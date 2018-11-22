@@ -1,0 +1,571 @@
+
+# List of annotations available
+#################################
+
+### 1000genomesALL
+# release: 2014oct/20141216
+# annotation_type: frequency
+# description: alternative allele frequency data in 1000 Genomes Project for autosomes (ALL, AFR (African), AMR (Admixed American), EAS (East Asian), EUR (European), SAS (South Asian)). Based on 201409 collection v5 (based on 201305 alignment) but including chrX and chrY data finally!
+
+### GWASCatalog
+# release: 20150202/20150202
+# annotation_type: annotation
+# description: Published GWAS results on diverse human diseases.
+
+### MutationTaster_score
+# release: 2/20170221
+# annotation_type: score
+# description: MutationTaster 2, data retrieved in 2015 http://www.mutationtaster.org/. MutationTaster p-value (MTori), ranges from 0 to 1. Multiple scores are separated. Information on corresponding transcript(s) can be found by querying http://www.mutationtaster.org/ChrPos.html
+
+### FATHMM_pred
+# release: 2.3/20170221
+# annotation_type: prediction
+# description: FATHMM, v2.3 http://fathmm.biocompute.org.uk. If a FATHMMori score is <=-1.5 (or rankscore >=0.81332) the corresponding nsSNV is predicted as D(AMAGING). otherwise it is predicted as T(OLERATED). Multiple predictions separated, corresponding to Ensembl_proteinid.
+
+### Symbol
+# release: 20170601/20170601
+# annotation_type: annotation [core]
+# description: Symbol of the gene from refSeq
+
+### GTEx_V6_gene
+# release: 6/20170221
+# annotation_type: annotation
+# description: GTEx v6 http://www.gtexportal.org/static/datasets/gtex_analysis_v6/single_tissue_eqtl_data/. target gene of the (significant) eQTL SNP
+
+### GenoCanyon_score
+# release: 1.0.3/20170221
+# annotation_type: score
+# description: GenoCanyon, v1.0.3 http://genocanyon.med.yale.edu/index.html. A functional prediction score based on conservation and biochemical annotations using an unsupervised statistical learning. (doi:10.1038/srep10576)
+
+### IARCTP53
+# release: 20130909/20130909
+# annotation_type: annotation
+# description: The IARC TP53 Database compiles various types of data and information on human TP53 gene variations related to cancer. Data are compiled from the peer-reviewed literature and from generalist databases.
+
+### SIFT_converted_rankscore
+# release: 201501/20170221
+# annotation_type: score
+# description: SIFT ensembl 66, released Jan, 2015 http://provean.jcvi.org/index.php. SIFTori scores were first converted to SIFTnew=1-SIFTori, then ranked among all SIFTnew scores in dbNSFP. The rankscore is the ratio of the rank the SIFTnew score over the total number of SIFTnew scores in dbNSFP. If there are multiple scores, only the most damaging (largest) rankscore is presented. The rankscores range from 0.00963 to 0.91219.
+
+### integrated_fitCons_score_rankscore
+# release: 1.01/20170221
+# annotation_type: score
+# description: fitCons, v1.01 http://compgen.bscb.cornell.edu/fitCons/. integrated fitCons scores were ranked among all integrated fitCons scores in dbNSFP. The rankscore is the ratio of the rank of the score over the total number  of integrated fitCons scores in dbNSFP.
+
+### Polyphen2_HVAR_pred
+# release: v2.2.2/20170221
+# annotation_type: prediction
+# description: Polyphen-2 v2.2.2, released Feb, 2012 http://genetics.bwh.harvard.edu/pph2/. Polyphen2 prediction based on HumVar, D (probably damaging, HVAR score in [0.909,1] or rankscore in [0.62797,0.97092]), P (possibly damaging, HVAR in [0.447,0.908] or rankscore in [0.44195,0.62727]) and B (benign, HVAR score in [0,0.446] or rankscore in [0.01257,0.44151]). Score cutoff for binary classification is 0.5 for HVAR score or 0.45833 for rankscore, i.e. the prediction is neutral if the HVAR score is smaller than 0.5 (rankscore is smaller than 0.45833), and deleterious if the HVAR score is larger than 0.5 (rankscore is larger than 0.45833). Multiple entries are separated.
+
+### NCI60
+# release: nci60/20130724
+# annotation_type: frequency
+# description: NCI-60 human tumor cell line panel exome sequencing allele frequency data. The Exomes of the NCI-60 Panel: A Genomic Resource for Cancer Biology and Systems Pharmacology
+
+### SiPhy_29way_logOdds
+# release: 0.5/20170221
+# annotation_type: score
+# description: SiPhy http://www.broadinstitute.org/mammals/2x/siphy_hg19/. SiPhy score based on 29 mammals genomes. The larger the score, the more conserved the site. Scores range from 0 to 37.9718 in dbNSFP.
+
+### phastCons20way_mammalian_rankscore
+# release: 3.3a/201504
+# annotation_type: score
+# description: phastCons20way_mammalian (hg38) http://hgdownload.soe.ucsc.edu/goldenPath/hg38/phastCons20way/. phastCons20way_mammalian scores were ranked among all phastCons20way_mammalian scores in dbNSFP. The rankscore is the ratio of the rank  of the score over the total number of phastCons20way_mammalian scores in dbNSFP.
+
+### DANN_rankscore
+# release: 1.0/20170221
+# annotation_type: score
+# description: DANN, https://cbcl.ics.uci.edu/public_data/DANN/. DANN scores were ranked among all DANN scores in dbNSFP. The rankscore is the ratio of the rank of the score over the total number of DANN scores in dbNSFP.
+
+### MutationAssessor_pred
+# release: 3/20170221
+# annotation_type: prediction
+# description: MutationAssessor, release 3 http://mutationassessor.org/. MutationAssessor functional impact of a variant : predicted functional, i.e. high (H) or medium (M), or predicted non-functional, i.e. low (L) or neutral (N). The MAori score cutoffs between H and M, M and L, and L and N, are 3.5, 1.935 and 0.8, respectively. The rankscore cutoffs between H and M, M and L, and L and N, are 0.92922, 0.51944 and 0.19719, respectively.
+
+### COSMIC
+# release: cosmic70/20140911
+# annotation_type: annotation
+# description: COSMIC database version 64 (previously observed cancer mutations, their identifiers in COSMIC, how many times are observed, and in which cancer tissues are observed). Including non-coding variants.
+
+### SiPhy_29way_logOdds_rankscore
+# release: 0.5/20170221
+# annotation_type: score
+# description: SiPhy http://www.broadinstitute.org/mammals/2x/siphy_hg19/. SiPhy_29way_logOdds scores were ranked among all SiPhy_29way_logOdds scores in dbNSFP. The rankscore is the ratio of the rank of the score over the total number of SiPhy_29way_logOdds scores in dbNSFP.
+
+### knownGene
+# release: 20170601/20170601
+# annotation_type: annotation [core]
+# description: Symbol of the gene from knownGene database
+
+### GERP++_RS_rankscore
+# release: 20110522/20170221
+# annotation_type: score
+# description: GERP++ http://mendel.stanford.edu/SidowLab/downloads/gerp/. GERP++ RS scores were ranked among all GERP++ RS scores in dbNSFP. The rankscore is the ratio of the rank of the score over the total number of GERP++ RS scores in dbNSFP.
+
+### SIFT_pred
+# release: 201501/20170221
+# annotation_type: prediction
+# description: SIFT ensembl 66, released Jan, 2015 http://provean.jcvi.org/index.php. If SIFTori is smaller than 0.05 (rankscore>0.395) the corresponding nsSNV is predicted as D(amaging). otherwise it is predicted as T(olerated). Multiple predictions separated
+
+### fathmm-MKL_coding_rankscore
+# release: 1.0/20170221
+# annotation_type: score
+# description: fathmm-MKL, http://fathmm.biocompute.org.uk/fathmmMKL.htm. fathmm-MKL coding scores were ranked among all fathmm-MKL coding scores in dbNSFP. The rankscore is the ratio of the rank of the score over the total number  of fathmm-MKL coding scores in dbNSFP.
+
+### 1000genomesSAS
+# release: 2014oct/20141216
+# annotation_type: frequency
+# description: alternative allele frequency data in 1000 Genomes Project for autosomes (ALL, AFR (African), AMR (Admixed American), EAS (East Asian), EUR (European), SAS (South Asian)). Based on 201409 collection v5 (based on 201305 alignment) but including chrX and chrY data finally!
+
+### CADD_raw_rankscore
+# release: 1.3/20170221
+# annotation_type: score
+# description: CADD, v1.3 http://cadd.gs.washington.edu/. CADD raw scores were ranked among all CADD raw scores in dbNSFP. The rankscore is the ratio of the rank of the score over the total number of CADD  raw scores in dbNSFP. Please note the following copyright statement for CADD: CADD  scores (http://cadd.gs.washington.edu/) are Copyright 2013 University of Washington  and Hudson-Alpha Institute for Biotechnology (all rights reserved) but are freely  available for all academic, non-commercial applications. For commercial licensing  information contact Jennifer McCullar (mccullaj@uw.edu).
+
+### Eigen-PC-raw
+# release: 1.1/20170221
+# annotation_type: score
+# description: Eigen & Eigen PC v1.1 http://www.columbia.edu/~ii2135/eigen.html. Eigen PC score for genome-wide SNVs. A functional prediction score based on conservation, allele frequencies, deleteriousness prediction (for missense SNVs) and epigenomic signals (for synonymous and non-coding SNVs) using an unsupervised learning  method (doi: 10.1038/ng.3477).
+
+### database_CPSGEN
+# release: 20140507/20140507
+# annotation_type: annotation
+# description: Specific database for group CPSGEN.
+
+### Polyphen2_HDIV_rankscore
+# release: v2.2.2/20170221
+# annotation_type: score
+# description: Polyphen-2 v2.2.2, released Feb, 2012 http://genetics.bwh.harvard.edu/pph2/. Polyphen2 HDIV scores were first ranked among all HDIV scores in dbNSFP. The rankscore is the ratio of the rank the score over the total number of the scores in dbNSFP. If there are multiple scores, only the most damaging (largest) rankscore is presented. The scores range from 0.02634 to 0.89865.
+
+### popfreq
+# release: 20150413/20150413
+# annotation_type: frequency [core]
+# description: A database containing the maximum allele frequency from these tables: 1000G2012APR_ALL 1000G2012APR_AFR 1000G2012APR_AMR 1000G2012APR_ASN 1000G2012APR_EUR ESP6500si_ALL ESP6500si_AA ESP6500si_EA CG46
+
+### integrated_confidence_value
+# release: 1.01/20170221
+# annotation_type: prediction
+# description: fitCons, v1.01 http://compgen.bscb.cornell.edu/fitCons/. 0 - highly significant scores (approx. p<.003) 1 - significant scores (approx. p<.05). 2 - informative scores (approx. p<.25)
+
+### Polyphen2_HVAR_score
+# release: v2.2.2/20170221
+# annotation_type: score
+# description: Polyphen-2 v2.2.2, released Feb, 2012 http://genetics.bwh.harvard.edu/pph2/. Polyphen2 score based on HumVar, i.e. hvar_prob. The score ranges from 0 to 1. Multiple entries separated, corresponding to Uniprot_acc_Polyphen2.
+
+### MetaLR_score
+# release: 1.0/20170221
+# annotation_type: score
+# description: MetaSVM and MetaLR, doi: 10.1093/hmg/ddu733. MetaLR scores were ranked among all MetaLR scores in dbNSFP. The rankscore is the ratio of the rank of the score over the total number of MetaLR scores in dbNSFP.  The scores range from 0 to 1.
+
+### MetaLR_rankscore
+# release: 1.0/20170221
+# annotation_type: score
+# description: MetaSVM and MetaLR, doi: 10.1093/hmg/ddu733. Prediction of our MetaLR based ensemble prediction score, T(olerated) or D(amaging) . The score cutoff between D and T is 0.5. The rankscore cutoff between D and T is 0.81113.
+
+### Polyphen2_HVAR_rankscore
+# release: v2.2.2/20170221
+# annotation_type: score
+# description: Polyphen-2 v2.2.2, released Feb, 2012 http://genetics.bwh.harvard.edu/pph2/. Polyphen2 HVAR scores were first ranked among all HVAR scores in dbNSFP. The rankscore is the ratio of the rank the score over the total number of the scores in dbNSFP. If there are multiple scores, only the most damaging (largest) rankscore is presented. The scores range from 0.01257 to 0.97092.
+
+### PROVEAN_score
+# release: 1.1/20170221
+# annotation_type: score
+# description: PROVEAN 1.1 ensembl 66, released Jan, 2015 http://provean.jcvi.org/index.php. PROVEAN score (PROVEANori). Scores range from -14 to 14. The smaller the score the more likely the SNP has damaging effect. Multiple scores separated, corresponding to Ensembl_proteinid.
+
+### MutationAssessor_score
+# release: 3/20170221
+# annotation_type: score
+# description: MutationAssessor, release 3 http://mutationassessor.org/. MutationAssessor functional impact combined score (MAori). The score ranges from -5.135 to 6.49 in dbNSFP.
+
+### revel
+# release: 20161205/20161205
+# annotation_type: score
+# description: REVEL scores for non-synonymous variants
+
+### outcome
+# release: 20170601/20170601
+# annotation_type: annotation [core]
+# description: Location of the gene - such as exonic and intronic - from RefSeq
+
+### FATHMM_converted_rankscore
+# release: 2.3/20170221
+# annotation_type: score
+# description: FATHMM, v2.3 http://fathmm.biocompute.org.uk. FATHMMori scores were first converted to FATHMMnew=1-(FATHMMori+16.13)/26.77, then ranked among all FATHMMnew scores in dbNSFP. The rankscore is the ratio of the rank of the score over the total number of FATHMMnew scores in dbNSFP. If there are multiple scores, only the most damaging (largest) rankscore is presented. The scores range from 0 to 1.
+
+### Transcript
+# release: 20170601/20170601
+# annotation_type: annotation [core]
+# description: RefSeq Transcript ID
+
+### dbSNPNonFlagged
+# release: snp138/20140222
+# annotation_type: annotation
+# description: dbSNP with ANNOVAR index files, after removing those flagged SNPs (SNPs < 1% minor allele frequency (MAF) (or unknown), mapping only once to reference assembly, flagged in dbSnp as 'clinically associated')
+
+### Eigen-raw
+# release: 1.1/20170221
+# annotation_type: score
+# description: Eigen & Eigen PC v1.1 http://www.columbia.edu/~ii2135/eigen.html. Eigen score for coding SNVs. A functional prediction score based on conservation, allele frequencies, and deleteriousness prediction using an unsupervised learning method  (doi: 10.1038/ng.3477).
+
+### MutationTaster_converted_rankscore
+# release: 2/20170221
+# annotation_type: score
+# description: MutationTaster 2, data retrieved in 2015 http://www.mutationtaster.org/. The MTori scores were first converted: if the prediction is A or D MTnew=MTori. if the prediction is N or P, MTnew=1-MTori. Then MTnew scores were ranked among all MTnew scores in dbNSFP. If there are multiple scores of a SNV, only the largest MTnew was used in ranking. The rankscore is the ratio of the rank of the score over the total number of MTnew scores in dbNSFP. The scores range from 0.08979 to 0.81033.
+
+### phyloP100way_vertebrate_rankscore
+# release: 201505/20170221
+# annotation_type: score
+# description: phyloP100way_vertebrate (hg38) http://hgdownload.soe.ucsc.edu/goldenPath/hg38/phyloP100way/. phyloP100way_vertebrate scores were ranked among all phyloP100way_vertebrate scores in dbNSFP. The rankscore is the ratio of the rank of the  score over the total number of phyloP100way_vertebrate scores in dbNSFP.
+
+### INTERVAR
+# release: 20180118/20170202
+# annotation_type: annotation
+# description: InterVar: clinical interpretation of missense variants
+
+### GTEx_V6_tissue
+# release: 6/20170221
+# annotation_type: annotation
+# description: GTEx v6 http://www.gtexportal.org/static/datasets/gtex_analysis_v6/single_tissue_eqtl_data/. tissue type of the expression data with which the eQTL/gene pair is detected
+
+### cytoBand
+# release: 20090614/20090614
+# annotation_type: annotation [core]
+# description: cytogenetic band
+
+### SIFT_score
+# release: 201501/20170221
+# annotation_type: score
+# description: SIFT ensembl 66, released Jan, 2015 http://provean.jcvi.org/index.php. SIFT score (SIFTori). Scores range from 0 to 1. The smaller the score the more likely the SNP has damaging effect. Multiple scores separated corresponding to Ensembl_proteinid.
+
+### InterPro
+# release: 3.1a/20151219
+# annotation_type: annotation
+# description: protein domain for variants.
+
+### 1000genomesEAS
+# release: 2014oct/20141216
+# annotation_type: frequency
+# description: alternative allele frequency data in 1000 Genomes Project for autosomes (ALL, AFR (African), AMR (Admixed American), EAS (East Asian), EUR (European), SAS (South Asian)). Based on 201409 collection v5 (based on 201305 alignment) but including chrX and chrY data finally!
+
+### LRT_converted_rankscore
+# release: 200911/20170221
+# annotation_type: score
+# description: LRT, released November, 2009 http://www.genetics.wustl.edu/jflab/lrt_query.html. The original LRT two-sided p-value (LRTori), ranges from 0 to 1. LRTori scores were first converted as LRTnew=1-LRTori*0.5 if Omega<1, or LRTnew=LRTori*0.5 if Omega>=1. Then LRTnew scores were ranked among all LRTnew scores in dbNSFP. The rankscore is the ratio of the rank over the total number of the scores in dbNSFP. The scores range from 0.00162 to 0.84324.
+
+### Polyphen2_HDIV_pred
+# release: v2.2.2/20170221
+# annotation_type: prediction
+# description: Polyphen-2 v2.2.2, released Feb, 2012 http://genetics.bwh.harvard.edu/pph2/. Polyphen2 prediction based on HumDiv, D (probably damaging, HDIV score in [0.957,1] or rankscore in [0.52844,0.89865]), P (possibly damaging, HDIV score in [0.453,0.956] or rankscore in [0.34282,0.52689]) and B (benign, HDIV score in [0,0.452] or rankscore in [0.02634,0.34268]). Score cutoff for binary classification is 0.5 for HDIV score or 0.3528 for rankscore, i.e. the prediction is neutral if the HDIV score is smaller than 0.5 (rankscore is smaller than 0.3528), and deleterious if the HDIV score is larger than 0.5 (rankscore is larger than 0.3528). Multiple entries are separated.
+
+### hgvs
+# release: 20170601/20170601
+# annotation_type: annotation
+# description: HGVS nomenclature of the variant, from RefSeq
+
+### GERP++_RS
+# release: 20110522/20170221
+# annotation_type: score
+# description: GERP++ http://mendel.stanford.edu/SidowLab/downloads/gerp/. GERP++ RS score, the larger the score, the more conserved the site. Scores range from -12.3 to 6.17.
+
+### phastCons100way_vertebrate_rankscore
+# release: 201505/20170221
+# annotation_type: score
+# description: phastCons100way_vertebrate (hg38) http://hgdownload.soe.ucsc.edu/goldenPath/hg38/phastCons100way/. phastCons100way_vertebrate scores were ranked among all phastCons100way_vertebrate scores in dbNSFP. The rankscore is the ratio of the rank  of the score over the total number of phastCons100way_vertebrate scores in dbNSFP.
+
+### mitimpact
+# release: 24/20160123
+# annotation_type: score
+# description: pathogenicity predictions of human mitochondrial missense variants
+
+### snpid
+# release: 150/20170929
+# annotation_type: annotation
+# description: dbSNP150 with allelic splitting and left-normalization
+
+### phastCons100way_vertebrate
+# release: 201505/20170221
+# annotation_type: score
+# description: phastCons100way_vertebrate (hg38) http://hgdownload.soe.ucsc.edu/goldenPath/hg38/phastCons100way/. phastCons conservation score based on the multiple alignments of 100 vertebrate genomes (including human). The larger the score, the more conserved  the site. Scores range from 0 to 1.
+
+### DANN_score
+# release: 1.0/20170221
+# annotation_type: score
+# description: DANN, https://cbcl.ics.uci.edu/public_data/DANN/. DANN is a functional prediction score retrained based on the training data of CADD using deep neural network. Scores range from 0 to 1. A larger number indicate  a higher probability to be damaging. More information of this score can be found in doi: 10.1093/bioinformatics/btu703. For commercial application of DANN, please contact  Daniel Quang (dxquang@uci.edu)
+
+### mcap
+# release: 20161104/20161104
+# annotation_type: score
+# description: M-CAP scores for non-synonymous variants
+
+### M-CAP_score
+# release: 1.0/20170221
+# annotation_type: score
+# description: M-CAP, v1.0 http://bejerano.stanford.edu/MCAP/. M-CAP score (details in DOI: 10.1038/ng.3703). Scores range from 0 to 1. The larger the score the more likely the SNP has damaging effect.
+
+### 6500NHLBIEA
+# release: esp6500siv2/20141222
+# annotation_type: frequency
+# description: alternative allele frequency in European American subjects in the NHLBI-ESP project with 6500 exomes, including the indel calls and the chrY calls.
+
+### Ensembl
+# release: 20170601/20170601
+# annotation_type: annotation [core]
+# description: Ensembl Gene ID
+
+### PROVEAN_pred
+# release: 1.1/20170221
+# annotation_type: prediction
+# description: PROVEAN 1.1 ensembl 66, released Jan, 2015 http://provean.jcvi.org/index.php. If PROVEANori <= -2.5 (rankscore>=0.543) the corresponding nsSNV is predicted as D(amaging)
+
+### MutationAssessor_score_rankscore
+# release: 3/20170221
+# annotation_type: score
+# description: MutationAssessor, release 3 http://mutationassessor.org/. MAori scores were ranked among all MAori scores in dbNSFP. The rankscore is the ratio of the rank of the score over the total number of MAori scores in dbNSFP. The scores range from 0 to 1.
+
+### CADD_phred
+# release: 1.3/20170221
+# annotation_type: score
+# description: CADD, v1.3 http://cadd.gs.washington.edu/. CADD phred-like score. This is phred-like rank score based on whole genome CADD raw scores. Please refer to Kircher et al. (2014) Nature Genetics 46(3):310-5  for details. The larger the score the more likely the SNP has damaging effect.  Please note the following copyright statement for CADD: CADD scores  (http://cadd.gs.washington.edu/) are Copyright 2013 University of Washington and  Hudson-Alpha Institute for Biotechnology (all rights reserved) but are freely  available for all academic, non-commercial applications. For commercial licensing  information contact Jennifer McCullar (mccullaj@uw.edu).
+
+### fathmm-MKL_coding_pred
+# release: 1.0/20170221
+# annotation_type: prediction
+# description: fathmm-MKL, http://fathmm.biocompute.org.uk/fathmmMKL.htm. If a fathmm-MKL_coding_score is >0.5 (or rankscore >0.28317)  the corresponding nsSNV is predicted as D(AMAGING). otherwise it is predicted as N(EUTRAL).
+
+### M-CAP_rankscore
+# release: 1.0/20170221
+# annotation_type: score
+# description: M-CAP, v1.0 http://bejerano.stanford.edu/MCAP/. M-CAP scores were ranked among all M-CAP scores in dbNSFP. The rankscore is the ratio of the rank of the score over the total number of M-CAP scores in dbNSFP.
+
+### 6500NHLBIALL
+# release: esp6500siv2/20141222
+# annotation_type: frequency
+# description: alternative allele frequency in All subjects in the NHLBI-ESP project with 6500 exomes, including the indel calls and the chrY calls.
+
+### 1000genomesAFR
+# release: 2014oct/20141216
+# annotation_type: frequency
+# description: alternative allele frequency data in 1000 Genomes Project for autosomes (ALL, AFR (African), AMR (Admixed American), EAS (East Asian), EUR (European), SAS (South Asian)). Based on 201409 collection v5 (based on 201305 alignment) but including chrX and chrY data finally!
+
+### M-CAP_pred
+# release: 1.0/20170221
+# annotation_type: prediction
+# description: M-CAP, v1.0 http://bejerano.stanford.edu/MCAP/. Prediction of M-CAP score based on the authors recommendation, T(olerated) or D(amaging). The score cutoff between D and T is 0.025.
+
+### CIVIC_SUMMARY
+# release: V20171020/20171020
+# annotation_type: annotation
+# description: CIViC is an open access, open source, community-driven web resource for Clinical Interpretation of Variants in Cancer.
+
+### phyloP20way_mammalian
+# release: 201504/20170221
+# annotation_type: score
+# description: phyloP20way_mammalian (hg38) http://hgdownload.soe.ucsc.edu/goldenPath/hg38/phyloP20way/. phyloP (phylogenetic p-values) conservation score based on the multiple alignments of 20 mammalian genomes (including human). The larger the score,  the more conserved the site. Scores range from -13.282 to 1.199 in dbNSFP.
+
+### phyloP20way_mammalian_rankscore
+# release: 201504/20170221
+# annotation_type: score
+# description: phyloP20way_mammalian (hg38) http://hgdownload.soe.ucsc.edu/goldenPath/hg38/phyloP20way/. phyloP20way_mammalian scores were ranked among all phyloP20way_mammalian scores in dbNSFP. The rankscore is the ratio of the rank of the  score over the total number of phyloP20way_mammalian scores in dbNSFP.
+
+### Polyphen2_HDIV_score
+# release: v2.2.2/20170221
+# annotation_type: score
+# description: Polyphen-2 v2.2.2, released Feb, 2012 http://genetics.bwh.harvard.edu/pph2/. Polyphen2 score based on HumDiv, i.e. hdiv_prob. The score ranges from 0 to 1. Multiple entries separated, corresponding to Uniprot_acc_Polyphen2.
+
+### location
+# release: 20170601/20170601
+# annotation_type: annotation [core]
+# description: Location of the gene - such as exonic and intronic - from RefSeq
+
+### 1000genomesAMR
+# release: 2014oct/20141216
+# annotation_type: frequency
+# description: alternative allele frequency data in 1000 Genomes Project for autosomes (ALL, AFR (African), AMR (Admixed American), EAS (East Asian), EUR (European), SAS (South Asian)). Based on 201409 collection v5 (based on 201305 alignment) but including chrX and chrY data finally!
+
+### dbscsnv
+# release: 11/20151218
+# annotation_type: annotation
+# description: dbscSNV version 1.1 for splice site prediction by AdaBoost and Random Forest
+
+### icgc
+# release: 21/20160622
+# annotation_type: score
+# description: International Cancer Genome Consortium version 21
+
+### CADD_raw
+# release: 1.3/20170221
+# annotation_type: score
+# description: CADD, v1.3 http://cadd.gs.washington.edu/. CADD raw score for functional prediction of a SNP. Please refer to Kircher et al. (2014) Nature Genetics 46(3):310-5 for details. The larger the score the more likely the SNP has damaging effect. Scores range from -7.535037 to 35.788538 in dbNSFP.  Please note the following copyright statement for CADD:  CADD scores (http://cadd.gs.washington.edu/) are Copyright 2013 University of  Washington and Hudson-Alpha Institute for Biotechnology (all rights reserved) but are  freely available for all academic, non-commercial applications. For commercial  licensing information contact Jennifer McCullar (mccullaj@uw.edu).
+
+### outcomeEnsembl
+# release: 20170601/20170601
+# annotation_type: annotation
+# description: Location of the gene - such as exonic and intronic - from Ensembl
+
+### CIVIC_FULL
+# release: V20171020/20171020
+# annotation_type: annotation
+# description: CIViC is an open access, open source, community-driven web resource for Clinical Interpretation of Variants in Cancer.
+
+### MetaSVM_rankscore
+# release: 1.0/20170221
+# annotation_type: score
+# description: MetaSVM and MetaLR, doi: 10.1093/hmg/ddu733. MetaSVM scores were ranked among all MetaSVM scores in dbNSFP. The rankscore is the ratio of the rank of the score over the total number of MetaSVM  scores in dbNSFP. The scores range from 0 to 1.
+
+### 1000genomesEUR
+# release: 2014oct/20141216
+# annotation_type: frequency
+# description: alternative allele frequency data in 1000 Genomes Project for autosomes (ALL, AFR (African), AMR (Admixed American), EAS (East Asian), EUR (European), SAS (South Asian)). Based on 201409 collection v5 (based on 201305 alignment) but including chrX and chrY data finally!
+
+### phyloP100way_vertebrate
+# release: 201505/20170221
+# annotation_type: score
+# description: phyloP100way_vertebrate (hg38) http://hgdownload.soe.ucsc.edu/goldenPath/hg38/phyloP100way/. phyloP (phylogenetic p-values) conservation score based on the multiple alignments of 100 vertebrate genomes (including human). The larger the score,  the more conserved the site. Scores range from -20.0 to 10.003 in dbNSFP.
+
+### MetaLR_pred
+# release: 1.0/20170221
+# annotation_type: prediction
+# description: MetaSVM and MetaLR, doi: 10.1093/hmg/ddu733.
+
+### LRT_pred
+# release: 200911/20170221
+# annotation_type: prediction
+# description: LRT, released November, 2009 http://www.genetics.wustl.edu/jflab/lrt_query.html. The original LRT two-sided p-value (LRTori), ranges from 0 to 1. LRT prediction, D(eleterious), N(eutral) or U(nknown), which is not solely determined by the score.
+
+### CLINVAR
+# release: 20180603/20171003
+# annotation_type: annotation
+# description: CLINVAR database with Variant Clinical Significance (unknown, untested, non-pathogenic, probable-non-pathogenic, probable-pathogenic, pathogenic, drug-response, histocompatibility, other) and Variant disease name. Clinvar version 20170905 with separate columns (CLINSIG CLNDBN CLNACC CLNDSDB CLNDSDBID)
+
+### gnomAD
+# release: 20170311/20170311
+# annotation_type: annotation
+# description: gnomAD genome collection
+
+### fathmm-MKL_coding_score
+# release: 1.0/20170221
+# annotation_type: score
+# description: fathmm-MKL, http://fathmm.biocompute.org.uk/fathmmMKL.htm. fathmm-MKL p-values. Scores range from 0 to 1. SNVs with scores >0.5 are predicted to be deleterious, and those <0.5 are predicted to be neutral or benign.  Scores close to 0 or 1 are with the highest-confidence. Coding scores are trained using 10 groups of features. More details of the score can be found in  doi: 10.1093/bioinformatics/btv009.
+
+### Interpro_domain
+# release: 56/20170221
+# annotation_type: annotation
+# description: Interpro v56 http://www.ebi.ac.uk/interpro/. domain or conserved site on which the variant locates. Domain annotations come from Interpro database. The number in the brackets following a specific domain is the count of times Interpro assigns the variant position to   that domain, typically coming from different predicting databases. Multiple entries  separated.
+
+### regsnpintron
+# release: 20170824/20170824
+# annotation_type: score
+# description: prioritize the disease-causing probability of intronic SNVs
+
+### 6500NHLBIAA
+# release: esp6500siv2/20141222
+# annotation_type: frequency
+# description: alternative allele frequency in African American subjects in the NHLBI-ESP project with 6500 exomes, including the indel calls and the chrY calls. This is lifted over from hg19 by myself.
+
+### MutationTaster_pred
+# release: 2/20170221
+# annotation_type: prediction
+# description: MutationTaster 2, data retrieved in 2015 http://www.mutationtaster.org/. MutationTaster prediction, A (disease_causing_automatic), D (disease_causing), N (polymorphism) or P (polymorphism_automatic). The score cutoff between D and N is 0.5 for MTnew and 0.31713 for the rankscore.
+
+### EXAC
+# release: 20150302/20150302
+# annotation_type: frequency
+# description: ExAC 65000 exome allele frequency data for ALL, AFR (African), AMR (Admixed American), EAS (East Asian), FIN (Finnish), NFE (Non-finnish European), OTH (other), SAS (South Asian)). version 0.3. Left normalization done
+
+### VEST3_score
+# release: 3.0/20170221
+# annotation_type: score
+# description: VEST, v3.0 http://karchinlab.org/apps/appVest.html. VEST 3.0 score. Score ranges from 0 to 1. The larger the score the more likely the mutation may cause functional change. Multiple scores separated, corresponding to Transcript_id_VEST3. Please note this score is free for non-commercial use. For more details please refer to http://wiki.chasmsoftware.org/index.php/SoftwareLicense. Commercial users should contact the Johns Hopkins Technology Transfer office.
+
+### iscaCuratedBenign
+# release: 20150118/20140413
+# annotation_type: annotation
+# description: International Standards for Cytogenomic
+
+### MetaSVM_score
+# release: 1.0/20170221
+# annotation_type: score
+# description: MetaSVM and MetaLR, doi: 10.1093/hmg/ddu733. Our support vector machine (SVM) based ensemble prediction score, which incorporated 10 scores (SIFT, PolyPhen-2 HDIV, PolyPhen-2 HVAR, GERP++, MutationTaster,  Mutation Assessor, FATHMM, LRT, SiPhy, PhyloP) and the maximum frequency observed in  the 1000 genomes populations. Larger value means the SNV is more likely to be damaging.  Scores range from -2 to 3 in dbNSFP.
+
+### gme
+# release: 20161024/20161024
+# annotation_type: frequency
+# description: Great Middle East allele frequency including NWA (northwest Africa), NEA (northeast Africa), AP (Arabian peninsula), Israel, SD (Syrian desert), TP (Turkish peninsula) and CA (Central Asia)
+
+### hgvsEnsembl
+# release: 20170601/20170601
+# annotation_type: annotation
+# description: HGVS nomenclature of the variant, from Ensembl
+
+### iscaCuratedPathogenic
+# release: 20140413/20140413
+# annotation_type: annotation
+# description: International Standards for Cytogenomic
+
+### MetaSVM_pred
+# release: 1.0/20170221
+# annotation_type: prediction
+# description: MetaSVM and MetaLR, doi: 10.1093/hmg/ddu733. Our logistic regression (LR) based ensemble prediction score, which incorporated 10 scores (SIFT, PolyPhen-2 HDIV, PolyPhen-2 HVAR, GERP++, MutationTaster,  Mutation Assessor, FATHMM, LRT, SiPhy, PhyloP) and the maximum frequency observed in  the 1000 genomes populations. Larger value means the SNV is more likely to be damaging.  Scores range from 0 to 1.
+
+### LRT_score
+# release: 200911/20170221
+# annotation_type: score
+# description: LRT, released November, 2009 http://www.genetics.wustl.edu/jflab/lrt_query.html. The original LRT two-sided p-value (LRTori), ranges from 0 to 1.
+
+### phastCons20way_mammalian
+# release: 201504/20170221
+# annotation_type: score
+# description: phastCons20way_mammalian (hg38) http://hgdownload.soe.ucsc.edu/goldenPath/hg38/phastCons20way/. phastCons conservation score based on the multiple alignments of 20 mammalian genomes (including human). The larger the score, the more conserved  the site. Scores range from 0 to 1.
+
+### integrated_fitCons_score
+# release: 1.01/20170221
+# annotation_type: score
+# description: fitCons, v1.01 http://compgen.bscb.cornell.edu/fitCons/. fitCons score predicts the fraction of genomic positions belonging to a specific function class (defined by epigenomic fingerprint) that are under selective  pressure. Scores range from 0 to 1, with a larger score indicating a higher proportion of  nucleic sites of the functional class the genomic position belong to are under selective  pressure, therefore more likely to be functional important. Integrated (i6) scores are integrated across three cell types (GM12878, H1-hESC and HUVEC). More details can be found in doi:10.1038/ng.3196.
+
+### VEST3_rankscore
+# release: 3.0/20170221
+# annotation_type: score
+# description: VEST, v3.0 http://karchinlab.org/apps/appVest.html. VEST3 scores were ranked among all VEST3 scores in dbNSFP. The rankscore is the ratio of the rank of the score over the total number of VEST3  scores in dbNSFP. In case there are multiple scores for the same variant, the largest  score (most damaging) is presented. The scores range from 0 to 1.  Please note VEST score is free for non-commercial use. For more details please refer to  http://wiki.chasmsoftware.org/index.php/SoftwareLicense. Commercial users should contact  the Johns Hopkins Technology Transfer office.
+
+### Eigen_coding_or_noncoding
+# release: 1.1/20170221
+# annotation_type: score
+# description: Eigen & Eigen PC v1.1 http://www.columbia.edu/~ii2135/eigen.html. Whether Eigen-raw and Eigen-phred scores are based on coding model or noncoding model.
+
+### PROVEAN_converted_rankscore
+# release: 1.1/20170221
+# annotation_type: score
+# description: PROVEAN 1.1 ensembl 66, released Jan, 2015 http://provean.jcvi.org/index.php. PROVEANori were first converted to PROVEANnew=1-(PROVEANori+14)/28, then ranked among all PROVEANnew scores in dbNSFP. The rankscore is the ratio of the rank the PROVEANnew score over the total number of PROVEANnew scores in dbNSFP. If there are multiple scores, only the most damaging (largest) rankscore is presented. The scores range from 0 to 1.
+
+### FATHMM_score
+# release: 2.3/20170221
+# annotation_type: score
+# description: FATHMM, v2.3 http://fathmm.biocompute.org.uk. FATHMM default score (weighted for human inherited-disease mutations with Disease Ontology) (FATHMMori). Scores range from -16.13 to 10.64. The smaller the score the more likely the SNP has damaging effect. Multiple scores separated, corresponding to Ensembl_proteinid.
+
+### RefSeq
+# release: 20170601/20170601
+# annotation_type: annotation [core]
+# description: RefSeq Gene ID
+
+### Transcript_Ensembl
+# release: 20170601/20170601
+# annotation_type: annotation [core]
+# description: Ensembl Transcript ID
+
+### locationEnsembl
+# release: 20170601/20170601
+# annotation_type: annotation
+# description: Location of the gene - such as exonic and intronic - from Ensembl
+
+### dbSNP
+# release: 150/20170929
+# annotation_type: annotation [core]
+# description: dbSNP150 with allelic splitting and left-normalization
+
+### GenoCanyon_score_rankscore
+# release: 1.0.3/20170221
+# annotation_type: score
+# description: GenoCanyon, v1.0.3 http://genocanyon.med.yale.edu/index.html. GenoCanyon_score scores were ranked among all integrated fitCons scores in dbNSFP. The rankscore is the ratio of the rank of the score over the total number  of GenoCanyon_score scores in dbNSFP.
+
+# 113 annotations available
+

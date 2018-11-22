@@ -1,0 +1,29 @@
+################
+# INSTALLATION #
+################
+
+# Tools configuration
+#######################
+# Use env.sh and config.ini to configure tools used by HOWARD
+
+
+# Annotation configuration
+############################
+# Use config.annotation.ini to configure annotations
+
+
+# Prioritization configuration
+################################
+# Use config.filter.ini to configure filter for prioritization
+
+
+# Download databases
+######################
+# Databases are downloaded automatically by using annotation configuratin file 
+# Use a vcf file to download ANNOVAR databases (without multithreading, "ALL" for all databases, "CORE" for core databases, or a list of databases):
+# ./HOWARD.sh --vcf=docs/example.vcf --output=docs/example.annotated.vcf --annotation=ALL --verbose
+# Use the following command to download SnpEff databases (beware of proxy parameters):
+# java -jar snpEff.jar download hg19
+# For home made databases, refer to config.annotation.ini file to construct and configure your database
+
+

@@ -1,0 +1,9 @@
+################
+# REQUIREMENTS #
+################
+
+CentOS6.7 or higher
+BCFTOOLS 1.8 or higher
+BGZIP 1.8 or higher
+TABIX 1.8 or higher
+
