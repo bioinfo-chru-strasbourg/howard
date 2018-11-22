@@ -12,27 +12,27 @@
 FROM centos:7
 MAINTAINER Antony Le Bechec <antony.lebechec@gmail.com>
 LABEL Software="HOWARD" \
-	Version="0.9b" \
-	Website="https://gitlab.bioinfo-diag.fr/Strasbourg/HOWARD" \
-	Description="HOWARD" \
-	License="GNU Affero General Public License (AGPL)" \
-	Usage="docker run -ti [-v [DATA FOLDER]:/data -v [DATABASE_FOLDER]:/databases] howard:version"
-	
+    Version="0.9b" \
+    Website="https://gitlab.bioinfo-diag.fr/Strasbourg/HOWARD" \
+    Description="HOWARD" \
+    License="GNU Affero General Public License (AGPL)" \
+    Usage="docker run -ti [-v [DATA FOLDER]:/data -v [DATABASE_FOLDER]:/databases] howard:version"
+    
 
 #######
 # YUM #
 #######
 
 RUN yum install -y \
-	gcc \
-	bc \
-	make \
-	wget \
-	perl-Switch \
-	perl-Digest-MD5 \
-	perl-Data-Dumper \
-	which \
-	zlib-devel zlib \
+    gcc \
+    bc \
+    make \
+    wget \
+    perl-Switch \
+    perl-Digest-MD5 \
+    perl-Data-Dumper \
+    which \
+    zlib-devel zlib \
     zlib2-devel zlib2 \
     bzip2-devel bzip2 \
     lzma-devel lzma \
@@ -94,9 +94,9 @@ ENV TOOLS=/home/TOOLS/tools
 ENV TOOL_NAME=java
 ENV TOOL_VERSION=1.8.0
 RUN yum install -y java-$TOOL_VERSION && \
-	mkdir -p $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin && \
-	ln -s /usr/bin/java $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin/java && \
-	ln -s $TOOLS/$TOOL_NAME/$TOOL_VERSION $TOOLS/$TOOL_NAME/current ;
+    mkdir -p $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin && \
+    ln -s /usr/bin/java $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin/java && \
+    ln -s $TOOLS/$TOOL_NAME/$TOOL_VERSION $TOOLS/$TOOL_NAME/current ;
 
 
 
@@ -170,15 +170,14 @@ ENV TOOLS=/home/TOOLS/tools
 ENV DATABASES=/databases
 ENV TOOL_NAME=howard
 ENV TOOL_VERSION=0.9.13b
-#ENV TARBALL_LOCATION=https://gitlab.bioinfo-diag.fr/Strasbourg/HOWARD/repository/0.9.13b
-#ENV TARBALL=archive.tar.gz
-#ENV TARBALL_FOLDER=archive
+ENV TARBALL_LOCATION=https://gitlab.bioinfo-diag.fr/Strasbourg/HOWARD/repository/0.9.13b
+ENV TARBALL=archive.tar.gz
+ENV TARBALL_FOLDER=archive
 ENV TOOL_DATABASE_FOLDER=/home/TOOLS/databases
 ENV DEST=$TOOLS/$TOOL_NAME/$TOOL_VERSION
 ENV PATH=$TOOLS/$TOOL_NAME/$TOOL_VERSION/bin:$PATH
 
 
-COPY . $TOOLS/$TOOL_NAME/$TOOL_VERSION
 RUN wget $TARBALL_LOCATION/$TARBALL ; \
     tar xf $TARBALL ; \
     rm -rf $TARBALL ; \
@@ -187,8 +186,8 @@ RUN wget $TARBALL_LOCATION/$TARBALL ; \
     rm -rf $(ls ${TOOL_NAME^^}-$TOOL_VERSION* -d) ; \
     ln -s $TOOLS/$TOOL_NAME/$TOOL_VERSION $TOOLS/$TOOL_NAME/current ; \
     chmod 0775 $TOOLS/$TOOL_NAME/$TOOL_VERSION $TOOLS/$TOOL_NAME/current -R ; \
-	mkdir -p $DATABASES ; \
-	ln -s $DATABASES $TOOL_DATABASE_FOLDER ;
+    mkdir -p $DATABASES ; \
+    ln -s $DATABASES $TOOL_DATABASE_FOLDER ;
 
 
 
@@ -199,7 +198,7 @@ RUN wget $TARBALL_LOCATION/$TARBALL ; \
 RUN yum erase -y zlib-devel \
                   zlib2-devel \
                   bzip2-devel \
-    			  lzma-devel \
+                  lzma-devel \
                   xz-devel \
                   ncurses-devel \
                   unzip \
