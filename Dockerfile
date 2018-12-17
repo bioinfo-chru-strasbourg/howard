@@ -1,51 +1,83 @@
 
 ##############################################################
-# Dockerfile Version:   1.0
+# Dockerfile Version:   1.2
 # Software:             HOWARD
-# Software Version:     0.9b
+# Software Version:     0.9.13.1b
 # Software Website:     https://gitlab.bioinfo-diag.fr/Strasbourg/HOWARD
 # Licence:              GNU Affero General Public License (AGPL)
 # Description:          HOWARD
 # Usage:                docker run -ti [-v [DATA FOLDER]:/data -v [DATABASE_FOLDER]:/databases] howard:version
 ##############################################################
 
+##########
+# README #
+##########
+
+# Config parameters
+#    identify yum packages for installation
+#    identify yum packages to remove
+#
+# Dependecies installation
+#    identify tools dependences
+#    config each tool
+#    write installation procedure for each tools
+#
+# Tool
+#    configure tool
+#    write isntallation procedure for the tool
+#    add link to current and root tool folder
+#
+# Workdir / Entrypoint / Cmd
+#    configure workdir, endpoint and command
+#    /!\ no variables in endpoint
+
+
+
+########
+# FROM #
+########
+
 FROM centos:7
 MAINTAINER Antony Le Bechec <antony.lebechec@gmail.com>
 LABEL Software="HOWARD" \
-	Version="0.9b" \
+	Version="0.9.13b" \
 	Website="https://gitlab.bioinfo-diag.fr/Strasbourg/HOWARD" \
 	Description="HOWARD" \
 	License="GNU Affero General Public License (AGPL)" \
 	Usage="docker run -ti [-v [DATA FOLDER]:/data -v [DATABASE_FOLDER]:/databases] howard:version"
-	
 
-#######
-# YUM #
-#######
 
-RUN yum install -y \
-	gcc \
-	bc \
-	make \
-	wget \
-	perl-Switch \
-	perl-Digest-MD5 \
-	perl-Data-Dumper \
-	which \
-	zlib-devel zlib \
-    zlib2-devel zlib2 \
-    bzip2-devel bzip2 \
-    lzma-devel lzma \
-    xz-devel xz \
-    ncurses-devel \
-    unzip
-    
+
+##############
+# PARAMETERS #
+##############
+
+ENV TOOLS=/home/TOOLS/tools
+ENV DATA=/data
+ENV TOOL=/tool
+ENV DATABASES=/databases
+ENV YUM_INSTALL="gcc bc make wget perl-Switch perl-Digest-MD5 perl-Data-Dumper which zlib-devel zlib 	zlib2-devel zlib2 	bzip2-devel bzip2 	lzma-devel lzma 	xz-devel xz 	ncurses-devel 	unzip"
+ENV YUM_REMOVE="zlib-devel zlib2-devel bzip2-devel lzma-devel xz-devel ncurses-devel unzip gcc"
+
+
+
+###############
+# YUM INSTALL #
+###############
+
+RUN yum install -y $YUM_INSTALL ;
+
+
+
+################
+# DEPENDENCIES #
+################
+
 
 ##########
 # HTSLIB #
 ##########
 
-ENV TOOLS=/home/TOOLS/tools
 ENV TOOL_NAME=htslib
 ENV TOOL_VERSION=1.8
 ENV TARBALL_LOCATION=https://github.com/samtools/$TOOL_NAME/releases/download/$TOOL_VERSION/
@@ -68,7 +100,6 @@ RUN wget $TARBALL_LOCATION/$TARBALL ; \
 # BCFTOOLS #
 ############
 
-ENV TOOLS=/home/TOOLS/tools
 ENV TOOL_NAME=bcftools
 ENV TOOL_VERSION=1.8
 ENV TARBALL_LOCATION=https://github.com/samtools/$TOOL_NAME/releases/download/$TOOL_VERSION/
@@ -90,7 +121,6 @@ RUN wget $TARBALL_LOCATION/$TARBALL ; \
 # JAVA #
 ########
 
-ENV TOOLS=/home/TOOLS/tools
 ENV TOOL_NAME=java
 ENV TOOL_VERSION=1.8.0
 RUN yum install -y java-$TOOL_VERSION && \
@@ -104,7 +134,6 @@ RUN yum install -y java-$TOOL_VERSION && \
 # SNPEFF #
 ##########
 
-ENV TOOLS=/home/TOOLS/tools
 ENV DATABASES=/databases
 ENV TOOL_NAME=snpeff
 ENV TOOL_VERSION=4.3t
@@ -133,7 +162,6 @@ RUN wget $TARBALL_LOCATION/$TARBALL ; \
 # ANNOVAR #
 ###########
 
-ENV TOOLS=/home/TOOLS/tools
 ENV DATABASES=/databases
 ENV TOOL_NAME=annovar
 ENV TOOL_VERSION=2018Apr16
@@ -165,12 +193,10 @@ RUN wget $TARBALL_LOCATION/$TARBALL ; \
 # HOWARD #
 ###########
 
-
-ENV TOOLS=/home/TOOLS/tools
 ENV DATABASES=/databases
 ENV TOOL_NAME=howard
-ENV TOOL_VERSION=0.9.13b
-ENV TARBALL_LOCATION=https://gitlab.bioinfo-diag.fr/Strasbourg/HOWARD/repository/0.9.13b
+ENV TOOL_VERSION=0.9.13.1b
+ENV TARBALL_LOCATION=https://gitlab.bioinfo-diag.fr/Strasbourg/HOWARD/repository/$TOOL_VERSION
 ENV TARBALL=archive.tar.gz
 ENV TARBALL_FOLDER=archive
 ENV TOOL_DATABASE_FOLDER=/home/TOOLS/databases
@@ -186,27 +212,26 @@ RUN wget $TARBALL_LOCATION/$TARBALL ; \
     rm -rf $(ls ${TOOL_NAME^^}-$TOOL_VERSION* -d) ; \
     ln -s $TOOLS/$TOOL_NAME/$TOOL_VERSION $TOOLS/$TOOL_NAME/current ; \
     chmod 0775 $TOOLS/$TOOL_NAME/$TOOL_VERSION $TOOLS/$TOOL_NAME/current -R ; \
-	mkdir -p $DATABASES ; \
-	ln -s $DATABASES $TOOL_DATABASE_FOLDER ;
+		mkdir -p $DATABASES ; \
+		ln -s $DATABASES $TOOL_DATABASE_FOLDER ; \
+		ln -s $TOOLS/$TOOL_NAME/$TOOL_VERSION $TOOLS/$TOOL_NAME/current ; \
+		ln -s $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin/ /tool ;
 
 
 
-#######
-# YUM #
-#######
+######################
+# YUM REMOVE & CLEAR #
+######################
 
-RUN yum erase -y zlib-devel \
-                  zlib2-devel \
-                  bzip2-devel \
-    			  lzma-devel \
-                  xz-devel \
-                  ncurses-devel \
-                  unzip \
-                  gcc ;
+RUN yum erase -y $YUM_REMOVE ; yum clean all ;
 
 
-WORKDIR "$TOOLS/$TOOL_NAME/current/bin"
 
-CMD ["/bin/bash"]
+##############################
+# WORKDIR / ENTRYPOINT / CMD #
+##############################
 
 
+WORKDIR "/data"
+
+ENTRYPOINT [ "/tool/HOWARD.sh" ]
