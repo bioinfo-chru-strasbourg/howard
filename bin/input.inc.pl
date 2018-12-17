@@ -121,19 +121,25 @@ VCF Output file
 =item B<--annotation=<string>>
 
 Annotations sources, defined in the file 'config_annotation'. CASE SENSITIVE.
-Example: "symbol", "Symbol,HGVS"
+Example: "symbol", "Symbol,HGVS", "snpeff", "snpeff_split"
+
+Specific snpEff options (if snpeff_jar and snpeff_databases defined):
+
+"snpeff_split" to annotate "ANN" field and split snpEff annotation into "snpeff_hgvs", "snpeff_gene_name", "snpeff_annotation" and "snpeff_impact" fieds, and add to specific fields "symbol", "location" and "outcome" if empty
+
+"snpeff" to annotate "ANN" field
+
+"snpeff_hgvs" to annotate "ANN" field and annotate "snpeff_hgvs" field and add into "hgvs" if empty
+
+"snpeff_gene_name" to annotate "ANN" field and annotate "snpeff_gene_name" field and add into "symbol" if empty
+
+"snpeff_annotation" to annotate "ANN" field and annotate "snpeff_annotation" field and add into "location" and "outcome" if empty
+
+"snpeff_impact" to annotate "ANN" field and annotate "snpeff_impact" field
 
 =item B<--assembly=<string>>
 
 Genome assembly to use. Default "hg19", "default" to use the default assembly in the configuration file.
-
-=item B<--snpeff>
-
-Annotation with snpEff (if snpeff_jar and snpeff_databases defined). default false. Same as adding "snpeff" in --annotation option
-
-=item B<--snpeff_hgvs>
-
-Add HGVS annotation from snpEff into INFO:hgvs and INFO:snpeff_hgvs fields (--snpeff option will be turned on). default false. Same as adding "snpeff_hgvs" in --annotation option
 
 =item B<--snpeff_stats=<file>>
 
@@ -287,11 +293,11 @@ our %parameters = ( #
 	'assembly'    			=>  	"",		# Assembly
 	'annovar_folder'    		=>  	"",		# ANNOVAR folder including scripts
 	'annovar_databases'    		=>  	"",		# ANNOVAR databases
-	'snpeff'    			=>  	0,		# snpEff annotation
+	#'snpeff'    			=>  	0,		# snpEff annotation
 	'snpeff_threads'		=>  	0,		# snpEff annotation
 	'snpeff_jar'    		=>  	"",		# snpEff JAR
 	'snpeff_databases'    		=>  	"",		# snpEff databases
-	'snpeff_hgvs'    		=>  	0,		# snpEff HGVS annotation in INFO:hgvs
+	#'snpeff_hgvs'    		=>  	0,		# snpEff HGVS annotation in INFO:hgvs
 	'snpeff_spliceSiteSize'    	=>  	3,		# snpEff additional options
 	'snpeff_additional_options'    	=>  	"",		# snpEff additional options
 	'snpeff_stats'    		=>  	"",		# snpEff stats
@@ -357,11 +363,11 @@ our @options=(
 	'assembly=s',			# Assembly
 	'annovar_folder=s',		# ANNOVAR folder including scripts
 	'annovar_databases=s',		# ANNOVAR databases
-	'snpeff!',			# snpEff annotation
+	#'snpeff!',			# snpEff annotation
 	'snpeff_threads=i',		# snpEff JAR
 	'snpeff_jar=s',			# snpEff JAR
 	'snpeff_databases=s',		# snpEff databases
-	'snpeff_hgvs!',			# snpEff HGVS annotation in INFO:hgvs
+	#'snpeff_hgvs!',			# snpEff HGVS annotation in INFO:hgvs
 	'snpeff_spliceSiteSize=i',	# snpEff additional options
 	'snpeff_additional_options=s',	# snpEff additional options
 	'snpeff_stats=s',		# snpEff stats files

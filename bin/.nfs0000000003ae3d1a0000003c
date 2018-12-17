@@ -317,14 +317,12 @@ if [ -z $TMP_SYS_FOLDER ] || [ ! -d $TMP_SYS_FOLDER ]; then
 	#exit;
 fi
 
-
 # Split
-SPLIT_DEFAULT=10000
 if [ ! -z $SPLIT_INPUT ]; then
 	SPLIT=$SPLIT_INPUT;
 fi;
 if [ -z $SPLIT ]; then
-	SPLIT=$SPLIT_DEFAULT;
+	SPLIT=10000;
 fi;
 
 # Compression

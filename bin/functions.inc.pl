@@ -2,7 +2,7 @@
 ##############################
 # Functions library          #
 # Author: Antony Le Béchec   #
-# Date: 23/08/2018           #
+# Date: 13/12/2018           #
 # Copyright: IRC             #
 ##############################
 
@@ -175,8 +175,14 @@ sub read_vcf {
 			# example: ##contig=<ID=Y,length=59373566,assembly=hg19>
 			if ($line_content =~ /##(.*)=<(.*)>/) {
 				my $header_type=$1;
+				my $split_limit=4;
+				if ($header_type eq "INFO") { $split_limit=4; };
+				if ($header_type eq "FORMAT") { $split_limit=4; };
+				if ($header_type eq "contig") { $split_limit=3; };
+				if ($header_type eq "FILTER") { $split_limit=2; };
 				#print "$1\t$2\n" if $DEBUG;	
-				my %header_variable_infos = map{split /=/, $_}(split /,/, $2);
+				#my %header_variable_infos = map{split /=/, $_}(split /,/, $2);
+				my %header_variable_infos = map{split /=/, $_,2}(split /,/, $2,$split_limit);
 				my $header_variable_id=$header_variable_infos{"ID"};
 				#print "$header_type\t$header_variable_id\n" if $DEBUG;	
 				$VCF_header{$header_type}{$header_variable_id}=\%header_variable_infos;
@@ -188,7 +194,13 @@ sub read_vcf {
 			if ($line_content=~ /^##(.*)=<(.*)>$/) {
 				my $type=$1;
 				if ($type eq "INFO" || $type eq "FORMAT" || $type eq "contig" || $type eq "FILTER") {
-					my @infos_split=split(",",$2);
+					my $split_limit=4;
+					if ($type eq "INFO") { $split_limit=4; };
+					if ($type eq "FORMAT") { $split_limit=4; };
+					if ($type eq "contig") { $split_limit=3; };
+					if ($type eq "FILTER") { $split_limit=2; };
+					my @infos_split=split(",",$2,$split_limit);
+					#my @infos_split=split(",",$2);
 					my %infos;
 					foreach my $info (@infos_split) {
 						my @info_split=split("=",$info,2); 

@@ -10,8 +10,8 @@
 
 our %information = ( #
 	'script'	=>  	basename($0),		# Script
-	'release'	=>  	"0.9.2.1b",		# Release
-	'date'		=>  	"20180918",		# Release parameter
+	'release'	=>  	"0.9.2.2b",		# Release
+	'date'		=>  	"20181217",		# Release parameter
 	'author'	=>  	"Antony Le Béchec",	# Author
 	'copyright'	=>  	"IRC",			# Copyright
 	'licence'	=>  	"GNU-GPL",		# Licence
@@ -20,6 +20,7 @@ our %information = ( #
 ## Release Notes
 ##################
 # 20180918-0.9.2.1b: Fix format input, blank lines in vcf
+# 20181217-0.9.2.2b: Add '#' to the header
 
 
 ## Modules
@@ -393,6 +394,8 @@ my %excluded=map { $_ => 1 } @left_annotations, @right_annotations_initial, ("SA
 if ($format eq "vcf") {
 	#print "########### VCF\n" if $DEBUG;
 	$output_header=$vcf_header
+#} else {
+#	$output_header="#";
 };#if
 
 
@@ -709,7 +712,7 @@ if ($DEBUG) {
 
 
 # create full file content
-my $output_full="$output_header\n$output_content";
+my $output_full="#$output_header\n$output_content";
 # remove blank lines
 $output_full =~ s/\n\s*/\n/g;
 

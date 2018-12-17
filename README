@@ -3,8 +3,8 @@
 # Highly Open and Valuable tool for   #
 #    Variant Annotation & Ranking     #
 #    for Discovery                    #
-# Release : 0.9.13b                   #
-# Date : 20181004                     #
+# Release : 0.9.13.1b                 #
+# Date : 20181217                     #
 # Author: Antony Le Bechec            #
 # Copyright: IRC                      #
 # Licence: GNU-GPL                    #
@@ -46,16 +46,15 @@ TABIX 1.8 or higher
 
 # Download databases
 ######################
-# Databases are downloaded automatically by using annotation configuratin file 
-# Use a vcf file to download ANNOVAR databases (without multithreading, "ALL" for all databases, "CORE" for core databases, or a list of databases):
-# ./HOWARD.sh --vcf=docs/example.vcf --output=docs/example.annotated.vcf --annotation=ALL --verbose
-# Use the following command to download SnpEff databases (beware of proxy parameters):
-# java -jar snpEff.jar download hg19
+# Databases are downloaded automatically by using annotation configuratin file, or options in command line (--annovar_databases, --snpeff_databases, assembly...)
+# Use a vcf file to download ANNOVAR databases (WITHOUT multithreading, "ALL" for all databases, "CORE" for core databases, "snpeff" for snpEff database, or a list of databases):
+# ./HOWARD.sh --vcf=docs/example.vcf --output=docs/example.annotated.vcf --annotation=ALL,snpeff [--annovar_databases=</path/to/annovar_databases> --snpeff_databases=</path/to/snpeff_databases> --assembly=<assembly> --verbose]
+# Use this command multiple times for all needed assembly (such as hg19, hg38, mm9)
 # For home made databases, refer to config.annotation.ini file to construct and configure your database
 
 
 #######################################
-# HOWARD [0.9.13b-04/10/2018]
+# HOWARD [0.9.13.1b-17/12/2018]
 # HOWARD Annotation, Calculation, Prioritization and Translation, based on ANNOVAR and snpEff, allowing multithreading 
 # Antony Le Bechec @ IRC © GNU-GPL
 #######################################
@@ -109,9 +108,15 @@ TABIX 1.8 or higher
 #	Remove --multithreading parameter, only --thread parameter to deal with multithreading
 #	Replace --filter and --format parameters by --prioritization and --translation parameters
 #	Add snpeff options to VCFannotation.pl
+# 0.9.13.1b-13/12/2018:
+#	Change Number/Type/Description of new INFO/FORMAT header generated
+#	Remove snpEff option --snpeff and --snpeff_hgvs. SnpEff is used through --annotation option
+#	Add '#' to the TAB delimiter format header
+#	Bug fixed: calculation INFO fields header, snpeff parameters options on multithreading
+#	Bug fixed: snpeff parameters in command line
 
 #######################################
-# HOWARD [0.9.13b-04/10/2018]
+# HOWARD [0.9.13.1b-17/12/2018]
 # HOWARD Annotation, Calculation, Prioritization and Translation, based on ANNOVAR and snpEff, allowing multithreading 
 # Antony Le Bechec @ IRC © GNU-GPL
 #######################################
@@ -243,10 +248,10 @@ Options:
 ## Script Information
 # script: VCFcalculation.pl
 # licence: GNU-GPL
-# date: 20180823
+# date: 20181217
 # copyright: IRC
 # author: Antony Le Béchec
-# release: 0.9.2.2b
+# release: 0.9.2.3b
 Usage:
     $ARGV[0] [options] --input=<VCF> --output=<VCF> [...]
 
@@ -389,10 +394,10 @@ Options:
 ## Script Information
 # script: VCFtranslation.pl
 # licence: GNU-GPL
-# date: 20180918
+# date: 20181217
 # copyright: IRC
 # author: Antony Le Béchec
-# release: 0.9.2.1b
+# release: 0.9.2.2b
 Usage:
     $ARGV[0] [options] --input=<VCF> --output=<VCF> [...]
 

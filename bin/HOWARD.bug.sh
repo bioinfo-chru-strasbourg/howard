@@ -5,8 +5,8 @@
 
 SCRIPT_NAME="HOWARD"
 SCRIPT_DESCRIPTION="HOWARD Annotation, Calculation, Prioritization and Translation, based on ANNOVAR and snpEff, allowing multithreading"
-SCRIPT_RELEASE="0.9.13.1b"
-SCRIPT_DATE="17/12/2018"
+SCRIPT_RELEASE="0.9.13d"
+SCRIPT_DATE="04/10/2018"
 SCRIPT_AUTHOR="Antony Le Bechec"
 SCRIPT_COPYRIGHT="IRC"
 SCRIPT_LICENCE="GNU-GPL"
@@ -61,12 +61,6 @@ RELEASE_NOTES=$RELEASE_NOTES"#\tRemove no multithreading part code to multithrea
 RELEASE_NOTES=$RELEASE_NOTES"#\tRemove --multithreading parameter, only --thread parameter to deal with multithreading\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tReplace --filter and --format parameters by --prioritization and --translation parameters\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tAdd snpeff options to VCFannotation.pl\n";
-RELEASE_NOTES=$RELEASE_NOTES"# 0.9.13.1b-13/12/2018:\n";
-RELEASE_NOTES=$RELEASE_NOTES"#\tChange Number/Type/Description of new INFO/FORMAT header generated\n";
-RELEASE_NOTES=$RELEASE_NOTES"#\tRemove snpEff option --snpeff and --snpeff_hgvs. SnpEff is used through --annotation option\n";
-RELEASE_NOTES=$RELEASE_NOTES"#\tAdd '#' to the TAB delimiter format header\n";
-RELEASE_NOTES=$RELEASE_NOTES"#\tBug fixed: calculation INFO fields header, snpeff parameters options on multithreading\n";
-RELEASE_NOTES=$RELEASE_NOTES"#\tBug fixed: snpeff parameters in command line\n";
 
 
 # Script folder
@@ -317,14 +311,12 @@ if [ -z $TMP_SYS_FOLDER ] || [ ! -d $TMP_SYS_FOLDER ]; then
 	#exit;
 fi
 
-
 # Split
-SPLIT_DEFAULT=10000
 if [ ! -z $SPLIT_INPUT ]; then
 	SPLIT=$SPLIT_INPUT;
 fi;
 if [ -z $SPLIT ]; then
-	SPLIT=$SPLIT_DEFAULT;
+	SPLIT=10000;
 fi;
 
 # Compression
@@ -652,8 +644,7 @@ if ((1)); then
 		(($VERBOSE)) && echo "#[INFO] INPUT_TMP: $INPUT"
 
 		# NB VARIANTS
-		#NB_VARIANT=$(grep ^# -cv $INPUT);
-		NB_VARIANT=$($BCFTOOLS view -H $INPUT | grep ^# -cv);
+		NB_VARIANT=$(grep ^# -cv $INPUT);
 		echo "#[INFO] NB VARIANT: $NB_VARIANT";
 
 	fi;
@@ -861,23 +852,19 @@ if (($NB_VARIANT)); then
 			#if [ $NB_VARIANT -gt $ANNOTATIONS_SPLIT ]; then
 				# SPLIT VCF on ANNOTATIONS_SPLIT variants
 				# HEAD
-				#grep "^#" $INPUT > $TMP_FOLDER/input.header
-				$BCFTOOLS view -h $INPUT > $TMP_FOLDER/input.header
+				grep "^#" $INPUT > $TMP_FOLDER/input.header
 				# VARIANTS
-				#grep -v "^#" $INPUT > $TMP_FOLDER/input.variants
-				$BCFTOOLS view -H $INPUT > $TMP_FOLDER/input.variants
+				grep -v "^#" $INPUT > $TMP_FOLDER/input.variants
 				# SPLIT
 				#echo "SPLIT"
-				#grep -v "^#" $INPUT | split - -a $SPLIT_SUFFIT_LENGTH -l $ANNOTATIONS_SPLIT $TMP_FOLDER/input.variants.splitted.
-				$BCFTOOLS view -H $INPUT | split - -a $SPLIT_SUFFIT_LENGTH -l $ANNOTATIONS_SPLIT $TMP_FOLDER/input.variants.splitted.
+				grep -v "^#" $INPUT | split - -a $SPLIT_SUFFIT_LENGTH -l $ANNOTATIONS_SPLIT $TMP_FOLDER/input.variants.splitted.
 				#echo "SPLIT END"
 				VCF_SPLITTED_LIST=""
-				#for splited_variants in $TMP_FOLDER/input.variants.splitted.*; do
-				for splited_variants in $(ls "$TMP_FOLDER/"input.variants.splitted.* | grep "$TMP_FOLDER/"'input.variants.splitted.[a-z]*$' ); do
+				for splited_variants in $TMP_FOLDER/input.variants.splitted.*; do
 					cat $TMP_FOLDER/input.header $splited_variants > $splited_variants.vcf
 					VCF_SPLITTED_LIST=$VCF_SPLITTED_LIST" $splited_variants.vcf"
 				done
-				#echo "SPLITTED: $VCF_SPLITTED_LIST"; exit 0;
+				#echo "SPLITTED: $VCF_SPLITTED_LIST"
 				#cat $VCF_SPLITTED_LIST
 				#exit 0;
 				echo "#[INFO] Input VCF splitted into "$(echo $VCF_SPLITTED_LIST | wc -w)" files";
@@ -888,15 +875,13 @@ if (($NB_VARIANT)); then
 
 			# PARAM ANNOTATION
 			#PARAM_ANNOTATION=$(echo "$PARAM " | sed "s/--snpeff_stats=[^ |$]*//gi");
-			#PARAM_ANNOTATION=$(echo "$PARAM " | sed "s/--snpeff_stats=[ |$]*//gi" | sed "s/--snpeff_hgvs[ |$]*//gi"  | sed "s/--snpeff [ |$]*//gi");
-			#PARAM_ANNOTATION=$(echo "$PARAM " | sed "s/--snpeff_stats=[^ |$]*//gi" | sed "s/--snpeff_hgvs[^ |$]*//gi"  | sed "s/--snpeff[^ |$]*//gi");
-			PARAM_ANNOTATION=$(echo "$PARAM " | sed "s/--snpeff_stats=[^ |$]*//gi");
+			PARAM_ANNOTATION=$(echo "$PARAM " | sed "s/--snpeff_stats=[ |$]*//gi" | sed "s/--snpeff_hgvs[ |$]*//gi"  | sed "s/--snpeff [ |$]*//gi");
 			#echo $PARAM_ANNOTATION; exit 0;
 
 			# FIND SAMPLE
-			if [ $($BCFTOOLS view -h $INPUT | grep "#CHROM" | wc -w) -gt 9 ]; then
+			if [ $(grep "#CHROM" $INPUT | wc -w) -gt 9 ]; then
 			#if [ $($BCFTOOLS view -h $INPUT | grep "#CHROM" | wc -w) -gt 9 ]; then
-				SAMPLES=$($BCFTOOLS view -h $INPUT | grep "#CHROM" | cut -f10-$(grep "#CHROM" $INPUT | wc -w) --output-delimiter=,)
+				SAMPLES=$(grep "#CHROM" $INPUT | cut -f10-$(grep "#CHROM" $INPUT | wc -w) --output-delimiter=,)
 				#SAMPLES=$($BCFTOOLS view -h $INPUT | grep "#CHROM" | cut -f10-$($BCFTOOLS view -h $INPUT | grep "#CHROM" | wc -w) --output-delimiter=,)
 			else
 				SAMPLES=""
@@ -1012,6 +997,12 @@ if (($NB_VARIANT)); then
 					echo "$OUTPUT_ANNOTATION: $OUTPUT_ANNOTATION.list $OUTPUT_ANNOTATION.header
 							mkdir -p $TMP_SORT\$@
 							$BCFTOOLS concat -f $OUTPUT_ANNOTATION.list -a --no-version | $BCFTOOLS reheader -h $OUTPUT_ANNOTATION.header --threads $THREADS | $BCFTOOLS sort -T $TMP_SORT\$@ > \$@ 2>>$ERR
+							# old version
+							#cat $OUTPUT_ANNOTATION.header > \$@.tmp
+							#$BCFTOOLS concat -f $OUTPUT_ANNOTATION.list -a --no-version | grep ^# -v  >> \$@.tmp
+							#mkdir -p $TMP_SORT\$@
+							#$BCFTOOLS sort -T $TMP_SORT\$@ \$@.tmp > \$@ 2>>$ERR
+							#rm -rf $TMP_SORT\$@
 							
 						" >>$MK;
 					
@@ -1099,15 +1090,12 @@ if (($NB_VARIANT)); then
 				if [ $NB_VARIANT -gt $CALCULATION_SPLIT ]; then
 					# SPLIT VCF on ANNOTATION_SPLIT variants
 					# HEAD
-					#grep "^#" $OUTPUT_ANNOTATION > $TMP_FOLDER/input_annotation.header
-					$BCFTOOLS view -h $OUTPUT_ANNOTATION > $TMP_FOLDER/input_annotation.header
+					grep "^#" $OUTPUT_ANNOTATION > $TMP_FOLDER/input_annotation.header
 					# VARIANTS
-					#grep -v "^#" $OUTPUT_ANNOTATION > $TMP_FOLDER/input_annotation.variants
-					$BCFTOOLS view -H $OUTPUT_ANNOTATION > $TMP_FOLDER/input_annotation.variants
+					grep -v "^#" $OUTPUT_ANNOTATION > $TMP_FOLDER/input_annotation.variants
 					# SPLIT
 					#echo "SPLIT"
-					#grep -v "^#" $OUTPUT_ANNOTATION | split - -a $SPLIT_SUFFIT_LENGTH -l $CALCULATION_SPLIT $TMP_FOLDER/input_annotation.variants.splitted.
-					$BCFTOOLS view -H $OUTPUT_ANNOTATION | split - -a $SPLIT_SUFFIT_LENGTH -l $CALCULATION_SPLIT $TMP_FOLDER/input_annotation.variants.splitted.
+					grep -v "^#" $OUTPUT_ANNOTATION | split - -a $SPLIT_SUFFIT_LENGTH -l $CALCULATION_SPLIT $TMP_FOLDER/input_annotation.variants.splitted.
 					#echo "SPLIT END"
 					for splited_variants in $TMP_FOLDER/input_annotation.variants.splitted.*; do
 						cat $TMP_FOLDER/input_annotation.header $splited_variants > $splited_variants.vcf
@@ -1130,9 +1118,9 @@ if (($NB_VARIANT)); then
 				PARAM_CALCULATION=$(echo "$PARAM " | sed "s/--snpeff_stats=[^ |$]*//gi");
 
 				# FIND SAMPLE
-				if [ $($BCFTOOLS view -h $INPUT | grep "#CHROM" | wc -w) -gt 9 ]; then
+				if [ $(grep "#CHROM" $INPUT | wc -w) -gt 9 ]; then
 				#if [ $($BCFTOOLS view -h $INPUT | grep "#CHROM" | wc -w) -gt 9 ]; then
-					SAMPLES=$($BCFTOOLS view -h $INPUT | grep "#CHROM" | cut -f10-$(grep "#CHROM" $INPUT | wc -w) --output-delimiter=,)
+					SAMPLES=$(grep "#CHROM" $INPUT | cut -f10-$(grep "#CHROM" $INPUT | wc -w) --output-delimiter=,)
 					#SAMPLES=$($BCFTOOLS view -h $INPUT | grep "#CHROM" | cut -f10-$($BCFTOOLS view -h $INPUT | grep "#CHROM" | wc -w) --output-delimiter=,)
 				else
 					SAMPLES=""
@@ -1261,15 +1249,12 @@ if (($NB_VARIANT)); then
 				if [ $NB_VARIANT -gt $PRIORITIZATION_SPLIT ]; then
 					# SPLIT VCF on CALCULATION_SPLIT variants
 					# HEAD
-					#grep "^#" $OUTPUT_CALCULATION > $TMP_FOLDER/input_calculation.header
-					$BCFTOOLS view -h $OUTPUT_CALCULATION > $TMP_FOLDER/input_calculation.header
+					grep "^#" $OUTPUT_CALCULATION > $TMP_FOLDER/input_calculation.header
 					# VARIANTS
-					#grep -v "^#" $OUTPUT_CALCULATION > $TMP_FOLDER/input_calculation.variants
-					$BCFTOOLS view -H $OUTPUT_CALCULATION > $TMP_FOLDER/input_calculation.variants
+					grep -v "^#" $OUTPUT_CALCULATION > $TMP_FOLDER/input_calculation.variants
 					# SPLIT
 					#echo "SPLIT"
-					#grep -v "^#" $OUTPUT_CALCULATION | split - -a $SPLIT_SUFFIT_LENGTH -l $PRIORITIZATION_SPLIT $TMP_FOLDER/input_calculation.variants.splitted.
-					$BCFTOOLS view -H $OUTPUT_CALCULATION | split - -a $SPLIT_SUFFIT_LENGTH -l $PRIORITIZATION_SPLIT $TMP_FOLDER/input_calculation.variants.splitted.
+					grep -v "^#" $OUTPUT_CALCULATION | split - -a $SPLIT_SUFFIT_LENGTH -l $PRIORITIZATION_SPLIT $TMP_FOLDER/input_calculation.variants.splitted.
 					#echo "SPLIT END"
 					for splited_variants in $TMP_FOLDER/input_calculation.variants.splitted.*; do
 						cat $TMP_FOLDER/input_calculation.header $splited_variants > $splited_variants.vcf
@@ -1292,9 +1277,9 @@ if (($NB_VARIANT)); then
 				PARAM_PRIORITIZATION=$(echo "$PARAM " | sed "s/--snpeff_stats=[^ |$]*//gi");
 
 				# FIND SAMPLE
-				if [ $($BCFTOOLS view -h $INPUT | grep "#CHROM" | wc -w) -gt 9 ]; then
+				if [ $(grep "#CHROM" $INPUT | wc -w) -gt 9 ]; then
 				#if [ $($BCFTOOLS view -h $INPUT | grep "#CHROM" | wc -w) -gt 9 ]; then
-					SAMPLES=$($BCFTOOLS view -h $INPUT | grep "#CHROM" | cut -f10-$(grep "#CHROM" $INPUT | wc -w) --output-delimiter=,)
+					SAMPLES=$(grep "#CHROM" $INPUT | cut -f10-$(grep "#CHROM" $INPUT | wc -w) --output-delimiter=,)
 					#SAMPLES=$($BCFTOOLS view -h $INPUT | grep "#CHROM" | cut -f10-$($BCFTOOLS view -h $INPUT | grep "#CHROM" | wc -w) --output-delimiter=,)
 				else
 					SAMPLES=""
@@ -1580,10 +1565,9 @@ if ((1)); then
 				PARAM_TRANSLATION=$(echo "$PARAM " | sed "s/--snpeff_stats=[^ |$]*//gi");
 
 				# FIND SAMPLE
-				#if [ $(grep "#CHROM" $INPUT | wc -w) -gt 9 ]; then
-				if [ $($BCFTOOLS view -h $INPUT | grep "#CHROM" | wc -w) -gt 9 ]; then
+				if [ $(grep "#CHROM" $INPUT | wc -w) -gt 9 ]; then
 				#if [ $($BCFTOOLS view -h $INPUT | grep "#CHROM" | wc -w) -gt 9 ]; then
-					SAMPLES=$($BCFTOOLS view -h $INPUT | grep "#CHROM" | cut -f10-$(grep "#CHROM" $INPUT | wc -w) --output-delimiter=,)
+					SAMPLES=$(grep "#CHROM" $INPUT | cut -f10-$(grep "#CHROM" $INPUT | wc -w) --output-delimiter=,)
 					#SAMPLES=$($BCFTOOLS view -h $INPUT | grep "#CHROM" | cut -f10-$($BCFTOOLS view -h $INPUT | grep "#CHROM" | wc -w) --output-delimiter=,)
 				else
 					SAMPLES=""

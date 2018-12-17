@@ -19,11 +19,10 @@
 
 # Download databases
 ######################
-# Databases are downloaded automatically by using annotation configuratin file 
-# Use a vcf file to download ANNOVAR databases (without multithreading, "ALL" for all databases, "CORE" for core databases, or a list of databases):
-# ./HOWARD.sh --vcf=docs/example.vcf --output=docs/example.annotated.vcf --annotation=ALL --verbose
-# Use the following command to download SnpEff databases (beware of proxy parameters):
-# java -jar snpEff.jar download hg19
+# Databases are downloaded automatically by using annotation configuratin file, or options in command line (--annovar_databases, --snpeff_databases, assembly...)
+# Use a vcf file to download ANNOVAR databases (WITHOUT multithreading, "ALL" for all databases, "CORE" for core databases, "snpeff" for snpEff database, or a list of databases):
+# ./HOWARD.sh --vcf=docs/example.vcf --output=docs/example.annotated.vcf --annotation=ALL,snpeff [--annovar_databases=</path/to/annovar_databases> --snpeff_databases=</path/to/snpeff_databases> --assembly=<assembly> --verbose]
+# Use this command multiple times for all needed assembly (such as hg19, hg38, mm9)
 # For home made databases, refer to config.annotation.ini file to construct and configure your database
 
 
