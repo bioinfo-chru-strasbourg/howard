@@ -810,7 +810,12 @@ if (($NB_VARIANT)); then
 
 		#echo $SCRIPT_DIR/VCFannotation.pl  $PARAM --input=$INPUT --show_annotations
 		#$SCRIPT_DIR/VCFannotation.pl  $PARAM --input=$INPUT --show_annotations; exit 0;
-		ANNOTATIONS=$($SCRIPT_DIR/VCFannotation.pl  $PARAM --input=$INPUT --show_annotations | grep "# ANNOTATIONS: " | cut -d: -f2);
+		CMD_SHOW_ANNOTATION="$SCRIPT_DIR/VCFannotation.pl  $PARAM --input=$INPUT --show_annotations"
+		#echo $CMD_SHOW_ANNOTATION
+		#eval $CMD_SHOW_ANNOTATION
+		#$SCRIPT_DIR/VCFannotation.pl  $PARAM --input=$INPUT --show_annotations
+		#ANNOTATIONS=$($SCRIPT_DIR/VCFannotation.pl  $PARAM --input=$INPUT --show_annotations | grep "# ANNOTATIONS: " | cut -d: -f2);
+		ANNOTATIONS=$(eval $CMD_SHOW_ANNOTATION | grep "# ANNOTATIONS: " | cut -d: -f2);
 		NB_ANNOTATIONS=$(echo $ANNOTATIONS | wc -w);
 		#echo "NB_VARIANT=$NB_VARIANT ANNOTATIONS_SPLIT=$ANNOTATIONS_SPLIT ANNOTATIONS=$ANNOTATIONS"; exit 0;
 

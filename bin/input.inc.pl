@@ -59,7 +59,7 @@ Configuration file for main parameters (default 'config.ini')
 
 Configuration file for annotation parameters (default 'config.annotation.ini').
 
-=item B<--config_filter|config_filter_file=<file>>
+=item B<--config_prioritization|--config_prioritization_file|--config_filter|config_filter_file=<file>>
 
 Configuration file for filter/prioritization parameters (default 'config.prioritization.ini' or 'config.filter.ini').
 
@@ -83,6 +83,10 @@ Folder with snpEff databases.
 =item B<--java>
 
 java binary (needed if snpeff option on). default "java"
+
+=item B<--java_flags>
+
+java flags  (needed if snpeff option on, especially for configure proxy for databases donwload). default ""
 
 =back
 
@@ -271,7 +275,7 @@ our %parameters = ( #
 	# Configuration
 	'config'		=>	'config.ini',			# Configuration file
 	'config_annotation'    	=>  	"config.annotation.ini",	# Configuratin annotation file
-	'config_filter'    	=>  	"config.prioritization.ini",	# Configuration filter file
+	'config_prioritization'    	=>  	"config.prioritization.ini",	# Configuration filter file
 	'tmp'			=>	undef,		# Output VCF file
 
 	# COMMON PARAMETERS
@@ -302,6 +306,7 @@ our %parameters = ( #
 	'snpeff_additional_options'    	=>  	"",		# snpEff additional options
 	'snpeff_stats'    		=>  	"",		# snpEff stats
 	'java'    			=>  	"",		# JAVA binary
+	'java_flags'    		=>  	"",		# JAVA binary
 	# show
 	'show_annotations'		=>	0,		# Show annotations
 	'show_annotations_full'		=>	0,		# Show annotations FULL
@@ -344,7 +349,7 @@ our @options=(
 	# CONFIGURATION
 	'config|config_file=s',				# Configuration file
 	'config_annotation|config_annotation_file=s',	# Configuratin annotation file
-	'config_filter|config_filter_file|config_prioritization|config_prioritization_file=s',		# Configuration filter file
+	'config_prioritization|config_prioritization_file|config_filter|config_filter_file=s',		# Configuration filter file
 	'tmp=s',		# Configuration filter file
 
 	# COMMON PARAMETERS
@@ -372,6 +377,7 @@ our @options=(
 	'snpeff_additional_options=s',	# snpEff additional options
 	'snpeff_stats=s',		# snpEff stats files
 	'java=s',			# JAVA binary
+	'java_flags=s',			# JAVA binary
 	# show
 	'show_annotations!',		# Show annotations
 	'show_annotations_full!',	# Show annotations FULL

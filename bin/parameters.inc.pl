@@ -137,12 +137,12 @@ while ((my $annotation_name, my $annotation_infos) = each(%config_annotation)){
 
 # Config filter file
 my $config_filter_file;
-if (-e $parameters{"config_filter"}) {
-    $config_filter_file=$parameters{"config_filter"};
-} elsif (-e "$basename/".$parameters{"config_filter"}) {
-    $config_filter_file="$basename/".$parameters{"config_filter"};
-} elsif (-e "$basename/config.filter.ini") {
-    $config_filter_file="$basename/config.filter.ini";
+if (-e $parameters{"config_prioritization"}) {
+    $config_filter_file=$parameters{"config_prioritization"};
+} elsif (-e "$basename/".$parameters{"config_prioritization"}) {
+    $config_filter_file="$basename/".$parameters{"config_prioritization"};
+} elsif (-e "$basename/config.prioritization.ini") {
+    $config_filter_file="$basename/config.prioritization.ini";
 } else {
 	print "No Filter Configuration file...\n";
 	pod2usage(1);

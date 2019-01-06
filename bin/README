@@ -41,7 +41,7 @@ TABIX 1.8 or higher
 
 # Prioritization configuration
 ################################
-# Use config.filter.ini to configure filter for prioritization
+# Use config.prioritization.ini to configure filter for prioritization
 
 
 # Download databases
@@ -362,7 +362,7 @@ Options:
     --config|config_file=<file>
       Configuration file for main parameters (default 'config.ini')
 
-    --config_filter|config_filter_file=<file>
+    --config_prioritization|--config_prioritization_file|--config_filter|config_filter_file=<file>
       Configuration file for filter/prioritization parameters (default
       'config.prioritization.ini' or 'config.filter.ini').
 

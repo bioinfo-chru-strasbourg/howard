@@ -97,7 +97,7 @@ Prints the manual page and exits.
 
 Configuration file for main parameters (default 'config.ini')
 
-=item B<--config_filter|config_filter_file=<file>>
+=item B<--config_prioritization|--config_prioritization_file|--config_filter|config_filter_file=<file>>
 
 Configuration file for filter/prioritization parameters (default 'config.prioritization.ini' or 'config.filter.ini').
 

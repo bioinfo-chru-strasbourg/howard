@@ -250,7 +250,7 @@ our %parameters = ( #
 	# Configuration
 	'config'		=>	'config.ini',			# Configuration file
 	'config_annotation'    	=>  	"config.annotation.ini",	# Configuration annotation file
-	'config_filter'    	=>  	"config.prioritization.ini",		# Configuration filter file
+	'config_prioritization' =>  	"config.prioritization.ini",		# Configuration filter file
 	# Input
 	'input'		=>	undef,		# Input VCF file
 	'filter'	=>	'ALL',	# Filter sources
@@ -271,7 +271,7 @@ our @options=(
 	# Configuration
 	'config|config_file=s',				# Configuration file
 	'config_annotation|config_annotation_file=s',	# Configuration annotation file
-	'config_filter|config_filter_file|config_prioritization|config_prioritization_file=s',		# Configuration filter file
+	'config_prioritization|config_prioritization_file|config_filter|config_filter_file=s',		# Configuration filter file
 	# Input
 	'input|input_file=s',	# Input file
 	'filter=s',		# Filter

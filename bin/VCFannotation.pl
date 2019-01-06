@@ -126,6 +126,10 @@ Folder with snpEff databases.
 
 java binary (needed if snpeff option on). default "java"
 
+=item B<--java_flags>
+
+java flags  (needed if snpeff option on, especially for configure proxy for databases donwload). default ""
+
 =back
 
 =head2 INPUT/OUPUT
@@ -276,6 +280,7 @@ $annovar_folder=".";
 $snpeff_jar="";
 $snpeff_databases="";
 $java=$parameters{"java"};
+$java_flags=$parameters{"java_flags"};
 
 $snpeff_threads=1;
 if ($parameters{"snpeff_threads"} > 0) {
@@ -572,6 +577,7 @@ if ($parameters{"show_annotations_full"}) {
 if ($parameters{"snpeff"} || $parameters{"snpeff_split"} || $parameters{"snpeff_hgvs"} || $parameters{"snpeff_gene_name"} || $parameters{"snpeff_annotation"} || $parameters{"snpeff_impact"}) {
 
 	# JAVA
+	#print $parameters{"java"}."\n";
 	if ($parameters{"java"} ne "" && -e $parameters{"java"}) {
 		#print "java1\n";
 		$java=$parameters{"java"};
@@ -722,6 +728,7 @@ if ($VERBOSE) {
 	print "#[INFO] snpEff JAR: $snpeff_jar\n";
 	print "#[INFO] snpEff Databases: $snpeff_databases\n";
 	print "#[INFO] java: $java\n";
+	print "#[INFO] java flags: $java_flags\n";
 	#exit 0;
 };#if
 
@@ -1190,7 +1197,7 @@ if ($parameters{"snpeff"} || $parameters{"snpeff_stats"}) {
 
 
 		## Command
-		my $cmd="$java -Xmx4g -jar $snpeff_jar $assembly $input_file -stats $input_file_snpeff_stats $snpeff_options -noLog 1>$output_file_snpeff 2>$output_file_snpeff_log";
+		my $cmd="$java $java_flags -Xmx4g -jar $snpeff_jar $assembly $input_file -stats $input_file_snpeff_stats $snpeff_options -noLog 1>$output_file_snpeff 2>$output_file_snpeff_log";
 		$output_verbose.="#    - cmd='$cmd'\n";
 		print $output_verbose if $VERBOSE;
 		
