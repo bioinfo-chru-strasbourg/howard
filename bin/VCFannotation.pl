@@ -10,8 +10,8 @@
 
 our %information = ( #
 	'script'	=>  	basename($0),			# Script
-	'release'	=>  	"0.9.8b",		# Release
-	'date'		=>  	"20181004",		# Release parameter
+	'release'	=>  	"0.9.9b",		# Release
+	'date'		=>  	"20190110",		# Release parameter
 	'author'	=>  	"Antony Le Béchec",	# Author
 	'copyright'	=>  	"IRC",			# Copyright
 	'licence'	=>  	"GNU-GPL",		# Licence
@@ -24,6 +24,7 @@ our %information = ( #
 # 20160520-0.9.4.3b: bug on VCF without variant
 # 20160520-0.9.7.1b: remove transcripts file for snpeff annotation
 # 20181004-0.9.8b: add snpeff additional options. add  spliceSiteSize option, default 3. Add snpeff_split options
+# 20190110-0.9.9b: add annovar_code_for_downdb parameter on annotation config file, generalise file parameter (no assembly by definition), bug fix
 
 
 ## Modules
@@ -867,9 +868,14 @@ while ((my $annotation_name, my $annotation_infos) = each(%annotation_hash)){
 		my $annotation_description=trim($config_annotation{$annotation_name}{"description"});
 
 		my $file=$config_annotation{$annotation_name}{"file"};
-        if ($file ne "") {
-            $file=$assembly."_".$file;
-        };#if
+		if ($file ne "") {
+		    $file=$assembly."_".$file;
+		};#if
+		my $annovar_code_for_downdb=$config_annotation{$annotation_name}{"annovar_code_for_downdb"};
+		if ($annovar_code_for_downdb eq "") {
+		    $annovar_code_for_downdb=$annovar_code;
+		};#if
+		my $online_file=$config_annotation{$annotation_name}{"online_file"};
 		my $output_file_extension=$config_annotation{$annotation_name}{"output_file_extension"};
 		my $additional_options=$config_annotation{$annotation_name}{"additional_options"};
 		my $colsWanted_options=$config_annotation{$annotation_name}{"colsWanted"};
@@ -901,8 +907,8 @@ while ((my $annotation_name, my $annotation_infos) = each(%annotation_hash)){
 			# try to download from ANNOVAR
 			if ($file eq "" || !-e "$annovar_databases/$file") {
 				#if ( -e "./ANNOVAR_download.sh") {
-					#my $cmd="./ANNOVAR_download.sh '$assembly' '$annovar_code' '$annovar_databases' '' '$annotate_variation' ''";
-					my $cmd="$annotate_variation -downdb -buildver $assembly $annovar_code $annovar_databases -webfrom annovar";# $ANNOVAR_SCRIPT -downdb -buildver $BUILD $DB $DB_FOLDER $WEBFROM
+					#my $cmd="./ANNOVAR_download.sh '$assembly' '$annovar_code_for_downdb' '$annovar_databases' '' '$annotate_variation' ''";
+					my $cmd="$annotate_variation -downdb -buildver $assembly $annovar_code_for_downdb $annovar_databases -webfrom annovar";# $ANNOVAR_SCRIPT -downdb -buildver $BUILD $DB $DB_FOLDER $WEBFROM
 					$output_verbose.="#    - cmdDL='$cmd'\n";
 					print "# Try to download database from ANNOVAR...\n" if $VERBOSE;
 					print "# cmd=$cmd...\n" if $VERBOSE;
@@ -912,8 +918,8 @@ while ((my $annotation_name, my $annotation_infos) = each(%annotation_hash)){
 			};#if
 			if ($file eq "" || !-e "$annovar_databases/$file") {
 				#if ( -e "./ANNOVAR_download.sh") {
-					#my $cmd="./ANNOVAR_download.sh '$assembly' '$annovar_code' '$annovar_databases' '' '$annotate_variation' ''";
-					my $cmd="$annotate_variation -downdb -buildver $assembly $annovar_code $annovar_databases -webfrom annovar -nowget";# $ANNOVAR_SCRIPT -downdb -buildver $BUILD $DB $DB_FOLDER $WEBFROM
+					#my $cmd="./ANNOVAR_download.sh '$assembly' '$annovar_code_for_downdb' '$annovar_databases' '' '$annotate_variation' ''";
+					my $cmd="$annotate_variation -downdb -buildver $assembly $annovar_code_for_downdb $annovar_databases -webfrom annovar -nowget";# $ANNOVAR_SCRIPT -downdb -buildver $BUILD $DB $DB_FOLDER $WEBFROM
 					$output_verbose.="#    - cmdDL='$cmd'\n";
 					print "# Try to download database from ANNOVAR without wget...\n" if $VERBOSE;
 					print "# cmd=$cmd...\n" if $VERBOSE;
@@ -924,12 +930,25 @@ while ((my $annotation_name, my $annotation_infos) = each(%annotation_hash)){
 			# try to download from UCSC
 			if ($file eq "" || !-e "$annovar_databases/$file") {
 				#if ( -e "./ANNOVAR_download.sh") {
-					my $cmd="$annotate_variation -downdb -buildver $assembly $annovar_code $annovar_databases ";# $ANNOVAR_SCRIPT -downdb -buildver $BUILD $DB $DB_FOLDER $WEBFROM
+					my $cmd="$annotate_variation -downdb -buildver $assembly $annovar_code_for_downdb $annovar_databases ";# $ANNOVAR_SCRIPT -downdb -buildver $BUILD $DB $DB_FOLDER $WEBFROM
 					$output_verbose.="#    - cmdDL='$cmd'\n";
 					print "# Try to download database from UCSC...\n" if $VERBOSE;
 					print "# cmd=$cmd...\n" if $VERBOSE;
 					print "# cmd=$cmd\n" if $DEBUG;
 					my $result = `$cmd 2>&1`; #
+				#};#if
+			};#if
+			# try to download from UCSC
+			if ($file eq "" || !-e "$annovar_databases/$file") {
+				#if ( -e "./ANNOVAR_download.sh") {
+					if ($online_file ne "") {
+						my $cmd="wget -O $annovar_databases/$file $online_file ";# $ANNOVAR_SCRIPT -downdb -buildver $BUILD $DB $DB_FOLDER $WEBFROM
+						$output_verbose.="#    - cmdDL='$cmd'\n";
+						print "# Try to download database from online file '$online_file'...\n" if $VERBOSE;
+						print "# cmd=$cmd...\n" if $VERBOSE;
+						print "# cmd=$cmd\n" if $DEBUG;
+						my $result = `$cmd 2>&1`; #
+					};#if
 				#};#if
 			};#if
 			if ($file eq "" || !-e "$annovar_databases/$file") {
