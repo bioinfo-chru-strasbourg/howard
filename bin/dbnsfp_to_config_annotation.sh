@@ -1,6 +1,6 @@
 #!/bin/bash
 #################################
-## HOWARD 
+## HOWARD
 #################################
 
 SCRIPT_NAME="HOWARD_DBNSFP"
@@ -42,7 +42,8 @@ function usage {
 	echo "# Following options are available:";
 	echo "# --input=<FILE>             Input DBNSPF file";
 	echo "# --output=<FILE>            Output annotation configuration file";
-	echo "# --input_release=<STRING>   Release of the input DBNSFP file";
+    echo "# --input_name=<STRING>      ANNOVAR code of the input DBNSFP file";
+    echo "# --input_release=<STRING>   Release of the input DBNSFP file";
 	echo "# --input_date=<STRING>      Date of the input DBNSFP file";
 	echo "# --env=<FILE>               Environment configuration for multithreading (BGZIP, TABIX, BCFTOOLS, VCFTOOLS)";
 	#echo "# --force                    Force annotation even if already exists in VCF header";
@@ -59,7 +60,7 @@ function usage {
 
 
 # EXAMPLE :
-# ./dbnsfp_to_config_annotation.sh --input=dbnsfp33a.txt --output=config.annotation.dbnsfp33a.ini
+# ./dbnsfp_to_config_annotation.sh --input=dbnsfp33a.txt --output=config.annotation.dbnsfp33a.ini --input_name=dbnsfp33a --input_release=3.3a --input_date=30122017
 
 # header
 header;
@@ -231,7 +232,7 @@ for ANNOTATION in $(head -n1 $INPUT | cut -f6- | tr "\t" "\n"); do
 	elif [[ $ANNOTATION =~ ^.*_pred$ ]]; then
 		annotation_type="prediction"
 	fi
-	
+
 	echo "ANNOTATION $ANNOTATION [$annotation_type]";
 	echo "
 
@@ -248,7 +249,5 @@ description=$ANNOTATION
 
 " >> $OUTPUT
 
-	
+
 done;
-
-
