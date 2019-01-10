@@ -5,8 +5,8 @@
 
 SCRIPT_NAME="HOWARD_DBNSFP"
 SCRIPT_DESCRIPTION="HOWARD DBNSFPx to config annotation ini file"
-SCRIPT_RELEASE="0.9"
-SCRIPT_DATE="07/11/2017"
+SCRIPT_RELEASE="0.9.1"
+SCRIPT_DATE="10/01/2019"
 SCRIPT_AUTHOR="Antony Le Bechec"
 SCRIPT_COPYRIGHT="IRC"
 SCRIPT_LICENCE="GNU-GPL"
@@ -14,6 +14,8 @@ SCRIPT_LICENCE="GNU-GPL"
 # Realse note
 RELEASE_NOTES=$RELEASE_NOTES"# 0.9b-07/11/2017:\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tScript creation\n";
+RELEASE_NOTES=$RELEASE_NOTES"# 0.9.1-10/01/2019:\n";
+RELEASE_NOTES=$RELEASE_NOTES"#\tHelp and code cleaning\n";
 
 
 # Script folder
@@ -38,9 +40,10 @@ function release () {
 function usage {
 	echo "# USAGE: $(basename $0) --input=<FILE>  [options...]";
 	echo "# Following options are available:";
-	echo "# --input=<FILE>             Input file in VCF format";
-	echo "# --output=<FILE>            Output annotated file in defined format (default VCF)";
-	echo "# --input_release=<STRING>   Release of the inpur DBNSFP file";
+	echo "# --input=<FILE>             Input DBNSPF file";
+	echo "# --output=<FILE>            Output annotation configuration file";
+	echo "# --input_release=<STRING>   Release of the input DBNSFP file";
+	echo "# --input_date=<STRING>      Date of the input DBNSFP file";
 	echo "# --env=<FILE>               Environment configuration for multithreading (BGZIP, TABIX, BCFTOOLS, VCFTOOLS)";
 	#echo "# --force                    Force annotation even if already exists in VCF header";
 	echo "# --tmp=<FOLDER>             Temporary folder (default /tmp)";
@@ -62,7 +65,7 @@ function usage {
 header;
 
 
-ARGS=$(getopt -o "i:o:e:a:f:s:r:xt:m:vdnh" --long "input:,output:,input_name:,input_release:,input_date:,env:,annotation:,calculation:,filter:,format:,snpeff_stats:,multithreading,threads:,split:,tmp:,verbose,debug,release,help" -- "$@" 2> /dev/null)
+ARGS=$(getopt -o "i:o:e:a:f:s:r:xt:m:vdnh" --long "input:,output:,input_name:,input_release:,input_date:,env:,tmp:,verbose,debug,release,help" -- "$@" 2> /dev/null)
 #ARGS=$(getopt --long "input:,output:,annotation:,multithreading,threads:,verbose,debug,release,help" -- "$@" 2> /dev/null)
 if [ $? -ne 0 ]; then
 	:
@@ -106,42 +109,6 @@ do
 			;;
 		--env)
 			ENV="$2";
-			shift 2
-			;;
-		--annotation)
-			ANNOTATION="$2"
-			shift 2
-			;;
-		--calculation)
-			CALCULATION="$2"
-			shift 2
-			;;
-		--config)
-			CONFIG="$2"
-			shift 2
-			;;
-		--filter)
-			FILTER="$2"
-			shift 2
-			;;
-		--format)
-			FORMAT="$2"
-			shift 2
-			;;
-		--snpeff_stats)
-			SNPEFF_STATS="$2"
-			shift 2
-			;;
-		--multithreading)
-			MULTITHREADING=1
-			shift 1
-			;;
-		--threads)
-			THREADS_INPUT="$2"
-			shift 2
-			;;
-		--split)
-			SPLIT_INPUT="$2"
 			shift 2
 			;;
 		--tmp)
@@ -247,8 +214,7 @@ fi
 echo "
 ##################
 # INPUT=$INPUT
-# OUTPUT=$OUTPUT
-# MULTITHREADING=$MULTITHREADING ($THREADS threads)"
+# OUTPUT=$OUTPUT"
 (($VERBOSE)) && echo "# LOG=$LOG";
 (($VERBOSE)) && echo "# ERR=$ERR";
 echo "##################"

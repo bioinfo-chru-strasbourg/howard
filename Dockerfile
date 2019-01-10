@@ -1,8 +1,8 @@
 
 ##############################################################
-# Dockerfile Version:   1.2
+# Dockerfile Version:   1.3
 # Software:             HOWARD
-# Software Version:     0.9.13.1b
+# Software Version:     0.9.14b
 # Software Website:     https://gitlab.bioinfo-diag.fr/Strasbourg/HOWARD
 # Licence:              GNU Affero General Public License (AGPL)
 # Description:          HOWARD
@@ -40,7 +40,7 @@
 FROM centos:7
 MAINTAINER Antony Le Bechec <antony.lebechec@gmail.com>
 LABEL Software="HOWARD" \
-	Version="0.9.13b" \
+	Version="0.9.14b" \
 	Website="https://gitlab.bioinfo-diag.fr/Strasbourg/HOWARD" \
 	Description="HOWARD" \
 	License="GNU Affero General Public License (AGPL)" \
@@ -141,7 +141,7 @@ ENV TOOL_VERSION_FOR_FILE=4_3t
 ENV TARBALL_LOCATION=https://sourceforge.net/projects/snpeff/files
 ENV TARBALL="snpEff_v"$TOOL_VERSION_FOR_FILE"_core.zip"
 ENV TARBALL_FOLDER=snpeff_folder
-ENV TOOL_DATABASE_FOLDER=$DATABASES/snpeff_sources/4.3t
+ENV TOOL_DATABASE_FOLDER=$DATABASES/snpeff/$TOOL_VERSION
 ENV DEST=$TOOLS/$TOOL_NAME/$TOOL_VERSION
 ENV PATH=$TOOLS/$TOOL_NAME/$TOOL_VERSION/bin:$PATH
 
@@ -168,7 +168,7 @@ ENV TOOL_VERSION=2018Apr16
 ENV TARBALL_LOCATION=http://www.openbioinformatics.org/annovar/download/0wgxR2rIVP/
 ENV TARBALL=annovar.latest.tar.gz
 ENV TARBALL_FOLDER=$TOOL_NAME
-ENV TOOL_DATABASE_FOLDER=$DATABASES/annovar_sources
+ENV TOOL_DATABASE_FOLDER=$DATABASES/annovar
 ENV DEST=$TOOLS/$TOOL_NAME/$TOOL_VERSION
 ENV PATH=$TOOLS/$TOOL_NAME/$TOOL_VERSION/bin:$PATH
 # http://www.openbioinformatics.org/annovar/download/0wgxR2rIVP/annovar.latest.tar.gz
@@ -195,7 +195,7 @@ RUN wget $TARBALL_LOCATION/$TARBALL ; \
 
 ENV DATABASES=/databases
 ENV TOOL_NAME=howard
-ENV TOOL_VERSION=0.9.13.1b
+ENV TOOL_VERSION=0.9.14b
 ENV TARBALL_LOCATION=https://gitlab.bioinfo-diag.fr/Strasbourg/HOWARD/repository/$TOOL_VERSION
 ENV TARBALL=archive.tar.gz
 ENV TARBALL_FOLDER=archive

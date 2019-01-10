@@ -1,12 +1,12 @@
 #!/bin/bash
 #################################
-## HOWARD 
+## HOWARD
 #################################
 
 SCRIPT_NAME="HOWARD"
 SCRIPT_DESCRIPTION="HOWARD Annotation, Calculation, Prioritization and Translation, based on ANNOVAR and snpEff, allowing multithreading"
-SCRIPT_RELEASE="0.9.13.1b"
-SCRIPT_DATE="17/12/2018"
+SCRIPT_RELEASE="0.9.14b"
+SCRIPT_DATE="10/01/2019"
 SCRIPT_AUTHOR="Antony Le Bechec"
 SCRIPT_COPYRIGHT="IRC"
 SCRIPT_LICENCE="GNU-GPL"
@@ -61,10 +61,12 @@ RELEASE_NOTES=$RELEASE_NOTES"#\tRemove no multithreading part code to multithrea
 RELEASE_NOTES=$RELEASE_NOTES"#\tRemove --multithreading parameter, only --thread parameter to deal with multithreading\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tReplace --filter and --format parameters by --prioritization and --translation parameters\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tAdd snpeff options to VCFannotation.pl\n";
-RELEASE_NOTES=$RELEASE_NOTES"# 0.9.13.1b-13/12/2018:\n";
+RELEASE_NOTES=$RELEASE_NOTES"# 0.9.14b-10/01/2019:\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tChange Number/Type/Description of new INFO/FORMAT header generated\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tRemove snpEff option --snpeff and --snpeff_hgvs. SnpEff is used through --annotation option\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tAdd '#' to the TAB delimiter format header\n";
+RELEASE_NOTES=$RELEASE_NOTES"#\tChange cofniguration files for annotation and prioritization\n";
+RELEASE_NOTES=$RELEASE_NOTES"#\tBug fixed: file identification in annotation configuration\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tBug fixed: calculation INFO fields header, snpeff parameters options on multithreading\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tBug fixed: snpeff parameters in command line\n";
 
@@ -119,15 +121,6 @@ function usage {
 	echo "# VCFprioritization.pl --help";
 	echo "# VCFtranslation.pl --help";
 	echo "";
-
-	#$SCRIPT_DIR/VCFannotation.pl --release
-	#$SCRIPT_DIR/VCFannotation.pl --help
-	#$SCRIPT_DIR/VCFcalculation.pl --release
-	#$SCRIPT_DIR/VCFcalculation.pl --help
-	#$SCRIPT_DIR/VCFprioritization.pl --release
-	#$SCRIPT_DIR/VCFprioritization.pl --help
-	#$SCRIPT_DIR/VCFtranslation.pl --release
-	#$SCRIPT_DIR/VCFtranslation.pl --help
 
 }
 
@@ -281,7 +274,7 @@ if [ -z $OUTPUT ] || [ "$OUTPUT" == "" ]; then #  || [ -z $OUTPUT ]; then
 	OUTPUT="output.vcf"; #/\.vcf$/\.output\.vcf/;
 	echo "#[INFO] Default OUTPUT '$OUTPUT' used."
 fi
-# mkdir OUPUT directory 
+# mkdir OUPUT directory
 mkdir -p $(dirname $OUTPUT)
 
 
@@ -426,7 +419,7 @@ if (($MULTITHREADING)); then
 		exit 1;
 	fi;
 	echo "#[INFO] BCFTOOLS=$BCFTOOLS";
-	
+
 	# SnpEff
 	echo "#[INFO] SNPEFF=$SNPEFF";
 
@@ -469,39 +462,39 @@ if ((1)); then
 		for INPUT_VCF in $(echo $INPUT | tr "," "\n"); do
 
 			((NB_VCF++))
-			echo -e "\n#[INFO] Validation of VCF #$NB_VCF '$INPUT_VCF'"; 
-						
+			echo -e "\n#[INFO] Validation of VCF #$NB_VCF '$INPUT_VCF'";
+
 			if [ -e $INPUT_VCF ]; then
-			
+
 				# CP file in TMP
 				INPUT_VCF_NUM=$TMP_FOLDER/INPUT_VCF_$NB_VCF.vcf
 				cp $INPUT_VCF $INPUT_VCF_NUM
-			
+
 				# Not empty
 				VCF_VALIDATION=$TMP_FOLDER/VCF_VALIDATION.$RANDOM
 				>$VCF_VALIDATION.tmp
 				>$VCF_VALIDATION
-				
+
 				# Simple check
 				VCFnotEmpty=$($BCFTOOLS view $INPUT_VCF_NUM -H 2>$VCF_VALIDATION | head -n 1 | wc -l)
-				
+
 				if (($(grep ^Failed $VCF_VALIDATION -c))); then
 					echo "#[WARNING] Input VCF '$INPUT_VCF' loading failed";
 				#elif !(($VCFnotEmpty)); then
 				#	echo "#[WARNING] Input VCF '$INPUT_VCF' is empty";
 				else
-				
+
 					if !(($VCFnotEmpty)); then
 						echo "#[WARNING] Input VCF '$INPUT_VCF' is empty";
 					fi;
-				
+
 					# CONTIG
 					if ((1)); then
 						existContig=$($BCFTOOLS view -h $INPUT_VCF_NUM 2>>$ERR | grep "##contig=" -c)
 						existVariants=$($BCFTOOLS view -H $INPUT_VCF_NUM 2>>$ERR | grep ^ -m1 -c)
-						
+
 						if (($existVariants)) && ! (($existContig)) ; then
-							echo "#[INFO] Input VCF '$INPUT_VCF': No contig in header. Try to add contig in header"; 
+							echo "#[INFO] Input VCF '$INPUT_VCF': No contig in header. Try to add contig in header";
 							INPUT_TMP_CONTIG=$INPUT_VCF_NUM.contig.vcf
 							INPUT_TMP_CONTIG_HEADER=$INPUT_VCF_NUM.contig.vcf.header
 							# Create new header
@@ -517,11 +510,11 @@ if ((1)); then
 							rm -f $INPUT_TMP_CONTIG $INPUT_TMP_CONTIG_HEADER
 						fi;
 					fi;
-				
-					# VCF validation	
-			
+
+					# VCF validation
+
 					VALIDATION_OK=1
-				
+
 					# Générate validation file
 					TMP_SORT_VALIDATION=$TMP_SORT$RANDOM
 					mkdir -p $TMP_SORT_VALIDATION
@@ -549,12 +542,12 @@ if ((1)); then
 						(($VERBOSE)) && echo "#[INFO] INPUT VCF validated";
 						VALIDATION_OK=1;
 					fi;
-			
-				
+
+
 					if (($VALIDATION_OK)); then
-				
+
 						# Sorting and normalize
-						echo "#[INFO] Input VCF '$INPUT_VCF' sorting and normalization"; 
+						echo "#[INFO] Input VCF '$INPUT_VCF' sorting and normalization";
 						TMP_SORT_PREPARATION=$TMP_SORT$RANDOM
 						mkdir -p $TMP_SORT_PREPARATION
 						$BCFTOOLS norm -m- --threads $THREADS $INPUT_VCF_NUM 2>>$ERR | $BCFTOOLS sort -T $TMP_SORT_PREPARATION 2>>$ERR | $BGZIP -@ $THREADS -l 0 > $INPUT_VCF_NUM.gz 2>>$ERR
@@ -567,39 +560,39 @@ if ((1)); then
 						else
 							echo "#[WARNING] Input VCF '$INPUT_VCF' loading failed (sort and normalization failed)";
 						fi;
-					
-				
+
+
 					else
 						echo "#[WARNING] Input VCF '$INPUT_VCF' loading failed (VCF not validated)";
-				
+
 					fi;
 				fi;
 			else
 				echo "#[WARNING] Input VCF '$INPUT_VCF' loading failed (file does not exist)";
 			fi;
 		done;
-		
+
 		# Check Empty list
 		if [ "$INPUT_LIST" == "" ]; then
 			echo "#[ERROR] No validated VCF found in the input list: '$INPUT'";
 			exit 0;
 		fi;
-		
+
 		# List of Vaidated VCF
 		echo -e "\n#[INFO] List of validated VCF: "$INPUT_ORIGINAL_LIST
-		
+
 		# Merging
 		INPUT_MULTI_VCF=$TMP_FOLDER/INPUT_MULTI_VCF.vcf
 		if [ $(echo $INPUT_LIST | wc -w) -gt 1 ]; then
 			echo "#[INFO] Merging list of VCF "
 			if ! $BCFTOOLS merge $INPUT_LIST --force-samples -o $INPUT_MULTI_VCF -m none 1>>$LOG 2>>$ERR; then
 				echo "#[ERROR] Merging failed ";
-				exit 0;	
+				exit 0;
 			fi;
 		elif (($(echo $INPUT_LIST | wc -w))); then
 			if ! $BCFTOOLS view $INPUT_LIST -o $INPUT_MULTI_VCF 1>>$LOG 2>>$ERR; then
 				echo "#[ERROR] Input loading failed ";
-				exit 0;	
+				exit 0;
 			fi;
 		else
 			echo "#[ERROR] Input VCF '$INPUT' does not contain any valide VCF files";
@@ -611,16 +604,16 @@ if ((1)); then
 	else
 		echo "#[ERROR] No VCF file '$INPUT'"
 		usage; exit;
-		
+
 	fi;
-	
+
 	# Check if file is empty
 	if !(($(grep ^ $INPUT -c))); then
 		echo "#[ERROR] Input VCF '$INPUT' is an empty file";
 		exit 0;
 	fi;
-	
-	
+
+
 	if ((1)); then
 
 		# HEADER
@@ -628,9 +621,9 @@ if ((1)); then
 
 		#echo -e "\n####################\n# INPUT PARAMETERS\n####################\n"
 
-		echo "#[INFO] INPUT: $INPUT_ORIGINAL"; 
-		echo "#[INFO] OUTPUT: $OUTPUT"; 
-		echo "#[INFO] MULTITHREADING: $MULTITHREADING ($THREADS threads)"; 
+		echo "#[INFO] INPUT: $INPUT_ORIGINAL";
+		echo "#[INFO] OUTPUT: $OUTPUT";
+		echo "#[INFO] MULTITHREADING: $MULTITHREADING ($THREADS threads)";
 		(($VERBOSE)) && echo "#[INFO] LOG: $LOG";
 		(($VERBOSE)) && echo "#[INFO] ERR: $ERR";
 
@@ -638,14 +631,14 @@ if ((1)); then
 		TMP_SORT_PREPARATION=$TMP_SORT$RANDOM
 		mkdir -p $TMP_SORT_PREPARATION
 		INPUT_TMP=$TMP_FOLDER/TMP_$(basename $INPUT | sed "s/.gz$//gi")
-	
+
 
 		# Normalization
 		if [ "$NORM" != "" ] && [ -e "$NORM" ]; then
 			INPUT_TMP_NORM=$INPUT.norm.vcf
 			$BCFTOOLS norm -m- -f $NORM $INPUT > $INPUT_TMP_NORM 2>>$ERR
 			cp $INPUT_TMP_NORM $INPUT
-			rm $INPUT_TMP_NORM 
+			rm $INPUT_TMP_NORM
 		fi;
 
 		#(($VERBOSE)) && echo "#[INFO] TMP_SORT_PREPARATION=$TMP_SORT_PREPARATION"
@@ -658,10 +651,10 @@ if ((1)); then
 
 	fi;
 
-	
-	
-	
-	
+
+
+
+
 	VCF_VALIDATION=$TMP_FOLDER/VCF_VALIDATION
 	>$VCF_VALIDATION.tmp
 	>$VCF_VALIDATION
@@ -742,22 +735,22 @@ if (($NB_VARIANT)); then
 	# ANNOTATE with BCFTOOLS
 	# example : ./HOWARD.sh --vcf=validation/simple.vcf --annotate="validation/test2.vcf.gz:INFO/Symbol|validation/test2.vcf.gz:INFO/RefSeq"
 	# ./HOWARD.sh --vcf=validation/simple.vcf --annotate="validation/test2.vcf.gz:INFO/Symbol;validation/test1.vcf.gz:INFO/RefSeq;validation/test2.vcf:INFO/Ensembl;validation/test2.vcf"  --annotation=Symbol,RefSeq --verbose --force --multithreading --debug
-	
+
 	if [ "$ANNOTATE" != "" ] && (($NB_VARIANT)); then
 		echo -e "\n####################\n# ANNOTATE with BCFTOOLS\n####################\n"
 		$BGZIP $INPUT -c > $INPUT.gz
 		$TABIX $INPUT.gz
 
-		# list of annotation "VCF/TAG"		
+		# list of annotation "VCF/TAG"
 		for ANNOT in $(echo $ANNOTATE | tr ";" " "); do
-		
+
 			#echo $ANNOT
 			ANNOT_FILE=$(echo $ANNOT | awk -F":" '{print $1}')
 			ANNOT_TAG=$(echo $ANNOT | awk -F":" '{print $2}')
 			#echo "-a $ANNOT_FILE -c $ANNOT_TAG"
-			
+
 			if [ -e "$ANNOT_FILE" ]; then
-			
+
 				# Prepare VCF annot
 				TMP_SORT_PREPARATION=$TMP_SORT$RANDOM
 				ANNOT_FILE_TMP=$TMP_FOLDER/ANNOT_FILE$RANDOM.vcf
@@ -766,38 +759,38 @@ if (($NB_VARIANT)); then
 				$BGZIP $ANNOT_FILE_TMP
 				$TABIX $ANNOT_FILE_TMP.gz
 				rm -rf $TMP_SORT_PREPARATION
-				
+
 				if [ "$ANNOT_TAG" == "" ]; then
 					#ANNOT_TAG="+INFO"
 					ANNOT_TAG="INFO"
 				fi;
-				
+
 				if [ -e "$ANNOT_FILE_TMP.gz" ] && [ -e "$ANNOT_FILE_TMP.gz.tbi" ]; then
-					
+
 					echo "#[INFO] BCFTOOLS Annotation with VCF file '$ANNOT_FILE' and TAG '$ANNOT_TAG'"
-					
+
 					INPUT_TMP=$TMP_FOLDER/INPUT_ANNOT_FILE$RANDOM.vcf.gz
 					$BGZIP -c $INPUT > $INPUT_TMP
 					$TABIX $INPUT_TMP
-			
+
 					INPUT_ANNOTATE_TMP=$TMP_FOLDER/INPUT_ANNOTATE_TMP$RANDOM.vcf
-			
+
 					$BCFTOOLS annotate -a $ANNOT_FILE_TMP.gz -c $ANNOT_TAG $INPUT_TMP > $INPUT_ANNOTATE_TMP #2>>$ERR
-				
+
 					if [ -e "$INPUT_ANNOTATE_TMP" ]; then
-						mv -f $INPUT_ANNOTATE_TMP $INPUT 
+						mv -f $INPUT_ANNOTATE_TMP $INPUT
 					fi;
-				
+
 				fi;
-			
+
 			else
 				echo "#[WARNING] Annotation file '$ANNOT' not found"
 			fi;
-			
+
 		done;
-		
+
 		#exit 0;
-		
+
 	fi;
 
 
@@ -827,7 +820,7 @@ if (($NB_VARIANT)); then
 				# ECHO / VERBOSE / DEBUG
 				echo "#[INFO] Multithreading ($THREADS threads)"
 
-			
+
 				# NEEDED
 				#if [ ! -z $BGZIP ] && [ -e $BGZIP ]; then
 				if [ ! -z $BGZIP ] && (( $(command -v $BGZIP | grep ^ -c) )); then
@@ -862,7 +855,7 @@ if (($NB_VARIANT)); then
 			echo "#[INFO] Annotations splitted into $NB_ANNOTATIONS analyses"
 			(($VERBOSE)) && echo "#[INFO] ANNOTATION=$ANNOTATION" 1>>$LOG 2>$ERR
 			(($VERBOSE)) && echo "#[INFO] ANNOTATIONS=$ANNOTATIONS" 1>>$LOG 2>$ERR
-			
+
 			#if [ $NB_VARIANT -gt $ANNOTATIONS_SPLIT ]; then
 				# SPLIT VCF on ANNOTATIONS_SPLIT variants
 				# HEAD
@@ -912,7 +905,7 @@ if (($NB_VARIANT)); then
 			#(($VERBOSE)) && echo "#[INFO] SAMPLES (#SAMPLES_COUNT)=$SAMPLES" 1>>$LOG 2>$ERR
 			(($VERBOSE)) && echo "#[INFO] #SAMPLES=$SAMPLES_COUNT" 1>>$LOG 2>$ERR
 			(($VERBOSE)) && echo "#[INFO] SAMPLES=$SAMPLES" 1>>$LOG 2>$ERR
-			
+
 			# IF SAMPLE(S)
 			if [ "$SAMPLES " != "" ]; then
 
@@ -930,7 +923,7 @@ if (($NB_VARIANT)); then
 
 
 				if ((1)); then
-				
+
 					# LOOP on split files
 					VCFGZ_SPLITTED_ANNOTATED_LIST=""
 					VCFGZ_SPLITTED_ANNOTATED_FILE=$TMP_FOLDER/splited.annotated.list
@@ -940,13 +933,13 @@ if (($NB_VARIANT)); then
 						VCFGZ_SPLITTED_ANN_LIST=""
 						VCFGZ_SPLITTED_ANN_FILE=$VCF_SPLITTED.ann.list
 						#(($VERBOSE)) && echo "#   VCFGZ_SPLITTED=$VCFGZ_SPLITTED" 1>>$LOG 2>$ERR
-						
+
 						for ANN in $(echo $ANNOTATIONS | tr "," " "); do
-						
+
 							VCFGZ_SPLITTED_ANN=$VCF_SPLITTED.$ANN.vcf.gz
-							
+
 							#(($VERBOSE)) && echo "#      VCFGZ_SPLITTED_ANN=$VCFGZ_SPLITTED_ANN" 1>>$LOG 2>$ERR
-							
+
 							echo "$VCFGZ_SPLITTED_ANN: $VCF_SPLITTED
 								$SCRIPT_DIR/VCFannotation.pl $PARAM_ANNOTATION --annotation=$ANN --output=\$@.tmp --input=$VCF_SPLITTED  1>>$LOG 2>>$ERR
 								# Prevent PL errorin number of fields in BCFTOOLS merge
@@ -955,15 +948,15 @@ if (($NB_VARIANT)); then
 								-rm -f \$@.tmp \$@.tmp2
 								$TABIX \$@ 1>>$LOG 2>>$ERR
 							" >>$MK;
-							
+
 							VCFGZ_SPLITTED_ANN_LIST=$VCFGZ_SPLITTED_ANN_LIST" $VCFGZ_SPLITTED_ANN"
 							#echo "$VCFGZ_SPLITTED_AN" >> $VCFGZ_SPLITTED_ANN_FILE
-							
+
 						done;
 						echo $VCFGZ_SPLITTED_ANN_LIST | tr " " "\n" > $VCFGZ_SPLITTED_ANN_FILE
-						
+
 						#(($VERBOSE)) && echo "#      VCFGZ_SPLITTED_ANN_LIST=$VCFGZ_SPLITTED_ANN_LIST" 1>>$LOG 2>$ERR
-						
+
 						# MERGE ANNOTATION
 						echo "$VCFGZ_SPLITTED_ANNOTATED: $VCFGZ_SPLITTED_ANN_LIST
 							$BCFTOOLS merge -l $VCFGZ_SPLITTED_ANN_FILE  --force-samples | cut -f1-$VCF_HEADER_CHROM_LENGTH > \$@.tmp;
@@ -971,11 +964,11 @@ if (($NB_VARIANT)); then
 							$TABIX -f \$@;
 							-rm -f $\$@.tmp;
 						" >>$MK;
-						
+
 						# OLD version of merge using annotate. Error when Number=R !!!
 						if ((0)); then
 						echo "$VCFGZ_SPLITTED_ANNOTATED: $VCFGZ_SPLITTED_ANN_LIST
-							
+
 							$BGZIP $VCF_SPLITTED -c > \$@.merge.vcf.gz ;
 							$TABIX -f \$@.merge.vcf.gz;
 							for A in $VCFGZ_SPLITTED_ANN_LIST; do \
@@ -990,20 +983,20 @@ if (($NB_VARIANT)); then
 							-rm -f $\$@.merge.vcf*;
 						" >>$MK;
 						fi;
-						
-						
+
+
 						VCFGZ_SPLITTED_ANNOTATED_LIST=$VCFGZ_SPLITTED_ANNOTATED_LIST" "$VCFGZ_SPLITTED_ANNOTATED
 						echo $VCFGZ_SPLITTED_ANNOTATED >> $VCFGZ_SPLITTED_ANNOTATED_FILE
-						
+
 					done;
-				
-					
+
+
 					# construct file list (when processed)
 					echo "$OUTPUT_ANNOTATION.list: $VCFGZ_SPLITTED_ANNOTATED_FILE $VCFGZ_SPLITTED_ANNOTATED_LIST
 						cp $VCFGZ_SPLITTED_ANNOTATED_FILE $OUTPUT_ANNOTATION.list
 					" >>$MK;
-					
-					# Construct Header	
+
+					# Construct Header
 					# if [[ $(echo $VCFGZ_SPLITTED_ANNOTATED_LIST | wc -w) -gt 1 ]]; then \
 					echo "$OUTPUT_ANNOTATION.header: $OUTPUT_ANNOTATION.list
 						if [[ \$\$(grep ^# -cv $OUTPUT_ANNOTATION.list) -gt 1 ]]; then \
@@ -1012,16 +1005,16 @@ if (($NB_VARIANT)); then
 							$BCFTOOLS view -h \$\$(cat $OUTPUT_ANNOTATION.list) --no-version > \$@ ; \
 						fi ;
 					" >>$MK;
-					
+
 					# Merge splitted files
 					echo "$OUTPUT_ANNOTATION: $OUTPUT_ANNOTATION.list $OUTPUT_ANNOTATION.header
 							mkdir -p $TMP_SORT\$@
 							$BCFTOOLS concat -f $OUTPUT_ANNOTATION.list -a --no-version | $BCFTOOLS reheader -h $OUTPUT_ANNOTATION.header --threads $THREADS | $BCFTOOLS sort -T $TMP_SORT\$@ > \$@ 2>>$ERR
-							
+
 						" >>$MK;
-					
+
 				fi;
-				
+
 				#cat $MK;
 				#exit 0;
 
@@ -1032,7 +1025,7 @@ if (($NB_VARIANT)); then
 				(($DEBUG)) && echo $MK && cat $MK;
 				(($DEBUG)) && tail -n 10 $OUTPUT_ANNOTATION.merge.vcf
 				(($DEBUG)) && tail -n 10 $OUTPUT_ANNOTATION
-				
+
 
 				# CLEANING
 				rm -f $MK
@@ -1072,7 +1065,7 @@ if (($NB_VARIANT)); then
 			if (($THREADS)); then
 
 				if ((1)); then
-				
+
 					# ECHO / VERBOSE / DEBUG
 					echo "#[INFO] Multithreading ($THREADS threads)"
 
@@ -1095,7 +1088,7 @@ if (($NB_VARIANT)); then
 						echo "#[ERROR] BCFTOOLS '$BCFTOOLS' needed. Configure ENV file";
 						exit 0;
 					fi;
-					
+
 				fi;
 
 				#echo $NB_VARIANT
@@ -1438,10 +1431,10 @@ if ((1)); then
 	###################
 	# VCF COMPRESSION #
 	###################
-	
-	
+
+
 	if [ $COMPRESS -gt -1 ]; then
-	
+
 		echo -e "\n####################\n# VCF COMPRESSION\n####################\n"
 		echo "#[INFO] Compression level='$COMPRESS'";
 

@@ -867,6 +867,9 @@ while ((my $annotation_name, my $annotation_infos) = each(%annotation_hash)){
 		my $annotation_description=trim($config_annotation{$annotation_name}{"description"});
 
 		my $file=$config_annotation{$annotation_name}{"file"};
+        if ($file ne "") {
+            $file=$assembly."_".$file;
+        };#if
 		my $output_file_extension=$config_annotation{$annotation_name}{"output_file_extension"};
 		my $additional_options=$config_annotation{$annotation_name}{"additional_options"};
 		my $colsWanted_options=$config_annotation{$annotation_name}{"colsWanted"};
