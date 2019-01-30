@@ -21,7 +21,7 @@ Thank U!
 
 =head1 COPYRIGHT
 
-IRC - GNU GPL License
+HUS - GNU AGPL V3
 
 =head1 AUTHOR
 

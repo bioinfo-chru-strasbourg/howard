@@ -2,7 +2,6 @@
 ############################
 # VCF prioritization       #
 # Author: Antony Le Béchec #
-# Copyright: IRC           #
 ############################
 
 ## Main Information
@@ -13,8 +12,8 @@ our %information = ( #
 	'release'	=>  	"0.9.5.1b",		# Release
 	'date'		=>  	"20180823",		# Release parameter
 	'author'	=>  	"Antony Le Béchec",	# Author
-	'copyright'	=>  	"IRC",			# Copyright
-	'licence'	=>  	"GNU-GPL",		# Licence
+	'copyright'	=>  	"HUS",			# Copyright
+	'licence'	=>  	"GNU AGPL V3",		# Licence
 );
 
 ## Release Notes
@@ -63,7 +62,7 @@ Thank U!
 
 =head1 COPYRIGHT
 
-IRC - GNU GPL License
+HUS - GNU AGPL V3
 
 =head1 AUTHOR
 

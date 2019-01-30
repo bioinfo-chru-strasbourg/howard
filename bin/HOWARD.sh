@@ -6,10 +6,10 @@
 SCRIPT_NAME="HOWARD"
 SCRIPT_DESCRIPTION="HOWARD Annotation, Calculation, Prioritization and Translation, based on ANNOVAR and snpEff, allowing multithreading"
 SCRIPT_RELEASE="0.9.14b"
-SCRIPT_DATE="10/01/2019"
+SCRIPT_DATE="21/01/2019"
 SCRIPT_AUTHOR="Antony Le Bechec"
-SCRIPT_COPYRIGHT="IRC"
-SCRIPT_LICENCE="GNU-GPL"
+SCRIPT_COPYRIGHT="HUS"
+SCRIPT_LICENCE="GNU AGPL V3"
 
 # Realse note
 RELEASE_NOTES=$RELEASE_NOTES"# 0.9b-07/10/2016:\n";
@@ -61,11 +61,14 @@ RELEASE_NOTES=$RELEASE_NOTES"#\tRemove no multithreading part code to multithrea
 RELEASE_NOTES=$RELEASE_NOTES"#\tRemove --multithreading parameter, only --thread parameter to deal with multithreading\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tReplace --filter and --format parameters by --prioritization and --translation parameters\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tAdd snpeff options to VCFannotation.pl\n";
-RELEASE_NOTES=$RELEASE_NOTES"# 0.9.14b-10/01/2019:\n";
+RELEASE_NOTES=$RELEASE_NOTES"# 0.9.14b-21/01/2019:\n";
+RELEASE_NOTES=$RELEASE_NOTES"#\tReorganization of folders (bin, config, docs, toolbox...).\n";
+RELEASE_NOTES=$RELEASE_NOTES"#\tImprove Translation (TSV or VCF, sort on fields, selection of fields, filtering on fields), especially memory efficiency\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tChange Number/Type/Description of new INFO/FORMAT header generated\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tRemove snpEff option --snpeff and --snpeff_hgvs. SnpEff is used through --annotation option\n";
-RELEASE_NOTES=$RELEASE_NOTES"#\tAdd '#' to the TAB delimiter format header\n";
-RELEASE_NOTES=$RELEASE_NOTES"#\tChange cofniguration files for annotation and prioritization\n";
+RELEASE_NOTES=$RELEASE_NOTES"#\tAdd '#' to the TAB/TSV delimiter format header\n";
+RELEASE_NOTES=$RELEASE_NOTES"#\tUpdate dbNSFP config annotation file script\n";
+RELEASE_NOTES=$RELEASE_NOTES"#\tChange default configuration files for annotation (add dbSNFP 3.5a, update mcap and regspintron) and prioritization\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tBug fixed: file identification in annotation configuration\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tBug fixed: calculation INFO fields header, snpeff parameters options on multithreading\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tBug fixed: snpeff parameters in command line\n";
@@ -73,6 +76,13 @@ RELEASE_NOTES=$RELEASE_NOTES"#\tBug fixed: snpeff parameters in command line\n";
 
 # Script folder
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+HOWARD_FOLDER_ROOT=$(dirname $SCRIPT_DIR)
+HOWARD_FOLDER_BIN=$SCRIPT_DIR
+HOWARD_FOLDER_CONFIG=$HOWARD_FOLDER_ROOT/config
+HOWARD_FOLDER_DOCS=$HOWARD_FOLDER_ROOT/docs
+HOWARD_FOLDER_TOOLBOX=$HOWARD_FOLDER_ROOT/toolbox
+HOWARD_FOLDER_VALIDATION=$HOWARD_FOLDER_ROOT/validation
+
 
 # Header
 function header () {
@@ -96,11 +106,29 @@ function usage {
 	echo "# --input|vcf=<FILES>                Input file in VCF format (*vcf or *vcf.gz in BGZIP compression format)";
 	echo "# --output=<FILE>                    Output annotated file in defined format (see --format option). Default 'output.vcf'";
 	echo "# --annotate=<LIST>                  Annotation with BCFTOOLS: List of VCF files with TAG to annotate.";
-	echo "#                                    Format 'VCF:TAG;VCF:TAG...' (e.g. 'annotate1.vcf:ID,QUAL,+TAG;annotate2.vcf:INFO/ANN'). Default TAG '+INFO'";
+	echo "#                                    Format 'VCF:TAG;VCF:TAG...' (e.g. 'annotate1.vcf:ID,QUAL,+TAG;annotate2.vcf:INFO/ANN').";
+	echo "#                                    Default TAG '+INFO'";
 	echo "# --annotation=<LIST>                Annotation: List of annotation (in the order to add into the input VCF)";
 	echo "# --calculation=<LIST>               Calculation: List of calculation";
 	echo "# --prioritization=<LIST OF FILE>    Priorization: List of prioritization config file";
-	echo "# --translation=<STRING>             Translation: Output format (default VCF)";
+	echo "# --translation=<STRING>             Translation: Output format, either TSV or VCF (default VCF)";
+	echo "# --fields=<STRING>                  List of annotations from INFOS VCF field to include in the output file.";
+	echo "#                                    Default 'INFOS' (as a uniq field in TSV format)";
+	echo "#                                    Use 'ALL' to insert all other annotations in the list";
+	echo "#                                    Annotations considered only if present in the file";
+	echo "#                                    Example: 'PZScore,PZFlag,PZComment,Symbol,hgvs,location,outcome,ALL'";
+	echo "# --sort=<STRING>                    Sort variants by a field and order (default '')"; 
+	echo "#                                    Format: 'field1:type:order,field2:type:order'";
+	echo "#                                       field considered only if present in the file";
+	echo "#                                       type 'n' for numeric, '?' for autodetect with VCF header. Default ''.";
+      	echo "#                                       order either 'DESC' or 'ASC'. Default 'ASC'";
+      	echo "#                                    Example: 'PZFlag::DESC,PZScore:n:DESC' (to sort and order by relevance)";
+      	echo "# --sort_by=<STRING>                 Sort variants by a field (if no 'sort' option). Default ''";
+	echo "#                                    Example: 'PZFlag,PZScore' (to sort by relevance)";
+	echo "# --order_by=<STRING>                Order variants by a field (if no 'sort' option). Default ''.";
+	echo "#                                    Example: 'DESC,DESC' (useful to sort by relevance)";
+	echo "# --bcftools_expression=<STRING>     bcftools include expression to filter variants (default '').";
+	echo "#                                    Example: \"PZFlag='PASS'\" (useful to hard filter), \"QUAL>90\", or \"PZFlag='PASS'&&QUAL>90\" to combine ";
 	echo "# --config=<FILE>                    Configuration file (ANNOVAR and SNPEff)";
 	#echo "# --multithreading                   Multithreading: perfom multithreading";
 	echo "# --threads=<INTEGER>                Threads: number of thread to use (default defined in environment variable THREADS, or 1)";
@@ -119,7 +147,7 @@ function usage {
 	echo "# VCFannotation.pl --help";
 	echo "# VCFcalculation.pl --help";
 	echo "# VCFprioritization.pl --help";
-	echo "# VCFtranslation.pl --help";
+	#echo "# VCFtranslation.pl --help";
 	echo "";
 
 }
@@ -131,7 +159,7 @@ function usage {
 header;
 
 
-ARGS=$(getopt -o "i:o:e:a:f:s:r:xt:m:vdnh" --long "input:,vcf:,output:,env:,annotation:,annotate:,calculation:,filter:,prioritization:,format:,translation:,snpeff_stats:,multithreading,threads:,split:,compress:,norm:,tmp:,verbose,debug,release,help" -- "$@" 2> /dev/null)
+ARGS=$(getopt -o "i:o:e:a:f:s:r:xt:m:vdnh" --long "input:,vcf:,output:,env:,annotation:,annotate:,calculation:,filter:,prioritization:,format:,translation:,fields:,sort:,sort_by:,order_by:,bcftools_expression:,snpeff_stats:,multithreading,threads:,split:,compress:,norm:,tmp:,verbose,debug,release,help" -- "$@" 2> /dev/null)
 #ARGS=$(getopt --long "input:,output:,annotation:,multithreading,threads:,verbose,debug,release,help" -- "$@" 2> /dev/null)
 if [ $? -ne 0 ]; then
 	:
@@ -208,6 +236,26 @@ do
 			NORM="$2"
 			shift 2
 			;;
+		--fields)
+			FIELDS="$2"
+			shift 2
+			;;
+		--sort)
+			SORT="$2"
+			shift 2
+			;;
+		--sort_by)
+			SORT_BY="$2"
+			shift 2
+			;;
+		--order_by)
+			ORDER_BY="$2"
+			shift 2
+			;;
+		--bcftools_expression)
+			BCFTOOLS_EXPRESSION="$2"
+			shift 2
+			;;
 		--tmp)
 			TMP_INPUT="$2"
 			shift 2
@@ -242,12 +290,15 @@ done
 if [ ! -z $ENV ] && [ -s $ENV ] && [ "$ENV" != "" ] && [ ! -d $ENV ]; then
 	ENV=$ENV;
 	echo "#[INFO] ENV '$ENV' found."
-elif [ -s $SCRIPT_DIR/$ENV ] && [ "$ENV" != "" ] && [ ! -d $ENV ]; then
-	ENV=$SCRIPT_DIR/$ENV;
+elif [ -s $HOWARD_FOLDER_CONFIG/$ENV ] && [ "$HOWARD_FOLDER_CONFIG/$ENV" != "" ] && [ ! -d $HOWARD_FOLDER_CONFIG/$ENV ]; then
+	ENV=$HOWARD_FOLDER_CONFIG/$ENV;
 	echo "#[INFO] ENV '$ENV' found."
+#elif [ -s $SCRIPT_DIR/$ENV ] && [ "$ENV" != "" ] && [ ! -d $ENV ]; then
+#	ENV=$SCRIPT_DIR/$ENV;
+#	echo "#[INFO] ENV '$ENV' found."
 elif [ "$ENV" == "" ] || [ ! -s $ENV ]; then
-	if [ -s $SCRIPT_DIR/"env.sh" ]; then
-		ENV=$SCRIPT_DIR/"env.sh";
+	if [ -s $HOWARD_FOLDER_CONFIG/"env.sh" ]; then
+		ENV=$HOWARD_FOLDER_CONFIG/"env.sh";
 		echo "#[INFO] Default ENV '$ENV' used."
 	else
 		ENV="";
@@ -801,19 +852,10 @@ if (($NB_VARIANT)); then
 		echo -e "\n####################\n# ANNOTATION\n####################\n"
 		#$SCRIPT_DIR/VCFannotation.pl --header
 
-		#echo $SCRIPT_DIR/VCFannotation.pl  $PARAM --input=$INPUT --show_annotations
-		#$SCRIPT_DIR/VCFannotation.pl  $PARAM --input=$INPUT --show_annotations; exit 0;
 		CMD_SHOW_ANNOTATION="$SCRIPT_DIR/VCFannotation.pl  $PARAM --input=$INPUT --show_annotations"
-		#echo $CMD_SHOW_ANNOTATION
-		#eval $CMD_SHOW_ANNOTATION
-		#$SCRIPT_DIR/VCFannotation.pl  $PARAM --input=$INPUT --show_annotations
-		#ANNOTATIONS=$($SCRIPT_DIR/VCFannotation.pl  $PARAM --input=$INPUT --show_annotations | grep "# ANNOTATIONS: " | cut -d: -f2);
 		ANNOTATIONS=$(eval $CMD_SHOW_ANNOTATION | grep "# ANNOTATIONS: " | cut -d: -f2);
 		NB_ANNOTATIONS=$(echo $ANNOTATIONS | wc -w);
-		#echo "NB_VARIANT=$NB_VARIANT ANNOTATIONS_SPLIT=$ANNOTATIONS_SPLIT ANNOTATIONS=$ANNOTATIONS"; exit 0;
 
-		#if (($MULTITHREADING)) && [ $NB_ANNOTATIONS -gt 1 ]; then
-		#if (($MULTITHREADING)) || [ $THREADS -gt 0 ]; then
 		if (($THREADS)); then
 
 			if ((1)); then
@@ -830,12 +872,6 @@ if (($NB_VARIANT)); then
 					echo "#[ERROR] BGZIP '$BGZIP' needed. Configure ENV file";
 					exit 0;
 				fi;
-				#if [ ! -z $VCFTOOLS ] && [ -e $VCFTOOLS ]; then
-				#	echo "#[INFO] VCFTOOLS=$VCFTOOLS";
-				#else
-				#	echo "#[ERROR] VCFTOOLS '$VCFTOOLS' needed. Configure ENV file";
-				#	exit 0;
-				#fi;
 				if [ ! -z $BCFTOOLS ] && [ -e $BCFTOOLS ]; then
 					echo "#[INFO] BCFTOOLS=$BCFTOOLS";
 				else
@@ -1332,8 +1368,6 @@ if (($NB_VARIANT)); then
 							$BCFTOOLS concat $VCFGZ_SPLITTED_PRIO_LIST -a --threads $THREADS --no-version >> \$@
 						" >>$MK_PRIORITIZATION;
 
-					#echo $MK_PRIORITIZATION
-					#cat $MK_PRIORITIZATION
 
 					if ! make -B -j $THREADS -f $MK_PRIORITIZATION 1>>$LOG 2>>$ERR; then echo "#[FAILED] PRIORITIZATION Multithreading FAILED!!! see $MK_PRIORITIZATION file"; exit 1; fi;
 
@@ -1345,7 +1379,6 @@ if (($NB_VARIANT)); then
 					# CLEANING
 					rm -f $MK_PRIORITIZATION
 
-					#echo " $SCRIPT_DIR/VCFprioritization.pl $PARAM --input=$OUTPUT_CALCULATION --output=$OUTPUT_PRIORITIZATION"
 				fi;
 
 			else
@@ -1354,17 +1387,10 @@ if (($NB_VARIANT)); then
 
 			fi;
 
-			#echo "DEBUG"
-			#exit 0;
 
 		fi;
 
 
-
-		# OLD
-		if ((0)); then
-			if ! $SCRIPT_DIR/VCFprioritization.pl $PARAM --input=$OUTPUT_CALCULATION --output=$OUTPUT_PRIORITIZATION 1>>$LOG 2>$ERR; then echo "#[FAILED] PRIORITIZATION FAILED!!! "; exit 1; fi;
-		fi;
 	else
 
 		cp $OUTPUT_CALCULATION $OUTPUT_PRIORITIZATION
@@ -1501,153 +1527,23 @@ if ((1)); then
 	# TRANSLATION
 	####################
 
+	if [ -z $FORMAT ] || [ "$FORMAT" != "" ]; then
+		if [ "$SORT" != "" ] || [ "$FIELDS" != "" ] || [ "$SORT_BY" != "" ] || [ "$ORDER_BY" != "" ] || [ "$BCFTOOLS_EXPRESSION" != "" ]; then
+			FORMAT="VCF"		
+		fi;
+	fi;
+
 	if [ ! -z $FORMAT ] && [ "$FORMAT" != "" ]; then
+	
 		echo -e "\n####################\n# TRANSLATION\n####################\n"
 		#$SCRIPT_DIR/VCFtranslation.pl --header
-		#echo "$SCRIPT_DIR/VCFtranslation.pl $PARAM --input=$OUTPUT_PRIORITIZATION --output=$OUTPUT"
 
 		$BCFTOOLS view $OUTPUT_PRIORITIZATION > $OUTPUT_PRIORITIZATION.uncompressed.vcf
 		rm $OUTPUT_PRIORITIZATION
 		OUTPUT_PRIORITIZATION=$OUTPUT_PRIORITIZATION.uncompressed.vcf
 
-		#echo $FIELDS
-		if (($THREADS)) && (($MULTITHREADING))  && [ $NB_VARIANT -gt $TRANSLATION_SPLIT ]; then
-		#if (($THREADS)) && (($MULTITHREADING)); then
-
-
-			# ECHO / VERBOSE / DEBUG
-				if ((1)); then
-				echo "#[INFO] Multithreading ($THREADS threads)"
-
-					# NEEDED
-					#if [ ! -z $BGZIP ] && [ -e $BZZIP ]; then
-					#	echo "#[INFO] BGZIP=$BGZIP";
-					#else
-					#	echo "#[ERROR] BGZIP '$BGZIP' needed. Configure ENV file";
-					#	exit 0;
-					#fi;
-					#if [ ! -z $VCFTOOLS ] && [ -e $VCFTOOLS ]; then
-					#	echo "#[INFO] VCFTOOLS=$VCFTOOLS";
-					#else
-					#	echo "#[ERROR] VCFTOOLS '$VCFTOOLS' needed. Configure ENV file";
-					#	exit 0;
-					#fi;
-					if [ ! -z $BCFTOOLS ] && [ -e $BCFTOOLS ]; then
-						echo "#[INFO] BCFTOOLS=$BCFTOOLS";
-					else
-						echo "#[ERROR] BCFTOOLS '$BCFTOOLS' needed. Configure ENV file";
-						exit 0;
-					fi;
-				fi;
-
-
-				#echo $NB_VARIANT
-				#echo $TRANSLATION_SPLIT
-				VCF_SPLITTED_TRANS_LIST=""
-				if [ $NB_VARIANT -gt $TRANSLATION_SPLIT ]; then
-					# SPLIT VCF on ANNOTATIONS_SPLIT variants
-					# HEAD
-					#grep "^#" $OUTPUT_PRIORITIZATION > $TMP_FOLDER/input_prioritization.header
-					$BCFTOOLS view -h $OUTPUT_PRIORITIZATION > $TMP_FOLDER/input_prioritization.header
-					# VARIANTS
-					#grep -v "^#" $OUTPUT_PRIORITIZATION > $TMP_FOLDER/input_prioritization.variants
-					$BCFTOOLS view -H $OUTPUT_PRIORITIZATION > $TMP_FOLDER/input_prioritization.variants
-					# SPLIT
-					#echo "SPLIT"
-					#grep -v "^#" $OUTPUT_PRIORITIZATION | split - -a $SPLIT_SUFFIT_LENGTH -l $TRANSLATION_SPLIT $TMP_FOLDER/input_prioritization.variants.splitted.
-					$BCFTOOLS view -H $OUTPUT_PRIORITIZATION | split - -a $SPLIT_SUFFIT_LENGTH -l $TRANSLATION_SPLIT $TMP_FOLDER/input_prioritization.variants.splitted.
-					#echo "SPLIT END"
-					for splited_variants in $TMP_FOLDER/input_prioritization.variants.splitted.*; do
-						cat $TMP_FOLDER/input_prioritization.header $splited_variants > $splited_variants.vcf
-						VCF_SPLITTED_TRANS_LIST=$VCF_SPLITTED_TRANS_LIST" $splited_variants.vcf"
-					done
-					#echo "SPLITTED: $VCF_SPLITTED_TRANS_LIST"
-					#cat $VCF_SPLITTED_TRANS_LIST
-					#exit 0;
-					echo "#[INFO] Input VCF splitted into "$(echo $VCF_SPLITTED_TRANS_LIST | wc -w)" files";
-					#echo $VCF_SPLITTED_TRANS_LIST
-
-				else
-					# cp $OUTPUT_PRIORITIZATION $TMP_FOLDER/input_prioritization.variants.splitted.vcf
-					$BCFTOOLS view $OUTPUT_PRIORITIZATION > $TMP_FOLDER/input_prioritization.variants.splitted.vcf
-					VCF_SPLITTED_PRIO_LIST=$TMP_FOLDER/input_prioritization.variants.splitted.vcf
-				fi;
-				#exit 0;
-
-				# PARAM ANNOTATION
-				PARAM_TRANSLATION=$(echo "$PARAM " | sed "s/--snpeff_stats=[^ |$]*//gi");
-
-				# FIND SAMPLE
-				#if [ $(grep "#CHROM" $INPUT | wc -w) -gt 9 ]; then
-				if [ $($BCFTOOLS view -h $INPUT | grep "#CHROM" | wc -w) -gt 9 ]; then
-				#if [ $($BCFTOOLS view -h $INPUT | grep "#CHROM" | wc -w) -gt 9 ]; then
-					SAMPLES=$($BCFTOOLS view -h $INPUT | grep "#CHROM" | cut -f10-$(grep "#CHROM" $INPUT | wc -w) --output-delimiter=,)
-					#SAMPLES=$($BCFTOOLS view -h $INPUT | grep "#CHROM" | cut -f10-$($BCFTOOLS view -h $INPUT | grep "#CHROM" | wc -w) --output-delimiter=,)
-				else
-					SAMPLES=""
-				fi;
-
-				SAMPLES_COUNT=$(echo $SAMPLES | tr "," " " | wc -w)
-				VCF_HEADER_CHROM_LENGTH=$(($SAMPLES_COUNT+9))
-				#(($VERBOSE)) && echo "#[INFO] SAMPLES (#SAMPLES_COUNT)=$SAMPLES" 1>>$LOG 2>$ERR
-				(($VERBOSE)) && echo "#[INFO] #SAMPLES=$SAMPLES_COUNT" 1>>$LOG 2>$ERR
-				(($VERBOSE)) && echo "#[INFO] SAMPLES=$SAMPLES" 1>>$LOG 2>$ERR
-
-
-				# IF SAMPLE(S)
-				if [ "$SAMPLES " != "" ]; then
-
-					#echo "#[INFO] TRANSLATION..."
-
-					# ALL
-					echo -e "all: $OUTPUT_TRANSLATION
-					" >>$MK_TRANSLATION;
-
-					for VCF_SPLITTED in $VCF_SPLITTED_TRANS_LIST; do
-						TAB_SPLITTED_TRANS=$VCF_SPLITTED.trans.tab
-						#echo "TAB_SPLITTED_TRANS=$TAB_SPLITTED_TRANS"
-						echo "$TAB_SPLITTED_TRANS: $VCF_SPLITTED
-						$SCRIPT_DIR/VCFtranslation.pl $PARAM_TRANSLATION --output=\$@ --input=$VCF_SPLITTED 1>>$LOG 2>>$ERR
-						" >>$MK_TRANSLATION;
-						TAB_SPLITTED_TRANS_LIST=$TAB_SPLITTED_TRANS_LIST" $TAB_SPLITTED_TRANS"
-					done;
-					#echo $TAB_SPLITTED_TRANS_LIST
-					#cat $MK_TRANSLATION;
-
-					echo "$OUTPUT_TRANSLATION: $TAB_SPLITTED_TRANS_LIST
-							#echo 'test' > \$@
-							head -n 1 \$< > \$@
-							awk 'FNR>1' \$^ >>  \$@
-							#join \$^ >>  \$@
-						" >>$MK_TRANSLATION;
-
-					if ! make -B -j $THREADS -f $MK_TRANSLATION all 1>>$LOG 2>>$ERR; then echo "#[FAILED] TRANSLATION Multithreading FAILED!!! see $MK_TRANSLATION file"; exit 1; fi;
-
-					# ECHO / VERBOSE / DEBUG
-					(($DEBUG)) && echo $MK_TRANSLATION && cat $MK_TRANSLATION;
-					#(($DEBUG)) && tail -n 10 $OUTPUT_TRANSLATION.merge.vcf
-					(($DEBUG)) && tail -n 10 $OUTPUT_TRANSLATION
-
-					#cat $MK_TRANSLATION;
-					#exit 0;
-
-					# CLEANING
-					rm -f $MK_TRANSLATION
-
-
-				fi;
-
-				#exit 0;
-
-				#mv $OUTPUT_TRANSLATION $OUTPUT
-
-		else
-
-			#echo "$SCRIPT_DIR/VCFtranslation.pl $PARAM --input=$OUTPUT_PRIORITIZATION --output=$OUTPUT_TRANSLATION"
-			if ! $SCRIPT_DIR/VCFtranslation.pl $PARAM --input=$OUTPUT_PRIORITIZATION --output=$OUTPUT_TRANSLATION 1>>$LOG 2>$ERR; then echo "#[FAILED] TRANSLATION FAILED!!! "; exit 1; fi;
-
-		fi;
-
+		$SCRIPT_DIR/VCFtranslation.sh $PARAM  --input=$OUTPUT_PRIORITIZATION --output=$OUTPUT_TRANSLATION --tmp=$TMP_FOLDER --env=$ENV
+	
 	else
 		cp $OUTPUT_PRIORITIZATION $OUTPUT_TRANSLATION
 	fi;
@@ -1665,18 +1561,15 @@ fi;
 if [ ! -e $OUTPUT ]; then
 	echo -e "\n#[ERROR] No output '$OUTPUT' file. Please see LOG '$LOG' and ERR '$ERR' files\n";
 fi;
-#(($VERBOSE)) && echo -e "\n####################\n# LOG '$LOG'\n####################\n" && cat $LOG;
-#(($VERBOSE)) && ! (($MULTITHREADING)) && echo -e "\n####################\n# LOG '$LOG'\n####################\n" && cat $LOG;
 (($DEBUG)) && echo -e "\n####################\n# LOG '$LOG'\n####################\n" && cat $LOG;
 (($DEBUG)) && echo -e "\n####################\n# ERR '$ERR' \n####################\n" && cat $ERR;
-#if [ "$(cat $ERR)" != "" ] && [ ! $DEBUG ]; then cat $ERR; fi;
 (($DEBUG)) && echo -e "\n####################\n# OUTOUT '$OUTPUT' \n####################\n" && tail -n 10 $OUTPUT
 
 echo "";
 
 
 # CLEANING
-#rm -rf $TMP_FOLDER
+rm -rf $TMP_FOLDER
 
 # KILL verbose
 if (($VERBOSE)); then

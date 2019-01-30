@@ -1,0 +1,2682 @@
+; Config file for annotations
+; See Annovar website for more information (http://www.openbioinformatics.org/annovar/)
+; Available databases from Annovar: ftp://hgdownload.cse.ucsc.edu/goldenPath/hg19/database
+;
+; NEEDED fields
+; annovar_code		 	Annovar code
+; annovar_annotation_type	Either "geneanno", "filter", "regionanno", "vcf", "generic"
+; release			release of the annotation (date, version...)
+; available			'true' or 'false'. annotation available/usable. Considered if annotation is 'ALL'
+; core				'true' or 'false'. annotation as the core annotation (minimum annotation). Considered if annotation is 'CORE' or 'ALL'
+
+; OPTIONS fields
+; annotation_type	classification of the annotations. Usually "annotation", "frequency" and "score".
+; output_file_extension	For specific file generation by ANNOVAR (ex: 'exonic_variant_function' for Ensembl outcome)
+; date			date of the release.
+; additional_options	options specific to annotation (ex: "--splicing_threshold 3" for "ensGene", "--hgvs" for refGene)
+; colsWanted		specify which columns are desired in the output for -regionanno
+; otherinfo		print out additional columns in database file (filter-based annotation). Use the index of each columns in the DB separated by comma
+; column_result		column of the wanted result in the annotation field. Default: 1
+; column_chr		column of the chromosome in the annotation field. Default: 7
+; description		Description of the annotation. DO NOT USE COMMA!!!
+
+
+; AUTO fields
+; file			"annovar_code.txt". Needed if different. WARNING: depend on the ASSEMBLY!!!
+; online_file		File to download, if problem. NOT AVAILABLE YET.
+
+
+; CORE annotation configuration
+
+
+[Ensembl]
+; NEEDED
+annovar_code=ensGene
+annovar_annotation_type=geneanno
+release=20170601
+available=true
+core=true
+; OPTIONS
+annotation_type=annotation
+date=20170601
+additional_options=
+column_result=
+column_chr=
+output_file_extension=
+description=Ensembl Gene ID
+; AUTO
+;file=
+;online_file=ftp://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/ensGene.txt.gz
+
+
+[Transcript_Ensembl]
+; NEEDED
+annovar_code=ensGene
+annovar_annotation_type=geneanno
+release=20170601
+available=true
+core=true
+; OPTIONS
+annotation_type=annotation
+date=20170601
+additional_options=--transcript_function
+column_result=
+column_chr=
+output_file_extension=
+description=Ensembl Transcript ID
+; AUTO
+;file=
+;online_file=ftp://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/ensGene.txt.gz
+
+[RefSeq]
+; NEEDED
+annovar_code=refGene
+annovar_annotation_type=geneanno
+release=20170601
+available=true
+core=true
+; OPTIONS
+annotation_type=annotation
+date=20170601
+additional_options=
+column_result=
+column_chr=
+output_file_extension=
+description=RefSeq Gene ID
+; AUTO
+;file=
+
+
+
+[Transcript]
+; NEEDED
+annovar_code=refGene
+annovar_annotation_type=geneanno
+release=20170601
+available=true
+core=true
+; OPTIONS
+annotation_type=annotation
+date=20170601
+additional_options=--transcript_function
+column_result=
+column_chr=
+output_file_extension=
+description=RefSeq Transcript ID
+; AUTO
+;file=
+
+
+
+[Symbol]
+; NEEDED
+annovar_code=refGene
+annovar_annotation_type=geneanno
+release=20170601
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20170601
+additional_options=
+column_result=
+column_chr=
+output_file_extension=
+description=Symbol of the gene from refSeq
+; AUTO
+;file=
+
+[symbol]
+; NEEDED
+annovar_code=refGene
+annovar_annotation_type=geneanno
+release=20170601
+available=true
+core=true
+; OPTIONS
+annotation_type=annotation
+date=20170601
+additional_options=
+column_result=
+column_chr=
+output_file_extension=
+description=Symbol of the gene from refSeq
+; AUTO
+;file=
+
+
+[knownGene]
+; NEEDED
+annovar_code=knownGene
+annovar_annotation_type=geneanno
+release=20170601
+available=true
+core=true
+; OPTIONS
+annotation_type=annotation
+date=20170601
+additional_options=
+column_result=
+column_chr=
+output_file_extension=
+description=Symbol of the gene from knownGene database
+; AUTO
+;file=
+
+
+[location]
+; NEEDED
+annovar_code=refGene
+annovar_annotation_type=geneanno
+release=20170601
+available=true
+core=true
+; OPTIONS
+annotation_type=annotation
+date=20170601
+additional_options=--splicing_threshold 3 --indel_splicing_threshold 3
+column_result=0
+column_chr=
+output_file_extension=
+description=Location of the gene - such as exonic and intronic - from RefSeq
+; AUTO
+;file=
+
+
+[locationEnsembl]
+; NEEDED
+annovar_code=ensGene
+annovar_annotation_type=geneanno
+release=20170601
+available=true
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20170601
+additional_options=--splicing_threshold 3
+column_result=0
+column_chr=
+output_file_extension=
+description=Location of the gene - such as exonic and intronic - from Ensembl
+; AUTO
+;file=
+
+
+[outcome]
+; NEEDED
+annovar_code=refGene
+annovar_annotation_type=geneanno
+release=20170601
+available=true
+core=true
+; OPTIONS
+annotation_type=annotation
+date=20170601
+additional_options=--splicing_threshold 3
+column_result=1
+column_chr=8
+output_file_extension=.exonic_variant_function
+description=Location of the gene - such as exonic and intronic - from RefSeq
+; AUTO
+;file=
+
+
+[outcomeEnsembl]
+; NEEDED
+annovar_code=ensGene
+annovar_annotation_type=geneanno
+release=20170601
+available=true
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20170601
+additional_options=--splicing_threshold 3
+column_result=1
+column_chr=8
+output_file_extension=.exonic_variant_function
+description=Location of the gene - such as exonic and intronic - from Ensembl
+; AUTO
+;file=
+
+
+[hgvs]
+; NEEDED
+annovar_code=refGene
+annovar_annotation_type=geneanno
+release=20170601
+available=true
+core=true
+; OPTIONS
+annotation_type=annotation
+date=20170601
+additional_options=--hgvs
+column_result=2
+column_chr=8
+output_file_extension=.exonic_variant_function
+description=HGVS nomenclature of the variant, from RefSeq
+; AUTO
+;file=
+
+
+[hgvsEnsembl]
+; NEEDED
+annovar_code=refGene
+annovar_annotation_type=geneanno
+release=20170601
+available=true
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20170601
+additional_options=--hgvs
+column_result=2
+column_chr=8
+output_file_extension=.exonic_variant_function
+description=HGVS nomenclature of the variant, from Ensembl
+; AUTO
+;file=
+
+
+[snpid138]
+; NEEDED
+annovar_code=snp138
+annovar_annotation_type=filter
+release=snp138
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20140910
+additional_options=
+column_result=
+column_chr=
+output_file_extension=
+description=dbSNP, Short Genetic Variations
+; AUTO
+;file=
+
+
+[snpid150]
+; NEEDED
+annovar_code=avsnp150
+annovar_annotation_type=filter
+release=150
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20170929
+additional_options=
+column_result=
+column_chr=
+output_file_extension=
+description=dbSNP150 with allelic splitting and left-normalization
+; AUTO
+;file=
+
+
+[snpid]
+; NEEDED
+annovar_code=avsnp150
+annovar_annotation_type=filter
+release=150
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20170929
+additional_options=
+column_result=
+column_chr=
+output_file_extension=
+description=dbSNP150 with allelic splitting and left-normalization
+; AUTO
+;file=
+
+
+
+[dbSNP138]
+; NEEDED
+annovar_code=snp138
+annovar_annotation_type=filter
+release=snp138
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20140910
+additional_options=
+column_result=
+column_chr=
+output_file_extension=
+description=dbSNP, Short Genetic Variations
+; AUTO
+;file=
+
+
+[dbSNP]
+; NEEDED
+annovar_code=avsnp150
+annovar_annotation_type=filter
+release=150
+available=true
+core=true
+; OPTIONS
+annotation_type=annotation
+date=20170929
+additional_options=
+column_result=
+column_chr=
+output_file_extension=
+description=dbSNP150 with allelic splitting and left-normalization
+; AUTO
+;file=
+
+[dbSNP150]
+; NEEDED
+annovar_code=avsnp150
+annovar_annotation_type=filter
+release=150
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20170929
+additional_options=
+column_result=
+column_chr=
+output_file_extension=
+description=dbSNP150 with allelic splitting and left-normalization
+; AUTO
+;file=
+
+
+
+[dbSNPNonFlagged]
+; NEEDED
+annovar_code=snp138NonFlagged
+annovar_annotation_type=filter
+release=snp138
+available=true
+core=true
+; OPTIONS
+annotation_type=annotation
+date=20140222
+additional_options=
+column_result=
+column_chr=
+output_file_extension=
+description=dbSNP with ANNOVAR index files, after removing those flagged SNPs (SNPs < 1% minor allele frequency (MAF) (or unknown), mapping only once to reference assembly, flagged in dbSnp as 'clinically associated')
+; AUTO
+;file=
+
+
+
+[LocalDB]
+; NEEDED
+annovar_code=merge.vcf
+annovar_annotation_type=vcf
+release=20140212
+available=false
+core=false
+; OPTIONS
+annotation_type=frequency
+date=20140212
+additional_options=
+column_result=
+column_chr=
+output_file_extension=
+description=Local database of some samples
+; AUTO
+;file=
+
+
+[COSMIC]
+; NEEDED
+annovar_code=cosmic70
+annovar_annotation_type=filter
+release=cosmic70
+available=true
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20140911
+additional_options=
+column_result=
+column_chr=
+output_file_extension=
+description=COSMIC database version 64 (previously observed cancer mutations, their identifiers in COSMIC, how many times are observed, and in which cancer tissues are observed). Including non-coding variants.
+; AUTO
+;file=
+
+
+[CIVIC_FULL]
+; NEEDED
+annovar_code=civic_full
+annovar_annotation_type=filter
+release=V20171020
+available=true
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20171020
+additional_options=
+column_result=
+column_chr=
+output_file_extension=
+description=CIViC is an open access, open source, community-driven web resource for Clinical Interpretation of Variants in Cancer.
+; AUTO
+;file=
+
+
+[CIVIC_SUMMARY]
+; NEEDED
+annovar_code=civic_summary
+annovar_annotation_type=filter
+release=V20171020
+available=true
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20171020
+additional_options=
+column_result=
+column_chr=
+output_file_extension=
+description=CIViC is an open access, open source, community-driven web resource for Clinical Interpretation of Variants in Cancer.
+; AUTO
+;file=
+
+
+
+[CLINVAR]
+; NEEDED
+annovar_code=clinvar_20180603
+annovar_annotation_type=filter
+release=20180603
+available=true
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20180603
+additional_options=
+column_result=
+column_chr=
+output_file_extension=
+description=CLINVAR database with Variant Clinical Significance (unknown, untested, non-pathogenic, probable-non-pathogenic, probable-pathogenic, pathogenic, drug-response, histocompatibility, other) and Variant disease name. Clinvar version 20180603 with separate columns (CLINSIG CLNDBN CLNACC CLNDSDB CLNDSDBID)
+; AUTO
+;file=
+
+
+
+[IARCTP53]
+; NEEDED
+annovar_code=IARCTP53
+annovar_annotation_type=regionanno
+release=20130909
+available=true
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20130909
+additional_options=
+column_result=
+column_chr=
+output_file_extension=
+description=The IARC TP53 Database compiles various types of data and information on human TP53 gene variations related to cancer. Data are compiled from the peer-reviewed literature and from generalist databases.
+; AUTO
+;file=
+
+
+;;;;;;;;;;;;
+; InterPro ;
+;;;;;;;;;;;;
+
+[InterPro]
+; NEEDED
+annovar_code=dbnsfp31a_interpro
+annovar_annotation_type=filter
+release=3.1a
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20151219
+additional_options=
+colsWanted=
+otherinfo=1
+column_result=1
+column_chr=
+output_file_extension=
+description=protein domain for variants.
+; AUTO
+;file=
+
+
+
+[popfreq]
+; NEEDED
+annovar_code=popfreq_max_20150413
+annovar_annotation_type=filter
+release=20150413
+available=true
+core=true
+; OPTIONS
+annotation_type=frequency
+date=20150413
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=A database containing the maximum allele frequency from these tables: 1000G ALL AFR AMR ASN EUR, ESP6500si ALL AA EA, and CG46
+; AUTO
+;file=
+
+
+
+[EXAC]
+; NEEDED
+annovar_code=exac03
+annovar_annotation_type=filter
+release=20151129
+available=true
+core=false
+; OPTIONS
+annotation_type=frequency
+date=20151129
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=ExAC 65000 exome allele frequency data for ALL, AFR (African), AMR (Admixed American), EAS (East Asian), FIN (Finnish), NFE (Non-finnish European), OTH (other), SAS (South Asian)). version 0.3. Left normalization done
+; AUTO
+;file=
+
+
+
+[1000genomesALL]
+; NEEDED
+annovar_code=1000g2015aug
+annovar_annotation_type=filter
+release=2015aug
+available=true
+core=false
+; OPTIONS
+annotation_type=frequency
+date=201508
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=alternative allele frequency data in 1000 Genomes Project for autosomes.
+; AUTO
+file=ALL.sites.2015_08.txt
+;online_file=http://www.openbioinformatics.org/annovar/download/hg19_1000g2015aug.zip
+
+
+
+[1000genomes2014ALL]
+; NEEDED
+annovar_code=1000g2014oct
+annovar_annotation_type=filter
+release=2014oct
+available=false
+core=false
+; OPTIONS
+annotation_type=frequency
+date=20141216
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=alternative allele frequency data in 1000 Genomes Project for autosomes (ALL, AFR (African), AMR (Admixed American), EAS (East Asian), EUR (European), SAS (South Asian)). Based on 201409 collection v5 (based on 201305 alignment) but including chrX and chrY data finally!
+; AUTO
+file=ALL.sites.2014_10.txt
+
+
+[1000genomesSAS]
+; NEEDED
+annovar_code=1000g2015aug_sas
+annovar_annotation_type=filter
+release=2015aug
+available=true
+core=false
+; OPTIONS
+annotation_type=frequency
+date=201508
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=alternative allele frequency data in 1000 Genomes Project for autosomes, SAS (South Asian).
+; AUTO
+file=SAS.sites.2015_08.txt
+annovar_code_for_downdb=1000g2015aug
+
+
+[1000genomesAMR]
+; NEEDED
+annovar_code=1000g2015aug_amr
+annovar_annotation_type=filter
+release=2015aug
+available=true
+core=false
+; OPTIONS
+annotation_type=frequency
+date=201508
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=alternative allele frequency data in 1000 Genomes Project for autosomes, AMR (Admixed American).
+; AUTO
+file=AMR.sites.2015_08.txt
+annovar_code_for_downdb=1000g2015aug
+
+
+[1000genomesEAS]
+; NEEDED
+annovar_code=1000g2015aug_eas
+annovar_annotation_type=filter
+release=2015aug
+available=true
+core=false
+; OPTIONS
+annotation_type=frequency
+date=201508
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=alternative allele frequency data in 1000 Genomes Project for autosomes, EAS (East Asian).
+; AUTO
+file=EAS.sites.2015_08.txt
+annovar_code_for_downdb=1000g2015aug
+
+
+[1000genomesAFR]
+; NEEDED
+annovar_code=1000g2015aug_afr
+annovar_annotation_type=filter
+release=2015aug
+available=true
+core=false
+; OPTIONS
+annotation_type=frequency
+date=201508
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=alternative allele frequency data in 1000 Genomes Project for autosomes, AFR (African).
+; AUTO
+file=AFR.sites.2015_08.txt
+annovar_code_for_downdb=1000g2015aug
+
+
+[1000genomesEUR]
+; NEEDED
+annovar_code=1000g2015aug_eur
+annovar_annotation_type=filter
+release=2015aug
+available=true
+core=false
+; OPTIONS
+annotation_type=frequency
+date=201508
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=alternative allele frequency data in 1000 Genomes Project for autosomes, EUR (European).
+; AUTO
+file=EUR.sites.2015_08.txt
+annovar_code_for_downdb=1000g2015aug
+
+
+[6500NHLBIALL]
+; NEEDED
+annovar_code=esp6500siv2_all
+annovar_annotation_type=filter
+release=esp6500siv2
+available=true
+core=false
+; OPTIONS
+annotation_type=frequency
+date=20141222
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=alternative allele frequency in All subjects in the NHLBI-ESP project with 6500 exomes, including the indel calls and the chrY calls.
+; AUTO
+;file=
+
+
+[6500NHLBIEA]
+; NEEDED
+annovar_code=esp6500siv2_ea
+annovar_annotation_type=filter
+release=esp6500siv2
+available=true
+core=false
+; OPTIONS
+annotation_type=frequency
+date=20141222
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=alternative allele frequency in European American subjects in the NHLBI-ESP project with 6500 exomes, including the indel calls and the chrY calls.
+; AUTO
+;file=
+
+
+[6500NHLBIAA]
+; NEEDED
+annovar_code=esp6500siv2_aa
+annovar_annotation_type=filter
+release=esp6500siv2
+available=true
+core=false
+; OPTIONS
+annotation_type=frequency
+date=20141222
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=alternative allele frequency in African American subjects in the NHLBI-ESP project with 6500 exomes, including the indel calls and the chrY calls. This is lifted over from hg19 by myself.
+; AUTO
+;file=
+
+
+[CG69]
+; NEEDED
+annovar_code=cg69
+annovar_annotation_type=filter
+release=cg69
+available=false
+core=false
+; OPTIONS
+annotation_type=frequency
+date=20120222
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=allele frequency in 69 human subjects sequenced by Complete Genomics.
+; AUTO
+;file=
+
+
+[NCI60]
+; NEEDED
+annovar_code=nci60
+annovar_annotation_type=filter
+release=nci60
+available=true
+core=false
+; OPTIONS
+annotation_type=frequency
+date=20130724
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=NCI-60 human tumor cell line panel exome sequencing allele frequency data. The Exomes of the NCI-60 Panel: A Genomic Resource for Cancer Biology and Systems Pharmacology
+; AUTO
+;file=
+
+
+
+[TFBS]
+; NEEDED
+annovar_code=tfbsConsSites
+annovar_annotation_type=regionanno
+release=v7
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20110503
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=transcription factor binding sites conserved in the human/mouse/rat alignment, based on transfac Matrix Database (v7.0)
+; AUTO
+;file=
+
+
+[CCDS]
+; NEEDED
+annovar_code=ccdsGene
+annovar_annotation_type=regionanno
+release=20150202
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20150202
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=CCDS Gene
+; AUTO
+;file=
+
+
+[CORIELL]
+; NEEDED
+annovar_code=coriellDelDup
+annovar_annotation_type=filter
+release=20150202
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20150202
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=Coriell Del Dup
+; AUTO
+;file=
+
+
+[CPG]
+; NEEDED
+annovar_code=cpgIslandExtUnmasked
+annovar_annotation_type=regionanno
+release=20090427
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20090427
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=CPG Island
+; AUTO
+;file=
+
+
+[cytoBand]
+; NEEDED
+annovar_code=cytoBand
+annovar_annotation_type=regionanno
+release=20090614
+available=true
+core=true
+; OPTIONS
+annotation_type=annotation
+date=20090614
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=cytogenetic band
+; AUTO
+;file=
+
+
+[DGV]
+; NEEDED
+annovar_code=dgvMerged
+annovar_annotation_type=regionanno
+release=20131013
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20131013
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=Database of Genomic Variants, which contains annotations for reported structural variations
+; AUTO
+;file=
+
+
+[wgRna]
+; NEEDED
+annovar_code=wgRna
+annovar_annotation_type=regionanno
+release=20101003
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20101003
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=snoRNA and miRNA annotations
+; AUTO
+;file=
+
+
+[GWASCatalog]
+; NEEDED
+annovar_code=gwasCatalog
+annovar_annotation_type=regionanno
+release=20150202
+available=true
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20150202
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=Published GWAS results on diverse human diseases.
+; AUTO
+;file=
+
+
+[iscaBenign]
+; NEEDED
+annovar_code=iscaBenign
+annovar_annotation_type=regionanno
+release=20140413
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20140413
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=International Standards for Cytogenomic
+; AUTO
+;file=
+
+
+[iscaCuratedBenign]
+; NEEDED
+annovar_code=iscaCuratedBenign
+annovar_annotation_type=regionanno
+release=20150118
+available=true
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20140413
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=International Standards for Cytogenomic
+; AUTO
+;file=
+
+
+[iscaCuratedPathogenic]
+; NEEDED
+annovar_code=iscaCuratedPathogenic
+annovar_annotation_type=regionanno
+release=20140413
+available=true
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20140413
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=International Standards for Cytogenomic
+; AUTO
+;file=
+
+
+[iscaLikelyBenign]
+; NEEDED
+annovar_code=iscaLikelyBenign
+annovar_annotation_type=regionanno
+release=20130922
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20130922
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=International Standards for Cytogenomic
+; AUTO
+;file=
+
+
+[iscaLikelyPathogenic]
+; NEEDED
+annovar_code=iscaLikelyPathogenic
+annovar_annotation_type=regionanno
+release=20130922
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20130922
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=International Standards for Cytogenomic
+; AUTO
+;file=
+
+
+[iscaPathGainCum]
+; NEEDED
+annovar_code=iscaPathGainCum
+annovar_annotation_type=regionanno
+release=20150118
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20130922
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=International Standards for Cytogenomic
+; AUTO
+;file=
+
+
+[iscaPathLossCum]
+; NEEDED
+annovar_code=iscaPathLossCum
+annovar_annotation_type=regionanno
+release=20150118
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20130922
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=International Standards for Cytogenomic
+; AUTO
+;file=
+
+
+[iscaPathogenic]
+; NEEDED
+annovar_code=iscaPathogenic
+annovar_annotation_type=regionanno
+release=20150118
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20130922
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=International Standards for Cytogenomic
+; AUTO
+;file=
+
+
+[iscaUncertain]
+; NEEDED
+annovar_code=iscaUncertain
+annovar_annotation_type=regionanno
+release=20150118
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20130922
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=International Standards for Cytogenomic
+; AUTO
+;file=
+
+
+[targetScanS]
+; NEEDED
+annovar_code=targetScanS
+annovar_annotation_type=regionanno
+release=20101226
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20101226
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=TargetScan generated miRNA target site predictions
+; AUTO
+;file=
+
+
+[oreganno]
+; NEEDED
+annovar_code=oreganno
+annovar_annotation_type=regionanno
+release=20110109
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20110109
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=Open REGulatory ANNOtation database
+; AUTO
+;file=
+
+
+[polyaDb]
+; NEEDED
+annovar_code=polyaDb
+annovar_annotation_type=regionanno
+release=20110124
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20110124
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=polyaDb - complex polyadenylation
+; AUTO
+;file=
+
+
+[switchDbTss]
+; NEEDED
+annovar_code=switchDbTss
+annovar_annotation_type=regionanno
+release=20110118
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20110118
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=DbTss - DataBase of Transcriptional Start Sites
+; AUTO
+;file=
+
+
+[evofold]
+; NEEDED
+annovar_code=evofold
+annovar_annotation_type=regionanno
+release=20101226
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20101226
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=EvoFold - conserved functional RNA, through RNA secondary structure predictions made with the EvoFold program
+; AUTO
+;file=
+
+
+[genomicSuperDups]
+; NEEDED
+annovar_code=genomicSuperDups
+annovar_annotation_type=regionanno
+release=20111225
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20111225
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=Segmental duplications in genome
+; AUTO
+;file=
+
+
+[sibGene]
+; NEEDED
+annovar_code=sibGene
+annovar_annotation_type=regionanno
+release=20111225
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20111225
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=sibGene
+; AUTO
+;file=
+
+
+[mgcGenes]
+; NEEDED
+annovar_code=mgcGenes
+annovar_annotation_type=regionanno
+release=20111218
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20111218
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=Mammalian Gene Collection Full ORF mRNAs
+; AUTO
+;file=
+
+
+[pseudoYale60]
+; NEEDED
+annovar_code=pseudoYale60
+annovar_annotation_type=regionanno
+release=20120122
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20120122
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=PseudoGene
+; AUTO
+;file=
+
+
+[vegaGene]
+; NEEDED
+annovar_code=vegaGene
+annovar_annotation_type=regionanno
+release=20101031
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20101031
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=vegaGene
+; AUTO
+;file=
+
+
+
+[pubsMarkerSnp]
+; NEEDED
+annovar_code=pubsMarkerSnp
+annovar_annotation_type=regionanno
+release=20120508
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20120508
+additional_options=
+colsWanted=4,5
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=pubsMarkerSnp
+; AUTO
+;file=
+
+
+
+[pubsMarkerGene]
+; NEEDED
+annovar_code=pubsMarkerGene
+annovar_annotation_type=regionanno
+release=20120508
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20120508
+additional_options=
+colsWanted=4,5
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=pubsMarkerSnp
+; AUTO
+;file=
+
+
+
+[tRNAs]
+; NEEDED
+annovar_code=tRNAs
+annovar_annotation_type=regionanno
+release=20120212
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20120212
+additional_options=
+colsWanted=4,5
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=tRNAs
+; AUTO
+;file=
+
+
+
+[INTERVAR]
+; NEEDED
+annovar_code=intervar_20180118
+annovar_annotation_type=filter
+release=20180118
+available=true
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20170202
+additional_options=
+colsWanted=
+otherinfo=1
+column_result=
+column_chr=
+output_file_extension=
+description=InterVar: clinical interpretation of missense variants
+; AUTO
+;file=
+
+
+
+
+[dbscsnv]
+; NEEDED
+annovar_code=dbscsnv11
+annovar_annotation_type=filter
+release=11
+available=true
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20151218
+additional_options=
+colsWanted=
+otherinfo=1
+column_result=
+column_chr=
+output_file_extension=
+description=dbscSNV version 1.1 for splice site prediction by AdaBoost and Random Forest
+; AUTO
+;file=
+
+
+
+[gnomAD]
+; NEEDED
+annovar_code=gnomad_exome
+annovar_annotation_type=filter
+release=20170311
+available=true
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20170311
+additional_options=
+colsWanted=
+otherinfo=1
+column_result=
+column_chr=
+output_file_extension=
+description=gnomAD genome collection
+; AUTO
+;file=
+
+
+
+[kaviar]
+; NEEDED
+annovar_code=kaviar_20150923
+annovar_annotation_type=filter
+release=20150923
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20150923
+additional_options=
+colsWanted=
+otherinfo=1
+column_result=
+column_chr=
+output_file_extension=
+description=170 million Known VARiants from 13K genomes and 64K exomes in 34 projects
+; AUTO
+;file=
+
+
+
+[hrcr1]
+; NEEDED
+annovar_code=hrcr1
+annovar_annotation_type=filter
+release=20151203
+available=false
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20151203
+additional_options=
+colsWanted=
+otherinfo=1
+column_result=
+column_chr=
+output_file_extension=
+description=40 million variants from 32K samples in haplotype reference consortium
+; AUTO
+;file=
+
+
+
+[gme]
+; NEEDED
+annovar_code=gme
+annovar_annotation_type=filter
+release=20161024
+available=true
+core=false
+; OPTIONS
+annotation_type=frequency
+date=20161024
+additional_options=
+colsWanted=
+otherinfo=1
+column_result=
+column_chr=
+output_file_extension=
+description=Great Middle East allele frequency including NWA (northwest Africa), NEA (northeast Africa), AP (Arabian peninsula), Israel, SD (Syrian desert), TP (Turkish peninsula) and CA (Central Asia)
+; AUTO
+;file=
+
+
+
+[mcap]
+; NEEDED
+annovar_code=mcap
+annovar_annotation_type=filter
+release=v1.3
+available=true
+core=false
+; OPTIONS
+annotation_type=score
+date=20181203
+additional_options=
+colsWanted=
+otherinfo=1
+column_result=
+column_chr=
+output_file_extension=
+description=M-CAP scores for non-synonymous variants
+; AUTO
+;file=
+
+
+
+[revel]
+; NEEDED
+annovar_code=revel
+annovar_annotation_type=filter
+release=20161205
+available=true
+core=false
+; OPTIONS
+annotation_type=score
+date=20161205
+additional_options=
+colsWanted=
+otherinfo=1
+column_result=
+column_chr=
+output_file_extension=
+description=REVEL scores for non-synonymous variants
+; AUTO
+;file=
+
+
+
+[icgc]
+; NEEDED
+annovar_code=icgc21
+annovar_annotation_type=filter
+release=21
+available=true
+core=false
+; OPTIONS
+annotation_type=score
+date=20160622
+additional_options=
+colsWanted=
+otherinfo=1
+column_result=
+column_chr=
+output_file_extension=
+description=International Cancer Genome Consortium version 21
+; AUTO
+;file=
+
+
+
+[mitimpact]
+; NEEDED
+annovar_code=mitimpact24
+annovar_annotation_type=filter
+release=24
+available=true
+core=false
+; OPTIONS
+annotation_type=score
+date=20160123
+additional_options=
+colsWanted=
+otherinfo=1
+column_result=
+column_chr=
+output_file_extension=
+description=pathogenicity predictions of human mitochondrial missense variants
+; AUTO
+;file=
+
+
+
+[regsnpintron]
+; NEEDED
+annovar_code=regsnpintron
+annovar_annotation_type=filter
+release=20180920
+available=true
+core=false
+; OPTIONS
+annotation_type=score
+date=20180920
+additional_options=
+colsWanted=
+otherinfo=1
+column_result=
+column_chr=
+output_file_extension=
+description=prioritize the disease-causing probability of intronic SNVs
+; AUTO
+;file=
+
+
+
+
+;;;;;;;;;;;;;;;
+; dbNSFP 3.3a ;
+;;;;;;;;;;;;;;;
+
+
+[SIFT_score]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=1
+description=SIFT score (SIFTori). Scores range from 0 to 1. The smaller the score the more likely the SNP has damaging effect.  Multiple scores separated by , corresponding to Ensembl_proteinid.
+
+
+
+[SIFT_converted_rankscore]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=2
+description=SIFTori scores were first converted to SIFTnew=1-SIFTori, then ranked among all SIFTnew scores in dbNSFP. The rankscore is the ratio of  the rank the SIFTnew score over the total number of SIFTnew scores in dbNSFP.  If there are multiple scores, only the most damaging (largest) rankscore is presented. The rankscores range from 0.00963 to 0.91219.
+
+
+
+[SIFT_pred]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=prediction
+date=August 6, 2017
+otherinfo=3
+description=If SIFTori is smaller than 0.05 (rankscore>0.395) the corresponding nsSNV is predicted as D(amaging) otherwise it is predicted as T(olerated).  Multiple predictions separated by 
+
+
+
+[Polyphen2_HDIV_score]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=4
+description=Polyphen2 score based on HumDiv, i.e. hdiv_prob. The score ranges from 0 to 1.  Multiple entries separated by , corresponding to Uniprot_acc_Polyphen2.
+
+
+
+[Polyphen2_HDIV_rankscore]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=5
+description=Polyphen2 HDIV scores were first ranked among all HDIV scores in dbNSFP. The rankscore is the ratio of the rank the score over the total number of  the scores in dbNSFP. If there are multiple scores, only the most damaging (largest)  rankscore is presented. The scores range from 0.02634 to 0.89865.
+
+
+
+[Polyphen2_HDIV_pred]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=prediction
+date=August 6, 2017
+otherinfo=6
+description=Polyphen2 prediction based on HumDiv, D (probably damaging, HDIV score in [0.957,1] or rankscore in [0.52844,0.89865]), P (possibly damaging,  HDIV score in [0.453,0.956] or rankscore in [0.34282,0.52689]) and B (benign,  HDIV score in [0,0.452] or rankscore in [0.02634,0.34268]). Score cutoff for binary  classification is 0.5 for HDIV score or 0.3528 for rankscore, i.e. the prediction is  neutral if the HDIV score is smaller than 0.5 (rankscore is smaller than 0.3528),  and deleterious if the HDIV score is larger than 0.5 (rankscore is larger than  0.3528). Multiple entries are separated by .
+
+
+
+[Polyphen2_HVAR_score]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=7
+description=Polyphen2 score based on HumVar, i.e. hvar_prob. The score ranges from 0 to 1.  Multiple entries separated by , corresponding to Uniprot_acc_Polyphen2.
+
+
+
+[Polyphen2_HVAR_rankscore]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=8
+description=Polyphen2 HVAR scores were first ranked among all HVAR scores in dbNSFP. The rankscore is the ratio of the rank the score over the total number of  the scores in dbNSFP. If there are multiple scores, only the most damaging (largest)  rankscore is presented. The scores range from 0.01257 to 0.97092.
+
+
+
+[Polyphen2_HVAR_pred]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=prediction
+date=August 6, 2017
+otherinfo=9
+description=Polyphen2 prediction based on HumVar, D (probably damaging, HVAR score in [0.909,1] or rankscore in [0.62797,0.97092]), P (possibly damaging,  HVAR in [0.447,0.908] or rankscore in [0.44195,0.62727]) and B (benign, HVAR  score in [0,0.446] or rankscore in [0.01257,0.44151]). Score cutoff for binary  classification is 0.5 for HVAR score or 0.45833 for rankscore, i.e. the prediction  is neutral if the HVAR score is smaller than 0.5 (rankscore is smaller than  0.45833), and deleterious if the HVAR score is larger than 0.5 (rankscore is larger  than 0.45833). Multiple entries are separated by .
+
+
+
+[LRT_score]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=10
+description=The original LRT two-sided p-value (LRTori), ranges from 0 to 1.
+
+
+
+[LRT_converted_rankscore]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=11
+description=LRTori scores were first converted as LRTnew=1-LRTori*0.5 if Omega<1, or LRTnew=LRTori*0.5 if Omega>=1. Then LRTnew scores were ranked among all  LRTnew scores in dbNSFP. The rankscore is the ratio of the rank over the total number  of the scores in dbNSFP. The scores range from 0.00162 to 0.84324.
+
+
+
+[LRT_pred]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=prediction
+date=August 6, 2017
+otherinfo=12
+description=LRT prediction, D(eleterious), N(eutral) or U(nknown), which is not solely determined by the score. 
+
+
+
+[MutationTaster_score]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=13
+description=MutationTaster p-value (MTori), ranges from 0 to 1.  Multiple scores are separated by . Information on corresponding transcript(s) can  be found by querying http://www.mutationtaster.org/ChrPos.html
+
+
+
+[MutationTaster_converted_rankscore]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=14
+description=The MTori scores were first converted: if the prediction is A or D MTnew=MTori if the prediction is N or P, MTnew=1-MTori. Then MTnew  scores were ranked among all MTnew scores in dbNSFP. If there are multiple scores of a  SNV, only the largest MTnew was used in ranking. The rankscore is the ratio of the rank of the score over the total number of MTnew scores in dbNSFP. The scores range from 0.08979 to 0.81033.
+
+
+
+[MutationTaster_pred]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=prediction
+date=August 6, 2017
+otherinfo=15
+description=MutationTaster prediction, A (disease_causing_automatic), D (disease_causing), N (polymorphism) or P (polymorphism_automatic). The  score cutoff between D and N is 0.5 for MTnew and 0.31713 for the rankscore.
+
+
+
+[MutationAssessor_score]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=16
+description=MutationAssessor functional impact combined score (MAori). The score ranges from -5.135 to 6.49 in dbNSFP. 
+
+
+
+[MutationAssessor_score_rankscore]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=17
+description=
+
+
+
+[MutationAssessor_pred]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=prediction
+date=August 6, 2017
+otherinfo=18
+description=MutationAssessors functional impact of a variant : predicted functional, i.e. high (H) or medium (M), or predicted non-functional, i.e. low (L) or neutral (N). The MAori score cutoffs between H and M,  M and L, and L and N, are 3.5, 1.935 and 0.8, respectively. The rankscore cutoffs  between H and M, M and L, and L and N, are 0.92922, 0.51944 and 0.19719,  respectively.
+
+
+
+[FATHMM_score]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=19
+description=FATHMM default score (weighted for human inherited-disease mutations with Disease Ontology) (FATHMMori). Scores range from -16.13 to 10.64. The smaller the score  the more likely the SNP has damaging effect. Multiple scores separated by , corresponding to Ensembl_proteinid.
+
+
+
+[FATHMM_converted_rankscore]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=20
+description=FATHMMori scores were first converted to FATHMMnew=1-(FATHMMori+16.13)/26.77, then ranked among all FATHMMnew scores in dbNSFP.  The rankscore is the ratio of the rank of the score over the total number of FATHMMnew  scores in dbNSFP. If there are multiple scores, only the most damaging (largest)  rankscore is presented. The scores range from 0 to 1.
+
+
+
+[FATHMM_pred]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=prediction
+date=August 6, 2017
+otherinfo=21
+description=If a FATHMMori score is <=-1.5 (or rankscore >=0.81332) the corresponding nsSNV is predicted as D(AMAGING) otherwise it is predicted as T(OLERATED). Multiple predictions separated by , corresponding to Ensembl_proteinid.
+
+
+
+[PROVEAN_score]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=22
+description=PROVEAN score (PROVEANori). Scores range from -14 to 14. The smaller the score the more likely the SNP has damaging effect.  Multiple scores separated by , corresponding to Ensembl_proteinid.
+
+
+
+[PROVEAN_converted_rankscore]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=23
+description=PROVEANori were first converted to PROVEANnew=1-(PROVEANori+14)/28, then ranked among all PROVEANnew scores in dbNSFP. The rankscore is the ratio of  the rank the PROVEANnew score over the total number of PROVEANnew scores in dbNSFP.  If there are multiple scores, only the most damaging (largest) rankscore is presented. The scores range from 0 to 1.
+
+
+
+[PROVEAN_pred]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=prediction
+date=August 6, 2017
+otherinfo=24
+description=If PROVEANori <= -2.5 (rankscore>=0.543) the corresponding nsSNV is predicted as D(amaging) otherwise it is predicted as N(eutral).  Multiple predictions separated by , corresponding to Ensembl_proteinid.
+
+
+
+[VEST3_score]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=25
+description=VEST 3.0 score. Score ranges from 0 to 1. The larger the score the more likely the mutation may cause functional change.  Multiple scores separated by , corresponding to Transcript_id_VEST3. Please note this score is free for non-commercial use. For more details please refer to  http://wiki.chasmsoftware.org/index.php/SoftwareLicense. Commercial users should contact  the Johns Hopkins Technology Transfer office.
+
+
+
+[VEST3_rankscore]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=26
+description=VEST3 scores were ranked among all VEST3 scores in dbNSFP. The rankscore is the ratio of the rank of the score over the total number of VEST3  scores in dbNSFP. In case there are multiple scores for the same variant, the largest  score (most damaging) is presented. The scores range from 0 to 1.  Please note VEST score is free for non-commercial use. For more details please refer to  http://wiki.chasmsoftware.org/index.php/SoftwareLicense. Commercial users should contact  the Johns Hopkins Technology Transfer office.
+
+
+
+[MetaSVM_score]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=27
+description=Our support vector machine (SVM) based ensemble prediction score, which incorporated 10 scores (SIFT, PolyPhen-2 HDIV, PolyPhen-2 HVAR, GERP++, MutationTaster,  Mutation Assessor, FATHMM, LRT, SiPhy, PhyloP) and the maximum frequency observed in  the 1000 genomes populations. Larger value means the SNV is more likely to be damaging.  Scores range from -2 to 3 in dbNSFP.
+
+
+
+[MetaSVM_rankscore]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=28
+description=MetaSVM scores were ranked among all MetaSVM scores in dbNSFP. The rankscore is the ratio of the rank of the score over the total number of MetaSVM  scores in dbNSFP. The scores range from 0 to 1.
+
+
+
+[MetaSVM_pred]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=prediction
+date=August 6, 2017
+otherinfo=29
+description=Prediction of our SVM based ensemble prediction score,T(olerated) or D(amaging). The score cutoff between D and T is 0. The rankscore cutoff between D and T is 0.82268.
+
+
+
+[MetaLR_score]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=30
+description=Our logistic regression (LR) based ensemble prediction score, which incorporated 10 scores (SIFT, PolyPhen-2 HDIV, PolyPhen-2 HVAR, GERP++, MutationTaster,  Mutation Assessor, FATHMM, LRT, SiPhy, PhyloP) and the maximum frequency observed in  the 1000 genomes populations. Larger value means the SNV is more likely to be damaging.  Scores range from 0 to 1.
+
+
+
+[MetaLR_rankscore]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=31
+description=MetaLR scores were ranked among all MetaLR scores in dbNSFP. The rankscore is the ratio of the rank of the score over the total number of MetaLR scores in dbNSFP.  The scores range from 0 to 1.
+
+
+
+[MetaLR_pred]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=prediction
+date=August 6, 2017
+otherinfo=32
+description=Prediction of our MetaLR based ensemble prediction score,T(olerated) or D(amaging). The score cutoff between D and T is 0.5. The rankscore cutoff between  D and T is 0.81113.
+
+
+
+[M-CAP_score]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=33
+description=M-CAP score (details in DOI: 10.1038/ng.3703). Scores range from 0 to 1. The larger the score the more likely the SNP has damaging effect. 
+
+
+
+[M-CAP_rankscore]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=34
+description=M-CAP scores were ranked among all M-CAP scores in dbNSFP. The rankscore is the ratio of the rank of the score over the total number of M-CAP scores in dbNSFP.
+
+
+
+[M-CAP_pred]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=prediction
+date=August 6, 2017
+otherinfo=35
+description=Prediction of M-CAP score based on the authors recommendation, T(olerated) or D(amaging). The score cutoff between D and T is 0.025.
+
+
+
+[REVEL_score]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=36
+description=REVEL is an ensemble score based on 13 individual scores for predicting the pathogenicity of missense variants. Scores range from 0 to 1. The larger the score the more  likely the SNP has damaging effect. REVEL scores are freely available for non-commercial use.   For other uses, please contact Weiva Sieh (weiva.sieh@mssm.edu)
+
+
+
+[REVEL_rankscore]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=37
+description=REVEL scores were ranked among all REVEL scores in dbNSFP. The rankscore is the ratio of the rank of the score over the total number of REVEL scores in dbNSFP.
+
+
+
+[MutPred_score]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=38
+description=General MutPred score. Scores range from 0 to 1. The larger the score the more likely the SNP has damaging effect.
+
+
+
+[MutPred_rankscore]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=39
+description=MutPred scores were ranked among all MutPred scores in dbNSFP. The rankscore is the ratio of the rank of the score over the total number of MutPred scores in dbNSFP.
+
+
+
+[CADD_raw]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=annotation
+date=August 6, 2017
+otherinfo=40
+description=CADD raw score for functional prediction of a SNP. Please refer to Kircher et al. (2014) Nature Genetics 46(3):310-5 for details. The larger the score the more likely the SNP has damaging effect. Scores range from -7.535037 to 35.788538 in dbNSFP.  Please note the following copyright statement for CADD:  CADD scores (http://cadd.gs.washington.edu/) are Copyright 2013 University of  Washington and Hudson-Alpha Institute for Biotechnology (all rights reserved) but are  freely available for all academic, non-commercial applications. For commercial  licensing information contact Jennifer McCullar (mccullaj@uw.edu).
+
+
+
+[CADD_raw_rankscore]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=41
+description=CADD raw scores were ranked among all CADD raw scores in dbNSFP. The rankscore is the ratio of the rank of the score over the total number of CADD  raw scores in dbNSFP. Please note the following copyright statement for CADD: CADD  scores (http://cadd.gs.washington.edu/) are Copyright 2013 University of Washington  and Hudson-Alpha Institute for Biotechnology (all rights reserved) but are freely  available for all academic, non-commercial applications. For commercial licensing  information contact Jennifer McCullar (mccullaj@uw.edu).
+
+
+
+[CADD_phred]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=42
+description=CADD phred-like score. This is phred-like rank score based on whole genome CADD raw scores. Please refer to Kircher et al. (2014) Nature Genetics 46(3):310-5  for details. The larger the score the more likely the SNP has damaging effect.  Please note the following copyright statement for CADD: CADD scores  (http://cadd.gs.washington.edu/) are Copyright 2013 University of Washington and  Hudson-Alpha Institute for Biotechnology (all rights reserved) but are freely  available for all academic, non-commercial applications. For commercial licensing  information contact Jennifer McCullar (mccullaj@uw.edu).
+
+
+
+[DANN_score]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=43
+description=DANN is a functional prediction score retrained based on the training data of CADD using deep neural network. Scores range from 0 to 1. A larger number indicate  a higher probability to be damaging. More information of this score can be found in doi: 10.1093/bioinformatics/btu703. For commercial application of DANN, please contact  Daniel Quang (dxquang@uci.edu)
+
+
+
+[DANN_rankscore]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=44
+description=DANN scores were ranked among all DANN scores in dbNSFP. The rankscore is the ratio of the rank of the score over the total number of DANN scores in dbNSFP.
+
+
+
+[fathmm-MKL_coding_score]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=45
+description=fathmm-MKL p-values. Scores range from 0 to 1. SNVs with scores >0.5 are predicted to be deleterious, and those <0.5 are predicted to be neutral or benign.  Scores close to 0 or 1 are with the highest-confidence. Coding scores are trained using 10 groups of features. More details of the score can be found in  doi: 10.1093/bioinformatics/btv009.
+
+
+
+[fathmm-MKL_coding_rankscore]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=46
+description=fathmm-MKL coding scores were ranked among all fathmm-MKL coding scores in dbNSFP. The rankscore is the ratio of the rank of the score over the total number  of fathmm-MKL coding scores in dbNSFP.
+
+
+
+[fathmm-MKL_coding_pred]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=prediction
+date=August 6, 2017
+otherinfo=47
+description=If a fathmm-MKL_coding_score is >0.5 (or rankscore >0.28317)  the corresponding nsSNV is predicted as D(AMAGING) otherwise it is predicted as N(EUTRAL).
+
+
+
+[Eigen_coding_or_noncoding]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=annotation
+date=August 6, 2017
+otherinfo=48
+description=Whether Eigen-raw and Eigen-phred scores are based on coding model or noncoding model.
+
+
+
+[Eigen-raw]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=annotation
+date=August 6, 2017
+otherinfo=49
+description=Eigen score for coding SNVs. A functional prediction score based on conservation, allele frequencies, and deleteriousness prediction using an unsupervised learning method  (doi: 10.1038/ng.3477). 
+
+
+
+[Eigen-PC-raw]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=annotation
+date=August 6, 2017
+otherinfo=50
+description=Eigen PC score for genome-wide SNVs. A functional prediction score based on conservation, allele frequencies, deleteriousness prediction (for missense SNVs) and epigenomic signals (for synonymous and non-coding SNVs) using an unsupervised learning  method (doi: 10.1038/ng.3477). 
+
+
+
+[GenoCanyon_score]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=51
+description=A functional prediction score based on conservation and biochemical annotations using an unsupervised statistical learning. (doi:10.1038/srep10576)
+
+
+
+[GenoCanyon_score_rankscore]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=52
+description=GenoCanyon_score scores were ranked among all integrated fitCons scores in dbNSFP. The rankscore is the ratio of the rank of the score over the total number  of GenoCanyon_score scores in dbNSFP.
+
+
+
+[integrated_fitCons_score]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=53
+description=fitCons score predicts the fraction of genomic positions belonging to a specific function class (defined by epigenomic fingerprint) that are under selective  pressure. Scores range from 0 to 1, with a larger score indicating a higher proportion of  nucleic sites of the functional class the genomic position belong to are under selective  pressure, therefore more likely to be functional important. Integrated (i6) scores are integrated across three cell types (GM12878, H1-hESC and HUVEC). More details can be found in doi:10.1038/ng.3196.
+
+
+
+[integrated_fitCons_score_rankscore]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=54
+description=
+
+
+
+[integrated_confidence_value]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=annotation
+date=August 6, 2017
+otherinfo=55
+description=0 - highly significant scores (approx. p<.003) 1 - significant scores (approx. p<.05) 2 - informative scores (approx. p<.25) 3 - other scores (approx. p>=.25).
+
+
+
+[GERP++_RS]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=annotation
+date=August 6, 2017
+otherinfo=56
+description=GERP++ RS score, the larger the score, the more conserved the site. Scores range from -12.3 to 6.17.
+
+
+
+[GERP++_RS_rankscore]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=57
+description=GERP++ RS scores were ranked among all GERP++ RS scores in dbNSFP. The rankscore is the ratio of the rank of the score over the total number of GERP++ RS  scores in dbNSFP.
+
+
+
+[phyloP100way_vertebrate]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=annotation
+date=August 6, 2017
+otherinfo=58
+description=phyloP (phylogenetic p-values) conservation score based on the multiple alignments of 100 vertebrate genomes (including human). The larger the score,  the more conserved the site. Scores range from -20.0 to 10.003 in dbNSFP.
+
+
+
+[phyloP100way_vertebrate_rankscore]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=59
+description=phyloP100way_vertebrate scores were ranked among all phyloP100way_vertebrate scores in dbNSFP. The rankscore is the ratio of the rank of the  score over the total number of phyloP100way_vertebrate scores in dbNSFP.
+
+
+
+[phyloP20way_mammalian]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=annotation
+date=August 6, 2017
+otherinfo=60
+description=phyloP (phylogenetic p-values) conservation score based on the multiple alignments of 20 mammalian genomes (including human). The larger the score,  the more conserved the site. Scores range from -13.282 to 1.199 in dbNSFP.
+
+
+
+[phyloP20way_mammalian_rankscore]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=61
+description=phyloP20way_mammalian scores were ranked among all phyloP20way_mammalian scores in dbNSFP. The rankscore is the ratio of the rank of the  score over the total number of phyloP20way_mammalian scores in dbNSFP.
+
+
+
+[phastCons100way_vertebrate]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=annotation
+date=August 6, 2017
+otherinfo=62
+description=phastCons conservation score based on the multiple alignments of 100 vertebrate genomes (including human). The larger the score, the more conserved  the site. Scores range from 0 to 1. 
+
+
+
+[phastCons100way_vertebrate_rankscore]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=63
+description=phastCons100way_vertebrate scores were ranked among all phastCons100way_vertebrate scores in dbNSFP. The rankscore is the ratio of the rank  of the score over the total number of phastCons100way_vertebrate scores in dbNSFP.
+
+
+
+[phastCons20way_mammalian]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=annotation
+date=August 6, 2017
+otherinfo=64
+description=phastCons conservation score based on the multiple alignments of 20 mammalian genomes (including human). The larger the score, the more conserved  the site. Scores range from 0 to 1. 
+
+
+
+[phastCons20way_mammalian_rankscore]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=65
+description=phastCons20way_mammalian scores were ranked among all phastCons20way_mammalian scores in dbNSFP. The rankscore is the ratio of the rank  of the score over the total number of phastCons20way_mammalian scores in dbNSFP.
+
+
+
+[SiPhy_29way_logOdds]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=annotation
+date=August 6, 2017
+otherinfo=66
+description=SiPhy score based on 29 mammals genomes. The larger the score, the more conserved the site. Scores range from 0 to 37.9718 in dbNSFP.
+
+
+
+[SiPhy_29way_logOdds_rankscore]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=score
+date=August 6, 2017
+otherinfo=67
+description=SiPhy_29way_logOdds scores were ranked among all SiPhy_29way_logOdds scores in dbNSFP. The rankscore is the ratio of the rank  of the score over the total number of SiPhy_29way_logOdds scores in dbNSFP.
+
+
+
+[Interpro_domain]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=annotation
+date=August 6, 2017
+otherinfo=68
+description=domain or conserved site on which the variant locates. Domain annotations come from Interpro database. The number in the brackets following a specific domain is the count of times Interpro assigns the variant position to   that domain, typically coming from different predicting databases. Multiple entries  separated by .
+
+
+
+[GTEx_V6p_gene]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=annotation
+date=August 6, 2017
+otherinfo=69
+description=target gene of the (significant) eQTL SNP
+
+
+
+[GTEx_V6p_tissue]
+annovar_code=dbnsfp35a
+annovar_annotation_type=filter
+release=3.5a
+available=true
+core=false
+annotation_type=annotation
+date=August 6, 2017
+otherinfo=70
+description=tissue type of the expression data with which the eQTL/gene pair is detected
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; additional databases ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+[database_CPSGEN]
+; NEEDED
+annovar_code=database_CPSGEN
+annovar_annotation_type=filter
+release=20140507
+available=true
+core=false
+; OPTIONS
+annotation_type=annotation
+date=20140507
+additional_options=
+colsWanted=
+otherinfo=
+column_result=
+column_chr=
+output_file_extension=
+description=Specific database for group CPSGEN.
+; AUTO
+;file=
+
+
+

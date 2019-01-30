@@ -4,10 +4,10 @@
 #    Variant Annotation & Ranking     #
 #    for Discovery                    #
 # Release : 0.9.14b                   #
-# Date : 20190110                     #
+# Date : 20190116                     #
 # Author: Antony Le Bechec            #
-# Copyright: IRC                      #
-# Licence: GNU-GPL                    #
+# Copyright: HUS                      #
+# Licence: GNU AGPL V3                #
 #######################################
 
 ###############
@@ -20,10 +20,11 @@ HOWARD est un outil d'annotation et de priorisation des variants. Il utilise les
 # REQUIREMENTS #
 ################
 
-CentOS6.7 or higher
+CentOS7 or higher
+YUM Packages "bc make wget perl-Switch perl-Digest-MD5 perl-Data-Dumper which zlib zlib2 bzip2 lzma xz"
 BCFTOOLS 1.8 or higher
-BGZIP 1.8 or higher
-TABIX 1.8 or higher
+HTSLIB (BGZIP & TABIX) 1.8 or higher
+JAVA 1.8 or higher
 
 ################
 # INSTALLATION #
@@ -39,7 +40,7 @@ TABIX 1.8 or higher
 
 # Prioritization configuration
 ################################
-# Use config.filter.ini to configure filter for prioritization
+# Use config.prioritization.ini to configure filter for prioritization
 
 # Download databases
 ######################
@@ -48,11 +49,12 @@ TABIX 1.8 or higher
 # ./HOWARD.sh --vcf=docs/example.vcf --output=docs/example.annotated.vcf --annotation=ALL,snpeff [--annovar_databases=</path/to/annovar_databases> --snpeff_databases=</path/to/snpeff_databases> --assembly=<assembly> --thread=1 --verbose]
 # Use this command multiple times for all needed assembly (such as hg19, hg38, mm9)
 # For home made databases, refer to config.annotation.ini file to construct and configure your database
+# Beware of proxy configuration!
 
 #######################################
-# HOWARD [0.9.14b-10/01/2019]
+# HOWARD [0.9.14b-21/01/2019]
 # HOWARD Annotation, Calculation, Prioritization and Translation, based on ANNOVAR and snpEff, allowing multithreading 
-# Antony Le Bechec @ IRC © GNU-GPL
+# Antony Le Bechec @ HUS © GNU AGPL V3
 #######################################
 # RELEASE NOTES:
 # 0.9b-07/10/2016:
@@ -104,30 +106,51 @@ TABIX 1.8 or higher
 #	Remove --multithreading parameter, only --thread parameter to deal with multithreading
 #	Replace --filter and --format parameters by --prioritization and --translation parameters
 #	Add snpeff options to VCFannotation.pl
-# 0.9.14b-10/01/2019:
+# 0.9.14b-21/01/2019:
+#	Reorganization of folders (bin, docs, toolbox...).
+#	Improve Translation (TSV or VCF, sort on fields, selection of fields, filtering on fields), especially memory efficiency
 #	Change Number/Type/Description of new INFO/FORMAT header generated
 #	Remove snpEff option --snpeff and --snpeff_hgvs. SnpEff is used through --annotation option
-#	Add '#' to the TAB delimiter format header
-#	Change cofniguration files for annotation and prioritization
+#	Add '#' to the TAB/TSV delimiter format header
+#	Update dbNSFP config annotation file script
+#	Change default configuration files for annotation (add dbSNFP 3.5a, update mcap and regspintron) and prioritization
 #	Bug fixed: file identification in annotation configuration
 #	Bug fixed: calculation INFO fields header, snpeff parameters options on multithreading
 #	Bug fixed: snpeff parameters in command line
 
 #######################################
-# HOWARD [0.9.14b-10/01/2019]
+# HOWARD [0.9.14b-21/01/2019]
 # HOWARD Annotation, Calculation, Prioritization and Translation, based on ANNOVAR and snpEff, allowing multithreading 
-# Antony Le Bechec @ IRC © GNU-GPL
+# Antony Le Bechec @ HUS © GNU AGPL V3
 #######################################
 # USAGE: HOWARD.sh --input=<FILE>  [options...]
 # Following options are available:
 # --input|vcf=<FILES>                Input file in VCF format (*vcf or *vcf.gz in BGZIP compression format)
 # --output=<FILE>                    Output annotated file in defined format (see --format option). Default 'output.vcf'
 # --annotate=<LIST>                  Annotation with BCFTOOLS: List of VCF files with TAG to annotate.
-#                                    Format 'VCF:TAG;VCF:TAG...' (e.g. 'annotate1.vcf:ID,QUAL,+TAG;annotate2.vcf:INFO/ANN'). Default TAG '+INFO'
+#                                    Format 'VCF:TAG;VCF:TAG...' (e.g. 'annotate1.vcf:ID,QUAL,+TAG;annotate2.vcf:INFO/ANN').
+#                                    Default TAG '+INFO'
 # --annotation=<LIST>                Annotation: List of annotation (in the order to add into the input VCF)
 # --calculation=<LIST>               Calculation: List of calculation
 # --prioritization=<LIST OF FILE>    Priorization: List of prioritization config file
-# --translation=<STRING>             Translation: Output format (default VCF)
+# --translation=<STRING>             Translation: Output format, either TSV or VCF (default VCF)
+# --fields=<STRING>                  List of annotations from INFOS VCF field to include in the output file.
+#                                    Default 'INFOS' (as a uniq field in TSV format)
+#                                    Use 'ALL' to insert all other annotations in the list
+#                                    Annotations considered only if present in the file
+#                                    Example: 'PZScore,PZFlag,PZComment,Symbol,hgvs,location,outcome,ALL'
+# --sort=<STRING>                    Sort variants by a field and order (default '')
+#                                    Format: 'field1:type:order,field2:type:order'
+#                                       field considered only if present in the file
+#                                       type 'n' for numeric, '?' for autodetect with VCF header. Default ''.
+#                                       order either 'DESC' or 'ASC'. Default 'ASC'
+#                                    Example: 'PZFlag::DESC,PZScore:n:DESC' (to sort and order by relevance)
+# --sort_by=<STRING>                 Sort variants by a field (if no 'sort' option). Default ''
+#                                    Example: 'PZFlag,PZScore' (to sort by relevance)
+# --order_by=<STRING>                Order variants by a field (if no 'sort' option). Default ''.
+#                                    Example: 'DESC,DESC' (useful to sort by relevance)
+# --bcftools_expression=<STRING>     bcftools include expression to filter variants (default '').
+#                                    Example: "PZFlag='PASS'" (useful to hard filter), "QUAL>90", or "PZFlag='PASS'&&QUAL>90" to combine 
 # --config=<FILE>                    Configuration file (ANNOVAR and SNPEff)
 # --threads=<INTEGER>                Threads: number of thread to use (default defined in environment variable THREADS, or 1)
 # --env=<FILE>                       Environment configuration for multithreading (BGZIP, TABIX, BCFTOOLS)
@@ -145,15 +168,14 @@ TABIX 1.8 or higher
 # VCFannotation.pl --help
 # VCFcalculation.pl --help
 # VCFprioritization.pl --help
-# VCFtranslation.pl --help
 
 ## Script Information
 # script: VCFannotation.pl
-# licence: GNU-GPL
-# date: 20181004
-# copyright: IRC
+# licence: GNU AGPL V3
+# date: 20190110
+# copyright: HUS
 # author: Antony Le Béchec
-# release: 0.9.8b
+# release: 0.9.9b
 Usage:
     $ARGV[0] [options] --input=<VCF> --output=<VCF> [...]
 
@@ -249,9 +271,9 @@ Options:
 
 ## Script Information
 # script: VCFcalculation.pl
-# licence: GNU-GPL
+# licence: GNU AGPL V3
 # date: 20181217
-# copyright: IRC
+# copyright: HUS
 # author: Antony Le Béchec
 # release: 0.9.2.3b
 Usage:
@@ -344,9 +366,9 @@ Options:
 
 ## Script Information
 # script: VCFprioritization.pl
-# licence: GNU-GPL
+# licence: GNU AGPL V3
 # date: 20180823
-# copyright: IRC
+# copyright: HUS
 # author: Antony Le Béchec
 # release: 0.9.5.1b
 Usage:
@@ -396,9 +418,9 @@ Options:
 
 ## Script Information
 # script: VCFtranslation.pl
-# licence: GNU-GPL
+# licence: GNU AGPL V3
 # date: 20181217
-# copyright: IRC
+# copyright: HUS
 # author: Antony Le Béchec
 # release: 0.9.2.2b
 Usage:
@@ -459,4 +481,48 @@ Options:
       with the associated values. Available only for 'tab' format
 
       Example: 'run:runA,sample:sample1'
+
+#######################################
+# HOWARD [0.9b-21/01/2019]
+# HOWARD Translation with awk 
+# Antony Le Bechec @ HUS © GNU AGPL V3
+#######################################
+# RELEASE NOTES:
+# 0.9b-21/01/2019:
+#	Script creation
+
+#######################################
+# HOWARD [0.9b-21/01/2019]
+# HOWARD Translation with awk 
+# Antony Le Bechec @ HUS © GNU AGPL V3
+#######################################
+# USAGE: VCFtranslation.sh --input=<FILE>  [options...]
+# Following options are available:
+# --input|vcf=<FILES>                Input file in VCF format (*vcf or *vcf.gz in BGZIP compression format)
+# --output=<FILE>                    Output annotated file in defined format (see --format option). Default '<input>.translated.<format>'
+# --translation=<STRING>             Translation: Output format, either TSV or VCF (default VCF)
+# --fields=<STRING>                  List of annotations from INFOS VCF field to include in the output file.
+#                                    Default 'INFOS' (as a uniq field in TSV format)
+#                                    Use 'ALL' to insert all other annotations in the list
+#                                    Annotations considered only if present in the file
+#                                    Example: 'PZScore,PZFlag,PZComment,Symbol,hgvs,location,outcome,ALL'
+# --sort=<STRING>                    Sort variants by a field and order (default '')
+#                                    Format: 'field1:type:order,field2:type:order'
+#                                       field considered only if present in the file
+#                                       type 'n' for numeric, '?' for autodetect with VCF header. Default ''.
+#                                       order either 'DESC' or 'ASC'. Default 'ASC'
+#                                    Example: 'PZFlag::DESC,PZScore:n:DESC' (to sort and order by relevance)
+# --sort_by=<STRING>                 Sort variants by a field (if no 'sort' option). Default ''
+#                                    Example: 'PZFlag,PZScore' (to sort by relevance)
+# --order_by=<STRING>                Order variants by a field (if no 'sort' option). Default ''.
+#                                    Example: 'DESC,DESC' (useful to sort by relevance)
+# --bcftools_expression=<STRING>     bcftools include expression to filter variants (default '').
+#                                    Example: "PZFlag='PASS'" (useful to hard filter), "QUAL>90", or "PZFlag='PASS'&&QUAL>90" to combine 
+# --env=<FILE>                       Environment configuration for multithreading (BGZIP, TABIX, BCFTOOLS)
+# --force                            Force annotation even if already exists in VCF header
+# --tmp=<FOLDER>                     Temporary folder (default /tmp)
+# --verbose                          VERBOSE option
+# --debug                            DEBUG option
+# --release                          RELEASE option
+# --help                             HELP option
 

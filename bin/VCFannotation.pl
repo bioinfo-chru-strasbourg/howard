@@ -2,7 +2,6 @@
 #################################
 # VCF Annotation using ANNOVAR  #
 # Author: Antony Le Béchec      #
-# Copyright: IRC                #
 #################################
 
 ## Main Information
@@ -13,8 +12,8 @@ our %information = ( #
 	'release'	=>  	"0.9.9b",		# Release
 	'date'		=>  	"20190110",		# Release parameter
 	'author'	=>  	"Antony Le Béchec",	# Author
-	'copyright'	=>  	"IRC",			# Copyright
-	'licence'	=>  	"GNU-GPL",		# Licence
+	'copyright'	=>  	"HUS",			# Copyright
+	'licence'	=>  	"GNU AGPL V3",		# Licence
 );
 
 ## Release Notes
@@ -68,7 +67,7 @@ Thank U!
 
 =head1 COPYRIGHT
 
-IRC - GNU GPL License
+HUS - GNU AGPL V3
 
 =head1 AUTHOR
 
@@ -259,131 +258,24 @@ my $DEBUG=1 if $parameters{"debug"};
 my $VERBOSE=1 if $parameters{"verbose"};
 
 
-## Configuration files
-
-# Config file
-my $config_file;
-if (-e $parameters{"config"}) {
-	$config_file=$parameters{"config"};
-} elsif (-e "$basename/".$parameters{"config"}) {
-	$config_file="$basename/".$parameters{"config"};
-#} elsif (-e "$basename/config.ini") {
-#	$config_file="$basename/config.ini";
-} else {
-	print "# No Configuration file...\n";
-	#pod2usage(1);
-};#if
-
-# Default config
-$assembly="hg19";
-$annovar_databases="annovar_sources";
-$annovar_folder=".";
-$snpeff_jar="";
-$snpeff_databases="";
-$java=$parameters{"java"};
-$java_flags=$parameters{"java_flags"};
-
-$snpeff_threads=1;
-if ($parameters{"snpeff_threads"} > 0) {
-	$snpeff_threads=$parameters{"snpeff_threads"};
-};#if
-
-
-# Set parameters from config file
-if (-e $config_file && ! -d $config_file && $config_file ne "") {
-
-	# read ini file
-	our %config=read_ini($config_file);
-
-	# Assembly
-	$assembly=$config{"project"}{"assembly"};
-
-	# ANNOVAR folders (default "$basename")
-	$annovar_databases=$config{"folders"}{"annovar_databases"};
-	if (defined $config{"folders"}{"annovar_folder"} && -d $config{"folders"}{"annovar_folder"}) {
-		$annovar_folder=$config{"folders"}{"annovar_folder"};
-	} else {
-		$annovar_folder=$basename;
-	};#if
-	if (trim($annovar_folder) ne "") {$annovar_folder.="/"};
-	
-	# ANNOVAR folders (default "$basename")
-	#$java=$config{"folders"}{"annovar_databases"};
-	#if (defined $config{"folders"}{"java"} && $java eq "") {
-	#	$java=$config{"folders"}{"java"};
-	#};#if
-	#if (trim($java) ne "") {$annovar_folder.="/"};
-	
-	
-
-};#if
-
-
-# Assembly in parameter
-if ($parameters{"assembly"} ne "") {
-	$assembly=$parameters{"assembly"};
-};#if
-
-# ANNOVAR databases
-if ($parameters{"annovar_databases"} ne "") {
-	$annovar_databases=$parameters{"annovar_databases"};
-};#if
-
-# ANNOVAR folder
-if ($parameters{"annovar_folder"} ne "") {
-	$annovar_folder=$parameters{"annovar_folder"};
-};#if
-
 # Test ANNOVAR folder
 if ( ! -d $annovar_folder) {
-	print "# ANNOVAR folder not found...\n";
+	print "#[ERROR] ANNOVAR folder '$annovar_folder' not found...\n";
 	pod2usage(1);
 };#if
-
-# SNPEFF database
-$snpeff_databases=$config{"folders"}{"snpeff_databases"};
-if ($parameters{"snpeff_databases"} ne "" && -d $parameters{"snpeff_databases"}) {
-	$snpeff_databases=$parameters{"snpeff_databases"};
-} elsif (defined $config{"folders"}{"snpeff_databases"} && -d $config{"folders"}{"snpeff_databases"}) {
-	$snpeff_databases=$config{"folders"}{"snpeff_databases"};
-} else {
-	$snpeff_databases=$basename;
-};#if
-
-# SNPEFF jar
-$snpeff_jar=$config{"folders"}{"snpeff_jar"};
-
-#print "$snpeff_jar" if $VERBOSE;
-if ($parameters{"snpeff_jar"} ne "" && -e $parameters{"snpeff_jar"}) {
-	$snpeff_jar=$parameters{"snpeff_jar"};
-} elsif (defined $config{"folders"}{"snpeff_jar"} && -e $config{"folders"}{"snpeff_jar"}) {
-	$snpeff_jar=$config{"folders"}{"snpeff_jar"};
-} else {
-	print "# snpEff JAR not found...\n";
-	#pod2usage(1);
-};#if
-#print "snpeff_jar=$snpeff_jar";
 
 
 # ANNOVAR annotation ype default
-$annovar_annotation_type_default=$parameters{"annovar_annotation_type_default"};
-
-# Config annotation file
-my $config_annotation_file;
-if (-e $parameters{"config_annotation"}) {
-    $config_annotation_file=$parameters{"config_annotation"};
-} elsif (-e "$basename/".$parameters{"config_annotation"}) {
-    $config_annotation_file="$basename/".$parameters{"config_annotation"};
-} elsif (-e "$basename/config.annotation.ini") {
-    $config_annotation_file="$basename/config.annotation.ini";
-} else {
-	print "No Annotation Configuration file...\n";
-	pod2usage(1);
-};#if
+our $annovar_annotation_type_default=$parameters{"annovar_annotation_type_default"};
 
 
 # Read the config annotation file
-our %config_annotation=read_ini($config_annotation_file);
+if (-e $config_annotation_file) {
+	our %config_annotation=read_ini($config_annotation_file);
+} else {
+	print "#[ERROR] No Annotation Configuration file...\n";
+	pod2usage(1);
+};#if
 
 # find annotation type
 my %annotation_type;
@@ -419,11 +311,6 @@ if (-e $parameters{"output"} && 0) {
 	$header.="## Output VCF file: $output_file\n";
 };#if
 
-
-# snpEff Stats
-if ($parameters{"snpeff_stats"} ne "") {
-	#$parameters{"snpeff"}=1;
-};#if
 
 ## Annotation
 my %annotation_hash = map { $_ => undef } split(/,/, $parameters{"annotation"});
@@ -627,27 +514,6 @@ if ($parameters{"snpeff"} || $parameters{"snpeff_split"} || $parameters{"snpeff_
 		print "# snpEff JAR not found...\n";
 		pod2usage(1);
 	};#if
-
-	# SNPEFF database
-	#$snpeff_databases=$config{"folders"}{"snpeff_databases"};
-	#if ($parameters{"snpeff_databases"} ne "" && -d $parameters{"snpeff_databases"}) {
-	#	$snpeff_databases=$parameters{"snpeff_databases"};
-	#} elsif (defined $config{"folders"}{"snpeff_databases"} && -d $config{"folders"}{"snpeff_databases"}) {
-	#	$snpeff_databases=$config{"folders"}{"snpeff_databases"};
-	#} else {
-	#	$snpeff_databases=$basename;
-	#};#if
-
-	# SNPEFF jar
-	#$snpeff_jar=$config{"folders"}{"snpeff_jar"};
-	#if ($parameters{"snpeff_jar"} ne "" && -e $parameters{"snpeff_jar"}) {
-	#	$snpeff_jar=$parameters{"snpeff_jar"};
-	#} elsif (defined $config{"folders"}{"snpeff_jar"} && -d $config{"folders"}{"snpeff_jar"}) {
-	#	$snpeff_jar=$config{"folders"}{"snpeff_jar"};
-	#} else {
-	#	print "# snpEff JAR not found...\n";
-	#	pod2usage(1);
-	#};#if
 
 
 };#if
@@ -868,7 +734,9 @@ while ((my $annotation_name, my $annotation_infos) = each(%annotation_hash)){
 		my $annotation_description=trim($config_annotation{$annotation_name}{"description"});
 
 		my $file=$config_annotation{$annotation_name}{"file"};
-		if ($file ne "") {
+		if ($file eq "") {
+			$file="".$assembly."_".$annovar_code.".txt";
+		} else {
 		    $file=$assembly."_".$file;
 		};#if
 		my $annovar_code_for_downdb=$config_annotation{$annotation_name}{"annovar_code_for_downdb"};
@@ -903,7 +771,7 @@ while ((my $annotation_name, my $annotation_infos) = each(%annotation_hash)){
 
 		# File
 		if ($file eq "" || !-e "$annovar_databases/$file") {
-			$file="".$assembly."_".$annovar_code.".txt";
+			
 			# try to download from ANNOVAR
 			if ($file eq "" || !-e "$annovar_databases/$file") {
 				#if ( -e "./ANNOVAR_download.sh") {

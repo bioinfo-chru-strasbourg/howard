@@ -2,7 +2,6 @@
 ############################
 # VCF translation          #
 # Author: Antony Le Béchec #
-# Copyright: IRC           #
 ############################
 
 ## Main Information
@@ -13,8 +12,8 @@ our %information = ( #
 	'release'	=>  	"0.9.2.2b",		# Release
 	'date'		=>  	"20181217",		# Release parameter
 	'author'	=>  	"Antony Le Béchec",	# Author
-	'copyright'	=>  	"IRC",			# Copyright
-	'licence'	=>  	"GNU-GPL",		# Licence
+	'copyright'	=>  	"HUS",			# Copyright
+	'licence'	=>  	"GNU AGPL V3",		# Licence
 );
 
 ## Release Notes
@@ -63,7 +62,7 @@ Thank U!
 
 =head1 COPYRIGHT
 
-IRC - GNU GPL License
+HUS - GNU AGPL V3
 
 =head1 AUTHOR
 
@@ -712,7 +711,10 @@ if ($DEBUG) {
 
 
 # create full file content
-my $output_full="#$output_header\n$output_content";
+my $output_full="";
+if ($output_content ne "") {
+	$output_full="#$output_header\n$output_content";
+};#if
 # remove blank lines
 $output_full =~ s/\n\s*/\n/g;
 

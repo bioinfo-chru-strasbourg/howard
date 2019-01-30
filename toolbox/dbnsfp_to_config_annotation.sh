@@ -1,6 +1,6 @@
 #!/bin/bash
 #################################
-## HOWARD
+## HOWARD 
 #################################
 
 SCRIPT_NAME="HOWARD_DBNSFP"
@@ -8,8 +8,8 @@ SCRIPT_DESCRIPTION="HOWARD DBNSFPx to config annotation ini file"
 SCRIPT_RELEASE="0.9.1"
 SCRIPT_DATE="10/01/2019"
 SCRIPT_AUTHOR="Antony Le Bechec"
-SCRIPT_COPYRIGHT="IRC"
-SCRIPT_LICENCE="GNU-GPL"
+SCRIPT_COPYRIGHT="HUS"
+SCRIPT_LICENCE="GNU AGPL V3"
 
 # Realse note
 RELEASE_NOTES=$RELEASE_NOTES"# 0.9b-07/11/2017:\n";
@@ -42,9 +42,10 @@ function usage {
 	echo "# Following options are available:";
 	echo "# --input=<FILE>             Input DBNSPF file";
 	echo "# --output=<FILE>            Output annotation configuration file";
-    echo "# --input_name=<STRING>      ANNOVAR code of the input DBNSFP file";
-    echo "# --input_release=<STRING>   Release of the input DBNSFP file";
+	echo "# --input_name=<STRING>      Annovar code of the input DBNSFP file";
+	echo "# --input_release=<STRING>   Release of the input DBNSFP file";
 	echo "# --input_date=<STRING>      Date of the input DBNSFP file";
+	echo "# --input_readme=<STRING>    Readme of the input DBNSFP file";
 	echo "# --env=<FILE>               Environment configuration for multithreading (BGZIP, TABIX, BCFTOOLS, VCFTOOLS)";
 	#echo "# --force                    Force annotation even if already exists in VCF header";
 	echo "# --tmp=<FOLDER>             Temporary folder (default /tmp)";
@@ -60,13 +61,13 @@ function usage {
 
 
 # EXAMPLE :
-# ./dbnsfp_to_config_annotation.sh --input=dbnsfp33a.txt --output=config.annotation.dbnsfp33a.ini --input_name=dbnsfp33a --input_release=3.3a --input_date=30122017
+# ./dbnsfp_to_config_annotation.sh --input=dbnsfp33a.txt --output=config.annotation.dbnsfp33a.ini
 
 # header
 header;
 
 
-ARGS=$(getopt -o "i:o:e:a:f:s:r:xt:m:vdnh" --long "input:,output:,input_name:,input_release:,input_date:,env:,tmp:,verbose,debug,release,help" -- "$@" 2> /dev/null)
+ARGS=$(getopt -o "i:o:e:a:f:s:r:xt:m:vdnh" --long "input:,output:,input_name:,input_release:,input_date:,input_readme:,env:,tmp:,verbose,debug,release,help" -- "$@" 2> /dev/null)
 #ARGS=$(getopt --long "input:,output:,annotation:,multithreading,threads:,verbose,debug,release,help" -- "$@" 2> /dev/null)
 if [ $? -ne 0 ]; then
 	:
@@ -106,6 +107,10 @@ do
 			;;
 		--input_date)
 			INPUT_DATE="$2";
+			shift 2
+			;;
+		--input_readme)
+			INPUT_README="$2";
 			shift 2
 			;;
 		--env)
@@ -171,20 +176,37 @@ if [ -z $INPUT ]; then #  || [ -z $OUTPUT ]; then
 	exit;
 fi
 
-if [ -z $INPUT_NAME ]; then #  || [ -z $OUTPUT ]; then
-	INPUT_NAME=$(basename $INPUT)
-	echo "#[WARNING] INPUT NAME Missing. default '$INPUT_NAME' used";
-fi
 
 if [ -z $INPUT_RELEASE ]; then #  || [ -z $OUTPUT ]; then
 	INPUT_RELEASE=$(basename $INPUT)
+	if [ -e $INPUT_README ] && [ "$INPUT_README" != "" ]; then
+	echo "test2"
+		INPUT_RELEASE=$(cat $INPUT_README | sed 's/\r$//' | grep "^dbNSFP version"  -m1 |cut -d" " -f3)
+		echo "#[INFO] RELEASE '$INPUT_RELEASE' found in README file '$INPUT_README'.";
+	fi;
 	echo "#[WARNING] INPUT RELEASE Missing. default '$INPUT_RELEASE' used";
 fi
 
 if [ -z $INPUT_DATE ]; then #  || [ -z $OUTPUT ]; then
 	INPUT_DATE=$(basename $INPUT)
-	echo "#[WARNING] INPUT DATE Missing. default '$INPUT_DATE' used";
+	if [ -e $INPUT_README ] && [ "$INPUT_README" != "" ]; then
+		INPUT_DATE=$(cat $INPUT_README | sed 's/\r$//' | grep "^Release:" -A1 | tail -n1 | tr -d "\t")
+		echo "#[INFO] DATE '$INPUT_DATE' found in README file '$INPUT_README'.";
+	fi;
+	echo "#[WARNING] INPUT DATE Missing. '$INPUT_DATE' used";
 fi
+
+if [ -z $INPUT_NAME ]; then #  || [ -z $OUTPUT ]; then
+	INPUT_NAME=$(basename $INPUT)
+	if [ -e $INPUT_README ] && [ "$INPUT_README" != "" ]; then
+		INPUT_NAME="dbnsfp"$(echo $INPUT_RELEASE | tr -d ".")
+	fi;
+	echo "#[WARNING] INPUT NAME Missing. default '$INPUT_NAME' used";
+fi
+
+echo "# INPUT_NAME=$INPUT_NAME";
+echo "# INPUT_DATE=$INPUT_DATE";
+echo "# INPUT_RELEASE=$INPUT_RELEASE";
 
 
 # Mandatory parameters
@@ -232,10 +254,15 @@ for ANNOTATION in $(head -n1 $INPUT | cut -f6- | tr "\t" "\n"); do
 	elif [[ $ANNOTATION =~ ^.*_pred$ ]]; then
 		annotation_type="prediction"
 	fi
-
-	echo "ANNOTATION $ANNOTATION [$annotation_type]";
-	echo "
-
+	if [ -e $INPUT_README ] && [ "$INPUT_README" != "" ]; then
+		DESCRIPTION=$(cat $INPUT_README | sed 's/\r$//' | sed ':a;N;$!ba;s/\n\t\t/ /g' | grep "$ANNOTATION: " | cut -d":" -f2- | sed "s/^ //" | tr -d "\"';")
+	else
+		DESCRIPTION=$ANNOTATION
+	fi;
+	
+	echo "#ANNOTATION '$ANNOTATION'";
+	
+	ANNOTATION_OUTPUT="
 [$ANNOTATION]
 annovar_code=$INPUT_NAME
 annovar_annotation_type=filter
@@ -245,9 +272,15 @@ core=false
 annotation_type=$annotation_type
 date=$INPUT_DATE
 otherinfo=$otherinfo
-description=$ANNOTATION
+description=$DESCRIPTION
 
-" >> $OUTPUT
+"
+	
+	echo "$ANNOTATION_OUTPUT"
+	echo "$ANNOTATION_OUTPUT" >> $OUTPUT
 
 
+	
 done;
+
+

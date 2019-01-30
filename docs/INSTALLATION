@@ -12,7 +12,7 @@
 
 # Prioritization configuration
 ################################
-# Use config.filter.ini to configure filter for prioritization
+# Use config.prioritization.ini to configure filter for prioritization
 
 # Download databases
 ######################
@@ -21,3 +21,4 @@
 # ./HOWARD.sh --vcf=docs/example.vcf --output=docs/example.annotated.vcf --annotation=ALL,snpeff [--annovar_databases=</path/to/annovar_databases> --snpeff_databases=</path/to/snpeff_databases> --assembly=<assembly> --thread=1 --verbose]
 # Use this command multiple times for all needed assembly (such as hg19, hg38, mm9)
 # For home made databases, refer to config.annotation.ini file to construct and configure your database
+# Beware of proxy configuration!
