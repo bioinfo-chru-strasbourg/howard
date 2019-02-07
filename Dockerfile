@@ -215,7 +215,7 @@ RUN wget $TARBALL_LOCATION/$TARBALL ; \
 		mkdir -p $DATABASES ; \
 		ln -s $DATABASES $TOOL_DATABASE_FOLDER ; \
 		ln -s $TOOLS/$TOOL_NAME/$TOOL_VERSION $TOOLS/$TOOL_NAME/current ; \
-		ln -s $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin/ /tool ;
+		ln -s $TOOLS/$TOOL_NAME/$TOOL_VERSION/ /tool ;
 
 
 
@@ -234,4 +234,4 @@ RUN yum erase -y $YUM_REMOVE ; yum clean all ;
 
 WORKDIR "/data"
 
-ENTRYPOINT [ "/tool/HOWARD.sh" ]
+ENTRYPOINT [ "/tool/bin/HOWARD.sh" ]
