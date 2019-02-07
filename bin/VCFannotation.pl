@@ -780,7 +780,7 @@ while ((my $annotation_name, my $annotation_infos) = each(%annotation_hash)){
 					$output_verbose.="#    - cmdDL='$cmd'\n";
 					print "# Try to download database from ANNOVAR...\n" if $VERBOSE;
 					print "# cmd=$cmd...\n" if $VERBOSE;
-					print "# cmd=$cmd\n" if $DEBUG;
+					#print "# cmd=$cmd\n" if $DEBUG;
 					my $result = `$cmd 2>&1`; #
 				#};#if
 			};#if
@@ -791,7 +791,7 @@ while ((my $annotation_name, my $annotation_infos) = each(%annotation_hash)){
 					$output_verbose.="#    - cmdDL='$cmd'\n";
 					print "# Try to download database from ANNOVAR without wget...\n" if $VERBOSE;
 					print "# cmd=$cmd...\n" if $VERBOSE;
-					print "# cmd=$cmd\n" if $DEBUG;
+					#print "# cmd=$cmd\n" if $DEBUG;
 					my $result = `$cmd 2>&1`; #
 				#};#if
 			};#if
@@ -802,7 +802,7 @@ while ((my $annotation_name, my $annotation_infos) = each(%annotation_hash)){
 					$output_verbose.="#    - cmdDL='$cmd'\n";
 					print "# Try to download database from UCSC...\n" if $VERBOSE;
 					print "# cmd=$cmd...\n" if $VERBOSE;
-					print "# cmd=$cmd\n" if $DEBUG;
+					#print "# cmd=$cmd\n" if $DEBUG;
 					my $result = `$cmd 2>&1`; #
 				#};#if
 			};#if
@@ -814,7 +814,7 @@ while ((my $annotation_name, my $annotation_infos) = each(%annotation_hash)){
 						$output_verbose.="#    - cmdDL='$cmd'\n";
 						print "# Try to download database from online file '$online_file'...\n" if $VERBOSE;
 						print "# cmd=$cmd...\n" if $VERBOSE;
-						print "# cmd=$cmd\n" if $DEBUG;
+						#print "# cmd=$cmd\n" if $DEBUG;
 						my $result = `$cmd 2>&1`; #
 					};#if
 				#};#if

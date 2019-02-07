@@ -1569,7 +1569,8 @@ echo "";
 
 
 # CLEANING
-rm -rf $TMP_FOLDER
+
+! (($DEBUG)) && rm -rf $TMP_FOLDER
 
 # KILL verbose
 if (($VERBOSE)); then
