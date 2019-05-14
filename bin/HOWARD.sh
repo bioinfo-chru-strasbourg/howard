@@ -852,7 +852,8 @@ if (($NB_VARIANT)); then
 		echo -e "\n####################\n# ANNOTATION\n####################\n"
 		#$SCRIPT_DIR/VCFannotation.pl --header
 
-		CMD_SHOW_ANNOTATION="$SCRIPT_DIR/VCFannotation.pl  $PARAM --input=$INPUT --show_annotations"
+		#CMD_SHOW_ANNOTATION="$SCRIPT_DIR/VCFannotation.pl  $PARAM --input=$INPUT --show_annotations"
+		CMD_SHOW_ANNOTATION="$HOWARD_FOLDER_BIN/VCFannotation.pl  $PARAM --input=$INPUT --show_annotations"
 		ANNOTATIONS=$(eval $CMD_SHOW_ANNOTATION | grep "# ANNOTATIONS: " | cut -d: -f2);
 		NB_ANNOTATIONS=$(echo $ANNOTATIONS | wc -w);
 
@@ -953,8 +954,10 @@ if (($NB_VARIANT)); then
 				if [ ! -z $SNPEFF_STATS ]; then
 					(($VERBOSE)) && echo "# snpEff Stats '$SNPEFF_STATS'";
 					echo "$SNPEFF_STATS: $INPUT
-						$SCRIPT_DIR/VCFannotation.pl $PARAM --output=/dev/null  --annotation=snpeff --snpeff_stats=$SNPEFF_STATS  1>>$LOG 2>>$ERR
+						$HOWARD_FOLDER_BIN/VCFannotation.pl $PARAM --output=/dev/null  --annotation=snpeff --snpeff_stats=$SNPEFF_STATS  1>>$LOG 2>>$ERR
 					" >>$MK;
+					#$SCRIPT_DIR/VCFannotation.pl $PARAM --output=/dev/null  --annotation=snpeff --snpeff_stats=$SNPEFF_STATS  1>>$LOG 2>>$ERR
+					
 				fi;
 
 
@@ -977,13 +980,15 @@ if (($NB_VARIANT)); then
 							#(($VERBOSE)) && echo "#      VCFGZ_SPLITTED_ANN=$VCFGZ_SPLITTED_ANN" 1>>$LOG 2>$ERR
 
 							echo "$VCFGZ_SPLITTED_ANN: $VCF_SPLITTED
-								$SCRIPT_DIR/VCFannotation.pl $PARAM_ANNOTATION --annotation=$ANN --output=\$@.tmp --input=$VCF_SPLITTED  1>>$LOG 2>>$ERR
+								$HOWARD_FOLDER_BIN/VCFannotation.pl $PARAM_ANNOTATION --annotation=$ANN --output=\$@.tmp --input=$VCF_SPLITTED  1>>$LOG 2>>$ERR
 								# Prevent PL errorin number of fields in BCFTOOLS merge
 								cat \$@.tmp | sed s/ID=PL,Number=G/ID=PL,Number=./gi > \$@.tmp2
 								$BGZIP -c \$@.tmp2 > \$@ 2>>$ERR
 								-rm -f \$@.tmp \$@.tmp2
 								$TABIX \$@ 1>>$LOG 2>>$ERR
 							" >>$MK;
+							#$SCRIPT_DIR/VCFannotation.pl $PARAM_ANNOTATION --annotation=$ANN --output=\$@.tmp --input=$VCF_SPLITTED  1>>$LOG 2>>$ERR
+							
 
 							VCFGZ_SPLITTED_ANN_LIST=$VCFGZ_SPLITTED_ANN_LIST" $VCFGZ_SPLITTED_ANN"
 							#echo "$VCFGZ_SPLITTED_AN" >> $VCFGZ_SPLITTED_ANN_FILE
@@ -1189,7 +1194,7 @@ if (($NB_VARIANT)); then
 						VCFGZ_SPLITTED_CALCULATION=$VCF_SPLITTED.calculation.vcf.gz
 						#echo "VCFGZ_SPLITTED_CALCULATION=$VCFGZ_SPLITTED_CALCULATION"
 						echo "$VCFGZ_SPLITTED_CALCULATION: $VCF_SPLITTED
-						$SCRIPT_DIR/VCFcalculation.pl $PARAM_CALCULATION --output=\$@.tmp --input=$VCF_SPLITTED  1>>$LOG 2>>$ERR
+						$HOWARD_FOLDER_BIN/VCFcalculation.pl $PARAM_CALCULATION --output=\$@.tmp --input=$VCF_SPLITTED  1>>$LOG 2>>$ERR
 						mkdir -p $TMP_SORT\$@
 						$BCFTOOLS sort -T $TMP_SORT\$@ \$@.tmp | $BGZIP -c > \$@ 2>>$ERR
 						rm -rf $TMP_SORT\$@
@@ -1199,6 +1204,7 @@ if (($NB_VARIANT)); then
 						VCFGZ_SPLITTED_CALCULATION_LIST=$VCFGZ_SPLITTED_CALCULATION_LIST" $VCFGZ_SPLITTED_CALCULATION"
 					done;
 					#echo $VCFGZ_SPLITTED_CALCULATION_LIST
+					#$SCRIPT_DIR/VCFcalculation.pl $PARAM_CALCULATION --output=\$@.tmp --input=$VCF_SPLITTED  1>>$LOG 2>>$ERR
 
 					echo "$OUTPUT_CALCULATION: $VCFGZ_SPLITTED_CALCULATION_LIST
 							@$BCFTOOLS concat -a $VCFGZ_SPLITTED_CALCULATION_LIST --threads $THREADS --no-version  >> \$@
@@ -1223,7 +1229,9 @@ if (($NB_VARIANT)); then
 				#echo " $SCRIPT_DIR/VCFcalculation.pl $PARAM --input=$OUTPUT_ANNOTATION --output=$OUTPUT_CALCULATION "
 				#echo $LOG
 				#echo $ERR
-				if ! $SCRIPT_DIR/VCFcalculation.pl $PARAM --input=$OUTPUT_ANNOTATION --output=$OUTPUT_CALCULATION 1>>$LOG 2>$ERR; then echo "#[FAILED] CALCULATION FAILED!!! "; exit 1; fi;
+				#if ! $SCRIPT_DIR/VCFcalculation.pl $PARAM --input=$OUTPUT_ANNOTATION --output=$OUTPUT_CALCULATION 1>>$LOG 2>$ERR; then echo "#[FAILED] CALCULATION FAILED!!! "; exit 1; fi;
+				if ! $HOWARD_FOLDER_BIN/VCFcalculation.pl $PARAM --input=$OUTPUT_ANNOTATION --output=$OUTPUT_CALCULATION 1>>$LOG 2>$ERR; then echo "#[FAILED] CALCULATION FAILED!!! "; exit 1; fi;
+				
 
 
 			fi;
@@ -1353,7 +1361,7 @@ if (($NB_VARIANT)); then
 						VCFGZ_SPLITTED_PRIO=$VCF_SPLITTED.prio.vcf.gz
 						#echo "VCFGZ_SPLITTED_PRIO=$VCFGZ_SPLITTED_PRIO"
 						echo "$VCFGZ_SPLITTED_PRIO: $VCF_SPLITTED
-						$SCRIPT_DIR/VCFprioritization.pl $PARAM_PRIORITIZATION --output=\$@.tmp --input=$VCF_SPLITTED  1>>$LOG 2>>$ERR
+						$HOWARD_FOLDER_BIN/VCFprioritization.pl $PARAM_PRIORITIZATION --output=\$@.tmp --input=$VCF_SPLITTED  1>>$LOG 2>>$ERR
 						mkdir -p $TMP_SORT\$@
 						$BCFTOOLS sort -T $TMP_SORT\$@ \$@.tmp | $BGZIP -c > \$@ 2>>$ERR
 						rm -rf $TMP_SORT\$@
@@ -1362,6 +1370,7 @@ if (($NB_VARIANT)); then
 						" >>$MK_PRIORITIZATION;
 						VCFGZ_SPLITTED_PRIO_LIST=$VCFGZ_SPLITTED_PRIO_LIST" $VCFGZ_SPLITTED_PRIO"
 					done;
+					#$SCRIPT_DIR/VCFprioritization.pl $PARAM_PRIORITIZATION --output=\$@.tmp --input=$VCF_SPLITTED  1>>$LOG 2>>$ERR
 					#echo $VCFGZ_SPLITTED_PRIO_LIST
 
 					echo "$OUTPUT_PRIORITIZATION: $VCFGZ_SPLITTED_PRIO_LIST
@@ -1383,7 +1392,9 @@ if (($NB_VARIANT)); then
 
 			else
 
-				if ! $SCRIPT_DIR/VCFprioritization.pl $PARAM --input=$OUTPUT_CALCULATION --output=$OUTPUT_PRIORITIZATION 1>>$LOG 2>$ERR; then echo "#[FAILED] PRIORITIZATION FAILED!!! "; exit 1; fi;
+				#if ! $SCRIPT_DIR/VCFprioritization.pl $PARAM --input=$OUTPUT_CALCULATION --output=$OUTPUT_PRIORITIZATION 1>>$LOG 2>$ERR; then echo "#[FAILED] PRIORITIZATION FAILED!!! "; exit 1; fi;
+				if ! $HOWARD_FOLDER_BIN/VCFprioritization.pl $PARAM --input=$OUTPUT_CALCULATION --output=$OUTPUT_PRIORITIZATION 1>>$LOG 2>$ERR; then echo "#[FAILED] PRIORITIZATION FAILED!!! "; exit 1; fi;
+				
 
 			fi;
 
@@ -1542,8 +1553,9 @@ if ((1)); then
 		rm $OUTPUT_PRIORITIZATION
 		OUTPUT_PRIORITIZATION=$OUTPUT_PRIORITIZATION.uncompressed.vcf
 
-		$SCRIPT_DIR/VCFtranslation.sh $PARAM  --input=$OUTPUT_PRIORITIZATION --output=$OUTPUT_TRANSLATION --tmp=$TMP_FOLDER --env=$ENV
-	
+		#$SCRIPT_DIR/VCFtranslation.sh $PARAM  --input=$OUTPUT_PRIORITIZATION --output=$OUTPUT_TRANSLATION --tmp=$TMP_FOLDER --env=$ENV
+		$HOWARD_FOLDER_BIN/VCFtranslation.sh $PARAM  --input=$OUTPUT_PRIORITIZATION --output=$OUTPUT_TRANSLATION --tmp=$TMP_FOLDER --env=$ENV
+		
 	else
 		cp $OUTPUT_PRIORITIZATION $OUTPUT_TRANSLATION
 	fi;
