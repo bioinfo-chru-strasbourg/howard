@@ -117,13 +117,13 @@ function usage {
 	echo "#                                    Use 'ALL' to insert all other annotations in the list";
 	echo "#                                    Annotations considered only if present in the file";
 	echo "#                                    Example: 'PZScore,PZFlag,PZComment,Symbol,hgvs,location,outcome,ALL'";
-	echo "# --sort=<STRING>                    Sort variants by a field and order (default '')"; 
+	echo "# --sort=<STRING>                    Sort variants by a field and order (default '')";
 	echo "#                                    Format: 'field1:type:order,field2:type:order'";
 	echo "#                                       field considered only if present in the file";
 	echo "#                                       type 'n' for numeric, '?' for autodetect with VCF header. Default ''.";
-      	echo "#                                       order either 'DESC' or 'ASC'. Default 'ASC'";
-      	echo "#                                    Example: 'PZFlag::DESC,PZScore:n:DESC' (to sort and order by relevance)";
-      	echo "# --sort_by=<STRING>                 Sort variants by a field (if no 'sort' option). Default ''";
+  	echo "#                                       order either 'DESC' or 'ASC'. Default 'ASC'";
+  	echo "#                                    Example: 'PZFlag::DESC,PZScore:n:DESC' (to sort and order by relevance)";
+  	echo "# --sort_by=<STRING>                 Sort variants by a field (if no 'sort' option). Default ''";
 	echo "#                                    Example: 'PZFlag,PZScore' (to sort by relevance)";
 	echo "# --order_by=<STRING>                Order variants by a field (if no 'sort' option). Default ''.";
 	echo "#                                    Example: 'DESC,DESC' (useful to sort by relevance)";
@@ -957,7 +957,7 @@ if (($NB_VARIANT)); then
 						$HOWARD_FOLDER_BIN/VCFannotation.pl $PARAM --output=/dev/null  --annotation=snpeff --snpeff_stats=$SNPEFF_STATS  1>>$LOG 2>>$ERR
 					" >>$MK;
 					#$SCRIPT_DIR/VCFannotation.pl $PARAM --output=/dev/null  --annotation=snpeff --snpeff_stats=$SNPEFF_STATS  1>>$LOG 2>>$ERR
-					
+
 				fi;
 
 
@@ -988,7 +988,7 @@ if (($NB_VARIANT)); then
 								$TABIX \$@ 1>>$LOG 2>>$ERR
 							" >>$MK;
 							#$SCRIPT_DIR/VCFannotation.pl $PARAM_ANNOTATION --annotation=$ANN --output=\$@.tmp --input=$VCF_SPLITTED  1>>$LOG 2>>$ERR
-							
+
 
 							VCFGZ_SPLITTED_ANN_LIST=$VCFGZ_SPLITTED_ANN_LIST" $VCFGZ_SPLITTED_ANN"
 							#echo "$VCFGZ_SPLITTED_AN" >> $VCFGZ_SPLITTED_ANN_FILE
@@ -1231,7 +1231,7 @@ if (($NB_VARIANT)); then
 				#echo $ERR
 				#if ! $SCRIPT_DIR/VCFcalculation.pl $PARAM --input=$OUTPUT_ANNOTATION --output=$OUTPUT_CALCULATION 1>>$LOG 2>$ERR; then echo "#[FAILED] CALCULATION FAILED!!! "; exit 1; fi;
 				if ! $HOWARD_FOLDER_BIN/VCFcalculation.pl $PARAM --input=$OUTPUT_ANNOTATION --output=$OUTPUT_CALCULATION 1>>$LOG 2>$ERR; then echo "#[FAILED] CALCULATION FAILED!!! "; exit 1; fi;
-				
+
 
 
 			fi;
@@ -1394,7 +1394,7 @@ if (($NB_VARIANT)); then
 
 				#if ! $SCRIPT_DIR/VCFprioritization.pl $PARAM --input=$OUTPUT_CALCULATION --output=$OUTPUT_PRIORITIZATION 1>>$LOG 2>$ERR; then echo "#[FAILED] PRIORITIZATION FAILED!!! "; exit 1; fi;
 				if ! $HOWARD_FOLDER_BIN/VCFprioritization.pl $PARAM --input=$OUTPUT_CALCULATION --output=$OUTPUT_PRIORITIZATION 1>>$LOG 2>$ERR; then echo "#[FAILED] PRIORITIZATION FAILED!!! "; exit 1; fi;
-				
+
 
 			fi;
 
@@ -1540,12 +1540,12 @@ if ((1)); then
 
 	if [ -z $FORMAT ] || [ "$FORMAT" != "" ]; then
 		if [ "$SORT" != "" ] || [ "$FIELDS" != "" ] || [ "$SORT_BY" != "" ] || [ "$ORDER_BY" != "" ] || [ "$BCFTOOLS_EXPRESSION" != "" ]; then
-			FORMAT="VCF"		
+			FORMAT="VCF"
 		fi;
 	fi;
 
 	if [ ! -z $FORMAT ] && [ "$FORMAT" != "" ]; then
-	
+
 		echo -e "\n####################\n# TRANSLATION\n####################\n"
 		#$SCRIPT_DIR/VCFtranslation.pl --header
 
@@ -1555,7 +1555,7 @@ if ((1)); then
 
 		#$SCRIPT_DIR/VCFtranslation.sh $PARAM  --input=$OUTPUT_PRIORITIZATION --output=$OUTPUT_TRANSLATION --tmp=$TMP_FOLDER --env=$ENV
 		$HOWARD_FOLDER_BIN/VCFtranslation.sh $PARAM  --input=$OUTPUT_PRIORITIZATION --output=$OUTPUT_TRANSLATION --tmp=$TMP_FOLDER --env=$ENV
-		
+
 	else
 		cp $OUTPUT_PRIORITIZATION $OUTPUT_TRANSLATION
 	fi;
