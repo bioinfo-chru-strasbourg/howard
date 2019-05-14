@@ -212,10 +212,10 @@ RUN wget $TARBALL_LOCATION/$TARBALL ; \
     rm -rf $(ls ${TOOL_NAME^^}-$TOOL_VERSION* -d) ; \
     ln -s $TOOLS/$TOOL_NAME/$TOOL_VERSION $TOOLS/$TOOL_NAME/current ; \
     chmod 0775 $TOOLS/$TOOL_NAME/$TOOL_VERSION $TOOLS/$TOOL_NAME/current -R ; \
-		mkdir -p $DATABASES ; \
-		ln -s $DATABASES $TOOL_DATABASE_FOLDER ; \
-		ln -s $TOOLS/$TOOL_NAME/$TOOL_VERSION $TOOLS/$TOOL_NAME/current ; \
-		ln -s $TOOLS/$TOOL_NAME/$TOOL_VERSION/ /tool ;
+	mkdir -p $DATABASES ; \
+	ln -s $DATABASES $TOOL_DATABASE_FOLDER ; \
+	ln -s $TOOLS/$TOOL_NAME/$TOOL_VERSION $TOOLS/$TOOL_NAME/current ; \
+	ln -s $TOOLS/$TOOL_NAME/$TOOL_VERSION/ /tool ;
 
 
 
