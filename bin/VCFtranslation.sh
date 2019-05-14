@@ -47,7 +47,7 @@ function usage {
 	echo "#                                    Annotations considered only if present in the file";
 	echo "#                                    Default 'ALL'";
 	echo "#                                    Example: 'PZScore,PZFlag,PZComment,Symbol,hgvs,location,outcome,ALL'";
-	echo "# --sort=<STRING>                    Sort variants by a field and order (default '')"; 
+	echo "# --sort=<STRING>                    Sort variants by a field and order (default '')";
 	echo "#                                    Format: 'field1:type:order,field2:type:order'";
 	echo "#                                       field considered only if present in the file";
 	echo "#                                       type 'n' for numeric, '?' for autodetect with VCF header. Default ''.";
@@ -72,7 +72,7 @@ function usage {
 }
 
 # EXAMPLE :
-# ./VCFtranslation.sh --input=example.vcf --output=example.tsv --sort="PZFlag:?:DESC,PZScore:n:DESC" --fields="PZFlag,PZScore,NOMEN,Symbol,ALL" --translation=TSV  --bcftools_expression="QUAL>90" 
+# ./VCFtranslation.sh --input=example.vcf --output=example.tsv --sort="PZFlag:?:DESC,PZScore:n:DESC" --fields="PZFlag,PZScore,NOMEN,Symbol,ALL" --translation=TSV  --bcftools_expression="QUAL>90"
 # header
 header;
 
@@ -250,12 +250,12 @@ if [ "$SORT" != "" ]; then
 else
 	echo $SORT_BY
 	echo $ORDER_BY
-	
+
 	echo $SORT_BY | tr ',' ' ' | tr ' ' '\n' | sed '/^$/d' > $TMP_FOLDER/sort_by
 	echo $ORDER_BY | tr ',' ' ' | tr ' ' '\n' | sed '/^$/d' > $TMP_FOLDER/order_by
-	
+
 	ANNS=$(paste $TMP_FOLDER/sort_by $TMP_FOLDER/order_by | awk '{print $1":?:"$2}')
-	
+
 fi;
 
 LIMIT_VARIANT=
@@ -287,7 +287,7 @@ FORMAT_OUTPUT=$(echo "$FORMAT" | tr '[:upper:]' '[:lower:]')
 	# output file
 	FA=$TMP_FOLDER/INPUT.vcf
 	#echo "FA="$FA
-	
+
 	# Generate sort parameters
 	nb_ANN=$(echo $ANN | tr "," " " | wc -w)
 	sort_param=""
@@ -312,7 +312,7 @@ FORMAT_OUTPUT=$(echo "$FORMAT" | tr '[:upper:]' '[:lower:]')
 				comparaison="n"
 			fi;
 		fi;
-		
+
 		#grep ID=PZScore 1G.1000.vcf | awk -F"Type=" '{print $2}' | awk -F"," '{print $1}'
 		sort_param=$sort_param" -k"$nb","$nb$comparaison$order" "
 	done
@@ -324,10 +324,10 @@ FORMAT_OUTPUT=$(echo "$FORMAT" | tr '[:upper:]' '[:lower:]')
 	###############
 
 	#echo ""
-	#echo "# Reduce File"
+	#echo "# Reduce File" 
 
 	echo $FIELDS | tr "," "\n" > $FA.tsv.listINFO.param
-	$BCFTOOLS view -h $INPUT | awk -F"##INFO=<ID=" '{print $2}' | awk -F"," '{print $1}' | sort -u > $FA.tsv.listINFO.ALL
+	$BCFTOOLS view -h $INPUT | awk -F"##INFO=<ID=" '{print $2}' | awk -F"[,>]" '{print $1}' | sort -u > $FA.tsv.listINFO.ALL
 	if (($(grep "^ALL$" $FA.tsv.listINFO.param -c))); then
 		echo "ALL" >> $FA.tsv.listINFO.ALL
 	fi;
@@ -336,7 +336,7 @@ FORMAT_OUTPUT=$(echo "$FORMAT" | tr '[:upper:]' '[:lower:]')
 
 	# IN all but not in listINFO
 	grep -Fxv -f $FA.tsv.listINFO $FA.tsv.listINFO.ALL > $FA.tsv.listINFO.ALL.REST
-	
+
 
 	if (($(grep "^ALL$" $FA.tsv.listINFO.param -c))); then
 
@@ -355,28 +355,28 @@ FORMAT_OUTPUT=$(echo "$FORMAT" | tr '[:upper:]' '[:lower:]')
 
 	(($DEBUG)) && echo "#[INFO] Selected Fields: "$(cat $FA.tsv.listINFO)
 
-	grep -Fxv -f $FA.tsv.listINFO $FA.tsv.listINFO.ALL | sort -u > $FA.tsv.listINFO.inv #| grep -Fxv -f - $FA.tsv.listINFO.ALL 
+	grep -Fxv -f $FA.tsv.listINFO $FA.tsv.listINFO.ALL | sort -u > $FA.tsv.listINFO.inv #| grep -Fxv -f - $FA.tsv.listINFO.ALL
 
-	
+
 
 	# FINAL
 	##########
 
 	#echo ""
 	#echo "# Generate output"
-	
-	
+
+
 
 	FINAL=$OUTPUT #$i.final.$FORMAT_OUTPUT
 
 	#if [ "$FORMAT" == "TSV" ]; then
-		
+
 	# translate to TSV
 
 	# List of ORMAT TAG
 	$BCFTOOLS view -h $INPUT | awk -F"##FORMAT=<ID=" '{print $2}' | awk -F"," '{print $1}' | sort -u > $FA.tsv.listFORMAT.ALL
 	#cat $FA.tsv.listFORMAT.ALL
-	
+
 	LIST_VARIANTS_IDS="%CHROM\t%POS\t%ID\t%REF\t%ALT\t%QUAL\t%FILTER"
 
 	LIST_FORMAT=""
@@ -405,7 +405,7 @@ FORMAT_OUTPUT=$(echo "$FORMAT" | tr '[:upper:]' '[:lower:]')
 	done;
 	if [ -z $LIST_INFOS ]; then LIST_INFOS="INFO"; fi;
 
-	LIST_INFOS_TOTAL="$LIST_VARIANTS_IDS\t$LIST_INFOS$LIST_INFOS_TOTAL_SAMPLES"	
+	LIST_INFOS_TOTAL="$LIST_VARIANTS_IDS\t$LIST_INFOS$LIST_INFOS_TOTAL_SAMPLES"
 
 	# List of samples
 	#LIST_SAMPLES=$(bcftools query -l $i | tr "\n" "\t"  | sed s/\t$//g)
@@ -417,7 +417,7 @@ FORMAT_OUTPUT=$(echo "$FORMAT" | tr '[:upper:]' '[:lower:]')
 	#FORMAT="VCF"
 
 	> $FINAL
-	if [ "$FORMAT" == "TSV" ]; then			
+	if [ "$FORMAT" == "TSV" ]; then
 		echo -ne "#" > $FINAL
 		echo -ne $LIST_INFOS_TOTAL | sed "s/INFO\///g" | tr -d "%"  | sed 's/\[.*\]//gi' >> $FINAL
 		#echo -ne $ANN_clear_list | tr "," "\t" | sed "s/INFO\///g" | tr -d "%"  | sed 's/\[.*\]//gi' >> $FINAL
@@ -440,10 +440,10 @@ FORMAT_OUTPUT=$(echo "$FORMAT" | tr '[:upper:]' '[:lower:]')
 #-v ANN=$ANN_clear_list
 #-v FIELDS=$(cat $FA.tsv.listINFO | tr "\n" "," | sed s/,$//g)
 	FIELDS_AWK=$(cat $FA.tsv.listINFO | tr "\n" "," | sed s/,$//g)
-	
+
 	if [ -z $nb_ANN ]; then $nb_ANN=1; fi;
 	if [ -z $FIELDS_AWK ]; then FIELDS_AWK="INFO"; fi;
-	
+
 
 	(($DEBUG)) && echo "nb_ANN=$nb_ANN"
 	#grep ^# -v $i | awk -F"\t"  -v FORMAT=$FORMAT -v ANN=$ANN_clear_list -v FIELDS=$FIELDS_AWK -f $VCFTRANSLATION_AWK | sort $sort_param | cut -f$nb_ANN- | head -n $LIMIT_VARIANT >> $FINAL
@@ -456,7 +456,7 @@ FORMAT_OUTPUT=$(echo "$FORMAT" | tr '[:upper:]' '[:lower:]')
 	#exit
 
 
-		
+
 	# OUTPUT HEADER
 	##################
 
@@ -477,9 +477,9 @@ FORMAT_OUTPUT=$(echo "$FORMAT" | tr '[:upper:]' '[:lower:]')
 	LIMIT_VARIANT=$LIMIT_VARIANT
 	BCFTOOLS_INCLUDE_EXPRESSION=$BCFTOOLS_INCLUDE_EXPRESSION
 	"
-	
 
-		
+
+
 		if [ "$BCFTOOLS_INCLUDE_EXPRESSION" != "" ]; then
 			BCFTOOLS_INCLUDE_EXPRESSION_param="-i \"$BCFTOOLS_INCLUDE_EXPRESSION\""
 		fi;
@@ -494,12 +494,12 @@ FORMAT_OUTPUT=$(echo "$FORMAT" | tr '[:upper:]' '[:lower:]')
 		fi;
 		(($DEBUG)) && echo $CMD
 		eval $CMD
-			
+
 		#exit
 
 		# copy vcf to final
 		#cp $FA.reduced.vcf $FINAL
-		
+
 		#fi;
 
 		# INFOS
@@ -508,24 +508,21 @@ FORMAT_OUTPUT=$(echo "$FORMAT" | tr '[:upper:]' '[:lower:]')
 		(($DEBUG)) &&  echo "# OUTPUT"
 		(($DEBUG)) &&  grep ^# $FINAL | head -n3 #| column -t
 		(($DEBUG)) &&  grep ^# -v $FINAL | head -n3 #| column -t
-			
+
 		# Test output file
 		if (($VERBOSE)); then
 			nb_var_original=$(grep ^# -v $INPUT -c)
 			nb_var_final=$(grep ^# -v $FINAL -c)
 			echo "#[INFO] NB variants original: $nb_var_original"
 			echo "#[INFO] NB variants final:    $nb_var_final"
-			
+
 			# Destructive test
 			if (( $nb_var_original == nb_var_final )); then
 				echo "#[INFO] NO destructive options"
 			else
 				echo "#[INFO] DESTRUCTIVE options"
-			fi; 
+			fi;
 		fi;
-		
+
 
 exit 0;
-
-
-
