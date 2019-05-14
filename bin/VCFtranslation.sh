@@ -324,7 +324,7 @@ FORMAT_OUTPUT=$(echo "$FORMAT" | tr '[:upper:]' '[:lower:]')
 	###############
 
 	#echo ""
-	#echo "# Reduce File"
+	#echo "# Reduce File" 
 
 	echo $FIELDS | tr "," "\n" > $FA.tsv.listINFO.param
 	$BCFTOOLS view -h $INPUT | awk -F"##INFO=<ID=" '{print $2}' | awk -F"[,>]" '{print $1}' | sort -u > $FA.tsv.listINFO.ALL
