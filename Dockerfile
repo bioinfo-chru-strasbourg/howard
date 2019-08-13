@@ -1,8 +1,8 @@
 
 ##############################################################
-# Dockerfile Version:   1.3
+# Dockerfile Version:   1.4
 # Software:             HOWARD
-# Software Version:     0.9.14b
+# Software Version:     0.9.15b
 # Software Website:     https://gitlab.bioinfo-diag.fr/Strasbourg/HOWARD
 # Licence:              GNU Affero General Public License (AGPL)
 # Description:          HOWARD
@@ -40,7 +40,7 @@
 FROM centos:7
 MAINTAINER Antony Le Bechec <antony.lebechec@gmail.com>
 LABEL Software="HOWARD" \
-	Version="0.9.14b" \
+	Version="0.9.15b" \
 	Website="https://gitlab.bioinfo-diag.fr/Strasbourg/HOWARD" \
 	Description="HOWARD" \
 	License="GNU Affero General Public License (AGPL)" \
@@ -195,7 +195,7 @@ RUN wget $TARBALL_LOCATION/$TARBALL ; \
 
 ENV DATABASES=/databases
 ENV TOOL_NAME=howard
-ENV TOOL_VERSION=0.9.14b
+ENV TOOL_VERSION=0.9.15b
 ENV TARBALL_LOCATION=https://gitlab.bioinfo-diag.fr/Strasbourg/HOWARD/repository/$TOOL_VERSION
 ENV TARBALL=archive.tar.gz
 ENV TARBALL_FOLDER=archive
@@ -234,4 +234,4 @@ RUN yum erase -y $YUM_REMOVE ; yum clean all ;
 
 WORKDIR "/data"
 
-ENTRYPOINT [ "/tool/bin/HOWARD.sh" ]
+ENTRYPOINT [ "/tool/bin/HOWARD" ]

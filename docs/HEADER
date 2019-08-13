@@ -3,8 +3,8 @@
 # Highly Open and Valuable tool for   #
 #    Variant Annotation & Ranking     #
 #    for Discovery                    #
-# Release : 0.9.14b                   #
-# Date : 20190116                     #
+# Release : 0.9.15b                   #
+# Date : 20190813                     #
 # Author: Antony Le Bechec            #
 # Copyright: HUS                      #
 # Licence: GNU AGPL V3                #
@@ -14,4 +14,10 @@
 # DESCRIPTION #
 ###############
 
-HOWARD est un outil d'annotation et de priorisation des variants. Il utilise les outils ANNOVAR et SNPEff et leurs bases de donnees associees (environ 60 bases de donnees actuellement disponibles), tout en acceptant les bases de donnees a facon. Un fichier de configuration permet de gerer les versions des bases de donnres. Les bases de donnres d'ANNOVAR peuvent etre automatiquement telechargees. Il permet egalementd'effectuer des calculs specifiqueslies a l'annotation (ex : harmonisation de la frequence allelique par une annotation unique "VAF", determination du HGVS en fonction d'une liste de NM personnalises, calcul du code barre VaRank). L'algorithme de priorisation permet de taguer les variants (selectionnes ou a exclue), leur donner un score de priorisation, et generer un commentaire automatique (ex : "Polymorphisme identifie dans dbSNP. Associe au cancer du sein dans ClinVar." ). Les filtres sont definis sur les valeurs de qualite (provenant generalement des callers, comme par exemple la qualite de genotypage "GQ", ou la frequence allelique) et des annotations disponibles (ex : COSMIC, Clinvar, 1000genomes, PolyPhen, SIFT). Plusieurs filtres peuvent etre utilises en meme temps pour definir plusieurs niveaux de validation (ex : stringent, tolerant, etendu). HOWARD genere des fichiers de sortie au format VCF et TXT (tab-delimiter). HOWARD est parallelise (par makefile) sur les bases de donnees et le nombre de variants (data-scaling).
+HOWARD annotates and prioritizes variants, calculates and normalizes annotations, translates vcf format and generates variants statistics.
+HOWARD annotation is mainly based on ANNOVAR and snpEff tools to annotate, using available databases (see ANNOVAR and snpEff) and home made databases. It also uses BCFTOOLS to annotate variants with a VCF file. ANNOVAR and snpEff databases are automatically downloaded if needed.
+HOWARD calculation harmonizes allele frequency (VAF), extracts Nomen (transcript, cNomen, pNomen...) from HGVS fields with an optional list of personalized transcripts, generates VaRank format barcode.
+HOWARD prioritization algorithm uses profiles to flag variants (as passed or filtered), calculate a prioritization score, and automatically generate a comment for each variants (example: 'polymorphism identified in dbSNP. associated to Lung Cancer. Found in ClinVar database').Prioritization profiles are defined in a configuration file. A profile is defined as a list of annotation/value, using wildcards and comparison options (contains, lower than, greater than, equal...). Annotations fields may be quality values (usually from callers, such as 'GQ', 'DP') or other annotations fields provided by annotations tools, such as HOWARD itself (example: COSMIC, Clinvar, 1000genomes, PolyPhen, SIFT). Multiple profiles can be used simultaneously, which is useful to define multiple validation/prioritization levels (example: 'standard', 'stringent', 'rare variants', 'low allele frequency').
+HOWARD translates VCF format into TSV format, by sorting variants using specific fields (example : 'prioritization score', 'allele frequency', 'gene symbol'), including/excluding annotations/fields, including/excluding variants, adding fixed columns.
+HOWARD generates statistics files with a specific algorithm, snpEff and BCFTOOLS.
+HOWARD is multithreaded through the number of variants and by database (data-scaling).

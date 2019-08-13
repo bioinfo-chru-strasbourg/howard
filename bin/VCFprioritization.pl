@@ -557,9 +557,9 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 
 		# Filter Extension
 		my $PZExtension="-$one_filter";
-		if ($one_filter eq $filter) { # default filter
-			$PZExtension="";
-		};#if
+		#if ($one_filter eq $filter) { # default filter
+		#	$PZExtension="";
+		#};#if
 
 		# if annotation exist and not forces
 		if (!$force && defined $$variant_values{"INFOS"}{"PZFlag$PZExtension"}) {
@@ -602,7 +602,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 			$prioritization_flag="PASS";
 		};#if
 
-		
+
 		#print Dumper(\%pzfilter_list_input) ; #if $DEBUG;
 
 		# PZScore
@@ -619,7 +619,16 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 				$PZHeader.="##INFO=<ID=PZScore$PZExtension,Number=.,Type=String,Description=\"Prioritization Score for filter '$one_filter', depending on the ponderation of each prioritization criterion\">\n";
 				$VCF_header{$header_type}{"PZScore$PZExtension"}=1;
 			};#if
-			
+
+			# Default filter
+			if ($one_filter eq $filter) { # default filter
+				$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"PZScore"}=$prioritization_score;
+				if (!exists $VCF_header{$header_type}{"PZScore"}) {
+					$PZHeader.="##INFO=<ID=PZScore,Number=.,Type=String,Description=\"Prioritization Score for filter '$one_filter', depending on the ponderation of each prioritization criterion\">\n";
+					$VCF_header{$header_type}{"PZScore"}=1;
+				};#if
+			}; #if
+
 		};#if
 
 		# PZScore
@@ -637,7 +646,16 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 				$PZHeader.="##INFO=<ID=PZFlag$PZExtension,Number=.,Type=String,Description=\"Prioritization Flag for filter '$one_filter', either 'PASS' or 'FILTERED'\">\n";
 				$VCF_header{$header_type}{"PZFlag$PZExtension"}=1;
 			};#if
-			
+
+			# Default filter
+			if ($one_filter eq $filter) { # default filter
+				$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"PZFlag"}=$prioritization_flag;
+				if (!exists $VCF_header{$header_type}{"PZFlag"}) {
+					$PZHeader.="##INFO=<ID=PZFlag,Number=.,Type=String,Description=\"Prioritization Flag for filter '$one_filter', either 'PASS' or 'FILTERED'\">\n";
+					$VCF_header{$header_type}{"PZFlag"}=1;
+				};#if
+			}; #if
+
 		};#if
 
 		# PZComment
@@ -659,7 +677,16 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 				$PZHeader.="##INFO=<ID=PZComment$PZExtension,Number=.,Type=String,Description=\"Prioritization Comment for filter '$one_filter', auto-comment the annotations\">\n";
 				$VCF_header{$header_type}{"PZComment$PZExtension"}=1;
 			};#if
-			
+
+			# Default filter
+			if ($one_filter eq $filter) { # default filter
+				$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"PZComment"}=$prioritization_comment;
+				if (!exists $VCF_header{$header_type}{"PZComment"}) {
+					$PZHeader.="##INFO=<ID=PZComment,Number=.,Type=String,Description=\"Prioritization Comment for filter '$one_filter', auto-comment the annotations\">\n";
+					$VCF_header{$header_type}{"PZFlag"}=1;
+				};#if
+			}; #if
+
 		};#if
 
 		# PZComment
@@ -676,7 +703,16 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 				$PZHeader.="##INFO=<ID=PZInfos$PZExtension,Number=.,Type=String,Description=\"Prioritization Infos for filter '$one_filter', describing the PZScore and PZFlag calculation\">\n";
 				$VCF_header{$header_type}{"PZInfos$PZExtension"}=1;
 			};#if
-			
+
+			# Default filter
+			if ($one_filter eq $filter) { # default filter
+				$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"PZInfos"}=$prioritization_infos;
+				if (!exists $VCF_header{$header_type}{"PZInfos"}) {
+					$PZHeader.="##INFO=<ID=PZInfos,Number=.,Type=String,Description=\"Prioritization Infos for filter '$one_filter', describing the PZScore and PZFlag calculation\">\n";
+					$VCF_header{$header_type}{"PZFlag"}=1;
+				};#if
+			}; #if
+
 		};#if
 
 
@@ -729,26 +765,26 @@ while(<FILE_INPUT>) {
 
 		#### ERROR !!! ####
 		#%{$annotation_input{$chr}{$pos}{$ref}{$alt}{"INFOS"}} = map{split /=/, $_, 2}(split /;/, $annotation_input_line);
-		
+
 
 		#if ($DEBUG) {
 		#my @test=split /;/, $annotation_input_line;
 		foreach my $varval (split /;/, $annotation_input_line) {
 			#print "$varval\n" if $DEBUG;
 			(my $var, my $val)=(split /=/, $varval, 2);
-			
+
 			#print "   $var = $val\n" if $DEBUG;
 			if ($var ne ".") {
 				$annotation_input{$chr}{$pos}{$ref}{$alt}{"INFOS"}{$var}=$val;
 			};#if
 			#foreach my $t2 (split /=/, $varval, 2) {
 			#	print "   $t2\n" if $DEBUG;
-			#	
+			#
 			#};#foreach
 		};#foreach
 		#print "@test\n" if $DEBUG;
 		#print Dumper(\%{$annotation_input{$chr}{$pos}{$ref}{$alt}}) if $DEBUG;
-			
+
 		#};#if
 
 		while ((my $annotation_name, my $annotation_result) = each(%{$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}})){
@@ -783,7 +819,7 @@ while(<FILE_INPUT>) {
 		# OUTPUT
 		if (!$hard_filter_remove) {
 			#my $variant_annotation=join(";", map { "$_=$annotation_input{$chr}{$pos}{$ref}{$alt}{'INFOS'}{$_}" } keys %{$annotation_input{$chr}{$pos}{$ref}{$alt}{"INFOS"}	});
-			
+
 			my $variant_annotation="";
 			my @varval_INFOS=keys(%{$annotation_input{$chr}{$pos}{$ref}{$alt}{"INFOS"}}) if $DEBUG;
 			#print "@varval_INFOS\n" if $DEBUG;
@@ -796,7 +832,7 @@ while(<FILE_INPUT>) {
 				} else {
 					$variant_annotation.="$sep$var";
 				};#if
-				
+
 			};#foreach
 			#foreach my $varval (split /;/, @varval_INFOS ) {
 			#	print "$varval\n" if $DEBUG;
@@ -806,7 +842,7 @@ while(<FILE_INPUT>) {
 			#	$annotation_input{$chr}{$pos}{$ref}{$alt}{"INFOS"}{$var}=$val;
 			#	#foreach my $t2 (split /=/, $varval, 2) {
 			#	#	print "   $t2\n" if $DEBUG;
-			#	#	
+			#	#
 			#	#};#foreach
 			#};#foreach
 			print "$variant_annotation\n" if $DEBUG;

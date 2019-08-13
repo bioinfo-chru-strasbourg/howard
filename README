@@ -3,8 +3,8 @@
 # Highly Open and Valuable tool for   #
 #    Variant Annotation & Ranking     #
 #    for Discovery                    #
-# Release : 0.9.14b                   #
-# Date : 20190116                     #
+# Release : 0.9.15b                   #
+# Date : 20190813                     #
 # Author: Antony Le Bechec            #
 # Copyright: HUS                      #
 # Licence: GNU AGPL V3                #
@@ -14,7 +14,13 @@
 # DESCRIPTION #
 ###############
 
-HOWARD est un outil d'annotation et de priorisation des variants. Il utilise les outils ANNOVAR et SNPEff et leurs bases de donnees associees (environ 60 bases de donnees actuellement disponibles), tout en acceptant les bases de donnees a facon. Un fichier de configuration permet de gerer les versions des bases de donnres. Les bases de donnres d'ANNOVAR peuvent etre automatiquement telechargees. Il permet egalementd'effectuer des calculs specifiqueslies a l'annotation (ex : harmonisation de la frequence allelique par une annotation unique "VAF", determination du HGVS en fonction d'une liste de NM personnalises, calcul du code barre VaRank). L'algorithme de priorisation permet de taguer les variants (selectionnes ou a exclue), leur donner un score de priorisation, et generer un commentaire automatique (ex : "Polymorphisme identifie dans dbSNP. Associe au cancer du sein dans ClinVar." ). Les filtres sont definis sur les valeurs de qualite (provenant generalement des callers, comme par exemple la qualite de genotypage "GQ", ou la frequence allelique) et des annotations disponibles (ex : COSMIC, Clinvar, 1000genomes, PolyPhen, SIFT). Plusieurs filtres peuvent etre utilises en meme temps pour definir plusieurs niveaux de validation (ex : stringent, tolerant, etendu). HOWARD genere des fichiers de sortie au format VCF et TXT (tab-delimiter). HOWARD est parallelise (par makefile) sur les bases de donnees et le nombre de variants (data-scaling).
+HOWARD annotates and prioritizes variants, calculates and normalizes annotations, translates vcf format and generates variants statistics.
+HOWARD annotation is mainly based on ANNOVAR and snpEff tools to annotate, using available databases (see ANNOVAR and snpEff) and home made databases. It also uses BCFTOOLS to annotate variants with a VCF file. ANNOVAR and snpEff databases are automatically downloaded if needed.
+HOWARD calculation harmonizes allele frequency (VAF), extracts Nomen (transcript, cNomen, pNomen...) from HGVS fields with an optional list of personalized transcripts, generates VaRank format barcode.
+HOWARD prioritization algorithm uses profiles to flag variants (as passed or filtered), calculate a prioritization score, and automatically generate a comment for each variants (example: 'polymorphism identified in dbSNP. associated to Lung Cancer. Found in ClinVar database').Prioritization profiles are defined in a configuration file. A profile is defined as a list of annotation/value, using wildcards and comparison options (contains, lower than, greater than, equal...). Annotations fields may be quality values (usually from callers, such as 'GQ', 'DP') or other annotations fields provided by annotations tools, such as HOWARD itself (example: COSMIC, Clinvar, 1000genomes, PolyPhen, SIFT). Multiple profiles can be used simultaneously, which is useful to define multiple validation/prioritization levels (example: 'standard', 'stringent', 'rare variants', 'low allele frequency').
+HOWARD translates VCF format into TSV format, by sorting variants using specific fields (example : 'prioritization score', 'allele frequency', 'gene symbol'), including/excluding annotations/fields, including/excluding variants, adding fixed columns.
+HOWARD generates statistics files with a specific algorithm, snpEff and BCFTOOLS.
+HOWARD is multithreaded through the number of variants and by database (data-scaling).
 
 ################
 # REQUIREMENTS #
@@ -46,13 +52,13 @@ JAVA 1.8 or higher
 ######################
 # Databases are downloaded automatically by using annotation configuratin file, or options in command line (--annovar_databases, --snpeff_databases, assembly...)
 # Use a vcf file to download ANNOVAR databases (WITHOUT multithreading, "ALL" for all databases, "CORE" for core databases, "snpeff" for snpEff database, or a list of databases):
-# ./HOWARD.sh --vcf=docs/example.vcf --output=docs/example.annotated.vcf --annotation=ALL,snpeff [--annovar_databases=</path/to/annovar_databases> --snpeff_databases=</path/to/snpeff_databases> --assembly=<assembly> --thread=1 --verbose]
+# ./HOWARD --input=docs/example.vcf --output=docs/example.annotated.vcf --annotation=ALL,snpeff [--annovar_databases=</path/to/annovar_databases> --snpeff_databases=</path/to/snpeff_databases> --assembly=<assembly> --thread=1 --verbose]
 # Use this command multiple times for all needed assembly (such as hg19, hg38, mm9)
 # For home made databases, refer to config.annotation.ini file to construct and configure your database
 # Beware of proxy configuration!
 
 #######################################
-# HOWARD [0.9.14b-21/01/2019]
+# HOWARD [0.9.15b-13/08/2019]
 # HOWARD Annotation, Calculation, Prioritization and Translation, based on ANNOVAR and snpEff, allowing multithreading 
 # Antony Le Bechec @ HUS © GNU AGPL V3
 #######################################
@@ -107,7 +113,7 @@ JAVA 1.8 or higher
 #	Replace --filter and --format parameters by --prioritization and --translation parameters
 #	Add snpeff options to VCFannotation.pl
 # 0.9.14b-21/01/2019:
-#	Reorganization of folders (bin, docs, toolbox...).
+#	Reorganization of folders (bin, config, docs, toolbox...).
 #	Improve Translation (TSV or VCF, sort on fields, selection of fields, filtering on fields), especially memory efficiency
 #	Change Number/Type/Description of new INFO/FORMAT header generated
 #	Remove snpEff option --snpeff and --snpeff_hgvs. SnpEff is used through --annotation option
@@ -117,412 +123,172 @@ JAVA 1.8 or higher
 #	Bug fixed: file identification in annotation configuration
 #	Bug fixed: calculation INFO fields header, snpeff parameters options on multithreading
 #	Bug fixed: snpeff parameters in command line
+# 0.9.15b-13/08/2019:
+#	Rename HOWARD.sh to HOWARD.
+#	Add --nomen_fields parameter.
+#	Add --bcftools_stats and --stats parameter.
+#	Change PZScore, PZFlag, PZComment and PZInfos generation, adding default PZ and all PZ filters.
+#	Bug fixed: translation fields identification.
 
 #######################################
-# HOWARD [0.9.14b-21/01/2019]
+# HOWARD [0.9.15b-13/08/2019]
 # HOWARD Annotation, Calculation, Prioritization and Translation, based on ANNOVAR and snpEff, allowing multithreading 
 # Antony Le Bechec @ HUS © GNU AGPL V3
 #######################################
-# USAGE: HOWARD.sh --input=<FILE>  [options...]
-# Following options are available:
-# --input|vcf=<FILES>                Input file in VCF format (*vcf or *vcf.gz in BGZIP compression format)
-# --output=<FILE>                    Output annotated file in defined format (see --format option). Default 'output.vcf'
-# --annotate=<LIST>                  Annotation with BCFTOOLS: List of VCF files with TAG to annotate.
-#                                    Format 'VCF:TAG;VCF:TAG...' (e.g. 'annotate1.vcf:ID,QUAL,+TAG;annotate2.vcf:INFO/ANN').
-#                                    Default TAG '+INFO'
-# --annotation=<LIST>                Annotation: List of annotation (in the order to add into the input VCF)
-# --calculation=<LIST>               Calculation: List of calculation
-# --prioritization=<LIST OF FILE>    Priorization: List of prioritization config file
-# --translation=<STRING>             Translation: Output format, either TSV or VCF (default VCF)
-# --fields=<STRING>                  List of annotations from INFOS VCF field to include in the output file.
-#                                    Default 'INFOS' (as a uniq field in TSV format)
-#                                    Use 'ALL' to insert all other annotations in the list
-#                                    Annotations considered only if present in the file
-#                                    Example: 'PZScore,PZFlag,PZComment,Symbol,hgvs,location,outcome,ALL'
-# --sort=<STRING>                    Sort variants by a field and order (default '')
-#                                    Format: 'field1:type:order,field2:type:order'
-#                                       field considered only if present in the file
-#                                       type 'n' for numeric, '?' for autodetect with VCF header. Default ''.
-#                                       order either 'DESC' or 'ASC'. Default 'ASC'
-#                                    Example: 'PZFlag::DESC,PZScore:n:DESC' (to sort and order by relevance)
-# --sort_by=<STRING>                 Sort variants by a field (if no 'sort' option). Default ''
-#                                    Example: 'PZFlag,PZScore' (to sort by relevance)
-# --order_by=<STRING>                Order variants by a field (if no 'sort' option). Default ''.
-#                                    Example: 'DESC,DESC' (useful to sort by relevance)
-# --bcftools_expression=<STRING>     bcftools include expression to filter variants (default '').
-#                                    Example: "PZFlag='PASS'" (useful to hard filter), "QUAL>90", or "PZFlag='PASS'&&QUAL>90" to combine 
-# --config=<FILE>                    Configuration file (ANNOVAR and SNPEff)
-# --threads=<INTEGER>                Threads: number of thread to use (default defined in environment variable THREADS, or 1)
-# --env=<FILE>                       Environment configuration for multithreading (BGZIP, TABIX, BCFTOOLS)
-# --split=<INTEGER>                  Split by group of variants (default (10000)
-# --compress=<INTEGER>               Compression level output file *vcf.gz (0 to 9, -1 no compression by default)
-# --norm=<FILE>                      Genome fasta file to normalize (beware of chromosome identification, either 'x' or 'chrx')
-# --force                            Force annotation even if already exists in VCF header
-# --tmp=<FOLDER>                     Temporary folder (default /tmp)
-# --verbose                          VERBOSE option
-# --debug                            DEBUG option
-# --release                          RELEASE option
-# --help                             HELP option
+# USAGE: HOWARD --input=<FILE>  [options...]
 #
-# More options are also available for each steps:
-# VCFannotation.pl --help
-# VCFcalculation.pl --help
-# VCFprioritization.pl --help
-
-## Script Information
-# script: VCFannotation.pl
-# licence: GNU AGPL V3
-# date: 20190110
-# copyright: HUS
-# author: Antony Le Béchec
-# release: 0.9.9b
-Usage:
-    $ARGV[0] [options] --input=<VCF> --output=<VCF> [...]
-
-Options:
-  Main options:
-    --help|h|?
-      Print a brief help message and exits.
-
-    --man
-      Prints the manual page and exits.
-
-  Configuration:
-    --config|config_file=<file>
-      Configuration file for main parameters (default 'config.ini')
-
-    --config_annotation|config_annotation_file=<file>
-      Configuration file for annotation parameters (default
-      'config.annotation.ini').
-
-    --annovar_folder=<folder>
-      Folder with ANNOVAR scripts.
-
-    --annovar_databases=<folder>
-      Folder with ANNOVAR databases.
-
-    --snpeff_jar=<file>
-      snpEff JAR file.
-
-    --snpeff_databases=<folder>
-      Folder with snpEff databases.
-
-    --java
-      java binary (needed if snpeff option on). default "java"
-
-    --java_flags
-      java flags (needed if snpeff option on, especially for configure proxy
-      for databases donwload). default ""
-
-  Input/Ouput:
-    --input|input_file|vcf=<file>
-      VCF Input file
-
-    --output=<file>
-      VCF Output file
-
-  Options:
-    --annotation=<string>
-      Annotations sources, defined in the file 'config_annotation'. CASE
-      SENSITIVE. Example: "symbol", "Symbol,HGVS", "snpeff", "snpeff_split"
-
-      Specific snpEff options (if snpeff_jar and snpeff_databases defined):
-
-      "snpeff_split" to annotate "ANN" field and split snpEff annotation
-      into "snpeff_hgvs", "snpeff_gene_name", "snpeff_annotation" and
-      "snpeff_impact" fieds, and add to specific fields "symbol", "location"
-      and "outcome" if empty
-
-      "snpeff" to annotate "ANN" field
-
-      "snpeff_hgvs" to annotate "ANN" field and annotate "snpeff_hgvs" field
-      and add into "hgvs" if empty
-
-      "snpeff_gene_name" to annotate "ANN" field and annotate
-      "snpeff_gene_name" field and add into "symbol" if empty
-
-      "snpeff_annotation" to annotate "ANN" field and annotate
-      "snpeff_annotation" field and add into "location" and "outcome" if
-      empty
-
-      "snpeff_impact" to annotate "ANN" field and annotate "snpeff_impact"
-      field
-
-    --assembly=<string>
-      Genome assembly to use. Default "hg19", "default" to use the default
-      assembly in the configuration file.
-
-    --snpeff_stats=<file>
-      Statistics from snpEff (--snpeff option will be turned on). default
-      false.
-
-    --snpeff_spliceSiteSize=<integer>
-      Set size for splice sites (donor and acceptor) in bases. Default: 3
-
-    --snpeff_additional_options=<string>
-      additional options for snpEff (format "param1:value1|param2:value2").
-      default empty.
-
-    --show_annotations
-        List of annotations available
-
-    --show_annotations_full
-        List of annotations available with details
-
-## Script Information
-# script: VCFcalculation.pl
-# licence: GNU AGPL V3
-# date: 20181217
-# copyright: HUS
-# author: Antony Le Béchec
-# release: 0.9.2.3b
-Usage:
-    $ARGV[0] [options] --input=<VCF> --output=<VCF> [...]
-
-Options:
-  Main options:
-    --help|h|?
-      Print a brief help message and exits.
-
-    --man
-      Prints the manual page and exits.
-
-  Configuration:
-    --config|config_file=<file>
-      Configuration file for main parameters (default 'config.ini')
-
-  Input/Ouput:
-    --input|input_file|vcf=<file>
-      VCF Input file
-
-    --output=<file>
-      VCF Output file
-
-  Options:
-    --calculation=<string>
-      calculation to do. Example: "VAF", "VAF,CNOMEN,PNOMEN",
-      "VAF,VAF_STATS,NOMEN,VARTYPE"
-
-      Currently available :
-
-      VAF: add VAF calculation for each sample, depending on information
-      provided by callers (by order: FREQ, DP4, AD)
-
-      VAF_STATS: add VAF statistics on INFO field, from VAF calculation for
-      each sample, depending on information provided by callers (by order:
-      VAF, FREQ, DP4, AD)
-
-      CALLING_QUALITY: Calling quality (FORMAT/*) of all samples in case of
-      multiSample VCF, or all pipelines in case of multipipeline VCF
-
-      CALLING_QUALITY_EXPLODE: Explode all Calling quality (FORMAT/*) in
-      multiple fields in INFOS
-
-      NOMEN: Find the NOMEN from HGVS annotation. Depend on transcript of
-      reference. If no transcript of reference, first transcript. This
-      option create annotations on INFO field: NOMEN (full HGVS annotation),
-      CNOMEN (DNA level mutation "c."), PNOMEN (Protein level mutation
-      "p."), TNOMEN (transcript), ENOMEN (exon, if any), GNOMEN (gene, if
-      any)
-
-      BARCODE: Calculate VaRank BarCode
-
-      GENOTYPECONCORDANCE: If all samples with the same genotype
-
-      FINDBYPIPELINES: Number of pipeline calling the variant
-
-      VARTYPE: SNV if X>Y, MOSAIC if X>Y,Z or X,Y>Z, INDEL if XY>Z or X>YZ
-
-    --transcripts=<string>
-      file containing default transcripts (with or without release) for each
-      gene. If mmultiple transcripts for a gene, priority is assigned by
-      position in the list (e.g. TRANSCRIPT2a has priority over
-      TRANSCRIPT2b).
-
-      format :
-
-      TRANSCRIPT1 GENE1
-
-      TRANSCRIPT2a GENE2
-
-      TRANSCRIPT2b GENE2
-
-      TRANSCRIPT3 GENE3
-
-      ...
-
-    --trio=<string>
-      List of sample to identify a trio. Will automatically calculate VaRank
-      barcode, and add INFO/trio_variant_type (either "denovo", "dominant",
-      "recessive") as:
-
-      case "001": denovo
-
-      case "011","101","111","021","201","121","211": dominant
-
-      case "112","212","122","222": recessive
-
-      format: "father_sample_name,mother_sample_name,child_sample_name"
-
-## Script Information
-# script: VCFprioritization.pl
-# licence: GNU AGPL V3
-# date: 20180823
-# copyright: HUS
-# author: Antony Le Béchec
-# release: 0.9.5.1b
-Usage:
-    $ARGV[0] [options] --input=<VCF> --output=<VCF> [...]
-
-Options:
-  Main options:
-    --help|h|?
-      Print a brief help message and exits.
-
-    --man
-      Prints the manual page and exits.
-
-  Configuration:
-    --config|config_file=<file>
-      Configuration file for main parameters (default 'config.ini')
-
-    --config_prioritization|--config_prioritization_file|--config_filter|con
-    fig_filter_file=<file>
-      Configuration file for filter/prioritization parameters (default
-      'config.prioritization.ini' or 'config.filter.ini').
-
-  Input/Ouput:
-    --input|input_file|vcf=<file>
-      VCF Input file
-
-    --output=<file>
-      VCF Output file
-
-  Options:
-    --filter|prioritization=string
-      Filter profile, defined in the 'config_annotation' file. 'ALL' for all
-      filters defined in the 'config_annotation' file. If the filter doesn't
-      exist, 'ALL' will be used (if exist).
-
-    --hard!
-      Remove not PASS variant in default priorisation filter (PZFlag)
-
-    --pzfields=<string>
-      List of prioritisation information to show
-
-      Default: 'PZScore,PZFlag'
-
-      Format: 'field1,field2...'
-
-      Example: 'PZScore,PZFlag,PZComment,PZInfos'
-
-## Script Information
-# script: VCFtranslation.pl
-# licence: GNU AGPL V3
-# date: 20181217
-# copyright: HUS
-# author: Antony Le Béchec
-# release: 0.9.2.2b
-Usage:
-    $ARGV[0] [options] --input=<VCF> --output=<VCF> [...]
-
-Options:
-  Main options:
-    --help|h|?
-      Print a brief help message and exits.
-
-    --man
-      Prints the manual page and exits.
-
-  Configuration:
-    --config|config_file=<file>
-      Configuration file for main parameters (default 'config.ini')
-
-    --config_annotation|config_annotation_file=<file>
-      Configuration file for annotation parameters (default
-      'config.annotation.ini').
-
-  Input/Ouput:
-    --input|input_file|vcf=<file>
-      VCF Input file
-
-    --output=<file>
-      VCF Output file
-
-  Options:
-    --translation|format=<string>
-      Output format, such as 'tab' (default 'tab').
-
-    --fields=<string>
-      List of annotation from INFOS VCF field to include in the output file
-
-      Default: 'ALL'
-
-      Format: 'annotation1,annotation2,annotation3,...'
-
-      Example:
-      'PZScore,PZFlag,PZComment,Symbol,hgvs,location,outcome,AlleleFrequency
-      ,AD,DP,AF,GQ,Ensembl,ALL' (first fourth annotations are defined and
-      ordered, and all other are included but not ordered)
-
-    --sort_by=<string>
-      Sort variants by a field (default 'PZFlag,PZScore'). Only 2 levels
-
-      Example: 'PZFlag,PZScore' (to sort by relevance) or 'CHROM_NUM,POS'
-      (to sort by position)
-
-    --order_by=<string>
-      Order variants by a field (default '').
-
-      Example: 'DESC,DESC' (useful to sort by relevance)
-
-    --columns=<string>
-      Additional columns with values. All additional columns will be added
-      with the associated values. Available only for 'tab' format
-
-      Example: 'run:runA,sample:sample1'
-
-#######################################
-# HOWARD [0.9b-21/01/2019]
-# HOWARD Translation with awk 
-# Antony Le Bechec @ HUS © GNU AGPL V3
-#######################################
-# RELEASE NOTES:
-# 0.9b-21/01/2019:
-#	Script creation
-
-#######################################
-# HOWARD [0.9b-21/01/2019]
-# HOWARD Translation with awk 
-# Antony Le Bechec @ HUS © GNU AGPL V3
-#######################################
-# USAGE: VCFtranslation.sh --input=<FILE>  [options...]
-# Following options are available:
-# --input|vcf=<FILES>                Input file in VCF format (*vcf or *vcf.gz in BGZIP compression format)
-# --output=<FILE>                    Output annotated file in defined format (see --format option). Default '<input>.translated.<format>'
-# --translation=<STRING>             Translation: Output format, either TSV or VCF (default VCF)
-# --fields=<STRING>                  List of annotations from INFOS VCF field to include in the output file.
-#                                    Default 'INFOS' (as a uniq field in TSV format)
-#                                    Use 'ALL' to insert all other annotations in the list
-#                                    Annotations considered only if present in the file
-#                                    Example: 'PZScore,PZFlag,PZComment,Symbol,hgvs,location,outcome,ALL'
-# --sort=<STRING>                    Sort variants by a field and order (default '')
-#                                    Format: 'field1:type:order,field2:type:order'
-#                                       field considered only if present in the file
-#                                       type 'n' for numeric, '?' for autodetect with VCF header. Default ''.
-#                                       order either 'DESC' or 'ASC'. Default 'ASC'
-#                                    Example: 'PZFlag::DESC,PZScore:n:DESC' (to sort and order by relevance)
-# --sort_by=<STRING>                 Sort variants by a field (if no 'sort' option). Default ''
-#                                    Example: 'PZFlag,PZScore' (to sort by relevance)
-# --order_by=<STRING>                Order variants by a field (if no 'sort' option). Default ''.
-#                                    Example: 'DESC,DESC' (useful to sort by relevance)
-# --bcftools_expression=<STRING>     bcftools include expression to filter variants (default '').
-#                                    Example: "PZFlag='PASS'" (useful to hard filter), "QUAL>90", or "PZFlag='PASS'&&QUAL>90" to combine 
-# --env=<FILE>                       Environment configuration for multithreading (BGZIP, TABIX, BCFTOOLS)
-# --force                            Force annotation even if already exists in VCF header
-# --tmp=<FOLDER>                     Temporary folder (default /tmp)
-# --verbose                          VERBOSE option
-# --debug                            DEBUG option
-# --release                          RELEASE option
-# --help                             HELP option
+ 
+### Input/Output
+# --input=<FILES>                       Input files in VCF format
+#                                       Format *vcf, *vcf.gz or *bcf in BGZIP compression format
+#                                       Input Files will be merged (all samples in the output)
+# --output=<FILE>                       Output annotated file in defined format (see --format option).
+#                                       Default input file with extension *howard.vcf
+#
+ 
+### Main Options
+# --annotate=<LIST>                     Annotation with BCFTOOLS
+#                                       List of VCF files with TAG to annotate
+#                                       Format 'VCF:TAG;VCF:TAG...'
+#                                       Example: 'annotate1.vcf:ID,QUAL,+INFO;annotate2.vcf:INFO/ANN;annotate3.vcf'.
+#                                       Default TAG '+INFO'
+# --annotation=<LIST>                   List of annotation (in the order to add into the input VCF, case sensitive)
+#                                       Annotations sources, defined in the file 'config_annotation'
+#                                       Example: 'symbol', 'symbol,hgvs', 'snpeff', 'snpeff_split'
+#                                       Specific snpEff options (if snpeff_jar and snpeff_databases defined):
+#                                          'snpeff' to annotate 'ANN' field
+#                                          'snpeff_split' to annotate 'ANN' field and split snpEff annotation into:
+#                                             'snpeff_hgvs' to annotate 'ANN' field and annotate 'snpeff_hgvs' field and add into 'hgvs'
+#                                             'snpeff_gene_name' to annotate 'ANN' field and annotate 'snpeff_gene_name' field and add into 'symbol' if empty
+#                                             'snpeff_annotation' to annotate 'ANN' field and annotate 'snpeff_annotation' field and add into 'location' and 'outcome' if empty
+#                                             'snpeff_impact' to annotate 'ANN' field and annotate 'snpeff_impact' field
+# --calculation=<LIST>                  List of calculation
+#                                       Example: 'VAF', 'VAF,NOMEN'
+#                                       Currently available:
+#                                          'VAF' add VAF calculation for each sample, depending on information provided by callers (by order: FREQ, DP4, AD)
+#                                          'VAF_STATS' add VAF statistics on INFO field, from VAF calculation for each sample, depending on information provided by callers (by order: VAF, FREQ, DP4, AD)
+#                                          'CALLING_QUALITY' Calling quality (FORMAT/*) of all samples in case of multiSample VCF, or all pipelines in case of multipipeline VCF
+#                                          'CALLING_QUALITY_EXPLODE' Explode all Calling quality (FORMAT/*) in multiple fields in INFOS
+#                                          'BARCODE' Calculate VaRank BarCode
+#                                          'GENOTYPECONCORDANCE' If all samples with the same genotype
+#                                          'FINDBYPIPELINES' Number of pipeline calling the variant
+#                                          'VARTYPE' SNV if X>Y, MOSAIC if X>Y,Z or X,Y>Z, INDEL if XY>Z or X>YZ
+#                                          'NOMEN' Find the NOMEN from HGVS annotation. Depend on transcript of reference.
+#                                             If no transcript of reference, first transcript.
+#                                             This option create annotations on INFO field:
+#                                                NOMEN (full HGVS annotation)
+#                                                CNOMEN (DNA level mutation 'c.'')
+#                                                PNOMEN (Protein level mutation 'p.'')
+#                                                TVNOMEN (transcript with version)
+#                                                TNOMEN (transcript)
+#                                                VNOMEN (transcript version)
+#                                                ENOMEN (exon, if any)
+#                                                GNOMEN (gene, if any)
+# --prioritization=<LIST OF FILE>       List of prioritization profiles (see prioritization config file)
+# --translation=<STRING>                Output format, either TSV or VCF
+#                                       Default VCF
+#
+ 
+### Annotation Options
+# --assembly=<STRING>                   Genome assembly
+#                                       Default 'hg19', 'default' to use the default assembly in the configuration file
+# --snpeff_spliceSiteSize=<INTEGER>     Set size for splice sites (donor and acceptor) in bases
+#                                       Default 3
+# --snpeff_additional_options=<STRING>  Additional options for snpEff 
+#                                       Format 'param1:value1|param2:value2'
+#                                       Default ''
+#
+ 
+### Calculation Options
+# --transcripts=<FILE>                  File containing default transcript for each gene
+#                                       Format (second field optional):
+#                                          TRANSCRIPT1	GENE1
+#                                          TRANSCRIPT2	GENE2
+#                                          TRANSCRIPT3	GENE2
+#                                          ...
+# --nomen_fields=<STRING>               List of names of annotation field to use to calculate/extract NOMEN annotation
+#                                       Field order determine the priority
+#                                       Format: field1,field2,...
+#                                       Examples: 'hgvs', 'snpeff_hgvs', 'snpeff_hgvs,hgvs'
+#                                       Default: 'hgvs'
+# --trio=<STRING>                       List of sample to identify a trio
+#                                       Will automatically calculate VaRank barcode, and add INFO/trio_variant_type
+#                                       Format: 'father_sample_name,mother_sample_name,child_sample_name'
+#                                       Either 'denovo', 'dominant', 'recessive':
+#                                          denovo: '001'
+#                                          dominant: '011','101','111','021','201','121','211'
+#                                          recessive: '112','212','122','222'
+#
+ 
+### Prioritization Options
+# --hard                                Remove not PASS variant in default priorisation filter (PZFlag)
+# --pzfields=<STRING>                   List of prioritisation information to show
+#                                       Default: 'PZScore,PZFlag'
+#                                       Format: 'field1,field2...'
+#                                       Example: 'PZScore,PZFlag,PZComment,PZInfos'
+#
+ 
+### Translation Options
+# --fields=<STRING>                     List of annotations from INFO VCF field to include in the output file.
+#                                       Use 'INFO' to insert a uniq field INFO in TSV format
+#                                       Use 'ALL' to insert all other annotations in the list
+#                                       Annotations considered only if present in the file
+#                                       Default 'ALL'
+#                                       Example: 'PZScore,PZFlag,PZComment,Symbol,hgvs,location,outcome,ALL'
+# --sort=<STRING>                       Sort variants by a field and order (default '')
+#                                       Format: 'field1:type:order,field2:type:order'
+#                                          field considered only if present in the file
+#                                          type 'n' for numeric, '?' for autodetect with VCF header. Default ''.
+#                                          order either 'DESC' or 'ASC'. Default 'ASC'
+#                                       Example: 'PZFlag::DESC,PZScore:n:DESC' (to sort and order by relevance)
+# --sort_by=<STRING>                    Sort variants by a field (if no 'sort' option). Default ''
+#                                       Example: 'PZFlag,PZScore' (to sort by relevance)
+# --order_by=<STRING>                   Order variants by a field (if no 'sort' option). Default ''.
+#                                       Example: 'DESC,DESC' (useful to sort by relevance)
+# --bcftools_expression=<STRING>        bcftools include expression to filter variants (default '').
+#                                       Example: "PZFlag='PASS'" (useful to hard filter), "QUAL>90", or "PZFlag='PASS'&&QUAL>90" to combine 
+# --columns=<STRING>                    Additional columns with values
+#                                       All additional columns will be added with the associated values
+#                                       Available only for 'tsv' format translation
+#                                       Format: 'column1:value1,column2:value2,...'
+#                                       Example: 'run:runA,sample:sample1'
+#
+ 
+### Configuration
+# --env=<FILE>                          Environment configuration for multithreading (BGZIP, TABIX, BCFTOOLS)
+# --config=<FILE>                       Configuration file for main parameters
+#                                       Default 'config.ini'
+# --config_annotation=<FILE>            Configuration file for annotation parameters
+#                                       Default 'config.annotation.ini'
+# --config_prioritization=<FILE>        Configuration file for filter/prioritization parameters
+#                                       Default 'config.prioritization.ini'
+# --annovar_folder=<FOLDER>             Folder with ANNOVAR scripts
+# --annovar_databases=<FOLDER>          Folder with ANNOVAR databases
+# --snpeff_jar=<FILE>                   snpEff JAR file
+# --snpeff_databases=<FOLDER>           Folder with snpEff databases
+# --java=<FILE>                         java binary (needed if snpeff option on)
+#                                       Default 'java'
+# --java_flags=<STRING>                 java flags (needed if snpeff option on)
+#                                       especially for configure proxy for databases donwload
+#                                       Default ''
+ 
+### Statistics
+# --stats=<FILE>                        Generates HOWARD stats.
+# --snpeff_stats=<FILE>                 Generates snpEff stats.
+# --bcftools_stats=<FILE>               Generates BCFTOOLS stats.
+#
+ 
+### Other Options
+# --force                               Force annotation, calculation, prioritization
+#                                       Replace values even if already exist in VCF header
+# --threads=<INTEGER>                   Threads: number of thread to use (default defined in environment variable THREADS, or 1)
+# --split=<INTEGER>                     Split by group of variants (default (10000)
+# --compress=<INTEGER>                  Compression level output file *vcf.gz (0 to 9, -1 no compression by default)
+# --norm=<FILE>                         Genome fasta file to normalize (beware of chromosome identification, either 'x' or 'chrx')
+# --tmp=<FOLDER>                        Temporary folder (default /tmp)
+# --verbose                             VERBOSE option
+# --debug                               DEBUG option
+# --release                             RELEASE option
+# --help                                HELP option
+#
 

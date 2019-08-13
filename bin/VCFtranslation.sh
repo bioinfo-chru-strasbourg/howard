@@ -51,9 +51,9 @@ function usage {
 	echo "#                                    Format: 'field1:type:order,field2:type:order'";
 	echo "#                                       field considered only if present in the file";
 	echo "#                                       type 'n' for numeric, '?' for autodetect with VCF header. Default ''.";
-      	echo "#                                       order either 'DESC' or 'ASC'. Default 'ASC'";
-      	echo "#                                    Example: 'PZFlag::DESC,PZScore:n:DESC' (to sort and order by relevance)";
-      	echo "# --sort_by=<STRING>                 Sort variants by a field (if no 'sort' option). Default ''";
+  	echo "#                                       order either 'DESC' or 'ASC'. Default 'ASC'";
+  	echo "#                                    Example: 'PZFlag::DESC,PZScore:n:DESC' (to sort and order by relevance)";
+  	echo "# --sort_by=<STRING>                 Sort variants by a field (if no 'sort' option). Default ''";
 	echo "#                                    Example: 'PZFlag,PZScore' (to sort by relevance)";
 	echo "# --order_by=<STRING>                Order variants by a field (if no 'sort' option). Default ''.";
 	echo "#                                    Example: 'DESC,DESC' (useful to sort by relevance)";
@@ -324,7 +324,7 @@ FORMAT_OUTPUT=$(echo "$FORMAT" | tr '[:upper:]' '[:lower:]')
 	###############
 
 	#echo ""
-	#echo "# Reduce File" 
+	#echo "# Reduce File"
 
 	echo $FIELDS | tr "," "\n" > $FA.tsv.listINFO.param
 	$BCFTOOLS view -h $INPUT | awk -F"##INFO=<ID=" '{print $2}' | awk -F"[,>]" '{print $1}' | sort -u > $FA.tsv.listINFO.ALL

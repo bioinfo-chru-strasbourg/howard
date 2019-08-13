@@ -123,7 +123,7 @@ VCF Output file
 
 =item B<--calculation=<string>>
 
-calculation to do. 
+calculation to do.
 Example: "VAF", "VAF,CNOMEN,PNOMEN", "VAF,VAF_STATS,NOMEN,VARTYPE"
 
 Currently available :
@@ -161,6 +161,18 @@ TRANSCRIPT2b	GENE2
 TRANSCRIPT3	GENE3
 
 ...
+
+=item B<--nomen_fields=<string>>
+
+List of names of annotation field to use to calculate/extract NOMEN annotation.
+
+Field order determine the priority
+
+Format: field1,field2,...
+
+Examples: "hgvs", "snpeff_hgvs", "snpeff_hgvs,hgvs"
+
+Default: "hgvs"
 
 =item B<--trio=<string>>
 
@@ -288,7 +300,7 @@ my @default_transcripts;
 if (-e $transcripts_input) { #if file exist
 	# Open the file
 	open(FILE_TRANSCRIPTS, $transcripts_input) || die "Problem to open the file: $!";
-	# Read the file		
+	# Read the file
 	while(<FILE_TRANSCRIPTS>) {
 		# delete \n character
 		chomp;
@@ -320,7 +332,7 @@ $header.="#[INFO] Calculations: @calculation_list_input\n";
 my $hard_filter=$parameters{"hard"};
 
 
-# Annotation type 
+# Annotation type
 my $annotation_type="calculation";
 my $description_plus=" [Release=".$information{"release"}.";Date=".$information{"date"}.";AnnotationType=$annotation_type]";
 
@@ -411,33 +423,33 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 		$variant_annotations_list{"SAMPLE.$sample_name"}=$sample_quality;
 	};#foreach
 
-	
-	
+
+
 	#$$variant_values{"SAMPLE_LIST_CONCAT"}
 	# VARIANT
 
 	print "# Calculations: @calculation_list_input\n" if $DEBUG;
 
-	
+
 
 	foreach my $one_calculation (@calculation_list_input) {
 		print "#\n# Calculation '$one_calculation'\n" if $DEBUG;
 		my $is_calculated=0;
 
-		
-		
+
+
 		########################
 		# GENOTYPE_CONCORDANCE #
 		########################
 
 		if (uc(trim($one_calculation)) eq "GENOTYPECONCORDANCE") {
 			print "# Calculation '$one_calculation'...\n" if $DEBUG;
-			
+
 			if ($force || !defined $$variant_values{"INFOS"}{"GenotypeConcordance"}) {
 
 				my $GENOTYPE_CONCORDANCE="";
 				my $FindByPipelines="";
-				
+
 				my @GT_LIST;
 				my $number_pipelines=0;
 				my $seen=0;
@@ -452,7 +464,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 						};#if
 						#push @GT_LIST, $GT;
 					};#if
-				};# while 
+				};# while
 				print "\tGT_LIST @GT_LIST\n" if $DEBUG ;
 				my @GT_LIST_UNIQ = do { my %seen; grep { !$seen{$_}++ } @GT_LIST };
 				$seen=@GT_LIST;
@@ -464,8 +476,8 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 				print "\tseen $seen\n" if $DEBUG ;
 				print "\tGENOTYPE_CONCORDANCE $GENOTYPE_CONCORDANCE\n" if $DEBUG ;
 				#print "\tFindByPipelines $FindByPipelines\n" if $DEBUG ;
-			
-			
+
+
 				if ($GENOTYPE_CONCORDANCE ne "") {
 					# GenotypeConcordance in INFO
 					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"GenotypeConcordance"}=$GENOTYPE_CONCORDANCE;
@@ -481,12 +493,12 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 
 			$is_calculated=1;
 		};#if
-		
-		
+
+
 		###################
 		# FINDBYPIPELINES #
 		###################
-		
+
 		if (uc(trim($one_calculation)) eq "FINDBYPIPELINES") {
 			print "# Calculation '$one_calculation'...\n" if $DEBUG;
 
@@ -494,7 +506,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 
 				my $GENOTYPE_CONCORDANCE="";
 				my $FindByPipelines="";
-				
+
 				my @GT_LIST;
 				my $number_pipelines=0;
 				my $seen=0;
@@ -508,7 +520,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 							push @GT_LIST, $GT;
 						};#if
 					};#if
-				};# while 
+				};# while
 				print "\tGT_LIST @GT_LIST\n" if $DEBUG ;
 				my @GT_LIST_UNIQ = do { my %seen; grep { !$seen{$_}++ } @GT_LIST };
 				$seen=@GT_LIST;
@@ -520,8 +532,8 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 				print "\tseen $seen\n" if $DEBUG ;
 				#print "\tGENOTYPE_CONCORDANCE $GENOTYPE_CONCORDANCE\n" if $DEBUG ;
 				print "\tFindByPipelines $FindByPipelines\n" if $DEBUG ;
-			
-			
+
+
 				if ($FindByPipelines ne "") {
 					# FindByPipelines in INFO
 					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"FindByPipelines"}=$FindByPipelines;
@@ -530,16 +542,16 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 					$vcf_header{"INFO"}{"FindByPipelines"}{"Type"}="String";
 					$vcf_header{"INFO"}{"FindByPipelines"}{"Description"}="\"Number of pipelines which find the variant (if value = 0, that to say that the variant was filtered in by all pipelines)$description_plus\"";
 				};#if
-			
+
 			};#if
-				
+
 
 			#};#while
 
 			$is_calculated=1;
 		};#if
-		
-		
+
+
 		#######
 		# VAF #
 		#######
@@ -556,12 +568,12 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 
 			while ( my ($sample_name, $sample_quality) = each(%$samples) ) {
 				#print "$sample_name ".$$sample_quality{"VAF"}." \n" if $DEBUG;
-			
+
 				#if ($force || !defined $$sample_quality{"VAF"}) {
 				if ($force || !defined $annotation_output{$chr}{$pos}{$ref}{$alt}{"SAMPLES"}{$sample_name}{"VAF"}) {
 					my $VAF="";
-					
-				
+
+
 					# if FREQ
 					#$$sample_quality{"FREQ"}="2.36%,5.25%";
 					if ($VAF eq "" && defined $$sample_quality{"FREQ"}) {
@@ -577,7 +589,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 							print "\tVAF = $VAF\n" if $DEBUG ;
 						};#if
 					};#if
-				
+
 					# if DP4
 					#$$sample_quality{"DP4"}="36,33,30,5";
 					#$$sample_quality{"DP4"}="36,33,30,5,10,5";
@@ -592,7 +604,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 							print "\tVAF = $VAF\n" if $DEBUG ;
 						};#if
 					};#if
-				
+
 					# if AD
 					if ($VAF eq "" && defined $$sample_quality{"AD"}) {
 						print "\tVAF calculated on AD (".$$sample_quality{"AD"}.")\n" if $DEBUG ;
@@ -604,7 +616,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 							print "\tVAF = $VAF\n" if $DEBUG ;
 						};#if
 					};#if
-				
+
 					# Check VAF NOT null
 					if ($VAF ne "") {
 						push @VAF_LIST, $VAF ;
@@ -625,28 +637,28 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 							$vcf_header{"FORMAT"}{"VAF"}{"Number"}="1";
 							$vcf_header{"FORMAT"}{"VAF"}{"Type"}="Float";
 							$vcf_header{"FORMAT"}{"VAF"}{"Description"}="\"VAF Variant Frequency, calculated from quality$description_plus\"";
-					
+
 						};#if
 					};#if
-				
+
 				} else {
 					push @VAF_LIST, $$sample_quality{"VAF"} ;
 					#@VAF_LIST=split(/,/,$$sample_quality{"VAF"});
-					
-				
+
+
 				};#if
-				
-			};# while 
-			
+
+			};# while
+
 			print "@VAF_LIST\n" if $DEBUG;
-			
+
 			#print "VAF ".$$variant_values{"VAF"}."\n" if $DEBUG;
 			if (uc(trim($one_calculation)) eq "VAF_STATS") {
-			
+
 				if ($force || !defined $$variant_values{"INFOS"}{"VAF"}) {
-			
+
 				#if ($force || !defined $$variant_values{"VAF"}) {
-			
+
 				$VAF_min = min @VAF_LIST;
 				$VAF_max = max @VAF_LIST;
 				$VAF_average = mean(@VAF_LIST);
@@ -656,7 +668,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 				print "\tVAF MAX = $VAF_max\n" if $DEBUG ;
 				print "\tVAF AVG = $VAF_average\n" if $DEBUG ;
 				print "\tVAF MED = $VAF_median\n" if $DEBUG ;
-		
+
 				#if ($VAF ne "" && $VAF ne ".") {
 				if (join("",@VAF_LIST) ne "") {
 					my $VAF=join(",",@VAF_LIST);
@@ -670,7 +682,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 					$vcf_header{"INFO"}{"VAF"}{"Type"}="Float";
 					$vcf_header{"INFO"}{"VAF"}{"Description"}="\"VAF Variant Frequency, calculated from quality$description_plus\"";
 				};#if
-		
+
 				if ($VAF_min ne "") {
 					# VAF_min in INFO
 					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"VAF_min"}=$VAF_min;
@@ -679,7 +691,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 					$vcf_header{"INFO"}{"VAF_min"}{"Type"}="Float";
 					$vcf_header{"INFO"}{"VAF_min"}{"Description"}="\"VAF Variant Frequency minimum$description_plus\"";
 				};#if
-		
+
 				if ($VAF_max ne "") {
 					# VAF_min in INFO
 					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"VAF_max"}=$VAF_max;
@@ -688,7 +700,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 					$vcf_header{"INFO"}{"VAF_max"}{"Type"}="Float";
 					$vcf_header{"INFO"}{"VAF_max"}{"Description"}="\"VAF Variant Frequency max$description_plus\"";
 				};#if
-		
+
 				if ($VAF_average ne "") {
 					# VAF_min in INFO
 					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"VAF_average"}=$VAF_average;
@@ -697,7 +709,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 					$vcf_header{"INFO"}{"VAF_average"}{"Type"}="Float";
 					$vcf_header{"INFO"}{"VAF_average"}{"Description"}="\"VAF Variant Frequency average$description_plus\"";
 				};#if
-		
+
 				if ($VAF_median ne "") {
 					# VAF_min in INFO
 					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"VAF_median"}=$VAF_median;
@@ -706,27 +718,27 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 					$vcf_header{"INFO"}{"VAF_median"}{"Type"}="Float";
 					$vcf_header{"INFO"}{"VAF_median"}{"Description"}="\"VAF Variant Frequency median$description_plus\"";
 				};#if
-				
+
 				};#if
-				
+
 			};#if
 
 			$is_calculated=1;
 		};#if
-		
-		
+
+
 		################
 		# CALLING_QUAL #
 		################
 
 		if (uc(trim($one_calculation)) eq "CALLING_QUALITY") {
 			print "# Calculation '$one_calculation'...\n" if $DEBUG;
-			
+
 			# Catch CALLING_QUALITY
 			my $CALLING_QUALITY="SAMPLE:".$$variant_values{"FORMAT"}."|".$$variant_values{"SAMPLE_LIST_CONCAT"};
 			# cleaning CALLING_QUALITY
 			$CALLING_QUALITY =~ tr/;/,/;
-			
+
 			print "CALLING_QUALITY: ".$CALLING_QUALITY."\n" if $DEBUG;
 
 			if ($CALLING_QUALITY ne "") {
@@ -734,12 +746,12 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 				$vcf_header{"INFO"}{"CALLING_QUALITY"}{"Number"}="1";
 				$vcf_header{"INFO"}{"CALLING_QUALITY"}{"Type"}="String";
 				$vcf_header{"INFO"}{"CALLING_QUALITY"}{"Description"}="\"Calling quality (FORMAT/*) of all samples in case of multiSample VCF, or all pipelines in case of multipipeline VCF$description_plus\"";
-			
+
 			};#if
 
 			$is_calculated=1;
 		};#if
-		
+
 
 		########################
 		# CALLING_QUAL_EXPLODE #
@@ -747,10 +759,10 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 
 		if (uc(trim($one_calculation)) eq "CALLING_QUALITY_EXPLODE") {
 			print "# Calculation '$one_calculation'...\n" if $DEBUG;
-			
+
 			#print Dumper($$variant_values{"SAMPLES"}) if $DEBUG;
-			
-			
+
+
 			while ( my ($sample_name, $sample_quality) = each(%$samples) ) {
 				while ( my ($quality_name, $quality_value) = each(%$sample_quality) ) {
 					#print "$sample_name ".$$sample_quality{"VAF"}." \n" if $DEBUG;
@@ -758,14 +770,14 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 					my $CALLING_QUALITY_EXPLODE_value=$quality_value;
 					# cleaning CALLING_QUALITY_EXPLODE_value
 					$CALLING_QUALITY_EXPLODE_value =~ tr/;/,/;
-					
+
 					if ($CALLING_QUALITY_EXPLODE_value ne "") {
 						my $value=$CALLING_QUALITY_EXPLODE_value;
 						my $number=($vcf_header_hash{"FORMAT"}{$quality_name}{"Number"} eq "R")?".":$vcf_header_hash{"FORMAT"}{$quality_name}{"Number"};
 						my $type=$vcf_header_hash{"FORMAT"}{$quality_name}{"Type"};
 						my $description=$vcf_header_hash{"FORMAT"}{$quality_name}{"Description"};
-						
-						# FORMAT header Consolidation 
+
+						# FORMAT header Consolidation
 						# Number
 						if (trim($number) eq "") {
 							$number=($vcf_header{"FORMAT"}{$quality_name}{"Number"} eq "R")?".":$vcf_header{"FORMAT"}{$quality_name}{"Number"};
@@ -781,11 +793,11 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 							$description=($vcf_header{"FORMAT"}{$quality_name}{"Description"} eq "R")?".":$vcf_header{"FORMAT"}{$quality_name}{"Description"};
 						};#if
 						if (trim($description) eq "") { $description="\"unknown\""; };#if
-						
+
 						print "$CALLING_QUALITY_EXPLODE_name number=$number\n" if $DEBUG;
 						print "$CALLING_QUALITY_EXPLODE_name type=$type\n" if $DEBUG;
 						print "$CALLING_QUALITY_EXPLODE_name description=$description\n" if $DEBUG;
-						
+
 						$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{$CALLING_QUALITY_EXPLODE_name}=$value;
 						$vcf_header{"INFO"}{$CALLING_QUALITY_EXPLODE_name}{"Number"}=$number;
 						$vcf_header{"INFO"}{$CALLING_QUALITY_EXPLODE_name}{"Type"}=$type;
@@ -795,11 +807,11 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 					#print Dumper(\$vcf_header_hash{"FORMAT"}{$quality_name}) if $DEBUG;
 					#print $vcf_header_hash{"FORMAT"}{$quality_name}{"Number"} if $DEBUG;
 					#print "TEST".$vcf_header{"FORMAT"}{"VAF"}{"Number"}."\n" if $DEBUG;
-					
-					
+
+
 				};
 			};
-			
+
 			if (0) {
 			my $CALLING_QUALITY="SAMPLE:".$$variant_values{"FORMAT"}."|".$$variant_values{"SAMPLE_LIST_CONCAT"};
 			print "CALLING_QUALITY: ".$CALLING_QUALITY."\n" if $DEBUG;
@@ -809,14 +821,14 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 				$vcf_header{"INFO"}{"CALLING_QUALITY"}{"Number"}=".";
 				$vcf_header{"INFO"}{"CALLING_QUALITY"}{"Type"}="String";
 				$vcf_header{"INFO"}{"CALLING_QUALITY"}{"Description"}="\"Calling quality (FORMAT/*) of all samples in case of multiSample VCF, or all pipelines in case of multipipeline VCF$description_plus\"";
-			
+
 			};#if
 			};#if
-			
+
 
 			$is_calculated=1;
 		};#if
-		
+
 
 		###########
 		# VARTYPE #
@@ -824,7 +836,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 
 		if (uc(trim($one_calculation)) eq "VARTYPE") {
 			print "# Calculation '$one_calculation'...\n" if $DEBUG;
-			
+
 			# Catch VARTYPE
 			my $REF=$$variant_values{"REF"};
 			my $ALT=$$variant_values{"ALT"};
@@ -840,7 +852,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 			};#if
 			# cleaning VARTYPE
 			#$VARTYPE =~ tr/;/,/;
-			
+
 			#print "VARTYPE: ".$VARTYPE."\n" if $DEBUG;
 
 			if ($VARTYPE ne "") {
@@ -848,7 +860,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 				$vcf_header{"INFO"}{"VARTYPE"}{"Number"}="1";
 				$vcf_header{"INFO"}{"VARTYPE"}{"Type"}="String";
 				$vcf_header{"INFO"}{"VARTYPE"}{"Description"}="\"Variant type: SNV if X>Y, MOSAIC if X>Y,Z or X,Y>Z, INDEL if XY>Z or X>YZ$description_plus\"";
-			
+
 			};#if
 
 			$is_calculated=1;
@@ -858,9 +870,9 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 		#########
 		# Nomen #
 		#########
-		
+
 		#my @default_transcripts=("NM_001122607");
-		
+
 
 		#if (uc(trim($one_calculation)) eq "NOMEN" || uc(trim($one_calculation)) eq "CNOMEN" || uc(trim($one_calculation)) eq "PNOMEN") {
 		if (uc(trim($one_calculation)) eq "NOMEN") {
@@ -869,27 +881,52 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 			#while ( my ($sample_name, $sample_quality) = each(%$samples) ) {
 			if ($force || !defined $$variant_values{"INFOS"}{"NOMEN"}) {
 				#print "$sample_name\n" if $DEBUG;
-				
+
 				#print "".$$variant_values{"INFOS"}{"hgvs"} if $DEBUG;
 				#print "".$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"hgvs"} if $DEBUG;
 				my $NOMEN=$$variant_values{"INFOS"}{"cnomen"};
 				my $CNOMEN=$$variant_values{"INFOS"}{"cnomen"};
 				my $PNOMEN=$$variant_values{"INFOS"}{"pnomen"};
+				my $TVNOMEN=$$variant_values{"INFOS"}{"tvnomen"};
 				my $TNOMEN=$$variant_values{"INFOS"}{"tnomen"};
+				my $VNOMEN=$$variant_values{"INFOS"}{"vnomen"};
 				my $ENOMEN=$$variant_values{"INFOS"}{"enomen"};
 				my $GNOMEN=$$variant_values{"INFOS"}{"gnomen"};
-				
-				#if (!defined $CNOMEN || !defined $PNOMEN) { 
-				if (defined $$variant_values{"INFOS"}{"hgvs"}) {
-					my @HGVS_split=split(/,/,$$variant_values{"INFOS"}{"hgvs"});
-					my $assigned=0;	
+
+				print "# Calculation '$one_calculation'...\n" if $DEBUG;
+
+				print "# nomen_fields '".$parameters{'nomen_fields'}."'...\n" if $VERBOSE;
+				my @nomen_fields_split=split(/,/,$parameters{'nomen_fields'});
+				my $value_hgvs;
+				foreach my $one_nomen_field (@nomen_fields_split) {
+					print "# one_nomen_field '".$one_nomen_field."'...\n" if $VERBOSE;
+					print "# one_nomen_field value '".$$variant_values{"INFOS"}{$one_nomen_field}."'...\n" if $VERBOSE;
+					if (defined $$variant_values{"INFOS"}{$one_nomen_field} && $$variant_values{"INFOS"}{$one_nomen_field} ne "" && !defined $value_hgvs) {
+						$value_hgvs=$$variant_values{"INFOS"}{$one_nomen_field};
+					}; #if
+				}; # foreach
+				#my $value_hgvs=$$variant_values{$parameters{'nomen_fields'}};
+				print "# nomen_fields value '".$value_hgvs."'...\n" if $VERBOSE;
+
+
+				#if (!defined $CNOMEN || !defined $PNOMEN) {
+				#if (defined $$variant_values{"INFOS"}{"hgvs"}) {
+				if (defined $value_hgvs) {
+					print "# nomen_fields value defined ! '".$value_hgvs."'...\n" if $VERBOSE;
+
+					#my @HGVS_split=split(/,/,$$variant_values{"INFOS"}{"hgvs"});
+					#my @HGVS_split=$value_hgvs;
+					my @HGVS_split=split(/,/,$value_hgvs);
+					my $assigned=0;
 					foreach my $one_hgvs (@HGVS_split) {
 						print "$one_hgvs\n" if $DEBUG;
 						@one_hgvs_split=split(/:/,$one_hgvs);
 						my $N;
 						my $C;
 						my $P;
+						my $TV;
 						my $T;
+						my $V;
 						my $E;
 						my $G;
 						my $O;
@@ -907,10 +944,28 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 								$P=$one_hgvs_infos;
 								$assigned=1;
 							};#if
+							# TVNOMEN
+							if ($one_hgvs_infos=~ /^NM_(.*)$/) {
+								$TV=$one_hgvs_infos;
+								$assigned=1;
+							};#if
 							# TNOMEN
 							if ($one_hgvs_infos=~ /^NM_(.*)$/) {
-								$T=$one_hgvs_infos;
-								$assigned=1;
+								#$T=$one_hgvs_infos;
+								my @one_hgvs_infos_T_split=split(/\./,$one_hgvs_infos);
+								if (defined $one_hgvs_infos_T_split[0]) {
+									$T=$one_hgvs_infos_T_split[0];
+									$assigned=1;
+								}; # if
+							};#if
+							# VNOMEN
+							if ($one_hgvs_infos=~ /^NM_(.*)$/) {
+								#$V=$one_hgvs_infos;
+								my @one_hgvs_infos_T_split=split(/\./,$one_hgvs_infos);
+								if (defined $one_hgvs_infos_T_split[1]) {
+									$V=$one_hgvs_infos_T_split[1];
+									$assigned=1;
+								}; # if
 							};#if
 							# ENOMEN
 							if ($one_hgvs_infos=~ /^exon(.*)$/) {
@@ -944,30 +999,26 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 							};#if
 							# DEFAULT TRANSCRIPT
 							#if (in_array($one_hgvs_infos,@default_transcripts)) {
-							my @one_hgvs_infos_split=split(/\./,$one_hgvs_infos);
-							my $transcript_NM=$one_hgvs_infos_split[0];
+							#my @one_hgvs_infos_split=split(/\./,$one_hgvs_infos);
+							#my $transcript_NM=$one_hgvs_infos_split[0];
+							my $transcript_NM=$T;
+							#print "default transcipt to find: $transcript_NM\n" if $DEBUG;
 							if (grep( /^$transcript_NM$/, @default_transcripts)) {
 								print "default transcipt found: $transcript_NM\n" if $DEBUG;
 								$T_D=$one_hgvs_infos;
 							};#fi
-							
+
 						};#foreach
-						$N="$C$P$T$E$G";
-						if (0) {
-							print "C=$C\n" if $DEBUG;
-							print "P=$P\n" if $DEBUG;
-							print "T=$T\n" if $DEBUG;
-							print "E=$E\n" if $DEBUG;
-							print "G=$G\n" if $DEBUG;
-							print "TD=$T_D\n" if $DEBUG;
-						};#if
+						$N="$C$P$TV$E$G";
 						if ($N ne "") {
 							if ( !$assigned || defined $T_D) {
 								print "assi\n" if $DEBUG;
 								$NOMEN=$one_hgvs;
 								$CNOMEN=$C;
 								$PNOMEN=$P;
+								$TVNOMEN=$TV;
 								$TNOMEN=$T;
+								$VNOMEN=$V;
 								$ENOMEN=$E;
 								$GNOMEN=$G;
 								$assigned=1;
@@ -978,7 +1029,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 						#};#if
 					};#foreach
 					#print $HGVS_split[0]."\n" if $DEBUG;
-				
+
 				};#fi
 				#};#if
 
@@ -986,7 +1037,9 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 					print "NOMEN=$NOMEN\n" if $DEBUG;
 					print "CNOMEN=$CNOMEN\n" if $DEBUG;
 					print "PNOMEN=$PNOMEN\n" if $DEBUG;
+					print "TVNOMEN=$TVNOMEN\n" if $DEBUG;
 					print "TNOMEN=$TNOMEN\n" if $DEBUG;
+					print "VNOMEN=$VNOMEN\n" if $DEBUG;
 					print "ENOMEN=$ENOMEN\n" if $DEBUG;
 					print "GNOMEN=$GNOMEN\n" if $DEBUG;
 				};#if
@@ -1018,6 +1071,15 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 					$vcf_header{"INFO"}{"PNOMEN"}{"Type"}="String";
 					$vcf_header{"INFO"}{"PNOMEN"}{"Description"}="\"PNOMEN hgvs nomenclature at Protein level related to a transcript (TNOMEN)$description_plus\"";
 				};#if
+				# TVNOMEN
+				if ($TVNOMEN ne "") {
+					# VAF in INFO
+					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"TVNOMEN"}=$TVNOMEN;
+					# ADD to HEADER
+					$vcf_header{"INFO"}{"TVNOMEN"}{"Number"}="1";
+					$vcf_header{"INFO"}{"TVNOMEN"}{"Type"}="String";
+					$vcf_header{"INFO"}{"TVNOMEN"}{"Description"}="\"TVNOMEN hgvs transcript with version (if any) used (e.g. for CNOMEN and PNOMEN)$description_plus\"";
+				};#if
 				# TNOMEN
 				if ($TNOMEN ne "") {
 					# VAF in INFO
@@ -1026,6 +1088,15 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 					$vcf_header{"INFO"}{"TNOMEN"}{"Number"}="1";
 					$vcf_header{"INFO"}{"TNOMEN"}{"Type"}="String";
 					$vcf_header{"INFO"}{"TNOMEN"}{"Description"}="\"TNOMEN hgvs transcript used (e.g. for CNOMEN and PNOMEN)$description_plus\"";
+				};#if
+				# VNOMEN
+				if ($VNOMEN ne "") {
+					# VAF in INFO
+					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"VNOMEN"}=$VNOMEN;
+					# ADD to HEADER
+					$vcf_header{"INFO"}{"VNOMEN"}{"Number"}="1";
+					$vcf_header{"INFO"}{"VNOMEN"}{"Type"}="String";
+					$vcf_header{"INFO"}{"VNOMEN"}{"Description"}="\"VNOMEN hgvs transcript version used (e.g. for CNOMEN and PNOMEN)$description_plus\"";
 				};#if
 				# ENOMEN
 				if ($ENOMEN ne "") {
@@ -1046,7 +1117,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 					$vcf_header{"INFO"}{"GNOMEN"}{"Type"}="String";
 					$vcf_header{"INFO"}{"GNOMEN"}{"Description"}="\"GNOMEN hgvs gene nomenclature related to a transcript (TNOMEN)$description_plus\"";
 				};#if
-				
+
 
 			};#if
 
@@ -1077,11 +1148,11 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 
 
 				print "TRIONAME:@trio_array \n" if $DEBUG;
-				
+
 				my $father_name=$trio_array[0];
 				my $mother_name=$trio_array[1];
 				my $child_name=$trio_array[2];
-				
+
 				my $father_barcode="";
 				my $mother_barcode="";
 				my $child_barcode="";
@@ -1089,14 +1160,14 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 
 				for my $sample_name (@sample_list_header) {
 					print "SAMPLE: $sample_name ".$$samples{$sample_name}{"GT"}."\n" if $DEBUG;
-					
+
 					my $BARCODE="";
 					my $GT=$$samples{$sample_name}{"GT"};
-				
+
 					if (defined $GT) {
-			
+
 						switch ($GT) {
-				
+
 							case "1/1"
 							{
 								$BARCODE="2";
@@ -1116,17 +1187,17 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 							{
 								$BARCODE="?";
 							}
-				
+
 						};# switch
 					};#if
-	
-			
+
+
 					if ($BARCODE ne "") {
 						push @BARCODE_LIST, $BARCODE ;
 					} else {
 						$BARCODE="?";
 					};# if
-					
+
 					if ("$father_name" eq "$sample_name") {
 						$father_barcode=$BARCODE;
 					};#if
@@ -1138,21 +1209,21 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 					};#if
 
 					print "GT: $GT > ".$BARCODE." \n" if $DEBUG;
-					
-					
+
+
 				};#for
-				
+
 				# TRIO
 				$trio_barcode="$father_barcode$mother_barcode$child_barcode";
 				print "TRIO:$father_barcode$mother_barcode$child_barcode  FATHER:$father_barcode  MOTHER:$mother_barcode  CHILD:$child_barcode \n" if $DEBUG;
-				
-				
+
+
 				if (length($trio_barcode)==3) {
-				
+
 					my $trio_variant_type="unknown";
-				
+
 					switch ($trio_barcode) {
-				
+
 						case "001"
 						{
 							$trio_variant_type="denovo";
@@ -1168,20 +1239,20 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 							$trio_variant_type="recessive";
 							break;
 						} # case
-		
+
 					};# switch
-					
+
 					print "trio_variant_type=$trio_variant_type \n" if $DEBUG;
-					
+
 					# BARCODE in INFO
 					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"trio_variant_type"}=$trio_variant_type;
 					# ADD to HEADER
 					$vcf_header{"INFO"}{"trio_variant_type"}{"Number"}="1";
 					$vcf_header{"INFO"}{"trio_variant_type"}{"Type"}="String";
-					$vcf_header{"INFO"}{"trio_variant_type"}{"Description"}="\"Trio variant type from VaRank BARCODE$description_plus\"";			
-					
+					$vcf_header{"INFO"}{"trio_variant_type"}{"Description"}="\"Trio variant type from VaRank BARCODE$description_plus\"";
+
 				};#if
-				
+
 				if (@BARCODE_LIST) {
 					# BARCODE in INFO
 					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"BARCODE"}=join("",@BARCODE_LIST);
@@ -1190,17 +1261,17 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 					$vcf_header{"INFO"}{"BARCODE"}{"Type"}="String";
 					$vcf_header{"INFO"}{"BARCODE"}{"Description"}="\"VaRank BARCODE$description_plus\"";
 				};#if
-				
-				
-				
-			
+
+
+
+
 			};#if
-			
+
 			print "@BARCODE_LIST\n" if $DEBUG;
 
 			$is_calculated=1;
 		};#if
-		
+
 
 
 		# Is calculated ?
@@ -1209,7 +1280,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 		} else {
 			print "# Calculation '$one_calculation' NOT executed\n\n" if $DEBUG;
 		};#if
-		
+
 
 	};#foreach
 
@@ -1255,8 +1326,8 @@ while(<FILE_INPUT>) {
 				my %infos;
 				foreach my $info (@infos_split) {
 					#print "$info\n";
-					#my @info_split=split("=",$info,2); 
-					my @info_split=split("=",$info,2); 
+					#my @info_split=split("=",$info,2);
+					my @info_split=split("=",$info,2);
 					$infos{$info_split[0]}=$info_split[1];
 				};#foreach
 				#print Dumper(\%infos); # if $DEBUG;
@@ -1274,7 +1345,7 @@ while(<FILE_INPUT>) {
 					};#while
 				};#if
 			};#if
-			
+
 		} else {
 			# just info, such as ##fileformat=VCFv4.1
 			$vcf_header_information.="$line_content\n";
@@ -1283,7 +1354,7 @@ while(<FILE_INPUT>) {
 		#%vcf_header = map{split /,/, $_}(split /=</, $line_content);
 
 		#print "########HEADER $line_content\n";
-		#check the line in order to insert the description of the new info into the VCF INFO column 
+		#check the line in order to insert the description of the new info into the VCF INFO column
 		#if (substr($line_content,0,7) eq "##INFO=") {
 		#	$line_info_read=1;
 		#} elsif ($line_info_read==1) {
@@ -1314,7 +1385,7 @@ while(<FILE_INPUT>) {
 					#print " > ".$vcf_header{$type}{$ID}{"Description"}."\n" if $DEBUG;
 					#print "\n" if $DEBUG;
 				};#if
-				
+
 				while ((my $info_var, my $info_val) = each(%{$vcf_header{$type}{$ID}})){
 					if (trim($info_val) ne "") {
 						$line.=",$info_var=$info_val";
@@ -1349,26 +1420,26 @@ while(<FILE_INPUT>) {
 
 		#### ERROR !!! ####
 		#%{$annotation_input{$chr}{$pos}{$ref}{$alt}{"INFOS"}} = map{split /=/, $_, 2}(split /;/, $annotation_input_line);
-		
+
 
 		#if ($DEBUG) {
 		#my @test=split /;/, $annotation_input_line;
 		foreach my $varval (split /;/, $annotation_input_line) {
 			#print "$varval\n" if $DEBUG;
 			(my $var, my $val)=(split /=/, $varval, 2);
-			
+
 			#print "   $var = $val\n" if $DEBUG;
 			if ($var ne ".") {
 				$annotation_input{$chr}{$pos}{$ref}{$alt}{"INFOS"}{$var}=$val;
 			};#if
 			#foreach my $t2 (split /=/, $varval, 2) {
 			#	print "   $t2\n" if $DEBUG;
-			#	
+			#
 			#};#foreach
 		};#foreach
 		#print "@test\n" if $DEBUG;
 		#print Dumper(\%{$annotation_input{$chr}{$pos}{$ref}{$alt}}) if $DEBUG;
-			
+
 		#};#if
 
 		while ((my $annotation_name, my $annotation_result) = each(%{$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}})){
@@ -1394,23 +1465,23 @@ while(<FILE_INPUT>) {
 		foreach my $sample_name (split(/\t/,$annotation_output{$chr}{$pos}{$ref}{$alt}{"SAMPLE_LIST_HEADER"})) {
 			my $sample_quality="";
 			foreach my $quality (split(/:/,$annotation_output{$chr}{$pos}{$ref}{$alt}{"FORMAT"})) {
-			
+
 				#print "$sample_i $sample_name $quality ".$annotation_output{$chr}{$pos}{$ref}{$alt}{"SAMPLES"}{$sample_name}{$quality}."\n" if $DEBUG;
 				my $sep=((trim($sample_quality) eq "")?"":":");
 				$sample_quality.=$sep.$annotation_output{$chr}{$pos}{$ref}{$alt}{"SAMPLES"}{$sample_name}{$quality};
-			
+
 			}
 			#print "$sample_i $sample_name ".$line_content_split[8]." $sample_quality\n" if $DEBUG;
 			$line_content_split[$sample_i]=$sample_quality;
 			$sample_i++;
 		}
-		
+
 		#print Dumper(\%{$annotation_input{$chr}{$pos}{$ref}{$alt}}) if $DEBUG;
 
 		# OUTPUT
 		if (!$hard_filter_remove) {
 			#my $variant_annotation=join(";", map { "$_=$annotation_input{$chr}{$pos}{$ref}{$alt}{'INFOS'}{$_}" } keys %{$annotation_input{$chr}{$pos}{$ref}{$alt}{"INFOS"}	});
-			
+
 			my $variant_annotation="";
 			my @varval_INFOS=keys(%{$annotation_input{$chr}{$pos}{$ref}{$alt}{"INFOS"}}) if $DEBUG;
 			#print "@varval_INFOS\n" if $DEBUG;
@@ -1425,7 +1496,7 @@ while(<FILE_INPUT>) {
 						$variant_annotation.="$sep$var";
 					};#if
 				#};#if
-				
+
 			};#foreach
 			#foreach my $varval (split /;/, @varval_INFOS ) {
 			#	print "$varval\n" if $DEBUG;
@@ -1435,7 +1506,7 @@ while(<FILE_INPUT>) {
 			#	$annotation_input{$chr}{$pos}{$ref}{$alt}{"INFOS"}{$var}=$val;
 			#	#foreach my $t2 (split /=/, $varval, 2) {
 			#	#	print "   $t2\n" if $DEBUG;
-			#	#	
+			#	#
 			#	#};#foreach
 			#};#foreach
 			#print "$variant_annotation\n" if $DEBUG;

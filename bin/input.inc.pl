@@ -80,11 +80,11 @@ snpEff JAR file.
 
 Folder with snpEff databases.
 
-=item B<--java>
+=item B<--java=<file>>
 
 java binary (needed if snpeff option on). default "java"
 
-=item B<--java_flags>
+=item B<--java_flags=<string>>
 
 java flags  (needed if snpeff option on, especially for configure proxy for databases donwload). default ""
 
@@ -176,6 +176,12 @@ NOMEN: Find the NOMEN from HGVS annotation. Depend on transcript of reference. I
 
 BARCODE: Calculate VaRank BarCode
 
+GENOTYPECONCORDANCE: If all samples with the same genotype
+
+FINDBYPIPELINES: Number of pipeline calling the variant
+
+VARTYPE: SNV if X>Y, MOSAIC if X>Y,Z or X,Y>Z, INDEL if XY>Z or X>YZ
+
 =item B<--transcripts=<string>>
 
 file containing default transcript for each gene.
@@ -187,6 +193,16 @@ TRANSCRIPT1	GENE1
 TRANSCRIPT2	GENE2
 
 ...
+
+=item B<--nomen_fields=<string>>
+
+List of names of annotation field to use to calculate/extract NOMEN annotation. Field order determine the priority.
+
+Format: field1,field2,...
+
+Examples: "hgvs", "snpeff_hgvs", "snpeff_hgvs,hgvs"
+
+Default: "hgvs"
 
 =item B<--trio=<string>>
 
@@ -200,7 +216,7 @@ case "112","212","122","222": recessive
 
 format: "father_sample_name,mother_sample_name,child_sample_name"
 
-=item B<--prioritization|filter=string>
+=item B<--prioritization|filter=<file>>
 
 Filter profile, defined in the 'config_annotation' file. 'ALL' for all filters defined in the 'config_annotation' file. If the filter doesn't exist, 'ALL' will be used (if exist).
 
@@ -305,6 +321,8 @@ our %parameters = ( #
 	'snpeff_spliceSiteSize'    	=>  	3,		# snpEff additional options
 	'snpeff_additional_options'    	=>  	"",		# snpEff additional options
 	'snpeff_stats'    		=>  	"",		# snpEff stats
+	'bcftools_stats'    		=>  	"",		# BCFTOOLS stats
+	'stats'    		=>  	"",		# HOWARD stats
 	'java'    			=>  	"",		# JAVA binary
 	'java_flags'    		=>  	"",		# JAVA binary
 	# show
@@ -315,6 +333,7 @@ our %parameters = ( #
 	# Input
 	'calculation'		=>	$calculation_default,	# Calculation to do
 	'transcripts'		=>	'',			# File with default transcripts by gene
+	'nomen_fields'		=>	'hgvs',			# Fields to calculate NOMEN
 	'trio'			=>	'',			# Trio identification
 
 	# PRIORITIZATION
@@ -376,6 +395,8 @@ our @options=(
 	'snpeff_spliceSiteSize=i',	# snpEff additional options
 	'snpeff_additional_options=s',	# snpEff additional options
 	'snpeff_stats=s',		# snpEff stats files
+	'bcftools_stats=s',		# BCFTOOLS stats files
+	'stats=s',		# HOWARD stats files
 	'java=s',			# JAVA binary
 	'java_flags=s',			# JAVA binary
 	# show
@@ -386,6 +407,7 @@ our @options=(
 	# Input
 	'calculation=s',	# Calculation to do
 	'transcripts=s',	# File with default transcripts by gene
+	'nomen_fields=s',	# Fields to calculate NOMEN
 	'trio=s',		# Trio identification
 
 	# PRIORITIZATION
@@ -401,7 +423,7 @@ our @options=(
 	'sort_by=s',		# Sort variants by an annotation
 	'order_by=s',		# Order variants by an annotation, ASC or DESC
 	'columns=s',		# Colmuns to add in case of tab delimiter format
-	
+
 	# OTHER
 	'split=s',		# Output format
 );

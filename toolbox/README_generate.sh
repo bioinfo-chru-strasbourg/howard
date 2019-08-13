@@ -105,16 +105,18 @@ cat $SCRIPT_DIR/../docs/REQUIREMENTS >> $README
 echo "" >> $README
 cat $SCRIPT_DIR/../docs/INSTALLATION >> $README
 echo "" >> $README
-$SCRIPT_DIR/../bin/HOWARD.sh --release >> $README
-$SCRIPT_DIR/../bin/HOWARD.sh --help >> $README
+$SCRIPT_DIR/../bin/HOWARD --release >> $README
+$SCRIPT_DIR/../bin/HOWARD --help >> $README
 
-$SCRIPT_DIR/../bin/VCFannotation.pl --release  >> $README
-$SCRIPT_DIR/../bin/VCFannotation.pl --help  >> $README
-$SCRIPT_DIR/../bin/VCFcalculation.pl --release  >> $README
-$SCRIPT_DIR/../bin/VCFcalculation.pl --help  >> $README
-$SCRIPT_DIR/../bin/VCFprioritization.pl --release  >> $README
-$SCRIPT_DIR/../bin/VCFprioritization.pl --help  >> $README
-$SCRIPT_DIR/../bin/VCFtranslation.pl --release  >> $README
-$SCRIPT_DIR/../bin/VCFtranslation.pl --help  >> $README
-$SCRIPT_DIR/../bin/VCFtranslation.sh --release  >> $README
-$SCRIPT_DIR/../bin/VCFtranslation.sh --help  >> $README
+if ((0)); then
+	$SCRIPT_DIR/../bin/VCFannotation.pl --release  >> $README
+	$SCRIPT_DIR/../bin/VCFannotation.pl --help  >> $README
+	$SCRIPT_DIR/../bin/VCFcalculation.pl --release  >> $README
+	$SCRIPT_DIR/../bin/VCFcalculation.pl --help  >> $README
+	$SCRIPT_DIR/../bin/VCFprioritization.pl --release  >> $README
+	$SCRIPT_DIR/../bin/VCFprioritization.pl --help  >> $README
+	$SCRIPT_DIR/../bin/VCFtranslation.pl --release  >> $README
+	$SCRIPT_DIR/../bin/VCFtranslation.pl --help  >> $README
+	$SCRIPT_DIR/../bin/VCFtranslation.sh --release  >> $README
+	$SCRIPT_DIR/../bin/VCFtranslation.sh --help  >> $README
+fi;

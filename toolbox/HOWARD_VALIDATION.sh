@@ -1,6 +1,6 @@
 #!/bin/bash
 #################################
-## HOWARD 
+## HOWARD
 #################################
 
 SCRIPT_NAME="HOWARD Validation"
@@ -67,7 +67,7 @@ function usage {
 }
 
 # EXAMPLE :
-# ./HOWARD_VALIDATION.sh --vcf=validation --output=validation_results 
+# ./HOWARD_VALIDATION.sh --vcf=validation --output=validation_results
 
 # header
 header;
@@ -177,7 +177,7 @@ if [ -z $INPUT ] || [ ! -f $INPUT ]; then #  || [ -z $OUTPUT ]; then
 		usage;
 		exit;
 	fi;
-	
+
 fi
 
 INPUT_DIR=$(dirname $INPUT)
@@ -189,7 +189,7 @@ if [ -z $OUTPUT ] || [ "$OUTPUT" == "" ]; then #  || [ -z $OUTPUT ]; then
 	DATE="V"`date '+%Y%m%d-%H%M%S'`
 	OUTPUT=$INPUT"_VALIDATION_"$DATE; #/\.vcf$/\.output\.vcf/;
 	echo "#[INFO] OUTPUT '$OUTPUT' used."
-	
+
 fi
 
 # Normalization
@@ -213,7 +213,8 @@ if [ -z $TMP_SYS_FOLDER ] || [ ! -d $TMP_SYS_FOLDER ]; then
 fi
 
 # HOWARD bin
-HOWARD_BIN=$HOWARD_FOLDER_BIN/HOWARD.sh
+#HOWARD_BIN=$HOWARD_FOLDER_BIN/HOWARD.sh
+HOWARD_BIN=$HOWARD_FOLDER_BIN/HOWARD
 
 
 TMP_VAR=$RANDOM$RANDOM
@@ -240,7 +241,7 @@ echo -e "# INPUT=$INPUT" >> $VALIDATION_REPORT
 echo -e "# OUTPUT=$OUTPUT" >> $VALIDATION_REPORT
 echo -e "# ENV=$ENV" >> $VALIDATION_REPORT
 echo -e "# TMP=$TMP_FOLDER" >> $VALIDATION_REPORT
-echo -e "#Test Name\tResult\tFile(s)\tError\tTest Description\tComment" >> $VALIDATION_REPORT
+echo -e "#Test Name\tFile(s)\tResult\tError\tTest Description\tComment" >> $VALIDATION_REPORT
 
 
 LOG=$VALIDATION_RESULTS_DIR/log
@@ -249,7 +250,7 @@ LOG_TEST=$VALIDATION_RESULTS_DIR/log_test
 ERR_TEST=$VALIDATION_RESULTS_DIR/err_test
 #RES_TEST=$VALIDATION_RESULTS_DIR/err_test
 
-(($VERBOSE)) && echo "" 
+(($VERBOSE)) && echo ""
 
 
 while IFS=$'\t' read -r -a myArray
@@ -260,7 +261,7 @@ do
 	FILES=${myArray[1]}
 	EXPECTED="${myArray[2]}"
 	COMMENT="${myArray[3]}"
-	
+
 	# INPUT FILES
 	FILE=""
 	FILE_OUTPUT=""
@@ -271,218 +272,224 @@ do
 	# Clean files
 	FILE=$(echo $FILE | sed "s/^ *//gi" | sed "s/ *$//gi")
 	FILE_OUTPUT=$(echo $FILE_OUTPUT | sed "s/^_*//gi" | sed "s/_*$//gi")
-	
+
 	CMD=""
-	
+
 	#echo "$TEST_NAME|$FILE|$EXPECTED|$COMMENT";
 	#continue
-	
-	#(($VERBOSE)) && echo -e "\n# TEST $TEST_NAME\n" 
+
+	#(($VERBOSE)) && echo -e "\n# TEST $TEST_NAME\n"
 	#echo -e "\n# TEST $TEST_NAME\n" >> $LOG
-	
+
 	if [ "$TEST_NAME" != "" ]; then
-	
+
 		mkdir -p $VALIDATION_RESULTS_DIR/$TEST_NAME
-		
+
 		RES_OUTPUT=$(echo $VALIDATION_RESULTS_DIR/$TEST_NAME/$(basename $FILE_OUTPUT) | tr "," "_" | tr " " "_")
-		
+
 		case "$TEST_NAME" in
-		
+
 			### ANNOTATION test ###
-			
+
 			ANN)
 				TEST_DESCRIPTION="Check annotation using CORE annotation"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --annotation=CORE $PARAM_ADD"
 				;;
-				
+
 			ANN_CORE)
 				TEST_DESCRIPTION="Check annotation using CORE annotation"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --annotation=CORE $PARAM_ADD"
 				;;
-		
+
 			ANN_F)
 				TEST_DESCRIPTION="Check annotation using CORE annotation and forcing annotation"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --annotation=CORE --force $PARAM_ADD"
 				;;
-		
-		
+
+
 			ANN_X)
 				TEST_DESCRIPTION="Check annotation using CORE annotation with multithreading "
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --annotation=CORE --multithreading $PARAM_ADD"
 				;;
-				
+
 			ANN_CORE_X)
 				TEST_DESCRIPTION="Check annotation using CORE annotations with multithreading"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --annotation=CORE --multithreading $PARAM_ADD"
 				;;
-			
+
 			ANN_SYMBOL_X)
 				TEST_DESCRIPTION="Check annotation using uniq annotation symbol with multithreading"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --annotation=symbol --multithreading $PARAM_ADD"
 				;;
-		
+
 			ANN_ALL_X)
 				TEST_DESCRIPTION="Check annotation using ALL annotations with multithreading"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --annotation=ALL --multithreading $PARAM_ADD"
 				;;
-		
+
 			## SNPEff
-		
+
 			ANN_SNPEFF)
 				TEST_DESCRIPTION="Check annotation SNPEff through --annotation option"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --annotation=snpeff $PARAM_ADD"
 				;;
-				
+
 			ANN_SNPEFF_FULL)
 				TEST_DESCRIPTION="Check annotation SNPEff, SNPEff HGVS through --annotation option and SNPEff Stats trhough option"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --annotation=snpeff,snpeff_hgvs --snpeff_stats=$RES_OUTPUT.stats $PARAM_ADD"
 				;;
-		
+
+			ANN_SNPEFF_SPLIT)
+				TEST_DESCRIPTION="Check annotation SNPEff splitted, SNPEff HGVS through --annotation option and SNPEff Stats trhough option"
+				# COMMAND
+				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --annotation=snpeff_split,snpeff_hgvs --snpeff_stats=$RES_OUTPUT.stats $PARAM_ADD"
+				;;
+
 			ANN_SNPEFF_X)
 				TEST_DESCRIPTION="Check annotation SNPEff through --annotation option with multithreading"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --annotation=snpeff --multithreading $PARAM_ADD"
 				;;
-				
+
 			ANN_SNPEFF_FULL_X)
 				TEST_DESCRIPTION="Check annotation SNPEff, SNPEff HGVS through --annotation option and SNPEff Stats through option with multithreading"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --annotation=snpeff,snpeff_hgvs --snpeff_stats=$RES_OUTPUT.stats --multithreading $PARAM_ADD"
 				;;
-				
-		
+
+
 			### CALCULATION TEST ###
-			
+
 			CALC_ALL)
 				TEST_DESCRIPTION="Check ALL calculations VAF,VAF_STATS,CALLING_QUALITY,CALLING_QUALITY_EXPLODE,NOMEN,BARCODE,GENOTYPECONCORDANCE,FINDBYPIPELINES"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --calculation=VAF,VAF_STATS,CALLING_QUALITY,CALLING_QUALITY_EXPLODE,NOMEN,BARCODE,GENOTYPECONCORDANCE,FINDBYPIPELINES $PARAM_ADD"
 				;;
-				
+
 			CALC_ALL_X)
 				TEST_DESCRIPTION="Check ALL calculations VAF,VAF_STATS,CALLING_QUALITY,CALLING_QUALITY_EXPLODE,NOMEN,BARCODE,GENOTYPECONCORDANCE,FINDBYPIPELINES with multithreading"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --calculation=VAF,VAF_STATS,CALLING_QUALITY,CALLING_QUALITY_EXPLODE,NOMEN,BARCODE,GENOTYPECONCORDANCE,FINDBYPIPELINES --multithreading $PARAM_ADD"
 				;;
 
-			
+
 			CALC_VAF)
 				TEST_DESCRIPTION="Check calculation VAF"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --calculation=VAF $PARAM_ADD"
 				;;
-			
+
 			CALC_VAFSTAT)
 				TEST_DESCRIPTION="Check calculation VAF STAT"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --calculation=VAF_STATS $PARAM_ADD"
 				;;
-				
+
 			CALC_VAF_VAFSTAT)
 				TEST_DESCRIPTION="Check calculation VAF and VAF STAT"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --calculation=VAF,VAF_STATS $PARAM_ADD"
 				;;
-			
+
 			CALC_CQ)
 				TEST_DESCRIPTION="Check calculation CALLING QUALITY"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --calculation=CALLING_QUALITY $PARAM_ADD"
 				;;
-			
+
 			CALC_CQE)
 				TEST_DESCRIPTION="Check calculation CALLING QUALITY EXPLODE"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --calculation=CALLING_QUALITY_EXPLODE $PARAM_ADD"
 				;;
-			
+
 			CALC_NOMEN)
 				TEST_DESCRIPTION="Check calculation NOMEN"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --calculation=NOMEN $PARAM_ADD"
 				;;
-			
+
 			CALC_BC)
 				TEST_DESCRIPTION="Check calculation BARCODE"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --calculation=BARCODE $PARAM_ADD"
 				;;
-			
+
 			CALC_GC)
 				TEST_DESCRIPTION="Check calculation GENOTYPECONCORDANCE"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --calculation=GENOTYPECONCORDANCE $PARAM_ADD"
 				;;
-			
+
 			CALC_FBP)
 				TEST_DESCRIPTION="Check calculation FINDBYPIPELINES"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --calculation=FINDBYPIPELINES $PARAM_ADD"
 				;;
-			
+
 			CALC_VAF_X)
 				TEST_DESCRIPTION="Check calculation VAF with multithreading"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --calculation=VAF --multithreading $PARAM_ADD"
 				;;
-			
+
 			CALC_VAFSTAT_X)
 				TEST_DESCRIPTION="Check calculation VAF STAT with multithreading"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --calculation=VAF_STATS --multithreading $PARAM_ADD"
 				;;
-				
+
 			CALC_VAF_VAFSTAT_X)
 				TEST_DESCRIPTION="Check calculation VAF and VAF STAT with multithreading"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --calculation=VAF,VAF_STATS --multithreading $PARAM_ADD"
 				;;
-			
+
 			CALC_CQ_X)
 				TEST_DESCRIPTION="Check calculation CALLING QUALITY with multithreading"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --calculation=CALLING_QUALITY --multithreading $PARAM_ADD"
 				;;
-			
+
 			CALC_CQE_X)
 				TEST_DESCRIPTION="Check calculation CALLING QUALITY EXPLODE with multithreading"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --calculation=CALLING_QUALITY_EXPLODE --multithreading $PARAM_ADD"
 				;;
-			
+
 			CALC_NOMEN_X)
 				TEST_DESCRIPTION="Check calculation NOMEN with multithreading"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --calculation=NOMEN --multithreading $PARAM_ADD"
 				;;
-			
+
 			CALC_BC_X)
 				TEST_DESCRIPTION="Check calculation BARCODE with multithreading"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --calculation=BARCODE --multithreading $PARAM_ADD"
 				;;
-			
+
 			CALC_GC_X)
 				TEST_DESCRIPTION="Check calculation GENOTYPECONCORDANCE with multithreading"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --calculation=GENOTYPECONCORDANCE --multithreading $PARAM_ADD"
 				;;
-			
+
 			CALC_FBP_X)
 				TEST_DESCRIPTION="Check calculation FINDBYPIPELINES with multithreading"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --calculation=FINDBYPIPELINES --multithreading $PARAM_ADD"
 				;;
-				
+
 			CALC_NOMEN_TRANS_ALL)
 				TEST_DESCRIPTION="Check calculation NOMEN with transcripts file"
 				VCF=$(echo $FILE | cut -d" " -f1)
@@ -490,7 +497,7 @@ do
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf=$VCF --output=$RES_OUTPUT --calculation=NOMEN --transcripts=$TRANSCRIPTS $PARAM_ADD"
 				;;
-			
+
 			CALC_NOMEN_TRANS_ALL_X)
 				TEST_DESCRIPTION="Check calculation NOMEN with transcripts file multithreading"
 				VCF=$(echo $FILE | cut -d" " -f1)
@@ -498,61 +505,98 @@ do
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf=$VCF --output=$RES_OUTPUT --calculation=NOMEN --transcripts=$TRANSCRIPTS --multithreading $PARAM_ADD"
 				;;
-			
+
+			CALC_NOMEN_TRANS_ALL_SNPEFF_HGVS_HGVS_NOMEN_FIELD_X)
+				TEST_DESCRIPTION="Check calculation NOMEN with snpeff_hgvs then hgvs nomen fields file multithreading"
+				#VCF=$(echo $FILE | cut -d" " -f1)
+				#TRANSCRIPTS=$(echo $FILE | cut -d" " -f2)
+				# COMMAND
+				CMD="$HOWARD_BIN --vcf=$FILE --output=$RES_OUTPUT --annotation=snpeff_split,hgvs --calculation=NOMEN --nomen_fields=snpeff_hgvs,hgvs --multithreading $PARAM_ADD"
+				;;
+
+
+
+			### STATS TEST ###
+
+			STATS)
+				TEST_DESCRIPTION="Check HOWARD Stats"
+				# COMMAND
+				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --stats=$RES_OUTPUT.stats $PARAM_ADD"
+				;;
+
+			STATS_CORE)
+				TEST_DESCRIPTION="Check HOWARD Stats after CORE annotation"
+				# COMMAND
+				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --annotation=CORE --stats=$RES_OUTPUT.stats $PARAM_ADD"
+				;;
+
+			STATS_CORE_SNPEFF_SPLIT)
+				TEST_DESCRIPTION="Check HOWARD Stats after CORE and snpEff split annotation"
+				# COMMAND
+				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --annotation=CORE,snpeff_split --stats=$RES_OUTPUT.stats $PARAM_ADD"
+				;;
+
+			STATS)
+				TEST_DESCRIPTION="Check BCFTOOLS Stats"
+				# COMMAND
+				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --bcftools_stats=$RES_OUTPUT.stats $PARAM_ADD"
+				;;
+
+
 			### INTERGRATION TEST ###
-		
+
 			INT_CORE)
 				TEST_DESCRIPTION="Check annotation, calculation, prioritization and translation using CORE annotations, ALL calculation, default prioritization, tab format of output, without multithreading"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --annotation=CORE --calculation=VAF,VAF_STATS,CALLING_QUALITY,CALLING_QUALITY_EXPLODE,NOMEN,BARCODE,GENOTYPECONCORDANCE,FINDBYPIPELINES --prioritization=default --translation=tab $PARAM_ADD"
 				;;
-				
+
 			INT_CORE_X)
 				TEST_DESCRIPTION="Check annotation, calculation, prioritization and translation using CORE annotations, ALL calculation, default prioritization, tab format of output, with multithreading"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --annotation=CORE --calculation=VAF,VAF_STATS,CALLING_QUALITY,CALLING_QUALITY_EXPLODE,NOMEN,BARCODE,GENOTYPECONCORDANCE,FINDBYPIPELINES --prioritization=default --translation=tab --multithreading $PARAM_ADD"
 				;;
-				
+
 			INT_CORE_SNPEFF)
 				TEST_DESCRIPTION="Check annotation, calculation, prioritization and translation using CORE annotations, ALL calculation, default prioritization, tab format of output, snpeff options, without multithreading"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --annotation=CORE,snpeff,snpeff_hgvs --calculation=VAF,VAF_STATS,CALLING_QUALITY,CALLING_QUALITY_EXPLODE,NOMEN,BARCODE,GENOTYPECONCORDANCE,FINDBYPIPELINES --snpeff_stats=$RES_OUTPUT.stats --prioritization=default --translation=tab $PARAM_ADD"
 				;;
-				
+
 			INT_CORE_SNPEFF_X)
 				TEST_DESCRIPTION="Check annotation, calculation, prioritization and translation using CORE annotations, ALL calculation, default prioritization, tab format of output, with multithreading"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --annotation=CORE,snpeff,snpeff_hgvs --calculation=VAF,VAF_STATS,CALLING_QUALITY,CALLING_QUALITY_EXPLODE,NOMEN,BARCODE,GENOTYPECONCORDANCE,FINDBYPIPELINES --snpeff_stats=$RES_OUTPUT.stats --prioritization=default --translation=tab --multithreading $PARAM_ADD"
 				;;
-			
+
 			INT_FULL)
 				TEST_DESCRIPTION="Check annotation, calculation, prioritization and translation using ALL annotations, ALL calculation, default prioritization, tab format of output, snpeff options, without multithreading"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --annotation=ALL --calculation=VAF,VAF_STATS,CALLING_QUALITY,CALLING_QUALITY_EXPLODE,NOMEN,BARCODE,GENOTYPECONCORDANCE,FINDBYPIPELINES --prioritization=default --translation=tab $PARAM_ADD"
 				;;
-				
+
 			INT_FULL_X)
 				TEST_DESCRIPTION="Check annotation, calculation, prioritization and translation using ALL annotations, ALL calculation, default prioritization, tab format of output, with multithreading"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --annotation=ALL --calculation=VAF,VAF_STATS,CALLING_QUALITY,CALLING_QUALITY_EXPLODE,NOMEN,BARCODE,GENOTYPECONCORDANCE,FINDBYPIPELINES --prioritization=default --translation=tab --multithreading $PARAM_ADD"
 				;;
-				
+
 			INT_FULL_SNPEFF)
 				TEST_DESCRIPTION="Check annotation, calculation, prioritization and translation using ALL annotations, ALL calculation, default prioritization, tab format of output, snpeff options, without multithreading"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --annotation=ALL,snpeff,snpeff_hgvs --calculation=VAF,VAF_STATS,CALLING_QUALITY,CALLING_QUALITY_EXPLODE,NOMEN,BARCODE,GENOTYPECONCORDANCE,FINDBYPIPELINES --snpeff_stats=$RES_OUTPUT.stats --prioritization=default --translation=tab $PARAM_ADD"
 				;;
-				
+
 			INT_FULL_SNPEFF_X)
 				TEST_DESCRIPTION="Check annotation, calculation, prioritization and translation using ALL annotations, ALL calculation, default prioritization, tab format of output, with multithreading"
 				# COMMAND
 				CMD="$HOWARD_BIN --vcf='$FILE' --output=$RES_OUTPUT --annotation=ALL,snpeff,snpeff_hgvs --calculation=VAF,VAF_STATS,CALLING_QUALITY,CALLING_QUALITY_EXPLODE,NOMEN,BARCODE,GENOTYPECONCORDANCE,FINDBYPIPELINES --snpeff_stats=$RES_OUTPUT.stats --prioritization=default --translation=tab --multithreading $PARAM_ADD"
 				;;
-		
+
 			*) 	echo "# Test '$TEST_NAME' is not recognized."
 				;;
 		esac
-	
+
 		(($VERBOSE)) && echo "## $TEST_NAME"
 		(($VERBOSE)) && echo "# $TEST_DESCRIPTION"
 		#(($VERBOSE)) && echo "# Test name: '$TEST_NAME'"
@@ -565,16 +609,16 @@ do
 		echo -e "# File: '$FILE'"  >> $LOG
 		echo -e "# Expected: '$EXPECTED'"  >> $LOG
 		echo -e "# Comment: '$COMMENT'"  >> $LOG
-	
+
 		if [ "$CMD" != "" ]; then
-	
+
 			(($VERBOSE)) && echo "# Command: "$CMD
 			echo $CMD >> $LOG
 			CMD_TO_EVAL="time  $CMD"
 			LOG_TIME=$LOG_TEST"TIME"
 			#echo $CMD
 			eval "time $CMD  1>$LOG_TEST 2>$ERR_TEST" 2>$LOG_TIME  2>$LOG_TIME #_TO_EVAL 1>$LOG_TEST 2>$ERR_TEST
-			
+
 			cat $LOG_TEST >> $LOG; cat $LOG_TIME >> $LOG; cat $ERR_TEST >> $ERR
 			cat $LOG_TEST >> $RES_OUTPUT.log; cat $LOG_TIME >> $RES_OUTPUT.time.log; cat $ERR_TEST >> $RES_OUTPUT.err
 			(($VERBOSE)) && echo "# Exec Time:: "; grep ^$ -v $LOG_TIME;
@@ -583,10 +627,10 @@ do
 			#echo "LOG TIME:"; cat $LOG_TIME;
 			#echo "";
 			# exit 0;
-			
+
 			# Validation
-			RES_TEST_ERR=$(cat $LOG_TEST $ERR_TEST | grep -c "FAILED")	
-			if (($RES_TEST_ERR)); then RES_TEST="FAILED"; else RES_TEST="OK"; fi; 
+			RES_TEST_ERR=$(cat $LOG_TEST $ERR_TEST | grep -c "FAILED")
+			if (($RES_TEST_ERR)); then RES_TEST="FAILED"; else RES_TEST="OK"; fi;
 			if (($(echo $EXPECTED | tr "," "\n" | grep "^[[:space:]]*OUTPUT[[:space:]]*$" - -c))); then
 				if [ ! -e $RES_OUTPUT ]; then RES_TEST="FAILED"; fi;
 			fi;
@@ -595,15 +639,15 @@ do
 			fi;
 			echo -e "$TEST_NAME\t$FILE\t$RES_TEST\t$RES_TEST_ERR\t$TEST_DESCRIPTION\t$COMMENT" >> $VALIDATION_REPORT
 			(($VERBOSE)) && grep FAILED $LOG_TEST $ERR_TEST && echo ""
-			
-	
+
+
 		fi;
-	
+
 		(($VERBOSE)) && echo ""
 		echo ""  >> $LOG
-	
+
 	fi;
-	
+
 done < <(grep ^# -v $INPUT)
 
 
@@ -626,5 +670,3 @@ rm -rf $TMP_FOLDER
 
 
 exit 0;
-
-

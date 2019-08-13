@@ -17,17 +17,17 @@
 		}}
 	}}
 	{RA=RA "\t"}
-	
+
 }}
 
 {if (FIELDS!="") {
 
 	{if (FIELDS=="INFO") {
-		
+
 		FIELDS_OUTPUT=$8
 
 	} else {
-		
+
 		{o=split(FIELDS,FIELDS_ARRAY,",")}
 		{nb_FIELDS=0}
 		{sep_FIELDS=""}
@@ -39,8 +39,8 @@
 				{LEN=length(B)+2}
 				{F=""}
 				{F_TRUE=0}
-				{if (match($8,"[;\t]"B"=[^;\t]*")){F=substr($8,RSTART+LEN,RLENGTH-LEN)}}
-				{if (match($8,"[;\t]"B"[;\t]")){F="TRUE"; F_TRUE=1}}
+				{if (match(";"$8";","[;\t]"B"=[^;\t]*")){F=substr(";"$8";",RSTART+LEN,RLENGTH-LEN)}}
+				{if (match(";"$8";","[;\t]"B"[;\t]")){F="TRUE"; F_TRUE=1}}
 				{if (FORMAT=="TSV") {
 					{FIELDS_OUTPUT=FIELDS_OUTPUT sep_FIELDS F}
 					{sep_FIELDS="\t"}
@@ -54,7 +54,7 @@
 							{sep_FIELDS=";"}
 						}}
 					}}
-					
+
 				}}
 			}}
 		}}
