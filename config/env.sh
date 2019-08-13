@@ -13,8 +13,8 @@
 #################################
 
 # Main tools folder
-NGS_TOOLS=/home/TOOLS/tools
-NGS_DATABASES=/home/TOOLS/databases
+NGS_TOOLS=/tools
+NGS_DATABASES=/databases
 
 # THREADS
 THREADS=$(ls -d /sys/devices/system/cpu/cpu[[:digit:]]* | wc -w)

@@ -52,12 +52,12 @@ LABEL Software="HOWARD" \
 # PARAMETERS #
 ##############
 
-ENV TOOLS=/home/TOOLS/tools
+ENV TOOLS=/tools
 ENV DATA=/data
 ENV TOOL=/tool
 ENV DATABASES=/databases
-ENV YUM_INSTALL="gcc bc make wget perl-Switch perl-Digest-MD5 perl-Data-Dumper which zlib-devel zlib 	zlib2-devel zlib2 	bzip2-devel bzip2 	lzma-devel lzma 	xz-devel xz 	ncurses-devel 	unzip"
-ENV YUM_REMOVE="zlib-devel zlib2-devel bzip2-devel lzma-devel xz-devel ncurses-devel unzip gcc"
+ENV YUM_INSTALL="gcc bc make wget perl-Switch perl-Digest-MD5 perl-Data-Dumper which zlib-devel zlib zlib2-devel zlib2 bzip2-devel bzip2 lzma-devel lzma xz-devel xz ncurses-devel unzip"
+ENV YUM_REMOVE="zlib-devel bzip2-devel xz-devel ncurses-devel unzip gcc"
 
 
 

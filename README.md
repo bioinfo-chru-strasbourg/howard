@@ -2,11 +2,17 @@ HOWARD
 ============
 
 HOWARD annotates and prioritizes variants, calculates and normalizes annotations, translates vcf format and generates variants statistics.
+
 HOWARD annotation is mainly based on ANNOVAR and snpEff tools to annotate, using available databases (see ANNOVAR and snpEff) and home made databases. It also uses BCFTOOLS to annotate variants with a VCF file. ANNOVAR and snpEff databases are automatically downloaded if needed.
+
 HOWARD calculation harmonizes allele frequency (VAF), extracts Nomen (transcript, cNomen, pNomen...) from HGVS fields with an optional list of personalized transcripts, generates VaRank format barcode.
+
 HOWARD prioritization algorithm uses profiles to flag variants (as passed or filtered), calculate a prioritization score, and automatically generate a comment for each variants (example: 'polymorphism identified in dbSNP. associated to Lung Cancer. Found in ClinVar database').Prioritization profiles are defined in a configuration file. A profile is defined as a list of annotation/value, using wildcards and comparison options (contains, lower than, greater than, equal...). Annotations fields may be quality values (usually from callers, such as 'GQ', 'DP') or other annotations fields provided by annotations tools, such as HOWARD itself (example: COSMIC, Clinvar, 1000genomes, PolyPhen, SIFT). Multiple profiles can be used simultaneously, which is useful to define multiple validation/prioritization levels (example: 'standard', 'stringent', 'rare variants', 'low allele frequency').
+
 HOWARD translates VCF format into TSV format, by sorting variants using specific fields (example : 'prioritization score', 'allele frequency', 'gene symbol'), including/excluding annotations/fields, including/excluding variants, adding fixed columns.
+
 HOWARD generates statistics files with a specific algorithm, snpEff and BCFTOOLS.
+
 HOWARD is multithreaded through the number of variants and by database (data-scaling).
 
 
@@ -72,6 +78,24 @@ Start HOWARD container.
 ```
 $ docker run --name howard --entrypoint=bash -ti howard:latest
 ```
+
+
+Database download
+-------------------
+
+Databases are downloaded automatically by using annotation configuratin file, or options in command line (--annovar_databases, --snpeff_databases, assembly...).
+
+Use a vcf file to download ANNOVAR databases (WITHOUT multithreading, "ALL" for all databases, "CORE" for core databases, "snpeff" for snpEff database, or a list of databases).
+
+```
+$ docker run howard:latest --input=/tool/docs/example.vcf --output=/tool/docs/example.annotated.vcf --annotation=ALL,snpeff --thread=1
+```
+
+Use this command multiple times for all needed assembly (such as hg19, hg38, mm9).
+
+For home made databases, refer to config.annotation.ini file to construct and configure your database.
+
+Beware of proxy configuration!
 
 
 Debugging
