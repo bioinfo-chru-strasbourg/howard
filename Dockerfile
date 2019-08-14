@@ -165,7 +165,7 @@ RUN wget $TARBALL_LOCATION/$TARBALL ; \
 ENV DATABASES=/databases
 ENV TOOL_NAME=annovar
 ENV TOOL_VERSION=2018Apr16
-ENV TARBALL_LOCATION=http://www.openbioinformatics.org/annovar/download/0wgxR2rIVP/
+ENV TARBALL_LOCATION=http://www.openbioinformatics.org/annovar/download/0wgxR2rIVP
 ENV TARBALL=annovar.latest.tar.gz
 ENV TARBALL_FOLDER=$TOOL_NAME
 ENV TOOL_DATABASE_FOLDER=$DATABASES/annovar
