@@ -136,7 +136,7 @@ CALLING_QUALITY: Calling quality (FORMAT/*) of all samples in case of multiSampl
 
 CALLING_QUALITY_EXPLODE: Explode all Calling quality (FORMAT/*) in multiple fields in INFOS
 
-NOMEN: Find the NOMEN from HGVS annotation. Depend on transcript of reference. If no transcript of reference, first transcript. This option create annotations on INFO field: NOMEN (full HGVS annotation), CNOMEN (DNA level mutation "c."), PNOMEN (Protein level mutation "p."), TNOMEN (transcript), ENOMEN (exon, if any), GNOMEN (gene, if any)
+NOMEN: Find the NOMEN from HGVS annotation. Depend on transcript of reference. If no transcript of reference, first transcript. This option create annotations on INFO field: NOMEN (full HGVS annotation), CNOMEN (DNA level mutation "c.", "g.", "m."), RNOMEN (RNA level mutation "r.", "n."), PNOMEN (Protein level mutation "p."), TNOMEN (transcript), TVNOMEN (transcript with version), VNOMEN (transcript version), ENOMEN (exon, if any), GNOMEN (gene, if any)
 
 BARCODE: Calculate VaRank BarCode
 
