@@ -899,13 +899,25 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 				print "# nomen_fields '".$parameters{'nomen_fields'}."'...\n" if $DEBUG;
 				my @nomen_fields_split=split(/,/,$parameters{'nomen_fields'});
 				my $value_hgvs;
-				foreach my $one_nomen_field (@nomen_fields_split) {
+
+				if (0) {
+					foreach my $one_nomen_field (@nomen_fields_split) {
+						print "# one_nomen_field '".$one_nomen_field."'...\n" if $DEBUG;
+						print "# one_nomen_field value '".$$variant_values{"INFOS"}{$one_nomen_field}."'...\n" if $DEBUG;
+						if (defined $$variant_values{"INFOS"}{$one_nomen_field} && $$variant_values{"INFOS"}{$one_nomen_field} ne "" && !defined $value_hgvs) {
+							$value_hgvs=$$variant_values{"INFOS"}{$one_nomen_field};
+						}; #if
+					}; # foreach
+				};#if
+
+				foreach my $one_nomen_field (split(/,/,$parameters{'nomen_fields'})) {
 					print "# one_nomen_field '".$one_nomen_field."'...\n" if $DEBUG;
 					print "# one_nomen_field value '".$$variant_values{"INFOS"}{$one_nomen_field}."'...\n" if $DEBUG;
-					if (defined $$variant_values{"INFOS"}{$one_nomen_field} && $$variant_values{"INFOS"}{$one_nomen_field} ne "" && !defined $value_hgvs) {
-						$value_hgvs=$$variant_values{"INFOS"}{$one_nomen_field};
+					if (defined $$variant_values{"INFOS"}{$one_nomen_field}) {
+						$value_hgvs.=$$variant_values{"INFOS"}{$one_nomen_field}.",";
 					}; #if
-				}; # foreach
+				};#foreach
+
 				#my $value_hgvs=$$variant_values{$parameters{'nomen_fields'}};
 				print "# nomen_fields value '".$value_hgvs."'...\n" if $DEBUG;
 
@@ -936,7 +948,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 						my $E;
 						my $G;
 						my $O;
-						my $T_D;
+						#my $T_D;
 						foreach my $one_hgvs_infos (@one_hgvs_split) {
 							#print "   $one_hgvs_infos\n" if $DEBUG;
 							my $assigned=0;
@@ -984,41 +996,45 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 								if ($one_hgvs_infos=~ /^XP_(.*)$/) {
 									$assigned_score+=1;
 								};#if
-
+								if (grep( /^$T$/, @default_transcripts)) {
+									print "default transcipt found: $T\n" if $DEBUG;
+									#$T_D=$one_hgvs_infos;
+									$assigned_score+=100;
+								};#fi 
 							};#if
 
 							# CNOMEN
 							if ($one_hgvs_infos=~ /^c\.(.*)$/) {
 								$C=$one_hgvs_infos;
 								$assigned=3;
-								$assigned_score++;
+								$assigned_score+=1;
 							};#if
 							if ($one_hgvs_infos=~ /^g\.(.*)$/) {
 								$C=$one_hgvs_infos;
 								$assigned=2;
-								$assigned_score++;
+								$assigned_score+=1;
 							};#if
 							if ($one_hgvs_infos=~ /^m\.(.*)$/) {
 								$C=$one_hgvs_infos;
 								$assigned=2;
-								$assigned_score++;
+								$assigned_score+=1;
 							};#if
 							# RNOMEN
 							if ($one_hgvs_infos=~ /^n\.(.*)$/) {
 								$R=$one_hgvs_infos;
 								$assigned=1;
-								$assigned_score++;
+								$assigned_score+=1;
 							};#if
 							if ($one_hgvs_infos=~ /^r\.(.*)$/) {
 								$R=$one_hgvs_infos;
 								$assigned=1;
-								$assigned_score++;
+								$assigned_score+=1;
 							};#if
 							# PNOMEN
 							if ($one_hgvs_infos=~ /^p\.(.*)$/) {
 								$P=$one_hgvs_infos;
 								$assigned=2;
-								$assigned_score++;
+								$assigned_score+=1;
 							};#if
 
 
@@ -1026,7 +1042,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 							if ($one_hgvs_infos=~ /^exon(.*)$/) {
 								$E=$one_hgvs_infos;
 								$assigned=1;
-								$assigned_score++;
+								$assigned_score+=1;
 							};#if
 
 							# GNOMEN
@@ -1041,18 +1057,16 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 							#if (in_array($one_hgvs_infos,@default_transcripts)) {
 							#my @one_hgvs_infos_split=split(/\./,$one_hgvs_infos);
 							#my $transcript_NM=$one_hgvs_infos_split[0];
-							my $transcript_NM=$T;
+							#my $transcript_NM=$T;
 							#print "default transcipt to find: $transcript_NM\n" if $DEBUG;
-							if (grep( /^$transcript_NM$/, @default_transcripts)) {
-								print "default transcipt found: $transcript_NM\n" if $DEBUG;
-								$T_D=$one_hgvs_infos;
-							};#fi
+
 
 						};#foreach
 						$N="$T$TV$V$C$R$P$E$G";
 						if ($N ne "") {
 							#if ( !$assigned || defined $T_D) {
-							if ( ($assigned_score > $assigned_score_max) || (defined $T_D) ) {
+							#if ( ($assigned_score > $assigned_score_max) || (defined $T_D) ) {
+							if ( ($assigned_score > $assigned_score_max)) {
 								print "assi $assigned_score > $assigned_score_max\n" if $DEBUG;
 								$NOMEN=$one_hgvs;
 								$CNOMEN=$C;
@@ -1064,9 +1078,9 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 								$ENOMEN=$E;
 								$GNOMEN=$G;
 								$assigned=1;
-								if ( defined $T_D ) {
-									$assigned_score=100000000;
-								};#if
+								#if ( defined $T_D ) {
+								#	$assigned_score=100000000;
+								#};#if
 							};#if
 						};#if
 
