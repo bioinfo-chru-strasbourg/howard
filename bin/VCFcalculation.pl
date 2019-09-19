@@ -1064,6 +1064,9 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 								$ENOMEN=$E;
 								$GNOMEN=$G;
 								$assigned=1;
+								if ( defined $T_D ) {
+									$assigned_score=100000000;
+								};#if
 							};#if
 						};#if
 
