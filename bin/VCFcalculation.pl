@@ -1041,7 +1041,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 					print "TNOMEN=$TNOMEN\n" if $DEBUG;
 					print "VNOMEN=$VNOMEN\n" if $DEBUG;
 					print "ENOMEN=$ENOMEN\n" if $DEBUG;
-					print "GNOMEN=$GNOMEN\n" if $DEBUG;
+					print "GNOMEN=$GNOMEN\n" if $DEBUG; 
 				};#if
 
 				# NOMEN

@@ -6,7 +6,7 @@
 SCRIPT_NAME="HOWARD"
 SCRIPT_DESCRIPTION="HOWARD Annotation, Calculation, Prioritization and Translation, based on ANNOVAR and snpEff, allowing multithreading"
 SCRIPT_RELEASE="0.9.15b"
-SCRIPT_DATE="13/08/2019"
+SCRIPT_DATE="19/09/2019"
 SCRIPT_AUTHOR="Antony Le Bechec"
 SCRIPT_COPYRIGHT="HUS"
 SCRIPT_LICENCE="GNU AGPL V3"
@@ -72,9 +72,9 @@ RELEASE_NOTES=$RELEASE_NOTES"#\tChange default configuration files for annotatio
 RELEASE_NOTES=$RELEASE_NOTES"#\tBug fixed: file identification in annotation configuration\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tBug fixed: calculation INFO fields header, snpeff parameters options on multithreading\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tBug fixed: snpeff parameters in command line\n";
-RELEASE_NOTES=$RELEASE_NOTES"# 0.9.15b-13/08/2019:\n";
+RELEASE_NOTES=$RELEASE_NOTES"# 0.9.15b-19/09/2019:\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tRename HOWARD.sh to HOWARD.\n";
-RELEASE_NOTES=$RELEASE_NOTES"#\tAdd --nomen_fields parameter.\n";
+RELEASE_NOTES=$RELEASE_NOTES"#\tAdd --nomen_fields parameter and update NOMEN calculation.\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tAdd --bcftools_stats and --stats parameter.\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tChange PZScore, PZFlag, PZComment and PZInfos generation, adding default PZ and all PZ filters.\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tBug fixed: translation fields identification.\n";
@@ -152,6 +152,7 @@ function usage {
 	echo "#                                             This option create annotations on INFO field:";
 	echo "#                                                NOMEN (full HGVS annotation)";
 	echo "#                                                CNOMEN (DNA level mutation 'c.'')";
+	echo "#                                                RNOMEN (RNA level mutation 'c.'')";
 	echo "#                                                PNOMEN (Protein level mutation 'p.'')";
 	echo "#                                                TVNOMEN (transcript with version)";
 	echo "#                                                TNOMEN (transcript)";
