@@ -177,9 +177,9 @@ JAVA 1.8 or higher
 #                                             If no transcript of reference, first transcript.
 #                                             This option create annotations on INFO field:
 #                                                NOMEN (full HGVS annotation)
-#                                                CNOMEN (DNA level mutation 'c.'')
-#                                                RNOMEN (RNA level mutation 'c.'')
-#                                                PNOMEN (Protein level mutation 'p.'')
+#                                                CNOMEN (DNA level mutation 'c.', 'g.', 'm.')
+#                                                RNOMEN (DNA level mutation 'r.', 'n.')
+#                                                PNOMEN (Protein level mutation 'p.')
 #                                                TVNOMEN (transcript with version)
 #                                                TNOMEN (transcript)
 #                                                VNOMEN (transcript version)
