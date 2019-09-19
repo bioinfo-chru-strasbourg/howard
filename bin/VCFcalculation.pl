@@ -886,6 +886,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 				#print "".$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"hgvs"} if $DEBUG;
 				my $NOMEN=$$variant_values{"INFOS"}{"cnomen"};
 				my $CNOMEN=$$variant_values{"INFOS"}{"cnomen"};
+				my $RNOMEN=$$variant_values{"INFOS"}{"rnomen"};
 				my $PNOMEN=$$variant_values{"INFOS"}{"pnomen"};
 				my $TVNOMEN=$$variant_values{"INFOS"}{"tvnomen"};
 				my $TNOMEN=$$variant_values{"INFOS"}{"tnomen"};
@@ -895,34 +896,39 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 
 				print "# Calculation '$one_calculation'...\n" if $DEBUG;
 
-				print "# nomen_fields '".$parameters{'nomen_fields'}."'...\n" if $VERBOSE;
+				print "# nomen_fields '".$parameters{'nomen_fields'}."'...\n" if $DEBUG;
 				my @nomen_fields_split=split(/,/,$parameters{'nomen_fields'});
 				my $value_hgvs;
 				foreach my $one_nomen_field (@nomen_fields_split) {
-					print "# one_nomen_field '".$one_nomen_field."'...\n" if $VERBOSE;
-					print "# one_nomen_field value '".$$variant_values{"INFOS"}{$one_nomen_field}."'...\n" if $VERBOSE;
+					print "# one_nomen_field '".$one_nomen_field."'...\n" if $DEBUG;
+					print "# one_nomen_field value '".$$variant_values{"INFOS"}{$one_nomen_field}."'...\n" if $DEBUG;
 					if (defined $$variant_values{"INFOS"}{$one_nomen_field} && $$variant_values{"INFOS"}{$one_nomen_field} ne "" && !defined $value_hgvs) {
 						$value_hgvs=$$variant_values{"INFOS"}{$one_nomen_field};
 					}; #if
 				}; # foreach
 				#my $value_hgvs=$$variant_values{$parameters{'nomen_fields'}};
-				print "# nomen_fields value '".$value_hgvs."'...\n" if $VERBOSE;
+				print "# nomen_fields value '".$value_hgvs."'...\n" if $DEBUG;
 
 
 				#if (!defined $CNOMEN || !defined $PNOMEN) {
 				#if (defined $$variant_values{"INFOS"}{"hgvs"}) {
 				if (defined $value_hgvs) {
-					print "# nomen_fields value defined ! '".$value_hgvs."'...\n" if $VERBOSE;
+					print "# nomen_fields value defined ! '".$value_hgvs."'...\n" if $DEBUG;
 
 					#my @HGVS_split=split(/,/,$$variant_values{"INFOS"}{"hgvs"});
 					#my @HGVS_split=$value_hgvs;
 					my @HGVS_split=split(/,/,$value_hgvs);
-					my $assigned=0;
+					#my $assigned=0;
+
+					my $assigned_score_previous=0;
+					my $assigned_score_max=0;
 					foreach my $one_hgvs (@HGVS_split) {
 						print "$one_hgvs\n" if $DEBUG;
+						my $assigned_score=0;
 						@one_hgvs_split=split(/:/,$one_hgvs);
 						my $N;
 						my $C;
+						my $R;
 						my $P;
 						my $TV;
 						my $T;
@@ -934,68 +940,102 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 						foreach my $one_hgvs_infos (@one_hgvs_split) {
 							#print "   $one_hgvs_infos\n" if $DEBUG;
 							my $assigned=0;
+
+							# TRANSCRIPT
+							# TVNOMEN TNOMEN VNOMEN
+							#if ($one_hgvs_infos=~ /^NM_(.*)$/) {
+							#if ($one_hgvs_infos=~ /^NM_(.*)$/
+							#	|| $one_hgvs_infos=~ /^NR_(.*)$/
+							#	|| $one_hgvs_infos=~ /^NP_(.*)$/
+							#	|| $one_hgvs_infos=~ /^XN_(.*)$/
+							#	|| $one_hgvs_infos=~ /^XR_(.*)$/
+							#	|| $one_hgvs_infos=~ /^XP_(.*)$/
+							#) {
+							if ($one_hgvs_infos=~ /^[NX][MRP]_(.*)$/) {
+								$TV=$one_hgvs_infos;
+								$assigned=1;
+
+								my @one_hgvs_infos_T_split=split(/\./,$one_hgvs_infos);
+								if (defined $one_hgvs_infos_T_split[0]) {
+									$T=$one_hgvs_infos_T_split[0];
+									#$assigned=1;
+									#$assigned_score++;
+								}; # if
+								if (defined $one_hgvs_infos_T_split[1]) {
+									$V=$one_hgvs_infos_T_split[1];
+									#$assigned=1;
+									#$assigned_score++;
+								}; # if
+								if ($one_hgvs_infos=~ /^NM_(.*)$/) {
+									$assigned_score+=3;
+								};#if
+								if ($one_hgvs_infos=~ /^NR_(.*)$/) {
+									$assigned_score+=2;
+								};#if
+								if ($one_hgvs_infos=~ /^NP_(.*)$/) {
+									$assigned_score+=3;
+								};#if
+								if ($one_hgvs_infos=~ /^XM_(.*)$/) {
+									$assigned_score+=1;
+								};#if
+								if ($one_hgvs_infos=~ /^XR_(.*)$/) {
+									$assigned_score+=1;
+								};#if
+								if ($one_hgvs_infos=~ /^XP_(.*)$/) {
+									$assigned_score+=1;
+								};#if
+
+							};#if
+
 							# CNOMEN
 							if ($one_hgvs_infos=~ /^c\.(.*)$/) {
 								$C=$one_hgvs_infos;
+								$assigned=3;
+								$assigned_score++;
+							};#if
+							if ($one_hgvs_infos=~ /^g\.(.*)$/) {
+								$C=$one_hgvs_infos;
+								$assigned=2;
+								$assigned_score++;
+							};#if
+							if ($one_hgvs_infos=~ /^m\.(.*)$/) {
+								$C=$one_hgvs_infos;
+								$assigned=2;
+								$assigned_score++;
+							};#if
+							# RNOMEN
+							if ($one_hgvs_infos=~ /^n\.(.*)$/) {
+								$R=$one_hgvs_infos;
 								$assigned=1;
+								$assigned_score++;
+							};#if
+							if ($one_hgvs_infos=~ /^r\.(.*)$/) {
+								$R=$one_hgvs_infos;
+								$assigned=1;
+								$assigned_score++;
 							};#if
 							# PNOMEN
 							if ($one_hgvs_infos=~ /^p\.(.*)$/) {
 								$P=$one_hgvs_infos;
-								$assigned=1;
+								$assigned=2;
+								$assigned_score++;
 							};#if
-							# TVNOMEN
-							if ($one_hgvs_infos=~ /^NM_(.*)$/) {
-								$TV=$one_hgvs_infos;
-								$assigned=1;
-							};#if
-							# TNOMEN
-							if ($one_hgvs_infos=~ /^NM_(.*)$/) {
-								#$T=$one_hgvs_infos;
-								my @one_hgvs_infos_T_split=split(/\./,$one_hgvs_infos);
-								if (defined $one_hgvs_infos_T_split[0]) {
-									$T=$one_hgvs_infos_T_split[0];
-									$assigned=1;
-								}; # if
-							};#if
-							# VNOMEN
-							if ($one_hgvs_infos=~ /^NM_(.*)$/) {
-								#$V=$one_hgvs_infos;
-								my @one_hgvs_infos_T_split=split(/\./,$one_hgvs_infos);
-								if (defined $one_hgvs_infos_T_split[1]) {
-									$V=$one_hgvs_infos_T_split[1];
-									$assigned=1;
-								}; # if
-							};#if
+
+
 							# ENOMEN
 							if ($one_hgvs_infos=~ /^exon(.*)$/) {
 								$E=$one_hgvs_infos;
 								$assigned=1;
+								$assigned_score++;
 							};#if
-							# NOMEN other genomic
-							if ($one_hgvs_infos=~ /^g\.(.*)$/) {
-								$O=$one_hgvs_infos;
-								$assigned=1;
-							};#if
-							# NOMEN other genomic
-							if ($one_hgvs_infos=~ /^m\.(.*)$/) {
-								$O=$one_hgvs_infos;
-								$assigned=1;
-							};#if
-							# NOMEN other genomic
-							if ($one_hgvs_infos=~ /^n\.(.*)$/) {
-								$O=$one_hgvs_infos;
-								$assigned=1;
-							};#if
-							# NOMEN other genomic
-							if ($one_hgvs_infos=~ /^r\.(.*)$/) {
-								$O=$one_hgvs_infos;
-								$assigned=1;
-							};#if
+
 							# GNOMEN
+							#if (!$assigned) {
+							print "assigned: $assigned_score $one_hgvs_infos\n" if $DEBUG;
 							if (!$assigned) {
 								$G=$one_hgvs_infos;
 								$assigned=1;
+								#$assigned_score++;
 							};#if
 							# DEFAULT TRANSCRIPT
 							#if (in_array($one_hgvs_infos,@default_transcripts)) {
@@ -1009,12 +1049,14 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 							};#fi
 
 						};#foreach
-						$N="$C$P$TV$E$G";
+						$N="$T$TV$V$C$R$P$E$G";
 						if ($N ne "") {
-							if ( !$assigned || defined $T_D) {
-								print "assi\n" if $DEBUG;
+							#if ( !$assigned || defined $T_D) {
+							if ( ($assigned_score > $assigned_score_max) || (defined $T_D) ) {
+								print "assi $assigned_score > $assigned_score_max\n" if $DEBUG;
 								$NOMEN=$one_hgvs;
 								$CNOMEN=$C;
+								$RNOMEN=$R;
 								$PNOMEN=$P;
 								$TVNOMEN=$TV;
 								$TNOMEN=$T;
@@ -1023,6 +1065,10 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 								$GNOMEN=$G;
 								$assigned=1;
 							};#if
+						};#if
+
+						if ( $assigned_score > $assigned_score_max ) {
+							$assigned_score_max=$assigned_score;
 						};#if
 						#if (!defined $PNOMEN || defined $T_D) {
 						#	$PNOMEN=$P;
@@ -1036,6 +1082,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 				if (1) {
 					print "NOMEN=$NOMEN\n" if $DEBUG;
 					print "CNOMEN=$CNOMEN\n" if $DEBUG;
+					print "RNOMEN=$RNOMEN\n" if $DEBUG;
 					print "PNOMEN=$PNOMEN\n" if $DEBUG;
 					print "TVNOMEN=$TVNOMEN\n" if $DEBUG;
 					print "TNOMEN=$TNOMEN\n" if $DEBUG;
@@ -1060,7 +1107,16 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 					# ADD to HEADER
 					$vcf_header{"INFO"}{"CNOMEN"}{"Number"}="1";
 					$vcf_header{"INFO"}{"CNOMEN"}{"Type"}="String";
-					$vcf_header{"INFO"}{"CNOMEN"}{"Description"}="\"CNOMEN hgvs nomenclature at cDNA level related to a transcript (TNOMEN)$description_plus\"";
+					$vcf_header{"INFO"}{"CNOMEN"}{"Description"}="\"CNOMEN hgvs nomenclature at DNA level related to a transcript (TNOMEN)$description_plus\"";
+				};#if
+				# RNOMEN
+				if ($RNOMEN ne "") {
+					# VAF in INFO
+					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"RNOMEN"}=$RNOMEN;
+					# ADD to HEADER
+					$vcf_header{"INFO"}{"RNOMEN"}{"Number"}="1";
+					$vcf_header{"INFO"}{"RNOMEN"}{"Type"}="String";
+					$vcf_header{"INFO"}{"RNOMEN"}{"Description"}="\"RNOMEN hgvs nomenclature at RNA level related to a transcript (TNOMEN)$description_plus\"";
 				};#if
 				# PNOMEN
 				if ($PNOMEN ne "") {

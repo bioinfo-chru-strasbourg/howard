@@ -863,6 +863,10 @@ if ((1)); then
 		echo "#[ERROR] Some Errors on INPUT VCF $INPUT:";
 		cat $VCF_VALIDATION;
 		exit 0;
+	elif (($(grep "^\Error:" $VCF_VALIDATION -c))); then
+		echo "#[ERROR] Some Errors on INPUT VCF $INPUT:";
+		cat $VCF_VALIDATION;
+		exit 0;
 	elif (($(cat $VCF_VALIDATION | wc -l))); then
 		echo "#[WARNING] Some Errors/Warnings on INPUT VCF $INPUT:";
 		cat $VCF_VALIDATION;
@@ -893,9 +897,6 @@ OUTPUT_CALCULATION=$TMP_FOLDER/output_calculation
 OUTPUT_PRIORITIZATION=$TMP_FOLDER/output_prioritization
 OUTPUT_TRANSLATION=$TMP_FOLDER/output_translation
 OUTPUT_STATS=$TMP_FOLDER/output_stats
-
-
-
 
 
 # Clean INPUT
@@ -981,7 +982,6 @@ if (($NB_VARIANT)); then
 		#exit 0;
 
 	fi;
-
 
 
 	# ANNOTATION
@@ -1205,7 +1205,6 @@ if (($NB_VARIANT)); then
 				(($DEBUG)) && tail -n 10 $OUTPUT_ANNOTATION.merge.vcf
 				(($DEBUG)) && tail -n 10 $OUTPUT_ANNOTATION
 
-
 				# CLEANING
 				rm -f $MK
 
@@ -1353,7 +1352,7 @@ if (($NB_VARIANT)); then
 
 					# ECHO / VERBOSE / DEBUG
 					(($DEBUG)) && echo $MK_CALCULATION && cat $MK_CALCULATION;
-					(($DEBUG)) && tail -n 10 $OUTPUT_CALCULATION.merge.vcf
+					#(($DEBUG)) && tail -n 10 $OUTPUT_CALCULATION.merge.vcf
 					(($DEBUG)) && tail -n 10 $OUTPUT_CALCULATION
 
 					# CLEANING
@@ -1533,7 +1532,6 @@ if (($NB_VARIANT)); then
 				#if ! $SCRIPT_DIR/VCFprioritization.pl $PARAM --input=$OUTPUT_CALCULATION --output=$OUTPUT_PRIORITIZATION 1>>$LOG 2>$ERR; then echo "#[FAILED] PRIORITIZATION FAILED!!! "; exit 1; fi;
 				if ! $HOWARD_FOLDER_BIN/VCFprioritization.pl $PARAM --input=$OUTPUT_CALCULATION --output=$OUTPUT_PRIORITIZATION 1>>$LOG 2>$ERR; then echo "#[FAILED] PRIORITIZATION FAILED!!! "; exit 1; fi;
 
-
 			fi;
 
 
@@ -1649,19 +1647,35 @@ if ((1)); then
 	grep -v -e "^Writing to " -e "^Merging .* temporary files$" -e "^Cleaning$" -e "^Done$" $VCF_VALIDATION.tmp > $VCF_VALIDATION
 	rm $VCF_VALIDATION.tmp
 
-	if (($(grep ^Failed $VCF_VALIDATION -c))) || (($(grep ^Aborded $VCF_VALIDATION -c))); then
-		echo "#[ERROR] Input VCF $OUTPUT_PRIORITIZATION failed";
-		cat $VCF_VALIDATION;
-		exit 0;
-	elif (($(grep "^\[E::" $VCF_VALIDATION -c))); then
-		echo "#[ERROR] Some Errors on Final VCF $OUTPUT_PRIORITIZATION:";
-		cat $VCF_VALIDATION;
-		exit 0;
-	elif (($(cat $VCF_VALIDATION | wc -l))); then
-		echo "#[WARNING] Some Errors/Warnings on Final VCF $OUTPUT_PRIORITIZATION:";
-		cat $VCF_VALIDATION;
-	else
-		echo "#[INFO] Final VCF validated";
+
+	if ((1)); then
+		if (($(grep ^Failed $VCF_VALIDATION -c))) \
+			|| (($(grep ^Failed $ERR -c))) \
+			|| (($(grep ^Aborded $VCF_VALIDATION -c))) \
+			|| (($(grep ^Aborded $ERR -c))); then
+			echo "#[ERROR] Input VCF $OUTPUT_PRIORITIZATION failed";
+			cat $VCF_VALIDATION $ERR;
+			echo "";
+			exit 1;
+		elif (($(grep "^\[E::" $VCF_VALIDATION -c))) \
+			|| (($(grep "^\[E::" $ERR -c))); then
+			echo "#[ERROR] Some Errors on Final VCF";
+			cat $VCF_VALIDATION $ERR;
+			echo "";
+			exit 1;
+		elif (($(grep "^\Error:" $VCF_VALIDATION -c))) \
+			|| (($(grep "^\Error:" $ERR -c))); then
+			echo "#[ERROR] Some Errors on Final VCF";
+			cat $VCF_VALIDATION $ERR;
+			echo "";
+			exit 1;
+		elif (($(cat $VCF_VALIDATION $ERR | wc -l))); then
+			echo "#[WARNING] Some Errors/Warnings on Final VCF";
+			cat $VCF_VALIDATION $ERR;
+			echo "";
+		else
+			echo "#[INFO] Final VCF validated";
+		fi;
 	fi;
 
 
