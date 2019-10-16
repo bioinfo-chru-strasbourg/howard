@@ -824,8 +824,9 @@ if ((1)); then
 
 		# Normalization
 		if [ "$NORM" != "" ] && [ -e "$NORM" ]; then
+			echo "#[INFO] NORMALIZATION with genome '$NORM'";
 			INPUT_TMP_NORM=$INPUT.norm.vcf
-			$BCFTOOLS norm -m- -f $NORM $INPUT > $INPUT_TMP_NORM 2>>$ERR
+			$BCFTOOLS norm -m- -f $NORM $INPUT | $BCFTOOLS norm -d all > $INPUT_TMP_NORM 2>>$ERR
 			cp $INPUT_TMP_NORM $INPUT
 			rm $INPUT_TMP_NORM
 		fi;
