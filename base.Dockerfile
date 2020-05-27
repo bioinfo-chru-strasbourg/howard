@@ -1,8 +1,8 @@
 
 ##############################################################
-# Dockerfile Version:   1.0
+# Dockerfile Version:   1.0.1
 # Software:             HOWARD
-# Software Version:     0.9.15b
+# Software Version:     0.9.15.1b
 # Software Website:     https://gitlab.bioinfo-diag.fr/Strasbourg/HOWARD
 # Licence:              GNU Affero General Public License (AGPL)
 # Description:          HOWARD
@@ -40,7 +40,7 @@
 FROM centos:7
 MAINTAINER Antony Le Bechec <antony.lebechec@gmail.com>
 LABEL Software="HOWARD" \
-	Version="0.9.15b" \
+	Version="0.9.15.1b" \
 	Website="https://gitlab.bioinfo-diag.fr/Strasbourg/HOWARD" \
 	Description="HOWARD" \
 	License="GNU Affero General Public License (AGPL)" \

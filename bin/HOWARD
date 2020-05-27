@@ -5,8 +5,8 @@
 
 SCRIPT_NAME="HOWARD"
 SCRIPT_DESCRIPTION="HOWARD Annotation, Calculation, Prioritization and Translation, based on ANNOVAR and snpEff, allowing multithreading"
-SCRIPT_RELEASE="0.9.15b"
-SCRIPT_DATE="19/09/2019"
+SCRIPT_RELEASE="0.9.15.1b"
+SCRIPT_DATE="28/05/2020"
 SCRIPT_AUTHOR="Antony Le Bechec"
 SCRIPT_COPYRIGHT="HUS"
 SCRIPT_LICENCE="GNU AGPL V3"
@@ -78,6 +78,8 @@ RELEASE_NOTES=$RELEASE_NOTES"#\tAdd --nomen_fields parameter and update NOMEN ca
 RELEASE_NOTES=$RELEASE_NOTES"#\tAdd --bcftools_stats and --stats parameter.\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tChange PZScore, PZFlag, PZComment and PZInfos generation, adding default PZ and all PZ filters.\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tBug fixed: translation fields identification.\n";
+RELEASE_NOTES=$RELEASE_NOTES"# 0.9.15.1b-28/05/2020:\n";
+RELEASE_NOTES=$RELEASE_NOTES"#\tBug fixed: NOMEN calculation clear previous NOMEN values if using force option.\n";
 
 
 
