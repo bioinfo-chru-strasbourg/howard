@@ -3,8 +3,8 @@
 # Highly Open and Valuable tool for   #
 #    Variant Annotation & Ranking     #
 #    for Discovery                    #
-# Release : 0.9.15b                   #
-# Date : 20190813                     #
+# Release : 0.9.15.1b                 #
+# Date : 20200528                     #
 # Author: Antony Le Bechec            #
 # Copyright: HUS                      #
 # Licence: GNU AGPL V3                #
@@ -58,7 +58,7 @@ JAVA 1.8 or higher
 # Beware of proxy configuration!
 
 #######################################
-# HOWARD [0.9.15b-19/09/2019]
+# HOWARD [0.9.15.1b-28/05/2020]
 # HOWARD Annotation, Calculation, Prioritization and Translation, based on ANNOVAR and snpEff, allowing multithreading 
 # Antony Le Bechec @ HUS © GNU AGPL V3
 #######################################
@@ -123,15 +123,17 @@ JAVA 1.8 or higher
 #	Bug fixed: file identification in annotation configuration
 #	Bug fixed: calculation INFO fields header, snpeff parameters options on multithreading
 #	Bug fixed: snpeff parameters in command line
-# 0.9.15b-19/09/2019:
+# 0.9.15.1b-28/05/2020:
 #	Rename HOWARD.sh to HOWARD.
 #	Add --nomen_fields parameter and update NOMEN calculation.
 #	Add --bcftools_stats and --stats parameter.
 #	Change PZScore, PZFlag, PZComment and PZInfos generation, adding default PZ and all PZ filters.
 #	Bug fixed: translation fields identification.
+# 0.9.15.1b-28/05/2020:
+#	Bug fixed: NOMEN calculation clear previous NOMEN values if using force option.
 
 #######################################
-# HOWARD [0.9.15b-19/09/2019]
+# HOWARD [0.9.15.1b-28/05/2020]
 # HOWARD Annotation, Calculation, Prioritization and Translation, based on ANNOVAR and snpEff, allowing multithreading 
 # Antony Le Bechec @ HUS © GNU AGPL V3
 #######################################

@@ -9,8 +9,8 @@
 
 our %information = ( #
 	'script'	=>  	basename($0),		# Script
-	'release'	=>  	"0.9.2.3b",			# Release
-	'date'		=>  	"20181217",		# Release parameter
+	'release'	=>  	"0.9.2.4b",			# Release
+	'date'		=>  	"20200528",		# Release parameter
 	'author'	=>  	"Antony Le Béchec",	# Author
 	'copyright'	=>  	"HUS",			# Copyright
 	'licence'	=>  	"GNU AGPL V3",		# Licence
@@ -884,15 +884,25 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 
 				#print "".$$variant_values{"INFOS"}{"hgvs"} if $DEBUG;
 				#print "".$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"hgvs"} if $DEBUG;
-				my $NOMEN=$$variant_values{"INFOS"}{"cnomen"};
-				my $CNOMEN=$$variant_values{"INFOS"}{"cnomen"};
-				my $RNOMEN=$$variant_values{"INFOS"}{"rnomen"};
-				my $PNOMEN=$$variant_values{"INFOS"}{"pnomen"};
-				my $TVNOMEN=$$variant_values{"INFOS"}{"tvnomen"};
-				my $TNOMEN=$$variant_values{"INFOS"}{"tnomen"};
-				my $VNOMEN=$$variant_values{"INFOS"}{"vnomen"};
-				my $ENOMEN=$$variant_values{"INFOS"}{"enomen"};
-				my $GNOMEN=$$variant_values{"INFOS"}{"gnomen"};
+				# my $NOMEN=$$variant_values{"INFOS"}{"cnomen"};
+				# my $CNOMEN=$$variant_values{"INFOS"}{"cnomen"};
+				# my $RNOMEN=$$variant_values{"INFOS"}{"rnomen"};
+				# my $PNOMEN=$$variant_values{"INFOS"}{"pnomen"};
+				# my $TVNOMEN=$$variant_values{"INFOS"}{"tvnomen"};
+				# my $TNOMEN=$$variant_values{"INFOS"}{"tnomen"};
+				# my $VNOMEN=$$variant_values{"INFOS"}{"vnomen"};
+				# my $ENOMEN=$$variant_values{"INFOS"}{"enomen"};
+				# my $GNOMEN=$$variant_values{"INFOS"}{"gnomen"};
+
+				my $NOMEN=undef;
+				my $CNOMEN=undef;
+				my $RNOMEN=undef;
+				my $PNOMEN=undef;
+				my $TVNOMEN=undef;
+				my $TNOMEN=undef;
+				my $VNOMEN=undef;
+				my $ENOMEN=undef;
+				my $GNOMEN=undef;
 
 				print "# Calculation '$one_calculation'...\n" if $DEBUG;
 
@@ -1108,88 +1118,77 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 					print "GNOMEN=$GNOMEN\n" if $DEBUG;
 				};#if
 
-				# NOMEN
-				if ($NOMEN ne "") {
-					# VAF in INFO
+
+				### Update *NOMEN
+			
+				if (defined($NOMEN)) {
+
+					# NOMEN
 					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"NOMEN"}=$NOMEN;
 					# ADD to HEADER
 					$vcf_header{"INFO"}{"NOMEN"}{"Number"}="1";
 					$vcf_header{"INFO"}{"NOMEN"}{"Type"}="String";
 					$vcf_header{"INFO"}{"NOMEN"}{"Description"}="\"NOMEN hgvs nomenclature considered as reference hgvs (official transcript, first otherwise)$description_plus\"";
-				};#if
-				# CNOMEN
-				if ($CNOMEN ne "") {
-					# VAF in INFO
+					
+					# CNOMEN
 					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"CNOMEN"}=$CNOMEN;
 					# ADD to HEADER
 					$vcf_header{"INFO"}{"CNOMEN"}{"Number"}="1";
 					$vcf_header{"INFO"}{"CNOMEN"}{"Type"}="String";
 					$vcf_header{"INFO"}{"CNOMEN"}{"Description"}="\"CNOMEN hgvs nomenclature at DNA level related to a transcript (TNOMEN)$description_plus\"";
-				};#if
-				# RNOMEN
-				if ($RNOMEN ne "") {
-					# VAF in INFO
+					
+					# RNOMEN
 					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"RNOMEN"}=$RNOMEN;
 					# ADD to HEADER
 					$vcf_header{"INFO"}{"RNOMEN"}{"Number"}="1";
 					$vcf_header{"INFO"}{"RNOMEN"}{"Type"}="String";
 					$vcf_header{"INFO"}{"RNOMEN"}{"Description"}="\"RNOMEN hgvs nomenclature at RNA level related to a transcript (TNOMEN)$description_plus\"";
-				};#if
-				# PNOMEN
-				if ($PNOMEN ne "") {
-					# VAF in INFO
+					
+					# PNOMEN
 					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"PNOMEN"}=$PNOMEN;
 					# ADD to HEADER
 					$vcf_header{"INFO"}{"PNOMEN"}{"Number"}="1";
 					$vcf_header{"INFO"}{"PNOMEN"}{"Type"}="String";
 					$vcf_header{"INFO"}{"PNOMEN"}{"Description"}="\"PNOMEN hgvs nomenclature at Protein level related to a transcript (TNOMEN)$description_plus\"";
-				};#if
-				# TVNOMEN
-				if ($TVNOMEN ne "") {
-					# VAF in INFO
+					
+					# TVNOMEN
 					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"TVNOMEN"}=$TVNOMEN;
 					# ADD to HEADER
 					$vcf_header{"INFO"}{"TVNOMEN"}{"Number"}="1";
 					$vcf_header{"INFO"}{"TVNOMEN"}{"Type"}="String";
 					$vcf_header{"INFO"}{"TVNOMEN"}{"Description"}="\"TVNOMEN hgvs transcript with version (if any) used (e.g. for CNOMEN and PNOMEN)$description_plus\"";
-				};#if
-				# TNOMEN
-				if ($TNOMEN ne "") {
-					# VAF in INFO
+					
+					# TNOMEN
 					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"TNOMEN"}=$TNOMEN;
 					# ADD to HEADER
 					$vcf_header{"INFO"}{"TNOMEN"}{"Number"}="1";
 					$vcf_header{"INFO"}{"TNOMEN"}{"Type"}="String";
 					$vcf_header{"INFO"}{"TNOMEN"}{"Description"}="\"TNOMEN hgvs transcript used (e.g. for CNOMEN and PNOMEN)$description_plus\"";
-				};#if
-				# VNOMEN
-				if ($VNOMEN ne "") {
-					# VAF in INFO
+				
+					# VNOMEN
 					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"VNOMEN"}=$VNOMEN;
 					# ADD to HEADER
 					$vcf_header{"INFO"}{"VNOMEN"}{"Number"}="1";
 					$vcf_header{"INFO"}{"VNOMEN"}{"Type"}="String";
 					$vcf_header{"INFO"}{"VNOMEN"}{"Description"}="\"VNOMEN hgvs transcript version used (e.g. for CNOMEN and PNOMEN)$description_plus\"";
-				};#if
-				# ENOMEN
-				if ($ENOMEN ne "") {
-					# VAF in INFO
+				
+					# ENOMEN
 					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"ENOMEN"}=$ENOMEN;
 					# ADD to HEADER
 					$vcf_header{"INFO"}{"ENOMEN"}{"Number"}="1";
 					$vcf_header{"INFO"}{"ENOMEN"}{"Type"}="String";
 					$vcf_header{"INFO"}{"ENOMEN"}{"Description"}="\"ENOMEN hgvs exon nomenclature related to a transcript (TNOMEN)$description_plus\"";
-				};#if
-				# GNOMEN
-				#if ($GNOMEN ne "" && 0) {
-				if ($GNOMEN ne "") {
-					# VAF in INFO
+				
+					# GNOMEN
 					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"GNOMEN"}=$GNOMEN;
 					# ADD to HEADER
 					$vcf_header{"INFO"}{"GNOMEN"}{"Number"}="1";
 					$vcf_header{"INFO"}{"GNOMEN"}{"Type"}="String";
 					$vcf_header{"INFO"}{"GNOMEN"}{"Description"}="\"GNOMEN hgvs gene nomenclature related to a transcript (TNOMEN)$description_plus\"";
-				};#if
+						
+
+				};
+				
 
 
 			};#if
@@ -1518,7 +1517,11 @@ while(<FILE_INPUT>) {
 		while ((my $annotation_name, my $annotation_result) = each(%{$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}})){
 
 			if ($force) {
-				$annotation_input{$chr}{$pos}{$ref}{$alt}{"INFOS"}{$annotation_name}="$annotation_result";
+				if (defined($annotation_result)) {
+					$annotation_input{$chr}{$pos}{$ref}{$alt}{"INFOS"}{$annotation_name}="$annotation_result";
+				} else {
+					$annotation_input{$chr}{$pos}{$ref}{$alt}{"INFOS"}{$annotation_name}=undef;
+				};
 			};#if
 
 			if (!exists $annotation_input{$chr}{$pos}{$ref}{$alt}{"INFOS"}{$annotation_name}
@@ -1565,9 +1568,16 @@ while(<FILE_INPUT>) {
 					my $sep=""; $sep=";" if $variant_annotation ne "";
 					if (defined $val) {
 						$variant_annotation.="$sep$var=$val";
-					} else {
+					} elsif (defined $val && $val eq "") {
 						$variant_annotation.="$sep$var";
+					#} else {
+					#	$variant_annotation.="$sep$var";
 					};#if
+					# if ($var eq "PNOMEN" && $pos eq "89623901") {
+					# 	if (defined $val) {
+					# 		warn "PNOMEN=$val";
+					# 	};
+					# };
 				#};#if
 
 			};#foreach

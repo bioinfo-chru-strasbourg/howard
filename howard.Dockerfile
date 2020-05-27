@@ -1,8 +1,8 @@
 
 ##############################################################
-# Dockerfile Version:   1.4
+# Dockerfile Version:   1.4.1
 # Software:             HOWARD
-# Software Version:     0.9.15b
+# Software Version:     0.9.15.1b
 # Software Website:     https://gitlab.bioinfo-diag.fr/Strasbourg/HOWARD
 # Licence:              GNU Affero General Public License (AGPL)
 # Description:          HOWARD
@@ -82,7 +82,7 @@ RUN yum install -y $YUM_INSTALL ;
 
 ENV DATABASES=/databases
 ENV TOOL_NAME=howard
-ENV TOOL_VERSION=0.9.15b
+ENV TOOL_VERSION=0.9.15.1b
 ENV TARBALL_LOCATION=https://gitlab.bioinfo-diag.fr/Strasbourg/HOWARD/repository/$TOOL_VERSION
 ENV TARBALL=archive.tar.gz
 ENV TARBALL_FOLDER=archive
