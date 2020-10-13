@@ -5,8 +5,8 @@
 
 SCRIPT_NAME="HOWARD"
 SCRIPT_DESCRIPTION="HOWARD Annotation, Calculation, Prioritization and Translation, based on ANNOVAR and snpEff, allowing multithreading"
-SCRIPT_RELEASE="0.9.15.1b"
-SCRIPT_DATE="28/05/2020"
+SCRIPT_RELEASE="0.9.15.2"
+SCRIPT_DATE="12/10/2020"
 SCRIPT_AUTHOR="Antony Le Bechec"
 SCRIPT_COPYRIGHT="HUS"
 SCRIPT_LICENCE="GNU AGPL V3"
@@ -81,7 +81,7 @@ RELEASE_NOTES=$RELEASE_NOTES"#\tBug fixed: translation fields identification.\n"
 RELEASE_NOTES=$RELEASE_NOTES"# 0.9.15.1b-28/05/2020:\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tBug fixed: NOMEN calculation clear previous NOMEN values if using force option.\n";
 RELEASE_NOTES=$RELEASE_NOTES"# 0.9.15.2-12/10/2020:\n";
-RELEASE_NOTES=$RELEASE_NOTES"#\Change --norm parameter by adding '--check-ref=s' in bcftools command.\n";
+RELEASE_NOTES=$RELEASE_NOTES"#\tChange --norm parameter by adding '--check-ref=s' in bcftools command.\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tAdd --norm_options parameter.\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tforce translation VCF by default.\n";
 
