@@ -1,0 +1,55 @@
+#########
+# HOWARD #
+#########
+# Usage: docker-compose up
+
+version: '3'
+
+# SERVICES
+##########
+
+services:
+
+
+    # HOWARD IMAGES
+    ##############
+
+
+    # HOWARD IMAGE
+    HOWARD:
+        image: ${DOCKER_HOWARD_IMAGE}
+        build:
+            context: ${DOCKER_HOWARD_CONTEXT}
+            dockerfile: Dockerfile
+        container_name: HOWARD
+        command: --help
+        env_file:
+            - ${DOCKER_COMPOSE_ENV}
+        networks:
+            - howard
+
+
+    # HOWARD CLI
+    HOWARD-CLI:
+        image: ${DOCKER_HOWARD_CLI_IMAGE}
+        container_name: ${DOCKER_HOWARD_CLI_CONTAINER_NAME}
+        entrypoint: /bin/bash
+        command: -c "while true; do sleep ${DOCKER_HOWARD_CLI_SLEEP}; done"
+        volumes:
+            # Databases
+            #- ${DOCKER_HOWARD_CLI_FOLDER_HOST_DATABASES}:${DOCKER_HOWARD_CLI_FOLDER_INNER_DATABASES}
+            # PWD
+            - /Users/lebechea:/pwd
+        restart: always
+        env_file:
+            - ${DOCKER_COMPOSE_ENV}
+        networks:
+            - howard
+
+
+# NETWORK
+###########
+
+networks:
+    howard:
+        driver: "bridge"

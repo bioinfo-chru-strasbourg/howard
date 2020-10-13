@@ -80,6 +80,11 @@ RELEASE_NOTES=$RELEASE_NOTES"#\tChange PZScore, PZFlag, PZComment and PZInfos ge
 RELEASE_NOTES=$RELEASE_NOTES"#\tBug fixed: translation fields identification.\n";
 RELEASE_NOTES=$RELEASE_NOTES"# 0.9.15.1b-28/05/2020:\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tBug fixed: NOMEN calculation clear previous NOMEN values if using force option.\n";
+RELEASE_NOTES=$RELEASE_NOTES"# 0.9.15.2-12/10/2020:\n";
+RELEASE_NOTES=$RELEASE_NOTES"#\Change --norm parameter by adding '--check-ref=s' in bcftools command.\n";
+RELEASE_NOTES=$RELEASE_NOTES"#\tAdd --norm_options parameter.\n";
+RELEASE_NOTES=$RELEASE_NOTES"#\tforce translation VCF by default.\n";
+
 
 
 
@@ -163,7 +168,7 @@ function usage {
 	echo "#                                                GNOMEN (gene, if any)";
 	echo "# --prioritization=<LIST OF FILE>       List of prioritization profiles (see prioritization config file)";
 	echo "# --translation=<STRING>                Output format, either TSV or VCF";
-	echo "#                                       Default VCF";
+	echo "#                                       Default: 'VCF'";
 	echo "#";
 
 	echo " ";
@@ -269,6 +274,9 @@ function usage {
 	echo "# --split=<INTEGER>                     Split by group of variants (default (10000)";
 	echo "# --compress=<INTEGER>                  Compression level output file *vcf.gz (0 to 9, -1 no compression by default)";
 	echo "# --norm=<FILE>                         Genome fasta file to normalize (beware of chromosome identification, either 'x' or 'chrx')";
+	echo "# --norm_options=<STRING>               Normalisation options (see bcftools options)";
+	echo "#                                       Format: '--option1=value1,--option2=value2,...' ";
+	echo "#                                       Default: '--multiallelics=-any,--rm-dup=none' ";
 	echo "# --tmp=<FOLDER>                        Temporary folder (default /tmp)";
 	echo "# --verbose                             VERBOSE option";
 	echo "# --debug                               DEBUG option";
@@ -291,7 +299,7 @@ function usage {
 header;
 
 
-ARGS=$(getopt -o "i:o:e:a:f:s:r:xt:m:vdnh" --long "input:,vcf:,output:,env:,annotation:,annotate:,calculation:,filter:,prioritization:,format:,translation:,fields:,sort:,sort_by:,order_by:,bcftools_expression:,stats:,snpeff_stats:,bcftools_stats:,multithreading,threads:,split:,compress:,norm:,tmp:,verbose,debug,release,help" -- "$@" 2> /dev/null)
+ARGS=$(getopt -o "i:o:e:a:f:s:r:xt:m:vdnh" --long "input:,vcf:,output:,env:,annotation:,annotate:,calculation:,filter:,prioritization:,format:,translation:,fields:,sort:,sort_by:,order_by:,bcftools_expression:,stats:,snpeff_stats:,bcftools_stats:,multithreading,threads:,split:,compress:,norm:,norm_options:,tmp:,verbose,debug,release,help" -- "$@" 2> /dev/null)
 #ARGS=$(getopt --long "input:,output:,annotation:,multithreading,threads:,verbose,debug,release,help" -- "$@" 2> /dev/null)
 if [ $? -ne 0 ]; then
 	:
@@ -374,6 +382,10 @@ do
 			;;
 		--norm)
 			NORM="$2"
+			shift 2
+			;;
+		--norm_options)
+			NORM_OPTIONS="$2"
 			shift 2
 			;;
 		--fields)
@@ -521,30 +533,37 @@ if [ -z $NORM ]; then
 	NORM="";
 fi;
 
+if [ "$NORM_OPTIONS" == "" ]; then
+	NORM_OPTIONS="--multiallelics=-any,--rm-dup=none"
+fi;
+#NORM_OPTIONS=""
+
+# FORMAT
+# force format as VCF
+if [ -z $FORMAT ] || [ "$FORMAT" == "VCF" ]; then
+	FORMAT="VCF";
+fi;
+
 
 # ANNOTATIONS_split
 if [ -z $ANNOTATIONS_SPLIT ]; then
 	ANNOTATIONS_SPLIT=$SPLIT;
-	#ANNOTATIONS_SPLIT=2;
 fi;
 
 # CALCULATION_split
 if [ -z $CALCULATION_SPLIT ]; then
 	CALCULATION_SPLIT=$SPLIT;
-	#ANNOTATIONS_SPLIT=2;
 fi;
 
 # PRIORITIZATION_split
 if [ -z $PRIORITIZATION_SPLIT ]; then
 	PRIORITIZATION_SPLIT=$SPLIT;
-	#ANNOTATIONS_SPLIT=2;
 fi;
 
 
 # TRANSLATION_split
 if [ -z $TRANSLATION_SPLIT ]; then
 	TRANSLATION_SPLIT=$SPLIT;
-	#ANNOTATIONS_SPLIT=2;
 fi;
 
 # SPLIT SUFFIX LENGTH
@@ -741,7 +760,7 @@ if ((1)); then
 						echo "#[INFO] Input VCF '$INPUT_VCF' sorting and normalization";
 						TMP_SORT_PREPARATION=$TMP_SORT$RANDOM
 						mkdir -p $TMP_SORT_PREPARATION
-						$BCFTOOLS norm -m- --threads $THREADS $INPUT_VCF_NUM 2>>$ERR | $BCFTOOLS sort -T $TMP_SORT_PREPARATION 2>>$ERR | $BGZIP -@ $THREADS -l 0 > $INPUT_VCF_NUM.gz 2>>$ERR
+						$BCFTOOLS view --threads $THREADS $INPUT_VCF_NUM 2>>$ERR | $BCFTOOLS sort -T $TMP_SORT_PREPARATION 2>>$ERR | $BGZIP -@ $THREADS -l 0 > $INPUT_VCF_NUM.gz 2>>$ERR
 						$TABIX $INPUT_VCF_NUM.gz 1>>$LOG 2>>$ERR
 						INPUT_VCF_NUM=$INPUT_VCF_NUM.gz
 						if [ -e $INPUT_VCF_NUM ] && [ -e $INPUT_VCF_NUM.tbi ]; then
@@ -825,13 +844,33 @@ if ((1)); then
 
 
 		# Normalization
+		NORM_CMD="$BCFTOOLS view $INPUT";
+		INPUT_TMP_NORM=$INPUT.norm.vcf
+		
+		# normalization with genome
 		if [ "$NORM" != "" ] && [ -e "$NORM" ]; then
 			echo "#[INFO] NORMALIZATION with genome '$NORM'";
-			INPUT_TMP_NORM=$INPUT.norm.vcf
-			$BCFTOOLS norm -m- -f $NORM $INPUT | $BCFTOOLS norm -d all > $INPUT_TMP_NORM 2>>$ERR
-			cp $INPUT_TMP_NORM $INPUT
-			rm $INPUT_TMP_NORM
+			NORM_CMD=$NORM_CMD" | $BCFTOOLS norm -f $NORM --check-ref=s " #--check-ref=s
 		fi;
+
+		# normalization with options
+		if [ "$NORM_OPTIONS" != "" ]; then
+			echo "#[INFO] NORMALIZATION with options '"$(echo $NORM_OPTIONS | tr "," " ")"'";
+			NORM_OPTIONS_CMD=""
+			for option in $(echo $NORM_OPTIONS | tr "," "\n"); do
+				NORM_OPTIONS_CMD=$NORM_OPTIONS_CMD" | $BCFTOOLS norm $option "
+			done;
+			NORM_CMD=$NORM_CMD" $NORM_OPTIONS_CMD "
+		fi;
+
+		# output and err
+		NORM_CMD=$NORM_CMD" > $INPUT_TMP_NORM "
+
+		# Eval norm cmd
+		eval $NORM_CMD 2>>$ERR;
+		cp $INPUT_TMP_NORM $INPUT
+		rm $INPUT_TMP_NORM
+
 
 		#(($VERBOSE)) && echo "#[INFO] TMP_SORT_PREPARATION=$TMP_SORT_PREPARATION"
 		(($VERBOSE)) && echo "#[INFO] INPUT_TMP: $INPUT"
@@ -1736,7 +1775,6 @@ if [ ! -z $STATS ] || [ ! -z $BCFTOOLS_STATS ]; then
 	fi;
 
 fi;
-
 
 
 
