@@ -37,7 +37,7 @@ services:
         command: -c "while true; do sleep ${DOCKER_HOWARD_CLI_SLEEP}; done"
         volumes:
             # Databases
-            #- ${DOCKER_HOWARD_CLI_FOLDER_HOST_DATABASES}:${DOCKER_HOWARD_CLI_FOLDER_INNER_DATABASES}
+            - ${DOCKER_HOWARD_CLI_FOLDER_HOST_DATABASES}:${DOCKER_HOWARD_CLI_FOLDER_INNER_DATABASES}
             # PWD
             - /Users/lebechea:/pwd
         restart: always
