@@ -1,8 +1,8 @@
 
 ##############################################################
-# Dockerfile Version:   1.4.1
+# Dockerfile Version:   1.4.2
 # Software:             HOWARD
-# Software Version:     0.9.15.1b
+# Software Version:     0.9.15.2
 # Software Website:     https://gitlab.bioinfo-diag.fr/Strasbourg/HOWARD
 # Licence:              GNU Affero General Public License (AGPL)
 # Description:          HOWARD
@@ -38,13 +38,21 @@
 ########
 
 FROM centos:7
-MAINTAINER Antony Le Bechec <antony.lebechec@gmail.com>
 LABEL Software="HOWARD" \
-	Version="0.9.15.1b" \
+	Version="0.9.15.2" \
 	Website="https://gitlab.bioinfo-diag.fr/Strasbourg/HOWARD" \
 	Description="HOWARD" \
 	License="GNU Affero General Public License (AGPL)" \
+    maintener="Antony Le Bechec <antony.lebechec@gmail.com>" \
 	Usage="docker run -ti [-v [DATA FOLDER]:/data -v [DATABASE_FOLDER]:/databases] howard:version"
+
+
+
+########
+# ARGS #
+########
+
+ARG THREADS="1"
 
 
 
@@ -90,7 +98,7 @@ RUN wget $TARBALL_LOCATION/$TARBALL ; \
     tar xf $TARBALL ; \
     rm -rf $TARBALL ; \
     cd $TOOL_NAME-$TOOL_VERSION ; \
-    make prefix=$TOOLS/$TOOL_NAME/$TOOL_VERSION install ; \
+    make -j $THREADS prefix=$TOOLS/$TOOL_NAME/$TOOL_VERSION install ; \
     cd ../ ; \
     rm -rf $TOOL_NAME-$TOOL_VERSION
 
@@ -112,7 +120,7 @@ RUN wget $TARBALL_LOCATION/$TARBALL ; \
     tar xf $TARBALL ; \
     rm -rf $TARBALL ; \
     cd $TOOL_NAME-$TOOL_VERSION ; \
-    make prefix=$TOOLS/$TOOL_NAME/$TOOL_VERSION install ; \
+    make -j $THREADS prefix=$TOOLS/$TOOL_NAME/$TOOL_VERSION install ; \
     cd ../ ; \
     rm -rf $TOOL_NAME-$TOOL_VERSION
 
@@ -195,7 +203,7 @@ RUN wget $TARBALL_LOCATION/$TARBALL ; \
 
 ENV DATABASES=/databases
 ENV TOOL_NAME=howard
-ENV TOOL_VERSION=0.9.15.1b
+ENV TOOL_VERSION=0.9.15.2
 ENV TARBALL_LOCATION=https://gitlab.bioinfo-diag.fr/Strasbourg/HOWARD/repository/$TOOL_VERSION
 ENV TARBALL=archive.tar.gz
 ENV TARBALL_FOLDER=archive
