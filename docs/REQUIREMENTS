@@ -4,6 +4,6 @@
 
 CentOS7 or higher
 YUM Packages "bc make wget perl-Switch perl-Digest-MD5 perl-Data-Dumper which zlib zlib2 bzip2 lzma xz"
-BCFTOOLS 1.8 or higher
-HTSLIB (BGZIP & TABIX) 1.8 or higher
+BCFTOOLS 1.11 or higher
+HTSLIB (BGZIP & TABIX) 1.11 or higher
 JAVA 1.8 or higher

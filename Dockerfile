@@ -64,7 +64,7 @@ ENV TOOLS=/tools
 ENV DATA=/data
 ENV TOOL=/tool
 ENV DATABASES=/databases
-ENV YUM_INSTALL="gcc bc make wget perl-Switch perl-Digest-MD5 perl-Data-Dumper which zlib-devel zlib zlib2-devel zlib2 bzip2-devel bzip2 lzma-devel lzma xz-devel xz ncurses-devel unzip"
+ENV YUM_INSTALL="gcc bc make wget perl-Switch perl-Digest-MD5 perl-Data-Dumper which zlib-devel zlib zlib2-devel zlib2 bzip2-devel bzip2 lzma-devel lzma xz-devel xz ncurses-devel unzip curl-devel"
 ENV YUM_REMOVE="zlib-devel bzip2-devel xz-devel ncurses-devel unzip gcc"
 
 
@@ -87,19 +87,19 @@ RUN yum install -y $YUM_INSTALL ;
 ##########
 
 ENV TOOL_NAME=htslib
-ENV TOOL_VERSION=1.8
+ENV TOOL_VERSION=1.11
 ENV TARBALL_LOCATION=https://github.com/samtools/$TOOL_NAME/releases/download/$TOOL_VERSION/
 ENV TARBALL=$TOOL_NAME-$TOOL_VERSION.tar.bz2
 ENV DEST=$TOOLS/$TOOL_NAME/$TOOL_VERSION
 ENV PATH=$TOOLS/$TOOL_NAME/$TOOL_VERSION/bin:$PATH
 
 # INSTALL
-RUN wget $TARBALL_LOCATION/$TARBALL ; \
-    tar xf $TARBALL ; \
-    rm -rf $TARBALL ; \
-    cd $TOOL_NAME-$TOOL_VERSION ; \
-    make -j $THREADS prefix=$TOOLS/$TOOL_NAME/$TOOL_VERSION install ; \
-    cd ../ ; \
+RUN wget $TARBALL_LOCATION/$TARBALL && \
+    tar xf $TARBALL && \
+    rm -rf $TARBALL && \
+    cd $TOOL_NAME-$TOOL_VERSION && \
+    make -j $THREADS prefix=$TOOLS/$TOOL_NAME/$TOOL_VERSION install && \
+    cd ../ && \
     rm -rf $TOOL_NAME-$TOOL_VERSION
 
 
@@ -109,19 +109,19 @@ RUN wget $TARBALL_LOCATION/$TARBALL ; \
 ############
 
 ENV TOOL_NAME=bcftools
-ENV TOOL_VERSION=1.8
+ENV TOOL_VERSION=1.11
 ENV TARBALL_LOCATION=https://github.com/samtools/$TOOL_NAME/releases/download/$TOOL_VERSION/
 ENV TARBALL=$TOOL_NAME-$TOOL_VERSION.tar.bz2
 ENV DEST=$TOOLS/$TOOL_NAME/$TOOL_VERSION
 ENV PATH=$TOOLS/$TOOL_NAME/$TOOL_VERSION/bin:$PATH
 
 # INSTALL
-RUN wget $TARBALL_LOCATION/$TARBALL ; \
-    tar xf $TARBALL ; \
-    rm -rf $TARBALL ; \
-    cd $TOOL_NAME-$TOOL_VERSION ; \
-    make -j $THREADS prefix=$TOOLS/$TOOL_NAME/$TOOL_VERSION install ; \
-    cd ../ ; \
+RUN wget $TARBALL_LOCATION/$TARBALL && \
+    tar xf $TARBALL && \
+    rm -rf $TARBALL && \
+    cd $TOOL_NAME-$TOOL_VERSION && \
+    make -j $THREADS prefix=$TOOLS/$TOOL_NAME/$TOOL_VERSION install && \
+    cd ../ && \
     rm -rf $TOOL_NAME-$TOOL_VERSION
 
 
@@ -155,13 +155,13 @@ ENV PATH=$TOOLS/$TOOL_NAME/$TOOL_VERSION/bin:$PATH
 
 
 # INSTALL
-RUN wget $TARBALL_LOCATION/$TARBALL ; \
-    unzip $TARBALL -d $TARBALL_FOLDER ; \
-    mkdir -p $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin/ ; \
-    cp $TARBALL_FOLDER/*/*jar $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin/ -R ; \
-    cp $TARBALL_FOLDER/*/*.config $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin/ -R ; \
-    ln -s $TOOLS/$TOOL_NAME/$TOOL_VERSION $TOOLS/$TOOL_NAME/current ; \
-    mkdir -p $TOOL_DATABASE_FOLDER ; \
+RUN wget $TARBALL_LOCATION/$TARBALL && \
+    unzip $TARBALL -d $TARBALL_FOLDER && \
+    mkdir -p $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin/ && \
+    cp $TARBALL_FOLDER/*/*jar $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin/ -R && \
+    cp $TARBALL_FOLDER/*/*.config $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin/ -R && \
+    ln -s $TOOLS/$TOOL_NAME/$TOOL_VERSION $TOOLS/$TOOL_NAME/current && \
+    mkdir -p $TOOL_DATABASE_FOLDER && \
     ln -s $TOOL_DATABASE_FOLDER $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin/data ;
 
 
@@ -172,7 +172,7 @@ RUN wget $TARBALL_LOCATION/$TARBALL ; \
 
 ENV DATABASES=/databases
 ENV TOOL_NAME=annovar
-ENV TOOL_VERSION=2018Apr16
+ENV TOOL_VERSION=2019Oct24
 ENV TARBALL_LOCATION=http://www.openbioinformatics.org/annovar/download/0wgxR2rIVP
 ENV TARBALL=annovar.latest.tar.gz
 ENV TARBALL_FOLDER=$TOOL_NAME
@@ -183,16 +183,16 @@ ENV PATH=$TOOLS/$TOOL_NAME/$TOOL_VERSION/bin:$PATH
 
 
 # INSTALL
-RUN wget $TARBALL_LOCATION/$TARBALL ; \
-    tar xf $TARBALL ; \
-    rm -rf $TARBALL ; \
-    cd $TARBALL_FOLDER ; \
-    mkdir -p $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin ; \
-    cp *.pl $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin/ -R ; \
-    cd ../ ; \
-    rm -rf $TARBALL_FOLDER ; \
-    ln -s $TOOLS/$TOOL_NAME/$TOOL_VERSION $TOOLS/$TOOL_NAME/current ; \
-    mkdir -p $TOOL_DATABASE_FOLDER ; \
+RUN wget $TARBALL_LOCATION/$TARBALL && \
+    tar xf $TARBALL && \
+    rm -rf $TARBALL && \
+    cd $TARBALL_FOLDER && \
+    mkdir -p $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin && \
+    cp *.pl $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin/ -R && \
+    cd ../ && \
+    rm -rf $TARBALL_FOLDER && \
+    ln -s $TOOLS/$TOOL_NAME/$TOOL_VERSION $TOOLS/$TOOL_NAME/current && \
+    mkdir -p $TOOL_DATABASE_FOLDER && \
     ln -s $TOOL_DATABASE_FOLDER $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin/databases ;
 
 
@@ -207,22 +207,15 @@ ENV TOOL_VERSION=0.9.15.2
 ENV TARBALL_LOCATION=https://gitlab.bioinfo-diag.fr/Strasbourg/HOWARD/repository/$TOOL_VERSION
 ENV TARBALL=archive.tar.gz
 ENV TARBALL_FOLDER=archive
-ENV TOOL_DATABASE_FOLDER=/home/TOOLS/databases
 ENV DEST=$TOOLS/$TOOL_NAME/$TOOL_VERSION
 ENV PATH=$TOOLS/$TOOL_NAME/$TOOL_VERSION/bin:$PATH
 
+ADD . $TOOLS/$TOOL_NAME/$TOOL_VERSION
 
-RUN wget $TARBALL_LOCATION/$TARBALL ; \
-    tar xf $TARBALL ; \
-    rm -rf $TARBALL ; \
-    mkdir -p $TOOLS/$TOOL_NAME/$TOOL_VERSION/ ; \
-    cp $(ls ${TOOL_NAME^^}-$TOOL_VERSION* -d)/* $TOOLS/$TOOL_NAME/$TOOL_VERSION/ -R ; \
-    rm -rf $(ls ${TOOL_NAME^^}-$TOOL_VERSION* -d) ; \
-    ln -s $TOOLS/$TOOL_NAME/$TOOL_VERSION $TOOLS/$TOOL_NAME/current ; \
-    chmod 0775 $TOOLS/$TOOL_NAME/$TOOL_VERSION $TOOLS/$TOOL_NAME/current -R ; \
-	mkdir -p $DATABASES ; \
-	ln -s $DATABASES $TOOL_DATABASE_FOLDER ; \
-	ln -s $TOOLS/$TOOL_NAME/$TOOL_VERSION $TOOLS/$TOOL_NAME/current ; \
+RUN ln -s $TOOLS/$TOOL_NAME/$TOOL_VERSION $TOOLS/$TOOL_NAME/current && \
+    chmod 0775 $TOOLS/$TOOL_NAME/$TOOL_VERSION $TOOLS/$TOOL_NAME/current -R && \
+	mkdir -p $DATABASES && \
+	ln -s $TOOLS/$TOOL_NAME/$TOOL_VERSION $TOOLS/$TOOL_NAME/current && \
 	ln -s $TOOLS/$TOOL_NAME/$TOOL_VERSION/ /tool ;
 
 
