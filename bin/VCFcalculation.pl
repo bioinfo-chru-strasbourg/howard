@@ -756,12 +756,10 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 
 					# if DP
 					if ($DP eq "" && defined $$sample_quality{"DP"}) {
-						my $DP=$$sample_quality{"DP"};
-						print "\tDP calculated on FREQ (".$$sample_quality{"FREQ"}." > ".$FREQ.")\n" if $DEBUG ;
-						my @FREQ_split=split(/,/,$FREQ);
-						my $FREQ_ALT = eval join '+', @FREQ_split;
-						if ($FREQ_ALT) {
-							$DP=sprintf("%.4f", $FREQ_ALT)/100;
+						print "\tDP calculated on DP (".$$sample_quality{"DP"}.")\n" if $DEBUG ;
+						my @DP_split=split(/,/,$$sample_quality{"DP"});
+						$DP = eval join '+', @DP_split;
+						if ($DP) {
 							print "\tDP = $DP\n" if $DEBUG ;
 						};#if
 					};#if
@@ -770,11 +768,8 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 					if ($DP eq "" && defined $$sample_quality{"DP4"}) {
 						print "\tDP calculated on DP4 (".$$sample_quality{"DP4"}.")\n" if $DEBUG ;
 						my @DP4_split=split(/,/,$$sample_quality{"DP4"});
-						#my $DP4_DP = eval join '+', @DP4_split[0 .. 1];
-						my $DP4_DP = eval join '+', @DP4_split[0 .. $#DP4_split];
-						my $DP4_ALT = eval join '+', @DP4_split[2 .. $#DP4_split];
-						if ($DP4_DP) {
-							$DP=sprintf("%.6f", $DP4_ALT/$DP4_DP);
+						$DP = eval join '+', @DP4_split;
+						if ($DP) {
 							print "\tDP = $DP\n" if $DEBUG ;
 						};#if
 					};#if
@@ -783,10 +778,8 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 					if ($DP eq "" && defined $$sample_quality{"AD"}) {
 						print "\tDP calculated on AD (".$$sample_quality{"AD"}.")\n" if $DEBUG ;
 						my @AD_split=split(/,/,$$sample_quality{"AD"});
-						my $AD_DP = eval join '+', @AD_split;
-						my $AD_ALT = eval join '+', @AD_split[1 .. $#AD_split];
-						if ($AD_DP) {
-							$DP=sprintf("%.6f", $AD_ALT/$AD_DP);
+						$DP = eval join '+', @AD_split;
+						if ($DP) {
 							print "\tDP = $DP\n" if $DEBUG ;
 						};#if
 					};#if
