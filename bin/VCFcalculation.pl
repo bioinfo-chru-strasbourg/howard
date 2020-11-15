@@ -1390,7 +1390,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 				for my $sample_name (@sample_list_header) {
 					print "SAMPLE: $sample_name ".$$samples{$sample_name}{"GT"}."\n" if $DEBUG;
 
-					my $BARCODE="";
+					my $BARCODE="?";
 					my $GT=$$samples{$sample_name}{"GT"};
 
 					if (defined $GT) {
@@ -1415,7 +1415,6 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 						}
 
 					};#if
-
 
 					if ($BARCODE ne "") {
 						push @BARCODE_LIST, $BARCODE ;
