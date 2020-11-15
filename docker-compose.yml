@@ -40,6 +40,7 @@ services:
             - ${DOCKER_HOWARD_CLI_FOLDER_HOST_DATABASES}:${DOCKER_HOWARD_CLI_FOLDER_INNER_DATABASES}
             # PWD
             - ${HOME}:/pwd
+            - /Users/lebechea/BIOINFO/git/HOWARD:/tool
         restart: always
         env_file:
             - ${DOCKER_COMPOSE_ENV}
