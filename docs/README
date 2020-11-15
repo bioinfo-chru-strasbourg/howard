@@ -28,8 +28,8 @@ HOWARD is multithreaded through the number of variants and by database (data-sca
 
 CentOS7 or higher
 YUM Packages "bc make wget perl-Switch perl-Digest-MD5 perl-Data-Dumper which zlib zlib2 bzip2 lzma xz"
-BCFTOOLS 1.8 or higher
-HTSLIB (BGZIP & TABIX) 1.8 or higher
+BCFTOOLS 1.11 or higher
+HTSLIB (BGZIP & TABIX) 1.11 or higher
 JAVA 1.8 or higher
 
 ################
@@ -135,6 +135,8 @@ JAVA 1.8 or higher
 #	Change --norm parameter by adding '--check-ref=s' in bcftools command.
 #	Add --norm_options parameter.
 #	force translation VCF by default.
+#   Change VAF_stats and add DP_stats.
+
 
 #######################################
 # HOWARD [0.9.15.2-12/10/2020]
@@ -173,6 +175,7 @@ JAVA 1.8 or higher
 #                                       Currently available:
 #                                          'VAF' add VAF calculation for each sample, depending on information provided by callers (by order: FREQ, DP4, AD)
 #                                          'VAF_STATS' add VAF statistics on INFO field, from VAF calculation for each sample, depending on information provided by callers (by order: VAF, FREQ, DP4, AD)
+#                                          'DP_STATS' add DP statistics on INFO field, from DP calculation for each sample, depending on information provided by callers (by order: DP, DP4, AD)
 #                                          'CALLING_QUALITY' Calling quality (FORMAT/*) of all samples in case of multiSample VCF, or all pipelines in case of multipipeline VCF
 #                                          'CALLING_QUALITY_EXPLODE' Explode all Calling quality (FORMAT/*) in multiple fields in INFOS
 #                                          'BARCODE' Calculate VaRank BarCode
@@ -294,7 +297,7 @@ JAVA 1.8 or higher
 # --norm=<FILE>                         Genome fasta file to normalize (beware of chromosome identification, either 'x' or 'chrx')
 # --norm_options=<STRING>               Normalisation options (see bcftools options)
 #                                       Format: '--option1=value1,--option2=value2,...' 
-#                                       Default: '--multiallelics=-any,--rm-dup=none' 
+#                                       Default: '--multiallelics=-any,--rm-dup=exact' 
 # --tmp=<FOLDER>                        Temporary folder (default /tmp)
 # --verbose                             VERBOSE option
 # --debug                               DEBUG option

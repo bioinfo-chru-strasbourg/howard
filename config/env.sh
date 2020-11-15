@@ -27,21 +27,21 @@ export HTSLIB_DESCRIPTION="A C library for reading/writing high-throughput seque
 export HTSLIB_REF="http://www.htslib.org/"
 
 # TABIX
-export TABIX=$NGS_TOOLS/htslib/1.8/bin/tabix			# BIN
+export TABIX=$NGS_TOOLS/htslib/1.11/bin/tabix			# BIN
 export TABIX_PATH=$(dirname $TABIX)				# BIN
-export TABIX_VERSION=1.8					# VER
+export TABIX_VERSION=1.11					# VER
 export TABIX_DESCRIPTION="Indexing VCF files"
 export TABIX_REF=$HTSLIB_REF
 
 # BGZIP
-export BGZIP=$NGS_TOOLS/htslib/1.8/bin/bgzip			# BIN
-export BGZIP_VERSION=1.8					# VER
+export BGZIP=$NGS_TOOLS/htslib/1.11/bin/bgzip			# BIN
+export BGZIP_VERSION=1.11					# VER
 export BGZIP_DESCRIPTION="Compressing VCF files"
 export BGZIP_REF=$HTSLIB_REF
 
 # BCFTOOLS
-export BCFTOOLS=$NGS_TOOLS/bcftools/1.8/bin/bcftools		# BIN
-export BCFTOOLS_VERSION=1.8					# VER
+export BCFTOOLS=$NGS_TOOLS/bcftools/1.11/bin/bcftools		# BIN
+export BCFTOOLS_VERSION=1.11					# VER
 export BCFTOOLS_DESCRIPTION="Reading/writing BCF2/VCF/gVCF files and calling/filtering/summarising SNP and short indel sequence variants"
 export BCFTOOLS_REF="http://www.htslib.org/"
 
@@ -56,8 +56,8 @@ export SNPEFF_REF="A program for annotating and predicting the effects of single
 TOOLS_LIST=$TOOLS_LIST" SNPEFF"
 
 # ANNOVAR
-export ANNOVAR=$NGS_TOOLS/annovar/2018Apr16/bin                         # DIR
-export ANNOVAR_VERSION=2018Apr16                                                        # VER
+export ANNOVAR=$NGS_TOOLS/annovar/2019Oct24/bin                         # DIR
+export ANNOVAR_VERSION=2019Oct24                                                        # VER
 export ANNOVAR_DATABASES=$NGS_DATABASES/annovar         # DATA
 export ANNOVAR_DESCRIPTION="an efficient software tool to utilize update-to-date information to functionally annotate genetic variants detected from diverse genomes"
 export ANNOVAR_REF="Wang K, Li M, Hakonarson H. ANNOVAR: Functional annotation of genetic variants from next-generation sequencing data Nucleic Acids Research, 38:e164, 2010"

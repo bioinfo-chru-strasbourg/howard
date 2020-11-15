@@ -84,6 +84,7 @@ RELEASE_NOTES=$RELEASE_NOTES"# 0.9.15.2-12/10/2020:\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tChange --norm parameter by adding '--check-ref=s' in bcftools command.\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tAdd --norm_options parameter.\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tforce translation VCF by default.\n";
+RELEASE_NOTES=$RELEASE_NOTES"#\tChange VAF_stats and add DP_stats.\n";
 
 
 
@@ -148,6 +149,7 @@ function usage {
 	echo "#                                       Currently available:";
 	echo "#                                          'VAF' add VAF calculation for each sample, depending on information provided by callers (by order: FREQ, DP4, AD)";
 	echo "#                                          'VAF_STATS' add VAF statistics on INFO field, from VAF calculation for each sample, depending on information provided by callers (by order: VAF, FREQ, DP4, AD)";
+	echo "#                                          'DP_STATS' add DP statistics on INFO field, from DP calculation for each sample, depending on information provided by callers (by order: DP, DP4, AD)";
 	echo "#                                          'CALLING_QUALITY' Calling quality (FORMAT/*) of all samples in case of multiSample VCF, or all pipelines in case of multipipeline VCF";
 	echo "#                                          'CALLING_QUALITY_EXPLODE' Explode all Calling quality (FORMAT/*) in multiple fields in INFOS";
 	echo "#                                          'BARCODE' Calculate VaRank BarCode";
@@ -276,7 +278,7 @@ function usage {
 	echo "# --norm=<FILE>                         Genome fasta file to normalize (beware of chromosome identification, either 'x' or 'chrx')";
 	echo "# --norm_options=<STRING>               Normalisation options (see bcftools options)";
 	echo "#                                       Format: '--option1=value1,--option2=value2,...' ";
-	echo "#                                       Default: '--multiallelics=-any,--rm-dup=none' ";
+	echo "#                                       Default: '--multiallelics=-any,--rm-dup=exact' ";
 	echo "# --tmp=<FOLDER>                        Temporary folder (default /tmp)";
 	echo "# --verbose                             VERBOSE option";
 	echo "# --debug                               DEBUG option";
@@ -534,7 +536,7 @@ if [ -z $NORM ]; then
 fi;
 
 if [ "$NORM_OPTIONS" == "" ]; then
-	NORM_OPTIONS="--multiallelics=-any,--rm-dup=none"
+	NORM_OPTIONS="--multiallelics=-any,--rm-dup=exact"
 fi;
 #NORM_OPTIONS=""
 

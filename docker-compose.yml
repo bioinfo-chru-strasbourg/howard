@@ -39,7 +39,7 @@ services:
             # Databases
             - ${DOCKER_HOWARD_CLI_FOLDER_HOST_DATABASES}:${DOCKER_HOWARD_CLI_FOLDER_INNER_DATABASES}
             # PWD
-            - /Users/lebechea:/pwd
+            - ${HOME}:/pwd
         restart: always
         env_file:
             - ${DOCKER_COMPOSE_ENV}
