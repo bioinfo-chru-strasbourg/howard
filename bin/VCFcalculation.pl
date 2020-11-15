@@ -1395,29 +1395,25 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 
 					if (defined $GT) {
 
-						switch ($GT) {
+						# GT compression
+						my $GT_compressed=$GT;
+						$GT_compressed =~ s/\./0/g;
+						$GT_compressed =~ s/\D//g;
+						$GT_compressed= join('',uniq(split(//, $GT_compressed)));
 
-							case "1/1"
-							{
-								$BARCODE="2";
-								break;
-							} # case
-							case ["0/1","1/0"]
-							{
-								$BARCODE="1";
-								break;
-							} # case
-							case ["0/0","./."]
-							{
+						# Barcode
+						if (length("$GT_compressed") eq 1) {
+							if ("$GT_compressed" eq "0") {
 								$BARCODE="0";
-								break;
-							} # case
-							else
-							{
-								$BARCODE="?";
-							}
+							} else {
+								$BARCODE="2";
+							};
+						} elsif (length("$GT_compressed") > 1) {
+							$BARCODE="1";
+						} else {
+							$BARCODE="?";
+						}
 
-						};# switch
 					};#if
 
 
