@@ -3,8 +3,8 @@
 # Highly Open and Valuable tool for   #
 #    Variant Annotation & Ranking     #
 #    for Discovery                    #
-# Release : 0.9.15.2                  #
-# Date : 20201012                     #
+# Release : 0.9.15.4                  #
+# Date : 20210411                     #
 # Author: Antony Le Bechec            #
 # Copyright: HUS                      #
 # Licence: GNU AGPL V3                #
@@ -14,7 +14,7 @@
 # DESCRIPTION #
 ###############
 
-HOWARD annotates and prioritizes variants, calculates and normalizes annotations, translates vcf format and generates variants statistics.
+HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations, translates vcf format and generates variants statistics.
 HOWARD annotation is mainly based on ANNOVAR and snpEff tools to annotate, using available databases (see ANNOVAR and snpEff) and home made databases. It also uses BCFTOOLS to annotate variants with a VCF file. ANNOVAR and snpEff databases are automatically downloaded if needed.
 HOWARD calculation harmonizes allele frequency (VAF), extracts Nomen (transcript, cNomen, pNomen...) from HGVS fields with an optional list of personalized transcripts, generates VaRank format barcode.
 HOWARD prioritization algorithm uses profiles to flag variants (as passed or filtered), calculate a prioritization score, and automatically generate a comment for each variants (example: 'polymorphism identified in dbSNP. associated to Lung Cancer. Found in ClinVar database').Prioritization profiles are defined in a configuration file. A profile is defined as a list of annotation/value, using wildcards and comparison options (contains, lower than, greater than, equal...). Annotations fields may be quality values (usually from callers, such as 'GQ', 'DP') or other annotations fields provided by annotations tools, such as HOWARD itself (example: COSMIC, Clinvar, 1000genomes, PolyPhen, SIFT). Multiple profiles can be used simultaneously, which is useful to define multiple validation/prioritization levels (example: 'standard', 'stringent', 'rare variants', 'low allele frequency').

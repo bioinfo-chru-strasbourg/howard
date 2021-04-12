@@ -9,8 +9,8 @@
 
 our %information = ( #
 	'script'	=>  	basename($0),			# Script
-	'release'	=>  	"0.9.9b",		# Release
-	'date'		=>  	"20190110",		# Release parameter
+	'release'	=>  	"0.9.10b",		# Release
+	'date'		=>  	"20210411",		# Release parameter
 	'author'	=>  	"Antony Le Béchec",	# Author
 	'copyright'	=>  	"HUS",			# Copyright
 	'licence'	=>  	"GNU AGPL V3",		# Licence
@@ -24,6 +24,7 @@ our %information = ( #
 # 20160520-0.9.7.1b: remove transcripts file for snpeff annotation
 # 20181004-0.9.8b: add snpeff additional options. add  spliceSiteSize option, default 3. Add snpeff_split options
 # 20190110-0.9.9b: add annovar_code_for_downdb parameter on annotation config file, generalise file parameter (no assembly by definition), bug fix
+# 20210411-0.9.10b: remove snpEff -t option, fix snpEff -stats option, bug fix
 
 
 ## Modules
@@ -1065,46 +1066,69 @@ if ($parameters{"snpeff"} || $parameters{"snpeff_stats"}) {
 		
 		#$parameters{"snpeff_additional_options"}
 		
-		my $snpeff_options=" -dataDir $snpeff_databases -spliceSiteSize ".$parameters{"snpeff_spliceSiteSize"}." ".$snpeff_additional_options; #.$parameters{"snpeff_additional_options"};
+		#my $snpeff_options=" -dataDir $snpeff_databases -spliceSiteSize ".$parameters{"snpeff_spliceSiteSize"}." ".$snpeff_additional_options; #.$parameters{"snpeff_additional_options"};
+		my $snpeff_options=" -dataDir $snpeff_databases $snpeff_additional_options"; #.$parameters{"snpeff_additional_options"};
 		#-nodownload -noShiftHgvs
 		#if ($parameters{"snpeff_stats"} eq "" || ! -e $input_file_snpeff_stats) {
-		if ($parameters{"snpeff_stats"} eq "") { #|| ! -e $input_file_snpeff_stats) {
-			#$snpeff_options.=" -t $snpeff_threads ";
-			$snpeff_options.=" -t ";
+
+		# Splice Sites Size
+		if (1) {
+			my $spliceSiteSize_input=$parameters{"snpeff_spliceSiteSize"};
+			if ($spliceSiteSize_input ne "") { #|| ! -e $input_file_snpeff_stats) {
+				$snpeff_options.=" -spliceSiteSize $spliceSiteSize_input ";
+				$output_verbose.="#    - spliceSiteSize='$spliceSiteSize_input'\n";
+			} else {
+				$snpeff_options.=" ";
+			};#if
+		}
+
+		# Stats
+		if (1) {
+			my $stats_input=$parameters{"snpeff_stats"};
+			if ($stats_input ne "") { #|| ! -e $input_file_snpeff_stats) {
+				$snpeff_options.=" -stats $stats_input ";
+				$output_verbose.="#    - stats='$stats_input'\n";
+				$output_verbose.="#    - stats='$stats_input'.genes.txt\n";
+			} else {
+				$snpeff_options.=" -noStats ";
+			};#if
 		};#if
 
 		# TRANSCRIPTS
 		if (0) {
 			my $transcripts_input=$parameters{"transcripts"};
 			if (-e $transcripts_input) { #if file exist
-				my $cmd="awk -F\"\\t\" '{print \$2\"\t\"\$1}' $transcripts_input > $output_file_snpeff_transcripts";
-				$output_verbose.="#    - cmd='$cmd'\n";
-				print $output_verbose if $VERBOSE;
-				my $result = `$cmd 2>&1`;
-				$snpeff_options.=" -canonList $output_file_snpeff_transcripts ";
+				#my $cmd="awk -F\"\\t\" '{print \$2\"\t\"\$1}' $transcripts_input > $output_file_snpeff_transcripts";
+				my $cmd="awk -F\"\\t\" '(\$1!=\”\"){print \$1}' $transcripts_input > $output_file_snpeff_transcripts";
+				#$output_verbose.="#    - cmd='$cmd'\n";
+				#print $output_verbose if $VERBOSE;
+				#my $result = `$cmd 2>&1`;
+				$snpeff_options.=" -onlyTr $output_file_snpeff_transcripts ";
+				$output_verbose.="#    - onlyTr '$transcripts_input'\n";
 			};#if
 		};#if
 
 
 		## Command
-		my $cmd="$java $java_flags -Xmx4g -jar $snpeff_jar $assembly $input_file -stats $input_file_snpeff_stats $snpeff_options -noLog 1>$output_file_snpeff 2>$output_file_snpeff_log";
-		$output_verbose.="#    - cmd='$cmd'\n";
+		#my $cmd="$java $java_flags -Xmx4g -jar $snpeff_jar $assembly $input_file -stats $input_file_snpeff_stats $snpeff_options -noLog 1>$output_file_snpeff 2>$output_file_snpeff_log";
+		my $cmd="$java $java_flags -Xmx4g -jar $snpeff_jar $assembly $input_file $snpeff_options -noLog 1>$output_file_snpeff 2>$output_file_snpeff_log";
+		$output_verbose.="##    - cmd='$cmd'\n";
 		print $output_verbose if $VERBOSE;
 		
 		## Launch Command
 		my $result = `$cmd 2>&1`;
 
 		# STATS
-		if ($parameters{"snpeff_stats"} ne "" && -e $input_file_snpeff_stats) {
-			my $cmd="cp $input_file_snpeff_stats ".$parameters{"snpeff_stats"};
-			$output_verbose.="#    - cmd='$cmd'\n";
-			print $output_verbose if $VERBOSE;
-			my $result = `$cmd 2>&1`;
-			my $cmd="cp $input_file_snpeff_stats.genes.txt ".$parameters{"snpeff_stats"}.".genes.txt";
-			$output_verbose.="#    - cmd='$cmd'\n";
-			print $output_verbose if $VERBOSE;
-			my $result = `$cmd 2>&1`;
-		};#if
+		# if ($parameters{"snpeff_stats"} ne "" && -e $input_file_snpeff_stats) {
+		# 	#my $cmd="cp $input_file_snpeff_stats ".$parameters{"snpeff_stats"};
+		# 	#$output_verbose.="#    - cmd='$cmd'\n";
+		# 	#print $output_verbose if $VERBOSE;
+		# 	#my $result = `$cmd 2>&1`;
+		# 	my $cmd="cp $input_file_snpeff_stats.genes.txt ".$parameters{"snpeff_stats"}.".genes.txt";
+		# 	$output_verbose.="#    - cmd='$cmd'\n";
+		# 	print $output_verbose if $VERBOSE;
+		# 	my $result = `$cmd 2>&1`;
+		# };#if
 
 
 		#print $output_file_snpeff_log if $VERBOSE;

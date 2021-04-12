@@ -15,31 +15,34 @@ services:
     ##############
 
 
-    # HOWARD IMAGE
-    HOWARD:
-        image: ${DOCKER_HOWARD_IMAGE}
+    # HOWARD setup and test
+    HOWARD-setup:
+        image: ${DOCKER_HOWARD_SETUP_IMAGE}
         build:
             context: ${DOCKER_HOWARD_CONTEXT}
             dockerfile: Dockerfile
-        container_name: HOWARD
-        command: --help
+        container_name: ${DOCKER_HOWARD_SETUP_CONTAINER_NAME}
+        entrypoint: /bin/bash
+        command: ${DOCKER_HOWARD_SETUP_CONTAINER_COMMAND}
+        volumes:
+            # Databases
+            - ${DOCKER_HOWARD_CLI_FOLDER_HOST_DATABASES}:${DOCKER_HOWARD_CLI_FOLDER_INNER_DATABASES}
         env_file:
             - ${DOCKER_COMPOSE_ENV}
         networks:
             - howard
-
 
     # HOWARD CLI
     HOWARD-CLI:
         image: ${DOCKER_HOWARD_CLI_IMAGE}
         container_name: ${DOCKER_HOWARD_CLI_CONTAINER_NAME}
         entrypoint: /bin/bash
-        command: -c "while true; do sleep ${DOCKER_HOWARD_CLI_SLEEP}; done"
+        command: -c "echo '# Welcome to HOWARD Command Line Interface' && while true; do sleep ${DOCKER_HOWARD_CLI_SLEEP}; done"
         volumes:
             # Databases
-            - ${DOCKER_HOWARD_CLI_FOLDER_HOST_DATABASES}:${DOCKER_HOWARD_CLI_FOLDER_INNER_DATABASES}
-            # PWD
-            - ${HOME}:/pwd
+            - ${DOCKER_HOWARD_CLI_FOLDER_HOST_DATABASES}:${DOCKER_HOWARD_CLI_FOLDER_INNER_DATABASES}:rw
+            # Data
+            - ${DOCKER_HOWARD_CLI_FOLDER_HOST_DATA}:${DOCKER_HOWARD_CLI_FOLDER_INNER_DATA}:rw
         restart: always
         env_file:
             - ${DOCKER_COMPOSE_ENV}

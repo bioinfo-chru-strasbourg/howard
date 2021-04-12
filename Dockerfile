@@ -1,8 +1,8 @@
 
 ##############################################################
-# Dockerfile Version:   1.4.2
+# Dockerfile Version:   1.5
 # Software:             HOWARD
-# Software Version:     0.9.15.2
+# Software Version:     0.9.15.4
 # Software Website:     https://gitlab.bioinfo-diag.fr/Strasbourg/HOWARD
 # Licence:              GNU Affero General Public License (AGPL)
 # Description:          HOWARD
@@ -39,7 +39,7 @@
 
 FROM centos:7
 LABEL Software="HOWARD" \
-	Version="0.9.15.2" \
+	Version="0.9.15.4" \
 	Website="https://gitlab.bioinfo-diag.fr/Strasbourg/HOWARD" \
 	Description="HOWARD" \
 	License="GNU Affero General Public License (AGPL)" \
@@ -65,7 +65,7 @@ ENV DATA=/data
 ENV TOOL=/tool
 ENV DATABASES=/databases
 ENV YUM_INSTALL="gcc bc make wget perl-Switch perl-Digest-MD5 perl-Data-Dumper which zlib-devel zlib zlib2-devel zlib2 bzip2-devel bzip2 lzma-devel lzma xz-devel xz ncurses-devel unzip curl-devel"
-ENV YUM_REMOVE="zlib-devel bzip2-devel xz-devel ncurses-devel unzip gcc"
+ENV YUM_REMOVE="zlib-devel bzip2-devel xz-devel ncurses-devel gcc"
 
 
 
@@ -87,7 +87,7 @@ RUN yum install -y $YUM_INSTALL ;
 ##########
 
 ENV TOOL_NAME=htslib
-ENV TOOL_VERSION=1.11
+ENV TOOL_VERSION=1.12
 ENV TARBALL_LOCATION=https://github.com/samtools/$TOOL_NAME/releases/download/$TOOL_VERSION/
 ENV TARBALL=$TOOL_NAME-$TOOL_VERSION.tar.bz2
 ENV DEST=$TOOLS/$TOOL_NAME/$TOOL_VERSION
@@ -100,6 +100,7 @@ RUN wget $TARBALL_LOCATION/$TARBALL && \
     cd $TOOL_NAME-$TOOL_VERSION && \
     make -j $THREADS prefix=$TOOLS/$TOOL_NAME/$TOOL_VERSION install && \
     cd ../ && \
+    ln -s $TOOL_VERSION $TOOLS/$TOOL_NAME/current && \
     rm -rf $TOOL_NAME-$TOOL_VERSION
 
 
@@ -109,7 +110,7 @@ RUN wget $TARBALL_LOCATION/$TARBALL && \
 ############
 
 ENV TOOL_NAME=bcftools
-ENV TOOL_VERSION=1.11
+ENV TOOL_VERSION=1.12
 ENV TARBALL_LOCATION=https://github.com/samtools/$TOOL_NAME/releases/download/$TOOL_VERSION/
 ENV TARBALL=$TOOL_NAME-$TOOL_VERSION.tar.bz2
 ENV DEST=$TOOLS/$TOOL_NAME/$TOOL_VERSION
@@ -122,6 +123,7 @@ RUN wget $TARBALL_LOCATION/$TARBALL && \
     cd $TOOL_NAME-$TOOL_VERSION && \
     make -j $THREADS prefix=$TOOLS/$TOOL_NAME/$TOOL_VERSION install && \
     cd ../ && \
+    ln -s $TOOL_VERSION $TOOLS/$TOOL_NAME/current && \
     rm -rf $TOOL_NAME-$TOOL_VERSION
 
 
@@ -134,7 +136,7 @@ ENV TOOL_VERSION=1.8.0
 RUN yum install -y java-$TOOL_VERSION && \
 	mkdir -p $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin && \
 	ln -s /usr/bin/java $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin/java && \
-	ln -s $TOOLS/$TOOL_NAME/$TOOL_VERSION $TOOLS/$TOOL_NAME/current ;
+	ln -s $TOOL_VERSION $TOOLS/$TOOL_NAME/current ;
 
 
 
@@ -144,14 +146,14 @@ RUN yum install -y java-$TOOL_VERSION && \
 
 ENV DATABASES=/databases
 ENV TOOL_NAME=snpeff
-ENV TOOL_VERSION=4.3t
-ENV TOOL_VERSION_FOR_FILE=4_3t
-ENV TARBALL_LOCATION=https://sourceforge.net/projects/snpeff/files
-ENV TARBALL="snpEff_v"$TOOL_VERSION_FOR_FILE"_core.zip"
+ENV TOOL_VERSION=5.0e
+ENV TARBALL="snpEff_latest_core.zip"
+ENV TARBALL_LOCATION=https://snpeff.blob.core.windows.net/versions
 ENV TARBALL_FOLDER=snpeff_folder
-ENV TOOL_DATABASE_FOLDER=$DATABASES/snpeff/$TOOL_VERSION
+ENV TOOL_DATABASE_FOLDER=$DATABASES/snpeff/current
 ENV DEST=$TOOLS/$TOOL_NAME/$TOOL_VERSION
 ENV PATH=$TOOLS/$TOOL_NAME/$TOOL_VERSION/bin:$PATH
+ENV SNPEFF_DATABASES=$TOOL_DATABASE_FOLDER
 
 
 # INSTALL
@@ -160,7 +162,7 @@ RUN wget $TARBALL_LOCATION/$TARBALL && \
     mkdir -p $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin/ && \
     cp $TARBALL_FOLDER/*/*jar $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin/ -R && \
     cp $TARBALL_FOLDER/*/*.config $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin/ -R && \
-    ln -s $TOOLS/$TOOL_NAME/$TOOL_VERSION $TOOLS/$TOOL_NAME/current && \
+    ln -s $TOOL_VERSION $TOOLS/$TOOL_NAME/current && \
     mkdir -p $TOOL_DATABASE_FOLDER && \
     ln -s $TOOL_DATABASE_FOLDER $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin/data ;
 
@@ -176,9 +178,10 @@ ENV TOOL_VERSION=2019Oct24
 ENV TARBALL_LOCATION=http://www.openbioinformatics.org/annovar/download/0wgxR2rIVP
 ENV TARBALL=annovar.latest.tar.gz
 ENV TARBALL_FOLDER=$TOOL_NAME
-ENV TOOL_DATABASE_FOLDER=$DATABASES/annovar
+ENV TOOL_DATABASE_FOLDER=$DATABASES/annovar/current
 ENV DEST=$TOOLS/$TOOL_NAME/$TOOL_VERSION
 ENV PATH=$TOOLS/$TOOL_NAME/$TOOL_VERSION/bin:$PATH
+ENV ANNOVAR_DATABASES=$TOOL_DATABASE_FOLDER
 # http://www.openbioinformatics.org/annovar/download/0wgxR2rIVP/annovar.latest.tar.gz
 
 
@@ -191,7 +194,7 @@ RUN wget $TARBALL_LOCATION/$TARBALL && \
     cp *.pl $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin/ -R && \
     cd ../ && \
     rm -rf $TARBALL_FOLDER && \
-    ln -s $TOOLS/$TOOL_NAME/$TOOL_VERSION $TOOLS/$TOOL_NAME/current && \
+    ln -s $TOOL_VERSION $TOOLS/$TOOL_NAME/current && \
     mkdir -p $TOOL_DATABASE_FOLDER && \
     ln -s $TOOL_DATABASE_FOLDER $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin/databases ;
 
@@ -203,7 +206,7 @@ RUN wget $TARBALL_LOCATION/$TARBALL && \
 
 ENV DATABASES=/databases
 ENV TOOL_NAME=howard
-ENV TOOL_VERSION=0.9.15.2
+ENV TOOL_VERSION=0.9.15.4
 ENV TARBALL_LOCATION=https://gitlab.bioinfo-diag.fr/Strasbourg/HOWARD/repository/$TOOL_VERSION
 ENV TARBALL=archive.tar.gz
 ENV TARBALL_FOLDER=archive
@@ -215,7 +218,7 @@ ADD . $TOOLS/$TOOL_NAME/$TOOL_VERSION
 RUN ln -s $TOOLS/$TOOL_NAME/$TOOL_VERSION $TOOLS/$TOOL_NAME/current && \
     chmod 0775 $TOOLS/$TOOL_NAME/$TOOL_VERSION $TOOLS/$TOOL_NAME/current -R && \
 	mkdir -p $DATABASES && \
-	ln -s $TOOLS/$TOOL_NAME/$TOOL_VERSION $TOOLS/$TOOL_NAME/current && \
+	ln -s $TOOL_VERSION $TOOLS/$TOOL_NAME/current && \
 	ln -s $TOOLS/$TOOL_NAME/$TOOL_VERSION/ /tool ;
 
 

@@ -1,7 +1,7 @@
 HOWARD
-============
+===
 
-HOWARD annotates and prioritizes variants, calculates and normalizes annotations, translates vcf format and generates variants statistics.
+HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations, translates vcf format and generates variants statistics.
 
 HOWARD annotation is mainly based on ANNOVAR and snpEff tools to annotate, using available databases (see ANNOVAR and snpEff) and home made databases. It also uses BCFTOOLS to annotate variants with a VCF file. ANNOVAR and snpEff databases are automatically downloaded if needed.
 
@@ -16,100 +16,103 @@ HOWARD generates statistics files with a specific algorithm, snpEff and BCFTOOLS
 HOWARD is multithreaded through the number of variants and by database (data-scaling).
 
 
-Getting Started
----------------
-
-The default build of this image presents a container that runs HOWARD App on CentOS.
-
-### Image Layout
-
-Includes yum modules and other tools dependencies.
+# Getting Started
 
 
-Building
---------
+In order to build, setup and create a persitent CLI (running container), docker-compose command build images and launch services as containers.
 
-The `Dockerfile` provided with this package provides everything that is
-needed to build the image. The build system must have Docker installed in
+```
+$ docker-compose up
+```
+
+A setup container (HOWARD-setup) automatically downloads required databases according to an HOWARD VCF example annotation using ANNOVAR and snpEff. Configuration of host data and databases folders (default ${HOME}/HOWARD), assembly and databases to download in `.env` file. See HOWARD, ANNOVAR and snpEff documentation for custom databases download.
+
+A Command Line Interface container (HOWARD-CLI) is started with host data and databases folders mounted. Execute a command, or connect to the CLI as a terminal, and let's start with HOWARD!
+
+Using an HOWARD VCF example, this command:
+- 1- annotates with HGVS (variation identification), outcome and location (fonctionnal annotation), and clinical databases (ClinVar and Cosmic),
+- 2- calculates the Variant Allele Frquency (VAF), a genotype barcode (BARCODE), and process HGVS to extract NOMEN information,
+- 3- prioritizes variations according to priorization rules specific to somatic focus (quality, functionnal and clinical annotations),
+- 4- translates into TSV format, with specific fields order for the first 3 columns (ALL for the rest), and a sorting to focus on intersting variations (Flag as PASS, with best score) 
+- 5- generates final file into host data folder (e.g. ${HOME}/HOWARD/data/example.howard.tsv)
+
+```
+$ docker exec HOWARD --input=/tool/docs/example.vcf --output=/data/example.howard.tsv --annotation=hgvs,symbol,outcome,location,CLINVAR,CLINVAR_CLNDN,COSMIC --calculation=VAF,BARCODE,NOMEN --prioritization=SOMATIC --translation=TSV --fields=NOMEN,PZFlag,PZScore,ALL --sort=PZFlag::DESC,PZScore:n:DESC
+```
+
+```
+$ docker exec -ti HOWARD-CLI bash
+[data]# HOWARD --help
+```
+
+# Docker 
+
+HOWARD image presents a container that runs on CentOS, and includes yum modules and other tools dependencies:
+- Java [1.8]
+- bcftools/htslib [1.12]
+- ANNOVAR [2019Oct24]
+- snpEff [5.0e]
+
+## Docker Build - Image
+
+
+The `Dockerfile` provided with this package provides everything that is needed to build the image. The build system must have Docker installed in
 order to build the image.
 
 ```
-$ cd PROJECT_ROOT
+$ cd ${HOME}/HOWARD
 $ docker build -t howard:latest .
 ```
-> Note: PROJECT_ROOT should be replaced with the path to where you have
->       cloned this project on the build system
 
+## Running Run - Container
 
-Running a Container
--------------------
-
-The container host must have Docker installed in order to run the image as a
-container. Then the image can be pulled and a container can be started directly.
+The container host must have Docker installed in order to run the image as a container. Then the image can be pulled and a container can be started directly. Any standard Docker switches may be provided on the command line when running a container.
 
 ```
 $ docker run howard:latest
 ```
 
-### Swtiches
 
-Any standard Docker switches may be provided on the command line when running
-a container. Some specific switches of interest are documented below.
+### Mount Data and Databases volumes
 
-#### Configuration
-```
--v HOST_DATA_FOLDER:/data
--v HOST_DATABASES_FOLDER:/databases
-```
-Content may be copied directly into the running container using a
-`docker cp ...` command, alternatively one may choose to simply expose a host
-configuration folder to the container.
-
-### Examples
-
-Run HOWARD as a uniq command.
+In order to make data and databases persistent, host volumes can be mounted. Content may also be copied directly into the running container using a
+`docker cp ...`.
 
 ```
-$ docker run --rm howard:latest HOWARD --input=sample.vcf --output=sample.tsv --annotation=symbol,hgvs --calculation=VAF,NOMEN --prioritization=default --translation=TSV
+-v ${HOME}/HOWARD/data:/data
+-v ${HOME}/HOWARD/databases:/databases
 ```
 
-Start HOWARD container.
+### Run as a terminal
+
+In order to execute command directly to an container, start HOWARD container with terminal interface:
 
 ```
 $ docker run --name howard --entrypoint=bash -ti howard:latest
 ```
 
+### Example
+
+Run HOWARD as a uniq command.
+
+```
+$ docker run --rm -v ${HOME}/HOWARD/data:/data -v ${HOME}/HOWARD/databases:/databases howard:latest --input=/tool/docs/example.vcf --output=/data/example.howard.tsv --annotation=hgvs,symbol,outcome,location,CLINVAR,CLINVAR_CLNDN,COSMIC --calculation=VAF,BARCODE,NOMEN --prioritization=SOMATIC --translation=TSV --fields=NOMEN,PZFlag,PZScore,ALL --sort=PZFlag::DESC,PZScore:n:DESC
+```
 
 Database download
 -------------------
 
 Databases are downloaded automatically by using annotation configuratin file, or options in command line (--annovar_databases, --snpeff_databases, assembly...).
 
-Use a vcf file to download ANNOVAR databases (WITHOUT multithreading, "ALL" for all databases, "CORE" for core databases, "snpeff" for snpEff database, or a list of databases).
+Use a vcf file, such as HOWARD VCF example, to download ANNOVAR and snpEff databases (WITHOUT multithreading, "ALL" for all databases, "core" for core databases, "snpeff" for snpEff database, or a list of databases, or ANNOVAR code). Use this command multiple times for all needed databases and assembly (such as hg19, hg38, mm9).
 
 ```
-$ docker run howard:latest --input=/tool/docs/example.vcf --output=/tool/docs/example.annotated.vcf --annotation=ALL,snpeff --thread=1
+$ docker run howard:latest --input=/tool/docs/example.vcf --output=/tool/docs/example.annotated.vcf --annotation=ALL,snpeff --thread=1 --verbose
 ```
 
-Use this command multiple times for all needed assembly (such as hg19, hg38, mm9).
 
-For home made databases, refer to config.annotation.ini file to construct and configure your database.
+> Note: For home made databases, refer to ```config.annotation.ini``` file to construct and configure your own database.
 
-Beware of proxy configuration!
+> Note: Beware of proxy configuration!
 
 
-Debugging
----------
-
-You may connect to a running container using the following command
-```
-$ docker exec -it --user root CONTAINER_NAME /bin/bash
-```
-> Note: CONTAINER_NAME should be the name provided to Docker when creating the
->       container initially. If not provided explicitly, Docker may have
->       assigned a random name. A container ID may also be used.
-
-You may tail the container logs using the following commands
-```
-$ docker logs -f CONTAINER_NAME
-```
