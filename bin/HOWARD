@@ -5,8 +5,8 @@
 
 SCRIPT_NAME="HOWARD"
 SCRIPT_DESCRIPTION="HOWARD Annotation, Calculation, Prioritization and Translation, based on ANNOVAR and snpEff, allowing multithreading"
-SCRIPT_RELEASE="0.9.15.2"
-SCRIPT_DATE="12/10/2020"
+SCRIPT_RELEASE="0.9.15.4"
+SCRIPT_DATE="11/04/2021"
 SCRIPT_AUTHOR="Antony Le Bechec"
 SCRIPT_COPYRIGHT="HUS"
 SCRIPT_LICENCE="GNU AGPL V3"
@@ -85,7 +85,10 @@ RELEASE_NOTES=$RELEASE_NOTES"#\tChange --norm parameter by adding '--check-ref=s
 RELEASE_NOTES=$RELEASE_NOTES"#\tAdd --norm_options parameter.\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tforce translation VCF by default.\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tChange VAF_stats and add DP_stats.\n";
-
+RELEASE_NOTES=$RELEASE_NOTES"# 0.9.15.4-11/04/2021:\n";
+RELEASE_NOTES=$RELEASE_NOTES"#\tRemove --snpeff_threads parameter (for snpEff 5.0e compatibility) and improve --snpeff_stats.\n";
+RELEASE_NOTES=$RELEASE_NOTES"#\tAdd a check and rehead INFO fields if necessary (prevent some incorrect INFO header format).\n";
+RELEASE_NOTES=$RELEASE_NOTES"#\tFix --compress parameter and add --index parameter.\n";
 
 
 
@@ -274,7 +277,8 @@ function usage {
 	echo "#                                       Replace values even if already exist in VCF header";
 	echo "# --threads=<INTEGER>                   Threads: number of thread to use (default defined in environment variable THREADS, or 1)";
 	echo "# --split=<INTEGER>                     Split by group of variants (default (10000)";
-	echo "# --compress=<INTEGER>                  Compression level output file *vcf.gz (0 to 9, -1 no compression by default)";
+	echo "# --compress=<INTEGER>                  Compression level output file (0 to 9, -1 no compression by default)";
+	echo "# --index                               Indexation of output file with name <output>.idx (only for vcf and compress output)";
 	echo "# --norm=<FILE>                         Genome fasta file to normalize (beware of chromosome identification, either 'x' or 'chrx')";
 	echo "# --norm_options=<STRING>               Normalisation options (see bcftools options)";
 	echo "#                                       Format: '--option1=value1,--option2=value2,...' ";
@@ -301,7 +305,7 @@ function usage {
 header;
 
 
-ARGS=$(getopt -o "i:o:e:a:f:s:r:xt:m:vdnh" --long "input:,vcf:,output:,env:,annotation:,annotate:,calculation:,filter:,prioritization:,format:,translation:,fields:,sort:,sort_by:,order_by:,bcftools_expression:,stats:,snpeff_stats:,bcftools_stats:,multithreading,threads:,split:,compress:,norm:,norm_options:,tmp:,verbose,debug,release,help" -- "$@" 2> /dev/null)
+ARGS=$(getopt -o "i:o:e:a:f:s:r:xt:m:vdnh" --long "input:,vcf:,output:,env:,annotation:,annotate:,calculation:,filter:,prioritization:,format:,translation:,fields:,sort:,sort_by:,order_by:,bcftools_expression:,stats:,snpeff_stats:,bcftools_stats:,bcftools:,multithreading,threads:,split:,compress:,index,norm:,norm_options:,annovar_databases:,snpeff_databases:,tmp:,verbose,debug,release,help" -- "$@" 2> /dev/null)
 #ARGS=$(getopt --long "input:,output:,annotation:,multithreading,threads:,verbose,debug,release,help" -- "$@" 2> /dev/null)
 if [ $? -ne 0 ]; then
 	:
@@ -366,6 +370,10 @@ do
 			BCFTOOLS_STATS="$2"
 			shift 2
 			;;
+		--bcftools)
+			BCFTOOLS="$2"
+			shift 2
+			;;
 		--multithreading)
 			MULTITHREADING=1
 			shift 1
@@ -382,12 +390,24 @@ do
 			COMPRESS="$2"
 			shift 2
 			;;
+		--index)
+			INDEX=1
+			shift 1
+			;;
 		--norm)
 			NORM="$2"
 			shift 2
 			;;
 		--norm_options)
 			NORM_OPTIONS="$2"
+			shift 2
+			;;
+		--annovar_databases)
+			ANNOVAR_DATABASES="$2"
+			shift 2
+			;;
+		--snpeff_databases)
+			SNPEFF_DATABASES="$2"
 			shift 2
 			;;
 		--fields)
@@ -571,6 +591,10 @@ fi;
 # SPLIT SUFFIX LENGTH
 SPLIT_SUFFIT_LENGTH=4
 
+
+### Databases
+[ "$ANNOVAR_DATABASES" != "" ] && mkdir -p $ANNOVAR_DATABASES;
+[ "$SNPEFF_DATABASES" != "" ] && mkdir -p $SNPEFF_DATABASES;
 
 
 
@@ -924,9 +948,19 @@ fi;
 
 # CLEANING PARAM
 #PARAM=$(echo "$PARAM " | sed "s/--threads=[^ |$]*//gi" | sed "s/--multithreading[^ |$]*//gi")
-PARAM=$(echo "$PARAM " | sed "s/--threads=[^ |$]*//gi" | sed "s/--multithreading[^ |$]*//gi" | sed "s/--env[^ |$]*//gi" | sed "s/--compress[^ |$]*//gi" | sed "s/--norm[^ |$]*//gi" | sed "s/--annotate[^ |$]*//gi")
+PARAM=$(echo "$PARAM " | sed "s/--threads=[^ |$]*//gi" | sed "s/--multithreading[^ |$]*//gi" | sed "s/--env[^ |$]*//gi" | sed "s/--compress[^ |$]*//gi" | sed "s/--index[^ |$]*//gi" | sed "s/--norm[^ |$]*//gi" | sed "s/--annotate[^ |$]*//gi")
 
-#echo $PARAM; exit 0;
+
+# Check and rehead INFO fields in 
+if ((1)); then
+	(($VERBOSE)) && echo "#[INFO] Check and rehead VCF INFO fields";
+	PARAM_REHEAD=$(echo "$PARAM " | sed "s/--snpeff_stats=[^ |$]*//gi");
+	$HOWARD_FOLDER_BIN/VCFcalculation.pl $PARAM_REHEAD --input=$INPUT --output=$INPUT.tmp.rehead --calculation=null 1>>$LOG 2>>$ERR
+	cp $INPUT.tmp.rehead $INPUT 
+	rm -f $INPUT.tmp.rehead
+fi;
+
+
 
 
 # MK
@@ -1056,7 +1090,9 @@ if (($NB_VARIANT)); then
 					echo "#[ERROR] BGZIP '$BGZIP' needed. Configure ENV file";
 					exit 0;
 				fi;
-				if [ ! -z $BCFTOOLS ] && [ -e $BCFTOOLS ]; then
+				#if [ -z $BCFTOOLS ] || ! (( $(command -v $BCFTOOLS | grep ^ -c) )); then
+				#if [ ! -z $BCFTOOLS ] && [ -e $BCFTOOLS ]; then
+				if [ ! -z $BCFTOOLS ] && (( $(command -v $BCFTOOLS | grep ^ -c) )); then
 					echo "#[INFO] BCFTOOLS=$BCFTOOLS";
 				else
 					echo "#[ERROR] BCFTOOLS '$BCFTOOLS' needed. Configure ENV file";
@@ -1108,7 +1144,12 @@ if (($NB_VARIANT)); then
 			#PARAM_ANNOTATION=$(echo "$PARAM " | sed "s/--snpeff_stats=[^ |$]*//gi");
 			#PARAM_ANNOTATION=$(echo "$PARAM " | sed "s/--snpeff_stats=[ |$]*//gi" | sed "s/--snpeff_hgvs[ |$]*//gi"  | sed "s/--snpeff [ |$]*//gi");
 			#PARAM_ANNOTATION=$(echo "$PARAM " | sed "s/--snpeff_stats=[^ |$]*//gi" | sed "s/--snpeff_hgvs[^ |$]*//gi"  | sed "s/--snpeff[^ |$]*//gi");
+
+
+			#DEV
 			PARAM_ANNOTATION=$(echo "$PARAM " | sed "s/--snpeff_stats=[^ |$]*//gi");
+			
+			
 			#echo $PARAM_ANNOTATION; exit 0;
 
 			# FIND SAMPLE
@@ -1136,6 +1177,8 @@ if (($NB_VARIANT)); then
 				# SNPEFF STATS
 				if [ ! -z $SNPEFF_STATS ]; then
 					(($VERBOSE)) && echo "# snpEff Stats '$SNPEFF_STATS'";
+
+					# DEV
 					echo "$SNPEFF_STATS: $INPUT
 						$HOWARD_FOLDER_BIN/VCFannotation.pl $PARAM --output=/dev/null  --annotation=snpeff --snpeff_stats=$SNPEFF_STATS  1>>$LOG 2>>$ERR
 					" >>$MK;
@@ -1305,7 +1348,8 @@ if (($NB_VARIANT)); then
 					#	echo "#[ERROR] VCFTOOLS '$VCFTOOLS' needed. Configure ENV file";
 					#	exit 0;
 					#fi;
-					if [ ! -z $BCFTOOLS ] && [ -e $BCFTOOLS ]; then
+					#if [ ! -z $BCFTOOLS ] && [ -e $BCFTOOLS ]; then
+					if [ ! -z $BCFTOOLS ] && (( $(command -v $BCFTOOLS | grep ^ -c) )); then
 						echo "#[INFO] BCFTOOLS=$BCFTOOLS";
 					else
 						echo "#[ERROR] BCFTOOLS '$BCFTOOLS' needed. Configure ENV file";
@@ -1471,7 +1515,8 @@ if (($NB_VARIANT)); then
 					#	echo "#[ERROR] VCFTOOLS '$VCFTOOLS' needed. Configure ENV file";
 					#	exit 0;
 					#fi;
-					if [ ! -z $BCFTOOLS ] && [ -e $BCFTOOLS ]; then
+					#if [ ! -z $BCFTOOLS ] && [ -e $BCFTOOLS ]; then
+					if [ ! -z $BCFTOOLS ] && (( $(command -v $BCFTOOLS | grep ^ -c) )); then
 						echo "#[INFO] BCFTOOLS=$BCFTOOLS";
 					else
 						echo "#[ERROR] BCFTOOLS '$BCFTOOLS' needed. Configure ENV file";
@@ -1643,28 +1688,6 @@ fi;
 
 
 
-# VCF final file COMPRESSION
-if ((1)); then
-
-	###################
-	# VCF COMPRESSION #
-	###################
-
-
-	if [ $COMPRESS -gt -1 ]; then
-
-		echo -e "\n####################\n# VCF COMPRESSION\n####################\n"
-		echo "#[INFO] Compression level='$COMPRESS'";
-
-		$BGZIP $OUTPUT_PRIORITIZATION -c -@ $THREADS -l 9 > $OUTPUT_PRIORITIZATION.gz
-		OUTPUT_PRIORITIZATION=$OUTPUT_PRIORITIZATION.gz
-
-	fi;
-
-fi;
-
-
-
 # VCF final file VALIDATION
 if ((1)); then
 
@@ -1733,7 +1756,7 @@ if [ ! -z $STATS ] || [ ! -z $BCFTOOLS_STATS ]; then
 	echo -e "\n####################\n# STATS\n####################\n"
 
 	# OUTPUT STATS
-	$HOWARD_FOLDER_BIN/VCFtranslation.sh $PARAM --translation=VCF --input=$OUTPUT_PRIORITIZATION --output=$OUTPUT_STATS --tmp=$TMP_FOLDER --env=$ENV 1>>$LOG 2>$ERR
+	$HOWARD_FOLDER_BIN/VCFtranslation.sh $PARAM --translation=VCF --input=$OUTPUT_PRIORITIZATION --output=$OUTPUT_STATS --bcftools_expression=$BCFTOOLS_EXPRESSION --tmp=$TMP_FOLDER --env=$ENV 1>>$LOG 2>$ERR
 
 	# HOWARD Statistics
 	if ((1)); then
@@ -1787,11 +1810,12 @@ if ((1)); then
 	# TRANSLATION
 	####################
 
-	if [ -z $FORMAT ] || [ "$FORMAT" != "" ]; then
-		if [ "$SORT" != "" ] || [ "$FIELDS" != "" ] || [ "$SORT_BY" != "" ] || [ "$ORDER_BY" != "" ] || [ "$BCFTOOLS_EXPRESSION" != "" ]; then
-			FORMAT="VCF"
-		fi;
-	fi;
+	# if [ -z $FORMAT ] || [ "$FORMAT" == "" ]; then
+	# 	if [ "$SORT" != "" ] || [ "$FIELDS" != "" ] || [ "$SORT_BY" != "" ] || [ "$ORDER_BY" != "" ] || [ "$BCFTOOLS_EXPRESSION" != "" ]; then
+	# 		FORMAT="VCF"
+	# 	fi;
+	# fi;
+
 
 	if [ ! -z $FORMAT ] && [ "$FORMAT" != "" ]; then
 
@@ -1805,7 +1829,7 @@ if ((1)); then
 		OUTPUT_PRIORITIZATION=$OUTPUT_PRIORITIZATION.uncompressed.vcf
 
 		#$SCRIPT_DIR/VCFtranslation.sh $PARAM  --input=$OUTPUT_PRIORITIZATION --output=$OUTPUT_TRANSLATION --tmp=$TMP_FOLDER --env=$ENV
-		$HOWARD_FOLDER_BIN/VCFtranslation.sh $PARAM --input=$OUTPUT_PRIORITIZATION --output=$OUTPUT_TRANSLATION --tmp=$TMP_FOLDER --env=$ENV 1>>$LOG 2>$ERR
+		$HOWARD_FOLDER_BIN/VCFtranslation.sh $PARAM --input=$OUTPUT_PRIORITIZATION --output=$OUTPUT_TRANSLATION --bcftools_expression=$BCFTOOLS_EXPRESSION --tmp=$TMP_FOLDER --env=$ENV 1>>$LOG 2>$ERR
 
 	else
 		cp $OUTPUT_PRIORITIZATION $OUTPUT_TRANSLATION
@@ -1818,6 +1842,60 @@ if ((1)); then
 	mv $OUTPUT_TRANSLATION $OUTPUT
 
 fi;
+
+
+
+
+# VCF final file COMPRESSION
+if ((1)); then
+
+	###################
+	# VCF COMPRESSION #
+	###################
+
+
+	if [ $COMPRESS -gt -1 ]; then
+
+		echo -e "\n####################\n# VCF COMPRESSION\n####################\n"
+		echo "#[INFO] Compression level='$COMPRESS'";
+
+		$BGZIP $OUTPUT -c -@ $THREADS -l $COMPRESS > $OUTPUT.tmp.compress.vcf.gz
+		mv $OUTPUT.tmp.compress.vcf.gz $OUTPUT
+
+
+
+		# VCF final file INDEXATION
+		if ((1)); then
+
+			##################
+			# VCF INDXXATION #
+			##################
+
+
+			if (($INDEX)) && [ "$FORMAT" == "VCF" ]; then
+
+				echo -e "\n####################\n# VCF INdEXATION\n####################\n"
+				echo "#[INFO] Indexation file $OUTPUT.idx";
+
+				$TABIX $OUTPUT
+				
+			fi;
+
+		fi;
+
+
+
+
+
+
+	fi;
+
+fi;
+
+
+
+
+
 
 
 # ECHO / VERBOSE / DEBUG

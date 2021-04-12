@@ -3,8 +3,8 @@
 # Highly Open and Valuable tool for   #
 #    Variant Annotation & Ranking     #
 #    for Discovery                    #
-# Release : 0.9.15.2                  #
-# Date : 20201012                     #
+# Release : 0.9.15.4                  #
+# Date : 20210411                     #
 # Author: Antony Le Bechec            #
 # Copyright: HUS                      #
 # Licence: GNU AGPL V3                #
@@ -14,7 +14,7 @@
 # DESCRIPTION #
 ###############
 
-HOWARD annotates and prioritizes variants, calculates and normalizes annotations, translates vcf format and generates variants statistics.
+HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations, translates vcf format and generates variants statistics.
 HOWARD annotation is mainly based on ANNOVAR and snpEff tools to annotate, using available databases (see ANNOVAR and snpEff) and home made databases. It also uses BCFTOOLS to annotate variants with a VCF file. ANNOVAR and snpEff databases are automatically downloaded if needed.
 HOWARD calculation harmonizes allele frequency (VAF), extracts Nomen (transcript, cNomen, pNomen...) from HGVS fields with an optional list of personalized transcripts, generates VaRank format barcode.
 HOWARD prioritization algorithm uses profiles to flag variants (as passed or filtered), calculate a prioritization score, and automatically generate a comment for each variants (example: 'polymorphism identified in dbSNP. associated to Lung Cancer. Found in ClinVar database').Prioritization profiles are defined in a configuration file. A profile is defined as a list of annotation/value, using wildcards and comparison options (contains, lower than, greater than, equal...). Annotations fields may be quality values (usually from callers, such as 'GQ', 'DP') or other annotations fields provided by annotations tools, such as HOWARD itself (example: COSMIC, Clinvar, 1000genomes, PolyPhen, SIFT). Multiple profiles can be used simultaneously, which is useful to define multiple validation/prioritization levels (example: 'standard', 'stringent', 'rare variants', 'low allele frequency').
@@ -58,8 +58,8 @@ JAVA 1.8 or higher
 # Beware of proxy configuration!
 
 #######################################
-# HOWARD [0.9.15.2-12/10/2020]
-# HOWARD Annotation, Calculation, Prioritization and Translation, based on ANNOVAR and snpEff, allowing multithreading 
+# HOWARD [0.9.15.4-11/04/2021]
+# HOWARD Annotation, Calculation, Prioritization and Translation, based on ANNOVAR and snpEff, allowing multithreading
 # Antony Le Bechec @ HUS © GNU AGPL V3
 #######################################
 # RELEASE NOTES:
@@ -136,11 +136,15 @@ JAVA 1.8 or higher
 #	Add --norm_options parameter.
 #	force translation VCF by default.
 #   Change VAF_stats and add DP_stats.
+# 0.9.15.4-11/04/2021:
+#	Remove --snpeff_threads parameter (for snpEff 5.0e compatibility) and improve --snpeff_stats.
+#	Add a check and rehead INFO fields if necessary (prevent some incorrect INFO header format).
+#	Fix --compress parameter and add --index parameter.
 
 
 #######################################
-# HOWARD [0.9.15.2-12/10/2020]
-# HOWARD Annotation, Calculation, Prioritization and Translation, based on ANNOVAR and snpEff, allowing multithreading 
+# HOWARD [0.9.15.4-11/04/2021]
+# HOWARD Annotation, Calculation, Prioritization and Translation, based on ANNOVAR and snpEff, allowing multithreading
 # Antony Le Bechec @ HUS © GNU AGPL V3
 #######################################
 # USAGE: HOWARD --input=<FILE>  [options...]
@@ -153,7 +157,7 @@ JAVA 1.8 or higher
 # --output=<FILE>                       Output annotated file in defined format (see --format option).
 #                                       Default input file with extension *howard.vcf
 #
- 
+
 ### Main Options
 # --annotate=<LIST>                     Annotation with BCFTOOLS
 #                                       List of VCF files with TAG to annotate
@@ -198,17 +202,17 @@ JAVA 1.8 or higher
 # --translation=<STRING>                Output format, either TSV or VCF
 #                                       Default: 'VCF'
 #
- 
+
 ### Annotation Options
 # --assembly=<STRING>                   Genome assembly
 #                                       Default 'hg19', 'default' to use the default assembly in the configuration file
 # --snpeff_spliceSiteSize=<INTEGER>     Set size for splice sites (donor and acceptor) in bases
 #                                       Default 3
-# --snpeff_additional_options=<STRING>  Additional options for snpEff 
+# --snpeff_additional_options=<STRING>  Additional options for snpEff
 #                                       Format 'param1:value1|param2:value2'
 #                                       Default ''
 #
- 
+
 ### Calculation Options
 # --transcripts=<FILE>                  File containing default transcript for each gene
 #                                       Format (second field optional):
@@ -229,7 +233,7 @@ JAVA 1.8 or higher
 #                                          dominant: '011','101','111','021','201','121','211'
 #                                          recessive: '112','212','122','222'
 #
- 
+
 ### Prioritization Options
 # --hard                                Remove not PASS variant in default priorisation filter (PZFlag)
 # --pzfields=<STRING>                   List of prioritisation information to show
@@ -237,7 +241,7 @@ JAVA 1.8 or higher
 #                                       Format: 'field1,field2...'
 #                                       Example: 'PZScore,PZFlag,PZComment,PZInfos'
 #
- 
+
 ### Translation Options
 # --fields=<STRING>                     List of annotations from INFO VCF field to include in the output file.
 #                                       Use 'INFO' to insert a uniq field INFO in TSV format
@@ -256,14 +260,14 @@ JAVA 1.8 or higher
 # --order_by=<STRING>                   Order variants by a field (if no 'sort' option). Default ''.
 #                                       Example: 'DESC,DESC' (useful to sort by relevance)
 # --bcftools_expression=<STRING>        bcftools include expression to filter variants (default '').
-#                                       Example: "PZFlag='PASS'" (useful to hard filter), "QUAL>90", or "PZFlag='PASS'&&QUAL>90" to combine 
+#                                       Example: "PZFlag='PASS'" (useful to hard filter), "QUAL>90", or "PZFlag='PASS'&&QUAL>90" to combine
 # --columns=<STRING>                    Additional columns with values
 #                                       All additional columns will be added with the associated values
 #                                       Available only for 'tsv' format translation
 #                                       Format: 'column1:value1,column2:value2,...'
 #                                       Example: 'run:runA,sample:sample1'
 #
- 
+
 ### Configuration
 # --env=<FILE>                          Environment configuration for multithreading (BGZIP, TABIX, BCFTOOLS)
 # --config=<FILE>                       Configuration file for main parameters
@@ -281,23 +285,24 @@ JAVA 1.8 or higher
 # --java_flags=<STRING>                 java flags (needed if snpeff option on)
 #                                       especially for configure proxy for databases donwload
 #                                       Default ''
- 
+
 ### Statistics
 # --stats=<FILE>                        Generates HOWARD stats.
 # --snpeff_stats=<FILE>                 Generates snpEff stats.
 # --bcftools_stats=<FILE>               Generates BCFTOOLS stats.
 #
- 
+
 ### Other Options
 # --force                               Force annotation, calculation, prioritization
 #                                       Replace values even if already exist in VCF header
 # --threads=<INTEGER>                   Threads: number of thread to use (default defined in environment variable THREADS, or 1)
 # --split=<INTEGER>                     Split by group of variants (default (10000)
-# --compress=<INTEGER>                  Compression level output file *vcf.gz (0 to 9, -1 no compression by default)
+# --compress=<INTEGER>                  Compression level output file (0 to 9, -1 no compression by default)
+# --index                               Indexation of output file with name <output>.idx (only for vcf and compress output)
 # --norm=<FILE>                         Genome fasta file to normalize (beware of chromosome identification, either 'x' or 'chrx')
 # --norm_options=<STRING>               Normalisation options (see bcftools options)
-#                                       Format: '--option1=value1,--option2=value2,...' 
-#                                       Default: '--multiallelics=-any,--rm-dup=exact' 
+#                                       Format: '--option1=value1,--option2=value2,...'
+#                                       Default: '--multiallelics=-any,--rm-dup=exact'
 # --tmp=<FOLDER>                        Temporary folder (default /tmp)
 # --verbose                             VERBOSE option
 # --debug                               DEBUG option
