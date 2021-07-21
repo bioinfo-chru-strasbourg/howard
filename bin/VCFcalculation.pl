@@ -9,8 +9,8 @@
 
 our %information = ( #
 	'script'	=>  	basename($0),		# Script
-	'release'	=>  	"0.9.2.4b",			# Release
-	'date'		=>  	"20201023",		# Release parameter
+	'release'	=>  	"0.9.3",			# Release
+	'date'		=>  	"20210721",		# Release parameter
 	'author'	=>  	"Antony Le Béchec",	# Author
 	'copyright'	=>  	"HUS",			# Copyright
 	'licence'	=>  	"GNU AGPL V3",		# Licence
@@ -22,6 +22,7 @@ our %information = ( #
 # 20180823-0.9.2.2b: Add Other NOMEN to avoid misassignation of GNOMEN. Fix bug with INFO/. for empty INFO field
 # 20181217-0.9.2.3b: Change Number/Type/Description of new INFO/FORMAT header generateed. Default VAF '.' if no info.  Bug fixed, Description, Number and Type consolidated within INFO
 # 20181217-0.9.2.4b: Change VAF_stats and and DP_stats
+# 20210721-0.9.3: Add calculation of DP, AD, GQ and stats associated. Adjust INFO fields type
 
 
 ## Modules
@@ -573,7 +574,12 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 				#print "$sample_name ".$$sample_quality{"VAF"}." \n" if $DEBUG;
 
 				#if ($force || !defined $$sample_quality{"VAF"}) {
-				if ($force || !defined $annotation_output{$chr}{$pos}{$ref}{$alt}{"SAMPLES"}{$sample_name}{"VAF"}) {
+				if ($force 
+					|| !defined $$sample_quality{"VAF"}
+					|| $$sample_quality{"VAF"} eq "."
+					|| $$sample_quality{"VAF"} eq ""
+					) {
+
 					my $VAF="";
 
 					# if FREQ
@@ -619,18 +625,24 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 						};#if
 					};#if
 
+					# # Check VAF NOT null
+					# if ($VAF ne "") {
+					# 	push @VAF_LIST, $VAF ;
+					# } else {
+					# #if ($VAF eq "") {
+					# 	$VAF=".";
+					# };# if
+
 					# Check VAF NOT null
-					if ($VAF ne "") {
-						push @VAF_LIST, $VAF ;
-					} else {
-					#if ($VAF eq "") {
+					if ($VAF eq "") {
 						$VAF=".";
 					};# if
+					push @VAF_LIST, $VAF ;
 
 					if (uc(trim($one_calculation)) eq "VAF") {
 						if ($VAF ne "") {
 							# VAF in FORMAT
-							$annotation_output{$chr}{$pos}{$ref}{$alt}{"SAMPLES"}{$sample_name}{"VAF"}=$VAF;
+							$$sample_quality{"VAF"}=$VAF;
 							# ADD to FORMAT
 							if (!grep( /^VAF$/, split(/:/,$annotation_output{$chr}{$pos}{$ref}{$alt}{"FORMAT"}))) {
 								$annotation_output{$chr}{$pos}{$ref}{$alt}{"FORMAT"}.=":VAF";
@@ -661,33 +673,50 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 
 				#if ($force || !defined $$variant_values{"VAF"}) {
 
-				$VAF_min = min @VAF_LIST;
-				$VAF_max = max @VAF_LIST;
-				$VAF_average = mean(@VAF_LIST);
-				$VAF_median = median(@VAF_LIST);
+				#my @VAF_LIST_for_calculation = grep { $VAF_LIST[$_] ne '^.$' } 0..$#VAF_LIST;
+				@VAF_LIST_for_calculation = grep {!/^.$/} @VAF_LIST;
+
+				$VAF_min = min @VAF_LIST_for_calculation;
+				$VAF_max = max @VAF_LIST_for_calculation;
+				$VAF_average = mean(@VAF_LIST_for_calculation);
+				$VAF_median = median(@VAF_LIST_for_calculation);
+				$VAF_stats="$VAF_min,$VAF_max,$VAF_average,$VAF_median";
+				$VAF_list=join(",",@VAF_LIST);
 				#print sum(@AD_split)/@AD_split if $DEBUG ;
+
+				if (join("",@VAF_LIST_for_calculation) eq "") {
+					$VAF_min = ".";
+					$VAF_max = ".";
+					$VAF_average = ".";
+					$VAF_median = ".";
+					$VAF_stats=".";
+					$VAF_list=".";
+				};
+
 				print "\tVAF MIN = $VAF_min\n" if $DEBUG ;
 				print "\tVAF MAX = $VAF_max\n" if $DEBUG ;
 				print "\tVAF AVG = $VAF_average\n" if $DEBUG ;
 				print "\tVAF MED = $VAF_median\n" if $DEBUG ;
 
-				if (join("",@VAF_LIST) ne "") {
-					my $VAF_stats="$VAF_min,$VAF_max,$VAF_average,$VAF_median";
+				#if (join("",@VAF_LIST) ne "") {
+				if ($VAF_stats ne "") {
+					#my $VAF_stats="$VAF_min,$VAF_max,$VAF_average,$VAF_median";
 					# VAF in INFO
 					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"VAF_stats"}=$VAF_stats;
 					# ADD to HEADER
 					$vcf_header{"INFO"}{"VAF_stats"}{"Number"}=".";
-					$vcf_header{"INFO"}{"VAF_stats"}{"Type"}="Float";
+					$vcf_header{"INFO"}{"VAF_stats"}{"Type"}="String";
 					$vcf_header{"INFO"}{"VAF_stats"}{"Description"}="\"VAF Variant Frequency stats, as min, max, average, median, calculated from quality$description_plus\"";
 				};#if
 
-				if (join("",@VAF_LIST) ne "") {
-					my $VAF_list=join(",",@VAF_LIST);
+				#if (join("",@VAF_LIST) ne "") {
+				if ($VAF_list ne "") {
+					#my $VAF_list=join(",",@VAF_LIST);
 					# VAF in INFO
 					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"VAF_list"}=$VAF_list;
 					# ADD to HEADER
 					$vcf_header{"INFO"}{"VAF_list"}{"Number"}=".";
-					$vcf_header{"INFO"}{"VAF_list"}{"Type"}="Float";
+					$vcf_header{"INFO"}{"VAF_list"}{"Type"}="String";
 					$vcf_header{"INFO"}{"VAF_list"}{"Description"}="\"VAF Variant Frequencylisted from quality$description_plus\"";
 				};#if
 
@@ -740,7 +769,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 		# DP #
 		######
 
-		if (uc(trim($one_calculation)) eq "DP_STATS") {
+		if (uc(trim($one_calculation)) eq "DP" || uc(trim($one_calculation)) eq "DP_STATS") {
 			print "# Calculation '$one_calculation'...\n" if $DEBUG;
 
 			my @DP_LIST; #=(0.99,0.999);
@@ -751,11 +780,18 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 
 			while ( my ($sample_name, $sample_quality) = each(%$samples) ) {
 
-				if ($force || !defined $annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"DP_stats"}) {
+				#if ($force || !defined $annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"DP_stats"}) {
+				#if ($force || !defined $annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"DP"}) {
+				if ($force 
+					|| !defined $$sample_quality{"DP"}
+					|| $$sample_quality{"DP"} eq "."
+					|| $$sample_quality{"DP"} eq ""
+					) {
+						
 					my $DP="";
 
 					# if DP
-					if ($DP eq "" && defined $$sample_quality{"DP"}) {
+					if ($DP eq "" && defined $$sample_quality{"DP"} && $$sample_quality{"DP"} ne "" && $$sample_quality{"DP"} ne ".") {
 						print "\tDP calculated on DP (".$$sample_quality{"DP"}.")\n" if $DEBUG ;
 						my @DP_split=split(/,/,$$sample_quality{"DP"});
 						$DP = eval join '+', @DP_split;
@@ -785,16 +821,33 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 					};#if
 
 					# Check DP NOT null
-					if ($DP ne "") {
-						push @DP_LIST, $DP ;
-					} else {
-					#if ($DP eq "") {
+					# if ($DP ne "") {
+					# 	push @DP_LIST, $DP ;
+					# } else {
+					if ($DP eq "") {
 						$DP=".";
 					};# if
+					push @DP_LIST, $DP ;
+
+					if (uc(trim($one_calculation)) eq "DP") {
+						if ($DP ne "") {
+							# DP in FORMAT
+							$$sample_quality{"DP"}=$DP;
+							# ADD to FORMAT
+							if (!grep( /^DP$/, split(/:/,$annotation_output{$chr}{$pos}{$ref}{$alt}{"FORMAT"}))) {
+								$annotation_output{$chr}{$pos}{$ref}{$alt}{"FORMAT"}.=":DP";
+							};#if
+							# ADD to HEADER
+							$vcf_header{"FORMAT"}{"DP"}{"Number"}="1";
+							$vcf_header{"FORMAT"}{"DP"}{"Type"}="Float";
+							$vcf_header{"FORMAT"}{"DP"}{"Description"}="\"Read Depth\"";
+
+						};#if
+					};#if
 
 
 				} else {
-					#push @DP_LIST, $$sample_quality{"DP"} ;
+					push @DP_LIST, $$sample_quality{"DP"} ;
 					#@DP_LIST=split(/,/,$$sample_quality{"DP"});
 
 
@@ -808,18 +861,33 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 
 				if ($force || !defined $$variant_values{"INFOS"}{"DP_stats"}) {
 
-				$DP_min = min @DP_LIST;
-				$DP_max = max @DP_LIST;
-				$DP_average = mean(@DP_LIST);
-				$DP_median = median(@DP_LIST);
+				@DP_LIST_for_calculation = grep {!/^.$/} @DP_LIST;
+
+				$DP_min = min @DP_LIST_for_calculation;
+				$DP_max = max @DP_LIST_for_calculation;
+				$DP_average = mean(@DP_LIST_for_calculation);
+				$DP_median = median(@DP_LIST_for_calculation);
+				$DP_stats="$DP_min,$DP_max,$DP_average,$DP_median";
+				$DP_list=join(",",@DP_LIST);
 				#print sum(@AD_split)/@AD_split if $DEBUG ;
+
+				if (join("",@DP_LIST_for_calculation) eq "") {
+					$DP_min = ".";
+					$DP_max = ".";
+					$DP_average = ".";
+					$DP_median = ".";
+					$DP_stats=".";
+					$DP_list=".";
+				};
+
 				print "\tDP MIN = $DP_min\n" if $DEBUG ;
 				print "\tDP MAX = $DP_max\n" if $DEBUG ;
 				print "\tDP AVG = $DP_average\n" if $DEBUG ;
 				print "\tDP MED = $DP_median\n" if $DEBUG ;
 
-				if (join("",@DP_LIST) ne "") {
-					my $DP_stats="$DP_min,$DP_max,$DP_average,$DP_median";
+				#if (join("",@DP_LIST) ne "") {
+				if ($DP_stats ne "") {
+					#my $DP_stats="$DP_min,$DP_max,$DP_average,$DP_median";
 					# DP in INFO
 					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"DP_stats"}=$DP_stats;
 					# ADD to HEADER
@@ -828,14 +896,15 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 					$vcf_header{"INFO"}{"DP_stats"}{"Description"}="\"DP stats, as min, max, average, median, calculated from quality$description_plus\"";
 				};#if
 
-				if (join("",@DP_LIST) ne "") {
-					my $DP_list=join(",",@DP_LIST);
+				#if (join("",@DP_LIST) ne "") {
+				if ($DP_list ne "") {
+					#my $DP_list=join(",",@DP_LIST);
 					# DP in INFO
 					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"DP_list"}=$DP_list;
 					# ADD to HEADER
 					$vcf_header{"INFO"}{"DP_list"}{"Number"}=".";
 					$vcf_header{"INFO"}{"DP_list"}{"Type"}="Float";
-					$vcf_header{"INFO"}{"DP_list"}{"Description"}="\"DP Depth listed from quality$description_plus\"";
+					$vcf_header{"INFO"}{"DP_list"}{"Description"}="\"DP listed from quality$description_plus\"";
 				};#if
 
 				if ($DP_min ne "") {
@@ -844,7 +913,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 					# ADD to HEADER
 					$vcf_header{"INFO"}{"DP_min"}{"Number"}="1";
 					$vcf_header{"INFO"}{"DP_min"}{"Type"}="Float";
-					$vcf_header{"INFO"}{"DP_min"}{"Description"}="\"DP Depth minimum$description_plus\"";
+					$vcf_header{"INFO"}{"DP_min"}{"Description"}="\"DP minimum$description_plus\"";
 				};#if
 
 				if ($DP_max ne "") {
@@ -853,7 +922,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 					# ADD to HEADER
 					$vcf_header{"INFO"}{"DP_max"}{"Number"}="1";
 					$vcf_header{"INFO"}{"DP_max"}{"Type"}="Float";
-					$vcf_header{"INFO"}{"DP_max"}{"Description"}="\"DP Depth max$description_plus\"";
+					$vcf_header{"INFO"}{"DP_max"}{"Description"}="\"DP max$description_plus\"";
 				};#if
 
 				if ($DP_average ne "") {
@@ -862,7 +931,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 					# ADD to HEADER
 					$vcf_header{"INFO"}{"DP_average"}{"Number"}="1";
 					$vcf_header{"INFO"}{"DP_average"}{"Type"}="Float";
-					$vcf_header{"INFO"}{"DP_average"}{"Description"}="\"DP Depth average$description_plus\"";
+					$vcf_header{"INFO"}{"DP_average"}{"Description"}="\"DP average$description_plus\"";
 				};#if
 
 				if ($DP_median ne "") {
@@ -871,7 +940,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 					# ADD to HEADER
 					$vcf_header{"INFO"}{"DP_median"}{"Number"}="1";
 					$vcf_header{"INFO"}{"DP_median"}{"Type"}="Float";
-					$vcf_header{"INFO"}{"DP_median"}{"Description"}="\"DP Variant Frequency median$description_plus\"";
+					$vcf_header{"INFO"}{"DP_median"}{"Description"}="\"DP median$description_plus\"";
 				};#if
 
 				};#if
@@ -882,6 +951,276 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 		};#if
 
 
+	
+		######
+		# GQ #
+		######
+
+		if (uc(trim($one_calculation)) eq "GQ" || uc(trim($one_calculation)) eq "GQ_STATS") {
+			print "# Calculation '$one_calculation'...\n" if $DEBUG;
+
+			my @GQ_LIST; #=(0.99,0.999);
+			my $GQ_min="";
+			my $GQ_max="";
+			my $GQ_average="";
+			my $GQ_median="";
+
+			while ( my ($sample_name, $sample_quality) = each(%$samples) ) {
+
+				#if ($force || !defined $annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"GQ_stats"}) {
+				#if ($force || !defined $annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"GQ"}) {
+				if ($force 
+					|| !defined $$sample_quality{"GQ"}
+					|| $$sample_quality{"GQ"} eq "."
+					|| $$sample_quality{"GQ"} eq ""
+					) {
+					
+					my $GQ="";
+
+					# if GQ
+					if ($GQ eq "" && defined $$sample_quality{"GQ"}) {
+						print "\tGQ calculated on GQ (".$$sample_quality{"GQ"}.")\n" if $DEBUG ;
+						my @GQ_split=split(/,/,$$sample_quality{"GQ"});
+						$GQ = eval join '+', @GQ_split;
+						if ($GQ) {
+							print "\tGQ = $GQ\n" if $DEBUG ;
+						};#if
+					};#if
+
+					# Check GQ NOT null
+					# if ($GQ ne "") {
+					# 	push @GQ_LIST, $GQ ;
+					# } else {
+					if ($GQ eq "") {
+						$GQ=".";
+					};# if
+					push @GQ_LIST, $GQ ;
+
+					if (uc(trim($one_calculation)) eq "GQ") {
+						if ($GQ ne "") {
+							# GQ in FORMAT
+							$$sample_quality{"GQ"}=$GQ;
+							# ADD to FORMAT
+							if (!grep( /^GQ$/, split(/:/,$annotation_output{$chr}{$pos}{$ref}{$alt}{"FORMAT"}))) {
+								$annotation_output{$chr}{$pos}{$ref}{$alt}{"FORMAT"}.=":GQ";
+							};#if
+							# ADD to HEADER
+							$vcf_header{"FORMAT"}{"GQ"}{"Number"}="1";
+							$vcf_header{"FORMAT"}{"GQ"}{"Type"}="Float";
+							$vcf_header{"FORMAT"}{"GQ"}{"Description"}="\"Genotype Quality\"";
+
+						};#if
+					};#if
+
+
+				} else {
+					push @GQ_LIST, $$sample_quality{"GQ"} ;
+					#@GQ_LIST=split(/,/,$$sample_quality{"GQ"});
+
+
+				};#if
+
+			};# while
+
+			print "@GQ_LIST\n" if $DEBUG;
+
+			if (uc(trim($one_calculation)) eq "GQ_STATS") {
+
+				if ($force || !defined $$variant_values{"INFOS"}{"GQ_stats"}) {
+				
+				@GQ_LIST_for_calculation = grep {!/^.$/} @GQ_LIST;
+
+				$GQ_min = min @GQ_LIST_for_calculation;
+				$GQ_max = max @GQ_LIST_for_calculation;
+				$GQ_average = mean(@GQ_LIST_for_calculation);
+				$GQ_median = median(@GQ_LIST_for_calculation);
+				$GQ_stats="$GQ_min,$GQ_max,$GQ_average,$GQ_median";
+				$GQ_list=join(",",@GQ_LIST);
+
+				if (join("",@GQ_LIST_for_calculation) eq "") {
+					$GQ_min = ".";
+					$GQ_max = ".";
+					$GQ_average = ".";
+					$GQ_median = ".";
+					$GQ_stats=".";
+					$GQ_list=".";
+				};
+				
+				#print sum(@AD_split)/@AD_split if $DEBUG ;
+				print "\tGQ MIN = $GQ_min\n" if $DEBUG ;
+				print "\tGQ MAX = $GQ_max\n" if $DEBUG ;
+				print "\tGQ AVG = $GQ_average\n" if $DEBUG ;
+				print "\tGQ MED = $GQ_median\n" if $DEBUG ;
+
+				#if (join("",@GQ_LIST) ne "") {
+				if ($GQ_stats ne "") {
+					#my $GQ_stats="$GQ_min,$GQ_max,$GQ_average,$GQ_median";
+					# GQ in INFO
+					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"GQ_stats"}=$GQ_stats;
+					# ADD to HEADER
+					$vcf_header{"INFO"}{"GQ_stats"}{"Number"}=".";
+					$vcf_header{"INFO"}{"GQ_stats"}{"Type"}="Float";
+					$vcf_header{"INFO"}{"GQ_stats"}{"Description"}="\"GQ stats, as min, max, average, median, calculated from quality$description_plus\"";
+				};#if
+
+				#if (join("",@GQ_LIST) ne "") {
+				if ($GQ_list ne "") {
+					#my $GQ_list=join(",",@GQ_LIST);
+					# GQ in INFO
+					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"GQ_list"}=$GQ_list;
+					# ADD to HEADER
+					$vcf_header{"INFO"}{"GQ_list"}{"Number"}=".";
+					$vcf_header{"INFO"}{"GQ_list"}{"Type"}="Float";
+					$vcf_header{"INFO"}{"GQ_list"}{"Description"}="\"GQ listed from quality$description_plus\"";
+				};#if
+
+				if ($GQ_min ne "") {
+					# GQ_min in INFO
+					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"GQ_min"}=$GQ_min;
+					# ADD to HEADER
+					$vcf_header{"INFO"}{"GQ_min"}{"Number"}="1";
+					$vcf_header{"INFO"}{"GQ_min"}{"Type"}="Float";
+					$vcf_header{"INFO"}{"GQ_min"}{"Description"}="\"GQ minimum$description_plus\"";
+				};#if
+
+				if ($GQ_max ne "") {
+					# GQ_min in INFO
+					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"GQ_max"}=$GQ_max;
+					# ADD to HEADER
+					$vcf_header{"INFO"}{"GQ_max"}{"Number"}="1";
+					$vcf_header{"INFO"}{"GQ_max"}{"Type"}="Float";
+					$vcf_header{"INFO"}{"GQ_max"}{"Description"}="\"GQ max$description_plus\"";
+				};#if
+
+				if ($GQ_average ne "") {
+					# GQ_min in INFO
+					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"GQ_average"}=$GQ_average;
+					# ADD to HEADER
+					$vcf_header{"INFO"}{"GQ_average"}{"Number"}="1";
+					$vcf_header{"INFO"}{"GQ_average"}{"Type"}="Float";
+					$vcf_header{"INFO"}{"GQ_average"}{"Description"}="\"GQ average$description_plus\"";
+				};#if
+
+				if ($GQ_median ne "") {
+					# GQ_min in INFO
+					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"GQ_median"}=$GQ_median;
+					# ADD to HEADER
+					$vcf_header{"INFO"}{"GQ_median"}{"Number"}="1";
+					$vcf_header{"INFO"}{"GQ_median"}{"Type"}="Float";
+					$vcf_header{"INFO"}{"GQ_median"}{"Description"}="\"GQ median$description_plus\"";
+				};#if
+
+				};#if
+
+			};#if
+
+			$is_calculated=1;
+		};#if
+
+
+
+		######
+		# AD #
+		######
+
+		if (uc(trim($one_calculation)) eq "AD" || uc(trim($one_calculation)) eq "AD_STATS") {
+			print "# Calculation '$one_calculation'...\n" if $DEBUG;
+
+			my @AD_LIST; #=(0.99,0.999);
+			my $AD_min="";
+			my $AD_max="";
+			my $AD_average="";
+			my $AD_median="";
+
+			while ( my ($sample_name, $sample_quality) = each(%$samples) ) {
+
+				#if ($force || !defined $annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"AD_stats"}) {
+				#if ($force || !defined $annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"AD"}) {
+				if ($force 
+					|| !defined $$sample_quality{"AD"}
+					|| $$sample_quality{"AD"} eq "."
+					|| $$sample_quality{"AD"} eq ""
+					|| (index($$sample_quality{"AD"}, ",") == -1)
+					) {
+
+					my $AD="";
+
+					# if BAL - case VarScan
+					if ($AD eq ""
+						&& defined $$sample_quality{"AD"}
+						&& index($$sample_quality{"AD"}, ",") == -1
+						&& looks_like_number($$sample_quality{"AD"})
+						&& defined $$sample_quality{"RD"}
+						&& looks_like_number($$sample_quality{"RD"})
+					) {
+					#if ($AD eq "" && defined $$sample_quality{"BAL"}) {
+						print "\tAD calculated on AD (".$$sample_quality{"AD"}.") and RD (".$$sample_quality{"RD"}.")\n" if $DEBUG ;
+						$AD=$$sample_quality{"AD"}.",".$$sample_quality{"RD"};
+						if ($AD) {
+							print "\tAD = $AD\n" if $DEBUG ;
+						};#if
+					};#if
+
+					# if BAL - case OutLyzer
+					if ($AD eq "" && defined $$sample_quality{"BAL"}) {
+						print "\tAD calculated on BAL (".$$sample_quality{"BAL"}.")\n" if $DEBUG ;
+						$AD=$$sample_quality{"BAL"};
+						$AD =~ s/\//,/;
+						#my @BAL_split=split(/,/,$$sample_quality{"BAL"});
+						#$AD = eval join '+', @AD_split;
+						if ($AD) {
+							print "\tAD = $AD\n" if $DEBUG ;
+						};#if
+					};#if
+
+					# if AD Empty but source defined
+					if ($AD eq "" && defined $$sample_quality{"AD"}) {
+						print "\tAD calculated on source AD (".$$sample_quality{"AD"}.")\n" if $DEBUG ;
+						$AD=$$sample_quality{"AD"};
+						if ($AD) {
+							print "\tAD = $AD\n" if $DEBUG ;
+						};#if
+					};#if
+
+					# Check AD NOT null
+					# if ($AD ne "") {
+					# 	push @AD_LIST, $AD ;
+					# } else {
+					if ($AD eq "") {
+						$AD=".";
+					};# if
+					push @AD_LIST, $AD ;
+
+					if (uc(trim($one_calculation)) eq "AD") {
+						if ($AD ne "") {
+							# AD in FORMAT
+							$$sample_quality{"AD"}=$AD;
+							# ADD to FORMAT
+							if (!grep( /^AD$/, split(/:/,$annotation_output{$chr}{$pos}{$ref}{$alt}{"FORMAT"}))) {
+								$annotation_output{$chr}{$pos}{$ref}{$alt}{"FORMAT"}.=":AD";
+							};#if
+							# ADD to HEADER
+							$vcf_header{"FORMAT"}{"AD"}{"Number"}="1";
+							$vcf_header{"FORMAT"}{"AD"}{"Type"}="String";
+							$vcf_header{"FORMAT"}{"AD"}{"Description"}="\"Allelic depths for the ref and alt alleles in the order listed\"";
+
+						};#if
+					};#if
+
+
+				} else {
+					push @AD_LIST, $$sample_quality{"AD"} ;
+					#@AD_LIST=split(/,/,$$sample_quality{"AD"});
+
+
+				};#if
+
+			};# while
+
+			print "@AD_LIST\n" if $DEBUG;
+
+			$is_calculated=1;
+		};#if
 
 
 		################

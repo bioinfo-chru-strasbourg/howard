@@ -37,7 +37,7 @@ Using an HOWARD VCF example, this command:
 - 5- generates final file into host data folder (e.g. ${HOME}/HOWARD/data/example.howard.tsv)
 
 ```
-$ docker exec HOWARD --input=/tool/docs/example.vcf --output=/data/example.howard.tsv --annotation=hgvs,symbol,outcome,location,CLINVAR,CLINVAR_CLNDN,COSMIC --calculation=VAF,BARCODE,NOMEN --prioritization=SOMATIC --translation=TSV --fields=NOMEN,PZFlag,PZScore,ALL --sort=PZFlag::DESC,PZScore:n:DESC
+$ docker exec HOWARD --input=/tool/docs/example.vcf --output=/data/example.howard.tsv --annotation=snpeff,hgvs,symbol,outcome,location,CLINVAR,CLINVAR_CLNDN,COSMIC --calculation=VAF,BARCODE,NOMEN --prioritization=SOMATIC --translation=TSV --fields=NOMEN,PZFlag,PZScore,ALL --sort=PZFlag::DESC,PZScore:n:DESC
 ```
 
 ```
@@ -96,7 +96,7 @@ $ docker run --name howard --entrypoint=bash -ti howard:latest
 Run HOWARD as a uniq command.
 
 ```
-$ docker run --rm -v ${HOME}/HOWARD/data:/data -v ${HOME}/HOWARD/databases:/databases howard:latest --input=/tool/docs/example.vcf --output=/data/example.howard.tsv --annotation=hgvs,symbol,outcome,location,CLINVAR,CLINVAR_CLNDN,COSMIC --calculation=VAF,BARCODE,NOMEN --prioritization=SOMATIC --translation=TSV --fields=NOMEN,PZFlag,PZScore,ALL --sort=PZFlag::DESC,PZScore:n:DESC
+$ docker run --rm -v ${HOME}/HOWARD/data:/data -v ${HOME}/HOWARD/databases:/databases howard:latest --input=/tool/docs/example.vcf --output=/data/example.howard.tsv --annotation=snpeff,hgvs,symbol,outcome,location,CLINVAR,CLINVAR_CLNDN,COSMIC --calculation=VAF,BARCODE,NOMEN --prioritization=SOMATIC --translation=TSV --fields=NOMEN,PZFlag,PZScore,ALL --sort=PZFlag::DESC,PZScore:n:DESC
 ```
 
 Database download
