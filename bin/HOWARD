@@ -5,8 +5,8 @@
 
 SCRIPT_NAME="HOWARD"
 SCRIPT_DESCRIPTION="HOWARD Annotation, Calculation, Prioritization and Translation, based on ANNOVAR and snpEff, allowing multithreading"
-SCRIPT_RELEASE="0.9.15.4"
-SCRIPT_DATE="11/04/2021"
+SCRIPT_RELEASE="0.9.15.5"
+SCRIPT_DATE="18/07/2021"
 SCRIPT_AUTHOR="Antony Le Bechec"
 SCRIPT_COPYRIGHT="HUS"
 SCRIPT_LICENCE="GNU AGPL V3"
@@ -89,6 +89,13 @@ RELEASE_NOTES=$RELEASE_NOTES"# 0.9.15.4-11/04/2021:\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tRemove --snpeff_threads parameter (for snpEff 5.0e compatibility) and improve --snpeff_stats.\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tAdd a check and rehead INFO fields if necessary (prevent some incorrect INFO header format).\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tFix --compress parameter and add --index parameter.\n";
+RELEASE_NOTES=$RELEASE_NOTES"# 0.9.15.5-21/07/2021:\n";
+RELEASE_NOTES=$RELEASE_NOTES"#\tAdd INFO description Type option, with autodetection.\n";
+RELEASE_NOTES=$RELEASE_NOTES"#\tAdd prioritization mode 'VaRank'/'max' for score calculation.\n";
+RELEASE_NOTES=$RELEASE_NOTES"#\tAdd calculation DP, AD, GQ and associated stats.\n";
+RELEASE_NOTES=$RELEASE_NOTES"#\tFix INFO field type for VCF.\n";
+
+
 
 
 
@@ -216,6 +223,11 @@ function usage {
 	echo "#                                       Default: 'PZScore,PZFlag'";
 	echo "#                                       Format: 'field1,field2...'";
 	echo "#                                       Example: 'PZScore,PZFlag,PZComment,PZInfos'";
+	echo "# --prioritization_score_mode=<STRING>  Prioritization mode";
+	echo "#                                       Default: 'HOWARD'";
+	echo "#                                       Either: 'HOWARD', 'VaRank";
+	echo "#                                          HOWARD': sum scores from prioritization definition";
+	echo "#                                          VaRank': choose max value score from prioritization definition";
 	echo "#";
 
 	echo " ";

@@ -9,8 +9,8 @@
 
 our %information = ( #
 	'script'	=>  	basename($0),		# Script
-	'release'	=>  	"0.9.5.1b",		# Release
-	'date'		=>  	"20180823",		# Release parameter
+	'release'	=>  	"0.9.6",		# Release
+	'date'		=>  	"20210721",		# Release parameter
 	'author'	=>  	"Antony Le Béchec",	# Author
 	'copyright'	=>  	"HUS",			# Copyright
 	'licence'	=>  	"GNU AGPL V3",		# Licence
@@ -19,6 +19,7 @@ our %information = ( #
 ## Release Notes
 ##################
 # 20180823-0.9.5.1b: Fix bug with INFO/. for empty INFO field
+# 20210721-0.9.6: Add prioritization mode 'VaRank'/'max' for score calculation. Adjust INFO field type
 
 
 ## Modules
@@ -137,6 +138,18 @@ Default: 'PZScore,PZFlag'
 Format: 'field1,field2...'
 
 Example: 'PZScore,PZFlag,PZComment,PZInfos'
+
+=item B<--prioritization_score_mode=<string>>
+
+Prioritization mode
+
+Default: 'HOWARD'
+
+Either: 'HOWARD', 'VaRank
+
+- HOWARD': sum scores from prioritization definition
+
+- VaRank': choose max value score from prioritization definition
 
 =back
 
@@ -323,6 +336,11 @@ my $hard_filter=$parameters{"hard"};
 my %pzfilter_list_input = map { $_ => 1 } split(",",$parameters{"pzfields"});
 
 
+# $prioritization_score_mode
+$prioritization_score_mode=$parameters{"prioritization_score_mode"};
+#$prioritization_score_mode="varank";
+
+
 ## DEBUG
 ##########
 
@@ -376,7 +394,10 @@ sub prioritize {
 	my $filter_annotation=$_[7];
 	my $filter_value=$_[8];
 	my $filter_value_comment=$_[9];
+	my $prioritization_score_mode=$_[10];
 
+
+	# $prioritization_score_mode="howard","sum","varank","max";
 	#$prioritization_flag,$prioritization_score,$prioritization_comment,$prioritization_infos,
 	#print "$variant_annotations_name,$annotation_name,$annotation_value,$filter_annotation,$filter_value,$filter_value_comment\n" if $DEBUG;
 
@@ -413,7 +434,13 @@ sub prioritize {
 					$prioritization_flag="FILTERED";
 				};#if
 			} elsif (looks_like_number($filter_value)) {
-				$prioritization_score+=$filter_value;
+				if (lc($prioritization_score_mode) eq "max" || lc($prioritization_score_mode) eq "varank") {
+					$prioritization_score=max($filter_value,$prioritization_score);
+				} elsif (lc($prioritization_score_mode) eq "sum" || lc($prioritization_score_mode) eq "howard") {
+					$prioritization_score+=$filter_value;
+				} else {
+					$prioritization_score+=$filter_value;
+				}
 			#} elsif ($filter_value =~ /^COMMENT/) {
 			#	print "$comment\n" if $DEBUG;
 			#	my $comment=$filter_value; $comment=~ s/^COMMENT//g; $comment=~ s/VALUE/$annotation_value/g;
@@ -476,8 +503,15 @@ sub prioritize {
 					$prioritization_flag="FILTERED";
 				};#if
 			} elsif (looks_like_number($filter_value)) {
+				if (lc($prioritization_score_mode) eq "max" || lc($prioritization_score_mode) eq "varank") {
+					$prioritization_score=max($filter_value,$prioritization_score);
+				} elsif (lc($prioritization_score_mode) eq "sum" || lc($prioritization_score_mode) eq "howard") {
+					$prioritization_score+=$filter_value;
+				} else {
+					$prioritization_score+=$filter_value;
+				}
 				#print "\t\t\t\tS\n" if $DEBUG;
-				$prioritization_score+=$filter_value;
+				#$prioritization_score+=$filter_value;
 			#} elsif ($filter_value =~ /^COMMENT/) {
 			#	my $comment=$filter_value; $comment=~ s/^COMMENT//g; $comment=~ s/VALUE/$annotation_value/g;
 			#	$prioritization_comment.="$comment,";
@@ -587,7 +621,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 						$prioritization_score,
 						$prioritization_comment,
 						$prioritization_infos)=prioritize($prioritization_flag,$prioritization_score,$prioritization_comment,$prioritization_infos,
-											$variant_annotations_name,$annotation_name,$annotation_value,$filter_annotation,$filter_value,$filter_value_comment);
+											$variant_annotations_name,$annotation_name,$annotation_value,$filter_annotation,$filter_value,$filter_value_comment,$prioritization_score_mode);
 
 					};#while
 					};#while
@@ -616,7 +650,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 			$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"PZScore$PZExtension"}=$prioritization_score;
 			# Header
 			if (!exists $VCF_header{$header_type}{"PZScore$PZExtension"}) {
-				$PZHeader.="##INFO=<ID=PZScore$PZExtension,Number=.,Type=String,Description=\"Prioritization Score for filter '$one_filter', depending on the ponderation of each prioritization criterion\">\n";
+				$PZHeader.="##INFO=<ID=PZScore$PZExtension,Number=.,Type=Integer,Description=\"Prioritization Score for filter '$one_filter', depending on the ponderation of each prioritization criterion\">\n";
 				$VCF_header{$header_type}{"PZScore$PZExtension"}=1;
 			};#if
 
@@ -624,7 +658,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 			if ($one_filter eq $filter) { # default filter
 				$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"PZScore"}=$prioritization_score;
 				if (!exists $VCF_header{$header_type}{"PZScore"}) {
-					$PZHeader.="##INFO=<ID=PZScore,Number=.,Type=String,Description=\"Prioritization Score for filter '$one_filter', depending on the ponderation of each prioritization criterion\">\n";
+					$PZHeader.="##INFO=<ID=PZScore,Number=.,Type=Integer,Description=\"Prioritization Score for filter '$one_filter', depending on the ponderation of each prioritization criterion\">\n";
 					$VCF_header{$header_type}{"PZScore"}=1;
 				};#if
 			}; #if
