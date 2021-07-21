@@ -340,7 +340,8 @@ our %parameters = ( #
 	# Input
 	'filter'	=>	'ALL',			# Filter
 	'pzfields'	=>	$PZFields_default,	# Filter fields
-	'hard'		=>	0,			# Hard filterind parameters
+	'hard'		=>	0,			# Hard filtering parameters
+	'prioritization_score_mode'		=>	"howard",			# Prioritization score mode parameters
 
 	# TRANSLATION
 	# Input
@@ -415,7 +416,8 @@ our @options=(
 	'filter|prioritization=s',		# Filter
 	'pzfields=s',		# Filter fields
 	'hard!',		# Hard Filtering
-
+	'prioritization_score_mode=s',		# # Prioritization score mode
+	
 	# TRANSLATION
 	# Input
 	'format|translation=s',		# Output format

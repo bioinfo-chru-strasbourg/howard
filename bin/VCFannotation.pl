@@ -9,8 +9,8 @@
 
 our %information = ( #
 	'script'	=>  	basename($0),			# Script
-	'release'	=>  	"0.9.10b",		# Release
-	'date'		=>  	"20210411",		# Release parameter
+	'release'	=>  	"0.9.11",		# Release
+	'date'		=>  	"20210721",		# Release parameter
 	'author'	=>  	"Antony Le Béchec",	# Author
 	'copyright'	=>  	"HUS",			# Copyright
 	'licence'	=>  	"GNU AGPL V3",		# Licence
@@ -25,6 +25,7 @@ our %information = ( #
 # 20181004-0.9.8b: add snpeff additional options. add  spliceSiteSize option, default 3. Add snpeff_split options
 # 20190110-0.9.9b: add annovar_code_for_downdb parameter on annotation config file, generalise file parameter (no assembly by definition), bug fix
 # 20210411-0.9.10b: remove snpEff -t option, fix snpEff -stats option, bug fix
+# 20210721-0.9.11: autodetection of INFO fields type (Float if looks_like_number)
 
 
 ## Modules
@@ -41,6 +42,8 @@ use File::Temp qw/ tmpnam /;
 use File::Copy;
 use File::stat;
 use lib dirname (__FILE__);	# Add lib in the same folder
+use Scalar::Util qw(looks_like_number);
+
 
 
 require "functions.inc.pl";	# Common functions
@@ -732,6 +735,7 @@ while ((my $annotation_name, my $annotation_infos) = each(%annotation_hash)){
 
 		# Possibily calculated option
 		my $annotation_type=$config_annotation{$annotation_name}{"annotation_type"};
+		my $annotation_type_vcf=$config_annotation{$annotation_name}{"annotation_type_vcf"};
 		my $annotation_description=trim($config_annotation{$annotation_name}{"description"});
 
 		my $file=$config_annotation{$annotation_name}{"file"};
@@ -832,10 +836,39 @@ while ((my $annotation_name, my $annotation_infos) = each(%annotation_hash)){
 		my $file_creation_date = trim(`$cmd_date 2>&1`);
 		$output_verbose.="#    - file_date='$file_creation_date'\n";
 
+		# Annovar annotation type
 		$annovar_annotation_type.=($annovar_annotation_type eq "")?"$annovar_annotation_type_default":"";
+
+		# Release
 		$release.=($release eq "")?$file_creation_date:"";
+
+		# Date
 		$date.=($date eq "")?$file_creation_date:"";
+
+		# Annotation type
 		$annotation_type.=($annotation_type eq "")?"unknown":"";
+
+		# Annotation type VCF
+		# "frequency" and "score"
+		# if ($annotation_type_vcf eq "") {
+		# 		switch ($annotation_type){
+		# 			case("frequency") {
+		# 				$annotation_type_vcf="Float";
+		# 			}
+		# 			case("score") {
+		# 				$annotation_type_vcf="Float";
+		# 			}
+		# 			else {
+		# 				$annotation_type_vcf="String";
+		# 			}# else
+		# 		}
+		# }
+		if ($annotation_type_vcf eq "") {
+			$annotation_type_vcf="auto";
+		};#if
+		#$annotation_type_vcf.=($annotation_type_vcf eq "")?"String":"";
+
+		# Annotation description
 		$annotation_description.=($annotation_description eq "")?$file:"";
 
 
@@ -876,6 +909,8 @@ while ((my $annotation_name, my $annotation_infos) = each(%annotation_hash)){
 		$output_verbose.="#    - annovar_annotation_type='$annovar_annotation_type'\n";
 		$output_verbose.="#    - additional_options='$additional_options'\n";
 		$output_verbose.="#    - annotation_description='$annotation_description'\n";
+		$output_verbose.="#    - annotation_type='$annotation_type'\n";
+		$output_verbose.="#    - annotation_type_vcf='$annotation_type_vcf'\n";
 
 
 		## Command
@@ -897,6 +932,7 @@ while ((my $annotation_name, my $annotation_infos) = each(%annotation_hash)){
 		my $line_num=0;
 		my $nb_annotation=0;
 		my $output_results;
+		my $autodetect_vcf_type_number=1;
 		if ( -e $annovar_file_output_results ) {
 			open(ANNOVAR_file_output_results, "$annovar_file_output_results") || die "# ERROR: '$annovar_file_output_results' $!";
 			while(<ANNOVAR_file_output_results>)
@@ -958,11 +994,20 @@ while ((my $annotation_name, my $annotation_infos) = each(%annotation_hash)){
 					};#if
 					#print "#       $chr:$pos:$ref:$alt\t".$annotation_output{$chr}{$pos}{$ref}{$alt}{$annotation_name}."\n";
 					$output_results.="#       $chr:$pos:$ref:$alt\t".$annotation_output{$chr}{$pos}{$ref}{$alt}{$annotation_name}."\n";
+
+					### Autodetect type VCF
+					#looks_like_number($$sample_quality{"AD"})
+					#print "XXXXXXXXX autodetect: $result ".looks_like_number($result)."\n";
+					#$autodetect_vcf_type_number=($autodetect_vcf_type_number && looks_like_number($result));
+					$autodetect_vcf_type_number=($autodetect_vcf_type_number && looks_like_number($result))?1:0;
+					#$autodetect_vcf_type_number=($autodetect_vcf_type_number && 0);
+
 				};#if
 
 			};#while
 			$nb_results_to_show=10;
 			$index_results_to_show=$nb_results_to_show-1;
+			$output_verbose_result.="#    - annotation_type_vcf_autodetect='$autodetect_vcf_type_number'\n";
 			$output_verbose_result.="#    - $nb_annotation Results for '$annotation_name'\n";
 			$output_verbose_result.="#    - first $nb_results_to_show results for '$annotation_name':\n";
 			#$output_verbose_result.=$output_results;
@@ -971,24 +1016,50 @@ while ((my $annotation_name, my $annotation_infos) = each(%annotation_hash)){
 
 			$output.="#       $nb_annotation annotated variants for '$annotation_name'\n";
 
+			### Autodetect type VCF
+			if ($annotation_type_vcf eq "auto"
+				&& $nb_annotation
+				&& $autodetect_vcf_type_number ne $annotation_type_vcf
+				&& $autodetect_vcf_type_number
+			) {
+				$annotation_type_vcf="Float";
+			# Type VCF from annotation type
+			} elsif ($annotation_type_vcf eq "auto") {
+				switch ($annotation_type){
+					case("frequency") {
+						$annotation_type_vcf="Float";
+					}
+					case("score") {
+						$annotation_type_vcf="Float";
+					}
+					else {
+						$annotation_type_vcf="String";
+					}# else
+				}
+				#$annotation_type_vcf="String";
+			};#if
+			# check
+			if ($annotation_type_vcf eq "" || $annotation_type_vcf eq "auto") {
+				$annotation_type_vcf="String";
+			};#if
+
 			# VCF_header_INFOS
-			if ($nb_annotation>0) {
+			#if ($nb_annotation>0) {
+			if (1) {
+				# Annotation Number
+				my $number=".";
+				# Annotation Type
+				my $type=$annotation_type_vcf;
+				# Annotation Description
 				$annotation_description =~ s/,//g;
-				$vcf_header_INFOS.="##INFO=<ID=$annotation_name,Number=.,Type=String,Description=\"Annotation '$annotation_name' (release:$release date:$date type:$annotation_type).".((trim($annotation_description) eq "")?"":" ")."$annotation_description\">\n";
-				# Mandatory
-				$vcf_header{"INFO"}{$annotation_name}{"Number"}=".";
-				$vcf_header{"INFO"}{$annotation_name}{"Type"}="String";
 				my $description=((trim($annotation_description) eq "")?"unknown":trim($annotation_description));
 				my $additional_description=" [Release=$release;Date=$date;AnnotationType=$annotation_type]";
+				# Header
+				#$vcf_header_INFOS.="##INFO=<ID=$annotation_name,Number=$number,Type=$$type,Description=\"Annotation '$annotation_name' (release:$release date:$date type:$annotation_type).".((trim($annotation_description) eq "")?"":" ")."$annotation_description\">\n";
+				# Pull
+				$vcf_header{"INFO"}{$annotation_name}{"Number"}=$number;
+				$vcf_header{"INFO"}{$annotation_name}{"Type"}=$type;
 				$vcf_header{"INFO"}{$annotation_name}{"Description"}="\"$description$additional_description\"";
-				# Optional but mandotory for DB	(included in description TAG)
-				#my $additional_description="[Release=$release,Date=$date,AnnotationType=$annotation_type]";
-				#$vcf_header{"INFO"}{$annotation_name}{"Description"}.=" $additional_description";
-				# Optional but mandotory for DB
-				#$vcf_header{"INFO"}{$annotation_name}{"Release"}="$release";
-				#$vcf_header{"INFO"}{$annotation_name}{"Date"}="$date";
-				#$vcf_header{"INFO"}{$annotation_name}{"AnnotationType"}="$annotation_type";
-				#$vcf_header{"INFO"}{$annotation_name}{"Description"}="\"Annotation '$annotation_name' (release:$release date:$date type:$annotation_type).".((trim($annotation_description) eq "")?"":" ")."$annotation_description\"";
 			};#if
 
 			#UNLINK
