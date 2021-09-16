@@ -3,8 +3,8 @@
 # Highly Open and Valuable tool for   #
 #    Variant Annotation & Ranking     #
 #    for Discovery                    #
-# Release : 0.9.15.5                  #
-# Date : 20210721                     #
+# Release : 0.9.15.6                  #
+# Date : 20210916                     #
 # Author: Antony Le Bechec            #
 # Copyright: HUS                      #
 # Licence: GNU AGPL V3                #
@@ -59,7 +59,7 @@ HOWARD is multithreaded through the number of variants and by database (data-sca
 # Beware of proxy configuration!
 
 #######################################
-# HOWARD [0.9.15.5-18/07/2021]
+# HOWARD [0.9.15.6-16/09/2021]
 # HOWARD Annotation, Calculation, Prioritization and Translation, based on ANNOVAR and snpEff, allowing multithreading 
 # Antony Le Bechec @ HUS © GNU AGPL V3
 #######################################
@@ -146,9 +146,13 @@ HOWARD is multithreaded through the number of variants and by database (data-sca
 #	Add prioritization mode 'VaRank'/'max' for score calculation.
 #	Add calculation DP, AD, GQ and associated stats.
 #	Fix INFO field type for VCF.
+# 0.9.15.6-16/09/2021:
+#	Structural variant compatibility.
+#	NOMEN extraction and generation improved, with --nomen_pattern option.
+#	Improve translation with variant sorting.
 
 #######################################
-# HOWARD [0.9.15.5-18/07/2021]
+# HOWARD [0.9.15.6-16/09/2021]
 # HOWARD Annotation, Calculation, Prioritization and Translation, based on ANNOVAR and snpEff, allowing multithreading 
 # Antony Le Bechec @ HUS © GNU AGPL V3
 #######################################
@@ -196,7 +200,8 @@ HOWARD is multithreaded through the number of variants and by database (data-sca
 #                                             This option create annotations on INFO field:
 #                                                NOMEN (full HGVS annotation)
 #                                                CNOMEN (DNA level mutation 'c.', 'g.', 'm.')
-#                                                RNOMEN (DNA level mutation 'r.', 'n.')
+#                                                RNOMEN (RNA level mutation 'r.')
+#                                                NNOMEN (non-coding mutation 'n.')
 #                                                PNOMEN (Protein level mutation 'p.')
 #                                                TVNOMEN (transcript with version)
 #                                                TNOMEN (transcript)
@@ -230,6 +235,12 @@ HOWARD is multithreaded through the number of variants and by database (data-sca
 #                                       Format: field1,field2,...
 #                                       Examples: 'hgvs', 'snpeff_hgvs', 'snpeff_hgvs,hgvs'
 #                                       Default: 'hgvs'
+# --nomen_pattern=<STRING>              List of information to generate NOMEN annotation.
+#                                       Information order determine the NOMEN pattern. (see --calculation option)
+#                                       Empty information will not be used.
+#                                       Format: INFO1:INFO2:...
+#                                       Examples: 'GNOMEN:TNOMEN:ENOMEN:CNMEN:RNOMEN:NNOMEN:PNOMEN', 'GNOMEN:TNOMEN:CNMEN:RNOMEN:PNOMEN', 'GNOMEN:CNMEN:PNOMEN'
+#                                       Default: 'GNOMEN:TNOMEN:ENOMEN:CNMEN:RNOMEN:NNOMEN:PNOMEN'
 # --trio=<STRING>                       List of sample to identify a trio
 #                                       Will automatically calculate VaRank barcode, and add INFO/trio_variant_type
 #                                       Format: 'father_sample_name,mother_sample_name,child_sample_name'

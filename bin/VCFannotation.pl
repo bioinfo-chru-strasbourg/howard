@@ -1267,8 +1267,12 @@ if ($parameters{"snpeff"} || $parameters{"snpeff_stats"}) {
 				my @snpeff_fields_values_split=split(",",$annotation_output{$chr}{$pos}{$ref}{$alt}{$info_snpeff_name});
 				#foreach (@snpeff_fields_values_split) { print "$_\n"; };
 				my %snpeff_hgvs_list;
-				my %snpeff_gene_id_list;
 				my %snpeff_gene_name_list;
+				my %snpeff_gene_id_list;
+				my %snpeff_transript_list;
+				my %snpeff_exon_list;
+				my %snpeff_hgvs_c_list;
+				my %snpeff_hgvs_p_list;
 				my %snpeff_annotation_list;
 				my %snpeff_impact_list;
 				foreach my $info (@snpeff_fields_values_split) {
@@ -1279,29 +1283,90 @@ if ($parameters{"snpeff"} || $parameters{"snpeff_stats"}) {
 					#foreach (@info_split) { $info_split_index++; print "$info_split_index $_\n"; };
 					if ($info_split[$info_split_index_array{"Feature_ID"}] ne ""
 						&& $info_split[$info_split_index_array{"HGVS.c"}] ne "") {
-						my $nb_infos=0;
-						my @snpeff_hgvs_transcript_split=split(/:/,$info_split[$info_split_index_array{"Feature_ID"}]);
-						my $snpeff_hgvs_transcript=$snpeff_hgvs_transcript_split[0];
-						#my $snpeff_hgvs=$info_split[$info_split_index_array{"Feature_ID"}].":".$info_split[$info_split_index_array{"HGVS.c"}];
-						my $snpeff_hgvs=$snpeff_hgvs_transcript.":".$info_split[$info_split_index_array{"HGVS.c"}];
-						# Gene ID
+						my $snpeff_hgvs="";
+						my $snpeff_hgvs_gene_name="";
+						my $snpeff_hgvs_gene_id="";
+						my $snpeff_hgvs_transcript="";
+						my $snpeff_hgvs_exon="";
+						my $snpeff_hgvs_c="";
+						my $snpeff_hgvs_p="";
+
+						### Gene Name
 						if ($info_split[$info_split_index_array{"Gene_Name"}] ne "") {
-							#$snpeff_hgvs=$info_split[$info_split_index_array{"Gene_Name"}].":".$snpeff_hgvs;
-							$snpeff_gene_name_list{$info_split[$info_split_index_array{"Gene_Name"}]}=1;
-							$nb_infos++;
+							if ($info_split[$info_split_index_array{"Gene_Name"}] ne "") {
+								$snpeff_hgvs_gene_name=$info_split[$info_split_index_array{"Gene_Name"}];
+								$snpeff_gene_name_list{$info_split[$info_split_index_array{"Gene_Name"}]}=1;
+							};#if
 						};#if
-						# Gene ID
+
+						### Gene ID
 						if ($info_split[$info_split_index_array{"Gene_ID"}] ne "") {
-							$snpeff_hgvs=$info_split[$info_split_index_array{"Gene_ID"}].":".$snpeff_hgvs;
-							$snpeff_gene_id_list{$info_split[$info_split_index_array{"Gene_ID"}]}=1;
-							$nb_infos++;
+							if ($info_split[$info_split_index_array{"Gene_ID"}] ne "") {
+								$snpeff_hgvs_gene_id=$info_split[$info_split_index_array{"Gene_ID"}];
+								$snpeff_gene_id_list{$info_split[$info_split_index_array{"Gene_ID"}]}=1;
+							};#if
 						};#if
-						# Protein HGVS annotation
+
+						### transcript
+						if ($info_split[$info_split_index_array{"Feature_ID"}] ne "") {
+							my @snpeff_hgvs_transcript_split=split(/:/,$info_split[$info_split_index_array{"Feature_ID"}]);
+							if ($snpeff_hgvs_transcript_split[0] ne "") {
+								$snpeff_hgvs_transcript=$snpeff_hgvs_transcript_split[0];
+								$snpeff_transript_list{$snpeff_hgvs_transcript_split[0]}=1;
+							};#if
+						};#if
+						
+						### Exon Rank
+						if ($info_split[$info_split_index_array{"Rank"}] ne "") {
+							my @snpeff_hgvs_rank_exon_split=split(/\//,$info_split[$info_split_index_array{"Rank"}]);
+							if ($snpeff_hgvs_rank_exon_split[0] ne "") {
+								$snpeff_hgvs_exon="exon".$snpeff_hgvs_rank_exon_split[0];
+								$snpeff_exon_list{$snpeff_hgvs_rank_exon_split[0]}=1;
+							}
+						};#if
+
+						### c.
+						if ($info_split[$info_split_index_array{"HGVS.c"}] ne "") {
+							if ($info_split[$info_split_index_array{"HGVS.c"}] ne "c.") {
+								$snpeff_hgvs_c=$info_split[$info_split_index_array{"HGVS.c"}];
+								$snpeff_hgvs_c_list{$info_split[$info_split_index_array{"HGVS.c"}]}=1;
+							};
+						};
+
+						### p.
 						if ($info_split[$info_split_index_array{"HGVS.p"}] ne "") {
-							$snpeff_hgvs.=":".$info_split[$info_split_index_array{"HGVS.p"}];
-							$nb_infos++;
-						};#
-						# HGVS annotation
+							if ($info_split[$info_split_index_array{"HGVS.p"}] ne "p.") {
+								$snpeff_hgvs_p=$info_split[$info_split_index_array{"HGVS.p"}];
+								$snpeff_hgvs_p_list{$info_split[$info_split_index_array{"HGVS.p"}]}=1;
+							};
+						};
+						
+						$sep="";
+						if ($snpeff_hgvs_gene_id ne "") {
+							$snpeff_hgvs.=$sep.$snpeff_hgvs_gene_id;
+							$sep=":";
+						};
+						if ($snpeff_hgvs_transcript ne "") {
+							$snpeff_hgvs.=$sep.$snpeff_hgvs_transcript;
+							$sep=":";
+						};
+						if ($snpeff_hgvs_exon ne "") {
+							$snpeff_hgvs.=$sep.$snpeff_hgvs_exon;
+							$sep=":";
+						};
+						if ($snpeff_hgvs_c ne "") {
+							$snpeff_hgvs.=$sep.$snpeff_hgvs_c;
+							$sep=":";
+						};
+						if ($snpeff_hgvs_p ne "") {
+							$snpeff_hgvs.=$sep.$snpeff_hgvs_p;
+							$sep=":";
+						};
+						#my $snpeff_hgvs=$info_split[$info_split_index_array{"Feature_ID"}].":".$info_split[$info_split_index_array{"HGVS.c"}];
+
+
+
+						### HGVS annotation
 						$snpeff_hgvs_list{$snpeff_hgvs}=1;
 						
 						# Annotation

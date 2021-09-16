@@ -178,6 +178,22 @@ Examples: "hgvs", "snpeff_hgvs", "snpeff_hgvs,hgvs"
 
 Default: "hgvs"
 
+=item B<--nomen_pattern=<string>>
+
+List of information to generate NOMEN annotation.
+
+Information order determine the NOMEN pattern.
+
+Empty information will not be used.
+
+Format: INFO1:INFO2:...
+
+Available information: see --calculation option
+
+Examples: "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN", "GNOMEN:TNOMEN:CNOMEN:RNOMEN:PNOMEN", "GNOMEN:CNOMEN:PNOMEN"
+
+Default: "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN"
+
 =item B<--trio=<string>>
 
 List of sample to identify a trio. Will automatically calculate VaRank barcode, and add INFO/trio_variant_type (either "denovo", "dominant", "recessive") as:
@@ -1378,17 +1394,6 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 			if ($force || !defined $$variant_values{"INFOS"}{"NOMEN"}) {
 				#print "$sample_name\n" if $DEBUG;
 
-				#print "".$$variant_values{"INFOS"}{"hgvs"} if $DEBUG;
-				#print "".$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"hgvs"} if $DEBUG;
-				# my $NOMEN=$$variant_values{"INFOS"}{"cnomen"};
-				# my $CNOMEN=$$variant_values{"INFOS"}{"cnomen"};
-				# my $RNOMEN=$$variant_values{"INFOS"}{"rnomen"};
-				# my $PNOMEN=$$variant_values{"INFOS"}{"pnomen"};
-				# my $TVNOMEN=$$variant_values{"INFOS"}{"tvnomen"};
-				# my $TNOMEN=$$variant_values{"INFOS"}{"tnomen"};
-				# my $VNOMEN=$$variant_values{"INFOS"}{"vnomen"};
-				# my $ENOMEN=$$variant_values{"INFOS"}{"enomen"};
-				# my $GNOMEN=$$variant_values{"INFOS"}{"gnomen"};
 
 				my $NOMEN=undef;
 				my $CNOMEN=undef;
@@ -1406,15 +1411,6 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 				my @nomen_fields_split=split(/,/,$parameters{'nomen_fields'});
 				my $value_hgvs;
 
-				if (0) {
-					foreach my $one_nomen_field (@nomen_fields_split) {
-						print "# one_nomen_field '".$one_nomen_field."'...\n" if $DEBUG;
-						print "# one_nomen_field value '".$$variant_values{"INFOS"}{$one_nomen_field}."'...\n" if $DEBUG;
-						if (defined $$variant_values{"INFOS"}{$one_nomen_field} && $$variant_values{"INFOS"}{$one_nomen_field} ne "" && !defined $value_hgvs) {
-							$value_hgvs=$$variant_values{"INFOS"}{$one_nomen_field};
-						}; #if
-					}; # foreach
-				};#if
 
 				foreach my $one_nomen_field (split(/,/,$parameters{'nomen_fields'})) {
 					print "# one_nomen_field '".$one_nomen_field."'...\n" if $DEBUG;
@@ -1447,6 +1443,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 						my $N;
 						my $C;
 						my $R;
+						my $NN;
 						my $P;
 						my $TV;
 						my $T;
@@ -1527,7 +1524,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 							};#if
 							# RNOMEN
 							if ($one_hgvs_infos=~ /^n\.(.*)$/) {
-								$R=$one_hgvs_infos;
+								$NN=$one_hgvs_infos;
 								$assigned=1;
 								$assigned_score+=1;
 							};#if
@@ -1568,25 +1565,47 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 
 
 						};#foreach
-						$N="$T$TV$V$C$R$P$E$G";
+						$N="$T$TV$V$C$R$NN$P$E$G";
+
+						#$NOMEN_array{"NOMEN"}=$NOMEN;
+						my %NOMEN_array;
+						$NOMEN_array{"NOMEN"}="";
+						$NOMEN_array{"TNOMEN"}=$T;
+						$NOMEN_array{"TVNOMEN"}=$TV;
+						$NOMEN_array{"VNOMEN"}=$V;
+						$NOMEN_array{"CNOMEN"}=$C;
+						$NOMEN_array{"RNOMEN"}=$R;
+						$NOMEN_array{"NNOMEN"}=$NN;
+						$NOMEN_array{"PNOMEN"}=$P;
+						$NOMEN_array{"ENOMEN"}=$E;
+						$NOMEN_array{"GNOMEN"}=$G;
+
+						#$NOMEN_PATTERN="GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN";
+						#$NOMEN_PATTERN="GNOMEN:TNOMEN:CNOMEN:RNOMEN:PNOMEN";
+						$NOMEN_PATTERN=$parameters{'nomen_pattern'};
+						$NOMEN_SEP="";
+						for my $NOMEN_i (split(/:/,$NOMEN_PATTERN)) {
+							if (defined($NOMEN_array{$NOMEN_i}) && $NOMEN_array{$NOMEN_i} ne "") {
+								$NOMEN_array{"NOMEN"}.=$NOMEN_SEP.$NOMEN_array{$NOMEN_i};
+								$NOMEN_SEP=":";
+							};
+						};
+
 						if ($N ne "") {
-							#if ( !$assigned || defined $T_D) {
-							#if ( ($assigned_score > $assigned_score_max) || (defined $T_D) ) {
 							if ( ($assigned_score > $assigned_score_max)) {
 								print "assi $assigned_score > $assigned_score_max\n" if $DEBUG;
-								$NOMEN=$one_hgvs;
-								$CNOMEN=$C;
-								$RNOMEN=$R;
-								$PNOMEN=$P;
-								$TVNOMEN=$TV;
-								$TNOMEN=$T;
-								$VNOMEN=$V;
-								$ENOMEN=$E;
-								$GNOMEN=$G;
+								#$NOMEN=$one_hgvs;
+								$NOMEN=($NOMEN_array{"NOMEN"} ne "")?$NOMEN_array{"NOMEN"}:".";
+								$CNOMEN=($C ne "")?$C:".";
+								$RNOMEN=($R ne "")?$R:".";
+								$NNOMEN=($NN ne "")?$NN:".";
+								$PNOMEN=($P ne "")?$P:".";
+								$TVNOMEN=($TV ne "")?$TV:".";
+								$TNOMEN=($T ne "")?$T:".";
+								$VNOMEN=($V ne "")?$V:".";
+								$ENOMEN=($E ne "")?$E:".";
+								$GNOMEN=($G ne "")?$G:".";
 								$assigned=1;
-								#if ( defined $T_D ) {
-								#	$assigned_score=100000000;
-								#};#if
 							};#if
 						};#if
 
@@ -1606,6 +1625,7 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 					print "NOMEN=$NOMEN\n" if $DEBUG;
 					print "CNOMEN=$CNOMEN\n" if $DEBUG;
 					print "RNOMEN=$RNOMEN\n" if $DEBUG;
+					print "NNOMEN=$NNOMEN\n" if $DEBUG;
 					print "PNOMEN=$PNOMEN\n" if $DEBUG;
 					print "TVNOMEN=$TVNOMEN\n" if $DEBUG;
 					print "TNOMEN=$TNOMEN\n" if $DEBUG;
@@ -1639,6 +1659,13 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 					$vcf_header{"INFO"}{"RNOMEN"}{"Number"}="1";
 					$vcf_header{"INFO"}{"RNOMEN"}{"Type"}="String";
 					$vcf_header{"INFO"}{"RNOMEN"}{"Description"}="\"RNOMEN hgvs nomenclature at RNA level related to a transcript (TNOMEN)$description_plus\"";
+					
+					# NNOMEN
+					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"NNOMEN"}=$NNOMEN;
+					# ADD to HEADER
+					$vcf_header{"INFO"}{"NNOMEN"}{"Number"}="1";
+					$vcf_header{"INFO"}{"NNOMEN"}{"Type"}="String";
+					$vcf_header{"INFO"}{"NNOMEN"}{"Description"}="\"NNOMEN hgvs nomenclature for non-coding variant$description_plus\"";
 					
 					# PNOMEN
 					$annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"PNOMEN"}=$PNOMEN;
