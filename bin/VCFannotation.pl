@@ -1327,7 +1327,7 @@ if ($parameters{"snpeff"} || $parameters{"snpeff_stats"}) {
 
 						### c.
 						if ($info_split[$info_split_index_array{"HGVS.c"}] ne "") {
-							if ($info_split[$info_split_index_array{"HGVS.c"}] ne "c.") {
+							if ($info_split[$info_split_index_array{"HGVS.c"}] ne "c." && $info_split[$info_split_index_array{"HGVS.c"}] ne "n." && $info_split[$info_split_index_array{"HGVS.c"}] ne "m." && $info_split[$info_split_index_array{"HGVS.c"}] ne "r." && $info_split[$info_split_index_array{"HGVS.c"}] ne "g.") {
 								$snpeff_hgvs_c=$info_split[$info_split_index_array{"HGVS.c"}];
 								$snpeff_hgvs_c_list{$info_split[$info_split_index_array{"HGVS.c"}]}=1;
 							};
@@ -1335,7 +1335,7 @@ if ($parameters{"snpeff"} || $parameters{"snpeff_stats"}) {
 
 						### p.
 						if ($info_split[$info_split_index_array{"HGVS.p"}] ne "") {
-							if ($info_split[$info_split_index_array{"HGVS.p"}] ne "p.") {
+							if ($info_split[$info_split_index_array{"HGVS.p"}] ne "p." && $info_split[$info_split_index_array{"HGVS.c"}] ne "n." && $info_split[$info_split_index_array{"HGVS.c"}] ne "m." && $info_split[$info_split_index_array{"HGVS.c"}] ne "r." && $info_split[$info_split_index_array{"HGVS.c"}] ne "g.") {
 								$snpeff_hgvs_p=$info_split[$info_split_index_array{"HGVS.p"}];
 								$snpeff_hgvs_p_list{$info_split[$info_split_index_array{"HGVS.p"}]}=1;
 							};

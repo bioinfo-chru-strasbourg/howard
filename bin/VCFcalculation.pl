@@ -1580,16 +1580,22 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 						$NOMEN_array{"ENOMEN"}=$E;
 						$NOMEN_array{"GNOMEN"}=$G;
 
-						#$NOMEN_PATTERN="GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN";
-						#$NOMEN_PATTERN="GNOMEN:TNOMEN:CNOMEN:RNOMEN:PNOMEN";
-						$NOMEN_PATTERN=$parameters{'nomen_pattern'};
-						$NOMEN_SEP="";
-						for my $NOMEN_i (split(/:/,$NOMEN_PATTERN)) {
-							if (defined($NOMEN_array{$NOMEN_i}) && $NOMEN_array{$NOMEN_i} ne "") {
-								$NOMEN_array{"NOMEN"}.=$NOMEN_SEP.$NOMEN_array{$NOMEN_i};
-								$NOMEN_SEP=":";
+
+						if (defined($annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"SVTYPE"}) && $annotation_output{$chr}{$pos}{$ref}{$alt}{"INFOS"}{"SVTYPE"} ne "") {
+							$NOMEN_array{"NOMEN"}=$one_hgvs;
+						} else {
+							#$NOMEN_PATTERN="GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN";
+							#$NOMEN_PATTERN="GNOMEN:TNOMEN:CNOMEN:RNOMEN:PNOMEN";
+							$NOMEN_PATTERN=$parameters{'nomen_pattern'};
+							$NOMEN_SEP="";
+							for my $NOMEN_i (split(/:/,$NOMEN_PATTERN)) {
+								if (defined($NOMEN_array{$NOMEN_i}) && $NOMEN_array{$NOMEN_i} ne "") {
+									$NOMEN_array{"NOMEN"}.=$NOMEN_SEP.$NOMEN_array{$NOMEN_i};
+									$NOMEN_SEP=":";
+								};
 							};
-						};
+						}
+						
 
 						if ($N ne "") {
 							if ( ($assigned_score > $assigned_score_max)) {
