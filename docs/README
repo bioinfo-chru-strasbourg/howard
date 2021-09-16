@@ -148,8 +148,9 @@ HOWARD is multithreaded through the number of variants and by database (data-sca
 #	Fix INFO field type for VCF.
 # 0.9.15.6-16/09/2021:
 #	Structural variant compatibility.
-#	NOMEN extraction and generation improved, with --nomen_pattern option.
+#	NOMEN extraction and generation improved, with --nomen_pattern option (only for SNV and InDel).
 #	Improve translation with variant sorting.
+#	Improve error catching.
 
 #######################################
 # HOWARD [0.9.15.6-16/09/2021]

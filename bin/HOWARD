@@ -96,8 +96,9 @@ RELEASE_NOTES=$RELEASE_NOTES"#\tAdd calculation DP, AD, GQ and associated stats.
 RELEASE_NOTES=$RELEASE_NOTES"#\tFix INFO field type for VCF.\n";
 RELEASE_NOTES=$RELEASE_NOTES"# 0.9.15.6-16/09/2021:\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tStructural variant compatibility.\n";
-RELEASE_NOTES=$RELEASE_NOTES"#\tNOMEN extraction and generation improved, with --nomen_pattern option.\n";
+RELEASE_NOTES=$RELEASE_NOTES"#\tNOMEN extraction and generation improved, with --nomen_pattern option (only for SNV and InDel).\n";
 RELEASE_NOTES=$RELEASE_NOTES"#\tImprove translation with variant sorting.\n";
+RELEASE_NOTES=$RELEASE_NOTES"#\tImprove error catching.\n";
 
 
 
