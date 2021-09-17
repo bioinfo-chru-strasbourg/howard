@@ -713,7 +713,9 @@ if ((1)); then
 
 					# CONTIG
 					if ((1)); then
-						existContig=$($BCFTOOLS view -h $INPUT_VCF_NUM 2>>$ERR | grep "##contig=" -c)
+
+						#existContig=$($BCFTOOLS view -h $INPUT_VCF_NUM 2>>$ERR | grep "##contig=" -c)
+						existContig=$($BCFTOOLS view -h $INPUT_VCF_NUM 2>>$ERR | grep "##contig=<ID=[^,]*,length=[^,],assembly=[^,]>" -c)
 						existVariants=$($BCFTOOLS view -H $INPUT_VCF_NUM 2>>$ERR | grep ^ -m1 -c)
 
 						if (($existVariants)) && ! (($existContig)) ; then
@@ -721,8 +723,9 @@ if ((1)); then
 							INPUT_TMP_CONTIG=$INPUT_VCF_NUM.contig.vcf
 							INPUT_TMP_CONTIG_HEADER=$INPUT_VCF_NUM.contig.vcf.header
 							# Create new header
-							$BCFTOOLS view -h $INPUT_VCF_NUM 2>>$ERR | grep "^##" >> $INPUT_TMP_CONTIG_HEADER 2>>$ERR
-							$BCFTOOLS view -H $INPUT_VCF_NUM 2>>$ERR | cut -f1 | uniq | sort  -k3,3V | awk '{print "##contig=<ID="$1">"}' >> $INPUT_TMP_CONTIG_HEADER 2>>$ERR
+							#$BCFTOOLS view -h $INPUT_VCF_NUM 2>>$ERR | grep "^##" >> $INPUT_TMP_CONTIG_HEADER 2>>$ERR
+							$BCFTOOLS view -h $INPUT_VCF_NUM 2>>$ERR | grep "^##" | grep -v "^##contig=" >> $INPUT_TMP_CONTIG_HEADER 2>>$ERR
+							$BCFTOOLS view -H $INPUT_VCF_NUM 2>>$ERR | cut -f1 | uniq | sort  -k3,3V | awk '{print "##contig=<ID="$1",length=0,assembly=unknown>"}' >> $INPUT_TMP_CONTIG_HEADER 2>>$ERR
 							$BCFTOOLS view -h $INPUT_VCF_NUM 2>>$ERR | grep "^#CHROM" >> $INPUT_TMP_CONTIG_HEADER 2>>$ERR
 							# Reheader
 							$BCFTOOLS reheader $INPUT_VCF_NUM -h $INPUT_TMP_CONTIG_HEADER > $INPUT_TMP_CONTIG 2>>$ERR
@@ -730,6 +733,7 @@ if ((1)); then
 							rm -f $INPUT_VCF_NUM
 							mv $INPUT_TMP_CONTIG $INPUT_VCF_NUM
 							rm -f $INPUT_TMP_CONTIG $INPUT_TMP_CONTIG_HEADER
+
 						fi;
 					fi;
 
@@ -1106,9 +1110,9 @@ if (($NB_VARIANT)); then
 
 			# SPLIT VCF on ANNOTATIONS_SPLIT variants
 			# HEAD
-			$BCFTOOLS view -h $INPUT > $TMP_FOLDER/input.header
+			$BCFTOOLS view -h $INPUT > $TMP_FOLDER/input.header #2>/dev/null
 			# VARIANTS
-			$BCFTOOLS view -H $INPUT > $TMP_FOLDER/input.variants
+			$BCFTOOLS view -H $INPUT > $TMP_FOLDER/input.variants #2>/dev/null
 			# SPLIT
 			$BCFTOOLS view -H $INPUT | split - -a $SPLIT_SUFFIT_LENGTH -l $ANNOTATIONS_SPLIT $TMP_FOLDER/input.variants.splitted.
 			VCF_SPLITTED_LIST=""
