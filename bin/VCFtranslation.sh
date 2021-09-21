@@ -304,7 +304,7 @@ FORMAT_OUTPUT=$(echo "$FORMAT" | tr '[:upper:]' '[:lower:]')
 		if [ "$(echo $a | awk -F: '{print $3}' | tr '[:upper:]' '[:lower:]')" == "desc" ]; then
 			order="r"
 		fi;
-		comparaison=""
+		comparaison="V"
 		if [ "$(echo $a | awk -F: '{print $2}' | tr '[:upper:]' '[:lower:]')" == "n" ]; then
 			comparaison="n"
 		elif [ "$(echo $a | awk -F: '{print $2}')" == "?" ]; then
@@ -318,6 +318,9 @@ FORMAT_OUTPUT=$(echo "$FORMAT" | tr '[:upper:]' '[:lower:]')
 	done
 	((nb_ANN++))
 
+	if [ "$sort_param" == "" ]; then
+		sort_param=" -k1,1V -k2,2n"
+	fi;
 
 
 	# Reduce VCF file with fields
