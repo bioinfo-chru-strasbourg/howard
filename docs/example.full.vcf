@@ -9,6 +9,7 @@
 ##contig=<ID=chr9,length=141213431,assembly=hg19>
 ##contig=<ID=chr11,length=135006516,assembly=hg19>
 ##contig=<ID=chr12,length=133851895,assembly=hg19>
+##contig=<ID=chr13,length=115169878,assembly=hg19>
 ##contig=<ID=chr14,length=102531392,assembly=hg19>
 ##contig=<ID=chr15,length=102531392,assembly=hg19>
 ##contig=<ID=chr17,length=81195210,assembly=hg19>
@@ -22,6 +23,7 @@
 ##INFO=<ID=EVENT,Number=1,Type=String,Description="EVENT">
 ##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
 ##INFO=<ID=END,Number=1,Type=Integer,Description="Second breakpoint of the SV, for SVs given in a single record">
+##INFO=<ID=MEINFO,Number=4,Type=String,Description="Mobile element info of the form NAME,START,END,POLARITY">
 ##ALT=<ID=DEL,Description="Deletion">
 ##ALT=<ID=DUP,Description="Duplication">
 ##ALT=<ID=DUP:TANDEM,Description="Tandem Duplication">
@@ -62,6 +64,7 @@ chr11	694974	.	A	<DUP>	44.77	PASS	SVTYPE=DUP;END=699974;SVLEN=5000	GT:GQ:DP	0|0:
 chr12	2791205	bnd_x	A	A[X:13771577[	12279.8	PASS	SVTYPE=BND;MATEID=bnd_w;EVENT=RR0	GT:GQ:DP	0|0:48:1	1|0:48:5	1/1:43:4	0/0:.:.
 chr12	2791206	bnd_y	A	]X:13771576]A	12279.8	PASS	SVTYPE=BND;MATEID=bnd_z;EVENT=RR0	GT:GQ:DP	0|0:48:1	1|0:48:5	1/1:43:4	0/0:.:.
 chr12	52200742	.	C	<DEL>	19409.8	PASS	SVTYPE=DEL;END=52207543;SVLEN=-6801	GT:GQ:DP	1|0:48:6	0|0:48:6	1/1:43:3	0/0:.:.
+chr13	32893302	INS:ME	T	<INS:ME:ALU>	142.686431884766	PASS	MEINFO=chr13:32893302_ALU_Plus,32893302,32893303,+	GT:GQ:DP	0/1:48:6	0/0:.:.	0/0:.:.	0/0:.:.
 chr14	31535603	bnd_E	G	G[15:26866738[,G[X:47466361[	3197.05	PASS	SVTYPE=BND;MATEID=bnd_F,bnd_G	GT:GQ:DP	0|0:3:3	1|0:49:4	1/1:41:3	0/0:.:.
 chr15	26866738	bnd_F	C	]14:31535603]C	3558.77	PASS	SVTYPE=BND;MATEID=bnd_E	GT:GQ:DP	0|0:48:1	1|0:48:5	1/1:43:4	0/0:.:.
 chr15	63937209	.	C	<INV>	6630.77	PASS	SVTYPE=INV;END=63941509	GT:GQ:DP	0|0:3:1	1|0:49:3	1/1:41:3	0/0:.:.
