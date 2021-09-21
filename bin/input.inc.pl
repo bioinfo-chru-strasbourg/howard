@@ -172,7 +172,7 @@ CALLING_QUALITY: Calling quality (FORMAT/*) of all samples in case of multiSampl
 
 CALLING_QUALITY_EXPLODE: Explode all Calling quality (FORMAT/*) in multiple fields in INFOS
 
-NOMEN: Find the NOMEN from HGVS annotation. Depend on transcript of reference. If no transcript of reference, first transcript. This option create annotations on INFO field: NOMEN (full HGVS annotation), CNOMEN (DNA level mutation "c."), PNOMEN (Protein level mutation "p."), TNOMEN (transcript), ENOMEN (exon, if any), GNOMEN (gene, if any)
+NOMEN: Find the NOMEN from HGVS annotation. Depend on transcript of reference. If no transcript of reference, first transcript. This option create annotations on INFO field: NOMEN (full HGVS annotation), CNOMEN (DNA level mutation "c."), RNOMEN (RNA level mutation "c."), NNOMEN (non-coding mutation "c."), PNOMEN (Protein level mutation "p."), TNOMEN (transcript), TVNOMEN (transcript with version), ENOMEN (exon, if any), GNOMEN (gene, if any)
 
 BARCODE: Calculate VaRank BarCode
 
@@ -203,6 +203,22 @@ Format: field1,field2,...
 Examples: "hgvs", "snpeff_hgvs", "snpeff_hgvs,hgvs"
 
 Default: "hgvs"
+
+=item B<--nomen_pattern=<string>>
+
+List of information to generate NOMEN annotation.
+
+Information order determine the NOMEN pattern.
+
+Empty information will not be used.
+
+Format: INFO1:INFO2:...
+
+Available information: see --calculation option
+
+Examples: "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN", "GNOMEN:TNOMEN:CNOMEN:RNOMEN:PNOMEN", "GNOMEN:CNOMEN:PNOMEN"
+
+Default: "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN"
 
 =item B<--trio=<string>>
 
@@ -334,6 +350,7 @@ our %parameters = ( #
 	'calculation'		=>	$calculation_default,	# Calculation to do
 	'transcripts'		=>	'',			# File with default transcripts by gene
 	'nomen_fields'		=>	'hgvs',			# Fields to calculate NOMEN
+	'nomen_pattern'		=>	'GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN',			# Information to generate NOMEN
 	'trio'			=>	'',			# Trio identification
 
 	# PRIORITIZATION
@@ -409,6 +426,7 @@ our @options=(
 	'calculation=s',	# Calculation to do
 	'transcripts=s',	# File with default transcripts by gene
 	'nomen_fields=s',	# Fields to calculate NOMEN
+	'nomen_pattern=s',	# Information to generate NOMEN
 	'trio=s',		# Trio identification
 
 	# PRIORITIZATION
