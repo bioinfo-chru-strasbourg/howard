@@ -715,7 +715,7 @@ if ((1)); then
 					if ((1)); then
 
 						#existContig=$($BCFTOOLS view -h $INPUT_VCF_NUM 2>>$ERR | grep "##contig=" -c)
-						existContig=$($BCFTOOLS view -h $INPUT_VCF_NUM 2>>$ERR | grep "##contig=<ID=[^,]*,length=[^,],assembly=[^,]>" -c)
+						existContig=$($BCFTOOLS view -h $INPUT_VCF_NUM 2>>$ERR | grep "##contig=<ID=[^,]*,length=[^,]*,assembly=[^,]*>" -c)
 						existVariants=$($BCFTOOLS view -H $INPUT_VCF_NUM 2>>$ERR | grep ^ -m1 -c)
 
 						if (($existVariants)) && ! (($existContig)) ; then
@@ -1336,7 +1336,7 @@ if (($NB_VARIANT)); then
 					for VCF_SPLITTED in $VCF_SPLITTED_CALCULATION_LIST; do
 						VCFGZ_SPLITTED_CALCULATION=$VCF_SPLITTED.calculation.vcf.gz
 						echo "$VCFGZ_SPLITTED_CALCULATION: $VCF_SPLITTED
-						$HOWARD_FOLDER_BIN/VCFcalculation.pl $PARAM_CALCULATION --output=\$@.tmp --input=$VCF_SPLITTED  1>>$LOG 2>>$ERR
+						@$HOWARD_FOLDER_BIN/VCFcalculation.pl $PARAM_CALCULATION --output=\$@.tmp --input=$VCF_SPLITTED  1>>$LOG 2>>$ERR
 						mkdir -p $TMP_SORT\$@
 						$BCFTOOLS sort -T $TMP_SORT\$@ \$@.tmp | $BGZIP -c > \$@ 2>>$ERR
 						rm -rf $TMP_SORT\$@

@@ -317,6 +317,8 @@ if (!defined $calculation) {
 # TRANSCRIPTS
 my $transcripts_input=$parameters{"transcripts"};
 my @default_transcripts;
+my %transcript_rank;
+my $transcript_nb=0;
 if (-e $transcripts_input) { #if file exist
 	# Open the file
 	open(FILE_TRANSCRIPTS, $transcripts_input) || die "Problem to open the file: $!";
@@ -330,16 +332,20 @@ if (-e $transcripts_input) { #if file exist
 		next if /^\s*\;|#/;
 		# read line
 		$line=$_;
+		$transcript_nb++;
+		#print "transcript_line: ".$transcript_line;
 		# split line
 		#my @line_split1=split(".",split("\t",$line));
 		my @line_split1=split("\t",$line);
 		my @line_split2=split(/\./,$line_split1[0]);
 		push @default_transcripts, trim($line_split2[0]);
+		$transcript_rank{$line_split2[0]}=$transcript_nb;
 	};#while
 };#if
-print "TRANSCRIPTS @default_transcripts" if $DEBUG;
+print "TRANSCRIPTS @default_transcripts\n" if $DEBUG;
 #exit 0;
-
+print Dumper(\%transcript_rank) if $DEBUG;
+#print $transcript_rank{"NM_001127511"} if $DEBUG;
 #print "force=$force\n" if $DEBUG;
 #exit 0;
 
@@ -1501,8 +1507,11 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 								};#if
 								if (grep( /^$T$/, @default_transcripts)) {
 									print "default transcipt found: $T\n" if $DEBUG;
+									#print "default transcipt nb: ".$transcript_nb."\n" if $DEBUG;
+									print "default transcipt rank: ".$transcript_rank{$T}." (out of ".$transcript_nb.")\n" if $DEBUG;
+									print "default transcipt pound: ".($transcript_nb-$transcript_rank{$T}+1)."\n" if $DEBUG;
 									#$T_D=$one_hgvs_infos;
-									$assigned_score+=100;
+									$assigned_score+=(100*($transcript_nb-$transcript_rank{$T}+1));
 								};#fi 
 							};#if
 
@@ -1639,6 +1648,9 @@ while ( my ($alt, $variant_values) = each(%{$alts}) ) {
 					print "ENOMEN=$ENOMEN\n" if $DEBUG;
 					print "GNOMEN=$GNOMEN\n" if $DEBUG;
 				};#if
+
+
+				#exit 0;
 
 
 				### Update *NOMEN
