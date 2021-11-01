@@ -6,7 +6,7 @@
 SCRIPT_NAME="HOWARD"
 SCRIPT_DESCRIPTION="HOWARD Annotation, Calculation, Prioritization and Translation, based on ANNOVAR and snpEff, allowing multithreading"
 SCRIPT_RELEASE="0.9.15.6"
-SCRIPT_DATE="16/09/2021"
+SCRIPT_DATE="01/11/2021"
 SCRIPT_AUTHOR="Antony Le Bechec"
 SCRIPT_COPYRIGHT="HUS"
 SCRIPT_LICENCE="GNU AGPL V3"
