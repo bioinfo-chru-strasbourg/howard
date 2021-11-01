@@ -779,50 +779,57 @@ while ((my $annotation_name, my $annotation_infos) = each(%annotation_hash)){
 			
 			# try to download from ANNOVAR
 			if ($file eq "" || !-e "$annovar_databases/$file") {
-				#if ( -e "./ANNOVAR_download.sh") {
-					#my $cmd="./ANNOVAR_download.sh '$assembly' '$annovar_code_for_downdb' '$annovar_databases' '' '$annotate_variation' ''";
-					my $cmd="$annotate_variation -downdb -buildver $assembly $annovar_code_for_downdb $annovar_databases -webfrom annovar";# $ANNOVAR_SCRIPT -downdb -buildver $BUILD $DB $DB_FOLDER $WEBFROM
-					$output_verbose.="#    - cmdDL='$cmd'\n";
-					print "# Try to download database from ANNOVAR...\n" if $VERBOSE;
-					print "# cmd=$cmd...\n" if $VERBOSE;
-					#print "# cmd=$cmd\n" if $DEBUG;
-					my $result = `$cmd 2>&1`; #
-				#};#if
+				my $cmd="$annotate_variation -downdb -buildver $assembly $annovar_code_for_downdb $annovar_databases -webfrom annovar";# $ANNOVAR_SCRIPT -downdb -buildver $BUILD $DB $DB_FOLDER $WEBFROM
+				$output_verbose.="#    - cmdDL='$cmd'\n";
+				print "# Try to download database from ANNOVAR...\n" if $VERBOSE;
+				print "# cmd=$cmd...\n" if $VERBOSE;
+				my $result = `$cmd 2>&1`; #
 			};#if
+			# try to download from ANNOVAR nowget
 			if ($file eq "" || !-e "$annovar_databases/$file") {
-				#if ( -e "./ANNOVAR_download.sh") {
-					#my $cmd="./ANNOVAR_download.sh '$assembly' '$annovar_code_for_downdb' '$annovar_databases' '' '$annotate_variation' ''";
-					my $cmd="$annotate_variation -downdb -buildver $assembly $annovar_code_for_downdb $annovar_databases -webfrom annovar -nowget";# $ANNOVAR_SCRIPT -downdb -buildver $BUILD $DB $DB_FOLDER $WEBFROM
-					$output_verbose.="#    - cmdDL='$cmd'\n";
-					print "# Try to download database from ANNOVAR without wget...\n" if $VERBOSE;
-					print "# cmd=$cmd...\n" if $VERBOSE;
-					#print "# cmd=$cmd\n" if $DEBUG;
-					my $result = `$cmd 2>&1`; #
-				#};#if
+				my $cmd="$annotate_variation -downdb -buildver $assembly $annovar_code_for_downdb $annovar_databases -webfrom annovar -nowget";# $ANNOVAR_SCRIPT -downdb -buildver $BUILD $DB $DB_FOLDER $WEBFROM
+				$output_verbose.="#    - cmdDL='$cmd'\n";
+				print "# Try to download database from ANNOVAR without wget...\n" if $VERBOSE;
+				print "# cmd=$cmd...\n" if $VERBOSE;
+				my $result = `$cmd 2>&1`; #
 			};#if
 			# try to download from UCSC
 			if ($file eq "" || !-e "$annovar_databases/$file") {
-				#if ( -e "./ANNOVAR_download.sh") {
-					my $cmd="$annotate_variation -downdb -buildver $assembly $annovar_code_for_downdb $annovar_databases ";# $ANNOVAR_SCRIPT -downdb -buildver $BUILD $DB $DB_FOLDER $WEBFROM
+				my $cmd="$annotate_variation -downdb -buildver $assembly $annovar_code_for_downdb $annovar_databases ";# $ANNOVAR_SCRIPT -downdb -buildver $BUILD $DB $DB_FOLDER $WEBFROM
+				$output_verbose.="#    - cmdDL='$cmd'\n";
+				print "# Try to download database from UCSC...\n" if $VERBOSE;
+				print "# cmd=$cmd...\n" if $VERBOSE;
+				my $result = `$cmd 2>&1`; #
+			};#if
+			# try to download from ANNOVAR openbioinformatics directly with curl
+			# directly from annovar with curl and retry http://www.openbioinformatics.org/annovar/download/hg19_XXX.txt.gz
+			if ($file eq "" || !-e "$annovar_databases/$file") {
+				$annovar_online_file="http://www.openbioinformatics.org/annovar/download/$file.gz";
+				$annovar_online_idx_file="http://www.openbioinformatics.org/annovar/download/$file.idx.gz";
+				if ($annovar_online_file ne "") {
+					my $cmd="wget -O $annovar_databases/$file.gz $annovar_online_file && gzip -d $annovar_databases/$file.gz ";# $ANNOVAR_SCRIPT -downdb -buildver $BUILD $DB $DB_FOLDER $WEBFROM
 					$output_verbose.="#    - cmdDL='$cmd'\n";
-					print "# Try to download database from UCSC...\n" if $VERBOSE;
+					print "# Try to download database from openbioinformatics/ANNOVAR source with curl '$annovar_online_file'...\n" if $VERBOSE;
 					print "# cmd=$cmd...\n" if $VERBOSE;
-					#print "# cmd=$cmd\n" if $DEBUG;
-					my $result = `$cmd 2>&1`; #
-				#};#if
+					my $result = `$cmd `; #
+				};#if
+				if ($annovar_online_idx_file ne "") {
+					my $cmd="wget -O $annovar_databases/$file.idx.gz $annovar_online_idx_file && gzip -d $annovar_databases/$file.idx.gz ";# $ANNOVAR_SCRIPT -downdb -buildver $BUILD $DB $DB_FOLDER $WEBFROM
+					$output_verbose.="#    - cmdDL='$cmd'\n";
+					print "# Try to download database from openbioinformatics/ANNOVAR source with curl '$annovar_online_idx_file'...\n" if $VERBOSE;
+					print "# cmd=$cmd...\n" if $VERBOSE;
+					my $result = `$cmd `; #
+				};#if
 			};#if
 			# try to download from UCSC
 			if ($file eq "" || !-e "$annovar_databases/$file") {
-				#if ( -e "./ANNOVAR_download.sh") {
-					if ($online_file ne "") {
-						my $cmd="wget -O $annovar_databases/$file $online_file ";# $ANNOVAR_SCRIPT -downdb -buildver $BUILD $DB $DB_FOLDER $WEBFROM
-						$output_verbose.="#    - cmdDL='$cmd'\n";
-						print "# Try to download database from online file '$online_file'...\n" if $VERBOSE;
-						print "# cmd=$cmd...\n" if $VERBOSE;
-						#print "# cmd=$cmd\n" if $DEBUG;
-						my $result = `$cmd 2>&1`; #
-					};#if
-				#};#if
+				if ($online_file ne "") {
+					my $cmd="wget -O $annovar_databases/$file $online_file ";# $ANNOVAR_SCRIPT -downdb -buildver $BUILD $DB $DB_FOLDER $WEBFROM
+					$output_verbose.="#    - cmdDL='$cmd'\n";
+					print "# Try to download database from online file '$online_file'...\n" if $VERBOSE;
+					print "# cmd=$cmd...\n" if $VERBOSE;
+					my $result = `$cmd 2>&1`; #
+				};#if
 			};#if
 			if ($file eq "" || !-e "$annovar_databases/$file") {
 				$output.="# ERROR: 'file' ('$file') not correct\n";
