@@ -866,8 +866,8 @@ while ((my $annotation_name, my $annotation_infos) = each(%annotation_hash)){
 				};#if
 			};#if
 			if ($file eq "" || !-e "$annovar_databases/$file") {
-				$output.="# ERROR: 'file' ('$file') not correct\n";
-				next;
+				$output.="#[WARNING] 'file' ('$file') not correct\n";
+				#next;
 			};#if
 		};#if
 		$output_verbose.="#    - file='$file'\n";
