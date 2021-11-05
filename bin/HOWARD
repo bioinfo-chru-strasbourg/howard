@@ -970,8 +970,10 @@ if ((1)); then
 	(($VERBOSE)) && echo "#[INFO] Check and rehead VCF INFO fields";
 	PARAM_REHEAD=$(echo "$PARAM " | sed "s/--snpeff_stats=[^ |$]*//gi");
 	$HOWARD_FOLDER_BIN/VCFcalculation.pl $PARAM_REHEAD --input=$INPUT --output=$INPUT.tmp.rehead --calculation=null 1>>$LOG 2>>$ERR
-	cp $INPUT.tmp.rehead $INPUT 
-	rm -f $INPUT.tmp.rehead
+	if [ -e $INPUT.tmp.rehead ]; then
+		cp $INPUT.tmp.rehead $INPUT 
+		rm -f $INPUT.tmp.rehead
+	fi;
 fi;
 
 
