@@ -809,14 +809,14 @@ while ((my $annotation_name, my $annotation_infos) = each(%annotation_hash)){
 				$annovar_online_file="http://www.openbioinformatics.org/annovar/download/$file.gz";
 				$annovar_online_idx_file="http://www.openbioinformatics.org/annovar/download/$file.idx.gz";
 				if ($annovar_online_file ne "") {
-					my $cmd="wget -O $annovar_databases/$file.gz $annovar_online_file && gzip -d $annovar_databases/$file.gz ";# $ANNOVAR_SCRIPT -downdb -buildver $BUILD $DB $DB_FOLDER $WEBFROM
+					my $cmd="wget -O $annovar_databases/$file.gz $annovar_online_file && gzip -d $annovar_databases/$file.gz && rm $annovar_databases/$file.gz ";# $ANNOVAR_SCRIPT -downdb -buildver $BUILD $DB $DB_FOLDER $WEBFROM
 					$output_verbose.="#    - cmdDL='$cmd'\n";
 					print "# Try to download database from openbioinformatics/ANNOVAR source with wget '$annovar_online_file'...\n" if $VERBOSE;
 					print "# cmd=$cmd...\n" if $VERBOSE;
 					my $result = `$cmd `; #
 				};#if
 				if ($annovar_online_idx_file ne "") {
-					my $cmd="wget -O $annovar_databases/$file.idx.gz $annovar_online_idx_file && gzip -d $annovar_databases/$file.idx.gz ";# $ANNOVAR_SCRIPT -downdb -buildver $BUILD $DB $DB_FOLDER $WEBFROM
+					my $cmd="wget -O $annovar_databases/$file.idx.gz $annovar_online_idx_file && gzip -d $annovar_databases/$file.idx.gz && rm $annovar_databases/$file.idx.gz ";# $ANNOVAR_SCRIPT -downdb -buildver $BUILD $DB $DB_FOLDER $WEBFROM
 					$output_verbose.="#    - cmdDL='$cmd'\n";
 					print "# Try to download database from openbioinformatics/ANNOVAR source with wget '$annovar_online_idx_file'...\n" if $VERBOSE;
 					print "# cmd=$cmd...\n" if $VERBOSE;
