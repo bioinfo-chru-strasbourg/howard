@@ -843,7 +843,7 @@ while ((my $annotation_name, my $annotation_infos) = each(%annotation_hash)){
 					my $result = `$cmd `; #
 				};#if
 			};#if
-			# try to download from ANNOVAR openbioinformatics directly with curl - with annovar_code_for_downdb and zip file
+			# try to download from ANNOVAR openbioinformatics directly with curl - with annovar_code_for_downdb and zip file 
 			# directly from annovar with curl and retry http://www.openbioinformatics.org/annovar/download/hg19_XXX.txt.gz
 			if ($file eq "" || !-e "$annovar_databases/$file") {
 				$annovar_online_file="http://www.openbioinformatics.org/annovar/download/$file_for_downdb_zip";
