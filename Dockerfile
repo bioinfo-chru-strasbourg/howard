@@ -2,7 +2,7 @@
 ##############################################################
 # Dockerfile Version:   1.5
 # Software:             HOWARD
-# Software Version:     0.9.15.5
+# Software Version:     0.9.15.6
 # Software Website:     https://gitlab.bioinfo-diag.fr/Strasbourg/HOWARD
 # Licence:              GNU Affero General Public License (AGPL)
 # Description:          HOWARD
@@ -39,7 +39,7 @@
 
 FROM centos:7
 LABEL Software="HOWARD" \
-	Version="0.9.15.5" \
+	Version="0.9.15.6" \
 	Website="https://gitlab.bioinfo-diag.fr/Strasbourg/HOWARD" \
 	Description="HOWARD" \
 	License="GNU Affero General Public License (AGPL)" \
@@ -206,7 +206,7 @@ RUN wget $TARBALL_LOCATION/$TARBALL && \
 
 ENV DATABASES=/databases
 ENV TOOL_NAME=howard
-ENV TOOL_VERSION=0.9.15.5
+ENV TOOL_VERSION=0.9.15.6
 ENV TARBALL_LOCATION=https://gitlab.bioinfo-diag.fr/Strasbourg/HOWARD/repository/$TOOL_VERSION
 ENV TARBALL=archive.tar.gz
 ENV TARBALL_FOLDER=archive
