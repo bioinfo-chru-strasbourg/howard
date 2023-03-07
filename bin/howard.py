@@ -726,15 +726,19 @@ class VCFDataObject:
             sql_create_table_columns_list.append(f"\"{column}\"")
 
         # Create database
+        log.debug(f"Create Database")
         sql_create_table_columns_sql = ", ".join(sql_create_table_columns)
         sql_create_table_columns_list_sql = ", ".join(sql_create_table_columns_list)
         sql_create_table = f"CREATE TABLE IF NOT EXISTS {self.table_variants} ({sql_create_table_columns_sql})"
         self.conn.execute(sql_create_table)
 
         # create index
-        # CREATE INDEX idx_table_parquet ON table_parquet ("#CHROM", "POS", "ALT", "REF");
-        sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.table_variants} ON {self.table_variants} ("#CHROM", "POS", "ALT", "REF")'
-        self.conn.execute(sql_create_table_index)
+        if False:
+            sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.table_variants} ON {self.table_variants} ("#CHROM", "POS", "REF", "ALT")'
+            sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.table_variants}_chrom ON {self.table_variants} ("#CHROM")'
+            sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.table_variants}_pos ON {self.table_variants} ("POS")'
+            sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.table_variants}_ref ON {self.table_variants} ( "REF")'
+            sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.table_variants}_alt ON {self.table_variants} ("ALT")'
 
         # chunksize = 100000
         chunksize = 100000
@@ -746,7 +750,9 @@ class VCFDataObject:
         tmp_parquet = "/tmp/tmp.parquet"
 
         # Load data
+        log.debug(f"Load Data from {self.input_format}")
         if self.input_format in ["vcf", "gz", "tsv", "csv", "psv"]:
+            
             header_len = self.get_header_length()
 
             # delimiter
@@ -813,19 +819,31 @@ class VCFDataObject:
                 self.conn.execute(sql_insert_table)
             pass
         elif self.input_format in ["db", "duckdb"]:
-            # Load DuckDB
-            if access in ["RO"]:
-                self.drop_variants_table()
-                sql_view = f"CREATE VIEW {self.table_variants} AS SELECT * FROM input_conn.{self.table_variants}"
-                self.conn.execute(sql_view)
-            else:
-                input_conn = duckdb.connect(self.input)
-                sql_insert_table = f"INSERT INTO {self.table_variants} SELECT * FROM input_conn.{self.table_variants}"
-                self.conn.execute(sql_insert_table)
-            pass
+            log.debug(f"Input file format '{self.input_format}' duckDB")
+        #     # Load DuckDB
+        #     if access in ["RO"]:
+        #         self.drop_variants_table()
+        #         sql_view = f"CREATE VIEW {self.table_variants} AS SELECT * FROM input_conn.{self.table_variants}"
+        #         self.conn.execute(sql_view)
+        #     else:
+        #         input_conn = duckdb.connect(self.input)
+        #         sql_insert_table = f"INSERT INTO {self.table_variants} SELECT * FROM input_conn.{self.table_variants}"
+        #         self.conn.execute(sql_insert_table)
+        #     pass
         else:
             log.error(f"Input file format '{self.input_format}' not available")
             raise ValueError("Input file format '{self.input_format}' not available")
+        
+        # Create index after insertion
+        if True:
+            sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.table_variants} ON {self.table_variants} ("#CHROM", "POS", "REF", "ALT")'
+            sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.table_variants}_chrom ON {self.table_variants} ("#CHROM")'
+            sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.table_variants}_pos ON {self.table_variants} ("POS")'
+            sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.table_variants}_ref ON {self.table_variants} ( "REF")'
+            sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.table_variants}_alt ON {self.table_variants} ("ALT")'
+            self.conn.execute(sql_create_table_index)
+
+
 
     def load_data_naive(self):
         """
@@ -883,8 +901,22 @@ class VCFDataObject:
         else:
             return None
 
-    def export_output(self):
-        #print("Export output")
+    def export_output(self, export_header=True):
+        
+        # print("Export output")
+        # print(self.get_output())
+
+        if export_header:
+            header_name = self.export_header()
+        else:
+            # Header
+            tmp_header = NamedTemporaryFile(prefix=self.get_prefix(), dir=self.get_tmp_dir())
+            tmp_header_name = tmp_header.name
+            f = open(tmp_header_name, 'w')
+            vcf_writer = vcf.Writer(f, self.header_vcf)
+            f.close()
+            header_name = tmp_header_name
+
         if self.get_output():
             #print(f"Export output {self.get_output()} now...")
 
@@ -906,11 +938,6 @@ class VCFDataObject:
                 if self.get_output_format() in ["psv"]:
                     delimiter = "|"
 
-                # Header
-                tmp_header_name = output_file + ".hdr"
-                f = open(tmp_header_name, 'w')
-                vcf_writer = vcf.Writer(f, self.header_vcf)
-                f.close()
 
                 # Export parquet
                 sql_query_export = f"COPY (SELECT {sql_column} FROM {table_variants} WHERE 1 {sql_query_hard} {sql_query_sort} {sql_query_limit}) TO '{output_file}' WITH (FORMAT PARQUET)"
@@ -918,9 +945,10 @@ class VCFDataObject:
 
             elif self.get_output_format() in ["db", "duckdb"]:
 
+                log.debug("Export in DuckDB. Nothing to do")
                 # Export duckDB
-                sql_query_export = f"EXPORT DATABASE '{output_file}'"
-                self.conn.execute(sql_query_export)
+                # sql_query_export = f"EXPORT DATABASE '{output_file}'"
+                # self.conn.execute(sql_query_export)
 
                 # self.conn.execute(f"PRAGMA wal_autocheckpoint = FULL")
                 # self.conn.execute(f"VACUUM")
@@ -935,11 +963,6 @@ class VCFDataObject:
                 if self.get_output_format() in ["psv"]:
                     delimiter = "|"
 
-                # Header
-                tmp_header_name = output_file + ".hdr"
-                f = open(tmp_header_name, 'w')
-                vcf_writer = vcf.Writer(f, self.header_vcf)
-                f.close()
 
                 # Export TSV/CSV
                 #sql_query_export = f"EXPORT DATABASE '{output_file}'  (FORMAT CSV, DELIMITER '{delimiter}')"
@@ -950,15 +973,10 @@ class VCFDataObject:
                 # Extract VCF
                 #print("#[INFO] VCF Output - Extract VCF...")
 
-                # Header
-                tmp_header = NamedTemporaryFile(prefix=self.get_prefix(), dir=self.get_tmp_dir())
-                tmp_header_name = tmp_header.name
-                f = open(tmp_header_name, 'w')
-                vcf_writer = vcf.Writer(f, self.header_vcf)
-                f.close()
+
 
                 # Variants
-                tmp_variants = NamedTemporaryFile(prefix=self.get_prefix(), dir=self.get_tmp_dir())
+                tmp_variants = NamedTemporaryFile(prefix=self.get_prefix(), dir=self.get_tmp_dir(), suffix=".gz", delete=False)
                 tmp_variants_name = tmp_variants.name
                 sql_query_export = f"COPY (SELECT {sql_column} FROM {table_variants} WHERE 1 {sql_query_hard} {sql_query_sort} {sql_query_limit}) TO '{tmp_variants_name}' WITH (FORMAT CSV, DELIMITER '\t', HEADER, QUOTE '', COMPRESSION 'gzip')"
                 #print(sql_query_export)
@@ -966,17 +984,38 @@ class VCFDataObject:
 
                 # Create output
                 # Cat header and variants
-                command_gzip = ""
+                command_gzip = " cat "
+                command_gzip_d = " cat "
                 if self.output_format in ["gz"]:
-                    command_gzip = f" | bgzip --threads={threads} -c "
-                command = f"grep '^#CHROM' -v {tmp_header_name} {command_gzip} > {output_file}; bgzip --threads={threads} -dc {tmp_variants_name} {command_gzip} >> {output_file}"
+                    command_gzip = f" bgzip -c "
+                    # Check threads in bgzip command (error in macos)
+                    result_command_bgzip = subprocess.run("bgzip --help 2>&1 | grep 'threads'", shell=True, stdout=subprocess.PIPE)
+                    if not result_command_bgzip.returncode:
+                        command_gzip += f" --threads={threads} "
+                    else:
+                        command_gzip = f" gzip -c "
+                    command_gzip_d = command_gzip + f" -d "
+                # decompress and re-compress with bgzip because gzip from duckdb is not in bgzip format
+                command = f"grep '^#CHROM' -v {header_name} | {command_gzip} > {output_file}; {command_gzip_d} {tmp_variants_name} | {command_gzip} >> {output_file}"
                 #print(command)
                 subprocess.run(command, shell=True)
+
+
+    def export_header(self, header_name=None):
+
+        if not header_name:
+            output_file = self.get_output()
+        tmp_header_name = output_file + ".hdr"
+        f = open(tmp_header_name, 'w')
+        vcf_writer = vcf.Writer(f, self.get_header())
+        f.close()
+        return tmp_header_name
+
 
     def export_variant_vcf(self, vcf_file, type="vcf", remove_info=False, add_samples=True, compression=1, index=False):
         
         # Extract VCF
-        #print("#[INFO] Export VCF...")
+        print("#[INFO] Export VCF...")
 
         sql_column = self.get_header_columns_as_sql()
         table_variants = self.get_table_variants()
@@ -1494,11 +1533,6 @@ class VCFDataObject:
                     parquet_file_name, parquet_file_extension = os.path.splitext(parquet_file)
                     parquet_file_basename = os.path.basename(parquet_file)
                     parquet_file_format = parquet_file_extension.replace(".", "")
-                    # print(parquet_file)
-                    # print(parquet_file_name)
-                    # print(parquet_file_basename)
-                    # print(parquet_file_extension)
-                    # print(parquet_file_format)
                     
                     if parquet_file_format in ["db", "duckdb"]:
                         parquet_file_as_duckdb_name = parquet_file_basename.replace(".","_")
@@ -1509,7 +1543,6 @@ class VCFDataObject:
                         parquet_file_link = f"{parquet_file_as_duckdb_name}.variants"
                     elif parquet_file_format in ["parquet"]:
                         parquet_file_link = f"'{parquet_file}'"
-
 
                     log.debug(f"Annotation with database '{annotation}' - file: " + str(parquet_file) + " and " + str(parquet_hdr_file) )
 
@@ -1543,7 +1576,15 @@ class VCFDataObject:
                         if not annotation_fields_new_name:
                             annotation_fields_new_name = annotation_field
 
-                        if annotation_field in parquet_hdr_vcf.get_header().infos and annotation_fields_new_name not in self.get_header().infos:
+                        # check annotation field in data
+                        annotation_field_exists_on_variants = 0
+                        if annotation_fields_new_name not in self.get_header().infos:
+                            sql_query_chromosomes = f"""SELECT count(*) AS count FROM {table_variants} as table_variants WHERE ';' || INFO LIKE '%;{annotation_fields_new_name}=%' LIMIT 1 """
+                            annotation_field_exists_on_variants = self.conn.execute(f"{sql_query_chromosomes}").df()["count"][0]
+                            log.debug(f"Annotation field {annotation_fields_new_name} found in variants: " + str(annotation_field_exists_on_variants))
+
+                        # To annotate
+                        if annotation_field in parquet_hdr_vcf.get_header().infos and annotation_fields_new_name not in self.get_header().infos and not annotation_field_exists_on_variants:
 
                             #annotation_fields_processed.append({annotation_field: annotation_fields_new_name})
                             annotation_fields_processed.append(annotation_fields_new_name)
@@ -1577,12 +1618,15 @@ class VCFDataObject:
                                         self.code_type_map[parquet_hdr_vcf_header_infos_type]
                                     )
 
+                        # Not to annotate
                         else:
 
                             if annotation_field not in parquet_hdr_vcf.get_header().infos:
                                 log.warning(f"Annotation with database '{annotation}' - '{annotation_field}' [{nb_annotation_field}] - not available in parquet file")
-                            elif annotation_fields_new_name in self.get_header().infos:
-                                log.warning(f"Annotation with database '{annotation}' - '{annotation_fields_new_name}' [{nb_annotation_field}] - already exists (skipped)")
+                            if annotation_fields_new_name in self.get_header().infos:
+                                log.warning(f"Annotation with database '{annotation}' - '{annotation_fields_new_name}' [{nb_annotation_field}] - already exists in header(skipped)")
+                            if annotation_field_exists_on_variants:
+                                log.warning(f"Annotation with database '{annotation}' - '{annotation_fields_new_name}' [{nb_annotation_field}] - already exists in variants (skipped)")
                     
                     # Check if ALL fields have to be annotated. Thus concat all INFO field
                     if nb_annotation_field == len(annotation_fields) and annotation_fields_ALL:
@@ -1620,13 +1664,14 @@ class VCFDataObject:
                         log.debug("Chromosomes max pos found: " + str(sql_query_chromosomes_max_pos_dictionary))
 
                         # Batch parameters
-                        param_batch_annotation_databases_window = self.get_param().get("annotation",{}).get("parquet",{}).get("batch",{}).get("window",0)
+                        param_batch_annotation_databases_window = self.get_param().get("annotation",{}).get("parquet",{}).get("batch",{}).get("window",100000000000000000)
                         param_batch_annotation_databases_auto = self.get_param().get("annotation",{}).get("parquet",{}).get("batch",{}).get("auto","each_chrom")
                         param_batch_annotation_databases_batch = self.get_param().get("annotation",{}).get("parquet",{}).get("batch",{}).get("batch",1000)
 
                         # Init
                         # param_batch_annotation_databases_window SKIP
                         #param_batch_annotation_databases_window = 100000000000000000
+                        param_batch_annotation_databases_window = 0
                         batch_annotation_databases_window = param_batch_annotation_databases_window
 
                         # nb_of_variant_annotated
@@ -1644,7 +1689,14 @@ class VCFDataObject:
                             sql_query_chromosomes_max_pos_dictionary_min_pos = sql_query_chromosomes_max_pos_dictionary.get(chrom,{}).get("min_pos")
 
                             # Autodetect range of bases to split/chunk
-                            if not param_batch_annotation_databases_window and (not batch_annotation_databases_window or param_batch_annotation_databases_auto == "each_chrom"):
+                            
+                            min_window = 10000000
+                            
+                            #  < min_window or (sql_query_chromosomes_max_pos_dictionary_max_pos - sql_query_chromosomes_max_pos_dictionary_min_pos) < param_batch_annotation_databases_window
+                            if  (sql_query_chromosomes_max_pos_dictionary_max_pos - sql_query_chromosomes_max_pos_dictionary_min_pos):
+                                batch_annotation_databases_window = (sql_query_chromosomes_max_pos_dictionary_max_pos - sql_query_chromosomes_max_pos_dictionary_min_pos)
+
+                            elif not param_batch_annotation_databases_window and (not batch_annotation_databases_window or param_batch_annotation_databases_auto == "each_chrom"):
                                 log.debug(f"Annotation with database '{annotation}' - Chromosome '{chrom}' - Start Autodetection Intervals...")
                                 # Query to detect window of "batch" number of variant in the chromosome
                                 autodetect_range = f"""SELECT table_parquet.\"POS\" as POS FROM {table_variants} as table_variants
@@ -1660,7 +1712,7 @@ class VCFDataObject:
                                     """
                                 autodetect_range_results = self.conn.execute(f"{autodetect_range}").df()["POS"]
 
-                                
+                                log.debug(f"Annotation with database '{annotation}' - Chromosome '{chrom}' - Start Autodetection Intervals - found first common POS")
 
                                 # Window is max position, if "batch" variants were found, otherwise Maximum Effort!!!
                                 if len(autodetect_range_results) == param_batch_annotation_databases_batch:
@@ -1669,15 +1721,17 @@ class VCFDataObject:
                                     batch_annotation_databases_window = 1000000000000000 # maximum effort
 
                                 # prevent too small window (usually with genome VCF and genome database)
-                                min_window = 10000000
+                                
                                 if batch_annotation_databases_window < min_window:
                                     batch_annotation_databases_window = min_window
+
+                                log.debug(f"Annotation with database '{annotation}' - Chromosome '{chrom}' - Stop Autodetection Intervals")
 
                             
                             # Create intervals from 0 to max position variant, with the batch window previously defined
                             sql_query_intervals = split_interval(sql_query_chromosomes_max_pos_dictionary_min_pos, sql_query_chromosomes_max_pos_dictionary_max_pos, step=batch_annotation_databases_window, ncuts=None)
 
-                            log.debug(f"Annotation with database '{annotation}' - Chromosome '{chrom}' - Strop Autodetection Intervals")
+                            
 
                             # Interval Start/Stop
                             sql_query_interval_start = sql_query_intervals[0]
@@ -1733,15 +1787,6 @@ class VCFDataObject:
 
                                     log.debug("Create SQL query: " + str(sql_query_annotation_chrom_interval_pos))
                                     
-                                    #Process query
-                                    if False:
-                                        result = self.conn.execute(sql_query_annotation_chrom_interval_pos)
-                                        nb_of_query += 1
-                                        nb_of_variant_annotated_by_query = result.df()["Count"][0]
-                                        nb_of_variant_annotated += nb_of_variant_annotated_by_query
-                                        log.info(f"Annotation with database '{annotation}' - Annotation - Query [{nb_of_query}] {nb_of_variant_annotated} variants annotated")
-
-
                                     # Interval Start/Stop
                                     sql_query_interval_start = sql_query_interval_stop
 
@@ -1753,11 +1798,12 @@ class VCFDataObject:
                         nb_of_query = len(query_list)
                         num_query = 0
                         for query in query_list:
-                            result = self.conn.execute(query)
                             num_query += 1
+                            log.info(f"Annotation with database '{annotation}' - Annotation - Query [{num_query}/{nb_of_query}]...")
+                            result = self.conn.execute(query)
                             nb_of_variant_annotated_by_query = result.df()["Count"][0]
                             nb_of_variant_annotated += nb_of_variant_annotated_by_query
-                            log.info(f"Annotation with database '{annotation}' - Annotation - Query [{num_query}/{nb_of_query}] {nb_of_variant_annotated} variants annotated")
+                            log.info(f"Annotation with database '{annotation}' - Annotation - Query [{num_query}/{nb_of_query}]... {nb_of_variant_annotated} variants annotated")
 
                         
                         log.info(f"Annotation with database '{annotation}' - Annotation of {nb_of_variant_annotated} variants (with {nb_of_query} queries)")
@@ -1766,28 +1812,14 @@ class VCFDataObject:
 
                         log.info(f"Annotation with database '{annotation}' - No Annotations available")
 
+                    if parquet_file_format in ["db", "duckdb"]:
+                        parquet_file_as_duckdb_name = parquet_file_basename.replace(".","_")
+                        log.debug(f"Annotation with database '{annotation}' - detach database : " + str(parquet_file) )
+                        self.conn.execute(f"DETACH DATABASE {parquet_file_as_duckdb_name}")
+
                     log.debug("Final header: " +str(vcf_reader.infos))
 
-                    # DEBUGF
-                    if False:
-                        if self.get_config().get("verbosity","warning") in ["debug"]:
-                            #results = self.conn.execute(f"SELECT * FROM {table_variants} WHERE INFO LIKE '%;CLN%'")
-                            results = self.conn.execute(f"SELECT * FROM {table_variants} ")
-                            log.info("Annotation with database results:\n" + str(results.df()))
-                            #print(results.fetchall())
-
-
-        # # DEBUG
-        # results = self.conn.execute(f"SELECT * FROM {table_variants} WHERE INFO LIKE '%nci60%'").df()
-        # log.debug("Annotation with database results:\n" + str(results))
-        # #print(results.fetchall())
-
-
         return
-
-            
-
-            
 
 
 
@@ -1801,7 +1833,7 @@ class VCFDataObject:
         #print(tmp_merged_vcf_name)
         mergeVCF.load_data()
         #mergeVCF.get_overview()
-        mergeVCF.export_output()
+        mergeVCF.export_output(export_header=False)
         sql_query_update = f"""
         UPDATE {table_variants} as table_variants
             SET INFO = (SELECT table_parquet.INFO FROM '{tmp_merged_vcf_name}' as table_parquet
@@ -1911,8 +1943,11 @@ def main():
     
     if vcfdata_obj.get_input_format() in ["db", "duckdb"]:
         connexion_db = vcfdata_obj.get_input()
-
-    if vcfdata_obj.get_connexion_type() in ["memory", None]:
+        vcfdata_obj.set_output(args.input)
+    elif vcfdata_obj.get_output_format() in ["db", "duckdb"]:
+        connexion_db = vcfdata_obj.get_output()
+        #vcfdata_obj.set_output(None)
+    elif vcfdata_obj.get_connexion_type() in ["memory", None]:
         connexion_db = ":memory:"
     elif vcfdata_obj.get_connexion_type() in ["tmpfile"]:
         tmp_name = tempfile.mkdtemp(prefix=vcfdata_obj.get_prefix(), dir=vcfdata_obj.get_tmp_dir(), suffix=".db")
@@ -1923,6 +1958,9 @@ def main():
         connexion_db = ":memory:"
     
     #print("connexion_db: "+str(connexion_db))
+
+    #return
+
     connexion_config = {}
     if config.get("threads",None):
         connexion_config["threads"] = config.get("threads")
@@ -1965,9 +2003,9 @@ def main():
 
 
     # Output
-    if args.output:
+    if vcfdata_obj.get_output():
         log.info("Exporting...")
-        vcfdata_obj.export_output()
+        vcfdata_obj.export_output(export_header=True)
 
 
     # Overview footer
