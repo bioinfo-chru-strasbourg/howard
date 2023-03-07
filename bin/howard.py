@@ -1488,20 +1488,27 @@ class VCFDataObject:
                 else:
                 
 
+                    parquet_file_link = f"'{parquet_file}'"
+
                     # Database type
                     parquet_file_name, parquet_file_extension = os.path.splitext(parquet_file)
+                    parquet_file_basename = os.path.basename(parquet_file)
                     parquet_file_format = parquet_file_extension.replace(".", "")
-                    #print(parquet_file)
-                    #print(parquet_file_format)
+                    # print(parquet_file)
+                    # print(parquet_file_name)
+                    # print(parquet_file_basename)
+                    # print(parquet_file_extension)
+                    # print(parquet_file_format)
+                    
                     if parquet_file_format in ["db", "duckdb"]:
+                        parquet_file_as_duckdb_name = parquet_file_basename.replace(".","_")
                         #print(f"Annotation with database '{annotation}' - attach database : " + str(parquet_file) )
                         log.debug(f"Annotation with database '{annotation}' - attach database : " + str(parquet_file) )
-                        self.conn.execute(f"ATTACH DATABASE '{parquet_file}' AS db")
+                        self.conn.execute(f"ATTACH DATABASE '{parquet_file}' AS {parquet_file_as_duckdb_name}")
                         #print("connexion to duckdb ok!")
-                        parquet_file_link = "db.variants"
+                        parquet_file_link = f"{parquet_file_as_duckdb_name}.variants"
                     elif parquet_file_format in ["parquet"]:
                         parquet_file_link = f"'{parquet_file}'"
-
 
 
                     log.debug(f"Annotation with database '{annotation}' - file: " + str(parquet_file) + " and " + str(parquet_hdr_file) )
