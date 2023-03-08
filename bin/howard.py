@@ -19,9 +19,18 @@ import logging as log
 # DOCS/USAGE
 
 # Create a duckdb from a parquet/vcf...
-# time python3.9 howard.py --verbose --input=my_file.parquet --output=my_file.duckdb --param='{"explode_infos": true}'
-# time python3.9 howard.py --verbose --input=my_file.parquet --config='{"connexion_type":"my_file.duckdb"}'
-# copy header file: cp my_file.parquet.hdr my_file.duckdb.hdr
+# time python3.9 howard.py --verbose --input=my_file.parquet --config='{"connexion_type":"my_file.duckdb"}'                 # Just translate
+# time python3.9 howard.py --verbose --input=my_file.parquet --output=my_file.duckdb --param='{"explode_infos": true}'      # Explode iinfos in INFO/ann1...
+# header file copied!
+
+
+# Query a parquet without loading
+# If not variants like parquet/duckDB (every parquet file)
+# time python3.9 howard.py --debug --query="SELECT count(*) FROM 'my.parquet'"
+# If variants like parquet/duckDB, can use specific options (such as overview, stats)
+# time python3.9 howard.py --debug --input=my.parquet --config='{"access": "RO"}' --query='SELECT count(*) FROM variants' --overview --stats
+# If variants like parquet/duckDB, can use specific options (such as overview, stats), and if explode_infos previously done to generate parquet/duckdb file
+# time python3.9 howard.py --debug --input=my.parquet --config='{"access": "RO"}' --query='SELECT count(*) FROM variants WHERE "INFO/DP" >= 30'
 
 # fonctions
 
@@ -698,6 +707,8 @@ class VCFDataObject:
         It reads a VCF file and inserts it into a table
         """
 
+        log.info("Loading data...")
+
         # Main structure
         structure = {
             "#CHROM": "VARCHAR",
@@ -736,7 +747,7 @@ class VCFDataObject:
         # chunksize define length of file chunk load file
         # chunksize = 100000
         # chunksize = 1000000
-        chunksize = 1000000
+        chunksize = 100000
 
         # Access
         access = self.get_config().get("access", None)
@@ -794,7 +805,7 @@ class VCFDataObject:
         else:
             log.error(f"Input file format '{self.input_format}' not available")
             raise ValueError(
-                "Input file format '{self.input_format}' not available")
+                f"Input file format '{self.input_format}' not available")
 
         
         # Explode INFOS fields into table fields
@@ -810,39 +821,44 @@ class VCFDataObject:
         The function takes a VCF file and explodes the INFO fields into individual columns
         """
 
-        # prefix
-        if not prefix or not type(prefix) == str:
-            prefix = "INFO/"
-        
-        # table variants
-        table_variants = self.get_table_variants(clause="select")
+        # Access
+        access = self.get_config().get("access", None)
 
-        log.debug("Explode INFO fields - ADD ["+str(len(self.get_header().infos))+"] annotations fields")
-        
-        sql_info_alter_table_array = []
+        if access not in ["RO"]:
 
-        for info in self.get_header().infos:
-            log.debug(f"Explode INFO fields - ADD {info} annotations fields")
+            # prefix
+            if not prefix or not type(prefix) == str:
+                prefix = "INFO/"
+            
+            # table variants
+            table_variants = self.get_table_variants(clause="select")
 
-            info_id_sql = prefix+info
-            type_sql = self.code_type_map_to_sql.get(self.get_header().infos[info].type, "VARCHAR")
-            if self.get_header().infos[info].num != 1:
-                type_sql = "VARCHAR"
+            log.debug("Explode INFO fields - ADD ["+str(len(self.get_header().infos))+"] annotations fields")
+            
+            sql_info_alter_table_array = []
 
-            # Add field
-            sql_info_alter_table = f"ALTER TABLE {table_variants} ADD COLUMN \"{info_id_sql}\" {type_sql} DEFAULT null"
-            log.debug(f"Explode INFO fields - ADD {info} annotations fields: {sql_info_alter_table}")
-            self.conn.execute(sql_info_alter_table)
+            for info in self.get_header().infos:
+                log.debug(f"Explode INFO fields - ADD {info} annotations fields")
 
-            # Update field array
-            update_info_field = f"\"{info_id_sql}\" = CASE WHEN REGEXP_EXTRACT(INFO, '[\^;]*{info}=([^;]*)',1) == '' THEN NULL WHEN REGEXP_EXTRACT(INFO, '{info}=([^;]*)',1) == '.' THEN NULL ELSE REGEXP_EXTRACT(INFO, '{info}=([^;]*)',1) END"
-            sql_info_alter_table_array.append(update_info_field)
+                info_id_sql = prefix+info
+                type_sql = self.code_type_map_to_sql.get(self.get_header().infos[info].type, "VARCHAR")
+                if self.get_header().infos[info].num != 1:
+                    type_sql = "VARCHAR"
 
-            # Update table
-            sql_info_alter_table_array_join = ", ".join(sql_info_alter_table_array)
-            sql_info_alter_table = f"UPDATE {table_variants} SET {sql_info_alter_table_array_join}"
-            log.debug(f"Explode INFO fields - ADD ["+str(len(self.get_header().infos))+f"]: {sql_info_alter_table}")
-            self.conn.execute(sql_info_alter_table)
+                # Add field
+                sql_info_alter_table = f"ALTER TABLE {table_variants} ADD COLUMN \"{info_id_sql}\" {type_sql} DEFAULT null"
+                log.debug(f"Explode INFO fields - ADD {info} annotations fields: {sql_info_alter_table}")
+                self.conn.execute(sql_info_alter_table)
+
+                # Update field array
+                update_info_field = f"\"{info_id_sql}\" = CASE WHEN REGEXP_EXTRACT(INFO, '[\^;]*{info}=([^;]*)',1) == '' THEN NULL WHEN REGEXP_EXTRACT(INFO, '{info}=([^;]*)',1) == '.' THEN NULL ELSE REGEXP_EXTRACT(INFO, '{info}=([^;]*)',1) END"
+                sql_info_alter_table_array.append(update_info_field)
+
+                # Update table
+                sql_info_alter_table_array_join = ", ".join(sql_info_alter_table_array)
+                sql_info_alter_table = f"UPDATE {table_variants} SET {sql_info_alter_table_array_join}"
+                log.debug(f"Explode INFO fields - ADD ["+str(len(self.get_header().infos))+f"]: {sql_info_alter_table}")
+                self.conn.execute(sql_info_alter_table)
 
 
     def create_indexes(self):
@@ -850,17 +866,21 @@ class VCFDataObject:
         Create indexes on the table after insertion
         """
 
-        # Create index
-        sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.get_table_variants()} ON {self.table_variants} ("#CHROM", "POS", "REF", "ALT")'
-        self.conn.execute(sql_create_table_index)
-        sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.get_table_variants()}_chrom ON {self.table_variants} ("#CHROM")'
-        self.conn.execute(sql_create_table_index)
-        sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.get_table_variants()}_pos ON {self.table_variants} ("POS")'
-        self.conn.execute(sql_create_table_index)
-        sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.get_table_variants()}_ref ON {self.table_variants} ( "REF")'
-        self.conn.execute(sql_create_table_index)
-        sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.get_table_variants()}_alt ON {self.table_variants} ("ALT")'
-        self.conn.execute(sql_create_table_index)
+        # Access
+        access = self.get_config().get("access", None)
+
+        if access not in ["RO"]:
+            # Create index
+            sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.get_table_variants()} ON {self.table_variants} ("#CHROM", "POS", "REF", "ALT")'
+            self.conn.execute(sql_create_table_index)
+            sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.get_table_variants()}_chrom ON {self.table_variants} ("#CHROM")'
+            self.conn.execute(sql_create_table_index)
+            sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.get_table_variants()}_pos ON {self.table_variants} ("POS")'
+            self.conn.execute(sql_create_table_index)
+            sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.get_table_variants()}_ref ON {self.table_variants} ( "REF")'
+            self.conn.execute(sql_create_table_index)
+            sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.get_table_variants()}_alt ON {self.table_variants} ("ALT")'
+            self.conn.execute(sql_create_table_index)
 
     def drop_indexes(self):
         """
@@ -1958,11 +1978,15 @@ def main():
     It loads a VCF file in multiple format (VCF, parquet, DB), and process, query, export data
     """
 
+    
+    # group.add_argument('--input', help='input file')
+    # group.add_argument('--query', help='query string')
+
     # Args
     parser = argparse.ArgumentParser(
         description="Load a VCF file in multiple format (VCF, parquet, DB), and process, query, export data")
     parser.add_argument(
-        "--input", help="Input file path (format: vcf, vcf.gz, parquet or db) Required", required=True)
+        "--input", help="Input file path (format: vcf, vcf.gz, parquet or db) Required", required=False)
     parser.add_argument(
         "--output", help="Output file path (format: vcf, vcf.gz, parquet or db)", required=False)
     parser.add_argument(
@@ -1988,6 +2012,9 @@ def main():
     parser.add_argument(
         "--verbosity", help="Verbosity level: CRITICAL, ERROR, WARNING, INFO, DEBUG or NOTSET", required=False, default="warning")
     args = parser.parse_args()
+
+    if not (args.input or args.query):
+        parser.error('At least one of --input or --query is required.')
 
     # Verbosity
     # Verbose
@@ -2024,33 +2051,8 @@ def main():
     else:
         param = json.loads(args.param)
 
-    # Create VCF object
-    vcfdata_obj = VCFDataObject(None, args.input, args.output, config, param)
 
-    # Connexion
-    # connexion_db = ":memory:"
-
-    if vcfdata_obj.get_input_format() in ["db", "duckdb"]:
-        connexion_db = vcfdata_obj.get_input()
-        vcfdata_obj.set_output(args.input)
-    elif vcfdata_obj.get_output_format() in ["db", "duckdb"]:
-        connexion_db = vcfdata_obj.get_output()
-        # vcfdata_obj.set_output(None)
-    elif vcfdata_obj.get_connexion_type() in ["memory", None]:
-        connexion_db = ":memory:"
-    elif vcfdata_obj.get_connexion_type() in ["tmpfile"]:
-        tmp_name = tempfile.mkdtemp(prefix=vcfdata_obj.get_prefix(
-        ), dir=vcfdata_obj.get_tmp_dir(), suffix=".db")
-        connexion_db = f"{tmp_name}/tmp.db"
-    elif vcfdata_obj.get_connexion_type() != "":
-        connexion_db = vcfdata_obj.get_connexion_type()
-    else:
-        connexion_db = ":memory:"
-
-    # print("connexion_db: "+str(connexion_db))
-
-    # return
-
+    # Connexion config
     connexion_config = {}
     if config.get("threads", None):
         connexion_config["threads"] = config.get("threads")
@@ -2059,95 +2061,141 @@ def main():
     # if config.get("duckdb_compression",None):
     #     connexion_config["compression"] = config.get("duckdb_compression") # 'lz4'
 
-    conn = duckdb.connect(connexion_db, config=connexion_config)
 
-    vcfdata_obj.set_connexion(conn)
+    # Create VCF object
+    if args.input:
+        vcfdata_obj = VCFDataObject(None, args.input, args.output, config, param)
 
-    # Quick Annotation
-    if args.annotation:
-        if os.path.exists(args.annotation):
-            log.info(f"Quick Annotation File {args.annotation}")
-            quick_annotation_file = args.annotation
-            quick_annotation_name, quick_annotation_extension = os.path.splitext(
-                args.annotation)
-            quick_annotation_format = quick_annotation_extension.replace(
-                ".", "")
-            if quick_annotation_format in ["parquet", "duckdb"]:
-                param_quick_annotation = {
-                    "annotation": {
-                        "parquet": {
-                            "annotations": {
-                                f"{quick_annotation_file}": {
-                                    "INFO": None
+        # Connexion
+        # connexion_db = ":memory:"
+
+        if vcfdata_obj.get_input_format() in ["db", "duckdb"]:
+            connexion_db = vcfdata_obj.get_input()
+            vcfdata_obj.set_output(args.input)
+        elif vcfdata_obj.get_output_format() in ["db", "duckdb"]:
+            connexion_db = vcfdata_obj.get_output()
+            # vcfdata_obj.set_output(None)
+        elif vcfdata_obj.get_connexion_type() in ["memory", None]:
+            connexion_db = ":memory:"
+        elif vcfdata_obj.get_connexion_type() in ["tmpfile"]:
+            tmp_name = tempfile.mkdtemp(prefix=vcfdata_obj.get_prefix(
+            ), dir=vcfdata_obj.get_tmp_dir(), suffix=".db")
+            connexion_db = f"{tmp_name}/tmp.db"
+        elif vcfdata_obj.get_connexion_type() != "":
+            connexion_db = vcfdata_obj.get_connexion_type()
+        else:
+            connexion_db = ":memory:"
+        
+        # print("connexion_db: "+str(connexion_db))
+
+        # return
+
+
+
+        conn = duckdb.connect(connexion_db, config=connexion_config)
+
+        vcfdata_obj.set_connexion(conn)
+
+        # Quick Annotation
+        if args.annotation:
+            if os.path.exists(args.annotation):
+                log.info(f"Quick Annotation File {args.annotation}")
+                quick_annotation_file = args.annotation
+                quick_annotation_name, quick_annotation_extension = os.path.splitext(
+                    args.annotation)
+                quick_annotation_format = quick_annotation_extension.replace(
+                    ".", "")
+                if quick_annotation_format in ["parquet", "duckdb"]:
+                    param_quick_annotation = {
+                        "annotation": {
+                            "parquet": {
+                                "annotations": {
+                                    f"{quick_annotation_file}": {
+                                        "INFO": None
+                                    }
                                 }
                             }
                         }
                     }
-                }
-            elif quick_annotation_format in ["gz"]:
-                param_quick_annotation = {
-                    "annotation": {
-                        "bcftools": {
-                            "annotations": {
-                                f"{quick_annotation_file}": {
-                                    "INFO": None
+                elif quick_annotation_format in ["gz"]:
+                    param_quick_annotation = {
+                        "annotation": {
+                            "bcftools": {
+                                "annotations": {
+                                    f"{quick_annotation_file}": {
+                                        "INFO": None
+                                    }
                                 }
                             }
                         }
                     }
-                }
+                else:
+                    log.error(
+                        f"Quick Annotation File {args.annotation} - format {quick_annotation_format} not supported yet")
+                    raise ValueError(
+                        f"Quick Annotation File {args.annotation} - format {quick_annotation_format} not supported yet"
+                    )
+                vcfdata_obj.set_param(param_quick_annotation)
             else:
                 log.error(
-                    f"Quick Annotation File {args.annotation} - format {quick_annotation_format} not supported yet")
-                raise ValueError(
-                    f"Quick Annotation File {args.annotation} - format {quick_annotation_format} not supported yet"
-                )
-            vcfdata_obj.set_param(param_quick_annotation)
-        else:
-            log.error(
-                f"Quick Annotation File {args.annotation} does NOT exist")
-        # return
-        # vcfdata_obj.get_overview()
+                    f"Quick Annotation File {args.annotation} does NOT exist")
+            # return
+            # vcfdata_obj.get_overview()
 
-    # Load data from input file
-    log.info("Loading data...")
-    vcfdata_obj.load_data()
+        # Load data from input file
+        vcfdata_obj.load_data()
 
-    # Overview
-    if args.overview:
-        vcfdata_obj.get_overview()
+        # Overview
+        if args.overview:
+            vcfdata_obj.get_overview()
 
-    # Stats
-    if args.stats:
-        vcfdata_obj.get_stats()
+        # Stats
+        if args.stats:
+            vcfdata_obj.get_stats()
 
-    # Query
-    if args.query or param.get("query", None):
-        log.info("Querying...")
-        if args.query:
-            result = vcfdata_obj.execute_query(args.query)
-        elif param.get("query", None):
-            result = vcfdata_obj.execute_query(param.get("query", None))
-        print(result.df())
+        # Annotation
+        # if param.get("annotation",None):
+        if vcfdata_obj.get_param().get("annotation", None):
+            vcfdata_obj.annotation()
 
-    # Annotation
-    # if param.get("annotation",None):
-    if vcfdata_obj.get_param().get("annotation", None):
-        vcfdata_obj.annotation()
+        # Output
+        if vcfdata_obj.get_output():
+            log.info("Exporting...")
+            vcfdata_obj.export_output(export_header=True)
 
-    # Output
-    if vcfdata_obj.get_output():
-        log.info("Exporting...")
-        vcfdata_obj.export_output(export_header=True)
+        # Overview footer
+        if args.overview_footer:
+            vcfdata_obj.get_overview()
 
-    # Overview footer
-    if args.overview_footer:
-        vcfdata_obj.get_overview()
+        # Stats footer
+        if args.stats_footer:
+            vcfdata_obj.get_overview()
 
-    # Stats footer
-    if args.stats_footer:
-        vcfdata_obj.get_overview()
+        # Query
+        if args.query or param.get("query", None):
+            log.info("Querying...")
+            if args.query:
+                result = vcfdata_obj.execute_query(args.query)
+            elif param.get("query", None):
+                result = vcfdata_obj.execute_query(param.get("query", None))
+            print(result.df())
 
+    else:
+
+        conn = duckdb.connect(":memory:", config=connexion_config)
+
+        # Query
+        if args.query or param.get("query", None):
+            log.info("Querying...")
+            if args.query:
+                result = conn.execute(args.query)
+            elif param.get("query", None):
+                result = conn.execute(param.get("query", None))
+            print(result.df())
+
+        
+
+    
     log.info("End")
 
 
