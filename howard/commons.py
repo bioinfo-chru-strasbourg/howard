@@ -16,13 +16,6 @@ import vcf
 import logging as log
 
 
-def add_numbers(a, b):
-    return a + b
-
-def multiply_numbers(a, b):
-    return a * b
-
-
 def set_log_level(verbosity):
     """
     It sets the log level of the Python logging module
@@ -47,6 +40,8 @@ def set_log_level(verbosity):
         level=configs[verbosity],
     )
 
+    return verbosity
+
 
 def split_interval(start, end, step=None, ncuts=None):
     """
@@ -67,7 +62,7 @@ def split_interval(start, end, step=None, ncuts=None):
         return list(range(start, end, step)) + [end]
     if ncuts is not None:
         step = (end - start) / ncuts
-        return [start + i*step for i in range(ncuts+1)] + [end]
+        return [start + i*step for i in range(ncuts+1)]
 
 
 def merge_regions(regions):
@@ -143,6 +138,17 @@ def create_where_clause(merged_regions, table="variants"):
     return where_clause
 
 
+def command(command):
+    """
+    It runs a command in the shell and waits for it to finish
+    
+    :param command: The command to run
+    :return: The return value is the exit status of the process.
+    """
+    output = subprocess.check_output(command, shell=True)
+    return output.decode('utf-8').strip()
+
+
 def run_parallel_commands(commands, threads):
     """
     It takes a list of commands and a number of threads, and runs the commands in parallel
@@ -158,17 +164,7 @@ def run_parallel_commands(commands, threads):
             cmd,), error_callback=lambda e: print(e)))
     pool.close()
     pool.join()
-    return results
-
-
-def command(command):
-    """
-    It runs a command in the shell and waits for it to finish
-    
-    :param command: The command to run
-    :return: The return value is the exit status of the process.
-    """
-    return subprocess.Popen(command, shell=True).wait()
+    return [result.get().strip() for result in results]
 
 
 def run_parallel_functions(functions, threads):
@@ -185,17 +181,18 @@ def run_parallel_functions(functions, threads):
     for func in functions:
         results.append(pool.apply_async(func, args=(1, "hello"),
                        error_callback=lambda e: print(e)))
+        # results.append(pool.apply_async(func,
+        #                error_callback=lambda e: print(e)))
+        # results.append(pool.apply_async(func, args=(1, "hello"),
+        #                error_callback=lambda e: print(e)))
+        #results.append(pool.apply_async(func,))
     pool.close()
     pool.join()
+    #return [result.get().strip() for result in results]
     return results
 
 
-def function_query(obj, query):
-    """
-    It takes a query and executes it on the object
-    
-    :param obj: The object that you want to query
-    :param query: The query to be executed
-    :return: the result of the query.
-    """
-    return obj.execute_query(query)
+def example_function(num, word):
+    return [num, word]
+
+

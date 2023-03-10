@@ -44,7 +44,7 @@ def main():
     parser.add_argument(
         "--query", help="Query (format: SQL) (default: None) (example: 'SELECT * FROM variants LIMIT 5')", default=None)
     parser.add_argument(
-        "--annotation", help="Quick annotation with a database file (format: file) (default: null)", default=None)
+        "--annotations", help="Quick annotation with databases file (format: list of files) (default: null)", default=None)
     parser.add_argument(
         "--threads", help="Number of threads. Will be added/replace to config file. (format: Integer) (default: null)", default=None)
     parser.add_argument("--overview", "--overview_header",
@@ -136,50 +136,16 @@ def main():
         conn = duckdb.connect(connexion_db, config=connexion_config)
 
         # Quick Annotation
-        if args.annotation:
-            if os.path.exists(args.annotation):
-                log.info(f"Quick Annotation File {args.annotation}")
-                quick_annotation_file = args.annotation
-                quick_annotation_name, quick_annotation_extension = os.path.splitext(
-                    args.annotation)
-                quick_annotation_format = quick_annotation_extension.replace(
-                    ".", "")
-                if quick_annotation_format in ["parquet", "duckdb"]:
-                    param_quick_annotation = {
-                        "annotation": {
-                            "parquet": {
-                                "annotations": {
-                                    f"{quick_annotation_file}": {
-                                        "INFO": None
-                                    }
-                                }
-                            }
-                        }
-                    }
-                elif quick_annotation_format in ["gz"]:
-                    param_quick_annotation = {
-                        "annotation": {
-                            "bcftools": {
-                                "annotations": {
-                                    f"{quick_annotation_file}": {
-                                        "INFO": None
-                                    }
-                                }
-                            }
-                        }
-                    }
-                else:
-                    log.error(
-                        f"Quick Annotation File {args.annotation} - format {quick_annotation_format} not supported yet")
-                    raise ValueError(
-                        f"Quick Annotation File {args.annotation} - format {quick_annotation_format} not supported yet"
-                    )
-                vcfdata_obj.set_param(param_quick_annotation)
-            else:
-                log.error(
-                    f"Quick Annotation File {args.annotation} does NOT exist")
-            # return
-            # vcfdata_obj.get_overview()
+        if args.annotations:
+            annotation_file_list = args.annotations.split(",")
+            log.info(f"Quick Annotation Files: {annotation_file_list}")
+            params = vcfdata_obj.get_param()
+            param_quick_annotations = param.get("annotations",{})
+            for annotation_file in annotation_file_list:
+                param_quick_annotations[annotation_file] = {"INFO": None}
+            params["annotations"] = param_quick_annotations
+            vcfdata_obj.set_param(params)
+            
 
         # Load data from input file
         vcfdata_obj.load_data()
@@ -193,8 +159,7 @@ def main():
             vcfdata_obj.get_stats()
 
         # Annotation
-        # if param.get("annotation",None):
-        if vcfdata_obj.get_param().get("annotation", None):
+        if vcfdata_obj.get_param().get("annotations", None) or vcfdata_obj.get_param().get("annotation", None):
             vcfdata_obj.annotation()
 
         # Output

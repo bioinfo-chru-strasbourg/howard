@@ -13,6 +13,8 @@ import pandas as pd
 import vcf
 import logging as log
 
+from howard.commons import *
+
 class Variants:
 
     def __init__(self, conn=None, input=None, output=None, config={}, param={}):
@@ -191,7 +193,6 @@ class Variants:
         The function prints the input, output, config, and dataframe of the current object
         """
         table_variants_from = self.get_table_variants(clause="from")
-        table_variants_select = self.get_table_variants(clause="select")
         sql_columns = self.get_header_columns_as_sql()
         sql_query_export = f"SELECT {sql_columns} FROM {table_variants_from}"
         df = self.conn.execute(sql_query_export).df()
@@ -867,7 +868,7 @@ class Variants:
     def export_variant_vcf(self, vcf_file, type="vcf", remove_info=False, add_samples=True, compression=1, index=False):
 
         # Extract VCF
-        print("#[INFO] Export VCF...")
+        log.debug("Export VCF...")
 
         sql_column = self.get_header_columns_as_sql()
         table_variants = self.get_table_variants()
@@ -900,12 +901,12 @@ class Variants:
 
         # Variants
         tmp_variants = NamedTemporaryFile(
-            prefix=self.get_prefix(), dir=self.get_tmp_dir())
+            prefix=self.get_prefix(), dir=self.get_tmp_dir(), suffix=".vcf.gz", delete=False)
         tmp_variants_name = tmp_variants.name
         select_fields = f"\"#CHROM\", POS, ID, REF, ALT, QUAL, FILTER"
 
         sql_query_export = f"COPY (SELECT {select_fields}, {info_field} {samples_fields} FROM {table_variants} WHERE 1 {sql_query_hard} {sql_query_sort} {sql_query_limit}) TO '{tmp_variants_name}' WITH (FORMAT CSV, DELIMITER '\t', HEADER, QUOTE '', COMPRESSION 'gzip')"
-        # print(sql_query_export)
+        #print(sql_query_export)
 
         self.conn.execute(sql_query_export)
 
@@ -913,22 +914,25 @@ class Variants:
         # Cat header and variants
         command_gzip = ""
         if type in ["gz"]:
-            command_gzip = f" | bgzip --compress-level={compression}  --threads={threads} -c "
+            #command_gzip = f" | bgzip --compress-level={compression}  --threads={threads} -c "
+            command_gzip = f" | bgzip -c "
         if index:
             command_tabix = f" && tabix {vcf_file}"
         else:
             command_tabix = ""
-        command = f"grep '^#CHROM' -v {tmp_header_name} {command_gzip} > {vcf_file}; bgzip --compress-level={compression} --threads={threads} -dc {tmp_variants_name} {command_gzip} >> {vcf_file} {command_tabix}"
-        # print(command)
+        #command = f"grep '^#CHROM' -v {tmp_header_name} {command_gzip} > {vcf_file}; bgzip --compress-level={compression} --threads={threads} -dc {tmp_variants_name} {command_gzip} >> {vcf_file} {command_tabix}"
+        command = f"grep '^#CHROM' -v {tmp_header_name} {command_gzip} > {vcf_file}; gzip -dc {tmp_variants_name} {command_gzip} >> {vcf_file} {command_tabix}"
+        #print(command)
         subprocess.run(command, shell=True)
+
 
     def run_commands(self, commands=[], threads=1):
         run_parallel_commands(commands, threads)
 
-    def set_id_null(self, threads=1):
-        functions = [function_query(self, "UPDATE variants SET ID='.' WHERE REF='A'"), function_query(self, "UPDATE variants SET ID='.' WHERE REF='C'"), function_query(
-            self, "UPDATE variants SET ID='.' WHERE REF='T'"), function_query(self, "UPDATE variants SET ID='.' WHERE REF='G'")]
-        run_parallel_functions(functions, threads)
+    # def set_id_null(self, threads=1):
+    #     functions = [function_query(self, "UPDATE variants SET ID='.' WHERE REF='A'"), function_query(self, "UPDATE variants SET ID='.' WHERE REF='C'"), function_query(
+    #         self, "UPDATE variants SET ID='.' WHERE REF='T'"), function_query(self, "UPDATE variants SET ID='.' WHERE REF='G'")]
+    #     run_parallel_functions(functions, threads)
 
     def get_threads(self):
         return int(self.config.get("threads", 1))
@@ -936,6 +940,47 @@ class Variants:
     def annotation(self):
 
         param = self.get_param()
+
+
+        if param.get("annotations"):
+            #annotation_dict = {}
+            if not "annotation" in param:
+                param["annotation"] = {}
+            for annotation_file in param.get("annotations"):
+                #print(annotation_file)
+                if os.path.exists(annotation_file):
+                    log.debug(f"Quick Annotation File {annotation_file}")
+                    quick_annotation_file =annotation_file
+                    quick_annotation_name, quick_annotation_extension = os.path.splitext(
+                        annotation_file)
+                    quick_annotation_format = quick_annotation_extension.replace(
+                        ".", "")
+                    format = None
+                    if quick_annotation_format in ["parquet", "duckdb"]:
+                        format = "parquet"
+                    elif quick_annotation_format in ["gz"]:
+                        format = "bcftools"
+                    else:
+                        log.error(
+                            f"Quick Annotation File {quick_annotation_file} - format {quick_annotation_format} not supported yet")
+                        raise ValueError(
+                            f"Quick Annotation File {quick_annotation_file} - format {quick_annotation_format} not supported yet"
+                        )
+                    if format:
+                        if format not in param["annotation"]:
+                            param["annotation"][format] = {}
+                        if "annotations" not in param["annotation"][format]:
+                            param["annotation"][format]["annotations"] = {}
+                        param["annotation"][format]["annotations"][quick_annotation_file] = { "INFO": None}
+                        #param["annotation"][format]["annotations"][quick_annotation_file] = None
+                else:
+                    log.error(
+                        f"Quick Annotation File {annotation_file} does NOT exist")
+                    
+
+            self.set_param(param)
+
+
 
         if param.get("annotation", None):
             log.info("Annotations")
@@ -1014,6 +1059,10 @@ class Variants:
 
             for annotation in annotations:
                 annotation_fields = annotations[annotation]
+
+                if not annotation_fields:
+                    annotation_fields = { "INFO": None }
+
                 log.debug(f"Annotation '{annotation}'")
                 log.debug(
                     f"Annotation '{annotation}' - fields: {annotation_fields}")
@@ -1052,9 +1101,33 @@ class Variants:
                     if db_file and db_hdr_file:
                         break
 
+                # Database type
+                db_file_name, db_file_extension = os.path.splitext(
+                    db_file)
+                db_file_basename = os.path.basename(db_file)
+                db_file_format = db_file_extension.replace(
+                    ".", "")
+                # db_file_format = db_file_extension.replace(
+                #     ".", "")
+                #print(db_file_format)
+
+                # try to extract header
+                if db_file_name.endswith(".vcf") and not db_hdr_file:
+                    log.debug(f"Try to extract header of file {db_file}")
+                    tmp_extract_header = NamedTemporaryFile(prefix=self.get_prefix(
+                    ), dir=self.get_tmp_dir(), suffix=".vcf.hdr", delete=False)
+                    tmp_extract_header_name = tmp_extract_header.name
+                    tmp_files.append(tmp_extract_header_name)
+                    command_extract_header = f"bcftools view -h {db_file} > {tmp_extract_header_name} 2>/dev/null"
+                    run_parallel_commands([command_extract_header], threads)
+                    db_hdr_file = tmp_extract_header_name
+
+                #if not db_file or (not db_hdr_file and db_file_format not in ["gz"]):
                 if not db_file or not db_hdr_file:
                     log.error("Annotation failed: file not found")
-                    raise ValueError("Annotation failed: file not found")
+                    log.error(f"Annotation annotation file: {db_file}")
+                    log.error(f"Annotation annotation header: {db_hdr_file}")
+                    raise ValueError(f"Annotation failed: databases not found - annotation file {db_file} / annotation header {db_hdr_file}")
                 else:
 
                     log.debug(
@@ -1213,7 +1286,11 @@ class Variants:
                                 # Annotate Command
                                 log.debug(
                                     f"Annotation '{annotation}' - add bcftools command")
-                                command_annotate = f"bcftools annotate --regions-file={tmp_bed_name} -a {db_file} -h {tmp_header_vcf_name} -c {annotation_infos} --rename-annots={tmp_rename_name} {tmp_vcf_name} 2>>{tmp_annotation_vcf_name_err} | bgzip -c > {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} && tabix {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} "
+                                #command_annotate = f"bcftools annotate --regions-file={tmp_bed_name} -a {db_file} -h {tmp_header_vcf_name} -c {annotation_infos} --rename-annots={tmp_rename_name} {tmp_vcf_name} 2>>{tmp_annotation_vcf_name_err} | bgzip -c > {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} && tabix {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} "
+                                #command_annotate = f"bcftools annotate --regions-file={tmp_bed_name} -a {db_file} -h {tmp_header_vcf_name} -c {annotation_infos} --rename-annots={tmp_rename_name} {tmp_vcf_name} -o {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} && tabix {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} "
+                                #command_annotate = f"bcftools annotate --regions-file={tmp_bed_name} -a {db_file} -h {tmp_header_vcf_name} -c {annotation_infos} --rename-annots={tmp_rename_name} {tmp_vcf_name} -o {tmp_annotation_vcf_name} -Oz && tabix {tmp_annotation_vcf_name} "
+                                command_annotate = f"bcftools annotate --regions-file={tmp_bed_name} -a {db_file} -h {tmp_header_vcf_name} -c {annotation_infos} --rename-annots={tmp_rename_name} {tmp_vcf_name} -o {tmp_annotation_vcf_name} -Oz 2>>{tmp_annotation_vcf_name_err} && tabix {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} "
+                                #command_annotate = f"bcftools annotate --regions-file={tmp_bed_name} -a {db_file} -c {annotation_infos} --rename-annots={tmp_rename_name} {tmp_vcf_name} -o {tmp_annotation_vcf_name} -Oz 2>>{tmp_annotation_vcf_name_err} && tabix {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} "
                                 commands.append(command_annotate)
 
 
@@ -1254,6 +1331,10 @@ class Variants:
                 # Merge
                 tmp_ann_vcf_list_cmd = " ".join(tmp_ann_vcf_list)
 
+                # for v in tmp_ann_vcf_list:
+                #     subprocess.run(f"bgzip -dc {v}", shell=True)
+
+
                 if tmp_ann_vcf_list_cmd:
 
                     # Tmp file
@@ -1270,20 +1351,40 @@ class Variants:
                             " ".join(tmp_files)
 
                     # Command merge
-                    merge_command = f"bcftools merge --force-samples --threads={threads} {tmp_vcf_name} {tmp_ann_vcf_list_cmd} 2>>{tmp_annotate_vcf_name_err} | bgzip --threads={threads} -c 2>>{tmp_annotate_vcf_name_err} > {tmp_annotate_vcf_name} {tmp_files_remove_command}"
+                    #merge_command = f"bcftools merge --force-samples --threads={threads} {tmp_vcf_name} {tmp_ann_vcf_list_cmd} 2>>{tmp_annotate_vcf_name_err} | bgzip --threads={threads} -c 2>>{tmp_annotate_vcf_name_err} > {tmp_annotate_vcf_name} {tmp_files_remove_command}"
+                    #merge_command = f"bcftools merge --force-samples --threads={threads} {tmp_vcf_name} {tmp_ann_vcf_list_cmd} -o {tmp_annotate_vcf_name} 2>>{tmp_annotate_vcf_name_err}  {tmp_files_remove_command}"
+                    merge_command = f"bcftools merge --force-samples --threads={threads} {tmp_vcf_name} {tmp_ann_vcf_list_cmd} -o {tmp_annotate_vcf_name} -Oz 2>>{tmp_annotate_vcf_name_err} {tmp_files_remove_command}"
                     log.info(f"Annotation - Annotation merging " +
                              str(len(commands)) + " annotated files")
                     log.debug(f"Annotation - merge command: {merge_command}")
                     run_parallel_commands([merge_command], 1)
 
+
                     # Error messages
                     log.info(f"Error/Warning messages:")
-                    if self.get_config().get("verbosity", "warning") in ["debug"]:
-                        error_message_command = f"cat " + " ".join(err_files)
-                    else:
-                        error_message_command = f"grep '\[E::' " + \
-                            " ".join(err_files)
-                    run_parallel_commands([error_message_command], 1)
+                    error_message_command_all = []
+                    error_message_command_warning = []
+                    error_message_command_err = []
+                    for err_file in err_files:
+                        with open(err_file, 'r') as f:
+                            for line in f:
+                                message = line.strip()
+                                error_message_command_all.append(message)
+                                if line.startswith('[W::'):
+                                    error_message_command_warning.append(message)
+                                if line.startswith('[E::'):
+                                    error_message_command_err.append(f"{err_file}: " + message)
+                    # log info
+                    for message in list(set(error_message_command_err + error_message_command_warning)):
+                        log.info(message)
+                    # debug info
+                    for message in list(set(error_message_command_all)):
+                        log.debug(message)
+                    # failed
+                    if len(error_message_command_err):
+                        log.error("Annotation failed: Error in commands")
+                        raise ValueError("Annotation failed: Error in commands") 
+
 
                     log.info(f"Annotation - Updating...")
                     self.update_from_vcf(tmp_annotate_vcf_name)
@@ -1346,6 +1447,10 @@ class Variants:
         if annotations:
             for annotation in annotations:
                 annotation_fields = annotations[annotation]
+                
+                if not annotation_fields:
+                    annotation_fields = { "INFO": None }
+
                 log.debug(f"Annotation '{annotation}'")
                 log.debug(
                     f"Annotation '{annotation}' - fields: {annotation_fields}")
@@ -1746,17 +1851,32 @@ class Variants:
             None, vcf_file, tmp_merged_vcf_name, config=self.get_config())
         mergeVCF.load_data()
         mergeVCF.export_output(export_header=False)
-        sql_query_update = f"""
-        UPDATE {table_variants} as table_variants
-            SET INFO = (SELECT table_parquet.INFO FROM '{tmp_merged_vcf_name}' as table_parquet
-                                WHERE table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
-                                AND table_parquet.\"POS\" = table_variants.\"POS\"
-                                AND table_parquet.\"ALT\" = table_variants.\"ALT\"
-                                AND table_parquet.\"REF\" = table_variants.\"REF\"
-                        )
-            ;
-            """
-        self.conn.execute(sql_query_update)
+
+        query = "SELECT count(*) AS count FROM variants"
+        count_original_variants = self.conn.execute(query).df()["count"][0]
+        #print(count_original_variants)
+
+        query = f"SELECT count(*) AS count FROM '{tmp_merged_vcf_name}' as table_parquet"
+        count_annotated_variants = self.conn.execute(query).df()["count"][0]
+        #print(count_annotated_variants)
+
+        if count_original_variants != count_annotated_variants:
+            log.warning(f"Update from VCF - Discodance of number of variants between database ({count_original_variants}) and VCF for update ({count_annotated_variants})")
+
+        if count_annotated_variants:
+            sql_query_update = f"""
+            UPDATE {table_variants} as table_variants
+                SET INFO = (
+                            SELECT table_variants.INFO || CASE WHEN table_variants.INFO NOT IN ('','.') AND table_parquet.INFO NOT IN ('','.')  THEN ';' ELSE '' END || CASE WHEN table_parquet.INFO NOT IN ('','.') THEN table_parquet.INFO ELSE '' END
+                            FROM '{tmp_merged_vcf_name}' as table_parquet
+                                    WHERE table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
+                                    AND table_parquet.\"POS\" = table_variants.\"POS\"
+                                    AND table_parquet.\"ALT\" = table_variants.\"ALT\"
+                                    AND table_parquet.\"REF\" = table_variants.\"REF\"
+                            )
+                ;
+                """
+            self.conn.execute(sql_query_update)
 
     def update_from_vcf_brutal(self, vcf_file):
         table_variants = self.get_table_variants()
