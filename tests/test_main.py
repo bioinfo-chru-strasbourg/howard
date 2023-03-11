@@ -6,10 +6,9 @@ Usage:
 pytest tests/
 
 Coverage:
-coverage run -m pytest
+coverage run -m pytest . -x -v
+coverage report --include=howard/* -m
 """
-from __future__ import division
-from __future__ import print_function
 
 import logging as log
 import os
@@ -20,7 +19,6 @@ from howard.objects.variants import Variants
 
 
 tests_folder = os.path.dirname(__file__)
-
 
 
 def remove_if_exists(filepath):

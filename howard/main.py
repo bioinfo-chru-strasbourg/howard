@@ -19,6 +19,11 @@ from howard.objects.annotation import Annotation
 from howard.commons import *
 
 
+# Usage
+# python -m pip install -e .
+# howard --input=my.vcf.gz --output=my.output.vcf --annotations=my.annotations.vcf.gz --stats --overview_footer
+# python -m howard.main --input=my.vcf.gz --output=my.output.vcf --annotations=my.annotations.vcf.gz --stats --overview_footer
+
 
 # Main function
 def main():
@@ -115,25 +120,6 @@ def main():
     if args.input:
         vcfdata_obj = Variants(None, args.input, args.output, config, param)
 
-        # Connexion
-        if vcfdata_obj.get_input_format() in ["db", "duckdb"]:
-            connexion_db = vcfdata_obj.get_input()
-            vcfdata_obj.set_output(args.input)
-        elif vcfdata_obj.get_output_format() in ["db", "duckdb"]:
-            connexion_db = vcfdata_obj.get_output()
-            # vcfdata_obj.set_output(None)
-        elif vcfdata_obj.get_connexion_type() in ["memory", None]:
-            connexion_db = ":memory:"
-        elif vcfdata_obj.get_connexion_type() in ["tmpfile"]:
-            tmp_name = tempfile.mkdtemp(prefix=vcfdata_obj.get_prefix(
-            ), dir=vcfdata_obj.get_tmp_dir(), suffix=".db")
-            connexion_db = f"{tmp_name}/tmp.db"
-        elif vcfdata_obj.get_connexion_type() != "":
-            connexion_db = vcfdata_obj.get_connexion_type()
-        else:
-            connexion_db = ":memory:"
-        
-        conn = duckdb.connect(connexion_db, config=connexion_config)
 
         # Quick Annotation
         if args.annotations:
@@ -204,13 +190,6 @@ def main():
 
 if __name__ == '__main__':
     main()
-    # my_variants = Variants('Alice')
-    # my_variants.say_hello()
 
-    # my_annotation = Annotation('Alice')
-    # my_annotation.say_hello()
-
-    # result = add_numbers(3, 4)
-    # print(result)
 
     

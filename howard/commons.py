@@ -30,10 +30,7 @@ def set_log_level(verbosity):
         "critical": log.CRITICAL,
     }
     if verbosity not in configs.keys():
-        raise ValueError(
-            "Unknown verbosity level:" + verbosity +
-            "\nPlease use any in:" + configs.keys()
-        )
+        raise ValueError("Unknown verbosity level:" + verbosity)
     log.basicConfig(
         format="#[%(asctime)s] [%(levelname)s] %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
