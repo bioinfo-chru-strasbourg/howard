@@ -17,7 +17,7 @@ from howard.commons import *
 
 class Variants:
 
-    def __init__(self, conn=None, input=None, output=None, config={}, param={}):
+    def __init__(self, conn=None, input=None, output=None, config={}, param={}, load=False):
         """
         The function `__init__` initializes the variables, sets the input, output, config, param, connexion and
         header
@@ -49,6 +49,10 @@ class Variants:
 
         # Header
         self.set_header()
+
+        # Load data
+        if load:
+            self.load_data()
 
     # INIT section
 
@@ -113,6 +117,8 @@ class Variants:
             "Flag": "VARCHAR"
         }
 
+        self.index_additionnal_fields = []
+
     # SET section
 
     def set_connexion(self, conn):
@@ -122,8 +128,26 @@ class Variants:
         :param conn: The connection to the database. If not provided, a new connection to an in-memory
         database is created
         """
+        connexion_db = ":memory:"
         if not conn:
-            conn = duckdb.connect(":memory:")
+            if self.get_input_format() in ["db", "duckdb"]:
+                connexion_db = self.get_input()
+                self.set_output(self.get_input())
+            elif self.get_output_format() in ["db", "duckdb"]:
+                connexion_db = self.get_output()
+            elif self.get_connexion_type() in ["memory", ":memory:", None]:
+                connexion_db = ":memory:"
+            elif self.get_connexion_type() in ["tmpfile"]:
+                tmp_name = tempfile.mkdtemp(prefix=self.get_prefix(
+                ), dir=self.get_tmp_dir(), suffix=".db")
+                connexion_db = f"{tmp_name}/tmp.db"
+            elif self.get_connexion_type() != "":
+                connexion_db = self.get_connexion_type()
+
+            conn = duckdb.connect(connexion_db)
+
+        # Set connexion
+        self.connexion_db = connexion_db
         self.conn = conn
 
     def set_output(self, output=None):
@@ -167,8 +191,8 @@ class Variants:
                 with open(input+".hdr", 'rt') as f:
                     header_list = self.read_vcf_header(f)
             else:
-                log.error(f"No header for file {input}!!!")
-                raise ValueError(f"No header for file {input}!!!")
+                log.error(f"No header for file {input}")
+                raise ValueError(f"No header for file {input}")
         else:
             with open(input, 'rt') as f:
                 header_list = self.read_vcf_header(f)
@@ -179,13 +203,13 @@ class Variants:
         # header as VCF object
         self.header_vcf = vcf.Reader(io.StringIO("\n".join(header_list)))
 
-    def set_dataframe(self, dataframe):
-        """
-        The function takes in a dataframe and sets it as the dataframe attribute of the class
+    # def set_dataframe(self, dataframe):
+    #     """
+    #     The function takes in a dataframe and sets it as the dataframe attribute of the class
 
-        :param dataframe: The dataframe that you want to plot
-        """
-        self.dataframe = dataframe
+    #     :param dataframe: The dataframe that you want to plot
+    #     """
+    #     self.dataframe = dataframe
 
 
     def get_overview(self):
@@ -210,6 +234,8 @@ class Variants:
         log.info("Dataframe: ")
         for d in str(df).split("\n"):
             log.info("\t" + str(d))
+
+        return None
 
 
     def get_stats(self):
@@ -245,9 +271,9 @@ class Variants:
         for sample in self.get_header_sample_list():
             sql_query_genotype = f"""
                 SELECT  '{sample}' as sample,
-                        REGEXP_EXTRACT("{sample}", '^([0-9/|\.]*)[:]*',1) as genotype,
-                        count(REGEXP_EXTRACT("{sample}", '^([0-9/|\.]*)[:]*',1)) as count,
-                        (count(REGEXP_EXTRACT("{sample}", '^([0-9/|\.]*)[:]*',1))*100/{nb_of_variants}) || '%' as percentage
+                        REGEXP_EXTRACT("{sample}", '^([0-9/|.]*)[:]*',1) as genotype,
+                        count(REGEXP_EXTRACT("{sample}", '^([0-9/|.]*)[:]*',1)) as count,
+                        (count(REGEXP_EXTRACT("{sample}", '^([0-9/|.]*)[:]*',1))*100/{nb_of_variants}) || '%' as percentage
                 FROM {table_variants_from}
                 WHERE 1
                 GROUP BY genotype
@@ -268,6 +294,8 @@ class Variants:
         for sample in genotypes:
             for d in str(genotypes[sample]).split("\n"):
                 log.info("\t" + str(d))
+
+        return None
 
     def get_input(self):
         """
@@ -316,7 +344,6 @@ class Variants:
         It returns the connexion_db attribute of the object
         :return: The connexion_db is being returned.
         """
-        self.set_connexion_db()
         return self.connexion_db
 
     def get_prefix(self):
@@ -387,23 +414,23 @@ class Variants:
         elif type == "list":
             return self.header_list
 
-    def get_infos_field_as_dict(self, info_field: str = "") -> dict:
-        """
-        It takes a string of the form `key1=value1,key2=value2,key3=value3` and returns a dictionary of
-        the form `{key1:value1,key2:value2,key3:value3}`
+    # def get_infos_field_as_dict(self, info_field: str = "") -> dict:
+    #     """
+    #     It takes a string of the form `key1=value1,key2=value2,key3=value3` and returns a dictionary of
+    #     the form `{key1:value1,key2:value2,key3:value3}`
         
-        :param info_field: The INFO field to parse
-        :type info_field: str
-        :return: A dictionary with the info field as key and the value as value.
-        """
+    #     :param info_field: The INFO field to parse
+    #     :type info_field: str
+    #     :return: A dictionary with the info field as key and the value as value.
+    #     """
 
-        # Split in parts
-        parts = info_field.strip().split('<')[1].split('>')[0].split(',')
+    #     # Split in parts
+    #     parts = info_field.strip().split('<')[1].split('>')[0].split(',')
 
-        # Create dictionnary
-        info_dict = {part.split('=')[0]: part.split(
-            '=')[1].replace('"', '') for part in parts}
-        return info_dict
+    #     # Create dictionnary
+    #     info_dict = {part.split('=')[0]: part.split(
+    #         '=')[1].replace('"', '') for part in parts}
+    #     return info_dict
 
 
     def get_header_length(self):
@@ -451,13 +478,13 @@ class Variants:
         """
         return self.get_config().get("verbose", False)
 
-    def get_dataframe(self):
-        """
-        This function returns the dataframe of the class
+    # def get_dataframe(self):
+    #     """
+    #     This function returns the dataframe of the class
 
-        :return: The dataframe is being returned.
-        """
-        return self.dataframe
+    #     :return: The dataframe is being returned.
+    #     """
+    #     return self.dataframe
 
 
     def insert_file_to_table(self, file, columns, header_len=0, sep='\t', chunksize=1000000):
@@ -481,26 +508,31 @@ class Variants:
             for chunk in pd.read_csv(file, skiprows=header_len, sep=sep, chunksize=chunksize, engine="c"):
                 sql_insert_into = f"INSERT INTO variants ({columns}) SELECT {columns} FROM chunk"
                 self.conn.execute(sql_insert_into)
-        else:
-            chunk = pd.read_csv(file, skiprows=header_len, sep=sep, engine="c")
-            sql_insert_into = f"INSERT INTO variants ({columns}) SELECT {columns} FROM chunk"
-            self.conn.execute(sql_insert_into)
+        # else:
+        #     chunk = pd.read_csv(file, skiprows=header_len, sep=sep, engine="c")
+        #     sql_insert_into = f"INSERT INTO variants ({columns}) SELECT {columns} FROM chunk"
+        #     self.conn.execute(sql_insert_into)
 
-    def append_to_parquet_table(self, dataframe, filepath=None, writer=None):
-        """
-        This function takes a dataframe, converts it to a pyarrow table, and then writes it to a parquet
-        file
+    # def append_to_parquet_table(self, dataframe, filepath=None, writer=None):
+    #     """
+    #     This function takes a dataframe, converts it to a pyarrow table, and then writes it to a parquet
+    #     file
         
-        :param dataframe: pd.DataFrame to be written in parquet format
-        :param filepath: The path to the file you want to write to
-        :param writer: ParquetWriter object to write pyarrow tables in parquet format
-        :return: The ParquetWriter object is being returned.
-        """
-        table = pa.Table.from_pandas(dataframe)
-        if writer is None:
-            writer = pq.ParquetWriter(filepath, table.schema)
-        writer.write_table(table=table)
-        return writer
+    #     :param dataframe: pd.DataFrame to be written in parquet format
+    #     :param filepath: The path to the file you want to write to
+    #     :param writer: ParquetWriter object to write pyarrow tables in parquet format
+    #     :return: The ParquetWriter object is being returned.
+    #     """
+    #     table = pa.Table.from_pandas(dataframe)
+    #     if writer is None:
+    #         writer = pq.ParquetWriter(filepath, table.schema)
+    #     writer.write_table(table=table)
+    #     return writer
+
+    # def commit(self):
+
+    #     self.get_connexion().commit()
+
 
     def load_data(self):
         """
@@ -615,11 +647,15 @@ class Variants:
         # Create index after insertion
         self.create_indexes()
 
+
        
     def explode_infos(self, prefix = None):
         """
         The function takes a VCF file and explodes the INFO fields into individual columns
         """
+
+        # drop indexes 
+        self.drop_indexes()
 
         # Access
         access = self.get_config().get("access", None)
@@ -637,8 +673,17 @@ class Variants:
             
             sql_info_alter_table_array = []
 
+            # number of fields in infos
+            nb_info_fields = str(len(self.get_header().infos))
+
+            # info field id
+            id_info_field = 0
+
             for info in self.get_header().infos:
                 log.debug(f"Explode INFO fields - ADD {info} annotations fields")
+
+                # info field id
+                id_info_field += 1
 
                 info_id_sql = prefix+info
                 type_sql = self.code_type_map_to_sql.get(self.get_header().infos[info].type, "VARCHAR")
@@ -646,25 +691,36 @@ class Variants:
                     type_sql = "VARCHAR"
 
                 # Add field
-                sql_info_alter_table = f"ALTER TABLE {table_variants} ADD COLUMN \"{info_id_sql}\" {type_sql} DEFAULT null"
+                sql_info_alter_table = f"ALTER TABLE {table_variants} ADD COLUMN IF NOT EXISTS \"{info_id_sql}\" {type_sql} DEFAULT null"
                 log.debug(f"Explode INFO fields - ADD {info} annotations fields: {sql_info_alter_table}")
                 self.conn.execute(sql_info_alter_table)
 
                 # Update field array
-                update_info_field = f"\"{info_id_sql}\" = CASE WHEN REGEXP_EXTRACT(INFO, '[\^;]*{info}=([^;]*)',1) == '' THEN NULL WHEN REGEXP_EXTRACT(INFO, '{info}=([^;]*)',1) == '.' THEN NULL ELSE REGEXP_EXTRACT(INFO, '{info}=([^;]*)',1) END"
+                update_info_field = f"\"{info_id_sql}\" = CASE WHEN REGEXP_EXTRACT(INFO, '[^;]*{info}=([^;]*)',1) == '' THEN NULL WHEN REGEXP_EXTRACT(INFO, '{info}=([^;]*)',1) == '.' THEN NULL ELSE REGEXP_EXTRACT(INFO, '{info}=([^;]*)',1) END"
                 sql_info_alter_table_array.append(update_info_field)
 
                 # Update table
-                sql_info_alter_table_array_join = ", ".join(sql_info_alter_table_array)
-                sql_info_alter_table = f"UPDATE {table_variants} SET {sql_info_alter_table_array_join}"
-                log.debug(f"Explode INFO fields - ADD ["+str(len(self.get_header().infos))+f"]: {sql_info_alter_table}")
+                #sql_info_alter_table_array_join = ", ".join(sql_info_alter_table_array)
+                sql_info_alter_table = f"UPDATE {table_variants} SET {update_info_field}"
+                log.debug(f"Explode INFO fields - ADD [{id_info_field}/{nb_info_fields}]: {sql_info_alter_table}")
                 self.conn.execute(sql_info_alter_table)
+
+            # # Update table
+            # sql_info_alter_table_array_join = ", ".join(sql_info_alter_table_array)
+            # sql_info_alter_table = f"UPDATE {table_variants} SET {sql_info_alter_table_array_join}"
+            # log.debug(f"Explode INFO fields - ADD ["+str(len(self.get_header().infos))+f"]: {sql_info_alter_table}")
+            # self.conn.execute(sql_info_alter_table)
+
+        # create indexes 
+        self.create_indexes()
 
 
     def create_indexes(self):
         """
         Create indexes on the table after insertion
         """
+
+        #print("create indexes")
 
         # Access
         access = self.get_config().get("access", None)
@@ -681,13 +737,28 @@ class Variants:
             self.conn.execute(sql_create_table_index)
             sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.get_table_variants()}_alt ON {self.table_variants} ("ALT")'
             self.conn.execute(sql_create_table_index)
+            for field in self.index_additionnal_fields:
+                #print(f"create {field}")
+                sql_create_table_index = f""" CREATE INDEX IF NOT EXISTS "idx_{self.get_table_variants()}_{field}" ON {self.table_variants} ("{field}") """
+                self.conn.execute(sql_create_table_index)
 
     def drop_indexes(self):
         """
         Create indexes on the table after insertion
         """
 
-         # Drop
+        # Access
+        access = self.get_config().get("access", None)
+
+        if access not in ["RO"]:
+            list_indexes = self.conn.execute(f"SELECT index_name FROM duckdb_indexes WHERE table_name='{self.table_variants}'")
+            for index in list_indexes.df()["index_name"]:
+                sql_drop_table_index = f""" DROP INDEX IF EXISTS "{index}" """
+                self.conn.execute(sql_drop_table_index)
+
+        return
+    
+        # Drop
         sql_create_table_index = f'DROP INDEX IF EXISTS idx_{self.table_variants}'
         self.conn.execute(sql_create_table_index)
         sql_create_table_index = f'DROP INDEX IF EXISTS idx_{self.table_variants}_chrom'
@@ -698,37 +769,42 @@ class Variants:
         self.conn.execute(sql_create_table_index)
         sql_create_table_index = f'DROP INDEX IF EXISTS idx_{self.table_variants}_alt'
         self.conn.execute(sql_create_table_index)
+        for field in self.index_additionnal_fields:
+            print(f"drop {field}")
+            sql_create_table_index = f""" DROP INDEX IF EXISTS "idx_{self.table_variants}_{field}" """
+            self.conn.execute(sql_create_table_index)
 
 
-    def load_data_naive(self):
-        """
-        > The function loads the data from the input file into the database
-        """
-        if self.input_format in ["vcf", "gz"]:
-            header_len = self.get_header_length()
-            # Load VCF
-            if self.input_format in ["gz"]:
-                with bgzf.open(self.input, 'rt') as file:
-                    dataframe = pd.read_csv(
-                        file, skiprows=header_len, sep='\t')
-            else:
-                dataframe = pd.read_csv(
-                    self.input, skiprows=header_len, sep='\t')
-            self.set_dataframe(dataframe)
-            # Variants reading
-            self.conn.execute(
-                f"CREATE TABLE {self.table_variants} AS SELECT * FROM dataframe")
-            pass
-        elif self.input_format in ["parquet"]:
-            # Load Parquet
-            pass
-        elif self.input_format in ["db", "duckdb"]:
-            # Load DuckDB
-            pass
-        else:
-            log.error(f"Input file format '{self.input_format}' not available")
-            raise ValueError(
-                f"Input file format '{self.input_format}' not available")
+    # def load_data_naive(self):
+    #     """
+    #     > The function loads the data from the input file into the database
+    #     """
+    #     if self.input_format in ["vcf", "gz"]:
+    #         header_len = self.get_header_length()
+    #         # Load VCF
+    #         if self.input_format in ["gz"]:
+    #             with bgzf.open(self.input, 'rt') as file:
+    #                 dataframe = pd.read_csv(
+    #                     file, skiprows=header_len, sep='\t')
+    #         else:
+    #             dataframe = pd.read_csv(
+    #                 self.input, skiprows=header_len, sep='\t')
+    #         self.set_dataframe(dataframe)
+    #         # Variants reading
+    #         self.conn.execute(
+    #             f"CREATE TABLE {self.table_variants} AS SELECT * FROM dataframe")
+    #         pass
+    #     elif self.input_format in ["parquet"]:
+    #         # Load Parquet
+    #         pass
+    #     elif self.input_format in ["db", "duckdb"]:
+    #         # Load DuckDB
+    #         pass
+    #     else:
+    #         log.error(f"Input file format '{self.input_format}' not available")
+    #         raise ValueError(
+    #             f"Input file format '{self.input_format}' not available")
+
 
     def read_vcf_header(self, f):
         """
@@ -788,13 +864,6 @@ class Variants:
 
             if self.get_output_format() in ["parquet"]:
 
-                # delimiter
-                delimiter = "\t"
-                if self.get_output_format() in ["csv"]:
-                    delimiter = ","
-                if self.get_output_format() in ["psv"]:
-                    delimiter = "|"
-
                 # Export parquet
                 sql_query_export = f"COPY (SELECT {sql_column} FROM {table_variants} WHERE 1 {sql_query_hard} {sql_query_sort} {sql_query_limit}) TO '{output_file}' WITH (FORMAT PARQUET)"
                 self.conn.execute(sql_query_export)
@@ -802,13 +871,6 @@ class Variants:
             elif self.get_output_format() in ["db", "duckdb"]:
 
                 log.debug("Export in DuckDB. Nothing to do")
-                # Export duckDB
-                # sql_query_export = f"EXPORT DATABASE '{output_file}'"
-                # self.conn.execute(sql_query_export)
-
-                # self.conn.execute(f"PRAGMA wal_autocheckpoint = FULL")
-                # self.conn.execute(f"VACUUM")
-                # self.conn.execute(f"CREATE DATABASE 'file:{output_file}' AS COPY OF 'memory:'")
 
             elif self.get_output_format() in ["tsv", "csv", "psv"]:
 
@@ -839,7 +901,7 @@ class Variants:
                 # Create output
                 # Cat header and variants
                 command_gzip = " cat "
-                command_gzip_d = " cat "
+                command_gzip_d = " zcat "
                 if self.output_format in ["gz"]:
                     command_gzip = f" bgzip -c "
                     # Check threads in bgzip command (error in macos)
@@ -929,25 +991,20 @@ class Variants:
     def run_commands(self, commands=[], threads=1):
         run_parallel_commands(commands, threads)
 
-    # def set_id_null(self, threads=1):
-    #     functions = [function_query(self, "UPDATE variants SET ID='.' WHERE REF='A'"), function_query(self, "UPDATE variants SET ID='.' WHERE REF='C'"), function_query(
-    #         self, "UPDATE variants SET ID='.' WHERE REF='T'"), function_query(self, "UPDATE variants SET ID='.' WHERE REF='G'")]
-    #     run_parallel_functions(functions, threads)
 
     def get_threads(self):
         return int(self.config.get("threads", 1))
+
 
     def annotation(self):
 
         param = self.get_param()
 
-
         if param.get("annotations"):
-            #annotation_dict = {}
             if not "annotation" in param:
                 param["annotation"] = {}
             for annotation_file in param.get("annotations"):
-                #print(annotation_file)
+                annotations = param.get("annotations").get(annotation_file, None)
                 if os.path.exists(annotation_file):
                     log.debug(f"Quick Annotation File {annotation_file}")
                     quick_annotation_file =annotation_file
@@ -971,16 +1028,12 @@ class Variants:
                             param["annotation"][format] = {}
                         if "annotations" not in param["annotation"][format]:
                             param["annotation"][format]["annotations"] = {}
-                        param["annotation"][format]["annotations"][quick_annotation_file] = { "INFO": None}
-                        #param["annotation"][format]["annotations"][quick_annotation_file] = None
+                        param["annotation"][format]["annotations"][quick_annotation_file] = annotations
                 else:
                     log.error(
                         f"Quick Annotation File {annotation_file} does NOT exist")
-                    
 
             self.set_param(param)
-
-
 
         if param.get("annotation", None):
             log.info("Annotations")
@@ -996,6 +1049,12 @@ class Variants:
                 log.info("Annotations 'snpeff'...")
             if param.get("annotation", {}).get("varank", None):
                 log.info("Annotations 'varank'...")
+
+        # Explode INFOS fields into table fields
+        if self.get_param().get("explode_infos",None):
+            self.explode_infos(prefix=self.get_param().get("explode_infos",None))
+
+
 
     def annotation_bcftools(self, threads=None):
 
@@ -1443,8 +1502,16 @@ class Variants:
             vcf_annotation_line = self.get_header().infos.get(vcf_annotation)
             log.debug(
                 f"Existing annotations in VCF: {vcf_annotation} [{vcf_annotation_line}]")
+        
+        # explode infos
+        self.explode_infos(prefix=self.get_param().get("explode_infos",None))
+
+        # drop indexes
+        self.drop_indexes()
+
 
         if annotations:
+
             for annotation in annotations:
                 annotation_fields = annotations[annotation]
                 
@@ -1533,6 +1600,8 @@ class Variants:
 
                     # List of annotation fields to use
                     sql_query_annotations_list = []
+                    sql_query_annotation_update_column_sets = []
+                    sql_query_annotation_update_info_sets = []
 
                     # Number of fields
                     nb_annotation_field = 0
@@ -1559,7 +1628,8 @@ class Variants:
                                 annotation_field_exists_on_variants))
 
                         # To annotate
-                        if annotation_field in parquet_hdr_vcf.get_header().infos and annotation_fields_new_name not in self.get_header().infos and not annotation_field_exists_on_variants:
+                        force_update_annotation = True
+                        if annotation_field in parquet_hdr_vcf.get_header().infos and (force_update_annotation or (annotation_fields_new_name not in self.get_header().infos and not annotation_field_exists_on_variants)):
 
                             # Add field to annotation to process list
                             annotation_fields_processed.append(
@@ -1576,8 +1646,11 @@ class Variants:
                                 f"Annotation '{annotation}' - '{annotation_field}' -> 'INFO/{annotation_fields_new_name}'")
 
                             # Annotation query fields
-                            sql_query_annotations_list.append(
-                                f"|| '{annotation_field_sep}' || '{annotation_fields_new_name}=' || REGEXP_EXTRACT(';' || table_parquet.INFO, ';{annotation_field}=([^;]*)',1) ")
+                            if False:
+                                # sql_query_annotations_list.append(
+                                #     f"|| '{annotation_field_sep}' || '{annotation_fields_new_name}=' || REGEXP_EXTRACT(';' || table_parquet.INFO, ';{annotation_field}=([^;]*)',1) ")
+                                sql_query_annotations_list.append(
+                                    f"|| CASE WHEN REGEXP_EXTRACT(';' || table_parquet.INFO, ';{annotation_field}=([^;]*)',1) NOT IN ('','.') THEN '{annotation_field_sep}' || '{annotation_fields_new_name}=' || REGEXP_EXTRACT(';' || table_parquet.INFO, ';{annotation_field}=([^;]*)',1) ELSE '' END")
 
                             # Add INFO field to header
                             parquet_hdr_vcf_header_infos_number = parquet_hdr_vcf_header_infos[
@@ -1601,18 +1674,56 @@ class Variants:
                                 self.code_type_map[parquet_hdr_vcf_header_infos_type]
                             )
 
+                            if True:
+                                # Update query
+
+                                # drop indexes
+                                self.drop_indexes()
+
+                                # create column
+                                prefix = "INFO/"
+                                info_id_sql = prefix+annotation_field
+                                type_sql = self.code_type_map_to_sql.get(parquet_hdr_vcf_header_infos_type, "VARCHAR")
+                                if parquet_hdr_vcf_header_infos_number != 1:
+                                    type_sql = "VARCHAR"
+
+                                # add field to additional index
+                                self.index_additionnal_fields.append(info_id_sql)
+
+                                sql_query_annotations_create_column = f"""ALTER TABLE {table_variants} ADD COLUMN IF NOT EXISTS "{info_id_sql}" {type_sql} DEFAULT null"""
+                                #print(sql_query_annotations_create_column)
+                                #print(self.conn.execute(f"SELECT index_name FROM duckdb_indexes WHERE table_name='{table_variants}'").df())
+                                #print(self.conn.execute("DESCRIBE TABLE variants").df())
+                                #print(self.conn.execute("PRAGMA table_info(variants);").df())
+                                self.conn.execute(sql_query_annotations_create_column)
+                                sql_query_annotations_create_column_index = f"""CREATE INDEX IF NOT EXISTS "idx_{annotation_field}" ON {table_variants} ("{info_id_sql}")"""
+                                self.conn.execute(sql_query_annotations_create_column_index)
+
+                                # update column
+                                sql_query_annotation_update_column_sets.append(f""" "{info_id_sql}" = REGEXP_EXTRACT(';' || table_parquet.INFO, ';{annotation_field}=([^;]*)',1) """)
+
+                                # update INFO
+                                sql_query_annotation_update_info_sets.append(f""" || CASE WHEN "{info_id_sql}" NOT IN ('','.') THEN '{annotation_field_sep}' || '{annotation_field}=' || "{info_id_sql}" ELSE '' END """)
+
+
                         # Not to annotate
                         else:
+
+                            if force_update_annotation:
+                                annotation_message = "forced"
+                            else:
+                                annotation_message = "skipped"
 
                             if annotation_field not in parquet_hdr_vcf.get_header().infos:
                                 log.warning(
                                     f"Annotation '{annotation}' - '{annotation_field}' [{nb_annotation_field}] - not available in parquet file")
                             if annotation_fields_new_name in self.get_header().infos:
                                 log.warning(
-                                    f"Annotation '{annotation}' - '{annotation_fields_new_name}' [{nb_annotation_field}] - already exists in header(skipped)")
+                                    f"Annotation '{annotation}' - '{annotation_fields_new_name}' [{nb_annotation_field}] - already exists in header ({annotation_message})")
                             if annotation_field_exists_on_variants:
                                 log.warning(
-                                    f"Annotation '{annotation}' - '{annotation_fields_new_name}' [{nb_annotation_field}] - already exists in variants (skipped)")
+                                    f"Annotation '{annotation}' - '{annotation_fields_new_name}' [{nb_annotation_field}] - already exists in variants ({annotation_message})")
+                            
 
                     # Check if ALL fields have to be annotated. Thus concat all INFO field
                     if nb_annotation_field == len(annotation_fields) and annotation_fields_ALL:
@@ -1628,6 +1739,15 @@ class Variants:
                         # Join query annotation list for SQL
                         sql_query_annotations_list_sql = " ".join(
                             sql_query_annotations_list)
+
+                        # Join query annotation update column sets for SQL
+                        sql_query_annotation_update_column_sets_sql = ", ".join(
+                            sql_query_annotation_update_column_sets)
+
+                        # Join query annotation update info sets for SQL
+                        sql_query_annotation_update_info_sets_sql = " || ';' ".join(
+                            sql_query_annotation_update_info_sets)
+                        
 
                         # Check chromosomes list (and variant max position)
                         sql_query_chromosomes_max_pos = f"""SELECT table_variants.\"#CHROM\" as CHROM, MAX(table_variants.\"POS\") as MAX_POS, MIN(table_variants.\"POS\")-1 as MIN_POS FROM {table_variants} as table_variants GROUP BY table_variants.\"#CHROM\""""
@@ -1796,7 +1916,7 @@ class Variants:
                                     # Create query to update
                                     sql_query_annotation_chrom_interval_pos = f"""
                                         UPDATE {table_variants} as table_variants
-                                            SET INFO = CASE WHEN table_variants.INFO NOT IN ('','.') THEN table_variants.INFO ELSE '' END || CASE WHEN table_variants.INFO NOT IN ('','.') THEN ';' ELSE '' END {sql_query_annotations_list_sql}
+                                            SET INFO = CASE WHEN table_variants.INFO NOT IN ('','.') THEN table_variants.INFO ELSE '' END || CASE WHEN ('' {sql_query_annotations_list_sql}) NOT IN ('','.') THEN ';' ELSE '' END {sql_query_annotations_list_sql}
                                             FROM (SELECT \"#CHROM\", \"POS\", \"REF\", \"ALT\", \"INFO\" FROM {parquet_file_link} as table_parquet WHERE {clause_where_regions_parquet}) as table_parquet
                                             WHERE ( {clause_where_regions_variants} )
                                                 AND table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
@@ -1805,7 +1925,71 @@ class Variants:
                                                 AND table_parquet.\"REF\" = table_variants.\"REF\"
                                             
                                                 """
-                                    query_dict[f"{chrom}:{sql_query_interval_start}-{sql_query_interval_stop}"] = sql_query_annotation_chrom_interval_pos
+                                    # SET INFO = CASE WHEN table_variants.INFO NOT IN ('','.') THEN table_variants.INFO ELSE '' END || CASE WHEN table_variants.INFO NOT IN ('','.') THEN ';' ELSE '' END {sql_query_annotations_list_sql}
+                                            
+                                    #query_dict[f"{chrom}:{sql_query_interval_start}-{sql_query_interval_stop}"] = sql_query_annotation_chrom_interval_pos
+                                    
+                                    if True:
+                                        # # Create query to update columns
+                                        # sql_query_annotation_chrom_interval_pos_update_columns = f"""
+                                        #     DROP VIEW IF EXISTS v1;
+                                        #     CREATE VIEW v1 AS SELECT \"#CHROM\", \"POS\", \"REF\", \"ALT\", STRING_AGG(\"INFO\") AS INFO FROM {parquet_file_link} as table_parquet WHERE {clause_where_regions_parquet} GROUP BY \"#CHROM\", \"POS\", \"REF\", \"ALT\";
+                                        #     UPDATE {table_variants} as table_variants
+                                        #         SET {sql_query_annotation_update_column_sets_sql}
+                                        #         FROM v1 as table_parquet
+                                        #         WHERE ( {clause_where_regions_variants} )
+                                        #             AND table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
+                                        #             AND table_parquet.\"POS\" = table_variants.\"POS\"
+                                        #             AND table_parquet.\"ALT\" = table_variants.\"ALT\"
+                                        #             AND table_parquet.\"REF\" = table_variants.\"REF\";
+                                        #     UPDATE {table_variants} as table_variants
+                                        #         SET INFO = table_variants.INFO || ';' {sql_query_annotation_update_info_sets_sql}
+                                        #         FROM v1 as table_parquet
+                                        #         WHERE ( {clause_where_regions_variants} )
+                                        #             AND table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
+                                        #             AND table_parquet.\"POS\" = table_variants.\"POS\"
+                                        #             AND table_parquet.\"ALT\" = table_variants.\"ALT\"
+                                        #             AND table_parquet.\"REF\" = table_variants.\"REF\";
+                                        #             """
+                                        # Create query to update columns
+                                        sql_query_annotation_chrom_interval_pos_update_columns = f"""
+                                            DROP VIEW IF EXISTS tmp_view_annotation;
+                                            CREATE VIEW tmp_view_annotation AS SELECT \"#CHROM\", \"POS\", \"REF\", \"ALT\", \"INFO\" AS INFO FROM {parquet_file_link} as table_parquet WHERE {clause_where_regions_parquet};
+                                            UPDATE {table_variants} as table_variants
+                                                SET {sql_query_annotation_update_column_sets_sql}
+                                                FROM tmp_view_annotation as table_parquet
+                                                WHERE ( {clause_where_regions_variants} )
+                                                    AND table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
+                                                    AND table_parquet.\"POS\" = table_variants.\"POS\"
+                                                    AND table_parquet.\"ALT\" = table_variants.\"ALT\"
+                                                    AND table_parquet.\"REF\" = table_variants.\"REF\";
+                                            UPDATE {table_variants} as table_variants
+                                                SET INFO = CASE WHEN table_variants.INFO NOT IN ('.','') THEN table_variants.INFO || ';' ELSE '' END {sql_query_annotation_update_info_sets_sql}
+                                                FROM tmp_view_annotation as table_parquet
+                                                WHERE ( {clause_where_regions_variants} )
+                                                    AND table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
+                                                    AND table_parquet.\"POS\" = table_variants.\"POS\"
+                                                    AND table_parquet.\"ALT\" = table_variants.\"ALT\"
+                                                    AND table_parquet.\"REF\" = table_variants.\"REF\";
+                                                    """
+                                        query_dict[f"{chrom}:{sql_query_interval_start}-{sql_query_interval_stop}"] = sql_query_annotation_chrom_interval_pos_update_columns
+                                        # print(sql_query_annotation_chrom_interval_pos_update_columns)
+                                        # result = self.conn.execute(sql_query_annotation_chrom_interval_pos_update_columns)
+                                        # print(result.df())
+
+                                        # Create query to update columns
+                                        # sql_query_annotation_chrom_interval_pos_update_columns = f"""
+                                        #     UPDATE {table_variants} as table_variants
+                                        #         SET INFO = table_variants.INFO || ';' {sql_query_annotation_update_info_sets_sql}
+                                        #         FROM (SELECT \"#CHROM\", \"POS\", \"REF\", \"ALT\", \"INFO\" FROM {parquet_file_link} as table_parquet WHERE {clause_where_regions_parquet}) as table_parquet
+                                        #         WHERE ( {clause_where_regions_variants} )
+                                        #             AND table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
+                                        #             AND table_parquet.\"POS\" = table_variants.\"POS\"
+                                        #             AND table_parquet.\"ALT\" = table_variants.\"ALT\"
+                                        #             AND table_parquet.\"REF\" = table_variants.\"REF\"
+                                                
+                                        #             """
+                                        #query_dict[f"{chrom}:{sql_query_interval_start}-{sql_query_interval_stop} info update"] = sql_query_annotation_chrom_interval_pos_update_columns
 
                                     log.debug(
                                         "Create SQL query: " + str(sql_query_annotation_chrom_interval_pos))
@@ -1840,6 +2024,9 @@ class Variants:
 
                     log.debug("Final header: " + str(vcf_reader.infos))
 
+        # create indexes
+        self.create_indexes()
+
         return
 
     def update_from_vcf(self, vcf_file):
@@ -1867,7 +2054,7 @@ class Variants:
             sql_query_update = f"""
             UPDATE {table_variants} as table_variants
                 SET INFO = (
-                            SELECT table_variants.INFO || CASE WHEN table_variants.INFO NOT IN ('','.') AND table_parquet.INFO NOT IN ('','.')  THEN ';' ELSE '' END || CASE WHEN table_parquet.INFO NOT IN ('','.') THEN table_parquet.INFO ELSE '' END
+                            SELECT CASE WHEN table_variants.INFO NOT IN ('','.') THEN table_variants.INFO ELSE '' END || CASE WHEN table_variants.INFO NOT IN ('','.') AND table_parquet.INFO NOT IN ('','.')  THEN ';' ELSE '' END || CASE WHEN table_parquet.INFO NOT IN ('','.') THEN table_parquet.INFO ELSE '' END
                             FROM '{tmp_merged_vcf_name}' as table_parquet
                                     WHERE table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
                                     AND table_parquet.\"POS\" = table_variants.\"POS\"

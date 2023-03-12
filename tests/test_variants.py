@@ -899,7 +899,9 @@ def test_annotations():
     check_annotation1 = result.df()["count"][0] == 1
 
     # Check annotation2
-    result = vcf.execute_query("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO LIKE '%nci60=0.66%'")
+    #result = vcf.execute_query("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO LIKE '%nci60=0.66%'")
+    result = vcf.execute_query("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'")
+    # DP=125;nci60=0.66
     check_annotation2 = result.df()["count"][0] == 1
     
     # check full
@@ -930,7 +932,7 @@ def test_annotation_parquet():
     # Annotation
     vcf.annotation()
     # query annotated variant
-    result = vcf.execute_query("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO LIKE '%nci60=0.66%'")
+    result = vcf.execute_query("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'")
     length = len(result.df())
     
     assert length == 1
@@ -955,7 +957,7 @@ def test_annotation_bcftools():
     # Annotation
     vcf.annotation()
     # query annotated variant
-    result = vcf.execute_query("""SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO LIKE '%nci60=0.66%'""")
+    result = vcf.execute_query("""SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'""")
     length = len(result.df())
     
     assert length == 1
