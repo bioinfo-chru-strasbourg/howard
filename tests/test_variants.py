@@ -19,38 +19,12 @@ import Bio.bgzf as bgzf
 import gzip
 import pytest
 
+from howard.commons import *
 from howard.objects.variants import Variants
 
 
 tests_folder = os.path.dirname(__file__)
 
-
-
-def remove_if_exists(filepath):
-    if os.path.exists(filepath):
-        os.remove(filepath)
-
-
-def test_remove_if_exists():
-
-    # filename
-    filename = "/tmp/output.test"
-
-    # create filename
-    fhandle = open(filename, 'a')
-    try:
-        os.utime(filename, None)
-    finally:
-        fhandle.close()
-    created = os.path.exists(filename)
-
-    # remove filename
-    remove_if_exists(filename)
-
-    # check delete
-    deleted = not os.path.exists(filename)
-
-    assert created and deleted
 
 
 def test_set_get_input():
@@ -860,23 +834,19 @@ def test_annotations():
     input_vcf = tests_folder + "/data/example.vcf.gz"
     annotation1 = tests_folder + "/data/annotations/nci60.parquet"
     annotation2 = tests_folder + "/data/example.vcf.gz"
+    annotation3 = tests_folder + "/data/annotations/refGene.bed.gz"
     output_vcf = "/tmp/output.vcf.gz"
-
-    # Create connection
-    conn = duckdb.connect(":memory:")
 
     # Construct param dict
     param_annotations = {
             annotation1: {"INFO": None},
             annotation2: {"CLNSIG": "CLNSIG_new"},
+            annotation3: {"symbol": "gene"},
             }
     param = {"annotations": param_annotations }
 
     # Create object
-    vcf = Variants(conn=conn, input=input_vcf, output=output_vcf, param=param)
-
-    # Load data
-    vcf.load_data()
+    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Remove if output file exists
     remove_if_exists(output_vcf)
@@ -888,21 +858,25 @@ def test_annotations():
     param_input = vcf.get_param()
     expected_param = {'annotations': param_annotations,
                       'annotation': {
-                        'parquet': {'annotations': {'/mnt/BIOINFO/git/HOWARD/tests/data/annotations/nci60.parquet': {'INFO': None}}},
-                        'bcftools': {'annotations': {'/mnt/BIOINFO/git/HOWARD/tests/data/example.vcf.gz': {'CLNSIG': 'CLNSIG_new'}}}
-                        }
+                        'parquet': {'annotations': {annotation1: {'INFO': None}}},
+                        'bcftools': {'annotations': {annotation2: {'CLNSIG': 'CLNSIG_new'}, annotation3: {'symbol': 'gene'}}}}
                     }
+
     check_param = param_input and expected_param
 
     # Check annotation1
-    result = vcf.execute_query("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr1' AND POS = 28736 AND REF = 'A' AND ALT = 'C' AND INFO LIKE '%CLNSIG_new=%'")
-    check_annotation1 = result.df()["count"][0] == 1
+    result = vcf.execute_query("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr1' AND POS = 28736 AND REF = 'A' AND ALT = 'C' AND INFO LIKE '%CLNSIG_new=%'").df()
+    check_annotation1 = False
+    if len(result["count"]):
+        if result["count"][0] == 1:
+            check_annotation1 = True
 
     # Check annotation2
-    #result = vcf.execute_query("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO LIKE '%nci60=0.66%'")
-    result = vcf.execute_query("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'")
-    # DP=125;nci60=0.66
-    check_annotation2 = result.df()["count"][0] == 1
+    result = vcf.execute_query("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66;gene=EGFR,EGFR-AS1'").df()
+    check_annotation2 = False
+    if len(result["count"]):
+        if result["count"][0] == 1:
+            check_annotation2 = True
     
     # check full
     check_full = check_param and check_annotation1 and check_annotation2
@@ -917,25 +891,78 @@ def test_annotation_parquet():
     annotation_parquet = tests_folder + "/data/annotations/nci60.parquet"
     output_vcf = "/tmp/output.vcf.gz"
 
-    # Create connection
-    conn = duckdb.connect(":memory:")
-
     # Construct param dict
     param = {"annotation": {"parquet": {"annotations": {annotation_parquet: {"INFO": None}}}}}
 
     # Create object
-    vcf = Variants(conn=conn, input=input_vcf, output=output_vcf, param=param)
-    # Load data
-    vcf.load_data()
+    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
     # Remove if output file exists
     remove_if_exists(output_vcf)
+
     # Annotation
     vcf.annotation()
+
     # query annotated variant
     result = vcf.execute_query("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'")
     length = len(result.df())
     
     assert length == 1
+
+
+def test_annotation_duckdb():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    annotation_parquet = tests_folder + "/data/annotations/nci60.duckdb"
+    output_vcf = "/tmp/output.vcf.gz"
+
+    # Construct param dict
+    param = {"annotation": {"parquet": {"annotations": {annotation_parquet: {"INFO": None}}}}}
+
+    # Create object
+    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
+    # Remove if output file exists
+    remove_if_exists(output_vcf)
+
+    # Annotation
+    vcf.annotation()
+
+    # query annotated variant
+    result = vcf.execute_query("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'")
+    length = len(result.df())
+    
+    assert length == 1
+
+
+# def test_annotation_duckdb_explode_infos():
+
+#     # Init files
+#     input_vcf = tests_folder + "/data/example.vcf.gz"
+#     annotation_parquet = tests_folder + "/data/annotations/nci60.explode_infos.duckdb"
+#     output_vcf = "/tmp/output.vcf.gz"
+
+#     # Create connection
+#     conn = duckdb.connect(":memory:")
+
+#     # Construct param dict
+#     param = {"annotation": {"parquet": {"annotations": {annotation_parquet: {"INFO": None}}}}}
+
+#     # Create object
+#     vcf = Variants(conn=conn, input=input_vcf, output=output_vcf, param=param)
+#     # Load data
+#     vcf.load_data()
+#     # Remove if output file exists
+#     remove_if_exists(output_vcf)
+#     # Annotation
+#     vcf.annotation()
+#     # query annotated variant
+#     result = vcf.execute_query("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'")
+#     length = len(result.df())
+    
+#     assert length == 1
+
 
 
 def test_annotation_bcftools():
@@ -944,23 +971,55 @@ def test_annotation_bcftools():
     input_vcf = tests_folder + "/data/example.vcf.gz"
     annotation_parquet = tests_folder + "/data/annotations/nci60.vcf.gz"
     output_vcf = "/tmp/output.vcf.gz"
-    # Create connection
-    conn = duckdb.connect(":memory:")
+
     # Construct param dict
     param = {"annotation": {"bcftools": {"annotations":  {annotation_parquet: {"INFO": None}}}}}
+
     # Create object
-    vcf = Variants(conn=conn, input=input_vcf, output=output_vcf, param=param)
-    # Load data
-    vcf.load_data()
+    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
     # Remove if output file exists
     remove_if_exists(output_vcf)
+
     # Annotation
     vcf.annotation()
+
     # query annotated variant
     result = vcf.execute_query("""SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'""")
     length = len(result.df())
     
     assert length == 1
+
+
+
+def test_annotation_bcftools_bed():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    annotation_parquet = tests_folder + "/data/annotations/refGene.bed.gz"
+    output_vcf = "/tmp/output.vcf.gz"
+
+    # Construct param dict
+    param = {"annotation": {"bcftools": {"annotations":  {annotation_parquet: {"symbol": None}}}}}
+
+    # Create object
+    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
+    # Remove if output file exists
+    remove_if_exists(output_vcf)
+
+    # Annotation
+    vcf.annotation()
+
+    # TEST
+    print(vcf.execute_query("""SELECT "#CHROM", POS, REF, ALT, INFO FROM variants """).df())
+
+    # query annotated variant
+    result = vcf.execute_query("""SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;symbol=EGFR,EGFR-AS1'""")
+    length = len(result.df())
+    
+    assert length == 1
+
 
 def test_explode_infos():
 

@@ -16,6 +16,14 @@ import vcf
 import logging as log
 
 
+
+
+def remove_if_exists(filepath):
+    if os.path.exists(filepath):
+        os.remove(filepath)
+
+
+
 def set_log_level(verbosity):
     """
     It sets the log level of the Python logging module

@@ -26,6 +26,30 @@ from howard.commons import *
 tests_folder = os.path.dirname(__file__)
 
 
+
+def test_remove_if_exists():
+
+    # filename
+    filename = "/tmp/output.test"
+
+    # create filename
+    fhandle = open(filename, 'a')
+    try:
+        os.utime(filename, None)
+    finally:
+        fhandle.close()
+    created = os.path.exists(filename)
+
+    # remove filename
+    remove_if_exists(filename)
+
+    # check delete
+    deleted = not os.path.exists(filename)
+
+    assert created and deleted
+
+
+
 def test_set_log_level():
 
     # define verbosity

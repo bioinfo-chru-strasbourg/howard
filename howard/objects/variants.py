@@ -119,7 +119,12 @@ class Variants:
 
         self.index_additionnal_fields = []
 
-    # SET section
+        #self.indexing = self.get_param().get("indexing", True)
+
+
+    def get_indexing(self):
+        return self.get_param().get("indexing", True)
+
 
     def set_connexion(self, conn):
         """
@@ -145,6 +150,11 @@ class Variants:
                 connexion_db = self.get_connexion_type()
 
             conn = duckdb.connect(connexion_db)
+
+        # Compression
+        # PRAGMA force_compression, expected Auto, Uncompressed, Constant, RLE, Dictionary, PFOR, BitPacking, FSST, Chimp, Patas
+        #conn.execute("PRAGMA force_compression='Patas';")
+
 
         # Set connexion
         self.connexion_db = connexion_db
@@ -508,6 +518,11 @@ class Variants:
             for chunk in pd.read_csv(file, skiprows=header_len, sep=sep, chunksize=chunksize, engine="c"):
                 sql_insert_into = f"INSERT INTO variants ({columns}) SELECT {columns} FROM chunk"
                 self.conn.execute(sql_insert_into)
+            # for chunk in duckdb.read_csv(file, skiprows=header_len, delimiter=sep):
+            #     sql_insert_into = f"INSERT INTO variants ({columns}) SELECT {columns} FROM chunk"
+            #     self.conn.execute(sql_insert_into)
+
+        # duckdb.read_csv
         # else:
         #     chunk = pd.read_csv(file, skiprows=header_len, sep=sep, engine="c")
         #     sql_insert_into = f"INSERT INTO variants ({columns}) SELECT {columns} FROM chunk"
@@ -568,12 +583,16 @@ class Variants:
             sql_create_table_columns.append(f"\"{column}\" {column_type}")
             sql_create_table_columns_list.append(f"\"{column}\"")
 
+        # get table variants
+        table_variants = self.get_table_variants()
+
         # Create database
         log.debug(f"Create Database")
         sql_create_table_columns_sql = ", ".join(sql_create_table_columns)
         sql_create_table_columns_list_sql = ", ".join(
             sql_create_table_columns_list)
-        sql_create_table = f"CREATE TABLE IF NOT EXISTS {self.table_variants} ({sql_create_table_columns_sql})"
+        #sql_create_table = f"CREATE TABLE IF NOT EXISTS {self.table_variants} ({sql_create_table_columns_sql})"
+        sql_create_table = f"CREATE TABLE IF NOT EXISTS {table_variants} ({sql_create_table_columns_sql})"
         self.conn.execute(sql_create_table)
 
         # chunksize define length of file chunk load file
@@ -624,10 +643,10 @@ class Variants:
             if access in ["RO"]:
                 # print("NO loading data")
                 self.drop_variants_table()
-                sql_view = f"CREATE VIEW {self.table_variants} AS SELECT * FROM '{self.input}'"
+                sql_view = f"CREATE VIEW {table_variants} AS SELECT * FROM '{self.input}'"
                 self.conn.execute(sql_view)
             else:
-                sql_insert_table = f"COPY {self.table_variants} FROM '{self.input}'"
+                sql_insert_table = f"COPY {table_variants} FROM '{self.input}'"
                 self.conn.execute(sql_insert_table)
             pass
 
@@ -695,6 +714,9 @@ class Variants:
                 log.debug(f"Explode INFO fields - ADD {info} annotations fields: {sql_info_alter_table}")
                 self.conn.execute(sql_info_alter_table)
 
+                # add field to index
+                self.index_additionnal_fields.append(info_id_sql)
+
                 # Update field array
                 update_info_field = f"\"{info_id_sql}\" = CASE WHEN REGEXP_EXTRACT(INFO, '[^;]*{info}=([^;]*)',1) == '' THEN NULL WHEN REGEXP_EXTRACT(INFO, '{info}=([^;]*)',1) == '.' THEN NULL ELSE REGEXP_EXTRACT(INFO, '{info}=([^;]*)',1) END"
                 sql_info_alter_table_array.append(update_info_field)
@@ -725,21 +747,24 @@ class Variants:
         # Access
         access = self.get_config().get("access", None)
 
-        if access not in ["RO"]:
+        # get table variants
+        table_variants = self.get_table_variants("FROM")
+
+        if self.get_indexing() and access not in ["RO"]:
             # Create index
-            sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.get_table_variants()} ON {self.table_variants} ("#CHROM", "POS", "REF", "ALT")'
+            sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.get_table_variants()} ON {table_variants} ("#CHROM", "POS", "REF", "ALT")'
             self.conn.execute(sql_create_table_index)
-            sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.get_table_variants()}_chrom ON {self.table_variants} ("#CHROM")'
+            sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.get_table_variants()}_chrom ON {table_variants} ("#CHROM")'
             self.conn.execute(sql_create_table_index)
-            sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.get_table_variants()}_pos ON {self.table_variants} ("POS")'
+            sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.get_table_variants()}_pos ON {table_variants} ("POS")'
             self.conn.execute(sql_create_table_index)
-            sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.get_table_variants()}_ref ON {self.table_variants} ( "REF")'
+            sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.get_table_variants()}_ref ON {table_variants} ( "REF")'
             self.conn.execute(sql_create_table_index)
-            sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.get_table_variants()}_alt ON {self.table_variants} ("ALT")'
+            sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.get_table_variants()}_alt ON {table_variants} ("ALT")'
             self.conn.execute(sql_create_table_index)
             for field in self.index_additionnal_fields:
                 #print(f"create {field}")
-                sql_create_table_index = f""" CREATE INDEX IF NOT EXISTS "idx_{self.get_table_variants()}_{field}" ON {self.table_variants} ("{field}") """
+                sql_create_table_index = f""" CREATE INDEX IF NOT EXISTS "idx_{self.get_table_variants()}_{field}" ON {table_variants} ("{field}") """
                 self.conn.execute(sql_create_table_index)
 
     def drop_indexes(self):
@@ -750,8 +775,11 @@ class Variants:
         # Access
         access = self.get_config().get("access", None)
 
+        # get table variants
+        table_variants = self.get_table_variants("FROM")
+
         if access not in ["RO"]:
-            list_indexes = self.conn.execute(f"SELECT index_name FROM duckdb_indexes WHERE table_name='{self.table_variants}'")
+            list_indexes = self.conn.execute(f"SELECT index_name FROM duckdb_indexes WHERE table_name='{table_variants}'")
             for index in list_indexes.df()["index_name"]:
                 sql_drop_table_index = f""" DROP INDEX IF EXISTS "{index}" """
                 self.conn.execute(sql_drop_table_index)
@@ -866,6 +894,7 @@ class Variants:
 
                 # Export parquet
                 sql_query_export = f"COPY (SELECT {sql_column} FROM {table_variants} WHERE 1 {sql_query_hard} {sql_query_sort} {sql_query_limit}) TO '{output_file}' WITH (FORMAT PARQUET)"
+                #sql_query_export = f"COPY (SELECT {sql_column} FROM {table_variants} WHERE 1 {sql_query_hard} {sql_query_sort} {sql_query_limit}) TO '{output_file}' WITH (FORMAT PARQUET, COMPRESSION uncompressed)"
                 self.conn.execute(sql_query_export)
 
             elif self.get_output_format() in ["db", "duckdb"]:
@@ -1007,21 +1036,26 @@ class Variants:
                 annotations = param.get("annotations").get(annotation_file, None)
                 if os.path.exists(annotation_file):
                     log.debug(f"Quick Annotation File {annotation_file}")
-                    quick_annotation_file =annotation_file
-                    quick_annotation_name, quick_annotation_extension = os.path.splitext(
-                        annotation_file)
-                    quick_annotation_format = quick_annotation_extension.replace(
-                        ".", "")
+                    quick_annotation_file = annotation_file
+                    quick_annotation_name, quick_annotation_extension = os.path.splitext(annotation_file)
+                    quick_annotation_format = quick_annotation_extension.replace(".", "")
+                    #print(quick_annotation_format)
+                    if quick_annotation_format in ["gz"]:
+                        quick_annotation_format_name, quick_annotation_format_extension = os.path.splitext(quick_annotation_name)
+                        quick_annotation_type = quick_annotation_format_extension.replace(".", "")
+                    else:
+                        quick_annotation_type = quick_annotation_format
+                    #print(quick_annotation_type)
                     format = None
-                    if quick_annotation_format in ["parquet", "duckdb"]:
+                    if quick_annotation_type in ["parquet", "duckdb"]:
                         format = "parquet"
-                    elif quick_annotation_format in ["gz"]:
+                    elif quick_annotation_type in ["vcf", "bed"]:
                         format = "bcftools"
                     else:
                         log.error(
-                            f"Quick Annotation File {quick_annotation_file} - format {quick_annotation_format} not supported yet")
+                            f"Quick Annotation File {quick_annotation_file} - format {quick_annotation_type} not supported yet")
                         raise ValueError(
-                            f"Quick Annotation File {quick_annotation_file} - format {quick_annotation_format} not supported yet"
+                            f"Quick Annotation File {quick_annotation_file} - format {quick_annotation_type} not supported yet"
                         )
                     if format:
                         if format not in param["annotation"]:
@@ -1160,21 +1194,22 @@ class Variants:
                     if db_file and db_hdr_file:
                         break
 
-                # Database type
-                db_file_name, db_file_extension = os.path.splitext(
-                    db_file)
-                db_file_basename = os.path.basename(db_file)
-                db_file_format = db_file_extension.replace(
-                    ".", "")
-                # db_file_format = db_file_extension.replace(
-                #     ".", "")
-                #print(db_file_format)
+                # Database format and type
+                db_file_name, db_file_extension = os.path.splitext(db_file)
+                #db_file_basename = os.path.basename(db_file)
+                db_file_format = db_file_extension.replace(".", "")
+                if db_file_format in ["gz"]:
+                    db_file_format_name, db_file_format_extension = os.path.splitext(db_file_name)
+                    db_file_type = db_file_format_extension.replace(".", "")
+                else:
+                    db_file_type = db_file_format
+                
 
                 # try to extract header
-                if db_file_name.endswith(".vcf") and not db_hdr_file:
+                if db_file_type in ["vcf", "bed"] and not db_hdr_file:
                     log.debug(f"Try to extract header of file {db_file}")
                     tmp_extract_header = NamedTemporaryFile(prefix=self.get_prefix(
-                    ), dir=self.get_tmp_dir(), suffix=".vcf.hdr", delete=False)
+                    ), dir=self.get_tmp_dir(), suffix=".hdr", delete=False)
                     tmp_extract_header_name = tmp_extract_header.name
                     tmp_files.append(tmp_extract_header_name)
                     command_extract_header = f"bcftools view -h {db_file} > {tmp_extract_header_name} 2>/dev/null"
@@ -1296,6 +1331,10 @@ class Variants:
 
                         if True:
 
+                            # BED columns in the annotation file
+                            if db_file_type in ["bed"]:
+                                annotation_infos = "CHROM,POS,POS," + annotation_infos
+
                             for chrom in chomosomes_list:
 
                                 # Create BED on initial VCF
@@ -1342,6 +1381,7 @@ class Variants:
                                 tmp_annotation_vcf_name_err = tmp_annotation_vcf_name + ".err"
                                 err_files.append(tmp_annotation_vcf_name_err)
 
+
                                 # Annotate Command
                                 log.debug(
                                     f"Annotation '{annotation}' - add bcftools command")
@@ -1351,6 +1391,12 @@ class Variants:
                                 command_annotate = f"bcftools annotate --regions-file={tmp_bed_name} -a {db_file} -h {tmp_header_vcf_name} -c {annotation_infos} --rename-annots={tmp_rename_name} {tmp_vcf_name} -o {tmp_annotation_vcf_name} -Oz 2>>{tmp_annotation_vcf_name_err} && tabix {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} "
                                 #command_annotate = f"bcftools annotate --regions-file={tmp_bed_name} -a {db_file} -c {annotation_infos} --rename-annots={tmp_rename_name} {tmp_vcf_name} -o {tmp_annotation_vcf_name} -Oz 2>>{tmp_annotation_vcf_name_err} && tabix {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} "
                                 commands.append(command_annotate)
+
+                                # DEVEL
+                                # BED
+                                # bcftools annotate -a /mnt/BIOINFO/git/HOWARD/tests/data/annotations/refGene.bed.gz -h /mnt/BIOINFO/git/HOWARD/tests/data/annotations/refGene.bed.test_devel.hdr -c CHROM,POS,POS,symbol,transcript,strand /mnt/BIOINFO/git/HOWARD/tests/data/example.vcf.gz 
+                                command_annotate = f"bcftools annotate --regions-file={tmp_bed_name} -a {db_file} -h {tmp_header_vcf_name} -c {annotation_infos} --rename-annots={tmp_rename_name} {tmp_vcf_name} -o {tmp_annotation_vcf_name} -Oz 2>>{tmp_annotation_vcf_name_err} && tabix {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} "
+                                
 
 
             # if some commands
@@ -1451,7 +1497,7 @@ class Variants:
         return
 
     def annotation_parquet(self, threads=None):
-
+        
         # DEBUG
         log.debug("Start annotation with parquet databases")
 
@@ -1509,7 +1555,7 @@ class Variants:
         # drop indexes
         self.drop_indexes()
 
-
+        
         if annotations:
 
             for annotation in annotations:
@@ -1554,13 +1600,14 @@ class Variants:
 
                     parquet_file_link = f"'{parquet_file}'"
 
-                    # Database type
+                    # Database format and type
                     parquet_file_name, parquet_file_extension = os.path.splitext(
                         parquet_file)
                     parquet_file_basename = os.path.basename(parquet_file)
                     parquet_file_format = parquet_file_extension.replace(
                         ".", "")
-
+                    parquet_file_type = parquet_file_format
+                    
                     if parquet_file_format in ["db", "duckdb", "sqlite"]:
                         parquet_file_as_duckdb_name = parquet_file_basename.replace(
                             ".", "_")
@@ -1573,7 +1620,6 @@ class Variants:
                             f"Annotation '{annotation}' - attach database : " + str(parquet_file))
                         self.conn.execute(
                             f"ATTACH DATABASE '{parquet_file}' AS {parquet_file_as_duckdb_name} (READ_ONLY{parquet_file_format_attached_type})")
-                        # print("connexion to duckdb ok!")
                         parquet_file_link = f"{parquet_file_as_duckdb_name}.variants"
                     elif parquet_file_format in ["parquet"]:
                         parquet_file_link = f"'{parquet_file}'"
@@ -1691,10 +1737,7 @@ class Variants:
                                 self.index_additionnal_fields.append(info_id_sql)
 
                                 sql_query_annotations_create_column = f"""ALTER TABLE {table_variants} ADD COLUMN IF NOT EXISTS "{info_id_sql}" {type_sql} DEFAULT null"""
-                                #print(sql_query_annotations_create_column)
-                                #print(self.conn.execute(f"SELECT index_name FROM duckdb_indexes WHERE table_name='{table_variants}'").df())
-                                #print(self.conn.execute("DESCRIBE TABLE variants").df())
-                                #print(self.conn.execute("PRAGMA table_info(variants);").df())
+
                                 self.conn.execute(sql_query_annotations_create_column)
                                 sql_query_annotations_create_column_index = f"""CREATE INDEX IF NOT EXISTS "idx_{annotation_field}" ON {table_variants} ("{info_id_sql}")"""
                                 self.conn.execute(sql_query_annotations_create_column_index)
