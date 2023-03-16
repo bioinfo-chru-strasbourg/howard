@@ -401,7 +401,7 @@ def tsv_to_vcf(input_file, output_file, annotations=None, header_file=None, data
 
         # chunk parameters
         chunk_idx = 0
-        chunksize = 10000000
+        chunksize = 1000000
 
         # chunk file into blocks (prevent memory usage)
         for chunk in pd.read_csv(f, skiprows=0, sep='\t', chunksize=chunksize, engine="c", header=nb_header_line, names=header, dtype=dtype_final, na_values=['.'], low_memory=True):

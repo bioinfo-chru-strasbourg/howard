@@ -666,7 +666,6 @@ class Variants:
         # Create index after insertion
         self.create_indexes()
 
-
        
     def explode_infos(self, prefix = None):
         """
@@ -767,6 +766,7 @@ class Variants:
                 sql_create_table_index = f""" CREATE INDEX IF NOT EXISTS "idx_{self.get_table_variants()}_{field}" ON {table_variants} ("{field}") """
                 self.conn.execute(sql_create_table_index)
 
+
     def drop_indexes(self):
         """
         Create indexes on the table after insertion
@@ -849,6 +849,7 @@ class Variants:
                 break
         return header_list
 
+
     def execute_query(self, query):
         """
         It takes a query as an argument, executes it, and returns the results
@@ -860,6 +861,7 @@ class Variants:
             return self.conn.execute(query)  # .fetchall()
         else:
             return None
+
 
     def export_output(self, export_header=True):
 
@@ -946,6 +948,7 @@ class Variants:
                 # print(command)
                 subprocess.run(command, shell=True)
 
+
     def export_header(self, header_name=None):
 
         if not header_name:
@@ -955,6 +958,7 @@ class Variants:
         vcf_writer = vcf.Writer(f, self.get_header())
         f.close()
         return tmp_header_name
+
 
     def export_variant_vcf(self, vcf_file, type="vcf", remove_info=False, add_samples=True, compression=1, index=False):
 
@@ -1034,7 +1038,12 @@ class Variants:
                 param["annotation"] = {}
             for annotation_file in param.get("annotations"):
                 annotations = param.get("annotations").get(annotation_file, None)
-                if os.path.exists(annotation_file):
+                if annotation_file == "snpeff":
+                    if "snpeff" not in param["annotation"]:
+                        param["annotation"]["snpeff"] = {}
+                    if "options" not in param["annotation"]["snpeff"]:
+                        param["annotation"]["snpeff"]["options"] = ""
+                elif os.path.exists(annotation_file):
                     log.debug(f"Quick Annotation File {annotation_file}")
                     quick_annotation_file = annotation_file
                     quick_annotation_name, quick_annotation_extension = os.path.splitext(annotation_file)
@@ -1081,13 +1090,13 @@ class Variants:
                 log.info("Annotations 'annovar'...")
             if param.get("annotation", {}).get("snpeff", None):
                 log.info("Annotations 'snpeff'...")
+                self.annotation_snpeff()
             if param.get("annotation", {}).get("varank", None):
                 log.info("Annotations 'varank'...")
 
         # Explode INFOS fields into table fields
         if self.get_param().get("explode_infos",None):
             self.explode_infos(prefix=self.get_param().get("explode_infos",None))
-
 
 
     def annotation_bcftools(self, threads=None):
@@ -1491,10 +1500,433 @@ class Variants:
                         raise ValueError("Annotation failed: Error in commands") 
 
 
+                    # Update variants
                     log.info(f"Annotation - Updating...")
                     self.update_from_vcf(tmp_annotate_vcf_name)
 
         return
+
+
+    def annotation_snpeff(self, threads=None):
+
+        # DEBUG
+        log.debug("Start annotation with snpeff databases")
+
+        # Threads
+        if not threads:
+            threads = self.get_threads()
+        log.debug("Threads: "+str(threads))
+
+        # DEBUG
+        delete_tmp = True
+        if self.get_config().get("verbosity", "warning") in ["debug"]:
+            delete_tmp = False
+            log.debug("Delete tmp files/folders: "+str(delete_tmp))
+
+        # Config
+        databases_folders = self.config.get("folders", {}).get(
+            "databases", {}).get("bcftools", ["."])
+        log.debug("Databases annotations: " + str(databases_folders))
+
+        # Config
+        config = self.get_config()
+        log.debug("Config: " + str(config))
+        
+        # Param
+        param = self.get_param()
+        log.debug("Config: " + str(config))
+        
+        # Param
+        options = param.get("annotation", {}).get(
+            "snpeff", {}).get("options", None)
+        log.debug("Options: " + str(options))
+
+        # Data
+        table_variants = self.get_table_variants()
+
+        # Check if not empty
+        log.debug("Check if not empty")
+        sql_query_chromosomes = f"""SELECT count(*) as count FROM {table_variants} as table_variants"""
+        if not self.conn.execute(f"{sql_query_chromosomes}").df()["count"][0]:
+            log.info(f"VCF empty")
+            return
+
+        # Export in VCF
+        log.debug("Create initial file to annotate")
+        tmp_vcf = NamedTemporaryFile(prefix=self.get_prefix(
+        ), dir=self.get_tmp_dir(), suffix=".vcf.gz", delete=False)
+        tmp_vcf_name = tmp_vcf.name
+
+        # VCF header
+        vcf_reader = self.get_header()
+        log.debug("Initial header: " + str(vcf_reader.infos))
+
+        # Existing annotations
+        for vcf_annotation in self.get_header().infos:
+
+            vcf_annotation_line = self.get_header().infos.get(vcf_annotation)
+            log.debug(
+                f"Existing annotations in VCF: {vcf_annotation} [{vcf_annotation_line}]")
+
+        force_update_annotation = True
+
+        if "ANN" not in self.get_header().infos or force_update_annotation:
+            
+            # Export VCF file
+            self.export_variant_vcf(vcf_file=tmp_vcf_name, type="gz",
+                                    remove_info=True, add_samples=False, compression=1, index=True)
+
+            # Tmp file
+            err_files = []
+            tmp_annotate_vcf = NamedTemporaryFile(prefix=self.get_prefix(
+            ), dir=self.get_tmp_dir(), suffix=".vcf", delete=False)
+            tmp_annotate_vcf_name = tmp_annotate_vcf.name
+            tmp_annotate_vcf_name_err = tmp_annotate_vcf_name + ".err"
+            err_files.append(tmp_annotate_vcf_name_err)
+
+
+            # Add header
+            # ##INFO=<ID=ANN,Number=.,Type=String,Description="Functional annotations: 'Allele | Annotation | Annotation_Impact | Gene_Name | Gene_ID | Feature_Type | Feature_ID | Transcript_BioType | Rank | HGVS.c | HGVS.p | cDNA.pos / cDNA.length | CDS.pos / CDS.length | AA.pos / AA.length | Distance | ERRORS / WARNINGS / INFO' ">
+            # ##INFO=<ID=LOF,Number=.,Type=String,Description="Predicted loss of function effects for this variant. Format: 'Gene_Name | Gene_ID | Number_of_transcripts_in_gene | Percent_of_transcripts_affected'">
+            # ##INFO=<ID=NMD,Number=.,Type=String,Description="Predicted nonsense mediated decay effects for this variant. Format: 'Gene_Name | Gene_ID | Number_of_transcripts_in_gene | Percent_of_transcripts_affected'">
+
+            # Add INFO field to header
+            if "ANN" not in vcf_reader.infos:
+                vcf_reader.infos["ANN"] = vcf.parser._Info(
+                    "ANN",
+                    ".",
+                    "String",
+                    "Functional annotations: 'Allele | Annotation | Annotation_Impact | Gene_Name | Gene_ID | Feature_Type | Feature_ID | Transcript_BioType | Rank | HGVS.c | HGVS.p | cDNA.pos / cDNA.length | CDS.pos / CDS.length | AA.pos / AA.length | Distance | ERRORS / WARNINGS / INFO' ",
+                    "snpEff",
+                    "unknown",
+                    1
+                )
+            if "LOF" not in vcf_reader.infos:
+                vcf_reader.infos["LOF"] = vcf.parser._Info(
+                    "LOF",
+                    ".",
+                    "String",
+                    "Predicted loss of function effects for this variant. Format: 'Gene_Name | Gene_ID | Number_of_transcripts_in_gene | Percent_of_transcripts_affected'",
+                    "snpEff",
+                    "unknown",
+                    1
+                )
+            if "NMD" not in vcf_reader.infos:
+                vcf_reader.infos["NMD"] = vcf.parser._Info(
+                    "NMD",
+                    ".",
+                    "String",
+                    "Predicted nonsense mediated decay effects for this variant. Format: 'Gene_Name | Gene_ID | Number_of_transcripts_in_gene | Percent_of_transcripts_affected'",
+                    "snpEff",
+                    "unknown",
+                    1
+                )
+
+
+            # Options
+            #snpeff_options = " -lof -hgvs -interval /tmp/chr7.bed -filterInterval /tmp/chr7.bed -oicr"
+            snpeff_options = f"  -stats OUTPUT.html -csvStats OUTPUT.csv"
+
+
+            # Config
+            # Java
+            java_bin = config.get("tools",{}).get("java",{}).get("bin","java")
+            # snpeff
+            snpeff_jar = config.get("tools",{}).get("snpeff",{}).get("jar","snpeff.jar")
+            snpeff_databases = config.get("folders",{}).get("databases",{}).get("snpeff",os.path.dirname(snpeff_jar)+"/data")
+
+            # Param
+            # Assembly
+            assembly = param.get("assembly","hg19")
+            genome = param.get("genome","hg19.fa")
+            # Options
+            snpeff_options = param.get("annotation",{}).get("snpeff",{}).get("options","")
+            snpeff_stats = param.get("annotation",{}).get("snpeff",{}).get("stats",None)
+            snpeff_csvStats = param.get("annotation",{}).get("snpeff",{}).get("csvStats",None)
+            if snpeff_stats:
+                snpeff_stats = snpeff_stats.replace("OUTPUT",self.get_output())
+                snpeff_options += f" -stats {snpeff_stats}"
+            if snpeff_csvStats:
+                snpeff_csvStats = snpeff_csvStats.replace("OUTPUT",self.get_output())
+                snpeff_options += f" -csvStats {snpeff_csvStats}" 
+
+            if not os.path.exists(java_bin):
+                log.error(f"Annotation failed: no java bin '{java_bin}'")
+                raise ValueError(f"Annotation failed: no java bin '{java_bin}'") 
+            
+            if not os.path.exists(snpeff_jar):
+                log.error(f"Annotation failed: no snpEff jar '{snpeff_jar}'")
+                raise ValueError(f"Annotation failed: no snpEff jar '{snpeff_jar}'") 
+
+            if not os.path.exists(snpeff_databases):
+                log.error(f"Annotation failed: no snpEff database '{snpeff_databases}'")
+                raise ValueError(f"Annotation failed: no snpEff database '{snpeff_databases}'") 
+
+
+            # Command
+            snpeff_command = f"{java_bin} -Xmx4g -jar {snpeff_jar} {assembly} -dataDir {snpeff_databases} {snpeff_options} {tmp_vcf_name} 1>{tmp_annotate_vcf_name} 2>>{tmp_annotate_vcf_name_err}"
+            log.debug(f"Annotation - snpEff command: {snpeff_command}")
+            run_parallel_commands([snpeff_command], 1)
+            
+
+
+            # Error messages
+            log.info(f"Error/Warning messages:")
+            error_message_command_all = []
+            error_message_command_warning = []
+            error_message_command_err = []
+            for err_file in err_files:
+                with open(err_file, 'r') as f:
+                    for line in f:
+                        message = line.strip()
+                        error_message_command_all.append(message)
+                        if line.startswith('[W::'):
+                            error_message_command_warning.append(message)
+                        if line.startswith('[E::'):
+                            error_message_command_err.append(f"{err_file}: " + message)
+            # log info
+            for message in list(set(error_message_command_err + error_message_command_warning)):
+                log.info(message)
+            # debug info
+            for message in list(set(error_message_command_all)):
+                log.debug(message)
+            # failed
+            if len(error_message_command_err):
+                log.error("Annotation failed: Error in commands")
+                raise ValueError("Annotation failed: Error in commands") 
+
+
+            # Update variants
+            log.info(f"Annotation - Updating...")
+            self.update_from_vcf(tmp_annotate_vcf_name)
+
+
+        else:
+            if "ANN" not in self.get_header().infos:
+                log.debug(
+                    f"Existing snpEff annotations in VCF")
+            if force_update_annotation:
+                log.debug(
+                    f"Existing snpEff annotations in VCF - annotation forced")
+
+
+
+        return
+
+
+
+    def annotation_annovar(self, threads=None):
+
+        #### TODO
+
+        # DEBUG
+        log.debug("Start annotation with snpeff databases (TODO)")
+
+        return
+
+        # Threads
+        if not threads:
+            threads = self.get_threads()
+        log.debug("Threads: "+str(threads))
+
+        # DEBUG
+        delete_tmp = True
+        if self.get_config().get("verbosity", "warning") in ["debug"]:
+            delete_tmp = False
+            log.debug("Delete tmp files/folders: "+str(delete_tmp))
+
+        # Config
+        databases_folders = self.config.get("folders", {}).get(
+            "databases", {}).get("bcftools", ["."])
+        log.debug("Databases annotations: " + str(databases_folders))
+
+        # Config
+        config = self.get_config()
+        log.debug("Config: " + str(config))
+        
+        # Param
+        param = self.get_param()
+        log.debug("Config: " + str(config))
+        
+        # Param
+        options = param.get("annotation", {}).get(
+            "snpeff", {}).get("options", None)
+        log.debug("Options: " + str(options))
+
+        # Data
+        table_variants = self.get_table_variants()
+
+        # Check if not empty
+        log.debug("Check if not empty")
+        sql_query_chromosomes = f"""SELECT count(*) as count FROM {table_variants} as table_variants"""
+        if not self.conn.execute(f"{sql_query_chromosomes}").df()["count"][0]:
+            log.info(f"VCF empty")
+            return
+
+        # Export in VCF
+        log.debug("Create initial file to annotate")
+        tmp_vcf = NamedTemporaryFile(prefix=self.get_prefix(
+        ), dir=self.get_tmp_dir(), suffix=".vcf.gz", delete=False)
+        tmp_vcf_name = tmp_vcf.name
+
+        # VCF header
+        vcf_reader = self.get_header()
+        log.debug("Initial header: " + str(vcf_reader.infos))
+
+        # Existing annotations
+        for vcf_annotation in self.get_header().infos:
+
+            vcf_annotation_line = self.get_header().infos.get(vcf_annotation)
+            log.debug(
+                f"Existing annotations in VCF: {vcf_annotation} [{vcf_annotation_line}]")
+
+        force_update_annotation = True
+
+        if "ANN" not in self.get_header().infos or force_update_annotation:
+            
+            # Export VCF file
+            self.export_variant_vcf(vcf_file=tmp_vcf_name, type="gz",
+                                    remove_info=True, add_samples=False, compression=1, index=True)
+
+            # Tmp file
+            err_files = []
+            tmp_annotate_vcf = NamedTemporaryFile(prefix=self.get_prefix(
+            ), dir=self.get_tmp_dir(), suffix=".vcf", delete=False)
+            tmp_annotate_vcf_name = tmp_annotate_vcf.name
+            tmp_annotate_vcf_name_err = tmp_annotate_vcf_name + ".err"
+            err_files.append(tmp_annotate_vcf_name_err)
+
+
+            # Add header
+            # ##INFO=<ID=ANN,Number=.,Type=String,Description="Functional annotations: 'Allele | Annotation | Annotation_Impact | Gene_Name | Gene_ID | Feature_Type | Feature_ID | Transcript_BioType | Rank | HGVS.c | HGVS.p | cDNA.pos / cDNA.length | CDS.pos / CDS.length | AA.pos / AA.length | Distance | ERRORS / WARNINGS / INFO' ">
+            # ##INFO=<ID=LOF,Number=.,Type=String,Description="Predicted loss of function effects for this variant. Format: 'Gene_Name | Gene_ID | Number_of_transcripts_in_gene | Percent_of_transcripts_affected'">
+            # ##INFO=<ID=NMD,Number=.,Type=String,Description="Predicted nonsense mediated decay effects for this variant. Format: 'Gene_Name | Gene_ID | Number_of_transcripts_in_gene | Percent_of_transcripts_affected'">
+
+            # Add INFO field to header
+            if "ANN" not in vcf_reader.infos:
+                vcf_reader.infos["ANN"] = vcf.parser._Info(
+                    "ANN",
+                    ".",
+                    "String",
+                    "Functional annotations: 'Allele | Annotation | Annotation_Impact | Gene_Name | Gene_ID | Feature_Type | Feature_ID | Transcript_BioType | Rank | HGVS.c | HGVS.p | cDNA.pos / cDNA.length | CDS.pos / CDS.length | AA.pos / AA.length | Distance | ERRORS / WARNINGS / INFO' ",
+                    "snpEff",
+                    "unknown",
+                    1
+                )
+            if "LOF" not in vcf_reader.infos:
+                vcf_reader.infos["LOF"] = vcf.parser._Info(
+                    "LOF",
+                    ".",
+                    "String",
+                    "Predicted loss of function effects for this variant. Format: 'Gene_Name | Gene_ID | Number_of_transcripts_in_gene | Percent_of_transcripts_affected'",
+                    "snpEff",
+                    "unknown",
+                    1
+                )
+            if "NMD" not in vcf_reader.infos:
+                vcf_reader.infos["NMD"] = vcf.parser._Info(
+                    "NMD",
+                    ".",
+                    "String",
+                    "Predicted nonsense mediated decay effects for this variant. Format: 'Gene_Name | Gene_ID | Number_of_transcripts_in_gene | Percent_of_transcripts_affected'",
+                    "snpEff",
+                    "unknown",
+                    1
+                )
+
+
+            # Options
+            #snpeff_options = " -lof -hgvs -interval /tmp/chr7.bed -filterInterval /tmp/chr7.bed -oicr"
+            snpeff_options = f"  -stats OUTPUT.html -csvStats OUTPUT.csv"
+
+
+            # Config
+            # Java
+            java_bin = config.get("tools",{}).get("java",{}).get("bin","java")
+            # snpeff
+            snpeff_jar = config.get("tools",{}).get("snpeff",{}).get("jar","snpeff.jar")
+            snpeff_databases = config.get("folders",{}).get("databases",{}).get("snpeff",os.path.dirname(snpeff_jar)+"/data")
+
+            # Param
+            # Assembly
+            assembly = param.get("assembly","hg19")
+            genome = param.get("genome","hg19.fa")
+            # Options
+            snpeff_options = param.get("annotation",{}).get("snpeff",{}).get("options","")
+            snpeff_stats = param.get("annotation",{}).get("snpeff",{}).get("stats",None)
+            snpeff_csvStats = param.get("annotation",{}).get("snpeff",{}).get("csvStats",None)
+            if snpeff_stats:
+                snpeff_stats = snpeff_stats.replace("OUTPUT",self.get_output())
+                snpeff_options += f" -stats {snpeff_stats}"
+            if snpeff_csvStats:
+                snpeff_csvStats = snpeff_csvStats.replace("OUTPUT",self.get_output())
+                snpeff_options += f" -csvStats {snpeff_csvStats}" 
+
+            if not os.path.exists(java_bin):
+                log.error(f"Annotation failed: no java bin '{java_bin}'")
+                raise ValueError(f"Annotation failed: no java bin '{java_bin}'") 
+            
+            if not os.path.exists(snpeff_jar):
+                log.error(f"Annotation failed: no snpEff jar '{snpeff_jar}'")
+                raise ValueError(f"Annotation failed: no snpEff jar '{snpeff_jar}'") 
+
+            if not os.path.exists(snpeff_databases):
+                log.error(f"Annotation failed: no snpEff database '{snpeff_databases}'")
+                raise ValueError(f"Annotation failed: no snpEff database '{snpeff_databases}'") 
+
+
+            # Command
+            snpeff_command = f"{java_bin} -Xmx4g -jar {snpeff_jar} {assembly} -dataDir {snpeff_databases} {snpeff_options} {tmp_vcf_name} 1>{tmp_annotate_vcf_name} 2>>{tmp_annotate_vcf_name_err}"
+            log.debug(f"Annotation - snpEff command: {snpeff_command}")
+            run_parallel_commands([snpeff_command], 1)
+            
+
+
+            # Error messages
+            log.info(f"Error/Warning messages:")
+            error_message_command_all = []
+            error_message_command_warning = []
+            error_message_command_err = []
+            for err_file in err_files:
+                with open(err_file, 'r') as f:
+                    for line in f:
+                        message = line.strip()
+                        error_message_command_all.append(message)
+                        if line.startswith('[W::'):
+                            error_message_command_warning.append(message)
+                        if line.startswith('[E::'):
+                            error_message_command_err.append(f"{err_file}: " + message)
+            # log info
+            for message in list(set(error_message_command_err + error_message_command_warning)):
+                log.info(message)
+            # debug info
+            for message in list(set(error_message_command_all)):
+                log.debug(message)
+            # failed
+            if len(error_message_command_err):
+                log.error("Annotation failed: Error in commands")
+                raise ValueError("Annotation failed: Error in commands") 
+
+
+            # Update variants
+            log.info(f"Annotation - Updating...")
+            self.update_from_vcf(tmp_annotate_vcf_name)
+
+
+        else:
+            if "ANN" not in self.get_header().infos:
+                log.debug(
+                    f"Existing snpEff annotations in VCF")
+            if force_update_annotation:
+                log.debug(
+                    f"Existing snpEff annotations in VCF - annotation forced")
+
+
+
+        return
+
+
+
 
     def annotation_parquet(self, threads=None):
         
@@ -2072,6 +2504,7 @@ class Variants:
 
         return
 
+
     def update_from_vcf(self, vcf_file):
         table_variants = self.get_table_variants()
         tmp_merged_vcf = NamedTemporaryFile(prefix=self.get_prefix(
@@ -2107,6 +2540,7 @@ class Variants:
                 ;
                 """
             self.conn.execute(sql_query_update)
+
 
     def update_from_vcf_brutal(self, vcf_file):
         table_variants = self.get_table_variants()
