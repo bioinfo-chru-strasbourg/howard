@@ -1,0 +1,20 @@
+{
+  "annotation": {
+    "annovar": {
+      "annotations": {
+        "refGene": {
+          "INFO": null
+        },
+        "cytoBand": null,
+        "clinvar_20210123": {
+          "CLNDN": "ClinVarDisease",
+          "CLNSIG": "ClinVarImpact"
+        }
+      },
+      "options": {
+        "genebase": "-hgvs -splicing_threshold 3 ",
+        "intronhgvs": 10
+      }
+    }
+  }
+}

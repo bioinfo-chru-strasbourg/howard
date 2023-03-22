@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import io
 import multiprocessing
 import os
@@ -148,6 +150,10 @@ def main():
         if vcfdata_obj.get_param().get("annotations", None) or vcfdata_obj.get_param().get("annotation", None):
             vcfdata_obj.annotation()
 
+        # Prioritization
+        if vcfdata_obj.get_param().get("prioritization", None):
+            vcfdata_obj.prioritization()
+
         # Output
         if vcfdata_obj.get_output():
             log.info("Exporting...")
@@ -170,6 +176,9 @@ def main():
                 result = vcfdata_obj.execute_query(param.get("query", None))
             print(result.df())
 
+        # Close connexion
+        vcfdata_obj.close_connexion()
+
     else:
 
         conn = duckdb.connect(":memory:", config=connexion_config)
@@ -183,7 +192,10 @@ def main():
                 result = conn.execute(param.get("query", None))
             print(result.df())
 
-    
+        # Close connexion
+        conn.close_()
+
+
     log.info("End")
 
 

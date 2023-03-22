@@ -1021,6 +1021,61 @@ def test_annotation_bcftools_bed():
     assert length == 1
 
 
+
+def test_annotation_annovar():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    annotation_annovar = "nci60"
+    output_vcf = "/tmp/output.vcf.gz"
+
+    # Construct param dict
+    param = {"annotation": {"annovar": {"annotations":  {annotation_annovar: {"INFO": None}}}}}
+
+    # Create object
+    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
+    # Remove if output file exists
+    remove_if_exists(output_vcf)
+
+    # Annotation
+    vcf.annotation()
+
+    # query annotated variant
+    result = vcf.execute_query("""SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'""")
+    length = len(result.df())
+    
+    assert length == 1
+
+
+
+def test_annotation_snpeff():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    annotation_snpeff = "snpeff"
+    output_vcf = "/tmp/output.vcf.gz"
+
+    # Construct param dict
+    param = {"annotation": {"snpeff": {"options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "}}}
+
+    # Create object
+    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
+    # Remove if output file exists
+    remove_if_exists(output_vcf)
+
+    # Annotation
+    vcf.annotation()
+
+    # query annotated variant
+    result = vcf.execute_query(""" SELECT 1 AS count FROM variants """)
+    length = len(result.df())
+    
+    assert length == 7
+
+
+
 def test_explode_infos():
 
     # Init files

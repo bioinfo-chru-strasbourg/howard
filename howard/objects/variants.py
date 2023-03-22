@@ -1,9 +1,14 @@
+import csv
+import gc
+import gzip
 import io
 import multiprocessing
 import os
 import re
+import shlex
+import sqlite3
 import subprocess
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 import tempfile
 import duckdb
 import json
@@ -123,7 +128,7 @@ class Variants:
 
 
     def get_indexing(self):
-        return self.get_param().get("indexing", True)
+        return self.get_param().get("indexing", False)
 
 
     def set_connexion(self, conn):
@@ -133,6 +138,9 @@ class Variants:
         :param conn: The connection to the database. If not provided, a new connection to an in-memory
         database is created
         """
+
+        connexion_format = self.get_config().get("connexion_format", "duckdb")
+        
         connexion_db = ":memory:"
         if not conn:
             if self.get_input_format() in ["db", "duckdb"]:
@@ -149,16 +157,25 @@ class Variants:
             elif self.get_connexion_type() != "":
                 connexion_db = self.get_connexion_type()
 
-            conn = duckdb.connect(connexion_db)
+            if connexion_format in ["duckdb"]:
+                conn = duckdb.connect(connexion_db)
+            elif connexion_format in ["sqlite"]:
+                conn = sqlite3.connect(connexion_db)
+
 
         # Compression
         # PRAGMA force_compression, expected Auto, Uncompressed, Constant, RLE, Dictionary, PFOR, BitPacking, FSST, Chimp, Patas
         #conn.execute("PRAGMA force_compression='Patas';")
 
-
         # Set connexion
+        self.connexion_format = connexion_format
         self.connexion_db = connexion_db
         self.conn = conn
+
+        log.debug(f"connexion_format: " + connexion_format)
+        log.debug(f"connexion_db: " + connexion_db)
+        #log.debug(f"connexion_format: " + connexion_format)
+
 
     def set_output(self, output=None):
         """
@@ -222,6 +239,18 @@ class Variants:
     #     self.dataframe = dataframe
 
 
+    def get_query_to_df(self, query):
+
+        connexion_format = self.get_connexion_format()
+        if connexion_format in ["duckdb"]:
+            df = self.conn.execute(query).df()
+        elif connexion_format in ["sqlite"]:
+            df = pd.read_sql_query(query, self.conn)
+        
+        return df
+
+
+
     def get_overview(self):
         """
         The function prints the input, output, config, and dataframe of the current object
@@ -229,7 +258,8 @@ class Variants:
         table_variants_from = self.get_table_variants(clause="from")
         sql_columns = self.get_header_columns_as_sql()
         sql_query_export = f"SELECT {sql_columns} FROM {table_variants_from}"
-        df = self.conn.execute(sql_query_export).df()
+        #df = self.conn.execute(sql_query_export).df()
+        df = self.get_query_to_df(sql_query_export)
         log.info("Input:  " + str(self.get_input()) +
                  " [" + str(str(self.get_input_format())) + "]")
         log.info("Output: " + str(self.get_output()) +
@@ -244,6 +274,10 @@ class Variants:
         log.info("Dataframe: ")
         for d in str(df).split("\n"):
             log.info("\t" + str(d))
+        
+        # garbage collector
+        del df
+        gc.collect()
 
         return None
 
@@ -411,6 +445,14 @@ class Variants:
         :return: The connection object.
         """
         return self.conn
+    
+    def close_connexion(self):
+        """
+        This function closes the connection to the database.
+        :return: The connection is being closed.
+        """
+        return self.conn.close()
+
 
     def get_header(self, type="vcf"):
         """
@@ -496,6 +538,13 @@ class Variants:
     #     """
     #     return self.dataframe
 
+    def get_connexion_format(self):
+        """
+        It returns the connexion format of the object.
+        :return: The connexion_format is being returned.
+        """
+        return self.connexion_format
+
 
     def insert_file_to_table(self, file, columns, header_len=0, sep='\t', chunksize=1000000):
         """
@@ -511,8 +560,24 @@ class Variants:
 
         # Config
         chunksize = self.get_config().get("load", {}).get("chunk", chunksize)
+        connexion_format = self.get_connexion_format()
 
         log.debug("chunksize: "+str(chunksize))
+
+        if chunksize:
+            for chunk in pd.read_csv(file, skiprows=header_len, sep=sep, chunksize=chunksize, engine="c"):
+                if connexion_format in ["duckdb"]:
+                    sql_insert_into = f"INSERT INTO variants ({columns}) SELECT {columns} FROM chunk"
+                    self.conn.execute(sql_insert_into)
+                elif connexion_format in ["sqlite"]:
+                    chunk.to_sql("variants", self.conn, if_exists='append', index=False)
+                else:
+                    log.error(f"Failed insert file into table. Unknown connexion format {connexion_format}")
+                    raise ValueError(
+                        f"Failed insert file into table. Unknown connexion format {connexion_format}") 
+
+
+        return
 
         if chunksize:
             for chunk in pd.read_csv(file, skiprows=header_len, sep=sep, chunksize=chunksize, engine="c"):
@@ -587,7 +652,7 @@ class Variants:
         table_variants = self.get_table_variants()
 
         # Create database
-        log.debug(f"Create Database")
+        log.debug(f"Create Table {table_variants}")
         sql_create_table_columns_sql = ", ".join(sql_create_table_columns)
         sql_create_table_columns_list_sql = ", ".join(
             sql_create_table_columns_list)
@@ -667,7 +732,7 @@ class Variants:
         self.create_indexes()
 
        
-    def explode_infos(self, prefix = None):
+    def explode_infos(self, prefix = None, create_index=False):
         """
         The function takes a VCF file and explodes the INFO fields into individual columns
         """
@@ -732,8 +797,9 @@ class Variants:
             # log.debug(f"Explode INFO fields - ADD ["+str(len(self.get_header().infos))+f"]: {sql_info_alter_table}")
             # self.conn.execute(sql_info_alter_table)
 
-        # create indexes 
-        self.create_indexes()
+        # create indexes
+        if create_index:
+            self.create_indexes()
 
 
     def create_indexes(self):
@@ -925,28 +991,23 @@ class Variants:
                 tmp_variants = NamedTemporaryFile(prefix=self.get_prefix(
                 ), dir=self.get_tmp_dir(), suffix=".gz", delete=False)
                 tmp_variants_name = tmp_variants.name
-                sql_query_export = f"COPY (SELECT {sql_column} FROM {table_variants} WHERE 1 {sql_query_hard} {sql_query_sort} {sql_query_limit}) TO '{tmp_variants_name}' WITH (FORMAT CSV, DELIMITER '\t', HEADER, QUOTE '', COMPRESSION 'gzip')"
+                #sql_query_export = f"COPY (SELECT {sql_column} FROM {table_variants} WHERE 1 {sql_query_hard} {sql_query_sort} {sql_query_limit}) TO '{tmp_variants_name}' WITH (FORMAT CSV, DELIMITER '\t', HEADER, QUOTE '', COMPRESSION 'gzip')"
+                sql_query_export = f"COPY (SELECT {sql_column} FROM {table_variants} WHERE 1 {sql_query_hard} {sql_query_sort} {sql_query_limit}) TO '{tmp_variants_name}' WITH (FORMAT CSV, DELIMITER '\t', HEADER, QUOTE '')"
                 # print(sql_query_export)
                 self.conn.execute(sql_query_export)
 
-                # Create output
-                # Cat header and variants
-                command_gzip = " cat "
-                command_gzip_d = " zcat "
-                if self.output_format in ["gz"]:
-                    command_gzip = f" bgzip -c "
-                    # Check threads in bgzip command (error in macos)
-                    result_command_bgzip = subprocess.run(
-                        "bgzip --help 2>&1 | grep 'threads'", shell=True, stdout=subprocess.PIPE)
-                    if not result_command_bgzip.returncode:
-                        command_gzip += f" --threads={threads} "
-                    else:
-                        command_gzip = f" gzip -c "
-                    command_gzip_d = command_gzip + f" -d "
-                # decompress and re-compress with bgzip because gzip from duckdb is not in bgzip format
-                command = f"grep '^#CHROM' -v {header_name} | {command_gzip} > {output_file}; {command_gzip_d} {tmp_variants_name} | {command_gzip} >> {output_file}"
-                # print(command)
+                # VCF
+                command = f"grep '^#CHROM' -v {header_name} > {output_file}.vcf; cat {tmp_variants_name} >> {output_file}.vcf"
                 subprocess.run(command, shell=True)
+
+                if self.get_output_format() in ["vcf"]:
+                    command = f"mv {output_file}.vcf {output_file}"
+                    subprocess.run(command, shell=True)
+                elif self.get_output_format() in ["gz"]:
+                    bgzip_command = get_bgzip(threads=threads)
+                    command = f""" {bgzip_command} {output_file}.vcf > {output_file}"""
+                    subprocess.run(command, shell=True)
+
 
 
     def export_header(self, header_name=None):
@@ -960,10 +1021,12 @@ class Variants:
         return tmp_header_name
 
 
-    def export_variant_vcf(self, vcf_file, type="vcf", remove_info=False, add_samples=True, compression=1, index=False):
+    def export_variant_vcf(self, vcf_file, file_type="vcf", remove_info=False, add_samples=True, compression=1, index=False):
 
         # Extract VCF
         log.debug("Export VCF...")
+
+        connexion_format = self.get_connexion_format()
 
         sql_column = self.get_header_columns_as_sql()
         table_variants = self.get_table_variants()
@@ -973,7 +1036,10 @@ class Variants:
 
         # Info fields
         if remove_info:
-            info_field = "'.' as INFO"
+            if type(remove_info) == str:
+                info_field = f"""'{remove_info}' as INFO"""
+            else:
+                info_field = f"""'.' as INFO"""
         else:
             info_field = "INFO"
         # samples fields
@@ -1000,17 +1066,23 @@ class Variants:
         tmp_variants_name = tmp_variants.name
         select_fields = f"\"#CHROM\", POS, ID, REF, ALT, QUAL, FILTER"
 
-        sql_query_export = f"COPY (SELECT {select_fields}, {info_field} {samples_fields} FROM {table_variants} WHERE 1 {sql_query_hard} {sql_query_sort} {sql_query_limit}) TO '{tmp_variants_name}' WITH (FORMAT CSV, DELIMITER '\t', HEADER, QUOTE '', COMPRESSION 'gzip')"
-        #print(sql_query_export)
+        sql_query_select = f""" SELECT {select_fields}, {info_field} {samples_fields} FROM {table_variants} WHERE 1 {sql_query_hard} {sql_query_sort} {sql_query_limit} """
 
-        self.conn.execute(sql_query_export)
-
+        if connexion_format in ["duckdb"]:
+            sql_query_export = f"COPY ({sql_query_select}) TO '{tmp_variants_name}' WITH (FORMAT CSV, DELIMITER '\t', HEADER, QUOTE '', COMPRESSION 'gzip')"
+            self.conn.execute(sql_query_export)
+        elif connexion_format in ["sqlite"]:
+            with gzip.open(tmp_variants_name, 'wt') as f:
+                writer = csv.writer(f, delimiter='\t', quotechar='', quoting=csv.QUOTE_NONE)
+                cursor = self.conn.execute(sql_query_select)
+                writer.writerow([i[0] for i in cursor.description])
+                writer.writerows(cursor)
         # Create output
         # Cat header and variants
         command_gzip = ""
-        if type in ["gz"]:
+        if file_type in ["gz"]:
             #command_gzip = f" | bgzip --compress-level={compression}  --threads={threads} -c "
-            command_gzip = f" | bgzip -c "
+            command_gzip = f" | bgzip -l {compression} -c "
         if index:
             command_tabix = f" && tabix {vcf_file}"
         else:
@@ -1043,6 +1115,15 @@ class Variants:
                         param["annotation"]["snpeff"] = {}
                     if "options" not in param["annotation"]["snpeff"]:
                         param["annotation"]["snpeff"]["options"] = ""
+                if annotation_file.startswith("annovar"):
+                    if "annovar" not in param["annotation"]:
+                        param["annotation"]["annovar"] = {}
+                    if "annotations" not in param["annotation"]["annovar"]:
+                        param["annotation"]["annovar"]["annotations"] = {}
+                    annotation_file_split = annotation_file.split(":")
+                    if len(annotation_file_split) > 1:
+                        annotation_file_annotation = annotation_file_split[1]
+                        param["annotation"]["annovar"]["annotations"][annotation_file_annotation] = annotations
                 elif os.path.exists(annotation_file):
                     log.debug(f"Quick Annotation File {annotation_file}")
                     quick_annotation_file = annotation_file
@@ -1078,6 +1159,9 @@ class Variants:
 
             self.set_param(param)
 
+        # print(param)
+        # return
+
         if param.get("annotation", None):
             log.info("Annotations")
             if param.get("annotation", {}).get("parquet", None):
@@ -1088,6 +1172,7 @@ class Variants:
                 self.annotation_bcftools()
             if param.get("annotation", {}).get("annovar", None):
                 log.info("Annotations 'annovar'...")
+                self.annotation_annovar()
             if param.get("annotation", {}).get("snpeff", None):
                 log.info("Annotations 'snpeff'...")
                 self.annotation_snpeff()
@@ -1131,7 +1216,9 @@ class Variants:
         # Check if not empty
         log.debug("Check if not empty")
         sql_query_chromosomes = f"""SELECT count(*) as count FROM {table_variants} as table_variants"""
-        if not self.conn.execute(f"{sql_query_chromosomes}").df()["count"][0]:
+        sql_query_chromosomes_df = self.get_query_to_df(sql_query_chromosomes)
+        #if not self.conn.execute(f"{sql_query_chromosomes}").df()["count"][0]:
+        if not sql_query_chromosomes_df["count"][0]:
             log.info(f"VCF empty")
             return
 
@@ -1329,8 +1416,10 @@ class Variants:
                         # Find chomosomes
                         log.debug("Find chromosomes ")
                         sql_query_chromosomes = f"""SELECT table_variants.\"#CHROM\" as CHROM FROM {table_variants} as table_variants GROUP BY table_variants.\"#CHROM\""""
-                        chomosomes_list = list(self.conn.execute(
-                            f"{sql_query_chromosomes}").df()["CHROM"])
+                        sql_query_chromosomes_df = self.get_query_to_df(sql_query_chromosomes)
+                        chomosomes_list = list(sql_query_chromosomes_df["CHROM"])
+                        #chomosomes_list = list(self.conn.execute(
+                        #    f"{sql_query_chromosomes}").df()["CHROM"])
                         log.debug("Chromosomes found: " +
                                   str(list(chomosomes_list)))
 
@@ -1404,7 +1493,7 @@ class Variants:
                                 # DEVEL
                                 # BED
                                 # bcftools annotate -a /mnt/BIOINFO/git/HOWARD/tests/data/annotations/refGene.bed.gz -h /mnt/BIOINFO/git/HOWARD/tests/data/annotations/refGene.bed.test_devel.hdr -c CHROM,POS,POS,symbol,transcript,strand /mnt/BIOINFO/git/HOWARD/tests/data/example.vcf.gz 
-                                command_annotate = f"bcftools annotate --regions-file={tmp_bed_name} -a {db_file} -h {tmp_header_vcf_name} -c {annotation_infos} --rename-annots={tmp_rename_name} {tmp_vcf_name} -o {tmp_annotation_vcf_name} -Oz 2>>{tmp_annotation_vcf_name_err} && tabix {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} "
+                                #command_annotate = f"bcftools annotate --regions-file={tmp_bed_name} -a {db_file} -h {tmp_header_vcf_name} -c {annotation_infos} --rename-annots={tmp_rename_name} {tmp_vcf_name} -o {tmp_annotation_vcf_name} -Oz 2>>{tmp_annotation_vcf_name_err} && tabix {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} "
                                 
 
 
@@ -1412,7 +1501,7 @@ class Variants:
             if commands:
 
                 # Export VCF file
-                self.export_variant_vcf(vcf_file=tmp_vcf_name, type="gz",
+                self.export_variant_vcf(vcf_file=tmp_vcf_name, file_type="gz",
                                         remove_info=True, add_samples=False, compression=1, index=True)
 
                 # Threads
@@ -1524,22 +1613,90 @@ class Variants:
             log.debug("Delete tmp files/folders: "+str(delete_tmp))
 
         # Config
-        databases_folders = self.config.get("folders", {}).get(
-            "databases", {}).get("bcftools", ["."])
-        log.debug("Databases annotations: " + str(databases_folders))
-
-        # Config
         config = self.get_config()
         log.debug("Config: " + str(config))
+
+        # Config - Folders - Databases
+        databases_folders = config.get("folders", {}).get(
+            "databases", {}).get("snpeff", ["."])
+        log.debug("Databases annotations: " + str(databases_folders))
         
+        # Config - Java
+        java_bin = config.get("tools",{}).get("java",{}).get("bin","java")
+        
+        # Config - snpEff
+        snpeff_jar = config.get("tools",{}).get("snpeff",{}).get("jar","snpEff.jar")
+        #snpeff_databases = config.get("folders",{}).get("databases",{}).get("snpeff",os.path.dirname(snpeff_jar)+"/data")
+        snpeff_databases = config.get("folders",{}).get("databases",{}).get("snpeff","")
+
+        # Config - check tools
+        #if not os.path.exists(java_bin) and not os.access(java_bin, os.X_OK) and java_bin != "java":
+        #if not os.path.exists(java_bin) and not os.access(java_bin, os.X_OK):
+        if not os.path.exists(java_bin):
+            log.warning(f"Annotation warning: no java bin '{java_bin}'. Try to find...")
+            # Try to find java
+            try:
+                java_bin = find_all('java', '/usr/bin')[0]
+            except:
+                log.error(f"Annotation failed: no java bin '{java_bin}'")
+                raise ValueError(f"Annotation failed: no java bin '{java_bin}'") 
+            if not os.path.exists(java_bin):
+                log.error(f"Annotation failed: no java bin '{java_bin}'")
+                raise ValueError(f"Annotation failed: no java bin '{java_bin}'")
+            else:
+                log.warning(f"Annotation warning: snpEff jar bin '{java_bin}'")
+        
+        if not os.path.exists(snpeff_jar):
+            log.warning(f"Annotation warning: no snpEff jar '{snpeff_jar}'. Try to find...")
+            # Try to find snpEff.jar
+            try:
+                snpeff_jar = find_all('snpEff.jar', '/')[0]
+            except:
+                log.error(f"Annotation failed: no snpEff jar '{snpeff_jar}'")
+                raise ValueError(f"Annotation failed: no snpEff jar '{snpeff_jar}'") 
+            if not os.path.exists(snpeff_jar):
+                log.error(f"Annotation failed: no snpEff jar '{snpeff_jar}'")
+                raise ValueError(f"Annotation failed: no snpEff jar '{snpeff_jar}'")
+            else:
+                log.warning(f"Annotation warning: snpEff jar found '{snpeff_jar}'")
+
+        if not os.path.exists(snpeff_databases):
+            log.warning(f"Annotation warning: no snpEff database '{snpeff_databases}'. Try to find...")
+            # Try to find snpeff database
+            try:
+                snpeff_databases = os.path.dirname(os.path.dirname(find_all('snpEffectPredictor.bin', '/')[0]))
+            except:
+                log.error(f"Annotation failed: no snpEff database '{snpeff_databases}'")
+                raise ValueError(f"Annotation failed: no snpEff database '{snpeff_databases}'")
+            if not os.path.exists(snpeff_databases):
+                log.error(f"Annotation failed: no snpEff database '{snpeff_databases}'")
+                raise ValueError(f"Annotation failed: no snpEff database '{snpeff_databases}'")
+            else:
+                log.warning(f"Annotation warning: snpEff database found '{snpeff_databases}'")
+
         # Param
         param = self.get_param()
-        log.debug("Config: " + str(config))
+        log.debug("Param: " + str(param))
         
         # Param
         options = param.get("annotation", {}).get(
             "snpeff", {}).get("options", None)
         log.debug("Options: " + str(options))
+
+        # Param - Assembly
+        assembly = param.get("assembly","hg19")
+
+        # Param - Options
+        #snpeff_options = f"  -stats OUTPUT.html -csvStats OUTPUT.csv"
+        snpeff_options = param.get("annotation",{}).get("snpeff",{}).get("options","")
+        snpeff_stats = param.get("annotation",{}).get("snpeff",{}).get("stats",None)
+        snpeff_csvstats = param.get("annotation",{}).get("snpeff",{}).get("csvStats",None)
+        if snpeff_stats:
+            snpeff_stats = snpeff_stats.replace("OUTPUT",self.get_output())
+            snpeff_options += f" -stats {snpeff_stats}"
+        if snpeff_csvstats:
+            snpeff_csvstats = snpeff_csvstats.replace("OUTPUT",self.get_output())
+            snpeff_options += f" -csvStats {snpeff_csvstats}"   
 
         # Data
         table_variants = self.get_table_variants()
@@ -1554,7 +1711,7 @@ class Variants:
         # Export in VCF
         log.debug("Create initial file to annotate")
         tmp_vcf = NamedTemporaryFile(prefix=self.get_prefix(
-        ), dir=self.get_tmp_dir(), suffix=".vcf.gz", delete=False)
+        ), dir=self.get_tmp_dir(), suffix=".vcf.gz", delete=True)
         tmp_vcf_name = tmp_vcf.name
 
         # VCF header
@@ -1573,7 +1730,7 @@ class Variants:
         if "ANN" not in self.get_header().infos or force_update_annotation:
             
             # Export VCF file
-            self.export_variant_vcf(vcf_file=tmp_vcf_name, type="gz",
+            self.export_variant_vcf(vcf_file=tmp_vcf_name, file_type="gz",
                                     remove_info=True, add_samples=False, compression=1, index=True)
 
             # Tmp file
@@ -1585,82 +1742,37 @@ class Variants:
             err_files.append(tmp_annotate_vcf_name_err)
 
 
-            # Add header
-            # ##INFO=<ID=ANN,Number=.,Type=String,Description="Functional annotations: 'Allele | Annotation | Annotation_Impact | Gene_Name | Gene_ID | Feature_Type | Feature_ID | Transcript_BioType | Rank | HGVS.c | HGVS.p | cDNA.pos / cDNA.length | CDS.pos / CDS.length | AA.pos / AA.length | Distance | ERRORS / WARNINGS / INFO' ">
-            # ##INFO=<ID=LOF,Number=.,Type=String,Description="Predicted loss of function effects for this variant. Format: 'Gene_Name | Gene_ID | Number_of_transcripts_in_gene | Percent_of_transcripts_affected'">
-            # ##INFO=<ID=NMD,Number=.,Type=String,Description="Predicted nonsense mediated decay effects for this variant. Format: 'Gene_Name | Gene_ID | Number_of_transcripts_in_gene | Percent_of_transcripts_affected'">
-
-            # Add INFO field to header
-            if "ANN" not in vcf_reader.infos:
-                vcf_reader.infos["ANN"] = vcf.parser._Info(
-                    "ANN",
-                    ".",
-                    "String",
-                    "Functional annotations: 'Allele | Annotation | Annotation_Impact | Gene_Name | Gene_ID | Feature_Type | Feature_ID | Transcript_BioType | Rank | HGVS.c | HGVS.p | cDNA.pos / cDNA.length | CDS.pos / CDS.length | AA.pos / AA.length | Distance | ERRORS / WARNINGS / INFO' ",
-                    "snpEff",
-                    "unknown",
-                    1
-                )
-            if "LOF" not in vcf_reader.infos:
-                vcf_reader.infos["LOF"] = vcf.parser._Info(
-                    "LOF",
-                    ".",
-                    "String",
-                    "Predicted loss of function effects for this variant. Format: 'Gene_Name | Gene_ID | Number_of_transcripts_in_gene | Percent_of_transcripts_affected'",
-                    "snpEff",
-                    "unknown",
-                    1
-                )
-            if "NMD" not in vcf_reader.infos:
-                vcf_reader.infos["NMD"] = vcf.parser._Info(
-                    "NMD",
-                    ".",
-                    "String",
-                    "Predicted nonsense mediated decay effects for this variant. Format: 'Gene_Name | Gene_ID | Number_of_transcripts_in_gene | Percent_of_transcripts_affected'",
-                    "snpEff",
-                    "unknown",
-                    1
-                )
-
-
-            # Options
-            #snpeff_options = " -lof -hgvs -interval /tmp/chr7.bed -filterInterval /tmp/chr7.bed -oicr"
-            snpeff_options = f"  -stats OUTPUT.html -csvStats OUTPUT.csv"
-
-
-            # Config
-            # Java
-            java_bin = config.get("tools",{}).get("java",{}).get("bin","java")
-            # snpeff
-            snpeff_jar = config.get("tools",{}).get("snpeff",{}).get("jar","snpeff.jar")
-            snpeff_databases = config.get("folders",{}).get("databases",{}).get("snpeff",os.path.dirname(snpeff_jar)+"/data")
-
-            # Param
-            # Assembly
-            assembly = param.get("assembly","hg19")
-            genome = param.get("genome","hg19.fa")
-            # Options
-            snpeff_options = param.get("annotation",{}).get("snpeff",{}).get("options","")
-            snpeff_stats = param.get("annotation",{}).get("snpeff",{}).get("stats",None)
-            snpeff_csvStats = param.get("annotation",{}).get("snpeff",{}).get("csvStats",None)
-            if snpeff_stats:
-                snpeff_stats = snpeff_stats.replace("OUTPUT",self.get_output())
-                snpeff_options += f" -stats {snpeff_stats}"
-            if snpeff_csvStats:
-                snpeff_csvStats = snpeff_csvStats.replace("OUTPUT",self.get_output())
-                snpeff_options += f" -csvStats {snpeff_csvStats}" 
-
-            if not os.path.exists(java_bin):
-                log.error(f"Annotation failed: no java bin '{java_bin}'")
-                raise ValueError(f"Annotation failed: no java bin '{java_bin}'") 
-            
-            if not os.path.exists(snpeff_jar):
-                log.error(f"Annotation failed: no snpEff jar '{snpeff_jar}'")
-                raise ValueError(f"Annotation failed: no snpEff jar '{snpeff_jar}'") 
-
-            if not os.path.exists(snpeff_databases):
-                log.error(f"Annotation failed: no snpEff database '{snpeff_databases}'")
-                raise ValueError(f"Annotation failed: no snpEff database '{snpeff_databases}'") 
+            # # Add INFO field to header
+            # if "ANN" not in vcf_reader.infos:
+            #     vcf_reader.infos["ANN"] = vcf.parser._Info(
+            #         "ANN",
+            #         ".",
+            #         "String",
+            #         "Functional annotations: 'Allele | Annotation | Annotation_Impact | Gene_Name | Gene_ID | Feature_Type | Feature_ID | Transcript_BioType | Rank | HGVS.c | HGVS.p | cDNA.pos / cDNA.length | CDS.pos / CDS.length | AA.pos / AA.length | Distance | ERRORS / WARNINGS / INFO' ",
+            #         "snpEff",
+            #         "unknown",
+            #         1
+            #     )
+            # if "LOF" not in vcf_reader.infos:
+            #     vcf_reader.infos["LOF"] = vcf.parser._Info(
+            #         "LOF",
+            #         ".",
+            #         "String",
+            #         "Predicted loss of function effects for this variant. Format: 'Gene_Name | Gene_ID | Number_of_transcripts_in_gene | Percent_of_transcripts_affected'",
+            #         "snpEff",
+            #         "unknown",
+            #         1
+            #     )
+            # if "NMD" not in vcf_reader.infos:
+            #     vcf_reader.infos["NMD"] = vcf.parser._Info(
+            #         "NMD",
+            #         ".",
+            #         "String",
+            #         "Predicted nonsense mediated decay effects for this variant. Format: 'Gene_Name | Gene_ID | Number_of_transcripts_in_gene | Percent_of_transcripts_affected'",
+            #         "snpEff",
+            #         "unknown",
+            #         1
+            #     )
 
 
             # Command
@@ -1668,7 +1780,6 @@ class Variants:
             log.debug(f"Annotation - snpEff command: {snpeff_command}")
             run_parallel_commands([snpeff_command], 1)
             
-
 
             # Error messages
             log.info(f"Error/Warning messages:")
@@ -1695,6 +1806,14 @@ class Variants:
                 log.error("Annotation failed: Error in commands")
                 raise ValueError("Annotation failed: Error in commands") 
 
+            # Find annotation in header
+            with open(tmp_annotate_vcf_name, 'rt') as f:
+                header_list = self.read_vcf_header(f)
+            annovar_vcf_header = vcf.Reader(io.StringIO("\n".join(header_list)))
+
+            for ann in annovar_vcf_header.infos:
+                if ann not in self.get_header().infos:
+                    vcf_reader.infos[ann] = annovar_vcf_header.infos.get(ann)
 
             # Update variants
             log.info(f"Annotation - Updating...")
@@ -1702,7 +1821,7 @@ class Variants:
 
 
         else:
-            if "ANN" not in self.get_header().infos:
+            if "ANN" in self.get_header().infos:
                 log.debug(
                     f"Existing snpEff annotations in VCF")
             if force_update_annotation:
@@ -1714,20 +1833,19 @@ class Variants:
         return
 
 
-
     def annotation_annovar(self, threads=None):
 
-        #### TODO
-
         # DEBUG
-        log.debug("Start annotation with snpeff databases (TODO)")
-
-        return
+        log.debug("Start annotation with Annovar databases")
 
         # Threads
         if not threads:
             threads = self.get_threads()
         log.debug("Threads: "+str(threads))
+
+        # Tmp en Err files
+        tmp_files = []
+        err_files = []
 
         # DEBUG
         delete_tmp = True
@@ -1736,22 +1854,62 @@ class Variants:
             log.debug("Delete tmp files/folders: "+str(delete_tmp))
 
         # Config
-        databases_folders = self.config.get("folders", {}).get(
-            "databases", {}).get("bcftools", ["."])
-        log.debug("Databases annotations: " + str(databases_folders))
-
-        # Config
         config = self.get_config()
         log.debug("Config: " + str(config))
-        
+
+        # Config - Folders - Databases
+        databases_folders = config.get("folders", {}).get(
+            "databases", {}).get("annovar", ["."])
+        log.debug("Databases annotations: " + str(databases_folders))
+
+        # Config - annovar
+        annovar_bin = config.get("tools",{}).get("annovar",{}).get("bin","table_annovar.pl")
+        annovar_databases = config.get("folders",{}).get("databases",{}).get("annovar","")
+
+        if not os.path.exists(annovar_bin):
+            log.warning(f"Annotation warning: no annovar bin '{annovar_bin}'. Try to find...")
+            # Try to find table_annovar.pl
+            try:
+                annovar_bin = find_all('table_annovar.pl', '/')[0]
+            except:
+                log.error(f"Annotation failed: no annovar bin '{annovar_bin}'")
+                raise ValueError(f"Annotation failed: no annovar bin '{annovar_bin}'") 
+            if not os.path.exists(annovar_bin):
+                log.error(f"Annotation failed: no annovar bin '{annovar_bin}'")
+                raise ValueError(f"Annotation failed: no annovar bin '{annovar_bin}'")
+            else:
+                log.warning(f"Annotation warning: annovar bin found '{annovar_bin}'")
+
+        if not os.path.exists(annovar_databases):
+            log.warning(f"Annotation warning: no annovar database '{annovar_databases}'. Try to find...")
+            # Try to find annovar database
+            try:
+                annovar_databases = os.path.dirname(find_all('annovar_downdb.log', '/')[0])
+            except:
+                log.error(f"Annotation failed: no annovar database '{annovar_databases}'")
+                raise ValueError(f"Annotation failed: no annovar database '{annovar_databases}'")
+            if not os.path.exists(annovar_databases):
+                log.error(f"Annotation failed: no annovar database '{annovar_databases}'")
+                raise ValueError(f"Annotation failed: no annovar database '{annovar_databases}'")
+            else:
+                log.warning(f"Annotation warning: annovar database found '{annovar_databases}'")
+
         # Param
         param = self.get_param()
-        log.debug("Config: " + str(config))
+        log.debug("Param: " + str(param))
         
-        # Param
+        # Param - options
         options = param.get("annotation", {}).get(
-            "snpeff", {}).get("options", None)
+            "annovar", {}).get("options", {})
         log.debug("Options: " + str(options))
+
+        # Param - annotations
+        annotations = param.get("annotation", {}).get(
+            "annovar", {}).get("annotations", {})
+        log.debug("Annotations: " + str(annotations))
+
+        # Param - Assembly
+        assembly = param.get("assembly","hg19")
 
         # Data
         table_variants = self.get_table_variants()
@@ -1759,15 +1917,10 @@ class Variants:
         # Check if not empty
         log.debug("Check if not empty")
         sql_query_chromosomes = f"""SELECT count(*) as count FROM {table_variants} as table_variants"""
-        if not self.conn.execute(f"{sql_query_chromosomes}").df()["count"][0]:
+        sql_query_chromosomes_df = self.get_query_to_df(sql_query_chromosomes)
+        if not sql_query_chromosomes_df["count"][0]:
             log.info(f"VCF empty")
             return
-
-        # Export in VCF
-        log.debug("Create initial file to annotate")
-        tmp_vcf = NamedTemporaryFile(prefix=self.get_prefix(
-        ), dir=self.get_tmp_dir(), suffix=".vcf.gz", delete=False)
-        tmp_vcf_name = tmp_vcf.name
 
         # VCF header
         vcf_reader = self.get_header()
@@ -1782,150 +1935,217 @@ class Variants:
 
         force_update_annotation = True
 
-        if "ANN" not in self.get_header().infos or force_update_annotation:
-            
+        if annotations:
+
+            commands = []
+            tmp_annotates_vcf_name_list = []
+
+            # Export in VCF
+            log.debug("Create initial file to annotate")
+            tmp_vcf = NamedTemporaryFile(prefix=self.get_prefix(
+            ), dir=self.get_tmp_dir(), suffix=".vcf.gz", delete=False)
+            tmp_vcf_name = tmp_vcf.name
+            tmp_files.append(tmp_vcf_name)
+            tmp_files.append(tmp_vcf_name+".tbi")
+
             # Export VCF file
-            self.export_variant_vcf(vcf_file=tmp_vcf_name, type="gz",
-                                    remove_info=True, add_samples=False, compression=1, index=True)
+            self.export_variant_vcf(vcf_file=tmp_vcf_name, file_type="gz",
+                                        remove_info=".", add_samples=False, compression=1, index=True)
 
-            # Tmp file
-            err_files = []
-            tmp_annotate_vcf = NamedTemporaryFile(prefix=self.get_prefix(
-            ), dir=self.get_tmp_dir(), suffix=".vcf", delete=False)
-            tmp_annotate_vcf_name = tmp_annotate_vcf.name
-            tmp_annotate_vcf_name_err = tmp_annotate_vcf_name + ".err"
-            err_files.append(tmp_annotate_vcf_name_err)
-
-
-            # Add header
-            # ##INFO=<ID=ANN,Number=.,Type=String,Description="Functional annotations: 'Allele | Annotation | Annotation_Impact | Gene_Name | Gene_ID | Feature_Type | Feature_ID | Transcript_BioType | Rank | HGVS.c | HGVS.p | cDNA.pos / cDNA.length | CDS.pos / CDS.length | AA.pos / AA.length | Distance | ERRORS / WARNINGS / INFO' ">
-            # ##INFO=<ID=LOF,Number=.,Type=String,Description="Predicted loss of function effects for this variant. Format: 'Gene_Name | Gene_ID | Number_of_transcripts_in_gene | Percent_of_transcripts_affected'">
-            # ##INFO=<ID=NMD,Number=.,Type=String,Description="Predicted nonsense mediated decay effects for this variant. Format: 'Gene_Name | Gene_ID | Number_of_transcripts_in_gene | Percent_of_transcripts_affected'">
-
-            # Add INFO field to header
-            if "ANN" not in vcf_reader.infos:
-                vcf_reader.infos["ANN"] = vcf.parser._Info(
-                    "ANN",
-                    ".",
-                    "String",
-                    "Functional annotations: 'Allele | Annotation | Annotation_Impact | Gene_Name | Gene_ID | Feature_Type | Feature_ID | Transcript_BioType | Rank | HGVS.c | HGVS.p | cDNA.pos / cDNA.length | CDS.pos / CDS.length | AA.pos / AA.length | Distance | ERRORS / WARNINGS / INFO' ",
-                    "snpEff",
-                    "unknown",
-                    1
-                )
-            if "LOF" not in vcf_reader.infos:
-                vcf_reader.infos["LOF"] = vcf.parser._Info(
-                    "LOF",
-                    ".",
-                    "String",
-                    "Predicted loss of function effects for this variant. Format: 'Gene_Name | Gene_ID | Number_of_transcripts_in_gene | Percent_of_transcripts_affected'",
-                    "snpEff",
-                    "unknown",
-                    1
-                )
-            if "NMD" not in vcf_reader.infos:
-                vcf_reader.infos["NMD"] = vcf.parser._Info(
-                    "NMD",
-                    ".",
-                    "String",
-                    "Predicted nonsense mediated decay effects for this variant. Format: 'Gene_Name | Gene_ID | Number_of_transcripts_in_gene | Percent_of_transcripts_affected'",
-                    "snpEff",
-                    "unknown",
-                    1
-                )
+            # Create file for field rename
+            log.debug("Create file for field rename")
+            tmp_rename = NamedTemporaryFile(prefix=self.get_prefix(
+            ), dir=self.get_tmp_dir(), suffix=".rename", delete=False)
+            tmp_rename_name = tmp_rename.name
+            tmp_files.append(tmp_rename_name)
 
 
-            # Options
-            #snpeff_options = " -lof -hgvs -interval /tmp/chr7.bed -filterInterval /tmp/chr7.bed -oicr"
-            snpeff_options = f"  -stats OUTPUT.html -csvStats OUTPUT.csv"
+            for annotation in annotations:
+                annotation_fields = annotations[annotation]
+
+                if not annotation_fields:
+                    annotation_fields = { "INFO": None }
+
+                log.debug(f"Annotation '{annotation}'")
+                log.debug(f"Annotation '{annotation}' - fields: {annotation_fields}")
+
+                # Tmp file for annovar
+                err_files = []
+                tmp_annotate_vcf_directory = TemporaryDirectory(prefix=self.get_prefix(
+                ), dir=self.get_tmp_dir(), suffix=".annovar") 
+                tmp_annotate_vcf_prefix = tmp_annotate_vcf_directory.name + "/annovar"
+                tmp_annotate_vcf_name_annovar = tmp_annotate_vcf_prefix + "." + assembly + "_multianno.vcf"
+                tmp_annotate_vcf_name_err = tmp_annotate_vcf_directory.name + "/.err"
+                err_files.append(tmp_annotate_vcf_name_err)
+                tmp_files.append(tmp_annotate_vcf_name_err)
+
+                # Tmp file final vcf annotated by annovar
+                tmp_annotate_vcf = NamedTemporaryFile(prefix=self.get_prefix(
+                ), dir=self.get_tmp_dir(), suffix=".vcf.gz", delete=False)
+                tmp_annotate_vcf_name = tmp_annotate_vcf.name
+                tmp_annotates_vcf_name_list.append(tmp_annotate_vcf_name)
+                tmp_files.append(tmp_annotate_vcf_name)
+                tmp_files.append(tmp_annotate_vcf_name+".tbi")
+
+                # Number of fields
+                annotation_list = []
+                annotation_renamed_list = []
+
+                for annotation_field in annotation_fields:
+
+                    # field new name, if parametered SKIPPED !!!!!! not managed actually TODO
+                    annotation_fields_new_name = annotation_fields.get(
+                        annotation_field, annotation_field)
+                    if not annotation_fields_new_name:
+                        annotation_fields_new_name = annotation_field
+
+                    if force_update_annotation or annotation_fields_new_name not in self.get_header().infos:
+                        annotation_list.append(annotation_field)
+                        annotation_renamed_list.append(annotation_fields_new_name)
+                    else: # annotation_fields_new_name in self.get_header().infos and not force_update_annotation:
+                        log.warning(
+                            f"Annotation '{annotation}' - '{annotation_fields_new_name}' - already exists (skipped)")
+                        
+                    # Add rename info
+                    run_parallel_commands(
+                            [f"echo 'INFO/{annotation_field} {annotation_fields_new_name}' >> {tmp_rename_name}"], 1)
 
 
-            # Config
-            # Java
-            java_bin = config.get("tools",{}).get("java",{}).get("bin","java")
-            # snpeff
-            snpeff_jar = config.get("tools",{}).get("snpeff",{}).get("jar","snpeff.jar")
-            snpeff_databases = config.get("folders",{}).get("databases",{}).get("snpeff",os.path.dirname(snpeff_jar)+"/data")
+                #log.debug("fields_to_removed: " + str(fields_to_removed))
+                log.debug("annotation_list: " + str(annotation_list))
 
-            # Param
-            # Assembly
-            assembly = param.get("assembly","hg19")
-            genome = param.get("genome","hg19.fa")
-            # Options
-            snpeff_options = param.get("annotation",{}).get("snpeff",{}).get("options","")
-            snpeff_stats = param.get("annotation",{}).get("snpeff",{}).get("stats",None)
-            snpeff_csvStats = param.get("annotation",{}).get("snpeff",{}).get("csvStats",None)
-            if snpeff_stats:
-                snpeff_stats = snpeff_stats.replace("OUTPUT",self.get_output())
-                snpeff_options += f" -stats {snpeff_stats}"
-            if snpeff_csvStats:
-                snpeff_csvStats = snpeff_csvStats.replace("OUTPUT",self.get_output())
-                snpeff_options += f" -csvStats {snpeff_csvStats}" 
+                # protocol
+                protocol = annotation
 
-            if not os.path.exists(java_bin):
-                log.error(f"Annotation failed: no java bin '{java_bin}'")
-                raise ValueError(f"Annotation failed: no java bin '{java_bin}'") 
-            
-            if not os.path.exists(snpeff_jar):
-                log.error(f"Annotation failed: no snpEff jar '{snpeff_jar}'")
-                raise ValueError(f"Annotation failed: no snpEff jar '{snpeff_jar}'") 
+                # argument
+                argument = ""
 
-            if not os.path.exists(snpeff_databases):
-                log.error(f"Annotation failed: no snpEff database '{snpeff_databases}'")
-                raise ValueError(f"Annotation failed: no snpEff database '{snpeff_databases}'") 
+                # operation
+                operation = "f"
+                if annotation in ["refGene", "refGeneWithVer"] or annotation.startswith("ensGene"):
+                    operation = "gx"
+                    if options.get("genebase",None):
+                        argument = f"""'{options.get("genebase","")}'"""
+                elif annotation in ["cytoBand"]:
+                    operation = "r"
+        
+                # argument option
+                argument_option = ""
+                if argument != "":
+                    argument_option = " --argument " + argument
+
+                # command options
+                command_options = f""" --nastring . --vcfinput --polish --dot2underline --thread {threads} """ # --intronhgvs 10
+                for option in options:
+                    if option not in ["genebase"]:
+                        command_options += f""" --{option}={options[option]}"""
+
+                # Command
+
+                # Command - Annovar
+                command_annovar = f"""{annovar_bin} {tmp_vcf_name} {annovar_databases} --buildver {assembly} --outfile {tmp_annotate_vcf_prefix} --remove --protocol {protocol} --operation {operation} {argument_option} {command_options} 2>>{tmp_annotate_vcf_name_err} && mv {tmp_annotate_vcf_name_annovar} {tmp_annotate_vcf_name}.tmp.vcf """
+                tmp_files.append(f"{tmp_annotate_vcf_name}.tmp.vcf")
+
+                # Command - start pipe
+                command_annovar += f""" && bcftools view --threads={threads} {tmp_annotate_vcf_name}.tmp.vcf 2>>{tmp_annotate_vcf_name_err} """
+                
+                # Command - Clean INFO/ANNOVAR_DATE (due to Annovar issue with multiple TAGS!) 
+                command_annovar += """ | sed "s/ANNOVAR_DATE=[^;\t]*;//gi" """
+
+                # Command - Special characters (refGene annotation)
+                command_annovar += """ | sed "s/\\\\\\x3b/,/gi" """
+
+                # Command - Clean empty fields (with value ".")
+                command_annovar += ''' | awk -F'\\t' -v OFS='\\t' '{if ($0 ~ /^#/) print; else {split($8,a,";");for(i=1;i<=length(a);i++) {split(a[i],b,"=");if(b[2]!=".") {c[b[1]]=b[2]}}; split($8,d,";");for(i=1;i<=length(d);i++) {split(d[i],e,"=");if(c[e[1]]!="") {if(info!="") {info=info";"}; info=info""e[1]"="c[e[1]]}}; if(info!="") {$8=info} else {$8=""}; delete c; info=""; print}}' '''
+                
+                # Command - Extract only needed fields, and remove ANNOVAR fields, and compress and index final file
+                annovar_fields_to_keep = ["INFO/ANNOVAR_DATE", "INFO/ALLELE_END"]
+                if "ALL" not in annotation_list and "INFO" not in annotation_list:
+                    #for ann in annotation_renamed_list:
+                    for ann in annotation_list:
+                        annovar_fields_to_keep.append(f"^INFO/{ann}")
+                
+                command_annovar += f""" | bcftools annotate --threads={threads} -x {",".join(annovar_fields_to_keep)} --rename-annots={tmp_rename_name} -o {tmp_annotate_vcf_name} -Oz 2>>{tmp_annotate_vcf_name_err} """
+
+                # Command - indexing
+                command_annovar += f"""  && tabix {tmp_annotate_vcf_name} """
+
+                log.debug(f"Annotation - Annovar command: {command_annovar}")
+                run_parallel_commands([command_annovar], 1)
+
+                # Error messages
+                if True:
+                    log.info(f"Error/Warning messages:")
+                    error_message_command_all = []
+                    error_message_command_warning = []
+                    error_message_command_err = []
+                    for err_file in err_files:
+                        with open(err_file, 'r') as f:
+                            for line in f:
+                                message = line.strip()
+                                error_message_command_all.append(message)
+                                if line.startswith('[W::') or line.startswith('WARNING'):
+                                    error_message_command_warning.append(message)
+                                if line.startswith('[E::') or line.startswith('ERROR'):
+                                    error_message_command_err.append(f"{err_file}: " + message)
+                    # log info
+                    for message in list(set(error_message_command_err + error_message_command_warning)):
+                        log.info(message)
+                    # debug info
+                    for message in list(set(error_message_command_all)):
+                        log.debug(message)
+                    # failed
+                    if len(error_message_command_err):
+                        log.error("Annotation failed: Error in commands")
+                        raise ValueError("Annotation failed: Error in commands") 
+
+            if tmp_annotates_vcf_name_list:
+
+                # List of annotated files
+                tmp_annotates_vcf_name_to_merge = " ".join(tmp_annotates_vcf_name_list)
+
+                # Tmp file
+                tmp_annotate_vcf = NamedTemporaryFile(prefix=self.get_prefix(
+                ), dir=self.get_tmp_dir(), suffix=".vcf.gz", delete=False)
+                tmp_annotate_vcf_name = tmp_annotate_vcf.name
+                tmp_files.append(tmp_annotate_vcf_name)
+                tmp_annotate_vcf_name_err = tmp_annotate_vcf_name + ".err"
+                err_files.append(tmp_annotate_vcf_name_err)
+                tmp_files.append(tmp_annotate_vcf_name_err)
+
+                # Command merge
+                merge_command = f"bcftools merge --force-samples --threads={threads} {tmp_vcf_name} {tmp_annotates_vcf_name_to_merge} -o {tmp_annotate_vcf_name} -Oz 2>>{tmp_annotate_vcf_name_err} "
+                log.info(f"Annotation - Annotation merging " +
+                            str(len(commands)) + " annotated files")
+                log.debug(f"Annotation - merge command: {merge_command}")
+                run_parallel_commands([merge_command], 1)
+
+                # Find annotation in header
+                with bgzf.open(tmp_annotate_vcf_name, 'rt') as f:
+                    header_list = self.read_vcf_header(f)
+                annovar_vcf_header = vcf.Reader(io.StringIO("\n".join(header_list)))
+
+                for ann in annovar_vcf_header.infos:
+                    if ann not in self.get_header().infos:
+                        vcf_reader.infos[ann] = annovar_vcf_header.infos.get(ann)
+
+                # Update variants
+                log.info(f"Annotation - Updating...")
+                self.update_from_vcf(tmp_annotate_vcf_name)
 
 
-            # Command
-            snpeff_command = f"{java_bin} -Xmx4g -jar {snpeff_jar} {assembly} -dataDir {snpeff_databases} {snpeff_options} {tmp_vcf_name} 1>{tmp_annotate_vcf_name} 2>>{tmp_annotate_vcf_name_err}"
-            log.debug(f"Annotation - snpEff command: {snpeff_command}")
-            run_parallel_commands([snpeff_command], 1)
-            
-
-
-            # Error messages
-            log.info(f"Error/Warning messages:")
-            error_message_command_all = []
-            error_message_command_warning = []
-            error_message_command_err = []
-            for err_file in err_files:
-                with open(err_file, 'r') as f:
-                    for line in f:
-                        message = line.strip()
-                        error_message_command_all.append(message)
-                        if line.startswith('[W::'):
-                            error_message_command_warning.append(message)
-                        if line.startswith('[E::'):
-                            error_message_command_err.append(f"{err_file}: " + message)
-            # log info
-            for message in list(set(error_message_command_err + error_message_command_warning)):
-                log.info(message)
-            # debug info
-            for message in list(set(error_message_command_all)):
-                log.debug(message)
-            # failed
-            if len(error_message_command_err):
-                log.error("Annotation failed: Error in commands")
-                raise ValueError("Annotation failed: Error in commands") 
-
-
-            # Update variants
-            log.info(f"Annotation - Updating...")
-            self.update_from_vcf(tmp_annotate_vcf_name)
-
-
-        else:
-            if "ANN" not in self.get_header().infos:
-                log.debug(
-                    f"Existing snpEff annotations in VCF")
-            if force_update_annotation:
-                log.debug(
-                    f"Existing snpEff annotations in VCF - annotation forced")
-
-
+            # Clean files
+            # Tmp file remove command
+            if True:
+                tmp_files_remove_command = ""
+                if tmp_files:
+                    tmp_files_remove_command = " ".join(tmp_files)
+                clean_command = f" rm -f {tmp_files_remove_command} "
+                log.info(f"Annotation - Annotation cleaning ")
+                log.debug(f"Annotation - cleaning command: {clean_command}")
+                run_parallel_commands([clean_command], 1)
 
         return
-
-
 
 
     def annotation_parquet(self, threads=None):
@@ -1985,6 +2205,7 @@ class Variants:
         self.explode_infos(prefix=self.get_param().get("explode_infos",None))
 
         # drop indexes
+        log.debug(f"Drop indexes...")
         self.drop_indexes()
 
         
@@ -2160,7 +2381,7 @@ class Variants:
 
                                 # create column
                                 prefix = "INFO/"
-                                info_id_sql = prefix+annotation_field
+                                info_id_sql = prefix+annotation_fields_new_name
                                 type_sql = self.code_type_map_to_sql.get(parquet_hdr_vcf_header_infos_type, "VARCHAR")
                                 if parquet_hdr_vcf_header_infos_number != 1:
                                     type_sql = "VARCHAR"
@@ -2169,16 +2390,24 @@ class Variants:
                                 self.index_additionnal_fields.append(info_id_sql)
 
                                 sql_query_annotations_create_column = f"""ALTER TABLE {table_variants} ADD COLUMN IF NOT EXISTS "{info_id_sql}" {type_sql} DEFAULT null"""
-
                                 self.conn.execute(sql_query_annotations_create_column)
-                                sql_query_annotations_create_column_index = f"""CREATE INDEX IF NOT EXISTS "idx_{annotation_field}" ON {table_variants} ("{info_id_sql}")"""
-                                self.conn.execute(sql_query_annotations_create_column_index)
 
-                                # update column
-                                sql_query_annotation_update_column_sets.append(f""" "{info_id_sql}" = REGEXP_EXTRACT(';' || table_parquet.INFO, ';{annotation_field}=([^;]*)',1) """)
+                                # sql_query_annotations_create_column_index = f"""CREATE INDEX IF NOT EXISTS "idx_{annotation_field}" ON {table_variants} ("{info_id_sql}")"""
+                                # self.conn.execute(sql_query_annotations_create_column_index)
 
-                                # update INFO
-                                sql_query_annotation_update_info_sets.append(f""" || CASE WHEN "{info_id_sql}" NOT IN ('','.') THEN '{annotation_field_sep}' || '{annotation_field}=' || "{info_id_sql}" ELSE '' END """)
+                                if True: 
+                                    # update column
+                                    sql_query_annotation_update_column_sets.append(f""" "{info_id_sql}" = REGEXP_EXTRACT(';' || table_parquet.INFO, ';{annotation_field}=([^;]*)',1) """)
+
+                                    # update INFO
+                                    sql_query_annotation_update_info_sets.append(f""" || CASE WHEN "{info_id_sql}" NOT IN ('','.') THEN '{annotation_field_sep}' || '{annotation_fields_new_name}=' || "{info_id_sql}" ELSE '' END """)
+
+                                if False: # BAD FIELD NAME
+                                    # update column
+                                    sql_query_annotation_update_column_sets.append(f""" "{info_id_sql}" = REGEXP_EXTRACT(';' || table_parquet.INFO, ';{annotation_field}=([^;]*)',1) """)
+
+                                    # update INFO
+                                    sql_query_annotation_update_info_sets.append(f""" || CASE WHEN "{info_id_sql}" NOT IN ('','.') THEN '{annotation_field_sep}' || '{annotation_field}=' || "{info_id_sql}" ELSE '' END """)
 
 
                         # Not to annotate
@@ -2201,12 +2430,16 @@ class Variants:
                             
 
                     # Check if ALL fields have to be annotated. Thus concat all INFO field
+                    query_annotation_full_info = False
                     if nb_annotation_field == len(annotation_fields) and annotation_fields_ALL:
+                        #print("query_annotation_full_info")
+                        query_annotation_full_info = True
+                        #return
                         sql_query_annotations_list = []
                         sql_query_annotations_list.append(
                             f"|| table_parquet.INFO ")
 
-                    if sql_query_annotations_list:
+                    if sql_query_annotations_list or sql_query_annotation_update_column_sets:
 
                         # Annotate
                         log.info(f"Annotation '{annotation}' - Annotation...")
@@ -2388,38 +2621,42 @@ class Variants:
                                     log.debug(
                                         f"Annotation '{annotation}' - Chromosome '{chrom}' - Interval [{sql_query_interval_start}-{sql_query_interval_stop}] - {nb_regions} regions...")
 
-                                    # Create query to update
-                                    sql_query_annotation_chrom_interval_pos = f"""
-                                        UPDATE {table_variants} as table_variants
-                                            SET INFO = CASE WHEN table_variants.INFO NOT IN ('','.') THEN table_variants.INFO ELSE '' END || CASE WHEN ('' {sql_query_annotations_list_sql}) NOT IN ('','.') THEN ';' ELSE '' END {sql_query_annotations_list_sql}
-                                            FROM (SELECT \"#CHROM\", \"POS\", \"REF\", \"ALT\", \"INFO\" FROM {parquet_file_link} as table_parquet WHERE {clause_where_regions_parquet}) as table_parquet
-                                            WHERE ( {clause_where_regions_variants} )
-                                                AND table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
-                                                AND table_parquet.\"POS\" = table_variants.\"POS\"
-                                                AND table_parquet.\"ALT\" = table_variants.\"ALT\"
-                                                AND table_parquet.\"REF\" = table_variants.\"REF\"
-                                            
-                                                """
-                                    # SET INFO = CASE WHEN table_variants.INFO NOT IN ('','.') THEN table_variants.INFO ELSE '' END || CASE WHEN table_variants.INFO NOT IN ('','.') THEN ';' ELSE '' END {sql_query_annotations_list_sql}
-                                            
-                                    #query_dict[f"{chrom}:{sql_query_interval_start}-{sql_query_interval_stop}"] = sql_query_annotation_chrom_interval_pos
+                                    allow_annotation_full_info = True
+                                    if query_annotation_full_info and allow_annotation_full_info:
+                                        log.debug("Annotation full INFO")
+
+                                        # Create query to update
+                                        sql_query_annotation_chrom_interval_pos = f"""
+                                            UPDATE {table_variants} as table_variants
+                                                SET INFO = CASE WHEN table_variants.INFO NOT IN ('','.') THEN table_variants.INFO ELSE '' END || CASE WHEN table_variants.INFO NOT IN ('','.') AND ('' {sql_query_annotations_list_sql}) NOT IN ('','.') THEN ';' ELSE '' END {sql_query_annotations_list_sql}
+                                                FROM (SELECT \"#CHROM\", \"POS\", \"REF\", \"ALT\", \"INFO\" FROM {parquet_file_link} as table_parquet WHERE {clause_where_regions_parquet}) as table_parquet
+                                                WHERE ( {clause_where_regions_variants} )
+                                                    AND table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
+                                                    AND table_parquet.\"POS\" = table_variants.\"POS\"
+                                                    AND table_parquet.\"ALT\" = table_variants.\"ALT\"
+                                                    AND table_parquet.\"REF\" = table_variants.\"REF\"
+                                                
+                                                    """
+                                        query_dict[f"{chrom}:{sql_query_interval_start}-{sql_query_interval_stop}"] = sql_query_annotation_chrom_interval_pos
                                     
-                                    if True:
-                                        # # Create query to update columns
-                                        # sql_query_annotation_chrom_interval_pos_update_columns = f"""
-                                        #     DROP VIEW IF EXISTS v1;
-                                        #     CREATE VIEW v1 AS SELECT \"#CHROM\", \"POS\", \"REF\", \"ALT\", STRING_AGG(\"INFO\") AS INFO FROM {parquet_file_link} as table_parquet WHERE {clause_where_regions_parquet} GROUP BY \"#CHROM\", \"POS\", \"REF\", \"ALT\";
+                                    else:
+                                        log.debug("Annotation by fields")
+
+                                        # Create query to update columns
+                                        # sql_query_annotation_chrom_interval_pos = f"""
+                                        #     DROP VIEW IF EXISTS tmp_view_annotation;
+                                        #     CREATE VIEW tmp_view_annotation AS SELECT \"#CHROM\", \"POS\", \"REF\", \"ALT\", \"INFO\" AS INFO FROM {parquet_file_link} as table_parquet WHERE {clause_where_regions_parquet};
                                         #     UPDATE {table_variants} as table_variants
                                         #         SET {sql_query_annotation_update_column_sets_sql}
-                                        #         FROM v1 as table_parquet
+                                        #         FROM tmp_view_annotation as table_parquet
                                         #         WHERE ( {clause_where_regions_variants} )
                                         #             AND table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
                                         #             AND table_parquet.\"POS\" = table_variants.\"POS\"
                                         #             AND table_parquet.\"ALT\" = table_variants.\"ALT\"
                                         #             AND table_parquet.\"REF\" = table_variants.\"REF\";
                                         #     UPDATE {table_variants} as table_variants
-                                        #         SET INFO = table_variants.INFO || ';' {sql_query_annotation_update_info_sets_sql}
-                                        #         FROM v1 as table_parquet
+                                        #         SET INFO = CASE WHEN table_variants.INFO NOT IN ('.','') THEN table_variants.INFO || ';' ELSE '' END {sql_query_annotation_update_info_sets_sql}
+                                        #         FROM tmp_view_annotation as table_parquet
                                         #         WHERE ( {clause_where_regions_variants} )
                                         #             AND table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
                                         #             AND table_parquet.\"POS\" = table_variants.\"POS\"
@@ -2427,7 +2664,7 @@ class Variants:
                                         #             AND table_parquet.\"REF\" = table_variants.\"REF\";
                                         #             """
                                         # Create query to update columns
-                                        sql_query_annotation_chrom_interval_pos_update_columns = f"""
+                                        sql_query_annotation_chrom_interval_pos = f"""
                                             DROP VIEW IF EXISTS tmp_view_annotation;
                                             CREATE VIEW tmp_view_annotation AS SELECT \"#CHROM\", \"POS\", \"REF\", \"ALT\", \"INFO\" AS INFO FROM {parquet_file_link} as table_parquet WHERE {clause_where_regions_parquet};
                                             UPDATE {table_variants} as table_variants
@@ -2439,32 +2676,13 @@ class Variants:
                                                     AND table_parquet.\"ALT\" = table_variants.\"ALT\"
                                                     AND table_parquet.\"REF\" = table_variants.\"REF\";
                                             UPDATE {table_variants} as table_variants
-                                                SET INFO = CASE WHEN table_variants.INFO NOT IN ('.','') THEN table_variants.INFO || ';' ELSE '' END {sql_query_annotation_update_info_sets_sql}
-                                                FROM tmp_view_annotation as table_parquet
+                                                SET INFO = CASE WHEN table_variants.INFO NOT IN ('','.') THEN table_variants.INFO ELSE '' END || CASE WHEN table_variants.INFO NOT IN ('','.') AND ('' {sql_query_annotation_update_info_sets_sql}) NOT IN ('','.') THEN ';' ELSE '' END {sql_query_annotation_update_info_sets_sql}
                                                 WHERE ( {clause_where_regions_variants} )
-                                                    AND table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
-                                                    AND table_parquet.\"POS\" = table_variants.\"POS\"
-                                                    AND table_parquet.\"ALT\" = table_variants.\"ALT\"
-                                                    AND table_parquet.\"REF\" = table_variants.\"REF\";
+                                                    AND ('' {sql_query_annotation_update_info_sets_sql}) NOT IN ('','.')
                                                     """
-                                        query_dict[f"{chrom}:{sql_query_interval_start}-{sql_query_interval_stop}"] = sql_query_annotation_chrom_interval_pos_update_columns
-                                        # print(sql_query_annotation_chrom_interval_pos_update_columns)
-                                        # result = self.conn.execute(sql_query_annotation_chrom_interval_pos_update_columns)
-                                        # print(result.df())
+                                        #print(sql_query_annotation_chrom_interval_pos)
+                                        query_dict[f"{chrom}:{sql_query_interval_start}-{sql_query_interval_stop}"] = sql_query_annotation_chrom_interval_pos
 
-                                        # Create query to update columns
-                                        # sql_query_annotation_chrom_interval_pos_update_columns = f"""
-                                        #     UPDATE {table_variants} as table_variants
-                                        #         SET INFO = table_variants.INFO || ';' {sql_query_annotation_update_info_sets_sql}
-                                        #         FROM (SELECT \"#CHROM\", \"POS\", \"REF\", \"ALT\", \"INFO\" FROM {parquet_file_link} as table_parquet WHERE {clause_where_regions_parquet}) as table_parquet
-                                        #         WHERE ( {clause_where_regions_variants} )
-                                        #             AND table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
-                                        #             AND table_parquet.\"POS\" = table_variants.\"POS\"
-                                        #             AND table_parquet.\"ALT\" = table_variants.\"ALT\"
-                                        #             AND table_parquet.\"REF\" = table_variants.\"REF\"
-                                                
-                                        #             """
-                                        #query_dict[f"{chrom}:{sql_query_interval_start}-{sql_query_interval_stop} info update"] = sql_query_annotation_chrom_interval_pos_update_columns
 
                                     log.debug(
                                         "Create SQL query: " + str(sql_query_annotation_chrom_interval_pos))
@@ -2474,6 +2692,9 @@ class Variants:
 
                             # nb_of_variant_annotated
                             nb_of_variant_annotated += nb_of_variant_annotated_by_chrom
+
+                        # log.debug("Create Indexes...")
+                        # self.create_indexes()
 
                         nb_of_query = len(query_dict)
                         num_query = 0
@@ -2500,12 +2721,22 @@ class Variants:
                     log.debug("Final header: " + str(vcf_reader.infos))
 
         # create indexes
-        self.create_indexes()
+        #self.create_indexes()
 
         return
 
 
     def update_from_vcf(self, vcf_file):
+
+        connexion_format = self.get_connexion_format()
+
+        if connexion_format in ["duckdb"]:
+            self.update_from_vcf_parquet(vcf_file)
+        elif connexion_format in ["sqlite"]:
+            self.update_from_vcf_sqlite(vcf_file)
+
+
+    def update_from_vcf_parquet(self, vcf_file):
         table_variants = self.get_table_variants()
         tmp_merged_vcf = NamedTemporaryFile(prefix=self.get_prefix(
         ), dir=self.get_tmp_dir(), suffix=".parquet", delete=True)
@@ -2514,6 +2745,8 @@ class Variants:
             None, vcf_file, tmp_merged_vcf_name, config=self.get_config())
         mergeVCF.load_data()
         mergeVCF.export_output(export_header=False)
+        del mergeVCF
+        gc.collect()
 
         query = "SELECT count(*) AS count FROM variants"
         count_original_variants = self.conn.execute(query).df()["count"][0]
@@ -2542,6 +2775,90 @@ class Variants:
             self.conn.execute(sql_query_update)
 
 
+    # def update_from_vcf_sqlite(self, vcf_file):
+    #     # Création d'une table temporaire pour le fichier VCF
+    #     table_vcf = 'tmp_vcf'
+    #     sql_create = f"CREATE TEMPORARY TABLE {table_vcf} AS SELECT * FROM variants WHERE 0"
+    #     self.conn.execute(sql_create)
+
+    #     # Chargement des données du fichier VCF dans la table temporaire
+    #     vcf_df = pd.read_csv(vcf_file, sep='\t', comment='#', header=None, low_memory=False)
+    #     vcf_df.columns = ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO']
+    #     vcf_df.to_sql(table_vcf, self.conn, if_exists='append', index=False)
+
+    #     # Utilisation de valeurs par défaut pour les enregistrements sans valeur dans le fichier VCF
+    #     sql_update = """
+    #         UPDATE variants 
+    #         SET INFO = COALESCE(variants.INFO, '') || 
+    #                 CASE WHEN tmp_vcf.INFO <> '' THEN ';' || tmp_vcf.INFO ELSE '' END 
+    #         WHERE EXISTS (
+    #             SELECT 1 FROM tmp_vcf
+    #             WHERE tmp_vcf."#CHROM" = variants."#CHROM"
+    #             AND tmp_vcf.POS = variants.POS
+    #             AND tmp_vcf.REF = variants.REF
+    #             AND tmp_vcf.ALT = variants.ALT
+    #         );
+
+
+    #     """
+    #     print(sql_update)
+    #     # Utilisation d'une transaction pour améliorer les performances
+    #     self.conn.execute('BEGIN TRANSACTION')
+    #     self.conn.execute(sql_update)
+    #     self.conn.execute('COMMIT')
+
+
+
+    def update_from_vcf_sqlite(self, vcf_file):
+        # Connexion à la base de données SQLite
+        #conn = sqlite3.connect(sqlite_file)
+
+        # Création d'une table temporaire pour le fichier VCF
+        table_vcf = 'tmp_vcf'
+        sql_create = f"CREATE TEMPORARY TABLE {table_vcf} AS SELECT * FROM variants WHERE 0"
+        self.conn.execute(sql_create)
+
+        # Chargement des données du fichier VCF dans la table temporaire
+        vcf_df = pd.read_csv(vcf_file, sep='\t', comment='#', header=None, low_memory=False)
+        vcf_df.columns = ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO']
+        vcf_df.to_sql(table_vcf, self.conn, if_exists='append', index=False)
+
+        # Mise à jour de la table 'variants' avec les données du fichier VCF
+        sql_query_update = f"""
+            UPDATE variants as table_variants
+            SET INFO = (
+                SELECT CASE 
+                    WHEN table_variants.INFO NOT IN ('','.') 
+                    THEN table_variants.INFO 
+                    ELSE '' 
+                END || 
+                CASE 
+                    WHEN table_variants.INFO NOT IN ('','.') 
+                    AND table_vcf.INFO NOT IN ('','.')  
+                    THEN ';' 
+                    ELSE '' 
+                END || 
+                CASE 
+                    WHEN table_vcf.INFO NOT IN ('','.') 
+                    THEN table_vcf.INFO 
+                    ELSE '' 
+                END
+                FROM {table_vcf} as table_vcf
+                WHERE table_vcf.\"#CHROM\" = table_variants.\"#CHROM\"
+                AND table_vcf.\"POS\" = table_variants.\"POS\"
+                AND table_vcf.\"ALT\" = table_variants.\"ALT\"
+                AND table_vcf.\"REF\" = table_variants.\"REF\"
+            )
+        """
+        self.conn.execute(sql_query_update)
+        # Suppression de la table temporaire
+        sql_drop = f"DROP TABLE {table_vcf}"
+        self.conn.execute(sql_drop)
+
+        # Fermeture de la connexion à la base de données SQLite
+        #conn.close()
+
+
     def update_from_vcf_brutal(self, vcf_file):
         table_variants = self.get_table_variants()
         self.drop_variants_table()
@@ -2554,3 +2871,251 @@ class Variants:
         sql_table_variants = f"DROP TABLE {table_variants}"
         self.conn.execute(sql_table_variants)
 
+
+    def prioritization(self):
+
+        log.info(f"Prioritization... ")
+
+        # Config
+        config = self.get_config()
+        config_profiles = config.get("prioritization",{}).get("config_profiles", None)
+
+        # Param
+        param = self.get_param()
+        config_profiles = param.get("prioritization",{}).get("config_profiles", config_profiles)
+        profiles = param.get("prioritization",{}).get("profiles", ["default"])
+        pzfields = param.get("prioritization",{}).get("pzfields", ["PZFlag", "PZScore"])
+        default_profile = param.get("prioritization",{}).get("default_profile", ["default"])
+        pzfields_sep = param.get("prioritization",{}).get("pzfields_sep", "_")
+        prioritization_score_mode = param.get("prioritization",{}).get("prioritization_score_mode", "HOWARD")
+
+
+        # Profiles are in files
+        if os.path.exists(config_profiles):
+            with open(config_profiles) as profiles_file:
+                config_profiles = json.load(profiles_file)
+
+        log.debug("Profiles availables: " + str(list(config_profiles.keys())))
+        log.debug("Profiles to check: " + str(list(profiles)))
+
+        # Variables
+        # pzfields_sep = "_"
+        # prioritization_score_mode = "HOWARD"
+        # default_profile = "default"
+        table_variants = self.get_table_variants(clause="update")
+
+
+        # Create list of PZfields
+        # List of PZFields
+        list_of_pzfields_original = pzfields + [pzfield+pzfields_sep+profile for pzfield in pzfields for profile in profiles]
+        list_of_pzfields = []
+        log.debug(f"{list_of_pzfields_original}")
+
+        # Remove existing PZfields to use if exists
+        for pzfield in list_of_pzfields_original:
+            if self.get_header().infos.get(pzfield,None) is None:
+                list_of_pzfields.append(pzfield)
+                log.debug(f"VCF Input - Header - PZfield '{pzfield}' not in VCF")
+            else:
+                log.debug(f"VCF Input - Header - PZfield '{pzfield}' already in VCF")
+
+
+        if list_of_pzfields:
+
+            sql_info_alter_table_array = []
+            for info in self.get_header().infos:
+
+                info_id_sql = "INFO/"+info
+                type_sql = code_type_map_to_sql.get(self.get_header().infos[info].type, "VARCHAR")
+                if self.get_header().infos[info].num != 1:
+                    type_sql = "VARCHAR"
+
+                # Add field
+                sql_info_alter_table = f""" ALTER TABLE {table_variants} ADD COLUMN IF NOT EXISTS "{info_id_sql}" {type_sql} """ 
+                self.conn.execute(sql_info_alter_table)
+
+                # Update field array
+                sql_info_alter_table_array.append(f""" "{info_id_sql}" = CASE WHEN REGEXP_EXTRACT(INFO, '[\^;]*{info}=([^;]*)',1) == '' THEN NULL WHEN REGEXP_EXTRACT(INFO, '{info}=([^;]*)',1) == '.' THEN NULL ELSE REGEXP_EXTRACT(INFO, '{info}=([^;]*)',1) END """)
+
+
+            sql_info_alter_table_array_join = ", ".join(sql_info_alter_table_array)
+            if sql_info_alter_table_array_join:
+                sql_info_alter_table = f"UPDATE {table_variants} SET {sql_info_alter_table_array_join}"
+                #print(sql_info_alter_table)
+                self.conn.execute(sql_info_alter_table)
+
+            # PZfields tags description
+            PZfields_INFOS = {
+                'PZTags': {
+                    'ID': 'PZTags',
+                    'Number': '.',
+                    'Type': 'String',
+                    'Description': 'Variant tags based on annotation criteria'
+                },
+                'PZScore': {
+                    'ID': 'PZScore',
+                    'Number': 1,
+                    'Type': 'Integer',
+                    'Description': 'Variant score based on annotation criteria'
+                },
+                'PZFlag': {
+                    'ID': 'PZFlag',
+                    'Number': 1,
+                    'Type': 'String',
+                    'Description': 'Variant flag based on annotation criteria'
+                },
+                'PZComment': {
+                    'ID': 'PZComment',
+                    'Number': '.',
+                    'Type': 'String',
+                    'Description': 'Variant comment based on annotation criteria'
+                },
+                'PZInfos': {
+                    'ID': 'PZInfos',
+                    'Number': '.',
+                    'Type': 'String',
+                    'Description': 'Variant infos based on annotation criteria'
+                }
+            }
+
+
+            # Create INFO fields if not exist
+            for field in PZfields_INFOS:
+                field_ID = PZfields_INFOS[field]["ID"]
+                field_description = PZfields_INFOS[field]["Description"]
+                if field_ID not in self.get_header().infos and field_ID in pzfields:
+                    if field != "PZTags":
+                        field_description = PZfields_INFOS[field]["Description"] + f", profile {default_profile}"
+                    code_type_map   
+                    #vcf_reader.infos[field_ID] = vcf.parser._Info(
+                    #    field_ID, PZfields_INFOS[field]["Number"], PZfields_INFOS[field]["Type"], field_description, 'source', 'version', '')
+                    self.get_header().infos[field_ID] = vcf.parser._Info(
+                        field_ID, PZfields_INFOS[field]["Number"], PZfields_INFOS[field]["Type"], field_description, 'unknown', 'unknown', code_type_map[PZfields_INFOS[field]["Type"]])
+
+            # Create INFO fields if not exist for each profile
+            for profile in config_profiles:
+                if profile in profiles or profiles == []:
+                    # Définition du champ INFO "score" s'il n'existe pas
+                    for field in PZfields_INFOS:
+                        if field != "PZTags":
+                            field_ID = PZfields_INFOS[field]["ID"]+pzfields_sep+profile
+                            field_description = PZfields_INFOS[field]["Description"] + f", profile {profile}"
+                            if field_ID not in self.get_header().infos and field in pzfields:
+                                self.get_header().infos[field_ID] = vcf.parser._Info(
+                                    field_ID, PZfields_INFOS[field]["Number"], PZfields_INFOS[field]["Type"], field_description, 'unknown', 'unknown', code_type_map[PZfields_INFOS[field]["Type"]])
+
+            # Écriture du fichier VCF de sortie, juste le header
+            # f = open(tmp_vcf+".tmp.header", 'w')
+            # vcf_writer = vcf.Writer(f, vcf_reader)
+            # f.close()
+
+            #print(self.get_header().infos)
+            
+
+            # Header
+            for pzfield in list_of_pzfields:
+                if re.match("PZScore.*",pzfield):
+                    self.conn.execute(f"ALTER TABLE {table_variants} ADD COLUMN IF NOT EXISTS {pzfield} INTEGER DEFAULT 0")
+                elif re.match("PZFlag.*",pzfield):
+                    self.conn.execute(f"ALTER TABLE {table_variants} ADD COLUMN IF NOT EXISTS {pzfield} BOOLEAN DEFAULT 1")
+                else:
+                    self.conn.execute(f"ALTER TABLE {table_variants} ADD COLUMN IF NOT EXISTS {pzfield} STRING DEFAULT ''")
+
+            if profiles:
+
+                for profile in config_profiles:
+                    if profile in profiles or profiles == []:
+                        log.info(f"Profile '{profile}'")
+
+                        sql_queries = []
+                        for annotation in config_profiles[profile]:
+                            for criterion in config_profiles[profile][annotation]:
+                                criterion_type = criterion['type']
+                                criterion_value = criterion['value']
+                                criterion_score = criterion.get('score', 0)
+                                criterion_flag = criterion.get('flag', 'PASS')
+                                criterion_flag_bool = (criterion_flag == "PASS")
+                                criterion_comment = ", ".join(criterion.get('comment', [])).replace('\'', '\'\'').replace(';', ',').replace('\t', ' ')
+                                criterion_infos = str(criterion).replace('\'', '\'\'').replace(';', ',').replace('\t', ' ')
+
+                                sql_set = []
+                                sql_set_info = []
+
+                                if f"PZScore{pzfields_sep}{profile}" in list_of_pzfields:
+                                    if prioritization_score_mode == "HOWARD":
+                                        sql_set.append(f"PZScore{pzfields_sep}{profile} = PZScore{pzfields_sep}{profile} + {criterion_score}")
+                                    elif prioritization_score_mode == "VaRank":
+                                        sql_set.append(f"PZScore{pzfields_sep}{profile} = CASE WHEN {criterion_score}>PZScore{pzfields_sep}{profile} THEN {criterion_score} END")
+                                    else:
+                                        sql_set.append(f"PZScore{pzfields_sep}{profile} = PZScore{pzfields_sep}{profile} + {criterion_score}")
+                                    sql_set_info.append(f" || 'PZScore{pzfields_sep}{profile}=' || PZScore{pzfields_sep}{profile} ")
+                                    if profile == default_profile and "PZScore" in list_of_pzfields:
+                                        sql_set_info.append(f" || 'PZScore=' || PZScore{pzfields_sep}{profile} ")
+                                if f"PZFlag{pzfields_sep}{profile}" in list_of_pzfields:
+                                    sql_set.append(f"PZFlag{pzfields_sep}{profile} = PZFlag{pzfields_sep}{profile} AND {criterion_flag_bool}")
+                                    sql_set_info.append(f" || 'PZFlag{pzfields_sep}{profile}=' || CASE WHEN PZFlag{pzfields_sep}{profile}==1 THEN 'PASS' WHEN PZFlag{pzfields_sep}{profile}==0 THEN 'FILTERED' END ")
+                                    if profile == default_profile and "PZFlag" in list_of_pzfields:
+                                        sql_set_info.append(f" || 'PZFlag=' || PZFlag{pzfields_sep}{profile} ")
+                                if f"PZComment{pzfields_sep}{profile}" in list_of_pzfields:
+                                    sql_set.append(f"PZComment{pzfields_sep}{profile} = PZComment{pzfields_sep}{profile} || CASE WHEN PZComment{pzfields_sep}{profile}!='' THEN ', ' ELSE '' END || '{criterion_comment}'")
+                                    sql_set_info.append(f" || 'PZComment{pzfields_sep}{profile}=' || PZComment{pzfields_sep}{profile}  ")
+                                    if profile == default_profile and "PZComment" in list_of_pzfields:
+                                        sql_set_info.append(f" || 'PZComment=' || PZComment{pzfields_sep}{profile} ")
+                                if f"PZInfos{pzfields_sep}{profile}" in list_of_pzfields:
+                                    sql_set.append(f"PZInfos{pzfields_sep}{profile} = PZInfos{pzfields_sep}{profile} || '{criterion_infos}'")
+                                    sql_set_info.append(f" || 'PZInfos{pzfields_sep}{profile}=' || PZInfos{pzfields_sep}{profile}")
+                                    if profile == default_profile and "PZInfos" in list_of_pzfields:
+                                        sql_set_info.append(f" || 'PZInfos=' || PZInfos{pzfields_sep}{profile} ")
+                                sql_set_option = ",".join(sql_set)
+                                sql_set_info_option = " || ';' ".join(sql_set_info)
+
+                                try:
+                                    float(criterion_value)
+                                    sql_update = f"UPDATE {table_variants} \
+                                    SET {sql_set_option} \
+                                    WHERE REGEXP_EXTRACT(INFO, '{annotation}=([^;]*)',1) != '' \
+                                    AND CAST('0' || REGEXP_EXTRACT(';' || INFO, ';{annotation}=([^;]*)',1) AS FLOAT){comparison_map[criterion_type]}{criterion_value}"
+                                except:
+                                    contains_option = ""
+                                    if criterion_type == "contains":
+                                        contains_option = ".*"
+                                    sql_update = f"UPDATE {table_variants} \
+                                        SET {sql_set_option} \
+                                        WHERE REGEXP_EXTRACT(';' || INFO, ';{annotation}=([^;]*)',1) SIMILAR TO '{contains_option}{criterion_value}{contains_option}'"
+                                sql_queries.append(sql_update)
+
+                        
+
+                        log.info(f"""Profile '{profile}' - Prioritization... """)
+                        self.conn.execute(";".join(sql_queries))
+                        #print(result.df())
+
+                        log.info(f"""Profile '{profile}' - Update... """)
+                        sql_query_update = f"""
+                            UPDATE {table_variants}
+                            SET INFO = 
+                                CASE WHEN INFO NOT IN ('','.') THEN INFO || ';' ELSE '' END
+                                {sql_set_info_option}
+
+                        """
+                        self.conn.execute(sql_query_update)
+                        #print(result.df())
+
+                        result = self.conn.execute(f"SELECT INFO, * FROM {table_variants} LIMIT 10")
+
+                        print(result.df())
+
+                        # if verbose:
+                        #     print(f"#[INFO] Profile '{profile}' - Prioritization...")
+                        # cursor = con.execute(";".join(sql_queries))
+                        # if verbose:
+                        #     print(f"#[INFO] Profile '{profile}' - Update...")
+                        # cursor = con.execute(f"UPDATE my_table SET INFO = INFO {sql_set_info_option} ")
+
+
+
+
+
+        else:
+
+            log.warning(f"No profiles in parameters")

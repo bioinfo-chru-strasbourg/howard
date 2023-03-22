@@ -18,7 +18,37 @@ import logging as log
 
 
 
+
+comparison_map = {
+    "gt": ">",
+    "gte": ">=",
+    "lt": "<",
+    "lte": "<=",
+    "equals": "=",
+    "contains": "SIMILAR TO"
+}
+
+code_type_map = {
+    "Integer": 0,
+    "String": 1,
+    "Float": 2,
+    "Flag": 3
+}
+
+code_type_map_to_sql = {
+    "Integer": "INTEGER",
+    "String": "VARCHAR",
+    "Float": "FLOAT",
+    "Flag": "VARCHAR"
+}
+
+
 def remove_if_exists(filepath):
+    """
+    If the filepath exists, remove it
+    
+    :param filepath: The path to the file you want to remove
+    """
     if os.path.exists(filepath):
         os.remove(filepath)
 
@@ -201,3 +231,26 @@ def example_function(num, word):
     return [num, word]
 
 
+def find(name, path):
+    for root, dirs, files in os.walk(path):
+        if name in files:
+            return os.path.join(root, name)
+
+def find_all(name, path):
+    result = []
+    for root, dirs, files in os.walk(path):
+        if name in files:
+            result.append(os.path.join(root, name))
+    return result
+
+
+def get_bgzip(threads=1, level=1):
+    command_gzip = f" bgzip -c "
+    # Check threads in bgzip command (error in macos)
+    result_command_bgzip = subprocess.run(
+        "bgzip --help 2>&1 | grep 'threads'", shell=True, stdout=subprocess.PIPE)
+    if not result_command_bgzip.returncode:
+        command_gzip += f" --threads={threads} --compress-level={level} "
+    else:
+        command_gzip = f" gzip -c -{level} "
+    return command_gzip

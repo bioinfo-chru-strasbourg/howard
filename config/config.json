@@ -1,0 +1,22 @@
+{
+  "threads": 8,
+  "memory": null,
+  "verbosity": "warning",
+  "folders": {
+    "databases": {
+      "root": "",
+      "parquet": ["/databases/annotations/current/hg19/"],
+      "bcftools": ["/databases/annotations/current/hg19/"],
+      "annovar": "/databases/annovar/current/",
+      "snpeff": "/databases/snpeff/current/",
+      "varank": "/databases/varank/current/"
+    }
+  },
+  "tools": {
+    "bcftools": {"bin": "bcftools"},
+    "bgzip": {"bin": "bgzip"},
+    "snpeff": {"jar": "/tools/snpeff/5.1d/bin/snpEff.jar"},
+    "java": {"bin": "/usr/bin/java"},
+    "annovar": {"bin": "/tools/annovar/2020Jun08/bin/table_annovar.pl"}
+  }
+}
