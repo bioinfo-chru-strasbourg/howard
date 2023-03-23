@@ -193,7 +193,7 @@ def main():
             print(result.df())
 
         # Close connexion
-        conn.close_()
+        conn.close()
 
 
     log.info("End")
