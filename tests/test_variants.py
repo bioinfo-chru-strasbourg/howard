@@ -618,6 +618,27 @@ def test_load_connexion_type_file():
     assert nb_variant_in_database == expected_number_of_variants
 
 
+def test_load_connexion_format_sqlite():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_config = { "connexion_format": "sqlite" }
+
+    # Create object
+    vcf = Variants(input=input_vcf, config=input_config)
+
+    # Load data
+    vcf.load_data()
+
+    # Check data loaded
+    result = vcf.get_query_to_df("SELECT count(*) AS count FROM variants")
+    nb_variant_in_database = result["count"][0]
+
+    expected_number_of_variants = 7
+
+    assert nb_variant_in_database == expected_number_of_variants
+
+
 def test_export_output_vcf_gz():
 
     # Init files
@@ -828,6 +849,86 @@ def test_export_output_psv():
     assert check_full
 
 
+
+def test_export_output_vcf_explode_infos():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    output_vcf = "/tmp/example.tsv"
+    param = {
+                "export_extra_infos": True
+        }
+
+    # remove if exists
+    remove_if_exists(output_vcf)
+
+    # Create object
+    vcf = Variants(input=input_vcf, output=output_vcf, load=True, param=param)
+
+    # Explode infos
+    vcf.explode_infos()
+
+    # Check get_output
+    vcf.export_output()
+    check_export_output = os.path.exists(output_vcf)
+
+    # Check get_output without header
+    remove_if_exists(output_vcf)
+    vcf.export_output(export_header=False)
+    check_export_output_without_header = os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
+
+    # check full
+    check_full = check_export_output and check_export_output_without_header
+
+    assert check_full
+
+
+
+def test_prioritization():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+
+    # Construct config dict
+    config = {
+        "prioritization": {
+            "config_profiles": "config/prioritization_profiles.json"
+            }
+        }
+
+    # Construct param dict
+    param = {
+                "prioritization": {
+                    "profiles": ["default", "GERMLINE"],
+                    "pzfields": ["PZFlag", "PZScore", "PZComment", "PZInfos"]
+                }
+        }
+
+    # Create object
+    vcf = Variants(input=input_vcf, load=True, config=config, param=param)
+
+    # Prioritization
+    vcf.prioritization()
+
+    # Check all priorized
+    result = vcf.execute_query(""" SELECT count(*) AS count FROM variants WHERE INFO LIKE '%PZScore_default=%' """).df()
+    check_priorization = False
+    if len(result["count"]):
+        if result["count"][0] == 7:
+            check_priorization = True
+    assert check_priorization
+
+
+    # Check annotation1
+    result = vcf.execute_query(""" SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND REF = 'A' AND ALT = 'C' AND INFO LIKE '%PZScore_default=15%' """).df()
+    check_variant1 = False
+    if len(result["count"]):
+        if result["count"][0] == 1:
+            check_variant1 = True
+    assert check_variant1
+
+
+
 def test_annotations():
 
     # Init files
@@ -934,34 +1035,6 @@ def test_annotation_duckdb():
     length = len(result.df())
     
     assert length == 1
-
-
-# def test_annotation_duckdb_explode_infos():
-
-#     # Init files
-#     input_vcf = tests_folder + "/data/example.vcf.gz"
-#     annotation_parquet = tests_folder + "/data/annotations/nci60.explode_infos.duckdb"
-#     output_vcf = "/tmp/output.vcf.gz"
-
-#     # Create connection
-#     conn = duckdb.connect(":memory:")
-
-#     # Construct param dict
-#     param = {"annotation": {"parquet": {"annotations": {annotation_parquet: {"INFO": None}}}}}
-
-#     # Create object
-#     vcf = Variants(conn=conn, input=input_vcf, output=output_vcf, param=param)
-#     # Load data
-#     vcf.load_data()
-#     # Remove if output file exists
-#     remove_if_exists(output_vcf)
-#     # Annotation
-#     vcf.annotation()
-#     # query annotated variant
-#     result = vcf.execute_query("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'")
-#     length = len(result.df())
-    
-#     assert length == 1
 
 
 
@@ -1073,6 +1146,39 @@ def test_annotation_snpeff():
     length = len(result.df())
     
     assert length == 7
+
+
+
+def test_annotation_bcftools_sqlite():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    annotation_parquet = tests_folder + "/data/annotations/nci60.vcf.gz"
+    output_vcf = "/tmp/output.vcf.gz"
+
+    # Construct config dict
+    config = {"connexion_format": "sqlite"}
+
+    # Construct param dict
+    param = {"annotation": {"bcftools": {"annotations":  {annotation_parquet: {"INFO": None}}}}}
+
+    # Create object
+    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, config=config, load=True)
+
+    # Remove if output file exists
+    remove_if_exists(output_vcf)
+
+    # Annotation
+    vcf.annotation()
+
+    # query annotated variant
+    # result = vcf.execute_query("""SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'""")
+    # length = len(result.df())
+
+    result = vcf.get_query_to_df("""SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'""")
+    length = len(result)
+    
+    assert length == 1
 
 
 

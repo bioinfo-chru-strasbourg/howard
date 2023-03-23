@@ -28,7 +28,7 @@ from howard.commons import *
 
 
 # Main function
-def main():
+def main() -> None:
     """
     It loads a VCF file in multiple format (VCF, parquet, DB), and process, query, export data
     """

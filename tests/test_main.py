@@ -7,6 +7,7 @@ pytest tests/
 
 Coverage:
 coverage run -m pytest . -x -v
+#coverage run -m pytest --mypy . -x -v --ignore-missing-imports
 coverage report --include=howard/* -m
 """
 

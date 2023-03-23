@@ -16,9 +16,6 @@ import vcf
 import logging as log
 
 
-
-
-
 comparison_map = {
     "gt": ">",
     "gte": ">=",
@@ -43,21 +40,20 @@ code_type_map_to_sql = {
 }
 
 
-def remove_if_exists(filepath):
+def remove_if_exists(filepath: str) -> None:
     """
     If the filepath exists, remove it
-    
+
     :param filepath: The path to the file you want to remove
     """
     if os.path.exists(filepath):
         os.remove(filepath)
 
 
-
-def set_log_level(verbosity):
+def set_log_level(verbosity: str) -> str:
     """
     It sets the log level of the Python logging module
-    
+
     :param verbosity: The level of verbosity
     """
     configs = {
@@ -78,11 +74,11 @@ def set_log_level(verbosity):
     return verbosity
 
 
-def split_interval(start, end, step=None, ncuts=None):
+def split_interval(start: int, end: int, step: int = None, ncuts: int = None):
     """
     It takes a start and end value, and either a step size or a number of cuts, and returns a list of
     values that split the interval into equal-sized pieces
-    
+
     :param start: the start of the interval
     :param end: the end of the interval
     :param step: the step size between each cut
@@ -100,11 +96,11 @@ def split_interval(start, end, step=None, ncuts=None):
         return [start + i*step for i in range(ncuts+1)]
 
 
-def merge_regions(regions):
+def merge_regions(regions: list) -> list:
     """
     It takes a list of genomic regions and returns a list of genomic regions where overlapping regions
     have been merged
-    
+
     :param regions: A list of tuples representing genomic regions with the values of the chrom, start
     and end columns
     :return: A list of tuples representing the merged regions with the values of the columns chrom,
@@ -138,11 +134,11 @@ def merge_regions(regions):
     return merged_regions
 
 
-def create_where_clause(merged_regions, table="variants"):
+def create_where_clause(merged_regions: list, table: str = "variants") -> str:
     """
     It takes a list of merged regions and returns a SQL WHERE clause that can be used to filter variants
     in a SQL table
-    
+
     :param merged_regions: a list of tuples representing the merged regions with the values of the
     chrom, start and end columns
     :param table: The name of the table to query, defaults to variants (optional)
@@ -173,10 +169,10 @@ def create_where_clause(merged_regions, table="variants"):
     return where_clause
 
 
-def command(command):
+def command(command: str) -> str:
     """
     It runs a command in the shell and waits for it to finish
-    
+
     :param command: The command to run
     :return: The return value is the exit status of the process.
     """
@@ -184,10 +180,10 @@ def command(command):
     return output.decode('utf-8').strip()
 
 
-def run_parallel_commands(commands, threads):
+def run_parallel_commands(commands: list, threads: int = 1) -> list:
     """
     It takes a list of commands and a number of threads, and runs the commands in parallel
-    
+
     :param commands: a list of commands to run
     :param threads: The number of threads to use
     :return: A list of results from the commands.
@@ -202,11 +198,11 @@ def run_parallel_commands(commands, threads):
     return [result.get().strip() for result in results]
 
 
-def run_parallel_functions(functions, threads):
+def run_parallel_functions(functions: list, threads: int = 1) -> list:
     """
     It takes a list of functions and a number of threads, and runs the functions in parallel using the
     number of threads specified
-    
+
     :param functions: a list of functions to run in parallel
     :param threads: The number of threads to use
     :return: A list of multiprocessing.pool.ApplyResult objects.
@@ -216,27 +212,50 @@ def run_parallel_functions(functions, threads):
     for func in functions:
         results.append(pool.apply_async(func, args=(1, "hello"),
                        error_callback=lambda e: print(e)))
-        # results.append(pool.apply_async(func,
-        #                error_callback=lambda e: print(e)))
-        # results.append(pool.apply_async(func, args=(1, "hello"),
-        #                error_callback=lambda e: print(e)))
-        #results.append(pool.apply_async(func,))
     pool.close()
     pool.join()
-    #return [result.get().strip() for result in results]
     return results
 
 
 def example_function(num, word):
+    """
+    `example_function` takes in a number and a word and returns a list of the number and the word
+
+    :param num: a number
+    :param word: a string
+    :return: [num, word]
+    """
     return [num, word]
 
 
-def find(name, path):
+def find(name: str, path: str) -> str:
+    """
+    It recursively walks the directory tree starting at the given path, and returns the first file it
+    finds with the given name
+
+    :param name: The name of the file you're looking for
+    :param path: The path to search for the file
+    :return: The path to the file.
+    """
     for root, dirs, files in os.walk(path):
         if name in files:
             return os.path.join(root, name)
+    return ""
 
-def find_all(name, path):
+
+def find_all(name: str, path: str) -> list:
+    """
+    "Walk the directory tree starting at path, and for each regular file with the name name, append its
+    full path to the result list."
+
+    The os.walk function is a generator that yields a 3-tuple containing the name of a directory, a list
+    of its subdirectories, and a list of the files in that directory. The name of the directory is a
+    string, and the lists of subdirectories and files are lists of strings
+
+    :param name: The name of the file you're looking for
+    :param path: The path to search in
+    :return: A list of all the files in the directory that have the name "name"
+    """
     result = []
     for root, dirs, files in os.walk(path):
         if name in files:
@@ -244,7 +263,15 @@ def find_all(name, path):
     return result
 
 
-def get_bgzip(threads=1, level=1):
+def get_bgzip(threads: int = 1, level: int = 1):
+    """
+    It checks if the bgzip command supports the --threads option, and if it does, it adds it to the
+    command
+
+    :param threads: number of threads to use for compression, defaults to 1 (optional)
+    :param level: Compression level, defaults to 1 (optional)
+    :return: The command to use for bgzip or gzip.
+    """
     command_gzip = f" bgzip -c "
     # Check threads in bgzip command (error in macos)
     result_command_bgzip = subprocess.run(
@@ -254,3 +281,23 @@ def get_bgzip(threads=1, level=1):
     else:
         command_gzip = f" gzip -c -{level} "
     return command_gzip
+
+
+def find_genome(genome_path: str, genome: str = "hg19.fa"):
+    """
+    It checks if the genome file exists, and if not, it tries to find it
+
+    :param genome_path: the path to the genome file
+    :param genome: the name of the genome file, defaults to hg19.fa (optional)
+    :return: The path to the genome file.
+    """
+    # check genome
+    if not os.path.exists(genome_path):
+        log.warning(f"Genome warning: no genome '{genome}'. Try to find...")
+        # Try to find genome
+        try:
+            genome_path = find_all(genome, '/')[0]
+        except:
+            log.error(f"Genome failed: no genome '{genome}'")
+            raise ValueError(f"Genome failed: no genome '{genome}'")
+    return genome_path

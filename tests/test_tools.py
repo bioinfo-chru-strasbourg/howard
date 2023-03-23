@@ -21,10 +21,11 @@ import gzip
 import pytest
 
 from howard.commons import *
-from howard.tools.annovar_to_vcf import *
+from howard.tools.tsv_to_vcf import *
 
 
 tests_folder = os.path.dirname(__file__)
+
 
 
 
@@ -122,6 +123,9 @@ def test_tsv_to_vcf():
     genome = tests_folder + "/data/annotations/hg19.fa"
     database_name = "nci60"
     
+    # check genome
+    genome = find_genome(genome)
+
     #remove
     remove_if_exists(output_vcf)
 
@@ -138,6 +142,9 @@ def test_tsv_to_vcf_with_correct_header():
     output_vcf = tests_folder + "/tmp/hg19_nci60.txt.vcf.gz"
     genome = tests_folder + "/data/annotations/hg19.fa"
     database_name = "nci60"
+
+    # check genome
+    genome = find_genome(genome)
     
     #remove
     remove_if_exists(output_vcf)
@@ -155,6 +162,9 @@ def test_tsv_to_vcf_with_annovar_header():
     output_vcf = tests_folder + "/tmp/hg19_nci60.txt.vcf.gz"
     genome = tests_folder + "/data/annotations/hg19.fa"
     database_name = "nci60"
+
+    # check genome
+    genome = find_genome(genome)
     
     #remove
     remove_if_exists(output_vcf)
@@ -173,6 +183,9 @@ def test_tsv_to_vcf_with_strange_header():
     output_vcf = tests_folder + "/tmp/hg19_nci60.txt.vcf.gz"
     genome = tests_folder + "/data/annotations/hg19.fa"
     database_name = "nci60"
+
+    # check genome
+    genome = find_genome(genome)
     
     #remove
     remove_if_exists(output_vcf)
@@ -192,6 +205,9 @@ def test_tsv_to_vcf_with_incorrect_header():
     output_vcf = tests_folder + "/tmp/hg19_nci60.txt.vcf.gz"
     genome = tests_folder + "/data/annotations/hg19.fa"
     database_name = "1nci60"
+
+    # check genome
+    genome = find_genome(genome)
     
     #remove
     remove_if_exists(output_vcf)
