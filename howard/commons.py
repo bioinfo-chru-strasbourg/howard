@@ -301,3 +301,126 @@ def find_genome(genome_path: str, genome: str = "hg19.fa"):
             log.error(f"Genome failed: no genome '{genome}'")
             raise ValueError(f"Genome failed: no genome '{genome}'")
     return genome_path
+
+
+def find_nomen(hgvs:str = "", pattern = "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN", transcripts:list = []) -> dict:
+    """
+    > This function takes a HGVS string and a list of transcripts and returns a dictionary with the best
+    NOMEN for each HGVS string
+    
+    :param hgvs: The HGVS string to parse
+    :type hgvs: str
+    :param pattern: This is the pattern that you want to use to construct the NOMEN. The default is
+    "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN". This means that the NOMEN will be constructed by
+    joining, defaults to GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN (optional)
+    :param transcripts: list of transcripts to use for ranking
+    :type transcripts: list
+    :return: A dictionary with the following keys:
+        NOMEN
+        CNOMEN
+        RNOMEN
+        NNOMEN
+        PNOMEN
+        TVNOMEN
+        TNOMEN
+        VNOMEN
+        ENOMEN
+        GNOMEN
+    """
+    
+    empty_nomen_dict = {
+        "NOMEN": None,
+        "CNOMEN": None,
+        "RNOMEN": None,
+        "NNOMEN": None,
+        "PNOMEN": None,
+        "TVNOMEN": None,
+        "TNOMEN": None,
+        "VNOMEN": None,
+        "ENOMEN": None,
+        "GNOMEN": None,
+        }
+
+    nomen_dict = empty_nomen_dict.copy()
+
+    if hgvs != "nan":
+        
+
+
+        hgvs_split = str(hgvs).split(',')
+
+        nomen_score_max = 0
+        
+
+        for one_hgvs in hgvs_split:
+            #print(one_hgvs)
+            one_hgvs_split = one_hgvs.split(':')
+            #print(one_hgvs_split)
+
+            one_nomen_score = 0
+            one_nomen_dict = empty_nomen_dict.copy()
+
+            for one_hgvs_infos in one_hgvs_split:
+
+                if re.match(r"^[NX][MRP]_(.*)$", one_hgvs_infos):
+                    # Transcript with version
+                    one_nomen_dict["TVNOMEN"] = one_hgvs_infos
+                    one_nomen_score += 1
+                    # Split transcript
+                    one_hgvs_infos_split = one_hgvs_infos.split('.')
+                    # Transcript 
+                    one_nomen_dict["TNOMEN"] = one_hgvs_infos_split[0]
+                    # Transcript version
+                    if len(one_hgvs_infos_split)>1:
+                        one_nomen_dict["VNOMEN"] = one_hgvs_infos_split[1]
+                    # NOMEN Score 
+                    if re.match(r"^NM_(.*)$", one_hgvs_infos) or re.match(r"^NM_(.*)$", one_hgvs_infos):
+                        one_nomen_score += 2
+                    elif re.match(r"^NR_(.*)$", one_hgvs_infos):
+                        one_nomen_score += 1
+                    # NOMEN with default transcript
+                    if one_nomen_dict["TVNOMEN"] in transcripts or one_nomen_dict["TNOMEN"] in transcripts:
+                        rank = max(get_index(one_nomen_dict["TVNOMEN"]), get_index(one_nomen_dict["TNOMEN"])) + 1
+                        if rank >= 0:
+                            one_nomen_score += (100 * (len(transcripts) - rank) )
+
+                elif re.match(r"^c\.(.*)$", one_hgvs_infos) or re.match(r"^g\.(.*)$", one_hgvs_infos) or re.match(r"^m\.(.*)$", one_hgvs_infos):
+                    one_nomen_dict["CNOMEN"] = one_hgvs_infos
+                    one_nomen_score += 1
+                elif re.match(r"^n\.(.*)$", one_hgvs_infos):
+                    one_nomen_dict["NNOMEN"] = one_hgvs_infos
+                    one_nomen_score += 1
+                elif re.match(r"^r\.(.*)$", one_hgvs_infos):
+                    one_nomen_dict["RNOMEN"] = one_hgvs_infos
+                    one_nomen_score += 1
+                elif re.match(r"^p\.(.*)$", one_hgvs_infos):
+                    one_nomen_dict["PNOMEN"] = one_hgvs_infos
+                    one_nomen_score += 1
+                elif re.match(r"^exon(.*)$", one_hgvs_infos):
+                    one_nomen_dict["ENOMEN"] = one_hgvs_infos
+                    one_nomen_score += 1
+                else:
+                    one_nomen_dict["GNOMEN"] = one_hgvs_infos
+
+            if one_nomen_score > nomen_score_max:
+                nomen_dict = one_nomen_dict.copy()
+                nomen_score_max = one_nomen_score
+
+
+        # Contruct NOMEN from pattern
+        nomen = []
+        for n in pattern.split(':'):
+            if nomen_dict.get(n,None):
+                nomen.append(nomen_dict.get(n,None))
+        nomen_dict["NOMEN"] = ":".join(nomen)
+
+    return nomen_dict
+
+
+
+def get_index(value, values:list = []) -> int:
+    try:
+        return values.index(value)
+    except ValueError:
+        # Si l'élément n'existe pas dans la liste, renvoyer un index négatif pour qu'il soit ignoré dans le calcul
+        return -1

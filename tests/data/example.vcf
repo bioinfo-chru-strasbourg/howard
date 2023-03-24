@@ -19,7 +19,7 @@
 ##FORMAT=<ID=GQ,Number=1,Type=Float,Description="Genotype Quality">
 ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
 ##FORMAT=<ID=AD,Number=2,Type=Integer,Description="Allelic Depth">
-##FORMAT=<ID=FILTER,Number=.,Type=Flag,Description="Filter quality">
+##FORMAT=<ID=FILTER,Number=.,Type=String,Description="Filter quality">
 ##FORMAT=<ID=QUAL,Number=1,Type=Integer,Description="Filter quality value">
 ##INFO=<ID=CLNSIG,Number=1,Type=String,Description="CLNSIG">
 ##contig=<ID=chr1,length=249250621,assembly=hg19>

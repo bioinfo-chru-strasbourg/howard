@@ -26,7 +26,6 @@ from howard.objects.variants import Variants
 tests_folder = os.path.dirname(__file__)
 
 
-
 def test_set_get_input():
 
     # Init files
@@ -929,6 +928,101 @@ def test_prioritization():
 
 
 
+def test_prioritization_varank():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+
+    # Construct config dict
+    config = {
+        "prioritization": {
+            "config_profiles": "config/prioritization_profiles.json"
+            }
+        }
+
+    # Construct param dict
+    param = {
+                "prioritization": {
+                    "profiles": ["default", "GERMLINE"],
+                    "pzfields": ["PZFlag", "PZScore", "PZComment", "PZInfos"],
+                    "prioritization_score_mode": "VaRank"
+                }
+        }
+
+    # Create object
+    vcf = Variants(input=input_vcf, load=True, config=config, param=param)
+
+    # Prioritization
+    vcf.prioritization()
+
+    # Check all priorized
+    result = vcf.execute_query(""" SELECT INFO FROM variants """).df()
+    assert len(result) > 0
+
+
+    # Check annotation1
+    result = vcf.execute_query(""" SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND REF = 'A' AND ALT = 'C' AND INFO LIKE '%PZScore_default=15%' """).df()
+    assert len(result) == 1
+
+
+
+def test_prioritization_no_profiles():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+
+    # Construct config dict
+    config = {
+        "prioritization": {
+            "config_profiles": None
+            }
+        }
+    # Create object
+    vcf = Variants(input=input_vcf, load=True, config=config)
+
+    # Prioritization fail
+    with pytest.raises(ValueError) as e:
+        vcf.prioritization()
+    assert str(e.value) == f"NO Profiles configuration"
+
+
+
+def test_prioritization_no_pzfields():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+
+    # Construct config dict
+    config = {
+        "prioritization": {
+            "config_profiles": "config/prioritization_profiles.json"
+            }
+        }
+
+    # Construct param dict
+    param = {
+                "prioritization": {
+                    "profiles": [],
+                    "pzfields": []
+                }
+        }
+
+    # Create object
+    vcf = Variants(input=input_vcf, load=True, config=config, param=param)
+
+    # Prioritization
+    vcf.prioritization()
+
+    # Check all priorized
+    result = vcf.execute_query(""" SELECT count(*) AS count FROM variants WHERE INFO LIKE '%PZScore_default=%' """).df()
+    check_priorization = False
+    if len(result["count"]):
+        if result["count"][0] == 0:
+            check_priorization = True
+    assert check_priorization
+
+
+
 def test_annotations():
 
     # Init files
@@ -1009,6 +1103,46 @@ def test_annotation_parquet():
     length = len(result.df())
     
     assert length == 1
+
+
+
+def test_annotation_parquet_field_already_in_vcf():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    annotation1 = tests_folder + "/data/annotations/nci60.parquet"
+    output_vcf = "/tmp/output.vcf.gz"
+
+    # Construct param dict
+    param_annotations = {
+            annotation1: {"nci60": "DP"}
+            }
+    param = {"annotations": param_annotations }
+
+    # Create object
+    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
+    # Remove if output file exists
+    remove_if_exists(output_vcf)
+
+    # Annotation
+    vcf.annotation()
+
+    # check param
+    param_input = vcf.get_param()
+    expected_param = {'annotations': param_annotations,
+                      'annotation': {
+                        'parquet': {'annotations': {annotation1: {"nci60": "DP"}}}
+                      }
+                    }
+
+    assert param_input and expected_param
+
+    # Check annotation not changed
+    result = vcf.execute_query("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125'").df()
+    assert len(result) == 1
+
+
 
 
 def test_annotation_duckdb():
@@ -1121,6 +1255,35 @@ def test_annotation_annovar():
     assert length == 1
 
 
+def test_annotation_quick_annovar():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    annotation_annovar = "nci60"
+    output_vcf = "/tmp/output.vcf.gz"
+
+    # Construct param dict
+    param = {"annotations": {
+                f"annovar:{annotation_annovar}": None
+                }
+    }
+
+    # Create object
+    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
+    # Remove if output file exists
+    remove_if_exists(output_vcf)
+
+    # Annotation
+    vcf.annotation()
+
+    # query annotated variant
+    result = vcf.execute_query("""SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'""")
+    length = len(result.df())
+    
+    assert length == 1
+
+
 
 def test_annotation_snpeff():
 
@@ -1131,6 +1294,36 @@ def test_annotation_snpeff():
 
     # Construct param dict
     param = {"annotation": {"snpeff": {"options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "}}}
+
+    # Create object
+    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
+    # Remove if output file exists
+    remove_if_exists(output_vcf)
+
+    # Annotation
+    vcf.annotation()
+
+    # query annotated variant
+    result = vcf.execute_query(""" SELECT 1 AS count FROM variants """)
+    length = len(result.df())
+    
+    assert length == 7
+
+
+
+def test_annotation_quick_snpeff():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    annotation_snpeff = "snpeff"
+    output_vcf = "/tmp/output.vcf.gz"
+
+    # Construct param dict
+    param = {"annotations": {
+                f"{annotation_snpeff}": None
+                }
+    }
 
     # Create object
     vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
@@ -1209,13 +1402,12 @@ def test_explode_infos():
 
     # check column found
     result = vcf.execute_query("SELECT * FROM variants LIMIT 0")
-    column_found = column_to_check in [col[0] for col in result.description]
+    assert column_to_check in [col[0] for col in result.description]
 
     # Check value in column
     result = vcf.execute_query(f"""SELECT "{column_to_check}" AS column_to_check FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND REF = 'A' AND ALT = 'C' """)
-    value_found = value_to_check == result.df()["column_to_check"][0]
-    
-    assert column_found and value_found
+    assert value_to_check == result.df()["column_to_check"][0]
+
 
 
 def test_explode_infos_param_prefix():
@@ -1244,13 +1436,11 @@ def test_explode_infos_param_prefix():
 
     # check column found
     result = vcf.execute_query("SELECT * FROM variants LIMIT 0")
-    column_found = column_to_check in [col[0] for col in result.description]
+    assert column_to_check in [col[0] for col in result.description]
 
     # Check value in column
     result = vcf.execute_query(f"""SELECT "{column_to_check}" AS column_to_check FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND REF = 'A' AND ALT = 'C' """)
-    value_found = value_to_check == result.df()["column_to_check"][0]
-    
-    assert column_found and value_found
+    assert value_to_check == result.df()["column_to_check"][0]
 
 
 def test_overview():
@@ -1288,17 +1478,79 @@ def test_query():
 
     # Init files
     input_vcf = tests_folder + "/data/example.vcf.gz"
+    output_query = "/tmp/output.tsv"
 
     # Create object
     vcf = Variants(input=input_vcf, load=True)
 
     # Query
+    query = "SELECT 1 AS query"
     result_query = vcf.execute_query("SELECT 1 AS query")
-    result_query_check = result_query.df()["query"][0] == 1
+    assert result_query.df()["query"][0] == 1
 
     # Query none
     result_query = vcf.execute_query(None)
-    result_query_none_check = result_query == None
+    assert result_query == None
 
-    assert result_query_check and result_query_none_check
+    # Remove if output file exists
+    remove_if_exists(output_query)
 
+    # Output query
+    vcf.export_output(output_file=output_query, query=query, export_header=False)
+    assert os.path.exists(output_query)
+
+
+def test_calculation():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    output_vcf = "/tmp/output.vcf.gz"
+    input_param = {
+            "annotation": {
+                "annovar": {
+                    "annotations": {
+                        "refGene": {
+                        "Func_refGene": "location",
+                        "Gene_refGene": "gene",
+                        "GeneDetail_refGene": "GeneDetail",
+                        "ExonicFunc_refGene": "outcome",
+                        "AAChange_refGene": "hgvs"
+                        }
+                    },
+                    "options": {
+                        "genebase": "-hgvs -splicing_threshold 3 ",
+                        "intronhgvs": 10
+                    }
+                }
+            },
+            "calculation": {
+                "NOMEN": {
+                    "options": {
+                        "hgvs_field": "hgvs"
+                    }
+                },
+                "middle": None,
+                "no_existing_calculation": None
+            }
+        }
+
+    # Create object
+    vcf = Variants(input=input_vcf, output=output_vcf, param=input_param, load=True)
+
+    # Annotation
+    vcf.annotation()
+
+    # Calculation
+    vcf.calculation()
+
+    # Check number of NOMEN (2)
+    result = vcf.get_query_to_df(f"""SELECT INFO FROM variants WHERE INFO LIKE '%NOMEN=%' """)
+    print(result)
+    
+    assert len(result) == 2
+
+     # Check number of middle (7)
+    result = vcf.get_query_to_df(f"""SELECT INFO FROM variants WHERE INFO LIKE '%middle=%' """)
+    print(result)
+    
+    assert len(result) == 7

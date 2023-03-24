@@ -51,6 +51,8 @@ def main() -> None:
     parser.add_argument(
         "--query", help="Query (format: SQL) (default: None) (example: 'SELECT * FROM variants LIMIT 5')", default=None)
     parser.add_argument(
+        "--output_query", help="Output Query file (format: VCF, TSV, Parquet...)", default=None)
+    parser.add_argument(
         "--annotations", help="Quick annotation with databases file (format: list of files) (default: null)", default=None)
     parser.add_argument(
         "--threads", help="Number of threads. Will be added/replace to config file. (format: Integer) (default: null)", default=None)
@@ -150,6 +152,10 @@ def main() -> None:
         if vcfdata_obj.get_param().get("annotations", None) or vcfdata_obj.get_param().get("annotation", None):
             vcfdata_obj.annotation()
 
+        # Calculation
+        if vcfdata_obj.get_param().get("calculations", None) or vcfdata_obj.get_param().get("calculation", None):
+            vcfdata_obj.calculation()
+
         # Prioritization
         if vcfdata_obj.get_param().get("prioritization", None):
             vcfdata_obj.prioritization()
@@ -171,10 +177,21 @@ def main() -> None:
         if args.query or param.get("query", None):
             log.info("Querying...")
             if args.query:
-                result = vcfdata_obj.execute_query(args.query)
+                query = args.query
+                #result = vcfdata_obj.execute_query(args.query)
             elif param.get("query", None):
-                result = vcfdata_obj.execute_query(param.get("query", None))
+                query = param.get("query", None)
+            result = vcfdata_obj.execute_query(query)
             print(result.df())
+
+            # Output Query
+            if args.output_query or param.get("output_query", None):
+                log.info("Output Querying...")
+                if args.output_query:
+                    output_query = args.output_query
+                elif param.get("output_query", None):
+                    output_query = param.get("output_query", None)
+                vcfdata_obj.export_output(output_file=output_query, query=query, export_header=True)
 
         # Close connexion
         vcfdata_obj.close_connexion()
@@ -187,10 +204,19 @@ def main() -> None:
         if args.query or param.get("query", None):
             log.info("Querying...")
             if args.query:
-                result = conn.execute(args.query)
+                result_dataframe = conn.execute(args.query).df()
             elif param.get("query", None):
-                result = conn.execute(param.get("query", None))
-            print(result.df())
+                result_dataframe = conn.execute(param.get("query", None)).df()
+            print(result_dataframe)
+
+            # Output Query
+            if args.output_query or param.get("output_query", None):
+                log.info("Output Querying (TSV only)...")
+                if args.output_query:
+                    output_query = args.output_query
+                elif param.get("output_query", None):
+                    output_query = param.get("output_query", None)
+                result_dataframe.to_csv(output_query, sep='\t', index=False)
 
         # Close connexion
         conn.close()

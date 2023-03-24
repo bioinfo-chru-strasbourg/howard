@@ -4,6 +4,7 @@ import gzip
 import io
 import multiprocessing
 import os
+import random
 import re
 import shlex
 import sqlite3
@@ -15,6 +16,7 @@ import json
 import argparse
 import Bio.bgzf as bgzf
 import pandas as pd
+import numpy as np
 import vcf
 import logging as log
 
@@ -366,12 +368,19 @@ class Variants:
         """
         return self.output
 
-    def get_output_format(self) -> str:
+    def get_output_format(self, output_file:str = None) -> str:
         """
         It returns the format of the input variable.
         :return: The format is being returned.
         """
-        return self.output_format
+        if not output_file:
+            output_file = self.get_output()
+        if output_file:
+            output_name, output_extension = os.path.splitext(output_file)
+            output_format = output_extension.replace(".", "")
+        else:
+            output_format = "unknwon"
+        return output_format
 
     def get_config(self) -> dict:
         """
@@ -662,7 +671,7 @@ class Variants:
         self.create_indexes()
 
 
-    def explode_infos(self, prefix: str = None, create_index: bool = False) -> None:
+    def explode_infos(self, prefix: str = None, create_index: bool = False, fields:list = None, update:bool = True) -> None:
         """
         The function takes a VCF file and explodes the INFO fields into individual columns
         """
@@ -682,41 +691,50 @@ class Variants:
             # table variants
             table_variants = self.get_table_variants(clause="select")
 
+            # extra infos
+            extra_infos = self.get_extra_infos()
+
             log.debug(
                 f"Explode INFO fields - ADD [{len(self.get_header().infos)}] annotations fields")
 
             sql_info_alter_table_array = []
 
             for info in self.get_header().infos:
-                log.debug(
-                    f"Explode INFO fields - ADD {info} annotations fields")
 
                 info_id_sql = prefix+info
-                type_sql = self.code_type_map_to_sql.get(
-                    self.get_header().infos[info].type, "VARCHAR")
-                if self.get_header().infos[info].num != 1:
-                    type_sql = "VARCHAR"
 
-                # Add field
-                sql_info_alter_table = f"ALTER TABLE {table_variants} ADD COLUMN IF NOT EXISTS \"{info_id_sql}\" {type_sql} DEFAULT null"
-                log.debug(
-                    f"Explode INFO fields - ADD {info} annotations fields: {sql_info_alter_table}")
-                self.conn.execute(sql_info_alter_table)
+                if (fields is None or info in fields or prefix+info in fields) and (update or info not in extra_infos): 
+                #if (fields is None or info in fields or info in fields) and (update or info not in extra_infos): 
 
-                # add field to index
-                self.index_additionnal_fields.append(info_id_sql)
+                    log.debug(
+                        f"Explode INFO fields - ADD '{info}' annotations fields")
 
-                # Update field array
-                update_info_field = f"\"{info_id_sql}\" = CASE WHEN REGEXP_EXTRACT(INFO, '[^;]*{info}=([^;]*)',1) == '' THEN NULL WHEN REGEXP_EXTRACT(INFO, '{info}=([^;]*)',1) == '.' THEN NULL ELSE REGEXP_EXTRACT(INFO, '{info}=([^;]*)',1) END"
-                sql_info_alter_table_array.append(update_info_field)
+                    type_sql = self.code_type_map_to_sql.get(
+                        self.get_header().infos[info].type, "VARCHAR")
+                    if self.get_header().infos[info].num != 1:
+                        type_sql = "VARCHAR"
+
+                    # Add field
+                    sql_info_alter_table = f"ALTER TABLE {table_variants} ADD COLUMN IF NOT EXISTS \"{info_id_sql}\" {type_sql} DEFAULT null"
+                    log.debug(
+                        f"Explode INFO fields - ADD {info} annotations fields: {sql_info_alter_table}")
+                    self.conn.execute(sql_info_alter_table)
+
+                    # add field to index
+                    self.index_additionnal_fields.append(info_id_sql)
+
+                    # Update field array
+                    update_info_field = f"\"{info_id_sql}\" = CASE WHEN REGEXP_EXTRACT(INFO, '[^;]*{info}=([^;]*)',1) == '' THEN NULL WHEN REGEXP_EXTRACT(INFO, '{info}=([^;]*)',1) == '.' THEN NULL ELSE REGEXP_EXTRACT(INFO, '{info}=([^;]*)',1) END"
+                    sql_info_alter_table_array.append(update_info_field)
 
             # # Update table
             sql_info_alter_table_array_join = ", ".join(
                 sql_info_alter_table_array)
-            sql_info_alter_table = f"UPDATE {table_variants} SET {sql_info_alter_table_array_join}"
-            log.debug(
-                f"Explode INFO fields - ADD [{len(self.get_header().infos)}]: {sql_info_alter_table}")
-            self.conn.execute(sql_info_alter_table)
+            if sql_info_alter_table_array_join:
+                sql_info_alter_table = f"UPDATE {table_variants} SET {sql_info_alter_table_array_join}"
+                log.debug(
+                    f"Explode INFO fields - ADD [{len(self.get_header().infos)}]: {sql_info_alter_table}")
+                self.conn.execute(sql_info_alter_table)
 
         # create indexes
         if create_index:
@@ -797,13 +815,16 @@ class Variants:
         else:
             return None
 
-    def export_output(self, export_header: bool = True) -> None:
+    def export_output(self, export_header: bool = True, output_file:str = None, query:str = None) -> None:
         """
         It takes a VCF file, and outputs a VCF file
 
         :param export_header: If True, the header will be exported to a file. If False, the header will
         be exported to a temporary file, defaults to True (optional)
         """
+
+        if not output_file:
+            output_file = self.get_output()
 
         # Export  header
         if export_header:
@@ -818,18 +839,20 @@ class Variants:
             f.close()
             header_name = tmp_header_name
 
-        if self.get_output():
+        if output_file:
 
-            output_file = self.get_output()
             sql_columns = self.get_header_columns_as_sql()
             table_variants = self.get_table_variants()
             sql_query_hard = ""
             sql_query_sort = ""
             sql_query_limit = ""
 
+            # output_format
+            output_format = self.get_output_format(output_file=output_file)
+
             # delimiter
             delimiters = {"vcf": "\t", "gz": "\t", "tsv": "\t", "csv": ",", "psv": "|"}
-            delimiter = delimiters.get(self.get_output_format(), "\t")
+            delimiter = delimiters.get(output_format, "\t")
 
             # Threads
             threads = self.get_threads()
@@ -843,43 +866,66 @@ class Variants:
 
             log.debug(f"Export extra columns: {sql_extra_columns}")
 
-            if self.get_output_format() in ["parquet"]:
+            sql_query_export_subquery = None
+            sql_query_export_to = None
+            sql_query_export_format = None
+            commands = []
+
+            if output_format in ["parquet"]:
 
                 # Export parquet
-                sql_query_export = f"COPY (SELECT {sql_columns} {sql_extra_columns} FROM {table_variants} WHERE 1 {sql_query_hard} {sql_query_sort} {sql_query_limit}) TO '{output_file}' WITH (FORMAT PARQUET)"
-                self.conn.execute(sql_query_export)
+                sql_query_export_subquery = f"""
+                    SELECT {sql_columns} {sql_extra_columns} FROM {table_variants} WHERE 1 {sql_query_hard} {sql_query_sort} {sql_query_limit}
+                    """
+                sql_query_export_to = output_file
+                sql_query_export_format = "FORMAT PARQUET"
+                
 
-            # elif self.get_output_format() in ["db", "duckdb"]:
+            # elif output_format in ["db", "duckdb"]:
 
             #     log.debug("Export in DuckDB. Nothing to do")
 
-            elif self.get_output_format() in ["tsv", "csv", "psv"]:
+            elif output_format in ["tsv", "csv", "psv"]:
 
                 # Export TSV/CSV
-                sql_query_export = f"COPY (SELECT {sql_columns} {sql_extra_columns} FROM {table_variants} WHERE 1 {sql_query_hard} {sql_query_sort} {sql_query_limit}) TO '{output_file}' WITH (FORMAT CSV, DELIMITER '{delimiter}', HEADER)"
-                self.conn.execute(sql_query_export)
+                sql_query_export_subquery = f"""
+                    SELECT {sql_columns} {sql_extra_columns} FROM {table_variants} WHERE 1 {sql_query_hard} {sql_query_sort} {sql_query_limit}
+                    """
+                sql_query_export_to = output_file
+                sql_query_export_format = f"FORMAT CSV, DELIMITER '{delimiter}', HEADER"
 
-            elif self.get_output_format() in ["vcf", "gz"]:
+            elif output_format in ["vcf", "gz"]:
 
                 # Extract VCF
-                # Variants
                 tmp_variants = NamedTemporaryFile(prefix=self.get_prefix(
                 ), dir=self.get_tmp_dir(), suffix=".gz", delete=False)
                 tmp_variants_name = tmp_variants.name
-                sql_query_export = f"COPY (SELECT {sql_columns} FROM {table_variants} WHERE 1 {sql_query_hard} {sql_query_sort} {sql_query_limit}) TO '{tmp_variants_name}' WITH (FORMAT CSV, DELIMITER '\t', HEADER, QUOTE '')"
-                self.conn.execute(sql_query_export)
+                sql_query_export_subquery = f"""
+                    SELECT {sql_columns} FROM {table_variants} WHERE 1 {sql_query_hard} {sql_query_sort} {sql_query_limit}
+                    """
+                sql_query_export_to = tmp_variants_name
+                sql_query_export_format = f"FORMAT CSV, DELIMITER '\t', HEADER, QUOTE ''"
 
                 # VCF
-                command = f"grep '^#CHROM' -v {header_name} > {output_file}.vcf; cat {tmp_variants_name} >> {output_file}.vcf"
-                subprocess.run(command, shell=True)
+                commands.append(f"grep '^#CHROM' -v {header_name} > {output_file}.vcf; cat {tmp_variants_name} >> {output_file}.vcf")
 
-                if self.get_output_format() in ["vcf"]:
-                    command = f"mv {output_file}.vcf {output_file}"
-                    subprocess.run(command, shell=True)
-                elif self.get_output_format() in ["gz"]:
+                if output_format in ["vcf"]:
+                    commands.append(f""" mv {output_file}.vcf {output_file} """)
+                elif output_format in ["gz"]:
                     bgzip_command = get_bgzip(threads=threads)
-                    command = f""" {bgzip_command} {output_file}.vcf > {output_file} && rm {output_file}.vcf """
-                    subprocess.run(command, shell=True)
+                    commands.append(f""" {bgzip_command} {output_file}.vcf > {output_file} && rm {output_file}.vcf """)
+                    
+            if query:
+                sql_query_export_subquery = query
+
+            # Export
+            if sql_query_export_subquery and sql_query_export_to and sql_query_export_format:
+                sql_query_export = f"COPY ({sql_query_export_subquery}) TO '{sql_query_export_to}' WITH ({sql_query_export_format})"
+                self.conn.execute(sql_query_export)
+
+            # Commands
+            if commands:
+                run_parallel_commands(commands=commands, threads=1)
 
 
     def get_extra_infos(self, table: str = None) -> list:
@@ -960,6 +1006,7 @@ class Variants:
         log.debug("Export VCF...")
 
         connexion_format = self.get_connexion_format()
+        threads = self.get_threads()
 
         table_variants = self.get_table_variants()
         sql_query_hard = ""
@@ -1010,15 +1057,16 @@ class Variants:
 
         # Create output
         # Cat header and variants
-        command_gzip = ""
-        if file_type in ["gz"]:
-            command_gzip = f" | bgzip -l {compression} -c "
+        # command_gzip = ""
+        # if file_type in ["gz"]:
+        #     command_gzip = f" | bgzip -l {compression} -c "
         if index:
             command_tabix = f" && tabix {vcf_file}"
         else:
             command_tabix = ""
-
-        command = f"grep '^#CHROM' -v {tmp_header_name} {command_gzip} > {vcf_file}; gzip -dc {tmp_variants_name} {command_gzip} >> {vcf_file} {command_tabix}"
+        command_gzip = get_bgzip(threads=threads, level=1)
+        command = f"grep '^#CHROM' -v {tmp_header_name} | {command_gzip} > {vcf_file}; gzip -dc {tmp_variants_name}  | {command_gzip} >> {vcf_file} {command_tabix}"
+        #print(command)
 
         subprocess.run(command, shell=True)
 
@@ -2651,9 +2699,12 @@ class Variants:
             "prioritization_score_mode", "HOWARD")
 
         # Profiles are in files
-        if os.path.exists(config_profiles):
+        if config_profiles and os.path.exists(config_profiles):
             with open(config_profiles) as profiles_file:
                 config_profiles = json.load(profiles_file)
+        else:
+            log.error("NO Profiles configuration")
+            raise ValueError(f"NO Profiles configuration")
 
         log.debug("Profiles availables: " + str(list(config_profiles.keys())))
         log.debug("Profiles to check: " + str(list(profiles)))
@@ -2875,3 +2926,242 @@ class Variants:
         else:
 
             log.warning(f"No profiles in parameters")
+
+
+    # def load_from_database(self):
+    #     """
+    #     It takes the data from the database and puts it into a dictionary
+    #     """
+    #     query = "SELECT * FROM variants"
+    #     cursor = self.connection.execute(query)
+    #     result = cursor.fetchall()
+    #     columns = [col[0] for col in cursor.description]
+    #     df = pd.DataFrame(result, columns=columns)
+    #     self.data = df.to_dict('list')
+
+
+    ### Calculation functions
+
+    def calculation(self):
+        """
+        It takes a list of operations, and for each operation, it checks if it's a python or sql
+        operation, and then calls the appropriate function
+
+        param json example:
+            "calculation": {
+                "NOMEN": {
+                    "options": {
+                        "hgvs_field": "hgvs"
+                    },
+                "middle" : null
+            }
+        """
+
+        operations_config = {
+            "middle": 
+                {
+                    "type": "sql",
+                    "name": "middle",
+                    "output_column_name": "middle",
+                    "output_column_type": "Integer",
+                    "output_column_description": "middle of the position, completly useless",
+                    "operation_query": "(SELECT POS/2)",
+                    "operation_info": True,
+                },
+            "NOMEN":
+                {
+                    "type": "python",
+                    "name": "NOMEN",
+                    "function_name": "calculation_extract_nomen",
+                    "function_params": []
+                },
+        }
+
+        operations = self.get_param().get("calculation",{}).keys()
+
+        for operation_name in operations:
+            if operation_name in operations_config:
+                log.info(f"Calculation '{operation_name}'")
+                operation = operations_config[operation_name]
+                if operation["type"] == "python":
+                    self.calculation_process_function(operation)
+                elif operation["type"] == "sql":
+                    self.calculation_process_sql(operation)
+            else:
+                log.warning(f"No calculation '{operation_name}' available")
+
+
+    def calculation_process_sql(self, operation):
+        """
+        This function takes in a string of a mathematical operation and returns the result of that
+        operation
+        
+        :param operation: The operation to be performed
+        """
+
+        # Param
+        param = self.get_param()
+        prefix = param.get("explode_infos", "INFO/")
+
+        # table variants
+        table_variants = self.get_table_variants(clause="alter")
+
+        # Operation infos
+        operation_name = operation['name']
+        log.debug(f"process sql {operation_name}")
+        output_column_name = operation['output_column_name']
+        output_column_type = operation['output_column_type']
+        output_column_type_sql = code_type_map_to_sql.get(output_column_type, "VARCHAR")
+        output_column_description = operation['output_column_description']
+        operation_query = operation['operation_query']
+        operation_info = operation['operation_info']
+
+        # Create column
+        self.conn.execute(f""" ALTER TABLE {table_variants} ADD COLUMN "{prefix}{output_column_name}" {output_column_type_sql} DEFAULT NULL """)
+
+        # Create VCF header field
+        vcf_reader = self.get_header()
+        vcf_reader.infos[output_column_name] = vcf.parser._Info(
+                                output_column_name,
+                                ".",
+                                output_column_type,
+                                output_column_description,
+                                "howard calculation",
+                                "0",
+                                self.code_type_map.get(output_column_type)
+                            )
+
+        # Operation calculation
+        self.conn.execute(f""" UPDATE {table_variants} SET "{prefix}{output_column_name}" = ({operation_query}) """)
+
+        # Add to INFO
+        if operation_info:
+            sql_update = f"""
+                UPDATE {table_variants}
+                SET "INFO" = "INFO" 
+                    || CASE WHEN "INFO" NOT IN ('','.')
+                             AND "{prefix}{output_column_name}" NOT IN ('','.')
+                        THEN ';'
+                        ELSE ''
+                        END
+                    || '{output_column_name}=' || "{prefix}{output_column_name}"
+            """
+            log.debug(sql_update)
+            self.conn.execute(sql_update)
+
+
+    def calculation_process_function(self, operation):
+        """
+        This function takes in a string, and returns a string
+        
+        :param operation: The operation to be performed
+        """
+        operation_name = operation['name']
+        log.debug(f"process sql {operation_name}")
+        function_name = operation['function_name']
+        function_params = operation['function_params']
+        getattr(self, function_name)(*function_params)
+
+
+    # Operation functions
+
+    def calculation_extract_nomen(self):
+        """
+        This function extracts the HGVS nomenclature from the calculation/identification of NOMEN.
+        """
+
+        # NOMEN field
+        field_nomen_dict = "NOMEN_DICT"
+
+        # NOMEN structure
+        nomen_dict = {
+            "NOMEN": "NOMEN hgvs nomenclature considered as reference hgvs (official transcript, first otherwise)",
+            "CNOMEN": "CNOMEN hgvs nomenclature at DNA level related to a transcript (TNOMEN)",
+            "RNOMEN": "RNOMEN hgvs nomenclature at RNA level related to a transcript (TNOMEN)",
+            "NNOMEN": "NNOMEN hgvs nomenclature for non-coding variant",
+            "PNOMEN": "PNOMEN hgvs nomenclature at Protein level related to a transcript (TNOMEN)",
+            "TVNOMEN": "TVNOMEN hgvs transcript with version (if any) used (e.g. for CNOMEN and PNOMEN)",
+            "TNOMEN": "TNOMEN hgvs transcript used (e.g. for CNOMEN and PNOMEN)",
+            "VNOMEN": "VNOMEN hgvs transcript version used (e.g. for CNOMEN and PNOMEN)",
+            "ENOMEN": "ENOMEN hgvs exon nomenclature related to a transcript (TNOMEN)",
+            "GNOMEN": "GNOMEN hgvs gene nomenclature related to a transcript (TNOMEN)",
+        }
+
+        # Param
+        param = self.get_param()
+        prefix = param.get("explode_infos", "INFO/")
+
+        # Header
+        vcf_reader = self.get_header()
+
+        # Get HGVS field
+        hgvs_field = param.get("calculation",{}).get("NOMEN",{}).get("options",{}).get("hgvs_field","hgvs")
+
+        # Explode HGVS field in column
+        self.explode_infos(fields=[hgvs_field])
+
+        # extra infos
+        extra_infos = self.get_extra_infos()
+        extra_field = prefix+hgvs_field
+
+        if extra_field in extra_infos:
+
+            # Create dataframe
+            dataframe_hgvs = self.get_query_to_df(f""" SELECT "#CHROM", "POS", "REF", "ALT", "{extra_field}" FROM variants """)
+
+            # Create main NOMEN column
+            dataframe_hgvs[field_nomen_dict] = dataframe_hgvs[extra_field].apply(lambda x: find_nomen(str(x)))
+            
+            # Explode NOMEN Structure and create SQL set for update
+            sql_nomen_fields = []
+            for nomen_field in nomen_dict:
+                dataframe_hgvs[nomen_field] = dataframe_hgvs[field_nomen_dict].apply(lambda x: dict(x).get(nomen_field,""))
+                # Create VCF header field
+                
+                vcf_reader.infos[nomen_field] = vcf.parser._Info(
+                                        nomen_field,
+                                        ".",
+                                        "String",
+                                        nomen_dict.get(nomen_field,"howard calculation NOMEN"),
+                                        "howard calculation",
+                                        "0",
+                                        self.code_type_map.get("String")
+                                    )
+                sql_nomen_fields.append(f"""
+                    || CASE WHEN dataframe_hgvs."{nomen_field}" NOT NULL
+                        THEN ';{nomen_field}=' || dataframe_hgvs."{nomen_field}"
+                        ELSE ''
+                        END """)
+            
+            # SQL set for update
+            sql_nomen_fields_set = "  ".join(sql_nomen_fields)
+
+            # Update
+            sql_update = f"""
+                UPDATE variants
+                SET "INFO" = "INFO" {sql_nomen_fields_set}
+                FROM dataframe_hgvs
+                WHERE variants."#CHROM" = dataframe_hgvs."#CHROM"
+                    AND variants."POS" = dataframe_hgvs."POS" 
+                    AND variants."REF" = dataframe_hgvs."REF"
+                    AND variants."ALT" = dataframe_hgvs."ALT"
+                    
+            """
+            self.conn.execute(sql_update)
+            
+            # Delete dataframe
+            del dataframe_hgvs
+            gc.collect()
+
+
+
+    # def to_pyvcf(self):
+    #     """
+    #     Export data to vcf_reader object
+    #     """
+    #     tmp_vcf = NamedTemporaryFile(prefix=self.get_prefix(), suffix=".vcf.gz", dir=self.get_tmp_dir(), delete=False)
+    #     tmp_vcf_name = tmp_vcf.name
+    #     self.export_variant_vcf(tmp_vcf_name, file_type="gz", remove_info=False, add_samples=True, index=False)
+    #     vcf_reader = vcf.Reader(filename=tmp_vcf_name)
+    #     return vcf_reader
+
