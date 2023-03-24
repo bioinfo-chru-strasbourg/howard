@@ -218,3 +218,167 @@ def test_example_function():
 
     assert result == expected_result
 
+
+def test_get_index():
+
+    # Test with a list of values
+    values = ['a', 'b', 'c', 'd']
+    assert get_index('a', values) == 0
+    assert get_index('d', values) == 3
+    assert get_index('e', values) == -1
+
+    # Test with an empty list
+    assert get_index('a', []) == -1
+    assert get_index('', []) == -1
+
+    # Test with a None element
+    assert get_index(None, values) == -1
+
+
+# def test_find_nomen():
+#     hgvs = "NM_001234.5:c.123A>T,NM_001234.6:g.456C>A"
+#     pattern = "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN"
+#     transcripts = ["NM_001234.5", "NM_001234.6"]
+#     expected_output = {
+#         "NOMEN": "A:123T",
+#         "CNOMEN": "c.123A>T",
+#         "RNOMEN": None,
+#         "NNOMEN": None,
+#         "PNOMEN": None,
+#         "TVNOMEN": "NM_001234.6",
+#         "TNOMEN": "NM_001234",
+#         "VNOMEN": "5",
+#         "ENOMEN": None,
+#         "GNOMEN": "g.456C>A"
+#     }
+#     assert find_nomen(hgvs, pattern, transcripts) == expected_output
+
+
+def test_find_nomen_full():
+    # Test case 1
+    print("test1")
+    hgvs = "NM_001637.3:c.1582G>T"
+    transcripts = ["NM_001637.3"]
+    expected_output = {
+        "NOMEN": "NM_001637:c.1582G>T",
+        "CNOMEN": "c.1582G>T",
+        "RNOMEN": None,
+        "NNOMEN": None,
+        "PNOMEN": None,
+        "TVNOMEN": "NM_001637.3",
+        "TNOMEN": "NM_001637",
+        "VNOMEN": "3",
+        "ENOMEN": None,
+        "GNOMEN": None,
+    }
+    assert find_nomen(hgvs, transcripts=transcripts) == expected_output
+
+    # Test case 2
+    print("test2")
+    hgvs = "NM_001637.3:c.1582G>T,NM_001637.3:c.1583G>T"
+    transcripts = ["NM_001637.3"]
+    expected_output = {
+        "NOMEN": "NM_001637:c.1582G>T",
+        "CNOMEN": "c.1582G>T",
+        "RNOMEN": None,
+        "NNOMEN": None,
+        "PNOMEN": None,
+        "TVNOMEN": "NM_001637.3",
+        "TNOMEN": "NM_001637",
+        "VNOMEN": "3",
+        "ENOMEN": None,
+        "GNOMEN": None,
+    }
+    assert find_nomen(hgvs, transcripts=transcripts) == expected_output
+
+    # Test case 3
+    print("test3")
+    hgvs = "NM_001637.3:c.1582G>T,NM_001637.3:c.1583G>T,NM_001637.2:c.1582G>T:p.G12D"
+    transcripts = ["NM_001637.2", "NM_001637.3"]
+    expected_output = {
+        "NOMEN": "NM_001637:c.1582G>T:p.G12D",
+        "CNOMEN": "c.1582G>T",
+        "RNOMEN": None,
+        "NNOMEN": None,
+        "PNOMEN": "p.G12D",
+        "TVNOMEN": "NM_001637.2",
+        "TNOMEN": "NM_001637",
+        "VNOMEN": "2",
+        "ENOMEN": None,
+        "GNOMEN": None,
+    }
+    assert find_nomen(hgvs, transcripts=transcripts) == expected_output
+
+    # Test case 4
+    print("test3")
+    hgvs = "Gene1:exon12:n.1582G>T:NR_001637.3"
+    transcripts = []
+    expected_output = {
+        "NOMEN": "Gene1:NR_001637:exon12:n.1582G>T",
+        "CNOMEN": None,
+        "RNOMEN": None,
+        "NNOMEN": "n.1582G>T",
+        "PNOMEN": None,
+        "TVNOMEN": "NR_001637.3",
+        "TNOMEN": "NR_001637",
+        "VNOMEN": "3",
+        "ENOMEN": "exon12",
+        "GNOMEN": "Gene1",
+    }
+    assert find_nomen(hgvs, transcripts=transcripts) == expected_output
+
+    # Test case 5
+    print("test3")
+    hgvs = "Gene1:exon12:r.1582G>T"
+    transcripts = []
+    expected_output = {
+        "NOMEN": "Gene1:exon12:r.1582G>T",
+        "CNOMEN": None,
+        "RNOMEN": "r.1582G>T",
+        "NNOMEN": None,
+        "PNOMEN": None,
+        "TVNOMEN": None,
+        "TNOMEN": None,
+        "VNOMEN": None,
+        "ENOMEN": "exon12",
+        "GNOMEN": "Gene1",
+    }
+    assert find_nomen(hgvs, transcripts=transcripts) == expected_output
+
+
+def test_get_gzip():
+
+    command_gzip_expected = "bgzip -c  --threads=2 --compress-level=5"
+
+    command_gzip = get_bgzip(threads=2, level=5)
+    print(command_gzip)
+
+    assert command_gzip.strip() == command_gzip_expected.strip()
+          
+
+
+def test_find_all():
+    # Create a temporary directory structure
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create some files with the name 'test_file' in different directories
+        open(os.path.join(tmpdir, 'test_file'), 'a').close()
+        os.makedirs(os.path.join(tmpdir, 'subdir'))
+        open(os.path.join(tmpdir, 'subdir', 'test_file'), 'a').close()
+
+        # Test that find_all returns the correct paths
+        assert find_all('test_file', tmpdir) == [
+            os.path.join(tmpdir, 'test_file'),
+            os.path.join(tmpdir, 'subdir', 'test_file')
+        ]
+
+
+def test_find_genome():
+    # create a temporary directory
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # specify a non-existent path for the genome file
+        genome_path = os.path.join(tmpdir, 'nonexistent_genome.fa')
+        # call the function to find the genome file
+        genome_path = find_genome(genome_path)
+        # check if the genome file was found
+        assert os.path.exists(genome_path)
+

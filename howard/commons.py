@@ -380,7 +380,7 @@ def find_nomen(hgvs:str = "", pattern = "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOM
                         one_nomen_score += 1
                     # NOMEN with default transcript
                     if one_nomen_dict["TVNOMEN"] in transcripts or one_nomen_dict["TNOMEN"] in transcripts:
-                        rank = max(get_index(one_nomen_dict["TVNOMEN"]), get_index(one_nomen_dict["TNOMEN"])) + 1
+                        rank = max(get_index(one_nomen_dict["TVNOMEN"],transcripts), get_index(one_nomen_dict["TNOMEN"],transcripts)) + 1
                         if rank >= 0:
                             one_nomen_score += (100 * (len(transcripts) - rank) )
 
@@ -403,6 +403,7 @@ def find_nomen(hgvs:str = "", pattern = "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOM
                     one_nomen_dict["GNOMEN"] = one_hgvs_infos
 
             if one_nomen_score > nomen_score_max:
+                print("change")
                 nomen_dict = one_nomen_dict.copy()
                 nomen_score_max = one_nomen_score
 
