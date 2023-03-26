@@ -16,15 +16,12 @@ import os
 import sys
 import duckdb
 
+from howard.commons import *
 from howard.objects.variants import Variants
 
 
 tests_folder = os.path.dirname(__file__)
 
-
-def remove_if_exists(filepath):
-    if os.path.exists(filepath):
-        os.remove(filepath)
 
 
 def test_load():
@@ -46,7 +43,7 @@ def test_export_vcf():
     conn = duckdb.connect(":memory:")
     vcf = Variants(conn=conn, input=input_vcf, output=output_vcf)
     vcf.load_data()
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
     vcf.export_output()
     assert os.path.exists(output_vcf)
 
@@ -60,7 +57,7 @@ def test_export_vcf_gz():
     conn = duckdb.connect(":memory:")
     vcf = Variants(conn=conn, input=input_vcf, output=output_vcf)
     vcf.load_data()
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
     vcf.export_output()
     assert os.path.exists(output_vcf)
 
@@ -74,7 +71,7 @@ def test_export_parquet():
     conn = duckdb.connect(":memory:")
     vcf = Variants(conn=conn, input=input_vcf, output=output_vcf)
     vcf.load_data()
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
     vcf.export_output()
     assert os.path.exists(output_vcf)
 
@@ -90,7 +87,7 @@ def test_export_header():
     conn = duckdb.connect(":memory:")
     vcf = Variants(conn=conn, input=input_vcf, output=output_vcf)
     vcf.load_data()
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
     vcf.export_output()
     assert os.path.exists(output_vcf_header)
 

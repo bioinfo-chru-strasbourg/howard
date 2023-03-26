@@ -127,7 +127,7 @@ def test_tsv_to_vcf():
     genome = find_genome(genome)
 
     #remove
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
 
     # transforme
     tsv_to_vcf(input_tsv, output_vcf, database_name=database_name, genome=genome)
@@ -147,7 +147,7 @@ def test_tsv_to_vcf_with_correct_header():
     genome = find_genome(genome)
     
     #remove
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
 
     # transforme
     tsv_to_vcf(input_tsv, output_vcf, database_name=database_name, genome=genome)
@@ -167,7 +167,7 @@ def test_tsv_to_vcf_with_annovar_header():
     genome = find_genome(genome)
     
     #remove
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
 
     # transforme
     tsv_to_vcf(input_tsv, output_vcf, database_name=database_name, genome=genome)
@@ -188,7 +188,7 @@ def test_tsv_to_vcf_with_strange_header():
     genome = find_genome(genome)
     
     #remove
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
 
     # transforme
     tsv_to_vcf(input_tsv, output_vcf, database_name=database_name, genome=genome)
@@ -210,7 +210,7 @@ def test_tsv_to_vcf_with_incorrect_header():
     genome = find_genome(genome)
     
     #remove
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
 
     # transforme
     #tsv_to_vcf(input_tsv, output_vcf, database_name=database_name, genome=genome)

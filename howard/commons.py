@@ -40,14 +40,17 @@ code_type_map_to_sql = {
 }
 
 
-def remove_if_exists(filepath: str) -> None:
+def remove_if_exists(filepaths: list) -> None:
     """
     If the filepath exists, remove it
 
     :param filepath: The path to the file you want to remove
     """
-    if os.path.exists(filepath):
-        os.remove(filepath)
+    if type(filepaths) is str:
+        filepaths = [filepaths]
+    for filepath in filepaths:
+        if os.path.exists(filepath):
+            os.remove(filepath)
 
 
 def set_log_level(verbosity: str) -> str:
@@ -296,7 +299,7 @@ def find_genome(genome_path: str, genome: str = "hg19.fa"):
         log.warning(f"Genome warning: no genome '{genome}'. Try to find...")
         # Try to find genome
         try:
-            genome_path = find_all(genome, '/')[0]
+            genome_path = find_all(genome, '/databases')[0]
         except:
             log.error(f"Genome failed: no genome '{genome}'")
             raise ValueError(f"Genome failed: no genome '{genome}'")

@@ -41,7 +41,7 @@ def test_remove_if_exists():
     created = os.path.exists(filename)
 
     # remove filename
-    remove_if_exists(filename)
+    remove_if_exists([filename])
 
     # check delete
     deleted = not os.path.exists(filename)

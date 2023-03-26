@@ -727,14 +727,35 @@ class Variants:
                     update_info_field = f"\"{info_id_sql}\" = CASE WHEN REGEXP_EXTRACT(INFO, '[^;]*{info}=([^;]*)',1) == '' THEN NULL WHEN REGEXP_EXTRACT(INFO, '{info}=([^;]*)',1) == '.' THEN NULL ELSE REGEXP_EXTRACT(INFO, '{info}=([^;]*)',1) END"
                     sql_info_alter_table_array.append(update_info_field)
 
-            # # Update table
-            sql_info_alter_table_array_join = ", ".join(
-                sql_info_alter_table_array)
-            if sql_info_alter_table_array_join:
-                sql_info_alter_table = f"UPDATE {table_variants} SET {sql_info_alter_table_array_join}"
+
+            # By chromosomes
+            chromosomes_df = self.get_query_to_df(f""" SELECT "#CHROM" FROM {table_variants} GROUP BY "#CHROM" """)
+            #print(chromosomes_df)
+
+            for chrom in chromosomes_df["#CHROM"]:
                 log.debug(
-                    f"Explode INFO fields - ADD [{len(self.get_header().infos)}]: {sql_info_alter_table}")
-                self.conn.execute(sql_info_alter_table)
+                        f"Explode INFO fields - Chromosoome {chrom}...")
+                # Update table
+                sql_info_alter_table_array_join = ", ".join(
+                    sql_info_alter_table_array)
+                if sql_info_alter_table_array_join:
+                    sql_info_alter_table = f"""
+                        UPDATE {table_variants}
+                        SET {sql_info_alter_table_array_join}
+                        WHERE "#CHROM" = '{chrom}'
+                        """
+                    log.debug(
+                        f"Explode INFO fields - ADD [{len(self.get_header().infos)}]: {sql_info_alter_table}")
+                    self.conn.execute(sql_info_alter_table)
+
+            # # Update table
+            # sql_info_alter_table_array_join = ", ".join(
+            #     sql_info_alter_table_array)
+            # if sql_info_alter_table_array_join:
+            #     sql_info_alter_table = f"UPDATE {table_variants} SET {sql_info_alter_table_array_join}"
+            #     log.debug(
+            #         f"Explode INFO fields - ADD [{len(self.get_header().infos)}]: {sql_info_alter_table}")
+            #     self.conn.execute(sql_info_alter_table)
 
         # create indexes
         if create_index:
@@ -828,7 +849,7 @@ class Variants:
 
         # Export  header
         if export_header:
-            header_name = self.export_header()
+            header_name = self.export_header(output_file=output_file)
         else:
             # Header
             tmp_header = NamedTemporaryFile(
@@ -862,7 +883,7 @@ class Variants:
             # Extra columns
             sql_extra_columns = ""
             if self.get_param().get("export_extra_infos", None):
-                sql_extra_columns = self.get_extra_infos_sql()
+                sql_extra_columns = ", " + self.get_extra_infos_sql()
 
             log.debug(f"Export extra columns: {sql_extra_columns}")
 
@@ -877,6 +898,7 @@ class Variants:
                 sql_query_export_subquery = f"""
                     SELECT {sql_columns} {sql_extra_columns} FROM {table_variants} WHERE 1 {sql_query_hard} {sql_query_sort} {sql_query_limit}
                     """
+                #print(sql_query_export_subquery)
                 sql_query_export_to = output_file
                 sql_query_export_format = "FORMAT PARQUET"
                 
@@ -967,7 +989,7 @@ class Variants:
         """
         return ", ".join(['"' + str(elem) + '"' for elem in self.get_extra_infos(table=table)])
 
-    def export_header(self, header_name: str = None) -> str:
+    def export_header(self, header_name: str = None, output_file:str = None) -> str:
         """
         It takes a VCF file, and writes the header to a new file
 
@@ -976,7 +998,7 @@ class Variants:
         :return: The name of the temporary header file.
         """
 
-        if not header_name:
+        if not header_name and not output_file:
             output_file = self.get_output()
         tmp_header_name = output_file + ".hdr"
         f = open(tmp_header_name, 'w')
@@ -1104,7 +1126,7 @@ class Variants:
                         param["annotation"]["snpeff"] = {}
                     if "options" not in param["annotation"]["snpeff"]:
                         param["annotation"]["snpeff"]["options"] = ""
-                if annotation_file.startswith("annovar"):
+                elif annotation_file.startswith("annovar"):
                     if "annovar" not in param["annotation"]:
                         param["annotation"]["annovar"] = {}
                     if "annotations" not in param["annotation"]["annovar"]:

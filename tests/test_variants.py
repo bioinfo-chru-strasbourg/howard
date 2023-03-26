@@ -600,7 +600,7 @@ def test_load_connexion_type_file():
     input_vcf = tests_folder + "/data/example.vcf.gz"
     input_config = { "connexion_type": "/tmp/output.duckdb" }
 
-    remove_if_exists("/tmp/output.duckdb")
+    remove_if_exists(["/tmp/output.duckdb"])
 
     # Create object
     vcf = Variants(input=input_vcf, config=input_config)
@@ -645,7 +645,7 @@ def test_export_output_vcf_gz():
     output_vcf = "/tmp/example.vcf.gz"
 
     # remove if exists
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
 
     # Create object
     vcf = Variants(input=input_vcf, output=output_vcf)
@@ -658,7 +658,7 @@ def test_export_output_vcf_gz():
     check_export_output = os.path.exists(output_vcf)
 
     # Check get_output without header
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
     vcf.export_output(export_header=False)
     check_export_output_without_header = os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
 
@@ -675,7 +675,7 @@ def test_export_output_vcf():
     output_vcf = "/tmp/example.vcf"
 
     # remove if exists
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
 
     # Create object
     vcf = Variants(input=input_vcf, output=output_vcf)
@@ -688,7 +688,7 @@ def test_export_output_vcf():
     check_export_output = os.path.exists(output_vcf)
 
     # Check get_output without header
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
     vcf.export_output(export_header=False)
     check_export_output_without_header = os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
 
@@ -705,7 +705,7 @@ def test_export_output_parquet():
     output_vcf = "/tmp/example.parquet"
 
     # remove if exists
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
 
     # Create object
     vcf = Variants(input=input_vcf, output=output_vcf)
@@ -718,7 +718,7 @@ def test_export_output_parquet():
     check_export_output = os.path.exists(output_vcf)
 
     # Check get_output without header
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
     vcf.export_output(export_header=False)
     check_export_output_without_header = os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
 
@@ -735,7 +735,7 @@ def test_export_output_duckdb():
     output_vcf = "/tmp/example.duckdb"
 
     # remove if exists
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
 
     # Create object
     vcf = Variants(input=input_vcf, output=output_vcf)
@@ -764,7 +764,7 @@ def test_export_output_tsv():
     output_vcf = "/tmp/example.tsv"
 
     # remove if exists
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
 
     # Create object
     vcf = Variants(input=input_vcf, output=output_vcf)
@@ -777,7 +777,7 @@ def test_export_output_tsv():
     check_export_output = os.path.exists(output_vcf)
 
     # Check get_output without header
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
     vcf.export_output(export_header=False)
     check_export_output_without_header = os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
 
@@ -794,7 +794,7 @@ def test_export_output_tsv():
     output_vcf = "/tmp/example.csv"
 
     # remove if exists
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
 
     # Create object
     vcf = Variants(input=input_vcf, output=output_vcf)
@@ -807,7 +807,7 @@ def test_export_output_tsv():
     check_export_output = os.path.exists(output_vcf)
 
     # Check get_output without header
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
     vcf.export_output(export_header=False)
     check_export_output_without_header = os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
 
@@ -825,7 +825,7 @@ def test_export_output_psv():
     output_vcf = "/tmp/example.psv"
 
     # remove if exists
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
 
     # Create object
     vcf = Variants(input=input_vcf, output=output_vcf)
@@ -838,7 +838,7 @@ def test_export_output_psv():
     check_export_output = os.path.exists(output_vcf)
 
     # Check get_output without header
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
     vcf.export_output(export_header=False)
     check_export_output_without_header = os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
 
@@ -859,7 +859,7 @@ def test_export_output_vcf_explode_infos():
         }
 
     # remove if exists
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
 
     # Create object
     vcf = Variants(input=input_vcf, output=output_vcf, load=True, param=param)
@@ -872,7 +872,7 @@ def test_export_output_vcf_explode_infos():
     check_export_output = os.path.exists(output_vcf)
 
     # Check get_output without header
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
     vcf.export_output(export_header=False)
     check_export_output_without_header = os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
 
@@ -1044,7 +1044,7 @@ def test_annotations():
     vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Remove if output file exists
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
 
     # Annotation
     vcf.annotation()
@@ -1093,7 +1093,7 @@ def test_annotation_parquet():
     vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Remove if output file exists
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
 
     # Annotation
     vcf.annotation()
@@ -1123,7 +1123,7 @@ def test_annotation_parquet_field_already_in_vcf():
     vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Remove if output file exists
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
 
     # Annotation
     vcf.annotation()
@@ -1159,7 +1159,7 @@ def test_annotation_duckdb():
     vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Remove if output file exists
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
 
     # Annotation
     vcf.annotation()
@@ -1186,7 +1186,7 @@ def test_annotation_bcftools():
     vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Remove if output file exists
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
 
     # Annotation
     vcf.annotation()
@@ -1213,7 +1213,7 @@ def test_annotation_bcftools_bed():
     vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Remove if output file exists
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
 
     # Annotation
     vcf.annotation()
@@ -1243,7 +1243,7 @@ def test_annotation_annovar():
     vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Remove if output file exists
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
 
     # Annotation
     vcf.annotation()
@@ -1272,7 +1272,7 @@ def test_annotation_quick_annovar():
     vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Remove if output file exists
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
 
     # Annotation
     vcf.annotation()
@@ -1299,7 +1299,7 @@ def test_annotation_snpeff():
     vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Remove if output file exists
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
 
     # Annotation
     vcf.annotation()
@@ -1329,7 +1329,7 @@ def test_annotation_quick_snpeff():
     vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Remove if output file exists
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
 
     # Annotation
     vcf.annotation()
@@ -1359,7 +1359,7 @@ def test_annotation_bcftools_sqlite():
     vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, config=config, load=True)
 
     # Remove if output file exists
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
 
     # Annotation
     vcf.annotation()
@@ -1391,7 +1391,7 @@ def test_explode_infos():
     vcf.explode_infos()
 
     # Remove if output file exists
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
 
     # Annotation
     vcf.annotation()
@@ -1425,7 +1425,7 @@ def test_explode_infos_param_prefix():
     #vcf.explode_infos(prefix=infos_prefix)
 
     # Remove if output file exists
-    remove_if_exists(output_vcf)
+    remove_if_exists([output_vcf])
 
     # Annotation
     vcf.annotation()
@@ -1493,7 +1493,7 @@ def test_query():
     assert result_query == None
 
     # Remove if output file exists
-    remove_if_exists(output_query)
+    remove_if_exists([output_query])
 
     # Output query
     vcf.export_output(output_file=output_query, query=query, export_header=False)
