@@ -48,6 +48,18 @@ Show example VCF statistics and brief overview
 howard --input=tests/data/example.vcf.gz --stats --overview
 ```
 
+### Translate VCF into other format
+
+Translate VCF into CSV and show output file
+```
+howard --input=tests/data/example.vcf.gz --output=tests/data/example.csv && cat tests/data/example.csv
+```
+
+Translate VCF into parquet, and show statistics on output file
+```
+howard --input=tests/data/example.vcf.gz --output=tests/data/example.parquet && howard --input=tests/data/example.parquet --stats
+```
+
 ### Query VCF
 
 Select variants in VCF with REF and POS fields

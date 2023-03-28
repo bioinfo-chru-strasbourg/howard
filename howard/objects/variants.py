@@ -62,7 +62,6 @@ class Variants:
         if load:
             self.load_data()
 
-    # INIT section
 
     def set_input(self, input: str = None) -> None:
         """
@@ -78,6 +77,7 @@ class Variants:
         self.input_extension = input_extension
         self.input_format = self.input_extension.replace(".", "")
 
+
     def set_config(self, config: dict) -> None:
         """
         This function takes in a config object and sets it as the config object for the class
@@ -86,6 +86,7 @@ class Variants:
         """
         self.config = config
 
+
     def set_param(self, param: dict) -> None:
         """
         This function takes in a param object and sets it as the param object for the class
@@ -93,6 +94,7 @@ class Variants:
         :param param: The paramters object
         """
         self.param = param
+
 
     def init_variables(self) -> None:
         """
@@ -127,6 +129,7 @@ class Variants:
 
         self.index_additionnal_fields = []
 
+
     def get_indexing(self) -> bool:
         """
         It returns the value of the key "indexing" in the dictionary. If the key is not present, it
@@ -134,6 +137,7 @@ class Variants:
         :return: The value of the indexing parameter.
         """
         return self.get_param().get("indexing", False)
+
 
     def set_connexion(self, conn) -> None:
         """
@@ -192,6 +196,7 @@ class Variants:
         log.debug(f"connexion_db: {connexion_db}")
         log.debug(f"connexion config: {connexion_config}")
 
+
     def set_output(self, output: str = None) -> None:
         """
         If the config file has an output key, set the output to the value of that key. Otherwise, set
@@ -212,29 +217,42 @@ class Variants:
             self.output_extension = None
             self.output_format = None
 
+
     def set_header(self) -> None:
         """
         It reads the header of a VCF file and stores it as a list of strings and as a VCF object
         """
         input_file = self.get_input()
+        input_format = self.get_input_format()
+        input_compressed = self.get_input_compressed()
         config = self.get_config()
         header_list = []
-        if self.input_format in ["gz"]:
-            with bgzf.open(input_file, 'rt') as f:
-                header_list = self.read_vcf_header(f)
-        elif self.input_format in ["parquet", "tsv", "csv", "psv", "db", "duckdb"]:
+        if input_format in ["vcf", "bcf", "hdr", "tsv", "csv", "psv", "parquet", "db", "duckdb"]:
+            # header provided in param
             if config.get("header_file", None):
                 with open(config.get("header_file"), 'rt') as f:
                     header_list = self.read_vcf_header(f)
+            # within a vcf file format (header within input file itsself)
+            elif input_format in ["vcf", "bcf", "hdr"]:
+                # within a compressed vcf file format (.vcf.gz or .bcf)
+                if input_compressed:
+                    with bgzf.open(input_file, 'rt') as f:
+                        header_list = self.read_vcf_header(f)
+                # within an uncompressed vcf file format (.vcf)
+                else:
+                    with open(input_file, 'rt') as f:
+                        header_list = self.read_vcf_header(f)
+            # header provided in default external file .hdr
             elif os.path.exists((input_file+".hdr")):
                 with open(input_file+".hdr", 'rt') as f:
                     header_list = self.read_vcf_header(f)
             else:
                 log.error(f"No header for file {input_file}")
                 raise ValueError(f"No header for file {input_file}")
-        else: # such as VCF
-            with open(input_file, 'rt') as f:
-                header_list = self.read_vcf_header(f)
+        else:  # try for unknown format ?
+            log.error(f"Input file format '{input_format}' not available")
+            raise ValueError(
+                f"Input file format '{input_format}' not available")
 
         # header as list
         self.header_list = header_list
@@ -242,10 +260,11 @@ class Variants:
         # header as VCF object
         self.header_vcf = vcf.Reader(io.StringIO("\n".join(header_list)))
 
+
     def get_query_to_df(self, query: str = "") -> pd.DataFrame:
         """
         > The function `get_query_to_df` takes a query as a string and returns a pandas dataframe
-        
+
         :param query: str = ""
         :type query: str
         :return: A dataframe
@@ -258,6 +277,7 @@ class Variants:
             df = pd.read_sql_query(query, self.conn)
 
         return df
+
 
     def get_overview(self) -> None:
         """
@@ -287,6 +307,7 @@ class Variants:
         gc.collect()
 
         return None
+
 
     def get_stats(self) -> None:
         """
@@ -347,6 +368,7 @@ class Variants:
 
         return None
 
+
     def get_input(self) -> str:
         """
         It returns the value of the input variable.
@@ -354,12 +376,28 @@ class Variants:
         """
         return self.input
 
-    def get_input_format(self) -> str:
+
+    def get_input_format(self, input_file: str = None) -> str:
         """
         It returns the format of the input variable.
         :return: The format is being returned.
         """
-        return self.input_format
+        if not input_file:
+            input_file = self.get_input()
+        input_format = get_file_format(input_file)
+        return input_format
+
+
+    def get_input_compressed(self, input_file: str = None) -> str:
+        """
+        It returns the format of the input variable.
+        :return: The format is being returned.
+        """
+        if not input_file:
+            input_file = self.get_input()
+        input_compressed = get_file_compressed(input_file)
+        return input_compressed
+
 
     def get_output(self) -> str:
         """
@@ -368,19 +406,30 @@ class Variants:
         """
         return self.output
 
-    def get_output_format(self, output_file:str = None) -> str:
+
+    def get_output_format(self, output_file: str = None) -> str:
         """
         It returns the format of the input variable.
         :return: The format is being returned.
         """
         if not output_file:
             output_file = self.get_output()
-        if output_file:
-            output_name, output_extension = os.path.splitext(output_file)
-            output_format = output_extension.replace(".", "")
-        else:
-            output_format = "unknwon"
+        output_format = get_file_format(output_file)
+
         return output_format
+
+
+    def get_output_compressed(self, output_file: str = None) -> str:
+        """
+        It returns the format of the input variable.
+        :return: The format is being returned.
+        """
+        if not output_file:
+            output_file = self.get_output()
+        output_compressed = get_file_compressed(output_file)
+
+        return output_compressed
+
 
     def get_config(self) -> dict:
         """
@@ -389,12 +438,14 @@ class Variants:
         """
         return self.config
 
+
     def get_param(self) -> dict:
         """
         It returns the param
         :return: The param variable is being returned.
         """
         return self.param
+
 
     def get_connexion_db(self) -> str:
         """
@@ -403,12 +454,14 @@ class Variants:
         """
         return self.connexion_db
 
+
     def get_prefix(self) -> str:
         """
         It returns the prefix of the object.
         :return: The prefix is being returned.
         """
         return self.prefix
+
 
     def get_table_variants(self, clause: str = "select") -> str:
         """
@@ -434,6 +487,7 @@ class Variants:
             table_variants = self.table_variants
         return table_variants
 
+
     def get_tmp_dir(self) -> str:
         """
         It returns the value of the tmp_dir key in the config dictionary, or /tmp if the key doesn't
@@ -443,6 +497,7 @@ class Variants:
         """
         return self.get_config().get("tmp_dir", "/tmp")
 
+
     def get_connexion_type(self) -> str:
         """
         If the connexion type is not in the list of allowed connexion types, raise a ValueError
@@ -450,6 +505,7 @@ class Variants:
         :return: The connexion type is being returned.
         """
         return self.get_config().get("connexion_type", "memory")
+
 
     def get_connexion(self):
         """
@@ -459,12 +515,14 @@ class Variants:
         """
         return self.conn
 
+
     def close_connexion(self) -> None:
         """
         This function closes the connection to the database.
         :return: The connection is being closed.
         """
         return self.conn.close()
+
 
     def get_header(self, type: str = "vcf"):
         """
@@ -478,6 +536,7 @@ class Variants:
         elif type == "list":
             return self.header_list
 
+
     def get_header_length(self) -> int:
         """
         This function retruns header length (without #CHROM line)
@@ -486,6 +545,7 @@ class Variants:
         """
         return len(self.header_list) - 1
 
+
     def get_header_columns(self) -> list:
         """
         This function returns the header list of a VCF
@@ -493,6 +553,7 @@ class Variants:
         :return: The length of the header list.
         """
         return self.header_list[-1]
+
 
     def get_header_columns_as_sql(self) -> str:
         """
@@ -505,6 +566,7 @@ class Variants:
             sql_column_list.append(f"\"{col}\"")
         return ",".join(sql_column_list)
 
+
     def get_header_sample_list(self):
         """
         This function retruns header length (without #CHROM line)
@@ -512,6 +574,7 @@ class Variants:
         :return: The length of the header list.
         """
         return self.header_vcf.samples
+
 
     def get_verbose(self) -> bool:
         """
@@ -522,12 +585,14 @@ class Variants:
         """
         return self.get_config().get("verbose", False)
 
+
     def get_connexion_format(self) -> str:
         """
         It returns the connexion format of the object.
         :return: The connexion_format is being returned.
         """
         return self.connexion_format
+
 
     def insert_file_to_table(self, file, columns: str, header_len: int = 0, sep: str = '\t', chunksize: int = 1000000) -> None:
         """
@@ -561,12 +626,28 @@ class Variants:
                     raise ValueError(
                         f"Failed insert file into table. Unknown connexion format {connexion_format}")
 
-    def load_data(self) -> None:
+
+    def load_data(self, input_file:str = None, drop_variants_table:bool = False) -> None:
         """
         It reads a VCF file and inserts it into a table
+        
+        :param input_file: The path to the input file
+        :type input_file: str
+        :param drop_variants_table: If True, the variants table will be dropped before loading the data,
+        defaults to False
+        :type drop_variants_table: bool (optional)
         """
 
         log.info("Loading data...")
+
+        # change input file
+        if input_file:
+            self.set_input(input_file)
+            self.set_header()
+
+        # drop variants table
+        if drop_variants_table:
+            self.drop_variants_table()
 
         # Main structure
         structure = {
@@ -595,7 +676,6 @@ class Variants:
             sql_create_table_columns.append(f"\"{column}\" {column_type}")
             sql_create_table_columns_list.append(f"\"{column}\"")
 
-
         # get table variants
         table_variants = self.get_table_variants()
 
@@ -615,20 +695,25 @@ class Variants:
         # Access
         access = self.get_config().get("access", None)
 
+        # Input format and compress
+        input_format = self.get_input_format()
+        input_compressed = self.get_input_compressed()
+
         # Load data
-        log.debug(f"Load Data from {self.input_format}")
-        if self.input_format in ["vcf", "gz", "tsv", "csv", "psv"]:
+        log.debug(f"Load Data from {input_format}")
+        # if self.input_format in ["vcf", "gz", "tsv", "csv", "psv"]:
+        if input_format in ["vcf", "bcf", "tsv", "csv", "psv"]:
 
             # delimiter
-            delimiters = {"vcf": "\t", "gz": "\t", "tsv": "\t", "csv": ",", "psv": "|"}
-            delimiter = delimiters.get(self.input_format, "\t")
+            # delimiters = {"vcf": "\t", "bcf": "\t", "tsv": "\t", "csv": ",", "psv": "|"}
+            delimiter = file_format_delimiters.get(input_format, "\t")
 
             # Load the input file
             with open(self.input, "rt") as input_file:
                 # Use the appropriate file handler based on the input format
-                if self.input_format == "gz":
+                if input_compressed:
                     input_file = bgzf.open(self.input, "rt")
-                if self.input_format == "gz" or self.input_format == "vcf":
+                if input_format in ["vcf", "bcf"]:
                     header_len = self.get_header_length()
                 else:
                     header_len = 0
@@ -648,10 +733,10 @@ class Variants:
                 # print("NO loading data")
                 self.drop_variants_table()
                 sql_parquet = f"CREATE VIEW {table_variants} AS SELECT * FROM '{self.input}'"
-                #self.conn.execute(sql_view)
+                # self.conn.execute(sql_view)
             else:
                 sql_parquet = f"COPY {table_variants} FROM '{self.input}'"
-            
+
             self.conn.execute(sql_parquet)
 
         elif self.input_format in ["db", "duckdb"]:
@@ -671,7 +756,7 @@ class Variants:
         self.create_indexes()
 
 
-    def explode_infos(self, prefix: str = None, create_index: bool = False, fields:list = None, update:bool = True) -> None:
+    def explode_infos(self, prefix: str = None, create_index: bool = False, fields: list = None, update: bool = True) -> None:
         """
         The function takes a VCF file and explodes the INFO fields into individual columns
         """
@@ -703,8 +788,8 @@ class Variants:
 
                 info_id_sql = prefix+info
 
-                if (fields is None or info in fields or prefix+info in fields) and (update or info not in extra_infos): 
-                #if (fields is None or info in fields or info in fields) and (update or info not in extra_infos): 
+                if (fields is None or info in fields or prefix+info in fields) and (update or info not in extra_infos):
+                    # if (fields is None or info in fields or info in fields) and (update or info not in extra_infos):
 
                     log.debug(
                         f"Explode INFO fields - ADD '{info}' annotations fields")
@@ -727,14 +812,14 @@ class Variants:
                     update_info_field = f"\"{info_id_sql}\" = CASE WHEN REGEXP_EXTRACT(INFO, '[^;]*{info}=([^;]*)',1) == '' THEN NULL WHEN REGEXP_EXTRACT(INFO, '{info}=([^;]*)',1) == '.' THEN NULL ELSE REGEXP_EXTRACT(INFO, '{info}=([^;]*)',1) END"
                     sql_info_alter_table_array.append(update_info_field)
 
-
             # By chromosomes
-            chromosomes_df = self.get_query_to_df(f""" SELECT "#CHROM" FROM {table_variants} GROUP BY "#CHROM" """)
-            #print(chromosomes_df)
+            chromosomes_df = self.get_query_to_df(
+                f""" SELECT "#CHROM" FROM {table_variants} GROUP BY "#CHROM" """)
+            # print(chromosomes_df)
 
             for chrom in chromosomes_df["#CHROM"]:
                 log.debug(
-                        f"Explode INFO fields - Chromosoome {chrom}...")
+                    f"Explode INFO fields - Chromosoome {chrom}...")
                 # Update table
                 sql_info_alter_table_array_join = ", ".join(
                     sql_info_alter_table_array)
@@ -760,6 +845,7 @@ class Variants:
         # create indexes
         if create_index:
             self.create_indexes()
+
 
     def create_indexes(self) -> None:
         """
@@ -791,6 +877,7 @@ class Variants:
                 sql_create_table_index = f""" CREATE INDEX IF NOT EXISTS "idx_{self.get_table_variants()}_{field}" ON {table_variants} ("{field}") """
                 self.conn.execute(sql_create_table_index)
 
+
     def drop_indexes(self) -> None:
         """
         Create indexes on the table after insertion
@@ -809,6 +896,7 @@ class Variants:
                 sql_drop_table_index = f""" DROP INDEX IF EXISTS "{index}" """
                 self.conn.execute(sql_drop_table_index)
 
+
     def read_vcf_header(self, f) -> list:
         """
         It reads the header of a VCF file and returns a list of the header lines
@@ -824,6 +912,7 @@ class Variants:
                 break
         return header_list
 
+
     def execute_query(self, query: str):
         """
         It takes a query as an argument, executes it, and returns the results
@@ -836,7 +925,8 @@ class Variants:
         else:
             return None
 
-    def export_output(self, export_header: bool = True, output_file:str = None, query:str = None) -> None:
+
+    def export_output(self, export_header: bool = True, output_file: str = None, query: str = None) -> None:
         """
         It takes a VCF file, and outputs a VCF file
 
@@ -870,10 +960,12 @@ class Variants:
 
             # output_format
             output_format = self.get_output_format(output_file=output_file)
+            output_compressed = self.get_output_compressed(
+                output_file=output_file)
 
             # delimiter
-            delimiters = {"vcf": "\t", "gz": "\t", "tsv": "\t", "csv": ",", "psv": "|"}
-            delimiter = delimiters.get(output_format, "\t")
+            # delimiters = {"vcf": "\t", "gz": "\t", "tsv": "\t", "csv": ",", "psv": "|"}
+            delimiter = file_format_delimiters.get(output_format, "\t")
 
             # Threads
             threads = self.get_threads()
@@ -892,20 +984,17 @@ class Variants:
             sql_query_export_format = None
             commands = []
 
+            output_file_tmp = output_file + ".tmp"
+
             if output_format in ["parquet"]:
 
                 # Export parquet
                 sql_query_export_subquery = f"""
                     SELECT {sql_columns} {sql_extra_columns} FROM {table_variants} WHERE 1 {sql_query_hard} {sql_query_sort} {sql_query_limit}
                     """
-                #print(sql_query_export_subquery)
-                sql_query_export_to = output_file
+                # print(sql_query_export_subquery)
+                sql_query_export_to = output_file_tmp
                 sql_query_export_format = "FORMAT PARQUET"
-                
-
-            # elif output_format in ["db", "duckdb"]:
-
-            #     log.debug("Export in DuckDB. Nothing to do")
 
             elif output_format in ["tsv", "csv", "psv"]:
 
@@ -913,10 +1002,10 @@ class Variants:
                 sql_query_export_subquery = f"""
                     SELECT {sql_columns} {sql_extra_columns} FROM {table_variants} WHERE 1 {sql_query_hard} {sql_query_sort} {sql_query_limit}
                     """
-                sql_query_export_to = output_file
+                sql_query_export_to = output_file_tmp
                 sql_query_export_format = f"FORMAT CSV, DELIMITER '{delimiter}', HEADER"
 
-            elif output_format in ["vcf", "gz"]:
+            elif output_format in ["vcf", "bcf"]:
 
                 # Extract VCF
                 tmp_variants = NamedTemporaryFile(prefix=self.get_prefix(
@@ -929,21 +1018,25 @@ class Variants:
                 sql_query_export_format = f"FORMAT CSV, DELIMITER '\t', HEADER, QUOTE ''"
 
                 # VCF
-                commands.append(f"grep '^#CHROM' -v {header_name} > {output_file}.vcf; cat {tmp_variants_name} >> {output_file}.vcf")
+                commands.append(
+                    f"grep '^#CHROM' -v {header_name} > {output_file_tmp}; cat {tmp_variants_name} >> {output_file_tmp}")
 
-                if output_format in ["vcf"]:
-                    commands.append(f""" mv {output_file}.vcf {output_file} """)
-                elif output_format in ["gz"]:
-                    bgzip_command = get_bgzip(threads=threads)
-                    commands.append(f""" {bgzip_command} {output_file}.vcf > {output_file} && rm {output_file}.vcf """)
-                    
+            # Query
             if query:
                 sql_query_export_subquery = query
 
-            # Export
+            # Export from table variants
             if sql_query_export_subquery and sql_query_export_to and sql_query_export_format:
                 sql_query_export = f"COPY ({sql_query_export_subquery}) TO '{sql_query_export_to}' WITH ({sql_query_export_format})"
                 self.conn.execute(sql_query_export)
+                # Compression
+                if output_compressed:
+                    bgzip_command = get_bgzip(threads=threads)
+                    commands.append(
+                        f""" {bgzip_command} {output_file_tmp} > {output_file} && rm {output_file_tmp} """)
+                else:
+                    commands.append(
+                        f""" mv {output_file_tmp} {output_file} """)
 
             # Commands
             if commands:
@@ -976,12 +1069,13 @@ class Variants:
                 extra_columns.append(column)
 
         return extra_columns
-    
+
+
     def get_extra_infos_sql(self, table: str = None) -> str:
         """
         It returns a string of the extra infos, separated by commas, and each extra info is surrounded
         by double quotes
-        
+
         :param table: The name of the table to get the extra infos from. If None, the default table is
         used
         :type table: str
@@ -989,7 +1083,8 @@ class Variants:
         """
         return ", ".join(['"' + str(elem) + '"' for elem in self.get_extra_infos(table=table)])
 
-    def export_header(self, header_name: str = None, output_file:str = None) -> str:
+
+    def export_header(self, header_name: str = None, output_file: str = None) -> str:
         """
         It takes a VCF file, and writes the header to a new file
 
@@ -1005,6 +1100,7 @@ class Variants:
         vcf.Writer(f, self.get_header())
         f.close()
         return tmp_header_name
+
 
     def export_variant_vcf(self, vcf_file, file_type: str = "vcf", remove_info: bool = False, add_samples: bool = True, compression: int = 1, index: bool = False) -> None:
         """
@@ -1088,9 +1184,10 @@ class Variants:
             command_tabix = ""
         command_gzip = get_bgzip(threads=threads, level=1)
         command = f"grep '^#CHROM' -v {tmp_header_name} | {command_gzip} > {vcf_file}; gzip -dc {tmp_variants_name}  | {command_gzip} >> {vcf_file} {command_tabix}"
-        #print(command)
+        # print(command)
 
         subprocess.run(command, shell=True)
+
 
     def run_commands(self, commands: list = [], threads: int = 1) -> None:
         """
@@ -1101,12 +1198,147 @@ class Variants:
         """
         run_parallel_commands(commands, threads)
 
+
     def get_threads(self) -> int:
         """
         It returns the number of threads to use for the current job
         :return: The number of threads.
         """
         return int(self.config.get("threads", 1))
+
+
+    def update_from_vcf(self, vcf_file: str) -> None:
+        """
+        > If the database is duckdb, then use the parquet method, otherwise use the sqlite method
+
+        :param vcf_file: the path to the VCF file
+        """
+
+        connexion_format = self.get_connexion_format()
+
+        if connexion_format in ["duckdb"]:
+            self.update_from_vcf_duckdb(vcf_file)
+        elif connexion_format in ["sqlite"]:
+            self.update_from_vcf_sqlite(vcf_file)
+
+
+    def update_from_vcf_duckdb(self, vcf_file: str) -> None:
+        """
+        It takes a VCF file and updates the INFO column of the variants table in the database with the
+        INFO column of the VCF file
+
+        :param vcf_file: the path to the VCF file
+        """
+
+        # varaints table
+        table_variants = self.get_table_variants()
+
+        # merged VCF
+        tmp_merged_vcf = NamedTemporaryFile(prefix=self.get_prefix(
+        ), dir=self.get_tmp_dir(), suffix=".parquet", delete=True)
+        tmp_merged_vcf_name = tmp_merged_vcf.name
+        mergeVCF = Variants(
+            None, vcf_file, tmp_merged_vcf_name, config=self.get_config())
+        mergeVCF.load_data()
+        mergeVCF.export_output(export_header=False)
+        del mergeVCF
+        gc.collect()
+
+        # Original number of variants
+        query = "SELECT count(*) AS count FROM variants"
+        count_original_variants = self.conn.execute(query).df()["count"][0]
+
+        # Annotated number of variants
+        query = f"SELECT count(*) AS count FROM '{tmp_merged_vcf_name}' as table_parquet"
+        count_annotated_variants = self.conn.execute(query).df()["count"][0]
+
+        if count_original_variants != count_annotated_variants:
+            log.warning(
+                f"Update from VCF - Discodance of number of variants between database ({count_original_variants}) and VCF for update ({count_annotated_variants})")
+
+        if count_annotated_variants:
+            sql_query_update = f"""
+            UPDATE {table_variants} as table_variants
+                SET INFO = (
+                            SELECT CASE WHEN table_variants.INFO NOT IN ('','.') THEN table_variants.INFO ELSE '' END || CASE WHEN table_variants.INFO NOT IN ('','.') AND table_parquet.INFO NOT IN ('','.')  THEN ';' ELSE '' END || CASE WHEN table_parquet.INFO NOT IN ('','.') THEN table_parquet.INFO ELSE '' END
+                            FROM '{tmp_merged_vcf_name}' as table_parquet
+                                    WHERE table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
+                                    AND table_parquet.\"POS\" = table_variants.\"POS\"
+                                    AND table_parquet.\"ALT\" = table_variants.\"ALT\"
+                                    AND table_parquet.\"REF\" = table_variants.\"REF\"
+                            )
+                ;
+                """
+            self.conn.execute(sql_query_update)
+
+
+    def update_from_vcf_sqlite(self, vcf_file: str) -> None:
+        """
+        It creates a temporary table in the SQLite database, loads the VCF file into the temporary
+        table, then updates the INFO column of the variants table with the INFO column of the temporary
+        table
+
+        :param vcf_file: The path to the VCF file you want to update the database with
+        """
+
+        # Create a temporary table for the VCF
+        table_vcf = 'tmp_vcf'
+        sql_create = f"CREATE TEMPORARY TABLE {table_vcf} AS SELECT * FROM variants WHERE 0"
+        self.conn.execute(sql_create)
+
+        # Loading VCF into temporaire table
+        vcf_df = pd.read_csv(vcf_file, sep='\t', comment='#',
+                             header=None, low_memory=False)
+        vcf_df.columns = ['#CHROM', 'POS', 'ID',
+                          'REF', 'ALT', 'QUAL', 'FILTER', 'INFO']
+        vcf_df.to_sql(table_vcf, self.conn, if_exists='append', index=False)
+
+        # Update table 'variants' with VCF data
+        sql_query_update = f"""
+            UPDATE variants as table_variants
+            SET INFO = (
+                SELECT CASE 
+                    WHEN table_variants.INFO NOT IN ('','.') 
+                    THEN table_variants.INFO 
+                    ELSE '' 
+                END || 
+                CASE 
+                    WHEN table_variants.INFO NOT IN ('','.') 
+                    AND table_vcf.INFO NOT IN ('','.')  
+                    THEN ';' 
+                    ELSE '' 
+                END || 
+                CASE 
+                    WHEN table_vcf.INFO NOT IN ('','.') 
+                    THEN table_vcf.INFO 
+                    ELSE '' 
+                END
+                FROM {table_vcf} as table_vcf
+                WHERE table_vcf.\"#CHROM\" = table_variants.\"#CHROM\"
+                AND table_vcf.\"POS\" = table_variants.\"POS\"
+                AND table_vcf.\"ALT\" = table_variants.\"ALT\"
+                AND table_vcf.\"REF\" = table_variants.\"REF\"
+            )
+        """
+        self.conn.execute(sql_query_update)
+
+        # Drop temporary table
+        sql_drop = f"DROP TABLE {table_vcf}"
+        self.conn.execute(sql_drop)
+
+
+    def drop_variants_table(self) -> None:
+        """
+        > This function drops the variants table
+        """
+        table_variants = self.get_table_variants()
+        sql_table_variants = f"DROP TABLE {table_variants}"
+        self.conn.execute(sql_table_variants)
+
+
+    ###
+    # Annotation
+    ###
 
     def annotation(self) -> None:
         """
@@ -1198,6 +1430,7 @@ class Variants:
         if self.get_param().get("explode_infos", None):
             self.explode_infos(
                 prefix=self.get_param().get("explode_infos", None))
+
 
     def annotation_bcftools(self, threads: int = None) -> None:
         """
@@ -1597,6 +1830,7 @@ class Variants:
                     log.info(f"Annotation - Updating...")
                     self.update_from_vcf(tmp_annotate_vcf_name)
 
+
     def annotation_snpeff(self, threads: int = None) -> None:
         """
         This function annotate with snpEff
@@ -1653,7 +1887,7 @@ class Variants:
                 raise ValueError(
                     f"Annotation failed: no java bin '{java_bin}'")
             else:
-                log.warning(f"Annotation warning: snpEff jar bin '{java_bin}'")
+                log.warning(f"Annotation warning: snpEff jar bin found '{java_bin}'")
 
         if not os.path.exists(snpeff_jar):
             log.warning(
@@ -1816,6 +2050,7 @@ class Variants:
             if force_update_annotation:
                 log.debug(
                     f"Existing snpEff annotations in VCF - annotation forced")
+
 
     def annotation_annovar(self, threads: int = None) -> None:
         """
@@ -2155,6 +2390,7 @@ class Variants:
                 log.info(f"Annotation - Annotation cleaning ")
                 log.debug(f"Annotation - cleaning command: {clean_command}")
                 run_parallel_commands([clean_command], 1)
+
 
     def annotation_parquet(self, threads: int = None) -> None:
         """
@@ -2569,130 +2805,10 @@ class Variants:
 
                     log.debug("Final header: " + str(vcf_reader.infos))
 
-    def update_from_vcf(self, vcf_file: str) -> None:
-        """
-        > If the database is duckdb, then use the parquet method, otherwise use the sqlite method
 
-        :param vcf_file: the path to the VCF file
-        """
-
-        connexion_format = self.get_connexion_format()
-
-        if connexion_format in ["duckdb"]:
-            self.update_from_vcf_parquet(vcf_file)
-        elif connexion_format in ["sqlite"]:
-            self.update_from_vcf_sqlite(vcf_file)
-
-    def update_from_vcf_parquet(self, vcf_file: str) -> None:
-        """
-        It takes a VCF file and updates the INFO column of the variants table in the database with the
-        INFO column of the VCF file
-
-        :param vcf_file: the path to the VCF file
-        """
-
-        # varaints table
-        table_variants = self.get_table_variants()
-
-        # merged VCF
-        tmp_merged_vcf = NamedTemporaryFile(prefix=self.get_prefix(
-        ), dir=self.get_tmp_dir(), suffix=".parquet", delete=True)
-        tmp_merged_vcf_name = tmp_merged_vcf.name
-        mergeVCF = Variants(
-            None, vcf_file, tmp_merged_vcf_name, config=self.get_config())
-        mergeVCF.load_data()
-        mergeVCF.export_output(export_header=False)
-        del mergeVCF
-        gc.collect()
-
-        # Original number of variants
-        query = "SELECT count(*) AS count FROM variants"
-        count_original_variants = self.conn.execute(query).df()["count"][0]
-
-        # Annotated number of variants
-        query = f"SELECT count(*) AS count FROM '{tmp_merged_vcf_name}' as table_parquet"
-        count_annotated_variants = self.conn.execute(query).df()["count"][0]
-
-        if count_original_variants != count_annotated_variants:
-            log.warning(
-                f"Update from VCF - Discodance of number of variants between database ({count_original_variants}) and VCF for update ({count_annotated_variants})")
-
-        if count_annotated_variants:
-            sql_query_update = f"""
-            UPDATE {table_variants} as table_variants
-                SET INFO = (
-                            SELECT CASE WHEN table_variants.INFO NOT IN ('','.') THEN table_variants.INFO ELSE '' END || CASE WHEN table_variants.INFO NOT IN ('','.') AND table_parquet.INFO NOT IN ('','.')  THEN ';' ELSE '' END || CASE WHEN table_parquet.INFO NOT IN ('','.') THEN table_parquet.INFO ELSE '' END
-                            FROM '{tmp_merged_vcf_name}' as table_parquet
-                                    WHERE table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
-                                    AND table_parquet.\"POS\" = table_variants.\"POS\"
-                                    AND table_parquet.\"ALT\" = table_variants.\"ALT\"
-                                    AND table_parquet.\"REF\" = table_variants.\"REF\"
-                            )
-                ;
-                """
-            self.conn.execute(sql_query_update)
-
-    def update_from_vcf_sqlite(self, vcf_file: str) -> None:
-        """
-        It creates a temporary table in the SQLite database, loads the VCF file into the temporary
-        table, then updates the INFO column of the variants table with the INFO column of the temporary
-        table
-
-        :param vcf_file: The path to the VCF file you want to update the database with
-        """
-
-        # Create a temporary table for the VCF
-        table_vcf = 'tmp_vcf'
-        sql_create = f"CREATE TEMPORARY TABLE {table_vcf} AS SELECT * FROM variants WHERE 0"
-        self.conn.execute(sql_create)
-
-        # Loading VCF into temporaire table
-        vcf_df = pd.read_csv(vcf_file, sep='\t', comment='#',
-                             header=None, low_memory=False)
-        vcf_df.columns = ['#CHROM', 'POS', 'ID',
-                          'REF', 'ALT', 'QUAL', 'FILTER', 'INFO']
-        vcf_df.to_sql(table_vcf, self.conn, if_exists='append', index=False)
-
-        # Update table 'variants' with VCF data
-        sql_query_update = f"""
-            UPDATE variants as table_variants
-            SET INFO = (
-                SELECT CASE 
-                    WHEN table_variants.INFO NOT IN ('','.') 
-                    THEN table_variants.INFO 
-                    ELSE '' 
-                END || 
-                CASE 
-                    WHEN table_variants.INFO NOT IN ('','.') 
-                    AND table_vcf.INFO NOT IN ('','.')  
-                    THEN ';' 
-                    ELSE '' 
-                END || 
-                CASE 
-                    WHEN table_vcf.INFO NOT IN ('','.') 
-                    THEN table_vcf.INFO 
-                    ELSE '' 
-                END
-                FROM {table_vcf} as table_vcf
-                WHERE table_vcf.\"#CHROM\" = table_variants.\"#CHROM\"
-                AND table_vcf.\"POS\" = table_variants.\"POS\"
-                AND table_vcf.\"ALT\" = table_variants.\"ALT\"
-                AND table_vcf.\"REF\" = table_variants.\"REF\"
-            )
-        """
-        self.conn.execute(sql_query_update)
-
-        # Drop temporary table
-        sql_drop = f"DROP TABLE {table_vcf}"
-        self.conn.execute(sql_drop)
-
-    def drop_variants_table(self) -> None:
-        """
-        > This function drops the variants table
-        """
-        table_variants = self.get_table_variants()
-        sql_table_variants = f"DROP TABLE {table_variants}"
-        self.conn.execute(sql_table_variants)
+    ###
+    # Prioritization
+    ###
 
     def prioritization(self) -> None:
         """
@@ -2711,7 +2827,8 @@ class Variants:
         param = self.get_param()
         config_profiles = param.get("prioritization", {}).get(
             "config_profiles", config_profiles)
-        profiles = param.get("prioritization", {}).get("profiles", ["default"])
+        #profiles = param.get("prioritization", {}).get("profiles", ["default"])
+        profiles = param.get("prioritization", {}).get("profiles", None)
         pzfields = param.get("prioritization", {}).get(
             "pzfields", ["PZFlag", "PZScore"])
         default_profile = param.get("prioritization", {}).get(
@@ -2727,6 +2844,10 @@ class Variants:
         else:
             log.error("NO Profiles configuration")
             raise ValueError(f"NO Profiles configuration")
+
+        # If no profiles provided, all profiles in the config profiles
+        if not profiles:
+            profiles = list(config_profiles.keys())
 
         log.debug("Profiles availables: " + str(list(config_profiles.keys())))
         log.debug("Profiles to check: " + str(list(profiles)))
@@ -2755,6 +2876,8 @@ class Variants:
 
             # Explode Infos fields
             explode_infos_prefix = self.get_param().get("explode_infos", "INFO/")
+            if explode_infos_prefix == True:
+                explode_infos_prefix = "INFO/"
             self.explode_infos(prefix=explode_infos_prefix)
             extra_infos = self.get_extra_infos()
 
@@ -2950,21 +3073,11 @@ class Variants:
             log.warning(f"No profiles in parameters")
 
 
-    # def load_from_database(self):
-    #     """
-    #     It takes the data from the database and puts it into a dictionary
-    #     """
-    #     query = "SELECT * FROM variants"
-    #     cursor = self.connection.execute(query)
-    #     result = cursor.fetchall()
-    #     columns = [col[0] for col in cursor.description]
-    #     df = pd.DataFrame(result, columns=columns)
-    #     self.data = df.to_dict('list')
+    ###
+    # Calculation
+    ###
 
-
-    ### Calculation functions
-
-    def calculation(self):
+    def calculation(self) -> None:
         """
         It takes a list of operations, and for each operation, it checks if it's a python or sql
         operation, and then calls the appropriate function
@@ -2980,7 +3093,7 @@ class Variants:
         """
 
         operations_config = {
-            "middle": 
+            "middle":
                 {
                     "type": "sql",
                     "name": "middle",
@@ -2989,6 +3102,13 @@ class Variants:
                     "output_column_description": "middle of the position, completly useless",
                     "operation_query": "(SELECT POS/2)",
                     "operation_info": True,
+                },
+            "snpeff_hgvs":
+                {
+                    "type": "python",
+                    "name": "snpeff_hgvs",
+                    "function_name": "calculation_extract_snpeff_hgvs",
+                    "function_params": []
                 },
             "NOMEN":
                 {
@@ -2999,7 +3119,7 @@ class Variants:
                 },
         }
 
-        operations = self.get_param().get("calculation",{}).keys()
+        operations = self.get_param().get("calculation", {}).keys()
 
         for operation_name in operations:
             if operation_name in operations_config:
@@ -3013,11 +3133,11 @@ class Variants:
                 log.warning(f"No calculation '{operation_name}' available")
 
 
-    def calculation_process_sql(self, operation):
+    def calculation_process_sql(self, operation) -> None:
         """
         This function takes in a string of a mathematical operation and returns the result of that
         operation
-        
+
         :param operation: The operation to be performed
         """
 
@@ -3033,28 +3153,31 @@ class Variants:
         log.debug(f"process sql {operation_name}")
         output_column_name = operation['output_column_name']
         output_column_type = operation['output_column_type']
-        output_column_type_sql = code_type_map_to_sql.get(output_column_type, "VARCHAR")
+        output_column_type_sql = code_type_map_to_sql.get(
+            output_column_type, "VARCHAR")
         output_column_description = operation['output_column_description']
         operation_query = operation['operation_query']
         operation_info = operation['operation_info']
 
         # Create column
-        self.conn.execute(f""" ALTER TABLE {table_variants} ADD COLUMN "{prefix}{output_column_name}" {output_column_type_sql} DEFAULT NULL """)
+        self.conn.execute(
+            f""" ALTER TABLE {table_variants} ADD COLUMN "{prefix}{output_column_name}" {output_column_type_sql} DEFAULT NULL """)
 
         # Create VCF header field
         vcf_reader = self.get_header()
         vcf_reader.infos[output_column_name] = vcf.parser._Info(
-                                output_column_name,
-                                ".",
-                                output_column_type,
-                                output_column_description,
-                                "howard calculation",
-                                "0",
-                                self.code_type_map.get(output_column_type)
-                            )
+            output_column_name,
+            ".",
+            output_column_type,
+            output_column_description,
+            "howard calculation",
+            "0",
+            self.code_type_map.get(output_column_type)
+        )
 
         # Operation calculation
-        self.conn.execute(f""" UPDATE {table_variants} SET "{prefix}{output_column_name}" = ({operation_query}) """)
+        self.conn.execute(
+            f""" UPDATE {table_variants} SET "{prefix}{output_column_name}" = ({operation_query}) """)
 
         # Add to INFO
         if operation_info:
@@ -3072,10 +3195,10 @@ class Variants:
             self.conn.execute(sql_update)
 
 
-    def calculation_process_function(self, operation):
+    def calculation_process_function(self, operation) -> None:
         """
         This function takes in a string, and returns a string
-        
+
         :param operation: The operation to be performed
         """
         operation_name = operation['name']
@@ -3084,10 +3207,152 @@ class Variants:
         function_params = operation['function_params']
         getattr(self, function_name)(*function_params)
 
-
     # Operation functions
 
-    def calculation_extract_nomen(self):
+
+    def set_variant_id(self, variant_id_column:str = "variant_id", force:bool = None) -> str:
+        """
+        It adds a column to the variants table called `variant_id` and populates it with a hash of the
+        `#CHROM`, `POS`, `REF`, and `ALT` columns
+        
+        :param variant_id_column: The name of the column to be created in the variants table, defaults
+        to variant_id
+        :type variant_id_column: str (optional)
+        :param force: If True, the variant_id column will be created even if it already exists
+        :type force: bool
+        :return: The name of the column that contains the variant_id
+        """
+
+
+        table_variants = self.get_table_variants()
+
+        if not variant_id_column:
+            variant_id_column = "variant_id"
+
+        if "variant_id" not in self.get_extra_infos() or force:
+
+            self.conn.execute(
+                f"ALTER TABLE {table_variants} ADD COLUMN IF NOT EXISTS {variant_id_column} UBIGINT DEFAULT 0")
+            
+            self.conn.execute(
+                f"""
+                    UPDATE {table_variants}
+                    SET "{variant_id_column}" = hash("#CHROM", "POS", "REF", "ALT")
+                """)
+        
+        return variant_id_column
+
+
+    def get_variant_id_column(self, variant_id_column:str = "variant_id", force:bool = None) -> str:
+        """
+        This function returns the variant_id column name
+        
+        :param variant_id_column: The name of the column in the dataframe that contains the variant IDs,
+        defaults to variant_id
+        :type variant_id_column: str (optional)
+        :param force: If True, will force the variant_id to be set to the value of variant_id_column. If
+        False, will only set the variant_id if it is not already set. If None, will set the variant_id
+        if it is not already set, or if it is set
+        :type force: bool
+        :return: The variant_id column name.
+        """
+        return self.set_variant_id(variant_id_column=variant_id_column, force=force)
+    
+
+    def calculation_extract_snpeff_hgvs(self) -> None:
+
+        # SnpEff annotation field
+        snpeff_ann = "ANN"
+
+        # SnpEff annotation field
+        snpeff_hgvs = "snpeff_hgvs"
+
+
+        # Snpeff hgvs tags
+        vcf_infos_tags = {
+            snpeff_hgvs: "snpEff hgvs annotations",
+        }
+
+        # Param
+        param = self.get_param()
+        prefix = param.get("explode_infos", "INFO/")
+        if prefix == True:
+            prefix = "INFO/"
+
+        speff_ann_infos = prefix+snpeff_ann
+        speff_hgvs_infos = prefix+snpeff_hgvs
+
+        # Header
+        vcf_reader = self.get_header()
+
+        # devel
+        #self.annotation_snpeff()
+
+        # Explode HGVS field in column
+        self.explode_infos(fields=[snpeff_ann])
+
+        if "ANN" in vcf_reader.infos:
+                
+            log.debug(vcf_reader.infos["ANN"])
+
+            #print(self.get_extra_infos())
+
+            # Create variant id
+            variant_id_column = self.get_variant_id_column()
+
+
+            # Create dataframe
+            dataframe_snpeff_hgvs = self.get_query_to_df(
+                f""" SELECT "{variant_id_column}", "{speff_ann_infos}" FROM variants """)
+            
+
+            # Create main NOMEN column
+            dataframe_snpeff_hgvs[speff_hgvs_infos] = dataframe_snpeff_hgvs[speff_ann_infos].apply(
+                    lambda x: extract_snpeff_hgvs(str(x)))
+
+            # Add snpeff_hgvs to header
+            vcf_reader.infos[snpeff_hgvs] = vcf.parser._Info(
+                        snpeff_hgvs,
+                        ".",
+                        "String",
+                        vcf_infos_tags.get(
+                            snpeff_hgvs, "snpEff hgvs annotations"),
+                        "howard calculation",
+                        "0",
+                        self.code_type_map.get("String")
+                    )
+            
+            # Create fields to add in INFO
+            sql_snpeff_hgvs_fields = [f"""
+                        || CASE WHEN dataframe_snpeff_hgvs."{speff_hgvs_infos}" NOT NULL
+                            THEN ';{snpeff_hgvs}=' || dataframe_snpeff_hgvs."{speff_hgvs_infos}"
+                            ELSE ''
+                            END """]
+            
+            # SQL set for update
+            sql_snpeff_hgvs_fields_set = "  ".join(sql_snpeff_hgvs_fields)
+
+            # Update
+            sql_update = f"""
+                UPDATE variants
+                SET "INFO" = "INFO" {sql_snpeff_hgvs_fields_set}
+                FROM dataframe_snpeff_hgvs
+                WHERE variants."{variant_id_column}" = dataframe_snpeff_hgvs."{variant_id_column}"
+
+            """
+            self.conn.execute(sql_update)
+
+            # Delete dataframe
+            del dataframe_snpeff_hgvs
+            gc.collect()
+        
+        else:
+
+            log.warning("No snpEff annotation. Please Anotate with snpEff before use this calculation option")
+
+
+
+    def calculation_extract_nomen(self) -> None:
         """
         This function extracts the HGVS nomenclature from the calculation/identification of NOMEN.
         """
@@ -3112,12 +3377,15 @@ class Variants:
         # Param
         param = self.get_param()
         prefix = param.get("explode_infos", "INFO/")
+        if prefix == True:
+            prefix = "INFO/"
 
         # Header
         vcf_reader = self.get_header()
 
         # Get HGVS field
-        hgvs_field = param.get("calculation",{}).get("NOMEN",{}).get("options",{}).get("hgvs_field","hgvs")
+        hgvs_field = param.get("calculation", {}).get(
+            "NOMEN", {}).get("options", {}).get("hgvs_field", "hgvs")
 
         # Explode HGVS field in column
         self.explode_infos(fields=[hgvs_field])
@@ -3129,32 +3397,38 @@ class Variants:
         if extra_field in extra_infos:
 
             # Create dataframe
-            dataframe_hgvs = self.get_query_to_df(f""" SELECT "#CHROM", "POS", "REF", "ALT", "{extra_field}" FROM variants """)
+            dataframe_hgvs = self.get_query_to_df(
+                f""" SELECT "#CHROM", "POS", "REF", "ALT", "{extra_field}" FROM variants """)
 
             # Create main NOMEN column
-            dataframe_hgvs[field_nomen_dict] = dataframe_hgvs[extra_field].apply(lambda x: find_nomen(str(x)))
-            
+            dataframe_hgvs[field_nomen_dict] = dataframe_hgvs[extra_field].apply(
+                lambda x: find_nomen(str(x)))
+
             # Explode NOMEN Structure and create SQL set for update
             sql_nomen_fields = []
             for nomen_field in nomen_dict:
-                dataframe_hgvs[nomen_field] = dataframe_hgvs[field_nomen_dict].apply(lambda x: dict(x).get(nomen_field,""))
-                # Create VCF header field
+
+                # Explode each field into a column
+                dataframe_hgvs[nomen_field] = dataframe_hgvs[field_nomen_dict].apply(
+                    lambda x: dict(x).get(nomen_field, ""))
                 
+                # Create VCF header field
                 vcf_reader.infos[nomen_field] = vcf.parser._Info(
-                                        nomen_field,
-                                        ".",
-                                        "String",
-                                        nomen_dict.get(nomen_field,"howard calculation NOMEN"),
-                                        "howard calculation",
-                                        "0",
-                                        self.code_type_map.get("String")
-                                    )
+                    nomen_field,
+                    ".",
+                    "String",
+                    nomen_dict.get(
+                        nomen_field, "howard calculation NOMEN"),
+                    "howard calculation",
+                    "0",
+                    self.code_type_map.get("String")
+                )
                 sql_nomen_fields.append(f"""
                     || CASE WHEN dataframe_hgvs."{nomen_field}" NOT NULL
                         THEN ';{nomen_field}=' || dataframe_hgvs."{nomen_field}"
                         ELSE ''
                         END """)
-            
+
             # SQL set for update
             sql_nomen_fields_set = "  ".join(sql_nomen_fields)
 
@@ -3170,10 +3444,11 @@ class Variants:
                     
             """
             self.conn.execute(sql_update)
-            
+
             # Delete dataframe
             del dataframe_hgvs
             gc.collect()
+
 
 
 
@@ -3187,3 +3462,14 @@ class Variants:
     #     vcf_reader = vcf.Reader(filename=tmp_vcf_name)
     #     return vcf_reader
 
+
+    # def load_from_database(self):
+    #     """
+    #     It takes the data from the database and puts it into a dictionary
+    #     """
+    #     query = "SELECT * FROM variants"
+    #     cursor = self.connection.execute(query)
+    #     result = cursor.fetchall()
+    #     columns = [col[0] for col in cursor.description]
+    #     df = pd.DataFrame(result, columns=columns)
+    #     self.data = df.to_dict('list')

@@ -25,6 +25,7 @@ comparison_map = {
     "contains": "SIMILAR TO"
 }
 
+
 code_type_map = {
     "Integer": 0,
     "String": 1,
@@ -32,11 +33,21 @@ code_type_map = {
     "Flag": 3
 }
 
+
 code_type_map_to_sql = {
     "Integer": "INTEGER",
     "String": "VARCHAR",
     "Float": "FLOAT",
     "Flag": "VARCHAR"
+}
+
+
+file_format_delimiters = {
+    "vcf": "\t",
+    "bcf": "\t",
+    "tsv": "\t",
+    "csv": ",",
+    "psv": "|"
 }
 
 
@@ -306,11 +317,11 @@ def find_genome(genome_path: str, genome: str = "hg19.fa"):
     return genome_path
 
 
-def find_nomen(hgvs:str = "", pattern = "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN", transcripts:list = []) -> dict:
+def find_nomen(hgvs: str = "", pattern="GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN", transcripts: list = []) -> dict:
     """
     > This function takes a HGVS string and a list of transcripts and returns a dictionary with the best
     NOMEN for each HGVS string
-    
+
     :param hgvs: The HGVS string to parse
     :type hgvs: str
     :param pattern: This is the pattern that you want to use to construct the NOMEN. The default is
@@ -330,7 +341,7 @@ def find_nomen(hgvs:str = "", pattern = "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOM
         ENOMEN
         GNOMEN
     """
-    
+
     empty_nomen_dict = {
         "NOMEN": None,
         "CNOMEN": None,
@@ -342,23 +353,20 @@ def find_nomen(hgvs:str = "", pattern = "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOM
         "VNOMEN": None,
         "ENOMEN": None,
         "GNOMEN": None,
-        }
+    }
 
     nomen_dict = empty_nomen_dict.copy()
 
     if hgvs != "nan":
-        
-
 
         hgvs_split = str(hgvs).split(',')
 
         nomen_score_max = 0
-        
 
         for one_hgvs in hgvs_split:
-            #print(one_hgvs)
+            # print(one_hgvs)
             one_hgvs_split = one_hgvs.split(':')
-            #print(one_hgvs_split)
+            # print(one_hgvs_split)
 
             one_nomen_score = 0
             one_nomen_dict = empty_nomen_dict.copy()
@@ -371,21 +379,23 @@ def find_nomen(hgvs:str = "", pattern = "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOM
                     one_nomen_score += 1
                     # Split transcript
                     one_hgvs_infos_split = one_hgvs_infos.split('.')
-                    # Transcript 
+                    # Transcript
                     one_nomen_dict["TNOMEN"] = one_hgvs_infos_split[0]
                     # Transcript version
-                    if len(one_hgvs_infos_split)>1:
+                    if len(one_hgvs_infos_split) > 1:
                         one_nomen_dict["VNOMEN"] = one_hgvs_infos_split[1]
-                    # NOMEN Score 
+                    # NOMEN Score
                     if re.match(r"^NM_(.*)$", one_hgvs_infos) or re.match(r"^NM_(.*)$", one_hgvs_infos):
                         one_nomen_score += 2
                     elif re.match(r"^NR_(.*)$", one_hgvs_infos):
                         one_nomen_score += 1
                     # NOMEN with default transcript
                     if one_nomen_dict["TVNOMEN"] in transcripts or one_nomen_dict["TNOMEN"] in transcripts:
-                        rank = max(get_index(one_nomen_dict["TVNOMEN"],transcripts), get_index(one_nomen_dict["TNOMEN"],transcripts)) + 1
+                        rank = max(get_index(one_nomen_dict["TVNOMEN"], transcripts), get_index(
+                            one_nomen_dict["TNOMEN"], transcripts)) + 1
                         if rank >= 0:
-                            one_nomen_score += (100 * (len(transcripts) - rank) )
+                            one_nomen_score += (100 *
+                                                (len(transcripts) - rank))
 
                 elif re.match(r"^c\.(.*)$", one_hgvs_infos) or re.match(r"^g\.(.*)$", one_hgvs_infos) or re.match(r"^m\.(.*)$", one_hgvs_infos):
                     one_nomen_dict["CNOMEN"] = one_hgvs_infos
@@ -410,21 +420,103 @@ def find_nomen(hgvs:str = "", pattern = "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOM
                 nomen_dict = one_nomen_dict.copy()
                 nomen_score_max = one_nomen_score
 
-
         # Contruct NOMEN from pattern
         nomen = []
         for n in pattern.split(':'):
-            if nomen_dict.get(n,None):
-                nomen.append(nomen_dict.get(n,None))
+            if nomen_dict.get(n, None):
+                nomen.append(nomen_dict.get(n, None))
         nomen_dict["NOMEN"] = ":".join(nomen)
 
     return nomen_dict
 
 
+def extract_snpeff_hgvs(snpeff:str = "", header:str = ['Allele', 'Annotation', 'Annotation_Impact', 'Gene_Name', 'Gene_ID', 'Feature_Type', 'Feature_ID', 'Transcript_BioType', 'Rank', 'HGVS.c', 'HGVS.p', 'cDNA.pos / cDNA.length', 'CDS.pos / CDS.length', 'AA.pos / AA.length', 'Distance', 'ERRORS / WARNINGS / INFO']) -> str:
 
-def get_index(value, values:list = []) -> int:
+    snpeff_hgvs = ""
+
+    if snpeff != "nan":
+        snpeff_hgvs = "snpeff_hgvs_list"
+
+    # Split snpeff ann values
+    snpeff_infos = [x.split('|') for x in snpeff.split(",")]
+
+    # Create Dataframe
+    snpeff_dict = {}
+    for i in range(len(header)):
+        snpeff_dict[header[i]] = [x[i] for x in snpeff_infos]
+    df = pd.DataFrame.from_dict(snpeff_dict, orient='index').transpose()
+
+    # Fetch each annotations
+    hgvs_list = []
+    for i, row in df.iterrows():
+
+        # Catch values 
+        gene_id = row["Gene_ID"]
+        feature_id = row["Feature_ID"]
+        rank = row["Rank"]
+        hgvs_c = row["HGVS.c"]
+        hgvs_p = row["HGVS.p"]
+
+        # Concatenate with ":" if not empty
+        values = []
+        if gene_id != "":
+            values.append(gene_id)
+        if feature_id != "":
+            values.append(feature_id)
+        if rank != "":
+            values.append("exon" + rank.split("/")[0])
+        if hgvs_c != "":
+            values.append(hgvs_c)
+        if hgvs_p != "":
+            values.append(hgvs_p)
+        hgvs = ":".join(values)
+
+        # Add to list
+        hgvs_list.append(hgvs)
+
+    # join list
+    snpeff_hgvs = ",".join(hgvs_list)
+
+    return snpeff_hgvs
+
+
+def get_index(value, values: list = []) -> int:
     try:
         return values.index(value)
     except ValueError:
         # Si l'élément n'existe pas dans la liste, renvoyer un index négatif pour qu'il soit ignoré dans le calcul
         return -1
+
+
+def get_file_format(filename: str = None) -> str:
+    """
+    It takes a filename and returns the file format
+
+    :param filename: the name of the file you want to get the format of
+    :type filename: str
+    :return: The file format of the file.
+    """
+    if filename:
+        filename_name, filename_extension = os.path.splitext(filename)
+        filename_format = filename_extension.replace(".", "")
+        if filename_format in ["gz"]:
+            filename_name_name, filename_name_extension = os.path.splitext(
+                filename_name)
+            filename_format = filename_name_extension.replace(".", "")
+    else:
+        filename_format = "unknown"
+    return filename_format
+
+
+def get_file_compressed(filename: str) -> bool:
+    """
+    This function takes a filename as input and returns True if the file is compressed (in bgzip) and False if it
+    is not
+
+    :param filename: the name of the file to be checked
+    :type filename: str
+    :return: A boolean value.
+    """
+    filename_name, filename_extension = os.path.splitext(filename)
+    compress_format = filename_extension.replace(".", "")
+    return compress_format in ["gz", "bcf"]

@@ -55,6 +55,10 @@ def main() -> None:
     parser.add_argument(
         "--annotations", help="Quick annotation with databases file (format: list of files) (default: null)", default=None)
     parser.add_argument(
+        "--calculations", help="Quick calculations (format: list of calculation operations) (example: NOMEN) (default: null)", default=None)
+    parser.add_argument(
+        "--prioritizations", help="Quick prioritization (format: file with profiles) (default: null)", default=None)
+    parser.add_argument(
         "--threads", help="Number of threads. Will be added/replace to config file. (format: Integer) (default: null)", default=None)
     parser.add_argument("--overview", "--overview_header",
                         help="Overview after loading data", action="store_true")
@@ -124,17 +128,35 @@ def main() -> None:
     if args.input:
         vcfdata_obj = Variants(None, args.input, args.output, config, param)
 
+        params = vcfdata_obj.get_param()
 
         # Quick Annotation
         if args.annotations:
             annotation_file_list = args.annotations.split(",")
             log.info(f"Quick Annotation Files: {annotation_file_list}")
-            params = vcfdata_obj.get_param()
             param_quick_annotations = param.get("annotations",{})
             for annotation_file in annotation_file_list:
                 param_quick_annotations[annotation_file] = {"INFO": None}
             params["annotations"] = param_quick_annotations
-            vcfdata_obj.set_param(params)
+
+        # Quick calculations
+        if args.calculations:
+            calculations_list= args.calculations.split(",")
+            log.info(f"Quick Calculations list: {calculations_list}")
+            param_quick_calculations = param.get("calculation",{})
+            for calculation_operation in calculations_list:
+                param_quick_calculations[calculation_operation] = {}
+            params["calculation"] = param_quick_calculations
+
+        # Quick prioritization
+        if args.prioritizations:
+            config_profiles= args.prioritizations
+            log.info(f"Quick Prioritization Config file: {config_profiles}")
+            param_quick_prioritizations = param.get("prioritization",{})
+            param_quick_prioritizations["config_profiles"] = config_profiles
+            params["prioritization"] = param_quick_prioritizations
+        
+        vcfdata_obj.set_param(params)
             
 
         # Load data from input file
@@ -157,7 +179,7 @@ def main() -> None:
             vcfdata_obj.calculation()
 
         # Prioritization
-        if vcfdata_obj.get_param().get("prioritization", None):
+        if vcfdata_obj.get_param().get("prioritizations", None) or vcfdata_obj.get_param().get("prioritization", None):
             vcfdata_obj.prioritization()
 
         # Output

@@ -166,7 +166,6 @@ def test_set_get_header():
     assert check_full
 
 
-
 def test_set_get_header_in_config():
 
     # Init files
@@ -268,13 +267,14 @@ def test_load_when_init():
 def test_load_format_not_available():
 
     # Init files
-    input_vcf = tests_folder + "/data/example.unknown"
+    input_format = "unknwon"
+    input_vcf = tests_folder + f"/data/example.{input_format}"
     input_config = { "header_file":  tests_folder + "/data/example.parquet.hdr" }
 
     # Create object
     with pytest.raises(ValueError) as e:
         vcf = Variants(input=input_vcf, config=input_config, load=True)
-    assert str(e.value) == f"Input file format 'unknown' not available"
+    assert str(e.value) == f"Input file format '{input_format}' not available"
 
 
 def test_load_vcf_gz():
@@ -296,7 +296,6 @@ def test_load_vcf_gz():
     expected_number_of_variants = 7
 
     assert nb_variant_in_database == expected_number_of_variants
-
 
 
 def test_load_parquet():
@@ -372,7 +371,6 @@ def test_load_csv():
     expected_number_of_variants = 7
 
     assert nb_variant_in_database == expected_number_of_variants
-
 
 
 def test_load_tsv():
@@ -551,7 +549,6 @@ def test_get_verbose():
     assert check_verbose_false and check_verbose_true
 
 
-
 def test_load_connexion_type_memory():
 
     # Init files
@@ -638,6 +635,28 @@ def test_load_connexion_format_sqlite():
     assert nb_variant_in_database == expected_number_of_variants
 
 
+def test_export_output_bcf():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    output_vcf = "/tmp/example.bcf"
+
+    # remove if exists
+    remove_if_exists([output_vcf])
+
+    # Create object
+    vcf = Variants(input=input_vcf, output=output_vcf, load=True)
+
+    # Check get_output
+    vcf.export_output()
+    assert os.path.exists(output_vcf)
+
+    # Check get_output without header
+    remove_if_exists([output_vcf])
+    vcf.export_output(export_header=False)
+    assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
+
+
 def test_export_output_vcf_gz():
 
     # Init files
@@ -648,24 +667,16 @@ def test_export_output_vcf_gz():
     remove_if_exists([output_vcf])
 
     # Create object
-    vcf = Variants(input=input_vcf, output=output_vcf)
-
-    # Load data
-    vcf.load_data()
+    vcf = Variants(input=input_vcf, output=output_vcf, load=True)
 
     # Check get_output
     vcf.export_output()
-    check_export_output = os.path.exists(output_vcf)
+    assert os.path.exists(output_vcf)
 
     # Check get_output without header
     remove_if_exists([output_vcf])
     vcf.export_output(export_header=False)
-    check_export_output_without_header = os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
-
-    # check full
-    check_full = check_export_output and check_export_output_without_header
-
-    assert check_full
+    assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
 
 
 def test_export_output_vcf():
@@ -678,24 +689,16 @@ def test_export_output_vcf():
     remove_if_exists([output_vcf])
 
     # Create object
-    vcf = Variants(input=input_vcf, output=output_vcf)
-
-    # Load data
-    vcf.load_data()
+    vcf = Variants(input=input_vcf, output=output_vcf, load=True)
 
     # Check get_output
     vcf.export_output()
-    check_export_output = os.path.exists(output_vcf)
+    assert os.path.exists(output_vcf)
 
     # Check get_output without header
     remove_if_exists([output_vcf])
     vcf.export_output(export_header=False)
-    check_export_output_without_header = os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
-
-    # check full
-    check_full = check_export_output and check_export_output_without_header
-
-    assert check_full
+    assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
 
 
 def test_export_output_parquet():
@@ -715,17 +718,12 @@ def test_export_output_parquet():
 
     # Check get_output
     vcf.export_output()
-    check_export_output = os.path.exists(output_vcf)
+    assert os.path.exists(output_vcf)
 
     # Check get_output without header
     remove_if_exists([output_vcf])
     vcf.export_output(export_header=False)
-    check_export_output_without_header = os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
-
-    # check full
-    check_full = check_export_output and check_export_output_without_header
-
-    assert check_full
+    assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
 
 
 def test_export_output_duckdb():
@@ -745,16 +743,11 @@ def test_export_output_duckdb():
 
     # Check get_output
     vcf.export_output()
-    check_export_output = os.path.exists(output_vcf)
+    assert os.path.exists(output_vcf)
 
     # Check get_output without header
     vcf.export_output(export_header=False)
-    check_export_output_without_header = os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
-
-    # check full
-    check_full = check_export_output and check_export_output_without_header
-
-    assert check_full
+    assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
 
 
 def test_export_output_tsv():
@@ -774,20 +767,40 @@ def test_export_output_tsv():
 
     # Check get_output
     vcf.export_output()
-    check_export_output = os.path.exists(output_vcf)
+    assert os.path.exists(output_vcf)
 
     # Check get_output without header
     remove_if_exists([output_vcf])
     vcf.export_output(export_header=False)
-    check_export_output_without_header = os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
-
-    # check full
-    check_full = check_export_output and check_export_output_without_header
-
-    assert check_full
+    assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
 
 
-def test_export_output_tsv():
+def test_export_output_tsv_gz():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    output_vcf = "/tmp/example.tsv.gz"
+
+    # remove if exists
+    remove_if_exists([output_vcf])
+
+    # Create object
+    vcf = Variants(input=input_vcf, output=output_vcf)
+
+    # Load data
+    vcf.load_data()
+
+    # Check get_output
+    vcf.export_output()
+    assert os.path.exists(output_vcf)
+
+    # Check get_output without header
+    remove_if_exists([output_vcf])
+    vcf.export_output(export_header=False)
+    assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
+
+
+def test_export_output_csv():
 
     # Init files
     input_vcf = tests_folder + "/data/example.vcf.gz"
@@ -804,18 +817,12 @@ def test_export_output_tsv():
 
     # Check get_output
     vcf.export_output()
-    check_export_output = os.path.exists(output_vcf)
+    assert os.path.exists(output_vcf)
 
     # Check get_output without header
     remove_if_exists([output_vcf])
     vcf.export_output(export_header=False)
-    check_export_output_without_header = os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
-
-    # check full
-    check_full = check_export_output and check_export_output_without_header
-
-    assert check_full
-
+    assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
 
 
 def test_export_output_psv():
@@ -835,18 +842,12 @@ def test_export_output_psv():
 
     # Check get_output
     vcf.export_output()
-    check_export_output = os.path.exists(output_vcf)
+    assert os.path.exists(output_vcf)
 
     # Check get_output without header
     remove_if_exists([output_vcf])
     vcf.export_output(export_header=False)
-    check_export_output_without_header = os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
-
-    # check full
-    check_full = check_export_output and check_export_output_without_header
-
-    assert check_full
-
+    assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
 
 
 def test_export_output_vcf_explode_infos():
@@ -869,18 +870,12 @@ def test_export_output_vcf_explode_infos():
 
     # Check get_output
     vcf.export_output()
-    check_export_output = os.path.exists(output_vcf)
+    assert os.path.exists(output_vcf)
 
     # Check get_output without header
     remove_if_exists([output_vcf])
     vcf.export_output(export_header=False)
-    check_export_output_without_header = os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
-
-    # check full
-    check_full = check_export_output and check_export_output_without_header
-
-    assert check_full
-
+    assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
 
 
 def test_prioritization():
@@ -927,7 +922,6 @@ def test_prioritization():
     assert check_variant1
 
 
-
 def test_prioritization_varank():
 
     # Init files
@@ -965,7 +959,6 @@ def test_prioritization_varank():
     assert len(result) == 1
 
 
-
 def test_prioritization_no_profiles():
 
     # Init files
@@ -984,7 +977,6 @@ def test_prioritization_no_profiles():
     with pytest.raises(ValueError) as e:
         vcf.prioritization()
     assert str(e.value) == f"NO Profiles configuration"
-
 
 
 def test_prioritization_no_pzfields():
@@ -1020,7 +1012,6 @@ def test_prioritization_no_pzfields():
         if result["count"][0] == 0:
             check_priorization = True
     assert check_priorization
-
 
 
 def test_annotations():
@@ -1105,7 +1096,6 @@ def test_annotation_parquet():
     assert length == 1
 
 
-
 def test_annotation_parquet_field_already_in_vcf():
 
     # Init files
@@ -1143,8 +1133,6 @@ def test_annotation_parquet_field_already_in_vcf():
     assert len(result) == 1
 
 
-
-
 def test_annotation_duckdb():
 
     # Init files
@@ -1171,7 +1159,6 @@ def test_annotation_duckdb():
     assert length == 1
 
 
-
 def test_annotation_bcftools():
 
     # Init files
@@ -1196,7 +1183,6 @@ def test_annotation_bcftools():
     length = len(result.df())
     
     assert length == 1
-
 
 
 def test_annotation_bcftools_bed():
@@ -1226,7 +1212,6 @@ def test_annotation_bcftools_bed():
     length = len(result.df())
     
     assert length == 1
-
 
 
 def test_annotation_annovar():
@@ -1284,7 +1269,6 @@ def test_annotation_quick_annovar():
     assert length == 1
 
 
-
 def test_annotation_snpeff():
 
     # Init files
@@ -1309,7 +1293,6 @@ def test_annotation_snpeff():
     length = len(result.df())
     
     assert length == 7
-
 
 
 def test_annotation_quick_snpeff():
@@ -1339,7 +1322,6 @@ def test_annotation_quick_snpeff():
     length = len(result.df())
     
     assert length == 7
-
 
 
 def test_annotation_bcftools_sqlite():
@@ -1374,7 +1356,6 @@ def test_annotation_bcftools_sqlite():
     assert length == 1
 
 
-
 def test_explode_infos():
 
     # Init files
@@ -1407,7 +1388,6 @@ def test_explode_infos():
     # Check value in column
     result = vcf.execute_query(f"""SELECT "{column_to_check}" AS column_to_check FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND REF = 'A' AND ALT = 'C' """)
     assert value_to_check == result.df()["column_to_check"][0]
-
 
 
 def test_explode_infos_param_prefix():
@@ -1551,6 +1531,59 @@ def test_calculation():
 
      # Check number of middle (7)
     result = vcf.get_query_to_df(f"""SELECT INFO FROM variants WHERE INFO LIKE '%middle=%' """)
-    print(result)
-    
     assert len(result) == 7
+
+
+def test_calculation_snpeff_hgvs():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.snpeff.vcf.gz"
+    output_vcf = "/tmp/output.vcf.gz"
+
+    # Construct param dict
+    param = {
+        "calculation": {
+            "snpeff_hgvs": None
+        }
+    }
+
+    # Create object
+    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
+    # Remove if output file exists
+    remove_if_exists([output_vcf])
+
+    # Calculation
+    vcf.calculation()
+
+    # query annotated variant
+    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%snpeff_hgvs=%' """)
+    assert len(result) == 7
+    
+
+def test_calculation_snpeff_hgvs_no_ann():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    output_vcf = "/tmp/output.vcf.gz"
+
+    # Construct param dict
+    param = {
+        "calculation": {
+            "snpeff_hgvs": None
+        }
+    }
+
+    # Create object
+    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
+    # Remove if output file exists
+    remove_if_exists([output_vcf])
+
+    # Calculation
+    vcf.calculation()
+
+    # query annotated variant
+    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%snpeff_hgvs=%' """)
+    assert len(result) == 0
+    

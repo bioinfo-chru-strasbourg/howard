@@ -26,6 +26,51 @@ from howard.commons import *
 tests_folder = os.path.dirname(__file__)
 
 
+def test_get_file_compressed():
+    # Test pour un fichier compressé .gz
+    assert get_file_compressed("testfile.gz") == True
+    
+    # Test pour un fichier compressé .bcf
+    assert get_file_compressed("testfile.bcf") == True
+    
+    # Test pour un fichier non compressé .vcf
+    assert get_file_compressed("testfile.vcf") == False
+    
+    # Test pour un fichier non compressé .tsv
+    assert get_file_compressed("testfile.tsv") == False
+    
+    # Test pour un fichier compressé .csv.gz
+    assert get_file_compressed("testfile.csv.gz") == True
+    
+    # Test pour un fichier compressé .parquet
+    assert get_file_compressed("testfile.parquet") == False
+    
+    # Test pour un fichier compressé .parquet.gz
+    assert get_file_compressed("testfile.parquet.gz") == True
+
+
+def test_get_file_format():
+    # Test pour un fichier .vcf
+    assert get_file_format("testfile.vcf") == "vcf"
+    
+    # Test pour un fichier .tsv.gz
+    assert get_file_format("testfile.tsv.gz") == "tsv"
+    
+    # Test pour un fichier .csv
+    assert get_file_format("testfile.csv") == "csv"
+    
+    # Test pour un fichier .bcf.gz
+    assert get_file_format("testfile.bcf") == "bcf"
+    
+    # Test pour un fichier .bcf.gz
+    assert get_file_format("testfile.bcf.gz") == "bcf"
+    
+    # Test pour un fichier .parquet
+    assert get_file_format("testfile.parquet") == "parquet"
+    
+    # Test pour un fichier .txt.gz
+    assert get_file_format("testfile.txt.gz") == "txt"
+
 
 def test_remove_if_exists():
 
@@ -49,6 +94,26 @@ def test_remove_if_exists():
     assert created and deleted
 
 
+def test_remove_if_exists_complete():
+    # Crée un fichier pour tester la fonction
+    test_path = "test_dir"
+    os.makedirs(test_path, exist_ok=True)
+    test_file_path = os.path.join(test_path, "test_file.txt")
+    with open(test_file_path, "w") as f:
+        f.write("Test file content")
+    
+    # Teste la fonction avec un fichier qui existe
+    remove_if_exists(test_file_path)
+    assert not os.path.exists(test_file_path)
+    
+    # Teste la fonction avec un fichier qui n'existe pas
+    remove_if_exists("nonexistent_file.txt")
+    
+    # Teste la fonction avec une liste de fichiers dont certains existent
+    filepaths = [test_file_path, "nonexistent_file.txt"]
+    remove_if_exists(filepaths)
+    assert not os.path.exists(test_file_path)
+
 
 def test_set_log_level():
 
@@ -59,6 +124,7 @@ def test_set_log_level():
     result_verbosity = set_log_level(verbosity)
 
     assert verbosity == result_verbosity
+
 
 def test_set_log_level_error():
 
@@ -235,25 +301,6 @@ def test_get_index():
     assert get_index(None, values) == -1
 
 
-# def test_find_nomen():
-#     hgvs = "NM_001234.5:c.123A>T,NM_001234.6:g.456C>A"
-#     pattern = "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN"
-#     transcripts = ["NM_001234.5", "NM_001234.6"]
-#     expected_output = {
-#         "NOMEN": "A:123T",
-#         "CNOMEN": "c.123A>T",
-#         "RNOMEN": None,
-#         "NNOMEN": None,
-#         "PNOMEN": None,
-#         "TVNOMEN": "NM_001234.6",
-#         "TNOMEN": "NM_001234",
-#         "VNOMEN": "5",
-#         "ENOMEN": None,
-#         "GNOMEN": "g.456C>A"
-#     }
-#     assert find_nomen(hgvs, pattern, transcripts) == expected_output
-
-
 def test_find_nomen_full():
     # Test case 1
     print("test1")
@@ -356,6 +403,34 @@ def test_get_gzip():
     assert command_gzip.strip() == command_gzip_expected.strip()
           
 
+def test_find():
+    # Crée un fichier pour tester la fonction
+    test_path = "test_dir"
+    os.makedirs(test_path, exist_ok=True)
+    test_file_path = os.path.join(test_path, "test_file.txt")
+    with open(test_file_path, "w") as f:
+        f.write("Test file content")
+    
+    # Teste la fonction avec un nom de fichier qui n'existe pas
+    assert find("nonexistent_file.txt", test_path) == ""
+    
+    # Teste la fonction avec un nom de fichier qui existe dans le dossier de base
+    assert find("test_file.txt", test_path) == test_file_path
+    
+    # Teste la fonction avec un nom de fichier qui existe dans un sous-dossier
+    sub_dir_path = os.path.join(test_path, "sub_dir")
+    os.makedirs(sub_dir_path, exist_ok=True)
+    sub_dir_file_path = os.path.join(sub_dir_path, "sub_dir_file.txt")
+    with open(sub_dir_file_path, "w") as f:
+        f.write("Sub-directory file content")
+    assert find("sub_dir_file.txt", test_path) == sub_dir_file_path
+    
+    # Nettoie le dossier de test
+    os.remove(test_file_path)
+    os.remove(sub_dir_file_path)
+    os.rmdir(sub_dir_path)
+    os.rmdir(test_path)
+
 
 def test_find_all():
     # Create a temporary directory structure
@@ -373,12 +448,36 @@ def test_find_all():
 
 
 def test_find_genome():
+
+    # Default genome filenaùe
+    genome_filename = "hg19.fa"
+
+    # Create existing genome
+    tmp_genome = NamedTemporaryFile(prefix="genome.", suffix=".fa", dir="/tmp")
+    tmp_genome_name = tmp_genome.name
+    # call the function to find the genome file
+    genome_path_found = find_genome(genome_path = tmp_genome_name, genome = genome_filename)
+    # check if the genome file was found
+    assert os.path.exists(genome_path_found) and genome_path_found == tmp_genome_name
+
+
+    # Either genome in the system or not
+
     # create a temporary directory
     with tempfile.TemporaryDirectory() as tmpdir:
         # specify a non-existent path for the genome file
-        genome_path = os.path.join(tmpdir, 'nonexistent_genome.fa')
+        genome_path_nonexistent = os.path.join(tmpdir, 'nonexistent_genome.fa')
         # call the function to find the genome file
-        genome_path = find_genome(genome_path)
+        error = None
+        try:
+            genome_path_found = find_genome(genome_path = genome_path_nonexistent, genome = genome_filename)
+        except:
+            with pytest.raises(ValueError) as e:
+                genome_path_found = find_genome(genome_path = genome_path_nonexistent, genome = genome_filename)
+                error = str(e.value)
+        
         # check if the genome file was found
-        assert os.path.exists(genome_path)
 
+        assert (os.path.exists(genome_path_found) and genome_path_found != genome_path_nonexistent) or error == f"Genome failed: no genome '{genome_filename}'"
+
+    
