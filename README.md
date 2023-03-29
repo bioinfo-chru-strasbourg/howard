@@ -18,6 +18,21 @@ HOWARD is multithreaded through the number of variants and by database (data-sca
 
 # Getting Started
 
+- [Installation](#installation)
+  - [Python](#python)
+  - [Docker](#docker)
+- [Quick HOWARD commands](#quick-howard-commands)
+  - [Show VCF stats and overview](#show-vcf-stats-and-overview)
+  - [Translate VCF into other format](#translate-vcf-into-other-format)
+  - [Query VCF](#query-vcf)
+  - [Annotation](#annotation)
+  - [Calculation](#calculation)
+  - [Prioritization](#prioritization)
+  - [Docker HOWARD-CLI](#docker-howard-cli)
+- [Documentation](#documentation)
+
+
+
 ## Installation
 
 ### Python
@@ -35,9 +50,7 @@ In order to build, setup and create a persitent CLI (running container), docker-
 docker-compose up -d
 ```
 
-A setup container (HOWARD-setup) automatically downloads required databases according to an HOWARD VCF example annotation using ANNOVAR and snpEff. Configuration of host data and databases folders (default ${HOME}/HOWARD), assembly and databases to download in `.env` file. See HOWARD, ANNOVAR and snpEff documentation for custom databases download.
-
-A Command Line Interface container (HOWARD-CLI) is started with host data and databases folders mounted.
+A Command Line Interface container (HOWARD-CLI) is started with host data and databases folders mounted (by default in ${HOME}/HOWARD folder)
 
 ## Quick HOWARD commands
 
@@ -55,9 +68,10 @@ Translate VCF into CSV and show output file
 howard --input=tests/data/example.vcf.gz --output=tests/data/example.csv && cat tests/data/example.csv
 ```
 
-Translate VCF into parquet, and show statistics on output file
+Translate VCF into parquet, and show statistics on output parquet file
 ```
-howard --input=tests/data/example.vcf.gz --output=tests/data/example.parquet && howard --input=tests/data/example.parquet --stats
+howard --input=tests/data/example.vcf.gz --output=tests/data/example.parquet
+howard --input=tests/data/example.parquet --stats
 ```
 
 ### Query VCF
@@ -69,7 +83,7 @@ howard --input=tests/data/example.vcf.gz --query="SELECT * FROM variants WHERE R
 
 Select variants in VCF with INFO Tags criterions
 ```
-howard --input=tests/data/example.vcf.gz --param='{"explode_infos": true}' --query="SELECT \"#CHROM\", POS, REF, ALT, \"INFO/DP\", \"INFO/CLNSIG\", sample2, sample3 FROM variants WHERE \"INFO/DP\" >=50 OR \"INFO/CLNSIG\" = 'pathogenic'"
+howard --input=tests/data/example.vcf.gz --param='{"explode_infos": true}' --query='SELECT "#CHROM", POS, REF, ALT, "INFO/DP", "INFO/CLNSIG", sample2, sample3 FROM variants WHERE "INFO/DP" >=50 OR "INFO/CLNSIG" NOT NULL'
 ```
 
 ### Annotation
@@ -84,93 +98,59 @@ VCF annotation with Clinvar Parquet databases, output as TSV format and INFO tag
 howard --verbose --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --annotation=tests/data/annotations/clinvar_20210123.parquet --param='{"explode_infos": true, "export_extra_infos": true}' --query='SELECT "INFO/CLNDN", count(*) AS count FROM variants WHERE "INFO/CLNDN" NOT NULL GROUP BY "INFO/CLNDN"'
 ```
 
+### Calculation
+
+Extract hgvs from snpEff annotation and calculate NOMEN with default transcripts list
+```
+howard --verbose --input=tests/data/example.ann.vcf.gz --param=tests/data/param.snpeff_hgvs.json --output=/tmp/example.snpeff_hgvs.vcf.gz --query='SELECT "#CHROM", POS, REF, ALT, "INFO/ANN" AS snpEff, "INFO/NOMEN" AS NOMEN FROM variants'
+```
+with 'param.snpeff_hgvs.json':
+```
+{
+  "calculation": {
+    "snpeff_hgvs": null,
+    "NOMEN": {
+        "options": {
+            "hgvs_field": "snpeff_hgvs",
+            "transcripts": "tests/data/tanscripts.tsv"
+        }
+    }
+  },
+  "explode_infos": "INFO/"
+}
+```
+and 'transcripts.tsv':
+```
+NR_024540	WASH7P
+NR_036266	MIR1302-9
+NM_001346897	EGFR
+NM_005228	EGFR
+```
+
+### Prioritization
+
+Prioritize variants from criteria on INFO annotations (see 'prioritization_profiles.json')
+```
+howard --verbose --input=tests/data/example.vcf.gz --prioritizations=tests/data/prioritization_profiles.json --output=/tmp/test.vcf --query='SELECT "#CHROM", POS, REF, ALT, "INFO/PZFlag", "INFO/PZScore" FROM variants ORDER BY "INFO/PZFlag" DESC, "INFO/PZScore" DESC' --param='{"explode_infos": "INFO/"}'
+```
+
+### Docker HOWARD-CLI
+
 VCF annotation (Parquet, BCFTOOLS, ANNOVAR and snpEff) using HOWARD-CLI (snpEff and ANNOVAR databases will be automatically downloaded), and query list of genes with HGVS
 
 ```
 docker exec HOWARD-CLI howard --verbose --input=/tool/tests/data/example.vcf.gz --output=/data/example.howard.vcf.gz --annotation=snpeff,annovar:refGene,/tool/tests/data/annotations/refGene.bed.gz,/tool/tests/data/annotations/avsnp150.vcf.gz,tests/data/annotations/dbnsfp42a.parquet --param='{"explode_infos": true}' --query='SELECT "INFO/symbol", "INFO/AAChange_refGene" FROM variants WHERE "INFO/symbol" NOT NULL ORDER BY "INFO/symbol"'
 ```
 
+
 Let's play within Docker HOWARD-CLI service!
 ```
-$ docker exec -ti HOWARD-CLI bash
-[data]# howard --help
+docker exec -ti HOWARD-CLI bash
+howard --help
 ```
 
-# Documentation
+## Documentation
 
 More documentation in [docs/howard.md](docs/howard.md)
-
-
-
-# Docker 
-
-HOWARD image presents a container that runs on AlmaLinux, and includes yum modules and other tools dependencies (see config.cfg and Dockerfile for releases):
-- Python
-- Java
-- bcftools/htslib
-- ANNOVAR
-- snpEff
-
-## Docker Build - Image
-
-
-The `Dockerfile` provided with this package provides everything that is needed to build the image. The build system must have Docker installed in
-order to build the image.
-
-```
-$ cd ${HOME}/HOWARD
-$ docker build -t howard:latest .
-```
-
-## Running Run - Container
-
-The container host must have Docker installed in order to run the image as a container. Then the image can be pulled and a container can be started directly. Any standard Docker switches may be provided on the command line when running a container.
-
-```
-$ docker run howard:latest
-```
-
-
-### Mount Data and Databases volumes
-
-In order to make data and databases persistent, host volumes can be mounted. Content may also be copied directly into the running container using a
-`docker cp ...`.
-
-```
--v ${HOME}/HOWARD/data:/data
--v ${HOME}/HOWARD/databases:/databases
-```
-
-### Run as a terminal
-
-In order to execute command directly to an container, start HOWARD container with terminal interface:
-
-```
-$ docker run --name howard --entrypoint=bash -ti howard:latest
-```
-
-### Example
-
-Run HOWARD as a uniq command.
-
-```
-$ docker run --rm -v ${HOME}/HOWARD/data:/data -v ${HOME}/HOWARD/databases:/databases howard:latest --input=/tool/docs/example.vcf --output=/data/example.howard.tsv --annotation=snpeff,annovar:refGene,/databases/gnomad211_exome.parquet,/databases/cosmic70.vcf.gz --calculation=VAF,BARCODE,NOMEN --prioritization=GERMLINE
-```
-
-Database download (TODO)
--------------------
-
-Databases are downloaded automatically by using annotation configuratin file, or options in command line (--annovar_databases, --snpeff_databases, assembly...).
-
-Use a vcf file, such as HOWARD VCF example, to download ANNOVAR and snpEff databases (WITHOUT multithreading, "ALL" for all databases, "core" for core databases, "snpeff" for snpEff database, or a list of databases, or ANNOVAR code). Use this command multiple times for all needed databases and assembly (such as hg19, hg38, mm9).
-
-```
-$ docker run howard:latest --input=/tool/docs/example.vcf --output=/tool/docs/example.annotated.vcf --annotation=ALL,snpeff --thread=1 --verbose
-```
-
-
-> Note: For home made databases, refer to ```config.annotation.ini``` file to construct and configure your own database (deprecated).
-
-> Note: Beware of proxy configuration!
 
 

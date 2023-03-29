@@ -1,0 +1,66 @@
+{
+    "default": {
+        "CLNSIG": [
+            {
+                "type": "equals",
+                "value": ".*pathogenic",
+                "score": 15,
+                "flag": "PASS",
+                "comment": [
+                    "Described on CLINVAR database"
+                ]
+            },
+            {
+                "type": "contains",
+                "value": "Pathogenic",
+                "score": 15,
+                "flag": "PASS",
+                "comment": [
+                    "Described on CLINVAR database"
+                ]
+            },
+            {
+                "type": "equals",
+                "value": "non-pathogenic",
+                "score": -100,
+                "flag": "FILTERED",
+                "comment": [
+                    "Described on CLINVAR database"
+                ]
+            },
+            {
+                "type": "equals",
+                "value": "Benign",
+                "score": -100,
+                "flag": "FILTERED",
+                "comment": [
+                    "Described on CLINVAR database"
+                ]
+            }
+        ],
+        "DP": [
+            {
+                "type": "gte",
+                "value": "50",
+                "score": 5,
+                "flag": "PASS",
+                "comment": [
+                    "DP"
+                ]
+            }
+        ]
+    },
+    "GERMLINE": {
+        "DP": [
+            {
+                "type": "gte",
+                "value": "30",
+                "score": 5,
+                "flag": "PASS",
+                "comment": [
+                    "DP"
+                ]
+            }
+        ]
+    }
+}

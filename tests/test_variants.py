@@ -878,49 +878,6 @@ def test_export_output_vcf_explode_infos():
     assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
 
 
-def test_prioritization():
-
-    # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
-
-    # Construct config dict
-    config = {
-        "prioritization": {
-            "config_profiles": "config/prioritization_profiles.json"
-            }
-        }
-
-    # Construct param dict
-    param = {
-                "prioritization": {
-                    "profiles": ["default", "GERMLINE"],
-                    "pzfields": ["PZFlag", "PZScore", "PZComment", "PZInfos"]
-                }
-        }
-
-    # Create object
-    vcf = Variants(input=input_vcf, load=True, config=config, param=param)
-
-    # Prioritization
-    vcf.prioritization()
-
-    # Check all priorized
-    result = vcf.execute_query(""" SELECT count(*) AS count FROM variants WHERE INFO LIKE '%PZScore_default=%' """).df()
-    check_priorization = False
-    if len(result["count"]):
-        if result["count"][0] == 7:
-            check_priorization = True
-    assert check_priorization
-
-
-    # Check annotation1
-    result = vcf.execute_query(""" SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND REF = 'A' AND ALT = 'C' AND INFO LIKE '%PZScore_default=15%' """).df()
-    check_variant1 = False
-    if len(result["count"]):
-        if result["count"][0] == 1:
-            check_variant1 = True
-    assert check_variant1
-
 
 def test_prioritization_varank():
 
@@ -1537,7 +1494,7 @@ def test_calculation():
 def test_calculation_snpeff_hgvs():
 
     # Init files
-    input_vcf = tests_folder + "/data/example.snpeff.vcf.gz"
+    input_vcf = tests_folder + "/data/example.ann.vcf.gz"
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct param dict
@@ -1549,6 +1506,10 @@ def test_calculation_snpeff_hgvs():
 
     # Create object
     vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
+    # Check if no snpeff_hgvs
+    result = vcf.get_query_to_df(f""" SELECT INFO FROM variants WHERE INFO LIKE '%snpeff_hgvs=%' """)
+    assert len(result) == 0
 
     # Remove if output file exists
     remove_if_exists([output_vcf])
@@ -1587,3 +1548,167 @@ def test_calculation_snpeff_hgvs_no_ann():
     result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%snpeff_hgvs=%' """)
     assert len(result) == 0
     
+
+def test_calculation_snpeff_hgvs_transcripts():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.snpeff.vcf.gz"
+    transcripts_file = tests_folder + "/data/transcripts.tsv"
+    output_vcf = "/tmp/output.vcf.gz"
+
+    # Construct param dict
+    param = {
+        "calculation": {
+            "NOMEN": {
+                "options": {
+                    "hgvs_field": "snpeff_hgvs",
+                    "transcripts": transcripts_file
+                }
+            }
+        }
+    }
+
+    # Create object
+    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
+    # Remove if output file exists
+    remove_if_exists([output_vcf])
+
+    # Calculation
+    vcf.calculation()
+
+    # query annotated variant
+    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%NOMEN=%' """)
+    assert len(result) == 7
+
+    # Check transcript priority
+    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%NOMEN=EGFR:NM_001346897%' """)
+    assert len(result) == 1
+
+
+def test_calculation_snpeff_hgvs_notranscripts():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.snpeff.vcf.gz"
+    transcripts_file = tests_folder + "/data/notranscripts.tsv"
+    output_vcf = "/tmp/output.vcf.gz"
+
+    # Construct param dict
+    param = {
+        "calculation": {
+            "NOMEN": {
+                "options": {
+                    "hgvs_field": "snpeff_hgvs",
+                    "transcripts": transcripts_file
+                }
+            }
+        }
+    }
+
+    # Create object
+    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
+    # Remove if output file exists
+    remove_if_exists([output_vcf])
+
+    # Calculation
+    with pytest.raises(ValueError) as e:
+        vcf.calculation()
+    assert str(e.value) == f"Transcript file '{transcripts_file}' does NOT exist"
+
+    
+def test_calculation_vartype():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.snv.indel.mosaic.vcf"
+    output_vcf = "/tmp/output.vcf.gz"
+
+    # Construct param dict
+    param = {
+        "calculation": {
+            "VARTYPE": None
+        }
+    }
+
+    # Create object
+    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
+    # Remove if output file exists
+    remove_if_exists([output_vcf])
+
+    # Calculation
+    vcf.calculation()
+
+    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=SNV%' """)
+    assert len(result) == 5
+    
+    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=INDEL%' """)
+    assert len(result) == 1
+    
+    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=MOSAIC%' """)
+    assert len(result) == 1
+    
+
+def test_prioritization():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+
+    # Construct config dict
+    config = {
+        "prioritization": {
+            "config_profiles": tests_folder + "/data/prioritization_profiles.json"
+            }
+        }
+    
+    # Construct param dict
+    param = {
+                "prioritization": {
+                    "profiles": ["default", "GERMLINE"],
+                    "pzfields": ["PZFlag", "PZScore", "PZComment", "PZInfos"]
+                }
+        }
+
+    # Create object
+    vcf = Variants(input=input_vcf, load=True, config=config, param=param)
+
+    # Prioritization
+    vcf.prioritization()
+
+    # Check all priorized default profile
+    result = vcf.execute_query("""
+        SELECT * FROM variants
+        WHERE INFO LIKE '%PZFlag_default=%'
+          AND INFO LIKE '%PZScore_default=%'
+          AND INFO LIKE '%PZComment_default=%'
+          AND INFO LIKE '%PZInfos_default=%'
+        """).df()
+    assert len(result) == 7
+
+    # Check all priorized GERMLINE profile
+    result = vcf.execute_query("""
+        SELECT * FROM variants
+        WHERE INFO LIKE '%PZFlag_GERMLINE=%'
+          AND INFO LIKE '%PZScore_GERMLINE=%'
+          AND INFO LIKE '%PZComment_GERMLINE=%'
+          AND INFO LIKE '%PZInfos_GERMLINE=%'
+        """).df()
+    assert len(result) == 7
+
+    # Check all priorized default profile (as default)
+    result = vcf.execute_query("""
+        SELECT * FROM variants
+        WHERE INFO LIKE '%PZFlag=%'
+          AND INFO LIKE '%PZScore=%'
+          AND INFO LIKE '%PZComment=%'
+          AND INFO LIKE '%PZInfos=%'
+        """).df()
+    assert len(result) == 7
+
+    # Check annotation1
+    result = vcf.execute_query(""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND REF = 'A' AND ALT = 'C' AND INFO LIKE '%PZScore_default=15%' """).df()
+    assert len(result) == 1
+
+    # Check FILTERED
+    result = vcf.execute_query(f""" SELECT INFO FROM variants WHERE INFO LIKE '%FILTERED%' """).df()
+    assert len(result) == 1

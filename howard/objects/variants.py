@@ -1297,28 +1297,29 @@ class Variants:
         sql_query_update = f"""
             UPDATE variants as table_variants
             SET INFO = (
-                SELECT CASE 
-                    WHEN table_variants.INFO NOT IN ('','.') 
-                    THEN table_variants.INFO 
-                    ELSE '' 
-                END || 
-                CASE 
-                    WHEN table_variants.INFO NOT IN ('','.') 
-                    AND table_vcf.INFO NOT IN ('','.')  
-                    THEN ';' 
-                    ELSE '' 
-                END || 
-                CASE 
-                    WHEN table_vcf.INFO NOT IN ('','.') 
-                    THEN table_vcf.INFO 
-                    ELSE '' 
-                END
+                SELECT 
+                    CASE 
+                        WHEN table_variants.INFO NOT IN ('','.') 
+                        THEN table_variants.INFO 
+                        ELSE '' 
+                    END || 
+                    CASE 
+                        WHEN table_variants.INFO NOT IN ('','.') 
+                            AND table_vcf.INFO NOT IN ('','.')  
+                        THEN ';' 
+                        ELSE '' 
+                    END || 
+                    CASE 
+                        WHEN table_vcf.INFO NOT IN ('','.') 
+                        THEN table_vcf.INFO 
+                        ELSE '' 
+                    END
                 FROM {table_vcf} as table_vcf
                 WHERE table_vcf.\"#CHROM\" = table_variants.\"#CHROM\"
-                AND table_vcf.\"POS\" = table_variants.\"POS\"
-                AND table_vcf.\"ALT\" = table_variants.\"ALT\"
-                AND table_vcf.\"REF\" = table_variants.\"REF\"
-            )
+                    AND table_vcf.\"POS\" = table_variants.\"POS\"
+                    AND table_vcf.\"ALT\" = table_variants.\"ALT\"
+                    AND table_vcf.\"REF\" = table_variants.\"REF\"
+                )
         """
         self.conn.execute(sql_query_update)
 
@@ -1335,6 +1336,55 @@ class Variants:
         sql_table_variants = f"DROP TABLE {table_variants}"
         self.conn.execute(sql_table_variants)
 
+
+    def set_variant_id(self, variant_id_column:str = "variant_id", force:bool = None) -> str:
+        """
+        It adds a column to the variants table called `variant_id` and populates it with a hash of the
+        `#CHROM`, `POS`, `REF`, and `ALT` columns
+        
+        :param variant_id_column: The name of the column to be created in the variants table, defaults
+        to variant_id
+        :type variant_id_column: str (optional)
+        :param force: If True, the variant_id column will be created even if it already exists
+        :type force: bool
+        :return: The name of the column that contains the variant_id
+        """
+
+
+        table_variants = self.get_table_variants()
+
+        if not variant_id_column:
+            variant_id_column = "variant_id"
+
+        if "variant_id" not in self.get_extra_infos() or force:
+
+            self.conn.execute(
+                f"ALTER TABLE {table_variants} ADD COLUMN IF NOT EXISTS {variant_id_column} UBIGINT DEFAULT 0")
+            
+            self.conn.execute(
+                f"""
+                    UPDATE {table_variants}
+                    SET "{variant_id_column}" = hash("#CHROM", "POS", "REF", "ALT")
+                """)
+        
+        return variant_id_column
+
+
+    def get_variant_id_column(self, variant_id_column:str = "variant_id", force:bool = None) -> str:
+        """
+        This function returns the variant_id column name
+        
+        :param variant_id_column: The name of the column in the dataframe that contains the variant IDs,
+        defaults to variant_id
+        :type variant_id_column: str (optional)
+        :param force: If True, will force the variant_id to be set to the value of variant_id_column. If
+        False, will only set the variant_id if it is not already set. If None, will set the variant_id
+        if it is not already set, or if it is set
+        :type force: bool
+        :return: The variant_id column name.
+        """
+        return self.set_variant_id(variant_id_column=variant_id_column, force=force)
+    
 
     ###
     # Annotation
@@ -1927,6 +1977,29 @@ class Variants:
             else:
                 log.warning(
                     f"Annotation warning: snpEff database found '{snpeff_databases}'")
+                
+        # if not os.path.exists(snpeff_databases):
+        #     log.warning(
+        #         f"Annotation warning: no snpEff database '{snpeff_databases}'. Try to find...")
+        #     # Try to find snpeff database
+        #     try:
+        #         snpeff_databases = os.path.dirname(os.path.dirname(
+        #             find_all('snpEffectPredictor.bin', '/')[0]))
+        #     except:
+        #         log.warning(
+        #             f"Annotation warning: no snpEff database autodetected '{snpeff_databases}'")
+        #         # raise ValueError(
+        #         #     f"Annotation warning: no snpEff database autodetected '{snpeff_databases}'")
+        #     if not os.path.exists(snpeff_databases):
+        #         #snpeff_databases = "/databases/snpeff/current"
+        #         snpeff_databases = "/databases"
+        #         log.warning(
+        #             f"Annotation warning: snpEff database default folder '{snpeff_databases}' (databases will be downloaded)")
+        #         # raise ValueError(
+        #         #     f"Annotation failed: no snpEff database '{snpeff_databases}'")
+        #     else:
+        #         log.warning(
+        #             f"Annotation warning: snpEff database found '{snpeff_databases}'")
 
         # Param
         param = self.get_param()
@@ -2132,6 +2205,29 @@ class Variants:
             else:
                 log.warning(
                     f"Annotation warning: annovar database found '{annovar_databases}'")
+                
+        # if not os.path.exists(annovar_databases):
+        #     log.warning(
+        #         f"Annotation warning: no annovar database '{annovar_databases}'. Try to find...")
+        #     # Try to find annovar database
+        #     try:
+        #         annovar_databases = os.path.dirname(os.path.dirname(
+        #             find_all('snpEffectPredictor.bin', '/')[0]))
+        #     except:
+        #         log.warning(
+        #             f"Annotation warning: no snpEff database autodetected '{annovar_databases}'")
+        #         # raise ValueError(
+        #         #     f"Annotation warning: no snpEff database autodetected '{annovar_databases}'")
+        #     if not os.path.exists(annovar_databases):
+        #         #annovar_databases = "/databases/annovar/current"
+        #         annovar_databases = "/databases"
+        #         log.warning(
+        #             f"Annotation warning: snpEff database default folder '{annovar_databases}' (databases will be downloaded)")
+        #         # raise ValueError(
+        #         #     f"Annotation failed: no snpEff database '{annovar_databases}'")
+        #     else:
+        #         log.warning(
+        #             f"Annotation warning: snpEff database found '{annovar_databases}'")
 
         # Param
         param = self.get_param()
@@ -2827,12 +2923,11 @@ class Variants:
         param = self.get_param()
         config_profiles = param.get("prioritization", {}).get(
             "config_profiles", config_profiles)
-        #profiles = param.get("prioritization", {}).get("profiles", ["default"])
         profiles = param.get("prioritization", {}).get("profiles", None)
         pzfields = param.get("prioritization", {}).get(
             "pzfields", ["PZFlag", "PZScore"])
         default_profile = param.get("prioritization", {}).get(
-            "default_profile", ["default"])
+            "default_profile", None)
         pzfields_sep = param.get("prioritization", {}).get("pzfields_sep", "_")
         prioritization_score_mode = param.get("prioritization", {}).get(
             "prioritization_score_mode", "HOWARD")
@@ -2848,6 +2943,9 @@ class Variants:
         # If no profiles provided, all profiles in the config profiles
         if not profiles:
             profiles = list(config_profiles.keys())
+
+        if not default_profile:
+            default_profile = profiles[0]
 
         log.debug("Profiles availables: " + str(list(config_profiles.keys())))
         log.debug("Profiles to check: " + str(list(profiles)))
@@ -3009,7 +3107,7 @@ class Variants:
                                         f" || 'PZFlag{pzfields_sep}{profile}=' || CASE WHEN PZFlag{pzfields_sep}{profile}==1 THEN 'PASS' WHEN PZFlag{pzfields_sep}{profile}==0 THEN 'FILTERED' END ")
                                     if profile == default_profile and "PZFlag" in list_of_pzfields:
                                         sql_set_info.append(
-                                            f" || 'PZFlag=' || PZFlag{pzfields_sep}{profile} ")
+                                            f" || 'PZFlag=' || CASE WHEN PZFlag{pzfields_sep}{profile}==1 THEN 'PASS' WHEN PZFlag{pzfields_sep}{profile}==0 THEN 'FILTERED' END ")
                                 if f"PZComment{pzfields_sep}{profile}" in list_of_pzfields:
                                     sql_set.append(
                                         f"PZComment{pzfields_sep}{profile} = PZComment{pzfields_sep}{profile} || CASE WHEN PZComment{pzfields_sep}{profile}!='' THEN ', ' ELSE '' END || '{criterion_comment}'")
@@ -3061,8 +3159,7 @@ class Variants:
                             log.info(f"""Profile '{profile}' - Update... """)
                             sql_query_update = f"""
                                 UPDATE {table_variants}
-                                SET INFO = 
-                                    CASE WHEN INFO NOT IN ('','.') THEN INFO || ';' ELSE '' END
+                                SET INFO = CASE WHEN INFO NOT IN ('','.') THEN INFO || ';' ELSE '' END
                                     {sql_set_info_option}
 
                             """
@@ -3071,6 +3168,10 @@ class Variants:
         else:
 
             log.warning(f"No profiles in parameters")
+
+        if self.get_param().get("explode_infos", None):
+            self.explode_infos(
+                prefix=self.get_param().get("explode_infos", None))
 
 
     ###
@@ -3103,6 +3204,23 @@ class Variants:
                     "operation_query": "(SELECT POS/2)",
                     "operation_info": True,
                 },
+            "VARTYPE":
+                {
+                    "type": "sql",
+                    "name": "VARTYPE",
+                    "output_column_name": "VARTYPE",
+                    "output_column_type": "String",
+                    "output_column_description": "Variant type: SNV if X>Y, MOSAIC if X>Y,Z or X,Y>Z, INDEL if XY>Z or X>YZ",
+                    "operation_query": """
+                        CASE
+                            WHEN LENGTH(REF) = 1 AND LENGTH(ALT) = 1 THEN 'SNV'
+                            WHEN REF LIKE '%,%' OR ALT LIKE '%,%' THEN 'MOSAIC'
+                            WHEN LENGTH(REF) <> LENGTH(ALT) THEN 'INDEL'
+                            ELSE 'UNDEFINED'
+                        END
+                        """,
+                    "operation_info": True,
+                },
             "snpeff_hgvs":
                 {
                     "type": "python",
@@ -3131,6 +3249,10 @@ class Variants:
                     self.calculation_process_sql(operation)
             else:
                 log.warning(f"No calculation '{operation_name}' available")
+
+        if self.get_param().get("explode_infos", None):
+            self.explode_infos(
+                prefix=self.get_param().get("explode_infos", None))
 
 
     def calculation_process_sql(self, operation) -> None:
@@ -3183,8 +3305,8 @@ class Variants:
         if operation_info:
             sql_update = f"""
                 UPDATE {table_variants}
-                SET "INFO" = "INFO" 
-                    || CASE WHEN "INFO" NOT IN ('','.')
+                SET "INFO" = CASE WHEN "INFO" IS NULL THEN '' ELSE "INFO" END
+                    || CASE WHEN "INFO" NOT IN ('','.',NULL)
                              AND "{prefix}{output_column_name}" NOT IN ('','.')
                         THEN ';'
                         ELSE ''
@@ -3209,55 +3331,6 @@ class Variants:
 
     # Operation functions
 
-
-    def set_variant_id(self, variant_id_column:str = "variant_id", force:bool = None) -> str:
-        """
-        It adds a column to the variants table called `variant_id` and populates it with a hash of the
-        `#CHROM`, `POS`, `REF`, and `ALT` columns
-        
-        :param variant_id_column: The name of the column to be created in the variants table, defaults
-        to variant_id
-        :type variant_id_column: str (optional)
-        :param force: If True, the variant_id column will be created even if it already exists
-        :type force: bool
-        :return: The name of the column that contains the variant_id
-        """
-
-
-        table_variants = self.get_table_variants()
-
-        if not variant_id_column:
-            variant_id_column = "variant_id"
-
-        if "variant_id" not in self.get_extra_infos() or force:
-
-            self.conn.execute(
-                f"ALTER TABLE {table_variants} ADD COLUMN IF NOT EXISTS {variant_id_column} UBIGINT DEFAULT 0")
-            
-            self.conn.execute(
-                f"""
-                    UPDATE {table_variants}
-                    SET "{variant_id_column}" = hash("#CHROM", "POS", "REF", "ALT")
-                """)
-        
-        return variant_id_column
-
-
-    def get_variant_id_column(self, variant_id_column:str = "variant_id", force:bool = None) -> str:
-        """
-        This function returns the variant_id column name
-        
-        :param variant_id_column: The name of the column in the dataframe that contains the variant IDs,
-        defaults to variant_id
-        :type variant_id_column: str (optional)
-        :param force: If True, will force the variant_id to be set to the value of variant_id_column. If
-        False, will only set the variant_id if it is not already set. If None, will set the variant_id
-        if it is not already set, or if it is set
-        :type force: bool
-        :return: The variant_id column name.
-        """
-        return self.set_variant_id(variant_id_column=variant_id_column, force=force)
-    
 
     def calculation_extract_snpeff_hgvs(self) -> None:
 
@@ -3335,7 +3408,8 @@ class Variants:
             # Update
             sql_update = f"""
                 UPDATE variants
-                SET "INFO" = "INFO" {sql_snpeff_hgvs_fields_set}
+                SET "INFO" = CASE WHEN "INFO" IS NULL THEN '' ELSE "INFO" END
+                    {sql_snpeff_hgvs_fields_set}
                 FROM dataframe_snpeff_hgvs
                 WHERE variants."{variant_id_column}" = dataframe_snpeff_hgvs."{variant_id_column}"
 
@@ -3349,7 +3423,6 @@ class Variants:
         else:
 
             log.warning("No snpEff annotation. Please Anotate with snpEff before use this calculation option")
-
 
 
     def calculation_extract_nomen(self) -> None:
@@ -3386,7 +3459,23 @@ class Variants:
         # Get HGVS field
         hgvs_field = param.get("calculation", {}).get(
             "NOMEN", {}).get("options", {}).get("hgvs_field", "hgvs")
-
+        
+        # Get transcripts
+        transcripts_file = param.get("calculation", {}).get(
+            "NOMEN", {}).get("options", {}).get("transcripts", None)
+        log.debug(f"Transcript file '{transcripts_file}'")
+        transcripts = []
+        if transcripts_file:
+            if os.path.exists(transcripts_file):
+                log.debug(f"Transcript file '{transcripts_file}' does exist")
+                transcripts_dataframe = pd.read_csv(transcripts_file, sep="\t", header=None, names=['transcript', 'gene'])
+                transcripts = transcripts_dataframe.iloc[:, 0].tolist()
+                log.debug(f"Transcripts DF")
+                log.debug(transcripts_dataframe)
+                log.debug(f"Transcripts: {transcripts}")
+            else:
+                log.error(f"Transcript file '{transcripts_file}' does NOT exist")
+                raise ValueError(f"Transcript file '{transcripts_file}' does NOT exist")
         # Explode HGVS field in column
         self.explode_infos(fields=[hgvs_field])
 
@@ -3402,7 +3491,7 @@ class Variants:
 
             # Create main NOMEN column
             dataframe_hgvs[field_nomen_dict] = dataframe_hgvs[extra_field].apply(
-                lambda x: find_nomen(str(x)))
+                lambda x: find_nomen(str(x), transcripts=transcripts))
 
             # Explode NOMEN Structure and create SQL set for update
             sql_nomen_fields = []
@@ -3435,7 +3524,8 @@ class Variants:
             # Update
             sql_update = f"""
                 UPDATE variants
-                SET "INFO" = "INFO" {sql_nomen_fields_set}
+                SET "INFO" = CASE WHEN "INFO" IS NULL THEN '' ELSE "INFO" END
+                    {sql_nomen_fields_set}
                 FROM dataframe_hgvs
                 WHERE variants."#CHROM" = dataframe_hgvs."#CHROM"
                     AND variants."POS" = dataframe_hgvs."POS" 
