@@ -551,3 +551,37 @@ def findbypipeline(df, samples:list = []):
 
     return f"{nb_pipeline_find}/{nb_pipeline}"
 
+
+
+def genotypeconcordance(df, samples:list = []):
+
+    # format
+    format_fields = df["FORMAT"].split(":")
+
+    # no sample/pipeline
+    if not samples:
+        return "0/0"
+
+    # init
+    genotype_list = {}
+
+    # For each sample/pipeline
+    for sample in samples:
+
+        # Split snpeff ann values
+        sample_infos = df[sample].split(":")
+
+        # Create Dataframe
+        sample_dict = {}
+        for i in range(len(format_fields)):
+            if len(sample_infos)>i:
+                sample_dict[format_fields[i]] = sample_infos[i]
+        
+        # Check if GT not null
+        #genotype_list[sample_dict["GT"]] = 1
+        if sample_dict["GT"] not in ['','.','./.','.|.']:
+            genotype_list[sample_dict["GT"]] = 1
+
+    return str(len(genotype_list) == 1).upper()
+
+

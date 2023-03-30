@@ -3242,11 +3242,24 @@ class Variants:
                     "function_name": "calculation_find_by_pipeline",
                     "function_params": []
                 },
+            "GENOTYPECONCORDANCE":
+                {
+                    "type": "python",
+                    "name": "FINDBYPIPELINE",
+                    "function_name": "calculation_genotype_concordance",
+                    "function_params": []
+                },
         }
-
+        
+        # Upper keys
+        operations_config = {k.upper(): v for k, v in operations_config.items()}
+        
+        # Operations for calculation
         operations = self.get_param().get("calculation", {}).keys()
 
+        # For each operations
         for operation_name in operations:
+            operation_name = operation_name.upper()
             if operation_name in operations_config:
                 log.info(f"Calculation '{operation_name}'")
                 operation = operations_config[operation_name]
@@ -3337,84 +3350,6 @@ class Variants:
         getattr(self, function_name)(*function_params)
 
     # Operation functions
-
-
-    def calculation_find_by_pipeline(self) -> None:
-
-        # findbypipeline annotation field
-        findbypipeline_tag = "findbypipeline"
-        
-        # VCF infos tags
-        vcf_infos_tags = {
-            "findbypipeline": "findbypipeline calculation",
-        }
-
-        # Param
-        param = self.get_param()
-        prefix = param.get("explode_infos", "INFO/")
-        if prefix == True:
-            prefix = "INFO/"
-
-        findbypipeline_infos = prefix+findbypipeline_tag
-
-        # Variants table
-        table_variants = self.get_table_variants()
-
-        # Header
-        vcf_reader = self.get_header()
-
-        # Create variant id
-        variant_id_column = self.get_variant_id_column()
-
-        # variant_id, FORMAT and samples
-        samples_fields = f" {variant_id_column}, FORMAT , " + \
-                " , ".join(self.get_header_sample_list())
-        
-        # Create dataframe
-        dataframe_findbypipeline = self.get_query_to_df(
-            f""" SELECT {samples_fields} FROM {table_variants} """)
-
-    
-        # Create findbypipeline column
-        dataframe_findbypipeline[findbypipeline_infos] = dataframe_findbypipeline.apply(lambda row: findbypipeline(row, samples=self.get_header_sample_list()), axis=1)
-        
-        # Add snpeff_hgvs to header
-        vcf_reader.infos[findbypipeline_tag] = vcf.parser._Info(
-                    findbypipeline_tag,
-                    ".",
-                    "String",
-                    vcf_infos_tags.get(
-                        findbypipeline_tag, "snpEff hgvs annotations"),
-                    "howard calculation",
-                    "0",
-                    self.code_type_map.get("String")
-                )
-
-        # Create fields to add in INFO
-        sql_findbypipeline_fields = [f"""
-                    || CASE WHEN dataframe_findbypipeline."{findbypipeline_infos}" NOT NULL AND "INFO" IS NOT NULL THEN ';' ELSE '' END
-                    || CASE WHEN dataframe_findbypipeline."{findbypipeline_infos}" NOT NULL
-                        THEN '{findbypipeline_tag}=' || dataframe_findbypipeline."{findbypipeline_infos}"
-                        ELSE ''
-                        END """]
-
-        # SQL set for update
-        sql_findbypipeline_fields_set = "  ".join(sql_findbypipeline_fields)
-
-        # Update
-        sql_update = f"""
-            UPDATE variants
-            SET "INFO" = CASE WHEN "INFO" IS NULL THEN '' ELSE "INFO" END
-                {sql_findbypipeline_fields_set}
-            FROM dataframe_findbypipeline
-            WHERE variants."{variant_id_column}" = dataframe_findbypipeline."{variant_id_column}"
-
-        """
-        self.conn.execute(sql_update)
-
-        # Delete dataframe
-        del dataframe_findbypipeline
-        gc.collect()
 
 
     def calculation_extract_snpeff_hgvs(self) -> None:
@@ -3627,6 +3562,162 @@ class Variants:
             # Delete dataframe
             del dataframe_hgvs
             gc.collect()
+
+
+    def calculation_find_by_pipeline(self) -> None:
+
+        # findbypipeline annotation field
+        findbypipeline_tag = "findbypipeline"
+        
+        # VCF infos tags
+        vcf_infos_tags = {
+            "findbypipeline": "findbypipeline calculation",
+        }
+
+        # Param
+        param = self.get_param()
+        prefix = param.get("explode_infos", "INFO/")
+        if prefix == True:
+            prefix = "INFO/"
+
+        findbypipeline_infos = prefix+findbypipeline_tag
+
+        # Variants table
+        table_variants = self.get_table_variants()
+
+        # Header
+        vcf_reader = self.get_header()
+
+        # Create variant id
+        variant_id_column = self.get_variant_id_column()
+
+        # variant_id, FORMAT and samples
+        samples_fields = f" {variant_id_column}, FORMAT , " + \
+                " , ".join(self.get_header_sample_list())
+        
+        # Create dataframe
+        dataframe_findbypipeline = self.get_query_to_df(
+            f""" SELECT {samples_fields} FROM {table_variants} """)
+
+    
+        # Create findbypipeline column
+        dataframe_findbypipeline[findbypipeline_infos] = dataframe_findbypipeline.apply(lambda row: findbypipeline(row, samples=self.get_header_sample_list()), axis=1)
+        
+        # Add snpeff_hgvs to header
+        vcf_reader.infos[findbypipeline_tag] = vcf.parser._Info(
+                    findbypipeline_tag,
+                    ".",
+                    "String",
+                    vcf_infos_tags.get(
+                        findbypipeline_tag, "snpEff hgvs annotations"),
+                    "howard calculation",
+                    "0",
+                    self.code_type_map.get("String")
+                )
+
+        # Create fields to add in INFO
+        sql_findbypipeline_fields = [f"""
+                    || CASE WHEN dataframe_findbypipeline."{findbypipeline_infos}" NOT NULL AND "INFO" IS NOT NULL THEN ';' ELSE '' END
+                    || CASE WHEN dataframe_findbypipeline."{findbypipeline_infos}" NOT NULL
+                        THEN '{findbypipeline_tag}=' || dataframe_findbypipeline."{findbypipeline_infos}"
+                        ELSE ''
+                        END """]
+
+        # SQL set for update
+        sql_findbypipeline_fields_set = "  ".join(sql_findbypipeline_fields)
+
+        # Update
+        sql_update = f"""
+            UPDATE variants
+            SET "INFO" = CASE WHEN "INFO" IS NULL THEN '' ELSE "INFO" END
+                {sql_findbypipeline_fields_set}
+            FROM dataframe_findbypipeline
+            WHERE variants."{variant_id_column}" = dataframe_findbypipeline."{variant_id_column}"
+
+        """
+        self.conn.execute(sql_update)
+
+        # Delete dataframe
+        del dataframe_findbypipeline
+        gc.collect()
+
+
+    def calculation_genotype_concordance(self) -> None:
+
+        # genotypeconcordance annotation field
+        genotypeconcordance_tag = "genotypeconcordance"
+        
+        # VCF infos tags
+        vcf_infos_tags = {
+            "genotypeconcordance": "genotypeconcordance calculation",
+        }
+
+        # Param
+        param = self.get_param()
+        prefix = param.get("explode_infos", "INFO/")
+        if prefix == True:
+            prefix = "INFO/"
+
+        genotypeconcordance_infos = prefix+genotypeconcordance_tag
+
+        # Variants table
+        table_variants = self.get_table_variants()
+
+        # Header
+        vcf_reader = self.get_header()
+
+        # Create variant id
+        variant_id_column = self.get_variant_id_column()
+
+        # variant_id, FORMAT and samples
+        samples_fields = f" {variant_id_column}, FORMAT , " + \
+                " , ".join(self.get_header_sample_list())
+        
+        # Create dataframe
+        dataframe_genotypeconcordance = self.get_query_to_df(
+            f""" SELECT {samples_fields} FROM {table_variants} """)
+
+    
+        # Create genotypeconcordance column
+        dataframe_genotypeconcordance[genotypeconcordance_infos] = dataframe_genotypeconcordance.apply(lambda row: genotypeconcordance(row, samples=self.get_header_sample_list()), axis=1)
+        
+        # Add genotypeconcordance to header
+        vcf_reader.infos[genotypeconcordance_tag] = vcf.parser._Info(
+                    genotypeconcordance_tag,
+                    ".",
+                    "String",
+                    vcf_infos_tags.get(
+                        genotypeconcordance_tag, "snpEff hgvs annotations"),
+                    "howard calculation",
+                    "0",
+                    self.code_type_map.get("String")
+                )
+
+        # Create fields to add in INFO
+        sql_genotypeconcordance_fields = [f"""
+                    || CASE WHEN dataframe_genotypeconcordance."{genotypeconcordance_infos}" NOT NULL AND "INFO" IS NOT NULL THEN ';' ELSE '' END
+                    || CASE WHEN dataframe_genotypeconcordance."{genotypeconcordance_infos}" NOT NULL
+                        THEN '{genotypeconcordance_tag}=' || dataframe_genotypeconcordance."{genotypeconcordance_infos}"
+                        ELSE ''
+                        END """]
+
+        # SQL set for update
+        sql_genotypeconcordance_fields_set = "  ".join(sql_genotypeconcordance_fields)
+
+        # Update
+        sql_update = f"""
+            UPDATE variants
+            SET "INFO" = CASE WHEN "INFO" IS NULL THEN '' ELSE "INFO" END
+                {sql_genotypeconcordance_fields_set}
+            FROM dataframe_genotypeconcordance
+            WHERE variants."{variant_id_column}" = dataframe_genotypeconcordance."{variant_id_column}"
+
+        """
+        self.conn.execute(sql_update)
+
+        # Delete dataframe
+        del dataframe_genotypeconcordance
+        gc.collect()
 
 
 
