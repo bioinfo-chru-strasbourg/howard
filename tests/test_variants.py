@@ -25,6 +25,9 @@ from howard.objects.variants import Variants
 
 tests_folder = os.path.dirname(__file__)
 
+
+
+
     
 
 def test_set_get_input():
@@ -1778,4 +1781,43 @@ def test_calculation_genotype_concordance():
     assert len(result) == 6
 
 
+def test_calculation_barcode():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    output_vcf = "/tmp/output.vcf.gz"
+
+    # Construct param dict
+    param = {
+        "calculation": {
+            "BARCODE": None
+        }
+    }
+
+    # Create object
+    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
+    # Remove if output file exists
+    remove_if_exists([output_vcf])
+
+    # Calculation
+    vcf.calculation()
+
+    result = vcf.get_query_to_df(f""" SELECT INFO FROM variants """)
+    print(result)
+
+    result = vcf.get_query_to_df(f""" SELECT INFO FROM variants WHERE INFO LIKE '%barcode%' """)
+    assert len(result) == 7
+
+    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%barcode=1122%' """)
+    assert len(result) == 1
+
+    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%barcode=0111%' """)
+    assert len(result) == 1
+    
+    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%barcode=1011%' """)
+    assert len(result) == 4
+    
+    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%barcode=1101%' """)
+    assert len(result) == 1
     

@@ -3249,6 +3249,13 @@ class Variants:
                     "function_name": "calculation_genotype_concordance",
                     "function_params": []
                 },
+            "BARCODE":
+                {
+                    "type": "python",
+                    "name": "BARCODE",
+                    "function_name": "calculation_barcode",
+                    "function_params": []
+                },
         }
         
         # Upper keys
@@ -3718,6 +3725,85 @@ class Variants:
         # Delete dataframe
         del dataframe_genotypeconcordance
         gc.collect()
+
+
+    def calculation_barcode(self) -> None:
+
+        # barcode annotation field
+        barcode_tag = "barcode"
+        
+        # VCF infos tags
+        vcf_infos_tags = {
+            "barcode": "barcode calculation",
+        }
+
+        # Param
+        param = self.get_param()
+        prefix = param.get("explode_infos", "INFO/")
+        if prefix == True:
+            prefix = "INFO/"
+
+        barcode_infos = prefix+barcode_tag
+
+        # Variants table
+        table_variants = self.get_table_variants()
+
+        # Header
+        vcf_reader = self.get_header()
+
+        # Create variant id
+        variant_id_column = self.get_variant_id_column()
+
+        # variant_id, FORMAT and samples
+        samples_fields = f" {variant_id_column}, FORMAT , " + \
+                " , ".join(self.get_header_sample_list())
+        
+        # Create dataframe
+        dataframe_barcode = self.get_query_to_df(
+            f""" SELECT {samples_fields} FROM {table_variants} """)
+
+    
+        # Create barcode column
+        dataframe_barcode[barcode_infos] = dataframe_barcode.apply(lambda row: barcode(row, samples=self.get_header_sample_list()), axis=1)
+        
+        # Add barcode to header
+        vcf_reader.infos[barcode_tag] = vcf.parser._Info(
+                    barcode_tag,
+                    ".",
+                    "String",
+                    vcf_infos_tags.get(
+                        barcode_tag, "snpEff hgvs annotations"),
+                    "howard calculation",
+                    "0",
+                    self.code_type_map.get("String")
+                )
+
+        # Create fields to add in INFO
+        sql_barcode_fields = [f"""
+                    || CASE WHEN dataframe_barcode."{barcode_infos}" NOT NULL AND "INFO" IS NOT NULL THEN ';' ELSE '' END
+                    || CASE WHEN dataframe_barcode."{barcode_infos}" NOT NULL
+                        THEN '{barcode_tag}=' || dataframe_barcode."{barcode_infos}"
+                        ELSE ''
+                        END """]
+
+        # SQL set for update
+        sql_barcode_fields_set = "  ".join(sql_barcode_fields)
+
+        # Update
+        sql_update = f"""
+            UPDATE variants
+            SET "INFO" = CASE WHEN "INFO" IS NULL THEN '' ELSE "INFO" END
+                {sql_barcode_fields_set}
+            FROM dataframe_barcode
+            WHERE variants."{variant_id_column}" = dataframe_barcode."{variant_id_column}"
+
+        """
+        self.conn.execute(sql_update)
+
+        # Delete dataframe
+        del dataframe_barcode
+        gc.collect()
+
 
 
 

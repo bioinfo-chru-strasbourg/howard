@@ -50,6 +50,18 @@ file_format_delimiters = {
     "psv": "|"
 }
 
+genotype_code = {
+    "./.": 0,
+    ".|.": 0,
+    "0/0": 0,
+    "0|0": 0,
+    "./.": 0,
+    "./.": 0,
+    "./.": 0,
+    "./.": 0,
+    "./.": 0,
+    "./.": 0
+}
 
 def remove_if_exists(filepaths: list) -> None:
     """
@@ -583,5 +595,61 @@ def genotypeconcordance(df, samples:list = []):
             genotype_list[sample_dict["GT"]] = 1
 
     return str(len(genotype_list) == 1).upper()
+
+
+def genotype_compression(genotype:str = "") -> str:
+
+    genotype_compressed = genotype
+    genotype_compressed = re.sub(r'\.', '0', genotype_compressed)
+    genotype_compressed = re.sub(r'\D', '', genotype_compressed)
+    genotype_compressed = ''.join(set(genotype_compressed))
+
+    return genotype_compressed
+
+
+def genotype_barcode(genotype:str = "") -> str:
+
+    genotype_compressed = genotype_compression(genotype)
+    if len(genotype_compressed) == 1:
+        if genotype_compressed == "0":
+            barcode = "0"
+        else:
+            barcode = "2"
+    elif len(genotype_compressed) > 1:
+        barcode = "1"
+    else:
+        barcode = "?"
+
+    return barcode
+
+
+def barcode(df, samples:list = []):
+
+    # format
+    format_fields = df["FORMAT"].split(":")
+
+    # no sample/pipeline
+    if not samples:
+        return "0/0"
+
+    # init
+    barcode = []
+
+    # For each sample/pipeline
+    for sample in samples:
+
+        # Split snpeff ann values
+        sample_infos = df[sample].split(":")
+
+        # Create Dataframe
+        sample_dict = {}
+        for i in range(len(format_fields)):
+            if len(sample_infos)>i:
+                sample_dict[format_fields[i]] = sample_infos[i]
+        
+        # generate barcode
+        barcode.append(genotype_barcode(sample_dict["GT"]))
+
+    return "".join(barcode)
 
 
