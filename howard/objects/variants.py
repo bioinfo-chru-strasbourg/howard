@@ -3256,6 +3256,13 @@ class Variants:
                     "function_name": "calculation_barcode",
                     "function_params": []
                 },
+            "VAF":
+                {
+                    "type": "python",
+                    "name": "VAF",
+                    "function_name": "calculation_vaf_normalization",
+                    "function_params": []
+                },
         }
         
         # Upper keys
@@ -3791,11 +3798,11 @@ class Variants:
 
         # Update
         sql_update = f"""
-            UPDATE variants
+            UPDATE {table_variants}
             SET "INFO" = CASE WHEN "INFO" IS NULL THEN '' ELSE "INFO" END
                 {sql_barcode_fields_set}
             FROM dataframe_barcode
-            WHERE variants."{variant_id_column}" = dataframe_barcode."{variant_id_column}"
+            WHERE {table_variants}."{variant_id_column}" = dataframe_barcode."{variant_id_column}"
 
         """
         self.conn.execute(sql_update)
@@ -3804,6 +3811,84 @@ class Variants:
         del dataframe_barcode
         gc.collect()
 
+
+    def calculation_vaf_normalization(self) -> None:
+
+        # vaf_normalization annotation field
+        vaf_normalization_tag = "VAF"
+        
+        # VCF infos tags
+        vcf_infos_tags = {
+            "VAF": "VAF Variant Frequency",
+        }
+
+        # Param
+        param = self.get_param()
+        prefix = param.get("explode_infos", "INFO/")
+        if prefix == True:
+            prefix = "INFO/"
+
+        #vaf_normalization_infos = prefix+vaf_normalization_tag
+
+        # Variants table
+        table_variants = self.get_table_variants()
+
+        # Header
+        vcf_reader = self.get_header()
+
+        # Do not calculate if VAF already exists
+        if "VAF" in vcf_reader.formats:
+            log.debug("VAF already on genotypes")
+            return
+
+        # Create variant id
+        variant_id_column = self.get_variant_id_column()
+
+        # variant_id, FORMAT and samples
+        samples_fields = f" {variant_id_column}, FORMAT , " + \
+                " , ".join(self.get_header_sample_list())
+        
+        # Create dataframe
+        dataframe_vaf_normalization = self.get_query_to_df(
+            f""" SELECT {variant_id_column}, FORMAT, {samples_fields} FROM {table_variants} """)
+
+        vaf_normalization_set = []
+
+        # for each sample vaf_normalization 
+        for sample in self.get_header_sample_list():
+            dataframe_vaf_normalization[sample] = dataframe_vaf_normalization.apply(lambda row: vaf_normalization(row, sample=sample), axis=1)
+            vaf_normalization_set.append(f""" "{sample}" = dataframe_vaf_normalization."{sample}" """)
+
+        # Add VAF to FORMAT
+        dataframe_vaf_normalization["FORMAT"] = dataframe_vaf_normalization["FORMAT"].apply(lambda x: str(x)+":VAF")
+        vaf_normalization_set.append(f""" "FORMAT" = dataframe_vaf_normalization."FORMAT" """)
+
+        # Add vaf_normalization to header
+        vcf_reader.formats[vaf_normalization_tag] = vcf.parser._Format(
+                    id=vaf_normalization_tag,
+                    num="1",
+                    type="Float",
+                    desc=vcf_infos_tags.get(
+                        vaf_normalization_tag, "VAF Variant Frequency"),
+                    type_code=self.code_type_map.get("Float")
+                )
+
+        # Create fields to add in INFO
+        sql_vaf_normalization_set = " , ".join(vaf_normalization_set)
+
+        # Update
+        sql_update = f"""
+            UPDATE {table_variants}
+            SET {sql_vaf_normalization_set}
+            FROM dataframe_vaf_normalization
+            WHERE variants."{variant_id_column}" = dataframe_vaf_normalization."{variant_id_column}"
+
+        """
+        self.conn.execute(sql_update)
+
+        # Delete dataframe
+        del dataframe_vaf_normalization
+        gc.collect()
 
 
 

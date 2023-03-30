@@ -18,6 +18,8 @@ import re
 import Bio.bgzf as bgzf
 import gzip
 import pytest
+import pandas as pd
+from pandas.testing import assert_frame_equal
 
 from howard.objects.variants import Variants
 from howard.commons import *
@@ -480,4 +482,146 @@ def test_find_genome():
 
         assert (os.path.exists(genome_path_found) and genome_path_found != genome_path_nonexistent) or error == f"Genome failed: no genome '{genome_filename}'"
 
+
+def test_findbypipeline():
+
+    # Test case 1: Sample with GT
+    data = {"FORMAT": "GT:DP:AD", "S1": "0/1:20:10,10", "S2": "0/0:20:20,0", "S3": "./.:20:0,0"}
+    row = pd.Series(data)
+    expected_result = "1/3"
+    assert findbypipeline(row, ["S1", "S2", "S3"]) == expected_result
     
+    # Test case 2: No sample/pipeline
+    data = {"FORMAT": "GT:DP:AD", "S1": "0/1:20:10,10", "S2": "0/0:20:20,0", "S3": "./.:20:0,0"}
+    row = pd.Series(data)
+    expected_result = "0/0"
+    assert findbypipeline(row, []) == expected_result
+    
+    # Test case 3: All samples have missing genotype
+    data = {"FORMAT": "GT:DP:AD", "S1": "./.:20:0,0", "S2": "./.:20:0,0", "S3": "./.:20:0,0"}
+    row = pd.Series(data)
+    expected_result = "0/3"
+    assert findbypipeline(row, ["S1", "S2", "S3"]) == expected_result
+
+
+def test_genotypeconcordance():
+
+    # Define test data
+    test_dataframe = pd.DataFrame({
+        "CHROM": ["chr1"],
+        "POS": [100],
+        "ID": ["rs123"],
+        "REF": ["A"],
+        "ALT": ["T"],
+        "QUAL": [30],
+        "FILTER": ["PASS"],
+        "INFO": ["AF=0.5"],
+        "FORMAT": ["GT:DP"],
+        "Sample1": ["0/1:10"],
+        "Sample2": ["0/0:20"],
+        "Sample3": ["1/1:30"]
+    })
+
+    # Test case 1: No samples
+    assert genotypeconcordance(test_dataframe.iloc[0], []) == "0/0"
+
+    # Test case 2: All samples have the same genotype
+    assert genotypeconcordance(test_dataframe.iloc[0], ["Sample2", "Sample2"]) == "TRUE"
+    
+    # Test case 3: At least one sample has a different genotype
+    assert genotypeconcordance(test_dataframe.iloc[0], ["Sample1", "Sample3"]) == "FALSE"
+    
+    # Test case 4: Some samples have null or unknown genotypes
+    assert genotypeconcordance(test_dataframe.iloc[0], ["Sample1", "Sample2", "Sample3", "Sample4"]) == "FALSE"
+    
+    # Test case 5: All samples have null or unknown genotypes
+    assert genotypeconcordance(test_dataframe.iloc[0], ["Sample4", "Sample5"]) == "FALSE"
+    
+    # Test case 6: All samples have the same null or unknown genotype
+    assert genotypeconcordance(test_dataframe.iloc[0], ["Sample2", "Sample4", "Sample5"]) == "TRUE"
+
+
+def test_genotype_compression():
+    # Test cases with expected output
+    test_cases = {
+        "0/0": "0",
+        "0/1": "01",
+        "1/1": "1",
+        "1|2": "12",
+        "./.": "0",
+        ".|1": "01",
+        "1|1|1": "1",
+        ".|.|.": "0",
+        "1/2|2": "12",
+        ".": "0",
+        "": ""
+    }
+
+    for genotype, expected_output in test_cases.items():
+        assert genotype_compression(genotype) == expected_output
+
+
+def test_genotype_barcode():
+    test_cases = {
+        "1|1": "2",
+        "0|0": "0",
+        "1|0": "1",
+        "1/1": "2",
+        "0/0": "0",
+        "1/0": "1",
+        "1/2": "1",
+        "0/2": "1",
+        "./.": "0",
+        ".|.": "0",
+        "": "?",
+    }
+    for input_genotype, expected_output in test_cases.items():
+        assert genotype_barcode(input_genotype) == expected_output
+
+
+def test_barcode():
+    
+    test_data = pd.DataFrame({
+        'CHROM': ['chr1', 'chr2'],
+        'POS': [100, 200],
+        'REF': ['A', 'A'],
+        'ALT': ['T', 'T'],
+        'FORMAT': ['GT', 'GT'],
+        'sample1': ['0/0', '0/0'],
+        'sample2': ['0/1', '1|0'],
+        'sample3': ['./.', './0'],
+        'sample4': ['1/1', '2/2'],
+    })
+    
+    # Case 1: empty samples list
+    assert barcode(test_data.iloc[0], []) == ''
+    
+    # Case 2: all samples have same barcode
+    assert barcode(test_data.iloc[0], ['sample1', 'sample2', 'sample4']) == '012'
+    
+    # Case 3: some samples have same barcode, some have different barcode
+    assert barcode(test_data.iloc[1], ['sample1', 'sample2', 'sample3', 'sample4']) == '0102'
+
+
+def test_vaf_normalization():
+
+    sample_data = pd.DataFrame({
+        "FORMAT": ["GT:AD:DP:GQ:PL", "GT:FREQ", "GT:DP4"],
+        "Sample1": ["0/1:10,5:15:99:255,0,255", "0/1:50.0%", "0/1:6,4,3,2"],
+        "Sample2": ["1/1:.:.", "0/0", "0/1:4,2,2,1"],
+        "Sample3": ["./.:.:.", "./.", ""]
+    })
+
+    expected_output = pd.DataFrame({
+        "FORMAT": ["GT:AD:DP:GQ:PL", "GT:FREQ", "GT:DP4"],
+        "Sample1": ["0/1:10,5:15:99:255,0,255:0.333333", "0/1:50.0%:0.5", "0/1:6,4,3,2:0.333333"],
+        "Sample2": ["1/1:.:.:.:.:.", "0/0:.:.", "0/1:4,2,2,1:0.333333"],
+        "Sample3": ["./.:.:.:.:.:.", "./.:.:.", "./.:.:."]
+    })
+
+    actual_output = sample_data.copy()
+    for sample in sample_data.columns[1:]:
+        actual_output[sample] = sample_data.apply(lambda x: vaf_normalization(x, sample), axis=1)
+
+    assert_frame_equal(actual_output, expected_output)
+

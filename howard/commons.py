@@ -50,18 +50,6 @@ file_format_delimiters = {
     "psv": "|"
 }
 
-genotype_code = {
-    "./.": 0,
-    ".|.": 0,
-    "0/0": 0,
-    "0|0": 0,
-    "./.": 0,
-    "./.": 0,
-    "./.": 0,
-    "./.": 0,
-    "./.": 0,
-    "./.": 0
-}
 
 def remove_if_exists(filepaths: list) -> None:
     """
@@ -558,11 +546,10 @@ def findbypipeline(df, samples:list = []):
                 sample_dict[format_fields[i]] = sample_infos[i]
         
         # Check if GT not null
-        if sample_dict["GT"] not in ['','.','./.','.|.']:
+        if sample_dict["GT"].replace("0",".") not in ['','.','./.','.|.']:
             nb_pipeline_find += 1
 
     return f"{nb_pipeline_find}/{nb_pipeline}"
-
 
 
 def genotypeconcordance(df, samples:list = []):
@@ -580,19 +567,21 @@ def genotypeconcordance(df, samples:list = []):
     # For each sample/pipeline
     for sample in samples:
 
-        # Split snpeff ann values
-        sample_infos = df[sample].split(":")
+        if sample in df:
 
-        # Create Dataframe
-        sample_dict = {}
-        for i in range(len(format_fields)):
-            if len(sample_infos)>i:
-                sample_dict[format_fields[i]] = sample_infos[i]
-        
-        # Check if GT not null
-        #genotype_list[sample_dict["GT"]] = 1
-        if sample_dict["GT"] not in ['','.','./.','.|.']:
-            genotype_list[sample_dict["GT"]] = 1
+            # Split snpeff ann values
+            sample_infos = df[sample].split(":")
+
+            # Create Dataframe
+            sample_dict = {}
+            for i in range(len(format_fields)):
+                if len(sample_infos)>i:
+                    sample_dict[format_fields[i]] = sample_infos[i]
+            
+            # Check if GT not null
+            #genotype_list[sample_dict["GT"]] = 1
+            if sample_dict["GT"] not in ['','.','./.','.|.']:
+                genotype_list[sample_dict["GT"]] = 1
 
     return str(len(genotype_list) == 1).upper()
 
@@ -602,7 +591,7 @@ def genotype_compression(genotype:str = "") -> str:
     genotype_compressed = genotype
     genotype_compressed = re.sub(r'\.', '0', genotype_compressed)
     genotype_compressed = re.sub(r'\D', '', genotype_compressed)
-    genotype_compressed = ''.join(set(genotype_compressed))
+    genotype_compressed = ''.join(sorted(set(genotype_compressed)))
 
     return genotype_compressed
 
@@ -630,7 +619,7 @@ def barcode(df, samples:list = []):
 
     # no sample/pipeline
     if not samples:
-        return "0/0"
+        return ""
 
     # init
     barcode = []
@@ -652,4 +641,61 @@ def barcode(df, samples:list = []):
 
     return "".join(barcode)
 
+
+def vaf_normalization(row, sample:str) -> str:
+
+    # format
+    format_fields = row["FORMAT"].split(":")
+    
+    # Sample genotype
+    sample_genotype = row[sample]
+
+    # No genotype
+    if not sample_genotype:
+        sample_genotype = "./."
+    
+    # Split samples values values
+    sample_genotype_infos = sample_genotype.split(":")
+
+    # Create Dataframe
+    sample_genotype_dict = {}
+    for i in range(len(format_fields)):
+        if len(sample_genotype_infos)>i:
+            sample_genotype_dict[format_fields[i]] = sample_genotype_infos[i]
+        else:
+            sample_genotype_dict[format_fields[i]] = "."
+
+    # Find VAF
+    # Default VAF
+    vaf = "."
+    # VAF from FREQ
+    if "FREQ" in sample_genotype_dict:
+        if sample_genotype_dict["FREQ"] != ".":
+            vaf_freq = sum(map(float, sample_genotype_dict["FREQ"].replace('%', '').split(',')))
+            if vaf_freq:
+                vaf = round(vaf_freq / 100, 4)
+    # VAF from DP4
+    elif "DP4" in sample_genotype_dict:
+        if sample_genotype_dict["DP4"] != ".":
+            dp4_split = sample_genotype_dict["DP4"].split(",")
+            if dp4_split != ['.']:
+                dp4_dp = sum(map(int, dp4_split))
+                pd4_alt = sum(map(int, dp4_split[2:]))
+                vaf = round(pd4_alt / dp4_dp, 6) if dp4_dp else "."
+    # VAF from AD
+    elif "AD" in sample_genotype_dict:
+        if sample_genotype_dict["AD"] != ".":
+            ad_split = sample_genotype_dict["AD"].split(",")
+            if ad_split != ['.']:
+                ad_dp = sum(map(int, ad_split))
+                ad_alt = sum(map(int, ad_split[1:]))
+                vaf = round(ad_alt / ad_dp, 6) if ad_dp else "."
+
+    # add vaf into genotype
+    sample_genotype_dict["VAF"] = vaf
+
+    # Create new genotype info
+    genotype_with_vaf = ":".join([str(v) for v in sample_genotype_dict.values()])
+
+    return genotype_with_vaf
 
