@@ -567,7 +567,7 @@ class Variants:
         return ",".join(sql_column_list)
 
 
-    def get_header_sample_list(self):
+    def get_header_sample_list(self) -> list:
         """
         This function retruns header length (without #CHROM line)
 
@@ -1140,7 +1140,7 @@ class Variants:
             info_field = "INFO"
         # samples fields
         if add_samples:
-            self.get_header_sample_list()
+            #self.get_header_sample_list()
             samples_fields = " , FORMAT , " + \
                 " , ".join(self.get_header_sample_list())
         else:
@@ -3235,6 +3235,13 @@ class Variants:
                     "function_name": "calculation_extract_nomen",
                     "function_params": []
                 },
+            "FINDBYPIPELINE":
+                {
+                    "type": "python",
+                    "name": "FINDBYPIPELINE",
+                    "function_name": "calculation_find_by_pipeline",
+                    "function_params": []
+                },
         }
 
         operations = self.get_param().get("calculation", {}).keys()
@@ -3332,6 +3339,84 @@ class Variants:
     # Operation functions
 
 
+    def calculation_find_by_pipeline(self) -> None:
+
+        # findbypipeline annotation field
+        findbypipeline_tag = "findbypipeline"
+        
+        # VCF infos tags
+        vcf_infos_tags = {
+            "findbypipeline": "findbypipeline calculation",
+        }
+
+        # Param
+        param = self.get_param()
+        prefix = param.get("explode_infos", "INFO/")
+        if prefix == True:
+            prefix = "INFO/"
+
+        findbypipeline_infos = prefix+findbypipeline_tag
+
+        # Variants table
+        table_variants = self.get_table_variants()
+
+        # Header
+        vcf_reader = self.get_header()
+
+        # Create variant id
+        variant_id_column = self.get_variant_id_column()
+
+        # variant_id, FORMAT and samples
+        samples_fields = f" {variant_id_column}, FORMAT , " + \
+                " , ".join(self.get_header_sample_list())
+        
+        # Create dataframe
+        dataframe_findbypipeline = self.get_query_to_df(
+            f""" SELECT {samples_fields} FROM {table_variants} """)
+
+    
+        # Create findbypipeline column
+        dataframe_findbypipeline[findbypipeline_infos] = dataframe_findbypipeline.apply(lambda row: findbypipeline(row, samples=self.get_header_sample_list()), axis=1)
+        
+        # Add snpeff_hgvs to header
+        vcf_reader.infos[findbypipeline_tag] = vcf.parser._Info(
+                    findbypipeline_tag,
+                    ".",
+                    "String",
+                    vcf_infos_tags.get(
+                        findbypipeline_tag, "snpEff hgvs annotations"),
+                    "howard calculation",
+                    "0",
+                    self.code_type_map.get("String")
+                )
+
+        # Create fields to add in INFO
+        sql_findbypipeline_fields = [f"""
+                    || CASE WHEN dataframe_findbypipeline."{findbypipeline_infos}" NOT NULL AND "INFO" IS NOT NULL THEN ';' ELSE '' END
+                    || CASE WHEN dataframe_findbypipeline."{findbypipeline_infos}" NOT NULL
+                        THEN '{findbypipeline_tag}=' || dataframe_findbypipeline."{findbypipeline_infos}"
+                        ELSE ''
+                        END """]
+
+        # SQL set for update
+        sql_findbypipeline_fields_set = "  ".join(sql_findbypipeline_fields)
+
+        # Update
+        sql_update = f"""
+            UPDATE variants
+            SET "INFO" = CASE WHEN "INFO" IS NULL THEN '' ELSE "INFO" END
+                {sql_findbypipeline_fields_set}
+            FROM dataframe_findbypipeline
+            WHERE variants."{variant_id_column}" = dataframe_findbypipeline."{variant_id_column}"
+
+        """
+        self.conn.execute(sql_update)
+
+        # Delete dataframe
+        del dataframe_findbypipeline
+        gc.collect()
+
+
     def calculation_extract_snpeff_hgvs(self) -> None:
 
         # SnpEff annotation field
@@ -3355,6 +3440,9 @@ class Variants:
         speff_ann_infos = prefix+snpeff_ann
         speff_hgvs_infos = prefix+snpeff_hgvs
 
+        # Variants table
+        table_variants = self.get_table_variants()
+        
         # Header
         vcf_reader = self.get_header()
 
@@ -3376,7 +3464,7 @@ class Variants:
 
             # Create dataframe
             dataframe_snpeff_hgvs = self.get_query_to_df(
-                f""" SELECT "{variant_id_column}", "{speff_ann_infos}" FROM variants """)
+                f""" SELECT "{variant_id_column}", "{speff_ann_infos}" FROM {table_variants} """)
             
 
             # Create main NOMEN column
@@ -3397,8 +3485,9 @@ class Variants:
             
             # Create fields to add in INFO
             sql_snpeff_hgvs_fields = [f"""
+                        || CASE WHEN dataframe_snpeff_hgvs."{speff_hgvs_infos}" NOT NULL AND "INFO" IS NOT NULL THEN ';' ELSE '' END
                         || CASE WHEN dataframe_snpeff_hgvs."{speff_hgvs_infos}" NOT NULL
-                            THEN ';{snpeff_hgvs}=' || dataframe_snpeff_hgvs."{speff_hgvs_infos}"
+                            THEN '{snpeff_hgvs}=' || dataframe_snpeff_hgvs."{speff_hgvs_infos}"
                             ELSE ''
                             END """]
             
@@ -3411,7 +3500,7 @@ class Variants:
                 SET "INFO" = CASE WHEN "INFO" IS NULL THEN '' ELSE "INFO" END
                     {sql_snpeff_hgvs_fields_set}
                 FROM dataframe_snpeff_hgvs
-                WHERE variants."{variant_id_column}" = dataframe_snpeff_hgvs."{variant_id_column}"
+                WHERE {table_variants}."{variant_id_column}" = dataframe_snpeff_hgvs."{variant_id_column}"
 
             """
             self.conn.execute(sql_update)
@@ -3538,7 +3627,6 @@ class Variants:
             # Delete dataframe
             del dataframe_hgvs
             gc.collect()
-
 
 
 

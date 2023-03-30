@@ -518,3 +518,36 @@ def get_file_compressed(filename: str) -> bool:
     filename_name, filename_extension = os.path.splitext(filename)
     compress_format = filename_extension.replace(".", "")
     return compress_format in ["gz", "bcf"]
+
+
+def findbypipeline(df, samples:list = []):
+
+    # format
+    format_fields = df["FORMAT"].split(":")
+
+    # no sample/pipeline
+    if not samples:
+        return "0/0"
+
+    # init
+    nb_pipeline = len(samples)
+    nb_pipeline_find = 0
+
+    # For each sample/pipeline
+    for sample in samples:
+
+        # Split snpeff ann values
+        sample_infos = df[sample].split(":")
+
+        # Create Dataframe
+        sample_dict = {}
+        for i in range(len(format_fields)):
+            if len(sample_infos)>i:
+                sample_dict[format_fields[i]] = sample_infos[i]
+        
+        # Check if GT not null
+        if sample_dict["GT"] not in ['','.','./.','.|.']:
+            nb_pipeline_find += 1
+
+    return f"{nb_pipeline_find}/{nb_pipeline}"
+
