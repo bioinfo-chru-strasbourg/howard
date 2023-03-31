@@ -26,7 +26,6 @@ from howard.objects.variants import Variants
 tests_folder = os.path.dirname(__file__)
 
 
-    
 
 def test_set_get_input():
 
@@ -1853,4 +1852,82 @@ def test_calculation_vaf_normalization():
 
     result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND sample4 LIKE '%:0.303819' """)
     assert len(result) == 1
+    
+
+def test_calculation_vaf_stats():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    output_vcf = "/tmp/output.vcf.gz"
+
+    # Construct param dict
+    param = {
+        "calculation": {
+            "vaf": None,
+            "vaf_stats": None
+        }
+    }
+
+    # Create object
+    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
+    # Remove if output file exists
+    remove_if_exists([output_vcf])
+
+    # Calculation
+    vcf.calculation()
+
+    result = vcf.get_query_to_df(f""" SELECT INFO FROM variants WHERE INFO LIKE '%VAF_stats%' """)
+    assert len(result) == 7
+
+    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%VAF_stats_nb=4%' """)
+    assert len(result) == 1
+
+    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%VAF_stats_min=0.279835%' """)
+    assert len(result) == 1
+    
+    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%VAF_stats_max=0.303819%' """)
+    assert len(result) == 1
+
+    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%VAF_stats_mean=0.28737675%' """)
+    assert len(result) == 1
+    
+
+def test_calculation_dp_stats():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    output_vcf = "/tmp/output.vcf.gz"
+
+    # Construct param dict
+    param = {
+        "calculation": {
+            "dp_stats": None
+        }
+    }
+
+    # Create object
+    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
+    # Remove if output file exists
+    remove_if_exists([output_vcf])
+
+    # Calculation
+    vcf.calculation()
+
+    result = vcf.get_query_to_df(f""" SELECT INFO FROM variants WHERE INFO LIKE '%DP_stats%' """)
+    assert len(result) == 7
+
+    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%DP_stats_nb=4%' """)
+    assert len(result) == 1
+
+    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%DP_stats_min=576.0%' """)
+    assert len(result) == 1
+    
+    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%DP_stats_max=17664.0%' """)
+    assert len(result) == 1
+
+    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%DP_stats_mean=9158.0%' """)
+    assert len(result) == 1
+    
     

@@ -3245,7 +3245,7 @@ class Variants:
             "GENOTYPECONCORDANCE":
                 {
                     "type": "python",
-                    "name": "FINDBYPIPELINE",
+                    "name": "GENOTYPECONCORDANCE",
                     "function_name": "calculation_genotype_concordance",
                     "function_params": []
                 },
@@ -3262,6 +3262,20 @@ class Variants:
                     "name": "VAF",
                     "function_name": "calculation_vaf_normalization",
                     "function_params": []
+                },
+            "VAF_stats":
+                {
+                    "type": "python",
+                    "name": "VAF_stats",
+                    "function_name": "calculation_genotype_stats",
+                    "function_params": ["VAF"]
+                },
+            "DP_stats":
+                {
+                    "type": "python",
+                    "name": "DP_stats",
+                    "function_name": "calculation_genotype_stats",
+                    "function_params": ["DP"]
                 },
         }
         
@@ -3888,6 +3902,102 @@ class Variants:
 
         # Delete dataframe
         del dataframe_vaf_normalization
+        gc.collect()
+
+
+    def calculation_genotype_stats(self, info:str = "VAF") -> None:
+
+        # vaf_stats annotation field
+        vaf_stats_tag = info+"_stats"
+        
+        # VCF infos tags
+        vcf_infos_tags = {
+            info+"_stats_nb": f"genotype {info} Statistics - number of {info}",
+            info+"_stats_list": f"genotype {info} Statistics - list of {info}",
+            info+"_stats_min": f"genotype {info} Statistics - min {info}",
+            info+"_stats_max": f"genotype {info} Statistics - max {info}",
+            info+"_stats_mean": f"genotype {info} Statistics - mean {info}",
+            info+"_stats_mediane": f"genotype {info} Statistics - mediane {info}",
+            info+"_stats_stdev": f"genotype {info} Statistics - standard deviation {info}",
+        }
+       
+        # Param
+        param = self.get_param()
+        prefix = param.get("explode_infos", "INFO/")
+        if prefix == True:
+            prefix = "INFO/"
+
+        vaf_stats_infos = prefix+vaf_stats_tag
+
+        # Variants table
+        table_variants = self.get_table_variants()
+
+        # Header
+        vcf_reader = self.get_header()
+
+        # Create variant id
+        variant_id_column = self.get_variant_id_column()
+
+        # variant_id, FORMAT and samples
+        samples_fields = f" {variant_id_column}, FORMAT , " + \
+                " , ".join(self.get_header_sample_list())
+        
+        # Create dataframe
+        dataframe_vaf_stats = self.get_query_to_df(
+            f""" SELECT {samples_fields} FROM {table_variants} """)
+
+        # Create vaf_stats column
+        dataframe_vaf_stats[vaf_stats_infos] = dataframe_vaf_stats.apply(lambda row: genotype_stats(row, samples=self.get_header_sample_list(), info=info), axis=1)
+        
+        # List of vcf tags
+        sql_vaf_stats_fields = []
+
+        # Check all VAF stats infos
+        for stat in vcf_infos_tags:
+
+            # Extract stats
+            dataframe_vaf_stats[stat] = dataframe_vaf_stats[vaf_stats_infos].apply(lambda x: dict(x).get(stat, ""))
+
+            # Add snpeff_hgvs to header
+            vcf_reader.infos[stat] = vcf.parser._Info(
+                        stat,
+                        ".",
+                        "String",
+                        vcf_infos_tags.get(
+                            stat, "genotype statistics"),
+                        "howard calculation",
+                        "0",
+                        self.code_type_map.get("String")
+                    )
+            
+            if len(sql_vaf_stats_fields):
+                sep = ";"
+            else:
+                sep = ""
+
+            # Create fields to add in INFO
+            sql_vaf_stats_fields.append(f"""
+                        || CASE WHEN dataframe_vaf_stats."{stat}" NOT NULL
+                            THEN '{sep}{stat}=' || dataframe_vaf_stats."{stat}"
+                            ELSE ''
+                            END """)
+        
+        # SQL set for update
+        sql_vaf_stats_fields_set = "  ".join(sql_vaf_stats_fields)
+
+        # Update
+        sql_update = f"""
+            UPDATE variants
+            SET "INFO" = CASE WHEN "INFO" IS NULL THEN '' ELSE "INFO" || ';' END
+                {sql_vaf_stats_fields_set}
+            FROM dataframe_vaf_stats
+            WHERE variants."{variant_id_column}" = dataframe_vaf_stats."{variant_id_column}"
+
+        """
+        self.conn.execute(sql_update)
+
+        # Delete dataframe
+        del dataframe_vaf_stats
         gc.collect()
 
 

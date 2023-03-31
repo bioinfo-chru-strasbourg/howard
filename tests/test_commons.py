@@ -625,3 +625,65 @@ def test_vaf_normalization():
 
     assert_frame_equal(actual_output, expected_output)
 
+
+def test_genotype_stats():
+
+    test_data = pd.DataFrame({
+        'FORMAT': 'GT:AD:DP:GQ:PL:VAF',
+        'Sample1': '0/1:0,10:10:20:255,0,255:0.5',
+        'Sample2': '0/0:5,0:5:15:255,0,255:0',
+        'Sample3': '1/1:0,5:5:10:0,255,255:1',
+    }, index=[0])
+
+    expected_output = {
+        'VAF_stats_nb': 2,
+        'VAF_stats_list': '0.5:1.0',
+        'VAF_stats_min': 0.5,
+        'VAF_stats_max': 1.0,
+        'VAF_stats_mean': 0.75,
+        'VAF_stats_mediane': 0.75,
+        'VAF_stats_stdev': 0.3535533905932738
+    }
+    
+    # test for all samples
+    output = genotype_stats(test_data.iloc[0], ['Sample1', 'Sample2', 'Sample3'], 'VAF')
+    assert output == expected_output
+
+    # test for one sample only
+    output = genotype_stats(test_data.iloc[0], ['Sample1'], 'VAF')
+    expected_output = {
+        'VAF_stats_nb': 1,
+        'VAF_stats_list': '0.5',
+        'VAF_stats_min': 0.5,
+        'VAF_stats_max': 0.5,
+        'VAF_stats_mean': 0.5,
+        'VAF_stats_mediane': 0.5,
+        'VAF_stats_stdev': None
+    }
+    assert output == expected_output
+
+    # test for empty samples
+    output = genotype_stats(test_data.iloc[0], [], 'VAF')
+    expected_output = {
+        'VAF_stats_nb': 0,
+        'VAF_stats_list': '',
+        'VAF_stats_min': None,
+        'VAF_stats_max': None,
+        'VAF_stats_mean': None,
+        'VAF_stats_mediane': None,
+        'VAF_stats_stdev': None
+    }
+    assert output == expected_output
+
+    output = genotype_stats(test_data.iloc[0], ['Sample1'], 'invalid')
+    expected_output = {
+        'invalid_stats_nb': 0,
+        'invalid_stats_list': '',
+        'invalid_stats_min': None,
+        'invalid_stats_max': None,
+        'invalid_stats_mean': None,
+        'invalid_stats_mediane': None,
+        'invalid_stats_stdev': None
+    }
+    assert output == expected_output
+

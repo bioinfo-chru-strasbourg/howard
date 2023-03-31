@@ -2,6 +2,7 @@ import io
 import multiprocessing
 import os
 import re
+import statistics
 import subprocess
 from tempfile import NamedTemporaryFile
 import tempfile
@@ -698,4 +699,65 @@ def vaf_normalization(row, sample:str) -> str:
     genotype_with_vaf = ":".join([str(v) for v in sample_genotype_dict.values()])
 
     return genotype_with_vaf
+
+
+def genotype_stats(df, samples:list = [], info:str = "VAF"):
+
+    # format
+    format_fields = df["FORMAT"].split(":")
+
+    # init
+    vaf_stats = {
+        info+"_stats_nb": 0,
+        info+"_stats_list": "",
+        info+"_stats_min": None,
+        info+"_stats_max": None,
+        info+"_stats_mean": None,
+        info+"_stats_mediane": None,
+        info+"_stats_stdev": None
+    }
+
+    # no sample/pipeline
+    if not samples:
+        return vaf_stats
+
+    # init
+    vaf_list = []
+    
+    # For each sample/pipeline
+    for sample in samples:
+
+        # Split snpeff ann values
+        sample_infos = df[sample].split(":")
+
+        # Create Dataframe
+        sample_dict = {}
+        for i in range(len(format_fields)):
+            if len(sample_infos)>i:
+                sample_dict[format_fields[i]] = sample_infos[i]
+        
+        # Check if GT not null
+        if info in sample_dict:
+            try:
+                vaf_float = float(sample_dict[info])
+            except:
+                vaf_float = None
+            if vaf_float:
+                vaf_list.append(vaf_float)
+
+    vaf_stats[info+"_stats_nb"] = len(vaf_list)
+    vaf_stats[info+"_stats_list"] = ":".join([str(x) for x in vaf_list])
+
+    # Compute min, max, mean and median only if the list is not empty
+    if vaf_list:
+        vaf_stats[info+"_stats_min"] = min(vaf_list)
+        vaf_stats[info+"_stats_max"] = max(vaf_list)
+        vaf_stats[info+"_stats_mean"] = statistics.mean(vaf_list)
+        vaf_stats[info+"_stats_mediane"] = statistics.median(vaf_list)
+
+    # Check if there are at least 2 values in the list before computing variance or stdev
+    if len(vaf_list) >= 2:
+        vaf_stats[info+"_stats_stdev"] = statistics.stdev(vaf_list)
+
+    return vaf_stats
 
