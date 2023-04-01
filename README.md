@@ -100,6 +100,11 @@ howard --verbose --input=tests/data/example.vcf.gz --output=/tmp/example.howard.
 
 ### Calculation
 
+Count number of variants by type
+```
+howard --verbose --input=tests/data/example.full.vcf --calculations=vartype  --query='SELECT "INFO/VARTYPE", count(*) AS count FROM variants GROUP BY "INFO/VARTYPE" ORDER BY count DESC'
+```
+
 Extract hgvs from snpEff annotation and calculate NOMEN with default transcripts list
 ```
 howard --verbose --input=tests/data/example.ann.vcf.gz --param=tests/data/param.snpeff_hgvs.json --output=/tmp/example.snpeff_hgvs.vcf.gz --query='SELECT "#CHROM", POS, REF, ALT, "INFO/ANN" AS snpEff, "INFO/NOMEN" AS NOMEN FROM variants'
