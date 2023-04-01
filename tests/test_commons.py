@@ -666,7 +666,7 @@ def test_genotype_stats():
     output = genotype_stats(test_data.iloc[0], [], 'VAF')
     expected_output = {
         'VAF_stats_nb': 0,
-        'VAF_stats_list': '',
+        'VAF_stats_list': None,
         'VAF_stats_min': None,
         'VAF_stats_max': None,
         'VAF_stats_mean': None,
@@ -678,7 +678,7 @@ def test_genotype_stats():
     output = genotype_stats(test_data.iloc[0], ['Sample1'], 'invalid')
     expected_output = {
         'invalid_stats_nb': 0,
-        'invalid_stats_list': '',
+        'invalid_stats_list': None,
         'invalid_stats_min': None,
         'invalid_stats_max': None,
         'invalid_stats_mean': None,
@@ -686,4 +686,37 @@ def test_genotype_stats():
         'invalid_stats_stdev': None
     }
     assert output == expected_output
+
+
+def test_trio():
+    # Define a sample DataFrame
+    df = pd.DataFrame({
+        "CHROM": ["1", "1"],
+        "POS": [100, 200],
+        "ID": [".", "."],
+        "REF": ["A", "C"],
+        "ALT": ["T", "G"],
+        "QUAL": [10.0, 20.0],
+        "FILTER": ["PASS", "PASS"],
+        "INFO": ["AF=0.5", "AF=0.2"],
+        "FORMAT": "GT:DP:AD:GQ:PL",
+        "sample1": ["0/1:10:5,5:99:10,20,30", "0/0:15:15,0:99:0,30,40"],
+        "sample2": ["1/1:20:0,20:99:50,0,60", "0/0:25:10,15:99:20,0,80"],
+        "sample3": ["1/1:30:0,30:99:70,0,80", "0/1:10:10,0:99:0,10,20"]
+    })
+
+    # Test case 1: Empty samples list
+    assert trio(df.iloc[0], []) == ""
+
+    # Test case 2: Non-empty samples list with dominant variant
+    assert trio(df.iloc[0], ["sample1", "sample2", "sample3"]) == "recessive"
+
+    # Test case 3: Non-empty samples list with recessive variant
+    assert trio(df.iloc[0], ["sample1", "sample1", "sample1"]) == "dominant"
+
+    # Test case 4: Non-empty samples list with recessive variant
+    assert trio(df.iloc[1], ["sample1", "sample2", "sample3"]) == "denovo"
+
+    # Test case 5: Non-existent sample name
+    assert trio(df.iloc[0], ["sample1", "non_existent_sample", "sample2"]) == "unknown"
 

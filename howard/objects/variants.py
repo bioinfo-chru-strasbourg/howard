@@ -546,13 +546,22 @@ class Variants:
         return len(self.header_list) - 1
 
 
-    def get_header_columns(self) -> list:
+    def get_header_columns(self) -> str:
         """
         This function returns the header list of a VCF
 
         :return: The length of the header list.
         """
         return self.header_list[-1]
+
+
+    def get_header_columns_as_list(self) -> list:
+        """
+        This function returns the header list of a VCF
+
+        :return: The length of the header list.
+        """
+        return self.get_header_columns().strip().split("\t")
 
 
     def get_header_columns_as_sql(self) -> str:
@@ -562,7 +571,7 @@ class Variants:
         :return: The length of the header list.
         """
         sql_column_list = []
-        for col in self.get_header_columns().strip().split("\t"):
+        for col in self.get_header_columns_as_list():
             sql_column_list.append(f"\"{col}\"")
         return ",".join(sql_column_list)
 
@@ -3261,6 +3270,13 @@ class Variants:
                     "function_name": "calculation_barcode",
                     "function_params": []
                 },
+            "TRIO":
+                {
+                    "type": "python",
+                    "name": "TRIO",
+                    "function_name": "calculation_trio",
+                    "function_params": []
+                },
             "VAF":
                 {
                     "type": "python",
@@ -3452,9 +3468,11 @@ class Variants:
                     )
             
             # Create fields to add in INFO
+            # || CASE WHEN dataframe_snpeff_hgvs."{speff_hgvs_infos}" NOT NULL AND "INFO" IS NOT NULL THEN ';' ELSE '' END
+            #             || CASE WHEN dataframe_snpeff_hgvs."{speff_hgvs_infos}" NOT NULL
             sql_snpeff_hgvs_fields = [f"""
-                        || CASE WHEN dataframe_snpeff_hgvs."{speff_hgvs_infos}" NOT NULL AND "INFO" IS NOT NULL THEN ';' ELSE '' END
-                        || CASE WHEN dataframe_snpeff_hgvs."{speff_hgvs_infos}" NOT NULL
+                        || CASE WHEN dataframe_snpeff_hgvs."{speff_hgvs_infos}" NOT IN ('','.','NaN')
+                             AND dataframe_snpeff_hgvs."{speff_hgvs_infos}" NOT NULL
                             THEN '{snpeff_hgvs}=' || dataframe_snpeff_hgvs."{speff_hgvs_infos}"
                             ELSE ''
                             END """]
@@ -3465,7 +3483,7 @@ class Variants:
             # Update
             sql_update = f"""
                 UPDATE variants
-                SET "INFO" = CASE WHEN "INFO" IS NULL THEN '' ELSE "INFO" END
+                SET "INFO" = CASE WHEN "INFO" IS NULL OR "INFO" IN ('','.') THEN '' ELSE "INFO" || ';' END
                     {sql_snpeff_hgvs_fields_set}
                 FROM dataframe_snpeff_hgvs
                 WHERE {table_variants}."{variant_id_column}" = dataframe_snpeff_hgvs."{variant_id_column}"
@@ -3599,411 +3617,521 @@ class Variants:
 
     def calculation_find_by_pipeline(self) -> None:
 
-        # findbypipeline annotation field
-        findbypipeline_tag = "findbypipeline"
+        # if FORMAT and samples
+        if "FORMAT" in self.get_header_columns_as_list() and self.get_header_sample_list():
+
+            # findbypipeline annotation field
+            findbypipeline_tag = "findbypipeline"
+            
+            # VCF infos tags
+            vcf_infos_tags = {
+                "findbypipeline": "findbypipeline calculation",
+            }
+
+            # Param
+            param = self.get_param()
+            prefix = param.get("explode_infos", "INFO/")
+            if prefix == True:
+                prefix = "INFO/"
+
+            findbypipeline_infos = prefix+findbypipeline_tag
+
+            # Variants table
+            table_variants = self.get_table_variants()
+
+            # Header
+            vcf_reader = self.get_header()
+
+            # Create variant id
+            variant_id_column = self.get_variant_id_column()
+
+            # variant_id, FORMAT and samples
+            samples_fields = f" {variant_id_column}, FORMAT , " + \
+                    " , ".join(self.get_header_sample_list())
+            
+            # Create dataframe
+            dataframe_findbypipeline = self.get_query_to_df(
+                f""" SELECT {samples_fields} FROM {table_variants} """)
         
-        # VCF infos tags
-        vcf_infos_tags = {
-            "findbypipeline": "findbypipeline calculation",
-        }
-
-        # Param
-        param = self.get_param()
-        prefix = param.get("explode_infos", "INFO/")
-        if prefix == True:
-            prefix = "INFO/"
-
-        findbypipeline_infos = prefix+findbypipeline_tag
-
-        # Variants table
-        table_variants = self.get_table_variants()
-
-        # Header
-        vcf_reader = self.get_header()
-
-        # Create variant id
-        variant_id_column = self.get_variant_id_column()
-
-        # variant_id, FORMAT and samples
-        samples_fields = f" {variant_id_column}, FORMAT , " + \
-                " , ".join(self.get_header_sample_list())
-        
-        # Create dataframe
-        dataframe_findbypipeline = self.get_query_to_df(
-            f""" SELECT {samples_fields} FROM {table_variants} """)
-
-    
-        # Create findbypipeline column
-        dataframe_findbypipeline[findbypipeline_infos] = dataframe_findbypipeline.apply(lambda row: findbypipeline(row, samples=self.get_header_sample_list()), axis=1)
-        
-        # Add snpeff_hgvs to header
-        vcf_reader.infos[findbypipeline_tag] = vcf.parser._Info(
-                    findbypipeline_tag,
-                    ".",
-                    "String",
-                    vcf_infos_tags.get(
-                        findbypipeline_tag, "snpEff hgvs annotations"),
-                    "howard calculation",
-                    "0",
-                    self.code_type_map.get("String")
-                )
-
-        # Create fields to add in INFO
-        sql_findbypipeline_fields = [f"""
-                    || CASE WHEN dataframe_findbypipeline."{findbypipeline_infos}" NOT NULL AND "INFO" IS NOT NULL THEN ';' ELSE '' END
-                    || CASE WHEN dataframe_findbypipeline."{findbypipeline_infos}" NOT NULL
-                        THEN '{findbypipeline_tag}=' || dataframe_findbypipeline."{findbypipeline_infos}"
-                        ELSE ''
-                        END """]
-
-        # SQL set for update
-        sql_findbypipeline_fields_set = "  ".join(sql_findbypipeline_fields)
-
-        # Update
-        sql_update = f"""
-            UPDATE variants
-            SET "INFO" = CASE WHEN "INFO" IS NULL THEN '' ELSE "INFO" END
-                {sql_findbypipeline_fields_set}
-            FROM dataframe_findbypipeline
-            WHERE variants."{variant_id_column}" = dataframe_findbypipeline."{variant_id_column}"
-
-        """
-        self.conn.execute(sql_update)
-
-        # Delete dataframe
-        del dataframe_findbypipeline
-        gc.collect()
-
-
-    def calculation_genotype_concordance(self) -> None:
-
-        # genotypeconcordance annotation field
-        genotypeconcordance_tag = "genotypeconcordance"
-        
-        # VCF infos tags
-        vcf_infos_tags = {
-            "genotypeconcordance": "genotypeconcordance calculation",
-        }
-
-        # Param
-        param = self.get_param()
-        prefix = param.get("explode_infos", "INFO/")
-        if prefix == True:
-            prefix = "INFO/"
-
-        genotypeconcordance_infos = prefix+genotypeconcordance_tag
-
-        # Variants table
-        table_variants = self.get_table_variants()
-
-        # Header
-        vcf_reader = self.get_header()
-
-        # Create variant id
-        variant_id_column = self.get_variant_id_column()
-
-        # variant_id, FORMAT and samples
-        samples_fields = f" {variant_id_column}, FORMAT , " + \
-                " , ".join(self.get_header_sample_list())
-        
-        # Create dataframe
-        dataframe_genotypeconcordance = self.get_query_to_df(
-            f""" SELECT {samples_fields} FROM {table_variants} """)
-
-    
-        # Create genotypeconcordance column
-        dataframe_genotypeconcordance[genotypeconcordance_infos] = dataframe_genotypeconcordance.apply(lambda row: genotypeconcordance(row, samples=self.get_header_sample_list()), axis=1)
-        
-        # Add genotypeconcordance to header
-        vcf_reader.infos[genotypeconcordance_tag] = vcf.parser._Info(
-                    genotypeconcordance_tag,
-                    ".",
-                    "String",
-                    vcf_infos_tags.get(
-                        genotypeconcordance_tag, "snpEff hgvs annotations"),
-                    "howard calculation",
-                    "0",
-                    self.code_type_map.get("String")
-                )
-
-        # Create fields to add in INFO
-        sql_genotypeconcordance_fields = [f"""
-                    || CASE WHEN dataframe_genotypeconcordance."{genotypeconcordance_infos}" NOT NULL AND "INFO" IS NOT NULL THEN ';' ELSE '' END
-                    || CASE WHEN dataframe_genotypeconcordance."{genotypeconcordance_infos}" NOT NULL
-                        THEN '{genotypeconcordance_tag}=' || dataframe_genotypeconcordance."{genotypeconcordance_infos}"
-                        ELSE ''
-                        END """]
-
-        # SQL set for update
-        sql_genotypeconcordance_fields_set = "  ".join(sql_genotypeconcordance_fields)
-
-        # Update
-        sql_update = f"""
-            UPDATE variants
-            SET "INFO" = CASE WHEN "INFO" IS NULL THEN '' ELSE "INFO" END
-                {sql_genotypeconcordance_fields_set}
-            FROM dataframe_genotypeconcordance
-            WHERE variants."{variant_id_column}" = dataframe_genotypeconcordance."{variant_id_column}"
-
-        """
-        self.conn.execute(sql_update)
-
-        # Delete dataframe
-        del dataframe_genotypeconcordance
-        gc.collect()
-
-
-    def calculation_barcode(self) -> None:
-
-        # barcode annotation field
-        barcode_tag = "barcode"
-        
-        # VCF infos tags
-        vcf_infos_tags = {
-            "barcode": "barcode calculation",
-        }
-
-        # Param
-        param = self.get_param()
-        prefix = param.get("explode_infos", "INFO/")
-        if prefix == True:
-            prefix = "INFO/"
-
-        barcode_infos = prefix+barcode_tag
-
-        # Variants table
-        table_variants = self.get_table_variants()
-
-        # Header
-        vcf_reader = self.get_header()
-
-        # Create variant id
-        variant_id_column = self.get_variant_id_column()
-
-        # variant_id, FORMAT and samples
-        samples_fields = f" {variant_id_column}, FORMAT , " + \
-                " , ".join(self.get_header_sample_list())
-        
-        # Create dataframe
-        dataframe_barcode = self.get_query_to_df(
-            f""" SELECT {samples_fields} FROM {table_variants} """)
-
-    
-        # Create barcode column
-        dataframe_barcode[barcode_infos] = dataframe_barcode.apply(lambda row: barcode(row, samples=self.get_header_sample_list()), axis=1)
-        
-        # Add barcode to header
-        vcf_reader.infos[barcode_tag] = vcf.parser._Info(
-                    barcode_tag,
-                    ".",
-                    "String",
-                    vcf_infos_tags.get(
-                        barcode_tag, "snpEff hgvs annotations"),
-                    "howard calculation",
-                    "0",
-                    self.code_type_map.get("String")
-                )
-
-        # Create fields to add in INFO
-        sql_barcode_fields = [f"""
-                    || CASE WHEN dataframe_barcode."{barcode_infos}" NOT NULL AND "INFO" IS NOT NULL THEN ';' ELSE '' END
-                    || CASE WHEN dataframe_barcode."{barcode_infos}" NOT NULL
-                        THEN '{barcode_tag}=' || dataframe_barcode."{barcode_infos}"
-                        ELSE ''
-                        END """]
-
-        # SQL set for update
-        sql_barcode_fields_set = "  ".join(sql_barcode_fields)
-
-        # Update
-        sql_update = f"""
-            UPDATE {table_variants}
-            SET "INFO" = CASE WHEN "INFO" IS NULL THEN '' ELSE "INFO" END
-                {sql_barcode_fields_set}
-            FROM dataframe_barcode
-            WHERE {table_variants}."{variant_id_column}" = dataframe_barcode."{variant_id_column}"
-
-        """
-        self.conn.execute(sql_update)
-
-        # Delete dataframe
-        del dataframe_barcode
-        gc.collect()
-
-
-    def calculation_vaf_normalization(self) -> None:
-
-        # vaf_normalization annotation field
-        vaf_normalization_tag = "VAF"
-        
-        # VCF infos tags
-        vcf_infos_tags = {
-            "VAF": "VAF Variant Frequency",
-        }
-
-        # Param
-        param = self.get_param()
-        prefix = param.get("explode_infos", "INFO/")
-        if prefix == True:
-            prefix = "INFO/"
-
-        #vaf_normalization_infos = prefix+vaf_normalization_tag
-
-        # Variants table
-        table_variants = self.get_table_variants()
-
-        # Header
-        vcf_reader = self.get_header()
-
-        # Do not calculate if VAF already exists
-        if "VAF" in vcf_reader.formats:
-            log.debug("VAF already on genotypes")
-            return
-
-        # Create variant id
-        variant_id_column = self.get_variant_id_column()
-
-        # variant_id, FORMAT and samples
-        samples_fields = f" {variant_id_column}, FORMAT , " + \
-                " , ".join(self.get_header_sample_list())
-        
-        # Create dataframe
-        dataframe_vaf_normalization = self.get_query_to_df(
-            f""" SELECT {variant_id_column}, FORMAT, {samples_fields} FROM {table_variants} """)
-
-        vaf_normalization_set = []
-
-        # for each sample vaf_normalization 
-        for sample in self.get_header_sample_list():
-            dataframe_vaf_normalization[sample] = dataframe_vaf_normalization.apply(lambda row: vaf_normalization(row, sample=sample), axis=1)
-            vaf_normalization_set.append(f""" "{sample}" = dataframe_vaf_normalization."{sample}" """)
-
-        # Add VAF to FORMAT
-        dataframe_vaf_normalization["FORMAT"] = dataframe_vaf_normalization["FORMAT"].apply(lambda x: str(x)+":VAF")
-        vaf_normalization_set.append(f""" "FORMAT" = dataframe_vaf_normalization."FORMAT" """)
-
-        # Add vaf_normalization to header
-        vcf_reader.formats[vaf_normalization_tag] = vcf.parser._Format(
-                    id=vaf_normalization_tag,
-                    num="1",
-                    type="Float",
-                    desc=vcf_infos_tags.get(
-                        vaf_normalization_tag, "VAF Variant Frequency"),
-                    type_code=self.code_type_map.get("Float")
-                )
-
-        # Create fields to add in INFO
-        sql_vaf_normalization_set = " , ".join(vaf_normalization_set)
-
-        # Update
-        sql_update = f"""
-            UPDATE {table_variants}
-            SET {sql_vaf_normalization_set}
-            FROM dataframe_vaf_normalization
-            WHERE variants."{variant_id_column}" = dataframe_vaf_normalization."{variant_id_column}"
-
-        """
-        self.conn.execute(sql_update)
-
-        # Delete dataframe
-        del dataframe_vaf_normalization
-        gc.collect()
-
-
-    def calculation_genotype_stats(self, info:str = "VAF") -> None:
-
-        # vaf_stats annotation field
-        vaf_stats_tag = info+"_stats"
-        
-        # VCF infos tags
-        vcf_infos_tags = {
-            info+"_stats_nb": f"genotype {info} Statistics - number of {info}",
-            info+"_stats_list": f"genotype {info} Statistics - list of {info}",
-            info+"_stats_min": f"genotype {info} Statistics - min {info}",
-            info+"_stats_max": f"genotype {info} Statistics - max {info}",
-            info+"_stats_mean": f"genotype {info} Statistics - mean {info}",
-            info+"_stats_mediane": f"genotype {info} Statistics - mediane {info}",
-            info+"_stats_stdev": f"genotype {info} Statistics - standard deviation {info}",
-        }
-       
-        # Param
-        param = self.get_param()
-        prefix = param.get("explode_infos", "INFO/")
-        if prefix == True:
-            prefix = "INFO/"
-
-        vaf_stats_infos = prefix+vaf_stats_tag
-
-        # Variants table
-        table_variants = self.get_table_variants()
-
-        # Header
-        vcf_reader = self.get_header()
-
-        # Create variant id
-        variant_id_column = self.get_variant_id_column()
-
-        # variant_id, FORMAT and samples
-        samples_fields = f" {variant_id_column}, FORMAT , " + \
-                " , ".join(self.get_header_sample_list())
-        
-        # Create dataframe
-        dataframe_vaf_stats = self.get_query_to_df(
-            f""" SELECT {samples_fields} FROM {table_variants} """)
-
-        # Create vaf_stats column
-        dataframe_vaf_stats[vaf_stats_infos] = dataframe_vaf_stats.apply(lambda row: genotype_stats(row, samples=self.get_header_sample_list(), info=info), axis=1)
-        
-        # List of vcf tags
-        sql_vaf_stats_fields = []
-
-        # Check all VAF stats infos
-        for stat in vcf_infos_tags:
-
-            # Extract stats
-            dataframe_vaf_stats[stat] = dataframe_vaf_stats[vaf_stats_infos].apply(lambda x: dict(x).get(stat, ""))
-
+            # Create findbypipeline column
+            dataframe_findbypipeline[findbypipeline_infos] = dataframe_findbypipeline.apply(lambda row: findbypipeline(row, samples=self.get_header_sample_list()), axis=1)
+            
             # Add snpeff_hgvs to header
-            vcf_reader.infos[stat] = vcf.parser._Info(
-                        stat,
+            vcf_reader.infos[findbypipeline_tag] = vcf.parser._Info(
+                        findbypipeline_tag,
                         ".",
                         "String",
                         vcf_infos_tags.get(
-                            stat, "genotype statistics"),
+                            findbypipeline_tag, "snpEff hgvs annotations"),
                         "howard calculation",
                         "0",
                         self.code_type_map.get("String")
                     )
-            
-            if len(sql_vaf_stats_fields):
-                sep = ";"
-            else:
-                sep = ""
 
             # Create fields to add in INFO
-            sql_vaf_stats_fields.append(f"""
-                        || CASE WHEN dataframe_vaf_stats."{stat}" NOT NULL
-                            THEN '{sep}{stat}=' || dataframe_vaf_stats."{stat}"
+            sql_findbypipeline_fields = [f"""
+                        || CASE WHEN dataframe_findbypipeline."{findbypipeline_infos}" NOT IN ('','.')
+                                AND dataframe_findbypipeline."{findbypipeline_infos}" NOT NULL
+                            THEN '{findbypipeline_tag}=' || dataframe_findbypipeline."{findbypipeline_infos}"
                             ELSE ''
-                            END """)
+                            END """]
+
+            # SQL set for update
+            sql_findbypipeline_fields_set = "  ".join(sql_findbypipeline_fields)
+
+            # Update
+            sql_update = f"""
+                UPDATE variants
+                SET "INFO" = CASE WHEN "INFO" IS NULL OR "INFO" IN ('','.') THEN '' ELSE "INFO" || ';' END
+                    {sql_findbypipeline_fields_set}
+                FROM dataframe_findbypipeline
+                WHERE variants."{variant_id_column}" = dataframe_findbypipeline."{variant_id_column}"
+
+            """
+            self.conn.execute(sql_update)
+
+            # Delete dataframe
+            del dataframe_findbypipeline
+            gc.collect()
+
+
+    def calculation_genotype_concordance(self) -> None:
+
+        # if FORMAT and samples
+        if "FORMAT" in self.get_header_columns_as_list() and self.get_header_sample_list():
+
+            # genotypeconcordance annotation field
+            genotypeconcordance_tag = "genotypeconcordance"
+            
+            # VCF infos tags
+            vcf_infos_tags = {
+                "genotypeconcordance": "genotypeconcordance calculation",
+            }
+
+            # Param
+            param = self.get_param()
+            prefix = param.get("explode_infos", "INFO/")
+            if prefix == True:
+                prefix = "INFO/"
+
+            genotypeconcordance_infos = prefix+genotypeconcordance_tag
+
+            # Variants table
+            table_variants = self.get_table_variants()
+
+            # Header
+            vcf_reader = self.get_header()
+
+            # Create variant id
+            variant_id_column = self.get_variant_id_column()
+
+            # variant_id, FORMAT and samples
+            samples_fields = f" {variant_id_column}, FORMAT , " + \
+                    " , ".join(self.get_header_sample_list())
+            
+            # Create dataframe
+            dataframe_genotypeconcordance = self.get_query_to_df(
+                f""" SELECT {samples_fields} FROM {table_variants} """)
+
         
-        # SQL set for update
-        sql_vaf_stats_fields_set = "  ".join(sql_vaf_stats_fields)
+            # Create genotypeconcordance column
+            dataframe_genotypeconcordance[genotypeconcordance_infos] = dataframe_genotypeconcordance.apply(lambda row: genotypeconcordance(row, samples=self.get_header_sample_list()), axis=1)
+            
+            # Add genotypeconcordance to header
+            vcf_reader.infos[genotypeconcordance_tag] = vcf.parser._Info(
+                        genotypeconcordance_tag,
+                        ".",
+                        "String",
+                        vcf_infos_tags.get(
+                            genotypeconcordance_tag, "snpEff hgvs annotations"),
+                        "howard calculation",
+                        "0",
+                        self.code_type_map.get("String")
+                    )
 
-        # Update
-        sql_update = f"""
-            UPDATE variants
-            SET "INFO" = CASE WHEN "INFO" IS NULL THEN '' ELSE "INFO" || ';' END
-                {sql_vaf_stats_fields_set}
-            FROM dataframe_vaf_stats
-            WHERE variants."{variant_id_column}" = dataframe_vaf_stats."{variant_id_column}"
+            # Create fields to add in INFO
+            # || CASE WHEN dataframe_genotypeconcordance."{genotypeconcordance_infos}" NOT IN (NULL,'','.') AND "INFO" IS NOT NULL THEN ';' ELSE '' END
+            sql_genotypeconcordance_fields = [f"""
+                        || CASE WHEN dataframe_genotypeconcordance."{genotypeconcordance_infos}" NOT IN ('','.')
+                                AND dataframe_genotypeconcordance."{genotypeconcordance_infos}" NOT NULL
+                            THEN '{genotypeconcordance_tag}=' || dataframe_genotypeconcordance."{genotypeconcordance_infos}"
+                            ELSE ''
+                            END """]
 
-        """
-        self.conn.execute(sql_update)
+            # SQL set for update
+            sql_genotypeconcordance_fields_set = "  ".join(sql_genotypeconcordance_fields)
 
-        # Delete dataframe
-        del dataframe_vaf_stats
-        gc.collect()
+            # Update
+            sql_update = f"""
+                UPDATE variants
+                SET "INFO" = CASE WHEN "INFO" IS NULL OR "INFO" IN ('','.') THEN '' ELSE "INFO" || ';' END
+                    {sql_genotypeconcordance_fields_set}
+                FROM dataframe_genotypeconcordance
+                WHERE variants."{variant_id_column}" = dataframe_genotypeconcordance."{variant_id_column}"
+
+            """
+            self.conn.execute(sql_update)
+
+            # Delete dataframe
+            del dataframe_genotypeconcordance
+            gc.collect()
+
+
+    def calculation_barcode(self) -> None:
+
+        # if FORMAT and samples
+        if "FORMAT" in self.get_header_columns_as_list() and self.get_header_sample_list():
+
+            # barcode annotation field
+            barcode_tag = "barcode"
+            
+            # VCF infos tags
+            vcf_infos_tags = {
+                "barcode": "barcode calculation",
+            }
+
+            # Param
+            param = self.get_param()
+            prefix = param.get("explode_infos", "INFO/")
+            if prefix == True:
+                prefix = "INFO/"
+
+            barcode_infos = prefix+barcode_tag
+
+            # Variants table
+            table_variants = self.get_table_variants()
+
+            # Header
+            vcf_reader = self.get_header()
+
+            # Create variant id
+            variant_id_column = self.get_variant_id_column()
+
+            # variant_id, FORMAT and samples
+            samples_fields = f" {variant_id_column}, FORMAT , " + \
+                    " , ".join(self.get_header_sample_list())
+            
+            # Create dataframe
+            dataframe_barcode = self.get_query_to_df(
+                f""" SELECT {samples_fields} FROM {table_variants} """)
+
+        
+            # Create barcode column
+            dataframe_barcode[barcode_infos] = dataframe_barcode.apply(lambda row: barcode(row, samples=self.get_header_sample_list()), axis=1)
+            
+            # Add barcode to header
+            vcf_reader.infos[barcode_tag] = vcf.parser._Info(
+                        barcode_tag,
+                        ".",
+                        "String",
+                        vcf_infos_tags.get(
+                            barcode_tag, "snpEff hgvs annotations"),
+                        "howard calculation",
+                        "0",
+                        self.code_type_map.get("String")
+                    )
+
+            # Create fields to add in INFO
+            sql_barcode_fields = [f"""
+                        || CASE WHEN dataframe_barcode."{barcode_infos}" NOT IN ('','.')
+                                AND dataframe_barcode."{barcode_infos}" NOT NULL
+                            THEN '{barcode_tag}=' || dataframe_barcode."{barcode_infos}"
+                            ELSE ''
+                            END """]
+
+            # SQL set for update
+            sql_barcode_fields_set = "  ".join(sql_barcode_fields)
+
+            # Update
+            sql_update = f"""
+                UPDATE {table_variants}
+                SET "INFO" = CASE WHEN "INFO" IS NULL OR "INFO" IN ('','.') THEN '' ELSE "INFO" || ';' END
+                    {sql_barcode_fields_set}
+                FROM dataframe_barcode
+                WHERE {table_variants}."{variant_id_column}" = dataframe_barcode."{variant_id_column}"
+
+            """
+            self.conn.execute(sql_update)
+
+            # Delete dataframe
+            del dataframe_barcode
+            gc.collect()
+
+
+    def calculation_trio(self) -> None:
+
+        # if FORMAT and samples
+        if "FORMAT" in self.get_header_columns_as_list() and self.get_header_sample_list():
+
+            # trio annotation field
+            trio_tag = "trio"
+            
+            # VCF infos tags
+            vcf_infos_tags = {
+                "trio": "trio calculation",
+            }
+
+            # Param
+            param = self.get_param()
+            prefix = param.get("explode_infos", "INFO/")
+            if prefix == True:
+                prefix = "INFO/"
+
+            # Trio param
+            trio_ped = param.get("calculation", {}).get("trio", {})
+            if trio_ped:
+                trio_samples = [
+                    trio_ped.get("father",""),
+                    trio_ped.get("mother",""),
+                    trio_ped.get("child","")
+                ]
+            else:
+                trio_samples = self.get_header_sample_list()[0:3]
+
+            log.debug(f"Param for trio sample: {trio_ped}")
+            log.debug(f"List of trio sample: {trio_samples}")
+
+            trio_infos = prefix+trio_tag
+
+            # Variants table
+            table_variants = self.get_table_variants()
+
+            # Header
+            vcf_reader = self.get_header()
+
+            # Create variant id
+            variant_id_column = self.get_variant_id_column()
+
+            # variant_id, FORMAT and samples
+            samples_fields = f" {variant_id_column}, FORMAT , " + \
+                    " , ".join(self.get_header_sample_list())
+            
+            # Create dataframe
+            dataframe_trio = self.get_query_to_df(
+                f""" SELECT {samples_fields} FROM {table_variants} """)
+
+        
+            # Create trio column
+            dataframe_trio[trio_infos] = dataframe_trio.apply(lambda row: trio(row, samples=trio_samples), axis=1)
+            
+            # Add trio to header
+            vcf_reader.infos[trio_tag] = vcf.parser._Info(
+                        trio_tag,
+                        ".",
+                        "String",
+                        vcf_infos_tags.get(
+                            trio_tag, "snpEff hgvs annotations"),
+                        "howard calculation",
+                        "0",
+                        self.code_type_map.get("String")
+                    )
+
+            # Create fields to add in INFO
+            sql_trio_fields = [f"""
+                        || CASE WHEN dataframe_trio."{trio_infos}" NOT IN ('','.')
+                                AND dataframe_trio."{trio_infos}" NOT NULL
+                            THEN '{trio_tag}=' || dataframe_trio."{trio_infos}"
+                            ELSE ''
+                            END """]
+
+            # SQL set for update
+            sql_trio_fields_set = "  ".join(sql_trio_fields)
+
+            # Update
+            sql_update = f"""
+                UPDATE {table_variants}
+                SET "INFO" = CASE WHEN "INFO" IS NULL OR "INFO" IN ('','.') THEN '' ELSE "INFO" || ';' END
+                    {sql_trio_fields_set}
+                FROM dataframe_trio
+                WHERE {table_variants}."{variant_id_column}" = dataframe_trio."{variant_id_column}"
+
+            """
+            self.conn.execute(sql_update)
+
+            # Delete dataframe
+            del dataframe_trio
+            gc.collect()
+
+
+    def calculation_vaf_normalization(self) -> None:
+
+        # if FORMAT and samples
+        if "FORMAT" in self.get_header_columns_as_list() and self.get_header_sample_list():
+
+            # vaf_normalization annotation field
+            vaf_normalization_tag = "VAF"
+            
+            # VCF infos tags
+            vcf_infos_tags = {
+                "VAF": "VAF Variant Frequency",
+            }
+
+            # Param
+            param = self.get_param()
+            prefix = param.get("explode_infos", "INFO/")
+            if prefix == True:
+                prefix = "INFO/"
+
+            #vaf_normalization_infos = prefix+vaf_normalization_tag
+
+            # Variants table
+            table_variants = self.get_table_variants()
+
+            # Header
+            vcf_reader = self.get_header()
+
+            # Do not calculate if VAF already exists
+            if "VAF" in vcf_reader.formats:
+                log.debug("VAF already on genotypes")
+                return
+
+            # Create variant id
+            variant_id_column = self.get_variant_id_column()
+
+            # variant_id, FORMAT and samples
+            samples_fields = f" {variant_id_column}, FORMAT , " + \
+                    " , ".join(self.get_header_sample_list())
+            
+            # Create dataframe
+            dataframe_vaf_normalization = self.get_query_to_df(
+                f""" SELECT {variant_id_column}, FORMAT, {samples_fields} FROM {table_variants} """)
+
+            vaf_normalization_set = []
+
+            # for each sample vaf_normalization 
+            for sample in self.get_header_sample_list():
+                dataframe_vaf_normalization[sample] = dataframe_vaf_normalization.apply(lambda row: vaf_normalization(row, sample=sample), axis=1)
+                vaf_normalization_set.append(f""" "{sample}" = dataframe_vaf_normalization."{sample}" """)
+
+            # Add VAF to FORMAT
+            dataframe_vaf_normalization["FORMAT"] = dataframe_vaf_normalization["FORMAT"].apply(lambda x: str(x)+":VAF")
+            vaf_normalization_set.append(f""" "FORMAT" = dataframe_vaf_normalization."FORMAT" """)
+
+            # Add vaf_normalization to header
+            vcf_reader.formats[vaf_normalization_tag] = vcf.parser._Format(
+                        id=vaf_normalization_tag,
+                        num="1",
+                        type="Float",
+                        desc=vcf_infos_tags.get(
+                            vaf_normalization_tag, "VAF Variant Frequency"),
+                        type_code=self.code_type_map.get("Float")
+                    )
+
+            # Create fields to add in INFO
+            sql_vaf_normalization_set = " , ".join(vaf_normalization_set)
+
+            # Update
+            sql_update = f"""
+                UPDATE {table_variants}
+                SET {sql_vaf_normalization_set}
+                FROM dataframe_vaf_normalization
+                WHERE variants."{variant_id_column}" = dataframe_vaf_normalization."{variant_id_column}"
+
+            """
+            self.conn.execute(sql_update)
+
+            # Delete dataframe
+            del dataframe_vaf_normalization
+            gc.collect()
+
+
+    def calculation_genotype_stats(self, info:str = "VAF") -> None:
+
+        # if FORMAT and samples
+        if "FORMAT" in self.get_header_columns_as_list() and self.get_header_sample_list():
+
+            # vaf_stats annotation field
+            vaf_stats_tag = info+"_stats"
+            
+            # VCF infos tags
+            vcf_infos_tags = {
+                info+"_stats_nb": f"genotype {info} Statistics - number of {info}",
+                info+"_stats_list": f"genotype {info} Statistics - list of {info}",
+                info+"_stats_min": f"genotype {info} Statistics - min {info}",
+                info+"_stats_max": f"genotype {info} Statistics - max {info}",
+                info+"_stats_mean": f"genotype {info} Statistics - mean {info}",
+                info+"_stats_mediane": f"genotype {info} Statistics - mediane {info}",
+                info+"_stats_stdev": f"genotype {info} Statistics - standard deviation {info}",
+            }
+        
+            # Param
+            param = self.get_param()
+            prefix = param.get("explode_infos", "INFO/")
+            if prefix == True:
+                prefix = "INFO/"
+
+            vaf_stats_infos = prefix+vaf_stats_tag
+
+            # Variants table
+            table_variants = self.get_table_variants()
+
+            # Header
+            vcf_reader = self.get_header()
+
+            # Create variant id
+            variant_id_column = self.get_variant_id_column()
+
+            # variant_id, FORMAT and samples
+            samples_fields = f" {variant_id_column}, FORMAT , " + \
+                    " , ".join(self.get_header_sample_list())
+            
+            # Create dataframe
+            dataframe_vaf_stats = self.get_query_to_df(
+                f""" SELECT {samples_fields} FROM {table_variants} """)
+
+            # Create vaf_stats column
+            dataframe_vaf_stats[vaf_stats_infos] = dataframe_vaf_stats.apply(lambda row: genotype_stats(row, samples=self.get_header_sample_list(), info=info), axis=1)
+            
+            # List of vcf tags
+            sql_vaf_stats_fields = []
+
+            # Check all VAF stats infos
+            for stat in vcf_infos_tags:
+
+                # Extract stats
+                dataframe_vaf_stats[stat] = dataframe_vaf_stats[vaf_stats_infos].apply(lambda x: dict(x).get(stat, ""))
+
+                # Add snpeff_hgvs to header
+                vcf_reader.infos[stat] = vcf.parser._Info(
+                            stat,
+                            ".",
+                            "String",
+                            vcf_infos_tags.get(
+                                stat, "genotype statistics"),
+                            "howard calculation",
+                            "0",
+                            self.code_type_map.get("String")
+                        )
+                
+                if len(sql_vaf_stats_fields):
+                    sep = ";"
+                else:
+                    sep = ""
+
+                # Create fields to add in INFO
+                sql_vaf_stats_fields.append(f"""
+                            || CASE WHEN dataframe_vaf_stats."{stat}" NOT NULL
+                                THEN '{sep}{stat}=' || dataframe_vaf_stats."{stat}"
+                                ELSE ''
+                                END """)
+            
+            # SQL set for update
+            sql_vaf_stats_fields_set = "  ".join(sql_vaf_stats_fields)
+
+            # Update
+            sql_update = f"""
+                UPDATE variants
+                SET "INFO" = CASE WHEN "INFO" IS NULL OR "INFO" IN ('','.') THEN '' ELSE "INFO" || ';' END
+                    {sql_vaf_stats_fields_set}
+                FROM dataframe_vaf_stats
+                WHERE variants."{variant_id_column}" = dataframe_vaf_stats."{variant_id_column}"
+
+            """
+            self.conn.execute(sql_update)
+
+            # Delete dataframe
+            del dataframe_vaf_stats
+            gc.collect()
 
 
 

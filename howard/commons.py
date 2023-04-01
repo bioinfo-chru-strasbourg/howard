@@ -628,19 +628,46 @@ def barcode(df, samples:list = []):
     # For each sample/pipeline
     for sample in samples:
 
-        # Split snpeff ann values
-        sample_infos = df[sample].split(":")
+        if sample in df:
 
-        # Create Dataframe
-        sample_dict = {}
-        for i in range(len(format_fields)):
-            if len(sample_infos)>i:
-                sample_dict[format_fields[i]] = sample_infos[i]
-        
-        # generate barcode
-        barcode.append(genotype_barcode(sample_dict["GT"]))
+            # Split snpeff ann values
+            sample_infos = df[sample].split(":")
+
+            # Create Dataframe
+            sample_dict = {}
+            for i in range(len(format_fields)):
+                if len(sample_infos)>i:
+                    sample_dict[format_fields[i]] = sample_infos[i]
+            
+            # generate barcode
+            barcode.append(genotype_barcode(sample_dict["GT"]))
 
     return "".join(barcode)
+
+
+def trio(df, samples:list = []):
+
+    # no sample/pipeline
+    if not samples:
+        return ""
+
+    # init
+    trio_barcode = barcode(df, samples)
+
+    # switcher
+    switcher = {
+        "001": "denovo",
+        ("011","101","111","021","201","121","211"): "dominant",
+        ("112","212","122","222"): "recessive"
+    }
+
+    trio_variant_type = "unknown"
+    for case in switcher:
+        if trio_barcode in case:
+            trio_variant_type = switcher[case]
+            break
+
+    return trio_variant_type
 
 
 def vaf_normalization(row, sample:str) -> str:
@@ -709,7 +736,7 @@ def genotype_stats(df, samples:list = [], info:str = "VAF"):
     # init
     vaf_stats = {
         info+"_stats_nb": 0,
-        info+"_stats_list": "",
+        info+"_stats_list": None,
         info+"_stats_min": None,
         info+"_stats_max": None,
         info+"_stats_mean": None,
@@ -746,7 +773,8 @@ def genotype_stats(df, samples:list = [], info:str = "VAF"):
                 vaf_list.append(vaf_float)
 
     vaf_stats[info+"_stats_nb"] = len(vaf_list)
-    vaf_stats[info+"_stats_list"] = ":".join([str(x) for x in vaf_list])
+    if vaf_list:
+        vaf_stats[info+"_stats_list"] = ":".join([str(x) for x in vaf_list])
 
     # Compute min, max, mean and median only if the list is not empty
     if vaf_list:
