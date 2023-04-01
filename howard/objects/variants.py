@@ -756,7 +756,7 @@ class Variants:
         self.create_indexes()
 
 
-    def explode_infos(self, prefix: str = None, create_index: bool = False, fields: list = None, update: bool = True) -> None:
+    def explode_infos(self, prefix: str = None, create_index: bool = False, fields: list = None, update: bool = True, force:bool = False) -> None:
         """
         The function takes a VCF file and explodes the INFO fields into individual columns
         """
@@ -784,19 +784,30 @@ class Variants:
 
             sql_info_alter_table_array = []
 
-            for info in self.get_header().infos:
+            # Info fields to check
+            fields_list = list(self.get_header().infos)
+            if fields:
+                fields_list += fields
+            fields_list = set(fields_list)
+
+            for info in fields_list:
 
                 info_id_sql = prefix+info
 
                 if (fields is None or info in fields or prefix+info in fields) and (update or info not in extra_infos):
-                    # if (fields is None or info in fields or info in fields) and (update or info not in extra_infos):
 
                     log.debug(
                         f"Explode INFO fields - ADD '{info}' annotations fields")
 
-                    type_sql = self.code_type_map_to_sql.get(
-                        self.get_header().infos[info].type, "VARCHAR")
-                    if self.get_header().infos[info].num != 1:
+                    if info in self.get_header().infos:
+                        info_type = self.get_header().infos[info].type
+                        info_num = self.get_header().infos[info].num
+                    else:
+                        info_type = "String"
+                        info_num = 0
+
+                    type_sql = self.code_type_map_to_sql.get(info_type, "VARCHAR")
+                    if info_num != 1:
                         type_sql = "VARCHAR"
 
                     # Add field
@@ -819,7 +830,7 @@ class Variants:
 
             for chrom in chromosomes_df["#CHROM"]:
                 log.debug(
-                    f"Explode INFO fields - Chromosoome {chrom}...")
+                    f"Explode INFO fields - Chromosome {chrom}...")
                 # Update table
                 sql_info_alter_table_array_join = ", ".join(
                     sql_info_alter_table_array)
@@ -831,16 +842,8 @@ class Variants:
                         """
                     log.debug(
                         f"Explode INFO fields - ADD [{len(self.get_header().infos)}]: {sql_info_alter_table}")
+                    print(sql_info_alter_table)
                     self.conn.execute(sql_info_alter_table)
-
-            # # Update table
-            # sql_info_alter_table_array_join = ", ".join(
-            #     sql_info_alter_table_array)
-            # if sql_info_alter_table_array_join:
-            #     sql_info_alter_table = f"UPDATE {table_variants} SET {sql_info_alter_table_array_join}"
-            #     log.debug(
-            #         f"Explode INFO fields - ADD [{len(self.get_header().infos)}]: {sql_info_alter_table}")
-            #     self.conn.execute(sql_info_alter_table)
 
         # create indexes
         if create_index:
@@ -3213,12 +3216,14 @@ class Variants:
                     "output_column_description": "Variant type: SNV if X>Y, MOSAIC if X>Y,Z or X,Y>Z, INDEL if XY>Z or X>YZ",
                     "operation_query": """
                         CASE
+                            WHEN "INFO/SVTYPE" NOT NULL THEN "INFO/SVTYPE"
                             WHEN LENGTH(REF) = 1 AND LENGTH(ALT) = 1 THEN 'SNV'
                             WHEN REF LIKE '%,%' OR ALT LIKE '%,%' THEN 'MOSAIC'
                             WHEN LENGTH(REF) <> LENGTH(ALT) THEN 'INDEL'
                             ELSE 'UNDEFINED'
                         END
                         """,
+                    "info_fields": ["SVTYPE"],
                     "operation_info": True,
                 },
             "snpeff_hgvs":
@@ -3327,6 +3332,7 @@ class Variants:
             output_column_type, "VARCHAR")
         output_column_description = operation['output_column_description']
         operation_query = operation['operation_query']
+        operation_info_fields = operation.get('info_fields', None)
         operation_info = operation['operation_info']
 
         # Create column
@@ -3345,6 +3351,10 @@ class Variants:
             self.code_type_map.get(output_column_type)
         )
 
+        # Explode infos if needed
+        if operation_info_fields:
+            self.explode_infos(fields=operation_info_fields, force=True)
+
         # Operation calculation
         self.conn.execute(
             f""" UPDATE {table_variants} SET "{prefix}{output_column_name}" = ({operation_query}) """)
@@ -3353,12 +3363,7 @@ class Variants:
         if operation_info:
             sql_update = f"""
                 UPDATE {table_variants}
-                SET "INFO" = CASE WHEN "INFO" IS NULL THEN '' ELSE "INFO" END
-                    || CASE WHEN "INFO" NOT IN ('','.',NULL)
-                             AND "{prefix}{output_column_name}" NOT IN ('','.')
-                        THEN ';'
-                        ELSE ''
-                        END
+                SET "INFO" = CASE WHEN "INFO" IS NULL THEN '' ELSE "INFO" || ';' END
                     || '{output_column_name}=' || "{prefix}{output_column_name}"
             """
             log.debug(sql_update)

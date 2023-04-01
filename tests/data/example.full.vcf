@@ -1,0 +1,80 @@
+##fileformat=VCFv4.3
+##fileDate=20210317
+##reference=GRCh37
+##contig=<ID=chr1,length=249250621,assembly=hg19>
+##contig=<ID=chr2,length=243199373,assembly=hg19>
+##contig=<ID=chr4,length=191154276,assembly=hg19>
+##contig=<ID=chr5,length=180915260,assembly=hg19>
+##contig=<ID=chr7,length=159138663,assembly=hg19>
+##contig=<ID=chr9,length=141213431,assembly=hg19>
+##contig=<ID=chr11,length=135006516,assembly=hg19>
+##contig=<ID=chr12,length=133851895,assembly=hg19>
+##contig=<ID=chr13,length=115169878,assembly=hg19>
+##contig=<ID=chr14,length=102531392,assembly=hg19>
+##contig=<ID=chr15,length=102531392,assembly=hg19>
+##contig=<ID=chr17,length=81195210,assembly=hg19>
+##contig=<ID=chr19,length=59128983,assembly=hg19>
+##contig=<ID=chr20,length=63025520,assembly=hg19>
+##contig=<ID=chr22,length=51304566,assembly=hg19>
+##contig=<ID=chrX,length=155270560,assembly=hg19>
+##INFO=<ID=SVLEN,Number=.,Type=Integer,Description="Difference in length between REF and ALT alleles">
+##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">
+##INFO=<ID=MATEID,Number=1,Type=String,Description="MATEID">
+##INFO=<ID=EVENT,Number=1,Type=String,Description="EVENT">
+##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
+##INFO=<ID=END,Number=1,Type=Integer,Description="Second breakpoint of the SV, for SVs given in a single record">
+##INFO=<ID=MEINFO,Number=4,Type=String,Description="Mobile element info of the form NAME,START,END,POLARITY">
+##ALT=<ID=DEL,Description="Deletion">
+##ALT=<ID=DUP,Description="Duplication">
+##ALT=<ID=DUP:TANDEM,Description="Tandem Duplication">
+##ALT=<ID=CNV,Description="Copy number variable region">
+##ALT=<ID=CN0,Description="Copy number allele: 0 copies">
+##ALT=<ID=CN3,Description="Copy number allele: 3 copies">
+##ALT=<ID=CN4,Description="Copy number allele: 4 copies">
+##ALT=<ID=INS,Description="Insertion of novel sequence">
+##ALT=<ID=INS:ME:ALU,Description="Insertion of ALU element">
+##ALT=<ID=INS:ME:L1,Description="Insertion of L1 element">
+##ALT=<ID=INS:ME:SVA,Description="Insertion of SVA element">
+##ALT=<ID=INV,Description="Inversion">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype quality">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
+##FORMAT=<ID=HQ,Number=2,Type=Integer,Description="Haplotype Quality">
+##FORMAT=<ID=AD,Number=2,Type=Integer,Description="Allelic Depth">
+##FORMAT=<ID=FILTER,Number=.,Type=Flag,Description="Filter quality">
+##FORMAT=<ID=QUAL,Number=1,Type=Integer,Description="Filter quality value">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sample1	sample2	sample3	sample4
+chrX	10	.	NN	<CN4>	10	PASS	SVTYPE=CNV;END=1198775;SVLEN=1198765	GT:GQ:DP	1|0:48:5	0|0:48:1	1/1:43:5	0/0:.:.
+chrX	13771576	bnd_z	A	A[12:2791206[	1556.77	PASS	SVTYPE=BND;MATEID=bnd_y;EVENT=RR0	GT:GQ:DP	0|0:3:3	1|0:49:4	1/1:41:3	0/0:.:.
+chrX	13771577	bnd_w	A	]12:2791205]A	1556.77	PASS	SVTYPE=BND;MATEID=bnd_x;EVENT=RR0	GT:GQ:DP	0|0:48:1	1|0:48:5	1/1:43:5	0/0:.:.
+chrX	21534509	.	A	<INV>	1724.73	PASS	SVTYPE=INV;END=21939919	GT:GQ:DP	0/0:35:4	0/1:17:2	1/1:40:3	0/0:.:.
+chrX	47466361	bnd_G	A	]14:31535603]A	3099.77	PASS	SVTYPE=BND;MATEID=bnd_E	GT:GQ:DP	0|0:48:1	1|0:48:5	1/1:43:4	0/0:.:.
+chrX	110653953	.	T	<INS>	5620.73	PASS	SVTYPE=INS;END=110653953;SVLEN=12876	GT:GQ:DP	1|0:49:4	0|0:3:3	1/1:41:1	0/0:.:.
+chrX	128721193	.	A	<DUP>	556.77	PASS	SVTYPE=DUP;END=128722793;SVLEN=15600	GT:GQ:DP	0|0:48:1	1|0:48:3	1/1:43:1	0/0:.:.
+chr1	120254545	.	G	<INS:ME:ALU>	909.77	PASS	SVTYPE=INS;END=120254746;SVLEN=201	GT:GQ:DP	0/0:35:4	0/1:17:4	1/1:40:1	0/0:.:.
+chr2	166183577	.	C	<INS:ME:L1>	1847.77	PASS	SVTYPE=INS;END=166183910;SVLEN=333	GT:GQ:DP	0|0:3:3	1|0:49:4	1/1:41:2	0/0:.:.
+chr2	241686789	.	G	<INV>	2876.77	PASS	SVTYPE=INV;END=242426789	GT:GQ:DP	0|0:3:1	1|0:49:3	1/1:41:3	0/0:.:.
+chr4	1940143	.	C	<DEL>	206.77	PASS	SVTYPE=DEL;END=1990143;SVLEN=-50000	GT:GQ:DP	0|0:48:6	1|0:48:6	1/1:43:2	0/0:.:.
+chr5	179780340	.	GT	<DUP:TANDEM>	145	PASS	SVTYPE=DUP;END=180002540;SVLEN=222200	GT:GQ:DP	1/1:41:6	0|0:3:1	1|0:49:3	0/0:.:.
+chr7	78119221	.	G	<DUP:TANDEM>	1870.73	PASS	SVTYPE=DUP;END=79119221;SVLEN=1000000	GT:GQ:DP	0|0:3:3	1|0:49:2	1/1:41:1	0/0:.:.
+chr7	155251433	.	C	<DUP>	355.77	PASS	SVTYPE=DUP;END=155252433;SVLEN=1000	GT:GQ:DP	0/0:35:4	0/1:17:2	1/1:40:2	0/0:.:.
+chr9	37020622	.	A	<INS>	2277.77	PASS	SVTYPE=INS;END=37020622;SVLEN=234991	GT:GQ:DP	1|0:48:3	1/1:43:1	0|0:48:1	0/0:.:.
+chr9	140001341	.	G	<DEL>	6321.73	PASS	SVTYPE=DEL;END=140001491;SVLEN=-150	GT:GQ:DP	1/1:40:3	0/0:35:4	0/1:17:2	0/0:.:.
+chr11	694974	.	A	<DUP>	44.77	PASS	SVTYPE=DUP;END=699974;SVLEN=5000	GT:GQ:DP	0|0:48:1	1|0:48:5	1/1:43:4	0/0:.:.
+chr12	2791205	bnd_x	A	A[X:13771577[	12279.8	PASS	SVTYPE=BND;MATEID=bnd_w;EVENT=RR0	GT:GQ:DP	0|0:48:1	1|0:48:5	1/1:43:4	0/0:.:.
+chr12	2791206	bnd_y	A	]X:13771576]A	12279.8	PASS	SVTYPE=BND;MATEID=bnd_z;EVENT=RR0	GT:GQ:DP	0|0:48:1	1|0:48:5	1/1:43:4	0/0:.:.
+chr12	52200742	.	C	<DEL>	19409.8	PASS	SVTYPE=DEL;END=52207543;SVLEN=-6801	GT:GQ:DP	1|0:48:6	0|0:48:6	1/1:43:3	0/0:.:.
+chr13	32893302	INS:ME	T	<INS:ME:ALU>	142.686431884766	PASS	MEINFO=chr13:32893302_ALU_Plus,32893302,32893303,+	GT:GQ:DP	0/1:48:6	0/0:.:.	0/0:.:.	0/0:.:.
+chr14	31535603	bnd_E	G	G[15:26866738[,G[X:47466361[	3197.05	PASS	SVTYPE=BND;MATEID=bnd_F,bnd_G	GT:GQ:DP	0|0:3:3	1|0:49:4	1/1:41:3	0/0:.:.
+chr15	26866738	bnd_F	C	]14:31535603]C	3558.77	PASS	SVTYPE=BND;MATEID=bnd_E	GT:GQ:DP	0|0:48:1	1|0:48:5	1/1:43:4	0/0:.:.
+chr15	63937209	.	C	<INV>	6630.77	PASS	SVTYPE=INV;END=63941509	GT:GQ:DP	0|0:3:1	1|0:49:3	1/1:41:3	0/0:.:.
+chr17	42964145	.	C	<INS>	2456.77	PASS	SVTYPE=INS;END=42964145;SVLEN=20000	GT:GQ:DP	0|0:48:1	1|0:48:3	1/1:43:1	0/0:.:.
+chr19	111	.	N	<CN3>	9.6	PASS	SVTYPE=CNV;END=123467;SVLEN=123356	GT:GQ:DP	0|0:48:6	1|0:48:6	1/1:43:2	0/0:.:.
+chr20	1235237	.	G	<CN0>	.	PASS	SVTYPE=CNV;END=1236000;SVLEN=-763	GT:GQ:DP	0/0:35:4	0/1:17:2	1/1:40:3	0/0:.:.
+chr22	42575528	.	G	<DUP:TANDEM>	151.77	PASS	SVTYPE=DUP;END=42698984;SVLEN=123456	GT:GQ:DP	0|0:48:1	1|0:48:3	1/1:43:1	0/0:.:.
+chr1	28736	.	G	A	100	PASS		GT:AD:DP:GQ	0/1:525,204:729:99	0/1:12659,4994:17664:99	1/1:12658,4995:17663:99	1/1:401,175:576:99
+chr1	35144	.	A	C	100	PASS		GT:AD:DP:GQ	0/1:525,204:729:99	0/1:12659,4994:17664:99	0/1:12658,4995:17663:99	0/1:401,175:576:99
+chr1	35144	.	A	C	100	PASS		GT:AD:DP:GQ	0/1:525,204:729:99	0/1:12659,4994:17664:99	0/1:12658,4995:17663:99	0/1:401,175:576:99
+chr1	69101	.	T	G,C	100	PASS		GT:AD:DP:GQ	0/1:525,204:729:99	0/1:12659,4994:17664:99	0/1:12658,4995:17663:99	0/2:401,175:576:99
+chr7	55249063	.	G	GAAAA,GAAAAA,GAAAAAAA	5777	PASS		GT:AD:DP:GQ	0/1:525,204:729:99	0/2:12659,4994:17664:99	0/3:12658,4995:17663:99	1/2:401,175:576:99
+chr7	55249063	.	G	GAAAAAAA	5777	PASS		GT:AD:DP:GQ	0/1:525,204:729:99	0/1:12659,4994:17664:99	0/1:12658,4995:17663:99	0/1:401,175:576:99

@@ -26,7 +26,7 @@ from howard.objects.variants import Variants
 tests_folder = os.path.dirname(__file__)
 
 
-
+  
 def test_set_get_input():
 
     # Init files
@@ -1490,6 +1490,88 @@ def test_calculation():
     result = vcf.get_query_to_df(f"""SELECT INFO FROM variants WHERE INFO LIKE '%middle=%' """)
     assert len(result) == 7
 
+  
+def test_calculation_vartype():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.snv.indel.mosaic.vcf"
+    output_vcf = "/tmp/output.vcf.gz"
+
+    # Construct param dict
+    param = {
+        "calculation": {
+            "VARTYPE": None
+        }
+    }
+
+    # Create object
+    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
+    # Remove if output file exists
+    remove_if_exists([output_vcf])
+
+    # Calculation
+    vcf.calculation()
+
+    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=SNV%' """)
+    assert len(result) == 5
+    
+    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=INDEL%' """)
+    assert len(result) == 1
+    
+    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=MOSAIC%' """)
+    assert len(result) == 1
+    
+
+def test_calculation_vartype_full():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.full.vcf"
+    output_vcf = "/tmp/output.vcf.gz"
+
+    # Construct param dict
+    param = {
+        "calculation": {
+            "VARTYPE": None
+        }
+    }
+
+    # Create object
+    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
+    # Remove if output file exists
+    remove_if_exists([output_vcf])
+
+    # Calculation
+    vcf.calculation()
+
+    result = vcf.get_query_to_df(f""" SELECT "INFO/VARTYPE", count(*) AS count FROM variants GROUP BY "INFO/VARTYPE" ORDER BY count""")
+    print(result)
+
+    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=SNV%' """)
+    assert len(result) == 3
+    
+    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=INDEL%' """)
+    assert len(result) == 2
+    
+    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=CNV%' """)
+    assert len(result) == 3
+
+    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=INV%' """)
+    assert len(result) == 3
+
+    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=DEL%' """)
+    assert len(result) == 3
+
+    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=INS%' """)
+    assert len(result) == 5
+
+    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=DUP%' """)
+    assert len(result) == 6
+    
+    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=BND%' """)
+    assert len(result) == 7
+
 
 def test_calculation_snpeff_hgvs():
 
@@ -1616,38 +1698,6 @@ def test_calculation_snpeff_hgvs_notranscripts():
         vcf.calculation()
     assert str(e.value) == f"Transcript file '{transcripts_file}' does NOT exist"
 
-    
-def test_calculation_vartype():
-
-    # Init files
-    input_vcf = tests_folder + "/data/example.snv.indel.mosaic.vcf"
-    output_vcf = "/tmp/output.vcf.gz"
-
-    # Construct param dict
-    param = {
-        "calculation": {
-            "VARTYPE": None
-        }
-    }
-
-    # Create object
-    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
-
-    # Remove if output file exists
-    remove_if_exists([output_vcf])
-
-    # Calculation
-    vcf.calculation()
-
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=SNV%' """)
-    assert len(result) == 5
-    
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=INDEL%' """)
-    assert len(result) == 1
-    
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=MOSAIC%' """)
-    assert len(result) == 1
-    
 
 def test_prioritization():
 
