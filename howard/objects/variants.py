@@ -71,11 +71,13 @@ class Variants:
         :param input: The input file
         """
         self.input = input
+        
         # Input format
-        input_name, input_extension = os.path.splitext(self.input)
-        self.input_name = input_name
-        self.input_extension = input_extension
-        self.input_format = self.input_extension.replace(".", "")
+        if input:
+            input_name, input_extension = os.path.splitext(self.input)
+            self.input_name = input_name
+            self.input_extension = input_extension
+            self.input_format = self.input_extension.replace(".", "")
 
 
     def set_config(self, config: dict) -> None:
@@ -223,42 +225,50 @@ class Variants:
         It reads the header of a VCF file and stores it as a list of strings and as a VCF object
         """
         input_file = self.get_input()
-        input_format = self.get_input_format()
-        input_compressed = self.get_input_compressed()
-        config = self.get_config()
-        header_list = []
-        if input_format in ["vcf", "bcf", "hdr", "tsv", "csv", "psv", "parquet", "db", "duckdb"]:
-            # header provided in param
-            if config.get("header_file", None):
-                with open(config.get("header_file"), 'rt') as f:
-                    header_list = self.read_vcf_header(f)
-            # within a vcf file format (header within input file itsself)
-            elif input_format in ["vcf", "bcf", "hdr"]:
-                # within a compressed vcf file format (.vcf.gz or .bcf)
-                if input_compressed:
-                    with bgzf.open(input_file, 'rt') as f:
+
+        if input_file:
+
+            input_format = self.get_input_format()
+            input_compressed = self.get_input_compressed()
+            config = self.get_config()
+            header_list = []
+            if input_format in ["vcf", "bcf", "hdr", "tsv", "csv", "psv", "parquet", "db", "duckdb"]:
+                # header provided in param
+                if config.get("header_file", None):
+                    with open(config.get("header_file"), 'rt') as f:
                         header_list = self.read_vcf_header(f)
-                # within an uncompressed vcf file format (.vcf)
+                # within a vcf file format (header within input file itsself)
+                elif input_format in ["vcf", "bcf", "hdr"]:
+                    # within a compressed vcf file format (.vcf.gz or .bcf)
+                    if input_compressed:
+                        with bgzf.open(input_file, 'rt') as f:
+                            header_list = self.read_vcf_header(f)
+                    # within an uncompressed vcf file format (.vcf)
+                    else:
+                        with open(input_file, 'rt') as f:
+                            header_list = self.read_vcf_header(f)
+                # header provided in default external file .hdr
+                elif os.path.exists((input_file+".hdr")):
+                    with open(input_file+".hdr", 'rt') as f:
+                        header_list = self.read_vcf_header(f)
                 else:
-                    with open(input_file, 'rt') as f:
-                        header_list = self.read_vcf_header(f)
-            # header provided in default external file .hdr
-            elif os.path.exists((input_file+".hdr")):
-                with open(input_file+".hdr", 'rt') as f:
-                    header_list = self.read_vcf_header(f)
-            else:
-                log.error(f"No header for file {input_file}")
-                raise ValueError(f"No header for file {input_file}")
-        else:  # try for unknown format ?
-            log.error(f"Input file format '{input_format}' not available")
-            raise ValueError(
-                f"Input file format '{input_format}' not available")
+                    log.error(f"No header for file {input_file}")
+                    raise ValueError(f"No header for file {input_file}")
+            else:  # try for unknown format ?
+                log.error(f"Input file format '{input_format}' not available")
+                raise ValueError(
+                    f"Input file format '{input_format}' not available")
 
-        # header as list
-        self.header_list = header_list
+            # header as list
+            self.header_list = header_list
 
-        # header as VCF object
-        self.header_vcf = vcf.Reader(io.StringIO("\n".join(header_list)))
+            # header as VCF object
+            self.header_vcf = vcf.Reader(io.StringIO("\n".join(header_list)))
+
+        else:
+
+            self.header_list = None
+            self.header_vcf = None
 
 
     def get_query_to_df(self, query: str = "") -> pd.DataFrame:
@@ -531,10 +541,13 @@ class Variants:
         :param type: the type of header you want to get, defaults to vcf (optional)
         :return: The header of the vcf file.
         """
-        if type == "vcf":
-            return self.header_vcf
-        elif type == "list":
-            return self.header_list
+        if self.header_vcf:
+            if type == "vcf":
+                return self.header_vcf
+            elif type == "list":
+                return self.header_list
+        else:
+            return None
 
 
     def get_header_length(self) -> int:
@@ -543,7 +556,10 @@ class Variants:
 
         :return: The length of the header list.
         """
-        return len(self.header_list) - 1
+        if self.get_header():
+            return len(self.header_list) - 1
+        else:
+            return 0
 
 
     def get_header_columns(self) -> str:
@@ -552,7 +568,10 @@ class Variants:
 
         :return: The length of the header list.
         """
-        return self.header_list[-1]
+        if self.get_header():
+            return self.header_list[-1]
+        else:
+            return ""
 
 
     def get_header_columns_as_list(self) -> list:
@@ -561,7 +580,10 @@ class Variants:
 
         :return: The length of the header list.
         """
-        return self.get_header_columns().strip().split("\t")
+        if self.get_header():
+            return self.get_header_columns().strip().split("\t")
+        else:
+            return []
 
 
     def get_header_columns_as_sql(self) -> str:
@@ -765,6 +787,35 @@ class Variants:
         self.create_indexes()
 
 
+    def add_column(self, table_name, column_name, column_type, default_value=None):
+        """
+        Adds a column to a SQLite or DuckDB table with a default value if it doesn't already exist.
+
+        table_name: the name of the table
+        column_name: the name of the column to add
+        column_type: the data type of the column to add
+        default_value: the default value of the column to add (optional)
+        """
+
+        # Check if the column already exists in the table
+        query = f"SELECT COUNT(*) AS count FROM sqlite_master WHERE type='table' AND name='{table_name}' AND sql LIKE '%{column_name}%';"
+        column_exists = self.get_query_to_df(query)["count"][0]
+        if column_exists:
+            log.debug(f"The {column_name} column already exists in the {table_name} table")
+            return
+        else:
+            log.debug(f"The {column_name} column NOT exists in the {table_name} table")
+        
+        # Add column in table
+        add_column_query = f""" ALTER TABLE {table_name} ADD COLUMN "{column_name}" {column_type} """
+        if default_value is not None:
+            add_column_query += f" DEFAULT {default_value}"
+        self.execute_query(add_column_query)
+        log.debug(f"The {column_name} column was successfully added to the {table_name} table")
+
+        return
+
+
     def explode_infos(self, prefix: str = None, create_index: bool = False, fields: list = None, update: bool = True, force:bool = False) -> None:
         """
         The function takes a VCF file and explodes the INFO fields into individual columns
@@ -772,6 +823,9 @@ class Variants:
 
         # drop indexes
         self.drop_indexes()
+
+        # connexion format 
+        connexion_format = self.get_connexion_format()
 
         # Access
         access = self.get_config().get("access", None)
@@ -820,22 +874,36 @@ class Variants:
                         type_sql = "VARCHAR"
 
                     # Add field
-                    sql_info_alter_table = f"ALTER TABLE {table_variants} ADD COLUMN IF NOT EXISTS \"{info_id_sql}\" {type_sql} DEFAULT null"
-                    log.debug(
-                        f"Explode INFO fields - ADD {info} annotations fields: {sql_info_alter_table}")
-                    self.conn.execute(sql_info_alter_table)
+                    self.add_column(table_name=table_variants, column_name=info_id_sql, column_type=type_sql, default_value="null")
 
                     # add field to index
                     self.index_additionnal_fields.append(info_id_sql)
 
                     # Update field array
-                    update_info_field = f"\"{info_id_sql}\" = CASE WHEN REGEXP_EXTRACT(INFO, '[^;]*{info}=([^;]*)',1) == '' THEN NULL WHEN REGEXP_EXTRACT(INFO, '{info}=([^;]*)',1) == '.' THEN NULL ELSE REGEXP_EXTRACT(INFO, '{info}=([^;]*)',1) END"
+                    if connexion_format in ["duckdb"]:
+                        update_info_field = f"""
+                        "{info_id_sql}" =
+                            CASE
+                                WHEN REGEXP_EXTRACT(INFO, '[^;]*{info}=([^;]*)',1) == '' THEN NULL
+                                WHEN REGEXP_EXTRACT(INFO, '{info}=([^;]*)',1) == '.' THEN NULL
+                                ELSE REGEXP_EXTRACT(INFO, '{info}=([^;]*)',1)
+                            END
+                        """
+                    elif connexion_format in ["sqlite"]:
+                        update_info_field = f"""
+                            "{info_id_sql}" =
+                                CASE
+                                    WHEN instr(INFO, '{info}=') = 0 THEN NULL
+                                    WHEN instr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}),';') = 0 THEN substr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}), instr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}), '=')+1)
+                                    ELSE substr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}), instr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}), '=')+1, instr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}),';')-instr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}), '=')-1)
+                                END
+                        """
+                        
                     sql_info_alter_table_array.append(update_info_field)
 
             # By chromosomes
             chromosomes_df = self.get_query_to_df(
                 f""" SELECT "#CHROM" FROM {table_variants} GROUP BY "#CHROM" """)
-            # print(chromosomes_df)
 
             for chrom in chromosomes_df["#CHROM"]:
                 log.debug(
@@ -851,7 +919,7 @@ class Variants:
                         """
                     log.debug(
                         f"Explode INFO fields - ADD [{len(self.get_header().infos)}]: {sql_info_alter_table}")
-                    print(sql_info_alter_table)
+                    #print(sql_info_alter_table)
                     self.conn.execute(sql_info_alter_table)
 
         # create indexes
@@ -901,13 +969,21 @@ class Variants:
         # get table variants
         table_variants = self.get_table_variants("FROM")
 
+        # Get database format
+        connexion_format = self.get_connexion_format()
+
         if access not in ["RO"]:
-            list_indexes = self.conn.execute(
-                f"SELECT index_name FROM duckdb_indexes WHERE table_name='{table_variants}'")
-            for index in list_indexes.df()["index_name"]:
+            if connexion_format in ["duckdb"]:
+                sql_list_indexes = f"SELECT index_name FROM duckdb_indexes WHERE table_name='{table_variants}'"
+            elif connexion_format in ["sqlite"]:
+                sql_list_indexes = f"SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='{table_variants}';"
+
+            list_indexes = self.conn.execute(sql_list_indexes)
+            index_names = [row[0] for row in list_indexes.fetchall()]
+            for index in index_names:
                 sql_drop_table_index = f""" DROP INDEX IF EXISTS "{index}" """
                 self.conn.execute(sql_drop_table_index)
-
+                
 
     def read_vcf_header(self, f) -> list:
         """
@@ -1074,7 +1150,7 @@ class Variants:
             table = self.get_table_variants(clause="from")
             header_columns = self.get_header_columns()
         query = f""" SELECT * FROM {table} LIMIT 1 """
-        table_columns = self.conn.execute(query).df().columns.tolist()
+        table_columns = self.get_query_to_df(query).columns.tolist()
         extra_columns = []
         for column in table_columns:
             if column not in header_columns:
@@ -2046,7 +2122,8 @@ class Variants:
         # Check if not empty
         log.debug("Check if not empty")
         sql_query_chromosomes = f"""SELECT count(*) as count FROM {table_variants} as table_variants"""
-        if not self.conn.execute(f"{sql_query_chromosomes}").df()["count"][0]:
+        #if not self.conn.execute(f"{sql_query_chromosomes}").df()["count"][0]:
+        if not self.get_query_to_df(f"{sql_query_chromosomes}")["count"][0]:
             log.info(f"VCF empty")
             return
 
@@ -3139,7 +3216,7 @@ class Variants:
                                 sql_set_option = ",".join(sql_set)
                                 sql_set_info_option = " || ';' ".join(
                                     sql_set_info)
-
+                                
                                 # Criterion and comparison
                                 try:
                                     float(criterion_value)

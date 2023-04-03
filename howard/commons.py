@@ -507,7 +507,7 @@ def get_file_format(filename: str = None) -> str:
     return filename_format
 
 
-def get_file_compressed(filename: str) -> bool:
+def get_file_compressed(filename: str = None) -> bool:
     """
     This function takes a filename as input and returns True if the file is compressed (in bgzip) and False if it
     is not
@@ -516,8 +516,10 @@ def get_file_compressed(filename: str) -> bool:
     :type filename: str
     :return: A boolean value.
     """
-    filename_name, filename_extension = os.path.splitext(filename)
-    compress_format = filename_extension.replace(".", "")
+    compress_format = None
+    if filename:
+        filename_name, filename_extension = os.path.splitext(filename)
+        compress_format = filename_extension.replace(".", "")
     return compress_format in ["gz", "bcf"]
 
 

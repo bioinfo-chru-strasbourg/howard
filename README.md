@@ -24,7 +24,7 @@ HOWARD is multithreaded through the number of variants and by database (data-sca
 - [Quick HOWARD commands](#quick-howard-commands)
   - [Show VCF stats and overview](#show-vcf-stats-and-overview)
   - [Translate VCF into other format](#translate-vcf-into-other-format)
-  - [Query VCF](#query-vcf)
+  - [Query](#query)
   - [Annotation](#annotation)
   - [Calculation](#calculation)
   - [Prioritization](#prioritization)
@@ -65,16 +65,17 @@ howard --input=tests/data/example.vcf.gz --stats --overview
 
 Translate VCF into CSV and show output file
 ```
-howard --input=tests/data/example.vcf.gz --output=tests/data/example.csv && cat tests/data/example.csv
+howard --input=tests/data/example.vcf.gz --output=tests/data/example.csv
+cat tests/data/example.csv
 ```
 
-Translate VCF into parquet, and show statistics on output parquet file
+Translate VCF into parquet, and show statistics on output parquet file (same as VCF)
 ```
 howard --input=tests/data/example.vcf.gz --output=tests/data/example.parquet
 howard --input=tests/data/example.parquet --stats
 ```
 
-### Query VCF
+### Query
 
 Select variants in VCF with REF and POS fields
 ```

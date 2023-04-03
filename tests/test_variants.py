@@ -26,7 +26,6 @@ from howard.objects.variants import Variants
 tests_folder = os.path.dirname(__file__)
 
 
-
   
 def test_set_get_input():
 
@@ -38,16 +37,14 @@ def test_set_get_input():
     conn = duckdb.connect(":memory:")
 
     # Create object
-    vcf = Variants(conn=conn, input=input_vcf)
+    variants = Variants(conn=conn, input=input_vcf)
 
     # Check get_input
-    check_get_input = input_vcf == vcf.get_input()
+    assert input_vcf == variants.get_input()
 
     # Check new input vcf
-    vcf.set_input(new_input_vcf)
-    check_set_input = new_input_vcf == vcf.get_input()
-
-    assert check_get_input and check_set_input
+    variants.set_input(new_input_vcf)
+    assert new_input_vcf == variants.get_input()
 
 
 def test_set_get_output():
@@ -61,16 +58,14 @@ def test_set_get_output():
     conn = duckdb.connect(":memory:")
 
     # Create object
-    vcf = Variants(conn=conn, input=input_vcf, output=output_vcf)
+    variants = Variants(conn=conn, input=input_vcf, output=output_vcf)
 
     # Check get_output
-    check_get_output = output_vcf == vcf.get_output()
+    assert output_vcf == variants.get_output()
 
     # Check new output vcf
-    vcf.set_output(new_output_vcf)
-    check_set_output = new_output_vcf == vcf.get_output()
-
-    assert check_get_output and check_set_output
+    variants.set_output(new_output_vcf)
+    assert new_output_vcf == variants.get_output()
 
 
 def test_set_get_config():
@@ -84,16 +79,14 @@ def test_set_get_config():
     conn = duckdb.connect(":memory:")
 
     # Create object
-    vcf = Variants(conn=conn, input=input_vcf, config=input_config)
+    variants = Variants(conn=conn, input=input_vcf, config=input_config)
 
     # Check get_input
-    check_get_config = input_config == vcf.get_config()
+    assert input_config == variants.get_config()
 
     # Check new input vcf
-    vcf.set_config(new_input_config)
-    check_set_config = new_input_config == vcf.get_config()
-
-    assert check_get_config and check_set_config
+    variants.set_config(new_input_config)
+    assert new_input_config == variants.get_config()
 
 
 def test_set_get_param():
@@ -107,16 +100,14 @@ def test_set_get_param():
     conn = duckdb.connect(":memory:")
 
     # Create object
-    vcf = Variants(conn=conn, input=input_vcf, param=input_param)
+    variants = Variants(conn=conn, input=input_vcf, param=input_param)
 
     # Check get_input
-    check_get_param = input_param == vcf.get_param()
+    assert input_param == variants.get_param()
 
     # Check new input vcf
-    vcf.set_param(new_input_param)
-    check_set_param = new_input_param == vcf.get_param()
-
-    assert check_get_param and check_set_param
+    variants.set_param(new_input_param)
+    assert new_input_param == variants.get_param()
 
 
 def test_set_get_header():
@@ -128,44 +119,78 @@ def test_set_get_header():
     conn = duckdb.connect(":memory:")
 
     # Create object
-    vcf = Variants(conn=conn, input=input_vcf)
+    variants = Variants(conn=conn, input=input_vcf)
 
     # set_header done when vcf object creation
 
     # Check header VCF
-    header_vcf = vcf.get_header()
-    check_header_vcf = header_vcf.infos != None
+    header_vcf = variants.get_header()
+    assert header_vcf.infos != None
 
     # Check header List and nb
-    header_list = vcf.get_header(type="list")
-    check_header_list = header_list != []
-    check_header_nb = len(header_list) == 53
+    header_list = variants.get_header(type="list")
+    assert header_list != []
+    assert len(header_list) == 53
 
     # check header length
-    check_header_length = vcf.get_header_length() == 52
+    assert variants.get_header_length() == 52
 
     # check get_header_columns
-    header_columns = vcf.get_header_columns().strip()
+    header_columns = variants.get_header_columns().strip()
     header_columns_expected = "#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sample1	sample2	sample3	sample4".strip()
-    check_header_columns = header_columns == header_columns_expected
+    assert header_columns == header_columns_expected
     
 
     # check get_header_columns_as_sql
-    header_columns_as_sql = vcf.get_header_columns_as_sql().strip()
+    header_columns_as_sql = variants.get_header_columns_as_sql().strip()
     header_columns_as_sql_expected = """ "#CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO","FORMAT","sample1","sample2","sample3","sample4" """.strip()
-    check_header_columns_as_sql = header_columns_as_sql == header_columns_as_sql_expected
+    assert header_columns_as_sql == header_columns_as_sql_expected
 
     # check get_header_sample_list
-    header_columns_sample_list = vcf.get_header_sample_list()
+    header_columns_sample_list = variants.get_header_sample_list()
     header_columns_sample_list_expected = ['sample1', 'sample2', 'sample3', 'sample4']
-    check_header_columns_sample_list = header_columns_sample_list == header_columns_sample_list_expected
+    assert header_columns_sample_list == header_columns_sample_list_expected
 
+
+def test_set_get_header_no_samples():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.no_samples.vcf.gz"
+
+    # Create connection
+    conn = duckdb.connect(":memory:")
+
+    # Create object
+    variants = Variants(conn=conn, input=input_vcf)
+
+    # set_header done when vcf object creation
+
+    # Check header VCF
+    header_vcf = variants.get_header()
+    assert header_vcf.infos != None
+
+    # Check header List and nb
+    header_list = variants.get_header(type="list")
+    assert header_list != []
+    assert len(header_list) == 38
+
+    # check header length
+    assert variants.get_header_length() == 37
+
+    # check get_header_columns
+    header_columns = variants.get_header_columns().strip()
+    header_columns_expected = "#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO".strip()
+    assert header_columns == header_columns_expected
     
-    # check full
-    check_full = check_header_vcf and check_header_list and check_header_nb and check_header_length and check_header_columns and check_header_columns_as_sql and check_header_columns_sample_list
-    #check_full = check_header_vcf and check_header_list and check_header_columns and check_header_columns_as_sql and check_header_columns_sample_list
+    # check get_header_columns_as_sql
+    header_columns_as_sql = variants.get_header_columns_as_sql().strip()
+    header_columns_as_sql_expected = """ "#CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO" """.strip()
+    assert header_columns_as_sql == header_columns_as_sql_expected
 
-    assert check_full
+    # check get_header_sample_list
+    header_columns_sample_list = variants.get_header_sample_list()
+    header_columns_sample_list_expected = []
+    assert header_columns_sample_list == header_columns_sample_list_expected
 
 
 def test_set_get_header_in_config():
@@ -175,41 +200,35 @@ def test_set_get_header_in_config():
     input_config = { "header_file":  tests_folder + "/data/example.parquet.hdr" }
 
     # Create object
-    vcf = Variants(input=input_vcf, config=input_config)
+    variants = Variants(input=input_vcf, config=input_config)
 
     # Check header VCF
-    header_vcf = vcf.get_header()
-    check_header_vcf = header_vcf.infos != None
+    header_vcf = variants.get_header()
+    assert header_vcf.infos != None
 
     # Check header List and nb
-    header_list = vcf.get_header(type="list")
-    check_header_list = header_list != []
-    check_header_nb = len(header_list) == 53
+    header_list = variants.get_header(type="list")
+    assert header_list != []
+    assert len(header_list) == 53
 
     # check header length
-    check_header_length = vcf.get_header_length() == 52
+    assert variants.get_header_length() == 52
 
     # check get_header_columns
-    header_columns = vcf.get_header_columns().strip()
+    header_columns = variants.get_header_columns().strip()
     header_columns_expected = "#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sample1	sample2	sample3	sample4".strip()
-    check_header_columns = header_columns == header_columns_expected
+    assert header_columns == header_columns_expected
     
 
     # check get_header_columns_as_sql
-    header_columns_as_sql = vcf.get_header_columns_as_sql().strip()
+    header_columns_as_sql = variants.get_header_columns_as_sql().strip()
     header_columns_as_sql_expected = """ "#CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO","FORMAT","sample1","sample2","sample3","sample4" """.strip()
-    check_header_columns_as_sql = header_columns_as_sql == header_columns_as_sql_expected
+    assert header_columns_as_sql == header_columns_as_sql_expected
 
     # check get_header_sample_list
-    header_columns_sample_list = vcf.get_header_sample_list()
+    header_columns_sample_list = variants.get_header_sample_list()
     header_columns_sample_list_expected = ['sample1', 'sample2', 'sample3', 'sample4']
-    check_header_columns_sample_list = header_columns_sample_list == header_columns_sample_list_expected
-
-    # check full
-    check_full = check_header_vcf and check_header_list and check_header_nb and check_header_length and check_header_columns and check_header_columns_as_sql and check_header_columns_sample_list
-    #check_full = check_header_vcf and check_header_list and check_header_columns and check_header_columns_as_sql and check_header_columns_sample_list
-
-    assert check_full
+    assert header_columns_sample_list == header_columns_sample_list_expected
 
 
 def test_load_without_header():
@@ -219,7 +238,7 @@ def test_load_without_header():
 
     # Create object
     with pytest.raises(ValueError) as e:
-        vcf = Variants(input=input_vcf)
+        variants = Variants(input=input_vcf)
     assert str(e.value) == f"No header for file {input_vcf}"
 
 
@@ -233,19 +252,13 @@ def test_read_vcf_header():
     conn = duckdb.connect(":memory:")
 
     # Create object
-    vcf = Variants(conn=conn, input=input_vcf)
+    variants = Variants(conn=conn, input=input_vcf)
 
     # Check read_vcf_header
     with open(vcf_header, 'rt') as f:
-        header_list = vcf.read_vcf_header(f)
-    check_header_list = header_list != []
-    check_header_list_length = len(header_list) == 53
-
-    # check full
-    check_full = check_header_list and check_header_list_length
-    #check_full = check_header_list
-
-    assert check_full
+        header_list = variants.read_vcf_header(f)
+    assert header_list != []
+    assert len(header_list) == 53
 
 
 def test_load_when_init():
@@ -254,12 +267,11 @@ def test_load_when_init():
     input_vcf = tests_folder + "/data/example.vcf.gz"
 
     # Create object
-    vcf = Variants(input=input_vcf, load=True)
+    variants = Variants(input=input_vcf, load=True)
 
     # Check data loaded
-    result = vcf.execute_query("SELECT count(*) AS count FROM variants")
-    nb_variant_in_database = result.df()["count"][0]
-    #length = result.df()["count"][0]
+    result = variants.get_query_to_df("SELECT count(*) AS count FROM variants")
+    nb_variant_in_database = result["count"][0]
 
     expected_number_of_variants = 7
 
@@ -275,7 +287,7 @@ def test_load_format_not_available():
 
     # Create object
     with pytest.raises(ValueError) as e:
-        vcf = Variants(input=input_vcf, config=input_config, load=True)
+        variants = Variants(input=input_vcf, config=input_config, load=True)
     assert str(e.value) == f"Input file format '{input_format}' not available"
 
 
@@ -285,17 +297,30 @@ def test_load_vcf_gz():
     input_vcf = tests_folder + "/data/example.vcf.gz"
 
     # Create object
-    vcf = Variants(input=input_vcf)
-
-    # Load data
-    vcf.load_data()
+    variants = Variants(input=input_vcf, load=True)
 
     # Check data loaded
-    result = vcf.execute_query("SELECT count(*) AS count FROM variants")
-    nb_variant_in_database = result.df()["count"][0]
-    #length = result.df()["count"][0]
+    result = variants.get_query_to_df("SELECT count(*) AS count FROM variants")
+    nb_variant_in_database = result["count"][0]
 
     expected_number_of_variants = 7
+
+    assert nb_variant_in_database == expected_number_of_variants
+
+
+def test_load_vcf_gz_no_samples():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.no_samples.vcf.gz"
+
+    # Create object
+    variants = Variants(input=input_vcf, load=True)
+
+    # Check data loaded
+    result = variants.get_query_to_df("SELECT count(*) AS count FROM variants")
+    nb_variant_in_database = result["count"][0]
+
+    expected_number_of_variants = 10
 
     assert nb_variant_in_database == expected_number_of_variants
 
@@ -305,20 +330,12 @@ def test_load_parquet():
     # Init files
     input_vcf = tests_folder + "/data/example.parquet"
 
-    # Create connection
-    #conn = duckdb.connect(":memory:")
-
     # Create object
-    #vcf = Variants(conn=conn, input=input_vcf)
-    vcf = Variants(input=input_vcf)
-
-    # Load data
-    vcf.load_data()
+    variants = Variants(input=input_vcf, load=True)
 
     # Check data loaded
-    result = vcf.execute_query("SELECT count(*) AS count FROM variants")
-    nb_variant_in_database = result.df()["count"][0]
-    #length = result.df()["count"][0]
+    result = variants.get_query_to_df("SELECT count(*) AS count FROM variants")
+    nb_variant_in_database = result["count"][0]
 
     expected_number_of_variants = 7
 
@@ -330,20 +347,12 @@ def test_load_vcf():
     # Init files
     input_vcf = tests_folder + "/data/example.vcf"
 
-    # Create connection
-    #conn = duckdb.connect(":memory:")
-
     # Create object
-    #vcf = Variants(conn=conn, input=input_vcf)
-    vcf = Variants(input=input_vcf)
-
-    # Load data
-    vcf.load_data()
+    variants = Variants(input=input_vcf, load=True)
 
     # Check data loaded
-    result = vcf.execute_query("SELECT count(*) AS count FROM variants")
-    nb_variant_in_database = result.df()["count"][0]
-    #length = result.df()["count"][0]
+    result = variants.get_query_to_df("SELECT count(*) AS count FROM variants")
+    nb_variant_in_database = result["count"][0]
 
     expected_number_of_variants = 7
 
@@ -355,20 +364,12 @@ def test_load_csv():
     # Init files
     input_vcf = tests_folder + "/data/example.csv"
 
-    # Create connection
-    #conn = duckdb.connect(":memory:")
-
     # Create object
-    #vcf = Variants(conn=conn, input=input_vcf)
-    vcf = Variants(input=input_vcf)
-
-    # Load data
-    vcf.load_data()
+    variants = Variants(input=input_vcf, load=True)
 
     # Check data loaded
-    result = vcf.execute_query("SELECT count(*) AS count FROM variants")
-    nb_variant_in_database = result.df()["count"][0]
-    #length = result.df()["count"][0]
+    result = variants.get_query_to_df("SELECT count(*) AS count FROM variants")
+    nb_variant_in_database = result["count"][0]
 
     expected_number_of_variants = 7
 
@@ -380,20 +381,12 @@ def test_load_tsv():
     # Init files
     input_vcf = tests_folder + "/data/example.tsv"
 
-    # Create connection
-    #conn = duckdb.connect(":memory:")
-
     # Create object
-    #vcf = Variants(conn=conn, input=input_vcf)
-    vcf = Variants(input=input_vcf)
-
-    # Load data
-    vcf.load_data()
+    variants = Variants(input=input_vcf, load=True)
 
     # Check data loaded
-    result = vcf.execute_query("SELECT count(*) AS count FROM variants")
-    nb_variant_in_database = result.df()["count"][0]
-    #length = result.df()["count"][0]
+    result = variants.get_query_to_df("SELECT count(*) AS count FROM variants")
+    nb_variant_in_database = result["count"][0]
 
     expected_number_of_variants = 7
 
@@ -405,20 +398,12 @@ def test_load_psv():
     # Init files
     input_vcf = tests_folder + "/data/example.psv"
 
-    # Create connection
-    #conn = duckdb.connect(":memory:")
-
     # Create object
-    #vcf = Variants(conn=conn, input=input_vcf)
-    vcf = Variants(input=input_vcf)
-
-    # Load data
-    vcf.load_data()
+    variants = Variants(input=input_vcf, load=True)
 
     # Check data loaded
-    result = vcf.execute_query("SELECT count(*) AS count FROM variants")
-    nb_variant_in_database = result.df()["count"][0]
-    #length = result.df()["count"][0]
+    result = variants.get_query_to_df("SELECT count(*) AS count FROM variants")
+    nb_variant_in_database = result["count"][0]
 
     expected_number_of_variants = 7
 
@@ -431,14 +416,11 @@ def test_load_duckdb():
     input_vcf = tests_folder + "/data/example.duckdb"
 
     # Create object
-    vcf = Variants(input=input_vcf)
-
-    # Load data
-    vcf.load_data()
+    variants = Variants(input=input_vcf, load=True)
 
     # Check data loaded
-    result = vcf.execute_query("SELECT count(*) AS count FROM variants")
-    nb_variant_in_database = result.df()["count"][0]
+    result = variants.get_query_to_df("SELECT count(*) AS count FROM variants")
+    nb_variant_in_database = result["count"][0]
 
     expected_number_of_variants = 7
 
@@ -452,10 +434,10 @@ def test_get_connexion_db_memory():
     input_config = { "connexion_type": "memory" }
 
     # Create object
-    vcf = Variants(input=input_vcf, config=input_config)
+    variants = Variants(input=input_vcf, config=input_config)
 
     # get connexion_db
-    connexion_db = vcf.get_connexion_db()
+    connexion_db = variants.get_connexion_db()
 
     assert connexion_db == ":memory:"
 
@@ -467,10 +449,10 @@ def test_get_connexion_db_tmpfile():
     input_config = { "connexion_type": "tmpfile" }
 
     # Create object
-    vcf = Variants(input=input_vcf, config=input_config)
+    variants = Variants(input=input_vcf, config=input_config)
 
     # get connexion_db
-    connexion_db = vcf.get_connexion_db()
+    connexion_db = variants.get_connexion_db()
 
     assert os.path.exists(connexion_db)
 
@@ -482,10 +464,10 @@ def test_get_connexion_db_file():
     input_config = { "connexion_type": "/tmp/connexion.duckdb" }
 
     # Create object
-    vcf = Variants(input=input_vcf, config=input_config)
+    variants = Variants(input=input_vcf, config=input_config)
 
     # get connexion_db
-    connexion_db = vcf.get_connexion_db()
+    connexion_db = variants.get_connexion_db()
 
     assert connexion_db == "/tmp/connexion.duckdb"
 
@@ -496,17 +478,15 @@ def test_get_table_variants():
     input_vcf = tests_folder + "/data/example.vcf.gz"
 
     # Create object
-    vcf = Variants(input=input_vcf)
+    variants = Variants(input=input_vcf)
 
     # get connexion_db
-    table_variants_select = vcf.get_table_variants(clause="select")
-    table_variants_select_check = table_variants_select == "variants"
-    table_variants_from = vcf.get_table_variants(clause="from")
-    table_variants_from_check = table_variants_select == "variants"
-    table_variants_else = vcf.get_table_variants(clause="else")
-    table_variants_else_check = table_variants_select == "variants"
-
-    assert table_variants_select_check and table_variants_from_check and table_variants_else_check
+    table_variants_select = variants.get_table_variants(clause="select")
+    assert table_variants_select == "variants"
+    table_variants_from = variants.get_table_variants(clause="from")
+    assert table_variants_from == "variants as variants"
+    table_variants_else = variants.get_table_variants(clause="else")
+    assert table_variants_else == "variants"
 
 
 def test_get_connexion():
@@ -515,40 +495,52 @@ def test_get_connexion():
     input_vcf = tests_folder + "/data/example.vcf.gz"
 
     # Create object
-    vcf = Variants(input=input_vcf)
+    variants = Variants(input=input_vcf)
 
     # get connexion_db
-    connexion = vcf.get_connexion()
+    connexion = variants.get_connexion()
     result = connexion.query("SELECT 'pass' AS connexion")
     check_connexion = result.df()["connexion"][0] == "pass"
     
     assert check_connexion
 
 
+def test_get_connexion_sqlite():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_config = { "connexion_format": "sqlite" }
+
+    # Create object
+    variants = Variants(input=input_vcf, config=input_config)
+
+    # get connexion_db
+    connexion = variants.get_connexion()
+    result = connexion.execute("SELECT 'pass' AS connexion").fetchall()
+    assert result[0][0] == "pass"
+
+
 def test_get_verbose():
 
     # Init files
     input_vcf = tests_folder + "/data/example.vcf.gz"
-    #input_config = { "verbose": True }
 
     # Create object
-    vcf = Variants(input=input_vcf)
+    variants = Variants(input=input_vcf)
 
     # get connexion_db
-    verbose = vcf.get_verbose()
-    check_verbose_false = not verbose
+    verbose = variants.get_verbose()
+    assert not verbose
 
     # config verbose True
     input_config = { "verbose": True }
 
     # Create object
-    vcf = Variants(input=input_vcf, config=input_config)
+    variants = Variants(input=input_vcf, config=input_config)
 
     # get connexion_db
-    verbose = vcf.get_verbose()
-    check_verbose_true = verbose
-    
-    assert check_verbose_false and check_verbose_true
+    verbose = variants.get_verbose()
+    assert verbose
 
 
 def test_load_connexion_type_memory():
@@ -558,14 +550,11 @@ def test_load_connexion_type_memory():
     input_config = { "connexion_type": "memory" }
 
     # Create object
-    vcf = Variants(input=input_vcf, config=input_config)
-
-    # Load data
-    vcf.load_data()
+    variants = Variants(input=input_vcf, config=input_config, load=True)
 
     # Check data loaded
-    result = vcf.execute_query("SELECT count(*) AS count FROM variants")
-    nb_variant_in_database = result.df()["count"][0]
+    result = variants.get_query_to_df("SELECT count(*) AS count FROM variants")
+    nb_variant_in_database = result["count"][0]
 
     expected_number_of_variants = 7
 
@@ -579,14 +568,11 @@ def test_load_connexion_type_tmpfile():
     input_config = { "connexion_type": "tmpfile" }
 
     # Create object
-    vcf = Variants(input=input_vcf, config=input_config)
-
-    # Load data
-    vcf.load_data()
+    variants = Variants(input=input_vcf, config=input_config, load=True)
 
     # Check data loaded
-    result = vcf.execute_query("SELECT count(*) AS count FROM variants")
-    nb_variant_in_database = result.df()["count"][0]
+    result = variants.get_query_to_df("SELECT count(*) AS count FROM variants")
+    nb_variant_in_database = result["count"][0]
 
     expected_number_of_variants = 7
 
@@ -602,14 +588,11 @@ def test_load_connexion_type_file():
     remove_if_exists(["/tmp/output.duckdb"])
 
     # Create object
-    vcf = Variants(input=input_vcf, config=input_config)
-
-    # Load data
-    vcf.load_data()
+    variants = Variants(input=input_vcf, config=input_config, load=True)
 
     # Check data loaded
-    result = vcf.execute_query("SELECT count(*) AS count FROM variants")
-    nb_variant_in_database = result.df()["count"][0]
+    result = variants.get_query_to_df("SELECT count(*) AS count FROM variants")
+    nb_variant_in_database = result["count"][0]
 
     expected_number_of_variants = 7
 
@@ -623,19 +606,20 @@ def test_load_connexion_format_sqlite():
     input_config = { "connexion_format": "sqlite" }
 
     # Create object
-    vcf = Variants(input=input_vcf, config=input_config)
-
-    # Load data
-    vcf.load_data()
+    variants = Variants(input=input_vcf, config=input_config, load=True)
 
     # Check data loaded
-    result = vcf.get_query_to_df("SELECT count(*) AS count FROM variants")
+    result = variants.get_query_to_df("SELECT count(*) AS count FROM variants")
     nb_variant_in_database = result["count"][0]
 
     expected_number_of_variants = 7
 
     assert nb_variant_in_database == expected_number_of_variants
 
+
+###
+### Export Output
+###
 
 def test_export_output_bcf():
 
@@ -647,16 +631,22 @@ def test_export_output_bcf():
     remove_if_exists([output_vcf])
 
     # Create object
-    vcf = Variants(input=input_vcf, output=output_vcf, load=True)
+    variants = Variants(input=input_vcf, output=output_vcf, load=True)
 
     # Check get_output
-    vcf.export_output()
+    variants.export_output()
     assert os.path.exists(output_vcf)
 
     # Check get_output without header
     remove_if_exists([output_vcf])
-    vcf.export_output(export_header=False)
+    variants.export_output(export_header=False)
     assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
+
+    # # Check if VCF is in correct format with pyVCF
+    # try:
+    #     vcf.Reader(filename=output_vcf)
+    # except:
+    #     assert False
 
 
 def test_export_output_vcf_gz():
@@ -669,16 +659,22 @@ def test_export_output_vcf_gz():
     remove_if_exists([output_vcf])
 
     # Create object
-    vcf = Variants(input=input_vcf, output=output_vcf, load=True)
+    variants = Variants(input=input_vcf, output=output_vcf, load=True)
 
     # Check get_output
-    vcf.export_output()
+    variants.export_output()
     assert os.path.exists(output_vcf)
 
     # Check get_output without header
     remove_if_exists([output_vcf])
-    vcf.export_output(export_header=False)
+    variants.export_output(export_header=False)
     assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
+
+    # Check if VCF is in correct format with pyVCF
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
 
 
 def test_export_output_vcf():
@@ -691,16 +687,23 @@ def test_export_output_vcf():
     remove_if_exists([output_vcf])
 
     # Create object
-    vcf = Variants(input=input_vcf, output=output_vcf, load=True)
+    variants = Variants(input=input_vcf, output=output_vcf, load=True)
 
     # Check get_output
-    vcf.export_output()
+    variants.export_output()
     assert os.path.exists(output_vcf)
 
     # Check get_output without header
     remove_if_exists([output_vcf])
-    vcf.export_output(export_header=False)
+    variants.export_output(export_header=False)
     assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
+
+    # Check if VCF is in correct format with pyVCF
+    vcf.Reader(filename=output_vcf)
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
 
 
 def test_export_output_parquet():
@@ -713,18 +716,15 @@ def test_export_output_parquet():
     remove_if_exists([output_vcf])
 
     # Create object
-    vcf = Variants(input=input_vcf, output=output_vcf)
-
-    # Load data
-    vcf.load_data()
+    variants = Variants(input=input_vcf, output=output_vcf, load=True)
 
     # Check get_output
-    vcf.export_output()
+    variants.export_output()
     assert os.path.exists(output_vcf)
 
     # Check get_output without header
     remove_if_exists([output_vcf])
-    vcf.export_output(export_header=False)
+    variants.export_output(export_header=False)
     assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
 
 
@@ -738,17 +738,14 @@ def test_export_output_duckdb():
     remove_if_exists([output_vcf])
 
     # Create object
-    vcf = Variants(input=input_vcf, output=output_vcf)
-
-    # Load data
-    vcf.load_data()
+    variants = Variants(input=input_vcf, output=output_vcf, load=True)
 
     # Check get_output
-    vcf.export_output()
+    variants.export_output()
     assert os.path.exists(output_vcf)
 
     # Check get_output without header
-    vcf.export_output(export_header=False)
+    variants.export_output(export_header=False)
     assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
 
 
@@ -762,18 +759,15 @@ def test_export_output_tsv():
     remove_if_exists([output_vcf])
 
     # Create object
-    vcf = Variants(input=input_vcf, output=output_vcf)
-
-    # Load data
-    vcf.load_data()
+    variants = Variants(input=input_vcf, output=output_vcf, load=True)
 
     # Check get_output
-    vcf.export_output()
+    variants.export_output()
     assert os.path.exists(output_vcf)
 
     # Check get_output without header
     remove_if_exists([output_vcf])
-    vcf.export_output(export_header=False)
+    variants.export_output(export_header=False)
     assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
 
 
@@ -787,18 +781,15 @@ def test_export_output_tsv_gz():
     remove_if_exists([output_vcf])
 
     # Create object
-    vcf = Variants(input=input_vcf, output=output_vcf)
-
-    # Load data
-    vcf.load_data()
+    variants = Variants(input=input_vcf, output=output_vcf, load=True)
 
     # Check get_output
-    vcf.export_output()
+    variants.export_output()
     assert os.path.exists(output_vcf)
 
     # Check get_output without header
     remove_if_exists([output_vcf])
-    vcf.export_output(export_header=False)
+    variants.export_output(export_header=False)
     assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
 
 
@@ -812,18 +803,15 @@ def test_export_output_csv():
     remove_if_exists([output_vcf])
 
     # Create object
-    vcf = Variants(input=input_vcf, output=output_vcf)
-
-    # Load data
-    vcf.load_data()
+    variants = Variants(input=input_vcf, output=output_vcf, load=True)
 
     # Check get_output
-    vcf.export_output()
+    variants.export_output()
     assert os.path.exists(output_vcf)
 
     # Check get_output without header
     remove_if_exists([output_vcf])
-    vcf.export_output(export_header=False)
+    variants.export_output(export_header=False)
     assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
 
 
@@ -837,22 +825,19 @@ def test_export_output_psv():
     remove_if_exists([output_vcf])
 
     # Create object
-    vcf = Variants(input=input_vcf, output=output_vcf)
-
-    # Load data
-    vcf.load_data()
+    variants = Variants(input=input_vcf, output=output_vcf, load=True)
 
     # Check get_output
-    vcf.export_output()
+    variants.export_output()
     assert os.path.exists(output_vcf)
 
     # Check get_output without header
     remove_if_exists([output_vcf])
-    vcf.export_output(export_header=False)
+    variants.export_output(export_header=False)
     assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
 
 
-def test_export_output_vcf_explode_infos():
+def test_export_output_tcf_explode_infos():
 
     # Init files
     input_vcf = tests_folder + "/data/example.vcf.gz"
@@ -865,112 +850,276 @@ def test_export_output_vcf_explode_infos():
     remove_if_exists([output_vcf])
 
     # Create object
-    vcf = Variants(input=input_vcf, output=output_vcf, load=True, param=param)
+    variants = Variants(input=input_vcf, output=output_vcf, load=True, param=param)
 
     # Explode infos
-    vcf.explode_infos()
+    variants.explode_infos()
 
     # Check get_output
-    vcf.export_output()
+    variants.export_output()
     assert os.path.exists(output_vcf)
 
     # Check get_output without header
     remove_if_exists([output_vcf])
-    vcf.export_output(export_header=False)
+    variants.export_output(export_header=False)
     assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
 
 
-def test_prioritization_varank():
+###
+### Explode
+###
+
+def test_explode_infos():
 
     # Init files
     input_vcf = tests_folder + "/data/example.vcf.gz"
 
-    # Construct config dict
-    config = {
-        "prioritization": {
-            "config_profiles": "config/prioritization_profiles.json"
-            }
-        }
+    # Create object
+    variants = Variants(input=input_vcf, load=True)
 
-    # Construct param dict
-    param = {
-                "prioritization": {
-                    "profiles": ["default", "GERMLINE"],
-                    "pzfields": ["PZFlag", "PZScore", "PZComment", "PZInfos"],
-                    "prioritization_score_mode": "VaRank"
-                }
-        }
+    # Explode infos fields
+    variants.explode_infos()
+
+    # column to check
+    column_to_check = "INFO/CLNSIG"
+    value_to_check = "pathogenic"
+
+    # check column found
+    result = variants.execute_query("SELECT * FROM variants LIMIT 0")
+    assert column_to_check in [col[0] for col in result.description]
+
+    # Check value in column
+    result = variants.get_query_to_df(f"""SELECT "{column_to_check}" AS column_to_check FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND REF = 'A' AND ALT = 'C' """)
+    assert value_to_check == result["column_to_check"][0]
+
+    # Check number of value in column to check
+    result = variants.get_query_to_df(f"""SELECT "{column_to_check}" AS column_to_check FROM variants WHERE "{column_to_check}" IS NOT NULL """)
+    assert len(result) == 2
+
+
+def test_explode_infos_no_infos():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.no_samples.vcf.gz"
+    #output_vcf = "/tmp/output.vcf.gz"
 
     # Create object
-    vcf = Variants(input=input_vcf, load=True, config=config, param=param)
+    variants = Variants(input=input_vcf, load=True)
 
-    # Prioritization
-    vcf.prioritization()
+    # Check column before explode
+    result = variants.execute_query("SELECT * FROM variants LIMIT 0")
+    columns_before_explode = [col[0] for col in result.description]
 
-    # Check all priorized
-    result = vcf.execute_query(""" SELECT INFO FROM variants """).df()
-    assert len(result) > 0
+    # Explode infos fields
+    variants.explode_infos()
+
+    # check column found
+    result = variants.execute_query("SELECT * FROM variants LIMIT 0")
+    columns_after_explode = [col[0] for col in result.description]
+
+    assert columns_before_explode == columns_after_explode
 
 
-    # Check annotation1
-    result = vcf.execute_query(""" SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND REF = 'A' AND ALT = 'C' AND INFO LIKE '%PZScore_default=15%' """).df()
-    assert len(result) == 1
+def test_explode_infos_sqlite():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_config = { "connexion_format": "sqlite" }
+
+    # Create object
+    variants = Variants(input=input_vcf, config=input_config, load=True)
+
+    # Explode infos fields
+    variants.explode_infos()
+
+    # Annotation
+    variants.annotation()
+
+    # column to check
+    column_to_check = "INFO/CLNSIG"
+    value_to_check = "pathogenic"
+
+    # check column found
+    result = variants.execute_query("SELECT * FROM variants LIMIT 0")
+    assert column_to_check in [col[0] for col in result.description]
+
+    # Check value in column
+    result = variants.get_query_to_df(f"""SELECT "{column_to_check}" AS column_to_check FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND REF = 'A' AND ALT = 'C' """)
+    assert value_to_check == result["column_to_check"][0]
+
+    # Check number of value in column to check
+    result = variants.get_query_to_df(f"""SELECT "{column_to_check}" AS column_to_check FROM variants WHERE "{column_to_check}" IS NOT NULL """)
+    assert len(result) == 2
 
 
-def test_prioritization_no_profiles():
+def test_explode_infos_param_prefix():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    infos_prefix = "INFO_"
+    input_param = {"explode_infos": infos_prefix}
+
+    # Create object
+    variants = Variants(input=input_vcf, load=True, param=input_param)
+
+    # column to check
+    column_to_check = infos_prefix + "CLNSIG"
+    value_to_check = "pathogenic"
+
+    # check column found
+    result = variants.execute_query("SELECT * FROM variants LIMIT 0")
+    assert column_to_check in [col[0] for col in result.description]
+
+    # Check value in column
+    result = variants.get_query_to_df(f"""SELECT "{column_to_check}" AS column_to_check FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND REF = 'A' AND ALT = 'C' """)
+    assert value_to_check == result["column_to_check"][0]
+
+    # Check number of value in column to check
+    result = variants.get_query_to_df(f"""SELECT "{column_to_check}" AS column_to_check FROM variants WHERE "{column_to_check}" IS NOT NULL """)
+    assert len(result) == 2
+
+
+###
+### Overview and Stats
+###
+
+def test_overview():
 
     # Init files
     input_vcf = tests_folder + "/data/example.vcf.gz"
 
-    # Construct config dict
-    config = {
-        "prioritization": {
-            "config_profiles": None
-            }
-        }
     # Create object
-    vcf = Variants(input=input_vcf, load=True, config=config)
+    variants = Variants(input=input_vcf, load=True)
 
-    # Prioritization fail
-    with pytest.raises(ValueError) as e:
-        vcf.prioritization()
-    assert str(e.value) == f"NO Profiles configuration"
+    # Overview
+    overview = variants.get_overview()
+
+    assert overview == None
 
 
-def test_prioritization_no_pzfields():
+def test_overview_no_samples():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.no_samples.vcf.gz"
+
+    # Create object
+    variants = Variants(input=input_vcf, load=True)
+
+    # Overview
+    overview = variants.get_overview()
+
+    assert overview == None
+
+
+def test_stats():
 
     # Init files
     input_vcf = tests_folder + "/data/example.vcf.gz"
 
-    # Construct config dict
-    config = {
-        "prioritization": {
-            "config_profiles": "config/prioritization_profiles.json"
-            }
-        }
+    # Create object
+    variants = Variants(input=input_vcf, load=True)
 
-    # Construct param dict
-    param = {
-                "prioritization": {
-                    "profiles": [],
-                    "pzfields": []
-                }
-        }
+    # Stats
+    stats = variants.get_stats()
+
+    assert stats == None
+
+
+def test_stats_no_samples():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.no_samples.vcf.gz"
 
     # Create object
-    vcf = Variants(input=input_vcf, load=True, config=config, param=param)
+    variants = Variants(input=input_vcf, load=True)
 
-    # Prioritization
-    vcf.prioritization()
+    # Stats
+    stats = variants.get_stats()
 
-    # Check all priorized
-    result = vcf.execute_query(""" SELECT count(*) AS count FROM variants WHERE INFO LIKE '%PZScore_default=%' """).df()
-    check_priorization = False
-    if len(result["count"]):
-        if result["count"][0] == 0:
-            check_priorization = True
-    assert check_priorization
+    assert stats == None
+   
 
+###
+### No input file
+###
+
+def test_no_input_file():
+
+    # Init files
+    #input_vcf = tests_folder + "/data/example.vcf.gz"
+
+    # Create object
+    #vcf = Variants(input=input_vcf, load=True)
+    variant = Variants()
+
+    assert variant.get_input() == None
+    assert variant.get_header() == None
+    assert variant.get_header_length() == 0
+    assert variant.get_header_columns() == ""
+    assert variant.get_header_columns_as_list() == []
+    assert variant.get_header_columns_as_sql() == ""
+
+
+###
+### Query
+###
+
+def test_query():
+
+    # Create object
+    variants = Variants()
+
+    # Query
+    query = "SELECT 1 AS query"
+    result_query = variants.execute_query(query)
+    assert result_query.df()["query"][0] == 1
+
+    # Query none
+    result_query = variants.execute_query(None)
+    assert result_query == None
+
+
+def test_get_query_to_df():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+
+    # Create object
+    vcf = Variants(input=input_vcf, load=True)
+
+    # Query
+    query = "SELECT 1 AS query"
+    result_query = vcf.get_query_to_df(query)
+    assert result_query["query"][0] == 1
+
+    # Query
+    query = "SELECT * FROM variants"
+    result_query = vcf.get_query_to_df(query)
+    assert len(result_query) == 7
+
+
+def test_get_query_to_df_no_samples():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.no_samples.vcf.gz"
+
+    # Create object
+    variants = Variants(input=input_vcf, load=True)
+
+    # Query
+    query = "SELECT 1 AS query"
+    result_query = variants.get_query_to_df(query)
+    assert result_query["query"][0] == 1
+
+    # Query
+    query = "SELECT * FROM variants"
+    result_query = variants.get_query_to_df(query)
+    assert len(result_query) == 10
+
+
+###
+### Annotation
+###
 
 def test_annotations():
 
@@ -990,42 +1139,85 @@ def test_annotations():
     param = {"annotations": param_annotations }
 
     # Create object
-    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Remove if output file exists
     remove_if_exists([output_vcf])
 
     # Annotation
-    vcf.annotation()
+    variants.annotation()
 
     # check param
-    param_input = vcf.get_param()
+    param_input = variants.get_param()
     expected_param = {'annotations': param_annotations,
                       'annotation': {
                         'parquet': {'annotations': {annotation1: {'INFO': None}}},
                         'bcftools': {'annotations': {annotation2: {'CLNSIG': 'CLNSIG_new'}, annotation3: {'symbol': 'gene'}}}}
                     }
 
-    check_param = param_input and expected_param
+    assert param_input == expected_param
 
     # Check annotation1
-    result = vcf.execute_query("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr1' AND POS = 28736 AND REF = 'A' AND ALT = 'C' AND INFO LIKE '%CLNSIG_new=%'").df()
-    check_annotation1 = False
-    if len(result["count"]):
-        if result["count"][0] == 1:
-            check_annotation1 = True
+    result = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr1' AND POS = 28736 AND REF = 'A' AND ALT = 'C' AND INFO LIKE '%CLNSIG_new=%'")
+    assert len(result) == 1
 
     # Check annotation2
-    result = vcf.execute_query("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66;gene=EGFR,EGFR-AS1'").df()
-    check_annotation2 = False
-    if len(result["count"]):
-        if result["count"][0] == 1:
-            check_annotation2 = True
-    
-    # check full
-    check_full = check_param and check_annotation1 and check_annotation2
+    result = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66;gene=EGFR,EGFR-AS1'")
+    assert len(result) == 1
 
-    assert check_full
+    # Check if VCF is in correct format with pyVCF
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
+
+
+def test_annotations_no_samples():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.no_samples.vcf.gz"
+    annotation1 = tests_folder + "/data/annotations/nci60.parquet"
+    annotation2 = tests_folder + "/data/example.vcf.gz"
+    annotation3 = tests_folder + "/data/annotations/refGene.bed.gz"
+    output_vcf = "/tmp/output.vcf.gz"
+
+    # Construct param dict
+    param_annotations = {
+            annotation1: {"INFO": None},
+            annotation2: {"CLNSIG": "CLNSIG_new"},
+            annotation3: {"symbol": "gene"},
+            }
+    param = {"annotations": param_annotations }
+
+    # Create object
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
+    # Remove if output file exists
+    remove_if_exists([output_vcf])
+
+    # Annotation
+    variants.annotation()
+
+    # check param
+    param_input = variants.get_param()
+    expected_param = {'annotations': param_annotations,
+                      'annotation': {
+                        'parquet': {'annotations': {annotation1: {'INFO': None}}},
+                        'bcftools': {'annotations': {annotation2: {'CLNSIG': 'CLNSIG_new'}, annotation3: {'symbol': 'gene'}}}}
+                    }
+
+    assert param_input == expected_param
+
+    result = variants.get_query_to_df("SELECT * FROM variants")
+    assert len(result) == 10
+
+    # Check if VCF is in correct format with pyVCF
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
 
 
 def test_annotation_parquet():
@@ -1039,19 +1231,26 @@ def test_annotation_parquet():
     param = {"annotation": {"parquet": {"annotations": {annotation_parquet: {"INFO": None}}}}}
 
     # Create object
-    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Remove if output file exists
     remove_if_exists([output_vcf])
 
     # Annotation
-    vcf.annotation()
+    variants.annotation()
 
     # query annotated variant
-    result = vcf.execute_query("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'")
-    length = len(result.df())
+    result = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'")
+    length = len(result)
     
     assert length == 1
+
+    # Check if VCF is in correct format with pyVCF
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
 
 
 def test_annotation_parquet_field_already_in_vcf():
@@ -1068,16 +1267,16 @@ def test_annotation_parquet_field_already_in_vcf():
     param = {"annotations": param_annotations }
 
     # Create object
-    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Remove if output file exists
     remove_if_exists([output_vcf])
 
     # Annotation
-    vcf.annotation()
+    variants.annotation()
 
     # check param
-    param_input = vcf.get_param()
+    param_input = variants.get_param()
     expected_param = {'annotations': param_annotations,
                       'annotation': {
                         'parquet': {'annotations': {annotation1: {"nci60": "DP"}}}
@@ -1087,8 +1286,15 @@ def test_annotation_parquet_field_already_in_vcf():
     assert param_input and expected_param
 
     # Check annotation not changed
-    result = vcf.execute_query("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125'").df()
+    result = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125'")
     assert len(result) == 1
+
+    # Check if VCF is in correct format with pyVCF
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
 
 
 def test_annotation_duckdb():
@@ -1102,19 +1308,24 @@ def test_annotation_duckdb():
     param = {"annotation": {"parquet": {"annotations": {annotation_parquet: {"INFO": None}}}}}
 
     # Create object
-    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Remove if output file exists
     remove_if_exists([output_vcf])
 
     # Annotation
-    vcf.annotation()
+    variants.annotation()
 
     # query annotated variant
-    result = vcf.execute_query("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'")
-    length = len(result.df())
-    
-    assert length == 1
+    result = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'")
+    assert len(result) == 1
+
+    # Check if VCF is in correct format with pyVCF
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
 
 
 def test_annotation_bcftools():
@@ -1128,19 +1339,24 @@ def test_annotation_bcftools():
     param = {"annotation": {"bcftools": {"annotations":  {annotation_parquet: {"INFO": None}}}}}
 
     # Create object
-    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Remove if output file exists
     remove_if_exists([output_vcf])
 
     # Annotation
-    vcf.annotation()
+    variants.annotation()
 
     # query annotated variant
-    result = vcf.execute_query("""SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'""")
-    length = len(result.df())
-    
-    assert length == 1
+    result = variants.get_query_to_df("""SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'""")
+    assert len(result) == 1
+
+    # Check if VCF is in correct format with pyVCF
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
 
 
 def test_annotation_bcftools_bed():
@@ -1154,22 +1370,24 @@ def test_annotation_bcftools_bed():
     param = {"annotation": {"bcftools": {"annotations":  {annotation_parquet: {"symbol": None}}}}}
 
     # Create object
-    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Remove if output file exists
     remove_if_exists([output_vcf])
 
     # Annotation
-    vcf.annotation()
-
-    # TEST
-    print(vcf.execute_query("""SELECT "#CHROM", POS, REF, ALT, INFO FROM variants """).df())
+    variants.annotation()
 
     # query annotated variant
-    result = vcf.execute_query("""SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;symbol=EGFR,EGFR-AS1'""")
-    length = len(result.df())
-    
-    assert length == 1
+    result = variants.get_query_to_df("""SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;symbol=EGFR,EGFR-AS1'""")
+    assert len(result) == 1
+
+    # Check if VCF is in correct format with pyVCF
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
 
 
 def test_annotation_annovar():
@@ -1183,19 +1401,89 @@ def test_annotation_annovar():
     param = {"annotation": {"annovar": {"annotations":  {annotation_annovar: {"INFO": None}}}}}
 
     # Create object
-    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Remove if output file exists
     remove_if_exists([output_vcf])
 
     # Annotation
-    vcf.annotation()
+    variants.annotation()
 
     # query annotated variant
-    result = vcf.execute_query("""SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'""")
-    length = len(result.df())
-    
-    assert length == 1
+    result = variants.get_query_to_df("""SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'""")
+    assert len(result) == 1
+
+    # Check if VCF is in correct format with pyVCF
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
+
+
+def test_annotation_annovar_no_samples():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.no_samples.vcf.gz"
+    annotation_annovar = "nci60"
+    output_vcf = "/tmp/output.vcf.gz"
+
+    # Construct param dict
+    param = {"annotation": {"annovar": {"annotations":  {annotation_annovar: {"INFO": None}}}}}
+
+    # Create object
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
+    # Remove if output file exists
+    remove_if_exists([output_vcf])
+
+    # Annotation
+    variants.annotation()
+
+    # query annotated variant
+    result = variants.get_query_to_df(""" SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr12' AND POS = 68724951 AND REF = 'G' AND ALT = 'T' AND INFO = 'nci60=0.77' """)
+    assert len(result) == 1
+
+    # Check if VCF is in correct format with pyVCF
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
+
+
+def test_annotation_annovar_sqlite():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    annotation_annovar = "nci60"
+    output_vcf = "/tmp/output.vcf.gz"
+
+    # Construct config dict
+    config = {"connexion_format": "sqlite"}
+
+    # Construct param dict
+    param = {"annotation": {"annovar": {"annotations":  {annotation_annovar: {"INFO": None}}}}}
+
+    # Create object
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, config=config, param=param, load=True)
+
+    # Remove if output file exists
+    remove_if_exists([output_vcf])
+
+    # Annotation
+    variants.annotation()
+
+    # query annotated variant
+    result = variants.get_query_to_df("""SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'""")
+    assert len(result) == 1
+
+    # # Check if VCF is in correct format with pyVCF
+    # variants.export_output()
+    # try:
+    #     vcf.Reader(filename=output_vcf)
+    # except:
+    #     assert False
 
 
 def test_annotation_quick_annovar():
@@ -1212,45 +1500,88 @@ def test_annotation_quick_annovar():
     }
 
     # Create object
-    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Remove if output file exists
     remove_if_exists([output_vcf])
 
     # Annotation
-    vcf.annotation()
+    variants.annotation()
 
     # query annotated variant
-    result = vcf.execute_query("""SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'""")
-    length = len(result.df())
+    result = variants.get_query_to_df("""SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'""")
+    assert len(result) == 1
     
-    assert length == 1
+    # Check if VCF is in correct format with pyVCF
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
 
 
 def test_annotation_snpeff():
 
     # Init files
     input_vcf = tests_folder + "/data/example.vcf.gz"
-    annotation_snpeff = "snpeff"
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct param dict
     param = {"annotation": {"snpeff": {"options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "}}}
 
     # Create object
-    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Remove if output file exists
     remove_if_exists([output_vcf])
 
     # Annotation
-    vcf.annotation()
+    variants.annotation()
 
     # query annotated variant
-    result = vcf.execute_query(""" SELECT 1 AS count FROM variants """)
-    length = len(result.df())
+    result = variants.get_query_to_df(""" SELECT 1 AS count FROM variants """)
+    assert len(result) == 7
     
-    assert length == 7
+    # Check if VCF is in correct format with pyVCF
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
+
+
+def test_annotation_snpeff_no_samples():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.no_samples.vcf.gz"
+    output_vcf = "/tmp/output.vcf.gz"
+
+    # Construct param dict
+    param = {"annotation": {"snpeff": {"options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "}}}
+
+    # Create object
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
+    # Remove if output file exists
+    remove_if_exists([output_vcf])
+
+    # Annotation
+    variants.annotation()
+
+    # query annotated variant
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE "#CHROM" = 'chr12' AND POS = 68724951 AND REF = 'G' AND ALT = 'T' AND INFO LIKE '%T|synonymous_variant|LOW|MDM1|MDM1|transcript|NM_001354969.1|protein_coding|2/15|c.69C>A|p.Ser23Ser|238/3032|69/2175|23/724||%' """)
+    assert len(result) == 1
+
+    # query annotated variant
+    result = variants.get_query_to_df(""" SELECT * FROM variants """)
+    assert len(result) == 10
+
+    # Check if VCF is in correct format with pyVCF
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
 
 
 def test_annotation_quick_snpeff():
@@ -1267,19 +1598,57 @@ def test_annotation_quick_snpeff():
     }
 
     # Create object
-    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Remove if output file exists
     remove_if_exists([output_vcf])
 
     # Annotation
-    vcf.annotation()
+    variants.annotation()
 
     # query annotated variant
-    result = vcf.execute_query(""" SELECT 1 AS count FROM variants """)
-    length = len(result.df())
+    result = variants.get_query_to_df(""" SELECT 1 AS count FROM variants """)
+    assert len(result) == 7
+
+    # Check if VCF is in correct format with pyVCF
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
     
-    assert length == 7
+
+def test_annotation_snpeff_sqlite():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    output_vcf = "/tmp/output.vcf.gz"
+
+    # Construct config dict
+    config = {"connexion_format": "sqlite"}
+
+    # Construct param dict
+    param = {"annotation": {"snpeff": {"options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "}}}
+
+    # Create object
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, config=config, param=param, load=True)
+
+    # Remove if output file exists
+    remove_if_exists([output_vcf])
+
+    # Annotation
+    variants.annotation()
+
+    # query annotated variant
+    result = variants.get_query_to_df(""" SELECT INFO FROM variants WHERE INFO LIKE '%ANN=%' """)
+    assert len(result) == 7
+
+    # # Check if VCF is in correct format with pyVCF
+    # variants.export_output()
+    # try:
+    #     vcf.Reader(filename=output_vcf)
+    # except:
+    #     assert False
 
 
 def test_annotation_bcftools_sqlite():
@@ -1296,147 +1665,252 @@ def test_annotation_bcftools_sqlite():
     param = {"annotation": {"bcftools": {"annotations":  {annotation_parquet: {"INFO": None}}}}}
 
     # Create object
-    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, config=config, load=True)
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, config=config, load=True)
 
     # Remove if output file exists
     remove_if_exists([output_vcf])
 
     # Annotation
-    vcf.annotation()
+    variants.annotation()
 
-    # query annotated variant
-    # result = vcf.execute_query("""SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'""")
-    # length = len(result.df())
+    result = variants.get_query_to_df("""SELECT * FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'""")
+    assert len(result) == 1
 
-    result = vcf.get_query_to_df("""SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'""")
-    length = len(result)
+    # # Check if VCF is in correct format with pyVCF
+    # variants.export_output()
+    # try:
+    #     vcf.Reader(filename=output_vcf)
+    # except:
+    #     assert False
     
-    assert length == 1
+
+###
+### Prioritization
+###
+
+def test_prioritization():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    output_vcf = "/tmp/output.vcf.gz"
+
+    # Construct config dict
+    config = {
+        "prioritization": {
+            "config_profiles": tests_folder + "/data/prioritization_profiles.json"
+            }
+        }
+    
+    # Construct param dict
+    param = {
+                "prioritization": {
+                    "profiles": ["default", "GERMLINE"],
+                    "pzfields": ["PZFlag", "PZScore", "PZComment", "PZInfos"]
+                }
+        }
+
+    # Create object
+    variants = Variants(input=input_vcf, output=output_vcf, load=True, config=config, param=param)
+
+    # Prioritization
+    variants.prioritization()
+
+    # Check all priorized default profile
+    result = variants.get_query_to_df("""
+        SELECT * FROM variants
+        WHERE INFO LIKE '%PZFlag_default=%'
+          AND INFO LIKE '%PZScore_default=%'
+          AND INFO LIKE '%PZComment_default=%'
+          AND INFO LIKE '%PZInfos_default=%'
+        """)
+    assert len(result) == 7
+
+    # Check all priorized GERMLINE profile
+    result = variants.get_query_to_df("""
+        SELECT * FROM variants
+        WHERE INFO LIKE '%PZFlag_GERMLINE=%'
+          AND INFO LIKE '%PZScore_GERMLINE=%'
+          AND INFO LIKE '%PZComment_GERMLINE=%'
+          AND INFO LIKE '%PZInfos_GERMLINE=%'
+        """)
+    assert len(result) == 7
+
+    # Check all priorized default profile (as default)
+    result = variants.get_query_to_df("""
+        SELECT * FROM variants
+        WHERE INFO LIKE '%PZFlag=%'
+          AND INFO LIKE '%PZScore=%'
+          AND INFO LIKE '%PZComment=%'
+          AND INFO LIKE '%PZInfos=%'
+        """)
+    assert len(result) == 7
+
+    # Check annotation1
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND REF = 'A' AND ALT = 'C' AND INFO LIKE '%PZScore_default=15%' """)
+    assert len(result) == 1
+
+    # Check FILTERED
+    result = variants.get_query_to_df(f""" SELECT INFO FROM variants WHERE INFO LIKE '%FILTERED%' """)
+    assert len(result) == 1
+
+    # Check if VCF is in correct format with pyVCF
+    remove_if_exists([output_vcf])
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
 
 
-def test_explode_infos():
+def test_prioritization_varank():
 
     # Init files
     input_vcf = tests_folder + "/data/example.vcf.gz"
     output_vcf = "/tmp/output.vcf.gz"
 
+    # Construct config dict
+    config = {
+        "prioritization": {
+            "config_profiles": "config/prioritization_profiles.json"
+            }
+        }
+
+    # Construct param dict
+    param = {
+                "prioritization": {
+                    "profiles": ["default", "GERMLINE"],
+                    "pzfields": ["PZFlag", "PZScore", "PZComment", "PZInfos"],
+                    "prioritization_score_mode": "VaRank"
+                }
+        }
+
     # Create object
-    vcf = Variants(input=input_vcf, output=output_vcf)
+    variants = Variants(input=input_vcf, output=output_vcf, load=True, config=config, param=param)
 
-    # Load data
-    vcf.load_data()
+    # Prioritization
+    variants.prioritization()
 
-    # Explode infos fields
-    vcf.explode_infos()
+    # Check all priorized
+    result = variants.get_query_to_df(""" SELECT INFO FROM variants """)
+    assert len(result) > 0
 
-    # Remove if output file exists
+    # Check annotation1
+    result = variants.get_query_to_df(""" SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND REF = 'A' AND ALT = 'C' AND INFO LIKE '%PZScore_default=15%' """)
+    assert len(result) == 1
+
+    # Check if VCF is in correct format with pyVCF
     remove_if_exists([output_vcf])
-
-    # Annotation
-    vcf.annotation()
-
-    # column to check
-    column_to_check = "INFO/CLNSIG"
-    value_to_check = "pathogenic"
-
-    # check column found
-    result = vcf.execute_query("SELECT * FROM variants LIMIT 0")
-    assert column_to_check in [col[0] for col in result.description]
-
-    # Check value in column
-    result = vcf.execute_query(f"""SELECT "{column_to_check}" AS column_to_check FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND REF = 'A' AND ALT = 'C' """)
-    assert value_to_check == result.df()["column_to_check"][0]
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
 
 
-def test_explode_infos_param_prefix():
+def test_prioritization_no_profiles():
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+
+    # Construct config dict
+    config = {
+        "prioritization": {
+            "config_profiles": None
+            }
+        }
+    # Create object
+    variants = Variants(input=input_vcf, load=True, config=config)
+
+    # Prioritization fail
+    with pytest.raises(ValueError) as e:
+        variants.prioritization()
+    assert str(e.value) == f"NO Profiles configuration"
+
+
+def test_prioritization_no_pzfields():
 
     # Init files
     input_vcf = tests_folder + "/data/example.vcf.gz"
     output_vcf = "/tmp/output.vcf.gz"
-    infos_prefix = "INFO_"
-    input_param = {"explode_infos": infos_prefix}
+
+    # Construct config dict
+    config = {
+        "prioritization": {
+            "config_profiles": "config/prioritization_profiles.json"
+            }
+        }
+
+    # Construct param dict
+    param = {
+                "prioritization": {
+                    "profiles": [],
+                    "pzfields": []
+                }
+        }
 
     # Create object
-    vcf = Variants(input=input_vcf, output=output_vcf, load=True, param=input_param)
+    variants = Variants(input=input_vcf, output=output_vcf, load=True, config=config, param=param)
 
-    # Explode infos fields
-    #vcf.explode_infos(prefix=infos_prefix)
+    # Prioritization
+    variants.prioritization()
 
-    # Remove if output file exists
+    # Check all priorized
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE INFO LIKE '%PZScore_default=%' """)
+    assert len(result) == 0
+
+    # Check if VCF is in correct format with pyVCF
     remove_if_exists([output_vcf])
-
-    # Annotation
-    vcf.annotation()
-
-    # column to check
-    column_to_check = infos_prefix + "CLNSIG"
-    value_to_check = "pathogenic"
-
-    # check column found
-    result = vcf.execute_query("SELECT * FROM variants LIMIT 0")
-    assert column_to_check in [col[0] for col in result.description]
-
-    # Check value in column
-    result = vcf.execute_query(f"""SELECT "{column_to_check}" AS column_to_check FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND REF = 'A' AND ALT = 'C' """)
-    assert value_to_check == result.df()["column_to_check"][0]
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
 
 
-def test_overview():
+def test_prioritization_no_infos():
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_folder + "/data/example.no_samples.vcf.gz"
+    output_vcf = "/tmp/output.vcf.gz"
+
+    # Construct config dict
+    config = {
+        "prioritization": {
+            "config_profiles": tests_folder + "/data/prioritization_profiles.json"
+            }
+        }
+    
+    # Construct param dict
+    param = {
+                "prioritization": {
+                    "profiles": ["default", "GERMLINE"],
+                    "pzfields": ["PZFlag", "PZScore", "PZComment", "PZInfos"]
+                }
+        }
 
     # Create object
-    vcf = Variants(input=input_vcf)
+    variants = Variants(input=input_vcf, output=output_vcf, load=True, config=config, param=param)
 
-    # Load data
-    vcf.load_data()
+    # Prioritization
+    variants.prioritization()
 
-    # Overview
-    overview = vcf.get_overview()
+    result = variants.get_query_to_df("""
+        SELECT INFO FROM variants WHERE INFO NOT IN ('','.') AND INFO NOT NULL
+        """)
+    assert len(result) == 0
 
-    assert overview == None
-
-
-def test_stats():
-
-    # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
-
-    # Create object
-    vcf = Variants(input=input_vcf, load=True)
-
-    # Stats
-    stats = vcf.get_stats()
-
-    assert stats == None
+    # Check if VCF is in correct format with pyVCF
+    remove_if_exists([output_vcf])
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
 
 
-def test_query():
-
-    # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
-    output_query = "/tmp/output.tsv"
-
-    # Create object
-    vcf = Variants(input=input_vcf, load=True)
-
-    # Query
-    query = "SELECT 1 AS query"
-    result_query = vcf.execute_query("SELECT 1 AS query")
-    assert result_query.df()["query"][0] == 1
-
-    # Query none
-    result_query = vcf.execute_query(None)
-    assert result_query == None
-
-    # Remove if output file exists
-    remove_if_exists([output_query])
-
-    # Output query
-    vcf.export_output(output_file=output_query, query=query, export_header=False)
-    assert os.path.exists(output_query)
-
+###
+### Calculation
+###
 
 def test_calculation():
 
@@ -1473,25 +1947,31 @@ def test_calculation():
         }
 
     # Create object
-    vcf = Variants(input=input_vcf, output=output_vcf, param=input_param, load=True)
+    variants = Variants(input=input_vcf, output=output_vcf, param=input_param, load=True)
 
     # Annotation
-    vcf.annotation()
+    variants.annotation()
 
     # Calculation
-    vcf.calculation()
+    variants.calculation()
 
     # Check number of NOMEN (2)
-    result = vcf.get_query_to_df(f"""SELECT INFO FROM variants WHERE INFO LIKE '%NOMEN=%' """)
-    print(result)
-    
+    result = variants.get_query_to_df("""SELECT INFO FROM variants WHERE INFO LIKE '%NOMEN=%' """)
     assert len(result) == 2
 
      # Check number of middle (7)
-    result = vcf.get_query_to_df(f"""SELECT INFO FROM variants WHERE INFO LIKE '%middle=%' """)
+    result = variants.get_query_to_df("""SELECT INFO FROM variants WHERE INFO LIKE '%middle=%' """)
     assert len(result) == 7
 
-  
+    # Check if VCF is in correct format with pyVCF
+    remove_if_exists([output_vcf])
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
+
+
 def test_calculation_vartype():
 
     # Init files
@@ -1506,23 +1986,28 @@ def test_calculation_vartype():
     }
 
     # Create object
-    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
-
-    # Remove if output file exists
-    remove_if_exists([output_vcf])
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Calculation
-    vcf.calculation()
+    variants.calculation()
 
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=SNV%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=SNV%' """)
     assert len(result) == 5
     
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=INDEL%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=INDEL%' """)
     assert len(result) == 1
     
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=MOSAIC%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=MOSAIC%' """)
     assert len(result) == 1
-    
+
+    # Check if VCF is in correct format with pyVCF
+    remove_if_exists([output_vcf])
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
+
 
 def test_calculation_vartype_full():
 
@@ -1538,40 +2023,42 @@ def test_calculation_vartype_full():
     }
 
     # Create object
-    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
-
-    # Remove if output file exists
-    remove_if_exists([output_vcf])
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Calculation
-    vcf.calculation()
+    variants.calculation()
 
-    result = vcf.get_query_to_df(f""" SELECT "INFO/VARTYPE", count(*) AS count FROM variants GROUP BY "INFO/VARTYPE" ORDER BY count""")
-    print(result)
-
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=SNV%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=SNV%' """)
     assert len(result) == 3
     
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=INDEL%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=INDEL%' """)
     assert len(result) == 2
     
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=CNV%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=CNV%' """)
     assert len(result) == 3
 
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=INV%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=INV%' """)
     assert len(result) == 3
 
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=DEL%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=DEL%' """)
     assert len(result) == 3
 
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=INS%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=INS%' """)
     assert len(result) == 5
 
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=DUP%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=DUP%' """)
     assert len(result) == 6
     
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=BND%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=BND%' """)
     assert len(result) == 7
+
+    # Check if VCF is in correct format with pyVCF
+    remove_if_exists([output_vcf])
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
 
 
 def test_calculation_snpeff_hgvs():
@@ -1588,22 +2075,27 @@ def test_calculation_snpeff_hgvs():
     }
 
     # Create object
-    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Check if no snpeff_hgvs
-    result = vcf.get_query_to_df(f""" SELECT INFO FROM variants WHERE INFO LIKE '%snpeff_hgvs=%' """)
+    result = variants.get_query_to_df(""" SELECT INFO FROM variants WHERE INFO LIKE '%snpeff_hgvs=%' """)
     assert len(result) == 0
 
-    # Remove if output file exists
-    remove_if_exists([output_vcf])
-
     # Calculation
-    vcf.calculation()
+    variants.calculation()
 
     # query annotated variant
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%snpeff_hgvs=%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE INFO LIKE '%snpeff_hgvs=%' """)
     assert len(result) == 7
-    
+
+    # Check if VCF is in correct format with pyVCF
+    remove_if_exists([output_vcf])
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
+ 
 
 def test_calculation_snpeff_hgvs_no_ann():
 
@@ -1619,17 +2111,22 @@ def test_calculation_snpeff_hgvs_no_ann():
     }
 
     # Create object
-    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
-
-    # Remove if output file exists
-    remove_if_exists([output_vcf])
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Calculation
-    vcf.calculation()
+    variants.calculation()
 
     # query annotated variant
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%snpeff_hgvs=%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE INFO LIKE '%snpeff_hgvs=%' """)
     assert len(result) == 0
+
+    # Check if VCF is in correct format with pyVCF
+    remove_if_exists([output_vcf])
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
     
 
 def test_calculation_snpeff_hgvs_transcripts():
@@ -1652,21 +2149,26 @@ def test_calculation_snpeff_hgvs_transcripts():
     }
 
     # Create object
-    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
-
-    # Remove if output file exists
-    remove_if_exists([output_vcf])
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Calculation
-    vcf.calculation()
+    variants.calculation()
 
     # query annotated variant
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%NOMEN=%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE INFO LIKE '%NOMEN=%' """)
     assert len(result) == 7
 
     # Check transcript priority
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%NOMEN=EGFR:NM_001346897%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE INFO LIKE '%NOMEN=EGFR:NM_001346897%' """)
     assert len(result) == 1
+
+    # Check if VCF is in correct format with pyVCF
+    remove_if_exists([output_vcf])
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
 
 
 def test_calculation_snpeff_hgvs_notranscripts():
@@ -1674,7 +2176,6 @@ def test_calculation_snpeff_hgvs_notranscripts():
     # Init files
     input_vcf = tests_folder + "/data/example.snpeff.vcf.gz"
     transcripts_file = tests_folder + "/data/notranscripts.tsv"
-    output_vcf = "/tmp/output.vcf.gz"
 
     # Construct param dict
     param = {
@@ -1689,82 +2190,14 @@ def test_calculation_snpeff_hgvs_notranscripts():
     }
 
     # Create object
-    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
-
-    # Remove if output file exists
-    remove_if_exists([output_vcf])
+    variants = Variants(conn=None, input=input_vcf, param=param, load=True)
 
     # Calculation
     with pytest.raises(ValueError) as e:
-        vcf.calculation()
+        variants.calculation()
     assert str(e.value) == f"Transcript file '{transcripts_file}' does NOT exist"
 
 
-def test_prioritization():
-
-    # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
-
-    # Construct config dict
-    config = {
-        "prioritization": {
-            "config_profiles": tests_folder + "/data/prioritization_profiles.json"
-            }
-        }
-    
-    # Construct param dict
-    param = {
-                "prioritization": {
-                    "profiles": ["default", "GERMLINE"],
-                    "pzfields": ["PZFlag", "PZScore", "PZComment", "PZInfos"]
-                }
-        }
-
-    # Create object
-    vcf = Variants(input=input_vcf, load=True, config=config, param=param)
-
-    # Prioritization
-    vcf.prioritization()
-
-    # Check all priorized default profile
-    result = vcf.execute_query("""
-        SELECT * FROM variants
-        WHERE INFO LIKE '%PZFlag_default=%'
-          AND INFO LIKE '%PZScore_default=%'
-          AND INFO LIKE '%PZComment_default=%'
-          AND INFO LIKE '%PZInfos_default=%'
-        """).df()
-    assert len(result) == 7
-
-    # Check all priorized GERMLINE profile
-    result = vcf.execute_query("""
-        SELECT * FROM variants
-        WHERE INFO LIKE '%PZFlag_GERMLINE=%'
-          AND INFO LIKE '%PZScore_GERMLINE=%'
-          AND INFO LIKE '%PZComment_GERMLINE=%'
-          AND INFO LIKE '%PZInfos_GERMLINE=%'
-        """).df()
-    assert len(result) == 7
-
-    # Check all priorized default profile (as default)
-    result = vcf.execute_query("""
-        SELECT * FROM variants
-        WHERE INFO LIKE '%PZFlag=%'
-          AND INFO LIKE '%PZScore=%'
-          AND INFO LIKE '%PZComment=%'
-          AND INFO LIKE '%PZInfos=%'
-        """).df()
-    assert len(result) == 7
-
-    # Check annotation1
-    result = vcf.execute_query(""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND REF = 'A' AND ALT = 'C' AND INFO LIKE '%PZScore_default=15%' """).df()
-    assert len(result) == 1
-
-    # Check FILTERED
-    result = vcf.execute_query(f""" SELECT INFO FROM variants WHERE INFO LIKE '%FILTERED%' """).df()
-    assert len(result) == 1
-
-    
 def test_calculation_findbypipeline():
 
     # Init files
@@ -1779,22 +2212,27 @@ def test_calculation_findbypipeline():
     }
 
     # Create object
-    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
-
-    # Remove if output file exists
-    remove_if_exists([output_vcf])
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Calculation
-    vcf.calculation()
+    variants.calculation()
 
-    result = vcf.get_query_to_df(f""" SELECT INFO FROM variants WHERE INFO LIKE '%findbypipeline%' """)
+    result = variants.get_query_to_df(""" SELECT INFO FROM variants WHERE INFO LIKE '%findbypipeline%' """)
     assert len(result) == 7
 
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%findbypipeline=4/4%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE INFO LIKE '%findbypipeline=4/4%' """)
     assert len(result) == 1
     
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%findbypipeline=3/4%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE INFO LIKE '%findbypipeline=3/4%' """)
     assert len(result) == 6
+
+    # Check if VCF is in correct format with pyVCF
+    remove_if_exists([output_vcf])
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
     
     
 def test_calculation_genotype_concordance():
@@ -1811,22 +2249,27 @@ def test_calculation_genotype_concordance():
     }
 
     # Create object
-    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
-
-    # Remove if output file exists
-    remove_if_exists([output_vcf])
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Calculation
-    vcf.calculation()
+    variants.calculation()
 
-    result = vcf.get_query_to_df(f""" SELECT INFO FROM variants WHERE INFO LIKE '%genotypeconcordance%' """)
+    result = variants.get_query_to_df(""" SELECT INFO FROM variants WHERE INFO LIKE '%genotypeconcordance%' """)
     assert len(result) == 7
 
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%genotypeconcordance=FALSE%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE INFO LIKE '%genotypeconcordance=FALSE%' """)
     assert len(result) == 1
     
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%genotypeconcordance=TRUE%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE INFO LIKE '%genotypeconcordance=TRUE%' """)
     assert len(result) == 6
+
+    # Check if VCF is in correct format with pyVCF
+    remove_if_exists([output_vcf])
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
 
 
 def test_calculation_barcode():
@@ -1843,28 +2286,33 @@ def test_calculation_barcode():
     }
 
     # Create object
-    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
-
-    # Remove if output file exists
-    remove_if_exists([output_vcf])
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Calculation
-    vcf.calculation()
+    variants.calculation()
 
-    result = vcf.get_query_to_df(f""" SELECT INFO FROM variants WHERE INFO LIKE '%barcode%' """)
+    result = variants.get_query_to_df(""" SELECT INFO FROM variants WHERE INFO LIKE '%barcode%' """)
     assert len(result) == 7
 
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%barcode=1122%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE INFO LIKE '%barcode=1122%' """)
     assert len(result) == 1
 
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%barcode=0111%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE INFO LIKE '%barcode=0111%' """)
     assert len(result) == 1
     
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%barcode=1011%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE INFO LIKE '%barcode=1011%' """)
     assert len(result) == 4
     
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%barcode=1101%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE INFO LIKE '%barcode=1101%' """)
     assert len(result) == 1
+
+    # Check if VCF is in correct format with pyVCF
+    remove_if_exists([output_vcf])
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
     
 
 def test_calculation_trio():
@@ -1885,22 +2333,27 @@ def test_calculation_trio():
     }
 
     # Create object
-    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
-
-    # Remove if output file exists
-    remove_if_exists([output_vcf])
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Calculation
-    vcf.calculation()
+    variants.calculation()
 
-    result = vcf.get_query_to_df(f""" SELECT INFO FROM variants WHERE INFO LIKE '%trio=recessive%' """)
+    result = variants.get_query_to_df(""" SELECT INFO FROM variants WHERE INFO LIKE '%trio=recessive%' """)
     assert len(result) == 1
 
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%trio=dominant%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE INFO LIKE '%trio=dominant%' """)
     assert len(result) == 5
 
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE INFO LIKE '%trio=unknown%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE INFO LIKE '%trio=unknown%' """)
     assert len(result) == 1
+
+    # Check if VCF is in correct format with pyVCF
+    remove_if_exists([output_vcf])
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
 
 
 def test_calculation_vaf_normalization():
@@ -1917,28 +2370,33 @@ def test_calculation_vaf_normalization():
     }
 
     # Create object
-    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
-
-    # Remove if output file exists
-    remove_if_exists([output_vcf])
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Calculation
-    vcf.calculation()
+    variants.calculation()
 
-    result = vcf.get_query_to_df(f""" SELECT INFO FROM variants WHERE FORMAT LIKE '%:VAF' """)
+    result = variants.get_query_to_df(""" SELECT INFO FROM variants WHERE FORMAT LIKE '%:VAF' """)
     assert len(result) == 7
 
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND sample1 LIKE '%:0.279835' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND sample1 LIKE '%:0.279835' """)
     assert len(result) == 1
 
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND sample2 LIKE '%:0.282898' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND sample2 LIKE '%:0.282898' """)
     assert len(result) == 1
     
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND sample3 LIKE '%:0.282955' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND sample3 LIKE '%:0.282955' """)
     assert len(result) == 1
 
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND sample4 LIKE '%:0.303819' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND sample4 LIKE '%:0.303819' """)
     assert len(result) == 1
+
+    # Check if VCF is in correct format with pyVCF
+    remove_if_exists([output_vcf])
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
     
 
 def test_calculation_vaf_stats():
@@ -1956,28 +2414,33 @@ def test_calculation_vaf_stats():
     }
 
     # Create object
-    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
-
-    # Remove if output file exists
-    remove_if_exists([output_vcf])
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Calculation
-    vcf.calculation()
+    variants.calculation()
 
-    result = vcf.get_query_to_df(f""" SELECT INFO FROM variants WHERE INFO LIKE '%VAF_stats%' """)
+    result = variants.get_query_to_df(""" SELECT INFO FROM variants WHERE INFO LIKE '%VAF_stats%' """)
     assert len(result) == 7
 
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%VAF_stats_nb=4%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%VAF_stats_nb=4%' """)
     assert len(result) == 1
 
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%VAF_stats_min=0.279835%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%VAF_stats_min=0.279835%' """)
     assert len(result) == 1
     
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%VAF_stats_max=0.303819%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%VAF_stats_max=0.303819%' """)
     assert len(result) == 1
 
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%VAF_stats_mean=0.28737675%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%VAF_stats_mean=0.28737675%' """)
     assert len(result) == 1
+
+    # Check if VCF is in correct format with pyVCF
+    remove_if_exists([output_vcf])
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
     
 
 def test_calculation_dp_stats():
@@ -1994,27 +2457,34 @@ def test_calculation_dp_stats():
     }
 
     # Create object
-    vcf = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
     # Remove if output file exists
     remove_if_exists([output_vcf])
 
     # Calculation
-    vcf.calculation()
+    variants.calculation()
 
-    result = vcf.get_query_to_df(f""" SELECT INFO FROM variants WHERE INFO LIKE '%DP_stats%' """)
+    result = variants.get_query_to_df(""" SELECT INFO FROM variants WHERE INFO LIKE '%DP_stats%' """)
     assert len(result) == 7
 
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%DP_stats_nb=4%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%DP_stats_nb=4%' """)
     assert len(result) == 1
 
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%DP_stats_min=576.0%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%DP_stats_min=576.0%' """)
     assert len(result) == 1
     
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%DP_stats_max=17664.0%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%DP_stats_max=17664.0%' """)
     assert len(result) == 1
 
-    result = vcf.get_query_to_df(f""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%DP_stats_mean=9158.0%' """)
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND INFO LIKE '%DP_stats_mean=9158.0%' """)
     assert len(result) == 1
     
-    
+    # Check if VCF is in correct format with pyVCF
+    remove_if_exists([output_vcf])
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
+ 
