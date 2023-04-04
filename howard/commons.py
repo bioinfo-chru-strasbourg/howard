@@ -15,6 +15,11 @@ import pandas as pd
 # import pyarrow.parquet as pq
 import vcf
 import logging as log
+import shutil
+import urllib.request
+import zipfile
+import gzip
+import requests
 
 
 comparison_map = {
@@ -230,6 +235,18 @@ def run_parallel_functions(functions: list, threads: int = 1) -> list:
     pool.close()
     pool.join()
     return results
+
+
+
+def run_parallel_functions_new(functions: list, threads:int = 1) -> None:
+    """
+    Runs a list of functions in parallel using multiprocessing.Pool.
+
+    :param functions: A list of functions to run.
+    :param threads: Number of threads to use.
+    """
+    with multiprocessing.Pool(threads) as p:
+        p.map(lambda f: f(), functions)
 
 
 def example_function(num, word):
@@ -791,3 +808,28 @@ def genotype_stats(df, samples:list = [], info:str = "VAF"):
 
     return vaf_stats
 
+
+def extract_file(file_path):
+    if file_path.endswith('.zip'):
+        with zipfile.ZipFile(file_path, 'r') as zip_ref:
+            zip_ref.extractall(os.path.dirname(file_path))
+    elif file_path.endswith('.gz'):
+        with gzip.open(file_path, 'rb') as f_in:
+            with open(file_path[:-3], 'wb') as f_out:
+                f_out.write(f_in.read())
+
+
+
+def download_file(url, dest_file_path, chunk_size=1024*1024):
+    # Create a temporary file
+    tmp_file_path = dest_file_path + '.tmp'
+    with requests.get(url, stream=True) as r:
+        r.raise_for_status()
+        # Open the temporary file for writing in binary mode
+        with open(tmp_file_path, 'wb') as f:
+            # Download the file by chunks
+            for chunk in r.iter_content(chunk_size=chunk_size):
+                # Write the chunk to the temporary file
+                f.write(chunk)
+    # Move the temporary file to the final destination
+    shutil.move(tmp_file_path, dest_file_path)
