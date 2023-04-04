@@ -54,6 +54,8 @@ howard download --download-annovar=/databases/annovar/current --download-annovar
 
 #### Parquet and DuckDB
 
+## Query
+
 ## Annotation
 
 ## Calculation

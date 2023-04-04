@@ -58,57 +58,57 @@ A Command Line Interface container (HOWARD-CLI) is started with host data and da
 
 Show example VCF statistics and brief overview
 ```
-howard --input=tests/data/example.vcf.gz --stats --overview
+howard analysis --input=tests/data/example.vcf.gz --stats --overview
 ```
 
 ### Translate VCF into other format
 
 Translate VCF into CSV and show output file
 ```
-howard --input=tests/data/example.vcf.gz --output=tests/data/example.csv
+howard analysis --input=tests/data/example.vcf.gz --output=tests/data/example.csv
 cat tests/data/example.csv
 ```
 
 Translate VCF into parquet, and show statistics on output parquet file (same as VCF)
 ```
-howard --input=tests/data/example.vcf.gz --output=tests/data/example.parquet
-howard --input=tests/data/example.parquet --stats
+howard analysis --input=tests/data/example.vcf.gz --output=tests/data/example.parquet
+howard analysis --input=tests/data/example.parquet --stats
 ```
 
 ### Query
 
 Select variants in VCF with REF and POS fields
 ```
-howard --input=tests/data/example.vcf.gz --query="SELECT * FROM variants WHERE REF = 'A' AND POS < 100000"
+howard analysis --input=tests/data/example.vcf.gz --query="SELECT * FROM variants WHERE REF = 'A' AND POS < 100000"
 ```
 
 Select variants in VCF with INFO Tags criterions
 ```
-howard --input=tests/data/example.vcf.gz --param='{"explode_infos": true}' --query='SELECT "#CHROM", POS, REF, ALT, "INFO/DP", "INFO/CLNSIG", sample2, sample3 FROM variants WHERE "INFO/DP" >=50 OR "INFO/CLNSIG" NOT NULL'
+howard analysis --input=tests/data/example.vcf.gz --param='{"explode_infos": true}' --query='SELECT "#CHROM", POS, REF, ALT, "INFO/DP", "INFO/CLNSIG", sample2, sample3 FROM variants WHERE "INFO/DP" >=50 OR "INFO/CLNSIG" NOT NULL'
 ```
 
 ### Annotation
 
 VCF annotation with Parquet databases, output as VCF format, and show INFO
 ```
-howard --verbose --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotation=tests/data/annotations/avsnp150.parquet,tests/data/annotations/dbnsfp42a.parquet,tests/data/annotations/gnomad211_genome.parquet --query='SELECT INFO FROM variants'
+howard analysis --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotation=tests/data/annotations/avsnp150.parquet,tests/data/annotations/dbnsfp42a.parquet,tests/data/annotations/gnomad211_genome.parquet --query='SELECT INFO FROM variants'
 ```
 
 VCF annotation with Clinvar Parquet databases, output as TSV format and INFO tags as column, and query Clinvar results
 ```
-howard --verbose --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --annotation=tests/data/annotations/clinvar_20210123.parquet --param='{"explode_infos": true, "export_extra_infos": true}' --query='SELECT "INFO/CLNDN", count(*) AS count FROM variants WHERE "INFO/CLNDN" NOT NULL GROUP BY "INFO/CLNDN"'
+howard analysis --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --annotation=tests/data/annotations/clinvar_20210123.parquet --param='{"explode_infos": true, "export_extra_infos": true}' --query='SELECT "INFO/CLNDN", count(*) AS count FROM variants WHERE "INFO/CLNDN" NOT NULL GROUP BY "INFO/CLNDN"'
 ```
 
 ### Calculation
 
 Count number of variants by type
 ```
-howard --verbose --input=tests/data/example.full.vcf --calculations=vartype  --query='SELECT "INFO/VARTYPE", count(*) AS count FROM variants GROUP BY "INFO/VARTYPE" ORDER BY count DESC'
+howard analysis --input=tests/data/example.full.vcf --calculations=vartype  --query='SELECT "INFO/VARTYPE", count(*) AS count FROM variants GROUP BY "INFO/VARTYPE" ORDER BY count DESC'
 ```
 
 Extract hgvs from snpEff annotation and calculate NOMEN with default transcripts list
 ```
-howard --verbose --input=tests/data/example.ann.vcf.gz --param=tests/data/param.snpeff_hgvs.json --output=/tmp/example.snpeff_hgvs.vcf.gz --query='SELECT "#CHROM", POS, REF, ALT, "INFO/ANN" AS snpEff, "INFO/NOMEN" AS NOMEN FROM variants'
+howard analysis --input=tests/data/example.ann.vcf.gz --param=tests/data/param.snpeff_hgvs.json --output=/tmp/example.snpeff_hgvs.vcf.gz --query='SELECT "#CHROM", POS, REF, ALT, "INFO/ANN" AS snpEff, "INFO/NOMEN" AS NOMEN FROM variants'
 ```
 with 'param.snpeff_hgvs.json':
 ```
@@ -137,7 +137,7 @@ NM_005228	EGFR
 
 Prioritize variants from criteria on INFO annotations (see 'prioritization_profiles.json')
 ```
-howard --verbose --input=tests/data/example.vcf.gz --prioritizations=tests/data/prioritization_profiles.json --output=/tmp/test.vcf --query='SELECT "#CHROM", POS, REF, ALT, "INFO/PZFlag", "INFO/PZScore" FROM variants ORDER BY "INFO/PZFlag" DESC, "INFO/PZScore" DESC' --param='{"explode_infos": "INFO/"}'
+howard analysis --input=tests/data/example.vcf.gz --prioritizations=tests/data/prioritization_profiles.json --output=/tmp/test.vcf --query='SELECT "#CHROM", POS, REF, ALT, "INFO/PZFlag", "INFO/PZScore" FROM variants ORDER BY "INFO/PZFlag" DESC, "INFO/PZScore" DESC' --param='{"explode_infos": "INFO/"}'
 ```
 
 ### Docker HOWARD-CLI
@@ -145,7 +145,7 @@ howard --verbose --input=tests/data/example.vcf.gz --prioritizations=tests/data/
 VCF annotation (Parquet, BCFTOOLS, ANNOVAR and snpEff) using HOWARD-CLI (snpEff and ANNOVAR databases will be automatically downloaded), and query list of genes with HGVS
 
 ```
-docker exec HOWARD-CLI howard --verbose --input=/tool/tests/data/example.vcf.gz --output=/data/example.howard.vcf.gz --annotation=snpeff,annovar:refGene,/tool/tests/data/annotations/refGene.bed.gz,/tool/tests/data/annotations/avsnp150.vcf.gz,tests/data/annotations/dbnsfp42a.parquet --param='{"explode_infos": true}' --query='SELECT "INFO/symbol", "INFO/AAChange_refGene" FROM variants WHERE "INFO/symbol" NOT NULL ORDER BY "INFO/symbol"'
+docker exec HOWARD-CLI howard analysis --input=/tool/tests/data/example.vcf.gz --output=/data/example.howard.vcf.gz --annotation=snpeff,annovar:refGene,/tool/tests/data/annotations/refGene.bed.gz,/tool/tests/data/annotations/avsnp150.vcf.gz,tests/data/annotations/dbnsfp42a.parquet --param='{"explode_infos": true}' --query='SELECT "INFO/symbol", "INFO/AAChange_refGene" FROM variants WHERE "INFO/symbol" NOT NULL ORDER BY "INFO/symbol"'
 ```
 
 
