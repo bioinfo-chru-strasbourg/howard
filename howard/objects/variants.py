@@ -21,6 +21,7 @@ import vcf
 import logging as log
 
 from howard.commons import *
+from howard.tools.download import *
 
 
 class Variants:
@@ -1190,7 +1191,7 @@ class Variants:
         return tmp_header_name
 
 
-    def export_variant_vcf(self, vcf_file, file_type: str = "vcf", remove_info: bool = False, add_samples: bool = True, compression: int = 1, index: bool = False) -> None:
+    def export_variant_vcf(self, vcf_file, file_type: str = "gz", remove_info: bool = False, add_samples: bool = True, compression: int = 1, index: bool = False) -> None:
         """
         It takes a VCF file and a list of samples, and returns a VCF file with only the samples in the
         list
@@ -1212,7 +1213,6 @@ class Variants:
         log.debug("Export VCF...")
 
         connexion_format = self.get_connexion_format()
-        threads = self.get_threads()
 
         table_variants = self.get_table_variants()
         sql_query_hard = ""
@@ -1262,17 +1262,27 @@ class Variants:
                 writer.writerows(cursor)
 
         # Create output
-        # Cat header and variants
-        # command_gzip = ""
-        # if file_type in ["gz"]:
-        #     command_gzip = f" | bgzip -l {compression} -c "
-        if index:
-            command_tabix = f" && tabix {vcf_file}"
+
+        # header
+        command = f"grep '^#CHROM' -v {tmp_header_name} > {vcf_file}.tmp; "
+
+        # variants
+        command += f"gzip -dc {tmp_variants_name} >> {vcf_file}.tmp; "
+
+        # export format
+        if file_type in ["vcf"]:
+            export_format = "v"
         else:
-            command_tabix = ""
-        command_gzip = get_bgzip(threads=threads, level=1)
-        command = f"grep '^#CHROM' -v {tmp_header_name} | {command_gzip} > {vcf_file}; gzip -dc {tmp_variants_name}  | {command_gzip} >> {vcf_file} {command_tabix}"
-        # print(command)
+            export_format = f"z{compression}"
+
+        # sort and compress
+        command += f"bcftools sort {vcf_file}.tmp -o {vcf_file} -O{export_format} 2>/dev/null; "
+
+        # tabix
+        if index:
+            command += f" tabix {vcf_file}; "
+        
+        log.debug(f"export_variant_vcf command: {command}")
 
         subprocess.run(command, shell=True)
 
@@ -1954,10 +1964,10 @@ class Variants:
                                         f"{err_file}: " + message)
                     # log info
                     for message in list(set(error_message_command_err + error_message_command_warning)):
-                        log.info(message)
+                        log.info(f"   {message}")
                     # debug info
                     for message in list(set(error_message_command_all)):
-                        log.debug(message)
+                        log.debug(f"   {message}")
                     # failed
                     if len(error_message_command_err):
                         log.error("Annotation failed: Error in commands")
@@ -2045,26 +2055,35 @@ class Variants:
                 log.warning(
                     f"Annotation warning: snpEff jar found '{snpeff_jar}'")
 
-        if not os.path.exists(snpeff_databases):
-            log.warning(
-                f"Annotation warning: no snpEff database '{snpeff_databases}'. Try to find...")
-            # Try to find snpeff database
-            try:
-                snpeff_databases = os.path.dirname(os.path.dirname(
-                    find_all('snpEffectPredictor.bin', '/')[0]))
-            except:
-                log.error(
-                    f"Annotation failed: no snpEff database '{snpeff_databases}'")
-                raise ValueError(
-                    f"Annotation failed: no snpEff database '{snpeff_databases}'")
+        if snpeff_databases != "":
             if not os.path.exists(snpeff_databases):
-                log.error(
-                    f"Annotation failed: no snpEff database '{snpeff_databases}'")
-                raise ValueError(
-                    f"Annotation failed: no snpEff database '{snpeff_databases}'")
-            else:
-                log.warning(
-                    f"Annotation warning: snpEff database found '{snpeff_databases}'")
+                os.makedirs(snpeff_databases)
+
+        #     # Check Annovar database
+        # snpeff_database = tests_config.get("folders",{}).get("databases",{}).get("snpeff",tests_folder + "/data/annotations/snpeff")
+        # databases_download_snpeff(folder=snpeff_database, assemblies=["hg19"], config=tests_config)
+
+
+        # if not os.path.exists(snpeff_databases):
+        #     log.warning(
+        #         f"Annotation warning: no snpEff database '{snpeff_databases}'. Try to find...")
+        #     # Try to find snpeff database
+        #     try:
+        #         snpeff_databases = os.path.dirname(os.path.dirname(
+        #             find_all('snpEffectPredictor.bin', '/')[0]))
+        #     except:
+        #         log.error(
+        #             f"Annotation failed: no snpEff database '{snpeff_databases}'")
+        #         raise ValueError(
+        #             f"Annotation failed: no snpEff database '{snpeff_databases}'")
+        #     if not os.path.exists(snpeff_databases):
+        #         log.error(
+        #             f"Annotation failed: no snpEff database '{snpeff_databases}'")
+        #         raise ValueError(
+        #             f"Annotation failed: no snpEff database '{snpeff_databases}'")
+        #     else:
+        #         log.warning(
+        #             f"Annotation warning: snpEff database found '{snpeff_databases}'")
                 
         # if not os.path.exists(snpeff_databases):
         #     log.warning(
@@ -2148,6 +2167,10 @@ class Variants:
 
         if "ANN" not in self.get_header().infos or force_update_annotation:
 
+            # Check snpEff database
+            log.debug(f"Check snpEff databases {[assembly]}")
+            databases_download_snpeff(folder=snpeff_databases, assemblies=[assembly], config=config)
+
             # Export VCF file
             self.export_variant_vcf(vcf_file=tmp_vcf_name, file_type="gz",
                                     remove_info=True, add_samples=False, compression=1, index=True)
@@ -2182,10 +2205,10 @@ class Variants:
                                 f"{err_file}: " + message)
             # log info
             for message in list(set(error_message_command_err + error_message_command_warning)):
-                log.info(message)
+                log.info(f"   {message}")
             # debug info
             for message in list(set(error_message_command_all)):
-                log.debug(message)
+                log.debug(f"   {message}")
             # failed
             if len(error_message_command_err):
                 log.error("Annotation failed: Error in commands")
@@ -2274,26 +2297,30 @@ class Variants:
                 log.warning(
                     f"Annotation warning: annovar bin found '{annovar_bin}'")
 
-        if not os.path.exists(annovar_databases):
-            log.warning(
-                f"Annotation warning: no annovar database '{annovar_databases}'. Try to find...")
-            # Try to find annovar database
-            try:
-                annovar_databases = os.path.dirname(
-                    find_all('annovar_downdb.log', '/')[0])
-            except:
-                log.error(
-                    f"Annotation failed: no annovar database '{annovar_databases}'")
-                raise ValueError(
-                    f"Annotation failed: no annovar database '{annovar_databases}'")
+        if annovar_databases != "":
             if not os.path.exists(annovar_databases):
-                log.error(
-                    f"Annotation failed: no annovar database '{annovar_databases}'")
-                raise ValueError(
-                    f"Annotation failed: no annovar database '{annovar_databases}'")
-            else:
-                log.warning(
-                    f"Annotation warning: annovar database found '{annovar_databases}'")
+                os.makedirs(annovar_databases)
+
+        # if not os.path.exists(annovar_databases):
+        #     log.warning(
+        #         f"Annotation warning: no annovar database '{annovar_databases}'. Try to find...")
+        #     # Try to find annovar database
+        #     try:
+        #         annovar_databases = os.path.dirname(
+        #             find_all('hg19_avdblist.txt', '/')[0])
+        #     except:
+        #         log.error(
+        #             f"Annotation failed: no annovar database '{annovar_databases}'")
+        #         raise ValueError(
+        #             f"Annotation failed: no annovar database '{annovar_databases}'")
+        #     if not os.path.exists(annovar_databases):
+        #         log.error(
+        #             f"Annotation failed: no annovar database '{annovar_databases}'")
+        #         raise ValueError(
+        #             f"Annotation failed: no annovar database '{annovar_databases}'")
+        #     else:
+        #         log.warning(
+        #             f"Annotation warning: annovar database found '{annovar_databases}'")
                 
         # if not os.path.exists(annovar_databases):
         #     log.warning(
@@ -2383,6 +2410,10 @@ class Variants:
             tmp_rename_name = tmp_rename.name
             tmp_files.append(tmp_rename_name)
 
+            # Check Annovar database
+            log.debug(f"Check Annovar databases {[assembly]}: {list(annotations.keys())}")
+            databases_download_annovar(folder=annovar_databases, files=list(annotations.keys()), assemblies = [assembly])
+            
             for annotation in annotations:
                 annotation_fields = annotations[annotation]
 
@@ -2448,7 +2479,7 @@ class Variants:
                 # operation
                 operation = "f"
                 if annotation in ["refGene", "refGeneWithVer"] or annotation.startswith("ensGene"):
-                    operation = "gx"
+                    operation = "g"
                     if options.get("genebase", None):
                         argument = f"""'{options.get("genebase","")}'"""
                 elif annotation in ["cytoBand"]:
@@ -2500,33 +2531,32 @@ class Variants:
                 run_parallel_commands([command_annovar], 1)
 
                 # Error messages
-                if True:
-                    log.info(f"Error/Warning messages:")
-                    error_message_command_all = []
-                    error_message_command_warning = []
-                    error_message_command_err = []
-                    for err_file in err_files:
-                        with open(err_file, 'r') as f:
-                            for line in f:
-                                message = line.strip()
-                                error_message_command_all.append(message)
-                                if line.startswith('[W::') or line.startswith('WARNING'):
-                                    error_message_command_warning.append(
-                                        message)
-                                if line.startswith('[E::') or line.startswith('ERROR'):
-                                    error_message_command_err.append(
-                                        f"{err_file}: " + message)
-                    # log info
-                    for message in list(set(error_message_command_err + error_message_command_warning)):
-                        log.info(message)
-                    # debug info
-                    for message in list(set(error_message_command_all)):
-                        log.debug(message)
-                    # failed
-                    if len(error_message_command_err):
-                        log.error("Annotation failed: Error in commands")
-                        raise ValueError(
-                            "Annotation failed: Error in commands")
+                log.info(f"Error/Warning messages:")
+                error_message_command_all = []
+                error_message_command_warning = []
+                error_message_command_err = []
+                for err_file in err_files:
+                    with open(err_file, 'r') as f:
+                        for line in f:
+                            message = line.strip()
+                            error_message_command_all.append(message)
+                            if line.startswith('[W::') or line.startswith('WARNING'):
+                                error_message_command_warning.append(
+                                    message)
+                            if line.startswith('[E::') or line.startswith('ERROR'):
+                                error_message_command_err.append(
+                                    f"{err_file}: " + message)
+                # log info
+                for message in list(set(error_message_command_err + error_message_command_warning)):
+                    log.info(f"   {message}")
+                # debug info
+                for message in list(set(error_message_command_all)):
+                    log.debug(f"   {message}")
+                # failed
+                if len(error_message_command_err):
+                    log.error("Annotation failed: Error in commands")
+                    raise ValueError(
+                        "Annotation failed: Error in commands")
 
             if tmp_annotates_vcf_name_list:
 
@@ -3305,6 +3335,7 @@ class Variants:
                             WHEN "INFO/SVTYPE" NOT NULL THEN "INFO/SVTYPE"
                             WHEN LENGTH(REF) = 1 AND LENGTH(ALT) = 1 THEN 'SNV'
                             WHEN REF LIKE '%,%' OR ALT LIKE '%,%' THEN 'MOSAIC'
+                            WHEN LENGTH(REF) == LENGTH(ALT) AND LENGTH(REF) > 1 THEN 'MNV'
                             WHEN LENGTH(REF) <> LENGTH(ALT) THEN 'INDEL'
                             ELSE 'UNDEFINED'
                         END

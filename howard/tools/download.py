@@ -52,7 +52,7 @@ def databases_download(args) -> None:
             assemblies = assemblies,
             annovar_url=args.download_annovar_url
             )
-        
+
     # snpEff
     if args.download_snpeff:
         log.debug(f"Download snpEff databases")
@@ -68,6 +68,7 @@ def databases_download_annovar(folder:str = None, files:list = None, assemblies:
     log.info(f"Download Annovar databases {assemblies}")
 
     # Minimum files to download
+    #files_minimum = ["refGene.txt.gz","refGene.txt.idx.gz","refGeneMrna.fa.gz"]
     files_minimum = ["refGene*"]
 
     for assembly in assemblies:
@@ -81,6 +82,9 @@ def databases_download_annovar(folder:str = None, files:list = None, assemblies:
         log.debug(f"Download Annovar databases in folder '{folder}'")
 
         if not files:
+            log.debug("Only mandatory files will be downloaded")
+            patterns_file_to_check = files_minimum
+        elif files == ["ALL"]:
             log.debug("All files will be downloaded")
             patterns_file_to_check = None
         else:
@@ -169,9 +173,9 @@ def databases_download_annovar(folder:str = None, files:list = None, assemblies:
 
             # Dowload and extract files
             if files_to_download:
-                log.info(f"Download Annovar databases for assembly '{assembly}'")
+                log.info(f"Download Annovar databases {[assembly]}")
                 for file in files_to_download:
-                    log.info(f"Download Annovar databases for assembly '{assembly}' - file '{file}' Downloading...")
+                    log.info(f"Download Annovar databases {[assembly]} - file '{file}' Downloading...")
                     file_url = os.path.join(annovar_url, file)
                     file_path = os.path.join(folder, file)
 
@@ -180,11 +184,10 @@ def databases_download_annovar(folder:str = None, files:list = None, assemblies:
                     log.debug(f"Extract file {file} to {folder}...")
                     extract_file(file_path)
             else:
-                log.info(f"Download Annovar databases for assembly '{assembly}' already exists")
+                log.info(f"Download Annovar databases {[assembly]} already exists")
 
 
 def databases_download_snpeff(folder:str = None, assemblies:list = ["hg19"], config:dict = {}) -> None:
-
 
     log.info(f"Download snpEff databases {assemblies}")
 
@@ -258,25 +261,5 @@ def databases_download_snpeff(folder:str = None, assemblies:list = ["hg19"], con
 
         else:
 
-            log.info(f"Database snpEff databases for assembly '{assembly}' already exists")
+            log.info(f"Database snpEff databases {[assembly]} already exists")
 
-
-
-def get_snpeff_bin(config:dict = {}):
-
-    # Config - snpEff
-    snpeff_jar = config.get("tools", {}).get(
-        "snpeff", {}).get("jar", None)
-
-    # Config - check tools
-    if not snpeff_jar or not os.path.exists(snpeff_jar):
-        # Try to find snpEff.jar
-        try:
-            snpeff_jar = find_all('snpEff.jar', '/')[0]
-        except:
-            return None
-        # Check if found
-        if not os.path.exists(snpeff_jar):
-            return None
-            
-    return snpeff_jar

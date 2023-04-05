@@ -57,11 +57,17 @@ file_format_delimiters = {
 }
 
 
+default_snpeff_bin = "/tools/snpeff/5.1d/bin/snpEff.jar"
+
+default_annovar_url = "http://www.openbioinformatics.org/annovar/download/"
+
+
 def remove_if_exists(filepaths: list) -> None:
     """
-    If the filepath exists, remove it
-
-    :param filepath: The path to the file you want to remove
+    The function removes a file if it exists at the specified filepath(s).
+    
+    :param filepaths: A list of file paths that you want to check for existence and remove if they exist
+    :type filepaths: list
     """
     if type(filepaths) is str:
         filepaths = [filepaths]
@@ -235,7 +241,6 @@ def run_parallel_functions(functions: list, threads: int = 1) -> list:
     pool.close()
     pool.join()
     return results
-
 
 
 def run_parallel_functions_new(functions: list, threads:int = 1) -> None:
@@ -447,6 +452,20 @@ def find_nomen(hgvs: str = "", pattern="GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOME
 
 
 def extract_snpeff_hgvs(snpeff:str = "", header:str = ['Allele', 'Annotation', 'Annotation_Impact', 'Gene_Name', 'Gene_ID', 'Feature_Type', 'Feature_ID', 'Transcript_BioType', 'Rank', 'HGVS.c', 'HGVS.p', 'cDNA.pos / cDNA.length', 'CDS.pos / CDS.length', 'AA.pos / AA.length', 'Distance', 'ERRORS / WARNINGS / INFO']) -> str:
+    """
+    This function extracts HGVS annotations from a given snpEff annotation string and returns them as a
+    comma-separated string.
+    
+    :param snpeff: The `snpeff` parameter is a string that contains annotations for genetic variants in
+    a specific format. It is used as input to extract HGVS notation for the variants
+    :type snpeff: str
+    :param header: The header parameter is a list of column names that will be used to create a pandas
+    DataFrame from the snpeff string input. It is used to extract specific information from the snpeff
+    annotations
+    :type header: str
+    :return: a string that contains the HGVS annotations extracted from the input SNPEff annotation
+    string.
+    """
 
     snpeff_hgvs = ""
 
@@ -497,6 +516,17 @@ def extract_snpeff_hgvs(snpeff:str = "", header:str = ['Allele', 'Annotation', '
 
 
 def get_index(value, values: list = []) -> int:
+    """
+    The function returns the index of a given value in a list, or -1 if the value is not in the list.
+    
+    :param value: The value to search for in the list
+    :param values: The parameter "values" is a list of values in which we want to find the index of a
+    specific value. It is an optional parameter with a default value of an empty list
+    :type values: list
+    :return: The function `get_index` returns the index of the first occurrence of the `value` parameter
+    in the `values` list. If the `value` parameter is not found in the `values` list, the function
+    returns -1.
+    """
     try:
         return values.index(value)
     except ValueError:
@@ -541,6 +571,19 @@ def get_file_compressed(filename: str = None) -> bool:
 
 
 def findbypipeline(df, samples:list = []):
+    """
+    This function takes a dataframe and a list of samples, and returns the number of pipelines found in
+    the samples that have a non-null GT value.
+    
+    :param df: The input dataframe containing genetic variant information
+    :param samples: The `samples` parameter is a list of strings representing the names of the
+    samples/pipelines to be searched for in the input dataframe `df`
+    :type samples: list
+    :return: a string in the format of "nb_pipeline_find/nb_pipeline", where nb_pipeline_find is the
+    number of pipelines in the input list samples that have a non-null GT value in the input dataframe
+    df, and nb_pipeline is the total number of pipelines in the input list samples. If the input list
+    samples is empty, the function returns "0/0".
+    """
 
     # format
     format_fields = df["FORMAT"].split(":")
@@ -573,6 +616,19 @@ def findbypipeline(df, samples:list = []):
 
 
 def genotypeconcordance(df, samples:list = []):
+    """
+    The function checks the genotype concordance of a given list of samples in a dataframe.
+    
+    :param df: The input dataframe containing genetic variant information, including genotype
+    information for each sample/pipeline
+    :param samples: The parameter "samples" is a list of sample/pipeline names that are present in the
+    input dataframe "df". These samples/pipelines have genotype information that will be used to
+    calculate genotype concordance
+    :type samples: list
+    :return: a string that indicates whether the genotypes of the specified samples in the input
+    dataframe are concordant or not. The string is either "TRUE" or "FALSE", depending on whether all
+    the specified samples have the same genotype or not.
+    """
 
     # format
     format_fields = df["FORMAT"].split(":")
@@ -607,6 +663,17 @@ def genotypeconcordance(df, samples:list = []):
 
 
 def genotype_compression(genotype:str = "") -> str:
+    """
+    The function takes a genotype string, replaces dots with zeros, removes non-digit characters, sorts
+    and removes duplicates, and returns the compressed genotype string.
+    
+    :param genotype: The input genotype as a string. It is a DNA sequence that contains genetic
+    information
+    :type genotype: str
+    :return: The function `genotype_compression` returns a compressed version of the input genotype
+    string. The compressed string has all dots replaced with 0s, all non-digit characters removed, and
+    duplicates removed and sorted. The compressed string is returned as a string.
+    """
 
     genotype_compressed = genotype
     genotype_compressed = re.sub(r'\.', '0', genotype_compressed)
@@ -617,6 +684,16 @@ def genotype_compression(genotype:str = "") -> str:
 
 
 def genotype_barcode(genotype:str = "") -> str:
+    """
+    This function takes a genotype string and compresses it, then returns a barcode string based on the
+    length and content of the compressed genotype.
+    
+    :param genotype: The genotype parameter is a string that represents a genetic sequence or code
+    :type genotype: str
+    :return: The function `genotype_barcode` returns a string representing the barcode for a given
+    genotype. The barcode can be "0", "1", "2", or "?" depending on the length and content of the
+    compressed genotype string.
+    """
 
     genotype_compressed = genotype_compression(genotype)
     if len(genotype_compressed) == 1:
@@ -633,7 +710,18 @@ def genotype_barcode(genotype:str = "") -> str:
 
 
 def barcode(df, samples:list = []):
+    """
+    Generates a barcode based on the genotype of the specified samples.
 
+    :param df: A pandas DataFrame containing the genetic data.
+    :type df: pandas.DataFrame
+
+    :param samples: A list of sample names to use for generating the barcode.
+    :type samples: list(str)
+
+    :return: A barcode string based on the genotype of the specified samples.
+    :rtype: str
+    """
     # format
     format_fields = df["FORMAT"].split(":")
 
@@ -665,6 +753,16 @@ def barcode(df, samples:list = []):
 
 
 def trio(df, samples:list = []):
+    """
+    The function trio(df, samples:list = []) determines the type of variant (denovo, dominant, or
+    recessive) in a trio based on the barcode generated from the samples.
+    
+    :param df: The input dataframe containing genetic variant information
+    :param samples: A list of sample IDs to be used in the analysis
+    :type samples: list
+    :return: The function `trio` returns a string that represents the type of variant in a trio
+    analysis, which can be "denovo", "dominant", "recessive", or "unknown".
+    """
 
     # no sample/pipeline
     if not samples:
@@ -690,6 +788,19 @@ def trio(df, samples:list = []):
 
 
 def vaf_normalization(row, sample:str) -> str:
+    """
+    This function takes in a row of data and a sample name, extracts the genotype information for that
+    sample, calculates the variant allele frequency (VAF) from the genotype information, and adds the
+    VAF to the genotype information before returning it.
+    
+    :param row: The input row of a pandas DataFrame containing information about a genetic variant
+    :param sample: The parameter "sample" is a string representing the name of the sample for which we
+    want to calculate the VAF (Variant Allele Frequency). It is used to extract the genotype information
+    for that particular sample from the input row
+    :type sample: str
+    :return: a string that represents the genotype information for a given sample with an added "VAF"
+    field that represents the variant allele frequency.
+    """
 
     # format
     format_fields = row["FORMAT"].split(":")
@@ -748,6 +859,23 @@ def vaf_normalization(row, sample:str) -> str:
 
 
 def genotype_stats(df, samples:list = [], info:str = "VAF"):
+    """
+    This function computes statistics on a specified information field (e.g. VAF) for a given set of
+    samples in a pandas dataframe.
+    
+    :param df: The input dataframe containing variant information
+    :param samples: The list of sample/pipeline names for which to compute the genotype statistics. If
+    empty, the function will return an empty dictionary
+    :type samples: list
+    :param info: The parameter "info" is a string that represents the type of information being analyzed
+    in the function. In this case, it is used to compute statistics on the Variant Allele Frequency
+    (VAF) of genetic variants, defaults to VAF
+    :type info: str (optional)
+    :return: a dictionary containing statistics related to a specified information field (default is
+    "VAF") for a given set of samples in a pandas DataFrame. The statistics include the number of
+    values, a list of values, minimum value, maximum value, mean, median, and standard deviation. If no
+    samples are specified, an empty dictionary is returned.
+    """
 
     # format
     format_fields = df["FORMAT"].split(":")
@@ -809,7 +937,23 @@ def genotype_stats(df, samples:list = [], info:str = "VAF"):
     return vaf_stats
 
 
-def extract_file(file_path):
+def extract_file(file_path:str):
+    """
+    The function extracts a compressed file in .zip or .gz format based on the file path provided.
+    
+    :param file_path: The file path parameter is a string that represents the path to a file that needs
+    to be extracted. The function checks if the file has a ".zip" or ".gz" extension and extracts it
+    accordingly
+    :type file_path: str
+    """
+    """
+    The function extracts a compressed file if it is in .zip or .gz format.
+    
+    :param file_path: The file path parameter is a string that represents the path to a file that needs
+    to be extracted. The function checks if the file has a ".zip" or ".gz" extension and extracts it
+    accordingly
+    :type file_path: str
+    """
     if file_path.endswith('.zip'):
         with zipfile.ZipFile(file_path, 'r') as zip_ref:
             zip_ref.extractall(os.path.dirname(file_path))
@@ -819,8 +963,16 @@ def extract_file(file_path):
                 f_out.write(f_in.read())
 
 
-
-def download_file(url, dest_file_path, chunk_size=1024*1024):
+def download_file(url:str, dest_file_path:str, chunk_size:int = 1024*1024):
+    """
+    This function downloads a file from a given URL and saves it to a specified destination file path in
+    chunks.
+    
+    :param url: The URL of the file to be downloaded
+    :param dest_file_path: The path where the downloaded file will be saved
+    :param chunk_size: The size of each chunk of data to be downloaded at a time. The default value is 1
+    MB
+    """
     # Create a temporary file
     tmp_file_path = dest_file_path + '.tmp'
     with requests.get(url, stream=True) as r:
@@ -833,3 +985,34 @@ def download_file(url, dest_file_path, chunk_size=1024*1024):
                 f.write(chunk)
     # Move the temporary file to the final destination
     shutil.move(tmp_file_path, dest_file_path)
+
+
+def get_snpeff_bin(config:dict = {}):
+    """
+    This function retrieves the path to the snpEff.jar file from a configuration dictionary or searches
+    for it in the file system if it is not specified in the configuration.
+    
+    :param config: A dictionary containing configuration information for the snpEff tool, including the
+    path to the snpEff jar file. If no configuration is provided, an empty dictionary is used
+    :type config: dict
+    :return: the path to the snpEff.jar file, either from the configuration dictionary or by searching
+    for it in the file system. If the file is not found, it returns None.
+    """
+
+    # Config - snpEff
+    snpeff_jar = config.get("tools", {}).get(
+        "snpeff", {}).get("jar", None)
+
+    # Config - check tools
+    if not snpeff_jar or not os.path.exists(snpeff_jar):
+        # Try to find snpEff.jar
+        try:
+            snpeff_jar = find_all('snpEff.jar', '/')[0]
+        except:
+            return None
+        # Check if found
+        if not os.path.exists(snpeff_jar):
+            return None
+            
+    return snpeff_jar
+

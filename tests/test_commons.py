@@ -20,6 +20,7 @@ import gzip
 import pytest
 import pandas as pd
 from pandas.testing import assert_frame_equal
+from unittest.mock import patch
 
 from howard.objects.variants import Variants
 from howard.commons import *
@@ -29,6 +30,10 @@ tests_folder = os.path.dirname(__file__)
 
 
 def test_get_file_compressed():
+    """
+    This function tests whether a given file is compressed or not, based on its file extension.
+    """
+
     # Test pour un fichier compressé .gz
     assert get_file_compressed("testfile.gz") == True
     
@@ -52,6 +57,11 @@ def test_get_file_compressed():
 
 
 def test_get_file_format():
+    """
+    The function tests the `get_file_format` function for various file formats and asserts that the
+    output is correct.
+    """
+
     # Test pour un fichier .vcf
     assert get_file_format("testfile.vcf") == "vcf"
     
@@ -75,6 +85,10 @@ def test_get_file_format():
 
 
 def test_remove_if_exists():
+    """
+    This function tests the functionality of the "remove_if_exists" function by creating a file,
+    attempting to delete it using "remove_if_exists", and checking if the file was successfully deleted.
+    """
 
     # filename
     filename = "/tmp/output.test"
@@ -97,6 +111,11 @@ def test_remove_if_exists():
 
 
 def test_remove_if_exists_complete():
+    """
+    This is a test function for the "remove_if_exists" function in Python that tests its ability to
+    remove existing files and handle non-existent files.
+    """
+
     # Crée un fichier pour tester la fonction
     test_path = "test_dir"
     os.makedirs(test_path, exist_ok=True)
@@ -118,6 +137,10 @@ def test_remove_if_exists_complete():
 
 
 def test_set_log_level():
+    """
+    This is a unit test for a function called "set_log_level" that sets the verbosity level and checks
+    if it was set correctly.
+    """
 
     # define verbosity
     verbosity = "info"
@@ -129,6 +152,10 @@ def test_set_log_level():
 
 
 def test_set_log_level_error():
+    """
+    This function tests if an error is raised when an unknown verbosity level is passed to the
+    set_log_level function in Python.
+    """
 
     # define verbosity
     verbosity = "not_a_level"
@@ -140,6 +167,10 @@ def test_set_log_level_error():
 
 
 def test_split_interval_either():
+    """
+    This is a test function that checks if an error is raised when neither step nor ncuts is provided in
+    the split_interval function.
+    """
 
     start = 0
     end = 1000
@@ -151,6 +182,10 @@ def test_split_interval_either():
 
 
 def test_split_interval_only():
+    """
+    This is a test function that checks if an error is raised when both step and ncuts are provided as
+    arguments in the split_interval function.
+    """
 
     start = 0
     end = 1000
@@ -162,6 +197,10 @@ def test_split_interval_only():
 
 
 def test_split_interval_step():
+    """
+    This is a test function that checks if the output of the split_interval function matches the
+    expected output for a given set of input parameters.
+    """
 
     start = 0
     end = 1000
@@ -174,6 +213,10 @@ def test_split_interval_step():
 
 
 def test_split_interval_ncuts():
+    """
+    This is a test function that checks if the split_interval function correctly splits an interval into
+    a specified number of cuts.
+    """
 
     start = 0
     end = 1000
@@ -186,6 +229,9 @@ def test_split_interval_ncuts():
 
 
 def test_merged_regions():
+    """
+    The function tests whether the merge_regions function correctly merges a list of genomic regions.
+    """
 
     # Define a list of genomic regions
     regions = [
@@ -208,6 +254,11 @@ def test_merged_regions():
 
 
 def test_create_where_clause():
+    """
+    This function tests the create_where_clause function by defining a list of merged regions and a
+    table, calling the create_where_clause function, and comparing the output to an expected where
+    clause.
+    """
 
     # Define a list of merged regions
     merged_regions = [
@@ -230,6 +281,9 @@ def test_create_where_clause():
 
 
 def test_command():
+    """
+    This function tests the execution of a command and compares its output to an expected result.
+    """
 
     # Creation of a command
     cmd = "echo 'Command'"
@@ -244,6 +298,10 @@ def test_command():
 
 
 def test_run_parallel_commands():
+    """
+    This function tests the execution of multiple commands in parallel and compares the results to the
+    expected output.
+    """
 
     # Creation of a list of command
     commands = [
@@ -262,6 +320,10 @@ def test_run_parallel_commands():
 
 
 def test_run_parallel_functions():
+    """
+    This function tests the functionality of running multiple functions in parallel using a specified
+    number of threads.
+    """
 
     # List of functions (examples)
     functions = [example_function(1, "hello"), example_function(2, "world")]
@@ -277,6 +339,10 @@ def test_run_parallel_functions():
 
 
 def test_example_function():
+    """
+    This is a test function that checks if the output of the example_function matches the expected
+    result.
+    """
 
     # Launch functions
     result = example_function(1, "hello")
@@ -288,6 +354,9 @@ def test_example_function():
 
 
 def test_get_index():
+    """
+    The function `test_get_index()` tests the `get_index()` function with various inputs.
+    """
 
     # Test with a list of values
     values = ['a', 'b', 'c', 'd']
@@ -304,8 +373,12 @@ def test_get_index():
 
 
 def test_find_nomen_full():
+    """
+    The function `test_find_nomen_full()` tests the `find_nomen()` function with various input cases and
+    expected outputs.
+    """
+
     # Test case 1
-    print("test1")
     hgvs = "NM_001637.3:c.1582G>T"
     transcripts = ["NM_001637.3"]
     expected_output = {
@@ -323,7 +396,6 @@ def test_find_nomen_full():
     assert find_nomen(hgvs, transcripts=transcripts) == expected_output
 
     # Test case 2
-    print("test2")
     hgvs = "NM_001637.3:c.1582G>T,NM_001637.3:c.1583G>T"
     transcripts = ["NM_001637.3"]
     expected_output = {
@@ -341,7 +413,6 @@ def test_find_nomen_full():
     assert find_nomen(hgvs, transcripts=transcripts) == expected_output
 
     # Test case 3
-    print("test3")
     hgvs = "NM_001637.3:c.1582G>T,NM_001637.3:c.1583G>T,NM_001637.2:c.1582G>T:p.G12D"
     transcripts = ["NM_001637.2", "NM_001637.3"]
     expected_output = {
@@ -359,7 +430,6 @@ def test_find_nomen_full():
     assert find_nomen(hgvs, transcripts=transcripts) == expected_output
 
     # Test case 4
-    print("test3")
     hgvs = "Gene1:exon12:n.1582G>T:NR_001637.3"
     transcripts = []
     expected_output = {
@@ -377,7 +447,6 @@ def test_find_nomen_full():
     assert find_nomen(hgvs, transcripts=transcripts) == expected_output
 
     # Test case 5
-    print("test3")
     hgvs = "Gene1:exon12:r.1582G>T"
     transcripts = []
     expected_output = {
@@ -396,6 +465,10 @@ def test_find_nomen_full():
 
 
 def test_get_gzip():
+    """
+    This function tests the get_bgzip function by comparing the expected command with the actual command
+    generated.
+    """
 
     command_gzip_expected = "bgzip -c  --threads=2 --compress-level=5"
 
@@ -406,6 +479,10 @@ def test_get_gzip():
           
 
 def test_find():
+    """
+    This is a test function for the "find" function, which tests if the function can correctly locate
+    files in a given directory and its subdirectories.
+    """
     # Crée un fichier pour tester la fonction
     test_path = "test_dir"
     os.makedirs(test_path, exist_ok=True)
@@ -435,6 +512,10 @@ def test_find():
 
 
 def test_find_all():
+    """
+    This function tests the find_all function by creating temporary directories and files and checking
+    if the function returns the correct paths.
+    """
     # Create a temporary directory structure
     with tempfile.TemporaryDirectory() as tmpdir:
         # Create some files with the name 'test_file' in different directories
@@ -450,6 +531,10 @@ def test_find_all():
 
 
 def test_find_genome():
+    """
+    This is a test function for the find_genome function, which checks if the function can correctly
+    find an existing genome file and handle errors when a genome file does not exist.
+    """
 
     # Default genome filenaùe
     genome_filename = "hg19.fa"
@@ -484,6 +569,10 @@ def test_find_genome():
 
 
 def test_findbypipeline():
+    """
+    The function `test_findbypipeline()` tests the `findbypipeline()` function with three different test
+    cases.
+    """
 
     # Test case 1: Sample with GT
     data = {"FORMAT": "GT:DP:AD", "S1": "0/1:20:10,10", "S2": "0/0:20:20,0", "S3": "./.:20:0,0"}
@@ -505,6 +594,9 @@ def test_findbypipeline():
 
 
 def test_genotypeconcordance():
+    """
+    The function tests the concordance of genotypes between a given variant and a list of samples.
+    """
 
     # Define test data
     test_dataframe = pd.DataFrame({
@@ -542,6 +634,10 @@ def test_genotypeconcordance():
 
 
 def test_genotype_compression():
+    """
+    This is a test function that checks if the genotype compression function returns the expected output
+    for various input test cases.
+    """
     # Test cases with expected output
     test_cases = {
         "0/0": "0",
@@ -562,6 +658,10 @@ def test_genotype_compression():
 
 
 def test_genotype_barcode():
+    """
+    This is a unit test for the function `genotype_barcode()` which tests various input genotype cases
+    and their expected output.
+    """
     test_cases = {
         "1|1": "2",
         "0|0": "0",
@@ -580,6 +680,9 @@ def test_genotype_barcode():
 
 
 def test_barcode():
+    """
+    The function tests the barcode function with different test cases using a test dataset.
+    """
     
     test_data = pd.DataFrame({
         'CHROM': ['chr1', 'chr2'],
@@ -604,6 +707,9 @@ def test_barcode():
 
 
 def test_vaf_normalization():
+    """
+    This is a unit test function for testing the vaf_normalization function on a sample dataset.
+    """
 
     sample_data = pd.DataFrame({
         "FORMAT": ["GT:AD:DP:GQ:PL", "GT:FREQ", "GT:DP4"],
@@ -627,6 +733,9 @@ def test_vaf_normalization():
 
 
 def test_genotype_stats():
+    """
+    The function tests the genotype statistics of a given dataset.
+    """
 
     test_data = pd.DataFrame({
         'FORMAT': 'GT:AD:DP:GQ:PL:VAF',
@@ -689,6 +798,9 @@ def test_genotype_stats():
 
 
 def test_trio():
+    """
+    The function "test_trio" is not defined and therefore cannot be summarized.
+    """
     # Define a sample DataFrame
     df = pd.DataFrame({
         "CHROM": ["1", "1"],
@@ -720,3 +832,24 @@ def test_trio():
     # Test case 5: Non-existent sample name
     assert trio(df.iloc[0], ["sample1", "non_existent_sample", "sample2"]) == "unknown"
 
+
+def test_get_snpeff_bin():
+    """
+    The function is not provided, so a summary cannot be given.
+    """
+
+    # Test when the path is provided in the config
+    config = {"tools": {"snpeff": {"jar": default_snpeff_bin}}}
+    assert get_snpeff_bin(config) == default_snpeff_bin
+
+    # Test when bad path is provided in the config
+    config = {"tools": {"snpeff": {"jar": "/tools/snpeff/5.1d/bin/NOT_snpEff.jar"}}}
+    assert get_snpeff_bin(config) == default_snpeff_bin
+    
+    # Test when the path is not provided in the config but snpEff.jar is found
+    with patch("os.path.exists", return_value=True):
+        assert get_snpeff_bin({}) == default_snpeff_bin
+    
+    # Test when the path is not provided in the config and snpEff.jar is not found
+    with patch("os.path.exists", return_value=False):
+        assert get_snpeff_bin({}) == None
