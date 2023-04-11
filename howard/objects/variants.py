@@ -21,7 +21,7 @@ import vcf
 import logging as log
 
 from howard.commons import *
-from howard.tools.download import *
+from howard.tools.databases import *
 
 
 class Variants:
@@ -226,13 +226,17 @@ class Variants:
         It reads the header of a VCF file and stores it as a list of strings and as a VCF object
         """
         input_file = self.get_input()
+        default_header_list = [
+            '##fileformat=VCFv4.2',
+            '#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO'
+            ]
 
         if input_file:
 
             input_format = self.get_input_format()
             input_compressed = self.get_input_compressed()
             config = self.get_config()
-            header_list = []
+            header_list = default_header_list
             if input_format in ["vcf", "bcf", "hdr", "tsv", "csv", "psv", "parquet", "db", "duckdb"]:
                 # header provided in param
                 if config.get("header_file", None):
@@ -259,6 +263,9 @@ class Variants:
                 log.error(f"Input file format '{input_format}' not available")
                 raise ValueError(
                     f"Input file format '{input_format}' not available")
+
+            if not header_list:
+                header_list = default_header_list
 
             # header as list
             self.header_list = header_list
@@ -542,13 +549,21 @@ class Variants:
         :param type: the type of header you want to get, defaults to vcf (optional)
         :return: The header of the vcf file.
         """
+        # vcf_required = [
+        #     '##fileformat=VCFv4.2',
+        #     '#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO'
+        #     ]
         if self.header_vcf:
             if type == "vcf":
                 return self.header_vcf
             elif type == "list":
                 return self.header_list
         else:
-            return None
+            if type == "vcf":
+                header = vcf.Reader(io.StringIO("\n".join(vcf_required)))
+                return header
+            elif type == "list":
+                return vcf_required
 
 
     def get_header_length(self) -> int:
@@ -557,8 +572,8 @@ class Variants:
 
         :return: The length of the header list.
         """
-        if self.get_header():
-            return len(self.header_list) - 1
+        if self.get_header(type="list"):
+            return len(self.get_header(type="list")) -1
         else:
             return 0
 
@@ -570,7 +585,7 @@ class Variants:
         :return: The length of the header list.
         """
         if self.get_header():
-            return self.header_list[-1]
+            return self.get_header(type="list")[-1]
         else:
             return ""
 
@@ -705,7 +720,8 @@ class Variants:
         sql_create_table_columns_list = []
         for column in structure_complete:
             column_type = structure_complete[column]
-            sql_create_table_columns.append(f"\"{column}\" {column_type}")
+            #sql_create_table_columns.append(f"\"{column}\" {column_type}")
+            sql_create_table_columns.append(f"\"{column}\" {column_type} default NULL")
             sql_create_table_columns_list.append(f"\"{column}\"")
 
         # get table variants
@@ -762,10 +778,8 @@ class Variants:
             # Load Parquet
 
             if access in ["RO"]:
-                # print("NO loading data")
                 self.drop_variants_table()
                 sql_parquet = f"CREATE VIEW {table_variants} AS SELECT * FROM '{self.input}'"
-                # self.conn.execute(sql_view)
             else:
                 sql_parquet = f"COPY {table_variants} FROM '{self.input}'"
 
@@ -920,7 +934,6 @@ class Variants:
                         """
                     log.debug(
                         f"Explode INFO fields - ADD [{len(self.get_header().infos)}]: {sql_info_alter_table}")
-                    #print(sql_info_alter_table)
                     self.conn.execute(sql_info_alter_table)
 
         # create indexes
@@ -932,8 +945,6 @@ class Variants:
         """
         Create indexes on the table after insertion
         """
-
-        # print("create indexes")
 
         # Access
         access = self.get_config().get("access", None)
@@ -954,7 +965,6 @@ class Variants:
             sql_create_table_index = f'CREATE INDEX IF NOT EXISTS idx_{self.get_table_variants()}_alt ON {table_variants} ("ALT")'
             self.conn.execute(sql_create_table_index)
             for field in self.index_additionnal_fields:
-                # print(f"create {field}")
                 sql_create_table_index = f""" CREATE INDEX IF NOT EXISTS "idx_{self.get_table_variants()}_{field}" ON {table_variants} ("{field}") """
                 self.conn.execute(sql_create_table_index)
 
@@ -995,7 +1005,6 @@ class Variants:
         """
         header_list = []
         for line in f:
-            # print(line)
             header_list.append(line)
             if line.startswith('#CHROM'):
                 break
@@ -1081,7 +1090,6 @@ class Variants:
                 sql_query_export_subquery = f"""
                     SELECT {sql_columns} {sql_extra_columns} FROM {table_variants} WHERE 1 {sql_query_hard} {sql_query_sort} {sql_query_limit}
                     """
-                # print(sql_query_export_subquery)
                 sql_query_export_to = output_file_tmp
                 sql_query_export_format = "FORMAT PARQUET"
 
@@ -1186,7 +1194,8 @@ class Variants:
             output_file = self.get_output()
         tmp_header_name = output_file + ".hdr"
         f = open(tmp_header_name, 'w')
-        vcf.Writer(f, self.get_header())
+        if self.get_header():
+            vcf.Writer(f, self.get_header())
         f.close()
         return tmp_header_name
 
@@ -1522,7 +1531,6 @@ class Variants:
                         annotation_file)
                     quick_annotation_format = quick_annotation_extension.replace(
                         ".", "")
-                    # print(quick_annotation_format)
                     if quick_annotation_format in ["gz"]:
                         quick_annotation_format_name, quick_annotation_format_extension = os.path.splitext(
                             quick_annotation_name)
@@ -1530,7 +1538,6 @@ class Variants:
                             ".", "")
                     else:
                         quick_annotation_type = quick_annotation_format
-                    # print(quick_annotation_type)
                     format = None
                     if quick_annotation_type in ["parquet", "duckdb"]:
                         format = "parquet"
@@ -1553,9 +1560,6 @@ class Variants:
                         f"Quick Annotation File {annotation_file} does NOT exist")
 
             self.set_param(param)
-
-        # print(param)
-        # return
 
         if param.get("annotation", None):
             log.info("Annotations")
@@ -1856,7 +1860,6 @@ class Variants:
                                     FROM {table_variants} as table_variants
                                     WHERE table_variants.\"#CHROM\" = '{chrom}'
                                 """
-                                # print(sql_query_intervals_for_bed)
                                 regions = self.conn.execute(
                                     sql_query_intervals_for_bed).fetchall()
                                 merged_regions = merge_regions(regions)
@@ -2017,7 +2020,7 @@ class Variants:
         snpeff_jar = config.get("tools", {}).get(
             "snpeff", {}).get("jar", "snpEff.jar")
         snpeff_databases = config.get("folders", {}).get(
-            "databases", {}).get("snpeff", "")
+            "databases", {}).get("snpeff", "/databases/snpeff/current")
 
         # Config - check tools
         if not os.path.exists(java_bin):
@@ -2055,58 +2058,10 @@ class Variants:
                 log.warning(
                     f"Annotation warning: snpEff jar found '{snpeff_jar}'")
 
-        if snpeff_databases != "":
+        if snpeff_databases is not None and snpeff_databases != "":
+            log.debug(f"Create snpEff databases folder")
             if not os.path.exists(snpeff_databases):
                 os.makedirs(snpeff_databases)
-
-        #     # Check Annovar database
-        # snpeff_database = tests_config.get("folders",{}).get("databases",{}).get("snpeff",tests_folder + "/data/annotations/snpeff")
-        # databases_download_snpeff(folder=snpeff_database, assemblies=["hg19"], config=tests_config)
-
-
-        # if not os.path.exists(snpeff_databases):
-        #     log.warning(
-        #         f"Annotation warning: no snpEff database '{snpeff_databases}'. Try to find...")
-        #     # Try to find snpeff database
-        #     try:
-        #         snpeff_databases = os.path.dirname(os.path.dirname(
-        #             find_all('snpEffectPredictor.bin', '/')[0]))
-        #     except:
-        #         log.error(
-        #             f"Annotation failed: no snpEff database '{snpeff_databases}'")
-        #         raise ValueError(
-        #             f"Annotation failed: no snpEff database '{snpeff_databases}'")
-        #     if not os.path.exists(snpeff_databases):
-        #         log.error(
-        #             f"Annotation failed: no snpEff database '{snpeff_databases}'")
-        #         raise ValueError(
-        #             f"Annotation failed: no snpEff database '{snpeff_databases}'")
-        #     else:
-        #         log.warning(
-        #             f"Annotation warning: snpEff database found '{snpeff_databases}'")
-                
-        # if not os.path.exists(snpeff_databases):
-        #     log.warning(
-        #         f"Annotation warning: no snpEff database '{snpeff_databases}'. Try to find...")
-        #     # Try to find snpeff database
-        #     try:
-        #         snpeff_databases = os.path.dirname(os.path.dirname(
-        #             find_all('snpEffectPredictor.bin', '/')[0]))
-        #     except:
-        #         log.warning(
-        #             f"Annotation warning: no snpEff database autodetected '{snpeff_databases}'")
-        #         # raise ValueError(
-        #         #     f"Annotation warning: no snpEff database autodetected '{snpeff_databases}'")
-        #     if not os.path.exists(snpeff_databases):
-        #         #snpeff_databases = "/databases/snpeff/current"
-        #         snpeff_databases = "/databases"
-        #         log.warning(
-        #             f"Annotation warning: snpEff database default folder '{snpeff_databases}' (databases will be downloaded)")
-        #         # raise ValueError(
-        #         #     f"Annotation failed: no snpEff database '{snpeff_databases}'")
-        #     else:
-        #         log.warning(
-        #             f"Annotation warning: snpEff database found '{snpeff_databases}'")
 
         # Param
         param = self.get_param()
@@ -2277,7 +2232,7 @@ class Variants:
         annovar_bin = config.get("tools", {}).get(
             "annovar", {}).get("bin", "table_annovar.pl")
         annovar_databases = config.get("folders", {}).get(
-            "databases", {}).get("annovar", "")
+            "databases", {}).get("annovar", "/databases/annovar/current")
 
         if not os.path.exists(annovar_bin):
             log.warning(
@@ -2753,7 +2708,6 @@ class Variants:
                     # get extra infos
                     parquet_columns = self.get_extra_infos(
                         table=parquet_file_link)
-                    # print(parquet_columns)
 
                     # For all fields in database
                     annotation_fields_ALL = False
@@ -3159,14 +3113,17 @@ class Variants:
             # Header
             for pzfield in list_of_pzfields:
                 if re.match("PZScore.*", pzfield):
-                    self.conn.execute(
-                        f"ALTER TABLE {table_variants} ADD COLUMN IF NOT EXISTS {pzfield} INTEGER DEFAULT 0")
+                    self.add_column(table_name=table_variants, column_name=pzfield, column_type="INTEGER", default_value="0")
+                    # self.conn.execute(
+                    #     f"ALTER TABLE {table_variants} ADD COLUMN IF NOT EXISTS {pzfield} INTEGER DEFAULT 0")
                 elif re.match("PZFlag.*", pzfield):
-                    self.conn.execute(
-                        f"ALTER TABLE {table_variants} ADD COLUMN IF NOT EXISTS {pzfield} BOOLEAN DEFAULT 1")
+                    self.add_column(table_name=table_variants, column_name=pzfield, column_type="BOOLEAN", default_value="1")
+                    # self.conn.execute(
+                    #     f"ALTER TABLE {table_variants} ADD COLUMN IF NOT EXISTS {pzfield} BOOLEAN DEFAULT 1")
                 else:
-                    self.conn.execute(
-                        f"ALTER TABLE {table_variants} ADD COLUMN IF NOT EXISTS {pzfield} STRING DEFAULT ''")
+                    self.add_column(table_name=table_variants, column_name=pzfield, column_type="STRING", default_value="")
+                    # self.conn.execute(
+                    #     f"ALTER TABLE {table_variants} ADD COLUMN IF NOT EXISTS {pzfield} STRING DEFAULT ''")
 
             # Profiles
             if profiles:
@@ -3178,6 +3135,39 @@ class Variants:
                     if profile in profiles or profiles == []:
                         log.info(f"Profile '{profile}'")
 
+                        sql_set_info_option = ""
+                        
+                        sql_set_info = []
+
+                         # PZ fields set
+                        if f"PZScore{pzfields_sep}{profile}" in list_of_pzfields:
+                            sql_set_info.append(
+                                f" || 'PZScore{pzfields_sep}{profile}=' || PZScore{pzfields_sep}{profile} ")
+                            if profile == default_profile and "PZScore" in list_of_pzfields:
+                                sql_set_info.append(
+                                    f" || 'PZScore=' || PZScore{pzfields_sep}{profile} ")
+                        if f"PZFlag{pzfields_sep}{profile}" in list_of_pzfields:
+                            sql_set_info.append(
+                                f" || 'PZFlag{pzfields_sep}{profile}=' || CASE WHEN PZFlag{pzfields_sep}{profile}==1 THEN 'PASS' WHEN PZFlag{pzfields_sep}{profile}==0 THEN 'FILTERED' END ")
+                            if profile == default_profile and "PZFlag" in list_of_pzfields:
+                                sql_set_info.append(
+                                    f" || 'PZFlag=' || CASE WHEN PZFlag{pzfields_sep}{profile}==1 THEN 'PASS' WHEN PZFlag{pzfields_sep}{profile}==0 THEN 'FILTERED' END ")
+                        if f"PZComment{pzfields_sep}{profile}" in list_of_pzfields:
+                            sql_set_info.append(
+                                f" || 'PZComment{pzfields_sep}{profile}=' || PZComment{pzfields_sep}{profile}  ")
+                            if profile == default_profile and "PZComment" in list_of_pzfields:
+                                sql_set_info.append(
+                                    f" || 'PZComment=' || PZComment{pzfields_sep}{profile} ")
+                        if f"PZInfos{pzfields_sep}{profile}" in list_of_pzfields:
+                            sql_set_info.append(
+                                f" || 'PZInfos{pzfields_sep}{profile}=' || PZInfos{pzfields_sep}{profile}")
+                            if profile == default_profile and "PZInfos" in list_of_pzfields:
+                                sql_set_info.append(
+                                    f" || 'PZInfos=' || PZInfos{pzfields_sep}{profile} ")
+                        sql_set_info_option = " || ';' ".join(
+                            sql_set_info)
+
+
                         sql_queries = []
                         for annotation in config_profiles[profile]:
 
@@ -3186,6 +3176,9 @@ class Variants:
                                 log.debug(
                                     f"Annotation '{annotation}' not in data")
                                 continue
+                            else:
+                                log.debug(
+                                    f"Annotation '{annotation}' in data")
 
                             # For each criterions
                             for criterion in config_profiles[profile][annotation]:
@@ -3214,38 +3207,16 @@ class Variants:
                                     else:
                                         sql_set.append(
                                             f"PZScore{pzfields_sep}{profile} = PZScore{pzfields_sep}{profile} + {criterion_score}")
-                                    sql_set_info.append(
-                                        f" || 'PZScore{pzfields_sep}{profile}=' || PZScore{pzfields_sep}{profile} ")
-                                    if profile == default_profile and "PZScore" in list_of_pzfields:
-                                        sql_set_info.append(
-                                            f" || 'PZScore=' || PZScore{pzfields_sep}{profile} ")
                                 if f"PZFlag{pzfields_sep}{profile}" in list_of_pzfields:
                                     sql_set.append(
                                         f"PZFlag{pzfields_sep}{profile} = PZFlag{pzfields_sep}{profile} AND {criterion_flag_bool}")
-                                    sql_set_info.append(
-                                        f" || 'PZFlag{pzfields_sep}{profile}=' || CASE WHEN PZFlag{pzfields_sep}{profile}==1 THEN 'PASS' WHEN PZFlag{pzfields_sep}{profile}==0 THEN 'FILTERED' END ")
-                                    if profile == default_profile and "PZFlag" in list_of_pzfields:
-                                        sql_set_info.append(
-                                            f" || 'PZFlag=' || CASE WHEN PZFlag{pzfields_sep}{profile}==1 THEN 'PASS' WHEN PZFlag{pzfields_sep}{profile}==0 THEN 'FILTERED' END ")
                                 if f"PZComment{pzfields_sep}{profile}" in list_of_pzfields:
                                     sql_set.append(
                                         f"PZComment{pzfields_sep}{profile} = PZComment{pzfields_sep}{profile} || CASE WHEN PZComment{pzfields_sep}{profile}!='' THEN ', ' ELSE '' END || '{criterion_comment}'")
-                                    sql_set_info.append(
-                                        f" || 'PZComment{pzfields_sep}{profile}=' || PZComment{pzfields_sep}{profile}  ")
-                                    if profile == default_profile and "PZComment" in list_of_pzfields:
-                                        sql_set_info.append(
-                                            f" || 'PZComment=' || PZComment{pzfields_sep}{profile} ")
                                 if f"PZInfos{pzfields_sep}{profile}" in list_of_pzfields:
                                     sql_set.append(
                                         f"PZInfos{pzfields_sep}{profile} = PZInfos{pzfields_sep}{profile} || '{criterion_infos}'")
-                                    sql_set_info.append(
-                                        f" || 'PZInfos{pzfields_sep}{profile}=' || PZInfos{pzfields_sep}{profile}")
-                                    if profile == default_profile and "PZInfos" in list_of_pzfields:
-                                        sql_set_info.append(
-                                            f" || 'PZInfos=' || PZInfos{pzfields_sep}{profile} ")
                                 sql_set_option = ",".join(sql_set)
-                                sql_set_info_option = " || ';' ".join(
-                                    sql_set_info)
                                 
                                 # Criterion and comparison
                                 try:
@@ -3273,24 +3244,25 @@ class Variants:
                         if sql_queries:
 
                             for sql_query in sql_queries:
+                                log.debug(f"""Profile '{profile}' - Prioritization query: {sql_query}... """)
                                 self.conn.execute(sql_query)
 
-                            log.info(f"""Profile '{profile}' - Update... """)
-                            sql_query_update = f"""
-                                UPDATE {table_variants}
-                                SET INFO = CASE WHEN INFO NOT IN ('','.') THEN INFO || ';' ELSE '' END
-                                    {sql_set_info_option}
+                        log.info(f"""Profile '{profile}' - Update... """)
+                        sql_query_update = f"""
+                            UPDATE {table_variants}
+                            SET INFO = CASE WHEN INFO NOT IN ('','.') THEN INFO || ';' ELSE '' END
+                                {sql_set_info_option}
 
-                            """
-                            self.conn.execute(sql_query_update)
+                        """
+                        self.conn.execute(sql_query_update)
 
         else:
 
             log.warning(f"No profiles in parameters")
 
-        if self.get_param().get("explode_infos", None):
-            self.explode_infos(
-                prefix=self.get_param().get("explode_infos", None))
+        # if self.get_param().get("explode_infos", None):
+        #     self.explode_infos(
+        #         prefix=self.get_param().get("explode_infos", None))
 
 
     ###
@@ -3547,8 +3519,6 @@ class Variants:
         if "ANN" in vcf_reader.infos:
                 
             log.debug(vcf_reader.infos["ANN"])
-
-            #print(self.get_extra_infos())
 
             # Create variant id
             variant_id_column = self.get_variant_id_column()

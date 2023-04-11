@@ -21,7 +21,7 @@ import pytest
 
 from howard.commons import *
 from howard.objects.variants import Variants
-from howard.tools.download import *
+from howard.tools.databases import *
 
 
 # Main tests folder
@@ -1310,19 +1310,17 @@ def test_no_input_file():
     This function tests the behavior of the Variants class when no input file is provided.
     """
 
-    # Init files
-    #input_vcf = tests_folder + "/data/example.vcf.gz"
-
     # Create object
-    #vcf = Variants(input=input_vcf, load=True)
     variant = Variants()
 
     assert variant.get_input() == None
-    assert variant.get_header() == None
-    assert variant.get_header_length() == 0
-    assert variant.get_header_columns() == ""
-    assert variant.get_header_columns_as_list() == []
-    assert variant.get_header_columns_as_sql() == ""
+    assert len(variant.get_header().infos) == 0
+    assert len(variant.get_header().formats) == 0
+    assert len(variant.get_header().contigs) == 0
+    assert variant.get_header_length() == 1
+    assert variant.get_header_columns() == "\t".join(vcf_required_columns)
+    assert variant.get_header_columns_as_list() == vcf_required_columns
+    assert variant.get_header_columns_as_sql() == ",".join(f'"{col}"' for col in vcf_required_columns)
 
 
 ###
@@ -2419,9 +2417,9 @@ def test_prioritization_no_infos():
     variants.prioritization()
 
     result = variants.get_query_to_df("""
-        SELECT INFO FROM variants WHERE INFO NOT IN ('','.') AND INFO NOT NULL
+        SELECT INFO FROM variants WHERE INFO LIKE '%PZScore=0%' AND INFO LIKE '%PZFlag=PASS%'
         """)
-    assert len(result) == 0
+    assert len(result) == 10
 
     # Check if VCF is in correct format with pyVCF
     remove_if_exists([output_vcf])

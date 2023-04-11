@@ -1,3 +1,9 @@
 __all__ = [
-    "download"
+    "process",
+    "tools",
+    "annotation",
+    "calculation",
+    "prioritization",
+    "query",
+    "databases",
 ]

@@ -32,6 +32,17 @@ from howard.commons import *
 
 
 
+def databases(args) -> None:
+
+    log.info("Start")
+
+    databases_download(args)
+
+    log.info("End")
+
+
+
+
 def databases_download(args) -> None:
 
     log.debug(f"Args {args}")

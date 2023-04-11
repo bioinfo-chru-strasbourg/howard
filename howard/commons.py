@@ -57,6 +57,14 @@ file_format_delimiters = {
 }
 
 
+vcf_required_release = '##fileformat=VCFv4.2'
+vcf_required_columns = ['#CHROM','POS','ID','REF','ALT','QUAL','FILTER','INFO']
+
+vcf_required = [
+            vcf_required_release,
+            "\t".join(vcf_required_columns)
+            ]
+
 default_snpeff_bin = "/tools/snpeff/5.1d/bin/snpEff.jar"
 
 default_annovar_url = "http://www.openbioinformatics.org/annovar/download/"
