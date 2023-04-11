@@ -42,8 +42,6 @@ def test_process():
     prioritizations = tests_folder + "/data/prioritization_profiles.json"
     input_query = None
 
-    # tests/data/param.snpeff_hgvs.json
-
     # prepare arguments for the query function
     args = argparse.Namespace(
         input = input_vcf,

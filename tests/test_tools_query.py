@@ -30,7 +30,6 @@ from howard.tools.tools import *
 tests_folder = os.path.dirname(__file__)
 
 
-# write the test function
 def test_query():
 
     # Init files

@@ -30,7 +30,6 @@ from howard.tools.tools import *
 tests_folder = os.path.dirname(__file__)
 
 
-# write the test function
 def test_get_argument():
     # test case 1: argument exists in the dictionary
     arguments = {'arg1': {'type': 'string', 'help': 'argument 1'}}

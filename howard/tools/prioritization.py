@@ -31,13 +31,6 @@ def prioritization(args) -> None:
 
     param = {}
 
-    # Connexion config
-    connexion_config = {}
-    if config.get("threads", None):
-        connexion_config["threads"] = config.get("threads")
-    if config.get("memory_limit", None):
-        connexion_config["memory_limit"] = config.get("memory_limit")
-
     # Create VCF object
     if args.input:
         vcfdata_obj = Variants(None, args.input, args.output, config, param)

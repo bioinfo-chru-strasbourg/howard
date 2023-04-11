@@ -98,7 +98,6 @@ def test_query():
     """
     conn = duckdb.connect(":memory:")
     result = conn.execute("SELECT 1 AS count").df()["count"][0]
-    print(result)
     assert result == 1
 
 
@@ -136,6 +135,7 @@ def test_get_table_variants_from_parquet():
     vcf.load_data()
     variants_table = vcf.get_table_variants(clause="from")
     assert variants_table == "variants as variants"
+
 
 def test_get_table_variants_from_parquet_ro():
     input_vcf = tests_folder + "/data/example.parquet"

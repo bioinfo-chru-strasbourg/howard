@@ -132,8 +132,6 @@ def test_databases_download_annovar():
     #             assert downloaded_file in downloaded_files
 
 
-
-
 def test_databases_download():
     """
     This function tests the download of databases for Annovar and snpEff tools.

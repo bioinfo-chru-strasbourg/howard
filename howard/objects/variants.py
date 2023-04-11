@@ -3121,7 +3121,7 @@ class Variants:
                     # self.conn.execute(
                     #     f"ALTER TABLE {table_variants} ADD COLUMN IF NOT EXISTS {pzfield} BOOLEAN DEFAULT 1")
                 else:
-                    self.add_column(table_name=table_variants, column_name=pzfield, column_type="STRING", default_value="")
+                    self.add_column(table_name=table_variants, column_name=pzfield, column_type="STRING", default_value="''")
                     # self.conn.execute(
                     #     f"ALTER TABLE {table_variants} ADD COLUMN IF NOT EXISTS {pzfield} STRING DEFAULT ''")
 

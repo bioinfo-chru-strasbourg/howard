@@ -473,7 +473,6 @@ def test_get_gzip():
     command_gzip_expected = "bgzip -c  --threads=2 --compress-level=5"
 
     command_gzip = get_bgzip(threads=2, level=5)
-    print(command_gzip)
 
     assert command_gzip.strip() == command_gzip_expected.strip()
           

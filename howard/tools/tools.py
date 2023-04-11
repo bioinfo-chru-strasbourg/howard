@@ -260,7 +260,7 @@ commands_arguments = {
         "help":         """Full genetic variations process: annotation, calculation, prioritization, format, query, filter...""",
         "epilog":       """Usage examples:\n"""
                         """   howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json\n"""
-                        """   howard process --input=tests/data/example.vcf.gz --annotations=snpeff --calculations=snpeff_hgvs,NOMEN --query='SELECT "INFO/NOMEN" FROM variants'""", 
+                        """   howard process --input=tests/data/example.vcf.gz --annotations=snpeff --calculations=snpeff_hgvs,NOMEN --prioritizations=config/prioritization_profiles.json --query='SELECT "INFO/NOMEN" FROM variants'""", 
 
         "groups": {
             "main": {
