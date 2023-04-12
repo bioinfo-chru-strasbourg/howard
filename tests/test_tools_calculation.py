@@ -44,6 +44,8 @@ def test_calculation():
         output = output_vcf,
         config = config,
         calculations = calculations,
+        hgvs_field = "hgvs",
+        transcripts = None
     )
 
     # Remove if output file exists

@@ -58,7 +58,6 @@ def calculation(args) -> None:
                 params["calculation"]["NOMEN"]["options"] = {}
             params["calculation"]["NOMEN"]["options"]["transcripts"] = args.transcripts
         
-        print(params)
 
         vcfdata_obj.set_param(params)
 

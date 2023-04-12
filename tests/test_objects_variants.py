@@ -2208,6 +2208,34 @@ def test_prioritization():
           AND INFO LIKE '%PZComment_default=%'
           AND INFO LIKE '%PZInfos_default=%'
         """)
+    assert len(result) == 4
+
+    # Check all priorized GERMLINE profile
+    result = variants.get_query_to_df("""
+        SELECT * FROM variants
+        WHERE INFO LIKE '%PZFlag_GERMLINE=%'
+          AND INFO LIKE '%PZScore_GERMLINE=%'
+          AND INFO LIKE '%PZComment_default=%'
+          AND INFO LIKE '%PZInfos_default=%'
+        """)
+    assert len(result) == 4
+
+    # Check all priorized default profile (as default)
+    result = variants.get_query_to_df("""
+        SELECT * FROM variants
+        WHERE INFO LIKE '%PZFlag=%'
+          AND INFO LIKE '%PZScore=%'
+          AND INFO LIKE '%PZComment_default=%'
+          AND INFO LIKE '%PZInfos_default=%'
+        """)
+    assert len(result) == 4
+
+    # Check all priorized default profile
+    result = variants.get_query_to_df("""
+        SELECT * FROM variants
+        WHERE INFO LIKE '%PZFlag_default=%'
+          AND INFO LIKE '%PZScore_default=%'
+        """)
     assert len(result) == 7
 
     # Check all priorized GERMLINE profile
@@ -2215,8 +2243,6 @@ def test_prioritization():
         SELECT * FROM variants
         WHERE INFO LIKE '%PZFlag_GERMLINE=%'
           AND INFO LIKE '%PZScore_GERMLINE=%'
-          AND INFO LIKE '%PZComment_GERMLINE=%'
-          AND INFO LIKE '%PZInfos_GERMLINE=%'
         """)
     assert len(result) == 7
 
@@ -2225,8 +2251,6 @@ def test_prioritization():
         SELECT * FROM variants
         WHERE INFO LIKE '%PZFlag=%'
           AND INFO LIKE '%PZScore=%'
-          AND INFO LIKE '%PZComment=%'
-          AND INFO LIKE '%PZInfos=%'
         """)
     assert len(result) == 7
 
@@ -2288,7 +2312,7 @@ def test_prioritization_full_unsorted():
           AND INFO LIKE '%PZComment_default=%'
           AND INFO LIKE '%PZInfos_default=%'
         """)
-    assert len(result) == 36
+    assert len(result) == 4
 
     # Check all priorized GERMLINE profile
     result = variants.get_query_to_df("""
@@ -2298,7 +2322,7 @@ def test_prioritization_full_unsorted():
           AND INFO LIKE '%PZComment_GERMLINE=%'
           AND INFO LIKE '%PZInfos_GERMLINE=%'
         """)
-    assert len(result) == 36
+    assert len(result) == 2
 
     # Check all priorized default profile (as default)
     result = variants.get_query_to_df("""
@@ -2307,6 +2331,30 @@ def test_prioritization_full_unsorted():
           AND INFO LIKE '%PZScore=%'
           AND INFO LIKE '%PZComment=%'
           AND INFO LIKE '%PZInfos=%'
+        """)
+    assert len(result) == 4
+
+    # Check all priorized default profile
+    result = variants.get_query_to_df("""
+        SELECT * FROM variants
+        WHERE INFO LIKE '%PZFlag_default=%'
+          AND INFO LIKE '%PZScore_default=%'
+        """)
+    assert len(result) == 36
+
+    # Check all priorized GERMLINE profile
+    result = variants.get_query_to_df("""
+        SELECT * FROM variants
+        WHERE INFO LIKE '%PZFlag_GERMLINE=%'
+          AND INFO LIKE '%PZScore_GERMLINE=%'
+        """)
+    assert len(result) == 36
+
+    # Check all priorized default profile (as default)
+    result = variants.get_query_to_df("""
+        SELECT * FROM variants
+        WHERE INFO LIKE '%PZFlag=%'
+          AND INFO LIKE '%PZScore=%'
         """)
     assert len(result) == 36
 
