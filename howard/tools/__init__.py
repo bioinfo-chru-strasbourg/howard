@@ -5,5 +5,6 @@ __all__ = [
     "calculation",
     "prioritization",
     "query",
+    "stats",
     "databases",
 ]

@@ -1,0 +1,56 @@
+{
+  "annotation": {
+    "snpeff": {
+      "options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "
+    },
+    "annovar": {
+      "annotations": {
+        "refGene": {
+          "INFO": null
+        }
+      },
+      "options": {
+        "genebase": "-hgvs -splicing_threshold 3 ",
+        "intronhgvs": 10
+      }
+    },
+    "parquet": {
+      "annotations": {
+        "tests/data/annotations/avsnp150.parquet": {
+          "INFO": null
+        },
+        "tests/data/annotations/dbnsfp42a.parquet": {
+          "INFO": null
+        },
+        "tests/data/annotations/gnomad211_genome.parquet": {
+          "INFO": null
+        }
+      }
+    },
+    "bcftools": {
+      "annotations": {
+        "tests/data/annotations/cosmic70.vcf.gz": {
+          "INFO": null
+        }
+      }
+    }
+  },
+  "calculation": {
+    "vartype": null,
+    "snpeff_hgvs": null,
+    "NOMEN": {
+      "options": {
+        "hgvs_field": "snpeff_hgvs",
+        "transcripts": "tests/data/transcripts.tsv"
+      }
+    },
+    "VAF": ""
+  },
+  "prioritization": {
+    "config_profiles": "config/prioritization_profiles.json",
+    "pzfields": ["PZScore", "PZFlag", "PZComment"],
+    "profiles": ["default", "GERMLINE"]
+  },
+  "explode_infos": "INFO/",
+  "threads": 8
+}

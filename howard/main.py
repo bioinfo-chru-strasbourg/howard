@@ -41,8 +41,8 @@ def main() -> None:
         description="""howard annotates and prioritizes genetic variations, calculates and normalizes annotations, translates vcf format and generates variants statistics""",
         #usage="howard [<shared-args>]",
         epilog="Examples:\n"
-            """howard analysis --input=input.vcf.gz --output=output.tsv \n"""
-            """howard analysis --input=input.vcf.gz --query="SELECT * FROM variants WHERE REF = 'A' AND POS < 100000" \n""",
+            """   howard process --input=input.vcf.gz --output=output.tsv \n"""
+            """   howard query --input=input.vcf.gz --query="SELECT * FROM variants WHERE REF = 'A' AND POS < 100000" \n""",
         formatter_class=argparse.RawTextHelpFormatter
         )
 

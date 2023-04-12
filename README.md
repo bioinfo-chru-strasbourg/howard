@@ -22,8 +22,8 @@ HOWARD is multithreaded through the number of variants and by database (data-sca
   - [Python](#python)
   - [Docker](#docker)
 - [Quick HOWARD commands](#quick-howard-commands)
-  - [Show VCF stats and overview](#show-vcf-stats-and-overview)
-  - [Translate VCF into other format](#translate-vcf-into-other-format)
+  - [Stats](#stats)
+  - [Convert](#convert)
   - [Query](#query)
   - [Annotation](#annotation)
   - [Calculation](#calculation)
@@ -33,16 +33,16 @@ HOWARD is multithreaded through the number of variants and by database (data-sca
 
 
 
-## Installation
+# Installation
 
-### Python
+## Python
 
 Install using Python Pip tool:
 ```
 python -m pip install -e .
 ```
 
-### Docker
+## Docker
 
 In order to build, setup and create a persitent CLI (running container), docker-compose command build images and launch services as containers.
 
@@ -52,100 +52,212 @@ docker-compose up -d
 
 A Command Line Interface container (HOWARD-CLI) is started with host data and databases folders mounted (by default in ${HOME}/HOWARD folder)
 
-## Quick HOWARD commands
+# Quick HOWARD commands
 
-### Show VCF stats and overview
+## Stats
 
-Show example VCF statistics and brief overview
+Statistics on genetic variations, such as: number of variants, number of samples, statistics by chromosome, genotypes by samples...
+
+- Show example VCF statistics and brief overview
 ```
-howard analysis --input=tests/data/example.vcf.gz --stats --overview
-```
-
-### Translate VCF into other format
-
-Translate VCF into CSV and show output file
-```
-howard analysis --input=tests/data/example.vcf.gz --output=tests/data/example.csv
-cat tests/data/example.csv
+howard stats --input=tests/data/example.vcf.gz
 ```
 
-Translate VCF into parquet, and show statistics on output parquet file (same as VCF)
+## Convert
+
+Convert genetic variations file to another format. Multiple format are available, such as usual and official VCF and BCF format, but also other formats such as TSV, CSV, PSV and Parquet/duckDB. These formats need a header '.hdr' file to take advantage of the power of howard (especially through INFO/tag definition), and using howard convert tool automatically generate header file fo futher use.
+
+- Translate VCF into TSV, export INFO/tags into columns, and show output file
 ```
-howard analysis --input=tests/data/example.vcf.gz --output=tests/data/example.parquet
-howard analysis --input=tests/data/example.parquet --stats
+howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --export_infos
 ```
 
-### Query
-
-Select variants in VCF with REF and POS fields
+- Translate VCF into parquet
 ```
-howard analysis --input=tests/data/example.vcf.gz --query="SELECT * FROM variants WHERE REF = 'A' AND POS < 100000"
+howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.parquet
 ```
-
-Select variants in VCF with INFO Tags criterions
+- and show statistics on output parquet file (same as VCF)
 ```
-howard analysis --input=tests/data/example.vcf.gz --param='{"explode_infos": true}' --query='SELECT "#CHROM", POS, REF, ALT, "INFO/DP", "INFO/CLNSIG", sample2, sample3 FROM variants WHERE "INFO/DP" >=50 OR "INFO/CLNSIG" NOT NULL'
+howard stats --input=/tmp/example.parquet
 ```
 
-### Annotation
+## Query
 
-VCF annotation with Parquet databases, output as VCF format, and show INFO
-```
-howard analysis --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotation=tests/data/annotations/avsnp150.parquet,tests/data/annotations/dbnsfp42a.parquet,tests/data/annotations/gnomad211_genome.parquet --query='SELECT INFO FROM variants'
-```
+Query genetic variations in SQL format. Data can be loaded into 'variants' table from various formats (e.g. VCF, TSV, Parquet...). Using --explode_infos allow query on INFO/tag annotations. SQL query can also use external data within the request, such as a Parquet file(s).
 
-VCF annotation with Clinvar Parquet databases, output as TSV format and INFO tags as column, and query Clinvar results
+- Select variants in VCF with REF and POS fields
 ```
-howard analysis --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --annotation=tests/data/annotations/clinvar_20210123.parquet --param='{"explode_infos": true, "export_extra_infos": true}' --query='SELECT "INFO/CLNDN", count(*) AS count FROM variants WHERE "INFO/CLNDN" NOT NULL GROUP BY "INFO/CLNDN"'
+howard query --input=tests/data/example.vcf.gz --query="SELECT * FROM variants WHERE REF = 'A' AND POS < 100000"
 ```
 
-### Calculation
-
-Count number of variants by type
+- Select variants in VCF with INFO Tags criterions
 ```
-howard analysis --input=tests/data/example.full.vcf --calculations=vartype  --query='SELECT "INFO/VARTYPE", count(*) AS count FROM variants GROUP BY "INFO/VARTYPE" ORDER BY count DESC'
+howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, "INFO/DP", "INFO/CLNSIG", sample2, sample3 FROM variants WHERE "INFO/DP" >= 50 OR "INFO/CLNSIG" NOT NULL ORDER BY "INFO/DP" DESC'
 ```
 
-Extract hgvs from snpEff annotation and calculate NOMEN with default transcripts list
+- Query a Parquet file with specific columns (e.g. from VCF convertion to Parquet)
 ```
-howard analysis --input=tests/data/example.ann.vcf.gz --param=tests/data/param.snpeff_hgvs.json --output=/tmp/example.snpeff_hgvs.vcf.gz --query='SELECT "#CHROM", POS, REF, ALT, "INFO/ANN" AS snpEff, "INFO/NOMEN" AS NOMEN FROM variants'
+howard query --query="SELECT * FROM 'tests/data/annotations/dbnsfp42a.parquet' WHERE \"INFO/Interpro_domain\" NOT NULL ORDER BY \"INFO/SiPhy_29way_logOdds_rankscore\" DESC"
 ```
-with 'param.snpeff_hgvs.json':
+
+- Query multiple Parquet files, merge INFO columns, and extract as TSV (in VCF format)
+```
+howard query --query="SELECT \"#CHROM\" AS \"#CHROM\", POS AS POS, '' AS ID, REF AS REF, ALT AS ALT, '' AS QUAL, '' AS FILTER, STRING_AGG(INFO, ';') AS INFO FROM 'tests/data/annotations/*.parquet' GROUP BY \"#CHROM\", POS, REF, ALT" --output=/tmp/full_annotation.tsv
+```
+
+
+## Annotation
+
+Annotation is mainly based on a build-in Parquet annotation method, and tools such as BCFTOOLS, Annovar and snpEff. It uses available databases (see Annovar and snpEff) and homemade databases. Format of databases are: parquet, duckdb, vcf, bed, Annovar and snpEff (Annovar and snpEff databases are automatically downloaded, see howard databases tool).
+
+- VCF annotation with Parquet and VCF databases, output as VCF format
+```
+howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations=tests/data/annotations/dbnsfp42a.parquet,tests/data/annotations/gnomad211_genome.parquet,tests/data/annotations/cosmic70.vcf.gz
+```
+
+- VCF annotation with Clinvar Parquet, Annovar refGene and snpEff databases, output as TSV format
+```
+howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --annotations=annovar:refGene,snpeff,tests/data/annotations/clinvar_20210123.parquet
+```
+
+## Calculation
+
+Calculation processes variants information to generate new information, such as: identify variation type (VarType), harmonizes allele frequency (VAF) and calculate sttistics (VAF_stats), extracts Nomen (transcript, cNomen, pNomen...) from an HGVS field (e.g. snpEff, Annovar) with an optional list of personalized transcripts, generates VaRank format barcode, identify trio inheritance.
+
+- Identify variant types
+```
+howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations=vartype
+```
+- and generate a table of variant type count
+```
+howard query --input=/tmp/example.calculation.tsv --explode_infos --query='SELECT "INFO/VARTYPE" AS 'VariantType', count(*) AS 'Count' FROM variants GROUP BY "INFO/VARTYPE" ORDER BY count DESC'
+```
+
+- Calculate NOMEN by extracting hgvs from snpEff annotation and identifying default transcripts from a list
+```
+howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.NOMEN.vcf.gz --calculations=snpeff_hgvs,NOMEN --hgvs_field=snpeff_hgvs --transcripts=tests/data/transcripts.tsv
+```
+- and query NOMEN for gene 'EGFR'
+```
+howard query --input=/tmp/example.NOMEN.vcf.gz --explode_infos --query="SELECT \"INFO/NOMEN\" AS 'NOMEN' FROM variants WHERE \"INFO/GNOMEN\" == 'EGFR'"
+```
+
+## Prioritization
+
+Prioritization algorithm uses profiles to flag variants (as passed or filtered), calculate a prioritization score, and automatically generate a comment for each variants (example: 'polymorphism identified in dbSNP. associated to Lung Cancer. Found in ClinVar database'). Prioritization profiles are defined in a configuration file in JSON format. A profile is defined as a list of annotation/value, using wildcards and comparison options (contains, lower than, greater than, equal...). Annotations fields may be quality values (usually from callers, such as 'DP') or other annotations fields provided by annotations tools, such as HOWARD itself (example: COSMIC, Clinvar, 1000genomes, PolyPhen, SIFT). Multiple profiles can be used simultaneously, which is useful to define multiple validation/prioritization levels (example: 'standard', 'stringent', 'rare variants', 'low allele frequency').
+
+- Prioritize variants from criteria on INFO annotations for profiles 'default' and 'GERMLINE' (see 'prioritization_profiles.json'), and query variants on prioritization tags
+```
+howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations=config/prioritization_profiles.json --profiles=default,GERMLINE --pzfields=PZFlag,PZScore,PZComment
+```
+- and query variants passing filters
+```
+howard query --input=/tmp/example.prioritized.vcf.gz --explode_infos --query="SELECT \"#CHROM\", POS, ALT, REF, \"INFO/PZFlag\", \"INFO/PZScore\", \"INFO/DP\", \"INFO/CLNSIG\" FROM variants WHERE \"INFO/PZScore\" > 0 AND \"INFO/PZFlag\" == 'PASS' ORDER BY \"INFO/PZScore\" DESC"
+```
+- and query variants with different prioritization flag between profiles
+```
+howard query --input=/tmp/example.prioritized.vcf.gz --explode_infos --query="SELECT \"#CHROM\", POS, ALT, REF, \"INFO/PZFlag_default\", \"INFO/PZFlag_GERMLINE\" FROM variants WHERE \"INFO/PZFlag_default\" != \"INFO/PZFlag_GERMLINE\" ORDER BY \"INFO/PZScore\" DESC"
+```
+- and showing propritization comments of variants, with flags and scores
+```
+howard query --input=/tmp/example.prioritized.vcf.gz --explode_infos --query="SELECT \"#CHROM\", POS, ALT, REF, \"INFO/PZComment\", \"INFO/PZFlag\", \"INFO/PZScore\" FROM variants WHERE \"INFO/PZComment\" IS NOT NULL ORDER BY \"INFO/PZScore\" DESC"
+```
+
+## Process
+
+howard process tool manage genetic variations to:
+- annotates genetic variants with multiple annotation databases/files and tools
+- calculates and normalizes annotations
+- prioritizes variants with profiles (list of citeria) to calculate scores and flags
+- translates into various formats
+- query genetic variants and annotations
+- generates variants statistics
+
+This process tool combines all other tools to pipe them in a uniq command, through a parameter file in JSON format. 
+
+- Full process command
+```
+howard process --config=config/config.json --param=config/param.json --input=tests/data/example.vcf.gz --output=/tmp/example.process.tsv --query='SELECT "INFO/NOMEN" AS "NOMEN", "INFO/PZFlag" AS "PZFlag", "INFO/PZScore" AS "PZScore", "INFO/PZComment" AS "PZComment" FROM variants ORDER BY "INFO/PZScore" DESC' --explode_infos
+```
+- to obtain this kind of table
+```
+                                            NOMEN    PZFlag  PZScore                                        PZComment
+0              WASH7P:NR_024540:exon1:n.50+585T>G      PASS       15      Described on CLINVAR database as pathogenic
+1      OR4F5:NM_001005484:exon1:c.11A>G:p.Glu4Gly      PASS        5                                DP higher than 50
+2  EGFR:NM_001346897:exon19:c.2226G>A:p.Gln742Gln      PASS        5                                DP higher than 50
+3         LINC01128:NR_047519:exon2:n.287+3767A>G      PASS        0                                              NaN
+4         LINC01128:NR_047519:exon2:n.287+3768A>G      PASS        0                                              NaN
+5         LINC01128:NR_047519:exon2:n.287+3769A>G      PASS        0                                              NaN
+6                  MIR1302-9:NR_036266:n.*4641A>C  FILTERED     -100  Described on CLINVAR database as non-pathogenic
+```
+- with parameter JSON file
 ```
 {
-  "calculation": {
-    "snpeff_hgvs": null,
-    "NOMEN": {
-        "options": {
-            "hgvs_field": "snpeff_hgvs",
-            "transcripts": "tests/data/tanscripts.tsv"
+  "annotation": {
+    "snpeff": {
+      "options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "
+    },
+    "annovar": {
+      "annotations": {
+        "refGene": {
+          "INFO": null
         }
+      },
+      "options": {
+        "genebase": "-hgvs -splicing_threshold 3 ",
+        "intronhgvs": 10
+      }
+    },
+    "parquet": {
+      "annotations": {
+        "tests/data/annotations/avsnp150.parquet": {
+          "INFO": null
+        },
+        "tests/data/annotations/dbnsfp42a.parquet": {
+          "INFO": null
+        },
+        "tests/data/annotations/gnomad211_genome.parquet": {
+          "INFO": null
+        }
+      }
+    },
+    "bcftools": {
+      "annotations": {
+        "tests/data/annotations/cosmic70.vcf.gz": {
+          "INFO": null
+        }
+      }
     }
   },
-  "explode_infos": "INFO/"
+  "calculation": {
+    "vartype": null,
+    "snpeff_hgvs": null,
+    "NOMEN": {
+      "options": {
+        "hgvs_field": "snpeff_hgvs",
+        "transcripts": "tests/data/transcripts.tsv"
+      }
+    },
+    "VAF": ""
+  },
+  "prioritization": {
+    "config_profiles": "config/prioritization_profiles.json",
+    "pzfields": ["PZScore", "PZFlag", "PZComment"],
+    "profiles": ["default", "GERMLINE"]
+  },
+  "explode_infos": "INFO/",
+  "threads": 8
 }
 ```
-and 'transcripts.tsv':
-```
-NR_024540	WASH7P
-NR_036266	MIR1302-9
-NM_001346897	EGFR
-NM_005228	EGFR
-```
 
-### Prioritization
 
-Prioritize variants from criteria on INFO annotations (see 'prioritization_profiles.json')
-```
-howard analysis --input=tests/data/example.vcf.gz --prioritizations=tests/data/prioritization_profiles.json --output=/tmp/test.vcf --query='SELECT "#CHROM", POS, REF, ALT, "INFO/PZFlag", "INFO/PZScore" FROM variants ORDER BY "INFO/PZFlag" DESC, "INFO/PZScore" DESC' --param='{"explode_infos": "INFO/"}'
-```
 
-### Docker HOWARD-CLI
+## Docker HOWARD-CLI
 
 VCF annotation (Parquet, BCFTOOLS, ANNOVAR and snpEff) using HOWARD-CLI (snpEff and ANNOVAR databases will be automatically downloaded), and query list of genes with HGVS
 
 ```
-docker exec HOWARD-CLI howard analysis --input=/tool/tests/data/example.vcf.gz --output=/data/example.howard.vcf.gz --annotation=snpeff,annovar:refGene,/tool/tests/data/annotations/refGene.bed.gz,/tool/tests/data/annotations/avsnp150.vcf.gz,tests/data/annotations/dbnsfp42a.parquet --param='{"explode_infos": true}' --query='SELECT "INFO/symbol", "INFO/AAChange_refGene" FROM variants WHERE "INFO/symbol" NOT NULL ORDER BY "INFO/symbol"'
+docker exec --workdir=/tool HOWARD-CLI howard process --config=config/config.json --param=config/param.json --input=tests/data/example.vcf.gz --output=/tmp/example.process.tsv --query='SELECT "INFO/NOMEN" AS "NOMEN", "INFO/PZFlag" AS "PZFlag", "INFO/PZScore" AS "PZScore", "INFO/PZComment" AS "PZComment" FROM variants ORDER BY "INFO/PZScore" DESC' --explode_infos
 ```
 
 

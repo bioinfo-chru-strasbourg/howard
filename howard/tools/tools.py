@@ -25,6 +25,8 @@ from howard.tools.annotation import *
 from howard.tools.calculation import *
 from howard.tools.prioritization import *
 from howard.tools.query import *
+from howard.tools.stats import *
+from howard.tools.convert import *
 from howard.tools.databases import *
 
 
@@ -124,6 +126,32 @@ arguments = {
                     """default: False""",
             "action": "store_true",
             "default": False
+        },
+        "export_infos": {
+            "help": """Export VCF INFO/Tag into columns file\n"""
+                    """Available only for non VCF format file (e.g. TSV, Parquet...) \n"""
+                    """default: False""",
+            "action": "store_true",
+            "default": False
+        },
+        "export_infos_prefix": {
+            "help": """VCF INFO/Tag prefix for exported columns\n"""
+                    """default: 'INFO/'""",
+            "metavar": "PREFIX",
+            "default": "INFO/"
+        },
+        "hgvs_field": {
+            "help": """HGVS INFO/tag containing a list o HGVS annotations\n"""
+                    """default: 'hgvs'""",
+            "metavar": "TAG",
+            "default": "hgvs"
+        },
+        "transcripts": {
+            "help": """Transcripts file in TSV format\n"""
+                    """Format: Transcript in first column, optional Gene in second column \n"""
+                    """default: None""",
+            "metavar": "FILE",
+            "default": None
         },
         "overview": {
             "help": "Overview after loading data",
@@ -259,8 +287,8 @@ commands_arguments = {
                         """- generates variants statistics""",
         "help":         """Full genetic variations process: annotation, calculation, prioritization, format, query, filter...""",
         "epilog":       """Usage examples:\n"""
-                        """   howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json\n"""
-                        """   howard process --input=tests/data/example.vcf.gz --annotations=snpeff --calculations=snpeff_hgvs,NOMEN --prioritizations=config/prioritization_profiles.json --query='SELECT "INFO/NOMEN" FROM variants'""", 
+                        """   howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json \n"""
+                        """   howard process --input=tests/data/example.vcf.gz --annotations=snpeff --calculations=snpeff_hgvs,NOMEN --prioritizations=config/prioritization_profiles.json --query='SELECT "INFO/NOMEN" FROM variants' \n""", 
 
         "groups": {
             "main": {
@@ -278,10 +306,11 @@ commands_arguments = {
     },
     "annotation": {
         "function" : "annotation",
-        "description":  """Annotation is mainly based on a build-in Parquet annotation method, and tools such as BCFTOOLS, ANNOVAR and snpEff. It using available databases (see ANNOVAR and snpEff) and homemade databases. Format of databases are: parquet, duckdb, vcf, bed, ANNOVAR and snpEff (ANNOVAR and snpEff databases are automatically downloaded if needed). """,
+        "description":  """Annotation is mainly based on a build-in Parquet annotation method, and tools such as BCFTOOLS, Annovar and snpEff. It uses available databases (see Annovar and snpEff) and homemade databases. Format of databases are: parquet, duckdb, vcf, bed, Annovar and snpEff (Annovar and snpEff databases are automatically downloaded, see howard databases tool). """,
         "help":         """Annotation of genetic variations using databases/files and tools.""",
         "epilog":       """Usage examples:\n"""
-                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --annotations=tests/data/annotations/dbnsfp42a.parquet,tests/data/annotations/gnomad211_exome.vcf.gz,tests/data/annotations/refGene.bed.gz,snpeff,annovar:refGene""", 
+                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations=tests/data/annotations/avsnp150.parquet,tests/data/annotations/dbnsfp42a.parquet,tests/data/annotations/gnomad211_genome.parquet \n"""
+                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --annotations=annovar:refGene,snpeff,tests/data/annotations/clinvar_20210123.parquet \n""", 
         "groups": {
             "main": {
                 "input": True,
@@ -292,30 +321,37 @@ commands_arguments = {
     },
     "calculation": {
         "function" : "calculation",
-        "description":  """Calculation processes variants information to calculate new information, such as: harmonizes allele frequency (VAF), extracts Nomen (transcript, cNomen, pNomen...) from HGVS fields with an optional list of personalized transcripts, generates VaRank format barcode.""",
+        "description":  """Calculation processes variants information to generate new information, such as: identify variation type (VarType), harmonizes allele frequency (VAF) and calculate sttistics (VAF_stats), extracts Nomen (transcript, cNomen, pNomen...) from an HGVS field (e.g. snpEff, Annovar) with an optional list of personalized transcripts, generates VaRank format barcode, identify trio inheritance.""",
         "help":         """Calculation operations on genetic variations and genotype information.\n""",
         "epilog":       """Usage examples:\n"""
-                        """   howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.calculated.vcf.gz --calculations=snpeff_hgvs,NOMEN,VARTYPE""", 
+                        """   howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations=vartype \n"""
+                        """   howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.calculated.tsv --calculations=snpeff_hgvs,NOMEN --hgvs_field=snpeff_hgvs --transcripts=tests/data/transcripts.tsv \n"""
+                        ,
         "groups": {
             "main": {
                 "input": True,
                 "output": True,
                 "calculations": True
+            },
+            "NOMEN calculation": {
+                "hgvs_field": False,
+                "transcripts": False
             }
         }
     },
     "prioritization": {
         "function" : "prioritization",
-        "description":  """Prioritization algorithm uses profiles to flag variants (as passed or filtered), calculate a prioritization score, and automatically generate a comment for each variants (example: 'polymorphism identified in dbSNP. associated to Lung Cancer. Found in ClinVar database').Prioritization profiles are defined in a configuration file. A profile is defined as a list of annotation/value, using wildcards and comparison options (contains, lower than, greater than, equal...). Annotations fields may be quality values (usually from callers, such as 'GQ', 'DP') or other annotations fields provided by annotations tools, such as HOWARD itself (example: COSMIC, Clinvar, 1000genomes, PolyPhen, SIFT). Multiple profiles can be used simultaneously, which is useful to define multiple validation/prioritization levels (example: 'standard', 'stringent', 'rare variants', 'low allele frequency').\n"""
-                        """and profiles score/flag profile""",
-        "help": "Prioritization of genetic variations based on annotations criteria (profiles)",
+        "description":  """Prioritization algorithm uses profiles to flag variants (as passed or filtered), calculate a prioritization score, and automatically generate a comment for each variants (example: 'polymorphism identified in dbSNP. associated to Lung Cancer. Found in ClinVar database'). Prioritization profiles are defined in a configuration file in JSON format. A profile is defined as a list of annotation/value, using wildcards and comparison options (contains, lower than, greater than, equal...). Annotations fields may be quality values (usually from callers, such as 'DP') or other annotations fields provided by annotations tools, such as HOWARD itself (example: COSMIC, Clinvar, 1000genomes, PolyPhen, SIFT). Multiple profiles can be used simultaneously, which is useful to define multiple validation/prioritization levels (example: 'standard', 'stringent', 'rare variants', 'low allele frequency').\n""",
+        "help": "Prioritization of genetic variations based on annotations criteria (profiles).",
         "epilog": """Usage examples:\n"""
-                        """   howard prioritization --input=tests/data/example.ann.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations=config/prioritization_profiles.json --profiles=default,GERMLINE""", 
+                        """   howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations=config/prioritization_profiles.json --profiles=default,GERMLINE \n""", 
         "groups": {
             "main": {
                 "input": True,
                 "output": True,
-                "prioritizations": True,
+                "prioritizations": True
+            },
+            "Prioritization": {
                 "profiles": False,
                 "default_profile": False,
                 "pzfields": False,
@@ -325,15 +361,13 @@ commands_arguments = {
     },
     "query": {
         "function" : "query",
-        "description":  """Query genetic variations in SQL format. """
-                        """Data can be loaded into 'variants' table from various format (e.g. VCF, TSV, Parquet...). """
-                        """SQL query can also use external data within th request, such as a parquet file """,
-        "help": "Query genetic variations in SQL format",
+        "description":  """Query genetic variations in SQL format. Data can be loaded into 'variants' table from various formats (e.g. VCF, TSV, Parquet...). Using --explode_infos allow query on INFO/tag annotations. SQL query can also use external data within the request, such as a Parquet file(s).  """,
+        "help": "Query genetic variations in SQL format.",
         "epilog": """Usage examples:\n"""
-                        """   howard query --input=tests/data/example.vcf.gz --query="SELECT * FROM variants WHERE REF = 'A' AND POS < 100000" n"""
-                        """   howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, "INFO/DP", "INFO/CLNSIG", sample2, sample3 FROM variants WHERE "INFO/DP" >=50 OR "INFO/CLNSIG" NOT NULL ORDER BY "INFO/DP" DESC' \n"""
+                        """   howard query --input=tests/data/example.vcf.gz --query="SELECT * FROM variants WHERE REF = 'A' AND POS < 100000" \n"""
+                        """   howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, "INFO/DP", "INFO/CLNSIG", sample2, sample3 FROM variants WHERE "INFO/DP" >= 50 OR "INFO/CLNSIG" NOT NULL ORDER BY "INFO/DP" DESC' \n"""
                         """   howard query --query="SELECT * FROM 'tests/data/annotations/dbnsfp42a.parquet' WHERE \\"INFO/Interpro_domain\\" NOT NULL ORDER BY \\"INFO/SiPhy_29way_logOdds_rankscore\\" DESC" \n"""
-                        """   howard query --query="SELECT \\"#CHROM\\", POS, '' AS ID, REF, ALT, '' AS QUAL, '' AS FILTER, STRING_AGG(INFO, ';') AS INFO FROM 'tests/data/annotations/*.parquet' GROUP BY \\"#CHROM\\", POS, REF, ALT" --output=/tmp/full_annotation.parquet """
+                        """   howard query --query="SELECT \\"#CHROM\\" AS \\"#CHROM\\", POS AS POS, '' AS ID, REF AS REF, ALT AS ALT, '' AS QUAL, '' AS FILTER, STRING_AGG(INFO, ';') AS INFO FROM 'tests/data/annotations/*.parquet' GROUP BY \\"#CHROM\\", POS, REF, ALT" --output=/tmp/full_annotation.tsv \n"""
                         , 
         "groups": {
             "main": {
@@ -341,6 +375,34 @@ commands_arguments = {
                 "output": False,
                 "query": True,
                 "explode_infos": False
+            }
+        }
+    },
+    "stats": {
+        "function" : "stats",
+        "description":  """Statistics on genetic variations, such as: number of variants, number of samples, statistics by chromosome, genotypes by samples...""",
+        "help": "Statistics on genetic variations.",
+        "epilog": """Usage examples:\n"""
+                        """   howard stats --input=tests/data/example.vcf.gz """, 
+        "groups": {
+            "main": {
+                "input": True
+            }
+        }
+    },
+    "convert": {
+        "function" : "convert",
+        "description":  """Convert genetic variations file to another format. Multiple format are available, such as usual and official VCF and BCF format, but also other formats such as TSV, CSV, PSV and Parquet/duckDB. These formats need a header '.hdr' file to take advantage of the power of howard (especially through INFO/tag definition), and using howard convert tool automatically generate header file fo futher use. """,
+        "help": "Convert genetic variations file to another format.",
+        "epilog": """Usage examples:\n"""
+                        """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --export_infos"""
+                        """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.parquet""", 
+        "groups": {
+            "main": {
+                "input": True,
+                "output": True,
+                "export_infos": False,
+                "export_infos_prefix": False,
             }
         }
     },

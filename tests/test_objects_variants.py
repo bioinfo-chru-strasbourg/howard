@@ -1102,7 +1102,66 @@ def test_export_output_tsv_explode_infos():
 ### Explode
 ###
 
+
 def test_explode_infos():
+    """
+    This function tests the explode_infos method of the Variants class in Python.
+    """
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    param= {"explode_infos": True}
+
+    # Create object
+    variants = Variants(input=input_vcf, load=True, param=param)
+
+    # column to check
+    column_to_check = "INFO/CLNSIG"
+    value_to_check = "pathogenic"
+
+    # check column found
+    result = variants.execute_query("SELECT * FROM variants LIMIT 0")
+    assert column_to_check in [col[0] for col in result.description]
+
+    # Check value in column
+    result = variants.get_query_to_df(f"""SELECT "{column_to_check}" AS column_to_check FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND REF = 'A' AND ALT = 'C' """)
+    assert value_to_check == result["column_to_check"][0]
+
+    # Check number of value in column to check
+    result = variants.get_query_to_df(f"""SELECT "{column_to_check}" AS column_to_check FROM variants WHERE "{column_to_check}" IS NOT NULL """)
+    assert len(result) == 2
+
+
+def test_explode_infos_custom():
+    """
+    This function tests the explode_infos method of the Variants class in Python.
+    """
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    param= {"explode_infos": "CUSTOM_"}
+
+    # Create object
+    variants = Variants(input=input_vcf, load=True, param=param)
+
+    # column to check
+    column_to_check = "CUSTOM_CLNSIG"
+    value_to_check = "pathogenic"
+
+    # check column found
+    result = variants.execute_query("SELECT * FROM variants LIMIT 0")
+    assert column_to_check in [col[0] for col in result.description]
+
+    # Check value in column
+    result = variants.get_query_to_df(f"""SELECT "{column_to_check}" AS column_to_check FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND REF = 'A' AND ALT = 'C' """)
+    assert value_to_check == result["column_to_check"][0]
+
+    # Check number of value in column to check
+    result = variants.get_query_to_df(f"""SELECT "{column_to_check}" AS column_to_check FROM variants WHERE "{column_to_check}" IS NOT NULL """)
+    assert len(result) == 2
+
+
+def test_explode_infos_method():
     """
     This function tests the explode_infos method of the Variants class in Python.
     """
@@ -1114,10 +1173,10 @@ def test_explode_infos():
     variants = Variants(input=input_vcf, load=True)
 
     # Explode infos fields
-    variants.explode_infos()
+    variants.explode_infos(prefix="CUSTOM_")
 
     # column to check
-    column_to_check = "INFO/CLNSIG"
+    column_to_check = "CUSTOM_CLNSIG"
     value_to_check = "pathogenic"
 
     # check column found
@@ -1141,7 +1200,6 @@ def test_explode_infos_no_infos():
 
     # Init files
     input_vcf = tests_folder + "/data/example.no_samples.vcf.gz"
-    #output_vcf = "/tmp/output.vcf.gz"
 
     # Create object
     variants = Variants(input=input_vcf, load=True)

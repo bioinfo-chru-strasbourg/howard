@@ -46,7 +46,20 @@ def calculation(args) -> None:
                 param_quick_calculations[calculation_operation] = {}
             params["calculation"] = param_quick_calculations
 
+        # HGVS Field
+        if args.hgvs_field and "NOMEN" in params["calculation"]:
+            if "options" not in params["calculation"]["NOMEN"]:
+                params["calculation"]["NOMEN"]["options"] = {}
+            params["calculation"]["NOMEN"]["options"]["hgvs_field"] = args.hgvs_field
+
+        # HGVS Field
+        if args.transcripts and "NOMEN" in params["calculation"]:
+            if "options" not in params["calculation"]["NOMEN"]:
+                params["calculation"]["NOMEN"]["options"] = {}
+            params["calculation"]["NOMEN"]["options"]["transcripts"] = args.transcripts
         
+        print(params)
+
         vcfdata_obj.set_param(params)
 
         # Load data from input file

@@ -794,7 +794,7 @@ class Variants:
                 f"Input file format '{self.input_format}' not available")
 
         # Explode INFOS fields into table fields
-        if self.get_param().get("explode_infos", None):
+        if self.get_param().get("explode_infos", None) is not None:
             self.explode_infos(
                 prefix=self.get_param().get("explode_infos", None))
 
@@ -813,7 +813,7 @@ class Variants:
         """
 
         # Check if the column already exists in the table
-        query = f"SELECT COUNT(*) AS count FROM sqlite_master WHERE type='table' AND name='{table_name}' AND sql LIKE '%{column_name}%';"
+        query = f"""SELECT COUNT(*) AS count FROM sqlite_master WHERE type='table' AND name='{table_name}' AND sql LIKE '%\"{column_name}\"%';"""
         column_exists = self.get_query_to_df(query)["count"][0]
         if column_exists:
             log.debug(f"The {column_name} column already exists in the {table_name} table")
@@ -827,7 +827,7 @@ class Variants:
             add_column_query += f" DEFAULT {default_value}"
         self.execute_query(add_column_query)
         log.debug(f"The {column_name} column was successfully added to the {table_name} table")
-
+        
         return
 
 
@@ -848,8 +848,11 @@ class Variants:
         if access not in ["RO"]:
 
             # prefix
-            if not prefix or type(prefix) != str:
-                prefix = "INFO/"
+            if prefix in [None, True] or type(prefix) != str:
+                if self.get_param().get("explode_infos",None) not in [None, True]:
+                    prefix = self.get_param().get("explode_infos","INFO/")
+                else:
+                    prefix = "INFO/"
 
             # table variants
             table_variants = self.get_table_variants(clause="select")
@@ -899,9 +902,9 @@ class Variants:
                         update_info_field = f"""
                         "{info_id_sql}" =
                             CASE
-                                WHEN REGEXP_EXTRACT(INFO, '[^;]*{info}=([^;]*)',1) == '' THEN NULL
-                                WHEN REGEXP_EXTRACT(INFO, '{info}=([^;]*)',1) == '.' THEN NULL
-                                ELSE REGEXP_EXTRACT(INFO, '{info}=([^;]*)',1)
+                                WHEN REGEXP_EXTRACT(';' || INFO, ';{info}=([^;]*)',1) == '' THEN NULL
+                                WHEN REGEXP_EXTRACT(';' || INFO, ';{info}=([^;]*)',1) == '.' THEN NULL
+                                ELSE REGEXP_EXTRACT(';' || INFO, ';{info}=([^;]*)',1)
                             END
                         """
                     elif connexion_format in ["sqlite"]:
@@ -1579,7 +1582,7 @@ class Variants:
                 log.info("Annotations 'varank'...")
 
         # Explode INFOS fields into table fields
-        if self.get_param().get("explode_infos", None):
+        if self.get_param().get("explode_infos", None) is not None:
             self.explode_infos(
                 prefix=self.get_param().get("explode_infos", None))
 
@@ -3139,31 +3142,65 @@ class Variants:
                         
                         sql_set_info = []
 
-                         # PZ fields set
+                        # PZ fields set
+
+                        # PZScore
                         if f"PZScore{pzfields_sep}{profile}" in list_of_pzfields:
                             sql_set_info.append(
                                 f" || 'PZScore{pzfields_sep}{profile}=' || PZScore{pzfields_sep}{profile} ")
                             if profile == default_profile and "PZScore" in list_of_pzfields:
                                 sql_set_info.append(
                                     f" || 'PZScore=' || PZScore{pzfields_sep}{profile} ")
+                                
+                        # PZFlag
                         if f"PZFlag{pzfields_sep}{profile}" in list_of_pzfields:
                             sql_set_info.append(
                                 f" || 'PZFlag{pzfields_sep}{profile}=' || CASE WHEN PZFlag{pzfields_sep}{profile}==1 THEN 'PASS' WHEN PZFlag{pzfields_sep}{profile}==0 THEN 'FILTERED' END ")
                             if profile == default_profile and "PZFlag" in list_of_pzfields:
                                 sql_set_info.append(
                                     f" || 'PZFlag=' || CASE WHEN PZFlag{pzfields_sep}{profile}==1 THEN 'PASS' WHEN PZFlag{pzfields_sep}{profile}==0 THEN 'FILTERED' END ")
+
+                        # PZComment
                         if f"PZComment{pzfields_sep}{profile}" in list_of_pzfields:
                             sql_set_info.append(
-                                f" || 'PZComment{pzfields_sep}{profile}=' || PZComment{pzfields_sep}{profile}  ")
+                                f"""
+                                || CASE
+                                    WHEN PZComment{pzfields_sep}{profile} NOT IN ('')
+                                        THEN 'PZComment{pzfields_sep}{profile}=' || PZComment{pzfields_sep}{profile}
+                                    ELSE ''
+                                    END
+                                """)
                             if profile == default_profile and "PZComment" in list_of_pzfields:
                                 sql_set_info.append(
-                                    f" || 'PZComment=' || PZComment{pzfields_sep}{profile} ")
+                                    f"""
+                                    || CASE
+                                        WHEN PZComment{pzfields_sep}{profile} NOT IN ('')
+                                            THEN 'PZComment=' || PZComment{pzfields_sep}{profile}
+                                        ELSE ''
+                                        END
+                                    """)
+                        
+                        # PZInfos
                         if f"PZInfos{pzfields_sep}{profile}" in list_of_pzfields:
                             sql_set_info.append(
-                                f" || 'PZInfos{pzfields_sep}{profile}=' || PZInfos{pzfields_sep}{profile}")
+                                f"""
+                                || CASE
+                                    WHEN PZInfos{pzfields_sep}{profile} NOT IN ('')
+                                        THEN 'PZInfos{pzfields_sep}{profile}=' || PZInfos{pzfields_sep}{profile}
+                                    ELSE ''
+                                    END
+                                """)
                             if profile == default_profile and "PZInfos" in list_of_pzfields:
                                 sql_set_info.append(
-                                    f" || 'PZInfos=' || PZInfos{pzfields_sep}{profile} ")
+                                    f"""
+                                    || CASE
+                                        WHEN PZInfos{pzfields_sep}{profile} NOT IN ('')
+                                            THEN 'PZInfos=' || PZInfos{pzfields_sep}{profile}
+                                        ELSE ''
+                                        END
+                                    """)
+                                
+                        # Merge PZfields
                         sql_set_info_option = " || ';' ".join(
                             sql_set_info)
 
@@ -3260,9 +3297,10 @@ class Variants:
 
             log.warning(f"No profiles in parameters")
 
-        # if self.get_param().get("explode_infos", None):
-        #     self.explode_infos(
-        #         prefix=self.get_param().get("explode_infos", None))
+        # Explode INFOS fields into table fields
+        if self.get_param().get("explode_infos", None) is not None:
+            self.explode_infos(
+                prefix=self.get_param().get("explode_infos", None))
 
 
     ###
@@ -3399,7 +3437,8 @@ class Variants:
             else:
                 log.warning(f"No calculation '{operation_name}' available")
 
-        if self.get_param().get("explode_infos", None):
+        # Explode INFOS fields into table fields
+        if self.get_param().get("explode_infos", None) is not None:
             self.explode_infos(
                 prefix=self.get_param().get("explode_infos", None))
 
