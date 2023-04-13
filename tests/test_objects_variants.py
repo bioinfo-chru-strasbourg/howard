@@ -2892,6 +2892,47 @@ def test_calculation_findbypipeline():
     except:
         assert False
     
+
+def test_calculation_findbysample():
+    """
+    This is a test function for the "FINDBYPIPELINE" calculation in the Variants class, which checks if
+    the calculation is performed correctly and the output VCF file is in the correct format.
+    """
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    output_vcf = "/tmp/output.vcf.gz"
+
+    # Construct param dict
+    param = {
+        "calculation": {
+            "FINDBYSAMPLE": None
+        }
+    }
+
+    # Create object
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
+    # Calculation
+    variants.calculation()
+
+    result = variants.get_query_to_df(""" SELECT INFO FROM variants WHERE INFO LIKE '%findbysample%' """)
+    assert len(result) == 7
+
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE INFO LIKE '%findbysample=4/4%' """)
+    assert len(result) == 1
+    
+    result = variants.get_query_to_df(""" SELECT * FROM variants WHERE INFO LIKE '%findbysample=3/4%' """)
+    assert len(result) == 6
+
+    # Check if VCF is in correct format with pyVCF
+    remove_if_exists([output_vcf])
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
+   
     
 def test_calculation_genotype_concordance():
     """
@@ -3168,3 +3209,50 @@ def test_calculation_dp_stats():
     except:
         assert False
  
+
+def test_calculation_variant_id():
+    """
+    This is a test function for the calculation of depth statistics in a VCF file using the Variants
+    class in Python.
+    """
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    output_vcf = "/tmp/output.vcf.gz"
+
+    # Construct param dict
+    param = {
+        "calculation": {
+            "variant_id": None
+        }
+    }
+
+    # Create object
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
+    # Remove if output file exists
+    remove_if_exists([output_vcf])
+
+    # Calculation
+    variants.calculation()
+
+    # Check if all variant have variant_id
+    result = variants.get_query_to_df(""" SELECT INFO FROM variants WHERE INFO LIKE '%variant_id%' """)
+    assert len(result) == 7
+
+    # Explode info
+    variants.explode_infos(prefix="INFO/")
+
+    # Check distinct variant_id
+    result = variants.get_query_to_df(""" SELECT distinct "INFO/variant_id" FROM variants """)
+    assert len(result) == 7
+    
+    # Check if VCF is in correct format with pyVCF
+    remove_if_exists([output_vcf])
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
+
+

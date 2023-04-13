@@ -140,6 +140,10 @@ arguments = {
             "metavar": "PREFIX",
             "default": "INFO/"
         },
+        "show_calculations": {
+            "help": """Show available calculation operations\n""",
+            "action": "store_true"
+        },
         "hgvs_field": {
             "help": """HGVS INFO/tag containing a list o HGVS annotations\n"""
                     """default: 'hgvs'""",
@@ -151,6 +155,13 @@ arguments = {
                     """Format: Transcript in first column, optional Gene in second column \n"""
                     """default: None""",
             "metavar": "FILE",
+            "default": None
+        },
+        "trio_pedigree": {
+            "help": """Pedigree Trio for trio inheritance calculation\n"""
+                    """Format: JSON file or dict (e.g. 'trio.ped.json', '{"father":"sample1", "mother":"sample2", "child":"sample3"}') \n"""
+                    """default: None""",
+            "metavar": "JSON",
             "default": None
         },
         "overview": {
@@ -331,11 +342,15 @@ commands_arguments = {
             "main": {
                 "input": True,
                 "output": True,
-                "calculations": True
+                "calculations": True,
+                "show_calculations": False
             },
             "NOMEN calculation": {
                 "hgvs_field": False,
                 "transcripts": False
+            },
+            "TRIO calculation": {
+                "trio_pedigree": False
             }
         }
     },
