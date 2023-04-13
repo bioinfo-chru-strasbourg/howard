@@ -28,6 +28,7 @@ from howard.tools.query import *
 from howard.tools.stats import *
 from howard.tools.convert import *
 from howard.tools.databases import *
+from howard.tools.from_annovar import *
 
 
 
@@ -190,11 +191,24 @@ arguments = {
         },
         "assembly": {
             "metavar": "ASSEMBLY",
-            "help": """Assembly to download\n"""
+            "help": """Genome Assembly\n"""
                     """Default: 'hg19'""",
             "nargs": "+",
             "required": False,
             "default": ["hg19"]
+        },
+        "genome": {
+            "metavar": "GENOME",
+            "help": """Genome file in fasta format\n"""
+                    """Default: 'hg19.fa'""",
+            "required": False,
+            "default": "hg19.fa"
+        },
+        "to_parquet": {
+            "metavar": "FILE",
+            "help": """Parquet file conversion\n""",
+            "required": False,
+            "default": None
         },
 
         # Databases
@@ -224,6 +238,14 @@ arguments = {
             "metavar": "FOLDER",
             "help": """Download snpEff databases within snpEff folder""",
             "required": False
+        },
+
+        # From Annovar
+        "annovar-code": {
+            "metavar": "CODE",
+            "help": """Annovar code, or database name. Usefull to name databases columns""",
+            "required": False,
+            "default": None
         },
 
         # Shared
@@ -425,7 +447,8 @@ commands_arguments = {
         "function" : "databases",
         "description": """Download databases and needed files for howard and associated tools""",
         "help": """Download databases and needed files for howard and associated tools""",
-        "epilog": "", 
+        "epilog": """Usage examples:\n"""
+                    """   howard databases --assembly=hg19 --download-annovar=/databases/annovar/current --download-annovar-files=refGene,gnomad_exome,dbnsfp42a,cosmic70,clinvar_202*,nci60 --download-snpeff=/databases/annovar/current """, 
         "groups": {
             "main": {
                 "assembly": False,
@@ -437,6 +460,28 @@ commands_arguments = {
                 "download-annovar": False,
                 "download-annovar-files": False,
                 "download-annovar-url": False
+            }
+        }
+    },
+    "from_annovar": {
+        "function" : "from_annovar",
+        "description": """(beta) Formatting Annovar database file to other format (VCF and Parquet). Exported Parquet file includes INFO/tags columns as VCF INFO columns had been exploded""",
+        "help": """(beta) Formatting Annovar database file to other format (VCF and Parquet)""",
+        "epilog": """Usage examples:\n"""
+                    """   howard from_annovar --input=/databases/annovar/current/hg19_nci60.txt --output=/databases/annotations/current/hg19/nci60.vcf.gz --to_parquet=/databases/annotations/current/hg19/nci60.parquet --annovar-code=nci60 --genome=/databases/genomes/current/hg19.fa --config=/tool/config/config.json --threads=8 """, 
+        "groups": {
+            "main": {
+                "input": True,
+                "output": True,
+                "genome": True,
+            },
+            "Annovar": {
+                "annovar-code": False,
+            },
+            "Parquet": {
+                "to_parquet": False,
+                #"export_infos": False,
+                #"export_infos_prefix": False,
             }
         }
     }

@@ -7,4 +7,5 @@ __all__ = [
     "query",
     "stats",
     "databases",
+    "from_annovar",
 ]
