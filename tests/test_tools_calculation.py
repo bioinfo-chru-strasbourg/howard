@@ -36,7 +36,7 @@ def test_calculation():
     input_vcf = tests_folder + "/data/example.vcf.gz"
     output_vcf = "/tmp/output_file.tsv"
     config = {}
-    calculations = ["VARTYPE"]
+    calculations = ["VARTYPE", "NOMEN", "TRIO"]
 
     # prepare arguments for the query function
     args = argparse.Namespace(
@@ -45,7 +45,9 @@ def test_calculation():
         config = config,
         calculations = calculations,
         hgvs_field = "hgvs",
-        transcripts = None
+        transcripts = None,
+        show_calculations = False,
+        trio_pedigree = '{"father":"sample1", "mother":"sample2", "child":"sample3"}'
     )
 
     # Remove if output file exists

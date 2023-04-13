@@ -35,6 +35,11 @@ def calculation(args) -> None:
     if args.input:
         vcfdata_obj = Variants(None, args.input, args.output, config, param)
 
+        if args.show_calculations:
+            for help_line in vcfdata_obj.get_operations_help():
+                log.info(help_line)
+            return 
+
         params = vcfdata_obj.get_param()
 
         # Quick calculations
@@ -43,7 +48,7 @@ def calculation(args) -> None:
             log.info(f"Quick Calculations list: {calculations_list}")
             param_quick_calculations = param.get("calculation",{})
             for calculation_operation in calculations_list:
-                param_quick_calculations[calculation_operation] = {}
+                param_quick_calculations[calculation_operation.upper()] = {}
             params["calculation"] = param_quick_calculations
 
         # HGVS Field
@@ -52,12 +57,23 @@ def calculation(args) -> None:
                 params["calculation"]["NOMEN"]["options"] = {}
             params["calculation"]["NOMEN"]["options"]["hgvs_field"] = args.hgvs_field
 
-        # HGVS Field
+        # HGVS Transcripts
         if args.transcripts and "NOMEN" in params["calculation"]:
             if "options" not in params["calculation"]["NOMEN"]:
                 params["calculation"]["NOMEN"]["options"] = {}
             params["calculation"]["NOMEN"]["options"]["transcripts"] = args.transcripts
-        
+
+        # TRIO pedigree
+        if args.trio_pedigree and "TRIO" in params["calculation"]:
+            trio_pedigree = {}
+            # Load trio_pedigree in JSON format
+            if os.path.exists(args.trio_pedigree):
+                with open(args.trio_pedigree) as trio_pedigree_file:
+                    trio_pedigree = json.load(trio_pedigree_file)
+            else:
+                trio_pedigree = json.loads(args.trio_pedigree)
+            params["calculation"]["TRIO"] = trio_pedigree
+
 
         vcfdata_obj.set_param(params)
 

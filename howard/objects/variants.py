@@ -1460,23 +1460,37 @@ class Variants:
         :return: The name of the column that contains the variant_id
         """
 
+        # Assembly
+        assembly = self.get_param().get("assembly", "hg19")
 
+        # INFO/Tag prefix
+        prefix = "INFO/"
+
+        # Explode INFO/SVTYPE
+        self.explode_infos(prefix=prefix,fields=["SVTYPE"])
+
+        # variants table
         table_variants = self.get_table_variants()
 
+        # variant_id column
         if not variant_id_column:
             variant_id_column = "variant_id"
 
+        # Creta variant_id column
         if "variant_id" not in self.get_extra_infos() or force:
 
+            # Create column
             self.conn.execute(
                 f"ALTER TABLE {table_variants} ADD COLUMN IF NOT EXISTS {variant_id_column} UBIGINT DEFAULT 0")
             
+            # Update column
             self.conn.execute(
                 f"""
                     UPDATE {table_variants}
-                    SET "{variant_id_column}" = hash("#CHROM", "POS", "REF", "ALT")
+                    SET "{variant_id_column}" = hash('{assembly}', "#CHROM", "POS", "REF", "ALT", '"{prefix}SVTYPE"')
                 """)
         
+        # return variant_id column name
         return variant_id_column
 
 
@@ -2258,50 +2272,6 @@ class Variants:
         if annovar_databases != "":
             if not os.path.exists(annovar_databases):
                 os.makedirs(annovar_databases)
-
-        # if not os.path.exists(annovar_databases):
-        #     log.warning(
-        #         f"Annotation warning: no annovar database '{annovar_databases}'. Try to find...")
-        #     # Try to find annovar database
-        #     try:
-        #         annovar_databases = os.path.dirname(
-        #             find_all('hg19_avdblist.txt', '/')[0])
-        #     except:
-        #         log.error(
-        #             f"Annotation failed: no annovar database '{annovar_databases}'")
-        #         raise ValueError(
-        #             f"Annotation failed: no annovar database '{annovar_databases}'")
-        #     if not os.path.exists(annovar_databases):
-        #         log.error(
-        #             f"Annotation failed: no annovar database '{annovar_databases}'")
-        #         raise ValueError(
-        #             f"Annotation failed: no annovar database '{annovar_databases}'")
-        #     else:
-        #         log.warning(
-        #             f"Annotation warning: annovar database found '{annovar_databases}'")
-                
-        # if not os.path.exists(annovar_databases):
-        #     log.warning(
-        #         f"Annotation warning: no annovar database '{annovar_databases}'. Try to find...")
-        #     # Try to find annovar database
-        #     try:
-        #         annovar_databases = os.path.dirname(os.path.dirname(
-        #             find_all('snpEffectPredictor.bin', '/')[0]))
-        #     except:
-        #         log.warning(
-        #             f"Annotation warning: no snpEff database autodetected '{annovar_databases}'")
-        #         # raise ValueError(
-        #         #     f"Annotation warning: no snpEff database autodetected '{annovar_databases}'")
-        #     if not os.path.exists(annovar_databases):
-        #         #annovar_databases = "/databases/annovar/current"
-        #         annovar_databases = "/databases"
-        #         log.warning(
-        #             f"Annotation warning: snpEff database default folder '{annovar_databases}' (databases will be downloaded)")
-        #         # raise ValueError(
-        #         #     f"Annotation failed: no snpEff database '{annovar_databases}'")
-        #     else:
-        #         log.warning(
-        #             f"Annotation warning: snpEff database found '{annovar_databases}'")
 
         # Param
         param = self.get_param()
@@ -3307,26 +3277,31 @@ class Variants:
     # Calculation
     ###
 
-    def calculation(self) -> None:
-        """
-        It takes a list of operations, and for each operation, it checks if it's a python or sql
-        operation, and then calls the appropriate function
+    def get_operations_help(self) -> list:
 
-        param json example:
-            "calculation": {
-                "NOMEN": {
-                    "options": {
-                        "hgvs_field": "hgvs"
-                    },
-                "middle" : null
-            }
-        """
+        operations_help = []
+
+        operations = self.get_operations()
+        operations_help.append(f"Available calculation operations:")
+        for op in operations:
+            #print(op)
+            op_name = operations[op].get("name", op).upper()
+            op_description = operations[op].get("description", op_name)
+            op_available = operations[op].get("available", False)
+            if op_available:
+                operations_help.append(f"   {op_name}: {op_description}")
+
+        return operations_help
+
+    def get_operations(self) -> dict:
 
         operations_config = {
             "middle":
                 {
                     "type": "sql",
                     "name": "middle",
+                    "description": "Devel operation middle",
+                    "available": False,
                     "output_column_name": "middle",
                     "output_column_type": "Integer",
                     "output_column_description": "middle of the position, completly useless",
@@ -3337,6 +3312,8 @@ class Variants:
                 {
                     "type": "sql",
                     "name": "VARTYPE",
+                    "description": "Variant type (e.g. SNV, INDEL, MNV, BND...)",
+                    "available": True,
                     "output_column_name": "VARTYPE",
                     "output_column_type": "String",
                     "output_column_description": "Variant type: SNV if X>Y, MOSAIC if X>Y,Z or X,Y>Z, INDEL if XY>Z or X>YZ",
@@ -3357,6 +3334,8 @@ class Variants:
                 {
                     "type": "python",
                     "name": "snpeff_hgvs",
+                    "description": "HGVS nomenclatures from snpEff annotation",
+                    "available": True,
                     "function_name": "calculation_extract_snpeff_hgvs",
                     "function_params": []
                 },
@@ -3364,6 +3343,8 @@ class Variants:
                 {
                     "type": "python",
                     "name": "NOMEN",
+                    "description": "NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature field",
+                    "available": True,
                     "function_name": "calculation_extract_nomen",
                     "function_params": []
                 },
@@ -3371,13 +3352,26 @@ class Variants:
                 {
                     "type": "python",
                     "name": "FINDBYPIPELINE",
+                    "description": "Number of pipeline that identify the variant (for multi pipeline VCF)",
+                    "available": True,
                     "function_name": "calculation_find_by_pipeline",
-                    "function_params": []
+                    "function_params": ["findbypipeline"]
+                },
+            "FINDBYSAMPLE":
+                {
+                    "type": "python",
+                    "name": "FINDBYSAMPLE",
+                    "description": "Number of sample that have a genotype for the variant (for multi sample VCF)",
+                    "available": True,
+                    "function_name": "calculation_find_by_pipeline",
+                    "function_params": ["findbysample"]
                 },
             "GENOTYPECONCORDANCE":
                 {
                     "type": "python",
                     "name": "GENOTYPECONCORDANCE",
+                    "description": "Concordance of genotype for multi caller VCF",
+                    "available": True,
                     "function_name": "calculation_genotype_concordance",
                     "function_params": []
                 },
@@ -3385,6 +3379,8 @@ class Variants:
                 {
                     "type": "python",
                     "name": "BARCODE",
+                    "description": "BARCODE as VaRank tool",
+                    "available": True,
                     "function_name": "calculation_barcode",
                     "function_params": []
                 },
@@ -3392,6 +3388,8 @@ class Variants:
                 {
                     "type": "python",
                     "name": "TRIO",
+                    "description": "Inheritance for a trio family",
+                    "available": True,
                     "function_name": "calculation_trio",
                     "function_params": []
                 },
@@ -3399,6 +3397,8 @@ class Variants:
                 {
                     "type": "python",
                     "name": "VAF",
+                    "description": "Variant Allele Frequency (VAF) harmonization",
+                    "available": True,
                     "function_name": "calculation_vaf_normalization",
                     "function_params": []
                 },
@@ -3406,6 +3406,8 @@ class Variants:
                 {
                     "type": "python",
                     "name": "VAF_stats",
+                    "description": "Variant Allele Frequency (VAF) statistics",
+                    "available": True,
                     "function_name": "calculation_genotype_stats",
                     "function_params": ["VAF"]
                 },
@@ -3413,10 +3415,42 @@ class Variants:
                 {
                     "type": "python",
                     "name": "DP_stats",
+                    "description": "Depth (DP) statistics",
+                    "available": True,
                     "function_name": "calculation_genotype_stats",
                     "function_params": ["DP"]
                 },
+            "variant_id":
+                {
+                    "type": "python",
+                    "name": "variant_id",
+                    "description": "Variant ID generated from variant position and type",
+                    "available": True,
+                    "function_name": "calculation_variant_id",
+                    "function_params": []
+                },
         }
+
+        return operations_config
+
+
+    def calculation(self) -> None:
+        """
+        It takes a list of operations, and for each operation, it checks if it's a python or sql
+        operation, and then calls the appropriate function
+
+        param json example:
+            "calculation": {
+                "NOMEN": {
+                    "options": {
+                        "hgvs_field": "hgvs"
+                    },
+                "middle" : null
+            }
+        """
+
+        # operations config
+        operations_config = self.get_operations()
         
         # Upper keys
         operations_config = {k.upper(): v for k, v in operations_config.items()}
@@ -3520,6 +3554,44 @@ class Variants:
     # Operation functions
 
 
+    def calculation_variant_id(self) -> None:
+
+        # variant_id annotation field
+        variant_id_tag = self.get_variant_id_column()
+
+        # variant_id hgvs tags"
+        vcf_infos_tags = {
+            variant_id_tag: "howard variant ID annotation",
+        }
+
+        # Variants table
+        table_variants = self.get_table_variants()
+        
+        # Header
+        vcf_reader = self.get_header()
+
+        # Add variant_id to header
+        vcf_reader.infos[variant_id_tag] = vcf.parser._Info(
+                    variant_id_tag,
+                    ".",
+                    "String",
+                    vcf_infos_tags.get(
+                        variant_id_tag, "howard variant ID annotation"),
+                    "howard calculation",
+                    "0",
+                    self.code_type_map.get("String")
+                )
+        
+        # Update
+        sql_update = f"""
+            UPDATE {table_variants}
+            SET "INFO" = CASE WHEN "INFO" IS NULL OR "INFO" IN ('','.') THEN '' ELSE "INFO" || ';' END
+                || '{variant_id_tag}=' || "{variant_id_tag}"
+
+        """
+        self.conn.execute(sql_update)
+
+
     def calculation_extract_snpeff_hgvs(self) -> None:
 
         # SnpEff annotation field
@@ -3531,7 +3603,7 @@ class Variants:
 
         # Snpeff hgvs tags
         vcf_infos_tags = {
-            snpeff_hgvs: "snpEff hgvs annotations",
+            snpeff_hgvs: "HGVS nomenclatures from snpEff annotation",
         }
 
         # Param
@@ -3732,17 +3804,17 @@ class Variants:
             gc.collect()
 
 
-    def calculation_find_by_pipeline(self) -> None:
+    def calculation_find_by_pipeline(self, tag:str = "findbypipeline") -> None:
 
         # if FORMAT and samples
         if "FORMAT" in self.get_header_columns_as_list() and self.get_header_sample_list():
 
             # findbypipeline annotation field
-            findbypipeline_tag = "findbypipeline"
+            findbypipeline_tag = tag
             
             # VCF infos tags
             vcf_infos_tags = {
-                "findbypipeline": "findbypipeline calculation",
+                findbypipeline_tag: f"Number of pipeline/sample for a variant ({findbypipeline_tag})",
             }
 
             # Param
@@ -3779,7 +3851,7 @@ class Variants:
                         ".",
                         "String",
                         vcf_infos_tags.get(
-                            findbypipeline_tag, "snpEff hgvs annotations"),
+                            findbypipeline_tag, "Find in pipeline/sample"),
                         "howard calculation",
                         "0",
                         self.code_type_map.get("String")
@@ -3822,7 +3894,7 @@ class Variants:
             
             # VCF infos tags
             vcf_infos_tags = {
-                "genotypeconcordance": "genotypeconcordance calculation",
+                genotypeconcordance_tag: "Concordance of genotype for multi caller VCF",
             }
 
             # Param
@@ -3904,7 +3976,7 @@ class Variants:
             
             # VCF infos tags
             vcf_infos_tags = {
-                "barcode": "barcode calculation",
+                "barcode": "barcode calculation (VaRank)",
             }
 
             # Param
@@ -3995,7 +4067,7 @@ class Variants:
                 prefix = "INFO/"
 
             # Trio param
-            trio_ped = param.get("calculation", {}).get("trio", {})
+            trio_ped = param.get("calculation", {}).get("TRIO", {})
             if trio_ped:
                 trio_samples = [
                     trio_ped.get("father",""),
@@ -4249,6 +4321,8 @@ class Variants:
             # Delete dataframe
             del dataframe_vaf_stats
             gc.collect()
+
+
 
 
 
