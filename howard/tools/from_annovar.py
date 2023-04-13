@@ -578,6 +578,7 @@ def annovar_to_vcf(input_file, output_file, annotations=None, header_file=None, 
 
     # BCFTools to reheader sort normalize
     #command = f"""{bcftools} reheader --threads={threads} -f {genome}.fai {output_file}.tmp.translation.vcf.gz | {bcftools} sort --max-mem={maxmem} | {bcftools} norm --threads={threads} --check-ref s -f {genome} -Oz -o {output_file}"""
+    log.info(f"VCF Sorting and Normalization...")
     command = f"""{bcftools} sort --max-mem={maxmem} {output_file}.tmp.translation.vcf.gz 2>{output_file}.tmp.err  | {bcftools} norm --threads={threads} --check-ref s -f {genome} -Oz -o {output_file} 2>{output_file}.tmp.err """
     log.debug("bcftools command: " + command)
     subprocess.run(command, shell=True)
