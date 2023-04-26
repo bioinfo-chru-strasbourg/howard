@@ -527,25 +527,26 @@ def test_load_psv():
     assert nb_variant_in_database == expected_number_of_variants
 
 
-def test_load_duckdb():
-    """
-    This function tests if a DuckDB database containing variant data can be loaded and queried
-    correctly.
-    """
+# Deprecated because of unstability on duckdb storage format
+# def test_load_duckdb():
+#     """
+#     This function tests if a DuckDB database containing variant data can be loaded and queried
+#     correctly.
+#     """
 
-    # Init files
-    input_vcf = tests_folder + "/data/example.duckdb"
+#     # Init files
+#     input_vcf = tests_folder + "/data/example.duckdb"
 
-    # Create object
-    variants = Variants(input=input_vcf, load=True)
+#     # Create object
+#     variants = Variants(input=input_vcf, load=True)
 
-    # Check data loaded
-    result = variants.get_query_to_df("SELECT count(*) AS count FROM variants")
-    nb_variant_in_database = result["count"][0]
+#     # Check data loaded
+#     result = variants.get_query_to_df("SELECT count(*) AS count FROM variants")
+#     nb_variant_in_database = result["count"][0]
 
-    expected_number_of_variants = 7
+#     expected_number_of_variants = 7
 
-    assert nb_variant_in_database == expected_number_of_variants
+#     assert nb_variant_in_database == expected_number_of_variants
 
 
 def test_get_connexion_db_memory():
@@ -593,6 +594,9 @@ def test_get_connexion_db_file():
     # Init files
     input_vcf = tests_folder + "/data/example.vcf.gz"
     input_config = { "connexion_type": "/tmp/connexion.duckdb" }
+
+    # Remove if exists
+    remove_if_exists(["/tmp/connexion.duckdb"])
 
     # Create object
     variants = Variants(input=input_vcf, config=input_config)
@@ -1658,38 +1662,39 @@ def test_annotation_parquet_field_already_in_vcf():
         assert False
 
 
-def test_annotation_duckdb():
-    """
-    This function tests the annotation of variants using DuckDB.
-    """
+# Deprecated because of unstability on duckdb storage format
+# def test_annotation_duckdb():
+#     """
+#     This function tests the annotation of variants using DuckDB.
+#     """
 
-    # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
-    annotation_parquet = tests_folder + "/data/annotations/nci60.duckdb"
-    output_vcf = "/tmp/output.vcf.gz"
+#     # Init files
+#     input_vcf = tests_folder + "/data/example.vcf.gz"
+#     annotation_parquet = tests_folder + "/data/annotations/nci60.duckdb"
+#     output_vcf = "/tmp/output.vcf.gz"
 
-    # Construct param dict
-    param = {"annotation": {"parquet": {"annotations": {annotation_parquet: {"INFO": None}}}}}
+#     # Construct param dict
+#     param = {"annotation": {"parquet": {"annotations": {annotation_parquet: {"INFO": None}}}}}
 
-    # Create object
-    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+#     # Create object
+#     variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
-    # Remove if output file exists
-    remove_if_exists([output_vcf])
+#     # Remove if output file exists
+#     remove_if_exists([output_vcf])
 
-    # Annotation
-    variants.annotation()
+#     # Annotation
+#     variants.annotation()
 
-    # query annotated variant
-    result = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'")
-    assert len(result) == 1
+#     # query annotated variant
+#     result = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'")
+#     assert len(result) == 1
 
-    # Check if VCF is in correct format with pyVCF
-    variants.export_output()
-    try:
-        vcf.Reader(filename=output_vcf)
-    except:
-        assert False
+#     # Check if VCF is in correct format with pyVCF
+#     variants.export_output()
+#     try:
+#         vcf.Reader(filename=output_vcf)
+#     except:
+#         assert False
 
 
 def test_annotation_bcftools():

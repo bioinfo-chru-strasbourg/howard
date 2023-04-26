@@ -813,9 +813,9 @@ class Variants:
         """
 
         # Check if the column already exists in the table
-        query = f"""SELECT COUNT(*) AS count FROM sqlite_master WHERE type='table' AND name='{table_name}' AND sql LIKE '%\"{column_name}\"%';"""
-        column_exists = self.get_query_to_df(query)["count"][0]
-        if column_exists:
+        query = f""" SELECT * FROM {table_name} LIMIT 0 """
+        columns = self.get_query_to_df(query).columns.tolist()
+        if column_name in columns:
             log.debug(f"The {column_name} column already exists in the {table_name} table")
             return
         else:
@@ -1480,9 +1480,8 @@ class Variants:
         if "variant_id" not in self.get_extra_infos() or force:
 
             # Create column
-            self.conn.execute(
-                f"ALTER TABLE {table_variants} ADD COLUMN IF NOT EXISTS {variant_id_column} UBIGINT DEFAULT 0")
-            
+            self.add_column(table_name=table_variants, column_name=variant_id_column, column_type="UBIGINT", default_value="0")
+
             # Update column
             self.conn.execute(
                 f"""
@@ -3284,7 +3283,6 @@ class Variants:
         operations = self.get_operations()
         operations_help.append(f"Available calculation operations:")
         for op in operations:
-            #print(op)
             op_name = operations[op].get("name", op).upper()
             op_description = operations[op].get("description", op_name)
             op_available = operations[op].get("available", False)
@@ -3505,8 +3503,7 @@ class Variants:
         operation_info = operation['operation_info']
 
         # Create column
-        self.conn.execute(
-            f""" ALTER TABLE {table_variants} ADD COLUMN "{prefix}{output_column_name}" {output_column_type_sql} DEFAULT NULL """)
+        self.add_column(table_name=table_variants, column_name=prefix+output_column_name, column_type=output_column_type_sql, default_value="null")
 
         # Create VCF header field
         vcf_reader = self.get_header()
