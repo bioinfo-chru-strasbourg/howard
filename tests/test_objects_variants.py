@@ -1114,6 +1114,192 @@ def test_export_output_tsv_explode_infos():
     assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
 
 
+def test_export_from_sqlite_output_bcf():
+    """
+    This function tests the export of a VCF file in gzipped format with the pyVCF library.
+    """
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    output_vcf = "/tmp/example.bcf"
+    input_config = { "connexion_format": "sqlite" }
+
+    # remove if exists
+    remove_if_exists([output_vcf])
+
+    # Create object
+    variants = Variants(input=input_vcf, output=output_vcf, config=input_config, load=True)
+
+    # Check get_output
+    variants.export_output()
+    assert os.path.exists(output_vcf)
+
+    # Check get_output without header
+    remove_if_exists([output_vcf])
+    variants.export_output(export_header=False)
+    assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
+
+    # Check if VCF is in correct format with pyVCF
+    # try:
+    #     vcf.Reader(filename=output_vcf)
+    # except:
+    #     assert False
+
+
+def test_export_from_sqlite_output_vcf_gz():
+    """
+    This function tests the export of a VCF file in gzipped format with the pyVCF library.
+    """
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    output_vcf = "/tmp/example.vcf.gz"
+    input_config = { "connexion_format": "sqlite" }
+
+    # remove if exists
+    remove_if_exists([output_vcf])
+
+    # Create object
+    variants = Variants(input=input_vcf, output=output_vcf, config=input_config, load=True)
+
+    # Check get_output
+    variants.export_output()
+    assert os.path.exists(output_vcf)
+
+    # Check get_output without header
+    remove_if_exists([output_vcf])
+    variants.export_output(export_header=False)
+    assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
+
+    # Check if VCF is in correct format with pyVCF
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
+
+
+def test_export_from_sqlite_output_vcf():
+    """
+    This function tests the export of a VCF file in gzipped format with the pyVCF library.
+    """
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    output_vcf = "/tmp/example.vcf"
+    input_config = { "connexion_format": "sqlite" }
+
+    # remove if exists
+    remove_if_exists([output_vcf])
+
+    # Create object
+    variants = Variants(input=input_vcf, output=output_vcf, config=input_config, load=True)
+
+    # Check get_output
+    variants.export_output()
+    assert os.path.exists(output_vcf)
+
+    # Check get_output without header
+    remove_if_exists([output_vcf])
+    variants.export_output(export_header=False)
+    assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
+
+    # Check if VCF is in correct format with pyVCF
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
+
+
+def test_export_from_sqlite_output_parquet():
+    """
+    This function tests the export of a VCF file in gzipped format with the pyVCF library.
+    """
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    output_vcf = "/tmp/example.parquet"
+    input_config = { "connexion_format": "sqlite" }
+
+    # remove if exists
+    remove_if_exists([output_vcf])
+
+    # Create object
+    variants = Variants(input=input_vcf, output=output_vcf, config=input_config, load=True)
+
+    # Check get_output
+    variants.export_output()
+    assert os.path.exists(output_vcf)
+
+    # Check get_output without header
+    remove_if_exists([output_vcf])
+    variants.export_output(export_header=False)
+    assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
+
+
+def test_export_from_sqlite_output_tsv():
+    """
+    This function tests the export of a VCF file in gzipped format with the pyVCF library.
+    """
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    output_vcf = "/tmp/example.tsv"
+    input_config = { "connexion_format": "sqlite" }
+
+    # remove if exists
+    remove_if_exists([output_vcf])
+
+    # Create object
+    variants = Variants(input=input_vcf, output=output_vcf, config=input_config, load=True)
+
+    # Check get_output
+    variants.export_output()
+    assert os.path.exists(output_vcf)
+
+    # Check get_output without header
+    remove_if_exists([output_vcf])
+    variants.export_output(export_header=False)
+    assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
+
+    # Check if VCF is in correct format with pyVCF
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
+
+
+def test_export_from_sqlite_output_tsv_gz():
+    """
+    This function tests the export of a VCF file in gzipped format with the pyVCF library.
+    """
+
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    output_vcf = "/tmp/example.tsv.gz"
+    input_config = { "connexion_format": "sqlite" }
+
+    # remove if exists
+    remove_if_exists([output_vcf])
+
+    # Create object
+    variants = Variants(input=input_vcf, output=output_vcf, config=input_config, load=True)
+
+    # Check get_output
+    variants.export_output()
+    assert os.path.exists(output_vcf)
+
+    # Check get_output without header
+    remove_if_exists([output_vcf])
+    variants.export_output(export_header=False)
+    assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
+
+    # Check if VCF is in correct format with pyVCF
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
+
+
 ###
 ### Explode
 ###
