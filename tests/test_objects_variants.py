@@ -527,26 +527,38 @@ def test_load_psv():
     assert nb_variant_in_database == expected_number_of_variants
 
 
-# Deprecated because of unstability on duckdb storage format
-# def test_load_duckdb():
-#     """
-#     This function tests if a DuckDB database containing variant data can be loaded and queried
-#     correctly.
-#     """
+def test_load_duckdb():
+    """
+    This function tests if a DuckDB database containing variant data can be loaded and queried
+    correctly.
+    """
 
-#     # Init files
-#     input_vcf = tests_folder + "/data/example.duckdb"
+    # Create duckdb database
 
-#     # Create object
-#     variants = Variants(input=input_vcf, load=True)
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    output_duckdb = "/tmp/example.duckdb"
 
-#     # Check data loaded
-#     result = variants.get_query_to_df("SELECT count(*) AS count FROM variants")
-#     nb_variant_in_database = result["count"][0]
+    remove_if_exists([output_duckdb])
 
-#     expected_number_of_variants = 7
+    duckdb_file = Variants(input=input_vcf, output=output_duckdb, load=True)
+    duckdb_file.export_output()
 
-#     assert nb_variant_in_database == expected_number_of_variants
+    # Test load duckdb database
+
+    # Init files
+    input_vcf = output_duckdb
+
+    # Create object
+    variants = Variants(input=input_vcf, load=True)
+
+    # Check data loaded
+    result = variants.get_query_to_df("SELECT count(*) AS count FROM variants")
+    nb_variant_in_database = result["count"][0]
+
+    expected_number_of_variants = 7
+
+    assert nb_variant_in_database == expected_number_of_variants
 
 
 def test_get_connexion_db_memory():
@@ -1662,39 +1674,50 @@ def test_annotation_parquet_field_already_in_vcf():
         assert False
 
 
-# Deprecated because of unstability on duckdb storage format
-# def test_annotation_duckdb():
-#     """
-#     This function tests the annotation of variants using DuckDB.
-#     """
+def test_annotation_duckdb():
+    """
+    This function tests the annotation of variants using DuckDB.
+    """
 
-#     # Init files
-#     input_vcf = tests_folder + "/data/example.vcf.gz"
-#     annotation_parquet = tests_folder + "/data/annotations/nci60.duckdb"
-#     output_vcf = "/tmp/output.vcf.gz"
+    # Create duckdb database
 
-#     # Construct param dict
-#     param = {"annotation": {"parquet": {"annotations": {annotation_parquet: {"INFO": None}}}}}
+    # Init files
+    annotation_parquet = tests_folder + "/data/annotations/nci60.parquet"
+    annotation_duckdb = "/tmp/annotations.nci60.duckdb"
 
-#     # Create object
-#     variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+    remove_if_exists([annotation_duckdb])
 
-#     # Remove if output file exists
-#     remove_if_exists([output_vcf])
+    annotation_database = Variants(input=annotation_parquet, output=annotation_duckdb, load=True)
+    annotation_database.export_output()
 
-#     # Annotation
-#     variants.annotation()
+    # Test annotation with duckdb database
 
-#     # query annotated variant
-#     result = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'")
-#     assert len(result) == 1
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    output_vcf = "/tmp/output.vcf.gz"
 
-#     # Check if VCF is in correct format with pyVCF
-#     variants.export_output()
-#     try:
-#         vcf.Reader(filename=output_vcf)
-#     except:
-#         assert False
+    # Construct param dict
+    param = {"annotation": {"parquet": {"annotations": {annotation_duckdb: {"INFO": None}}}}}
+
+    # Create object
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
+    # Remove if output file exists
+    remove_if_exists([output_vcf])
+
+    # Annotation
+    variants.annotation()
+
+    # query annotated variant
+    result = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'")
+    assert len(result) == 1
+
+    # Check if VCF is in correct format with pyVCF
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
 
 
 def test_annotation_bcftools():
@@ -3261,3 +3284,16 @@ def test_calculation_variant_id():
         assert False
 
 
+def test_get_operations_help():
+    operations = { "add": { "name": "addition", "description": "sum two numbers", "available": True, }, "subtract": { "name": "subtraction", "description": "subtract two numbers", "available": False }, }
+
+    expected_operations_help = [
+        "Available calculation operations:"
+    ]
+
+    variants = Variants()
+    actual_operations_help = variants.get_operations_help()
+
+    print(actual_operations_help[0])
+
+    assert expected_operations_help[0] == actual_operations_help[0]
