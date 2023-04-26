@@ -332,28 +332,35 @@ class Variants:
         The function prints statistics of the current object
         """
 
+        # Log
+        log.info(f"Stats Calculation...")
+
         # table varaints
         table_variants_from = self.get_table_variants()
 
         # Samples
         nb_of_samples = len(self.get_header_sample_list())
 
-        # Variants
-        sql_query_nb_variant = f"SELECT count(*) as count FROM {table_variants_from}"
-        nb_of_variants = self.conn.execute(
-            sql_query_nb_variant).df()["count"][0]
-
         # Variants by chr
-        sql_query_nb_variant = f"SELECT \"#CHROM\" as CHROM, count(*) as count, (count(*)*100/{nb_of_variants}) || '%' as percentage FROM {table_variants_from} GROUP BY \"#CHROM\""
-        nb_of_variants_by_chrom = self.conn.execute(
-            sql_query_nb_variant).df().sort_values(by=['CHROM'], kind='quicksort')
+        #sql_query_nb_variant_by_chrom = f"SELECT \"#CHROM\" as CHROM, count(*) as count, '' as percentage FROM {table_variants_from} GROUP BY \"#CHROM\""
+        sql_query_nb_variant_by_chrom = f"SELECT \"#CHROM\" as CHROM, count(*) as count FROM {table_variants_from} GROUP BY \"#CHROM\""
+        log.debug(f"Query Variants by Chr: {sql_query_nb_variant_by_chrom}")
+        df_nb_of_variants_by_chrom = self.get_query_to_df(sql_query_nb_variant_by_chrom)
+        nb_of_variants_by_chrom = df_nb_of_variants_by_chrom.sort_values(by=['CHROM'], kind='quicksort')
 
-        # TS/TV
-        sql_query_nb_variant = f"""
-            SELECT REF, ALT, count(*) as count FROM {table_variants_from} WHERE len(REF)=1 AND len(ALT)=1 GROUP BY REF, ALT
-            ORDER BY REF asc, ALT desc
-            """
-        tstv = self.conn.execute(sql_query_nb_variant).df()
+        # Total number of variants
+        nb_of_variants = nb_of_variants_by_chrom["count"].sum()
+
+        # Calculate percentage
+        nb_of_variants_by_chrom['percent'] = nb_of_variants_by_chrom['count'].apply(lambda x: (x / nb_of_variants) * 100)
+
+        # # TS/TV
+        # sql_query_tstv = f"""
+        #     SELECT REF, ALT, count(*) as count FROM {table_variants_from} WHERE len(REF)=1 AND len(ALT)=1 GROUP BY REF, ALT
+        #     ORDER BY REF asc, ALT desc
+        #     """
+        # log.debug(f"Query Variants by Chr: {sql_query_tstv}")
+        # tstv = self.conn.execute(sql_query_tstv).df()
 
         # Genotypes
         genotypes = {}
@@ -375,9 +382,9 @@ class Variants:
         log.info("Number of Variant(s) by chromosomes:")
         for d in str(nb_of_variants_by_chrom).split("\n"):
             log.info("\t" + str(d))
-        log.info("Ti/Ts/Tv Ratio:")
-        for d in str(tstv).split("\n"):
-            log.info("\t" + str(d))
+        # log.info("Ti/Ts/Tv Ratio:")
+        # for d in str(tstv).split("\n"):
+        #     log.info("\t" + str(d))
         log.info("Number of Sample(s): " + str(nb_of_samples))
         log.info(f"Genotypes:")
         for sample in genotypes:
@@ -638,7 +645,12 @@ class Variants:
         It returns the connexion format of the object.
         :return: The connexion_format is being returned.
         """
-        return self.connexion_format
+        connexion_format = self.connexion_format
+        if connexion_format not in ["duckdb", "sqlite"]:
+            log.error(f"Unknown connexion format {connexion_format}")
+            raise ValueError(f"Unknown connexion format {connexion_format}")
+        else:
+            return connexion_format
 
 
     def insert_file_to_table(self, file, columns: str, header_len: int = 0, sep: str = '\t', chunksize: int = 1000000) -> None:
@@ -667,11 +679,6 @@ class Variants:
                 elif connexion_format in ["sqlite"]:
                     chunk.to_sql("variants", self.conn,
                                  if_exists='append', index=False)
-                else:
-                    log.error(
-                        f"Failed insert file into table. Unknown connexion format {connexion_format}")
-                    raise ValueError(
-                        f"Failed insert file into table. Unknown connexion format {connexion_format}")
 
 
     def load_data(self, input_file:str = None, drop_variants_table:bool = False) -> None:
@@ -696,49 +703,8 @@ class Variants:
         if drop_variants_table:
             self.drop_variants_table()
 
-        # Main structure
-        structure = {
-            "#CHROM": "VARCHAR",
-            "POS": "INTEGER",
-            "ID": "VARCHAR",
-            "REF": "VARCHAR",
-            "ALT": "VARCHAR",
-            "QUAL": "VARCHAR",
-            "FILTER": "VARCHAR",
-            "INFO": "VARCHAR",
-        }
-
-        # Strcuture with samples
-        structure_complete = structure
-        if self.get_header_sample_list():
-            structure["FORMAT"] = "VARCHAR"
-            for sample in self.get_header_sample_list():
-                structure_complete[sample] = "VARCHAR"
-
-        # Columns list for create and insert
-        sql_create_table_columns = []
-        sql_create_table_columns_list = []
-        for column in structure_complete:
-            column_type = structure_complete[column]
-            #sql_create_table_columns.append(f"\"{column}\" {column_type}")
-            sql_create_table_columns.append(f"\"{column}\" {column_type} default NULL")
-            sql_create_table_columns_list.append(f"\"{column}\"")
-
         # get table variants
         table_variants = self.get_table_variants()
-
-        # Create database
-        log.debug(f"Create Table {table_variants}")
-        sql_create_table_columns_sql = ", ".join(sql_create_table_columns)
-        sql_create_table_columns_list_sql = ", ".join(
-            sql_create_table_columns_list)
-        sql_create_table = f"CREATE TABLE IF NOT EXISTS {table_variants} ({sql_create_table_columns_sql})"
-        self.conn.execute(sql_create_table)
-
-        # chunksize define length of file chunk load file
-        # chunksize = 100000
-        # chunksize = 1000000
-        chunksize = 100000
 
         # Access
         access = self.get_config().get("access", None)
@@ -747,51 +713,118 @@ class Variants:
         input_format = self.get_input_format()
         input_compressed = self.get_input_compressed()
 
+        # Connexion format
+        connexion_format = self.get_connexion_format()
+
         # Load data
         log.debug(f"Load Data from {input_format}")
-        # if self.input_format in ["vcf", "gz", "tsv", "csv", "psv"]:
         if input_format in ["vcf", "bcf", "tsv", "csv", "psv"]:
 
             # delimiter
-            # delimiters = {"vcf": "\t", "bcf": "\t", "tsv": "\t", "csv": ",", "psv": "|"}
             delimiter = file_format_delimiters.get(input_format, "\t")
 
-            # Load the input file
-            with open(self.input, "rt") as input_file:
-                # Use the appropriate file handler based on the input format
-                if input_compressed:
-                    input_file = bgzf.open(self.input, "rt")
-                if input_format in ["vcf", "bcf"]:
-                    header_len = self.get_header_length()
+            if connexion_format in ["duckdb"]:
+                if access in ["RO"]:
+                    sql_vcf = f"CREATE VIEW {table_variants} AS SELECT * FROM read_csv('{self.input}', auto_detect=True, delim='{delimiter}')"
                 else:
-                    header_len = 0
-                # Insert the file contents into a table
-                self.insert_file_to_table(
-                    input_file,
-                    columns=sql_create_table_columns_list_sql,
-                    header_len=header_len,
-                    sep=delimiter,
-                    chunksize=chunksize,
-                )
+                    sql_vcf = f"CREATE TABLE {table_variants} AS SELECT * FROM read_csv('{self.input}', auto_detect=True, delim='{delimiter}')"
+
+                self.conn.execute(sql_vcf)
+
+            elif connexion_format in ["sqlite"]:
+
+                # Main structure
+                structure = {
+                    "#CHROM": "VARCHAR",
+                    "POS": "INTEGER",
+                    "ID": "VARCHAR",
+                    "REF": "VARCHAR",
+                    "ALT": "VARCHAR",
+                    "QUAL": "VARCHAR",
+                    "FILTER": "VARCHAR",
+                    "INFO": "VARCHAR",
+                }
+
+                # Strcuture with samples
+                structure_complete = structure
+                if self.get_header_sample_list():
+                    structure["FORMAT"] = "VARCHAR"
+                    for sample in self.get_header_sample_list():
+                        structure_complete[sample] = "VARCHAR"
+
+                # Columns list for create and insert
+                sql_create_table_columns = []
+                sql_create_table_columns_list = []
+                for column in structure_complete:
+                    column_type = structure_complete[column]
+                    #sql_create_table_columns.append(f"\"{column}\" {column_type}")
+                    sql_create_table_columns.append(f"\"{column}\" {column_type} default NULL")
+                    sql_create_table_columns_list.append(f"\"{column}\"")
+
+                
+
+                # Create database
+                log.debug(f"Create Table {table_variants}")
+                sql_create_table_columns_sql = ", ".join(sql_create_table_columns)
+                sql_create_table_columns_list_sql = ", ".join(
+                    sql_create_table_columns_list)
+                sql_create_table = f"CREATE TABLE IF NOT EXISTS {table_variants} ({sql_create_table_columns_sql})"
+                self.conn.execute(sql_create_table)
+
+                # chunksize define length of file chunk load file
+                chunksize = 100000
+
+                # delimiter
+                delimiter = file_format_delimiters.get(input_format, "\t")
+
+                # Load the input file
+                with open(self.input, "rt") as input_file:
+                    # Use the appropriate file handler based on the input format
+                    if input_compressed:
+                        input_file = bgzf.open(self.input, "rt")
+                    if input_format in ["vcf", "bcf"]:
+                        header_len = self.get_header_length()
+                    else:
+                        header_len = 0
+
+                    # Insert the file contents into a table
+                    self.insert_file_to_table(
+                        input_file,
+                        columns=sql_create_table_columns_list_sql,
+                        header_len=header_len,
+                        sep=delimiter,
+                        chunksize=chunksize,
+                    )
 
         elif self.input_format in ["parquet"]:
+
             # Load Parquet
+            if connexion_format in ["duckdb"]:
 
-            if access in ["RO"]:
-                self.drop_variants_table()
-                sql_parquet = f"CREATE VIEW {table_variants} AS SELECT * FROM '{self.input}'"
+                if access in ["RO"]:
+                    sql_parquet = f"CREATE VIEW {table_variants} AS SELECT * FROM '{self.input}'"
+                else:
+                    #sql_parquet = f"COPY {table_variants} FROM '{self.input}'"
+                    sql_parquet = f"CREATE TABLE {table_variants} AS SELECT * FROM '{self.input}'"
+
+                self.conn.execute(sql_parquet)
+
             else:
-                sql_parquet = f"COPY {table_variants} FROM '{self.input}'"
+                log.error(f"Input file format '{self.input_format}' not compatilbe with database format '{connexion_format}'")
+                raise ValueError(f"Input file format '{self.input_format}' not compatilbe with database format '{connexion_format}'")
 
-            self.conn.execute(sql_parquet)
 
         elif self.input_format in ["db", "duckdb"]:
-            log.debug(f"Input file format '{self.input_format}' duckDB")
+
+            if connexion_format in ["duckdb"]:
+                log.debug(f"Input file format '{self.input_format}' duckDB")
+            else:
+                log.error(f"Input file format '{self.input_format}' not compatilbe with database format '{connexion_format}'")
+                raise ValueError(f"Input file format '{self.input_format}' not compatilbe with database format '{connexion_format}'")
 
         else:
             log.error(f"Input file format '{self.input_format}' not available")
-            raise ValueError(
-                f"Input file format '{self.input_format}' not available")
+            raise ValueError(f"Input file format '{self.input_format}' not available")
 
         # Explode INFOS fields into table fields
         if self.get_param().get("explode_infos", None) is not None:
@@ -1443,7 +1476,7 @@ class Variants:
         > This function drops the variants table
         """
         table_variants = self.get_table_variants()
-        sql_table_variants = f"DROP TABLE {table_variants}"
+        sql_table_variants = f"DROP TABLE IF EXISTS {table_variants}"
         self.conn.execute(sql_table_variants)
 
 
@@ -3617,9 +3650,6 @@ class Variants:
         
         # Header
         vcf_reader = self.get_header()
-
-        # devel
-        #self.annotation_snpeff()
 
         # Explode HGVS field in column
         self.explode_infos(fields=[snpeff_ann])
