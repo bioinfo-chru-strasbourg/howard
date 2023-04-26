@@ -29,9 +29,9 @@ def convert(args) -> None:
 
     config = args.config
 
-    param = {}
+    params = {}
 
-    vcfdata_obj = Variants(None, args.input, args.output, config, param)
+    vcfdata_obj = Variants(None, args.input, args.output, config, params)
 
     params = vcfdata_obj.get_param()
 
@@ -47,7 +47,7 @@ def convert(args) -> None:
 
     # Create VCF object
     if args.input:
-        vcfdata_obj = Variants(None, args.input, args.output, config, param)
+        vcfdata_obj = Variants(None, args.input, args.output, config=config, param=params)
 
         # Load data from input file
         vcfdata_obj.load_data()
