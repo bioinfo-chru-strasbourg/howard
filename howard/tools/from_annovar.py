@@ -39,6 +39,20 @@ from howard.commons import *
 # avsnp150
 
 
+# Remove digits
+REMOVE_DIGIT_TABLE = str.maketrans('', '', '0123456789')
+
+# Dictionnaire des types
+TYPES = {
+    "int": "Integer",
+    "int64": "Integer",
+    "float": "Float",
+    "float64": "Float",
+    "object": "String"
+}
+
+
+
 def from_annovar(args) -> None:
 
     log.info("Start")
@@ -97,17 +111,18 @@ def from_annovar(args) -> None:
             raise ValueError(f"Fail create output folder '{output_dirname}'")
 
     # To Parquet
-    output_parquet_dirname = os.path.dirname(output_file_parquet)
-    output_file_parquet_name, output_file_parquet_ext = os.path.splitext(os.path.basename(output_file_parquet))
-    if output_file_parquet_ext not in [".parquet"]:
-        log.error(f"Output file '{output_file_parquet}' without compress extension")
-        raise ValueError(f"Output file '{output_file_parquet}' without compress extension")
-    if not os.path.exists(output_parquet_dirname):
-        try:
-            os.makedirs(output_parquet_dirname, exist_ok=True)
-        except:
-            log.error(f"Fail create output folder '{output_parquet_dirname}'")
-            raise ValueError(f"Fail create output folder '{output_parquet_dirname}'")
+    if output_file_parquet:
+        output_parquet_dirname = os.path.dirname(output_file_parquet)
+        output_file_parquet_name, output_file_parquet_ext = os.path.splitext(os.path.basename(output_file_parquet))
+        if output_file_parquet_ext not in [".parquet"]:
+            log.error(f"Output file '{output_file_parquet}' without compress extension")
+            raise ValueError(f"Output file '{output_file_parquet}' without compress extension")
+        if not os.path.exists(output_parquet_dirname):
+            try:
+                os.makedirs(output_parquet_dirname, exist_ok=True)
+            except:
+                log.error(f"Fail create output folder '{output_parquet_dirname}'")
+                raise ValueError(f"Fail create output folder '{output_parquet_dirname}'")
 
     # Genome
     if not os.path.exists(genome_file):
@@ -132,7 +147,6 @@ def from_annovar(args) -> None:
 
     # first VCF
 
-
     # Annovar to VCF
     log.info(f"Annovar to VCF...")
     output_file_first_vcf = output_file + ".tmp.first.vcf.gz"
@@ -143,10 +157,16 @@ def from_annovar(args) -> None:
     log.info(f"VCF merging...")
     merge_vcf(input_file=output_file_first_vcf, output_file=output_file)
 
+    # Header VCF hdr
+    log.info(f"VCF Extract header hdr...")
+    command = f"""{bcftools} view -h {output_file} 1>{output_file}.hdr """
+    log.debug("bcftools command: " + command)
+    subprocess.run(command, shell=True)
+
     # VCF to Parquet
+    output_file_first_parquet = output_file + ".tmp.first.parquet"
     if output_file_parquet:
         log.info(f"VCF to Parquet...")
-        output_file_first_parquet = output_file + ".tmp.first.parquet"
         variants = Variants(input=output_file, output=output_file_first_parquet, load=False)
         log.debug(f"VCF to Parquet loading...")
         variants.load_data()
@@ -156,28 +176,12 @@ def from_annovar(args) -> None:
         log.info(f"Parquet infos exploding...")
         parquet_info_explode(input_file=output_file_first_parquet, output_file=output_file_parquet, threads=threads)
 
-    
-
+    # Clean
     clean_command = f""" rm -f {output_file_first_vcf} {output_file_first_parquet} {output_file_first_parquet}.hdr """
     log.debug("clean command: " + clean_command)
     subprocess.run(clean_command, shell=True)
 
     log.info("End")
-
-
-
-
-REMOVE_DIGIT_TABLE = str.maketrans('', '', '0123456789')
-
-
-# Dictionnaire des types
-TYPES = {
-    "int": "Integer",
-    "int64": "Integer",
-    "float": "Float",
-    "float64": "Float",
-    "object": "String"
-}
 
 
 def replace_dot(val):
@@ -583,6 +587,13 @@ def annovar_to_vcf(input_file, output_file, annotations=None, header_file=None, 
     log.debug("bcftools command: " + command)
     subprocess.run(command, shell=True)
 
+    # # Header hdr
+    # log.info(f"VCF Extract header hdr...")
+    # command = f"""{bcftools} view -h {output_file} 1>{output_file}.hdr 2>>{output_file}.tmp.err """
+    # log.debug("bcftools command: " + command)
+    # subprocess.run(command, shell=True)
+
+    # Clean
     clean_command = f""" rm {output_file}.tmp.* """
     subprocess.run(clean_command, shell=True)
 
@@ -617,8 +628,6 @@ def merge_vcf(input_file, output_file):
                 # Split the info string into key=value pairs
                 info_pairs = info_str.split(";")
 
-                
-
                 # Check if the current variant is the same as the last one
                 if last_chrom == chrom and last_pos == pos and last_ref == ref and last_alt == alt:
                     #log.debug("continue")
@@ -628,9 +637,10 @@ def merge_vcf(input_file, output_file):
                     #log.debug("write")
                     
                     # Write the merged info string to output
-                    write_string = f"{last_chrom}\t{last_pos}\t.\t{last_ref}\t{last_alt}\t.\tPASS\t" + ";".join([f"{key}={','.join(values)}" for key, values in last_info.items()]) + "\n"
-                    if write_string:
-                        fout.write(write_string)
+                    if last_chrom is not None:
+                        write_string = f"{last_chrom}\t{last_pos}\t.\t{last_ref}\t{last_alt}\t.\tPASS\t" + ";".join([f"{key}={','.join(values)}" for key, values in last_info.items()]) + "\n"
+                        if write_string:
+                            fout.write(write_string)
                     
                     # Clear last info dictionary
                     last_info = {}
@@ -652,9 +662,10 @@ def merge_vcf(input_file, output_file):
             #     break
 
         # Write the merged info string for the last variant to output
-        fout.write(f"{last_chrom}\t{last_pos}\t.\t{last_ref}\t{last_alt}\t.\tPASS\t")
-        fout.write(";".join([f"{key}={','.join(values)}" for key, values in last_info.items()]))
-        fout.write("\n")
+        if last_chrom is not None:
+            fout.write(f"{last_chrom}\t{last_pos}\t.\t{last_ref}\t{last_alt}\t.\tPASS\t")
+            fout.write(";".join([f"{key}={','.join(values)}" for key, values in last_info.items()]))
+            fout.write("\n")
 
 
 def parquet_info_explode(input_file:str, output_file:str, threads:int = 1, tmp:str = "/tmp") -> None:
@@ -726,3 +737,5 @@ def parquet_info_explode(input_file:str, output_file:str, threads:int = 1, tmp:s
 
     df = parquet_input.get_query_to_df(f"SELECT * FROM '{query_explode_output}' LIMIT 10 ")
     log.debug(df)
+
+
