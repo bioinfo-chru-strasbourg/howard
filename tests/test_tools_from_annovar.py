@@ -41,10 +41,10 @@ def test_from_annovar():
     config = {}
 
     # remove
-    remove_if_exists(output_vcf)
-    remove_if_exists(output_vcf+".hdr")
-    remove_if_exists(output_parquet)
-    remove_if_exists(output_parquet+".hdr")
+    remove_if_exists([output_vcf])
+    remove_if_exists([output_vcf+".hdr"])
+    remove_if_exists([output_parquet])
+    remove_if_exists([output_parquet+".hdr"])
 
     # Find genome
     genome = find_genome(genome)
@@ -86,10 +86,10 @@ def test_from_annovar_reduce_memory():
     config = {}
 
     # remove
-    remove_if_exists(output_vcf)
-    remove_if_exists(output_vcf+".hdr")
-    remove_if_exists(output_parquet)
-    remove_if_exists(output_parquet+".hdr")
+    remove_if_exists([output_vcf])
+    remove_if_exists([output_vcf+".hdr"])
+    remove_if_exists([output_parquet])
+    remove_if_exists([output_parquet+".hdr"])
 
     # Find genome
     genome = find_genome(genome)
