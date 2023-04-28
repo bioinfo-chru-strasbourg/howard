@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import gc
 import io
 import multiprocessing
 import os
@@ -28,19 +29,16 @@ from howard.commons import *
 # time howard from_annovar --input=/databases/annovar/current/hg19_nci60.txt --output=/databases/annotations/current/hg19/nci60.vcf.gz --to_parquet=/databases/annotations/current/hg19/nci60.parquet --annovar-code=nci60 --genome=/databases/genomes/current/hg19.fa --config=/tool/config/config.json --threads=8 
 # time howard from_annovar --input=/databases/annovar/current/hg19_cosmic70.txt --output=/databases/annotations/current/hg19/cosmic.vcf.gz --to_parquet=/databases/annotations/current/hg19/cosmic.parquet --annovar-code=cosmic --genome=/databases/genomes/current/hg19.fa --config=/tool/config/config.json --threads=8 
 # time howard from_annovar --input=/databases/annovar/current/hg19_clinvar_20221231.txt --output=/databases/annotations/current/hg19/clinvar.vcf.gz --to_parquet=/databases/annotations/current/hg19/clinvar.parquet --annovar-code=clinvar --genome=/databases/genomes/current/hg19.fa --config=/tool/config/config.json --threads=8 
-# time howard from_annovar --input=/databases/annovar/current/hg19_gnomad211_exome.txt --output=/databases/annotations/current/hg19/gnomad_exome.vcf.gz --to_parquet=/databases/annotations/current/hg19/gnomad_exome.parquet --annovar-code=gnomad_exome --genome=/databases/genomes/current/hg19.fa --config=/tool/config/config.json --threads=12 
+# time howard from_annovar --input=/databases/annovar/current/hg19_gnomad211_exome.txt --output=/databases/annotations/current/hg19/gnomad_exome.vcf.gz --to_parquet=/databases/annotations/current/hg19/gnomad_exome.parquet --annovar-code=gnomad_exome --genome=/databases/genomes/current/hg19.fa --config=/tool/config/config.json --threads=12 --reduce_memory
 
-# time howard from_annovar --input=/databases/annovar/current/hg19_dbnsfp42a.txt --output=/databases/annotations/current/hg19/dbnsfp.vcf.gz --to_parquet=/databases/annotations/current/hg19/dbnsfp.parquet --annovar-code=dbnsfp --genome=/databases/genomes/current/hg19.fa --config=/tool/config/config.json --threads=12
-# time howard from_annovar --input=/databases/annovar/current/hg19_avsnp150.txt --output=/databases/annotations/current/hg19/avsnp150.vcf.gz --to_parquet=/databases/annotations/current/hg19/avsnp150.parquet --annovar-code=avsnp150 --genome=/databases/genomes/current/hg19.fa --config=/tool/config/config.json --threads=12
+# time howard from_annovar --input=/databases/annovar/current/hg19_dbnsfp42a.txt --output=/databases/annotations/current/hg19/dbnsfp.vcf.gz --to_parquet=/databases/annotations/current/hg19/dbnsfp.parquet --annovar-code=dbnsfp --genome=/databases/genomes/current/hg19.fa --config=/tool/config/config.json --threads=12  --reduce_memory
+# time howard from_annovar --input=/databases/annovar/current/hg19_avsnp150.txt --output=/databases/annotations/current/hg19/avsnp150.vcf.gz --to_parquet=/databases/annotations/current/hg19/avsnp150.parquet --annovar-code=avsnp150 --genome=/databases/genomes/current/hg19.fa --config=/tool/config/config.json --threads=12 --reduce_memory
 
 # 
 # gnomad211_exome
 # dbnsfp42a
 # avsnp150
 
-
-# Remove digits
-REMOVE_DIGIT_TABLE = str.maketrans('', '', '0123456789')
 
 # Dictionnaire des types
 TYPES = {
@@ -50,7 +48,6 @@ TYPES = {
     "float64": "Float",
     "object": "String"
 }
-
 
 
 def from_annovar(args) -> None:
@@ -77,6 +74,9 @@ def from_annovar(args) -> None:
 
     # # Export Infos Prefix
     # export_infos_prefix = args.export_infos_prefix
+
+    # Export Infos Prefix
+    reduce_memory = args.reduce_memory
 
     # config
     config = args.config
@@ -136,7 +136,7 @@ def from_annovar(args) -> None:
     if not annovar_code:
         annovar_code = os.path.basename(output_file).replace('.vcf.gz','').replace('.','_')
 
-    
+    # Log
     log.info(f"Input Annovar database: {input_file}")
     log.info(f"Output VCF database: {output_file}")
     log.info(f"Database name: {annovar_code}")
@@ -148,169 +148,68 @@ def from_annovar(args) -> None:
     # first VCF
 
     # Annovar to VCF
-    log.info(f"Annovar to VCF...")
-    output_file_first_vcf = output_file + ".tmp.first.vcf.gz"
-    log.debug(output_file_first_vcf)
-    annovar_to_vcf(input_file=input_file, output_file=output_file_first_vcf, annotations=None, header_file=None, database_name=annovar_code, bcftools=bcftools, genome=genome_file, threads=threads, maxmem="40G", remove_annotations=["ID"])
-
-    # Merging VCF file
-    log.info(f"VCF merging...")
-    merge_vcf(input_file=output_file_first_vcf, output_file=output_file)
+    log.info(f"Annovar to VCF and Parquet...")
+    annovar_to_vcf(input_file=input_file, output_file=output_file, output_file_parquet=output_file_parquet, annotations=None, header_file=None, database_name=annovar_code, bcftools=bcftools, genome=genome_file, threads=threads, maxmem="40G", remove_annotations=["ID"], reduce_memory=reduce_memory)
 
     # Header VCF hdr
-    log.info(f"VCF Extract header hdr...")
+    log.info(f"VCF Extract header hdr for VCF...")
     command = f"""{bcftools} view -h {output_file} 1>{output_file}.hdr """
     log.debug("bcftools command: " + command)
     subprocess.run(command, shell=True)
 
     # VCF to Parquet
-    output_file_first_parquet = output_file + ".tmp.first.parquet"
     if output_file_parquet:
-        log.info(f"VCF to Parquet...")
-        variants = Variants(input=output_file, output=output_file_first_parquet, load=False)
-        log.debug(f"VCF to Parquet loading...")
-        variants.load_data()
-        log.debug(f"VCF to Parquet exporting...")
-        variants.export_output()
-
-        log.info(f"Parquet infos exploding...")
-        parquet_info_explode(input_file=output_file_first_parquet, output_file=output_file_parquet, threads=threads)
-
-    # Clean
-    clean_command = f""" rm -f {output_file_first_vcf} {output_file_first_parquet} {output_file_first_parquet}.hdr """
-    log.debug("clean command: " + clean_command)
-    subprocess.run(clean_command, shell=True)
+        # File already generated
+        # Header VCF hdr
+        log.info(f"VCF Extract header hdr for Parquet...")
+        command = f"""{bcftools} view -h {output_file} 1>{output_file_parquet}.hdr """
+        log.debug("bcftools command: " + command)
+        subprocess.run(command, shell=True)
 
     log.info("End")
 
 
-def replace_dot(val):
+def annovar_to_vcf(input_file, output_file, output_file_parquet=None, annotations=None, header_file=None, database_name=None, bcftools="bcftools", genome="hg19.fa", threads=1, maxmem="40G", remove_annotations:list = [], reduce_memory=False): #, chrom_col='#CHROM', pos_col='POS', ref_col='REF', alt_col='ALT'):
     """
-    If the value is a dot, return np.nan, otherwise return the value
+    This function reads a tab-separated file, converts it to a VCF file, and then normalizes it, with
+    options to include specific columns in the INFO field, use a header file, and specify a reference
+    genome.
     
-    :param val: The value to be replaced
-    :return: the value of the variable val.
-    """
-    if str(val) == '.':
-        return np.nan
-    else:
-        return val
-
-
-def replace_char(x):
-    """
-    > If the input is a string, replace all semicolons, spaces, and equal signs with underscores
-    
-    The first line of the function is a docstring.  This is a special string that is used to document
-    the function.  It is the first thing that is read by the `help` function.  The docstring is enclosed
-    in triple quotes.  The first line of the docstring is a one sentence summary of the function.  The
-    next line is a blank line.  The next line is a more detailed description of the function.  The last
-    line is a description of the return value
-    
-    :param x: The string to be translated
-    :return: the string with the characters ' ;=' replaced with '___'
-    """
-    if isinstance(x, str):
-        translation_table = str.maketrans(' ;=', '___')
-        return x.translate(translation_table)
-    else:
-        return x
-
-
-def process_chunk(chunk, info_idxs, annotations):
-    """
-    It takes a chunk of the dataframe, replaces the characters in the chunk, and then reads the lines in
-    the chunk
-    
-    :param chunk: a chunk of the dataframe
-    :param info_idxs: a list of the indexes of the columns that contain the information we want to
-    extract
-    :param annotations: a list of strings that are the names of the columns that you want to extract
-    from the file
-    :return: A dataframe with the same number of rows as the original dataframe, but with the columns
-    replaced by the read_line function.
-    """
-    chunk_processed_replace_char = chunk.applymap(replace_char)
-    chunk_processed_read_line = read_line(chunk_processed_replace_char, info_idxs, annotations)
-    return chunk_processed_read_line
-    
-
-def read_line(chunk_data, info_idxs, annotations):
-    """
-    The function takes in a chunk of data, a list of indices for the annotations, and a list of the
-    annotations themselves. It then iterates through each row of the chunk, and creates a string that
-    contains the chromosome, position, reference allele, alternate allele, and the annotations
-    
-    :param chunk_data: the dataframe of the chunk
-    :param info_idxs: the index of the column in the dataframe that contains the info you want to add to
-    the VCF
-    :param annotations: the names of the columns in the VCF file that you want to keep
-    :return: A list of strings, each string is a line of the VCF file.
-    """
-
-    info_list = []
-
-    for index, row in chunk_data.iterrows():
-
-        chrom = str(row["#CHROM"])
-        pos = row["POS"]
-        ref = row["REF"]
-        alt = row["ALT"]
-
-        if not chrom.startswith("chr"):
-            chrom = "chr" + chrom
-        if chrom == "chrMT":
-            chrom = "chrM"
-        if chrom == "chr23":
-            chrom = "chrX"
-        if chrom == "chr24":
-            chrom = "chrY"
-
-        ref = str(ref).translate(REMOVE_DIGIT_TABLE)
-        alt = str(alt).translate(REMOVE_DIGIT_TABLE)
-
-        if ref in ["-", ""]:
-            pos -= 1
-            ref = "N"
-            alt = "N" + alt
-        if alt in ["-", ""]:
-            pos -= 1
-            ref = "N" + ref
-            alt = "N"         
-
-        info = ';'.join([f'{a}={row[info_idxs[i]]}' for i, a in enumerate(annotations) if row[info_idxs[i]] not in ['', '.']])
-        
-        info_list.append(f'{chrom}\t{pos}\t.\t{ref}\t{alt}\t.\t.\t{info}')
-
-    return info_list
-
-
-def annovar_to_vcf(input_file, output_file, annotations=None, header_file=None, database_name=None, bcftools="bcftools", genome="hg19.fa", threads=1, maxmem="40G", remove_annotations:list = []): #, chrom_col='#CHROM', pos_col='POS', ref_col='REF', alt_col='ALT'):
-    """
-    It reads a tab-separated file, converts it to a VCF file, and then normalizes it
-    
-    :param input_file: the path to the input file
-    :param output_file: the name of the output file
-    :param annotations: a list of columns to be included in the INFO field of the VCF. If not provided,
-    all columns will be included
-    :param header_file: the path to the header file. If you don't have one, you can leave it blank
-    :param database_name: The name of the database you want to use for the INFO tags
-    :param bcftools: the path to the bcftools executable, defaults to bcftools (optional)
-    :param genome: the reference genome to use, defaults to hg19.fa (optional)
-    :param threads: number of threads to use, defaults to 1 (optional)
-    :param maxmem: The maximum amount of memory to use for sorting, defaults to 40G (optional)
-    :return: the value of the variable "output_file"
+    :param input_file: The path to the input file that needs to be converted to VCF format and
+    normalized
+    :param output_file: The name of the output file that will be generated by the function
+    :param output_file_parquet: `output_file_parquet` is an optional parameter that specifies the name
+    of the output file in Parquet format. If this parameter is not provided, the function will not
+    export the data in Parquet format
+    :param annotations: annotations is a list of columns to be included in the INFO field of the VCF. If
+    not provided, all columns will be included
+    :param header_file: The path to the header file. If provided, it will be used to determine the
+    columns of the input file. If not provided, the function will try to determine the columns
+    automatically
+    :param database_name: The name of the database you want to use for the INFO tags in the VCF file. If
+    not provided, a default name will be used
+    :param bcftools: bcftools is a software tool used for manipulating and analyzing VCF (Variant Call
+    Format) files. It is used in this function to sort and normalize the VCF file, defaults to bcftools
+    (optional)
+    :param genome: The reference genome to use for the VCF conversion and normalization. It defaults to
+    hg19.fa, defaults to hg19.fa (optional)
+    :param threads: The number of threads to use for sorting during the conversion process, defaults to
+    1 (optional)
+    :param maxmem: maxmem is the maximum amount of memory to use for sorting during the VCF sorting and
+    normalization step. It is a string that specifies the amount of memory, such as "40G" for 40
+    gigabytes, defaults to 40G (optional)
+    :param remove_annotations: The list of annotations to be removed from the INFO field of the VCF
+    :type remove_annotations: list
+    :return: The function does not explicitly return anything, but it does write a VCF file and
+    optionally a Parquet file to disk. The function also logs various messages to the console.
     """
     
+    # Check input file
     if not os.path.exists(input_file):
         raise ValueError("No input file")
         
-
-    log.debug("")
-    log.debug("")
-    log.debug("#########################")
+    # Log
     log.debug("input_file: " + input_file)
-
 
     # Determine header columns
     header = []
@@ -398,14 +297,12 @@ def annovar_to_vcf(input_file, output_file, annotations=None, header_file=None, 
     if not header_ok:
         raise ValueError("Error in header")
 
-
     # protect info tag from unauthorized characters
     header_fixed = []
     for h in header:
         h = h.replace('-', '_').replace('+', '').replace('.', '_')
         header_fixed.append(h)
     header = header_fixed
-
 
     # determine nb header line
     nb_header_line = 0
@@ -420,7 +317,6 @@ def annovar_to_vcf(input_file, output_file, annotations=None, header_file=None, 
                 break
     f.close()
     
-
     # Check dtype and force if needed
     dtype = {}
     for h in header:
@@ -434,16 +330,11 @@ def annovar_to_vcf(input_file, output_file, annotations=None, header_file=None, 
 
 
     # Check format VCF readable
-    auto_format = "VCF"
     try:
         df = pd.read_csv(input_file, delimiter='\t', nrows=100000, na_values=['.'], header=nb_header_line, names=header, dtype=dtype)
-        auto_format = "VCF"
     except:
-        auto_format = "BED"
         log.error("format not supported")
         raise ValueError("format not supported")
-        return
-
     
     # Recheck column type les types de chaque colonne
     for col in df.columns:
@@ -454,18 +345,30 @@ def annovar_to_vcf(input_file, output_file, annotations=None, header_file=None, 
             df[col] = pd.to_numeric(df[col], errors='coerce')
     column_types = df.dtypes
 
+    # Dictionnary to mapper data types from pandas to SQL
+    sql_types = {
+        'int64': 'INTEGER',
+        'float64': 'FLOAT',
+        'object': 'STRING',
+    }
+
+    sql_types_forces = {
+        "#CHROM": "STRING",
+        "POS": "INTEGER",
+        "REF": "STRING",
+        "ALT": "STRING",
+    }
+
     # replace if dtype forced
     dtype_final = {}
     for column in dict(column_types):
-        if dtype.get(column, None):
-            dtype_final[column] = dtype[column]
+        if sql_types_forces.get(column,None):
+            dtype_final[column] = sql_types_forces.get(column,None)
         else:
-            dtype_final[column] = column_types[column]
-
+            dtype_final[column] = sql_types.get(str(column_types[column]),'STRING')
 
     # column type to VCF type
     vcf_types = {col: TYPES[str(column_types[col])] for col in column_types.index}
-
 
     # check chromosomes
     input_file_index = input_file + ".idx"
@@ -474,14 +377,13 @@ def annovar_to_vcf(input_file, output_file, annotations=None, header_file=None, 
     chrom_list_fixed = []
     if os.path.exists(input_file_index) and os.path.exists(genome_index):
 
-
         # Check chromosomes in genome
         df_genome = pd.read_csv(genome_index, delimiter='\t', header=None,  names = ["CHROM", "length", "col2", "col3", "col4"], dtype = {"CHROM": str, "Start": int, "End": int})
         genome_chrom_length = {}
         for item in df_genome.iterrows():
             genome_chrom_length[item[1].CHROM] = item[1].length
 
-        
+        # Uniquify
         genome_chrom = df_genome['CHROM'].unique()
 
         # Read index of input file
@@ -502,11 +404,8 @@ def annovar_to_vcf(input_file, output_file, annotations=None, header_file=None, 
         log.debug("List of chromosomes: " + str(chrom_list_fixed))
         log.debug(df_genome)
 
-    # read file
-    log.info("Start reading file")
-
     # open file input in read only, open (temporary) vcf output in write mode
-    with open(input_file, 'r') as f, bgzf.open(output_file+".tmp.translation.vcf.gz", 'wt') as vcf_file:
+    with bgzf.open(output_file+".tmp.translation.header.vcf.gz", 'wt') as vcf_file:
 
         # header fileformat
         vcf_file.write('##fileformat=VCFv4.3\n')
@@ -515,9 +414,7 @@ def annovar_to_vcf(input_file, output_file, annotations=None, header_file=None, 
         for col, type_ in vcf_types.items():
             if col not in ["#CHROM", "POS", "REF", "ALT"] + remove_annotations:
                 info_tag = col
-                #if col.startswith():
                 info_tag.replace("-", "_").replace("+", "_")
-                #log.debug(f"""##INFO=<ID={info_tag},Number=.,Type={type_},Description="{col} annotation">""")
                 vcf_file.write(f"""##INFO=<ID={info_tag},Number=.,Type={type_},Description="{info_tag} annotation">\n""")
 
         # header contig
@@ -528,214 +425,224 @@ def annovar_to_vcf(input_file, output_file, annotations=None, header_file=None, 
         # header #CHROM line
         vcf_file.write('#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n')
 
-        # Determine annotations if not annotations in input
-        annotations_auto = []
-        if not annotations:
-            for h in header:
-                if h not in ["#CHROM", "POS", "REF", "ALT", "-", ""] and not str(h).startswith("-"):
-                    #log.debug(h)
-                    annotations_auto.append(h)
-            annotations = annotations_auto
+    # Determine annotations if not annotations in input
+    annotations_auto = []
+    if not annotations:
+        for h in header:
+            if h not in ["#CHROM", "POS", "REF", "ALT", "-", ""] and not str(h).startswith("-"):
+                #log.debug(h)
+                annotations_auto.append(h)
+        annotations = annotations_auto
 
-        for remove_annotation in remove_annotations:
-            if remove_annotation in annotations:
-                annotations.remove(remove_annotation)
+    for remove_annotation in remove_annotations:
+        if remove_annotation in annotations:
+            annotations.remove(remove_annotation)
 
-        # create index of annotations
-        info_idxs = [header.index(a) for a in annotations]
+    # Check dtypes
+    dtype_duckdb = []
+    for dtype in dtype_final:
+        dtype_duckdb.append(dtype_final[dtype])
 
-        # Read Process
+    # Create view
+    conn = duckdb.connect(":memory:", config={"threads": threads, "memory_limit": maxmem})
+    delimiter = '\t'
 
-        # chunk parameters
-        chunk_idx = 0
-        chunksize = 1000000
-        #chunksize = 100000
+    query = f""" CREATE VIEW annovar AS SELECT * FROM read_csv_auto('{input_file}', auto_detect=True, delim='{delimiter}', names={header}, dtypes={dtype_duckdb}, quote=None, nullstr='.', parallel=True) """
+    conn.execute(query)
 
-        nb_lines = 0
+    # Check existing columns
+    query = """ SELECT * FROM annovar LIMIT 0  """
+    columns = conn.execute(query).df().columns.tolist()
 
-        # chunk file into blocks (prevent memory usage)
-        for chunk in pd.read_csv(f, skiprows=0, sep='\t', chunksize=chunksize, engine="c", header=nb_header_line, names=header, dtype=dtype_final, na_values=['.'], low_memory=True):
+    # Prepare queries
+    any_value_list = []
+    explode_info_list = []
+    for column in columns:
+        if column not in ["#CHROM", "POS", "REF", "ALT", "ID"]:
+            any_value_list.append(f""" 
+                CASE WHEN STRING_AGG(DISTINCT "{column}") IS NULL THEN '' ELSE '{column}=' || REPLACE(STRING_AGG(DISTINCT "{column}"),';',',') || ';' END
+            """)
+            explode_info_list.append(f"""
+                CASE WHEN STRING_AGG(DISTINCT "{column}") IS NULL THEN NULL ELSE STRING_AGG(DISTINCT "{column}") END
+                AS "INFO/{column}"
+                """)
 
-            nb_lines += len(chunk)
-
-            # log
-            #log.info(f"Reading {len(chunk)} (total {nb_lines})")
-            log.info(f"Reading {nb_lines} lines...")
-
-            # Chunk into subblocks for each threads (multithreading)
-            chunk_size = len(chunk) // (threads * 1)
-            chunk_groups = [chunk.iloc[i:i+chunk_size,:] for i in range(0, len(chunk), chunk_size)]
-
-            # Run process_chunk on each subblock
-            with multiprocessing.Pool(processes=threads) as pool:
-                # Add parameters to function process_chunk
-                chunk_processor = partial(process_chunk, info_idxs=info_idxs, annotations=annotations)
-                # Run multiprocessing
-                results = pool.imap(chunk_processor, chunk_groups)
-                # List of lines for VCF
-                concatenated_list = list(itertools.chain.from_iterable(results))
-                # Write into VCF
-                for variant in concatenated_list:
-                    vcf_file.write((variant+"\n").encode("utf-8"))
-
-            chunk_idx += 1
-
-    # BCFTools to reheader sort normalize
-    #command = f"""{bcftools} reheader --threads={threads} -f {genome}.fai {output_file}.tmp.translation.vcf.gz | {bcftools} sort --max-mem={maxmem} | {bcftools} norm --threads={threads} --check-ref s -f {genome} -Oz -o {output_file}"""
-    log.info(f"VCF Sorting and Normalization...")
-    command = f"""{bcftools} sort --max-mem={maxmem} {output_file}.tmp.translation.vcf.gz 2>{output_file}.tmp.err  | {bcftools} norm --threads={threads} --check-ref s -f {genome} -Oz -o {output_file} 2>{output_file}.tmp.err """
-    log.debug("bcftools command: " + command)
-    subprocess.run(command, shell=True)
-
-    # # Header hdr
-    # log.info(f"VCF Extract header hdr...")
-    # command = f"""{bcftools} view -h {output_file} 1>{output_file}.hdr 2>>{output_file}.tmp.err """
-    # log.debug("bcftools command: " + command)
-    # subprocess.run(command, shell=True)
-
-    # Clean
-    clean_command = f""" rm {output_file}.tmp.* """
-    subprocess.run(clean_command, shell=True)
+    # Join to create INFO column
+    any_value_sql = " || ".join(any_value_list)
+    # Remove last caracter ';'
+    any_value_sql = f""" SUBSTR({any_value_sql}, 1, LENGTH({any_value_sql}) - 1) """
+    # Join INFO columns
+    explode_info_sql = " , ".join(explode_info_list)
 
 
-def merge_vcf(input_file, output_file):
+    # Partitioning checking
+    #input_file_size = os.path.getsize(input_file)
+    #if input_file_size > 1024*1024*1024 or reduce_memory:
+    partitioning_by_chromosomes = True
+    if reduce_memory:
+        partitioning = True
+        #partitioning_by_chromosomes = True # "chrom"
+    else:
+        partitioning = False
+        #partitioning_by_chromosomes = False # "chrom"
 
-    # Open input and output files
-    with bgzf.open(input_file, "r") as fin, bgzf.open(output_file, "w") as fout:
-        # Iterate over the lines in the input file
-        last_info = {}
-        last_chrom = None
-        last_pos = None
-        last_ref = None
-        last_alt = None
-        write_string = None
-
-        line_i = 0
-
-        for line in fin:
-            # If line starts with #, write it to output
-            if line.startswith("#"):
-                fout.write(line)
-            else:
-                # Split the line into its columns
-                cols = line.strip().split("\t")
-                chrom, pos, _, ref, alt, _, _, info_str = cols[:8]
-
-                #log.debug(cols)
-
-                line_i += 1
-
-                # Split the info string into key=value pairs
-                info_pairs = info_str.split(";")
-
-                # Check if the current variant is the same as the last one
-                if last_chrom == chrom and last_pos == pos and last_ref == ref and last_alt == alt:
-                    #log.debug("continue")
-                    continue  # skip if it's the same variant as before
-
-                else:
-                    #log.debug("write")
-                    
-                    # Write the merged info string to output
-                    if last_chrom is not None:
-                        write_string = f"{last_chrom}\t{last_pos}\t.\t{last_ref}\t{last_alt}\t.\tPASS\t" + ";".join([f"{key}={','.join(values)}" for key, values in last_info.items()]) + "\n"
-                        if write_string:
-                            fout.write(write_string)
-                    
-                    # Clear last info dictionary
-                    last_info = {}
-
-                # Update the last info dictionary with new values
-                for info_pair in info_pairs:
-                    key, value = info_pair.split("=")
-                    if key in last_info:
-                        #last_info[key].append(value)
-                        if value not in last_info[key]:
-                            last_info[key].append(value)
-                    else:
-                        last_info[key] = [value]
-
-                # Save the current variant as the last variant
-                last_chrom, last_pos, last_ref, last_alt = chrom, pos, ref, alt
-
-            # if line_i > 50:
-            #     break
-
-        # Write the merged info string for the last variant to output
-        if last_chrom is not None:
-            fout.write(f"{last_chrom}\t{last_pos}\t.\t{last_ref}\t{last_alt}\t.\tPASS\t")
-            fout.write(";".join([f"{key}={','.join(values)}" for key, values in last_info.items()]))
-            fout.write("\n")
-
-
-def parquet_info_explode(input_file:str, output_file:str, threads:int = 1, tmp:str = "/tmp") -> None:
+    # Query to select columns
+    query_select_parquet = f"""
+        SELECT
+            CASE WHEN "#CHROM" LIKE 'chr%' THEN '' ELSE 'chr' END ||
+            CASE WHEN "#CHROM" = 'MT' THEN 'M' WHEN "#CHROM" = '23' THEN 'X' WHEN "#CHROM" = '24' THEN 'Y' ELSE "#CHROM" END
+            AS '#CHROM',
+            CASE WHEN "REF" in ('-','') OR "ALT" in ('-','') THEN "POS"-1 ELSE "POS" END
+            AS "POS",
+            '' AS "ID",
+            CASE WHEN "REF" in ('-','') THEN 'N' WHEN "ALT" in ('-','') THEN 'N' || "REF" ELSE "REF" END
+            AS "REF",
+            CASE WHEN "REF" in ('-','') THEN 'N' || "ALT" WHEN "ALT" in ('-','') THEN 'N' ELSE "ALT" END
+            AS "ALT",
+            '' AS "QUAL",
+            'PASS' AS "FILTER",
+            {any_value_sql} AS "INFO",
+            {explode_info_sql}
+        FROM annovar
+        GROUP BY "#CHROM", "POS", "REF", "ALT" 
     """
-    > It takes a parquet file, splits it by chromosome, explodes the INFO column, and then merges the
-    exploded files back together
-    
-    :param input_file: The input file to be exploded
-    :param output_file: The name of the output file
-    """
-    
-    # Config
-    config_ro = {
-        "access": "RO",
-        "threads": threads
-    }
-    config_threads = {
-        "threads": threads
-    }
-    param_explode = {
-        "explode_infos": True,
-        "export_extra_infos": True
-    }
 
-    # List of exploded parquet files
-    list_of_exploded_files = []
-
-    # Create 
-    parquet_input = Variants(input=input_file, config=config_ro)
-    parquet_chromosomes = parquet_input.get_query_to_df(query=f""" SELECT "#CHROM" FROM '{input_file}' WHERE "#CHROM" NOT NULL GROUP BY "#CHROM" """)
-    for chrom in parquet_chromosomes["#CHROM"]:
-        
-        # Split Chrom
-        query_chrom = f""" SELECT * FROM '{input_file}' WHERE "#CHROM"='{chrom}'  """
-        query_chrom_output = f"{output_file}.{chrom}.parquet"
-        query_chrom_explode_output = f"{output_file}.{chrom}.explode.parquet"
+    # Partitioning 
+    if partitioning:
 
         # Log
-        log.info(f"Explode infos chromosome {chrom}")
+        log.info("Partitioning...")
+
+        if partitioning_by_chromosomes:
+
+            # Log
+            log.debug("Partitioning by chromosomes...")
+
+            # Check list of chromosome
+            query_chrom_list = """ SELECT distinct("#CHROM") FROM annovar """
+            chrom_list = list(conn.query(query_chrom_list).df()["#CHROM"])
+
+            # Query to select columns with filter by chromosome
+            query_select_parquet_chrom = f"""
+                SELECT
+                    CASE WHEN "#CHROM" LIKE 'chr%' THEN '' ELSE 'chr' END ||
+                    CASE WHEN "#CHROM" = 'MT' THEN 'M' WHEN "#CHROM" = '23' THEN 'X' WHEN "#CHROM" = '24' THEN 'Y' ELSE "#CHROM" END
+                    AS '#CHROM',
+                    CASE WHEN "REF" in ('-','') OR "ALT" in ('-','') THEN "POS"-1 ELSE "POS" END
+                    AS "POS",
+                    '' AS "ID",
+                    CASE WHEN "REF" in ('-','') THEN 'N' WHEN "ALT" in ('-','') THEN 'N' || "REF" ELSE "REF" END
+                    AS "REF",
+                    CASE WHEN "REF" in ('-','') THEN 'N' || "ALT" WHEN "ALT" in ('-','') THEN 'N' ELSE "ALT" END
+                    AS "ALT",
+                    '' AS "QUAL",
+                    'PASS' AS "FILTER",
+                    {any_value_sql} AS "INFO",
+                    {explode_info_sql}
+                FROM annovar
+                WHERE "#CHROM" = ?
+                GROUP BY "#CHROM", "POS", "REF", "ALT" 
+            """
+
+            # Query to copy into files
+            query_parquet_partition_chrom = f"""
+                COPY ({query_select_parquet_chrom})
+                TO '{output_file}.tmp.partition' WITH (FORMAT PARQUET, PARTITION_BY ("#CHROM"), OVERWRITE_OR_IGNORE)
+                """
+            
+            # Copy files
+            for chrom in chrom_list:
+                #log.info(f"Partitioning {chrom}...")
+                res = conn.execute(query_parquet_partition_chrom, [chrom])
+                del res
+                gc.collect()
+
+        # else:
+
+        #     # Log
+        #     log.debug("Partitioning by chromosomes in parallel...")
+
+        #     # Query to copy into files
+        #     query_parquet_partition = f"""
+        #         COPY ({query_select_parquet})
+        #         TO '{output_file}.tmp.partition' WITH (FORMAT PARQUET, PARTITION_BY ("#CHROM"), OVERWRITE_OR_IGNORE)
+        #     """
+
+        #     # Copy files
+        #     res = conn.query(query_parquet_partition)
+        #     del res
+        #     gc.collect()
+
+    
+    # Export Parquet
+    if output_file_parquet:
+
+        # Log
+        log.info("Exporting Parquet...")
+
+        # Check source
+        if partitioning:
+            source = f""" SELECT * FROM parquet_scan('{output_file}.tmp.partition/*/*.parquet', hive_partitioning=1) """
+        else:
+            source = query_select_parquet
+
+        # Query to copy file
+        query_parquet = f"""
+            COPY ({source})
+            TO '{output_file_parquet}' WITH (FORMAT PARQUET)
+        """
+
+        # Copy file
+        res = conn.query(query_parquet)
+        del res
+        gc.collect()
 
 
-        # Extract
-        log.debug(f"Extract chromosome {chrom}: {query_chrom_explode_output}")
-        remove_if_exists([query_chrom_output,query_chrom_output+".hdr"])
-        parquet_input.export_output(output_file=query_chrom_output, query=query_chrom, export_header=True)
-        
-        # Explode
-        log.debug(f"Explode infos for chromosome {chrom}: {query_chrom_explode_output}")
-        list_of_exploded_files.append(query_chrom_explode_output)
-        parquet_explode = Variants(input=query_chrom_output, output=query_chrom_explode_output, config=config_threads, param=param_explode)
-        parquet_explode.load_data()
-        remove_if_exists([query_chrom_explode_output,query_chrom_explode_output+".hdr"])
-        parquet_explode.export_output()
-        remove_if_exists([query_chrom_output,query_chrom_output+".hdr"])
+    # Export VCF
+    log.info("Exporting VCF...")
 
+    # Check source
+    if partitioning:
+        source = f""" SELECT "#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO" FROM parquet_scan('{output_file}.tmp.partition/*/*.parquet', hive_partitioning=1) """
+    elif output_file_parquet:
+        source = f""" SELECT "#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO" FROM '{output_file_parquet}' """
+    else:
+        source = f""" SELECT "#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO" FROM ({query_select_parquet}) """
 
-    # list_of_exploded_files
-    log.info(f"Merge explode infos")
-    log.debug(f"Merge explode infos files: {list_of_exploded_files}")
-    query_explode = f""" SELECT * FROM read_parquet({list_of_exploded_files}) """
-    query_explode_output = output_file
-    remove_if_exists([query_explode_output,query_explode_output+".hdr"])
+    # Query to copy file
+    query = f"""
+        COPY ({source})
+        TO '{output_file}.tmp.translation.variants.vcf.gz' WITH (FORMAT CSV, COMPRESSION GZIP, DELIMITER '\t', QUOTE '')
+    """
+    
+    # Copy file
+    res = conn.query(query)
+    del res
+    gc.collect()
 
-    parquet_explode.export_output(output_file=query_explode_output, query=query_explode, export_header=True)
+    # Cllose connexion
+    conn.close()
 
-    # Clear
-    for file in list_of_exploded_files:
-        remove_if_exists([file,file+".hdr"])
+    # BCFTools to reheader sort normalize
+    if partitioning:
+        log.info("VCF Sorting and Normalization by chromosomes...")
+        command = f"zcat {output_file}.tmp.translation.header.vcf.gz > {output_file}.tmp.split.vcf; "
+        for chrom in chrom_list_fixed:
+            command += f"zcat {output_file}.tmp.translation.header.vcf.gz > {output_file}.tmp.translation.{chrom}.vcf; "
+            command += f"zcat {output_file}.tmp.translation.variants.vcf.gz | grep -P '{chrom}\t' >> {output_file}.tmp.translation.{chrom}.vcf; "
+            command += f"{bcftools} sort --max-mem={maxmem} {output_file}.tmp.translation.{chrom}.vcf 2>{output_file}.tmp.err | {bcftools} norm --threads={threads} --check-ref s -f {genome} 2>{output_file}.tmp.err | {bcftools} view -H 2>{output_file}.tmp.err >> {output_file}.tmp.split.vcf 2>{output_file}.tmp.err;  "
+            
+        command += f"{bcftools} view {output_file}.tmp.split.vcf -Oz -o {output_file} ; "
+        log.debug("bcftools command: " + command)
+        subprocess.run(command, shell=True)
 
-    df = parquet_input.get_query_to_df(f"SELECT * FROM '{query_explode_output}' LIMIT 10 ")
-    log.debug(df)
+    else:
+        log.info("VCF Sorting and Normalization...")
+        command = f"""zcat {output_file}.tmp.translation.header.vcf.gz {output_file}.tmp.translation.variants.vcf.gz 2>{output_file}.tmp.err | {bcftools} sort --max-mem={maxmem} 2>{output_file}.tmp.err | {bcftools} norm --threads={threads} --check-ref s -f {genome} -Oz -o {output_file} 2>{output_file}.tmp.err """
+        log.debug("bcftools command: " + command)
+        subprocess.run(command, shell=True)
 
+    # Clean
+    clean_command = f""" rm -rf {output_file}.tmp.* {output_file_parquet}.tmp.* """
+    subprocess.run(clean_command, shell=True)
 

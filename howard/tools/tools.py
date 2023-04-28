@@ -141,6 +141,12 @@ arguments = {
             "metavar": "PREFIX",
             "default": "INFO/"
         },
+        "reduce_memory": {
+            "help": """Reduce memory option\n"""
+                    """default: False""",
+            "action": "store_true",
+            "default": False
+        },
         "show_calculations": {
             "help": """Show available calculation operations\n""",
             "action": "store_true"
@@ -482,6 +488,9 @@ commands_arguments = {
                 "to_parquet": False,
                 #"export_infos": False,
                 #"export_infos_prefix": False,
+            },
+            "Resources": {
+                "reduce_memory": False,
             }
         }
     }
