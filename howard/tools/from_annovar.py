@@ -20,6 +20,10 @@ import sys
 from functools import partial
 import itertools
 
+import pyarrow as pa
+import pyarrow.parquet as pq
+import pyarrow.csv as csv
+
 
 from howard.objects.variants import Variants
 from howard.objects.annotation import Annotation
@@ -49,6 +53,7 @@ TYPES = {
     "float64": "Float",
     "object": "String"
 }
+
 
 
 def from_annovar(args) -> None:
@@ -86,7 +91,7 @@ def from_annovar(args) -> None:
     threads = config.get("threads", None)
 
     # Threads
-    memory_limit = config.get("memory_limit", None)
+    memory = config.get("memory", None)
 
     # BCFTools
     bcftools = config.get("bcftools", "bcftools")
@@ -150,7 +155,7 @@ def from_annovar(args) -> None:
 
     # Annovar to VCF
     log.info(f"Annovar to VCF and Parquet...")
-    annovar_to_vcf(input_file=input_file, output_file=output_file, output_file_parquet=output_file_parquet, annotations=None, header_file=None, database_name=annovar_code, bcftools=bcftools, genome=genome_file, threads=threads, maxmem=memory_limit, remove_annotations=["ID"], reduce_memory=reduce_memory)
+    annovar_to_vcf(input_file=input_file, output_file=output_file, output_file_parquet=output_file_parquet, annotations=None, header_file=None, database_name=annovar_code, bcftools=bcftools, genome=genome_file, threads=threads, maxmem=memory, remove_annotations=["ID"], reduce_memory=reduce_memory)
 
     # Header VCF hdr
     log.info(f"VCF Extract header hdr for VCF...")
@@ -367,12 +372,6 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
     column_types = df.dtypes
 
     # Dictionnary to mapper data types from pandas to SQL
-    sql_types = {
-        'int64': 'INTEGER',
-        'float64': 'FLOAT',
-        'object': 'STRING',
-    }
-
     sql_types_forces = {
         "#CHROM": "STRING",
         "POS": "INTEGER",
@@ -387,13 +386,9 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
             dtype_final[column] = sql_types_forces.get(column,None)
         else:
             dtype_final[column] = "STRING"
-        # else:
-        #     dtype_final[column] = sql_types.get(str(column_types[column]),'STRING')
 
     # column type to VCF type
     vcf_types = {col: TYPES[str(column_types[col])] for col in column_types.index}
-
-
 
     # check chromosomes
 
@@ -468,7 +463,7 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
 
         # Log
         log.debug("List of original chromosomes: " + str(chrom_list_original))
-        log.debug("List of chromosomes: " + str(chrom_list_fixed))
+        log.debug("List of fixed chromosomes: " + str(chrom_list_fixed))
 
     # Write VCF header
 
@@ -513,7 +508,7 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
 
     # Columns struct
     columns_struct = {k: v for k, v in zip(header, dtype_duckdb)}
-
+    
     # Create connexion
     if reduce_memory:
         log.info("""Reducing memory mode""")
@@ -527,6 +522,7 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
     if maxmem_connexion:
         duckdb_config["memory_limit"] = maxmem_connexion
 
+    # Connexion
     conn = duckdb.connect(connexion_type, config=duckdb_config)
     delimiter = '\t'
 
@@ -535,10 +531,29 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
     log.debug(f"""duckDB Config: {duckdb_config}""")
 
     # Create view of input file
-    query = f""" CREATE VIEW annovar AS SELECT * FROM read_csv_auto('{input_file}', delim='{delimiter}', columns={columns_struct}, names={header}, dtypes={dtype_duckdb}, quote=None, nullstr='.', parallel=True, skip={nb_header_line}) """
+    if reduce_memory:
+
+        # Log
+        log.debug(f"Create View From TSV to Parquet")
+            
+        # Create Parquet file from TSV
+        tsv_to_parquet(input_file, f'{output_file}.tmp.annovar.parquet', delim=delimiter, columns=columns_struct, quote=None, nullstr='.', skip=nb_header_line)
+
+        # Query Create view
+        query = f""" CREATE VIEW annovar AS SELECT * FROM '{output_file}.tmp.annovar.parquet' """
+
+    else:
+
+        # Log
+        log.debug(f"Create View From TSV")
+
+        # Create view of input file
+        query = f""" CREATE VIEW annovar AS SELECT * FROM read_csv_auto('{input_file}', delim='{delimiter}', columns={columns_struct}, names={header}, dtypes={dtype_duckdb}, quote=None, nullstr='.', parallel=True, skip={nb_header_line}) """
+    
     conn.execute(query)
 
     # Check existing columns
+    log.debug(f"Check existing columns")
     query = """ SELECT * FROM annovar LIMIT 0  """
     columns = conn.execute(query).df().columns.tolist()
 
@@ -562,39 +577,30 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
 
     # Prepare queries - other columns
     any_value_list = []
-    explode_info_list = []
+    # explode_info_list = []
+    nb_annotation_column = 0
     for column in columns:
         if column not in ["#CHROM", "POS", "REF", "ALT", "ID"]:
+            nb_annotation_column += 1
             any_value_list.append(f""" 
                 CASE WHEN STRING_AGG(DISTINCT "{column}") IS NULL THEN '' ELSE '{column}=' || REPLACE(STRING_AGG(DISTINCT "{column}"),';',',') || ';' END
             """)
-            explode_info_list.append(f"""
-                CASE WHEN STRING_AGG(DISTINCT "{column}") IS NULL THEN NULL ELSE STRING_AGG(DISTINCT "{column}") END
-                AS "INFO/{column}"
-                """)
+            # explode_info_list.append(f"""
+            #     CASE WHEN STRING_AGG(DISTINCT "{column}") IS NULL THEN NULL ELSE STRING_AGG(DISTINCT "{column}") END
+            #     AS "INFO/{column}"
+            #     """)
 
     # Join to create INFO column
     any_value_sql = " || ".join(any_value_list)
     # Remove last caracter ';'
     any_value_sql = f""" SUBSTR({any_value_sql}, 1, LENGTH({any_value_sql}) - 1) """
     # Join INFO columns
-    explode_info_sql = " , ".join(explode_info_list)
+    # explode_info_sql = " , ".join(explode_info_list)
 
     # Create parquet table/view
     log.info("Formatting VCF and Parquet...")
 
     if reduce_memory:
-
-        # Query to select columns
-        query_select_parquet = f"""
-            SELECT
-                {main_columns}
-                {any_value_sql} AS "INFO",
-                {explode_info_sql}
-            FROM annovar
-            WHERE "#CHROM" = ?
-            GROUP BY "#CHROM", "POS", "REF", "ALT" 
-        """
 
         # Check list of chromosome
         log.debug("Check chromosomes...")
@@ -604,22 +610,81 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
         else:
             chrom_list = chrom_list_original
 
-        # Log
-        log.debug("CREATE table parquet...")
-
-        # Query creation table
-        query_parquet = f""" CREATE TABLE parquet AS ({query_select_parquet} LIMIT 0) """
-        res = conn.execute(query_parquet,[chrom_list[0]])
-        del res
-        gc.collect()
+        # Window calculation
+        window_base = 100000000
+        window = round( window_base / nb_annotation_column )
 
         # Insert formatted variants
         for chrom in chrom_list:
-            log.debug(f"INSERT Chromosome {chrom}...")
-            query_parquet = f""" INSERT INTO parquet ({query_select_parquet}) """
-            res = conn.execute(query_parquet, [chrom])
-            del res
-            gc.collect()
+
+            log.info(f"Formatting VCF and Parquet - Chromosome '{chrom}'")
+
+            # max pos
+            query_min_max_pos = f"""
+                SELECT min("POS") AS 'min_pos', max("POS") AS 'max_pos'
+                FROM annovar
+                WHERE "#CHROM" = '{chrom}'
+            """
+            min_max_pos_df = conn.execute(query_min_max_pos).df()
+            min_pos = min_max_pos_df["min_pos"][0]
+            max_pos = min_max_pos_df["max_pos"][0]
+
+            start = min_pos - 1
+            stop = start + window
+
+            # If no variants
+            if pd.isna(min_pos):
+                continue
+
+            while True:
+
+                # Log
+                log.info(f"Formatting VCF and Parquet - Chromosome '{chrom}' - Range {start}-{stop}...")
+
+                # If out of bound
+                if start > max_pos or max_pos == 0:
+                    break
+
+                # Parquet File
+                #log.info(f"Formatting VCF and Parquet - Chromosome '{chrom}' - Exporting...")
+                log.debug(f"Create parquet file for chromosome '{chrom}' range {start}-{stop}...")
+                query_select_parquet = f"""
+                    COPY
+                        (SELECT *
+                        FROM annovar
+                        WHERE "#CHROM" = '{chrom}'
+                        AND POS > {start} AND POS <= {stop}
+                        )
+                    TO '{output_file}.tmp.chrom.parquet' WITH (FORMAT PARQUET)
+                """
+                res = conn.execute(query_select_parquet)
+                start = start + window
+                stop = start + window
+
+                # Formatted Parquet file
+                #log.info(f"Formatting VCF and Parquet - Chromosome '{chrom}' - Formatting...")
+                log.debug(f"Create formatted parquet file for chromosome '{chrom}' range {start}-{stop}...")
+                query_select_parquet = f"""
+                    COPY
+                        (SELECT
+                        {main_columns}
+                        {any_value_sql} AS "INFO"
+                    FROM '{output_file}.tmp.chrom.parquet'
+                    GROUP BY "#CHROM", "POS", "REF", "ALT")
+                    TO '{output_file}.tmp.chrom.{chrom}.start.{start}.stop.{stop}.parquet' WITH (FORMAT PARQUET)
+                """
+                res = conn.execute(query_select_parquet)
+                count_insert = res.df()["Count"][0] 
+                log.debug(f"Create formatted parquet file for chromosome '{chrom}' range {start}-{stop}... {count_insert} variants")
+                del res
+                gc.collect()
+
+        # Query creation table
+        query_parquet = f""" CREATE TABLE parquet AS (SELECT * FROM parquet_scan('{output_file}.tmp.chrom.*.start.*.stop.*.parquet')) """
+        res = conn.execute(query_parquet)
+        del res
+        gc.collect()
+
 
     else:
 
@@ -627,8 +692,7 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
         query_select_parquet = f"""
             SELECT
                 {main_columns}
-                {any_value_sql} AS "INFO",
-                {explode_info_sql}
+                {any_value_sql} AS "INFO"
             FROM annovar
             GROUP BY "#CHROM", "POS", "REF", "ALT" 
         """
@@ -660,27 +724,6 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
     del res
     gc.collect()
 
-    # Export Parquet
-    if output_file_parquet:
-
-        # Log
-        log.info("Exporting Parquet...")
-
-        # Check source
-        source = """ SELECT * FROM parquet """
-
-        # Query to copy file
-        query_parquet = f"""
-            COPY ({source})
-            TO '{output_file_parquet}' WITH (FORMAT PARQUET)
-        """
-
-        # Copy file
-        res = conn.execute(query_parquet)
-        del res
-        gc.collect()
-
-
     # Close connexion
     log.debug("Close connexion...")
     conn.close()
@@ -688,19 +731,36 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
     # BCFTools to reheader sort normalize
     log.info("Normalizing VCF...")
 
-    if reduce_memory:
+    if reduce_memory and False:
 
         # Log
         log.debug("VCF Sorting and Normalization by chromosomes...")
 
-        # Command
+        # # Command
+        # command = f"zcat {output_file}.tmp.translation.header.vcf.gz > {output_file}.tmp.split.vcf; "
+        # for chrom in chrom_list_fixed:
+        #     command += f"zcat {output_file}.tmp.translation.header.vcf.gz > {output_file}.tmp.translation.{chrom}.vcf; "
+        #     command += f"zcat {output_file}.tmp.translation.variants.vcf.gz | grep -P '{chrom}\t' >> {output_file}.tmp.translation.{chrom}.vcf; "
+        #     command += f"{bcftools} sort --max-mem={maxmem} {output_file}.tmp.translation.{chrom}.vcf 2>{output_file}.tmp.err | {bcftools} norm --threads={threads} --check-ref s -f {genome} 2>{output_file}.tmp.err | {bcftools} view --threads={threads} -H 2>{output_file}.tmp.err >> {output_file}.tmp.split.vcf 2>{output_file}.tmp.err;  "
+        #     #command += f"{bcftools} sort --max-mem={maxmem} {output_file}.tmp.translation.{chrom}.vcf | {bcftools} norm --threads={threads} --check-ref s -f {genome} | {bcftools} view --threads={threads} -H >> {output_file}.tmp.split.vcf ;  "
+            
+        # command += f"{bcftools} view --threads={threads} {output_file}.tmp.split.vcf -Oz -o {output_file} ; "
+
+        # Command header
         command = f"zcat {output_file}.tmp.translation.header.vcf.gz > {output_file}.tmp.split.vcf; "
+        subprocess.run(command, shell=True)
+
+        # Command by chromosome
         for chrom in chrom_list_fixed:
-            command += f"zcat {output_file}.tmp.translation.header.vcf.gz > {output_file}.tmp.translation.{chrom}.vcf; "
+            log.info(f"Normalizing VCF - Chromosome '{chrom}'...")
+            command = f"zcat {output_file}.tmp.translation.header.vcf.gz > {output_file}.tmp.translation.{chrom}.vcf; "
             command += f"zcat {output_file}.tmp.translation.variants.vcf.gz | grep -P '{chrom}\t' >> {output_file}.tmp.translation.{chrom}.vcf; "
             command += f"{bcftools} sort --max-mem={maxmem} {output_file}.tmp.translation.{chrom}.vcf 2>{output_file}.tmp.err | {bcftools} norm --threads={threads} --check-ref s -f {genome} 2>{output_file}.tmp.err | {bcftools} view --threads={threads} -H 2>{output_file}.tmp.err >> {output_file}.tmp.split.vcf 2>{output_file}.tmp.err;  "
+            subprocess.run(command, shell=True)
             
-        command += f"{bcftools} view --threads={threads} {output_file}.tmp.split.vcf -Oz -o {output_file} ; "
+        # Command compression
+        command = f"{bcftools} view --threads={threads} {output_file}.tmp.split.vcf -Oz -o {output_file} ; "
+        subprocess.run(command, shell=True)
 
         # Log
         log.debug("bcftools command: " + command)
@@ -722,7 +782,182 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
         # Run
         subprocess.run(command, shell=True)
 
+
+    # Export Parquet
+    if output_file_parquet:
+
+        # Log
+        log.info("Exporting Parquet...")
+
+        # Check source
+        parquet_info_explode(input_file=output_file, output_file=output_file_parquet, threads=threads, reduce_memory=reduce_memory)
+
+
     # Clean
     clean_command = f""" rm -rf {output_file}.tmp.* {output_file_parquet}.tmp.* """
     subprocess.run(clean_command, shell=True)
+
+
+
+def parquet_info_explode(input_file:str, output_file:str, threads:int = 1, reduce_memory:bool = False) -> None:
+    """
+    This function takes a parquet file, splits it by chromosome, explodes the INFO column, and then
+    merges the exploded files back together.
+    
+    :param input_file: The path to the input file, which can be either a TSV or VCF file
+    :type input_file: str
+    :param output_file: The name of the output file in Parquet format after exploding the input file
+    :type output_file: str
+    :param threads: The number of threads to use for processing the parquet file, defaults to 1
+    :type threads: int (optional)
+    :param reduce_memory: The `reduce_memory` parameter is a boolean flag that determines whether or not
+    to use memory reduction techniques during the execution of the function. If set to `True`, the
+    function will attempt to reduce memory usage during the execution, which may result in slower
+    performance but lower memory usage. If set to `, defaults to False
+    :type reduce_memory: bool (optional)
+    """
+
+    # Config
+    config_ro = {
+        "access": "RO",
+        "threads": threads
+    }
+    config_threads = {
+        "threads": threads
+    }
+    param_explode = {
+        "explode_infos": True,
+        "export_extra_infos": True
+    }
+
+    if reduce_memory:
+
+        # List of exploded parquet files
+        list_of_exploded_files = []
+
+        # Create 
+        parquet_input = Variants(input=input_file, config=config_ro)
+        parquet_chromosomes = parquet_input.get_query_to_df(query=f""" SELECT "#CHROM" FROM read_csv('{input_file}',AUTO_DETECT=TRUE) WHERE "#CHROM" NOT NULL GROUP BY "#CHROM" """)
+
+        for chrom in parquet_chromosomes["#CHROM"]:
+            
+            # Split Chrom
+            query_chrom = f""" SELECT * FROM read_csv('{input_file}',AUTO_DETECT=TRUE) WHERE "#CHROM"='{chrom}'  """
+            query_chrom_output = f"{output_file}.{chrom}.parquet"
+            query_chrom_explode_output = f"{output_file}.{chrom}.explode.parquet"
+
+            # Log
+            log.info(f"Explode infos chromosome {chrom}")
+
+            # Extract
+            log.debug(f"Extract chromosome {chrom}: {query_chrom_explode_output}")
+            remove_if_exists([query_chrom_output,query_chrom_output+".hdr"])
+            parquet_input.export_output(output_file=query_chrom_output, query=query_chrom, export_header=True)
+            
+            # Explode
+            log.debug(f"Explode infos for chromosome {chrom}: {query_chrom_explode_output}")
+            list_of_exploded_files.append(query_chrom_explode_output)
+            parquet_explode = Variants(input=query_chrom_output, output=query_chrom_explode_output, config=config_threads, param=param_explode)
+            parquet_explode.load_data()
+            remove_if_exists([query_chrom_explode_output,query_chrom_explode_output+".hdr"])
+            parquet_explode.export_output()
+            remove_if_exists([query_chrom_output,query_chrom_output+".hdr"])
+
+        # list_of_exploded_files
+        log.info(f"Merge explode infos")
+        log.debug(f"Merge explode infos files: {list_of_exploded_files}")
+        query_explode = f""" SELECT * FROM read_parquet({list_of_exploded_files}) """
+        query_explode_output = output_file
+        remove_if_exists([query_explode_output,query_explode_output+".hdr"])
+        parquet_explode.export_output(output_file=query_explode_output, query=query_explode, export_header=True)
+
+        # Clear
+        for file in list_of_exploded_files:
+            remove_if_exists([file,file+".hdr"])
+
+    else:
+
+        # Create 
+        parquet_explode = Variants(input=input_file, output=output_file, config=config_threads, param=param_explode)
+        parquet_explode.load_data()
+        parquet_explode.export_output()
+
+    # Check
+    # df = parquet_input.get_query_to_df(f"SELECT * FROM '{query_explode_output}' LIMIT 10 ")
+    # log.debug(df)
+
+
+def tsv_to_parquet(tsv:str, parquet:str, delim:str = None, columns:dict = None, quote:str = None, nullstr:str = None, skip:int = None) -> None:
+    """
+    The function converts a TSV file to a Parquet file with customizable options.
+    
+    :param tsv: The path to the TSV file that needs to be converted to Parquet format
+    :type tsv: str
+    :param parquet: `parquet` is the file path and name of the output Parquet file that will be created
+    by the function
+    :type parquet: str
+    :param delim: The delimiter used in the TSV file to separate columns. If not specified, the default
+    delimiter (tab) will be used
+    :type delim: str
+    :param columns: The `columns` parameter is a dictionary that maps column names to their data types.
+    It is used to specify the schema of the resulting Parquet file. For example, if the input TSV file
+    has columns "name", "age", and "salary", and we want "name" to be
+    :type columns: dict
+    :param quote: The `quote` parameter is an optional parameter that specifies the character used to
+    quote fields in the TSV file. If not specified, the default quote character is double quotes (")
+    :type quote: str
+    :param nullstr: The `nullstr` parameter is used to specify the string that represents null values in
+    the input TSV file. This parameter is used to correctly interpret and convert null values in the TSV
+    file to null values in the resulting Parquet file. For example, if the null value in the TSV
+    :type nullstr: str
+    :param skip: The `skip` parameter is an optional integer parameter that specifies the number of rows
+    to skip at the beginning of the TSV file. This is useful if the TSV file has a header row that
+    should not be included in the resulting Parquet file. If `skip` is not specified, no
+    :type skip: int
+    """
+
+    # Create Schema dict
+    columns_pyarrow_dict = []
+    for col in columns:
+        if columns[col] in ["STRING"]:
+            columns_pyarrow_dict.append((col,pa.string()))
+        elif columns[col] in ["INTEGER"]:
+            columns_pyarrow_dict.append((col,pa.int64()))
+        elif columns[col] in ["FLOAT"]:
+            columns_pyarrow_dict.append((col,pa.float64()))
+
+    # Create Schema
+    schema = pa.schema(columns_pyarrow_dict)
+
+    # CSV options
+    convert_options = csv.ConvertOptions()
+    read_options = csv.ReadOptions()
+    parse_options = csv.ParseOptions()
+
+    # Parameters to VCS options
+    convert_options.auto_dict_encode = False
+    if delim:
+        parse_options.delimiter = delim
+    if columns:
+        convert_options.column_types = schema
+        read_options.column_names = list(columns.keys())
+    if quote:
+        parse_options.quote_char = quote
+    if nullstr:
+        convert_options.null_values = nullstr
+        convert_options.strings_can_be_null = True
+    if skip:
+        read_options.skip_rows = skip
+
+    # Read CSV and Write to Parquet
+    writer = None
+    with csv.open_csv(tsv, convert_options=convert_options, read_options=read_options, parse_options=parse_options) as reader:
+        for next_chunk in reader:
+            if next_chunk is None:
+                break
+            if writer is None:
+                writer = pq.ParquetWriter(parquet, next_chunk.schema)
+            next_table = pa.Table.from_batches([next_chunk])
+            writer.write_table(next_table)
+    writer.close()
 

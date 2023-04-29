@@ -84,7 +84,7 @@ def main() -> None:
 
     # Verbosity
     # Default
-    args.verbosity = "info"
+    #args.verbosity = "info"
     # Quiet
     if "quiet" in args and args.quiet:
         args.verbosity = "warning"
@@ -104,6 +104,11 @@ def main() -> None:
     else:
         threads = 1
 
+    if "memory" in args and args.memory:
+        memory = args.memory
+    else:
+        memory = "8G"
+
     # Load configuration in JSON format
     if "config" in args:
         if os.path.exists(args.config):
@@ -117,6 +122,7 @@ def main() -> None:
     # add to config
     config["verbosity"] = args.verbosity
     config["threads"] = threads
+    config["memory"] = memory
 
 
     # Change config
