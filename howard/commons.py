@@ -90,6 +90,7 @@ def set_log_level(verbosity: str) -> str:
 
     :param verbosity: The level of verbosity
     """
+    verbosity = verbosity.lower()
     configs = {
         "debug": log.DEBUG,
         "info": log.INFO,

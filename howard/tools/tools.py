@@ -263,15 +263,21 @@ arguments = {
         },
         "threads": {
             "metavar": "INTEGER",
-            "help": "Number of threads (replace config)",
+            "help": "Number of threads to use\nFormat: INTEGER\nDefault: 1",
             "required": False,
-            "default": None
+            "default": 1
+        },
+        "memory": {
+            "metavar": "FLOAT[kMG]",
+            "help": "Memory to use\nFormat: FLOAT[kMG]\nDefault: 8G",
+            "required": False,
+            "default": "8G"
         },
         "verbosity": {
             "metavar": "LEVEL",
             "help": "Verbosity level (CRITICAL, ERROR, WARNING, INFO, DEBUG or NOTSET)\nDefault: INFO",
             "required": False,
-            "default": "warning"
+            "default": "info"
         },
         "quiet": {
             "help": argparse.SUPPRESS,
@@ -311,7 +317,7 @@ arguments = {
 
 
 # Shared arguments
-shared_arguments = ["config", "threads", "verbosity", "quiet", "verbose", "debug"]
+shared_arguments = ["config", "threads", "memory", "verbosity", "quiet", "verbose", "debug"]
 
 # Command dict
 commands_arguments = {
