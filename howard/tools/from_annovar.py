@@ -367,7 +367,8 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
 
     # Check format VCF readable
     #nrows = 100000
-    nrows_sampling = 10000000
+    log.debug("Check input file struct...")
+    nrows_sampling = 1000000
     try:
         df = pd.read_csv(input_file, delimiter='\t', nrows=nrows_sampling, na_values=['.'], header=nb_header_line, names=header, dtype=dtype)
     except:
@@ -547,6 +548,8 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
             if chrom_fixed in genome_chrom:
                 chrom_list_fixed.append(chrom_fixed)
 
+        chrom_list_map = {k: v for k, v in zip(chrom_list_original, chrom_list_fixed)}
+
         # Log
         log.debug("List of original chromosomes: " + str(chrom_list_original))
         log.debug("List of fixed chromosomes: " + str(chrom_list_fixed))
@@ -674,7 +677,7 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
     else:
         query_group_by = ""
 
-    if reduce_memory:
+    if reduce_memory and multi_variant:
 
         # Check list of chromosome
         log.debug("Check chromosomes...")
@@ -697,21 +700,13 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
             log.info(f"Formatting VCF and Parquet - Chromosome '{chrom}'...")
 
             # max pos
-            query_min_max_pos = f"""
-                SELECT min("POS") AS 'min_pos', max("POS") AS 'max_pos'
-                FROM annovar
-                WHERE "#CHROM" = '{chrom}'
-            """
-            min_max_pos_df = conn.execute(query_min_max_pos).df()
-            min_pos = min_max_pos_df["min_pos"][0]
-            max_pos = min_max_pos_df["max_pos"][0]
+            log.debug(f"Formatting VCF and Parquet - Chromosome '{chrom}' - Check range...")
+
+            min_pos = 0
+            max_pos = genome_chrom_length.get(chrom_list_map.get(chrom,0))
 
             start = min_pos - 1
             stop = start + window
-
-            # If no variants
-            if pd.isna(min_pos):
-                continue
 
             while True:
 
@@ -727,10 +722,11 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
                 log.debug(f"Create parquet file for chromosome '{chrom}' range {start}-{stop}...")
                 query_select_parquet = f"""
                     COPY
-                        (SELECT *
-                        FROM annovar
-                        WHERE "#CHROM" = '{chrom}'
-                        AND POS > {start} AND POS <= {stop}
+                        (
+                            SELECT *
+                            FROM annovar
+                            WHERE "#CHROM" = '{chrom}'
+                            AND POS > {start} AND POS <= {stop}
                         )
                     TO '{output_file}.tmp.chrom.parquet' WITH (FORMAT PARQUET)
                 """

@@ -302,27 +302,6 @@ arguments = {
 
     }
 
-   # analysis_parser.add_argument(
-    #     "--overview", "--overview_header",
-    #     help="Overview after loading data",
-    #     action="store_true"
-    # )
-    # analysis_parser.add_argument(
-    #     "--overview_footer",
-    #     help="Overview before data processing",
-    #     action="store_true"
-    # )
-    # analysis_parser.add_argument(
-    #     "--stats", "--stats_header",
-    #     help="Statistics after loading data",
-    #     action="store_true"
-    # )
-    # analysis_parser.add_argument(
-    #     "--stats_footer",
-    #     help="Statistics before data processing",
-    #     action="store_true"
-    # )
-
 
 # Shared arguments
 shared_arguments = ["config", "threads", "memory", "verbosity", "quiet", "verbose", "debug"]
