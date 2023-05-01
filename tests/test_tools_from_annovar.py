@@ -57,7 +57,8 @@ def test_from_annovar():
         annovar_code = annovar_code,
         to_parquet = output_parquet,
         threads = "2",
-        reduce_memory = False,
+        reduce_memory = "disable",
+        multi_variant = "disable",
         config = config
     )
 
@@ -102,7 +103,8 @@ def test_from_annovar_reduce_memory():
         annovar_code = annovar_code,
         to_parquet = output_parquet,
         threads = "2",
-        reduce_memory = True,
+        reduce_memory = "enable",
+        multi_variant = "disable",
         config = config
     )
 

@@ -35,10 +35,10 @@ from howard.commons import *
 # time howard from_annovar --input=/databases/annovar/current/hg19_cosmic70.txt --output=/databases/annotations/current/hg19/cosmic.vcf.gz --to_parquet=/databases/annotations/current/hg19/cosmic.parquet --annovar-code=cosmic --genome=/databases/genomes/current/hg19.fa --config=/tool/config/config.json --threads=8 
 # time howard from_annovar --input=/databases/annovar/current/hg19_clinvar_20221231.txt --output=/databases/annotations/current/hg19/clinvar.vcf.gz --to_parquet=/databases/annotations/current/hg19/clinvar.parquet --annovar-code=clinvar --genome=/databases/genomes/current/hg19.fa --config=/tool/config/config.json --threads=8 
 
-# time howard from_annovar --input=/databases/annovar/current/hg19_gnomad211_exome.txt --output=/databases/annotations/current/hg19/gnomad_exome.vcf.gz --to_parquet=/databases/annotations/current/hg19/gnomad_exome.parquet --annovar-code=gnomad_exome --genome=/databases/genomes/current/hg19.fa --config=/tool/config/config.json --threads=12 --reduce_memory
+# time howard from_annovar --input=/databases/annovar/current/hg19_gnomad211_exome.txt --output=/databases/annotations/current/hg19/gnomad_exome.vcf.gz --to_parquet=/databases/annotations/current/hg19/gnomad_exome.parquet --annovar-code=gnomad_exome --genome=/databases/genomes/current/hg19.fa --config=/tool/config/config.json --threads=12 --memory=8G
 
-# time howard from_annovar --input=/databases/annovar/current/hg19_dbnsfp42a.txt --output=/databases/annotations/current/hg19/dbnsfp.vcf.gz --to_parquet=/databases/annotations/current/hg19/dbnsfp.parquet --annovar-code=dbnsfp --genome=/databases/genomes/current/hg19.fa --config=/tool/config/config.json --threads=12  --reduce_memory
-# time howard from_annovar --input=/databases/annovar/current/hg19_avsnp150.txt --output=/databases/annotations/current/hg19/avsnp150.vcf.gz --to_parquet=/databases/annotations/current/hg19/avsnp150.parquet --annovar-code=avsnp150 --genome=/databases/genomes/current/hg19.fa --config=/tool/config/config.json --threads=12 --reduce_memory
+# time howard from_annovar --input=/databases/annovar/current/hg19_dbnsfp42a.txt --output=/databases/annotations/current/hg19/dbnsfp.vcf.gz --to_parquet=/databases/annotations/current/hg19/dbnsfp.parquet --annovar-code=dbnsfp --genome=/databases/genomes/current/hg19.fa --config=/tool/config/config.json --threads=12 --memory=40G --multi_variant=disable --reduce_memory=enable
+# time howard from_annovar --input=/databases/annovar/current/hg19_avsnp150.txt --output=/databases/annotations/current/hg19/avsnp150.vcf.gz --to_parquet=/databases/annotations/current/hg19/avsnp150.parquet --annovar-code=avsnp150 --genome=/databases/genomes/current/hg19.fa --config=/tool/config/config.json --threads=12 --memory=40G 
 
 
 # time howard from_annovar --input=/tmp/nci60.txt --output=/tmp/nci60.vcf.gz --to_parquet=/tmp/nci60.parquet --annovar-code=nci60 --genome=/databases/genomes/current/hg19.fa --config=/tool/config/config.json --threads=8
@@ -81,7 +81,10 @@ def from_annovar(args) -> None:
     # # Export Infos Prefix
     # export_infos_prefix = args.export_infos_prefix
 
-    # Export Infos Prefix
+    # Multi Variant
+    multi_variant = args.multi_variant
+
+    # Reduce memory
     reduce_memory = args.reduce_memory
 
     # config
@@ -145,6 +148,8 @@ def from_annovar(args) -> None:
     # Log
     log.info(f"Input Annovar database: {input_file}")
     log.info(f"Output VCF database: {output_file}")
+    if output_file_parquet:
+        log.info(f"Output Parquet database: {output_file_parquet}")
     log.info(f"Database name: {annovar_code}")
 
     # Make output folder
@@ -155,7 +160,7 @@ def from_annovar(args) -> None:
 
     # Annovar to VCF
     log.info(f"Annovar to VCF and Parquet...")
-    annovar_to_vcf(input_file=input_file, output_file=output_file, output_file_parquet=output_file_parquet, annotations=None, header_file=None, database_name=annovar_code, bcftools=bcftools, genome=genome_file, threads=threads, maxmem=memory, remove_annotations=["ID"], reduce_memory=reduce_memory)
+    annovar_to_vcf(input_file=input_file, output_file=output_file, output_file_parquet=output_file_parquet, annotations=None, header_file=None, database_name=annovar_code, bcftools=bcftools, genome=genome_file, threads=threads, maxmem=memory, remove_annotations=["ID"], reduce_memory=reduce_memory, multi_variant=multi_variant)
 
     # Header VCF hdr
     log.info(f"VCF Extract header hdr for VCF...")
@@ -176,7 +181,7 @@ def from_annovar(args) -> None:
 
 
    
-def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = None, annotations:str = None, header_file:str = None, database_name:str = None, bcftools:str = "bcftools", genome:str = "hg19.fa", threads:int = None, maxmem:str = None, remove_annotations:list = [], reduce_memory:bool = False) -> None: 
+def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = None, annotations:str = None, header_file:str = None, database_name:str = None, bcftools:str = "bcftools", genome:str = "hg19.fa", threads:int = None, maxmem:str = None, remove_annotations:list = [], reduce_memory:bool = None, multi_variant:bool = None) -> None: 
     """
     This function converts an ANNOVAR file to a VCF file and optionally to a Parquet file, with various
     options for annotations, headers, databases, and memory usage.
@@ -218,6 +223,12 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
     memory-efficient algorithm, but this may result in slower performance. If set to False, the function
     will use a faster algorithm that may consume more, defaults to False
     :type reduce_memory: bool (optional)
+    :param multivariant: A boolean parameter that determines if input file contains multiple annotations
+    for each variant (position ref alt). If set to False, the function will attempt to reduce memory usage
+    a specific query without 'group by', for a more memory-efficient algorithm. If set to True, the function
+    will use a query using 'group by', which may consume more memory. I set to None, the function will
+    auto-detemine the parameter value with a sample of variants. Defaults to None (auto)
+    :type multivariant: bool (optional)
     """
     
     # Check input file
@@ -354,14 +365,89 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
             column_type = int
             dtype[h] = column_type
 
-
     # Check format VCF readable
+    #nrows = 100000
+    nrows_sampling = 10000000
     try:
-        df = pd.read_csv(input_file, delimiter='\t', nrows=100000, na_values=['.'], header=nb_header_line, names=header, dtype=dtype)
+        df = pd.read_csv(input_file, delimiter='\t', nrows=nrows_sampling, na_values=['.'], header=nb_header_line, names=header, dtype=dtype)
     except:
         log.error("format not supported")
         raise ValueError("format not supported")
     
+    # Check multi variant (multiple annotation on same variant CHROM, POS REF, ALT)
+    query_multi_variant = """
+        SELECT "#CHROM", "POS", "REF", "ALT", count(*) AS count
+        FROM df
+        GROUP BY "#CHROM", "POS", "REF", "ALT"
+        ORDER BY "count" DESC
+    """
+    query_multi_variant_connexion = duckdb.connect(":memory:")
+    res_multi_variant = query_multi_variant_connexion.query(query_multi_variant)
+                   
+    # Check Multi Variant
+    if multi_variant is None or multi_variant.lower() == "auto":
+        if res_multi_variant.df()["count"][0] > 1:
+            multi_variant = True
+            log.debug("""Multi Variant mode enabled: because some variant with multiple annotation lines""")
+        else:
+            multi_variant = False
+    elif multi_variant.lower().startswith("enable"):
+        multi_variant = True
+    elif multi_variant.lower().startswith("disable"):
+        multi_variant = False
+    else:
+        multi_variant = True
+
+    # Log
+    if multi_variant:
+        log.info("Multi Variant mode enabled")
+    else:
+        log.info("Multi Variant mode disabled")
+
+    # Check reduce memory
+    if reduce_memory is None or reduce_memory.lower() == "auto":
+        log.debug("""Reduce memory mode as None (Auto)""")
+        if multi_variant:
+            reduce_memory = True
+            log.debug("""Reduce memory mode enabled: because Multi Variant mode enabled""")
+        else:
+            # Check number of variants
+            if len(df) == nrows_sampling:
+                reduce_memory = True
+                log.debug(f"""Reduce memory mode enabled: because more than {nrows_sampling} variants""")
+            else:
+                reduce_memory = False
+    elif reduce_memory.lower().startswith("enable"):
+        reduce_memory = True
+    elif reduce_memory.lower().startswith("disable"):
+        reduce_memory = False
+    else:
+        reduce_memory = True
+
+    # Log
+    if reduce_memory:
+        log.info("""Reduce memory mode enabled""")
+    else:
+        log.info("""Reduce memory mode disabled""")
+    
+    # Create connexion
+    if reduce_memory:
+        #log.info("""Reduce memory mode enabled""")
+        connexion_type = f"{output_file}.tmp.duckdb"
+        remove_if_exists([connexion_type])
+    else:
+        #log.info("""Reduce memory mode disabled""")
+        connexion_type = ":memory:"
+    duckdb_config = {}
+    if threads_connexion:
+        duckdb_config["threads"] = threads_connexion
+    if maxmem_connexion:
+        duckdb_config["memory_limit"] = maxmem_connexion
+
+    # Connexion
+    conn = duckdb.connect(connexion_type, config=duckdb_config)
+    delimiter = '\t'
+
     # Recheck column type les types de chaque colonne
     for col in df.columns:
         if df[col].dtype == object:
@@ -508,30 +594,13 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
 
     # Columns struct
     columns_struct = {k: v for k, v in zip(header, dtype_duckdb)}
-    
-    # Create connexion
-    if reduce_memory:
-        log.info("""Reducing memory mode""")
-        connexion_type = f"{output_file}.tmp.duckdb"
-        remove_if_exists([connexion_type])
-    else:
-        connexion_type = ":memory:"
-    duckdb_config = {}
-    if threads_connexion:
-        duckdb_config["threads"] = threads_connexion
-    if maxmem_connexion:
-        duckdb_config["memory_limit"] = maxmem_connexion
-
-    # Connexion
-    conn = duckdb.connect(connexion_type, config=duckdb_config)
-    delimiter = '\t'
 
     # Log
     log.debug(f"""duckDB Connexion: {connexion_type}""")
     log.debug(f"""duckDB Config: {duckdb_config}""")
 
     # Create view of input file
-    if reduce_memory:
+    if reduce_memory and multi_variant:
 
         # Log
         log.debug(f"Create View From TSV to Parquet")
@@ -545,7 +614,7 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
     else:
 
         # Log
-        log.debug(f"Create View From TSV")
+        log.debug("Create View From TSV")
 
         # Create view of input file
         query = f""" CREATE VIEW annovar AS SELECT * FROM read_csv_auto('{input_file}', delim='{delimiter}', columns={columns_struct}, names={header}, dtypes={dtype_duckdb}, quote=None, nullstr='.', parallel=True, skip={nb_header_line}) """
@@ -553,7 +622,7 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
     conn.execute(query)
 
     # Check existing columns
-    log.debug(f"Check existing columns")
+    log.debug("Check existing columns")
     query = """ SELECT * FROM annovar LIMIT 0  """
     columns = conn.execute(query).df().columns.tolist()
 
@@ -577,28 +646,33 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
 
     # Prepare queries - other columns
     any_value_list = []
-    # explode_info_list = []
     nb_annotation_column = 0
     for column in columns:
         if column not in ["#CHROM", "POS", "REF", "ALT", "ID"]:
             nb_annotation_column += 1
-            any_value_list.append(f""" 
-                CASE WHEN STRING_AGG(DISTINCT "{column}") IS NULL THEN '' ELSE '{column}=' || REPLACE(STRING_AGG(DISTINCT "{column}"),';',',') || ';' END
-            """)
-            # explode_info_list.append(f"""
-            #     CASE WHEN STRING_AGG(DISTINCT "{column}") IS NULL THEN NULL ELSE STRING_AGG(DISTINCT "{column}") END
-            #     AS "INFO/{column}"
-            #     """)
+            if multi_variant:
+                any_value_list.append(f""" 
+                    CASE WHEN STRING_AGG(DISTINCT "{column}") IS NULL THEN '' ELSE '{column}=' || REPLACE(STRING_AGG(DISTINCT "{column}"),';',',') || ';' END
+                """)
+            else:
+                any_value_list.append(f""" 
+                    CASE WHEN "{column}" IS NULL THEN '' ELSE '{column}=' || REPLACE("{column}",';',',') || ';' END
+                """)
 
     # Join to create INFO column
     any_value_sql = " || ".join(any_value_list)
+
     # Remove last caracter ';'
     any_value_sql = f""" SUBSTR({any_value_sql}, 1, LENGTH({any_value_sql}) - 1) """
-    # Join INFO columns
-    # explode_info_sql = " , ".join(explode_info_list)
 
     # Create parquet table/view
     log.info("Formatting VCF and Parquet...")
+
+    # Multi Variant Group By
+    if multi_variant:
+        query_group_by = """ GROUP BY "#CHROM", "POS", "REF", "ALT" """
+    else:
+        query_group_by = ""
 
     if reduce_memory:
 
@@ -612,12 +686,15 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
 
         # Window calculation
         window_base = 100000000
-        window = round( window_base / nb_annotation_column )
+        if multi_variant:
+            window = round( window_base / nb_annotation_column )
+        else:
+            window = window_base
 
         # Insert formatted variants
         for chrom in chrom_list:
 
-            log.info(f"Formatting VCF and Parquet - Chromosome '{chrom}'")
+            log.info(f"Formatting VCF and Parquet - Chromosome '{chrom}'...")
 
             # max pos
             query_min_max_pos = f"""
@@ -639,7 +716,7 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
             while True:
 
                 # Log
-                log.info(f"Formatting VCF and Parquet - Chromosome '{chrom}' - Range {start}-{stop}...")
+                log.debug(f"Formatting VCF and Parquet - Chromosome '{chrom}' - Range {start}-{stop}...")
 
                 # If out of bound
                 if start > max_pos or max_pos == 0:
@@ -666,11 +743,13 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
                 log.debug(f"Create formatted parquet file for chromosome '{chrom}' range {start}-{stop}...")
                 query_select_parquet = f"""
                     COPY
-                        (SELECT
-                        {main_columns}
-                        {any_value_sql} AS "INFO"
-                    FROM '{output_file}.tmp.chrom.parquet'
-                    GROUP BY "#CHROM", "POS", "REF", "ALT")
+                        (
+                            SELECT
+                                {main_columns}
+                                {any_value_sql} AS "INFO"
+                            FROM '{output_file}.tmp.chrom.parquet'
+                            {query_group_by}
+                        )
                     TO '{output_file}.tmp.chrom.{chrom}.start.{start}.stop.{stop}.parquet' WITH (FORMAT PARQUET)
                 """
                 res = conn.execute(query_select_parquet)
@@ -694,7 +773,7 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
                 {main_columns}
                 {any_value_sql} AS "INFO"
             FROM annovar
-            GROUP BY "#CHROM", "POS", "REF", "ALT" 
+            {query_group_by} 
         """
 
         # Log
@@ -731,56 +810,17 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
     # BCFTools to reheader sort normalize
     log.info("Normalizing VCF...")
 
-    if reduce_memory and False:
+    # Log
+    log.debug("VCF Sorting and Normalization...")
 
-        # Log
-        log.debug("VCF Sorting and Normalization by chromosomes...")
+    # Command
+    command = f"""zcat {output_file}.tmp.translation.header.vcf.gz {output_file}.tmp.translation.variants.vcf.gz 2>{output_file}.tmp.err | {bcftools} sort --max-mem={maxmem} 2>{output_file}.tmp.err | {bcftools} norm --threads={threads} --check-ref s -f {genome} -Oz -o {output_file} 2>{output_file}.tmp.err """
 
-        # # Command
-        # command = f"zcat {output_file}.tmp.translation.header.vcf.gz > {output_file}.tmp.split.vcf; "
-        # for chrom in chrom_list_fixed:
-        #     command += f"zcat {output_file}.tmp.translation.header.vcf.gz > {output_file}.tmp.translation.{chrom}.vcf; "
-        #     command += f"zcat {output_file}.tmp.translation.variants.vcf.gz | grep -P '{chrom}\t' >> {output_file}.tmp.translation.{chrom}.vcf; "
-        #     command += f"{bcftools} sort --max-mem={maxmem} {output_file}.tmp.translation.{chrom}.vcf 2>{output_file}.tmp.err | {bcftools} norm --threads={threads} --check-ref s -f {genome} 2>{output_file}.tmp.err | {bcftools} view --threads={threads} -H 2>{output_file}.tmp.err >> {output_file}.tmp.split.vcf 2>{output_file}.tmp.err;  "
-        #     #command += f"{bcftools} sort --max-mem={maxmem} {output_file}.tmp.translation.{chrom}.vcf | {bcftools} norm --threads={threads} --check-ref s -f {genome} | {bcftools} view --threads={threads} -H >> {output_file}.tmp.split.vcf ;  "
-            
-        # command += f"{bcftools} view --threads={threads} {output_file}.tmp.split.vcf -Oz -o {output_file} ; "
+    # Log
+    log.debug("bcftools command: " + command)
 
-        # Command header
-        command = f"zcat {output_file}.tmp.translation.header.vcf.gz > {output_file}.tmp.split.vcf; "
-        subprocess.run(command, shell=True)
-
-        # Command by chromosome
-        for chrom in chrom_list_fixed:
-            log.info(f"Normalizing VCF - Chromosome '{chrom}'...")
-            command = f"zcat {output_file}.tmp.translation.header.vcf.gz > {output_file}.tmp.translation.{chrom}.vcf; "
-            command += f"zcat {output_file}.tmp.translation.variants.vcf.gz | grep -P '{chrom}\t' >> {output_file}.tmp.translation.{chrom}.vcf; "
-            command += f"{bcftools} sort --max-mem={maxmem} {output_file}.tmp.translation.{chrom}.vcf 2>{output_file}.tmp.err | {bcftools} norm --threads={threads} --check-ref s -f {genome} 2>{output_file}.tmp.err | {bcftools} view --threads={threads} -H 2>{output_file}.tmp.err >> {output_file}.tmp.split.vcf 2>{output_file}.tmp.err;  "
-            subprocess.run(command, shell=True)
-            
-        # Command compression
-        command = f"{bcftools} view --threads={threads} {output_file}.tmp.split.vcf -Oz -o {output_file} ; "
-        subprocess.run(command, shell=True)
-
-        # Log
-        log.debug("bcftools command: " + command)
-
-        # Run
-        subprocess.run(command, shell=True)
-
-    else:
-
-        # Log
-        log.debug("VCF Sorting and Normalization...")
-
-        # Command
-        command = f"""zcat {output_file}.tmp.translation.header.vcf.gz {output_file}.tmp.translation.variants.vcf.gz 2>{output_file}.tmp.err | {bcftools} sort --max-mem={maxmem} 2>{output_file}.tmp.err | {bcftools} norm --threads={threads} --check-ref s -f {genome} -Oz -o {output_file} 2>{output_file}.tmp.err """
-
-        # Log
-        log.debug("bcftools command: " + command)
-
-        # Run
-        subprocess.run(command, shell=True)
+    # Run
+    subprocess.run(command, shell=True)
 
 
     # Export Parquet
@@ -790,7 +830,7 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
         log.info("Exporting Parquet...")
 
         # Check source
-        parquet_info_explode(input_file=output_file, output_file=output_file_parquet, threads=threads, reduce_memory=reduce_memory)
+        parquet_info_explode(input_file=output_file, output_file=output_file_parquet, threads=threads, memory=maxmem_connexion, reduce_memory=reduce_memory)
 
 
     # Clean
@@ -799,7 +839,7 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
 
 
 
-def parquet_info_explode(input_file:str, output_file:str, threads:int = 1, reduce_memory:bool = False) -> None:
+def parquet_info_explode(input_file:str, output_file:str, threads:int = None, memory:str = None, reduce_memory:bool = False) -> None:
     """
     This function takes a parquet file, splits it by chromosome, explodes the INFO column, and then
     merges the exploded files back together.
@@ -808,8 +848,10 @@ def parquet_info_explode(input_file:str, output_file:str, threads:int = 1, reduc
     :type input_file: str
     :param output_file: The name of the output file in Parquet format after exploding the input file
     :type output_file: str
-    :param threads: The number of threads to use for processing the parquet file, defaults to 1
+    :param threads: The number of threads to use for processing the parquet file, defaults to None (all)
     :type threads: int (optional)
+    :param memory: The among of memory to use for processing the parquet file, defaults to None (all)
+    :type memory: str (optional)
     :param reduce_memory: The `reduce_memory` parameter is a boolean flag that determines whether or not
     to use memory reduction techniques during the execution of the function. If set to `True`, the
     function will attempt to reduce memory usage during the execution, which may result in slower
@@ -819,16 +861,23 @@ def parquet_info_explode(input_file:str, output_file:str, threads:int = 1, reduc
 
     # Config
     config_ro = {
-        "access": "RO",
-        "threads": threads
+        "access": "RO"
     }
-    config_threads = {
-        "threads": threads
-    }
+    config_threads = {}
     param_explode = {
         "explode_infos": True,
         "export_extra_infos": True
     }
+
+    # Threads
+    if threads:
+        config_ro["threads"] = threads
+        config_threads["threads"] = threads
+
+    # Memory
+    if memory:
+        config_ro["memory_limit"] = memory
+        config_threads["memory_limit"] = memory
 
     if reduce_memory:
 
