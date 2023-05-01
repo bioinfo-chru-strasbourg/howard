@@ -141,11 +141,19 @@ arguments = {
             "metavar": "PREFIX",
             "default": "INFO/"
         },
+        "multi_variant": {
+            "help": """Variant with multiple annotation lines\n"""
+                    """Values: 'auto' (auto-detection), 'enable', 'disable'\n"""
+                    """default: 'auto'""",
+            "metavar": "BOOL",
+            "default": "auto"
+        },
         "reduce_memory": {
             "help": """Reduce memory option\n"""
-                    """default: False""",
-            "action": "store_true",
-            "default": False
+                    """Values: 'auto' (auto-detection), 'enable', 'disable'\n"""
+                    """default: 'auto'""",
+            "metavar": "BOOL",
+            "default": "auto"
         },
         "show_calculations": {
             "help": """Show available calculation operations\n""",
@@ -495,8 +503,9 @@ commands_arguments = {
                 #"export_infos": False,
                 #"export_infos_prefix": False,
             },
-            "Resources": {
+            "Modes": {
                 "reduce_memory": False,
+                "multi_variant": False
             }
         }
     }
