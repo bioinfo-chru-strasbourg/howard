@@ -238,8 +238,8 @@ arguments = {
                     """Example: refGene,gnomad211_exome,cosmic70,clinvar_202*,nci60\n"""
                     """Note: refGene will be at leaset downloaded\n"""
                     """Note2: Only file that not exists or with a different size will be downloaded""",
-            "nargs": '+',
-            "required": False
+            "required": False,
+            "default": None
         },
         "download-annovar-url": {
             "metavar": "URL",

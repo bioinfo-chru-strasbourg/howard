@@ -18,7 +18,6 @@ import logging as log
 import fnmatch
 import glob
 
-
 import os
 import requests
 import shutil
@@ -31,7 +30,6 @@ from typing import List
 from howard.commons import *
 
 
-
 def databases(args) -> None:
 
     log.info("Start")
@@ -39,8 +37,6 @@ def databases(args) -> None:
     databases_download(args)
 
     log.info("End")
-
-
 
 
 def databases_download(args) -> None:
@@ -54,7 +50,8 @@ def databases_download(args) -> None:
     if args.download_annovar:
         log.debug(f"Download Annovar databases")
         if args.download_annovar_files:
-            files = [value for val in args.download_annovar_files for value in val.split(',')]
+            #files = [value for val in args.download_annovar_files for value in val.split(',')]
+            files = [value for value in args.download_annovar_files.split(',')]
         else:
             files = []
         databases_download_annovar(
