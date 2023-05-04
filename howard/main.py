@@ -40,9 +40,15 @@ def main() -> None:
         prog="howard",
         description="""howard annotates and prioritizes genetic variations, calculates and normalizes annotations, translates vcf format and generates variants statistics""",
         #usage="howard [<shared-args>]",
-        epilog="Examples:\n"
-            """   howard process --input=input.vcf.gz --output=output.tsv \n"""
-            """   howard query --input=input.vcf.gz --query="SELECT * FROM variants WHERE REF = 'A' AND POS < 100000" \n""",
+        epilog="Usage examples:\n"
+            """   howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json \n"""
+            """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/data/annotations/dbnsfp42a.parquet,tests/data/annotations/gnomad211_genome.parquet' \n"""
+            """   howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations='vartype' \n"""
+            """   howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations=config/prioritization_profiles.json --profiles='default,GERMLINE' \n"""
+            """   howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, "INFO/DP", "INFO/CLNSIG", sample2, sample3 FROM variants WHERE "INFO/DP" >= 50 OR "INFO/CLNSIG" NOT NULL ORDER BY "INFO/DP" DESC' \n"""
+            """   howard stats --input=tests/data/example.vcf.gz \n"""
+            """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --export_infos \n"""
+            ,
         formatter_class=argparse.RawTextHelpFormatter
         )
 
@@ -94,6 +100,9 @@ def main() -> None:
     # Debug
     if "debug" in args and args.debug:
         args.verbosity = "debug"
+    # verbosity
+    if "verbosity" not in args:
+        args.verbosity = "info"
 
     # Logging
     set_log_level(args.verbosity)

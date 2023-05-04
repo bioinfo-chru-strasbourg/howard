@@ -44,7 +44,7 @@ def process(args) -> None:
 
         # Quick Annotation
         if args.annotations:
-            annotation_file_list = [value for val in args.annotations for value in val.split(',')]
+            annotation_file_list = [value for value in args.annotations.split(',')]
             log.info(f"Quick Annotation Files: {annotation_file_list}")
             param_quick_annotations = param.get("annotations",{})
             for annotation_file in annotation_file_list:
@@ -53,7 +53,7 @@ def process(args) -> None:
 
         # Quick calculations
         if args.calculations:
-            calculations_list= [value for val in args.calculations for value in val.split(',')]
+            calculations_list= [value for value in args.calculations.split(',')]
             log.info(f"Quick Calculations list: {calculations_list}")
             param_quick_calculations = param.get("calculation",{})
             for calculation_operation in calculations_list:

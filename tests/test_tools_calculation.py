@@ -36,7 +36,7 @@ def test_calculation():
     input_vcf = tests_folder + "/data/example.vcf.gz"
     output_vcf = "/tmp/output_file.tsv"
     config = {}
-    calculations = ["VARTYPE", "NOMEN", "TRIO"]
+    calculations = 'VARTYPE,NOMEN,TRIO'
 
     # prepare arguments for the query function
     args = argparse.Namespace(

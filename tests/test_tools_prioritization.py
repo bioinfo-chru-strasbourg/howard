@@ -44,8 +44,8 @@ def test_prioritization():
         output = output_vcf,
         config = config,
         prioritizations = prioritizations,
-        profiles = ["default,GERMLINE"],
-        pzfields = ["PZScore,PZFlag"],
+        profiles = "default,GERMLINE",
+        pzfields = "PZScore,PZFlag",
         default_profile = "default",
         prioritization_score_mode = "HOWARD"
     )
