@@ -31,6 +31,27 @@ from howard.tools.databases import *
 tests_folder = os.path.dirname(__file__)
 
 
+
+def test_database():
+
+    # prepare arguments for the query function
+    args = argparse.Namespace(
+        assembly = 'hg19',
+        download_annovar_files = None,
+        download_annovar = None,
+        download_annovar_url = None,
+        download_snpeff = None,
+        config = None,
+    )
+
+    try:
+        databases(args)
+    except:
+        assert False
+
+    assert True
+    
+
 def test_databases_download_annovar():
     """
     This function tests the functionality of the databases_download_annovar function by downloading and
@@ -110,27 +131,6 @@ def test_databases_download_annovar():
                 filtered_files = fnmatch.filter(downloaded_files, downloaded_file)
                 assert len(filtered_files) > 1
 
-    # Test downloading an existing file in multiple assemblies
-    # with TemporaryDirectory() as tmp_dir:
-        
-    #     # assembly
-    #     assemblies = ["hg19","hg38"]
-        
-    #     # files
-    #     file_list = ['nci60']
-        
-    #     # Download
-    #     databases_download_annovar(folder=tmp_dir, files=file_list, assemblies=assemblies)
-        
-    #     # Dowloaded files
-    #     downloaded_files = os.listdir(tmp_dir)
-        
-    #     # Check
-    #     for assembly in assemblies:
-    #         for file in file_list:
-    #             downloaded_file = f"{assembly}_{file}.txt"
-    #             assert downloaded_file in downloaded_files
-
 
 def test_databases_download():
     """
@@ -141,11 +141,13 @@ def test_databases_download():
     with TemporaryDirectory() as tmp_dir:
 
         # assembly
-        assemblies = ["hg19"]
+        assemblies = 'hg19'
+        assemblies_list = [value for value in assemblies.split(',')]
+
 
         # files
-        annovar_file_list = ['nci60']
-        annovar_file_list_list = [value for val in annovar_file_list for value in val.split(',')]
+        annovar_file_list = 'nci60'
+        annovar_file_list_list = [value for value in annovar_file_list.split(',')]
 
         # config
         config = {"tools": {"snpeff": {"jar": default_snpeff_bin}}}
@@ -171,7 +173,7 @@ def test_databases_download():
 
         # Check Annovar
         # Check
-        for assembly in assemblies:
+        for assembly in assemblies_list:
             for file in annovar_file_list_list:
                 downloaded_file = f"{assembly}_{file}.txt"
                 assert downloaded_file in downloaded_files
@@ -180,37 +182,8 @@ def test_databases_download():
         snpeff_databases_list_file = "snpeff_databases.list"
         assert snpeff_databases_list_file in downloaded_files
         
-        # Check assembly folders
-        for assembly in assemblies:
+        # Check assembly folders of snpEff
+        for assembly in assemblies_list:
             assert assembly in downloaded_files
 
-
-# def test_databases_download_snpeff():
-#     """
-#     This function tests the download of snpEff databases for specified assemblies.
-#     """
-
-#     with TemporaryDirectory() as tmp_dir:
-        
-#         # assembly
-#         assemblies = ["hg19","hg38"]
-        
-#         # config
-#         config = {"tools": {"snpeff": {"jar": default_snpeff_bin}}}
-        
-#         # Dowloaded
-#         databases_download_snpeff(folder=tmp_dir, assemblies=assemblies, config=config)
-        
-#         # Dowloaded files
-#         downloaded_files = os.listdir(tmp_dir)
-        
-#         # Check
-        
-#         # Check snpEff databases list file
-#         snpeff_databases_list_file = "snpeff_databases.list"
-#         assert snpeff_databases_list_file in downloaded_files
-        
-#         # Check assembly folders
-#         for assembly in assemblies:
-#             assert assembly in downloaded_files
 

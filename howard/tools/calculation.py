@@ -31,20 +31,22 @@ def calculation(args) -> None:
 
     param = {}
 
-    # Create VCF object
-    if args.input:
-        vcfdata_obj = Variants(None, args.input, args.output, config, param)
+    # Show available calculations
+    if args.show_calculations:
+        vcfdata_obj = Variants()
+        for help_line in vcfdata_obj.get_operations_help():
+            log.info(help_line)
 
-        if args.show_calculations:
-            for help_line in vcfdata_obj.get_operations_help():
-                log.info(help_line)
-            return 
+    # Create VCF object
+    elif args.input and args.output and args.calculations:
+
+        vcfdata_obj = Variants(None, args.input, args.output, config, param)
 
         params = vcfdata_obj.get_param()
 
         # Quick calculations
         if args.calculations:
-            calculations_list= [value for val in args.calculations for value in val.split(',')]
+            calculations_list= [value for value in args.calculations.split(',')]
             log.info(f"Quick Calculations list: {calculations_list}")
             param_quick_calculations = param.get("calculation",{})
             for calculation_operation in calculations_list:
@@ -74,7 +76,6 @@ def calculation(args) -> None:
                 trio_pedigree = json.loads(args.trio_pedigree)
             params["calculation"]["TRIO"] = trio_pedigree
 
-
         vcfdata_obj.set_param(params)
 
         # Load data from input file
@@ -91,6 +92,13 @@ def calculation(args) -> None:
 
         # Close connexion
         vcfdata_obj.close_connexion()
+
+    # If no arguments
+    else:
+
+        log.info("""The following arguments are required:""")
+        log.info("""   --input, --output, --calculations""")
+        log.info("""   --show_calculations""")
 
     log.info("End")
 

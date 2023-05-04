@@ -62,20 +62,20 @@ arguments = {
             "default": None
         },
         "annotations": {
-            "metavar": "ANNOTATION",
+            "metavar": "ANNOTATIONS",
             "help": """Annotation with databases files, or with tools\n"""
                     """Format: list of files in Parquet, VCF, BED, or keywords\n"""
                     """For a Parquet/VCF/BED file, use file path (e.g. '/path/to/file.parquet')\n"""
                     """For snpeff annotation, use keyword 'snpeff'\n"""
                     """For Annovar annotation, use keyword 'annovar' with annovar code (e.g. 'annovar:refGene', 'annovar:cosmic70')\n"""
                     ,
-            "nargs": "+",
             "default": None
         },
         "calculations": {
-            "metavar": "OPERATION",
+            "metavar": "OPERATIONS",
             "help": """Calculations on genetic variants information and genotype information\n"""
-                    """List of available calculations (see doc for more information):\n"""
+                    """Example: 'VARTYPE,barcode'\n"""
+                    """List of available calculations (unsensitive case, see doc for more information):\n"""
                     """ VARTYPE """
                     """ snpeff_hgvs """
                     """ FINDBYPIPELINE """
@@ -86,7 +86,6 @@ arguments = {
                     """ VAF_STATS """
                     """ DP_STATS """
                     ,
-            "nargs": "+",
             "default": None
         },
         "prioritizations": {
@@ -98,7 +97,6 @@ arguments = {
             "metavar": "PROFILES",
             "help": """Prioritization profiles to use (based on file in JSON)\n"""
                     """default: all profiles available""",
-            "nargs": "+",
             "default": None
         },
         "default_profile": {
@@ -112,8 +110,7 @@ arguments = {
             "help": """Prioritization fields to provide (see doc)\n"""
                     """available: PZScore, PZFlag, PZTags, PZComment, PZInfos\n"""
                     """default: PZScore,PZFlag""",
-            "nargs": "+",
-            "default": ["PZScore","PZFlag"]
+            "default": "PZScore,PZFlag"
         },
         "prioritization_score_mode": {
             "metavar": "MODE",
@@ -207,9 +204,8 @@ arguments = {
             "metavar": "ASSEMBLY",
             "help": """Genome Assembly\n"""
                     """Default: 'hg19'""",
-            "nargs": "+",
             "required": False,
-            "default": ["hg19"]
+            "default": "hg19"
         },
         "genome": {
             "metavar": "GENOME",
@@ -232,7 +228,7 @@ arguments = {
             "required": False
         },
         "download-annovar-files": {
-            "metavar": "FILE",
+            "metavar": "CODE",
             "help": """Download Annovar databases for a list of Annovar file code (see Annovar Doc)\n"""
                     """Default: All available files\n"""
                     """Example: refGene,gnomad211_exome,cosmic70,clinvar_202*,nci60\n"""
@@ -320,7 +316,7 @@ commands_arguments = {
         "help":         """Full genetic variations process: annotation, calculation, prioritization, format, query, filter...""",
         "epilog":       """Usage examples:\n"""
                         """   howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json \n"""
-                        """   howard process --input=tests/data/example.vcf.gz --annotations=snpeff --calculations=snpeff_hgvs,NOMEN --prioritizations=config/prioritization_profiles.json --query='SELECT "INFO/NOMEN" FROM variants' \n""", 
+                        """   howard process --input=tests/data/example.vcf.gz --annotations='snpeff' --calculations='snpeff_hgvs,NOMEN' --prioritizations=config/prioritization_profiles.json --query='SELECT "INFO/NOMEN" FROM variants' \n""", 
 
         "groups": {
             "main": {
@@ -341,8 +337,8 @@ commands_arguments = {
         "description":  """Annotation is mainly based on a build-in Parquet annotation method, and tools such as BCFTOOLS, Annovar and snpEff. It uses available databases (see Annovar and snpEff) and homemade databases. Format of databases are: parquet, duckdb, vcf, bed, Annovar and snpEff (Annovar and snpEff databases are automatically downloaded, see howard databases tool). """,
         "help":         """Annotation of genetic variations using databases/files and tools.""",
         "epilog":       """Usage examples:\n"""
-                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations=tests/data/annotations/avsnp150.parquet,tests/data/annotations/dbnsfp42a.parquet,tests/data/annotations/gnomad211_genome.parquet \n"""
-                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --annotations=annovar:refGene,snpeff,tests/data/annotations/clinvar_20210123.parquet \n""", 
+                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/data/annotations/avsnp150.parquet,tests/data/annotations/dbnsfp42a.parquet,tests/data/annotations/gnomad211_genome.parquet' \n"""
+                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --annotations='annovar:refGene,snpeff,tests/data/annotations/clinvar_20210123.parquet' \n""", 
         "groups": {
             "main": {
                 "input": True,
@@ -356,14 +352,15 @@ commands_arguments = {
         "description":  """Calculation processes variants information to generate new information, such as: identify variation type (VarType), harmonizes allele frequency (VAF) and calculate sttistics (VAF_stats), extracts Nomen (transcript, cNomen, pNomen...) from an HGVS field (e.g. snpEff, Annovar) with an optional list of personalized transcripts, generates VaRank format barcode, identify trio inheritance.""",
         "help":         """Calculation operations on genetic variations and genotype information.\n""",
         "epilog":       """Usage examples:\n"""
-                        """   howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations=vartype \n"""
-                        """   howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.calculated.tsv --calculations=snpeff_hgvs,NOMEN --hgvs_field=snpeff_hgvs --transcripts=tests/data/transcripts.tsv \n"""
+                        """   howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations='vartype' \n"""
+                        """   howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.calculated.tsv --calculations='snpeff_hgvs,NOMEN' --hgvs_field=snpeff_hgvs --transcripts=tests/data/transcripts.tsv \n"""
+                        """   howard calculation --show_calculations \n"""
                         ,
         "groups": {
             "main": {
-                "input": True,
-                "output": True,
-                "calculations": True,
+                "input": False,
+                "output": False,
+                "calculations": False,
                 "show_calculations": False
             },
             "NOMEN calculation": {
@@ -380,7 +377,7 @@ commands_arguments = {
         "description":  """Prioritization algorithm uses profiles to flag variants (as passed or filtered), calculate a prioritization score, and automatically generate a comment for each variants (example: 'polymorphism identified in dbSNP. associated to Lung Cancer. Found in ClinVar database'). Prioritization profiles are defined in a configuration file in JSON format. A profile is defined as a list of annotation/value, using wildcards and comparison options (contains, lower than, greater than, equal...). Annotations fields may be quality values (usually from callers, such as 'DP') or other annotations fields provided by annotations tools, such as HOWARD itself (example: COSMIC, Clinvar, 1000genomes, PolyPhen, SIFT). Multiple profiles can be used simultaneously, which is useful to define multiple validation/prioritization levels (example: 'standard', 'stringent', 'rare variants', 'low allele frequency').\n""",
         "help": "Prioritization of genetic variations based on annotations criteria (profiles).",
         "epilog": """Usage examples:\n"""
-                        """   howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations=config/prioritization_profiles.json --profiles=default,GERMLINE \n""", 
+                        """   howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations=config/prioritization_profiles.json --profiles='default,GERMLINE' \n""", 
         "groups": {
             "main": {
                 "input": True,
@@ -447,7 +444,7 @@ commands_arguments = {
         "description": """Download databases and needed files for howard and associated tools""",
         "help": """Download databases and needed files for howard and associated tools""",
         "epilog": """Usage examples:\n"""
-                    """   howard databases --assembly=hg19 --download-annovar=/databases/annovar/current --download-annovar-files=refGene,gnomad_exome,dbnsfp42a,cosmic70,clinvar_202*,nci60 --download-snpeff=/databases/annovar/current """, 
+                    """   howard databases --assembly=hg19 --download-annovar=/databases/annovar/current --download-annovar-files='refGene,gnomad_exome,dbnsfp42a,cosmic70,clinvar_202*,nci60' --download-snpeff=/databases/annovar/current """, 
         "groups": {
             "main": {
                 "assembly": False,

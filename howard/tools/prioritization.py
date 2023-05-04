@@ -47,11 +47,11 @@ def prioritization(args) -> None:
 
             # Profiles
             if args.profiles:
-                params["prioritization"]["profiles"] = [value for val in args.profiles for value in val.split(',')]
+                params["prioritization"]["profiles"] = [value for value in args.profiles.split(',')]
 
             # PZFields
             if args.pzfields:
-                params["prioritization"]["pzfields"] = [value for val in args.pzfields for value in val.split(',')]
+                params["prioritization"]["pzfields"] = [value for value in args.pzfields.split(',')]
 
             # Default
             if args.default_profile:
@@ -61,7 +61,6 @@ def prioritization(args) -> None:
             if args.prioritization_score_mode:
                 params["prioritization"]["prioritization_score_mode"] = args.prioritization_score_mode
 
-        
         vcfdata_obj.set_param(params)
             
         # Load data from input file

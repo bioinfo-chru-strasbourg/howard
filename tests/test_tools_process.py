@@ -37,8 +37,8 @@ def test_process():
     output_vcf = "/tmp/output_file.tsv"
     config = {}
     param = "{}"
-    annotations = [tests_folder + "/data/annotations/nci60.parquet"]
-    calculations = ["VARTYPE"]
+    annotations = tests_folder + "/data/annotations/nci60.parquet"
+    calculations = "VARTYPE"
     prioritizations = tests_folder + "/data/prioritization_profiles.json"
     input_query = None
 
@@ -78,8 +78,8 @@ def test_process_with_param_file():
     output_vcf = "/tmp/output_file.tsv"
     config = {}
     param = tests_folder +  "/data/param.snpeff_hgvs.json"
-    annotations = [tests_folder + "/data/annotations/nci60.parquet"]
-    calculations = ["VARTYPE"]
+    annotations = tests_folder + "/data/annotations/nci60.parquet"
+    calculations = "VARTYPE"
     prioritizations = tests_folder + "/data/prioritization_profiles.json"
     input_query = None
 
@@ -119,8 +119,8 @@ def test_process_with_query():
     output_vcf = "/tmp/output_file.tsv"
     config = {}
     param = "{}"
-    annotations = [tests_folder + "/data/annotations/nci60.parquet"]
-    calculations = ["VARTYPE"]
+    annotations = tests_folder + "/data/annotations/nci60.parquet"
+    calculations = "VARTYPE"
     prioritizations = tests_folder + "/data/prioritization_profiles.json"
     input_query = "SELECT count(*) as count FROM variants WHERE INFO LIKE '%VARTYPE%' AND INFO LIKE '%PZScore%'"
 

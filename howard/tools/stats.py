@@ -39,7 +39,6 @@ def stats(args) -> None:
         vcfdata_obj.load_data()
 
         # Stats
-        #vcfdata_obj.get_overview()
         vcfdata_obj.get_stats()
 
         # Close connexion

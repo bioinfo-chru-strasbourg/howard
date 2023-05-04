@@ -40,7 +40,7 @@ def annotation(args) -> None:
 
         # Quick Annotation
         if args.annotations:
-            annotation_file_list = [value for val in args.annotations for value in val.split(',')]
+            annotation_file_list = [value for value in args.annotations.split(',')]
             log.info(f"Quick Annotation Files: {annotation_file_list}")
             param_quick_annotations = param.get("annotations",{})
             for annotation_file in annotation_file_list:
@@ -48,8 +48,7 @@ def annotation(args) -> None:
             params["annotations"] = param_quick_annotations
         
         vcfdata_obj.set_param(params)
-            
-
+        
         # Load data from input file
         vcfdata_obj.load_data()
 

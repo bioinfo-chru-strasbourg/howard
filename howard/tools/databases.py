@@ -44,13 +44,12 @@ def databases_download(args) -> None:
     log.debug(f"Args {args}")
 
     # Assembly
-    assemblies = [value for val in args.assembly for value in val.split(',')]
+    assemblies = [value for value in args.assembly.split(',')]
 
     # Annovar
     if args.download_annovar:
         log.debug(f"Download Annovar databases")
         if args.download_annovar_files:
-            #files = [value for val in args.download_annovar_files for value in val.split(',')]
             files = [value for value in args.download_annovar_files.split(',')]
         else:
             files = []
@@ -76,7 +75,6 @@ def databases_download_annovar(folder:str = None, files:list = None, assemblies:
     log.info(f"Download Annovar databases {assemblies}")
 
     # Minimum files to download
-    #files_minimum = ["refGene.txt.gz","refGene.txt.idx.gz","refGeneMrna.fa.gz"]
     files_minimum = ["refGene*"]
 
     for assembly in assemblies:
@@ -140,7 +138,6 @@ def databases_download_annovar(folder:str = None, files:list = None, assemblies:
                     files_to_download.append(f"{assembly}_{file}.fa.gz")
                     files_to_download.append(f"{assembly}_{file}.zip")
 
-
             # Found if files exists in folder
             list_files_in_folder = []
             list_files_in_folder_size = {}
@@ -157,7 +154,6 @@ def databases_download_annovar(folder:str = None, files:list = None, assemblies:
             log.debug(f"List of file in Annovar folder: {list_files_in_folder}")
             log.debug(f"List of file in Annovar folder with size: {list_files_in_folder_size}")
             
-
             # Found if files exists in url
             matched_files = []
             #for pattern in list_files_in_folder:

@@ -384,11 +384,11 @@
         "CLNSIG": [
             {
                 "type": "equals",
-                "value": ".*pathogenic",
+                "value": "pathogenic",
                 "score": 15,
                 "flag": "PASS",
                 "comment": [
-                    "Described on CLINVAR database"
+                    "Described on CLINVAR database as pathogenic"
                 ]
             },
             {
@@ -397,7 +397,7 @@
                 "score": 15,
                 "flag": "PASS",
                 "comment": [
-                    "Described on CLINVAR database"
+                    "Described on CLINVAR database as pathogenic"
                 ]
             },
             {
@@ -406,7 +406,7 @@
                 "score": -100,
                 "flag": "FILTERED",
                 "comment": [
-                    "Described on CLINVAR database"
+                    "Described on CLINVAR database as non-pathogenic"
                 ]
             },
             {
@@ -423,10 +423,10 @@
             {
                 "type": "gte",
                 "value": "50",
-                "score": 50,
+                "score": 5,
                 "flag": "PASS",
                 "comment": [
-                    "DP"
+                    "DP higher than 50"
                 ]
             }
         ],
