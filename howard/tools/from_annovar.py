@@ -26,7 +26,7 @@ import pyarrow.csv as csv
 
 
 from howard.objects.variants import Variants
-from howard.objects.annotation import Annotation
+from howard.objects.database import Database
 from howard.commons import *
 
 

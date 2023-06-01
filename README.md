@@ -52,6 +52,22 @@ docker-compose up -d
 
 A Command Line Interface container (HOWARD-CLI) is started with host data and databases folders mounted (by default in ${HOME}/HOWARD folder)
 
+# Databases
+
+Databases such as Annovar and snpEff can be downloaded with databases tool.
+
+- Download Annovar databases for assembly 'hg19':
+```
+howard databases --assembly='hg19' --download-annovar=/databases/annovar/current --download-annovar-files='refGene,gnomad_exome,dbnsfp42a,cosmic70,clinvar_202*,nci60'
+```
+
+- Download snpEff databases for assembly 'hg38':
+```
+howard databases --assembly='hg38' --download-snpeff=/databases/annovar/current
+```
+
+
+
 # Quick HOWARD commands
 
 ## Stats
@@ -112,12 +128,12 @@ Annotation is mainly based on a build-in Parquet annotation method, and tools su
 
 - VCF annotation with Parquet and VCF databases, output as VCF format
 ```
-howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations=tests/data/annotations/dbnsfp42a.parquet,tests/data/annotations/gnomad211_genome.parquet,tests/data/annotations/cosmic70.vcf.gz
+howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/data/annotations/dbnsfp42a.parquet,tests/data/annotations/gnomad211_genome.parquet,tests/data/annotations/cosmic70.vcf.gz'
 ```
 
 - VCF annotation with Clinvar Parquet, Annovar refGene and snpEff databases, output as TSV format
 ```
-howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --annotations=annovar:refGene,snpeff,tests/data/annotations/clinvar_20210123.parquet
+howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --annotations='annovar:refGene,snpeff,tests/data/annotations/clinvar_20210123.parquet'
 ```
 
 ## Calculation
@@ -126,7 +142,7 @@ Calculation processes variants information to generate new information, such as:
 
 - Identify variant types
 ```
-howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations=vartype
+howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations='vartype'
 ```
 - and generate a table of variant type count
 ```
@@ -135,7 +151,7 @@ howard query --input=/tmp/example.calculation.tsv --explode_infos --query='SELEC
 
 - Calculate NOMEN by extracting hgvs from snpEff annotation and identifying default transcripts from a list
 ```
-howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.NOMEN.vcf.gz --calculations=snpeff_hgvs,NOMEN --hgvs_field=snpeff_hgvs --transcripts=tests/data/transcripts.tsv
+howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.NOMEN.vcf.gz --calculations='snpeff_hgvs,NOMEN' --hgvs_field='snpeff_hgvs' --transcripts=tests/data/transcripts.tsv
 ```
 - and query NOMEN for gene 'EGFR'
 ```
@@ -148,7 +164,7 @@ Prioritization algorithm uses profiles to flag variants (as passed or filtered),
 
 - Prioritize variants from criteria on INFO annotations for profiles 'default' and 'GERMLINE' (see 'prioritization_profiles.json'), and query variants on prioritization tags
 ```
-howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations=config/prioritization_profiles.json --profiles=default,GERMLINE --pzfields=PZFlag,PZScore,PZComment
+howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations=config/prioritization_profiles.json --profiles='default,GERMLINE' --pzfields='PZFlag,PZScore,PZComment'
 ```
 - and query variants passing filters
 ```
@@ -249,7 +265,6 @@ howard process --config=config/config.json --param=config/param.json --input=tes
   "threads": 8
 }
 ```
-
 
 
 ## Docker HOWARD-CLI
