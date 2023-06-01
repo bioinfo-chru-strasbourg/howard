@@ -1869,7 +1869,7 @@ def test_annotation_duckdb():
 
     # Init files
     annotation_parquet = tests_folder + "/data/annotations/nci60.parquet"
-    annotation_duckdb = "/tmp/annotations.nci60.duckdb"
+    annotation_duckdb = "/tmp/nci60.duckdb"
 
     remove_if_exists([annotation_duckdb])
 
