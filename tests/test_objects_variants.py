@@ -1860,50 +1860,50 @@ def test_annotation_parquet_field_already_in_vcf():
         assert False
 
 
-# def test_annotation_duckdb():
-#     """
-#     This function tests the annotation of variants using DuckDB.
-#     """
+def test_annotation_duckdb():
+    """
+    This function tests the annotation of variants using DuckDB.
+    """
 
-#     # Create duckdb database
+    # Create duckdb database
 
-#     # Init files
-#     annotation_parquet = tests_folder + "/data/annotations/nci60.parquet"
-#     annotation_duckdb = "/tmp/annotations.nci60.duckdb"
+    # Init files
+    annotation_parquet = tests_folder + "/data/annotations/nci60.parquet"
+    annotation_duckdb = "/tmp/nci60.duckdb"
 
-#     remove_if_exists([annotation_duckdb])
+    remove_if_exists([annotation_duckdb])
 
-#     annotation_database = Variants(input=annotation_parquet, output=annotation_duckdb, load=True)
-#     annotation_database.export_output()
+    annotation_database = Variants(input=annotation_parquet, output=annotation_duckdb, load=True)
+    annotation_database.export_output()
 
-#     # Test annotation with duckdb database
+    # Test annotation with duckdb database
 
-#     # Init files
-#     input_vcf = tests_folder + "/data/example.vcf.gz"
-#     output_vcf = "/tmp/output.vcf.gz"
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    output_vcf = "/tmp/output.vcf.gz"
 
-#     # Construct param dict
-#     param = {"annotation": {"parquet": {"annotations": {annotation_duckdb: {"INFO": None}}}}}
+    # Construct param dict
+    param = {"annotation": {"parquet": {"annotations": {annotation_duckdb: {"INFO": None}}}}}
 
-#     # Create object
-#     variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+    # Create object
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
 
-#     # Remove if output file exists
-#     remove_if_exists([output_vcf])
+    # Remove if output file exists
+    remove_if_exists([output_vcf])
 
-#     # Annotation
-#     variants.annotation()
+    # Annotation
+    variants.annotation()
 
-#     # query annotated variant
-#     result = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'")
-#     assert len(result) == 1
+    # query annotated variant
+    result = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'")
+    assert len(result) == 1
 
-#     # Check if VCF is in correct format with pyVCF
-#     variants.export_output()
-#     try:
-#         vcf.Reader(filename=output_vcf)
-#     except:
-#         assert False
+    # Check if VCF is in correct format with pyVCF
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
 
 
 def test_annotation_bcftools():

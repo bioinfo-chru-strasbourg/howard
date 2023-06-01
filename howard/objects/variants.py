@@ -170,9 +170,6 @@ class Variants:
         if not conn:
             if self.get_input_format() in ["db", "duckdb"]:
                 connexion_db = self.get_input()
-                # self.set_output(self.get_input())
-            elif self.get_output_format() in ["db", "duckdb"]:
-                connexion_db = self.get_output()
             elif self.get_connexion_type() in ["memory", default_connexion_db, None]:
                 connexion_db = default_connexion_db
             elif self.get_connexion_type() in ["tmpfile"]:
@@ -1138,7 +1135,27 @@ class Variants:
 
             output_file_tmp = output_file + ".tmp"
 
-            if output_format in ["parquet"]:
+            if output_format in ["duckdb", "db"]:
+
+                # Remove output if exists
+                remove_if_exists(output_file)
+
+                # Export parquet
+                sql_query_export_subquery = f"""
+                    SELECT {sql_columns} {sql_extra_columns} FROM {table_variants} WHERE 1 {sql_query_hard} {sql_query_sort} {sql_query_limit}
+                    """
+                sql_query_export = f"COPY ({sql_query_export_subquery}) TO '{output_file_tmp}' WITH (FORMAT PARQUET)"
+                self.conn.execute(sql_query_export)
+
+                # Export in duckdb
+                conn = duckdb.connect(output_file)
+                conn.execute(f"CREATE TABLE IF NOT EXISTS variants AS SELECT * FROM read_parquet('{output_file_tmp}')")
+                conn.close()
+
+                # Remove tmp parquet file
+                remove_if_exists(output_file_tmp)
+
+            elif output_format in ["parquet"]:
 
                 # Export parquet
                 sql_query_export_subquery = f"""
