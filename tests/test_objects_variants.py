@@ -55,6 +55,51 @@ tests_config = {
 }
 
 
+
+
+# def test_DEVEL_annotation_parquet():
+#     """
+#     Tests the `annotation()` method of the `Variants` class using a Parquet file as annotation source. 
+
+#     The function creates a `Variants` object with an input VCF file and an output VCF file, and a parameter dictionary specifying that the Parquet file should be used as the annotation source with the "INFO" field. The `annotation()` method is then called to annotate the variants, and the resulting VCF file is checked for correctness using PyVCF. 
+
+#     Returns:
+#         None
+#     """
+#     # Init files
+#     input_vcf = tests_folder + "/data/example.vcf.gz"
+#     annotation_parquet = tests_folder + "/data/annotations/nci60.parquet"
+#     output_vcf = "/tmp/output.vcf.gz"
+
+#     # Construct param dict
+#     param = {"annotation": {"parquet": {"annotations": {annotation_parquet: {"INFO": None}}}}}
+
+#     # Create object
+#     variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
+#     # Remove if output file exists
+#     remove_if_exists([output_vcf])
+
+#     # Annotation
+#     variants.annotation()
+
+#     # query annotated variant
+#     result = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'")
+#     length = len(result)
+    
+#     assert length == 1
+
+#     # Check if VCF is in correct format with pyVCF
+#     variants.export_output()
+#     try:
+#         vcf.Reader(filename=output_vcf)
+#     except:
+#         assert False
+
+#     assert False
+
+
+
 def test_set_get_input():
     """
     This function tests the set_input and get_input methods of the Variants class in Python.
