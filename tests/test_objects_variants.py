@@ -68,14 +68,19 @@ tests_config = {
 #     """
 #     # Init files
 #     input_vcf = tests_folder + "/data/example.vcf.gz"
-#     annotation_parquet = tests_folder + "/data/annotations/nci60.parquet"
+#     #annotation_parquet = tests_folder + "/data/annotations/nci60.parquet"
+#     annotation_parquet = "nci60.parquet"
+#     databses_parquet = tests_folder + "/data/annotations"
 #     output_vcf = "/tmp/output.vcf.gz"
+
+#     # Construct config dict
+#     config = {"folders": {"databases": {"parquet": [databses_parquet]}}}
 
 #     # Construct param dict
 #     param = {"annotation": {"parquet": {"annotations": {annotation_parquet: {"INFO": None}}}}}
 
 #     # Create object
-#     variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+#     variants = Variants(conn=None, input=input_vcf, output=output_vcf, config=config, param=param, load=True)
 
 #     # Remove if output file exists
 #     remove_if_exists([output_vcf])

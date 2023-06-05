@@ -2630,438 +2630,432 @@ class Variants:
                 run_parallel_commands([clean_command], 1)
 
 
-    def annotation_parquet(self, threads: int = None) -> None:
-        """
-        It takes a VCF file, and annotates it with a parquet file
+    # def annotation_parquet(self, threads: int = None) -> None:
+    #     """
+    #     It takes a VCF file, and annotates it with a parquet file
 
-        :param threads: number of threads to use for the annotation
-        :return: the value of the variable "result".
-        """
+    #     :param threads: number of threads to use for the annotation
+    #     :return: the value of the variable "result".
+    #     """
 
-        # DEBUG
-        log.debug("Start annotation with parquet databases")
+    #     # DEBUG
+    #     log.debug("Start annotation with parquet databases")
 
-        # Threads
-        if not threads:
-            threads = self.get_threads()
-        log.debug("Threads: "+str(threads))
+    #     # Threads
+    #     if not threads:
+    #         threads = self.get_threads()
+    #     log.debug("Threads: "+str(threads))
 
-        # DEBUG
-        delete_tmp = True
-        if self.get_config().get("verbosity", "warning") in ["debug"]:
-            delete_tmp = False
-            log.debug("Delete tmp files/folders: "+str(delete_tmp))
+    #     # DEBUG
+    #     delete_tmp = True
+    #     if self.get_config().get("verbosity", "warning") in ["debug"]:
+    #         delete_tmp = False
+    #         log.debug("Delete tmp files/folders: "+str(delete_tmp))
 
-        # Config
-        databases_folders = self.config.get("folders", {}).get(
-            "databases", {}).get("parquet", ["."])
-        log.debug("Databases annotations: " + str(databases_folders))
+    #     # Config
+    #     databases_folders = self.get_config().get("folders", {}).get(
+    #         "databases", {}).get("parquet", ["."])
+    #     log.debug("Databases annotations: " + str(databases_folders))
 
-        # Param
-        annotations = self.param.get("annotation", {}).get(
-            "parquet", {}).get("annotations", None)
-        log.debug("Annotations: " + str(annotations))
+    #     # Param
+    #     annotations = self.get_param().get("annotation", {}).get(
+    #         "parquet", {}).get("annotations", None)
+    #     log.debug("Annotations: " + str(annotations))
 
-        # Data
-        table_variants = self.get_table_variants()
+    #     # Assembly
+    #     assembly = self.get_param().get("assembly", "hg19")
 
-        # Check if not empty
-        log.debug("Check if not empty")
-        sql_query_chromosomes_df = self.get_query_to_df(
-            f"""SELECT count(*) as count FROM {table_variants} as table_variants LIMIT 1""")
-        if not sql_query_chromosomes_df["count"][0]:
-            log.info(f"VCF empty")
-            return
+    #     # Data
+    #     table_variants = self.get_table_variants()
 
-        # VCF header
-        vcf_reader = self.get_header()
-        log.debug("Initial header: " + str(vcf_reader.infos))
+    #     # Check if not empty
+    #     log.debug("Check if not empty")
+    #     sql_query_chromosomes_df = self.get_query_to_df(
+    #         f"""SELECT count(*) as count FROM {table_variants} as table_variants LIMIT 1""")
+    #     if not sql_query_chromosomes_df["count"][0]:
+    #         log.info(f"VCF empty")
+    #         return
 
-        # Nb Variants POS
-        log.debug("NB Variants Start")
-        nb_variants = self.conn.execute(
-            f"SELECT count(*) AS count FROM variants").fetchdf()["count"][0]
-        log.debug("NB Variants Stop")
+    #     # VCF header
+    #     vcf_reader = self.get_header()
+    #     log.debug("Initial header: " + str(vcf_reader.infos))
 
-        # Existing annotations
-        for vcf_annotation in self.get_header().infos:
+    #     # Nb Variants POS
+    #     log.debug("NB Variants Start")
+    #     nb_variants = self.conn.execute(
+    #         f"SELECT count(*) AS count FROM variants").fetchdf()["count"][0]
+    #     log.debug("NB Variants Stop")
 
-            vcf_annotation_line = self.get_header().infos.get(vcf_annotation)
-            log.debug(
-                f"Existing annotations in VCF: {vcf_annotation} [{vcf_annotation_line}]")
+    #     # Existing annotations
+    #     for vcf_annotation in self.get_header().infos:
 
-        # explode infos
-        self.explode_infos(prefix=self.get_param().get("explode_infos", None))
+    #         vcf_annotation_line = self.get_header().infos.get(vcf_annotation)
+    #         log.debug(
+    #             f"Existing annotations in VCF: {vcf_annotation} [{vcf_annotation_line}]")
 
-        # drop indexes
-        log.debug(f"Drop indexes...")
-        self.drop_indexes()
+    #     # explode infos
+    #     self.explode_infos(prefix=self.get_param().get("explode_infos", None))
 
-        if annotations:
+    #     # drop indexes
+    #     log.debug(f"Drop indexes...")
+    #     self.drop_indexes()
 
-            for annotation in annotations:
-                annotation_fields = annotations[annotation]
+    #     if annotations:
 
-                if not annotation_fields:
-                    annotation_fields = {"INFO": None}
+    #         for annotation in annotations:
+    #             annotation_fields = annotations[annotation]
 
-                log.debug(f"Annotation '{annotation}'")
-                log.debug(
-                    f"Annotation '{annotation}' - fields: {annotation_fields}")
+    #             if not annotation_fields:
+    #                 annotation_fields = {"INFO": None}
 
-                # # DEVEL
-                # annotation = "nci60.parquet"
-                # #databases_folders = [".", "/databases/annotations/current/hg19", "/tools/howard/devel/tests/data/annotations"]
-                # databases_folders = [".", "/tools/howard/devel/tests/data/annotations"]
-                # print()
-                # print("DEVEL START")
-                # print(annotation)
-                # print(databases_folders)
-                # database = Database(database=annotation)
-                # print(database.get_database())
-                # if database.exists():
-                #     print("exists")
-                # else:
-                #     print("NOT exist")
-                # #print("DEVEL END")
+    #             log.debug(f"Annotation '{annotation}'")
+    #             log.debug(
+    #                 f"Annotation '{annotation}' - fields: {annotation_fields}")
+
+    #             # DEVEL
+    #             annotation = "nci60.parquet"
+    #             #databases_folders = [".", "/databases/annotations/current/hg19", "/tools/howard/devel/tests/data/annotations"]
+    #             #databases_folders = [".", "/databases/annotations/current"]
+    #             #databases_folders = [".", "/tools/howard/devel/tests/data/annotations"]
+    #             print()
+    #             print("DEVEL START")
+    #             print(f"assembly: {assembly}")
+    #             print(f"annotation: {annotation}")
+    #             print(f"databases_folders: {databases_folders}")
+    #             database = Database(database=annotation, databases_folders=databases_folders, assembly=assembly)
+
+    #             print(f"get database: " + database.get_database())
+    #             print(f"get header file: " + str(database.get_header_file()))
+    #             parquet_file = database.get_database()
+    #             parquet_hdr_file = database.get_header_file()
+    #             #print("DEVEL END")
                 
 
-                # Find parquet file and header file
-                parquet_file = None
-                parquet_hdr_file = None
-                for databases_folder in databases_folders:
-                    parquet_file = None
-                    parquet_hdr_file = None
-                    log.debug("Annotation file check: " + annotation +
-                              " or " + str(databases_folder+"/"+annotation+".parquet"))
-
-                    # Parquet .parquet
-                    if os.path.exists(annotation):
-                        parquet_file = annotation
-                    elif os.path.exists(databases_folder+"/"+annotation+".parquet"):
-                        parquet_file = databases_folder+"/"+annotation+".parquet"
-                    if not parquet_file:
-                        continue
-
-                    # Header .hdr
-                    if os.path.exists(parquet_file+".hdr"):
-                        parquet_hdr_file = parquet_file+".hdr"
-
-                    # parquet and hdr found
-                    if parquet_file and parquet_hdr_file:
-                        break
-
-                if not parquet_file or not parquet_hdr_file:
-                    log.error("Annotation failed: file not found")
-                    raise ValueError("Annotation failed: file not found")
-                else:
-
-                    parquet_file_link = f"'{parquet_file}'"
-
-                    # Database format and type
-                    parquet_file_name, parquet_file_extension = os.path.splitext(
-                        parquet_file)
-                    parquet_file_basename = os.path.basename(parquet_file)
-                    parquet_file_format = parquet_file_extension.replace(
-                        ".", "")
-                    parquet_file_type = parquet_file_format
-
-                    if parquet_file_format in ["db", "duckdb", "sqlite"]:
-                        parquet_file_as_duckdb_name = parquet_file_basename.replace(
-                            ".", "_")
-                        if parquet_file_format in ["sqlite"]:
-                            parquet_file_format_attached_type = ", TYPE SQLITE"
-                        else:
-                            parquet_file_format_attached_type = ""
-                        log.debug(
-                            f"Annotation '{annotation}' - attach database : " + str(parquet_file))
-                        self.conn.execute(
-                            f"ATTACH DATABASE '{parquet_file}' AS {parquet_file_as_duckdb_name} (READ_ONLY{parquet_file_format_attached_type})")
-                        parquet_file_link = f"{parquet_file_as_duckdb_name}.variants"
-                    elif parquet_file_format in ["parquet"]:
-                        parquet_file_link = f"'{parquet_file}'"
-
-                    log.debug(f"Annotation '{annotation}' - file: " +
-                              str(parquet_file) + " and " + str(parquet_hdr_file))
-
-                    # Load header as VCF object
-                    parquet_hdr_vcf = Variants(input=parquet_hdr_file)
-                    parquet_hdr_vcf_header_infos = parquet_hdr_vcf.get_header().infos
-                    log.debug("Annotation database header: " +
-                              str(parquet_hdr_vcf_header_infos))
-
-                    # get extra infos
-                    parquet_columns = self.get_extra_infos(
-                        table=parquet_file_link)
-
-                    # For all fields in database
-                    annotation_fields_ALL = False
-                    if "ALL" in annotation_fields or "INFO" in annotation_fields:
-                        annotation_fields_ALL = True
-                        annotation_fields = {
-                            key: key for key in parquet_hdr_vcf_header_infos}
-                        log.debug(
-                            "Annotation database header - All annotations added: " + str(annotation_fields))
-
-                    # List of annotation fields to use
-                    sql_query_annotation_update_info_sets = []
-
-                    # Number of fields
-                    nb_annotation_field = 0
-
-                    # Annotation fields processed
-                    annotation_fields_processed = []
-
-                    for annotation_field in annotation_fields:
-
-                        # annotation_field_column
-                        if annotation_field in parquet_columns:
-                            annotation_field_column = annotation_field
-                        elif "INFO/" + annotation_field in parquet_columns:
-                            annotation_field_column = "INFO/" + annotation_field
-                        else:
-                            annotation_field_column = "INFO"
-
-                        # field new name, if parametered
-                        annotation_fields_new_name = annotation_fields.get(
-                            annotation_field, annotation_field)
-                        if not annotation_fields_new_name:
-                            annotation_fields_new_name = annotation_field
-
-                        # check annotation field in data
-                        annotation_field_exists_on_variants = 0
-                        if annotation_fields_new_name not in self.get_header().infos:
-                            sampling_annotation_field_exists_on_variants = 10000
-                            sql_query_chromosomes = f"""
-                                SELECT 1 AS count
-                                FROM (SELECT * FROM {table_variants} as table_variants LIMIT {sampling_annotation_field_exists_on_variants})
-                                WHERE ';' || INFO LIKE '%;{annotation_fields_new_name}=%'
-                                LIMIT 1
-                                """
-                            annotation_field_exists_on_variants = len(
-                                self.conn.execute(f"{sql_query_chromosomes}").df()["count"])
-                            log.debug(f"Annotation field {annotation_fields_new_name} found in variants: " + str(
-                                annotation_field_exists_on_variants))
-
-                        # To annotate
-                        force_update_annotation = False
-                        if annotation_field in parquet_hdr_vcf.get_header().infos and (force_update_annotation or (annotation_fields_new_name not in self.get_header().infos and not annotation_field_exists_on_variants)):
-
-                            # Add field to annotation to process list
-                            annotation_fields_processed.append(
-                                annotation_fields_new_name)
-
-                            # Sep between fields in INFO
-                            nb_annotation_field += 1
-                            if nb_annotation_field > 1:
-                                annotation_field_sep = ";"
-                            else:
-                                annotation_field_sep = ""
-
-                            log.info(
-                                f"Annotation '{annotation}' - '{annotation_field}' -> 'INFO/{annotation_fields_new_name}'")
-
-                            # Add INFO field to header
-                            parquet_hdr_vcf_header_infos_number = parquet_hdr_vcf_header_infos[
-                                annotation_field].num or "."
-                            parquet_hdr_vcf_header_infos_type = parquet_hdr_vcf_header_infos[
-                                annotation_field].type or "String"
-                            parquet_hdr_vcf_header_infos_description = parquet_hdr_vcf_header_infos[
-                                annotation_field].desc or f"{annotation_field} description"
-                            parquet_hdr_vcf_header_infos_source = parquet_hdr_vcf_header_infos[
-                                annotation_field].source or "unknown"
-                            parquet_hdr_vcf_header_infos_version = parquet_hdr_vcf_header_infos[
-                                annotation_field].version or "unknown"
-
-                            vcf_reader.infos[annotation_fields_new_name] = vcf.parser._Info(
-                                annotation_fields_new_name,
-                                parquet_hdr_vcf_header_infos_number,
-                                parquet_hdr_vcf_header_infos_type,
-                                parquet_hdr_vcf_header_infos_description,
-                                parquet_hdr_vcf_header_infos_source,
-                                parquet_hdr_vcf_header_infos_version,
-                                self.code_type_map[parquet_hdr_vcf_header_infos_type]
-                            )
-
-                            # Annotation/Update query fields
-                            # Found in INFO column
-                            if annotation_field_column == "INFO":
-                                sql_query_annotation_update_info_sets.append(f"""
-                                || CASE WHEN REGEXP_EXTRACT(';' || table_parquet.INFO, ';{annotation_field}=([^;]*)',1) NOT IN ('','.')
-                                        THEN '{annotation_field_sep}' || '{annotation_fields_new_name}=' || REGEXP_EXTRACT(';' || table_parquet.INFO, ';{annotation_field}=([^;]*)',1)
-                                        ELSE ''
-                                    END
-                                """)
-                            # Found in a specific column
-                            else:
-                                sql_query_annotation_update_info_sets.append(f"""
-                                || CASE WHEN table_parquet."{annotation_field_column}" NOT IN ('','.')
-                                        THEN '{annotation_field_sep}' || '{annotation_fields_new_name}=' || table_parquet."{annotation_field_column}"
-                                        ELSE ''
-                                    END
-                                """)
-
-                        # Not to annotate
-                        else:
-
-                            if force_update_annotation:
-                                annotation_message = "forced"
-                            else:
-                                annotation_message = "skipped"
-
-                            if annotation_field not in parquet_hdr_vcf.get_header().infos:
-                                log.warning(
-                                    f"Annotation '{annotation}' - '{annotation_field}' [{nb_annotation_field}] - not available in parquet file")
-                            if annotation_fields_new_name in self.get_header().infos:
-                                log.warning(
-                                    f"Annotation '{annotation}' - '{annotation_fields_new_name}' [{nb_annotation_field}] - already exists in header ({annotation_message})")
-                            if annotation_field_exists_on_variants:
-                                log.warning(
-                                    f"Annotation '{annotation}' - '{annotation_fields_new_name}' [{nb_annotation_field}] - already exists in variants ({annotation_message})")
-
-                    # Check if ALL fields have to be annotated. Thus concat all INFO field
-                    allow_annotation_full_info = True
-                    if allow_annotation_full_info and nb_annotation_field == len(annotation_fields) and annotation_fields_ALL:
-                        sql_query_annotation_update_info_sets = []
-                        sql_query_annotation_update_info_sets.append(
-                            f"|| table_parquet.INFO ")
-
-                    if sql_query_annotation_update_info_sets:
-
-                        # Annotate
-                        log.info(f"Annotation '{annotation}' - Annotation...")
-
-                        # Join query annotation update info sets for SQL
-                        sql_query_annotation_update_info_sets_sql = " ".join(
-                            sql_query_annotation_update_info_sets)
-
-                        # Check chromosomes list (and variant max position)
-                        sql_query_chromosomes_max_pos = f""" SELECT table_variants."#CHROM" as CHROM, MAX(table_variants."POS") as MAX_POS, MIN(table_variants."POS")-1 as MIN_POS FROM {table_variants} as table_variants GROUP BY table_variants."#CHROM" """
-                        sql_query_chromosomes_max_pos_df = self.conn.execute(
-                            sql_query_chromosomes_max_pos).df()
-
-                        # Create dictionnary with chromosomes (and max position)
-                        sql_query_chromosomes_max_pos_dictionary = sql_query_chromosomes_max_pos_df.groupby('CHROM').apply(
-                            lambda x: {'max_pos': x['MAX_POS'].max(), 'min_pos': x['MIN_POS'].min()}).to_dict()
-
-                        # Affichage du dictionnaire
-                        log.debug("Chromosomes max pos found: " +
-                                  str(sql_query_chromosomes_max_pos_dictionary))
-
-                        # nb_of_variant_annotated
-                        nb_of_query = 0
-                        nb_of_variant_annotated = 0
-                        query_dict = {}
-
-                        for chrom in sql_query_chromosomes_max_pos_dictionary:
-
-                            # nb_of_variant_annotated_by_chrom
-                            nb_of_variant_annotated_by_chrom = 0
-
-                            # Get position of the farthest variant (max position) in the chromosome
-                            sql_query_chromosomes_max_pos_dictionary_max_pos = sql_query_chromosomes_max_pos_dictionary.get(
-                                chrom, {}).get("max_pos")
-                            sql_query_chromosomes_max_pos_dictionary_min_pos = sql_query_chromosomes_max_pos_dictionary.get(
-                                chrom, {}).get("min_pos")
-
-                            # Autodetect range of bases to split/chunk
-                            log.debug(
-                                f"Annotation '{annotation}' - Chromosome '{chrom}' - Start Autodetection Intervals...")
-
-                            batch_annotation_databases_step = None
-                            batch_annotation_databases_ncuts = 1
-
-                            # Create intervals from 0 to max position variant, with the batch window previously defined
-                            sql_query_intervals = split_interval(
-                                sql_query_chromosomes_max_pos_dictionary_min_pos, sql_query_chromosomes_max_pos_dictionary_max_pos, step=batch_annotation_databases_step, ncuts=batch_annotation_databases_ncuts)
-
-                            log.debug(
-                                f"Annotation '{annotation}' - Chromosome '{chrom}' - Stop Autodetection Intervals")
-
-                            # Interval Start/Stop
-                            sql_query_interval_start = sql_query_intervals[0]
-
-                            # For each interval
-                            for i in sql_query_intervals[1:]:
-
-                                # Interval Start/Stop
-                                sql_query_interval_stop = i
-
-                                log.debug(
-                                    f"Annotation '{annotation}' - Chromosome '{chrom}' - Interval [{sql_query_interval_start}-{sql_query_interval_stop}] ...")
-
-                                log.debug(
-                                    f"Annotation '{annotation}' - Chromosome '{chrom}' - Interval [{sql_query_interval_start}-{sql_query_interval_stop}] - Start detecting regions...")
-
-                                regions = [
-                                    (chrom, sql_query_interval_start, sql_query_interval_stop)]
-
-                                log.debug(
-                                    f"Annotation '{annotation}' - Chromosome '{chrom}' - Interval [{sql_query_interval_start}-{sql_query_interval_stop}] - Stop detecting regions")
-
-                                # Fusion des régions chevauchantes
-                                if regions:
-
-                                    # Number of regions
-                                    nb_regions = len(regions)
-
-                                    # create where caluse on regions
-                                    clause_where_regions_variants = create_where_clause(
-                                        regions, table="table_variants")
-                                    clause_where_regions_parquet = create_where_clause(
-                                        regions, table="table_parquet")
-
-                                    log.debug(
-                                        f"Annotation '{annotation}' - Chromosome '{chrom}' - Interval [{sql_query_interval_start}-{sql_query_interval_stop}] - {nb_regions} regions...")
-
-                                    sql_query_annotation_chrom_interval_pos = f"""
-                                        UPDATE {table_variants} as table_variants
-                                            SET INFO = CASE WHEN table_variants.INFO NOT IN ('','.') THEN table_variants.INFO ELSE '' END || CASE WHEN table_variants.INFO NOT IN ('','.') AND ('' {sql_query_annotation_update_info_sets_sql}) NOT IN ('','.') THEN ';' ELSE '' END {sql_query_annotation_update_info_sets_sql}
-                                            FROM {parquet_file_link} as table_parquet
-                                            WHERE ( {clause_where_regions_parquet} )
-                                                AND table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
-                                                AND table_parquet.\"POS\" = table_variants.\"POS\"
-                                                AND table_parquet.\"ALT\" = table_variants.\"ALT\"
-                                                AND table_parquet.\"REF\" = table_variants.\"REF\";
-                                                """
-                                    query_dict[f"{chrom}:{sql_query_interval_start}-{sql_query_interval_stop}"] = sql_query_annotation_chrom_interval_pos
-
-                                    log.debug(
-                                        "Create SQL query: " + str(sql_query_annotation_chrom_interval_pos))
-
-                                    # Interval Start/Stop
-                                    sql_query_interval_start = sql_query_interval_stop
-
-                            # nb_of_variant_annotated
-                            nb_of_variant_annotated += nb_of_variant_annotated_by_chrom
-
-                        nb_of_query = len(query_dict)
-                        num_query = 0
-                        for query_name in query_dict:
-                            query = query_dict[query_name]
-                            num_query += 1
-                            log.info(
-                                f"Annotation '{annotation}' - Annotation - Query [{num_query}/{nb_of_query}] {query_name}...")
-                            result = self.conn.execute(query)
-                            nb_of_variant_annotated_by_query = result.df()[
-                                "Count"][0]
-                            nb_of_variant_annotated += nb_of_variant_annotated_by_query
-                            log.info(
-                                f"Annotation '{annotation}' - Annotation - Query [{num_query}/{nb_of_query}] {query_name} - {nb_of_variant_annotated_by_query} variants annotated")
-
-                        log.info(
-                            f"Annotation '{annotation}' - Annotation of {nb_of_variant_annotated} variants out of {nb_variants} (with {nb_of_query} queries)")
-
-                    else:
-
-                        log.info(
-                            f"Annotation '{annotation}' - No Annotations available")
-
-                    log.debug("Final header: " + str(vcf_reader.infos))
-
-
-
-    def annotation_parquet_original(self, threads: int = None) -> None:
+    #             # Find parquet file and header file
+    #             # parquet_file = None
+    #             # parquet_hdr_file = None
+    #             # for databases_folder in databases_folders:
+    #             #     parquet_file = None
+    #             #     parquet_hdr_file = None
+    #             #     log.debug("Annotation file check: " + annotation +
+    #             #               " or " + str(databases_folder+"/"+annotation+".parquet"))
+
+    #             #     # Parquet .parquet
+    #             #     if os.path.exists(annotation):
+    #             #         parquet_file = annotation
+    #             #     elif os.path.exists(databases_folder+"/"+annotation+".parquet"):
+    #             #         parquet_file = databases_folder+"/"+annotation+".parquet"
+    #             #     if not parquet_file:
+    #             #         continue
+
+    #             #     # Header .hdr
+    #             #     if os.path.exists(parquet_file+".hdr"):
+    #             #         parquet_hdr_file = parquet_file+".hdr"
+
+    #             #     # parquet and hdr found
+    #             #     if parquet_file and parquet_hdr_file:
+    #             #         break
+
+    #             if not parquet_file or not parquet_hdr_file:
+    #                 log.error("Annotation failed: file not found")
+    #                 raise ValueError("Annotation failed: file not found")
+    #             else:
+
+    #                 # Get parquet connexion
+    #                 parquet_sql_attach = database.get_sql_database_attach(output="query")
+    #                 if parquet_sql_attach:
+    #                     self.conn.execute(parquet_sql_attach)
+    #                 parquet_file_link = database.get_sql_database_link()
+    #                 # Log
+    #                 log.debug(f"Annotation '{annotation}' - file: " +
+    #                           str(parquet_file) + " and " + str(parquet_hdr_file))
+
+    #                 # Load header as VCF object
+    #                 # parquet_hdr_vcf = Variants(input=parquet_hdr_file)
+    #                 # print(parquet_hdr_vcf)
+    #                 # print(parquet_hdr_vcf.get_header().infos)
+    #                 parquet_hdr_vcf = database.get_header()
+    #                 # print(parquet_hdr_vcf)
+    #                 # print(parquet_hdr_vcf.infos)
+    #                 #parquet_hdr_vcf_header_infos = parquet_hdr_vcf.get_header().infos
+    #                 parquet_hdr_vcf_header_infos = parquet_hdr_vcf.infos
+    #                 # Log
+    #                 log.debug("Annotation database header: " +
+    #                           str(parquet_hdr_vcf_header_infos))
+
+
+    #                 # get extra infos
+    #                 parquet_columns = self.get_extra_infos(
+    #                     table=parquet_file_link)
+
+    #                 # For all fields in database
+    #                 annotation_fields_ALL = False
+    #                 if "ALL" in annotation_fields or "INFO" in annotation_fields:
+    #                     annotation_fields_ALL = True
+    #                     annotation_fields = {
+    #                         key: key for key in parquet_hdr_vcf_header_infos}
+    #                     log.debug(
+    #                         "Annotation database header - All annotations added: " + str(annotation_fields))
+
+    #                 # List of annotation fields to use
+    #                 sql_query_annotation_update_info_sets = []
+
+    #                 # Number of fields
+    #                 nb_annotation_field = 0
+
+    #                 # Annotation fields processed
+    #                 annotation_fields_processed = []
+
+    #                 for annotation_field in annotation_fields:
+
+    #                     # annotation_field_column
+    #                     if annotation_field in parquet_columns:
+    #                         annotation_field_column = annotation_field
+    #                     elif "INFO/" + annotation_field in parquet_columns:
+    #                         annotation_field_column = "INFO/" + annotation_field
+    #                     else:
+    #                         annotation_field_column = "INFO"
+
+    #                     # field new name, if parametered
+    #                     annotation_fields_new_name = annotation_fields.get(
+    #                         annotation_field, annotation_field)
+    #                     if not annotation_fields_new_name:
+    #                         annotation_fields_new_name = annotation_field
+
+    #                     # check annotation field in data
+    #                     annotation_field_exists_on_variants = 0
+    #                     if annotation_fields_new_name not in self.get_header().infos:
+    #                         sampling_annotation_field_exists_on_variants = 10000
+    #                         sql_query_chromosomes = f"""
+    #                             SELECT 1 AS count
+    #                             FROM (SELECT * FROM {table_variants} as table_variants LIMIT {sampling_annotation_field_exists_on_variants})
+    #                             WHERE ';' || INFO LIKE '%;{annotation_fields_new_name}=%'
+    #                             LIMIT 1
+    #                             """
+    #                         annotation_field_exists_on_variants = len(
+    #                             self.conn.execute(f"{sql_query_chromosomes}").df()["count"])
+    #                         log.debug(f"Annotation field {annotation_fields_new_name} found in variants: " + str(
+    #                             annotation_field_exists_on_variants))
+
+    #                     # To annotate
+    #                     force_update_annotation = False
+    #                     if annotation_field in parquet_hdr_vcf_header_infos and (force_update_annotation or (annotation_fields_new_name not in self.get_header().infos and not annotation_field_exists_on_variants)):
+
+    #                         # Add field to annotation to process list
+    #                         annotation_fields_processed.append(
+    #                             annotation_fields_new_name)
+
+    #                         # Sep between fields in INFO
+    #                         nb_annotation_field += 1
+    #                         if nb_annotation_field > 1:
+    #                             annotation_field_sep = ";"
+    #                         else:
+    #                             annotation_field_sep = ""
+
+    #                         log.info(
+    #                             f"Annotation '{annotation}' - '{annotation_field}' -> 'INFO/{annotation_fields_new_name}'")
+
+    #                         # Add INFO field to header
+    #                         parquet_hdr_vcf_header_infos_number = parquet_hdr_vcf_header_infos[
+    #                             annotation_field].num or "."
+    #                         parquet_hdr_vcf_header_infos_type = parquet_hdr_vcf_header_infos[
+    #                             annotation_field].type or "String"
+    #                         parquet_hdr_vcf_header_infos_description = parquet_hdr_vcf_header_infos[
+    #                             annotation_field].desc or f"{annotation_field} description"
+    #                         parquet_hdr_vcf_header_infos_source = parquet_hdr_vcf_header_infos[
+    #                             annotation_field].source or "unknown"
+    #                         parquet_hdr_vcf_header_infos_version = parquet_hdr_vcf_header_infos[
+    #                             annotation_field].version or "unknown"
+
+    #                         vcf_reader.infos[annotation_fields_new_name] = vcf.parser._Info(
+    #                             annotation_fields_new_name,
+    #                             parquet_hdr_vcf_header_infos_number,
+    #                             parquet_hdr_vcf_header_infos_type,
+    #                             parquet_hdr_vcf_header_infos_description,
+    #                             parquet_hdr_vcf_header_infos_source,
+    #                             parquet_hdr_vcf_header_infos_version,
+    #                             self.code_type_map[parquet_hdr_vcf_header_infos_type]
+    #                         )
+
+    #                         # Annotation/Update query fields
+    #                         # Found in INFO column
+    #                         if annotation_field_column == "INFO":
+    #                             sql_query_annotation_update_info_sets.append(f"""
+    #                             || CASE WHEN REGEXP_EXTRACT(';' || table_parquet.INFO, ';{annotation_field}=([^;]*)',1) NOT IN ('','.')
+    #                                     THEN '{annotation_field_sep}' || '{annotation_fields_new_name}=' || REGEXP_EXTRACT(';' || table_parquet.INFO, ';{annotation_field}=([^;]*)',1)
+    #                                     ELSE ''
+    #                                 END
+    #                             """)
+    #                         # Found in a specific column
+    #                         else:
+    #                             sql_query_annotation_update_info_sets.append(f"""
+    #                             || CASE WHEN table_parquet."{annotation_field_column}" NOT IN ('','.')
+    #                                     THEN '{annotation_field_sep}' || '{annotation_fields_new_name}=' || table_parquet."{annotation_field_column}"
+    #                                     ELSE ''
+    #                                 END
+    #                             """)
+
+    #                     # Not to annotate
+    #                     else:
+
+    #                         if force_update_annotation:
+    #                             annotation_message = "forced"
+    #                         else:
+    #                             annotation_message = "skipped"
+
+    #                         if annotation_field not in parquet_hdr_vcf_header_infos:
+    #                             log.warning(
+    #                                 f"Annotation '{annotation}' - '{annotation_field}' [{nb_annotation_field}] - not available in parquet file")
+    #                         if annotation_fields_new_name in self.get_header().infos:
+    #                             log.warning(
+    #                                 f"Annotation '{annotation}' - '{annotation_fields_new_name}' [{nb_annotation_field}] - already exists in header ({annotation_message})")
+    #                         if annotation_field_exists_on_variants:
+    #                             log.warning(
+    #                                 f"Annotation '{annotation}' - '{annotation_fields_new_name}' [{nb_annotation_field}] - already exists in variants ({annotation_message})")
+
+    #                 # Check if ALL fields have to be annotated. Thus concat all INFO field
+    #                 allow_annotation_full_info = True
+    #                 if allow_annotation_full_info and nb_annotation_field == len(annotation_fields) and annotation_fields_ALL:
+    #                     sql_query_annotation_update_info_sets = []
+    #                     sql_query_annotation_update_info_sets.append(
+    #                         f"|| table_parquet.INFO ")
+
+    #                 if sql_query_annotation_update_info_sets:
+
+    #                     # Annotate
+    #                     log.info(f"Annotation '{annotation}' - Annotation...")
+
+    #                     # Join query annotation update info sets for SQL
+    #                     sql_query_annotation_update_info_sets_sql = " ".join(
+    #                         sql_query_annotation_update_info_sets)
+
+    #                     # Check chromosomes list (and variant max position)
+    #                     sql_query_chromosomes_max_pos = f""" SELECT table_variants."#CHROM" as CHROM, MAX(table_variants."POS") as MAX_POS, MIN(table_variants."POS")-1 as MIN_POS FROM {table_variants} as table_variants GROUP BY table_variants."#CHROM" """
+    #                     sql_query_chromosomes_max_pos_df = self.conn.execute(
+    #                         sql_query_chromosomes_max_pos).df()
+
+    #                     # Create dictionnary with chromosomes (and max position)
+    #                     sql_query_chromosomes_max_pos_dictionary = sql_query_chromosomes_max_pos_df.groupby('CHROM').apply(
+    #                         lambda x: {'max_pos': x['MAX_POS'].max(), 'min_pos': x['MIN_POS'].min()}).to_dict()
+
+    #                     # Affichage du dictionnaire
+    #                     log.debug("Chromosomes max pos found: " +
+    #                               str(sql_query_chromosomes_max_pos_dictionary))
+
+    #                     # nb_of_variant_annotated
+    #                     nb_of_query = 0
+    #                     nb_of_variant_annotated = 0
+    #                     query_dict = {}
+
+    #                     for chrom in sql_query_chromosomes_max_pos_dictionary:
+
+    #                         # nb_of_variant_annotated_by_chrom
+    #                         nb_of_variant_annotated_by_chrom = 0
+
+    #                         # Get position of the farthest variant (max position) in the chromosome
+    #                         sql_query_chromosomes_max_pos_dictionary_max_pos = sql_query_chromosomes_max_pos_dictionary.get(
+    #                             chrom, {}).get("max_pos")
+    #                         sql_query_chromosomes_max_pos_dictionary_min_pos = sql_query_chromosomes_max_pos_dictionary.get(
+    #                             chrom, {}).get("min_pos")
+
+    #                         # Autodetect range of bases to split/chunk
+    #                         log.debug(
+    #                             f"Annotation '{annotation}' - Chromosome '{chrom}' - Start Autodetection Intervals...")
+
+    #                         batch_annotation_databases_step = None
+    #                         batch_annotation_databases_ncuts = 1
+
+    #                         # Create intervals from 0 to max position variant, with the batch window previously defined
+    #                         sql_query_intervals = split_interval(
+    #                             sql_query_chromosomes_max_pos_dictionary_min_pos, sql_query_chromosomes_max_pos_dictionary_max_pos, step=batch_annotation_databases_step, ncuts=batch_annotation_databases_ncuts)
+
+    #                         log.debug(
+    #                             f"Annotation '{annotation}' - Chromosome '{chrom}' - Stop Autodetection Intervals")
+
+    #                         # Interval Start/Stop
+    #                         sql_query_interval_start = sql_query_intervals[0]
+
+    #                         # For each interval
+    #                         for i in sql_query_intervals[1:]:
+
+    #                             # Interval Start/Stop
+    #                             sql_query_interval_stop = i
+
+    #                             log.debug(
+    #                                 f"Annotation '{annotation}' - Chromosome '{chrom}' - Interval [{sql_query_interval_start}-{sql_query_interval_stop}] ...")
+
+    #                             log.debug(
+    #                                 f"Annotation '{annotation}' - Chromosome '{chrom}' - Interval [{sql_query_interval_start}-{sql_query_interval_stop}] - Start detecting regions...")
+
+    #                             regions = [
+    #                                 (chrom, sql_query_interval_start, sql_query_interval_stop)]
+
+    #                             log.debug(
+    #                                 f"Annotation '{annotation}' - Chromosome '{chrom}' - Interval [{sql_query_interval_start}-{sql_query_interval_stop}] - Stop detecting regions")
+
+    #                             # Fusion des régions chevauchantes
+    #                             if regions:
+
+    #                                 # Number of regions
+    #                                 nb_regions = len(regions)
+
+    #                                 # create where caluse on regions
+    #                                 clause_where_regions_variants = create_where_clause(
+    #                                     regions, table="table_variants")
+    #                                 clause_where_regions_parquet = create_where_clause(
+    #                                     regions, table="table_parquet")
+
+    #                                 log.debug(
+    #                                     f"Annotation '{annotation}' - Chromosome '{chrom}' - Interval [{sql_query_interval_start}-{sql_query_interval_stop}] - {nb_regions} regions...")
+
+    #                                 sql_query_annotation_chrom_interval_pos = f"""
+    #                                     UPDATE {table_variants} as table_variants
+    #                                         SET INFO = CASE WHEN table_variants.INFO NOT IN ('','.') THEN table_variants.INFO ELSE '' END || CASE WHEN table_variants.INFO NOT IN ('','.') AND ('' {sql_query_annotation_update_info_sets_sql}) NOT IN ('','.') THEN ';' ELSE '' END {sql_query_annotation_update_info_sets_sql}
+    #                                         FROM {parquet_file_link} as table_parquet
+    #                                         WHERE ( {clause_where_regions_parquet} )
+    #                                             AND table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
+    #                                             AND table_parquet.\"POS\" = table_variants.\"POS\"
+    #                                             AND table_parquet.\"ALT\" = table_variants.\"ALT\"
+    #                                             AND table_parquet.\"REF\" = table_variants.\"REF\";
+    #                                             """
+    #                                 query_dict[f"{chrom}:{sql_query_interval_start}-{sql_query_interval_stop}"] = sql_query_annotation_chrom_interval_pos
+
+    #                                 log.debug(
+    #                                     "Create SQL query: " + str(sql_query_annotation_chrom_interval_pos))
+
+    #                                 # Interval Start/Stop
+    #                                 sql_query_interval_start = sql_query_interval_stop
+
+    #                         # nb_of_variant_annotated
+    #                         nb_of_variant_annotated += nb_of_variant_annotated_by_chrom
+
+    #                     nb_of_query = len(query_dict)
+    #                     num_query = 0
+    #                     for query_name in query_dict:
+    #                         query = query_dict[query_name]
+    #                         num_query += 1
+    #                         log.info(
+    #                             f"Annotation '{annotation}' - Annotation - Query [{num_query}/{nb_of_query}] {query_name}...")
+    #                         result = self.conn.execute(query)
+    #                         nb_of_variant_annotated_by_query = result.df()[
+    #                             "Count"][0]
+    #                         nb_of_variant_annotated += nb_of_variant_annotated_by_query
+    #                         log.info(
+    #                             f"Annotation '{annotation}' - Annotation - Query [{num_query}/{nb_of_query}] {query_name} - {nb_of_variant_annotated_by_query} variants annotated")
+
+    #                     log.info(
+    #                         f"Annotation '{annotation}' - Annotation of {nb_of_variant_annotated} variants out of {nb_variants} (with {nb_of_query} queries)")
+
+    #                 else:
+
+    #                     log.info(
+    #                         f"Annotation '{annotation}' - No Annotations available")
+
+    #                 log.debug("Final header: " + str(vcf_reader.infos))
+
+
+
+    def annotation_parquet(self, threads: int = None) -> None:
         """
         It takes a VCF file, and annotates it with a parquet file
 
