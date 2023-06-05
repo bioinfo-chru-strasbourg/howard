@@ -1,9 +1,11 @@
 
 # import pyarrow as pa
 # import pyarrow.csv as csv
+import hashlib
 import polars as pl
 import pandas as pd
 import duckdb
+import sqlite3
 import vcf
 
 from howard.commons import *
@@ -42,41 +44,88 @@ DATABASE_TYPE_NEEDED_COLUMNS = {
         },
 }
 
+DEFAULT_VCF_HEADER = [
+    "#CHROM",
+    "POS",
+    "ID",
+    "REF",
+    "ALT",
+    "QUAL",
+    "FILTER",
+    "INFO"
+]
+
+DEFAULT_HEADER_LIST = [
+            '##fileformat=VCFv4.2',
+            '#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO'
+        ]
+
+CODE_TYPE_MAP = {
+            "Integer": 0,
+            "String": 1,
+            "Float": 2,
+            "Flag": 3
+        }
+
+DTYPE_LIMIT_AUTO = 10000
 class Database:
 
-    def __init__(self, database:str = None, header:str = None, databases_folders:list = None, header_file:str = None) -> None:
+    def __init__(self, database:str = None, format:str = None, header:str = None, header_file:str = None, databases_folders:list = None, assembly:str = None) -> None:
         """
-        This is the initialization function for a class that sets up a database and header file for use
+        This is an initialization function for a class that sets up a database and header file for use
         in a DuckDB connection.
         
         :param database: A string representing the name of the database to be used. If None, the default
         database will be used
         :type database: str
-        :param header: The header parameter is a string that represents the name of the header file that
-        contains the column names for the database. It is used in conjunction with the database
-        parameter to set the header for the database. If the header parameter is not provided, the
-        header will be set to None
+        :param format: The `format` parameter is not described in the docstring, so it is unclear what
+        it represents
+        :type format: str
+        :param header: The `header` parameter is a string that represents the name of the header file
+        that contains the column names for the database. It is used in conjunction with the `database`
+        parameter to set the header for the database. If the `header` parameter is not provided, the
+        header will be set to
         :type header: str
+        :param header_file: The `header_file` parameter is a string that represents the file path to the
+        header file that contains the column names for the database. It is used in the `set_header()`
+        method to set the header attribute of the class
+        :type header_file: str
         :param databases_folders: The `databases_folders` parameter is a list of folders where the
         database files are located. This parameter is used in the `set_database()` method to search for
         the database file in the specified folders. If the database file is not found in any of the
         folders, an error is raised
         :type databases_folders: list
-        :param header_file: The header_file parameter is a string that represents the file path to the
-        header file that contains the column names for the database. This parameter is used in the
-        set_header method to set the header attribute of the class
-        :type header_file: str
+        :param assembly: The `assembly` parameter is a string representing the name of the assembly to
+        be used. It is used in conjunction with the `set_assembly()` method to set the assembly for the
+        DuckDB connection. If the `assembly` parameter is not provided, the default assembly will be
+        used
+        :type assembly: str
         """
-
-        self.database = None
-        self.header = None
-
-        self.set_database(database=database, databases_folders=databases_folders)
-        self.set_header(database=database, header_file=header_file)
+    
+        # Init
+        self.database = database
+        self.format = format
+        self.header = header
+        self.header_file = header_file
+        self.databases_folders = databases_folders
+        self.assembly = assembly
+        
+        # DuckDB connexion
         self.conn = duckdb.connect()
 
+        # Install sqlite scanner
+        self.conn.query("INSTALL sqlite_scanner; LOAD sqlite_scanner; ")
 
-    def set_database(self, database:str, databases_folders:list = None) -> str:
+        # Check attributes
+        self.set_format(format=format)
+        self.set_assembly(assembly=assembly)
+        self.set_databases_folders(databases_folders=databases_folders)
+        self.set_header_file(header_file=header_file)
+        self.set_database(database=database, databases_folders=self.get_database_folders(), format=self.get_format(), assembly=self.get_assembly())
+        self.set_header(database=self.get_database(), header=header, header_file=header_file)
+
+
+    def set_database(self, database:str, databases_folders:list = None, format:str = None, assembly:str = None) -> str:
         """
         This function sets the database attribute of an object to a specified database if it exists or
         can be found in a list of folders.
@@ -88,14 +137,47 @@ class Database:
         found in any of these folders, it will be set as the current database. If `databases_folders` is
         not provided, the
         :type databases_folders: list
+        :param format: The `format` parameter is an optional string representing the format of the
+        database to be searched for. If provided, the `find_database` method will search for the
+        database only in the specified format. If not provided, the method will search for the database
+        in all formats
+        :type format: str
+        :param assembly: The `assembly` parameter is an optional string representing the name of the
+        assembly to which the database belongs. If provided, the `find_database` method will search for
+        the database only in the specified assembly. If not provided, the method will search for the
+        database in all assemblies
+        :type assembly: str
         """
 
         if database is None:
             self.database = None
         elif self.exists(database=database):
             self.database = database
-        elif self.find_database(database=database, databases_folders=databases_folders):
-            self.database = self.find_database(database=database, databases_folders=databases_folders)
+        elif self.find_database(database=database, databases_folders=databases_folders, format=format, assembly=assembly):
+            self.database = self.find_database(database=database, databases_folders=databases_folders, format=format, assembly=assembly)
+
+
+    def set_databases_folders(self, databases_folders:list = ["."]) -> None:
+        """
+        This function sets the list of folders where databases are located as an attribute of an object.
+        
+        :param databases_folders: databases_folders is a list parameter that contains the paths to the
+        folders where the databases are stored. The default value of the parameter is a list with a
+        single element, which is the current directory (".")
+        :type databases_folders: list
+        """
+
+        self.databases_folders = databases_folders
+
+
+    def get_database_folders(self) -> list:
+        """
+        This function returns a list of database folders.
+        :return: The method `get_database_folders` is returning a list of database folders. The specific
+        list being returned is stored in the instance variable `databases_folders`.
+        """
+
+        return self.databases_folders
 
 
     def read_header_file(self, header_file:str = None) -> list:
@@ -148,13 +230,8 @@ class Database:
         a default list is used.
         """
 
-        default_header_list = [
-            '##fileformat=VCFv4.2',
-            '#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO'
-        ]
-
         if not header_list:
-            header_list = default_header_list
+            header_list = DEFAULT_HEADER_LIST
             
         return vcf.Reader(io.StringIO("\n".join(header_list)))
     
@@ -171,20 +248,52 @@ class Database:
         obtained by reading a header file using the `read_header_file` method.
         """
 
-        default_header_list = [
-            '##fileformat=VCFv4.2',
-            '#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO'
-            ]
-
         if not header_file:
-            header_list = default_header_list
+            header_list = DEFAULT_HEADER_LIST
         else:
             header_list = self.read_header_file(header_file=header_file)
 
         return self.get_header_from_list(header_list)
         
 
-    def get_header(self, header_file:str = None, header_list:list = None) -> vcf:
+    def find_header_file(self, database:str = None) -> str:
+        """
+        This function finds the header file for a given database in various formats.
+        
+        :param database: The `database` parameter is a string that represents the path to a database
+        file. If this parameter is not provided, the `get_database()` method is called to retrieve the
+        path to the database file
+        :type database: str
+        :return: the path to the header file for a given database. If the header is in a separate file,
+        it returns the path to that file. If the header is within the database file itself, it returns
+        the path to the database file. If the database or its format cannot be determined, it returns
+        None.
+        """
+
+        if not database:
+            database = self.get_database()
+
+        if not database:
+            return None
+
+        # database format
+        database_format = self.get_format(database=database)
+
+        # extra header file
+        database_header_file = None
+        
+        # header in extra header file
+        if os.path.exists(database + ".hdr"):
+            database_header_file = database + ".hdr"
+
+        # header within file
+        elif database_format in ["vcf", "tsv", "csv", "psv", "bed"]:
+            database_header_file = database
+
+        return database_header_file
+    
+
+    def get_header(self, database:str = None, header_file:str = None, header_list:list = None) -> vcf:
         """
         This function returns the header of a VCF file either from a file, a list, or from the object
         itself.
@@ -198,18 +307,134 @@ class Database:
         conditions are met (i.e. `self.header` is not set, `header_file` is not provided, and
         `header_list` is not provided), then `None` is returned.
         """
-
+        
         if self.header:
+            # Construct header from a given header object
             return self.header
         elif header_file:
+            # Construct header from a given header file
             return self.get_header_from_file(header_file)
         elif header_list:
+            # Construct header from a given header list
             return self.get_header_from_list(header_list)
+        elif self.find_header_file(database=database):
+            # Construct header from header file found
+            return self.get_header_from_file(self.find_header_file(database=database))
+        elif self.get_extra_columns(database=database):
+            # Construct header from a list of columns
+            return self.get_header_from_columns(database=database, header_columns=self.get_extra_columns(database=database))
+        elif "INFO" in self.get_columns(database=database):
+            # Construct header from annotation in INFO column (in case of VCF database without header, e.g. in TSV)
+            # TODO
+            return None
+        else:
+            # No header
+            return None
+
+    def get_header_from_columns(self, database:str = None, header_columns:list = []) -> object:
+        """
+        This function generates a VCF header based on the columns in a database and adds custom
+        annotations to it.
+        
+        :param database: The `database` parameter is a string that represents the name of a database. It
+        is an optional parameter and if not provided, the `get_database()` method is called to retrieve
+        the default database
+        :type database: str
+        :param header_columns: A list of column names that will be used to generate header information
+        for a VCF file. If no header_columns are provided, the function will attempt to automatically
+        detect the columns to use based on the database being used
+        :type header_columns: list
+        :return: a VCF header object that includes information about the columns in a database and their
+        data types. The header object is created based on the input parameters, including the database
+        name and a list of header columns.
+        """
+        
+        if not database:
+            database = self.get_database()
+
+        database_header = vcf.Reader(io.StringIO("\n".join(DEFAULT_HEADER_LIST)))
+        
+        if not header_columns:
+            header_columns = self.get_extra_columns(database=database)
+
+        database_basename = self.get_database_basename(database=database) or "unknown"
+
+        # Columns query for auto detection of stype
+        
+        # Attach if need
+        if self.get_sql_database_attach(database=database, output="attach"):
+            self.query(database=database, query=self.get_sql_database_attach(database=database, output="attach"))
+
+        # database columns
+        database_query_columns_sql = f""" SELECT * FROM {self.get_sql_database_link(database=database)} LIMIT {DTYPE_LIMIT_AUTO} """
+        database_query_columns = self.query(database=database, query=database_query_columns_sql)
+
+        # Remove specific VCF column if is a VCF type
+        if self.get_type_from_columns(database_columns=self.get_columns(database=database), check_database_type="vcf") == "vcf":
+            header_columns = [x for x in header_columns if x not in DEFAULT_VCF_HEADER]
+
+        # List all columns to add into header
+        for header_column in header_columns:
+
+            # Header info type
+            header_info_type = "String"
+            header_column_df = database_query_columns.df()[header_column]
+            header_column_df_dtype = header_column_df.dtype
+            if header_column_df_dtype == object:
+                if pd.to_numeric(header_column_df, errors='coerce').notnull().all():
+                    header_info_type = "Float"
+            else:
+                header_info_type = "Integer"
+
+            # Header info
+            header_info_name = header_column
+            header_info_number = "."
+            header_info_description = f"{header_column} annotation"
+            header_info_source = database_basename
+            header_info_version = "unknown"
+            database_header.infos[header_column] = vcf.parser._Info(
+                header_info_name,
+                header_info_number,
+                header_info_type,
+                header_info_description,
+                header_info_source,
+                header_info_version,
+                CODE_TYPE_MAP[header_info_type]
+            )
+
+        # Detach if need
+        if self.get_sql_database_attach(database=database, output="detach"):
+            self.query(database=database, query=self.get_sql_database_attach(database=database, output="detach"))
+
+        return database_header
+
+
+    def query(self, database:str = None, query:str = None) -> object:
+        """
+        This is a Python function that takes in a database and query string as parameters and returns
+        the result of the query on the database.
+        
+        :param database: A string representing the name of the database to query. If no database is
+        provided, the method will attempt to retrieve the default database from the connection object
+        :type database: str
+        :param query: The query parameter is a string that represents the SQL query that needs to be
+        executed on the database. It can be any valid SQL statement such as SELECT, INSERT, UPDATE,
+        DELETE, etc
+        :type query: str
+        :return: If a query is provided, the method returns the result of the query executed on the
+        database. If no query is provided, the method returns None.
+        """
+
+        if not database:
+            database = self.get_database()
+
+        if query:
+            return self.conn.query(query)
         else:
             return None
 
 
-    def set_header(self, database:str = None, header_file:str = None) -> None:
+    def set_header(self, database:str = None, header:vcf = None, header_file:str = None) -> None:
         """
         This function sets the header of a database based on a provided header file or the database
         format.
@@ -217,56 +442,151 @@ class Database:
         :param database: A string representing the name or path of a database file. If not provided, the
         method will attempt to get the database name from the object's attributes
         :type database: str
+        :param header: `header` is a variable of type `vcf` (presumably representing a VCF header) that
+        can be provided as an argument to the `set_header` method to set the header attribute of the
+        object. If `header` is provided, the `header_file` parameter is ignored
+        :type header: vcf
         :param header_file: A string representing the file path of a header file. If provided, the
-        function will use this header file to set the header attribute of the object. If not provided,
-        the function will try to determine the header from the database file
+        function will use this header file to set the header attribute of the object
         :type header_file: str
         """
 
-        if header_file and os.path.exists(header_file):
+        if header:
 
-            # header provided
-            self.header = self.get_header(header_file=header_file)
+            self.header = header
+            self.header_file = None
         
         else:
 
-            if not database:
-                database = self.get_database()
+            if header_file and os.path.exists(header_file):
 
-            if database:
-
-                # database format
-                database_format = self.get_format(database=database)
-
-                # extra header file
-                database_header_file = database + ".hdr"
-
-                # header in extra header file
-                if os.path.exists(database_header_file):
-                    self.header = self.get_header(header_file=database_header_file)
-                # header within file
-                elif database_format in ["vcf", "tsv", "csv", "psv", "bed"]:
-                    self.header = self.get_header(header_file=database)
-                # Not header
-                else:
-                    self.header = self.get_header()
-
+                # header provided
+                self.header = self.get_header(header_file=header_file)
+                self.header_file = header_file
+            
             else:
 
-                self.header = None
+                # default no heder file
+                self.header_file = None
+                
+                if not database:
+                    database = self.get_database()
+                
+                if database:
+                    
+                    # database format
+                    database_format = self.get_format(database=database)
+
+                    # extra header file
+                    database_header_file = database + ".hdr"
+                    
+                    # header in extra header file
+                    if os.path.exists(database_header_file):
+                        self.header = self.get_header(header_file=database_header_file)
+                        self.header_file = database_header_file
+                    # header within file
+                    elif database_format in ["vcf", "tsv", "csv", "psv", "bed"]:
+                        self.header = self.get_header(header_file=database)
+                        if self.header:
+                            self.header_file = self.get_database()
+                    # Not header
+                    else:
+                        self.header = self.get_header()
+
+                else:
+
+                    self.header = None
 
 
-    def find_database(self, database:str = None, databases_folders:list = None) -> str:
+    def set_header_file(self, header_file:str = None) -> None:
+        """
+        This function sets the header file attribute of an object to the value passed as an argument.
+        
+        :param header_file: The parameter `header_file` is a string that represents the name or path of
+        a header file. This method sets the `header_file` attribute of an object to the value passed as
+        an argument. If no argument is passed, the `header_file` attribute remains unchanged
+        :type header_file: str
+        """
+
+        self.header_file = header_file
+
+
+    def get_header_file(self, header_file:str = None) -> str:
+        """
+        This function generates a VCF header file if it does not exist or generates a default header
+        file if the provided header file does not match the database.
+        
+        :param header_file: A string representing the file path and name of the header file. If None,
+        the default header file path and name will be used
+        :type header_file: str
+        :return: a string which is the name of the header file that was generated or None if no header
+        file was generated.
+        """
+        
+        if not header_file:
+            header_file = self.header_file
+        
+        if header_file:
+            if header_file != self.get_database():
+                if self.get_header():
+                    header = self.get_header()
+                else:
+                    header = self.get_header(header_list=DEFAULT_HEADER_LIST)
+                # Generate header file
+                f = open(header_file, 'w')
+                vcf.Writer(f, header)
+                f.close()
+        else:
+            # No header generated
+            header_file = None
+        
+        return header_file
+
+
+    def set_assembly(self, assembly:str = None) -> None:
+        """
+        This is a function that sets the assembly attribute of an object to a given string value.
+        
+        :param assembly: The assembly parameter is a string that represents the name or type of assembly
+        that the object belongs to. This method sets the assembly attribute of the object to the value
+        passed in as the assembly parameter. If no value is passed in, the assembly attribute remains
+        unchanged. The method returns the updated value of the
+        :type assembly: str
+        """
+
+        self.assembly = assembly
+
+    
+    def get_assembly(self) -> str:
+        """
+        This function returns the assembly attribute of an object if it exists, otherwise it returns
+        None.
+        :return: If `self.assembly` is not `None`, then it returns the value of `self.assembly`.
+        Otherwise, it returns `None`.
+        """
+
+        return self.assembly
+        
+
+    def find_database(self, database:str = None, databases_folders:list = None, format:str = None, assembly:str = None) -> str:
         """
         This function finds a database file in a specified folder or the current directory.
         
         :param database: The name of the database to be searched for. If not provided, it will call the
-        `get_database()` method to get the name of the database
+        `get_database()` method to get the name of the database. It is a string type parameter
         :type database: str
         :param databases_folders: A list of folders where the function should look for the database
         file. If this parameter is not provided, the function will look for the database file in the
         current directory
         :type databases_folders: list
+        :param format: The file format of the database file. It is an optional parameter and if not
+        provided, the function will call the `get_format()` method to get the format
+        :type format: str
+        :param assembly: `assembly` is an optional parameter that represents the name of a subfolder
+        where the function should look for the database file. If provided, the function will search for
+        the database file in the specified subfolder within each of the `databases_folders`. If not
+        provided, the function will only search for
+        :type assembly: str
         :return: a string that represents the path to the database file. If the database is not found or
         if no database is specified, it returns None.
         """
@@ -274,9 +594,15 @@ class Database:
         if not database:
             database = self.get_database()
 
+        if not format:
+            format = self.get_format()
+        
+        if not assembly:
+            assembly = self.get_assembly()
+
         if not database:
             return None
-
+        
         elif self.exists(database=database):
             return database
         
@@ -286,19 +612,43 @@ class Database:
                 databases_folders = ['.']
 
             database_file = None
-            for databases_folder in databases_folders:
-                
-                # Log
-                log.debug("Annotation file check: " + str(databases_folder+"/"+database))
 
-                # In folder
-                if os.path.exists(databases_folder+"/"+database):
-                    database_file = databases_folder+"/"+database
+            for format_extension in ["", f".{format}", f".{format}.gz"]:
+
+                # find in folders
+                for databases_folder in databases_folders:
+                    
+                    # Log
+                    log.debug("Annotation file check: " + str(databases_folder+"/"+database+format_extension))
+
+                    # In folder
+                    if os.path.exists(databases_folder+"/"+database+format_extension):
+                        database_file = databases_folder+"/"+database+format_extension
+
+                    # database found
+                    if database_file:
+                        break
+
+                # find in subfolder assemby
+                if not database_file and assembly:
+
+                    for databases_folder in databases_folders:
+                        
+                        # Log
+                        log.debug("Annotation file check: " + str(databases_folder+"/"+assembly+"/"+database+format_extension))
+
+                        # In folder
+                        if os.path.exists(databases_folder+"/"+assembly+"/"+database+format_extension):
+                            database_file = databases_folder+"/"+assembly+"/"+database+format_extension
+
+                        # database found
+                        if database_file:
+                            break
 
                 # database found
                 if database_file:
                     break
-            
+
             return database_file
 
 
@@ -311,6 +661,52 @@ class Database:
         """
         
         return self.database
+
+
+    def get_database_basename(self, database:str = None) -> str:
+        """
+        This function returns the basename of a database file.
+        
+        :param database: The parameter `database` is a string that represents the name of a database. If
+        it is not provided, the method will use the `get_database()` method to retrieve the current
+        database
+        :type database: str
+        :return: a string which is the basename of the database file. If the database parameter is not
+        provided, it gets the current database using the `get_database()` method. If the database
+        exists, it returns the basename of the database file using the `os.path.basename()` method. If
+        the database does not exist, it returns `None`.
+        """
+
+        if not database:
+            database = self.get_database()
+
+        if database:
+            return os.path.basename(database)
+        else:
+            return None
+
+
+    def get_database_dirname(self, database:str = None) -> str:
+        """
+        This function returns the directory name of a given database or the current database if none is
+        specified.
+        
+        :param database: The parameter `database` is a string that represents the path to a database
+        file. If it is not provided, the method will call `self.get_database()` to retrieve the path to
+        the default database
+        :type database: str
+        :return: a string that represents the directory name of the specified database file. If no
+        database file is specified, it will use the default database file and return its directory name.
+        If there is no database file, it will return None.
+        """
+
+        if not database:
+            database = self.get_database()
+
+        if database:
+            return os.path.dirname(database)
+        else:
+            return None
 
 
     def exists(self, database:str = None) -> bool:
@@ -332,6 +728,20 @@ class Database:
         return database and os.path.exists(database)
 
 
+    def set_format(self, format:str = None) -> str:
+        """
+        This is a method in a Python class that sets a format attribute to a specified string.
+        
+        :param format: The format parameter is a string that specifies the desired format for the data.
+        It is an optional parameter, meaning that if it is not provided, the format attribute of the
+        object will not be changed. The function returns a string indicating the current format of the
+        object
+        :type format: str
+        """
+
+        self.format = format
+
+
     def get_format(self, database:str = None) -> str:
         """
         This Python function returns the file format of a given database or the current database if none
@@ -339,6 +749,7 @@ class Database:
         Format database:
             - parquet
             - duckdb
+            - sqlite
             - vcf
             - csv
         
@@ -347,10 +758,13 @@ class Database:
         to retrieve the database type
         :type database: str
         :return: a string that represents the type of database. The type of database can be one of the
-        following: "parquet", "duckdb", "vcf", or "csv". The specific type of database is determined by
+        following: "parquet", "duckdb", "sqlite", "vcf", or "csv". The specific type of database is determined by
         the input parameter `database`, which is either passed as an argument to the function or
         obtained by calling the `get_database()` method. The `get_file_format
         """
+
+        if self.format:
+            return self.format
 
         if not database:
             database = self.get_database()
@@ -401,6 +815,11 @@ class Database:
                 database_tables = list(database_conn.query("SHOW TABLES;").df()["name"])
                 database_conn.close()
                 return database_tables
+            elif format in ["sqlite"]:
+                database_conn = sqlite3.connect(database)
+                sql_query = f"SELECT name FROM sqlite_master WHERE type='table'"
+                database_tables = list(pd.read_sql_query(sql_query, database_conn)["name"])
+                return database_tables
             else:
                 return None
         else:
@@ -424,7 +843,7 @@ class Database:
         if database and self.exists(database):
             
             database_format = self.get_format(database)
-            if database_format in ["duckdb"]:
+            if database_format in ["duckdb", "sqlite"]:
                 for database_table in self.get_database_tables(database=database):
                     database_columns = self.get_columns(database, table=database_table)
                     database_type = self.get_type_from_columns(database_columns)
@@ -443,7 +862,7 @@ class Database:
         
         :param database_columns: a list of column names in a database table
         :type database_columns: list
-        :param check_database_type: A list of database types to check for. If not provided, it defaults
+        :param check_database_type: A database type to check for. If not provided, it defaults
         to all database types defined in the constant `DATABASE_TYPE_NEEDED_COLUMNS`
         :type check_database_type: str
         :return: a string that represents the type of database based on the provided list of columns. If
@@ -487,20 +906,20 @@ class Database:
         needed_columns = DATABASE_TYPE_NEEDED_COLUMNS.get(database_type)
         variants_columns_found = {}
 
-
-        for needed_col in needed_columns:
-            variants_columns_found[needed_col] = None
-            for possible_col in needed_columns[needed_col]:
-                if database_columns:
-                    for existing_column in database_columns:
-                        if possible_col.upper() == existing_column.upper():
-                            variants_columns_found[needed_col] = existing_column
-                            break
+        if needed_columns:
+            for needed_col in needed_columns:
+                variants_columns_found[needed_col] = None
+                for possible_col in needed_columns[needed_col]:
+                    if database_columns:
+                        for existing_column in database_columns:
+                            if possible_col.upper() == existing_column.upper():
+                                variants_columns_found[needed_col] = existing_column
+                                break
 
         return variants_columns_found
 
 
-    def get_sql_from(self, database:str = None):
+    def get_sql_from(self, database:str = None) -> str:
         """
         This function returns a SQL query string based on the input database format.
         
@@ -516,8 +935,11 @@ class Database:
 
         if not database:
             database = self.get_database()
+
         database_format = self.get_format(database)
+
         sql_form = None
+
         if database_format in ["parquet"]:
             sql_form = f"read_parquet('{database}')"
         elif database_format in ["vcf", "tsv", "csv", "psv", "bed"]:
@@ -527,9 +949,93 @@ class Database:
             sql_form = f"read_json('{database}', auto_detect=True)"
         elif database_format in ["duckdb"]:
             sql_form = f"'{database}'"
+        elif database_format in ["sqlite"]:
+            database_table = self.get_database_table(database=database)
+            sql_form = f"(SELECT * FROM sqlite_scan('{database}', '{database_table}'))"
 
         return sql_form
     
+
+    def get_sql_database_attach(self, database:str = None, output:str = "query", ) -> str:
+        """
+        This function returns a SQL query to attach or detach a database based on the specified format
+        and output.
+        
+        :param database: The name of the database to attach. If not provided, it will try to get the
+        default database from the connection
+        :type database: str
+        :param output: The "output" parameter is a string that specifies the desired output of the
+        function. It can take on the following values:, defaults to query
+        :type output: str (optional)
+        :return: a string that represents a SQL query to attach a database to a DuckDB or SQLite
+        database engine. The specific output depends on the value of the `output` parameter, which can
+        be "query" (default), "attach", "detach", or "name". If `output` is "query" or "attach", the
+        function returns a SQL query to attach the specified database.
+        """
+
+        if not database:
+            database = self.get_database()
+
+        if not database:
+            return None
+
+        database_format = self.get_format(database=database)
+
+        database_attach = None
+
+        if database_format in ["duckdb", "sqlite"]:
+            database_name = "database_" + hashlib.sha1(database.encode()).hexdigest()
+            database_options = []
+            if database_format in ["sqlite"]:
+                database_options.append("TYPE SQLITE")
+            if database_options:
+                database_options_sql = "(" + ",".join(database_options) + ")"
+            else:
+                database_options_sql = ""
+            
+            if output in ["query", "attach"]:
+                database_attach = f"ATTACH DATABASE '{database}' AS {database_name} {database_options_sql}"
+            elif output in ["detach"]:
+                database_attach = f"DETACH {database_name}"
+            elif output == "name":
+                database_attach = database_name
+    
+        return database_attach
+    
+
+    def get_sql_database_link(self, database:str = None) -> str:
+        """
+        This function returns a SQL database link based on the provided database name or the default
+        database.
+        
+        :param database: The `database` parameter is a string that represents the name of the database.
+        If it is not provided, the method will call the `get_database()` method to retrieve the default
+        database
+        :type database: str
+        :return: a SQL database link as a string. If a database name is provided as an argument, it will
+        use that database to construct the link. Otherwise, it will use the default database obtained
+        from `self.get_database()`. The link is constructed using the `sql_from` and `sql_table`
+        obtained from other methods, and the final link is returned as a string. If the
+        """
+
+        if not database:
+            database = self.get_database()
+
+        sql_database_link = None
+
+        sql_from = self.get_sql_from(database=database)
+
+        if sql_from:
+
+            database_attach_name = self.get_sql_database_attach(database=database, output="name")
+            if database_attach_name:
+                sql_table = self.get_database_table(database=database)
+                sql_from = f"{database_attach_name}.{sql_table}"
+                
+            sql_database_link = f"(SELECT * FROM {sql_from})"
+        
+        return sql_database_link
+
 
     def is_compressed(self, database:str = None) -> bool:
         """
@@ -571,6 +1077,9 @@ class Database:
         if not database:
             database = self.get_database()
 
+        if not table:
+            table = self.get_database_table(database=database)
+
         if database and self.exists(database):
             database_format = self.get_format(database)
             if database_format in ["duckdb"]:
@@ -582,6 +1091,14 @@ class Database:
                     return columns_list
                 else:
                     return []
+            elif database_format in ["sqlite"]:
+                if table:
+                    database_conn = sqlite3.connect(database)
+                    sql_query = f"SELECT * FROM {table} LIMIT 0"
+                    columns_list = list(pd.read_sql_query(sql_query, database_conn).columns)
+                    return columns_list
+                else:
+                    return []
             elif database_format in ["parquet", "vcf", "tsv", "csv", "psv", "bed", "json"]:
                 sql_from = self.get_sql_from(database)
                 sql_query = f"SELECT * FROM {sql_from} LIMIT 0"
@@ -589,6 +1106,29 @@ class Database:
             else:
                 return []
         return []
+
+
+    def get_annotations(self, database:str = None) -> object:
+        """
+        This function returns the annotations of a database or the default database if none is
+        specified.
+        
+        :param database: The parameter `database` is a string that represents the name of the database
+        to retrieve annotations from. If no database name is provided, the method will use the default
+        database name obtained from the `get_database()` method
+        :type database: str
+        :return: The function `get_annotations` returns the `infos` attribute of the header of a
+        database. If the `database` parameter is not provided, it gets the current database using the
+        `get_database` method. If there is no header, it returns `None`.
+        """
+
+        if not database:
+            database = self.get_database()
+
+        if self.get_header(database=database):
+            return self.get_header(database=database).infos
+        else:
+            return None
 
 
     def get_extra_columns(self, database:str = None) -> list:
