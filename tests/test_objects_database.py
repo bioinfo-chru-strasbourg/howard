@@ -14,12 +14,14 @@ import os
 import pytest
 
 from howard.commons import *
+from howard.objects.variants import Variants
 from howard.objects.database import Database
 
 # Main tests folder
 tests_folder = os.path.dirname(__file__)
 
 # Annotation subfolder
+tests_data_folder = tests_folder + "/data"
 tests_annotations_folder = tests_folder + "/data/annotations"
 
 # Annotation databases
@@ -38,17 +40,67 @@ database_files = {
     "tsv_failed_columns" : tests_annotations_folder + "/nci60.failed_columns.tsv",
     "tsv_lower_columns" : tests_annotations_folder + "/nci60.lower_columns.tsv",
     "tsv_without_header" : tests_annotations_folder + "/nci60.without_header.tsv",
+    "tsv_variants" : tests_annotations_folder + "/nci60.variants.tsv",
     "tsv_gz" : tests_annotations_folder + "/nci60.tsv.gz",
     "csv" : tests_annotations_folder + "/nci60.csv",
     "csv_gz" : tests_annotations_folder + "/nci60.csv.gz",
-    "psv" : tests_annotations_folder + "/nci60.psv",
-    "psv_gz" : tests_annotations_folder + "/nci60.psv.gz",
+    "tbl" : tests_annotations_folder + "/nci60.tbl",
+    "tbl_gz" : tests_annotations_folder + "/nci60.tbl.gz",
     "json" : tests_annotations_folder + "/nci60.json",
     "json_gz" : tests_annotations_folder + "/nci60.json.gz",
     "bed" : tests_annotations_folder + "/annotation_regions.bed",
-    "bed_gz" : tests_annotations_folder + "/annotation_regions.bed.gz"
+    "bed_gz" : tests_annotations_folder + "/annotation_regions.bed.gz",
+    "example_vcf" : tests_data_folder + "/example.vcf",
+
 }
 
+
+def test_database_as_conn():
+    """
+    This function test creation of a Database empty
+    """
+
+    # Create conn with variants in a table by loading a VCF with Variants object
+    variants = Variants(input=database_files.get("example_vcf"), load=True)
+
+    # Create database object with conn
+    try:
+        database = Database(conn=variants.get_connexion())
+    except:
+        assert False
+
+    # Check get_conn
+    assert database.get_conn() == variants.get_connexion()
+
+    # Create database object using conn, variants object header, and point to table "variants"
+    try:
+        database = Database(database=variants.get_connexion(), header=variants.get_header(), table="variants")
+    except:
+        assert False
+
+    # Check table variants is queryable
+    assert database.query(query="SELECT * FROM variants")
+
+    # Check if some variants
+    assert len(database.query(query="SELECT * FROM variants"))
+
+    # get_database_tables
+    assert database.get_database_tables() == ["variants"]
+
+    # Check get_database_basename
+    assert database.get_database_basename() == None
+    
+
+    # Check export
+    output_database = "/tmp/output_database.vcf"
+    remove_if_exists([output_database])
+    try:
+        assert database.export(output_database=output_database)
+        assert database.query(database=output_database, query=f"""{database.get_sql_database_link(database=output_database)}""")
+    except:
+        assert False
+
+    #assert False
 
 
 def test_empty_database():
@@ -499,7 +551,7 @@ def test_get_format():
     assert database.get_format(database_files.get("vcf")) == "vcf"
     assert database.get_format(database_files.get("vcf_gz")) == "vcf"
 
-     # Check tsv
+    # Check tsv
     assert database.get_format(database_files.get("tsv")) == "tsv"
     assert database.get_format(database_files.get("tsv_gz")) == "tsv"
 
@@ -544,7 +596,7 @@ def test_get_is_compressed():
     assert not database.is_compressed(database_files.get("vcf"))
     assert database.is_compressed(database_files.get("vcf_gz"))
 
-     # Check tsv
+    # Check tsv
     assert not database.is_compressed(database_files.get("tsv"))
     assert database.is_compressed(database_files.get("tsv_gz"))
 
@@ -578,20 +630,18 @@ def test_get_type():
 
     # Check parquet VCF/BED
     assert database.get_type(database_files.get("parquet")) == "variants"
-    #assert database.get_type(database_files.get("parquet")) == "variants"
 
-    # Check duckdb variants/regions
+    # Check duckdb
     assert database.get_type(database_files.get("duckdb")) == "variants"
-    #assert database.get_type(database_files.get("duckdb")) == "variants"
 
-    # Check sqlite variants/regions
+    # Check sqlite
     assert database.get_type(database_files.get("sqlite")) == "variants"
 
-    # Check vcf variants/regions
+    # Check vcf
     assert database.get_type(database_files.get("vcf")) == "variants"
     assert database.get_type(database_files.get("vcf_gz")) == "variants"
 
-     # Check tsv
+    # Check tsv
     assert database.get_type(database_files.get("tsv")) == "variants"
     assert database.get_type(database_files.get("tsv_gz")) == "variants"
     assert database.get_type(database_files.get("tsv_alternative_columns")) == "variants"
@@ -628,19 +678,17 @@ def test_is_vcf():
     # Create object
     database = Database()
 
-    # Check parquet VCF/BED
-    assert database.is_vcf(database_files.get("parquet"))
-    assert database.is_vcf(database_files.get("parquet"))
+    # Check parquet
+    assert not database.is_vcf(database_files.get("parquet"))
 
-    # Check duckdb variants/regions
-    assert database.is_vcf(database_files.get("duckdb"))
-    assert database.is_vcf(database_files.get("duckdb"))
+    # Check duckdb
+    assert not database.is_vcf(database_files.get("duckdb"))
 
-    # Check vcf variants/regions
+    # Check vcf
     assert database.is_vcf(database_files.get("vcf"))
     assert database.is_vcf(database_files.get("vcf_gz"))
 
-     # Check tsv
+    # Check tsv
     assert database.is_vcf(database_files.get("tsv"))
     assert database.is_vcf(database_files.get("tsv_gz"))
     assert database.is_vcf(database_files.get("tsv_alternative_columns"))
@@ -652,8 +700,8 @@ def test_is_vcf():
     assert database.is_vcf(database_files.get("csv_gz"))
 
     # Check json
-    assert database.is_vcf(database_files.get("json"))
-    assert database.is_vcf(database_files.get("json_gz"))
+    assert not database.is_vcf(database_files.get("json"))
+    assert not database.is_vcf(database_files.get("json_gz"))
 
     # Check bed
     assert not database.is_vcf(database_files.get("bed"))
@@ -811,8 +859,8 @@ def test_get_sql_from():
     # Check csv
     assert database.get_sql_from(database_files.get("csv")) == f"""read_csv('{database_files.get("csv")}', auto_detect=True, delim=',')"""
 
-    # Check psv
-    assert database.get_sql_from(database_files.get("psv")) == f"""read_csv('{database_files.get("psv")}', auto_detect=True, delim='|')"""
+    # Check tbl
+    assert database.get_sql_from(database_files.get("tbl")) == f"""read_csv('{database_files.get("tbl")}', auto_detect=True, delim='|')"""
 
     # Check bed
     assert database.get_sql_from(database_files.get("bed")) == f"""read_csv('{database_files.get("bed")}', auto_detect=True, delim='\t')"""
@@ -927,10 +975,10 @@ def test_get_sql_database_link():
         database.conn.query(sql_database_attach)
     assert len(database.conn.query(f""" SELECT * FROM {sql_database_link} """).df())
 
-    # Check psv
+    # Check tbl
     database = Database()
-    sql_database_link = database.get_sql_database_link(database=database_files.get("psv"))
-    sql_database_attach = database.get_sql_database_attach(database=database_files.get("psv"), output="query")
+    sql_database_link = database.get_sql_database_link(database=database_files.get("tbl"))
+    sql_database_attach = database.get_sql_database_attach(database=database_files.get("tbl"), output="query")
     assert sql_database_link
     assert not sql_database_attach
     if sql_database_attach:
@@ -988,8 +1036,8 @@ def test_get_columns():
     # Check csv
     assert database.get_columns(database=database_files.get("csv")) == ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO']
 
-    # Check psv
-    assert database.get_columns(database=database_files.get("psv")) == ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO']
+    # Check tbl
+    assert database.get_columns(database=database_files.get("tbl")) == ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO']
 
     # Check bed
     assert database.get_columns(database=database_files.get("bed")) == ['#CHROM', 'START', 'END', 'annot1', 'annot2']
@@ -1030,8 +1078,8 @@ def test_get_extra_colums():
     # Check csv
     assert database.get_extra_columns(database_files.get("csv")) == ['ID', 'QUAL', 'FILTER', 'INFO']
 
-    # Check psv
-    assert database.get_extra_columns(database_files.get("psv")) == ['ID', 'QUAL', 'FILTER', 'INFO']
+    # Check tbl
+    assert database.get_extra_columns(database_files.get("tbl")) == ['ID', 'QUAL', 'FILTER', 'INFO']
 
     # Check bed
     assert database.get_extra_columns(database_files.get("bed")) == ['annot1', 'annot2']
@@ -1120,58 +1168,67 @@ def test_get_needed_columns():
 
     # Init
     variants_needed_columns_empty = {
-        'chromosome': None,
-        'position': None,
-        'reference': None,
-        'alternative': None
+        '#CHROM': None,
+        'POS': None,
+        'REF': None,
+        'ALT': None
     }
     variants_needed_columns_only_CHROM = {
-        'chromosome': "CHROM",
-        'position': None,
-        'reference': None,
-        'alternative': None
+        '#CHROM': "CHROM",
+        'POS': None,
+        'REF': None,
+        'ALT': None
     }
     variants_needed_columns_only_ALL = {
-        'chromosome': "#CHROM",
-        'position': "POS",
-        'reference': "REF",
-        'alternative': "ALT"
+        '#CHROM': "#CHROM",
+        'POS': "POS",
+        'REF': "REF",
+        'ALT': "ALT"
     }
     vcf_needed_columns_empty = {
-        'chromosome': None,
-        'position': None,
-        'reference': None,
-        'alternative': None,
-        'info': None,
+        '#CHROM': None,
+        'POS': None,
+        'ID': None,
+        'REF': None,
+        'ALT': None,
+        'QUAL': None,
+        'FILTER': None,
+        'INFO': None,
     }
     vcf_needed_columns_only_CHROM = {
-        'chromosome': "CHROM",
-        'position': None,
-        'reference': None,
-        'alternative': None,
-        'info': None,
+        '#CHROM': "CHROM",
+        'POS': None,
+        'ID': None,
+        'REF': None,
+        'ALT': None,
+        'QUAL': None,
+        'FILTER': None,
+        'INFO': None,
     }
     vcf_needed_columns_only_ALL = {
-        'chromosome': "#CHROM",
-        'position': "POS",
-        'reference': "REF",
-        'alternative': "ALT",
-        'info': "INFO",
+        '#CHROM': "#CHROM",
+        'POS': "POS",
+        'ID': None,
+        'REF': "REF",
+        'ALT': "ALT",
+        'QUAL': None,
+        'FILTER': None,
+        'INFO': "INFO",
     }
     regions_needed_columns_empty = {
-        'chromosome': None,
-        'start': None,
-        'end': None
+        '#CHROM': None,
+        'START': None,
+        'END': None
     }
     regions_needed_columns_only_CHROM = {
-        'chromosome': "CHROM",
-        'start': None,
-        'end': None
+        '#CHROM': "CHROM",
+        'START': None,
+        'END': None
     }
     regions_needed_columns_only_ALL = {
-        'chromosome': "#CHROM",
-        'start': "START",
-        'end': "END"
+        '#CHROM': "#CHROM",
+        'START': "START",
+        'END': "END"
     }
 
     # Create object
@@ -1215,3 +1272,34 @@ def test_get_needed_columns():
 
     # Regions MORE
     assert database.get_needed_columns(database_columns = ["#CHROM", "START", "END", "MORE"], database_type = "regions") == regions_needed_columns_only_ALL
+
+
+def test_export():
+    """
+    The function tests the export functionality of a database for various input and output formats.
+    """
+
+    # No database input
+    database = Database()
+    output_database=f"/tmp/output_database.no_input.parquet"
+    remove_if_exists([output_database])
+    assert not database.export(output_database)
+
+    # database input/format
+    for database_input_index in ["bed", "parquet", "vcf", "vcf_gz", "tsv", "csv", "tbl", "tsv_alternative_columns", "tsv_variants", "json", "example_vcf"]:
+        for database_output_format in ["parquet", "vcf", "vcf.gz", "tsv", "csv", "tbl", "json", "bed"]:
+            input_database = database_files.get(database_input_index)
+            database = Database(database_files.get(database_input_index))
+            output_database=f"/tmp/output_database.{database_output_format}"
+            output_header=output_database+".hdr"
+            remove_if_exists([output_database,output_header])
+            if not (database.get_format(input_database) == "bed" and database.get_format(output_database) == "vcf"):
+                try:
+                    assert database.export(output_database=output_database, output_header=output_header)
+                    assert database.query(database=output_database, query=f"""{database.get_sql_database_link(database=output_database)}""")
+                except:
+                    assert False
+            else:
+                # For input as BED and output as VCF
+                assert not database.export(output_database=output_database)
+

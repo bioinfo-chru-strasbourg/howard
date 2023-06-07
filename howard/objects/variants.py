@@ -235,14 +235,14 @@ class Variants:
             input_compressed = self.get_input_compressed()
             config = self.get_config()
             header_list = default_header_list
-            if input_format in ["vcf", "bcf", "hdr", "tsv", "csv", "psv", "parquet", "db", "duckdb"]:
+            if input_format in ["vcf", "hdr", "tsv", "csv", "psv", "parquet", "db", "duckdb"]:
                 # header provided in param
                 if config.get("header_file", None):
                     with open(config.get("header_file"), 'rt') as f:
                         header_list = self.read_vcf_header(f)
                 # within a vcf file format (header within input file itsself)
-                elif input_format in ["vcf", "bcf", "hdr"]:
-                    # within a compressed vcf file format (.vcf.gz or .bcf)
+                elif input_format in ["vcf", "hdr"]:
+                    # within a compressed vcf file format (.vcf.gz)
                     if input_compressed:
                         with bgzf.open(input_file, 'rt') as f:
                             header_list = self.read_vcf_header(f)
@@ -715,7 +715,7 @@ class Variants:
 
         # Load data
         log.debug(f"Load Data from {input_format}")
-        if input_format in ["vcf", "bcf", "tsv", "csv", "psv"]:
+        if input_format in ["vcf", "tsv", "csv", "psv"]:
 
             # delimiter
             delimiter = file_format_delimiters.get(input_format, "\t")
@@ -779,7 +779,7 @@ class Variants:
                     # Use the appropriate file handler based on the input format
                     if input_compressed:
                         input_file = bgzf.open(self.input, "rt")
-                    if input_format in ["vcf", "bcf"]:
+                    if input_format in ["vcf"]:
                         header_len = self.get_header_length()
                     else:
                         header_len = 0
@@ -1183,7 +1183,7 @@ class Variants:
                     "quotechar": "'"
                 }
 
-            elif output_format in ["vcf", "bcf"]:
+            elif output_format in ["vcf"]:
 
                 # Extract VCF
                 tmp_variants = NamedTemporaryFile(prefix=self.get_prefix(

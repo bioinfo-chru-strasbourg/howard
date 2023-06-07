@@ -847,36 +847,6 @@ def test_load_connexion_format_sqlite():
 ### Export Output
 ###
 
-def test_export_output_bcf():
-    """
-    This function tests the export of a VCF file to a BCF file format using the PyVCF library.
-    """
-
-    # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
-    output_vcf = "/tmp/example.bcf"
-
-    # remove if exists
-    remove_if_exists([output_vcf])
-
-    # Create object
-    variants = Variants(input=input_vcf, output=output_vcf, load=True)
-
-    # Check get_output
-    variants.export_output()
-    assert os.path.exists(output_vcf)
-
-    # Check get_output without header
-    remove_if_exists([output_vcf])
-    variants.export_output(export_header=False)
-    assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
-
-    # # Check if VCF is in correct format with pyVCF
-    # try:
-    #     vcf.Reader(filename=output_vcf)
-    # except:
-    #     assert False
-
 
 def test_export_output_vcf_gz():
     """
@@ -1162,38 +1132,6 @@ def test_export_output_tsv_explode_infos():
     remove_if_exists([output_vcf])
     variants.export_output(export_header=False)
     assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
-
-
-def test_export_from_sqlite_output_bcf():
-    """
-    This function tests the export of a VCF file in gzipped format with the pyVCF library.
-    """
-
-    # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
-    output_vcf = "/tmp/example.bcf"
-    input_config = { "connexion_format": "sqlite" }
-
-    # remove if exists
-    remove_if_exists([output_vcf])
-
-    # Create object
-    variants = Variants(input=input_vcf, output=output_vcf, config=input_config, load=True)
-
-    # Check get_output
-    variants.export_output()
-    assert os.path.exists(output_vcf)
-
-    # Check get_output without header
-    remove_if_exists([output_vcf])
-    variants.export_output(export_header=False)
-    assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
-
-    # Check if VCF is in correct format with pyVCF
-    # try:
-    #     vcf.Reader(filename=output_vcf)
-    # except:
-    #     assert False
 
 
 def test_export_from_sqlite_output_vcf_gz():

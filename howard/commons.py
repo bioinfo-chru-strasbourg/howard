@@ -50,7 +50,6 @@ code_type_map_to_sql = {
 
 file_format_delimiters = {
     "vcf": "\t",
-    "bcf": "\t",
     "tsv": "\t",
     "csv": ",",
     "psv": "|"
@@ -576,7 +575,7 @@ def get_file_compressed(filename: str = None) -> bool:
     if filename:
         filename_name, filename_extension = os.path.splitext(filename)
         compress_format = filename_extension.replace(".", "")
-    return compress_format in ["gz", "bcf"]
+    return compress_format in ["gz"]
 
 
 def findbypipeline(df, samples:list = []):
