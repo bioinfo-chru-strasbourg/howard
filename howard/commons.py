@@ -1025,3 +1025,52 @@ def get_snpeff_bin(config:dict = {}):
             
     return snpeff_jar
 
+
+
+def concat_file(input_files:list, output_file:str) -> bool:
+    """
+    This function concatenates multiple input files into a single output file.
+    
+    :param input_files: A list of file paths to the input files that need to be concatenated
+    :type input_files: list
+    :param output_file: The parameter "output_file" is a string that represents the name of the file
+    that will be created by the function and will contain the concatenated content of all the input
+    files
+    :type output_file: str
+    :return: a boolean value indicating whether the output file was successfully created or not. It
+    checks if the output file exists using the `os.path.exists()` function and returns `True` if it
+    exists and `False` otherwise.
+    """
+
+    with open(output_file, 'w') as outfile:
+        for input_file in input_files:
+            with open(input_file) as infile:
+                for line in infile:
+                    outfile.write(line)
+
+    return os.path.exists(output_file)
+
+
+def compress_file(input_file:str, output_file:str) -> bool:
+    """
+    This function compresses a file using the BGZF compression algorithm.
+    
+    :param input_file: The path and name of the input file that needs to be compressed
+    :type input_file: str
+    :param output_file: The output_file parameter is a string that represents the name and path of
+    the file where the compressed data will be written
+    :type output_file: str
+    """
+
+    with open(input_file, 'rb') as input:
+        with bgzf.open(output_file, 'wb') as output:
+            shutil.copyfileobj(input, output)
+
+    # fp = open(input_file,"rb")
+    # data = fp.read()
+    # bindata = bytearray(data)
+    # with bgzf.open(output_file, "wb") as f:
+    #     f.write(bindata)
+
+    return os.path.exists(output_file)
+
