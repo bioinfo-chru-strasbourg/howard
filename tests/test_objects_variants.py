@@ -26,6 +26,8 @@ from howard.tools.databases import *
 
 # Main tests folder
 tests_folder = os.path.dirname(__file__)
+tests_data_folder = tests_folder + "/data"
+tests_annotations_folder = tests_folder + "/data/annotations"
 
 # Tools folder
 tests_tools = "/tools"
@@ -54,56 +56,89 @@ tests_config = {
   }
 }
 
+# Annotation databases
+database_files = {
+    "parquet" : tests_annotations_folder + "/nci60.parquet",
+    "parquet_without_header" : tests_annotations_folder + "/nci60.without_header.parquet",
+    "duckdb" : tests_annotations_folder + "/nci60.duckdb",
+    "duckdb_no_annotation_table" : tests_annotations_folder + "/nci60.no_annotation_table.duckdb",
+    "sqlite" : tests_annotations_folder + "/nci60.sqlite",
+    "vcf" : tests_annotations_folder + "/nci60.vcf",
+    "vcf_gz" : tests_annotations_folder + "/nci60.vcf.gz",
+    "vcf_without_header" : tests_annotations_folder + "/nci60.without_header.vcf",
+    "vcf_gz_without_header" : tests_annotations_folder + "/nci60.without_header.vcf.gz",
+    "tsv" : tests_annotations_folder + "/nci60.tsv",
+    "tsv_alternative_columns" : tests_annotations_folder + "/nci60.alternative_columns.tsv",
+    "tsv_failed_columns" : tests_annotations_folder + "/nci60.failed_columns.tsv",
+    "tsv_lower_columns" : tests_annotations_folder + "/nci60.lower_columns.tsv",
+    "tsv_without_header" : tests_annotations_folder + "/nci60.without_header.tsv",
+    "tsv_variants" : tests_annotations_folder + "/nci60.variants.tsv",
+    "tsv_gz" : tests_annotations_folder + "/nci60.tsv.gz",
+    "csv" : tests_annotations_folder + "/nci60.csv",
+    "csv_gz" : tests_annotations_folder + "/nci60.csv.gz",
+    "tbl" : tests_annotations_folder + "/nci60.tbl",
+    "tbl_gz" : tests_annotations_folder + "/nci60.tbl.gz",
+    "json" : tests_annotations_folder + "/nci60.json",
+    "json_gz" : tests_annotations_folder + "/nci60.json.gz",
+    "bed" : tests_annotations_folder + "/annotation_regions.bed",
+    "bed_gz" : tests_annotations_folder + "/annotation_regions.bed.gz",
+    "example_vcf" : tests_data_folder + "/example.vcf",
+
+}
 
 
 
-# def test_DEVEL_annotation_parquet():
-#     """
-#     Tests the `annotation()` method of the `Variants` class using a Parquet file as annotation source. 
 
-#     The function creates a `Variants` object with an input VCF file and an output VCF file, and a parameter dictionary specifying that the Parquet file should be used as the annotation source with the "INFO" field. The `annotation()` method is then called to annotate the variants, and the resulting VCF file is checked for correctness using PyVCF. 
+def test_export_query():
+    """
+    This is a test function for exporting data from a VCF file to a TSV file using SQL queries.
+    """
 
-#     Returns:
-#         None
-#     """
-#     # Init files
-#     input_vcf = tests_folder + "/data/example.vcf.gz"
-#     #annotation_parquet = tests_folder + "/data/annotations/nci60.parquet"
-#     annotation_parquet = "nci60.parquet"
-#     databses_parquet = tests_folder + "/data/annotations"
-#     output_vcf = "/tmp/output.vcf.gz"
+    # Init files
+    input_vcf = tests_folder + "/data/example.vcf.gz"
+    output_tsv = "/tmp/example.tsv"
 
-#     # Construct config dict
-#     config = {"folders": {"databases": {"parquet": [databses_parquet]}}}
+    # remove if exists
+    remove_if_exists([output_tsv])
 
-#     # Construct param dict
-#     param = {"annotation": {"parquet": {"annotations": {annotation_parquet: {"INFO": None}}}}}
+    # Create object
+    variants = Variants(input=input_vcf, output=output_tsv, load=True)
 
-#     # Create object
-#     variants = Variants(conn=None, input=input_vcf, output=output_vcf, config=config, param=param, load=True)
+    # Check get_output
+    query = 'SELECT "#CHROM", POS, REF, ALT, INFO FROM variants'
+    variants.export_output(query=query)
+    assert os.path.exists(output_tsv)
 
-#     # Remove if output file exists
-#     remove_if_exists([output_vcf])
-
-#     # Annotation
-#     variants.annotation()
-
-#     # query annotated variant
-#     result = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'")
-#     length = len(result)
-    
-#     assert length == 1
-
-#     # Check if VCF is in correct format with pyVCF
-#     variants.export_output()
-#     try:
-#         vcf.Reader(filename=output_vcf)
-#     except:
-#         assert False
-
-#     assert False
+    # Check get_output without header
+    output_header = output_tsv + ".hdr"
+    remove_if_exists([output_tsv, output_tsv + ".hdr"])
+    variants.export_output(output_header=output_header, query=query)
+    assert os.path.exists(output_tsv) and os.path.exists(output_header)
 
 
+def test_export():
+    """
+    The function tests the export functionality of a database for various input and output formats.
+    """
+
+    # database input/format
+    for database_input_index in ["parquet", "vcf", "vcf_gz", "tsv", "csv", "tsv_alternative_columns", "example_vcf"]:
+        for database_output_format in ["parquet", "vcf", "vcf.gz", "tsv", "csv", "json", "bed"]:
+            input_database = database_files.get(database_input_index)
+            output_database=f"/tmp/output_database.{database_output_format}"
+            output_header=output_database+".hdr"
+            variants = Variants(input=input_database, output=output_database, load=True)
+            remove_if_exists([output_database,output_header])
+            try:
+                assert variants.export_output(output_file=output_database, output_header=output_header)
+                if database_output_format == "vcf":
+                    try:
+                        vcf.Reader(filename=output_database)
+                    except:
+                        assert False
+            except:
+                assert False
+            
 
 def test_set_get_input():
     """
@@ -556,25 +591,25 @@ def test_load_tsv():
     assert nb_variant_in_database == expected_number_of_variants
 
 
-def test_load_psv():
-    """
-    This function tests if a PSV file can be loaded into a Variants object and if the expected number of
-    variants is present in the database.
-    """
+# def test_load_psv():
+#     """
+#     This function tests if a PSV file can be loaded into a Variants object and if the expected number of
+#     variants is present in the database.
+#     """
 
-    # Init files
-    input_vcf = tests_folder + "/data/example.psv"
+#     # Init files
+#     input_vcf = tests_folder + "/data/example.psv"
 
-    # Create object
-    variants = Variants(input=input_vcf, load=True)
+#     # Create object
+#     variants = Variants(input=input_vcf, load=True)
 
-    # Check data loaded
-    result = variants.get_query_to_df("SELECT count(*) AS count FROM variants")
-    nb_variant_in_database = result["count"][0]
+#     # Check data loaded
+#     result = variants.get_query_to_df("SELECT count(*) AS count FROM variants")
+#     nb_variant_in_database = result["count"][0]
 
-    expected_number_of_variants = 7
+#     expected_number_of_variants = 7
 
-    assert nb_variant_in_database == expected_number_of_variants
+#     assert nb_variant_in_database == expected_number_of_variants
 
 
 def test_load_duckdb():
@@ -983,21 +1018,24 @@ def test_export_output_duckdb():
 
     # Init files
     input_vcf = tests_folder + "/data/example.vcf.gz"
-    output_vcf = "/tmp/example.duckdb"
+    output_duckdb = "/tmp/example.duckdb"
 
     # remove if exists
-    remove_if_exists([output_vcf])
+    remove_if_exists([output_duckdb])
 
     # Create object
-    variants = Variants(input=input_vcf, output=output_vcf, load=True)
+    variants = Variants(input=input_vcf, output=output_duckdb, load=True)
 
     # Check get_output
     variants.export_output()
-    assert os.path.exists(output_vcf)
+    assert os.path.exists(output_duckdb)
+
+    # remove if exists
+    remove_if_exists([output_duckdb])
 
     # Check get_output without header
     variants.export_output(export_header=False)
-    assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
+    assert os.path.exists(output_duckdb) and os.path.exists(output_duckdb + ".hdr")
 
 
 def test_export_output_tsv():
@@ -1078,14 +1116,14 @@ def test_export_output_csv():
     assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
 
 
-def test_export_output_psv():
+def test_export_output_tbl():
     """
     This function tests the export_output method of the Variants class in Python.
     """
 
     # Init files
     input_vcf = tests_folder + "/data/example.vcf.gz"
-    output_vcf = "/tmp/example.psv"
+    output_vcf = "/tmp/example.tbl"
 
     # remove if exists
     remove_if_exists([output_vcf])

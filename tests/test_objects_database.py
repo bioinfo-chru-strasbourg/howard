@@ -90,6 +90,8 @@ def test_database_as_conn():
     # Check get_database_basename
     assert database.get_database_basename() == None
     
+    # Check is compressed
+    assert not database.is_compressed()
 
     # Check export
     output_database = "/tmp/output_database.vcf"
@@ -100,7 +102,10 @@ def test_database_as_conn():
     except:
         assert False
 
-    #assert False
+    # Check export duckdb
+    output_database = "/tmp/output_database.duckdb"
+    remove_if_exists([output_database])
+    assert database.export(output_database=output_database)
 
 
 def test_empty_database():
@@ -244,6 +249,32 @@ def test_get_header_from_file():
     # Header example with header within file
     database_header = database.get_header_from_file(header_file=example_hearder_NO_file)
     assert list(database_header.infos) == []
+
+
+def test_get_header_infos_list():
+    """
+    This function tests the `get_header` method of the `Database` class in Python.
+    """
+
+    # Init files
+
+    # Create object
+    database = Database()
+
+    # Header None
+    database_header_infos_list = database.get_header_infos_list()
+    assert database_header_infos_list == []
+
+    # Header parquet
+    database_header_infos_list = database.get_header_infos_list(database=database_files.get("parquet"))
+    assert database_header_infos_list == ["nci60"]
+
+    # Create conn with variants in a table by loading a Parquet with Variants object
+    # Header list is columns of the table
+    variants = Variants(input=database_files.get("parquet"), load=True)
+    database = Database(conn=variants.get_connexion())
+    database_header_infos_list = database.get_header_infos_list(database=database.get_conn())
+    assert database_header_infos_list == ["INFO/nci60"]
 
 
 def test_get_header():
@@ -711,6 +742,53 @@ def test_is_vcf():
     assert not database.is_vcf(None)
 
 
+def test_is_compressed():
+    """
+    This function test is a database is a vcf (contains all needed columns)
+    """
+
+    # Create object
+    database = Database(database_files.get("vcf"))
+
+    # Check duckdb
+    assert not database.is_compressed()
+
+    # Create object
+    database = Database()
+
+    # Check parquet
+    assert not database.is_compressed(database_files.get("parquet"))
+
+    # Check duckdb
+    assert not database.is_compressed(database_files.get("duckdb"))
+
+    # Check vcf
+    assert not database.is_compressed(database_files.get("vcf"))
+    assert database.is_compressed(database_files.get("vcf_gz"))
+
+    # Check tsv
+    assert not database.is_compressed(database_files.get("tsv"))
+    assert database.is_compressed(database_files.get("tsv_gz"))
+    assert not database.is_compressed(database_files.get("tsv_alternative_columns"))
+    assert not database.is_compressed(database_files.get("tsv_failed_columns"))
+    assert not database.is_compressed(database_files.get("tsv_lower_columns"))
+
+    # Check csv
+    assert not database.is_compressed(database_files.get("csv"))
+    assert database.is_compressed(database_files.get("csv_gz"))
+
+    # Check json
+    assert not database.is_compressed(database_files.get("json"))
+    assert database.is_compressed(database_files.get("json_gz"))
+
+    # Check bed
+    assert not database.is_compressed(database_files.get("bed"))
+    assert database.is_compressed(database_files.get("bed_gz"))
+
+    # Check None
+    assert not database.is_compressed(None)
+
+
 def test_get_database_tables():
     """
     This function list tables in a duckdb database
@@ -819,7 +897,6 @@ def test_get_database_table():
     assert database.get_database_table(None) is None
 
 
-
 def test_get_sql_from():
     """
     This function get sql from section from a database
@@ -870,7 +947,6 @@ def test_get_sql_from():
 
     # Check None
     assert database.get_sql_from(None) == None
-
 
 
 def test_get_sql_database_link():
@@ -1088,6 +1164,85 @@ def test_get_extra_colums():
     assert database.get_extra_columns(None) == []
 
 
+def test_find_column():
+    """
+    This is a test function for a Python program that checks the functionality of a method called
+    "find_column" in a database.
+    """
+
+    # Check duckdb
+    database = Database(database=database_files.get("parquet"))
+
+    # find column
+    assert database.find_column() == "INFO"
+
+    assert database.find_column(column="nci60") == "INFO/nci60"
+    assert database.find_column(column="nci60", prefixes=["INFO/"]) == "INFO/nci60"
+    assert database.find_column(column="nci60", prefixes=["PREFIX/"]) == "INFO"
+
+    assert database.find_column(column="INFO/nci60") == "INFO/nci60"
+    assert database.find_column(column="INFO/nci60", prefixes=["INFO/"]) == "INFO/nci60"
+    assert database.find_column(column="INFO/nci60", prefixes=["PREFIX/"]) == "INFO/nci60"
+
+    assert database.find_column(column="OTHER/nci60", prefixes=["PREFIX/"]) == None
+
+
+    assert database.find_column(column="column") == None
+    assert database.find_column(column="column", prefixes=["INFO/"]) == None
+    assert database.find_column(column="column", prefixes=["PREFIX/"]) == None
+
+    # Empty Database
+    database = Database()
+    assert database.find_column(database=database_files.get("parquet"), column="nci60") == "INFO/nci60"
+    assert database.find_column(database=database_files.get("parquet"), column="INFO/nci60") == "INFO/nci60"
+    assert database.find_column(database=database_files.get("parquet"), column="nci60", prefixes=["INFO/"]) == "INFO/nci60"
+    assert database.find_column(database=database_files.get("parquet"), column="nci60", prefixes=["OTHER/"]) == "INFO"
+    assert database.find_column(database=database_files.get("parquet"), column="column") == None
+
+
+def test_map_columns():
+    """
+    The function tests the `map_columns` method of a `Database` class in Python.
+    """
+
+    # Check duckdb
+    database = Database(database=database_files.get("parquet"))
+
+    # find column
+    assert database.map_columns() == {}
+
+    assert database.map_columns(columns=["nci60"]) == {"nci60": "INFO/nci60"}
+    assert database.map_columns(columns=["nci60"], prefixes=["INFO/"]) == {"nci60": "INFO/nci60"}
+    assert database.map_columns(columns=["nci60"], prefixes=["PREFIX/"]) == {"nci60": "INFO"}
+
+    assert database.map_columns(columns=["nci60", "QUAL"]) == {"nci60": "INFO/nci60", "QUAL": "QUAL"}
+    assert database.map_columns(columns=["nci60", "QUAL"], prefixes=["INFO/"]) == {"nci60": "INFO/nci60", "QUAL": "QUAL"}
+    assert database.map_columns(columns=["nci60", "QUAL"], prefixes=["PREFIX/"]) == {"nci60": "INFO", "QUAL": "QUAL"}
+
+
+    assert database.map_columns(columns=["INFO/nci60"]) == {"INFO/nci60": "INFO/nci60"}
+    assert database.map_columns(columns=["INFO/nci60"], prefixes=["INFO/"]) == {"INFO/nci60": "INFO/nci60"}
+    assert database.map_columns(columns=["INFO/nci60"], prefixes=["PREFIX/"]) == {"INFO/nci60": "INFO/nci60"}
+
+    assert database.map_columns(columns=["column"]) == {"column": None}
+    assert database.map_columns(columns=["column"], prefixes=["INFO/"]) == {"column": None}
+    assert database.map_columns(columns=["column"], prefixes=["PREFIX/"]) == {"column": None}
+
+    assert database.map_columns(columns=["column", "QUAL"]) == {"column": None, "QUAL": "QUAL"}
+    assert database.map_columns(columns=["column", "QUAL"], prefixes=["INFO/"]) == {"column": None, "QUAL": "QUAL"}
+    assert database.map_columns(columns=["column", "QUAL"], prefixes=["PREFIX/"]) == {"column": None, "QUAL": "QUAL"}
+
+    # Empty Database
+    database = Database()
+    assert database.map_columns(database=database_files.get("parquet"), columns=["nci60"]) == {"nci60": "INFO/nci60"}
+    assert database.map_columns(database=database_files.get("parquet"), columns=["INFO/nci60"]) == {"INFO/nci60": "INFO/nci60"}
+    assert database.map_columns(database=database_files.get("parquet"), columns=["nci60"], prefixes=["INFO/"]) == {"nci60": "INFO/nci60"}
+    assert database.map_columns(database=database_files.get("parquet"), columns=["nci60"], prefixes=["OTHER/"]) == {"nci60": "INFO"}
+    assert database.map_columns(database=database_files.get("parquet"), columns=["column"]) == {"column": None}
+
+    assert database.map_columns(database=database_files.get("parquet"), columns=["nci60", "QUAL"]) == {"nci60": "INFO/nci60", "QUAL": "QUAL"}
+
+
 def test_get_header_from_columns():
     """
     The function tests the `get_header_from_columns` method of the `Database` class for different database types and
@@ -1113,8 +1268,6 @@ def test_get_header_from_columns():
 
     # VCF without external header
     assert list(database.get_header_from_columns(database=database_files.get("vcf_without_header")).infos) == []
-
-    #assert False
 
 
 def test_get_annotations():
@@ -1287,7 +1440,7 @@ def test_export():
 
     # database input/format
     for database_input_index in ["bed", "parquet", "vcf", "vcf_gz", "tsv", "csv", "tbl", "tsv_alternative_columns", "tsv_variants", "json", "example_vcf"]:
-        for database_output_format in ["parquet", "vcf", "vcf.gz", "tsv", "csv", "tbl", "json", "bed"]:
+        for database_output_format in ["duckdb", "parquet", "vcf", "vcf.gz", "tsv", "csv", "tbl", "json", "bed"]:
             input_database = database_files.get(database_input_index)
             database = Database(database_files.get(database_input_index))
             output_database=f"/tmp/output_database.{database_output_format}"
@@ -1296,6 +1449,8 @@ def test_export():
             if not (database.get_format(input_database) == "bed" and database.get_format(output_database) == "vcf"):
                 try:
                     assert database.export(output_database=output_database, output_header=output_header)
+                    if database.get_sql_database_attach(database=output_database):
+                        database.query(database=output_database, query=f"""{database.get_sql_database_attach(database=output_database)}""")
                     assert database.query(database=output_database, query=f"""{database.get_sql_database_link(database=output_database)}""")
                 except:
                     assert False

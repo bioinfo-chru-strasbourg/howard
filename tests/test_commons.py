@@ -38,7 +38,7 @@ def test_get_file_compressed():
     assert get_file_compressed("testfile.gz") == True
     
     # Test pour un fichier compressé .bcf
-    assert get_file_compressed("testfile.bcf") == True
+    assert get_file_compressed("testfile.bcf") == False
     
     # Test pour un fichier non compressé .vcf
     assert get_file_compressed("testfile.vcf") == False

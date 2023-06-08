@@ -62,13 +62,20 @@ def test_process():
 
     # read the contents of the actual output file
     with open(output_vcf, 'r') as f:
-        result_output_nb_lines = len(f.readlines())
+        result_output_nb_lines = 0
+        result_output_nb_variants = 0
+        for line in f:
+            result_output_nb_lines += 1
+            if not line.startswith("#"):
+                result_output_nb_variants += 1
 
     # Expected result
-    expected_result_nb_lines = 8
+    expected_result_nb_lines = 68
+    expected_result_nb_variants = 7
 
     # Compare
     assert result_output_nb_lines == expected_result_nb_lines
+    assert result_output_nb_variants == expected_result_nb_variants
 
 
 def test_process_with_param_file():
@@ -103,13 +110,20 @@ def test_process_with_param_file():
 
     # read the contents of the actual output file
     with open(output_vcf, 'r') as f:
-        result_output_nb_lines = len(f.readlines())
+        result_output_nb_lines = 0
+        result_output_nb_variants = 0
+        for line in f:
+            result_output_nb_lines += 1
+            if not line.startswith("#"):
+                result_output_nb_variants += 1
 
     # Expected result
-    expected_result_nb_lines = 8
+    expected_result_nb_lines = 78
+    expected_result_nb_variants = 7
 
     # Compare
     assert result_output_nb_lines == expected_result_nb_lines
+    assert result_output_nb_variants == expected_result_nb_variants
 
 
 def test_process_with_query():
@@ -122,7 +136,7 @@ def test_process_with_query():
     annotations = tests_folder + "/data/annotations/nci60.parquet"
     calculations = "VARTYPE"
     prioritizations = tests_folder + "/data/prioritization_profiles.json"
-    input_query = "SELECT count(*) as count FROM variants WHERE INFO LIKE '%VARTYPE%' AND INFO LIKE '%PZScore%'"
+    input_query = "SELECT count(*) AS '#count' FROM variants WHERE INFO LIKE '%VARTYPE%' AND INFO LIKE '%PZScore%'"
 
     # prepare arguments for the query function
     args = argparse.Namespace(
@@ -144,12 +158,23 @@ def test_process_with_query():
 
     # read the contents of the actual output file
     with open(output_vcf, 'r') as f:
-        result_output = f.read()
+        result_output_nb_lines = 0
+        result_output_nb_variants = 0
+        result_lines = []
+        for line in f:
+            result_output_nb_lines += 1
+            if not line.startswith("#"):
+                result_output_nb_variants += 1
+                result_lines.append(line.strip())
 
     # Expected result
-    expected_result = "count\n7\n"
+    expected_result_nb_lines = 62
+    expected_result_nb_variants = 1
+    expected_result_lines = ["7"]
 
     # Compare
-    assert result_output == expected_result
+    assert result_output_nb_lines == expected_result_nb_lines
+    assert result_output_nb_variants == expected_result_nb_variants
+    assert result_lines == expected_result_lines
 
 

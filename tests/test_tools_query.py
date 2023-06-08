@@ -36,7 +36,7 @@ def test_query():
     input_vcf = tests_folder + "/data/example.vcf.gz"
     output_vcf = "/tmp/output_file.tsv"
     config = {'threads': 4}
-    input_query = "SELECT count(*) AS count FROM variants"
+    input_query = "SELECT count(*) AS '#count' FROM variants"
 
     for explode_infos in [True, False]:
 
@@ -57,10 +57,21 @@ def test_query():
 
         # read the contents of the actual output file
         with open(output_vcf, 'r') as f:
-            result_output = f.read()
+            result_output_nb_lines = 0
+            result_output_nb_variants = 0
+            result_lines = []
+            for line in f:
+                result_output_nb_lines += 1
+                if not line.startswith("#"):
+                    result_output_nb_variants += 1
+                    result_lines.append(line.strip())
 
         # Expected result
-        expected_result = "count\n7\n"
+        expected_result_nb_lines = 54
+        expected_result_nb_variants = 1
+        expected_result_lines = ["7"]
 
         # Compare
-        assert result_output == expected_result
+        assert result_output_nb_lines == expected_result_nb_lines
+        assert result_output_nb_variants == expected_result_nb_variants
+        assert result_lines == expected_result_lines
