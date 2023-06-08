@@ -52,13 +52,23 @@ def test_annotation():
     # Query
     annotation(args)
 
+    # Check output file exists
+    assert os.path.exists(output_vcf)
+
     # read the contents of the actual output file
     with open(output_vcf, 'r') as f:
-        result_output_nb_lines = len(f.readlines())
+        result_output_nb_lines = 0
+        result_output_nb_variants = 0
+        for line in f:
+            result_output_nb_lines += 1
+            if not line.startswith("#"):
+                result_output_nb_variants += 1
 
     # Expected result
-    expected_result_nb_lines = 8
+    expected_result_nb_lines = 61
+    expected_result_nb_variants = 7
 
     # Compare
     assert result_output_nb_lines == expected_result_nb_lines
+    assert result_output_nb_variants == expected_result_nb_variants
 
