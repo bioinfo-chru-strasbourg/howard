@@ -246,9 +246,6 @@ ENV DEST=$TOOLS/$TOOL_NAME/$TOOL_VERSION
 ENV PATH=$TOOLS/$TOOL_NAME/$TOOL_VERSION/bin:$PATH
 
 
-# PATCH for new release of dickdb python package with vcf read as csv (bgzip patch)
-ENV python -m pip install duckdb --pre --upgrade
-
 ADD . $TOOLS/$TOOL_NAME/$TOOL_VERSION
 
 RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
