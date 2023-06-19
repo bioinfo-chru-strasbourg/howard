@@ -86,6 +86,7 @@ FILE_FORMAT_DELIMITERS = {
 
 DTYPE_LIMIT_AUTO = 10000
 
+DUCKDB_EXTENSION_TO_LOAD = ["sqlite_scanner"]
 
 class Database:
 
@@ -144,8 +145,8 @@ class Database:
         else:
             self.conn = duckdb.connect()
 
-        # Install sqlite scanner
-        self.conn.query("INSTALL sqlite_scanner; LOAD sqlite_scanner; ")
+        # Install duckDB extensions
+        load_duckdb_extension(self.conn,DUCKDB_EXTENSION_TO_LOAD)
 
         # Check attributes
         self.set_format(format=format)

@@ -1,6 +1,7 @@
 import io
 import multiprocessing
 import os
+import platform
 import re
 import statistics
 import subprocess
@@ -21,6 +22,8 @@ import zipfile
 import gzip
 import requests
 
+
+file_folder = os.path.dirname(__file__)
 
 comparison_map = {
     "gt": ">",
@@ -68,6 +71,12 @@ default_snpeff_bin = "/tools/snpeff/5.1d/bin/snpEff.jar"
 
 default_annovar_url = "http://www.openbioinformatics.org/annovar/download/"
 
+DUCKDB_EXTENSION = f"{file_folder}/duckdb_extension"
+
+MACHIN_LIST = {
+    "amd64": "amd64",
+    "arm64": "arm64"
+}
 
 def remove_if_exists(filepaths: list) -> None:
     """
@@ -1073,3 +1082,60 @@ def compress_file(input_file:str, output_file:str) -> bool:
 
     return os.path.exists(output_file)
 
+
+def get_plateform_name() -> str:
+    """
+    This function returns the name of the platform and machine architecture in a specific format.
+    :return: a string that represents the platform name. The platform name is a combination of the
+    system name and the machine architecture. If the machine architecture is not found in the
+    MACHIN_LIST dictionary, it defaults to "amd64".
+    """
+
+    system = platform.system()
+    machine = platform.machine()
+    machine_check = MACHIN_LIST.get(machine,"amd64")
+
+    return f"{system}_{machine_check}".lower()
+    
+
+def get_duckdb_extension_file(extension_name:str) -> str:
+    """
+    This function returns the file path of a DuckDB extension based on the extension name and platform.
+    
+    :param extension_name: The name of the DuckDB extension file that is being requested
+    :type extension_name: str
+    :return: a string that represents the file path of a DuckDB extension file. The file path is
+    constructed using the constant `DUCKDB_EXTENSION`, the platform name obtained from the
+    `get_plateform_name()` function, and the extension name passed as an argument to the function.
+    """
+
+    return f'{DUCKDB_EXTENSION}/{get_plateform_name()}/{extension_name}.duckdb_extension'
+
+
+def load_duckdb_extension(conn:duckdb.DuckDBPyConnection, duckdb_extensions:list) -> bool:
+    """
+    This function loads DuckDB extensions into a connection object and returns a boolean indicating
+    whether all extensions were successfully loaded.
+    
+    :param conn: duckdb.DuckDBPyConnection object representing a connection to a DuckDB database
+    :type conn: duckdb.DuckDBPyConnection
+    :param duckdb_extensions: A list of strings representing the names of the DuckDB extensions to be
+    loaded
+    :type duckdb_extensions: list
+    :return: a boolean value indicating whether all the specified DuckDB extensions were successfully
+    loaded or not.
+    """
+
+    loaded = True
+
+    for extension_name in duckdb_extensions:
+        try:
+            duckdb_extension_file = get_duckdb_extension_file(extension_name)
+            if os.path.exists(duckdb_extension_file):
+                conn.query(f"INSTALL '{duckdb_extension_file}'; LOAD {extension_name}; ")
+            else:
+                conn.query(f"INSTALL '{extension_name}'; LOAD {extension_name}; ")
+        except:
+            loaded = False
+
+    return loaded
