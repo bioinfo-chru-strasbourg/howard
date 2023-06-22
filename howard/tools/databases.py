@@ -30,7 +30,16 @@ from typing import List
 from howard.commons import *
 
 
-def databases(args) -> None:
+def databases(args:argparse) -> None:
+    """
+    The function downloads databases and logs the start and end of the process.
+    
+    :param args: The "args" parameter is likely an object or dictionary containing various arguments or
+    options related to the "databases" function. Without more context, it's difficult to say exactly
+    what these arguments might be, but they could include things like the names or locations of
+    databases to download, authentication credentials, or
+    :type args: argparse
+    """
 
     log.info("Start")
 
@@ -39,12 +48,33 @@ def databases(args) -> None:
     log.info("End")
 
 
-def databases_download(args) -> None:
+def databases_download(args:argparse) -> None:
+    """
+    The `databases_download` function downloads genome, Annovar, and snpEff databases based on
+    user-specified arguments.
+    
+    :param args: The `args` parameter is an object of the `argparse` module that contains the input
+    arguments for the `databases_download` function. These arguments are used to determine which genome,
+    Annovar, and snpEff databases to download
+    :type args: argparse
+    """
 
     log.debug(f"Args {args}")
 
     # Assembly
     assemblies = [value for value in args.assembly.split(',')]
+
+    # Genomes
+    if args.download_genomes:
+        log.debug(f"Download Genomes")
+        if assemblies:
+            databases_download_genomes(
+                assemblies=assemblies, 
+                genome_folder=args.download_genomes,
+                provider=args.download_genomes_provider,
+                contig_regex=args.download_genomes_contig_regex
+                )
+
 
     # Annovar
     if args.download_annovar:
@@ -71,6 +101,22 @@ def databases_download(args) -> None:
 
 
 def databases_download_annovar(folder:str = None, files:list = None, assemblies:list = ["hg19"], annovar_url:str = "http://www.openbioinformatics.org/annovar/download/") -> None:
+    """
+    This function downloads and extracts Annovar databases for specified assemblies and files.
+    
+    :param folder: The folder where the Annovar databases will be downloaded to
+    :type folder: str
+    :param files: The `files` parameter is a list of specific Annovar database files to download. If not
+    provided, only the mandatory files will be downloaded. If set to "ALL", all available files will be
+    downloaded
+    :type files: list
+    :param assemblies: A list of genome assemblies for which Annovar databases will be downloaded.
+    Default is ["hg19"]
+    :type assemblies: list
+    :param annovar_url: The URL where Annovar databases can be downloaded from, defaults to
+    http://www.openbioinformatics.org/annovar/download/
+    :type annovar_url: str (optional)
+    """
 
     log.info(f"Download Annovar databases {assemblies}")
 
@@ -188,10 +234,23 @@ def databases_download_annovar(folder:str = None, files:list = None, assemblies:
                     log.debug(f"Extract file {file} to {folder}...")
                     extract_file(file_path)
             else:
-                log.info(f"Download Annovar databases {[assembly]} already exists")
+                log.info(f"Download Annovar databases {[assembly]} - already exists")
 
 
 def databases_download_snpeff(folder:str = None, assemblies:list = ["hg19"], config:dict = {}) -> None:
+    """
+    This function downloads and extracts snpEff databases for specified genome assemblies.
+    
+    :param folder: The folder where the snpEff databases will be downloaded and stored
+    :type folder: str
+    :param assemblies: The assemblies parameter is a list of genome assemblies for which the snpEff
+    databases need to be downloaded
+    :type assemblies: list
+    :param config: The `config` parameter is a dictionary that contains information about the tools and
+    their configurations. It is used to retrieve the path to the Java binary and the path to the snpEff
+    binary
+    :type config: dict
+    """
 
     log.info(f"Download snpEff databases {assemblies}")
 
@@ -202,7 +261,7 @@ def databases_download_snpeff(folder:str = None, assemblies:list = ["hg19"], con
     # database list
     snpeff_databases_list = "snpeff_databases.list"
     snpeff_databases_list_path = os.path.join(folder,snpeff_databases_list)
-
+    
     # create folder if not exists
     if folder:
         if not os.path.exists(folder):
@@ -236,7 +295,7 @@ def databases_download_snpeff(folder:str = None, assemblies:list = ["hg19"], con
 
             # Strat download
             log.info(f"Download snpEff databases for assembly '{assembly}'...")
-
+            #print(snpeff_list_databases.keys())
             # Try to download files
             file_path = None
             for file_url in snpeff_list_databases[assembly]:
@@ -265,5 +324,52 @@ def databases_download_snpeff(folder:str = None, assemblies:list = ["hg19"], con
 
         else:
 
-            log.info(f"Database snpEff databases {[assembly]} already exists")
+            log.info(f"Download snpEff databases {[assembly]} - already exists")
+
+
+def databases_download_genomes(assemblies: list, genome_folder: str = None, provider:str = "UCSC", contig_regex:str = None, threads:int = 1) -> None:
+    """
+    This function downloads genome assemblies using genomepy package with options to specify genome
+    folder, provider, contig regex, and number of threads.
+    
+    :param assemblies: a list of genome assembly names to download
+    :type assemblies: list
+    :param genome_folder: The folder where the downloaded genome files will be saved. If no folder is
+    specified, the default folder will be used
+    :type genome_folder: str
+    :param provider: The provider parameter specifies the source of the genome data. In this case, the
+    default provider is set to "UCSC", which refers to the University of California, Santa Cruz Genome
+    Browser. Other possible providers could include NCBI or Ensembl, defaults to UCSC
+    :type provider: str (optional)
+    :param contig_regex: The contig_regex parameter is a regular expression used to filter the contigs
+    (chromosomes or scaffolds) to be downloaded for a given genome assembly. It allows users to download
+    only a subset of the available contigs, based on their names or other characteristics. If
+    contig_regex is not specified
+    :type contig_regex: str
+    :param threads: The "threads" parameter specifies the number of threads (parallel processes) to use
+    for downloading the genomes. This can speed up the process if the computer has multiple cores or
+    processors. The default value is 1, meaning that the download will be done using a single thread,
+    defaults to 1
+    :type threads: int (optional)
+    :return: None is being returned.
+    """
+
+    log.info(f"Download Genomes {assemblies}")
+
+    if not genome_folder:
+        genome_folder = DEFAULT_GENOME_FOLDER
+
+    if os.path.exists(genome_folder):
+        installed_genomes = genomepy.list_installed_genomes(genomes_dir=genome_folder)
+    else:
+        installed_genomes = []
+
+    for assembly in assemblies:
+        if assembly in installed_genomes:
+            log.info(f"Download Genomes '{[assembly]}' - already exists")
+        else:
+            log.info(f"Download Genomes '{[assembly]}' downloading...")
+            genomepy.install_genome(assembly, annotation=False, provider=provider, genomes_dir=genome_folder, threads=threads, regex=contig_regex)
+
+    return None
 

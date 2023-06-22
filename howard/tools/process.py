@@ -23,7 +23,17 @@ from howard.tools.databases import *
 
 
 
-def process(args) -> None:
+def process(args:argparse) -> None:
+    """
+    The "process" function processes input arguments, loads parameters in JSON format, creates a VCF
+    object, performs quick annotations, calculations, prioritizations, and queries, exports output, and
+    closes the connection.
+    
+    :param args: args is a variable that contains the arguments passed to the function "process". It is
+    assumed to be an object with several attributes, including "config", "param", "input", "output",
+    "annotations", "calculations", "prioritizations", and "query". These attributes are used to
+    :type args: argparse
+    """
 
     log.info("Start")
 

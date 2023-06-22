@@ -222,6 +222,27 @@ arguments = {
         },
 
         # Databases
+        "download-genomes": {
+            "metavar": "FOLDER",
+            "help": "Download Genomes within folder",
+            "required": False
+        },
+        "download-genomes-provider": {
+            "metavar": "PROVIDER",
+            "help": """Download Genome from an external provider\n"""
+                    """Available: GENCODE, Ensembl, UCSC, NCBI\n"""
+                    """Default: UCSC\n""",
+            "required": False,
+            "default": "UCSC"
+        },
+        "download-genomes-contig-regex": {
+            "metavar": "REGEXP",
+            "help": """Regular expression to select specific chromosome \n"""
+                    """Default: None\n"""
+                    """Example: '^>chr[0-9XYM]*$'\n""",
+            "required": False,
+            "default": None
+        },
         "download-annovar": {
             "metavar": "FOLDER",
             "help": "Download Annovar databases within Annovar folder",
@@ -444,10 +465,15 @@ commands_arguments = {
         "description": """Download databases and needed files for howard and associated tools""",
         "help": """Download databases and needed files for howard and associated tools""",
         "epilog": """Usage examples:\n"""
-                    """   howard databases --assembly=hg19 --download-annovar=/databases/annovar/current --download-annovar-files='refGene,gnomad_exome,dbnsfp42a,cosmic70,clinvar_202*,nci60' --download-snpeff=/databases/annovar/current """, 
+                    """   howard databases --assembly=hg19 --download-genomes=/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='^>chr[0-9XYM]*$' --download-annovar=/databases/annovar/current --download-annovar-files='refGene,gnomad_exome,dbnsfp42a,cosmic70,clinvar_202*,nci60' --download-snpeff=/databases/snpeff/current """, 
         "groups": {
             "main": {
                 "assembly": False,
+            },
+            "Genomes": {
+                "download-genomes": False,
+                "download-genomes-provider": False,
+                "download-genomes-contig-regex": False,
             },
             "snpEff": {
                 "download-snpeff": False
@@ -490,6 +516,27 @@ commands_arguments = {
 
 # get argument
 def get_argument(arguments:dict = {}, arg:str = "", required:bool = False) -> dict:
+    """
+    This function retrieves a specific argument from a dictionary and can also set its "required"
+    status.
+    
+    :param arguments: A dictionary containing information about the arguments passed to a function or
+    method
+    :type arguments: dict
+    :param arg: The name of the argument that you want to retrieve information for
+    :type arg: str
+    :param required: The "required" parameter is a boolean value that determines whether the argument is
+    required or not. If set to True, the function will return an empty dictionary if the argument is not
+    found in the "arguments" dictionary. If set to False (default), the function will still return an
+    empty dictionary if, defaults to False
+    :type required: bool (optional)
+    :return: a dictionary containing information about a specific argument, specified by the `arg`
+    parameter. If the argument is found in the `arguments` dictionary, the function returns a dictionary
+    containing the information about that argument. If the argument is not found, an empty dictionary is
+    returned. The `required` parameter is used to specify whether the argument is required or not, and
+    this information is added
+    """
+    
     if arg in arguments:
         arg_infos = arguments.get(arg,{})
         if required != None:

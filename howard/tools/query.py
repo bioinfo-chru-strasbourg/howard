@@ -23,7 +23,15 @@ from howard.tools.databases import *
 
 
 
-def query(args) -> None:
+def query(args:argparse) -> None:
+    """
+    This Python function loads and queries data from a VCF file based on user input and exports the
+    results.
+    
+    :param args: args is an object that contains the arguments passed to the function. It is likely a
+    Namespace object created by parsing command line arguments using argparse
+    :type args: argparse
+    """
 
     log.info("Start")
 

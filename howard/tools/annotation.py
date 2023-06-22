@@ -23,7 +23,16 @@ from howard.tools.databases import *
 
 
 
-def annotation(args) -> None:
+def annotation(args:argparse) -> None:
+    """
+    The `annotation` function performs annotation on a VCF file based on specified parameters and
+    exports the annotated data.
+    
+    :param args: The `args` parameter is likely an object or dictionary containing various arguments
+    passed to the `annotation` function. It is not clear from the code snippet what specific arguments
+    are expected or required
+    :type args: argparse
+    """
 
     log.info("Start")
 

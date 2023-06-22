@@ -23,7 +23,14 @@ from howard.tools.databases import *
 
 
 
-def calculation(args) -> None:
+def calculation(args:argparse) -> None:
+    """
+    This function performs calculations on VCF data based on user input and exports the results.
+    
+    :param args: The `args` parameter is a command line argument parser object that contains the
+    arguments passed to the script when it was executed
+    :type args: argparse
+    """
 
     log.info("Start")
 

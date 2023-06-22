@@ -23,7 +23,16 @@ from howard.tools.databases import *
 
 
 
-def convert(args) -> None:
+def convert(args:argparse) -> None:
+    """
+    The `convert` function converts a VCF file to a different format and can optionally explode info
+    fields.
+    
+    :param args: `args` is a parameter passed to the `convert` function, likely an object or dictionary
+    containing various arguments needed for the function to perform its task. These arguments could
+    include things like input and output file paths, configuration settings, and other parameters
+    :type args: argparse
+    """
 
     log.info("Start")
 
