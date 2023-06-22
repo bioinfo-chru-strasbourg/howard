@@ -56,7 +56,14 @@ TYPES = {
 
 
 
-def from_annovar(args) -> None:
+def from_annovar(args:argparse) -> None:
+    """
+    This function converts an Annovar database to a VCF and Parquet format.
+    
+    :param args: `args` is an object with several attributes representing the input parameters for the
+    function. These attributes include:
+    :type args: argparse
+    """
 
     log.info("Start")
 

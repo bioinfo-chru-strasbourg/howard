@@ -21,6 +21,7 @@ import urllib.request
 import zipfile
 import gzip
 import requests
+import genomepy
 
 
 file_folder = os.path.dirname(__file__)
@@ -67,12 +68,20 @@ vcf_required = [
             "\t".join(vcf_required_columns)
             ]
 
-default_snpeff_bin = "/tools/snpeff/5.1d/bin/snpEff.jar"
+# Tools
+DEFAULT_SNPEFF_BIN = "/tools/snpeff/5.1d/bin/snpEff.jar"
 
-default_annovar_url = "http://www.openbioinformatics.org/annovar/download/"
+# URL
+DEFAULT_ANNOVAR_URL = "http://www.openbioinformatics.org/annovar/download/"
 
+# Databases default folder
+DEFAULT_DATABASE_FOLDER = "/databases"
+DEFAULT_GENOME_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/genomes/current"
+
+# DuckDB extension
 DUCKDB_EXTENSION = f"{file_folder}/duckdb_extension"
 
+# Variables
 MACHIN_LIST = {
     "amd64": "amd64",
     "arm64": "arm64"

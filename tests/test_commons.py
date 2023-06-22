@@ -838,17 +838,52 @@ def test_get_snpeff_bin():
     """
 
     # Test when the path is provided in the config
-    config = {"tools": {"snpeff": {"jar": default_snpeff_bin}}}
-    assert get_snpeff_bin(config) == default_snpeff_bin
+    config = {"tools": {"snpeff": {"jar": DEFAULT_SNPEFF_BIN}}}
+    assert get_snpeff_bin(config) == DEFAULT_SNPEFF_BIN
 
     # Test when bad path is provided in the config
     config = {"tools": {"snpeff": {"jar": "/tools/snpeff/5.1d/bin/NOT_snpEff.jar"}}}
-    assert get_snpeff_bin(config) == default_snpeff_bin
+    assert get_snpeff_bin(config) == DEFAULT_SNPEFF_BIN
     
     # Test when the path is not provided in the config but snpEff.jar is found
     with patch("os.path.exists", return_value=True):
-        assert get_snpeff_bin({}) == default_snpeff_bin
+        assert get_snpeff_bin({}) == DEFAULT_SNPEFF_BIN
     
     # Test when the path is not provided in the config and snpEff.jar is not found
     with patch("os.path.exists", return_value=False):
         assert get_snpeff_bin({}) == None
+
+
+def test_load_duckdb_extension():
+    """
+    The function tests whether the `load_duckdb_extension` function can successfully load a specified
+    extension in a DuckDB connection.
+    """
+
+    # Create connexion
+    conn = duckdb.connect()
+
+    # tests
+    assert load_duckdb_extension(conn,["sqlite_scanner"])
+    assert load_duckdb_extension(conn,["json"])
+    assert not load_duckdb_extension(conn,["not_an_extension"])
+
+
+def test_get_duckdb_extension_file():
+    """
+    The function "test_get_duckdb_extension_file" tests the "get_duckdb_extension_file" function with
+    the argument "sqlite_scanner".
+    """
+
+    assert get_duckdb_extension_file("sqlite_scanner")
+
+
+def test_get_plateform_name():
+    """
+    The function "test_plateform_name" is incomplete and requires the implementation of a
+    "plateform_name" function to be tested.
+    """
+
+    assert get_plateform_name()
+
+
