@@ -56,3 +56,7 @@ services:
 networks:
     howard:
         driver: "bridge"
+        ipam:
+            driver: default
+            config:
+                - subnet: ${DOCKER_HOWARD_SUBNET}
