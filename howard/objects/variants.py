@@ -16,13 +16,16 @@ import json
 import argparse
 import Bio.bgzf as bgzf
 import pandas as pd
+from pyfaidx import Fasta
 import numpy as np
 import vcf
 import logging as log
 import fastparquet as fp
+from multiprocesspandas import applyparallel
 
 from howard.commons import *
 from howard.objects.database import *
+from howard.utils import *
 
 
 class Variants:
@@ -3209,6 +3212,266 @@ class Variants:
         if self.get_param().get("explode_infos", None) is not None:
             self.explode_infos(
                 prefix=self.get_param().get("explode_infos", None))
+
+
+    ###
+    # HGVS
+    ###
+
+    def hgvs_full_test(self, row):
+            #print(row)
+            # Faire quelque chose avec les données de la ligne
+            return row['CHROM'] + row['REF']
+
+
+    def annotation_hgvs(self, threads:int = None) -> None:
+        """
+        The `annotation_hgvs` function performs HGVS annotation on a set of variants using genomic
+        coordinates and alleles.
+        
+        :param threads: The `threads` parameter is an optional integer that specifies the number of
+        threads to use for parallel processing. If no value is provided, it will default to the number
+        of threads obtained from the `get_threads()` method
+        :type threads: int
+        """
+
+        # Function for each partition of the Dask Dataframe
+        def partition_function(partition):
+            """
+            The function `partition_function` applies the `annotation_hgvs_partition` function to
+            each row of a DataFrame called `partition`.
+            
+            :param partition: The parameter "partition" is a pandas DataFrame that contains the data
+            to be processed
+            :return: the result of applying the "annotation_hgvs_partition" function to each row of
+            the "partition" dataframe along the axis 1.
+            """
+            return partition.apply(annotation_hgvs_partition, axis=1)
+
+        def annotation_hgvs_partition(row) -> str:
+            """
+            The function `annotation_hgvs_partition` takes in a row of data and returns a string
+            containing a list of HGVS names associated with the given genomic coordinates and alleles.
+            
+            :param row: A dictionary-like object that contains the values for the following keys:
+            :return: a string that contains the HGVS names associated with the given row of data.
+            """
+
+            chr = row["CHROM"]
+            pos = row["POS"]
+            ref = row["REF"]
+            alt = row["ALT"]
+
+            # Find list of associated transcripts
+            transcripts_list = list(polars_conn.execute(f"""
+                SELECT transcript
+                FROM refgene_df
+                WHERE CHROM='{chr}'
+                AND POS={pos} 
+            """)["transcript"])
+
+
+            # Full HGVS annotation in list
+            hgvs_full_list = []
+
+            for transcript_name in transcripts_list:
+
+                # Transcript
+                transcript = get_transcript(transcripts=transcripts, transcript_name=transcript_name)
+                # Exon
+                if use_exon:
+                    exon=transcript.find_exon_number(pos)
+                else:
+                    exon = None
+                # Protein
+                transcript_protein = None
+                if use_protein or add_protein or full_format:
+                    transcripts_protein = list(polars_conn.execute(f"""
+                        SELECT protein
+                        FROM refseqlink_df
+                        WHERE transcript='{transcript_name}'
+                        LIMIT 1
+                    """)["protein"])
+                    if len(transcripts_protein):
+                        transcript_protein = transcripts_protein[0]
+
+
+                # HGVS name
+                hgvs_name = format_hgvs_name(chr, pos, ref, alt, genome=genome, transcript=transcript, transcript_protein=transcript_protein, exon=exon, use_gene=use_gene, use_protein=use_protein, full_format=full_format, codon_type=codon_type)
+                hgvs_full_list.append(hgvs_name)
+                if add_protein and not use_protein and not full_format:
+                    hgvs_name = format_hgvs_name(chr, pos, ref, alt, genome=genome, transcript=transcript, transcript_protein=transcript_protein, exon=exon, use_gene=use_gene, use_protein=True, full_format=False, codon_type=codon_type)
+                    hgvs_full_list.append(hgvs_name)
+
+            # Create liste of HGVS annotations
+            hgvs_full = ",".join(hgvs_full_list)
+
+            return hgvs_full
+
+        log.info(f"HGVS Annotation... ")
+
+        # Polars connexion
+        polars_conn = pl.SQLContext(register_globals=True, eager_execution=True)
+
+        # Config
+        config = self.get_config()
+
+        # Databases
+        # Genome
+        databases_genomes_folders = config.get("folders", {}).get(
+            "databases", {}).get("genomes", "/databases/genomes/current")
+        #databases_genome = config.get("databases", {}).get("genome", databases_genomes_folders)
+        databases_genome = config.get("databases", {}).get("genome", "")
+        # refGene
+        databases_refgene_folders = config.get("folders", {}).get(
+            "databases", {}).get("refGene", "/databases/refGene/current")
+        databases_refgene = config.get("databases", {}).get("refGene", "")
+        # refSeqLink
+        databases_refseqlink_folders = config.get("folders", {}).get(
+            "databases", {}).get("refSeqLink", "/databases/refGene/current")
+        databases_refseqlink = config.get("databases", {}).get("refSeqLink", "")
+
+        # Param
+        param = self.get_param()
+
+        # HGVS Param
+        param_hgvs = param.get("hgvs",{})
+        use_exon = param_hgvs.get("use_exon",False)
+        use_gene = param_hgvs.get("use_gene",False)
+        use_protein = param_hgvs.get("use_protein",False)
+        add_protein = param_hgvs.get("add_protein",False)
+        full_format = param_hgvs.get("full_format",False)
+        codon_type = param_hgvs.get("codon_type","3")
+
+        # refGene refSeqLink
+        databases_refgene = param_hgvs.get("refgene", databases_refgene)
+        databases_refseqlink = param_hgvs.get("refseqlink", databases_refseqlink)
+
+        # Assembly
+        assembly = param.get("assembly", "hg19")
+
+        # Genome
+        genome_file = None
+        if find_genome(databases_genome):
+            genome_file = find_genome(databases_genome)
+        else:
+            genome_file = find_genome(genome_path=databases_genomes_folders, assembly=assembly)
+        log.debug("Genome: "+str(genome_file))
+        
+        # refGene
+        refgene_file = find_file_prefix(input_file=databases_refgene, prefix="refGene", folder=databases_refgene_folders, assembly=assembly)
+        log.debug("refGene: "+str(refgene_file))
+
+        # refSeqLink
+        refseqlink_file = find_file_prefix(input_file=databases_refseqlink, prefix="ncbiRefSeqLink", folder=databases_refseqlink_folders, assembly=assembly)
+        log.debug("refSeqLink: "+str(refseqlink_file))
+
+        # Threads
+        if not threads:
+            threads = self.get_threads()
+        log.debug("Threads: "+str(threads))
+
+        # Variables
+        table_variants = self.get_table_variants(clause="update")
+
+        # Get variants SNV and InDel only
+        query_variants = f"""
+            SELECT "#CHROM" AS CHROM, POS, REF, ALT
+            FROM {table_variants}
+            WHERE REF ~ '^[A-Za-z]+$' AND ALT ~ '^[A-Za-z]+$'
+            """
+        df_variants = self.get_query_to_df(query_variants)
+
+        # Add hgvs column in variants table
+        self.add_column(table_variants, "hgvs", "STRING", default_value=None)
+
+        log.debug(f"refGene loading...")
+        # refGene in duckDB
+        refgene_table = get_refgene_table(conn=self.conn, refgene_table="refgene", refgene_file=refgene_file)
+        # Loading all refGene in Dataframe
+        refgene_query = f"""
+            SELECT df_variants.CHROM, df_variants.POS, {refgene_table}.name AS transcript
+            FROM {refgene_table}
+            JOIN df_variants ON (
+                {refgene_table}.chrom = df_variants.CHROM
+                AND {refgene_table}.txStart<=df_variants.POS
+                AND {refgene_table}.txEnd>=df_variants.POS
+            )
+        """
+        refgene_df = self.conn.query(refgene_query).pl()
+
+        if refseqlink_file:
+            log.debug(f"refSeqLink loading...")
+            # refSeqLink in duckDB
+            refseqlink_table = get_refgene_table(conn=self.conn, refgene_table="refseqlink", refgene_file=refseqlink_file)
+            # Loading all refSeqLink in Dataframe
+            refseqlink_query = f"""
+                SELECT {refgene_table}.chrom, protAcc_without_ver AS protein, mrnaAcc_without_ver AS transcript
+                FROM {refseqlink_table} 
+                JOIN {refgene_table} ON ({refgene_table}.name = {refseqlink_table}.mrnaAcc_without_ver)
+                WHERE protAcc_without_ver IS NOT NULL
+            """
+            # Polars Dataframe
+            refseqlink_df = self.conn.query(f"{refseqlink_query}").pl()
+
+        # Read RefSeq transcripts into a python dict/model.
+        log.debug(f"Transcripts loading...")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            transcripts_query = f"""
+                COPY (
+                    SELECT {refgene_table}.*
+                    FROM {refgene_table}
+                    JOIN df_variants ON (
+                        {refgene_table}.chrom=df_variants.CHROM
+                        AND {refgene_table}.txStart<=df_variants.POS
+                        AND {refgene_table}.txEnd>=df_variants.POS
+                    )
+                )
+                TO '{tmpdir}/transcript.tsv' (DELIMITER '\t');
+            """
+            self.conn.query(transcripts_query)
+            with open(f'{tmpdir}/transcript.tsv') as infile:
+                transcripts = read_transcripts(infile)
+
+        # Polars connexion
+        polars_conn = pl.SQLContext(register_globals=True, eager_execution=True)
+
+        log.debug("Genome loading...")
+        # Read genome sequence using pyfaidx.
+        genome = Fasta(genome_file)
+
+        log.debug("Start annotation HGVS...")
+
+        # Create 
+        # a Dask Dataframe from Pandas dataframe with partition as number of threads
+        ddf = dd.from_pandas(df_variants, npartitions=threads)
+        
+        # Use dask.dataframe.apply() to apply function on each partition
+        ddf["hgvs"] = ddf.map_partitions(partition_function)
+
+        # Convert Dask DataFrame to Pandas Dataframe
+        df = ddf.compute()
+
+        # Update hgvs column
+        update_variant_query = f"""
+                UPDATE {table_variants}
+                SET hgvs=df.hgvs
+                FROM df
+                WHERE variants."#CHROM" = df.CHROM
+                AND variants.POS = df.POS
+                AND variants.REF = df.REF
+                AND variants.ALT = df.ALT
+                AND df.hgvs NOT IN ('') AND df.hgvs NOT NULL
+                """
+        self.execute_query(update_variant_query)
+
+        # Update INFO column
+        sql_query_update = f"""
+            UPDATE {table_variants}
+            SET INFO = CASE WHEN INFO NOT IN ('','.') THEN INFO || ';' ELSE '' END || 'hgvs=' || hgvs
+            WHERE hgvs NOT IN ('') AND hgvs NOT NULL
+            """
+        self.execute_query(sql_query_update)
 
 
     ###

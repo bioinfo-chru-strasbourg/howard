@@ -1,6 +1,7 @@
 import io
 import multiprocessing
 import os
+from pathlib import Path
 import platform
 import re
 import statistics
@@ -346,24 +347,71 @@ def get_bgzip(threads: int = 1, level: int = 1):
     return command_gzip
 
 
-def find_genome(genome_path: str, genome: str = "hg19.fa"):
+def find_genome(genome_path: str, assembly: str = None, file: str = None) -> str:
     """
-    It checks if the genome file exists, and if not, it tries to find it
+    The `find_genome` function checks if a genome file exists at the specified path, and if not, it
+    tries to find it using the provided assembly name or file name.
+    
+    :param genome_path: The path to the genome file
+    :type genome_path: str
+    :param assembly: The `assembly` parameter is a string that represents the name of the genome
+    assembly. It is used to search for the genome file with the specified assembly name in the
+    `genome_dir` directory. If a genome file with the assembly name is found, its path is returned
+    :type assembly: str
+    :param file: The `file` parameter is the name of the genome file that you want to find
+    :type file: str
+    :return: the path to the genome file.
+    """
 
-    :param genome_path: the path to the genome file
-    :param genome: the name of the genome file, defaults to hg19.fa (optional)
-    :return: The path to the genome file.
-    """
     # check genome
-    if not os.path.exists(genome_path):
-        log.warning(f"Genome warning: no genome '{genome}'. Try to find...")
+    if os.path.exists(genome_path) and not os.path.isdir(genome_path):
+        return genome_path
+    else:
+        log.warning(f"Genome warning: Try to find genome in '{genome_path}'...")
+        genome_dir = genome_path
+        genome_path = ""
         # Try to find genome
-        try:
-            genome_path = find_all(genome, '/databases')[0]
-        except:
-            log.error(f"Genome failed: no genome '{genome}'")
-            raise ValueError(f"Genome failed: no genome '{genome}'")
+        if file and find_all(file, genome_dir):
+            genome_path = find_all(file, genome_dir)[0]
+        elif assembly and find_all(assembly+".fa", genome_dir):
+            genome_path = find_all(assembly+".fa", genome_dir)[0]
     return genome_path
+
+
+def find_file_prefix(input_file:str = None, prefix:str = None, folder:str = None, assembly:str = None) -> str:
+    """
+    The function `find_file_prefix` is used to find a specific file based on input parameters such as
+    input file, folder, and assembly.
+    
+    :param input_file: The input file is the file that you want to find the prefix for. It can be a file
+    path or just the file name if it is in the current directory
+    :type input_file: str
+    :param folder: The `folder` parameter is a string that represents the directory where the file is
+    located
+    :type folder: str
+    :param assembly: The "assembly" parameter is a string that represents the assembly version of the
+    file you are looking for. It is used to search for files with the specific assembly version in their
+    filename
+    :type assembly: str
+    :return: the path of the output file.
+    """
+
+    output_file = None
+    if os.path.exists(input_file):
+        output_file = input_file
+    else:
+        #refgene_prefix = "refGene"
+        # Find in specific assembly folder
+        if find_all(f"{prefix}.txt", f"{folder}/{assembly}"):
+            output_file = find_all(f"{prefix}.txt", f"{folder}/{assembly}")[0]
+        # Find with assembly in filename
+        elif find_all(f"{prefix}.{assembly}.txt", folder):
+            output_file = find_all(f"{prefix}.{assembly}.txt", folder)[0]
+        # Find within the entire folder
+        elif find_all(f"{prefix}.txt", folder):
+            output_file = find_all(f"{prefix}.txt", folder)[0]
+
+    return output_file
 
 
 def find_nomen(hgvs: str = "", pattern="GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN", transcripts: list = []) -> dict:

@@ -2,6 +2,7 @@ __all__ = [
     "objects",
     "main",
     "commons",
+    "utils",
     "tools"
 ]
 

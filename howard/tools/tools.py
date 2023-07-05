@@ -23,6 +23,7 @@ from howard.commons import *
 from howard.tools.process import *
 from howard.tools.annotation import *
 from howard.tools.calculation import *
+from howard.tools.hgvs import *
 from howard.tools.prioritization import *
 from howard.tools.query import *
 from howard.tools.stats import *
@@ -221,6 +222,57 @@ arguments = {
             "default": None
         },
 
+        # HGVS
+        "use_gene": {
+            "help": """Use Gene information to generate HGVS annotation\n"""
+                    """Example: 'NM_152232(TAS1R2):c.231T>C'""",
+            "action": "store_true"
+        },
+        "use_exon": {
+            "help": """Use Exon information to generate HGVS annotation\n"""
+                    """Only if 'use_gene' is not enabled\n"""
+                    """Example: 'NM_152232(exon2):c.231T>C'""",
+            "action": "store_true"
+        },
+        "use_protein": {
+            "help": """Use Protein level to generate HGVS annotation\n"""
+                    """Can be used with 'use_exon' or 'use_gene'\n"""
+                    """Example: 'NP_689418:p.Cys77Arg'""",
+            "action": "store_true"
+        },
+        "add_protein": {
+            "help": """Add Protein level to DNA HGVS annotation\n"""
+                    """Example: 'NM_152232:c.231T>C,NP_689418:p.Cys77Arg'""",
+            "action": "store_true"
+        },
+        "full_format": {
+            "help": """Generates HGVS annotation in a full format (non-standard)\n"""
+                    """Full format use all information to generates an exhaustive annotation.\n"""
+                    """Use specifically 'use_exon' to add exon information.\n"""
+                    """Example: 'TAS1R2:NM_152232:NP_689418:c.231T>C:p.Cys77Arg'\n"""
+                    """         'TAS1R2:NM_152232:NP_689418:exon2:c.231T>C:p.Cys77Arg'""",
+            "action": "store_true"
+        },
+        "codon_type": {
+            "help": """Amino Acide Codon format type to use to generate HGVS annotation\n"""
+                    """Available (default '3'):\n"""
+                    """   '1': codon in 1 caracter (e.g. 'C', 'R')\n"""
+                    """   '3': codon in 3 caracter (e.g. 'Cys', 'Arg')\n"""
+                    """   'FULL': codon in full name (e.g. 'Cysteine', 'Arginine')\n""",
+            "required": False,
+            "default": "3"
+        },
+        "refgene": {
+            "help": """refGene annotation file""",
+            "required": False,
+            "default": ""
+        },
+        "refseqlink": {
+            "help": """refSeqLink annotation file""",
+            "required": False,
+            "default": ""
+        },
+
         # Databases
         "download-genomes": {
             "metavar": "FOLDER",
@@ -390,6 +442,33 @@ commands_arguments = {
             },
             "TRIO calculation": {
                 "trio_pedigree": False
+            }
+        }
+    },
+    "hgvs": {
+        "function" : "hgvs",
+        "description":  """HGVS annotation using HUGO HGVS internation Sequence Variant Nomenclature (http://varnomen.hgvs.org/). Annotation refere to refGene and genome to generate HGVS nomenclature for all available transcripts. This annotation add 'hgvs' field into VCF INFO column of a VCF file.""",
+        "help":         """HGVS annotation.\n""",
+        "epilog":       """Usage examples:\n"""
+                        """   howard hgvs --input=tests/data/example.full.vcf --output=/tmp/example.hgvs.vcf \n"""
+                        ,
+        "groups": {
+            "main": {
+                "input": True,
+                "output": False
+            },
+            "HGVS": {
+                "use_gene": False,
+                "use_exon": False,
+                "use_protein": False,
+                "add_protein": False,
+                "full_format": False,
+                "codon_type": False
+            },
+            "Databases": {
+                "assembly": False,
+                "refgene": False,
+                "refseqlink": False,
             }
         }
     },
