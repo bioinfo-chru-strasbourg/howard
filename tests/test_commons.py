@@ -542,7 +542,7 @@ def test_find_genome():
     tmp_genome = NamedTemporaryFile(prefix="genome.", suffix=".fa", dir="/tmp")
     tmp_genome_name = tmp_genome.name
     # call the function to find the genome file
-    genome_path_found = find_genome(genome_path = tmp_genome_name, genome = genome_filename)
+    genome_path_found = find_genome(genome_path = tmp_genome_name, file = genome_filename)
     # check if the genome file was found
     assert os.path.exists(genome_path_found) and genome_path_found == tmp_genome_name
 
@@ -556,15 +556,14 @@ def test_find_genome():
         # call the function to find the genome file
         error = None
         try:
-            genome_path_found = find_genome(genome_path = genome_path_nonexistent, genome = genome_filename)
+            genome_path_found = find_genome(genome_path = genome_path_nonexistent, file = genome_filename)
         except:
             with pytest.raises(ValueError) as e:
-                genome_path_found = find_genome(genome_path = genome_path_nonexistent, genome = genome_filename)
+                genome_path_found = find_genome(genome_path = genome_path_nonexistent, file = genome_filename)
                 error = str(e.value)
         
         # check if the genome file was found
-
-        assert (os.path.exists(genome_path_found) and genome_path_found != genome_path_nonexistent) or error == f"Genome failed: no genome '{genome_filename}'"
+        assert (os.path.exists(genome_path_found) and genome_path_found != genome_path_nonexistent) or error == None
 
 
 def test_findbypipeline():

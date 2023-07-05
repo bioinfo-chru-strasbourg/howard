@@ -3,6 +3,7 @@ __all__ = [
     "tools",
     "annotation",
     "calculation",
+    "hgvs",
     "prioritization",
     "query",
     "stats",

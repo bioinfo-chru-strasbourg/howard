@@ -1,4 +1,9 @@
 __all__ = [
     "variants",
-    "database"
+    "database",
+    "cdna",
+    "genome",
+    "hgvs",
+    "transcript",
+    "variant"
 ]

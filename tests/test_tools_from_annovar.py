@@ -47,7 +47,7 @@ def test_from_annovar():
     remove_if_exists([output_parquet+".hdr"])
 
     # Find genome
-    genome = find_genome(genome)
+    genome = find_genome(genome_path=genome)
 
     # prepare arguments for the query function
     args = argparse.Namespace(
@@ -93,7 +93,7 @@ def test_from_annovar_reduce_memory():
     remove_if_exists([output_parquet+".hdr"])
 
     # Find genome
-    genome = find_genome(genome)
+    genome = find_genome(genome_path=genome)
 
     # prepare arguments for the query function
     args = argparse.Namespace(
@@ -139,7 +139,7 @@ def test_from_annovar_multi_variant():
     remove_if_exists([output_parquet+".hdr"])
 
     # Find genome
-    genome = find_genome(genome)
+    genome = find_genome(genome_path=genome)
 
     # prepare arguments for the query function
     args = argparse.Namespace(
@@ -185,7 +185,7 @@ def test_from_annovar_reduce_memory_multi_variant():
     remove_if_exists([output_parquet+".hdr"])
 
     # Find genome
-    genome = find_genome(genome)
+    genome = find_genome(genome_path=genome)
 
     # prepare arguments for the query function
     args = argparse.Namespace(

@@ -1,0 +1,11 @@
+__pycache__/
+howard.egg-info/
+.pytest_cache/
+.cache
+.vscode
+.coverage
+tests/data/annotations/annovar/
+tests/data/annotations/snpeff/
+tests/data/annotations/hg19.fa
+tests/data/annotations/hg19.fa.fai
+tests/data/annotations/.DS_Store
