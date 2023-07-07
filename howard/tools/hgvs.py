@@ -37,7 +37,7 @@ def hgvs(args:argparse) -> None:
     # Create VCF object
     if args.input:
         vcfdata_obj = Variants(None, args.input, args.output, config, param)
-
+        
         # Params
         params = vcfdata_obj.get_param()
 
@@ -58,6 +58,9 @@ def hgvs(args:argparse) -> None:
 
         if "full_format" in args:
             params["hgvs"]["full_format"] = args.full_format
+        
+        if "use_version" in args:
+            params["hgvs"]["use_version"] = args.use_version
 
         if "codon_type" in args:
             params["hgvs"]["codon_type"] = args.codon_type
@@ -72,13 +75,13 @@ def hgvs(args:argparse) -> None:
             params["assembly"] = args.assembly
 
         vcfdata_obj.set_param(params)
-            
+        
         # Load data from input file
         vcfdata_obj.load_data()
 
         # Prioritization
-        if vcfdata_obj.get_param().get("hgvs", None):
-            vcfdata_obj.annotation_hgvs()
+        #if vcfdata_obj.get_param().get("hgvs", None):
+        vcfdata_obj.annotation_hgvs()
         
         # Export
         if vcfdata_obj.get_output():
