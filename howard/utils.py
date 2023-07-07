@@ -440,8 +440,10 @@ def hgvs_justify_indel(chrom, offset, ref, alt, strand, genome):
         return chrom, offset, ref, alt
 
     # Get genomic sequence around the lesion.
-    start = max(offset - 100, 0)
-    end = offset + 100
+    window_size = 100
+    size = window_size + max(len(ref), len(alt))
+    start = max(offset - size, 0)
+    end = offset + size
     seq = str(genome[str(chrom)][start - 1:end]).upper()
     cds_offset = offset - start
 
@@ -816,14 +818,19 @@ def variant_to_hgvs_name(chrom, offset, ref, alt, genome, transcript, transcript
     return hgvs
 
 
-def format_hgvs_name(chrom, offset, ref, alt, genome, transcript, transcript_protein=None, exon=None, use_prefix=True, use_gene=True, use_protein=False, use_counsyl=False, max_allele_length=4, full_format=False, codon_type:str = "3"):
+def format_hgvs_name(chrom, offset, ref, alt, genome, transcript, transcript_protein=None, exon=None, use_prefix=True, use_gene=True, use_protein=False, use_counsyl=False, max_allele_length=4, full_format=False, use_version=False, codon_type:str = "3"):
     """
-    The function `format_hgvs_name` generates a HGVS name from a genomic coordinate.
+    The `format_hgvs_name` function generates a HGVS name from a genomic coordinate.
     
-    :param chrom: The chromosome name
-    :param offset: The genomic offset of the allele, which is the position of the variant on the
-    chromosome
-    :param ref: The reference allele
+    :param chrom: The `chrom` parameter represents the chromosome name. It is a string that specifies
+    the chromosome on which the variant occurs
+    :param offset: The `offset` parameter represents the genomic offset of the allele, which is the
+    position of the variant on the chromosome. It is used to generate the HGVS name based on the genomic
+    coordinate
+    :param ref: The `ref` parameter represents the reference allele. In genetics, a variant or mutation
+    can occur at a specific position in the genome, resulting in a change from the reference allele to
+    an alternate allele. The `ref` parameter specifies the sequence of the reference allele at that
+    position
     :param alt: The `alt` parameter represents the alternate allele. In genetics, a variant or mutation
     can occur at a specific position in the genome, resulting in a change from the reference allele to
     an alternate allele. The `alt` parameter specifies the sequence of the alternate allele at that
@@ -831,15 +838,16 @@ def format_hgvs_name(chrom, offset, ref, alt, genome, transcript, transcript_pro
     :param genome: A pygr compatible genome object, which is used to retrieve genomic sequences and
     annotations. It provides methods to access genomic information such as chromosome names, sequences,
     and gene annotations
-    :param transcript: The transcript parameter is the transcript corresponding to the allele. It is
+    :param transcript: The `transcript` parameter is the transcript corresponding to the allele. It is
     used to generate the HGVS name based on the genomic coordinate
     :param transcript_protein: The `transcript_protein` parameter is an optional argument that
     represents the protein transcript corresponding to the cDNA transcript. It is used to generate the
     protein HGVS name if it exists
-    :param exon: The exon parameter is used to specify the exon number in the HGVS name. It is an
+    :param exon: The `exon` parameter is used to specify the exon number in the HGVS name. It is an
     optional parameter and is used to generate a more specific HGVS name when needed
     :param use_prefix: A boolean indicating whether to include a transcript/gene/chromosome prefix in
-    the HGVS name, defaults to True (optional)
+    the HGVS name. If set to True, the prefix will be included; if set to False, the prefix will be
+    excluded, defaults to True (optional)
     :param use_gene: A boolean parameter that determines whether to include the gene name in the HGVS
     prefix. If set to True, the gene name will be included; if set to False, the gene name will be
     excluded, defaults to True (optional)
@@ -847,26 +855,31 @@ def format_hgvs_name(chrom, offset, ref, alt, genome, transcript, transcript_pro
     the generated HGVS name. If set to True, the protein HGVS notation will be included if it exists. If
     set to False, only the genomic and transcript HGVS notation will be included, defaults to False
     (optional)
-    :param use_counsyl: A boolean parameter that determines whether to use Counsyl-specific formatting
-    for the HGVS name, defaults to False (optional)
-    :param max_allele_length: The max_allele_length parameter is used to determine the maximum length of
-    the allele. If the length of the allele is greater than the specified max_allele_length, then the
-    allele length will be used in the HGVS name instead of the actual allele sequence, defaults to 4
-    (optional)
+    :param use_counsyl: The `use_counsyl` parameter is a boolean parameter that determines whether to
+    use Counsyl-specific formatting for the HGVS name. If set to True, the HGVS name will be formatted
+    according to Counsyl's specific guidelines. If set to False, the HGVS name will be, defaults to
+    False (optional)
+    :param max_allele_length: The `max_allele_length` parameter is used to determine the maximum length
+    of the allele. If the length of the allele is greater than the specified `max_allele_length`, then
+    the allele length will be used in the HGVS name instead of the actual allele sequence. By default,
+    the `, defaults to 4 (optional)
     :param full_format: A boolean parameter that determines whether to use the full HGVS format or not.
     If set to True, the HGVS name will include the gene name, transcript name, exon number (if
     provided), and the amino acid change (if protein information is available). If set to False, the
     HGVS, defaults to False (optional)
-    :param codon_type: The parameter "codon_type" is a string that specifies the type of codon numbering
+    :param use_version: A boolean parameter that determines whether to include the version number of the
+    transcript in the HGVS name. If set to True, the version number will be included; if set to False,
+    the version number will be excluded, defaults to False (optional)
+    :param codon_type: The `codon_type` parameter is a string that specifies the type of codon numbering
     to be used in the HGVS name. It can have one of the following values:, defaults to 3
     :type codon_type: str (optional)
     :return: a formatted HGVS name generated from a genomic coordinate.
     """
+    
     hgvs = variant_to_hgvs_name(chrom, offset, ref, alt, genome, transcript, transcript_protein=transcript_protein, exon=exon,
                                 max_allele_length=max_allele_length,
                                 use_counsyl=use_counsyl, codon_type=codon_type)
-    return hgvs.format(use_prefix=use_prefix, use_gene=use_gene, use_exon=exon, use_protein=use_protein,
-                       use_counsyl=use_counsyl, full_format=full_format)
+    return hgvs.format(use_prefix=use_prefix, use_gene=use_gene, use_exon=exon, use_protein=use_protein, full_format=full_format, use_version=use_version)
 
 
 def create_refgene_table(conn, refgene_table:str = "refgene", refgene_file:str = None) -> str:
@@ -930,7 +943,7 @@ def create_refgene_table(conn, refgene_table:str = "refgene", refgene_file:str =
             "description": "STRING",
             "externalId": "STRING",
             }
-        query = f"CREATE TABLE {refgene_table} AS SELECT *, regexp_extract(mrnaAcc, '(.*)\..*', 1) AS 'mrnaAcc_without_ver', regexp_extract(protAcc, '(.*)\..*', 1) AS 'protAcc_without_ver' FROM read_csv_auto('{refgene_file}',HEADER=False,columns={refgene_structure})"
+        query = rf"CREATE TABLE {refgene_table} AS SELECT *, regexp_extract(mrnaAcc, '(.*)\..*', 1) AS 'mrnaAcc_without_ver', regexp_extract(protAcc, '(.*)\..*', 1) AS 'protAcc_without_ver', mrnaAcc AS 'mrnaAcc_with_ver', protAcc AS 'protAcc_with_ver' FROM read_csv_auto('{refgene_file}',HEADER=False,columns={refgene_structure})"
 
     # Create tabel with file
     if refgene_file:

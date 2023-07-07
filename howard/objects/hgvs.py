@@ -1,4 +1,4 @@
-"""
+r"""
 HGVS language currently implemented.
 
 HGVS = ALLELE
@@ -78,7 +78,7 @@ OFFSET_PREFIX = '-' | '+'
 OFFSET = NUMBER
 
 # Primatives:
-NUMBER = \d+
+NUMBER = "\d+"
 BASE = [ACGT]
 BASES = BASE+
 
@@ -127,6 +127,8 @@ NUCLEOTIDE_TRANSLATE = {
 }
 
 
+# The HGVSRegex class is used for working with regular expressions related to the Human Genome
+# Variation Society (HGVS) nomenclature.
 class HGVSRegex(object):
     """
     All regular expression for HGVS names.
@@ -134,8 +136,8 @@ class HGVSRegex(object):
 
     # DNA syntax
     # http://www.hgvs.org/mutnomen/standards.html#nucleotide
-    BASE = "[acgtbdhkmnrsvwyACGTBDHKMNRSVWY]|\d+"
-    BASES = "[acgtbdhkmnrsvwyACGTBDHKMNRSVWY]+|\d+"
+    BASE = r"[acgtbdhkmnrsvwyACGTBDHKMNRSVWY]|\d+"
+    BASES = r"[acgtbdhkmnrsvwyACGTBDHKMNRSVWY]+|\d+"
     DNA_REF = "(?P<ref>" + BASES + ")"
     DNA_ALT = "(?P<alt>" + BASES + ")"
 
@@ -147,17 +149,17 @@ class HGVSRegex(object):
     DUP = "(?P<mutation_type>dup)"
 
     # Simple coordinate syntax
-    COORD_START = "(?P<start>\d+)"
-    COORD_END = "(?P<end>\d+)"
+    COORD_START = r"(?P<start>\d+)"
+    COORD_END = r"(?P<end>\d+)"
     COORD_RANGE = COORD_START + "_" + COORD_END
 
     # cDNA coordinate syntax
-    CDNA_COORD = ("(?P<coord_prefix>|-|\*)(?P<coord>\d+)"
-                  "((?P<offset_prefix>-|\+)(?P<offset>\d+))?")
-    CDNA_START = ("(?P<start>(?P<start_coord_prefix>|-|\*)(?P<start_coord>\d+)"
-                  "((?P<start_offset_prefix>-|\+)(?P<start_offset>\d+))?)")
+    CDNA_COORD = (r"(?P<coord_prefix>|-|\*)(?P<coord>\d+)"
+                  r"((?P<offset_prefix>-|\+)(?P<offset>\d+))?")
+    CDNA_START = (r"(?P<start>(?P<start_coord_prefix>|-|\*)(?P<start_coord>\d+)"
+                  r"((?P<start_offset_prefix>-|\+)(?P<start_offset>\d+))?)")
     CDNA_END = (r"(?P<end>(?P<end_coord_prefix>|-|\*)(?P<end_coord>\d+)"
-                "((?P<end_offset_prefix>-|\+)(?P<end_offset>\d+))?)")
+                r"((?P<end_offset_prefix>-|\+)(?P<end_offset>\d+))?)")
     CDNA_RANGE = CDNA_START + "_" + CDNA_END
 
     # cDNA allele syntax
@@ -177,6 +179,7 @@ class HGVSRegex(object):
         CDNA_START + DUP,
 
         # Insertion, deletion, duplication
+        COORD_RANGE + EQUAL,
         CDNA_RANGE + INS + DNA_ALT,
         CDNA_RANGE + DEL + DNA_REF,
         CDNA_RANGE + DUP + DNA_REF,
@@ -199,7 +202,7 @@ class HGVSRegex(object):
     PEP_REF2 = "(?P<ref2>" + PEP + ")"
     PEP_ALT = "(?P<alt>" + PEP + ")"
 
-    PEP_EXTRA = "(?P<extra>(|=|\?)(|fs))"
+    PEP_EXTRA = r"(?P<extra>(|=|\?)(|fs))"
 
     # Peptide allele syntax
     PEP_ALLELE = [
@@ -287,16 +290,40 @@ REFSEQ_PREFIX_LOOKUP = dict(
 )
 
 
-def get_refseq_type(name):
+def get_refseq_type(name:str) -> str:
     """
-    Return the RefSeq type for a refseq name.
+    The `get_refseq_type` function returns the RefSeq type for a given RefSeq name.
+    
+    :param name: The `name` parameter is a string representing a RefSeq name
+    :type name: str
+    :return: The function `get_refseq_type` returns the RefSeq type for a given RefSeq name.
     """
+    
     prefix = name[:3]
     return REFSEQ_PREFIX_LOOKUP.get(prefix, (None, ''))[0]
 
 
+# The InvalidHGVSName class is a subclass of ValueError and is used to represent an error when an
+# invalid HGVS name is encountered.
 class InvalidHGVSName(ValueError):
-    def __init__(self, name='', part='name', reason=''):
+
+    def __init__(self, name:str = '', part:str = 'name', reason:str = '') -> None:
+        """
+        The function initializes an InvalidHGVSName object with a message, name, part, and reason.
+        
+        :param name: The name parameter is a string that represents the invalid HGVS name. It is the
+        name that is considered invalid and does not meet the required criteria
+        :type name: str
+        :param part: The "part" parameter represents the part of the HGVS (Human Genome Variation
+        Society) name that is invalid. It is used to provide more specific information about the error
+        that occurred, defaults to name
+        :type part: str (optional)
+        :param reason: The "reason" parameter is an optional argument that provides additional
+        information or context for why the HGVS name is considered invalid. It can be used to provide
+        specific details about the error or to explain why the name does not meet the required criteria
+        :type reason: str
+        """
+        
         if name:
             message = 'Invalid HGVS %s "%s"' % (part, name)
         else:
@@ -310,15 +337,79 @@ class InvalidHGVSName(ValueError):
         self.reason = reason
 
 
+# The HGVSName class is a Python class for handling HGVS (Human Genome Variation Society) names.
 class HGVSName(object):
     """
     Represents a HGVS variant name.
     """
 
-    def __init__(self, name='', prefix='', chrom='', transcript='', transcript_protein=None, gene='', exon=None,
-                 kind='', mutation_type=None, start=0, end=0, ref_allele='',
-                 ref2_allele='', alt_allele='',
-                 cdna_start=None, cdna_end=None, pep_extra=''):
+    def __init__(self, name:str = '', prefix:str = '', chrom:str = '', transcript:str = '', transcript_protein:str = None, gene:str = '', exon:str = None, kind:str = '', mutation_type:str = None, start:int = 0, end:int = 0, ref_allele:str = '', ref2_allele:str = '', alt_allele:str = '', cdna_start:int = None, cdna_end:int = None, pep_extra:str = ''):
+        """
+        The function is a constructor that initializes various attributes of an object and parses a
+        given name to populate those attributes.
+        
+        :param name: The full HGVS name of the variant
+        :type name: str
+        :param prefix: The `prefix` parameter is a string that is used as a prefix for the HGVS name. It
+        can be used to indicate additional information or context about the variant
+        :type prefix: str
+        :param chrom: The `chrom` parameter represents the chromosome where the mutation occurs. It is a
+        string that specifies the chromosome number or identifier
+        :type chrom: str
+        :param transcript: The `transcript` parameter represents the transcript ID or name associated
+        with the mutation. It is used to specify the specific transcript in which the mutation occurs
+        :type transcript: str
+        :param transcript_protein: The `transcript_protein` parameter is used to store information about
+        the protein associated with the transcript. It can be used to specify the protein variant or
+        isoform that is affected by the mutation
+        :type transcript_protein: str
+        :param gene: The "gene" parameter represents the gene associated with the variant. It is a
+        string that specifies the gene name or identifier
+        :type gene: str
+        :param exon: The `exon` parameter represents the exon number or range in which the mutation
+        occurs. It is used to specify the location of the mutation within the transcript
+        :type exon: str
+        :param kind: The "kind" parameter is used to specify the type of variant or mutation. It can be
+        a string that represents the kind of mutation, such as "substitution", "deletion", "insertion",
+        etc. This parameter helps to categorize and describe the type of mutation being represented by
+        the
+        :type kind: str
+        :param mutation_type: The `mutation_type` parameter is used to specify the type of mutation. It
+        can be a string that represents the type of mutation, such as "SNP" (single nucleotide
+        polymorphism), "DEL" (deletion), "INS" (insertion), etc
+        :type mutation_type: str
+        :param start: The `start` parameter represents the starting position of the mutation or variant
+        in the genomic sequence. It is an integer value that indicates the position of the mutation or
+        variant on the genomic sequence. If not provided, it defaults to 0, defaults to 0
+        :type start: int (optional)
+        :param end: The "end" parameter represents the end position of the mutation or variant. It is an
+        integer value that indicates the position of the mutation or variant on the genomic sequence,
+        defaults to 0
+        :type end: int (optional)
+        :param ref_allele: The `ref_allele` parameter represents the reference allele in a genetic
+        mutation. It is the allele that is present in the reference genome at a specific position
+        :type ref_allele: str
+        :param ref2_allele: The `ref2_allele` parameter represents the reference allele at the end of a
+        peptide indel. In the context of genetic mutations, an indel refers to the insertion or deletion
+        of nucleotides in a DNA sequence. The `ref2_allele` specifically represents the reference allele
+        that is
+        :type ref2_allele: str
+        :param alt_allele: The `alt_allele` parameter represents the alternate allele in a genetic
+        mutation. In genetics, an allele is one of the possible forms of a gene. In the context of this
+        code, `alt_allele` is used to store the alternate allele that is present in a mutation
+        :type alt_allele: str
+        :param cdna_start: The `cdna_start` parameter is used to specify the start position of the
+        mutation in the cDNA sequence. It is an optional parameter and if not provided, it will be set
+        to a default value of `CDNACoord()`
+        :type cdna_start: int
+        :param cdna_end: The `cdna_end` parameter is used to store the end coordinate of the cDNA
+        (complementary DNA) sequence. It is an optional parameter and if not provided, it will be
+        initialized as a `CDNACoord` object. The `CDNACoord` object is likely a
+        :type cdna_end: int
+        :param pep_extra: The `pep_extra` parameter is a string that represents any additional
+        information related to the protein. It is used in the context of protein-specific fields
+        :type pep_extra: str
+        """
 
         # Full HGVS name.
         self.name = name
@@ -348,8 +439,17 @@ class HGVSName(object):
         if name:
             self.parse(name)
 
-    def parse(self, name):
-        """Parse a HGVS name."""
+
+    def parse(self, name:str) -> None:
+        """
+        The `parse` function is used to split an HGVS name into a prefix and allele, and then validate
+        the parsed components.
+        
+        :param name: The `name` parameter is a string that represents an HGVS name. It is the input to
+        the `parse` function and is used to parse the HGVS name by splitting it into a prefix and allele
+        :type name: str
+        """
+        
         # Does HGVS name have transcript/gene prefix?
         if ':' in name:
             prefix, allele = name.split(':', 1)
@@ -361,17 +461,21 @@ class HGVSName(object):
 
         # Parse prefix and allele.
         self.parse_allele(allele)
-        self.parse_prefix(prefix, self.kind)
+        self.parse_prefix(prefix)
         self._validate()
 
-    def parse_prefix(self, prefix, kind):
-        """
-        Parse a HGVS prefix (gene/transcript/chromosome).
 
-        Some examples of full hgvs names with transcript include:
-          NM_007294.3:c.2207A>C
-          NM_007294.3(BRCA1):c.2207A>C
-          BRCA1{NM_007294.3}:c.2207A>C
+    def parse_prefix(self, prefix:str):
+        """
+        The `parse_prefix` function is used to parse a HGVS prefix (gene/transcript/chromosome) and
+        assign the parsed values to the corresponding attributes of the object.
+        
+        :param prefix: The `prefix` parameter is a string that represents a HGVS prefix, which can be a
+        gene, transcript, or chromosome identifier. It is used to determine the type of prefix and
+        assign the parsed values to the corresponding attributes of the object
+        :type prefix: str
+        :return: The function `parse_prefix` returns the parsed values for the transcript and gene
+        attributes, or sets the chrom or gene attributes based on the given prefix.
         """
 
         self.prefix = prefix
@@ -423,10 +527,11 @@ class HGVSName(object):
         # Assume gene name.
         self.gene = prefix
 
-    def parse_allele(self, allele):
+    def parse_allele(self, allele:str) -> None:
         """
-        Parse a HGVS allele description.
-
+        The function `parse_allele` parses a HGVS allele description and determines the kind of HGVS
+        name (c., p., g., etc.) and the mutation type.
+        
         Some examples include:
           cDNA substitution: c.101A>C,
           cDNA indel: c.3428delCinsTA, c.1000_1003delATG, c.1000_1001insATG
@@ -435,7 +540,14 @@ class HGVSName(object):
           Protein frameshift: p.Glu1161_Ser1164?fs
           Genomic substitution: g.1000100A>T
           Genomic indel: g.1000100_1000102delATG
+
+        :param allele: The `allele` parameter is a string that represents a HGVS allele description. It
+        can contain various types of mutations, such as cDNA substitutions, cDNA indels, protein
+        changes, protein frameshifts, genomic substitutions, and genomic indels. The purpose of the
+        `parse_allele`
+        :type allele: str
         """
+
         if '.' not in allele:
             raise InvalidHGVSName(allele, 'allele',
                                   'expected kind "c.", "p.", "g.", etc')
@@ -461,14 +573,23 @@ class HGVSName(object):
         else:
             raise NotImplementedError("unknown kind: %s" % allele)
 
-    def parse_cdna(self, details):
-        """
-        Parse a HGVS cDNA name.
 
+    def parse_cdna(self, details:str) -> None:
+        """
+        The function `parse_cdna` is used to parse a HGVS cDNA name and extract information such as
+        mutation type, coordinates, and alleles.
+        
         Some examples include:
           Substitution: 101A>C,
           Indel: 3428delCinsTA, 1000_1003delATG, 1000_1001insATG
+
+        :param details: The `details` parameter is a string that represents a HGVS cDNA name. It
+        contains information about a genetic mutation, such as a substitution or an indel, along with
+        the specific coordinates and alleles involved in the mutation
+        :type details: str
+        :return: None.
         """
+
         for regex in HGVSRegex.CDNA_ALLELE_REGEXES:
             match = re.match(regex, details)
             if match:
@@ -508,15 +629,25 @@ class HGVSName(object):
 
         raise InvalidHGVSName(details, 'cDNA allele')
 
-    def parse_protein(self, details):
-        """
-        Parse a HGVS protein name.
 
+    def parse_protein(self, details:str) -> None:
+        """
+        The function `parse_protein` is used to parse a HGVS protein name and extract information such
+        as mutation type, coordinates, alleles, and additional details.
+        
         Some examples include:
           No change: Glu1161=
           Change: Glu1161Ser
           Frameshift: Glu1161_Ser1164?fs
+
+        :param details: The `details` parameter is a string that represents a HGVS protein name. It
+        contains information about a protein mutation, such as the amino acid change and the position of
+        the mutation
+        :type details: str
+        :return: The method `parse_protein` does not return anything. It updates the instance variables
+        of the object it is called on.
         """
+
         for regex in HGVSRegex.PEP_ALLELE_REGEXES:
             match = re.match(regex, details)
             if match:
@@ -551,13 +682,20 @@ class HGVSName(object):
 
         raise InvalidHGVSName(details, 'protein allele')
 
-    def parse_genome(self, details):
-        """
-        Parse a HGVS genomic name.
 
-        Som examples include:
+    def parse_genome(self, details:str) -> None:
+        """
+        The function `parse_genome` is used to parse a HGVS genomic name and extract information such as
+        mutation type, coordinates, and alleles.
+        
+        Some examples include:
           Substitution: 1000100A>T
           Indel: 1000100_1000102delATG
+
+        :param details: The `details` parameter is a string that represents a HGVS genomic name. It
+        contains information about a genomic mutation, such as a substitution or an indel
+        :type details: str
+        :return: None.
         """
 
         for regex in HGVSRegex.GENOMIC_ALLELE_REGEXES:
@@ -599,24 +737,70 @@ class HGVSName(object):
 
         raise InvalidHGVSName(details, 'genomic allele')
 
-    def _validate(self):
+
+    def _validate(self) -> None:
         """
-        Check for internal inconsistencies in representation
+        The function checks for internal inconsistencies in the representation of coordinates.
         """
+        
         if self.start > self.end:
             raise InvalidHGVSName(reason="Coordinates are nonincreasing")
 
-    def __repr__(self):
+
+    def __repr__(self) -> str:
+        """
+        The function returns a string representation of an HGVSName object.
+        :return: The `__repr__` method is returning a string representation of the object. If the
+        `format` method is implemented, it will return a string in the format
+        "HGVSName('formatted_string')". If the `format` method is not implemented, it will return a
+        string in the format "HGVSName('name')".
+        """
+
         try:
             return "HGVSName('%s')" % self.format()
         except NotImplementedError:
             return "HGVSName('%s')" % self.name
 
-    def __unicode__(self):
+
+    def __unicode__(self) -> str:
+        """
+        The function returns a formatted string representation of the object.
+        :return: The `__unicode__` method is returning the result of the `format()` method.
+        """
+
         return self.format()
 
-    def format(self, use_prefix=True, use_gene=True, use_exon=False, use_protein=False, use_counsyl=False, full_format=False):
-        """Generate a HGVS name as a string."""
+
+    def format(self, use_prefix:bool = True, use_gene:bool = True, use_exon:bool = False, use_protein:bool = False, full_format=False, use_version:bool = False) -> str:
+        """
+        The `format` function generates a HGVS name as a string based on various formatting options.
+        
+        :param use_prefix: A boolean indicating whether to include the prefix in the HGVS name. If set
+        to True, the prefix will be included in the HGVS name. If set to False, the prefix will be
+        excluded. The default value is True, defaults to True
+        :type use_prefix: bool (optional)
+        :param use_gene: A boolean indicating whether to include the gene name in the HGVS name. If set
+        to True, the gene name will be included in the HGVS name. If set to False, the gene name will
+        not be included. The default value is True, defaults to True
+        :type use_gene: bool (optional)
+        :param use_exon: A boolean indicating whether to include exon information in the HGVS name. If
+        set to True, exon information will be included in the HGVS name. If set to False, exon
+        information will not be included, defaults to False
+        :type use_exon: bool (optional)
+        :param use_protein: A boolean indicating whether to include the protein change in the HGVS name.
+        If set to True, the protein change will be included in the HGVS name. If set to False, the
+        protein change will not be included, defaults to False
+        :type use_protein: bool (optional)
+        :param full_format: A boolean parameter that determines whether the full format of the allele
+        should be included in the output. If set to True, and if the allele is not a protein variant,
+        the allele will be appended with ':p.' followed by the formatted protein variant, defaults to
+        False (optional)
+        :param use_version: A boolean parameter that determines whether to include the version number in
+        the formatted HGVS name. If set to True, the version number will be included in the output. If
+        set to False, the version number will not be included, defaults to False
+        :type use_version: bool (optional)
+        :return: a HGVS name as a string.
+        """
 
         if use_protein and self.format_protein():
             allele = 'p.' + self.format_protein()
@@ -633,20 +817,42 @@ class HGVSName(object):
         if full_format and not use_protein and self.format_protein():
             allele += ':p.' + self.format_protein()
         
-        prefix = self.format_prefix(use_gene=use_gene, use_exon=use_exon, use_protein=use_protein, full_format=full_format) if use_prefix else ''
+        prefix = self.format_prefix(use_gene=use_gene, use_exon=use_exon, use_protein=use_protein, full_format=full_format, use_version=use_version) if use_prefix else ''
         
         if prefix:
             return prefix + ':' + allele
         else:
             return allele
 
-    def format_prefix(self, use_gene=True, use_exon=False, use_protein=False, full_format=False):
-        """
-        Generate HGVS trancript/gene prefix.
 
-        Some examples of full hgvs names with transcript include:
-          NM_007294.3:c.2207A>C
-          NM_007294.3(BRCA1):c.2207A>C
+    def format_prefix(self, use_gene:bool = True, use_exon:bool = False, use_protein:bool = False, full_format:bool = False, use_version:bool = False) -> str:
+        """
+        The `format_prefix` function generates an HGVS transcript/gene prefix based on various
+        parameters.
+        
+        :param use_gene: A boolean parameter that determines whether to include the gene name in the
+        prefix. If set to True, the gene name will be included in the prefix. If set to False, the gene
+        name will not be included in the prefix. The default value is True, defaults to True
+        :type use_gene: bool (optional)
+        :param use_exon: A boolean parameter that determines whether to include the exon information in
+        the prefix. If set to True, the exon information will be included in the prefix. If set to
+        False, the exon information will not be included, defaults to False
+        :type use_exon: bool (optional)
+        :param use_protein: A boolean indicating whether to use the protein transcript instead of the
+        nucleotide transcript if available. If set to True, the protein transcript will be used. If set
+        to False, the nucleotide transcript will be used. The default value is False, defaults to False
+        :type use_protein: bool (optional)
+        :param full_format: A boolean parameter that determines whether to generate the full HGVS name
+        with transcript/gene prefix or not. If set to True, the full format will be generated. If set to
+        False, only the transcript/gene prefix will be generated, defaults to False
+        :type full_format: bool (optional)
+        :param use_version: A boolean parameter that determines whether to include the version number in
+        the transcript prefix. If set to True, the version number will be included in the prefix (e.g.,
+        NM_007294.3). If set to False, only the transcript ID without the version number will be
+        included in the prefix, defaults to False
+        :type use_version: bool (optional)
+        :return: The function `format_prefix` returns a formatted HGVS transcript/gene prefix as a
+        string.
         """
 
         if full_format:
@@ -673,6 +879,8 @@ class HGVSName(object):
                     transcript = self.transcript_protein
                 else:
                     transcript = self.transcript
+                if not use_version and transcript:
+                    transcript = transcript.split('.')[0]
                 if use_gene and self.gene:
                     return '%s(%s)' % (transcript, self.gene)
                 elif use_exon and self.exon:
@@ -685,20 +893,33 @@ class HGVSName(object):
                 else:
                     return ''
 
-    def format_cdna_coords(self):
+
+    def format_cdna_coords(self) -> str:
         """
-        Generate HGVS cDNA coordinates string.
+        The function `format_cdna_coords` generates a string representing HGVS cDNA coordinates,
+        returning either the start coordinate or a string in the format "start_end" depending on whether
+        the start and end coordinates are the same or not.
+        :return: a string representing the cDNA coordinates. If the start and end coordinates are the
+        same, it returns just the start coordinate. Otherwise, it returns a string in the format
+        "start_end".
         """
+        
         # Format coordinates.
         if self.cdna_start == self.cdna_end:
             return str(self.cdna_start)
         else:
             return "%s_%s" % (self.cdna_start, self.cdna_end)
 
-    def format_dna_allele(self):
+
+    def format_dna_allele(self) -> str:
         """
-        Generate HGVS DNA allele.
+        The function `format_dna_allele` generates an HGVS DNA allele based on the mutation type and
+        alleles provided.
+        :return: The function `format_dna_allele` returns a string representing the HGVS DNA allele. The
+        specific format of the returned string depends on the value of the `mutation_type` attribute of
+        the object. The possible return values are:
         """
+        
         if self.mutation_type == '=':
             # No change.
             # example: 101A=
@@ -731,25 +952,35 @@ class HGVSName(object):
             raise AssertionError(
                 "unknown mutation type: '%s'" % self.mutation_type)
 
-    def format_cdna(self):
+
+    def format_cdna(self) -> str:
         """
-        Generate HGVS cDNA allele.
+        The function "format_cdna" generates an HGVS cDNA allele by combining the cDNA coordinates and
+        the DNA allele.
 
         Some examples include:
           Substitution: 101A>C,
           Indel: 3428delCinsTA, 1000_1003delATG, 1000_1001insATG
+
+        :return: a string that represents the HGVS cDNA allele.
         """
+        
         return self.format_cdna_coords() + self.format_dna_allele()
 
-    def format_protein(self):
+
+    def format_protein(self) -> str:
         """
-        Generate HGVS protein name.
+        The `format_protein` function generates an HGVS protein name based on different scenarios such
+        as no change, change, frameshift, and range change.
 
         Some examples include:
           No change: Glu1161=
           Change: Glu1161Ser
           Frameshift: Glu1161_Ser1164?fs
+
+        :return: The method `format_protein` returns a string representing the HGVS protein name.
         """
+        
         if (self.start == self.end and
                 self.ref_allele == self.ref2_allele == self.alt_allele):
             # Match.
@@ -776,30 +1007,51 @@ class HGVSName(object):
 
         else:
             return None
-            #raise NotImplementedError('protein name formatting.')
 
-    def format_coords(self):
+
+    def format_coords(self) -> str:
         """
-        Generate HGVS cDNA coordinates string.
+        The function `format_coords` generates a string representation of HGVS cDNA coordinates.
+        :return: a string that represents the HGVS cDNA coordinates. If the start and end coordinates
+        are the same, it returns just the start coordinate. Otherwise, it returns a string in the format
+        "start_end".
         """
+        
         # Format coordinates.
         if self.start == self.end:
             return str(self.start)
         else:
             return "%s_%s" % (self.start, self.end)
 
-    def format_genome(self):
-        """
-        Generate HGVS genomic allele.
 
-        Som examples include:
+    def format_genome(self) -> str:
+        """
+        The function "format_genome" generates an HGVS genomic allele by combining the formatted
+        coordinates and DNA allele.
+
+        Some examples include:
           Substitution: 1000100A>T
           Indel: 1000100_1000102delATG
+
+        :return: a string that represents the HGVS genomic allele.
         """
+        
         return self.format_coords() + self.format_dna_allele()
 
-    def get_raw_coords(self, transcript=None):
-        """ return genomic coordinates """
+
+    def get_raw_coords(self, transcript:object = None) -> tuple:
+        """
+        The function `get_raw_coords` returns the genomic coordinates based on the given transcript or
+        the provided chromosomal coordinates.
+        
+        :param transcript: The `transcript` parameter is an object that represents a transcript. It is
+        used to retrieve genomic coordinates based on the type of HGVS name (`self.kind`). The
+        `transcript` object should have the following attributes and methods:
+        :type transcript: object
+        :return: a tuple containing the genomic coordinates. The tuple consists of three elements: the
+        chromosome, the start position, and the end position.
+        """
+        
         if self.kind in ('c', 'n'):
             chrom = transcript.tx_position.chrom
             start = transcript.cdna_to_genomic_coord(self.cdna_start)
@@ -829,9 +1081,19 @@ class HGVSName(object):
 
         return chrom, start, end
 
-    def get_ref_coords(self, transcript=None):
-        """Return genomic coordinates of reference allele."""
 
+    def get_ref_coords(self, transcript:object = None) -> tuple:
+        """
+        The function "get_ref_coords" returns the genomic coordinates of the reference allele, taking
+        into account different mutation types.
+        
+        :param transcript: The `transcript` parameter is an optional object that represents a transcript
+        or gene. It is used to retrieve the genomic coordinates of the reference allele
+        :type transcript: object
+        :return: a tuple containing the genomic coordinates of the reference allele. The tuple consists
+        of three elements: the chromosome, the start position, and the end position.
+        """
+        
         chrom, start, end = self.get_raw_coords(transcript)
 
         if self.mutation_type == "ins":
@@ -846,8 +1108,19 @@ class HGVSName(object):
             end = start - 1
         return chrom, start, end
 
-    def get_vcf_coords(self, transcript=None):
-        """Return genomic coordinates of reference allele in VCF-style."""
+
+    def get_vcf_coords(self, transcript:object = None) -> tuple:
+        """
+        The function "get_vcf_coords" returns the genomic coordinates of the reference allele in
+        VCF-style, with left-padding for indels.
+        
+        :param transcript: The `transcript` parameter is an object that represents a transcript or gene.
+        It is used to retrieve the genomic coordinates of the reference allele
+        :type transcript: object
+        :return: a tuple containing the genomic coordinates of the reference allele in VCF-style. The
+        tuple consists of three elements: the chromosome, the start position, and the end position.
+        """
+        
         chrom, start, end = self.get_ref_coords(transcript)
 
         # Inserts and deletes require left-padding by 1 base
@@ -860,11 +1133,27 @@ class HGVSName(object):
             raise NotImplementedError("Unknown mutation_type '%s'" %
                                       self.mutation_type)
         return chrom, start, end
+    
 
-    def get_ref_alt(self, is_forward_strand=True, raw_dup_alleles=False):
-        """ Return reference and alternate alleles.
-            Original code was for representation - ie it altered dup to look like an insert
-            pass raw_dup_alleles=True to get the raw values """
+    def get_ref_alt(self, is_forward_strand:bool = True, raw_dup_alleles:bool = False) -> tuple:
+        """
+        The function `get_ref_alt` returns the reference and alternate alleles, with an option to modify
+        duplications to look like inserts.
+        
+        :param is_forward_strand: The parameter `is_forward_strand` is a boolean flag that indicates
+        whether the alleles should be returned for the forward strand or the reverse complement strand.
+        If `is_forward_strand` is `True`, the alleles will be returned as is. If `is_forward_strand` is
+        `False`,, defaults to True
+        :type is_forward_strand: bool (optional)
+        :param raw_dup_alleles: The `raw_dup_alleles` parameter is a boolean flag that determines
+        whether the raw values of duplicated alleles should be returned. By default, it is set to
+        `False`, which means that if the mutation type is a duplication (`dup`), the reference allele
+        will be represented as an empty string, defaults to False
+        :type raw_dup_alleles: bool (optional)
+        :return: The function `get_ref_alt` returns a tuple containing the reference and alternate
+        alleles.
+        """
+
         if self.kind == 'p':
             raise NotImplementedError(
                 'get_ref_alt is not implemented for protein HGVS names')

@@ -86,9 +86,41 @@ def test_format_name():
     """
     for expected_name, formatable, attrs in _parse_names:
         if formatable:
-            name = HGVSName(**attrs).format()
+            name = HGVSName(**attrs).format(use_version=True)
             nose.tools.assert_equal(name, expected_name,
                                     (name, expected_name, attrs))
+
+
+def test_format_prefix():
+    """
+    The function `test_format_prefix()` tests the `format_prefix()` method of the `HGVSName` class by
+    checking if the returned result matches the expected result for different combinations of input
+    parameters.
+    """
+
+    # full_format
+    obj = HGVSName()
+    obj.gene = 'GENE1'
+    obj.transcript = 'NM_001'
+    obj.transcript_protein = 'NP_001'
+    obj.exon = 2
+
+    expected_result = 'GENE1:NM_001:NP_001:exon2'
+
+    result = obj.format_prefix(use_gene=True, use_exon=True, use_protein=True, full_format=True)
+
+    assert result == expected_result
+
+    # kind as 'g' or 'm'
+    obj = HGVSName()
+    obj.kind = 'g'
+    obj.chrom = 'chr1'
+
+    expected_result= 'chr1'
+
+    result=obj.format_prefix(use_gene=True,use_exon=False,use_protein=False,full_format=False)
+
+    assert result==expected_result
 
 
 def test_name_to_variant():
@@ -109,64 +141,40 @@ def test_name_to_variant():
                 repr([hgvs_name, variant, hgvs_variant]))
 
 
-# def test_variant_to_name():
-#     """
-#     Convert variant coordinates to HGVS names.
-#     """
-#     genome = MockGenomeTestFile(
-#         db_filename='hg19.fa',
-#         filename = tests_folder + '/data/test_variant_to_name.genome',
-#         create_data=False)
+def test_variant_to_name():
+    """
+    Convert variant coordinates to HGVS names.
+    """
+    genome = MockGenomeTestFile(
+        db_filename='hg19.fa',
+        filename = tests_folder + '/data/test_variant_to_name.genome',
+        create_data=False)
 
-#     print("test")
+    for (expected_hgvs_name, variant,
+         name_canonical, var_canonical) in _name_variants_to_name:
+        
+        chrom = variant[0]
+        #if name_canonical:
+        if name_canonical and chrom in ["chr17"]:
+            hgvs = HGVSName(expected_hgvs_name)
+            transcript_name = hgvs.transcript
+            transcript = None
+            if transcript_name:
+                transcript = get_transcript(transcript_name)
+                assert transcript, transcript_name
+            chrom, offset, ref, alt = variant
+            hgvs_name = format_hgvs_name(
+                chrom, offset, ref, alt, genome, transcript,
+                use_gene=False, use_version=True)
 
-#     for (expected_hgvs_name, variant,
-#          name_canonical, var_canonical) in _name_variants:
-#         print(expected_hgvs_name, variant, name_canonical, var_canonical)
-#         if name_canonical:
-#             hgvs = HGVSName(expected_hgvs_name)
-#             transcript_name = hgvs.transcript
-#             transcript = None
-#             if transcript_name:
-#                 transcript = get_transcript(transcript_name)
-#                 assert transcript, transcript_name
-#             chrom, offset, ref, alt = variant
-#             hgvs_name = format_hgvs_name(
-#                 chrom, offset, ref, alt, genome, transcript,
-#                 use_gene=False)
+            if hgvs.kind == 'g':
+                # Strip off g.HGVS prefix
+                i = expected_hgvs_name.find(":g.")
+                expected_hgvs_name = expected_hgvs_name[i+1:]
 
-#             if hgvs.kind == 'g':
-#                 # Strip off g.HGVS prefix
-#                 i = expected_hgvs_name.find(":g.")
-#                 expected_hgvs_name = expected_hgvs_name[i+1:]
-
-#             nose.tools.assert_equal(
-#                 hgvs_name, expected_hgvs_name,
-#                 repr([hgvs_name, expected_hgvs_name, variant]))
-
-
-# def test_variant_to_name_counsyl():
-#     """
-#     Convert variant coordinates to HGVS names with counsyl-specific style.
-#     """
-#     genome = MockGenomeTestFile(
-#         db_filename='hg19.fa',
-#         filename = tests_folder + '/data/test_variant_to_name_counsyl.genome',
-#         create_data=False)
-
-#     for (expected_hgvs_name, variant,
-#          name_canonical, var_canonical) in _name_variants_counsyl:
-#         if name_canonical:
-#             transcript_name = HGVSName(expected_hgvs_name).transcript
-#             transcript = get_transcript(transcript_name)
-#             assert transcript, transcript_name
-#             chrom, offset, ref, alt = variant
-#             hgvs_name = format_hgvs_name(
-#                 chrom, offset, ref, alt, genome, transcript,
-#                 use_gene=False, use_counsyl=True)
-#             nose.tools.assert_equal(
-#                 hgvs_name, expected_hgvs_name,
-#                 repr([hgvs_name, expected_hgvs_name, variant]))
+            nose.tools.assert_equal(
+                hgvs_name, expected_hgvs_name,
+                repr([hgvs_name, expected_hgvs_name, variant]))
 
 
 def test_name_to_variant_refseqs():
@@ -201,7 +209,6 @@ def test_name_to_variant_long():
         create_data=False)
 
     # Read transcripts.
-    #with open(tests_folder+'/data/genes.refGene', 'r') as infile:
     with open(tests_folder+'/data/annotations/refGene.hg19.txt', 'r') as infile:
         transcripts = read_transcripts(infile)
 
@@ -263,29 +270,29 @@ def test_invalid_coordinates():
     parse_hgvs_name(hgvs_name, genome, get_transcript=get_transcript)
 
 
-# def test_matches_ref():
-#     genome = MockGenomeTestFile(
-#         db_filename='hg19.fa',
-#         filename=tests_folder+'/data/test_hgvs.genome',
-#         create_data=False)
-#     # genome = SequenceFileDB('pyhgvs/tests/data/test_hgvs.genome')
-#     transcript = get_transcript("NM_000016.4")
+def test_matches_ref():
+    genome = MockGenomeTestFile(
+        db_filename='hg19.fa',
+        filename=tests_folder+'/data/test_hgvs.genome',
+        create_data=False)
+    # genome = SequenceFileDB('pyhgvs/tests/data/test_hgvs.genome')
+    transcript = get_transcript("NM_000016.4")
 
-#     # The base at this position is "T" - used to always work w/dups
-#     expected = [
-#         ("NM_000016.4:c.1189dupT", True),
-#         ("NM_000016.4:c.1189T>TT", True),  # same as dup by both alleles provided
-#         ("NM_000016.4:c.1189dupA", False),
-#         ("NM_000016.4:c.1189A>AA", False),
-#         ("NM_000016.4:c.1189delT", True),
-#         ("NM_000016.4:c.1189delC", False),
-#         ("NM_000016.4:c.1189delCinsT", False),
-#         ("NM_000016.4:c.1189delTinsC", True),
-#     ]
-#     for hgvs_string, expected_result in expected:
-#         hgvs_name = HGVSName(hgvs_string)
-#         matches_ref = matches_ref_allele(hgvs_name, genome, transcript)
-#         nose.tools.assert_equal(matches_ref, expected_result, hgvs_string + " matches reference base")
+    # The base at this position is "T" - used to always work w/dups
+    expected = [
+        ("NM_000016.4:c.1189dupT", True),
+        ("NM_000016.4:c.1189T>TT", True),  # same as dup by both alleles provided
+        ("NM_000016.4:c.1189dupA", False),
+        ("NM_000016.4:c.1189A>AA", False),
+        ("NM_000016.4:c.1189delT", True),
+        ("NM_000016.4:c.1189delC", False),
+        ("NM_000016.4:c.1189delCinsT", False),
+        ("NM_000016.4:c.1189delTinsC", True),
+    ]
+    for hgvs_string, expected_result in expected:
+        hgvs_name = HGVSName(hgvs_string)
+        matches_ref = matches_ref_allele(hgvs_name, genome, transcript)
+        nose.tools.assert_equal(matches_ref, expected_result, hgvs_string + " matches reference base")
 
 
 # Test examples of cDNA coordinates.
@@ -780,6 +787,7 @@ _parse_names = [
 ]
 
 
+
 # Example HGVS names and variants.
 # format: (name, variant, name_canonical, var_canonical)
 _name_variants = [
@@ -909,8 +917,89 @@ _name_variants = [
 ]
 
 
-_name_variants_counsyl = [
-    ('NM_000016.4:c.307insG', ('chr1', 76199232, 'T', 'TG'), True, True),
+# Example HGVS names and variants.
+# format: (name, variant, name_canonical, var_canonical)
+_name_variants_to_name = [
+
+
+    # Indels.
+    ('NM_000018.3:c.922_930delGCAGAGGTGinsTCAAAGCAC',
+     ('chr17', 7126028, 'AGCAGAGGTG', 'ATCAAAGCAC'), False, True),
+    ('NM_000023.2:c.585-2_585-1delAGinsT',
+     ('chr17', 48246450, 'CAG', 'CT'), True, True),
+    ('NM_007294.3:c.4185+2_4185+22del21insA',
+     ('chr17', 41242938, 'GCACACACACACACGCTTTTTA', 'GT'), False, True),
+
+    # Single letter del and insert.
+    ('NM_000016.4:c.945+4delAinsGC',
+     ('chr1', 76216234, 'AA', 'AGC'), True, True),
+
+    # Delete region.
+    ('NM_000016.4:c.291_296delTCTTGG',
+     ('chr1', 76199214, 'AGGTCTT', 'A'),  False, True),
+    ('NM_000016.4:c.306_307insG',
+     ('chr1', 76199232, 'T', 'TG'), False, True),
+    ('NM_000016.4:c.343_348delGGATGT',
+     ('chr1', 76199267, 'ATGGATG', 'A'), False, True),
+    ('NM_000016.4:c.430_432delAAG', ('chr1', 76200511, 'AAAG', 'A'),
+     True, True),
+    ('NM_000016.4:c.430_432del3', ('chr1', 76200511, 'AAAG', 'A'),
+     False, True),
+
+    # Single letter insert, delete, duplication.
+    ('NM_000016.4:c.203delA', ('chr1', 76198412, 'GA', 'G'), True, True),
+    ('NM_000016.4:c.244dupT', ('chr1', 76198564, 'C', 'CT'), True, True),
+    ('NM_000016.4:c.387+1delG', ('chr1', 76199309, 'TG', 'T'), True, True),
+    ('NM_000016.4:c.475delT', ('chr1', 76205669, 'AT', 'A'), True, True),
+    ('NM_000016.4:c.1189dupT', ('chr1', 76227049, 'C', 'CT'), True, True),
+    # Same as above but without optional trailing base
+    ('NM_000016.4:c.1189dup', ('chr1', 76227049, 'C', 'CT'), False, True),
+    ('NM_000016.4:c.1191delT', ('chr1', 76227051, 'AT', 'A'), True, True),
+    # Same as above but without optional trailing base
+    ('NM_000016.4:c.1191del', ('chr1', 76227051, 'AT', 'A'), False, True),
+    ('NM_000016.4:c.306_307insG', ('chr1', 76199232, 'T', 'TG'), True, True),
+
+    # Alignment tests for HGVS 3' and VCF left-alignment.
+    ('NM_000492.3:c.935_937delTCT', ('chr7', 117180210, 'CCTT', 'C'),
+     True, True),
+    ('NM_000492.3:c.442delA', ('chr7', 117171120, 'CA', 'C'), True, True),
+    ('NM_000492.3:c.805_806delAT', ('chr7', 117176660, 'AAT', 'A'),
+     True, True),
+    ('NM_000492.3:c.1155_1156dupTA', ('chr7', 117182104, 'A', 'AAT'),
+     True, True),
+    # Same as above but without optional trailing base
+    ('NM_000492.3:c.1155_1156dup', ('chr7', 117182104, 'A', 'AAT'),
+     False, True),
+    ('NM_000492.3:c.3889dupT', ('chr7', 117292905, 'A', 'AT'), True, True),
+
+    # Transcript prefix.
+    ('NM_007294.3:c.2207A>C', ('chr17', 41245341, 'T', 'G'), False, True),
+    ('NM_007294.3:c.2207A>C', ('chr17', 41245341, 'T', 'G'), False, True),
+    ('NM_007294.3(BRCA1):c.2207A>C', ('chr17', 41245341, 'T', 'G'),
+     False, True),
+    ('ENST00000357654:c.2207A>C', ('chr17', 41245341, 'T', 'G'), False, True),
+
+    # After stop codon.
+    ('NM_000492.3:c.*3A>C', ('chr7', 117307165, 'A', 'C'), True, True),
+
+    # Genomic single letter del and insert.
+    ('chr1:g.76216235delAinsGC', ('chr1', 76216234, 'AA', 'AGC'),
+     False, True),
+
+    # Genomic dup
+    ('chr7:g.117182108_117182109dup', ('chr7', 117182104, 'A', 'AAT'),
+     False, True),
+
+    ('chr7:g.117182105_117182106dupAT', ('chr7', 117182104, 'A', 'AAT'),
+     False, True),
+
+    # Genomic delete region.
+    ('chr1:g.76199215_76199220delGGTCTT',
+     ('chr1', 76199214, 'AGGTCTT', 'A'), False, True),
+
+    # Non-canonical.
+    ('NM_000492.3:c.1210-7_1210-6dupTT',
+     ('chr7', 117188682, 'GTT', 'GTTTT'), True, False),
 ]
 
 

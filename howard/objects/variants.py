@@ -3295,12 +3295,11 @@ class Variants:
                     if len(transcripts_protein):
                         transcript_protein = transcripts_protein[0]
 
-
                 # HGVS name
-                hgvs_name = format_hgvs_name(chr, pos, ref, alt, genome=genome, transcript=transcript, transcript_protein=transcript_protein, exon=exon, use_gene=use_gene, use_protein=use_protein, full_format=full_format, codon_type=codon_type)
+                hgvs_name = format_hgvs_name(chr, pos, ref, alt, genome=genome, transcript=transcript, transcript_protein=transcript_protein, exon=exon, use_gene=use_gene, use_protein=use_protein, full_format=full_format, use_version=use_version, codon_type=codon_type)
                 hgvs_full_list.append(hgvs_name)
                 if add_protein and not use_protein and not full_format:
-                    hgvs_name = format_hgvs_name(chr, pos, ref, alt, genome=genome, transcript=transcript, transcript_protein=transcript_protein, exon=exon, use_gene=use_gene, use_protein=True, full_format=False, codon_type=codon_type)
+                    hgvs_name = format_hgvs_name(chr, pos, ref, alt, genome=genome, transcript=transcript, transcript_protein=transcript_protein, exon=exon, use_gene=use_gene, use_protein=True, full_format=False, use_version=use_version, codon_type=codon_type)
                     hgvs_full_list.append(hgvs_name)
 
             # Create liste of HGVS annotations
@@ -3333,7 +3332,7 @@ class Variants:
 
         # Param
         param = self.get_param()
-
+        
         # HGVS Param
         param_hgvs = param.get("hgvs",{})
         use_exon = param_hgvs.get("use_exon",False)
@@ -3341,6 +3340,7 @@ class Variants:
         use_protein = param_hgvs.get("use_protein",False)
         add_protein = param_hgvs.get("add_protein",False)
         full_format = param_hgvs.get("full_format",False)
+        use_version = param_hgvs.get("use_version",False)
         codon_type = param_hgvs.get("codon_type","3")
 
         # refGene refSeqLink
@@ -3359,7 +3359,7 @@ class Variants:
         log.debug("Genome: "+str(genome_file))
         
         # refGene
-        refgene_file = find_file_prefix(input_file=databases_refgene, prefix="refGene", folder=databases_refgene_folders, assembly=assembly)
+        refgene_file = find_file_prefix(input_file=databases_refgene, prefix="ncbiRefSeq", folder=databases_refgene_folders, assembly=assembly)
         log.debug("refGene: "+str(refgene_file))
 
         # refSeqLink
@@ -3405,14 +3405,17 @@ class Variants:
             # refSeqLink in duckDB
             refseqlink_table = get_refgene_table(conn=self.conn, refgene_table="refseqlink", refgene_file=refseqlink_file)
             # Loading all refSeqLink in Dataframe
+            protacc_column = "protAcc_with_ver"
+            mrnaacc_column = "mrnaAcc_with_ver"
             refseqlink_query = f"""
-                SELECT {refgene_table}.chrom, protAcc_without_ver AS protein, mrnaAcc_without_ver AS transcript
+                SELECT {refgene_table}.chrom, {protacc_column} AS protein, {mrnaacc_column} AS transcript
                 FROM {refseqlink_table} 
-                JOIN {refgene_table} ON ({refgene_table}.name = {refseqlink_table}.mrnaAcc_without_ver)
+                JOIN {refgene_table} ON ({refgene_table}.name = {refseqlink_table}.mrnaAcc_with_ver)
                 WHERE protAcc_without_ver IS NOT NULL
             """
             # Polars Dataframe
             refseqlink_df = self.conn.query(f"{refseqlink_query}").pl()
+
 
         # Read RefSeq transcripts into a python dict/model.
         log.debug(f"Transcripts loading...")

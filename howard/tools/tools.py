@@ -253,6 +253,12 @@ arguments = {
                     """         'TAS1R2:NM_152232:NP_689418:exon2:c.231T>C:p.Cys77Arg'""",
             "action": "store_true"
         },
+        "use_version": {
+            "help": """Generates HGVS annotation with transcript version\n"""
+                    """Example: without version 'NM_152232:c.231T>C'\n"""
+                    """         with version 'NM_152232.1:c.231T>C'""",
+            "action": "store_true"
+        },
         "codon_type": {
             "help": """Amino Acide Codon format type to use to generate HGVS annotation\n"""
                     """Available (default '3'):\n"""
