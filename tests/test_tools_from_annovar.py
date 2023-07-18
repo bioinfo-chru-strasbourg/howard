@@ -25,6 +25,7 @@ from unittest.mock import patch
 from howard.objects.variants import Variants
 from howard.commons import *
 from howard.tools.tools import *
+from test_needed import *
 
 
 tests_folder = os.path.dirname(__file__)
@@ -32,11 +33,14 @@ tests_folder = os.path.dirname(__file__)
 
 def test_from_annovar():
 
+    # Download database
+    download_needed_databases()
+
     # Init files
     input_vcf = tests_folder + "/data/annotations/hg19_nci60.txt"
     output_vcf = "/tmp/hg19_nci60.vcf.gz"
     output_parquet = "/tmp/hg19_nci60.parquet"
-    genome = "/databases/genomes/current/hg19.fa"
+    genome = tests_config["folders"]["databases"]["genomes"] + "/hg19/hg19.fa"
     annovar_code = "nci60"
     config = {}
 
@@ -78,11 +82,14 @@ def test_from_annovar():
 
 def test_from_annovar_reduce_memory():
 
+    # Download database
+    download_needed_databases()
+
     # Init files
     input_vcf = tests_folder + "/data/annotations/hg19_nci60.txt"
     output_vcf = "/tmp/hg19_nci60.vcf.gz"
     output_parquet = "/tmp/hg19_nci60.parquet"
-    genome = "/databases/genomes/current/hg19.fa"
+    genome = tests_config["folders"]["databases"]["genomes"] + "/hg19/hg19.fa"
     annovar_code = "nci60"
     config = {}
 
@@ -124,11 +131,14 @@ def test_from_annovar_reduce_memory():
 
 def test_from_annovar_multi_variant():
 
+    # Download database
+    download_needed_databases()
+
     # Init files
     input_vcf = tests_folder + "/data/annotations/hg19_nci60.txt"
     output_vcf = "/tmp/hg19_nci60.vcf.gz"
     output_parquet = "/tmp/hg19_nci60.parquet"
-    genome = "/databases/genomes/current/hg19.fa"
+    genome = tests_config["folders"]["databases"]["genomes"] + "/hg19/hg19.fa"
     annovar_code = "nci60"
     config = {}
 
@@ -170,11 +180,14 @@ def test_from_annovar_multi_variant():
 
 def test_from_annovar_reduce_memory_multi_variant():
 
+    # Download database
+    download_needed_databases()
+
     # Init files
     input_vcf = tests_folder + "/data/annotations/hg19_nci60.txt"
     output_vcf = "/tmp/hg19_nci60.vcf.gz"
     output_parquet = "/tmp/hg19_nci60.parquet"
-    genome = "/databases/genomes/current/hg19.fa"
+    genome = tests_config["folders"]["databases"]["genomes"] + "/hg19/hg19.fa"
     annovar_code = "nci60"
     config = {}
 

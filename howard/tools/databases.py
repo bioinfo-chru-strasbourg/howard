@@ -75,7 +75,6 @@ def databases_download(args:argparse) -> None:
                 contig_regex=args.download_genomes_contig_regex
                 )
 
-
     # Annovar
     if args.download_annovar:
         log.debug(f"Download Annovar databases")
@@ -98,9 +97,31 @@ def databases_download(args:argparse) -> None:
             assemblies = assemblies,
             config=args.config
             )
+        
+    # refSeq
+    if args.download_refseq:
+        log.debug(f"Download refSeq databases")
+        if args.download_refseq_files:
+            files = [value for value in args.download_refseq_files.split(',')]
+        else:
+            files = []
+        databases_download_refseq(
+            assemblies = assemblies,
+            refseq_folder=args.download_refseq,
+            refseq_url=args.download_refseq_url,
+            refseq_prefix=args.download_refseq_prefix,
+            refseq_files=files,
+            refseq_format_file=args.download_refseq_format_file,
+            include_utr_5=args.download_refseq_include_utr5,
+            include_utr_3=args.download_refseq_include_utr3,
+            include_chrM=args.download_refseq_include_chrM,
+            include_non_canonical_chr=args.download_refseq_include_non_canonical_chr,
+            include_non_coding_transcripts=args.download_refseq_include_non_coding_transcripts,
+            include_transcript_ver=args.download_refseq_include_transcript_version
+            )
 
 
-def databases_download_annovar(folder:str = None, files:list = None, assemblies:list = ["hg19"], annovar_url:str = "http://www.openbioinformatics.org/annovar/download/") -> None:
+def databases_download_annovar(folder:str = None, files:list = None, assemblies:list = ["hg19"], annovar_url:str = "http://www.openbioinformatics.org/annovar/download") -> None:
     """
     This function downloads and extracts Annovar databases for specified assemblies and files.
     
@@ -114,7 +135,7 @@ def databases_download_annovar(folder:str = None, files:list = None, assemblies:
     Default is ["hg19"]
     :type assemblies: list
     :param annovar_url: The URL where Annovar databases can be downloaded from, defaults to
-    http://www.openbioinformatics.org/annovar/download/
+    http://www.openbioinformatics.org/annovar/download
     :type annovar_url: str (optional)
     """
 
@@ -146,7 +167,7 @@ def databases_download_annovar(folder:str = None, files:list = None, assemblies:
         log.debug(f"Download list of Annovar files from Annovar URL")
 
         avdblist_file = f"{assembly}_avdblist.txt"
-        avdblist_url_file = f"{annovar_url}{avdblist_file}"
+        avdblist_url_file = f"{annovar_url}/{avdblist_file}"
         avdblist_folder_file = f"{folder}/{avdblist_file}"
         log.debug(f"Download list of Annovar files {avdblist_file} from Annovar URL {avdblist_url_file} to Annovar folder {avdblist_folder_file}")
         download_file(avdblist_url_file, avdblist_folder_file)
@@ -372,4 +393,257 @@ def databases_download_genomes(assemblies: list, genome_folder: str = None, prov
             genomepy.install_genome(assembly, annotation=False, provider=provider, genomes_dir=genome_folder, threads=threads, regex=contig_regex)
 
     return None
+
+
+def databases_download_refseq(assemblies:list, refseq_folder:str = None, refseq_url:str = None, refseq_prefix:str = "ncbiRefSeq", refseq_files:List = ["ncbiRefSeq.txt", "ncbiRefSeqLink.txt"], refseq_format_file:str = "ncbiRefSeq.txt", refseq_format_file_output:str = None, include_utr_5:bool = True, include_utr_3:bool = True, include_chrM:bool = True, include_non_canonical_chr:bool = True, include_non_coding_transcripts:bool = True, include_transcript_ver:bool = True) -> dict:
+    """
+    The `databases_download_refseq` function downloads RefSeq files for a list of assemblies and returns
+    a dictionary of installed RefSeq files for each assembly.
+    
+    :param assemblies: A list of assemblies for which the RefSeq files need to be downloaded. Each
+    assembly is represented as a string
+    :type assemblies: list
+    :param refseq_folder: The `refseq_folder` parameter is a string that specifies the folder where the
+    RefSeq files will be downloaded and stored. If this parameter is not provided, a default folder will
+    be used
+    :type refseq_folder: str
+    :param refseq_url: The `refseq_url` parameter is a string that represents the URL where the RefSeq
+    files can be downloaded from
+    :type refseq_url: str
+    :param refseq_prefix: The `refseq_prefix` parameter is a string that specifies the prefix for the
+    downloaded RefSeq files. By default, it is set to "ncbiRefSeq". This prefix is used to identify the
+    RefSeq files for each assembly. For example, if the prefix is set to "ncbi, defaults to ncbiRefSeq
+    :type refseq_prefix: str (optional)
+    :param refseq_files: The `refseq_files` parameter is a list of filenames that need to be downloaded
+    for each assembly. The default value is `["ncbiRefSeq.txt", "ncbiRefSeqLink.txt"]`, but you can
+    provide your own list of filenames if needed
+    :type refseq_files: List
+    :param refseq_format_file: The `refseq_format_file` parameter is a string that specifies the
+    filename of the RefSeq file that needs to be formatted. This file will be used as input for the
+    `databases_format_refseq` function. By default, the value is set to "ncbiRefSeq.txt", defaults to
+    ncbiRefSeq.txt
+    :type refseq_format_file: str (optional)
+    :param refseq_format_file_output: The `refseq_format_file_output` parameter is a string that
+    specifies the output file path for the formatted RefSeq file. This file will be generated by the
+    `databases_format_refseq` function and will contain the formatted RefSeq data. If this parameter is
+    not provided, the formatted RefSeq
+    :type refseq_format_file_output: str
+    :param include_utr_5: A boolean parameter that specifies whether to include the 5' untranslated
+    region (UTR) in the downloaded RefSeq files. If set to True, the 5' UTR will be included. If set to
+    False, the 5' UTR will be excluded, defaults to True
+    :type include_utr_5: bool (optional)
+    :param include_utr_3: The `include_utr_3` parameter is a boolean that specifies whether to include
+    the 3' untranslated region (UTR) in the downloaded RefSeq files. If set to `True`, the 3' UTR will
+    be included. If set to `False`, the 3', defaults to True
+    :type include_utr_3: bool (optional)
+    :param include_chrM: A boolean parameter that determines whether to include the mitochondrial
+    chromosome (chrM) in the downloaded RefSeq files. If set to True, the chrM will be included; if set
+    to False, it will be excluded, defaults to True
+    :type include_chrM: bool (optional)
+    :param include_non_canonical_chr: The `include_non_canonical_chr` parameter is a boolean value that
+    determines whether or not to include non-canonical chromosomes in the downloaded RefSeq files. If
+    set to `True`, non-canonical chromosomes will be included. If set to `False`, non-canonical
+    chromosomes will be excluded, defaults to True
+    :type include_non_canonical_chr: bool (optional)
+    :param include_non_coding_transcripts: The parameter `include_non_coding_transcripts` is a boolean
+    flag that determines whether non-coding transcripts should be included in the downloaded RefSeq
+    files. If set to `True`, non-coding transcripts will be included. If set to `False`, non-coding
+    transcripts will be excluded, defaults to True
+    :type include_non_coding_transcripts: bool (optional)
+    :param include_transcript_ver: The `include_transcript_ver` parameter is a boolean value that
+    determines whether to include the transcript version in the downloaded RefSeq files. If set to
+    `True`, the transcript version will be included. If set to `False`, the transcript version will be
+    excluded, defaults to True
+    :type include_transcript_ver: bool (optional)
+    :return: The function `databases_download_refseq` returns a dictionary `installed_refseq` which
+    contains information about the downloaded RefSeq files for each assembly. The keys of the dictionary
+    are the assembly names, and the values are lists of the installed RefSeq files for each assembly.
+    """
+
+    # Log
+    log.info(f"Download refSeq databases {assemblies}")
+
+    # Default refSeq Folder
+    if not refseq_folder:
+        refseq_folder = DEFAULT_REFSEQ_FOLDER
+
+    # Default refSeq URL
+    if not refseq_url:
+        refseq_url = DEFAULT_REFSEQ_URL
+
+    # Create folder if not exists
+    if not os.path.exists(refseq_folder):
+        os.makedirs(refseq_folder)
+
+    # Installed refSeq files
+    installed_refseq = {}
+
+    for assembly in assemblies:
+
+        # Create folder if not exists
+        if not os.path.exists(f"{refseq_folder}/{assembly}"):
+            os.makedirs(f"{refseq_folder}/{assembly}")
+
+        # Strat download needed files
+        installed_refseq[assembly] = []
+        if os.path.exists(refseq_folder):
+            log.debug(f"Download refSeq databases {assemblies} - '{assembly}'")
+            existing_files_path = f"{refseq_folder}/{assembly}"
+            existing_files = glob.glob(rf'{existing_files_path}/{refseq_prefix}*', recursive=True)
+            # For refSeq files to download
+            for refseq_file in refseq_files:
+                new_refseq_file = False
+                # If refSeq file exists
+                if f"{existing_files_path}/{refseq_file}" in existing_files:
+                    log.info(f"Download refSeq databases ['{assembly}'] - '{refseq_file}' already exists")
+                    installed_refseq[assembly].append(refseq_file)
+                # If refSeq file need to be downloaded
+                else:
+                    # files to download
+                    file_url = f"{refseq_url}/{assembly}/database/{refseq_file}.gz"
+                    file_path = f"{refseq_folder}/{assembly}/{refseq_file}.gz"
+                    # try to download
+                    try:
+                        log.info(f"Download refSeq databases ['{assembly}'] - '{refseq_file}' downloading...")
+                        # Download file
+                        download_file(file_url, file_path)
+                        # Extract file
+                        extract_file(file_path)
+                        # add to installed files
+                        installed_refseq[assembly].append(refseq_file)
+                        new_refseq_file = True
+                    # If fail, just pass to next url
+                    except:
+                        log.debug(f"Download refSeq databases {assemblies} - '{assembly}' - '{refseq_file}' downloading failed")
+                        raise ValueError(f"Download refSeq databases {assemblies} - '{assembly}' - '{refseq_file}' downloading failed")
+                # format refSeq
+                file_path = f"{refseq_folder}/{assembly}/{refseq_file}"
+                if refseq_format_file_output:
+                    file_path_bed = refseq_format_file_output
+                else:
+                    file_path_bed = re.sub(r'txt$', 'bed', file_path)
+                if refseq_file == refseq_format_file and (new_refseq_file or not os.path.exists(file_path_bed)):
+                    log.info(f"Download refSeq databases ['{assembly}'] - '{refseq_file}' formatting...")
+                    databases_format_refseq(refseq_file=file_path, output_file=file_path_bed, include_utr_5=include_utr_5, include_utr_3=include_utr_3, include_chrM=include_chrM, include_non_canonical_chr=include_non_canonical_chr, include_non_coding_transcripts=include_non_coding_transcripts, include_transcript_ver=include_transcript_ver)
+
+    # Log
+    log.debug(f"installed_refseq: {installed_refseq}")
+
+    return installed_refseq
+
+
+def databases_format_refseq(refseq_file:str, output_file:str, include_utr_5:bool = True, include_utr_3:bool = True, include_chrM:bool = True, include_non_canonical_chr:bool = True, include_non_coding_transcripts:bool = True, include_transcript_ver:bool = True) -> str:
+    """
+    The function `databases_format_refseq` takes a RefSeq file as input and formats it according to
+    specified criteria, such as including or excluding certain features, and outputs the formatted file.
+    
+    :param refseq_file: The `refseq_file` parameter is a string that represents the path to the input
+    RefSeq file. This file contains information about gene annotations, including chromosome, start and
+    end positions, strand, and other details
+    :type refseq_file: str
+    :param output_file: The output file is the name of the file where the formatted data will be written
+    :type output_file: str
+    :param include_utr_5: The parameter `include_utr_5` determines whether to include the 5' UTR
+    (untranslated region) in the output. If set to `True`, the 5' UTR will be included. If set to
+    `False`, the 5' UTR will be excluded, defaults to True
+    :type include_utr_5: bool (optional)
+    :param include_utr_3: The parameter `include_utr_3` determines whether to include the 3' UTR
+    (untranslated region) in the output. If set to `True`, the 3' UTR will be included. If set to
+    `False`, the 3' UTR will be excluded, defaults to True
+    :type include_utr_3: bool (optional)
+    :param include_chrM: A boolean parameter that determines whether to include transcripts from the
+    mitochondrial chromosome (chrM or chrMT) in the output file. If set to True, transcripts from the
+    mitochondrial chromosome will be included. If set to False, transcripts from the mitochondrial
+    chromosome will be excluded, defaults to True
+    :type include_chrM: bool (optional)
+    :param include_non_canonical_chr: The parameter `include_non_canonical_chr` determines whether or
+    not to include non-canonical chromosomes in the output. If set to `True`, non-canonical chromosomes
+    will be included. If set to `False`, non-canonical chromosomes will be excluded, defaults to True
+    :type include_non_canonical_chr: bool (optional)
+    :param include_non_coding_transcripts: The parameter `include_non_coding_transcripts` determines
+    whether non-coding transcripts should be included in the output file. If set to `True`, non-coding
+    transcripts will be included. If set to `False`, non-coding transcripts will be excluded, defaults
+    to True
+    :type include_non_coding_transcripts: bool (optional)
+    :param include_transcript_ver: The parameter `include_transcript_ver` determines whether to include
+    the transcript version in the output file. If set to `True`, the transcript version will be included
+    in the output file. If set to `False`, the transcript version will be removed from the output file,
+    defaults to True
+    :type include_transcript_ver: bool (optional)
+    :return: the path of the output file.
+    """
+
+    # Open refSeq file
+    with open(refseq_file, "r") as fi:
+
+        # Open refSeq output file
+        with open(output_file, "w") as fo:
+
+            # For each line
+            for l in fi:
+
+                # Header
+                if l.startswith("#"):
+                    continue
+
+                # line
+                l = l.strip().split()
+				
+				# exclude non-coding transcripts
+                if not include_non_coding_transcripts:
+                    if not l[1].startswith("NM_"):
+                        continue
+
+                if not include_transcript_ver:
+                    l[1] = l[1].split('.')[0]
+                
+				# exclude unwanted chr
+                if not include_non_canonical_chr and not re.match(r'^chr([0-9]*|X|Y)$', l[2]):
+                    continue
+                if not include_chrM and l[2] in {"chrM", "chrMT"}:
+                    continue
+
+                # packing exons together to be able to number them (need to start from the end if negative strand, if using IGV as standard)
+                exon_start = l[9][:-1].split(",")
+                exon_ends = l[10][:-1].split(",")
+                exons_to_write = []
+
+                # deal with utr
+                for i in range(len(exon_start)):
+                    start = exon_start[i]
+                    end = exon_ends[i]
+                    if not include_utr_5 and int(start) < int(l[6]):
+                        start = l[6]
+                    if not include_utr_3 and int(end) > int(l[7]):
+                        end = l[7]
+                    if include_utr_5 and not include_utr_3:
+                        end = min(end, l[7])
+                    if include_utr_3 and not include_utr_5:
+                        start = max(start, l[6])
+                    if not include_utr_5 and not include_utr_3:
+                        if int(end) <= int(l[7]) and int(start) >= int(l[6]):
+                            pass
+                        elif int(start) < int(l[6]) and int(end) <= int(l[7]) and int(end) >= int(l[6]):
+                            start = l[6]
+                        elif int(start) >= int(l[6]) and int(end) > int(l[7]) and int(start) <= int(l[7]):
+                            end = l[7]
+                        elif int(start) <= int(l[6]) and int(end) >= int(l[7]):
+                            start = l[6]
+                            end = l[7]
+                    exons_to_write.append([l[2], start, end, l[12], l[1], l[3]])
+
+                if l[3] == "-":
+                    exon_num = len(exons_to_write)
+                    exon_num_incrementation = -1
+                else:
+                    exon_num = 1
+                    exon_num_incrementation = 1
+
+                for i in range(len(exons_to_write)):
+                    exons_to_write[i].append("exon"+str(exon_num))
+                    exon_num += exon_num_incrementation
+                    fo.write("\t".join(exons_to_write[i])+"\n")
+                
+
+    return output_file
 
