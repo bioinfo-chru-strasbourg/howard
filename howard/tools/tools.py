@@ -280,6 +280,8 @@ arguments = {
         },
 
         # Databases
+
+        # Genome
         "download-genomes": {
             "metavar": "FOLDER",
             "help": "Download Genomes within folder",
@@ -301,6 +303,8 @@ arguments = {
             "required": False,
             "default": None
         },
+
+        # Annovar
         "download-annovar": {
             "metavar": "FOLDER",
             "help": "Download Annovar databases within Annovar folder",
@@ -319,16 +323,78 @@ arguments = {
         "download-annovar-url": {
             "metavar": "URL",
             "help": """Download Annovar databases URL (see Annovar Doc)\n"""
-                    """Default: 'http://www.openbioinformatics.org/annovar/download/'""",
+                    """Default: 'http://www.openbioinformatics.org/annovar/download'""",
             "required": False,
-            "default": "http://www.openbioinformatics.org/annovar/download/"
+            "default": "http://www.openbioinformatics.org/annovar/download"
         },
+
+        # snpEff
         "download-snpeff": {
             "metavar": "FOLDER",
             "help": """Download snpEff databases within snpEff folder""",
             "required": False
         },
 
+        # refSeq
+        "download-refseq": {
+            "metavar": "FOLDER",
+            "help": """Download refSeq databases within refSeq folder""",
+            "required": False
+        },
+        "download-refseq-url": {
+            "metavar": "URL",
+            "help": """Download refSeq databases URL (see refSeq WebSite)\n"""
+                    """Default: 'http://hgdownload.soe.ucsc.edu/goldenPath'""",
+            "required": False,
+            "default": "http://hgdownload.soe.ucsc.edu/goldenPath"
+        },
+        "download-refseq-prefix": {
+            "metavar": "STRING",
+            "help": """Check existing refSeq files in refSeq folder\n"""
+                    """Default: 'ncbiRefSeq'""",
+            "required": False,
+            "default": "ncbiRefSeq"
+        },
+        "download-refseq-files": {
+            "metavar": "LIST",
+            "help": """List of refSeq files to download\n"""
+                    """Default: 'ncbiRefSeq.txt,ncbiRefSeqLink.txt'""",
+            "required": False,
+            "default": "ncbiRefSeq.txt,ncbiRefSeqLink.txt"
+        },
+        "download-refseq-format-file": {
+            "metavar": "STRING",
+            "help": """Name of refSeq file to format in BED format\n"""
+                    """Exemple: 'ncbiRefSeq.txt'\n"""
+                    """Default: None""",
+            "required": False,
+            "default": None
+        },
+        "download-refseq-include-utr5": {
+            "help": """Formating BED refSeq file including 5'UTR""",
+            "action": "store_true"
+        },
+        "download-refseq-include-utr3": {
+            "help": """Formating BED refSeq file including 3'UTR""",
+            "action": "store_true"
+        },
+        "download-refseq-include-chrM": {
+            "help": """Formating BED refSeq file including Mitochondiral chromosome 'chrM' or 'chrMT'""",
+            "action": "store_true"
+        },
+        "download-refseq-include-non-canonical-chr": {
+            "help": """Formating BED refSeq file including non canonical chromosomes""",
+            "action": "store_true"
+        },
+        "download-refseq-include-non-coding-transcripts": {
+            "help": """Formating BED refSeq file including non coding transcripts""",
+            "action": "store_true"
+        },
+        "download-refseq-include-transcript-version": {
+            "help": """Formating BED refSeq file including transcript version""",
+            "action": "store_true"
+        },
+        
         # From Annovar
         "annovar-code": {
             "metavar": "CODE",
@@ -567,6 +633,19 @@ commands_arguments = {
                 "download-annovar": False,
                 "download-annovar-files": False,
                 "download-annovar-url": False
+            },
+            "refSeq": {
+                "download-refseq": False,
+                "download-refseq-url": False,
+                "download-refseq-prefix": False,
+                "download-refseq-files": False,
+                "download-refseq-format-file": False,
+                "download-refseq-include-utr5": False,
+                "download-refseq-include-utr3": False,
+                "download-refseq-include-chrM": False,
+                "download-refseq-include-non-canonical-chr": False,
+                "download-refseq-include-non-coding-transcripts": False,
+                "download-refseq-include-transcript-version": False,
             }
         }
     },

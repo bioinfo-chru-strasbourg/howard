@@ -73,11 +73,13 @@ vcf_required = [
 DEFAULT_SNPEFF_BIN = "/tools/snpeff/5.1d/bin/snpEff.jar"
 
 # URL
-DEFAULT_ANNOVAR_URL = "http://www.openbioinformatics.org/annovar/download/"
+DEFAULT_ANNOVAR_URL = "http://www.openbioinformatics.org/annovar/download"
+DEFAULT_REFSEQ_URL = "http://hgdownload.soe.ucsc.edu/goldenPath"
 
 # Databases default folder
 DEFAULT_DATABASE_FOLDER = "/databases"
 DEFAULT_GENOME_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/genomes/current"
+DEFAULT_REFSEQ_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/refseq/current"
 
 # DuckDB extension
 DUCKDB_EXTENSION = f"{file_folder}/duckdb_extension"
