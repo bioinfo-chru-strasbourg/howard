@@ -25,21 +25,20 @@ from unittest.mock import patch
 from howard.objects.variants import Variants
 from howard.commons import *
 from howard.tools.tools import *
+from test_needed import *
 
-
-tests_folder = os.path.dirname(__file__)
 
 
 def test_process():
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/output_file.tsv"
     config = {}
     param = "{}"
-    annotations = tests_folder + "/data/annotations/nci60.parquet"
+    annotations = database_files.get("parquet")
     calculations = "VARTYPE"
-    prioritizations = tests_folder + "/data/prioritization_profiles.json"
+    prioritizations = tests_data_folder + "/prioritization_profiles.json"
     input_query = None
 
     # prepare arguments for the query function
@@ -81,13 +80,13 @@ def test_process():
 def test_process_with_param_file():
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/output_file.tsv"
     config = {}
     param = tests_folder +  "/data/param.snpeff_hgvs.json"
-    annotations = tests_folder + "/data/annotations/nci60.parquet"
+    annotations = database_files.get("parquet")
     calculations = "VARTYPE"
-    prioritizations = tests_folder + "/data/prioritization_profiles.json"
+    prioritizations = tests_data_folder + "/prioritization_profiles.json"
     input_query = None
 
     # prepare arguments for the query function
@@ -129,13 +128,13 @@ def test_process_with_param_file():
 def test_process_with_query():
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/output_file.tsv"
     config = {}
     param = "{}"
-    annotations = tests_folder + "/data/annotations/nci60.parquet"
+    annotations = database_files.get("parquet")
     calculations = "VARTYPE"
-    prioritizations = tests_folder + "/data/prioritization_profiles.json"
+    prioritizations = tests_data_folder + "/prioritization_profiles.json"
     input_query = "SELECT count(*) AS '#count' FROM variants WHERE INFO LIKE '%VARTYPE%' AND INFO LIKE '%PZScore%'"
 
     # prepare arguments for the query function

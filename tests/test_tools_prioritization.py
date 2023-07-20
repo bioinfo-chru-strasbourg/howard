@@ -25,18 +25,17 @@ from unittest.mock import patch
 from howard.objects.variants import Variants
 from howard.commons import *
 from howard.tools.tools import *
+from test_needed import *
 
-
-tests_folder = os.path.dirname(__file__)
 
 
 def test_prioritization():
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/output_file.tsv"
     config = {}
-    prioritizations = tests_folder + "/data/prioritization_profiles.json"
+    prioritizations = tests_data_folder + "/prioritization_profiles.json"
 
     # prepare arguments for the query function
     args = argparse.Namespace(

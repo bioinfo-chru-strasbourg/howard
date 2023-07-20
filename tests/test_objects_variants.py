@@ -26,73 +26,6 @@ from howard.tools.databases import *
 from test_needed import *
 
 
-# # Main tests folder
-# tests_folder = os.path.dirname(__file__)
-# tests_data_folder = tests_folder + "/data"
-# tests_annotations_folder = tests_folder + "/data/annotations"
-
-# # Tools folder
-# tests_tools = "/tools"
-
-# # Test config
-# tests_config = {
-#   "threads": 1,
-#   "memory": None,
-#   "verbosity": "warning",
-#   "folders": {
-#     "databases": {
-#       "root": "",
-#       "parquet": [f"{tests_folder}/data/annotations"],
-#       "bcftools": [f"{tests_folder}/data/annotations"],
-#       "annovar": f"{tests_folder}/data/annotations/annovar",
-#       "snpeff": f"{tests_folder}/data/annotations/snpeff",
-#       "varank": f"{tests_folder}/data/annotations/varank",
-#       "genomes": f"{tests_folder}/data/annotations/genomes",
-#       "refGene": f"{tests_folder}/data/annotations/refseq",
-#       "refSeqLink": f"{tests_folder}/data/annotations/refseq",
-#     }
-#   },
-#   "tools": {
-#     "bcftools": {"bin": "bcftools"},
-#     "bgzip": {"bin": "bgzip"},
-#     "snpeff": {"jar": f"{tests_tools}/snpeff/current/bin/snpEff.jar"},
-#     "java": {"bin": "/usr/bin/java"},
-#     "annovar": {"bin": f"{tests_tools}/annovar/current/bin/table_annovar.pl"}
-#   }
-# }
-
-# Annotation databases
-database_files = {
-    "parquet" : tests_annotations_folder + "/nci60.parquet",
-    "parquet_without_header" : tests_annotations_folder + "/nci60.without_header.parquet",
-    "duckdb" : tests_annotations_folder + "/nci60.duckdb",
-    "duckdb_no_annotation_table" : tests_annotations_folder + "/nci60.no_annotation_table.duckdb",
-    "sqlite" : tests_annotations_folder + "/nci60.sqlite",
-    "vcf" : tests_annotations_folder + "/nci60.vcf",
-    "vcf_gz" : tests_annotations_folder + "/nci60.vcf.gz",
-    "vcf_without_header" : tests_annotations_folder + "/nci60.without_header.vcf",
-    "vcf_gz_without_header" : tests_annotations_folder + "/nci60.without_header.vcf.gz",
-    "tsv" : tests_annotations_folder + "/nci60.tsv",
-    "tsv_alternative_columns" : tests_annotations_folder + "/nci60.alternative_columns.tsv",
-    "tsv_failed_columns" : tests_annotations_folder + "/nci60.failed_columns.tsv",
-    "tsv_lower_columns" : tests_annotations_folder + "/nci60.lower_columns.tsv",
-    "tsv_without_header" : tests_annotations_folder + "/nci60.without_header.tsv",
-    "tsv_variants" : tests_annotations_folder + "/nci60.variants.tsv",
-    "tsv_gz" : tests_annotations_folder + "/nci60.tsv.gz",
-    "csv" : tests_annotations_folder + "/nci60.csv",
-    "csv_gz" : tests_annotations_folder + "/nci60.csv.gz",
-    "tbl" : tests_annotations_folder + "/nci60.tbl",
-    "tbl_gz" : tests_annotations_folder + "/nci60.tbl.gz",
-    "json" : tests_annotations_folder + "/nci60.json",
-    "json_gz" : tests_annotations_folder + "/nci60.json.gz",
-    "bed" : tests_annotations_folder + "/annotation_regions.bed",
-    "bed_gz" : tests_annotations_folder + "/annotation_regions.bed.gz",
-    "example_vcf" : tests_data_folder + "/example.vcf",
-
-}
-
-
-
 
 def test_export_query():
     """
@@ -100,7 +33,7 @@ def test_export_query():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_tsv = "/tmp/example.tsv"
 
     # remove if exists
@@ -151,8 +84,8 @@ def test_set_get_input():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
-    new_input_vcf = tests_folder + "/data/example.parquet"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
+    new_input_vcf = tests_data_folder + "/example.parquet"
 
     # Create connection
     conn = duckdb.connect(":memory:")
@@ -174,9 +107,9 @@ def test_set_get_output():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
-    output_vcf = tests_folder + "/data//tmp/example.parquet"
-    new_output_vcf = tests_folder + "/data/tmp/example.parquet"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
+    output_vcf = tests_data_folder + "//tmp/example.parquet"
+    new_output_vcf = tests_data_folder + "/tmp/example.parquet"
 
     # Create connection
     conn = duckdb.connect(":memory:")
@@ -198,7 +131,7 @@ def test_set_get_config():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     input_config = { "option": "option_value" }
     new_input_config = { "option": "option_value", "new_option": "new_option_value" }
 
@@ -222,7 +155,7 @@ def test_set_get_param():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     input_param = { "option": "option_value" }
     new_input_param = { "option": "option_value", "new_option": "new_option_value" }
 
@@ -247,7 +180,7 @@ def test_set_get_header():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
 
     # Create connection
     conn = duckdb.connect(":memory:")
@@ -293,7 +226,7 @@ def test_set_get_header_no_samples():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.no_samples.vcf.gz"
+    input_vcf = tests_data_folder + "/example.no_samples.vcf.gz"
 
     # Create connection
     conn = duckdb.connect(":memory:")
@@ -338,8 +271,8 @@ def test_set_get_header_in_config():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.parquet"
-    input_config = { "header_file":  tests_folder + "/data/example.parquet.hdr" }
+    input_vcf = tests_data_folder + "/example.parquet"
+    input_config = { "header_file":  tests_data_folder + "/example.parquet.hdr" }
 
     # Create object
     variants = Variants(input=input_vcf, config=input_config)
@@ -380,7 +313,7 @@ def test_load_without_header():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.without_header.parquet"
+    input_vcf = tests_data_folder + "/example.without_header.parquet"
 
     # Create object
     with pytest.raises(ValueError) as e:
@@ -395,8 +328,8 @@ def test_read_vcf_header():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.parquet"
-    vcf_header = tests_folder + "/data/example.parquet.hdr"
+    input_vcf = tests_data_folder + "/example.parquet"
+    vcf_header = tests_data_folder + "/example.parquet.hdr"
 
     # Create connection
     conn = duckdb.connect(":memory:")
@@ -418,7 +351,7 @@ def test_load_when_init():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
 
     # Create object
     variants = Variants(input=input_vcf, load=True)
@@ -440,7 +373,7 @@ def test_load_format_not_available():
     # Init files
     input_format = "unknwon"
     input_vcf = tests_folder + f"/data/example.{input_format}"
-    input_config = { "header_file":  tests_folder + "/data/example.parquet.hdr" }
+    input_config = { "header_file":  tests_data_folder + "/example.parquet.hdr" }
 
     # Create object
     with pytest.raises(ValueError) as e:
@@ -455,7 +388,7 @@ def test_load_vcf_gz():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
 
     # Create object
     variants = Variants(input=input_vcf, load=True)
@@ -477,7 +410,7 @@ def test_load_full_unsorted_vcf_gz():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.full.unsorted.vcf.gz"
+    input_vcf = tests_data_folder + "/example.full.unsorted.vcf.gz"
 
     # Create object
     variants = Variants(input=input_vcf, load=True)
@@ -498,7 +431,7 @@ def test_load_vcf_gz_no_samples():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.no_samples.vcf.gz"
+    input_vcf = tests_data_folder + "/example.no_samples.vcf.gz"
 
     # Create object
     variants = Variants(input=input_vcf, load=True)
@@ -519,7 +452,7 @@ def test_load_parquet():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.parquet"
+    input_vcf = tests_data_folder + "/example.parquet"
 
     # Create object
     variants = Variants(input=input_vcf, load=True)
@@ -540,7 +473,7 @@ def test_load_vcf():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf"
+    input_vcf = tests_data_folder + "/example.vcf"
 
     # Create object
     variants = Variants(input=input_vcf, load=True)
@@ -561,7 +494,7 @@ def test_load_csv():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.csv"
+    input_vcf = tests_data_folder + "/example.csv"
 
     # Create object
     variants = Variants(input=input_vcf, load=True)
@@ -582,7 +515,7 @@ def test_load_tsv():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.tsv"
+    input_vcf = tests_data_folder + "/example.tsv"
 
     # Create object
     variants = Variants(input=input_vcf, load=True)
@@ -603,7 +536,7 @@ def test_load_tsv():
 #     """
 
 #     # Init files
-#     input_vcf = tests_folder + "/data/example.psv"
+#     input_vcf = tests_data_folder + "/example.psv"
 
 #     # Create object
 #     variants = Variants(input=input_vcf, load=True)
@@ -626,7 +559,7 @@ def test_load_duckdb():
     # Create duckdb database
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_duckdb = "/tmp/example.duckdb"
 
     remove_if_exists([output_duckdb])
@@ -658,7 +591,7 @@ def test_get_connexion_db_memory():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     input_config = { "connexion_type": "memory" }
 
     # Create object
@@ -676,7 +609,7 @@ def test_get_connexion_db_tmpfile():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     input_config = { "connexion_type": "tmpfile" }
 
     # Create object
@@ -694,7 +627,7 @@ def test_get_connexion_db_file():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     input_config = { "connexion_type": "/tmp/connexion.duckdb" }
 
     # Remove if exists
@@ -715,7 +648,7 @@ def test_get_table_variants():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
 
     # Create object
     variants = Variants(input=input_vcf)
@@ -736,7 +669,7 @@ def test_get_connexion():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
 
     # Create object
     variants = Variants(input=input_vcf)
@@ -756,7 +689,7 @@ def test_get_connexion_sqlite():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     input_config = { "connexion_format": "sqlite" }
 
     # Create object
@@ -774,7 +707,7 @@ def test_get_verbose():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
 
     # Create object
     variants = Variants(input=input_vcf)
@@ -801,7 +734,7 @@ def test_load_connexion_type_memory():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     input_config = { "connexion_type": "memory" }
 
     # Create object
@@ -823,7 +756,7 @@ def test_load_connexion_type_tmpfile():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     input_config = { "connexion_type": "tmpfile" }
 
     # Create object
@@ -845,7 +778,7 @@ def test_load_connexion_type_file():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     input_config = { "connexion_type": "/tmp/output.duckdb" }
 
     remove_if_exists(["/tmp/output.duckdb"])
@@ -868,7 +801,7 @@ def test_load_connexion_format_sqlite():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     input_config = { "connexion_format": "sqlite" }
 
     # Create object
@@ -894,7 +827,7 @@ def test_export_output_vcf_gz():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/example.vcf.gz"
 
     # remove if exists
@@ -933,7 +866,7 @@ def test_export_output_vcf_gz_from_full_unsorted():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.full.unsorted.vcf.gz"
+    input_vcf = tests_data_folder + "/example.full.unsorted.vcf.gz"
     output_vcf = "/tmp/example.vcf.gz"
 
     # remove if exists
@@ -965,7 +898,7 @@ def test_export_output_vcf():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/example.vcf"
 
     # remove if exists
@@ -997,7 +930,7 @@ def test_export_output_parquet():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/example.parquet"
 
     # remove if exists
@@ -1022,7 +955,7 @@ def test_export_output_duckdb():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_duckdb = "/tmp/example.duckdb"
 
     # remove if exists
@@ -1050,7 +983,7 @@ def test_export_output_tsv():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/example.tsv"
 
     # remove if exists
@@ -1076,7 +1009,7 @@ def test_export_output_tsv_gz():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/example.tsv.gz"
 
     # remove if exists
@@ -1102,7 +1035,7 @@ def test_export_output_csv():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/example.csv"
 
     # remove if exists
@@ -1127,7 +1060,7 @@ def test_export_output_tbl():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/example.tbl"
 
     # remove if exists
@@ -1152,7 +1085,7 @@ def test_export_output_tsv_explode_infos():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/example.tsv"
     param = {
                 "export_extra_infos": True
@@ -1183,7 +1116,7 @@ def test_export_from_sqlite_output_vcf_gz():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/example.vcf.gz"
     input_config = { "connexion_format": "sqlite" }
 
@@ -1215,7 +1148,7 @@ def test_export_from_sqlite_output_vcf():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/example.vcf"
     input_config = { "connexion_format": "sqlite" }
 
@@ -1247,7 +1180,7 @@ def test_export_from_sqlite_output_parquet():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/example.parquet"
     input_config = { "connexion_format": "sqlite" }
 
@@ -1273,7 +1206,7 @@ def test_export_from_sqlite_output_tsv():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/example.tsv"
     input_config = { "connexion_format": "sqlite" }
 
@@ -1305,7 +1238,7 @@ def test_export_from_sqlite_output_tsv_gz():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/example.tsv.gz"
     input_config = { "connexion_format": "sqlite" }
 
@@ -1342,7 +1275,7 @@ def test_explode_infos():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     param= {"explode_infos": True}
 
     # Create object
@@ -1371,7 +1304,7 @@ def test_explode_infos_custom():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     param= {"explode_infos": "CUSTOM_"}
 
     # Create object
@@ -1400,7 +1333,7 @@ def test_explode_infos_method():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
 
     # Create object
     variants = Variants(input=input_vcf, load=True)
@@ -1432,7 +1365,7 @@ def test_explode_infos_no_infos():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.no_samples.vcf.gz"
+    input_vcf = tests_data_folder + "/example.no_samples.vcf.gz"
 
     # Create object
     variants = Variants(input=input_vcf, load=True)
@@ -1458,7 +1391,7 @@ def test_explode_infos_sqlite():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     input_config = { "connexion_format": "sqlite" }
 
     # Create object
@@ -1493,7 +1426,7 @@ def test_explode_infos_param_prefix():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     infos_prefix = "INFO_"
     input_param = {"explode_infos": infos_prefix}
 
@@ -1528,7 +1461,7 @@ def test_overview():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
 
     # Create object
     variants = Variants(input=input_vcf, load=True)
@@ -1546,7 +1479,7 @@ def test_overview_no_samples():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.no_samples.vcf.gz"
+    input_vcf = tests_data_folder + "/example.no_samples.vcf.gz"
 
     # Create object
     variants = Variants(input=input_vcf, load=True)
@@ -1563,7 +1496,7 @@ def test_stats():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
 
     # Create object
     variants = Variants(input=input_vcf, load=True)
@@ -1581,7 +1514,7 @@ def test_stats_no_samples():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.no_samples.vcf.gz"
+    input_vcf = tests_data_folder + "/example.no_samples.vcf.gz"
 
     # Create object
     variants = Variants(input=input_vcf, load=True)
@@ -1644,7 +1577,7 @@ def test_get_query_to_df():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
 
     # Create object
     vcf = Variants(input=input_vcf, load=True)
@@ -1667,7 +1600,7 @@ def test_get_query_to_df_no_samples():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.no_samples.vcf.gz"
+    input_vcf = tests_data_folder + "/example.no_samples.vcf.gz"
 
     # Create object
     variants = Variants(input=input_vcf, load=True)
@@ -1703,22 +1636,45 @@ def test_annotations():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
-    annotation1 = tests_folder + "/data/annotations/nci60.parquet"
-    annotation2 = tests_folder + "/data/example.vcf.gz"
-    annotation3 = tests_folder + "/data/annotations/refGene.bed.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
+    annotation1 = "nci60.parquet"
+    annotation2 = tests_data_folder + "/example.vcf.gz"
+    annotation3 = "refGene.bed.gz"
     output_vcf = "/tmp/output.vcf.gz"
 
+    # Config
+    config = tests_config.copy()
+
     # Construct param dict
-    param_annotations = {
-            annotation1: {"INFO": None},
-            annotation2: {"CLNSIG": "CLNSIG_new"},
-            annotation3: {"symbol": "gene"},
-            }
-    param = {"annotations": param_annotations }
+    param_annotation = {
+                            'parquet': {
+                                'annotations': {
+                                    annotation1: {
+                                        'INFO': None
+                                    },
+                                    annotation2: {
+                                        'CLNSIG': 'CLNSIG_new'
+                                    }
+                                },
+                            },
+                            'bcftools': {
+                                'annotations': {
+                                    annotation2: {
+                                        'CLNSIG': 'CLNSIG_new_bcftools'
+                                    },
+                                    annotation3: {
+                                        'symbol': 'gene'
+                                    }
+                                },
+                            }
+                        }
+    param = {
+        "annotation": param_annotation,
+        "assembly": "hg19"
+        }
 
     # Create object
-    variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, config=config, param=param, load=True)
 
     # Remove if output file exists
     remove_if_exists([output_vcf])
@@ -1728,11 +1684,7 @@ def test_annotations():
 
     # check param
     param_input = variants.get_param()
-    expected_param = {'annotations': param_annotations,
-                      'annotation': {
-                        'parquet': {'annotations': {annotation1: {'INFO': None}}},
-                        'bcftools': {'annotations': {annotation2: {'CLNSIG': 'CLNSIG_new'}, annotation3: {'symbol': 'gene'}}}}
-                    }
+    expected_param = param
 
     assert param_input == expected_param
 
@@ -1759,10 +1711,10 @@ def test_annotations_no_samples():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.no_samples.vcf.gz"
-    annotation1 = tests_folder + "/data/annotations/nci60.parquet"
-    annotation2 = tests_folder + "/data/example.vcf.gz"
-    annotation3 = tests_folder + "/data/annotations/refGene.bed.gz"
+    input_vcf = tests_data_folder + "/example.no_samples.vcf.gz"
+    annotation1 = os.path.join(tests_annotations_folder, "nci60.parquet")
+    annotation2 = tests_data_folder + "/example.vcf.gz"
+    annotation3 = os.path.join(tests_annotations_folder, "refGene.bed.gz")
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct param dict
@@ -1812,8 +1764,8 @@ def test_annotation_parquet_with_all_formats():
     for annotation_format in ["vcf", "vcf.gz", "tsv", "tsv.gz", "csv", "csv.gz", "json", "json.gz", "tbl", "tbl", "parquet", "duckdb"]:
 
         # Init files
-        input_vcf = tests_folder + "/data/example.vcf.gz"
-        annotation_parquet = tests_folder + f"/data/annotations/nci60.{annotation_format}"
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        annotation_parquet = os.path.join(tests_annotations_folder, f"nci60.{annotation_format}")
         output_vcf = "/tmp/output.vcf.gz"
 
         # Construct param dict
@@ -1849,8 +1801,8 @@ def test_annotation_parquet_field_already_in_vcf():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
-    annotation1 = tests_folder + "/data/annotations/nci60.parquet"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
+    annotation1 = os.path.join(tests_annotations_folder, "nci60.parquet")
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct param dict
@@ -1898,7 +1850,7 @@ def test_annotation_duckdb():
     # Create duckdb database
 
     # Init files
-    annotation_parquet = tests_folder + "/data/annotations/nci60.parquet"
+    annotation_parquet = os.path.join(tests_annotations_folder, "nci60.parquet")
     annotation_duckdb = "/tmp/nci60.duckdb"
 
     remove_if_exists([annotation_duckdb])
@@ -1909,7 +1861,7 @@ def test_annotation_duckdb():
     # Test annotation with duckdb database
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct param dict
@@ -1942,8 +1894,8 @@ def test_annotation_bcftools():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
-    annotation_parquet = tests_folder + "/data/annotations/nci60.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
+    annotation_parquet = os.path.join(tests_annotations_folder, "nci60.vcf.gz")
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct param dict
@@ -1976,8 +1928,8 @@ def test_annotation_bcftools_bed():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
-    annotation_parquet = tests_folder + "/data/annotations/refGene.bed.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
+    annotation_parquet = os.path.join(tests_annotations_folder, "refGene.bed.gz")
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct param dict
@@ -2011,7 +1963,7 @@ def test_annotation_annovar():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     annotation_annovar = "nci60"
     output_vcf = "/tmp/output.vcf.gz"
 
@@ -2048,7 +2000,7 @@ def test_annotation_annovar_full_unsorted():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.full.unsorted.vcf.gz"
+    input_vcf = tests_data_folder + "/example.full.unsorted.vcf.gz"
     annotation_annovar = "nci60"
     output_vcf = "/tmp/output.vcf.gz"
 
@@ -2082,7 +2034,7 @@ def test_annotation_annovar_no_samples():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.no_samples.vcf.gz"
+    input_vcf = tests_data_folder + "/example.no_samples.vcf.gz"
     annotation_annovar = "nci60"
     output_vcf = "/tmp/output.vcf.gz"
 
@@ -2116,7 +2068,7 @@ def test_annotation_annovar_sqlite():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     annotation_annovar = "nci60"
     output_vcf = "/tmp/output.vcf.gz"
 
@@ -2154,7 +2106,7 @@ def test_annotation_quick_annovar():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     annotation_annovar = "nci60"
     output_vcf = "/tmp/output.vcf.gz"
 
@@ -2191,7 +2143,7 @@ def test_annotation_snpeff():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct param dict
@@ -2227,7 +2179,7 @@ def test_annotation_snpeff_full_unsorted():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.full.unsorted.vcf.gz"
+    input_vcf = tests_data_folder + "/example.full.unsorted.vcf.gz"
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct param dict
@@ -2268,7 +2220,7 @@ def test_annotation_snpeff_no_samples():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.no_samples.vcf.gz"
+    input_vcf = tests_data_folder + "/example.no_samples.vcf.gz"
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct param dict
@@ -2305,7 +2257,7 @@ def test_annotation_quick_snpeff():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     annotation_snpeff = "snpeff"
     output_vcf = "/tmp/output.vcf.gz"
 
@@ -2342,7 +2294,7 @@ def test_annotation_snpeff_sqlite():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct config dict
@@ -2379,8 +2331,8 @@ def test_annotation_bcftools_sqlite():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
-    annotation_parquet = tests_folder + "/data/annotations/nci60.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
+    annotation_parquet = os.path.join(tests_annotations_folder, "nci60.vcf.gz")
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct config dict
@@ -2416,7 +2368,7 @@ def test_annotation_hgvs():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct config dict
@@ -2475,13 +2427,13 @@ def test_prioritization():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct config dict
     config = {
         "prioritization": {
-            "config_profiles": tests_folder + "/data/prioritization_profiles.json"
+            "config_profiles": tests_data_folder + "/prioritization_profiles.json"
             }
         }
     
@@ -2579,13 +2531,13 @@ def test_prioritization_full_unsorted():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.full.unsorted.vcf.gz"
+    input_vcf = tests_data_folder + "/example.full.unsorted.vcf.gz"
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct config dict
     config = {
         "prioritization": {
-            "config_profiles": tests_folder + "/data/prioritization_profiles.json"
+            "config_profiles": tests_data_folder + "/prioritization_profiles.json"
             }
         }
     
@@ -2680,7 +2632,7 @@ def test_prioritization_varank():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct config dict
@@ -2729,7 +2681,7 @@ def test_prioritization_no_profiles():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
 
     # Construct config dict
     config = {
@@ -2753,7 +2705,7 @@ def test_prioritization_no_pzfields():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct config dict
@@ -2797,13 +2749,13 @@ def test_prioritization_no_infos():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.no_samples.vcf.gz"
+    input_vcf = tests_data_folder + "/example.no_samples.vcf.gz"
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct config dict
     config = {
         "prioritization": {
-            "config_profiles": tests_folder + "/data/prioritization_profiles.json"
+            "config_profiles": tests_data_folder + "/prioritization_profiles.json"
             }
         }
     
@@ -2846,7 +2798,7 @@ def test_calculation():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/output.vcf.gz"
     input_param = {
             "annotation": {
@@ -2909,7 +2861,7 @@ def test_calculation_vartype():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.snv.indel.mosaic.vcf"
+    input_vcf = tests_data_folder + "/example.snv.indel.mosaic.vcf"
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct param dict
@@ -2949,7 +2901,7 @@ def test_calculation_vartype_full():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.full.unsorted.vcf.gz"
+    input_vcf = tests_data_folder + "/example.full.unsorted.vcf.gz"
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct param dict
@@ -3007,7 +2959,7 @@ def test_calculation_snpeff_hgvs():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.ann.vcf.gz"
+    input_vcf = tests_data_folder + "/example.ann.vcf.gz"
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct param dict
@@ -3046,7 +2998,7 @@ def test_calculation_snpeff_hgvs_no_ann():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct param dict
@@ -3082,8 +3034,8 @@ def test_calculation_snpeff_hgvs_transcripts():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.snpeff.vcf.gz"
-    transcripts_file = tests_folder + "/data/transcripts.tsv"
+    input_vcf = tests_data_folder + "/example.snpeff.vcf.gz"
+    transcripts_file = tests_data_folder + "/transcripts.tsv"
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct param dict
@@ -3127,8 +3079,8 @@ def test_calculation_snpeff_hgvs_notranscripts():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.snpeff.vcf.gz"
-    transcripts_file = tests_folder + "/data/notranscripts.tsv"
+    input_vcf = tests_data_folder + "/example.snpeff.vcf.gz"
+    transcripts_file = tests_data_folder + "/notranscripts.tsv"
 
     # Construct param dict
     param = {
@@ -3158,7 +3110,7 @@ def test_calculation_findbypipeline():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct param dict
@@ -3199,7 +3151,7 @@ def test_calculation_findbysample():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct param dict
@@ -3239,7 +3191,7 @@ def test_calculation_genotype_concordance():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct param dict
@@ -3280,7 +3232,7 @@ def test_calculation_barcode():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct param dict
@@ -3327,7 +3279,7 @@ def test_calculation_trio():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct param dict
@@ -3371,7 +3323,7 @@ def test_calculation_vaf_normalization():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct param dict
@@ -3418,7 +3370,7 @@ def test_calculation_vaf_stats():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct param dict
@@ -3466,7 +3418,7 @@ def test_calculation_dp_stats():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct param dict
@@ -3516,7 +3468,7 @@ def test_calculation_variant_id():
     """
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/output.vcf.gz"
 
     # Construct param dict

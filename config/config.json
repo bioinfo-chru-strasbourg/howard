@@ -5,8 +5,9 @@
   "folders": {
     "databases": {
       "root": "",
-      "parquet": ["/databases/annotations/current/hg19/"],
-      "bcftools": ["/databases/annotations/current/hg19/"],
+      "annotations": ["/databases/annotations/current/"],
+      "parquet": ["/databases/annotations/current/"],
+      "bcftools": ["/databases/annotations/current/"],
       "annovar": "/databases/annovar/current/",
       "snpeff": "/databases/snpeff/current/",
       "varank": "/databases/varank/current/"

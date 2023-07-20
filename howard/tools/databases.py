@@ -148,11 +148,12 @@ def databases_download_annovar(folder:str = None, files:list = None, assemblies:
 
         log.debug(f"Download Annovar for assembly '{assembly}'")
 
-        if folder:
-            if not os.path.exists(folder):
-                os.makedirs(folder)
+        folder_assembly = f"{folder}/{assembly}"
+
+        if not os.path.exists(folder_assembly):
+            os.makedirs(folder_assembly)
         
-        log.debug(f"Download Annovar databases in folder '{folder}'")
+        log.debug(f"Download Annovar databases in folder '{folder_assembly}'")
 
         if not files:
             log.debug("Only mandatory files will be downloaded")
@@ -168,7 +169,7 @@ def databases_download_annovar(folder:str = None, files:list = None, assemblies:
 
         avdblist_file = f"{assembly}_avdblist.txt"
         avdblist_url_file = f"{annovar_url}/{avdblist_file}"
-        avdblist_folder_file = f"{folder}/{avdblist_file}"
+        avdblist_folder_file = f"{folder_assembly}/{avdblist_file}"
         log.debug(f"Download list of Annovar files {avdblist_file} from Annovar URL {avdblist_url_file} to Annovar folder {avdblist_folder_file}")
         download_file(avdblist_url_file, avdblist_folder_file)
 
@@ -211,7 +212,7 @@ def databases_download_annovar(folder:str = None, files:list = None, assemblies:
             # Loop through each file in the list
             for file in files_to_download:
                 # Get a list of files in the folder that match the pattern
-                files_in_folder = glob.glob(os.path.join(folder, file))
+                files_in_folder = glob.glob(os.path.join(folder_assembly, file))
                 if files_in_folder:
                     # If the file exists, add it
                     list_files_in_folder += [os.path.basename(f) for f in files_in_folder]
@@ -248,11 +249,11 @@ def databases_download_annovar(folder:str = None, files:list = None, assemblies:
                 for file in files_to_download:
                     log.info(f"Download Annovar databases {[assembly]} - file '{file}' Downloading...")
                     file_url = os.path.join(annovar_url, file)
-                    file_path = os.path.join(folder, file)
+                    file_path = os.path.join(folder_assembly, file)
 
                     log.debug(f"Download file {file} from {file_url} to {file_path}...")
                     download_file(file_url, file_path)
-                    log.debug(f"Extract file {file} to {folder}...")
+                    log.debug(f"Extract file {file} to {folder_assembly}...")
                     extract_file(file_path)
             else:
                 log.info(f"Download Annovar databases {[assembly]} - already exists")

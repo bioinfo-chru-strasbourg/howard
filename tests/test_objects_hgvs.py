@@ -14,9 +14,10 @@ except ImportError:
 from howard.objects.cdna import CDNACoord, CDNA_STOP_CODON
 from howard.objects.hgvs import HGVSName, InvalidHGVSName
 from howard.objects.genome import MockGenomeTestFile
+from howard.objects.variant import normalize_variant
 from howard.utils import read_transcripts, format_hgvs_name, matches_ref_allele, parse_hgvs_name
+from test_needed import *
 
-tests_folder = os.path.dirname(__file__)
 
 
 def get_transcript(name):
@@ -184,7 +185,7 @@ def test_name_to_variant_refseqs():
     if not SequenceFileDB:
         print('skip test_name_to_variant_refseqs')
         return
-    genome = SequenceFileDB(tests_folder+'/data/test_refseqs.fa')
+    genome = SequenceFileDB(tests_data_folder + '/test_refseqs.fa')
 
     for hgvs_name, variant, name_canonical, var_canonical in _name_variants:
         if not var_canonical or 'NM_' not in hgvs_name:
@@ -203,13 +204,16 @@ def test_name_to_variant_long():
 
     Test a large number of HGVS names from the wild.
     """
+
+    download_needed_databases()
+
     genome = MockGenomeTestFile(
         db_filename='hg19.fa',
-        filename=tests_folder+'/data/test_hgvs.genome',
+        filename=tests_data_folder + '/test_hgvs.genome',
         create_data=False)
 
     # Read transcripts.
-    with open(tests_folder+'/data/annotations/refGene.hg19.txt', 'r') as infile:
+    with open(tests_databases_folder+'/refseq/hg19/ncbiRefSeq.txt', 'r') as infile:
         transcripts = read_transcripts(infile)
 
     class NoTranscriptError(Exception):
@@ -233,7 +237,7 @@ def test_name_to_variant_long():
         return transcript
 
     errors = []
-    with open(tests_folder+'/data/test_hgvs.txt', 'r') as infile:
+    with open(tests_data_folder + '/test_hgvs.txt', 'r') as infile:
         for i, line in enumerate(infile):
             row = line.rstrip().split('\t')
             chrom, offset, ref, alt, hgvs_name = row[:5]
@@ -265,7 +269,7 @@ def test_invalid_coordinates():
     if not SequenceFileDB:
         raise nose.SkipTest
 
-    genome = SequenceFileDB(tests_folder+'/data/test_refseqs.fa')
+    genome = SequenceFileDB(tests_data_folder + '/test_refseqs.fa')
     hgvs_name = 'NC_000005.10:g.177421339_177421327delACTCGAGTGCTCC'
     parse_hgvs_name(hgvs_name, genome, get_transcript=get_transcript)
 
@@ -273,7 +277,7 @@ def test_invalid_coordinates():
 def test_matches_ref():
     genome = MockGenomeTestFile(
         db_filename='hg19.fa',
-        filename=tests_folder+'/data/test_hgvs.genome',
+        filename=tests_data_folder +'/test_hgvs.genome',
         create_data=False)
     # genome = SequenceFileDB('pyhgvs/tests/data/test_hgvs.genome')
     transcript = get_transcript("NM_000016.4")

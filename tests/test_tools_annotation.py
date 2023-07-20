@@ -25,18 +25,17 @@ from unittest.mock import patch
 from howard.objects.variants import Variants
 from howard.commons import *
 from howard.tools.tools import *
+from test_needed import *
 
-
-tests_folder = os.path.dirname(__file__)
 
 
 def test_annotation():
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/output_file.tsv"
     config = {}
-    annotations = tests_folder + "/data/annotations/nci60.parquet"
+    annotations = database_files.get("parquet")
 
     # prepare arguments for the query function
     args = argparse.Namespace(

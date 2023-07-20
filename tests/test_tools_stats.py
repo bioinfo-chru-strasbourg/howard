@@ -33,7 +33,7 @@ tests_folder = os.path.dirname(__file__)
 def test_stats():
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     config = {}
 
     # prepare arguments for the query function

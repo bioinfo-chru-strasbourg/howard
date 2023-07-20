@@ -16,43 +16,8 @@ import pytest
 from howard.commons import *
 from howard.objects.variants import Variants
 from howard.objects.database import Database
+from test_needed import *
 
-# Main tests folder
-tests_folder = os.path.dirname(__file__)
-
-# Annotation subfolder
-tests_data_folder = tests_folder + "/data"
-tests_annotations_folder = tests_folder + "/data/annotations"
-
-# Annotation databases
-database_files = {
-    "parquet" : tests_annotations_folder + "/nci60.parquet",
-    "parquet_without_header" : tests_annotations_folder + "/nci60.without_header.parquet",
-    "duckdb" : tests_annotations_folder + "/nci60.duckdb",
-    "duckdb_no_annotation_table" : tests_annotations_folder + "/nci60.no_annotation_table.duckdb",
-    "sqlite" : tests_annotations_folder + "/nci60.sqlite",
-    "vcf" : tests_annotations_folder + "/nci60.vcf",
-    "vcf_gz" : tests_annotations_folder + "/nci60.vcf.gz",
-    "vcf_without_header" : tests_annotations_folder + "/nci60.without_header.vcf",
-    "vcf_gz_without_header" : tests_annotations_folder + "/nci60.without_header.vcf.gz",
-    "tsv" : tests_annotations_folder + "/nci60.tsv",
-    "tsv_alternative_columns" : tests_annotations_folder + "/nci60.alternative_columns.tsv",
-    "tsv_failed_columns" : tests_annotations_folder + "/nci60.failed_columns.tsv",
-    "tsv_lower_columns" : tests_annotations_folder + "/nci60.lower_columns.tsv",
-    "tsv_without_header" : tests_annotations_folder + "/nci60.without_header.tsv",
-    "tsv_variants" : tests_annotations_folder + "/nci60.variants.tsv",
-    "tsv_gz" : tests_annotations_folder + "/nci60.tsv.gz",
-    "csv" : tests_annotations_folder + "/nci60.csv",
-    "csv_gz" : tests_annotations_folder + "/nci60.csv.gz",
-    "tbl" : tests_annotations_folder + "/nci60.tbl",
-    "tbl_gz" : tests_annotations_folder + "/nci60.tbl.gz",
-    "json" : tests_annotations_folder + "/nci60.json",
-    "json_gz" : tests_annotations_folder + "/nci60.json.gz",
-    "bed" : tests_annotations_folder + "/annotation_regions.bed",
-    "bed_gz" : tests_annotations_folder + "/annotation_regions.bed.gz",
-    "example_vcf" : tests_data_folder + "/example.vcf",
-
-}
 
 
 def test_database_as_conn():
