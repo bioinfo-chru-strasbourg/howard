@@ -1704,6 +1704,75 @@ def test_annotations():
         assert False
 
 
+
+def test_annotations_all_available_annotations_databases():
+    """
+    The function `test_annotations_all_available_annotations_databases` tests the annotation
+    functionality of a `Variants` object using all available databases.
+    """
+
+    # Init files
+    input_vcf = tests_data_folder + "/example.vcf.gz"
+    output_vcf = "/tmp/output.vcf.gz"
+
+    # Config
+    config = tests_config.copy()
+
+    # Construct param annotations with all available parquet databases (with header)
+    parquet_files = list(set(
+        glob.glob(rf"{tests_annotations_folder}/*parquet", recursive=False)
+        + glob.glob(rf"{tests_annotations_folder}/*duckdb", recursive=False)
+        + glob.glob(rf"{tests_annotations_folder}/*vcf", recursive=False)
+        + glob.glob(rf"{tests_annotations_folder}/*vcf.gz", recursive=False)
+        + glob.glob(rf"{tests_annotations_folder}/*tsv", recursive=False)
+        + glob.glob(rf"{tests_annotations_folder}/*tsv.gz", recursive=False)
+        + glob.glob(rf"{tests_annotations_folder}/*csv", recursive=False)
+        + glob.glob(rf"{tests_annotations_folder}/*csv.gz", recursive=False)
+        + glob.glob(rf"{tests_annotations_folder}/*json", recursive=False)
+        + glob.glob(rf"{tests_annotations_folder}/*json.gz", recursive=False)
+    ))
+
+    param_annotation = {
+                            'parquet': {
+                                'annotations': {}
+                            }
+                        }
+    for parquet_file in parquet_files:
+        if os.path.exists(parquet_file) and os.path.exists(parquet_file+".hdr") and "fail" not in parquet_file:
+            param_annotation["parquet"]["annotations"][parquet_file] = {'INFO': None}
+
+    param = {
+        "annotation": param_annotation,
+        "assembly": "hg19"
+        }
+
+    # Create object
+    variants = Variants(conn=None, input=input_vcf, output=output_vcf, config=config, param=param, load=True)
+
+    # Remove if output file exists
+    remove_if_exists([output_vcf])
+
+    # Annotation
+    try:
+        variants.annotation()
+        assert True
+    except:
+        assert False
+
+    # check param
+    param_input = variants.get_param()
+    expected_param = param
+
+    assert param_input == expected_param
+
+    # Check if VCF is in correct format with pyVCF
+    variants.export_output()
+    try:
+        vcf.Reader(filename=output_vcf)
+    except:
+        assert False
+
+
 def test_annotations_no_samples():
     """
     This function tests the annotation of a VCF file without samples using various annotations
