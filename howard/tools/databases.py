@@ -583,67 +583,71 @@ def databases_format_refseq(refseq_file:str, output_file:str, include_utr_5:bool
             for l in fi:
 
                 # Header
-                if l.startswith("#"):
-                    continue
+                if not l.startswith("#"):
 
-                # line
-                l = l.strip().split()
-				
-				# exclude non-coding transcripts
-                if not include_non_coding_transcripts:
-                    if not l[1].startswith("NM_"):
-                        continue
+                    # line
+                    l = l.strip().split()
+                    
+                    # check non-coding transcripts or unwanted chr
+                    condition = (
+                        (include_non_coding_transcripts or l[1].startswith("NM_"))
+                        and (
+                            (include_non_canonical_chr or re.match(r'^chr([0-9]*|X|Y)$', l[2]))
+                            or (include_chrM and l[2] in {"chrM", "chrMT"})
+                        )
+                    )
 
-                if not include_transcript_ver:
-                    l[1] = l[1].split('.')[0]
+                    # include transcript
+                    if condition:
+
+                        # Transcript version
+                        if not include_transcript_ver:
+                            l[1] = l[1].split('.')[0]
+                        
+                        # Exon to write (depending on utr)
+                        # packing exons together to be able to number them (need to start from the end if negative strand, if using IGV as standard)
+                        exon_starts = l[9][:-1].split(",")
+                        exon_ends = l[10][:-1].split(",")
+                        exons_to_write = []
+                        for i in range(len(exon_starts)):
+                            
+                            if include_utr_5 and include_utr_3:
+                                exons_to_write.append([l[2], exon_starts[i], exon_ends[i], l[12], l[1], l[3]])
+                    
+                            elif not include_utr_5 and include_utr_3:
+                                if int(exon_starts[i]) < int(l[6]):
+                                    exons_to_write.append([l[2], l[6], exon_ends[i], l[12], l[1], l[3]])
+                                else:
+                                    exons_to_write.append([l[2], exon_starts[i], exon_ends[i], l[12], l[1], l[3]])
+                    
+                            elif include_utr_5 and not include_utr_3:
+                                if int(exon_ends[i]) > int(l[7]):
+                                    exons_to_write.append([l[2], exon_starts[i], l[7], l[12], l[1], l[3]])
+                                else:
+                                    exons_to_write.append([l[2], exon_starts[i], exon_ends[i], l[12], l[1], l[3]])
+                    
+                            elif not include_utr_5 and not include_utr_3:
+                                if int(exon_starts[i]) >= int(l[6]) and int(exon_ends[i]) <= int(l[7]):
+                                    exons_to_write.append([l[2], exon_starts[i], exon_ends[i], l[12], l[1], l[3]])
+                                elif int(exon_starts[i]) < int(l[6]) and int(l[6]) <= int(exon_ends[i]) <= int(l[7]):
+                                    exons_to_write.append([l[2], l[6], exon_ends[i], l[12], l[1], l[3]])
+                                elif int(l[6])<= int(exon_starts[i]) <= int(l[7]) and int(exon_ends[i]) > int(l[7]):
+                                    exons_to_write.append([l[2], exon_starts[i], l[7], l[12], l[1], l[3]])
+                                elif int(exon_starts[i]) <= int(l[6]) <= int(exon_ends[i]) and int(exon_starts[i]) <= int(l[7]) <= int(exon_ends[i]):
+                                    exons_to_write.append([l[2], l[6], l[7], l[12], l[1], l[3]])
+
+                        # Write exon (depending on strand)
+                        if l[3] == "-":
+                            exon_num = len(exons_to_write)
+                            exon_num_incrementation = -1
+                        else:
+                            exon_num = 1
+                            exon_num_incrementation = 1
+
+                        for i in range(len(exons_to_write)):
+                            exons_to_write[i].append("exon"+str(exon_num))
+                            exon_num += exon_num_incrementation
+                            fo.write("\t".join(exons_to_write[i])+"\n")
                 
-				# exclude unwanted chr
-                if not include_non_canonical_chr and not re.match(r'^chr([0-9]*|X|Y)$', l[2]):
-                    continue
-                if not include_chrM and l[2] in {"chrM", "chrMT"}:
-                    continue
-
-                # packing exons together to be able to number them (need to start from the end if negative strand, if using IGV as standard)
-                exon_start = l[9][:-1].split(",")
-                exon_ends = l[10][:-1].split(",")
-                exons_to_write = []
-
-                # deal with utr
-                for i in range(len(exon_start)):
-                    start = exon_start[i]
-                    end = exon_ends[i]
-                    if not include_utr_5 and int(start) < int(l[6]):
-                        start = l[6]
-                    if not include_utr_3 and int(end) > int(l[7]):
-                        end = l[7]
-                    if include_utr_5 and not include_utr_3:
-                        end = min(end, l[7])
-                    if include_utr_3 and not include_utr_5:
-                        start = max(start, l[6])
-                    if not include_utr_5 and not include_utr_3:
-                        if int(end) <= int(l[7]) and int(start) >= int(l[6]):
-                            pass
-                        elif int(start) < int(l[6]) and int(end) <= int(l[7]) and int(end) >= int(l[6]):
-                            start = l[6]
-                        elif int(start) >= int(l[6]) and int(end) > int(l[7]) and int(start) <= int(l[7]):
-                            end = l[7]
-                        elif int(start) <= int(l[6]) and int(end) >= int(l[7]):
-                            start = l[6]
-                            end = l[7]
-                    exons_to_write.append([l[2], start, end, l[12], l[1], l[3]])
-
-                if l[3] == "-":
-                    exon_num = len(exons_to_write)
-                    exon_num_incrementation = -1
-                else:
-                    exon_num = 1
-                    exon_num_incrementation = 1
-
-                for i in range(len(exons_to_write)):
-                    exons_to_write[i].append("exon"+str(exon_num))
-                    exon_num += exon_num_incrementation
-                    fo.write("\t".join(exons_to_write[i])+"\n")
-                
-
     return output_file
 
