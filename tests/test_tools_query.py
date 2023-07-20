@@ -33,7 +33,7 @@ tests_folder = os.path.dirname(__file__)
 def test_query():
 
     # Init files
-    input_vcf = tests_folder + "/data/example.vcf.gz"
+    input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/output_file.tsv"
     config = {'threads': 4}
     input_query = "SELECT count(*) AS '#count' FROM variants"

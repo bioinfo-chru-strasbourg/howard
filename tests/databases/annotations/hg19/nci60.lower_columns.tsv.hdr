@@ -1,0 +1,37 @@
+##fileformat=VCFv4.2
+##fileDate=20230212
+##source=AnnovarScript
+##reference=hg19
+##annotation_list=nci60
+##bcftools_normVersion=1.15.1+htslib-1.15.1
+##bcftools_normCommand=norm --regions=chr1,chr2,chr3,chr4,chr5,chr6,chr7,chr8,chr9,chr10,chr11,chr12,chr13,chr14,chr15,chr16,chr17,chr18,chr19,chr20,chr21,chr22,chrM,chrX,chrY --threads=4 --check-ref s -f /STARK/databases/genomes/current/hg19.fa /tmp//STARK/data/reformatDB/output4/hg19/nci60.vcf.sort.vcf.gz; Date=Sun Feb 12 22:38:42 2023
+##bcftools_viewVersion=1.15.1+htslib-1.15.1
+##bcftools_viewCommand=view -h /mnt/STARK/databases/annotations/20230214/hg19/nci60.vcf.gz; Date=Sat Mar  4 22:36:54 2023
+##INFO=<ID=nci60,Number=.,Type=Float,Description="nci60">
+##FILTER=<ID=PASS,Description="All filters passed">
+##contig=<ID=chr1,length=249250621>
+##contig=<ID=chr2,length=243199373>
+##contig=<ID=chr3,length=198022430>
+##contig=<ID=chr4,length=191154276>
+##contig=<ID=chr5,length=180915260>
+##contig=<ID=chr6,length=171115067>
+##contig=<ID=chr7,length=159138663>
+##contig=<ID=chr8,length=146364022>
+##contig=<ID=chr9,length=141213431>
+##contig=<ID=chr10,length=135534747>
+##contig=<ID=chr11,length=135006516>
+##contig=<ID=chr12,length=133851895>
+##contig=<ID=chr13,length=115169878>
+##contig=<ID=chr14,length=107349540>
+##contig=<ID=chr15,length=102531392>
+##contig=<ID=chr16,length=90354753>
+##contig=<ID=chr17,length=81195210>
+##contig=<ID=chr18,length=78077248>
+##contig=<ID=chr19,length=59128983>
+##contig=<ID=chr20,length=63025520>
+##contig=<ID=chr21,length=48129895>
+##contig=<ID=chr22,length=51304566>
+##contig=<ID=chrM,length=16571>
+##contig=<ID=chrX,length=155270560>
+##contig=<ID=chrY,length=59373566>
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO

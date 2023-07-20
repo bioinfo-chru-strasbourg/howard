@@ -26,9 +26,8 @@ from unittest.mock import patch
 from howard.objects.variants import Variants
 from howard.commons import *
 from howard.tools.databases import *
+from test_needed import *
 
-
-tests_folder = os.path.dirname(__file__)
 
 
 
@@ -134,9 +133,12 @@ def test_databases_download():
         # Check Annovar
         downloaded_files = os.listdir(annovar_tmp_dir)
         for assembly in assemblies_list:
+            assert assembly in downloaded_files
+            downloaded_files_assembly = os.listdir(f"{annovar_tmp_dir}/{assembly}")
+            assert f"{assembly}_refGene.txt" in downloaded_files_assembly
             for file in annovar_file_list_list:
                 downloaded_file = f"{assembly}_{file}.txt"
-                assert downloaded_file in downloaded_files
+                assert downloaded_file in downloaded_files_assembly
 
         # Check snpEff databases list file
         downloaded_files = os.listdir(snpeff_tmp_dir)
@@ -206,7 +208,7 @@ def test_databases_format_refseq():
     with TemporaryDirectory(dir=".") as tmp_dir:
        
         # refSeq files
-        refseq_file_to_format = f"{tests_folder}/data/ncbiRefSeq.test.txt"
+        refseq_file_to_format = f"{tests_databases_folder}/others/ncbiRefSeq.test.txt"
 
         # Format refSeq by default
         
@@ -520,17 +522,18 @@ def test_databases_download_genomes():
             assert False 
 
 
-def test_databases_download_annovar():
+def test_databases_download_annovar_multiple_assembly():
     """
-    This function tests the functionality of the databases_download_annovar function by downloading and
-    checking various files.
+    The function `test_databases_download_annovar_multiple_assembly` tests the functionality of
+    downloading multiple files with different assemblies using the `databases_download_annovar`
+    function.
     """
 
     # Test downloading an existing file
     with TemporaryDirectory(dir=".") as tmp_dir:
        
         # assembly
-        assemblies = ["hg19","hg38"]
+        assemblies = ["hg19", "hg38"]
         
         # files
         file_list = ['nci60']
@@ -543,10 +546,12 @@ def test_databases_download_annovar():
         
         # Check
         for assembly in assemblies:
-            assert  f"{assembly}_refGene.txt" in downloaded_files
+            assert assembly in downloaded_files
+            downloaded_files_assembly = os.listdir(f"{tmp_dir}/{assembly}")
+            assert f"{assembly}_refGene.txt" in downloaded_files_assembly
             for file in file_list:
                 downloaded_file = f"{assembly}_{file}.txt"
-                assert downloaded_file in downloaded_files
+                assert downloaded_file in downloaded_files_assembly
 
         # Download
         databases_download_annovar(folder=tmp_dir, files=file_list, assemblies=assemblies)
@@ -554,9 +559,22 @@ def test_databases_download_annovar():
         # Dowloaded files
         downloaded_files_bis = os.listdir(tmp_dir)
 
-        assert len(downloaded_files) == len(downloaded_files_bis)
-        
-            
+        # Check
+        for assembly in assemblies:
+            assert assembly in downloaded_files_bis
+            downloaded_files_bis_assembly = os.listdir(f"{tmp_dir}/{assembly}")
+            assert f"{assembly}_refGene.txt" in downloaded_files_bis_assembly
+            for file in file_list:
+                downloaded_file = f"{assembly}_{file}.txt"
+                assert downloaded_file in downloaded_files_bis_assembly
+
+
+def test_databases_download_annovar_mandatory_refgene():
+    """
+    The function `test_databases_download_annovar_mandatory_refgene` tests the downloading of the
+    mandatory file `refGene` from the ANNOVAR databases.
+    """
+
     # Test downloading mandatory file refGene (no file list in input)
     with TemporaryDirectory(dir=".") as tmp_dir:
         
@@ -574,8 +592,16 @@ def test_databases_download_annovar():
         
         # Check
         for assembly in assemblies:
-            downloaded_file = f"{assembly}_refGene.txt"
-            assert downloaded_file in downloaded_files
+            assert assembly in downloaded_files
+            downloaded_files_assembly = os.listdir(f"{tmp_dir}/{assembly}")
+            assert f"{assembly}_refGene.txt" in downloaded_files_assembly
+
+
+def test_databases_download_annovar_pattern_files():
+    """
+    The function `test_databases_download_annovar_pattern_files` tests the functionality of
+    downloading multiple files with a pattern using the `databases_download_annovar` function.
+    """
 
     # Test downloading multiple files with pattern
     with TemporaryDirectory(dir=".") as tmp_dir:
@@ -594,8 +620,9 @@ def test_databases_download_annovar():
         
         # Check
         for assembly in assemblies:
+            assert assembly in downloaded_files
+            downloaded_files_assembly = os.listdir(f"{tmp_dir}/{assembly}")
             for file in file_list:
                 downloaded_file = f"{assembly}_{file}.txt"
-                filtered_files = fnmatch.filter(downloaded_files, downloaded_file)
+                filtered_files = fnmatch.filter(downloaded_files_assembly, downloaded_file)
                 assert len(filtered_files) > 1
-

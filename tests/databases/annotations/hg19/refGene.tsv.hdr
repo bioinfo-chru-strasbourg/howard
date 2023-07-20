@@ -1,0 +1,10 @@
+##fileformat=VCFv4.2
+##fileDate=20230212
+##source=AnnovarScript
+##reference=hg19
+##annotation_list=symbol,transcript,strand
+##INFO=<ID=symbol,Number=.,Type=String,Description="Gene symbol from refGene">
+##INFO=<ID=transcript,Number=.,Type=String,Description="Gene transcript from refGene">
+##INFO=<ID=strand,Number=.,Type=String,Description="Gene strand from refGene">
+##FILTER=<ID=PASS,Description="All filters passed">
+#CHROM	START	END	symbol	transcript	strand

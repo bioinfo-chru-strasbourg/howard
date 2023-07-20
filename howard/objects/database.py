@@ -656,32 +656,41 @@ class Database:
             database_file = None
 
             for format_extension in ["", f".{format}", f".{format}.gz"]:
-
-                # find in folders
-                for databases_folder in databases_folders:
-                    
-                    # Log
-                    log.debug("Annotation file check: " + str(databases_folder+"/"+database+format_extension))
-
-                    # In folder
-                    if os.path.exists(databases_folder+"/"+database+format_extension):
-                        database_file = databases_folder+"/"+database+format_extension
-
-                    # database found
-                    if database_file:
-                        break
-
+                
                 # find in subfolder assemby
-                if not database_file and assembly:
-
+                if  assembly:
                     for databases_folder in databases_folders:
-                        
+                            
+                        #database_file_check = os.path.join(databases_folder, assembly, f"{database}{format_extension}")
+                        database_file_check = f"{databases_folder}/{assembly}/{database}{format_extension}"
+                        print(database_file_check)
                         # Log
-                        log.debug("Annotation file check: " + str(databases_folder+"/"+assembly+"/"+database+format_extension))
+                        log.debug("Annotation file check: " + database_file_check)
 
                         # In folder
-                        if os.path.exists(databases_folder+"/"+assembly+"/"+database+format_extension):
-                            database_file = databases_folder+"/"+assembly+"/"+database+format_extension
+                        
+                        if os.path.exists(database_file_check):
+                            database_file = database_file_check
+
+                        # database found
+                        if database_file:
+                            break
+
+                # find within folder
+                if not database_file:
+
+                    # find in folders
+                    for databases_folder in databases_folders:
+                        
+                        #database_file_check = os.path.join(databases_folder, f"{database}{format_extension}")
+                        database_file_check = f"{databases_folder}/{database}{format_extension}"
+
+                        # Log
+                        log.debug("Annotation file check: " + database_file_check)
+
+                        # In folder
+                        if os.path.exists(database_file_check):
+                            database_file = database_file_check
 
                         # database found
                         if database_file:

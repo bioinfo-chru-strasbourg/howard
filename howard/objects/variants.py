@@ -1508,20 +1508,41 @@ class Variants:
         It annotates the VCF file with the annotations specified in the config file.
         """
 
+        # Config
+        config = self.get_config()
+
+        # Param
         param = self.get_param()
+
+        # Param - Assembly
+        assembly = param.get("assembly", "hg19")
+
+        # annotations databases folders
+        annotations_databases = set(
+            config.get("folders", {}).get("databases", {}).get("annotations", ["/databases/annotations/current"])
+            + config.get("folders", {}).get("databases", {}).get("parquet", ["/databases/parquet/current"])
+            + config.get("folders", {}).get("databases", {}).get("bcftools", ["/databases/bcftools/current"])
+        )
 
         if param.get("annotations"):
             if not "annotation" in param:
                 param["annotation"] = {}
             for annotation_file in param.get("annotations"):
+
                 annotations = param.get("annotations").get(
                     annotation_file, None)
+                
+                # Annotation snpEff
                 if annotation_file == "snpeff":
+                    log.debug(f"Quick Annotation snpEff")
                     if "snpeff" not in param["annotation"]:
                         param["annotation"]["snpeff"] = {}
                     if "options" not in param["annotation"]["snpeff"]:
                         param["annotation"]["snpeff"]["options"] = ""
+                
+                # Annotation Annovar
                 elif annotation_file.startswith("annovar"):
+                    log.debug(f"Quick Annotation Annovar")
                     if "annovar" not in param["annotation"]:
                         param["annotation"]["annovar"] = {}
                     if "annotations" not in param["annotation"]["annovar"]:
@@ -1530,40 +1551,61 @@ class Variants:
                     if len(annotation_file_split) > 1:
                         annotation_file_annotation = annotation_file_split[1]
                         param["annotation"]["annovar"]["annotations"][annotation_file_annotation] = annotations
-                elif os.path.exists(annotation_file):
-                    log.debug(f"Quick Annotation File {annotation_file}")
-                    quick_annotation_file = annotation_file
-                    quick_annotation_name, quick_annotation_extension = os.path.splitext(
-                        annotation_file)
-                    quick_annotation_format = quick_annotation_extension.replace(
-                        ".", "")
-                    if quick_annotation_format in ["gz"]:
-                        quick_annotation_format_name, quick_annotation_format_extension = os.path.splitext(
-                            quick_annotation_name)
-                        quick_annotation_type = quick_annotation_format_extension.replace(
-                            ".", "")
-                    else:
-                        quick_annotation_type = quick_annotation_format
-                    format = None
-                    if quick_annotation_type in ["parquet", "duckdb"]:
-                        format = "parquet"
-                    elif quick_annotation_type in ["vcf", "bed"]:
-                        format = "bcftools"
-                    else:
-                        log.error(
-                            f"Quick Annotation File {quick_annotation_file} - format {quick_annotation_type} not supported yet")
-                        raise ValueError(
-                            f"Quick Annotation File {quick_annotation_file} - format {quick_annotation_type} not supported yet"
-                        )
-                    if format:
-                        if format not in param["annotation"]:
-                            param["annotation"][format] = {}
-                        if "annotations" not in param["annotation"][format]:
-                            param["annotation"][format]["annotations"] = {}
-                        param["annotation"][format]["annotations"][quick_annotation_file] = annotations
+
+                # Annotation Parquet or BCFTOOLS
                 else:
-                    log.error(
-                        f"Quick Annotation File {annotation_file} does NOT exist")
+                    
+                    # Find file
+                    annotation_file_found = None
+
+                    if os.path.exists(annotation_file):
+                        annotation_file_found = annotation_file
+
+                    else:
+                        # Find within assembly folders
+                        for annotations_database in annotations_databases:
+                            found_files = find_all(annotation_file, os.path.join(annotations_database, assembly))
+                            if len(found_files) > 0:
+                                annotation_file_found = found_files[0]
+                                break
+                        if not annotation_file_found:
+                            # Find within folders
+                            for annotations_database in annotations_databases:
+                                found_files = find_all(annotation_file, annotations_database)
+                                if len(found_files) > 0:
+                                    annotation_file_found = found_files[0]
+                                    break
+
+                    if annotation_file_found:
+
+                        database = Database(database=annotation_file_found)
+                        quick_annotation_format = database.get_format()
+
+                        # Check Annotation Tool
+                        annotation_tool = None
+                        if quick_annotation_format in ["tsv", "tsv", "csv", "json", "tbl", "parquet", "duckdb"]:
+                            annotation_tool = "parquet"
+                        elif quick_annotation_format in ["vcf", "bed"]:
+                            annotation_tool = "bcftools"
+                        else:
+                            log.error(
+                                f"Quick Annotation File {annotation_file_found} - Format {quick_annotation_format} not supported yet")
+                            raise ValueError(
+                                f"Quick Annotation File {annotation_file_found} - Format {quick_annotation_format} not supported yet"
+                            )
+                        
+                        log.debug(f"Quick Annotation File {annotation_file} - Annotation tool: {annotation_tool}")
+                        
+                        # Annotation Tool dispatch
+                        if annotation_tool:
+                            if annotation_tool not in param["annotation"]:
+                                param["annotation"][annotation_tool] = {}
+                            if "annotations" not in param["annotation"][annotation_tool]:
+                                param["annotation"][annotation_tool]["annotations"] = {}
+                            param["annotation"][annotation_tool]["annotations"][annotation_file_found] = annotations
+
+                    else:
+                        log.error(f"Quick Annotation File {annotation_file} does NOT exist")
 
             self.set_param(param)
 
@@ -1613,14 +1655,19 @@ class Variants:
             log.debug("Delete tmp files/folders: "+str(delete_tmp))
 
         # Config
-        databases_folders = self.config.get("folders", {}).get(
-            "databases", {}).get("bcftools", ["."])
+        databases_folders = set(
+            self.get_config().get("folders", {}).get("databases", {}).get("annotations", ["."])
+            + self.get_config().get("folders", {}).get("databases", {}).get("bcftools", ["."])
+        )
         log.debug("Databases annotations: " + str(databases_folders))
 
         # Param
-        annotations = self.param.get("annotation", {}).get(
+        annotations = self.get_param().get("annotation", {}).get(
             "bcftools", {}).get("annotations", None)
         log.debug("Annotations: " + str(annotations))
+
+        # Assembly
+        assembly = self.get_param().get("assembly", "hg19")
 
         # Data
         table_variants = self.get_table_variants()
@@ -1667,60 +1714,13 @@ class Variants:
                 log.debug(
                     f"Annotation '{annotation}' - fields: {annotation_fields}")
 
-                # Find vcf/bed file and header file
-                db_file = None
-                db_hdr_file = None
-                for databases_folder in databases_folders:
-                    db_file = None
-                    db_hdr_file = None
-                    log.debug("Annotation file check: " + annotation + " or " +
-                              str(databases_folder+"/"+annotation+".{vcf,bed}"))
+                # Create Database
+                database = Database(database=annotation, databases_folders=databases_folders, assembly=assembly)
 
-                    # VCF .vcf BED .bed
-                    if os.path.exists(annotation):
-                        db_file = annotation
-                    elif os.path.exists(databases_folder+"/"+annotation+".vcf"):
-                        db_file = databases_folder+"/"+annotation+".vcf"
-                    elif os.path.exists(databases_folder+"/"+annotation+".vcf.gz"):
-                        db_file = databases_folder+"/"+annotation+".vcf.gz"
-                    # BED .bed
-                    if os.path.exists(annotation):
-                        db_file = annotation
-                    elif os.path.exists(databases_folder+"/"+annotation+".bed"):
-                        db_file = databases_folder+"/"+annotation+".bed"
-                    elif os.path.exists(databases_folder+"/"+annotation+".bed.gz"):
-                        db_file = databases_folder+"/"+annotation+".bed.gz"
-                    if not db_file:
-                        continue
-
-                    # Header .hdr
-                    if os.path.exists(db_file+".hdr"):
-                        db_hdr_file = db_file+".hdr"
-
-                    # parquet and hdr found
-                    if db_file and db_hdr_file:
-                        break
-
-                # Database format and type
-                db_file_name, db_file_extension = os.path.splitext(db_file)
-                db_file_format = db_file_extension.replace(".", "")
-                if db_file_format in ["gz"]:
-                    db_file_format_name, db_file_format_extension = os.path.splitext(
-                        db_file_name)
-                    db_file_type = db_file_format_extension.replace(".", "")
-                else:
-                    db_file_type = db_file_format
-
-                # try to extract header
-                if db_file_type in ["vcf", "bed"] and not db_hdr_file:
-                    log.debug(f"Try to extract header of file {db_file}")
-                    tmp_extract_header = NamedTemporaryFile(prefix=self.get_prefix(
-                    ), dir=self.get_tmp_dir(), suffix=".hdr", delete=False)
-                    tmp_extract_header_name = tmp_extract_header.name
-                    tmp_files.append(tmp_extract_header_name)
-                    command_extract_header = f"bcftools view -h {db_file} > {tmp_extract_header_name} 2>/dev/null"
-                    run_parallel_commands([command_extract_header], threads)
-                    db_hdr_file = tmp_extract_header_name
+                # Find files
+                db_file = database.get_database()
+                db_hdr_file = database.get_header_file()
+                db_file_type = database.get_format()
 
                 # if not db_file or (not db_hdr_file and db_file_format not in ["gz"]):
                 if not db_file or not db_hdr_file:
@@ -1814,15 +1814,23 @@ class Variants:
 
                     if annotation_infos != "":
 
-                        # Protect header for bcftools (remove "#CHROM" line)
+                        # Protect header for bcftools (remove "#CHROM" and variants line)
                         log.debug(
                             "Protect Header file - remove #CHROM line if exists")
                         tmp_header_vcf = NamedTemporaryFile(prefix=self.get_prefix(
                         ), dir=self.get_tmp_dir(), suffix=".hdr", delete=False)
                         tmp_header_vcf_name = tmp_header_vcf.name
                         tmp_files.append(tmp_header_vcf_name)
-                        run_parallel_commands(
-                            [f"grep '^#CHROM' -v {db_hdr_file} > {tmp_header_vcf_name}"], 1)
+                        # Command
+                        if db_hdr_file.endswith(".gz"):
+                            command_extract_header = f"zcat {db_hdr_file} | grep '^##' > {tmp_header_vcf_name}"
+                        else:
+                            command_extract_header = f"cat {db_hdr_file} | grep '^##' > {tmp_header_vcf_name}"
+                        # Run
+                        run_parallel_commands([command_extract_header], 1)
+                        
+
+                        #print(f"grep '^#CHROM' -v {db_hdr_file} > {tmp_header_vcf_name}")
 
                         # Find chomosomes
                         log.debug("Find chromosomes ")
@@ -1839,64 +1847,62 @@ class Variants:
                         run_parallel_commands(
                             [f"echo 'INFO/{annotation_field} {annotation_fields_new_name}' >> {tmp_rename_name}"], 1)
 
-                        if True:
+                        # BED columns in the annotation file
+                        if db_file_type in ["bed"]:
+                            annotation_infos = "CHROM,POS,POS," + annotation_infos
 
-                            # BED columns in the annotation file
-                            if db_file_type in ["bed"]:
-                                annotation_infos = "CHROM,POS,POS," + annotation_infos
+                        for chrom in chomosomes_list:
 
-                            for chrom in chomosomes_list:
+                            # Create BED on initial VCF
+                            log.debug(
+                                "Create BED on initial VCF: " + str(tmp_vcf_name))
+                            tmp_bed = NamedTemporaryFile(prefix=self.get_prefix(
+                            ), dir=self.get_tmp_dir(), suffix=".bed", delete=False)
+                            tmp_bed_name = tmp_bed.name
+                            tmp_files.append(tmp_bed_name)
 
-                                # Create BED on initial VCF
-                                log.debug(
-                                    "Create BED on initial VCF: " + str(tmp_vcf_name))
-                                tmp_bed = NamedTemporaryFile(prefix=self.get_prefix(
-                                ), dir=self.get_tmp_dir(), suffix=".bed", delete=False)
-                                tmp_bed_name = tmp_bed.name
-                                tmp_files.append(tmp_bed_name)
+                            # Detecte regions
+                            log.debug(
+                                f"Annotation '{annotation}' - Chromosome '{chrom}' - Start detecting regions...")
+                            window = 1000000
+                            sql_query_intervals_for_bed = f"""
+                                SELECT  \"#CHROM\",
+                                        CASE WHEN \"POS\"-{window}-1 < 0 THEN 0 ELSE \"POS\"-{window}-1 END,
+                                        \"POS\"+{window}
+                                FROM {table_variants} as table_variants
+                                WHERE table_variants.\"#CHROM\" = '{chrom}'
+                            """
+                            regions = self.conn.execute(
+                                sql_query_intervals_for_bed).fetchall()
+                            merged_regions = merge_regions(regions)
+                            log.debug(
+                                f"Annotation '{annotation}' - Chromosome '{chrom}' - Stop detecting regions...")
 
-                                # Detecte regions
-                                log.debug(
-                                    f"Annotation '{annotation}' - Chromosome '{chrom}' - Start detecting regions...")
-                                window = 1000000
-                                sql_query_intervals_for_bed = f"""
-                                    SELECT  \"#CHROM\",
-                                            CASE WHEN \"POS\"-{window}-1 < 0 THEN 0 ELSE \"POS\"-{window}-1 END,
-                                            \"POS\"+{window}
-                                    FROM {table_variants} as table_variants
-                                    WHERE table_variants.\"#CHROM\" = '{chrom}'
-                                """
-                                regions = self.conn.execute(
-                                    sql_query_intervals_for_bed).fetchall()
-                                merged_regions = merge_regions(regions)
-                                log.debug(
-                                    f"Annotation '{annotation}' - Chromosome '{chrom}' - Stop detecting regions...")
+                            header = ["#CHROM", "START", "END"]
+                            with open(tmp_bed_name, "w") as f:
+                                # Write the header with tab delimiter
+                                f.write("\t".join(header) + "\n")
+                                for d in merged_regions:
+                                    # Write each data row with tab delimiter
+                                    f.write("\t".join(map(str, d)) + "\n")
 
-                                header = ["#CHROM", "START", "END"]
-                                with open(tmp_bed_name, "w") as f:
-                                    # Write the header with tab delimiter
-                                    f.write("\t".join(header) + "\n")
-                                    for d in merged_regions:
-                                        # Write each data row with tab delimiter
-                                        f.write("\t".join(map(str, d)) + "\n")
+                            # Tmp files
+                            tmp_annotation_vcf = NamedTemporaryFile(prefix=self.get_prefix(
+                            ), dir=self.get_tmp_dir(), suffix=".vcf.gz", delete=False)
+                            tmp_annotation_vcf_name = tmp_annotation_vcf.name
+                            tmp_files.append(tmp_annotation_vcf_name)
+                            tmp_ann_vcf_list.append(
+                                f"{tmp_annotation_vcf_name}")
+                            tmp_annotation_vcf_name_err = tmp_annotation_vcf_name + ".err"
+                            err_files.append(tmp_annotation_vcf_name_err)
 
-                                # Tmp files
-                                tmp_annotation_vcf = NamedTemporaryFile(prefix=self.get_prefix(
-                                ), dir=self.get_tmp_dir(), suffix=".vcf.gz", delete=False)
-                                tmp_annotation_vcf_name = tmp_annotation_vcf.name
-                                tmp_files.append(tmp_annotation_vcf_name)
-                                tmp_ann_vcf_list.append(
-                                    f"{tmp_annotation_vcf_name}")
-                                tmp_annotation_vcf_name_err = tmp_annotation_vcf_name + ".err"
-                                err_files.append(tmp_annotation_vcf_name_err)
+                            # Annotate Command
+                            log.debug(
+                                f"Annotation '{annotation}' - add bcftools command")
 
-                                # Annotate Command
-                                log.debug(
-                                    f"Annotation '{annotation}' - add bcftools command")
+                            command_annotate = f"bcftools annotate --regions-file={tmp_bed_name} -a {db_file} -h {tmp_header_vcf_name} -c {annotation_infos} --rename-annots={tmp_rename_name} {tmp_vcf_name} -o {tmp_annotation_vcf_name} -Oz 2>>{tmp_annotation_vcf_name_err} && tabix {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} "
 
-                                command_annotate = f"bcftools annotate --regions-file={tmp_bed_name} -a {db_file} -h {tmp_header_vcf_name} -c {annotation_infos} --rename-annots={tmp_rename_name} {tmp_vcf_name} -o {tmp_annotation_vcf_name} -Oz 2>>{tmp_annotation_vcf_name_err} && tabix {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} "
-
-                                commands.append(command_annotate)
+                            commands.append(command_annotate)
 
             # if some commands
             if commands:
@@ -2258,9 +2264,8 @@ class Variants:
                 log.warning(
                     f"Annotation warning: annovar bin found '{annovar_bin}'")
 
-        if annovar_databases != "":
-            if not os.path.exists(annovar_databases):
-                os.makedirs(annovar_databases)
+        if annovar_databases != "" and not os.path.exists(annovar_databases):
+            os.makedirs(annovar_databases)
 
         # Param
         param = self.get_param()
@@ -2278,6 +2283,11 @@ class Variants:
 
         # Param - Assembly
         assembly = param.get("assembly", "hg19")
+
+        # Annovar database assembly
+        annovar_databases_assembly = f"{annovar_databases}/{assembly}"
+        if annovar_databases_assembly != "" and not os.path.exists(annovar_databases_assembly):
+            os.makedirs(annovar_databases_assembly)
 
         # Data
         table_variants = self.get_table_variants()
@@ -2416,7 +2426,7 @@ class Variants:
                 # Command
 
                 # Command - Annovar
-                command_annovar = f"""{annovar_bin} {tmp_vcf_name} {annovar_databases} --buildver {assembly} --outfile {tmp_annotate_vcf_prefix} --remove --protocol {protocol} --operation {operation} {argument_option} {command_options} 2>>{tmp_annotate_vcf_name_err} && mv {tmp_annotate_vcf_name_annovar} {tmp_annotate_vcf_name}.tmp.vcf """
+                command_annovar = f"""{annovar_bin} {tmp_vcf_name} {annovar_databases_assembly} --buildver {assembly} --outfile {tmp_annotate_vcf_prefix} --remove --protocol {protocol} --operation {operation} {argument_option} {command_options} 2>>{tmp_annotate_vcf_name_err} && mv {tmp_annotate_vcf_name_annovar} {tmp_annotate_vcf_name}.tmp.vcf """
                 tmp_files.append(f"{tmp_annotate_vcf_name}.tmp.vcf")
 
                 # Command - start pipe
@@ -2547,8 +2557,10 @@ class Variants:
             log.debug("Delete tmp files/folders: "+str(delete_tmp))
 
         # Config
-        databases_folders = self.get_config().get("folders", {}).get(
-            "databases", {}).get("parquet", ["."])
+        databases_folders = set(
+            self.get_config().get("folders", {}).get("databases", {}).get("annotations", ["."])
+            + self.get_config().get("folders", {}).get("databases", {}).get("parquet", ["."])
+        )
         log.debug("Databases annotations: " + str(databases_folders))
 
         # Param
@@ -2618,7 +2630,6 @@ class Variants:
                     log.error("Annotation failed: file not found")
                     raise ValueError("Annotation failed: file not found")
                 else:
-
                     # Get parquet connexion
                     parquet_sql_attach = database.get_sql_database_attach(output="query")
                     if parquet_sql_attach:
@@ -3265,7 +3276,7 @@ class Variants:
             # Find list of associated transcripts
             transcripts_list = list(polars_conn.execute(f"""
                 SELECT transcript
-                FROM refgene_df
+                FROM refseq_df
                 WHERE CHROM='{chr}'
                 AND POS={pos} 
             """)["transcript"])
@@ -3319,15 +3330,13 @@ class Variants:
         # Genome
         databases_genomes_folders = config.get("folders", {}).get(
             "databases", {}).get("genomes", "/databases/genomes/current")
-        #databases_genome = config.get("databases", {}).get("genome", databases_genomes_folders)
         databases_genome = config.get("databases", {}).get("genome", "")
-        # refGene
-        databases_refgene_folders = config.get("folders", {}).get(
-            "databases", {}).get("refGene", "/databases/refGene/current")
-        databases_refgene = config.get("databases", {}).get("refGene", "")
+        # refseq database folder
+        databases_refseq_folders = config.get("folders", {}).get(
+            "databases", {}).get("refseq", "/databases/refseq/current")
+        # refseq
+        databases_refseq = config.get("databases", {}).get("refSeq", "")
         # refSeqLink
-        databases_refseqlink_folders = config.get("folders", {}).get(
-            "databases", {}).get("refSeqLink", "/databases/refGene/current")
         databases_refseqlink = config.get("databases", {}).get("refSeqLink", "")
 
         # Param
@@ -3343,8 +3352,8 @@ class Variants:
         use_version = param_hgvs.get("use_version",False)
         codon_type = param_hgvs.get("codon_type","3")
 
-        # refGene refSeqLink
-        databases_refgene = param_hgvs.get("refgene", databases_refgene)
+        # refSseq refSeqLink
+        databases_refseq = param_hgvs.get("refseq", databases_refseq)
         databases_refseqlink = param_hgvs.get("refseqlink", databases_refseqlink)
 
         # Assembly
@@ -3358,12 +3367,12 @@ class Variants:
             genome_file = find_genome(genome_path=databases_genomes_folders, assembly=assembly)
         log.debug("Genome: "+str(genome_file))
         
-        # refGene
-        refgene_file = find_file_prefix(input_file=databases_refgene, prefix="ncbiRefSeq", folder=databases_refgene_folders, assembly=assembly)
-        log.debug("refGene: "+str(refgene_file))
+        # refSseq
+        refseq_file = find_file_prefix(input_file=databases_refseq, prefix="ncbiRefSeq", folder=databases_refseq_folders, assembly=assembly)
+        log.debug("refSeq: "+str(refseq_file))
 
         # refSeqLink
-        refseqlink_file = find_file_prefix(input_file=databases_refseqlink, prefix="ncbiRefSeqLink", folder=databases_refseqlink_folders, assembly=assembly)
+        refseqlink_file = find_file_prefix(input_file=databases_refseqlink, prefix="ncbiRefSeqLink", folder=databases_refseq_folders, assembly=assembly)
         log.debug("refSeqLink: "+str(refseqlink_file))
 
         # Threads
@@ -3385,32 +3394,32 @@ class Variants:
         # Add hgvs column in variants table
         self.add_column(table_variants, "hgvs", "STRING", default_value=None)
 
-        log.debug(f"refGene loading...")
-        # refGene in duckDB
-        refgene_table = get_refgene_table(conn=self.conn, refgene_table="refgene", refgene_file=refgene_file)
-        # Loading all refGene in Dataframe
-        refgene_query = f"""
-            SELECT df_variants.CHROM, df_variants.POS, {refgene_table}.name AS transcript
-            FROM {refgene_table}
+        log.debug(f"refSeq loading...")
+        # refSeq in duckDB
+        refseq_table = get_refseq_table(conn=self.conn, refseq_table="refseq", refseq_file=refseq_file)
+        # Loading all refSeq in Dataframe
+        refseq_query = f"""
+            SELECT df_variants.CHROM, df_variants.POS, {refseq_table}.name AS transcript
+            FROM {refseq_table}
             JOIN df_variants ON (
-                {refgene_table}.chrom = df_variants.CHROM
-                AND {refgene_table}.txStart<=df_variants.POS
-                AND {refgene_table}.txEnd>=df_variants.POS
+                {refseq_table}.chrom = df_variants.CHROM
+                AND {refseq_table}.txStart<=df_variants.POS
+                AND {refseq_table}.txEnd>=df_variants.POS
             )
         """
-        refgene_df = self.conn.query(refgene_query).pl()
+        refseq_df = self.conn.query(refseq_query).pl()
 
         if refseqlink_file:
             log.debug(f"refSeqLink loading...")
             # refSeqLink in duckDB
-            refseqlink_table = get_refgene_table(conn=self.conn, refgene_table="refseqlink", refgene_file=refseqlink_file)
+            refseqlink_table = get_refseq_table(conn=self.conn, refseq_table="refseqlink", refseq_file=refseqlink_file)
             # Loading all refSeqLink in Dataframe
             protacc_column = "protAcc_with_ver"
             mrnaacc_column = "mrnaAcc_with_ver"
             refseqlink_query = f"""
-                SELECT {refgene_table}.chrom, {protacc_column} AS protein, {mrnaacc_column} AS transcript
+                SELECT {refseq_table}.chrom, {protacc_column} AS protein, {mrnaacc_column} AS transcript
                 FROM {refseqlink_table} 
-                JOIN {refgene_table} ON ({refgene_table}.name = {refseqlink_table}.mrnaAcc_with_ver)
+                JOIN {refseq_table} ON ({refseq_table}.name = {refseqlink_table}.mrnaAcc_with_ver)
                 WHERE protAcc_without_ver IS NOT NULL
             """
             # Polars Dataframe
@@ -3422,12 +3431,12 @@ class Variants:
         with tempfile.TemporaryDirectory() as tmpdir:
             transcripts_query = f"""
                 COPY (
-                    SELECT {refgene_table}.*
-                    FROM {refgene_table}
+                    SELECT {refseq_table}.*
+                    FROM {refseq_table}
                     JOIN df_variants ON (
-                        {refgene_table}.chrom=df_variants.CHROM
-                        AND {refgene_table}.txStart<=df_variants.POS
-                        AND {refgene_table}.txEnd>=df_variants.POS
+                        {refseq_table}.chrom=df_variants.CHROM
+                        AND {refseq_table}.txStart<=df_variants.POS
+                        AND {refseq_table}.txEnd>=df_variants.POS
                     )
                 )
                 TO '{tmpdir}/transcript.tsv' (DELIMITER '\t');
@@ -3454,19 +3463,24 @@ class Variants:
 
         # Convert Dask DataFrame to Pandas Dataframe
         df = ddf.compute()
+        
+        # Convert Pandas dataframe to parquet (due to error in cast VARCHAR -> NULL ???)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            df_parquet = os.path.join(tmpdir,"df.parquet")
+            df.to_parquet(df_parquet)
 
-        # Update hgvs column
-        update_variant_query = f"""
+            # Update hgvs column
+            update_variant_query = f"""
                 UPDATE {table_variants}
                 SET hgvs=df.hgvs
-                FROM df
+                FROM read_parquet('{df_parquet}') as df
                 WHERE variants."#CHROM" = df.CHROM
                 AND variants.POS = df.POS
                 AND variants.REF = df.REF
                 AND variants.ALT = df.ALT
                 AND df.hgvs NOT IN ('') AND df.hgvs NOT NULL
                 """
-        self.execute_query(update_variant_query)
+            self.execute_query(update_variant_query)
 
         # Update INFO column
         sql_query_update = f"""

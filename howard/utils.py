@@ -882,27 +882,27 @@ def format_hgvs_name(chrom, offset, ref, alt, genome, transcript, transcript_pro
     return hgvs.format(use_prefix=use_prefix, use_gene=use_gene, use_exon=exon, use_protein=use_protein, full_format=full_format, use_version=use_version)
 
 
-def create_refgene_table(conn, refgene_table:str = "refgene", refgene_file:str = None) -> str:
+def create_refseq_table(conn, refseq_table:str = "refseq", refseq_file:str = None) -> str:
     """
-    The function `create_refgene_table` creates a table in a database with the specified name and
+    The function `create_refseq_table` creates a table in a database with the specified name and
     structure, either using a file or without a file.
     
     :param conn: The `conn` parameter is a connection object that represents a connection to a database.
     It is used to execute SQL queries and interact with the database
-    :param refgene_table: The `refgene_table` parameter is a string that specifies the name of the table
-    that will be created in the database to store the RefGene data, defaults to refgene
-    :type refgene_table: str (optional)
-    :param refgene_file: The `refgene_file` parameter is a string that specifies the path to a file
+    :param refseq_table: The `refseq_table` parameter is a string that specifies the name of the table
+    that will be created in the database to store the RefGene data, defaults to refseq
+    :type refseq_table: str (optional)
+    :param refseq_file: The `refseq_file` parameter is a string that specifies the path to a file
     containing the data for the refGene table. If this parameter is provided, the function will create
     the refGene table in the database using the data from the file. If this parameter is not provided,
     the function will
-    :type refgene_file: str
-    :return: the name of the refgene table that was created or used.
+    :type refseq_file: str
+    :return: the name of the refseq table that was created or used.
     """
 
     # RefGene in database
-    if refgene_table == "refgene":
-        refgene_structure = {
+    if refseq_table == "refseq":
+        refseq_structure = {
             "bin": "INTEGER",
             "name": "STRING",
             "chrom": "STRING",
@@ -920,9 +920,9 @@ def create_refgene_table(conn, refgene_table:str = "refgene", refgene_file:str =
             "cdsEndStat": "STRING",
             "exonFrames": "STRING"
         }
-        query = f"CREATE TABLE {refgene_table} AS SELECT * FROM read_csv_auto('{refgene_file}',HEADER=False,columns={refgene_structure})"
-    elif refgene_table == "refseqlink":
-        refgene_structure = {
+        query = f"CREATE TABLE {refseq_table} AS SELECT * FROM read_csv_auto('{refseq_file}',HEADER=False,columns={refseq_structure})"
+    elif refseq_table == "refseqlink":
+        refseq_structure = {
             "id": "STRING",
             "status": "STRING",
             "name": "STRING",
@@ -943,113 +943,54 @@ def create_refgene_table(conn, refgene_table:str = "refgene", refgene_file:str =
             "description": "STRING",
             "externalId": "STRING",
             }
-        query = rf"CREATE TABLE {refgene_table} AS SELECT *, regexp_extract(mrnaAcc, '(.*)\..*', 1) AS 'mrnaAcc_without_ver', regexp_extract(protAcc, '(.*)\..*', 1) AS 'protAcc_without_ver', mrnaAcc AS 'mrnaAcc_with_ver', protAcc AS 'protAcc_with_ver' FROM read_csv_auto('{refgene_file}',HEADER=False,columns={refgene_structure})"
+        query = rf"CREATE TABLE {refseq_table} AS SELECT *, regexp_extract(mrnaAcc, '(.*)\..*', 1) AS 'mrnaAcc_without_ver', regexp_extract(protAcc, '(.*)\..*', 1) AS 'protAcc_without_ver', mrnaAcc AS 'mrnaAcc_with_ver', protAcc AS 'protAcc_with_ver' FROM read_csv_auto('{refseq_file}',HEADER=False,columns={refseq_structure})"
 
     # Create tabel with file
-    if refgene_file:
-        #print(f"Create table refGene '{refgene_table}' with file '{refgene_file}'")
+    if refseq_file:
+        #print(f"Create table refGene '{refseq_table}' with file '{refseq_file}'")
         conn.query(query)
     # Create table without file
     else:
-        #print(f"Create table refGene '{refgene_table}' without file")
+        #print(f"Create table refGene '{refseq_table}' without file")
         sql_structure_list = []
-        for col in refgene_structure:
-            col_format = refgene_structure.get(col,"VARCHAR").replace("STRING","VARCHAR")
+        for col in refseq_structure:
+            col_format = refseq_structure.get(col,"VARCHAR").replace("STRING","VARCHAR")
             sql_structure_list.append(f" {col} {col_format}")
         sql_structure = ",".join(sql_structure_list)
-        conn.query(f"CREATE TABLE {refgene_table}({sql_structure})")
+        conn.query(f"CREATE TABLE {refseq_table}({sql_structure})")
 
-    return refgene_table
+    return refseq_table
 
 
-def get_refgene_table(conn, refgene_table:str = "refgene", refgene_file:str = None) -> str:
+def get_refseq_table(conn, refseq_table:str = "refseq", refseq_file:str = None) -> str:
     """
-    The function `get_refgene_table` checks if a table named `refgene` exists in a database, and if not,
-    creates it using the `create_refgene_table` function.
+    The function `get_refseq_table` checks if a table named `refseq` exists in a database, and if not,
+    creates it using the `create_refseq_table` function.
     
     :param conn: The parameter `conn` is expected to be a connection object that allows you to interact
     with a database. It could be an instance of a database connector class, such as `pymysql.connect()`
     for MySQL or `psycopg2.connect()` for PostgreSQL
-    :param refgene_table: The parameter "refgene_table" is a string that specifies the name of the table
+    :param refseq_table: The parameter "refseq_table" is a string that specifies the name of the table
     in the database where the refGene data will be stored. If this table already exists in the database,
     the function will return the name of the existing table. If the table does not exist, the function
-    will create, defaults to refgene
-    :type refgene_table: str (optional)
-    :param refgene_file: The `refgene_file` parameter is the name or path of the file that contains the
+    will create, defaults to refseq
+    :type refseq_table: str (optional)
+    :param refseq_file: The `refseq_file` parameter is the name or path of the file that contains the
     refGene data. This file is used to populate the refGene table in the database
-    :type refgene_file: str
-    :return: the name of the refgene_table.
+    :type refseq_file: str
+    :return: the name of the refseq_table.
     """
 
     # Existing tables
     existing_tables = conn.query(f"SHOW TABLES").df()
 
     # refGene already table exists
-    if refgene_table in list(existing_tables["name"]):
-        return refgene_table
+    if refseq_table in list(existing_tables["name"]):
+        return refseq_table
     # Create refGene table
     else:
-        refgene_table = create_refgene_table(conn, refgene_table=refgene_table, refgene_file=refgene_file)
-        return refgene_table
-
-    
-# def get_transcripts(conn, chr:str, pos:int, refgene_table="refgene") -> list:
-#     """
-#     The function `get_transcripts` retrieves the names of transcripts from a specified table in a
-#     database based on the chromosome, position, and reference gene table.
-    
-#     :param conn: The `conn` parameter is a database connection object that is used to connect to a
-#     database and execute SQL queries
-#     :param chr: The `chr` parameter is a string that represents the chromosome name or number. It is
-#     used to filter the results based on the specified chromosome
-#     :type chr: str
-#     :param pos: The `pos` parameter represents the position on the chromosome where you want to find
-#     transcripts
-#     :type pos: int
-#     :param refgene_table: The refgene_table parameter is the name of the table in the database that
-#     contains the reference gene information, defaults to refgene (optional)
-#     :return: a list of transcript names that match the given criteria.
-#     """
-
-#     query = f"SELECT name FROM {refgene_table} WHERE chrom='{chr}' AND txStart<={pos} AND txEnd>={pos}"
-#     #print(query)
-#     try:
-#         return list(conn.query(query).df()["name"])
-#     except:
-#         return []
-
-
-# def get_transcripts_positions(conn, positions=[], refgene_table="refgene", by_chrom:bool = False, dataframe_type:str = "pandas") -> list:
-#     """
-#     The function `get_transcripts_positions` retrieves transcript positions from a database based on a
-#     list of positions.
-    
-#     :param conn: The `conn` parameter is a database connection object that allows you to interact with a
-#     database. It is used to execute SQL queries and retrieve results
-#     :param positions: The `positions` parameter is a list of dictionaries, where each dictionary
-#     represents a position. Each dictionary should have two keys: "CHROM" for the chromosome and "POS" for
-#     the position on that chromosome. For example: [{"CHROM":"chr1","POS":1234}, {"CHROM":"chr2","POS":5678}]
-#     :param refgene_table: The `refgene_table` parameter is the name of the table in the database that
-#     contains the reference gene information, defaults to refgene (optional)
-#     :return: a pandas DataFrame containing the results of the SQL query.
-#     """
-    
-#     if positions:
-#         sql_positions = " OR ".join([f"""(chrom = '{position["CHROM"]}' AND txStart<={position["POS"]} AND txEnd>={position["POS"]})""" for position in positions])
-#         query = f"SELECT * FROM {refgene_table} WHERE {sql_positions}"
-#     else:
-#         query = f"SELECT * FROM {refgene_table}"
-    
-#     res = conn.query(query).df()
-
-#     if by_chrom:
-#         transcripts_positions = {}
-#         for chrom in list(set(res["chrom"])):
-#             transcripts_positions[chrom] = res[(res['chrom'] == chrom)]
-#     else:
-#         transcripts_positions = res
-
-#     return transcripts_positions
+        refseq_table = create_refseq_table(conn, refseq_table=refseq_table, refseq_file=refseq_file)
+        return refseq_table
 
 
 def get_transcript(transcripts:dict, transcript_name:str) -> Transcript:
