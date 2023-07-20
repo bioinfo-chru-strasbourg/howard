@@ -3463,19 +3463,24 @@ class Variants:
 
         # Convert Dask DataFrame to Pandas Dataframe
         df = ddf.compute()
+        
+        # Convert Pandas dataframe to parquet (due to error in cast VARCHAR -> NULL ???)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            df_parquet = os.path.join(tmpdir,"df.parquet")
+            df.to_parquet(df_parquet)
 
-        # Update hgvs column
-        update_variant_query = f"""
+            # Update hgvs column
+            update_variant_query = f"""
                 UPDATE {table_variants}
                 SET hgvs=df.hgvs
-                FROM df
+                FROM read_parquet('{df_parquet}') as df
                 WHERE variants."#CHROM" = df.CHROM
                 AND variants.POS = df.POS
                 AND variants.REF = df.REF
                 AND variants.ALT = df.ALT
                 AND df.hgvs NOT IN ('') AND df.hgvs NOT NULL
                 """
-        self.execute_query(update_variant_query)
+            self.execute_query(update_variant_query)
 
         # Update INFO column
         sql_query_update = f"""
