@@ -24,9 +24,8 @@ from unittest.mock import patch
 
 from howard.objects.variants import Variants
 from howard.utils import *
+from test_needed import *
 
-
-tests_folder = os.path.dirname(__file__)
 
 
 def test_json_perfect_exons_to_cdna_match():
