@@ -25,9 +25,8 @@ from unittest.mock import patch
 from howard.objects.variants import Variants
 from howard.commons import *
 from howard.tools.tools import *
+from test_needed import *
 
-
-tests_folder = os.path.dirname(__file__)
 
 
 def test_stats():
