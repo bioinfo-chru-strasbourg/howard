@@ -16,20 +16,20 @@
     },
     "parquet": {
       "annotations": {
-        "tests/data/annotations/avsnp150.parquet": {
+        "tests/databases/annotations/hg19/avsnp150.parquet": {
           "INFO": null
         },
-        "tests/data/annotations/dbnsfp42a.parquet": {
+        "tests/databases/annotations/hg19/dbnsfp42a.parquet": {
           "INFO": null
         },
-        "tests/data/annotations/gnomad211_genome.parquet": {
+        "tests/databases/annotations/hg19/gnomad211_genome.parquet": {
           "INFO": null
         }
       }
     },
     "bcftools": {
       "annotations": {
-        "tests/data/annotations/cosmic70.vcf.gz": {
+        "tests/databases/annotations/hg19/cosmic70.vcf.gz": {
           "INFO": null
         }
       }

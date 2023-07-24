@@ -378,6 +378,8 @@ def databases_download_genomes(assemblies: list, genome_folder: str = None, prov
 
     log.info(f"Download Genomes {assemblies}")
 
+    import genomepy
+
     if not genome_folder:
         genome_folder = DEFAULT_GENOME_FOLDER
 

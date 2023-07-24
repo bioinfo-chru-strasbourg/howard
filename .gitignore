@@ -4,8 +4,10 @@ howard.egg-info/
 .cache
 .vscode
 .coverage
-tests/data/annotations/annovar/
-tests/data/annotations/snpeff/
-tests/data/annotations/hg19.fa
-tests/data/annotations/hg19.fa.fai
-tests/data/annotations/.DS_Store
+tests/databases/annovar/
+tests/databases/snpeff/
+tests/databases/genomes/
+tests/databases/refseq/
+tests/databases/hg19.fa
+tests/databases/hg19.fa.fai
+tests/databases/.DS_Store

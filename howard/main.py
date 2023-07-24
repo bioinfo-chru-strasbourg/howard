@@ -42,7 +42,7 @@ def main() -> None:
         #usage="howard [<shared-args>]",
         epilog="Usage examples:\n"
             """   howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json \n"""
-            """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/data/annotations/dbnsfp42a.parquet,tests/data/annotations/gnomad211_genome.parquet' \n"""
+            """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/hg19/dbnsfp42a.parquet,tests/databases/annotations/hg19/gnomad211_genome.parquet' \n"""
             """   howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations='vartype' \n"""
             """   howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations=config/prioritization_profiles.json --profiles='default,GERMLINE' \n"""
             """   howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, "INFO/DP", "INFO/CLNSIG", sample2, sample3 FROM variants WHERE "INFO/DP" >= 50 OR "INFO/CLNSIG" NOT NULL ORDER BY "INFO/DP" DESC' \n"""
@@ -105,7 +105,7 @@ def main() -> None:
         args.verbosity = "info"
 
     # Logging
-    set_log_level(args.verbosity)
+    set_log_level(args.verbosity, args.log)
 
     # Threads
     if "threads" in args and args.threads:

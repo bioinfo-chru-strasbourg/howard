@@ -32,7 +32,6 @@ from howard.tools.databases import *
 from howard.tools.from_annovar import *
 
 
-
 # Arguments dict
 arguments = {
 
@@ -428,6 +427,14 @@ arguments = {
             "required": False,
             "default": "info"
         },
+        "log": {
+            "metavar": "FILE",
+            "help": """Logs file\n"""
+                    """Format: LOG\n"""
+                    """Example: 'my.log'\n"""
+                    """Default: None""",
+            "default": None
+        },
         "quiet": {
             "help": argparse.SUPPRESS,
             "action": "store_true"
@@ -445,7 +452,7 @@ arguments = {
 
 
 # Shared arguments
-shared_arguments = ["config", "threads", "memory", "verbosity", "quiet", "verbose", "debug"]
+shared_arguments = ["config", "threads", "memory", "verbosity", "log", "quiet", "verbose", "debug"]
 
 # Command dict
 commands_arguments = {
@@ -482,8 +489,8 @@ commands_arguments = {
         "description":  """Annotation is mainly based on a build-in Parquet annotation method, and tools such as BCFTOOLS, Annovar and snpEff. It uses available databases (see Annovar and snpEff) and homemade databases. Format of databases are: parquet, duckdb, vcf, bed, Annovar and snpEff (Annovar and snpEff databases are automatically downloaded, see howard databases tool). """,
         "help":         """Annotation of genetic variations using databases/files and tools.""",
         "epilog":       """Usage examples:\n"""
-                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/data/annotations/avsnp150.parquet,tests/data/annotations/dbnsfp42a.parquet,tests/data/annotations/gnomad211_genome.parquet' \n"""
-                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --annotations='annovar:refGene,snpeff,tests/data/annotations/clinvar_20210123.parquet' \n""", 
+                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/hg19/avsnp150.parquet,tests/databases/annotations/hg19/dbnsfp42a.parquet,tests/databases/annotations/hg19/gnomad211_genome.parquet' \n"""
+                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --annotations='annovar:refGene,snpeff,tests/databases/annotations/hg19/clinvar_20210123.parquet' \n""", 
         "groups": {
             "main": {
                 "input": True,
@@ -571,8 +578,8 @@ commands_arguments = {
         "epilog": """Usage examples:\n"""
                         """   howard query --input=tests/data/example.vcf.gz --query="SELECT * FROM variants WHERE REF = 'A' AND POS < 100000" \n"""
                         """   howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, "INFO/DP", "INFO/CLNSIG", sample2, sample3 FROM variants WHERE "INFO/DP" >= 50 OR "INFO/CLNSIG" NOT NULL ORDER BY "INFO/DP" DESC' \n"""
-                        """   howard query --query="SELECT * FROM 'tests/data/annotations/dbnsfp42a.parquet' WHERE \\"INFO/Interpro_domain\\" NOT NULL ORDER BY \\"INFO/SiPhy_29way_logOdds_rankscore\\" DESC" \n"""
-                        """   howard query --query="SELECT \\"#CHROM\\" AS \\"#CHROM\\", POS AS POS, '' AS ID, REF AS REF, ALT AS ALT, '' AS QUAL, '' AS FILTER, STRING_AGG(INFO, ';') AS INFO FROM 'tests/data/annotations/*.parquet' GROUP BY \\"#CHROM\\", POS, REF, ALT" --output=/tmp/full_annotation.tsv \n"""
+                        """   howard query --query="SELECT * FROM 'tests/databases/annotations/hg19/dbnsfp42a.parquet' WHERE \\"INFO/Interpro_domain\\" NOT NULL ORDER BY \\"INFO/SiPhy_29way_logOdds_rankscore\\" DESC" \n"""
+                        """   howard query --query="SELECT \\"#CHROM\\" AS \\"#CHROM\\", POS AS POS, '' AS ID, REF AS REF, ALT AS ALT, '' AS QUAL, '' AS FILTER, STRING_AGG(INFO, ';') AS INFO FROM 'tests/databases/annotations/hg19/*.parquet' GROUP BY \\"#CHROM\\", POS, REF, ALT" --output=/tmp/full_annotation.tsv \n"""
                         , 
         "groups": {
             "main": {

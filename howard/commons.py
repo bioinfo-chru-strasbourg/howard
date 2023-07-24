@@ -22,7 +22,6 @@ import urllib.request
 import zipfile
 import gzip
 import requests
-import genomepy
 
 
 file_folder = os.path.dirname(__file__)
@@ -90,6 +89,8 @@ MACHIN_LIST = {
     "arm64": "arm64"
 }
 
+LOG_FORMAT = "#[%(asctime)s] [%(levelname)s] %(message)s"
+
 def remove_if_exists(filepaths: list) -> None:
     """
     The function removes a file if it exists at the specified filepath(s).
@@ -104,7 +105,7 @@ def remove_if_exists(filepaths: list) -> None:
             os.remove(filepath)
 
 
-def set_log_level(verbosity: str) -> str:
+def set_log_level(verbosity: str, log_file:str = None) -> str:
     """
     It sets the log level of the Python logging module
 
@@ -120,8 +121,11 @@ def set_log_level(verbosity: str) -> str:
     }
     if verbosity not in configs.keys():
         raise ValueError("Unknown verbosity level:" + verbosity)
+    
     log.basicConfig(
-        format="#[%(asctime)s] [%(levelname)s] %(message)s",
+        filename=log_file,
+        encoding='utf-8', 
+        format=LOG_FORMAT,
         datefmt="%Y-%m-%d %H:%M:%S",
         level=configs[verbosity],
     )
