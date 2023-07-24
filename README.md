@@ -113,12 +113,12 @@ howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "
 
 - Query a Parquet file with specific columns (e.g. from VCF convertion to Parquet)
 ```
-howard query --query="SELECT * FROM 'tests/data/annotations/dbnsfp42a.parquet' WHERE \"INFO/Interpro_domain\" NOT NULL ORDER BY \"INFO/SiPhy_29way_logOdds_rankscore\" DESC"
+howard query --query="SELECT * FROM 'tests/databases/annotations/hg19/dbnsfp42a.parquet' WHERE \"INFO/Interpro_domain\" NOT NULL ORDER BY \"INFO/SiPhy_29way_logOdds_rankscore\" DESC"
 ```
 
 - Query multiple Parquet files, merge INFO columns, and extract as TSV (in VCF format)
 ```
-howard query --query="SELECT \"#CHROM\" AS \"#CHROM\", POS AS POS, '' AS ID, REF AS REF, ALT AS ALT, '' AS QUAL, '' AS FILTER, STRING_AGG(INFO, ';') AS INFO FROM 'tests/data/annotations/*.parquet' GROUP BY \"#CHROM\", POS, REF, ALT" --output=/tmp/full_annotation.tsv
+howard query --query="SELECT \"#CHROM\" AS \"#CHROM\", POS AS POS, '' AS ID, REF AS REF, ALT AS ALT, '' AS QUAL, '' AS FILTER, STRING_AGG(INFO, ';') AS INFO FROM 'tests/databases/annotations/hg19/*.parquet' GROUP BY \"#CHROM\", POS, REF, ALT" --output=/tmp/full_annotation.tsv
 ```
 
 
@@ -128,12 +128,12 @@ Annotation is mainly based on a build-in Parquet annotation method, and tools su
 
 - VCF annotation with Parquet and VCF databases, output as VCF format
 ```
-howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/data/annotations/dbnsfp42a.parquet,tests/data/annotations/gnomad211_genome.parquet,tests/data/annotations/cosmic70.vcf.gz'
+howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/hg19/dbnsfp42a.parquet,tests/databases/annotations/hg19/gnomad211_genome.parquet,tests/databases/annotations/hg19/cosmic70.vcf.gz'
 ```
 
 - VCF annotation with Clinvar Parquet, Annovar refGene and snpEff databases, output as TSV format
 ```
-howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --annotations='annovar:refGene,snpeff,tests/data/annotations/clinvar_20210123.parquet'
+howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --annotations='annovar:refGene,snpeff,tests/databases/annotations/hg19/clinvar_20210123.parquet'
 ```
 
 ## Calculation
@@ -226,20 +226,20 @@ howard process --config=config/config.json --param=config/param.json --input=tes
     },
     "parquet": {
       "annotations": {
-        "tests/data/annotations/avsnp150.parquet": {
+        "tests/databases/annotations/hg19/avsnp150.parquet": {
           "INFO": null
         },
-        "tests/data/annotations/dbnsfp42a.parquet": {
+        "tests/databases/annotations/hg19/dbnsfp42a.parquet": {
           "INFO": null
         },
-        "tests/data/annotations/gnomad211_genome.parquet": {
+        "tests/databases/annotations/hg19/gnomad211_genome.parquet": {
           "INFO": null
         }
       }
     },
     "bcftools": {
       "annotations": {
-        "tests/data/annotations/cosmic70.vcf.gz": {
+        "tests/databases/annotations/hg19/cosmic70.vcf.gz": {
           "INFO": null
         }
       }

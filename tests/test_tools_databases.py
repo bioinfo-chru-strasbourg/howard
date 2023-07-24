@@ -437,6 +437,8 @@ def test_databases_download_genomes():
     different assemblies and contig filters.
     """
 
+    import genomepy
+
     # Init
     assemblies_config = {
             "sacCer3": {
