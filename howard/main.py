@@ -103,6 +103,9 @@ def main() -> None:
     # verbosity
     if "verbosity" not in args:
         args.verbosity = "info"
+    # log
+    if "log" not in args:
+        args.log = None
 
     # Logging
     set_log_level(args.verbosity, args.log)
@@ -133,10 +136,8 @@ def main() -> None:
     config["threads"] = threads
     config["memory"] = memory
 
-
     # Change config
     args.config = config
-
 
     # Command eval
     if not args.command:

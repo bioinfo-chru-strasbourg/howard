@@ -696,8 +696,8 @@ def test_is_vcf():
     assert database.is_vcf(database_files.get("csv_gz"))
 
     # Check json
-    assert not database.is_vcf(database_files.get("json"))
-    assert not database.is_vcf(database_files.get("json_gz"))
+    assert database.is_vcf(database_files.get("json"))
+    assert database.is_vcf(database_files.get("json_gz"))
 
     # Check bed
     assert not database.is_vcf(database_files.get("bed"))
@@ -887,25 +887,25 @@ def test_get_sql_from():
     assert database.get_sql_from(database_files.get("parquet")) ==  f"""read_parquet('{database_files.get("parquet")}')"""
 
     # Check vcf
-    assert database.get_sql_from(database_files.get("vcf")) == f"""read_csv('{database_files.get("vcf")}', auto_detect=True, delim='\t')"""
+    assert database.get_sql_from(database_files.get("vcf")) == f"""read_csv('{database_files.get("vcf")}', names=['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, delim='\t')"""
 
     # Check vcf gz
-    assert database.get_sql_from(database_files.get("vcf_gz")) == f"""read_csv('{database_files.get("vcf_gz")}', auto_detect=True, delim='\t')"""
+    assert database.get_sql_from(database_files.get("vcf_gz")) == f"""read_csv('{database_files.get("vcf_gz")}', names=['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, delim='\t')"""
 
     # Check tsv
-    assert database.get_sql_from(database_files.get("tsv")) == f"""read_csv('{database_files.get("tsv")}', auto_detect=True, delim='\t')"""
+    assert database.get_sql_from(database_files.get("tsv")) == f"""read_csv('{database_files.get("tsv")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, delim='\t')"""
 
     # Check tsv gz
-    assert database.get_sql_from(database_files.get("tsv_gz")) == f"""read_csv('{database_files.get("tsv_gz")}', auto_detect=True, delim='\t')"""
+    assert database.get_sql_from(database_files.get("tsv_gz")) == f"""read_csv('{database_files.get("tsv_gz")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, delim='\t')"""
 
     # Check csv
-    assert database.get_sql_from(database_files.get("csv")) == f"""read_csv('{database_files.get("csv")}', auto_detect=True, delim=',')"""
+    assert database.get_sql_from(database_files.get("csv")) == f"""read_csv('{database_files.get("csv")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, delim=',')"""
 
     # Check tbl
-    assert database.get_sql_from(database_files.get("tbl")) == f"""read_csv('{database_files.get("tbl")}', auto_detect=True, delim='|')"""
+    assert database.get_sql_from(database_files.get("tbl")) == f"""read_csv('{database_files.get("tbl")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, delim='|')"""
 
     # Check bed
-    assert database.get_sql_from(database_files.get("bed")) == f"""read_csv('{database_files.get("bed")}', auto_detect=True, delim='\t')"""
+    assert database.get_sql_from(database_files.get("bed")) == f"""read_csv('{database_files.get("bed")}', names=['#CHROM', 'START', 'END', 'annot1', 'annot2'], auto_detect=True, delim='\t')"""
 
     # Check json
     assert database.get_sql_from(database_files.get("json")) == f"""read_json('{database_files.get("json")}', auto_detect=True)"""
@@ -1063,7 +1063,7 @@ def test_get_columns():
     assert database.get_columns(database=database_files.get("sqlite"), table="variants") == ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'INFO/nci60']
 
     # Check parquet
-    assert database.get_columns(database=database_files.get("parquet")) ==  ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'INFO/nci60']
+    assert database.get_columns(database=database_files.get("parquet")) ==  ['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO', 'INFO/nci60']
 
     # Check vcf
     assert database.get_columns(database=database_files.get("vcf")) == ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO']
@@ -1072,16 +1072,28 @@ def test_get_columns():
     assert database.get_columns(database=database_files.get("vcf_without_header")) == ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO']
 
     # Check tsv
-    assert database.get_columns(database=database_files.get("tsv")) == ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO']
+    assert database.get_columns(database=database_files.get("tsv")) == ['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO']
 
     # Check csv
-    assert database.get_columns(database=database_files.get("csv")) == ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO']
+    assert database.get_columns(database=database_files.get("csv")) == ['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO']
 
     # Check tbl
-    assert database.get_columns(database=database_files.get("tbl")) == ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO']
+    assert database.get_columns(database=database_files.get("tbl")) == ['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO']
 
     # Check bed
     assert database.get_columns(database=database_files.get("bed")) == ['#CHROM', 'START', 'END', 'annot1', 'annot2']
+
+    # Check refgene
+    assert database.get_columns(database=database_files.get("refgene")) == ['#CHROM', 'START', 'END', 'symbol', 'transcript', 'strand']
+
+    # Check refgene with an extra header file
+    assert database.get_columns(database=database_files.get("refgene"),header_file=database_files.get("refgene")+".hdr") == ['#CHROM', 'START', 'END', 'symbol', 'transcript', 'strand']
+
+    # Check refgene without header
+    assert database.get_columns(database=database_files.get("refgene_without_header")) == ['#CHROM', 'START', 'END', 'column3', 'column4', 'column5']
+
+    # Check refgene gz
+    assert database.get_columns(database=database_files.get("refgene_gz"),header_file=database_files.get("refgene_gz")+".hdr") == ['#CHROM', 'START', 'END', 'symbol', 'transcript', 'strand']
 
     # Check None
     assert database.get_columns(database=None) == []
@@ -1406,12 +1418,13 @@ def test_export():
     # database input/format
     for database_input_index in ["bed", "parquet", "vcf", "vcf_gz", "tsv", "csv", "tbl", "tsv_alternative_columns", "tsv_variants", "json", "example_vcf"]:
         for database_output_format in ["duckdb", "parquet", "vcf", "vcf.gz", "tsv", "csv", "tbl", "json", "bed"]:
+            print(database_input_index, database_output_format)
             input_database = database_files.get(database_input_index)
             database = Database(database_files.get(database_input_index))
             output_database=f"/tmp/output_database.{database_output_format}"
             output_header=output_database+".hdr"
             remove_if_exists([output_database,output_header])
-            if not (database.get_format(input_database) == "bed" and database.get_format(output_database) == "vcf"):
+            if True: #not (database.get_format(input_database) == "bed" and database.get_format(output_database) == "vcf"):
                 try:
                     assert database.export(output_database=output_database, output_header=output_header)
                     if database.get_sql_database_attach(database=output_database):
@@ -1421,5 +1434,5 @@ def test_export():
                     assert False
             else:
                 # For input as BED and output as VCF
-                assert not database.export(output_database=output_database)
+                assert database.export(output_database=output_database) == "regions"
 

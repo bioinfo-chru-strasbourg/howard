@@ -1828,9 +1828,6 @@ class Variants:
                             command_extract_header = f"cat {db_hdr_file} | grep '^##' > {tmp_header_vcf_name}"
                         # Run
                         run_parallel_commands([command_extract_header], 1)
-                        
-
-                        #print(f"grep '^#CHROM' -v {db_hdr_file} > {tmp_header_vcf_name}")
 
                         # Find chomosomes
                         log.debug("Find chromosomes ")
@@ -2624,6 +2621,8 @@ class Variants:
                 # Find files
                 parquet_file = database.get_database()
                 parquet_hdr_file = database.get_header_file()
+                parquet_format = database.get_format()
+                parquet_type = database.get_type()
 
                 # Check if files exists
                 if not parquet_file or not parquet_hdr_file:
@@ -2651,12 +2650,30 @@ class Variants:
                     log.debug("Annotation database Columns: " +
                               str(parquet_columns))
 
+                    
+                    # Add extra columns
+                    allow_add_extra_column = True
+                    if allow_add_extra_column and database.get_extra_columns():
+                        for extra_column in database.get_extra_columns():
+                            if extra_column not in annotation_fields:
+                                #annotation_fields[extra_column] = extra_column
+                                parquet_hdr_vcf_header_infos[extra_column] = vcf.parser._Info(
+                                    extra_column,
+                                    ".",
+                                    "String",
+                                    f"{extra_column} description",
+                                    "unknown",
+                                    "unknown",
+                                    self.code_type_map["String"]
+                                )
+
                     # For all fields in database
                     annotation_fields_ALL = False
                     if "ALL" in annotation_fields or "INFO" in annotation_fields:
                         annotation_fields_ALL = True
                         annotation_fields = {
                             key: key for key in parquet_hdr_vcf_header_infos}
+                        
                         log.debug(
                             "Annotation database header - All annotations added: " + str(annotation_fields))
 
@@ -2664,6 +2681,9 @@ class Variants:
 
                     # List of annotation fields to use
                     sql_query_annotation_update_info_sets = []
+
+                    # List of annotation to agregate
+                    sql_query_annotation_to_agregate = []
 
                     # Number of fields
                     nb_annotation_field = 0
@@ -2676,7 +2696,7 @@ class Variants:
 
                     # Fetch Anotation fields
                     for annotation_field in annotation_fields:
-
+                        
                         # annotation_field_column
                         annotation_field_column = map_columns.get(annotation_field, "INFO")
 
@@ -2689,7 +2709,7 @@ class Variants:
                         # To annotate
                         force_update_annotation = False
                         if annotation_field in parquet_hdr_vcf_header_infos and (force_update_annotation or (annotation_fields_new_name not in self.get_header().infos)):
-
+                            
                             # Add field to annotation to process list
                             annotation_fields_processed.append(
                                 annotation_fields_new_name)
@@ -2743,6 +2763,7 @@ class Variants:
                                         ELSE ''
                                     END
                                 """)
+                                sql_query_annotation_to_agregate.append(f""" string_agg(DISTINCT table_parquet_from."{annotation_field_column}", ',') AS "{annotation_field_column}" """)
 
                         # Not to annotate
                         else:
@@ -2761,6 +2782,10 @@ class Variants:
 
                     # Check if ALL fields have to be annotated. Thus concat all INFO field
                     allow_annotation_full_info = True
+                    
+                    if parquet_type in ["regions"]:
+                        allow_annotation_full_info = False
+
                     if allow_annotation_full_info and nb_annotation_field == len(annotation_fields) and annotation_fields_ALL:
                         sql_query_annotation_update_info_sets = []
                         sql_query_annotation_update_info_sets.append(
@@ -2848,21 +2873,47 @@ class Variants:
                                     # create where caluse on regions
                                     clause_where_regions_variants = create_where_clause(
                                         regions, table="table_variants")
-                                    clause_where_regions_parquet = create_where_clause(
-                                        regions, table="table_parquet")
 
                                     log.debug(
                                         f"Annotation '{annotation}' - Chromosome '{chrom}' - Interval [{sql_query_interval_start}-{sql_query_interval_stop}] - {nb_regions} regions...")
 
+                                    if parquet_type in ["regions"]:
+                                        sql_query_annotation_from_clause = f"""
+                                            FROM (
+                                                SELECT 
+                                                    table_variants_from.\"#CHROM\" AS \"#CHROM\",
+                                                    table_variants_from.\"POS\" AS \"POS\",
+                                                    table_variants_from.\"REF\" AS \"REF\",
+                                                    table_variants_from.\"ALT\" AS \"ALT\",
+                                                    {",".join(sql_query_annotation_to_agregate)}
+                                                FROM {parquet_file_link} as table_parquet_from, {table_variants} as table_variants_from
+                                                WHERE table_variants_from.\"#CHROM\" in ('{chrom}')
+                                                    AND table_parquet_from.\"#CHROM\" = table_variants_from.\"#CHROM\"
+                                                    AND table_variants_from.\"POS\" > table_parquet_from.\"START\" 
+                                                    AND table_variants_from.\"POS\" <= table_parquet_from.\"END\"
+                                                GROUP BY
+                                                    table_variants_from.\"#CHROM\",
+                                                    table_variants_from.\"POS\",
+                                                    table_variants_from.\"REF\",
+                                                    table_variants_from.\"ALT\"
+                                                    )
+                                                as table_parquet
+                                        """
+                                    else:
+                                        sql_query_annotation_from_clause = f"""
+                                            FROM {parquet_file_link} as table_parquet 
+                                        """
+
                                     sql_query_annotation_chrom_interval_pos = f"""
                                         UPDATE {table_variants} as table_variants
                                             SET INFO = CASE WHEN table_variants.INFO NOT IN ('','.') THEN table_variants.INFO ELSE '' END || CASE WHEN table_variants.INFO NOT IN ('','.') AND ('' {sql_query_annotation_update_info_sets_sql}) NOT IN ('','.') THEN ';' ELSE '' END {sql_query_annotation_update_info_sets_sql}
-                                            FROM {parquet_file_link} as table_parquet
-                                            WHERE ( {clause_where_regions_parquet} )
+                                            {sql_query_annotation_from_clause}
+                                            WHERE ( {clause_where_regions_variants} )
                                                 AND table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
                                                 AND table_parquet.\"POS\" = table_variants.\"POS\"
                                                 AND table_parquet.\"ALT\" = table_variants.\"ALT\"
-                                                AND table_parquet.\"REF\" = table_variants.\"REF\";
+                                                AND table_parquet.\"REF\" = table_variants.\"REF\"
+                                                ;
                                                 """
                                     query_dict[f"{chrom}:{sql_query_interval_start}-{sql_query_interval_stop}"] = sql_query_annotation_chrom_interval_pos
 
@@ -3228,11 +3279,6 @@ class Variants:
     ###
     # HGVS
     ###
-
-    def hgvs_full_test(self, row):
-            #print(row)
-            # Faire quelque chose avec les données de la ligne
-            return row['CHROM'] + row['REF']
 
 
     def annotation_hgvs(self, threads:int = None) -> None:
