@@ -64,7 +64,7 @@ def test_annotation():
                 result_output_nb_variants += 1
 
     # Expected result
-    expected_result_nb_lines = 61
+    expected_result_nb_lines = 65
     expected_result_nb_variants = 7
 
     # Compare

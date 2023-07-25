@@ -69,7 +69,7 @@ def test_process():
                 result_output_nb_variants += 1
 
     # Expected result
-    expected_result_nb_lines = 68
+    expected_result_nb_lines = 72
     expected_result_nb_variants = 7
 
     # Compare
@@ -117,7 +117,7 @@ def test_process_with_param_file():
                 result_output_nb_variants += 1
 
     # Expected result
-    expected_result_nb_lines = 78
+    expected_result_nb_lines = 82
     expected_result_nb_variants = 7
 
     # Compare
@@ -167,7 +167,7 @@ def test_process_with_query():
                 result_lines.append(line.strip())
 
     # Expected result
-    expected_result_nb_lines = 62
+    expected_result_nb_lines = 66
     expected_result_nb_variants = 1
     expected_result_lines = ["7"]
 
