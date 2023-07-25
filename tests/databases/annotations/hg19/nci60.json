@@ -1,4 +1,3 @@
 [
-	{"#CHROM":"chr7","POS":55249063,"ID":".","REF":"G","ALT":"A","QUAL":".","FILTER":"PASS","INFO":"nci60=0.66","INFO/nci60":"0.66"},
-	{"#CHROM":"chr7","POS":55249063,"ID":".","REF":"G","ALT":"A","QUAL":".","FILTER":"PASS","INFO":"nci60=0.66","INFO/nci60":"0.66"}
+	{"#CHROM":"chr7","POS":55249063,"REF":"G","ALT":"A","ID":".","QUAL":".","FILTER":"PASS","INFO":"nci60=0.66"}
 ]

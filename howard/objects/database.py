@@ -51,6 +51,12 @@ DATABASE_TYPE_NEEDED_COLUMNS = {
             "FILTER": ["FILTER"],
             "INFO": ["INFO"],
         },
+    "bed":
+        {
+            "#CHROM": ["#CHROM", "CHROM", "CHR", "CHROMOSOME"],
+            "START": ["START", "POSITIONSTART", "POS"],
+            "END": ["END", "POSITIONEND", "POS"],
+        },
 }
 
 DEFAULT_VCF_HEADER = [
@@ -147,7 +153,7 @@ class Database:
 
         # Install duckDB extensions
         load_duckdb_extension(self.conn,DUCKDB_EXTENSION_TO_LOAD)
-
+        
         # Check attributes
         self.set_format(format=format)
         self.set_assembly(assembly=assembly)
@@ -230,7 +236,7 @@ class Database:
             return []
 
         else:
-
+            
             header_file_compressed = get_file_compressed(header_file)
 
             if header_file_compressed:
@@ -253,22 +259,25 @@ class Database:
     
     def get_header_from_list(self, header_list:list = None) -> vcf:
         """
-        This function returns a vcf.Reader object with a header generated from a given list or a default
-        list.
+        The function `get_header_from_list` returns a `vcf.Reader` object with a header generated from a
+        given list or a default list.
         
-        :param header_list: A list of strings representing the header lines of a VCF file. If this
-        parameter is not provided, the function will use a default list of header lines
+        :param header_list: The `header_list` parameter is a list of strings representing the header
+        lines of a VCF (Variant Call Format) file. It is an optional parameter, meaning it can be
+        provided as an argument to the function, but if no argument is provided, a default list of
+        header lines will be used
         :type header_list: list
-        :return: a `vcf.Reader` object that reads the VCF header information from a list of strings. The
-        list of strings can be provided as an argument to the function, and if no argument is provided,
-        a default list is used.
+        :return: a `vcf.Reader` object.
         """
-
+        
         if not header_list:
             header_list = DEFAULT_HEADER_LIST
             
-        return vcf.Reader(io.StringIO("\n".join(header_list)))
-    
+        try:
+            return vcf.Reader(io.StringIO("\n".join(header_list)))
+        except:
+            return None
+        
 
     def get_header_from_file(self, header_file:str) -> vcf:
         """
@@ -491,7 +500,7 @@ class Database:
             self.header_file = None
         
         else:
-
+            
             if header_file and os.path.exists(header_file):
 
                 # header provided
@@ -499,8 +508,8 @@ class Database:
                 self.header_file = header_file
             
             else:
-
-                # default no heder file
+                
+                # default no haeder file
                 self.header_file = None
                 
                 if not database:
@@ -518,13 +527,13 @@ class Database:
                     if os.path.exists(database_header_file):
                         self.header = self.get_header(header_file=database_header_file)
                         self.header_file = database_header_file
-
+                        
                     # header within file
                     elif database_format in ["vcf", "tsv", "csv", "tbl", "bed"]:
                         self.header = self.get_header(header_file=database)
                         if self.header:
                             self.header_file = self.get_database()
-
+                        
                     # Not header
                     else:
                         self.header = self.get_header()
@@ -572,9 +581,10 @@ class Database:
                 else:
                     header = self.get_header(header_list=DEFAULT_HEADER_LIST)
                 # Generate header file
-                f = open(header_file, 'w')
-                vcf.Writer(f, header)
-                f.close()
+                if not os.path.exists(header_file):
+                    f = open(header_file, 'w')
+                    vcf.Writer(f, header)
+                    f.close()
         else:
             # No header generated
             header_file = None
@@ -661,9 +671,8 @@ class Database:
                 if  assembly:
                     for databases_folder in databases_folders:
                             
-                        #database_file_check = os.path.join(databases_folder, assembly, f"{database}{format_extension}")
                         database_file_check = f"{databases_folder}/{assembly}/{database}{format_extension}"
-                        print(database_file_check)
+                        
                         # Log
                         log.debug("Annotation file check: " + database_file_check)
 
@@ -842,10 +851,20 @@ class Database:
         
         if not database:
             database = self.get_database()
-        
+
         if database and self.exists(database):
             database_columns = self.get_columns(database, table=self.get_database_table(database))
-            return self.get_type_from_columns(database_columns)
+            database_type = self.get_type_from_columns(database_columns)
+            if database_type:
+                return database_type
+            else:
+                database_format = self.get_format()
+                if database_format in ["vcf"]:
+                    return "vcf"
+                elif database_format in ["bed"]:
+                    return "regions"
+                else:
+                    return None
         else:
             return None
     
@@ -983,7 +1002,7 @@ class Database:
         return variants_columns_found
 
 
-    def get_sql_from(self, database:str = None) -> str:
+    def get_sql_from(self, database:str = None, header_file:str = None) -> str:
         """
         This function returns a SQL query string based on the input database format.
         
@@ -1000,17 +1019,26 @@ class Database:
         if not database:
             database = self.get_database()
 
-        database_format = self.get_format(database)
+        database_format = self.get_format(database=database)
 
         sql_form = None
 
         if type(database) == duckdb.DuckDBPyConnection:
-            sql_form = self.get_database_table(database)
+            sql_form = self.get_database_table(database=database)
         elif database_format in ["parquet"]:
             sql_form = f"read_parquet('{database}')"
         elif database_format in ["vcf","tsv", "csv", "tbl", "bed"]:
             delimiter = SEP_TYPE.get(database_format,"\t")
-            sql_form = f"read_csv('{database}', auto_detect=True, delim='{delimiter}')"
+            # Check columns from file
+            table_columns = self.get_table_columns_from_file(database=database, header_file=header_file)
+            nb_columns_detected_by_duckdb = len(self.conn.query(f"""SELECT * FROM read_csv('{database}', auto_detect=True, delim='{delimiter}') LIMIT 0""").df().columns)
+            if not table_columns or (nb_columns_detected_by_duckdb != len(table_columns)):
+                # Check columns from header
+                table_columns = self.get_table_columns_from_format(database=database)
+            if table_columns:
+                sql_form = f"""read_csv('{database}', names={table_columns}, auto_detect=True, delim='{delimiter}')"""
+            else:
+                sql_form = f"read_csv('{database}', auto_detect=True, delim='{delimiter}')"
         elif database_format in ["json"]:
             sql_form = f"read_json('{database}', auto_detect=True)"
         elif database_format in ["duckdb"]:
@@ -1239,7 +1267,7 @@ class Database:
         return columns_mapping
     
 
-    def get_columns(self, database:str = None, table:str = None) -> list:
+    def get_columns(self, database:str = None, table:str = None, header_file:str = None) -> list:
         """
         This function retrieves a list of columns from a specified database and table using SQL queries.
         
@@ -1284,12 +1312,97 @@ class Database:
                     columns_list = list(pd.read_sql_query(sql_query, database_conn).columns)
                     return columns_list
             elif database_format in ["parquet", "vcf", "tsv", "csv", "tbl", "bed", "json"]:
-                sql_from = self.get_sql_from(database)
+                sql_from = self.get_sql_from(database=database, header_file=header_file)
                 sql_query = f"SELECT * FROM {sql_from} LIMIT 0"
                 return list(self.conn.query(sql_query).df().columns)
 
         return []
 
+
+    def get_table_columns_from_format(self, database:str = None) -> list:
+        """
+        The function `get_table_columns_from_format` returns a list of table columns based on the
+        specified database format.
+        
+        :param database: The `database` parameter is a string that represents the name of the database.
+        It is an optional parameter, which means it has a default value of `None`. If no value is
+        provided for the `database` parameter, the `get_database()` method is called to retrieve the
+        current database name
+        :type database: str
+        :return: a list of table columns.
+        """
+
+        table_columns = None
+
+        if not database:
+            database = self.get_database()
+
+        database_format = self.get_format(database)
+
+        needed_columns = DATABASE_TYPE_NEEDED_COLUMNS.get(database_format, None)
+        if needed_columns:
+            table_columns = list(needed_columns.keys())
+        else:
+            table_columns = []
+        
+        return table_columns
+
+
+    def get_table_columns_from_file(self, database:str = None, header_file:str = None) -> list:
+        """
+        The function `get_table_columns_from_file` retrieves the column names from a database or header
+        file.
+        
+        :param database: The `database` parameter is a string that represents the name or path of the
+        database file. If this parameter is not provided, the `get_database()` method is called to
+        retrieve the database name or path
+        :type database: str
+        :param header_file: The `header_file` parameter is a string that represents the file path or
+        name of the header file. This file contains the header information for a table, which typically
+        includes the names of the columns in the table
+        :type header_file: str
+        :return: a list of table columns.
+        """
+
+        table_columns = None
+
+        if not database:
+            database = self.get_database()
+
+        if not header_file:
+            header_file = self.get_header_file()
+
+        if not header_file:
+            header_file = self.find_header_file(database)
+
+        database_format = self.get_format(database=database)
+        delimiter = SEP_TYPE.get(database_format,"\t")
+
+        # Try from database file
+        try:
+            table_header = self.read_header_file(database)
+        except:
+            table_header = None
+
+        if table_header:
+            table_columns = table_header[len(table_header)-1].strip().split(delimiter)
+        else:
+            table_columns = None
+
+        if not table_columns:
+            # Try from header file
+            try:
+                table_header = self.read_header_file(header_file)
+            except:
+                table_header = None
+
+            if table_header:
+                table_columns = table_header[len(table_header)-1].strip().split(delimiter)
+            else:
+                table_columns = None
+
+        return table_columns
+        
 
     def get_annotations(self, database:str = None) -> object:
         """
@@ -1551,6 +1664,6 @@ class Database:
                 remove_if_exists([query_output_database_tmp])
             else:
                 shutil.move(query_output_database_tmp, output_database)
-
+        
         return os.path.exists(output_database) and self.get_type(output_database)
 

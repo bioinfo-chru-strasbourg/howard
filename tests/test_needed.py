@@ -56,7 +56,8 @@ tests_config = {
     "snpeff": {"jar": f"{tests_tools}/snpeff/current/bin/snpEff.jar"},
     "java": {"bin": "/usr/bin/java"},
     "annovar": {"bin": f"{tests_tools}/annovar/current/bin/table_annovar.pl"}
-  }
+  },
+  "verbosity": "debug"
 }
 
 
@@ -86,8 +87,10 @@ database_files = {
     "json_gz" : tests_annotations_folder + "/nci60.json.gz",
     "bed" : tests_annotations_folder + "/annotation_regions.bed",
     "bed_gz" : tests_annotations_folder + "/annotation_regions.bed.gz",
+    "refgene" : tests_annotations_folder + "/refGene.bed",
+    "refgene_without_header" : tests_annotations_folder + "/refGene.without_header.bed",
+    "refgene_gz" : tests_annotations_folder + "/refGene.bed.gz",
     "example_vcf" : tests_data_folder + "/example.vcf",
-
 }
 
 

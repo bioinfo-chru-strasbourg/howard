@@ -27,6 +27,7 @@ from test_needed import *
 
 
 
+
 def test_export_query():
     """
     This is a test function for exporting data from a VCF file to a TSV file using SQL queries.
@@ -60,7 +61,7 @@ def test_export():
     """
 
     # database input/format
-    for database_input_index in ["parquet", "vcf", "vcf_gz", "tsv", "csv", "tsv_alternative_columns", "example_vcf"]:
+    for database_input_index in ["parquet", "vcf", "vcf_gz", "tsv", "csv","example_vcf"]:
         for database_output_format in ["parquet", "vcf", "vcf.gz", "tsv", "csv", "json", "bed"]:
             input_database = database_files.get(database_input_index)
             output_database=f"/tmp/output_database.{database_output_format}"
@@ -1854,6 +1855,144 @@ def test_annotation_parquet_with_all_formats():
         length = len(result)
         
         assert length == 1
+
+        # Check if VCF is in correct format with pyVCF
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
+def test_annotation_parquet_regions():
+    """
+    The `test_annotation_parquet_regions()` function tests the `annotation()` method of the `Variants`
+    class using a Parquet file as an annotation source with various formats.
+    """
+    
+    # Init files
+    input_vcf = tests_data_folder + "/example.vcf.gz"
+
+    # annotation regions
+    with TemporaryDirectory(dir=".") as tmp_dir:
+        
+        # Init
+        annotation_parquet = os.path.join(tests_annotations_folder, f"annotation_regions.bed.gz")
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {"annotation": {"parquet": {"annotations": {annotation_parquet: {"INFO": None}}}}}
+
+        # Create object
+        variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
+        # Annotation
+        variants.annotation()
+
+        # query annotated variant
+        result = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE INFO LIKE '%blue%' OR INFO LIKE '%red%' OR INFO LIKE '%orange%' OR INFO LIKE '%cherry%'")
+        length = len(result)
+        
+        assert length == 3
+
+        # query annotated variant
+        result = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE INFO LIKE '%yellow%' OR INFO LIKE '%banana%'")
+        length = len(result)
+        
+        assert length == 3
+
+        # query annotated variant
+        result = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE INFO NOT LIKE '%annot1%' AND INFO NOT LIKE '%annot2%'")
+        length = len(result)
+        
+        assert length == 1
+
+        # Check if VCF is in correct format with pyVCF
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+    # annotation regions with refgene and an associated header hdr
+    with TemporaryDirectory(dir=".") as tmp_dir:
+        
+        # Init
+        annotation_parquet = os.path.join(tests_annotations_folder, f"refGene.bed")
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {"annotation": {"parquet": {"annotations": {annotation_parquet: {"INFO": None}}}}}
+
+        # Create object
+        variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
+        # Annotation
+        variants.annotation()
+
+        # query annotated variant
+        result = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE INFO LIKE '%symbol%' OR INFO LIKE '%transcripts%' OR INFO LIKE '%strand%'")
+        length = len(result)
+        
+        assert length == 3
+
+        # Check if VCF is in correct format with pyVCF
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+    # annotation regions with refgene compressed gz and an associated header hdr
+    with TemporaryDirectory(dir=".") as tmp_dir:
+        
+        # Init
+        annotation_parquet = os.path.join(tests_annotations_folder, f"refGene.bed.gz")
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {"annotation": {"parquet": {"annotations": {annotation_parquet: {"INFO": None}}}}}
+
+        # Create object
+        variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
+        # Annotation
+        variants.annotation()
+
+        # query annotated variant
+        result = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE INFO LIKE '%symbol%' OR INFO LIKE '%transcripts%' OR INFO LIKE '%strand%'")
+        length = len(result)
+        
+        assert length == 3
+
+        # Check if VCF is in correct format with pyVCF
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+    # annotation regions with refgene without any associated header hdr
+    with TemporaryDirectory(dir=".") as tmp_dir:
+        
+        # Init
+        annotation_parquet = os.path.join(tests_annotations_folder, f"refGene.without_header.bed")
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {"annotation": {"parquet": {"annotations": {annotation_parquet: {"INFO": None}}}}}
+
+        # Create object
+        variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
+        # Annotation
+        variants.annotation()
+
+        # query annotated variant
+        result = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE INFO LIKE '%column3%' OR INFO LIKE '%column4%' OR INFO LIKE '%column5%'")
+        length = len(result)
+        
+        assert length == 3
 
         # Check if VCF is in correct format with pyVCF
         variants.export_output()

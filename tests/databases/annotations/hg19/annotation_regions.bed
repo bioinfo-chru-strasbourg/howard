@@ -33,5 +33,5 @@
 ##contig=<ID=chrY,length=59373566>
 #CHROM	START	END	annot1	annot2
 chr1	28735	69101	blue	orange
+chr1	28735	69101	red	cherry
 chr1	768250	768253	yellow	banana
-chr7	55249060	55249069	red	cherry

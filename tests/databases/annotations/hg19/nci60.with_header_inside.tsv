@@ -36,4 +36,3 @@
 ##bcftools_viewCommand=view -R tests/data/example.bed -o tests/data/annotations/nci60.vcf.gz -Oz /Users/lebechea/STARK/databases/annotations/current/hg19/nci60.vcf.gz; Date=Sun Mar 26 15:49:05 2023
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
 chr7	55249063	.	G	A	.	PASS	nci60=0.66
-chr7	55249063	.	G	A	.	PASS	nci60=0.66
