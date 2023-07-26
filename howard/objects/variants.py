@@ -2877,44 +2877,56 @@ class Variants:
                                     log.debug(
                                         f"Annotation '{annotation}' - Chromosome '{chrom}' - Interval [{sql_query_interval_start}-{sql_query_interval_stop}] - {nb_regions} regions...")
 
+                                    # Annotation with regions database
                                     if parquet_type in ["regions"]:
                                         sql_query_annotation_from_clause = f"""
                                             FROM (
                                                 SELECT 
-                                                    table_variants_from.\"#CHROM\" AS \"#CHROM\",
+                                                    '{chrom}' AS \"#CHROM\",
                                                     table_variants_from.\"POS\" AS \"POS\",
-                                                    table_variants_from.\"REF\" AS \"REF\",
-                                                    table_variants_from.\"ALT\" AS \"ALT\",
                                                     {",".join(sql_query_annotation_to_agregate)}
-                                                FROM {parquet_file_link} as table_parquet_from, {table_variants} as table_variants_from
-                                                WHERE table_variants_from.\"#CHROM\" in ('{chrom}')
-                                                    AND table_parquet_from.\"#CHROM\" = table_variants_from.\"#CHROM\"
-                                                    AND table_variants_from.\"POS\" > table_parquet_from.\"START\" 
+                                                FROM {table_variants} as table_variants_from
+                                                LEFT JOIN {parquet_file_link} as table_parquet_from ON (
+                                                    table_parquet_from.\"#CHROM\" in ('{chrom}')
                                                     AND table_variants_from.\"POS\" <= table_parquet_from.\"END\"
-                                                GROUP BY
-                                                    table_variants_from.\"#CHROM\",
-                                                    table_variants_from.\"POS\",
-                                                    table_variants_from.\"REF\",
-                                                    table_variants_from.\"ALT\"
-                                                    )
+                                                    AND (table_variants_from.\"POS\" >= (table_parquet_from.\"START\"+1)
+                                                        OR table_variants_from.\"POS\" + (len(table_variants_from.\"REF\")-1) >= (table_parquet_from.\"START\"+1)
+                                                        )
+                                                )
+                                                WHERE table_variants_from.\"#CHROM\" in ('{chrom}')
+                                                GROUP BY table_variants_from.\"POS\"
+                                                )
                                                 as table_parquet
                                         """
+                                        
+                                        sql_query_annotation_where_clause = """
+                                            table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
+                                            AND table_parquet.\"POS\" = table_variants.\"POS\"
+                                        """
+
+                                    # Annotation with variants database
                                     else:
                                         sql_query_annotation_from_clause = f"""
                                             FROM {parquet_file_link} as table_parquet 
                                         """
+                                        sql_query_annotation_where_clause = f"""
+                                            ( {clause_where_regions_variants} )
+                                            AND table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
+                                            AND table_parquet.\"POS\" = table_variants.\"POS\"
+                                            AND table_parquet.\"ALT\" = table_variants.\"ALT\"
+                                            AND table_parquet.\"REF\" = table_variants.\"REF\"
+                                        """
 
+                                    # Create update query
                                     sql_query_annotation_chrom_interval_pos = f"""
                                         UPDATE {table_variants} as table_variants
                                             SET INFO = CASE WHEN table_variants.INFO NOT IN ('','.') THEN table_variants.INFO ELSE '' END || CASE WHEN table_variants.INFO NOT IN ('','.') AND ('' {sql_query_annotation_update_info_sets_sql}) NOT IN ('','.') THEN ';' ELSE '' END {sql_query_annotation_update_info_sets_sql}
                                             {sql_query_annotation_from_clause}
-                                            WHERE ( {clause_where_regions_variants} )
-                                                AND table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
-                                                AND table_parquet.\"POS\" = table_variants.\"POS\"
-                                                AND table_parquet.\"ALT\" = table_variants.\"ALT\"
-                                                AND table_parquet.\"REF\" = table_variants.\"REF\"
-                                                ;
-                                                """
+                                            WHERE {sql_query_annotation_where_clause}
+                                            ;
+                                        """
+                                    
+                                    # Add update query to dict
                                     query_dict[f"{chrom}:{sql_query_interval_start}-{sql_query_interval_stop}"] = sql_query_annotation_chrom_interval_pos
 
                                     log.debug(
