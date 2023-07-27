@@ -1026,7 +1026,16 @@ class Database:
         if type(database) == duckdb.DuckDBPyConnection:
             sql_form = self.get_database_table(database=database)
         elif database_format in ["parquet"]:
-            sql_form = f"read_parquet('{database}')"
+            if os.path.isdir(database):
+                list_of_parquet = glob.glob(os.path.join(database,"**/*parquet"), recursive=True)
+                if list_of_parquet:
+                    list_of_parquet_level_path = "*/" * (list_of_parquet[0].replace(database, "").count('/')-1)
+                    sql_form = f"read_parquet('{database}/{list_of_parquet_level_path}*parquet', hive_partitioning=1)"
+                else:
+                    log.error(f"Input file '{database}' not a compatible partitionned parquet folder")
+                    raise ValueError(f"Input file '{database}' not a compatible partitionned parquet folder")
+            else:
+                sql_form = f"read_parquet('{database}')"
         elif database_format in ["vcf","tsv", "csv", "tbl", "bed"]:
             delimiter = SEP_TYPE.get(database_format,"\t")
             # Check columns from file
@@ -1491,19 +1500,30 @@ class Database:
         return self.conn
     
 
-    def export(self, output_database:str, output_header:str = None, database:str = None, table:str = "variants") -> bool:
+    def export(self, output_database:str, output_header:str = None, database:str = None, table:str = "variants", parquet_partitions:list = None) -> bool:
         """
-        This function exports data from a database to a specified output format and compresses it if
-        necessary.
+        The `export` function exports data from a database to a specified output format, compresses it
+        if necessary, and returns a boolean value indicating whether the export was successful or not.
         
-        :param output_database: The path and filename of the output file to be exported
+        :param output_database: The `output_database` parameter is a string that represents the path and
+        filename of the output file to be exported. It specifies where the exported data will be saved
         :type output_database: str
-        :param output_header: The parameter `output_header` is an optional string that represents the
+        :param output_header: The `output_header` parameter is an optional string that represents the
         header of the output file. If it is not provided, the header will be automatically detected
         based on the output file format
         :type output_header: str
-        :param database: The name of the database to export
+        :param database: The `database` parameter is the name of the database from which you want to
+        export data. If this parameter is not provided, the function will use the `get_database()`
+        method to retrieve the current database
         :type database: str
+        :param table: The `table` parameter specifies the name of the table in the database from which
+        the data will be exported. By default, it is set to "variants", defaults to variants
+        :type table: str (optional)
+        :param parquet_partitions: The `parquet_partitions` parameter is a list that specifies the
+        partition columns for the Parquet output format. Each element in the list represents a partition
+        column. The partitions are used to organize the data in the Parquet file based on the values of
+        the specified columns
+        :type parquet_partitions: list
         :return: a boolean value indicating whether the export was successful or not.
         """
 
@@ -1521,7 +1541,7 @@ class Database:
         output_type = get_file_format(output_database)
         compressed = self.is_compressed(database=output_database)
         delimiter = FILE_FORMAT_DELIMITERS.get(output_type, "\t")
-        
+
         # database type
         database_type = self.get_type(database=database)
 
@@ -1566,6 +1586,12 @@ class Database:
         elif output_type in ["parquet"]:
             needed_columns = self.get_needed_columns(database_columns=existing_columns, database_type=database_type)
             query_export_format = f"FORMAT PARQUET"
+            if parquet_partitions:
+                parquet_partitions_clean = []
+                for parquet_partition in parquet_partitions:
+                    parquet_partitions_clean.append('"'+parquet_partition.translate( { '"': None, "'": None, " ": None } )+'"')
+                parquet_partitions_by = ",".join(parquet_partitions_clean)
+                query_export_format += f", PARTITION_BY ({parquet_partitions_by}), OVERWRITE_OR_IGNORE"
             include_header = False
 
         # BED

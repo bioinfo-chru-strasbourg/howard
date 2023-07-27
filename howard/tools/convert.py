@@ -33,7 +33,7 @@ def convert(args:argparse) -> None:
     include things like input and output file paths, configuration settings, and other parameters
     :type args: argparse
     """
-
+    
     log.info("Start")
 
     config = args.config
@@ -50,6 +50,10 @@ def convert(args:argparse) -> None:
         params["export_extra_infos"] = True
     else:
         config["access"] = "RO"
+
+    # parquet_partitions
+    if "parquet_partitions" in args and args.parquet_partitions:
+        params["parquet_partitions"] = args.parquet_partitions.split(",")
 
     vcfdata_obj.set_param(params)
     vcfdata_obj.set_config(config)

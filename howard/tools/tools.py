@@ -138,6 +138,13 @@ arguments = {
             "metavar": "PREFIX",
             "default": "INFO/"
         },
+        "parquet_partitions": {
+            "help": """Parquet partitioning (only for Parquet export format)\n"""
+                    """examples: '#CHROM', '#CHROM,REF'\n"""
+                    """default: None""",
+            "metavar": "LIST",
+            "default": None
+        },
         "multi_variant": {
             "help": """Variant with multiple annotation lines\n"""
                     """Values: 'auto' (auto-detection), 'enable', 'disable'\n"""
@@ -615,6 +622,7 @@ commands_arguments = {
                 "output": True,
                 "export_infos": False,
                 "export_infos_prefix": False,
+                "parquet_partitions": False,
             }
         }
     },
