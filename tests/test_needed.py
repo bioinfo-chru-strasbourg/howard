@@ -64,6 +64,7 @@ tests_config = {
 # Annotation databases
 database_files = {
     "parquet" : tests_annotations_folder + "/nci60.parquet",
+    "partition_parquet" : tests_annotations_folder + "/nci60.partition.parquet",
     "parquet_without_header" : tests_annotations_folder + "/nci60.without_header.parquet",
     "duckdb" : tests_annotations_folder + "/nci60.duckdb",
     "duckdb_no_annotation_table" : tests_annotations_folder + "/nci60.no_annotation_table.duckdb",

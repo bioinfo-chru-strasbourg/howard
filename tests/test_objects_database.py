@@ -25,52 +25,54 @@ def test_database_as_conn():
     This function test creation of a Database empty
     """
 
-    # Create conn with variants in a table by loading a VCF with Variants object
-    variants = Variants(input=database_files.get("example_vcf"), load=True)
+    with TemporaryDirectory(dir=".") as tmp_dir:
 
-    # Create database object with conn
-    try:
-        database = Database(conn=variants.get_connexion())
-    except:
-        assert False
+        # Create conn with variants in a table by loading a VCF with Variants object
+        variants = Variants(input=database_files.get("example_vcf"), load=True)
 
-    # Check get_conn
-    assert database.get_conn() == variants.get_connexion()
+        # Create database object with conn
+        try:
+            database = Database(conn=variants.get_connexion())
+        except:
+            assert False
 
-    # Create database object using conn, variants object header, and point to table "variants"
-    try:
-        database = Database(database=variants.get_connexion(), header=variants.get_header(), table="variants")
-    except:
-        assert False
+        # Check get_conn
+        assert database.get_conn() == variants.get_connexion()
 
-    # Check table variants is queryable
-    assert database.query(query="SELECT * FROM variants")
+        # Create database object using conn, variants object header, and point to table "variants"
+        try:
+            database = Database(database=variants.get_connexion(), header=variants.get_header(), table="variants")
+        except:
+            assert False
 
-    # Check if some variants
-    assert len(database.query(query="SELECT * FROM variants"))
+        # Check table variants is queryable
+        assert database.query(query="SELECT * FROM variants")
 
-    # get_database_tables
-    assert database.get_database_tables() == ["variants"]
+        # Check if some variants
+        assert len(database.query(query="SELECT * FROM variants"))
 
-    # Check get_database_basename
-    assert database.get_database_basename() == None
-    
-    # Check is compressed
-    assert not database.is_compressed()
+        # get_database_tables
+        assert database.get_database_tables() == ["variants"]
 
-    # Check export
-    output_database = "/tmp/output_database.vcf"
-    remove_if_exists([output_database])
-    try:
+        # Check get_database_basename
+        assert database.get_database_basename() == None
+        
+        # Check is compressed
+        assert not database.is_compressed()
+
+        # Check export
+        output_database = f"{tmp_dir}/output_database.vcf"
+        remove_if_exists([output_database])
+        try:
+            assert database.export(output_database=output_database)
+            assert database.query(database=output_database, query=f"""{database.get_sql_database_link(database=output_database)}""")
+        except:
+            assert False
+
+        # Check export duckdb
+        output_database = f"{tmp_dir}/output_database.duckdb"
+        remove_if_exists([output_database])
         assert database.export(output_database=output_database)
-        assert database.query(database=output_database, query=f"""{database.get_sql_database_link(database=output_database)}""")
-    except:
-        assert False
-
-    # Check export duckdb
-    output_database = "/tmp/output_database.duckdb"
-    remove_if_exists([output_database])
-    assert database.export(output_database=output_database)
 
 
 def test_empty_database():
@@ -179,41 +181,43 @@ def test_get_header_from_file():
     This function tests the `get_header_from_file` method of the `Database` class in Python.
     """
 
-    # Init files
-    default_header_list = [
-        '##fileformat=VCFv4.2',
-        '#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO'
-    ]
-    default_header_file = "/tmp/header_file.hdr"
-    remove_if_exists(default_header_file)
-    with open(default_header_file, "w") as f:
-        f.write("\n".join(default_header_list))
-    example_hearder_file = database_files.get("parquet") + ".hdr"
-    example_hearder_inside_file = database_files.get("vcf")
-    example_hearder_NO_file = "/tmp/no_file.hdr"
-    
-    # Create object
-    database = Database()
+    with TemporaryDirectory(dir=".") as tmp_dir:
 
-    # Header None
-    database_header = database.get_header_from_file(header_file=None)
-    assert list(database_header.infos) == []
+        # Init files
+        default_header_list = [
+            '##fileformat=VCFv4.2',
+            '#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO'
+        ]
+        default_header_file = f"{tmp_dir}/header_file.hdr"
+        remove_if_exists(default_header_file)
+        with open(default_header_file, "w") as f:
+            f.write("\n".join(default_header_list))
+        example_hearder_file = database_files.get("parquet") + ".hdr"
+        example_hearder_inside_file = database_files.get("vcf")
+        example_hearder_NO_file = f"{tmp_dir}/no_file.hdr"
+        
+        # Create object
+        database = Database()
 
-    # Header default
-    database_header = database.get_header_from_file(header_file=default_header_file)
-    assert list(database_header.infos) == []
+        # Header None
+        database_header = database.get_header_from_file(header_file=None)
+        assert list(database_header.infos) == []
 
-    # Header example
-    database_header = database.get_header_from_file(header_file=example_hearder_file)
-    assert list(database_header.infos) == ["nci60"]
+        # Header default
+        database_header = database.get_header_from_file(header_file=default_header_file)
+        assert list(database_header.infos) == []
 
-    # Header example with header within file
-    database_header = database.get_header_from_file(header_file=example_hearder_inside_file)
-    assert list(database_header.infos) == ["nci60"]
+        # Header example
+        database_header = database.get_header_from_file(header_file=example_hearder_file)
+        assert list(database_header.infos) == ["nci60"]
 
-    # Header example with header within file
-    database_header = database.get_header_from_file(header_file=example_hearder_NO_file)
-    assert list(database_header.infos) == []
+        # Header example with header within file
+        database_header = database.get_header_from_file(header_file=example_hearder_inside_file)
+        assert list(database_header.infos) == ["nci60"]
+
+        # Header example with header within file
+        database_header = database.get_header_from_file(header_file=example_hearder_NO_file)
+        assert list(database_header.infos) == []
 
 
 def test_get_header_infos_list():
@@ -247,55 +251,57 @@ def test_get_header():
     This function tests the `get_header` method of the `Database` class in Python.
     """
 
-    # Init files
-    default_header_list = [
-        '##fileformat=VCFv4.2',
-        '#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO'
-    ]
-    default_header_file = "/tmp/header_file.hdr"
-    remove_if_exists(default_header_file)
-    with open(default_header_file, "w") as f:
-        f.write("\n".join(default_header_list))
-    example_hearder_file = database_files.get("parquet") + ".hdr"
-    example_hearder_inside_file = database_files.get("vcf")
-    example_hearder_NO_file = "/tmp/no_file.hdr"
+    with TemporaryDirectory(dir=".") as tmp_dir:
 
-    # Create object
-    database = Database()
+        # Init files
+        default_header_list = [
+            '##fileformat=VCFv4.2',
+            '#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO'
+        ]
+        default_header_file = f"{tmp_dir}/header_file.hdr"
+        remove_if_exists(default_header_file)
+        with open(default_header_file, "w") as f:
+            f.write("\n".join(default_header_list))
+        example_hearder_file = database_files.get("parquet") + ".hdr"
+        example_hearder_inside_file = database_files.get("vcf")
+        example_hearder_NO_file = f"{tmp_dir}/no_file.hdr"
 
-    # Header None
-    database_header = database.get_header(header_file=None)
-    assert not database_header
+        # Create object
+        database = Database()
 
-    # Header default
-    database_header = database.get_header(header_file=default_header_file)
-    assert database_header
-    assert list(database_header.infos) == []
+        # Header None
+        database_header = database.get_header(header_file=None)
+        assert not database_header
 
-    # Header example
-    database_header = database.get_header(header_file=example_hearder_file)
-    assert database_header
-    assert list(database_header.infos) == ["nci60"]
+        # Header default
+        database_header = database.get_header(header_file=default_header_file)
+        assert database_header
+        assert list(database_header.infos) == []
 
-    # Header example with header within file
-    database_header = database.get_header(header_file=example_hearder_inside_file)
-    assert database_header
-    assert list(database_header.infos) == ["nci60"]
+        # Header example
+        database_header = database.get_header(header_file=example_hearder_file)
+        assert database_header
+        assert list(database_header.infos) == ["nci60"]
 
-    # Header example with header within file
-    database_header = database.get_header(header_file=example_hearder_NO_file)
-    assert database_header
-    assert list(database_header.infos) == []
+        # Header example with header within file
+        database_header = database.get_header(header_file=example_hearder_inside_file)
+        assert database_header
+        assert list(database_header.infos) == ["nci60"]
 
-    # Header example with header within list default
-    database_header = database.get_header(header_list=default_header_list)
-    assert database_header
-    assert list(database_header.infos) == []
+        # Header example with header within file
+        database_header = database.get_header(header_file=example_hearder_NO_file)
+        assert database_header
+        assert list(database_header.infos) == []
 
-    # Create object with header
-    database = Database(database_files.get("vcf"))
-    database_header = database.get_header()
-    assert list(database_header.infos) == ["nci60"]
+        # Header example with header within list default
+        database_header = database.get_header(header_list=default_header_list)
+        assert database_header
+        assert list(database_header.infos) == []
+
+        # Create object with header
+        database = Database(database_files.get("vcf"))
+        database_header = database.get_header()
+        assert list(database_header.infos) == ["nci60"]
 
 
 def test_read_header_file():
@@ -303,43 +309,45 @@ def test_read_header_file():
     This function tests the `read_header_file` method of the `Database` class.
     """
 
-    # Init files
-    default_header_list = [
-        '##fileformat=VCFv4.2',
-        '#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO'
-    ]
-    default_header_file = "/tmp/header_file.hdr"
-    remove_if_exists(default_header_file)
-    with open(default_header_file, "w") as f:
-        # for line in default_header_list:
-        #     f.write(line)
-        f.write("\n".join(default_header_list))
-    example_hearder_file = database_files.get("parquet") + ".hdr"
-    example_hearder_inside_file = database_files.get("vcf")
-    example_hearder_NO_file = "/tmp/no_file.hdr"
-    
-    # Create object
-    database = Database()
+    with TemporaryDirectory(dir=".") as tmp_dir:
 
-    # Header None
-    database_header_list = database.read_header_file(header_file=None)
-    assert list(database_header_list) == []
+        # Init files
+        default_header_list = [
+            '##fileformat=VCFv4.2',
+            '#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO'
+        ]
+        default_header_file = f"{tmp_dir}/header_file.hdr"
+        remove_if_exists(default_header_file)
+        with open(default_header_file, "w") as f:
+            # for line in default_header_list:
+            #     f.write(line)
+            f.write("\n".join(default_header_list))
+        example_hearder_file = database_files.get("parquet") + ".hdr"
+        example_hearder_inside_file = database_files.get("vcf")
+        example_hearder_NO_file = f"{tmp_dir}/no_file.hdr"
+        
+        # Create object
+        database = Database()
 
-    # Header default
-    database_header_list = database.read_header_file(header_file=default_header_file)
-    assert [line.strip() for line in list(database_header_list)] == default_header_list
+        # Header None
+        database_header_list = database.read_header_file(header_file=None)
+        assert list(database_header_list) == []
 
-    # Header example
-    database_header_list = database.read_header_file(header_file=example_hearder_file)
-    assert len(list(database_header_list)) == 37
+        # Header default
+        database_header_list = database.read_header_file(header_file=default_header_file)
+        assert [line.strip() for line in list(database_header_list)] == default_header_list
 
-    # Header example with header within file
-    database_header_list = database.read_header_file(header_file=example_hearder_inside_file)
-    assert len(list(database_header_list)) == 37
+        # Header example
+        database_header_list = database.read_header_file(header_file=example_hearder_file)
+        assert len(list(database_header_list)) == 37
 
-    # Header example with header within file
-    database_header_list = database.read_header_file(header_file=example_hearder_NO_file)
-    assert list(database_header_list) == []
+        # Header example with header within file
+        database_header_list = database.read_header_file(header_file=example_hearder_inside_file)
+        assert len(list(database_header_list)) == 37
+
+        # Header example with header within file
+        database_header_list = database.read_header_file(header_file=example_hearder_NO_file)
+        assert list(database_header_list) == []
 
 
 def test_get_header_file():
@@ -347,42 +355,44 @@ def test_get_header_file():
     This function tests the `get_header_file()` method of the `Database` class in Python.
     """
 
-    # Init
-    database_file = database_files.get("parquet")
-    hearder_file = database_files.get("parquet") + ".hdr"
-    database_without_header  = database_files.get("parquet_without_header")
-    database_within_header  = database_files.get("vcf_without_header")
-    output_header_file = "/tmp/header_file.hdr"
+    with TemporaryDirectory(dir=".") as tmp_dir:
 
-    # With with database and with header
-    database = Database(database=database_file, header_file=hearder_file)
-    assert database.get_header_file() == hearder_file
-    assert database.get_header_file(output_header_file) == output_header_file
+        # Init
+        database_file = database_files.get("parquet")
+        hearder_file = database_files.get("parquet") + ".hdr"
+        database_without_header  = database_files.get("parquet_without_header")
+        database_within_header  = database_files.get("vcf_without_header")
+        output_header_file = f"{tmp_dir}/header_file.hdr"
 
-    # Check without database and without header file
-    database = Database(database=None, header_file=None)
-    assert database.get_header_file() == None
-    assert database.get_header_file(output_header_file) == output_header_file
+        # With with database and with header
+        database = Database(database=database_file, header_file=hearder_file)
+        assert database.get_header_file() == hearder_file
+        assert database.get_header_file(output_header_file) == output_header_file
 
-    # Check without database and with header file
-    database = Database(database=None, header_file=hearder_file)
-    assert database.get_header_file() == hearder_file
-    assert database.get_header_file(output_header_file) == output_header_file
+        # Check without database and without header file
+        database = Database(database=None, header_file=None)
+        assert database.get_header_file() == None
+        assert database.get_header_file(output_header_file) == output_header_file
 
-    # Check with database and with header associated to database
-    database = Database(database=database_file, header_file=None)
-    assert database.get_header_file() == hearder_file
-    assert database.get_header_file(output_header_file) == output_header_file
+        # Check without database and with header file
+        database = Database(database=None, header_file=hearder_file)
+        assert database.get_header_file() == hearder_file
+        assert database.get_header_file(output_header_file) == output_header_file
 
-    # Check with database and without header at all
-    database = Database(database=database_without_header, header_file=None)
-    assert database.get_header_file() == None
-    assert database.get_header_file(output_header_file) == output_header_file
+        # Check with database and with header associated to database
+        database = Database(database=database_file, header_file=None)
+        assert database.get_header_file() == hearder_file
+        assert database.get_header_file(output_header_file) == output_header_file
 
-    # Check with database and with header within database
-    database = Database(database=database_within_header, header_file=None)
-    assert database.get_header_file() == database_within_header
-    assert database.get_header_file(output_header_file) == output_header_file
+        # Check with database and without header at all
+        database = Database(database=database_without_header, header_file=None)
+        assert database.get_header_file() == None
+        assert database.get_header_file(output_header_file) == output_header_file
+
+        # Check with database and with header within database
+        database = Database(database=database_within_header, header_file=None)
+        assert database.get_header_file() == database_within_header
+        assert database.get_header_file(output_header_file) == output_header_file
 
 
 def test_exists():
@@ -1409,30 +1419,32 @@ def test_export():
     The function tests the export functionality of a database for various input and output formats.
     """
 
-    # No database input
-    database = Database()
-    output_database=f"/tmp/output_database.no_input.parquet"
-    remove_if_exists([output_database])
-    assert not database.export(output_database)
+    with TemporaryDirectory(dir=".") as tmp_dir:
 
-    # database input/format
-    for database_input_index in ["bed", "parquet", "vcf", "vcf_gz", "tsv", "csv", "tbl", "tsv_alternative_columns", "tsv_variants", "json", "example_vcf"]:
-        for database_output_format in ["duckdb", "parquet", "vcf", "vcf.gz", "tsv", "csv", "tbl", "json", "bed"]:
-            print(database_input_index, database_output_format)
-            input_database = database_files.get(database_input_index)
-            database = Database(database_files.get(database_input_index))
-            output_database=f"/tmp/output_database.{database_output_format}"
-            output_header=output_database+".hdr"
-            remove_if_exists([output_database,output_header])
-            if True: #not (database.get_format(input_database) == "bed" and database.get_format(output_database) == "vcf"):
+        # No database input
+        database = Database()
+        output_database=f"{tmp_dir}/output_database.no_input.parquet"
+        assert not database.export(output_database)
+
+        # database input/format
+        for database_input_index in ["parquet", "partition_parquet", "vcf", "vcf_gz", "tsv", "csv", "tbl", "tsv_alternative_columns", "tsv_variants", "json", "example_vcf", "bed"]:
+            for database_output_format in ["duckdb", "parquet", "partition_parquet", "vcf", "vcf.gz", "tsv", "csv", "tbl", "json", "bed"]:
+                parquet_partitions = None
+                # specific partition_parquet
+                if database_output_format in ["partition_parquet"]:
+                    database_output_format = "parquet"
+                    parquet_partitions = ["#CHROM"]
+                input_database = database_files.get(database_input_index)
+                database = Database(database_files.get(database_input_index))
+                output_database=f"{tmp_dir}/output_database.{database_output_format}"
+                output_header=output_database+".hdr"
+                remove_if_exists([output_database,output_header])
+
                 try:
-                    assert database.export(output_database=output_database, output_header=output_header)
+                    assert database.export(output_database=output_database, output_header=output_header, parquet_partitions=parquet_partitions)
                     if database.get_sql_database_attach(database=output_database):
                         database.query(database=output_database, query=f"""{database.get_sql_database_attach(database=output_database)}""")
                     assert database.query(database=output_database, query=f"""{database.get_sql_database_link(database=output_database)}""")
                 except:
                     assert False
-            else:
-                # For input as BED and output as VCF
-                assert database.export(output_database=output_database) == "regions"
 
