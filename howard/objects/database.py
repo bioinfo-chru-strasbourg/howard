@@ -255,7 +255,23 @@ class Database:
                             break
                         header_list.append(line)
                     return header_list
-                
+    
+
+    def get_header_file_columns(self, header_file:str = None) -> list:
+        """
+        The function `get_header_columns` returns the header list of a VCF file.
+        
+        :param header_file: The `header_file` parameter is a string that represents the file path of the
+        header file. It is an optional parameter and its default value is `None`
+        :type header_file: str
+        :return: a list of header columns.
+        """
+
+        if not header_file or not self.read_header_file(header_file=header_file):
+            return []
+        else:
+            return self.read_header_file(header_file=header_file)[-1].strip().split("\t")
+
     
     def get_header_from_list(self, header_list:list = None) -> vcf:
         """
@@ -590,7 +606,12 @@ class Database:
             header_file = None
 
         if header_file and remove_header_line:
-            os.system(f"sed -i '/^#CHROM/d' {header_file}")
+            with open(header_file, "r") as file:
+                lines = file.readlines()
+            with open(header_file, "w") as file:
+                for line in lines:
+                    if not line.startswith("#CHROM"):
+                        file.write(line)
         
         return header_file
 
@@ -1537,13 +1558,21 @@ class Database:
         if output_header:
             self.get_header_file(header_file=output_header)
 
+        # Header columns
+        existing_columns_header = self.get_header_file_columns(output_header)
+
         # Auto-detect output type and compression and delimiter
         output_type = get_file_format(output_database)
         compressed = self.is_compressed(database=output_database)
         delimiter = FILE_FORMAT_DELIMITERS.get(output_type, "\t")
 
         # database type
-        database_type = self.get_type(database=database)
+        if output_type in ["vcf"]:
+            database_type = "vcf"
+        elif output_type in ["bed"]:
+            database_type = "regions"
+        else:
+            database_type = self.get_type(database=database)
 
         # Existing columns
         existing_columns = self.get_columns(database=database, table = self.get_database_table(database))
@@ -1551,40 +1580,40 @@ class Database:
         # Extra columns
         extra_columns = self.get_extra_columns(database=database, database_type=output_type)
         
+        # Needed columns
+        needed_columns = self.get_needed_columns(database_columns=existing_columns, database_type=database_type)
+
         # random
         random_tmp = ''.join(random.choice(string.ascii_lowercase) for i in range(10))
 
         # Query values
         default_empty_value = ""
-        needed_columns = []
         query_export_format = None
         include_header = False
 
         # VCF
         if output_type in ["vcf"]:
-            needed_columns = self.get_needed_columns(database_columns=existing_columns, database_type="vcf")
             if not self.is_vcf(database=database):
                 extra_columns = []
+            else:
+                extra_columns = existing_columns_header
             default_empty_value = "."
             query_export_format = f"FORMAT CSV, DELIMITER '{delimiter}', HEADER, QUOTE ''"
             include_header = True
 
         # TSV/CSV/TBL
         elif output_type in ["tsv", "csv", "tbl"]:
-            needed_columns = self.get_needed_columns(database_columns=existing_columns, database_type=database_type)
             query_export_format = f"FORMAT CSV, DELIMITER '{delimiter}', HEADER"
             if delimiter in ["\t"]:
                 include_header = True
 
         # JSON
         elif output_type in ["json"]:
-            needed_columns = self.get_needed_columns(database_columns=existing_columns, database_type=database_type)
             query_export_format = f"FORMAT JSON, ARRAY TRUE"
             include_header = False
 
         # Parquet
         elif output_type in ["parquet"]:
-            needed_columns = self.get_needed_columns(database_columns=existing_columns, database_type=database_type)
             query_export_format = f"FORMAT PARQUET"
             if parquet_partitions:
                 parquet_partitions_clean = []
@@ -1596,12 +1625,14 @@ class Database:
 
         # BED
         elif output_type in ["bed"]:
-            needed_columns = self.get_needed_columns(database_columns=existing_columns, database_type="regions")
             query_export_format = f"FORMAT CSV, DELIMITER '{delimiter}', HEADER"
             include_header = True
 
         # duckDB
         elif output_type in ["duckdb"]:
+
+            # Needed column
+            needed_columns = []
 
             # Export database as Parquet
             database_export_parquet_file = f"""{output_database}.{random_tmp}.database_export.parquet"""

@@ -25,7 +25,7 @@ def test_database_as_conn():
     This function test creation of a Database empty
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Create conn with variants in a table by loading a VCF with Variants object
         variants = Variants(input=database_files.get("example_vcf"), load=True)
@@ -181,7 +181,7 @@ def test_get_header_from_file():
     This function tests the `get_header_from_file` method of the `Database` class in Python.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         default_header_list = [
@@ -251,7 +251,7 @@ def test_get_header():
     This function tests the `get_header` method of the `Database` class in Python.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         default_header_list = [
@@ -309,7 +309,7 @@ def test_read_header_file():
     This function tests the `read_header_file` method of the `Database` class.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         default_header_list = [
@@ -319,8 +319,6 @@ def test_read_header_file():
         default_header_file = f"{tmp_dir}/header_file.hdr"
         remove_if_exists(default_header_file)
         with open(default_header_file, "w") as f:
-            # for line in default_header_list:
-            #     f.write(line)
             f.write("\n".join(default_header_list))
         example_hearder_file = database_files.get("parquet") + ".hdr"
         example_hearder_inside_file = database_files.get("vcf")
@@ -355,7 +353,7 @@ def test_get_header_file():
     This function tests the `get_header_file()` method of the `Database` class in Python.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init
         database_file = database_files.get("parquet")
@@ -393,6 +391,51 @@ def test_get_header_file():
         database = Database(database=database_within_header, header_file=None)
         assert database.get_header_file() == database_within_header
         assert database.get_header_file(output_header_file) == output_header_file
+
+
+def test_get_header_file_columns():
+    """
+    This function tests the `get_header_file_columns` method of the `Database` class.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        default_header_list = [
+            '##fileformat=VCFv4.2',
+            '#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO'
+        ]
+        default_header_file_columns = ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO']
+        default_header_file = f"{tmp_dir}/header_file.hdr"
+        remove_if_exists(default_header_file)
+        with open(default_header_file, "w") as f:
+            f.write("\n".join(default_header_list))
+        example_hearder_file = database_files.get("parquet") + ".hdr"
+        example_hearder_inside_file = database_files.get("vcf")
+        example_hearder_NO_file = f"{tmp_dir}/no_file.hdr"
+        
+        # Create object
+        database = Database()
+
+        # Header None
+        database_header_file_columns = database.get_header_file_columns(header_file=None)
+        assert database_header_file_columns == []
+
+        # Header default
+        database_header_file_columns = database.get_header_file_columns(header_file=default_header_file)
+        assert database_header_file_columns == default_header_file_columns
+
+        # Header example
+        database_header_file_columns = database.get_header_file_columns(header_file=example_hearder_file)
+        assert database_header_file_columns == default_header_file_columns
+
+        # Header example with header within file
+        database_header_file_columns = database.get_header_file_columns(header_file=example_hearder_inside_file)
+        assert database_header_file_columns == default_header_file_columns
+
+        # Header example with header within file
+        database_header_file_columns = database.get_header_file_columns(header_file=example_hearder_NO_file)
+        assert database_header_file_columns == []
 
 
 def test_exists():
@@ -1419,7 +1462,7 @@ def test_export():
     The function tests the export functionality of a database for various input and output formats.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # No database input
         database = Database()
