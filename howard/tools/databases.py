@@ -72,7 +72,8 @@ def databases_download(args:argparse) -> None:
                 assemblies=assemblies, 
                 genome_folder=args.download_genomes,
                 provider=args.download_genomes_provider,
-                contig_regex=args.download_genomes_contig_regex
+                contig_regex=args.download_genomes_contig_regex,
+                threads=args.threads
                 )
 
     # Annovar

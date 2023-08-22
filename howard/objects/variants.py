@@ -2623,8 +2623,11 @@ class Variants:
             log.debug(
                 f"Existing annotations in VCF: {vcf_annotation} [{vcf_annotation_line}]")
 
+        # prefix
+        prefix=self.get_param().get("explode_infos", None)
+        
         # explode infos
-        self.explode_infos(prefix=self.get_param().get("explode_infos", None))
+        self.explode_infos(prefix=prefix)
 
         # drop indexes
         log.debug(f"Drop indexes...")
@@ -2677,13 +2680,12 @@ class Variants:
                     log.debug("Annotation database Columns: " +
                               str(parquet_columns))
 
-                    
-                    # Add extra columns
-                    allow_add_extra_column = True
-                    if allow_add_extra_column and database.get_extra_columns():
+                    # Add extra columns if "ALL" in annotation_fields
+                    # if "ALL" in annotation_fields:
+                    #     allow_add_extra_column = True
+                    if "ALL" in annotation_fields and database.get_extra_columns():
                         for extra_column in database.get_extra_columns():
-                            if extra_column not in annotation_fields:
-                                #annotation_fields[extra_column] = extra_column
+                            if extra_column not in annotation_fields and extra_column.replace("INFO/","") not in parquet_hdr_vcf_header_infos:
                                 parquet_hdr_vcf_header_infos[extra_column] = vcf.parser._Info(
                                     extra_column,
                                     ".",

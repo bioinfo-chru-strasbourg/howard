@@ -33,7 +33,7 @@ def test_export_query():
     This is a test function for exporting data from a VCF file to a TSV file using SQL queries.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -62,7 +62,7 @@ def test_export():
     The function tests the export functionality of a database for various input and output formats.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # database input/format
         for database_input_index in ["parquet", "partition_parquet", "vcf", "vcf_gz", "tsv", "csv","example_vcf"]:
@@ -116,7 +116,7 @@ def test_set_get_output():
     This function tests the set_output and get_output methods of the Variants class in Python.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -568,7 +568,7 @@ def test_load_duckdb():
     correctly.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -638,7 +638,7 @@ def test_get_connexion_db_file():
     This function tests the "get_connexion_db" method of a "Variants" object in Python.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -791,7 +791,7 @@ def test_load_connexion_type_file():
     number of variants is present in the database.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -842,7 +842,7 @@ def test_export_output_vcf_gz():
     This function tests the export of a VCF file in gzipped format with the pyVCF library.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -883,7 +883,7 @@ def test_export_output_vcf_gz_from_full_unsorted():
     :return: None
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.full.unsorted.vcf.gz"
@@ -917,7 +917,7 @@ def test_export_output_vcf():
     file and checks if it is in the correct format using pyVCF.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -951,7 +951,7 @@ def test_export_output_parquet():
     This function tests the export of a VCF file to a Parquet file format.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -978,7 +978,7 @@ def test_export_output_duckdb():
     This function tests the export_output method of the Variants class in Python's DuckDB library.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -1008,7 +1008,7 @@ def test_export_output_tsv():
     file to a TSV file.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -1036,7 +1036,7 @@ def test_export_output_tsv_gz():
     file to a TSV file in gzipped format.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -1064,7 +1064,7 @@ def test_export_output_csv():
     output file exists with and without a header.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -1091,7 +1091,7 @@ def test_export_output_tbl():
     This function tests the export_output method of the Variants class in Python.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -1118,7 +1118,7 @@ def test_export_output_tsv_explode_infos():
     This function tests the export of variant information in TSV format with exploded extra information.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -1151,7 +1151,7 @@ def test_export_from_sqlite_output_vcf_gz():
     This function tests the export of a VCF file in gzipped format with the pyVCF library.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -1185,7 +1185,7 @@ def test_export_from_sqlite_output_vcf():
     This function tests the export of a VCF file in gzipped format with the pyVCF library.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -1219,7 +1219,7 @@ def test_export_from_sqlite_output_parquet():
     This function tests the export of a VCF file in gzipped format with the pyVCF library.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -1247,7 +1247,7 @@ def test_export_from_sqlite_output_tsv():
     This function tests the export of a VCF file in gzipped format with the pyVCF library.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -1281,7 +1281,7 @@ def test_export_from_sqlite_output_tsv_gz():
     This function tests the export of a VCF file in gzipped format with the pyVCF library.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -1681,7 +1681,7 @@ def test_annotations():
     :raises AssertionError: If any of the tests fail.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -1759,7 +1759,7 @@ def test_annotations_all_available_annotations_databases():
     functionality of a `Variants` object using all available databases.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -1829,7 +1829,7 @@ def test_annotations_no_samples():
     and checks if the output VCF file is in the correct format.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.no_samples.vcf.gz"
@@ -1882,7 +1882,7 @@ def test_annotation_parquet_with_all_formats():
     annotation source with various formats.
     """
     
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         for annotation_format in ["vcf", "vcf.gz", "tsv", "tsv.gz", "csv", "csv.gz", "json", "json.gz", "tbl", "tbl.gz", "parquet", "partition.parquet", "duckdb"]:
 
@@ -1927,7 +1927,7 @@ def test_annotation_parquet_regions():
     input_vcf = tests_data_folder + "/example.vcf.gz"
 
     # annotation regions
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
         
         # Init
         annotation_parquet = os.path.join(tests_annotations_folder, f"annotation_regions.bed.gz")
@@ -1968,7 +1968,7 @@ def test_annotation_parquet_regions():
             assert False
 
     # annotation regions with refgene and an associated header hdr
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
         
         # Init
         annotation_parquet = os.path.join(tests_annotations_folder, f"refGene.bed")
@@ -1997,7 +1997,7 @@ def test_annotation_parquet_regions():
             assert False
 
     # annotation regions with refgene compressed gz and an associated header hdr
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
         
         # Init
         annotation_parquet = os.path.join(tests_annotations_folder, f"refGene.bed.gz")
@@ -2025,8 +2025,8 @@ def test_annotation_parquet_regions():
         except:
             assert False
 
-    # annotation regions with refgene without any associated header hdr
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    # annotation regions with refgene without any associated header hdr and INFO annotation (no annotation)
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
         
         # Init
         annotation_parquet = os.path.join(tests_annotations_folder, f"refGene.without_header.bed")
@@ -2034,6 +2034,35 @@ def test_annotation_parquet_regions():
 
         # Construct param dict
         param = {"annotation": {"parquet": {"annotations": {annotation_parquet: {"INFO": None}}}}}
+
+        # Create object
+        variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
+        # Annotation
+        variants.annotation()
+
+        # query annotated variant
+        result = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE INFO LIKE '%column3%' OR INFO LIKE '%column4%' OR INFO LIKE '%column5%'")
+        length = len(result)
+        
+        assert length == 0
+
+        # Check if VCF is in correct format with pyVCF
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+    # annotation regions with refgene without any associated header hdr and ALL annotation (annotation with "column...)")
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+        
+        # Init
+        annotation_parquet = os.path.join(tests_annotations_folder, f"refGene.without_header.bed")
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {"annotation": {"parquet": {"annotations": {annotation_parquet: {"ALL": None}}}}}
 
         # Create object
         variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
@@ -2061,7 +2090,7 @@ def test_annotation_parquet_field_already_in_vcf():
     Parquet file.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -2110,7 +2139,7 @@ def test_annotation_duckdb():
     This function tests the annotation of variants using DuckDB.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         annotation_parquet = os.path.join(tests_annotations_folder, "nci60.parquet")
@@ -2156,7 +2185,7 @@ def test_annotation_bcftools():
     This function tests the annotation of a VCF file using bcftools annotations.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -2192,7 +2221,7 @@ def test_annotation_bcftools_bed():
     This function tests the annotation of a VCF file using bcftools and a bed file.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -2229,7 +2258,7 @@ def test_annotation_annovar():
     the correct format.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -2268,7 +2297,7 @@ def test_annotation_annovar_full_unsorted():
     This VCF is unsorted
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.full.unsorted.vcf.gz"
@@ -2304,7 +2333,7 @@ def test_annotation_annovar_no_samples():
     This function tests the annotation of a VCF file using Annovar when there are no samples present.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.no_samples.vcf.gz"
@@ -2340,7 +2369,7 @@ def test_annotation_annovar_sqlite():
     This function tests the annotation of variants using Annovar and SQLite database.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -2380,7 +2409,7 @@ def test_annotation_quick_annovar():
     This function tests the annotation of a VCF file using Annovar.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -2419,7 +2448,7 @@ def test_annotation_snpeff():
     This function tests the annotation of variants using the snpEff tool.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -2457,7 +2486,7 @@ def test_annotation_snpeff_full_unsorted():
     This VCF is unsorted
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.full.unsorted.vcf.gz"
@@ -2500,7 +2529,7 @@ def test_annotation_snpeff_no_samples():
     VCF file.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.no_samples.vcf.gz"
@@ -2539,7 +2568,7 @@ def test_annotation_quick_snpeff():
     This function tests the annotation of a VCF file using the snpEff tool.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -2578,7 +2607,7 @@ def test_annotation_snpeff_sqlite():
     This function tests the annotation of variants using snpEff and SQLite database.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -2617,7 +2646,7 @@ def test_annotation_bcftools_sqlite():
     This function tests the annotation of a VCF file using bcftools and SQLite.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -2656,7 +2685,7 @@ def test_annotation_hgvs():
     The function `test_annotation_hgvs` tests the annotation of a VCF file using bcftools and SQLite.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -2717,7 +2746,7 @@ def test_prioritization():
     and parameter dictionary.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -2823,7 +2852,7 @@ def test_prioritization_full_unsorted():
     This VCF is unsorted
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.full.unsorted.vcf.gz"
@@ -2926,7 +2955,7 @@ def test_prioritization_varank():
     This is a test function for the prioritization feature of a Python package called "Variants".
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -3001,7 +3030,7 @@ def test_prioritization_no_pzfields():
     specified.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -3047,7 +3076,7 @@ def test_prioritization_no_infos():
     available.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.no_samples.vcf.gz"
@@ -3098,7 +3127,7 @@ def test_calculation():
     checks if the output VCF file is in the correct format.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -3163,7 +3192,7 @@ def test_calculation_vartype():
     This function tests the calculation of variant types in a VCF file using the Variants class.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.snv.indel.mosaic.vcf"
@@ -3205,7 +3234,7 @@ def test_calculation_vartype_full():
     This function tests the calculation of variant types in a VCF file using the Variants class.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.full.unsorted.vcf.gz"
@@ -3265,7 +3294,7 @@ def test_calculation_snpeff_hgvs():
     This is a test function for the calculation of snpeff_hgvs in a VCF file using the Variants class.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.ann.vcf.gz"
@@ -3306,7 +3335,7 @@ def test_calculation_snpeff_hgvs_no_ann():
     This function tests the calculation of SNPEff HGVS annotations on a VCF file with no annotations.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -3344,7 +3373,7 @@ def test_calculation_snpeff_hgvs_transcripts():
     file.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.snpeff.vcf.gz"
@@ -3422,7 +3451,7 @@ def test_calculation_findbypipeline():
     the calculation is performed correctly and the output VCF file is in the correct format.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -3465,7 +3494,7 @@ def test_calculation_findbysample():
     the calculation is performed correctly and the output VCF file is in the correct format.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -3507,7 +3536,7 @@ def test_calculation_genotype_concordance():
     This is a test function for calculating genotype concordance in a VCF file using the Variants class.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -3550,7 +3579,7 @@ def test_calculation_barcode():
     checks if the output is correct.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -3599,7 +3628,7 @@ def test_calculation_trio():
     parameters.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -3645,7 +3674,7 @@ def test_calculation_vaf_normalization():
     This is a test function for the calculation of variant allele frequency normalization in a VCF file.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -3694,7 +3723,7 @@ def test_calculation_vaf_stats():
     file using the Variants class in Python.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -3744,7 +3773,7 @@ def test_calculation_dp_stats():
     class in Python.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -3796,7 +3825,7 @@ def test_calculation_variant_id():
     class in Python.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"

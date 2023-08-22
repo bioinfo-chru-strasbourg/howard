@@ -61,7 +61,7 @@ def test_databases_download():
     """
 
     # Tmp folder
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # assembly
         assemblies = 'hg19'
@@ -88,6 +88,9 @@ def test_databases_download():
         # config
         config = {"tools": {"snpeff": {"jar": DEFAULT_SNPEFF_BIN}}}
 
+        # threads
+        threads = 1
+
         # annovar URL
         download_annovar_url = DEFAULT_ANNOVAR_URL
 
@@ -112,7 +115,8 @@ def test_databases_download():
             download_refseq_include_non_canonical_chr=True,
             download_refseq_include_non_coding_transcripts=True,
             download_refseq_include_transcript_version=True,
-            config=config
+            config=config,
+            threads=threads
         )
 
         # Download
@@ -163,7 +167,7 @@ def test_databases_download_genomes_only():
     """
 
     # Tmp folder
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # assembly
         assemblies = 'sacCer3'
@@ -172,6 +176,9 @@ def test_databases_download_genomes_only():
         # Genome
         genome_provider = None
         genome_contig_regex = None
+
+        # threads
+        threads = 1
 
         # Arguments
         args = argparse.Namespace(
@@ -182,6 +189,7 @@ def test_databases_download_genomes_only():
             download_annovar=None,
             download_snpeff=None,
             download_refseq=None,
+            threads=threads
         )
 
         # Download
@@ -205,7 +213,7 @@ def test_databases_format_refseq():
     """
 
     # Test downloading one file one assembly, and format in BED
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
        
         # refSeq files
         refseq_file_to_format = f"{tests_databases_folder}/others/ncbiRefSeq.test.txt"
@@ -334,7 +342,7 @@ def test_databases_download_refseq():
     expected files.
     """
 
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
        
         # Test downloading all files for 2 assemblies
 
@@ -532,7 +540,7 @@ def test_databases_download_annovar_multiple_assembly():
     """
 
     # Test downloading an existing file
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
        
         # assembly
         assemblies = ["hg19", "hg38"]
@@ -578,7 +586,7 @@ def test_databases_download_annovar_mandatory_refgene():
     """
 
     # Test downloading mandatory file refGene (no file list in input)
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
         
         # assembly
         assemblies = ["hg19"]
@@ -606,7 +614,7 @@ def test_databases_download_annovar_pattern_files():
     """
 
     # Test downloading multiple files with pattern
-    with TemporaryDirectory(dir=".") as tmp_dir:
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
         
         # assembly
         assemblies = ["hg19"]
