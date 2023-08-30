@@ -200,6 +200,7 @@ def test_databases_download():
             download_refseq_include_non_canonical_chr=True,
             download_refseq_include_non_coding_transcripts=True,
             download_refseq_include_transcript_version=True,
+            download_dbnsfp = None, # Too long...
             config=config,
             threads=threads
         )
@@ -274,6 +275,7 @@ def test_databases_download_genomes_only():
             download_annovar=None,
             download_snpeff=None,
             download_refseq=None,
+            download_dbnsfp = None,
             threads=threads
         )
 
