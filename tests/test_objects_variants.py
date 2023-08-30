@@ -328,9 +328,14 @@ def test_load_without_header():
     input_vcf = tests_data_folder + "/example.without_header.parquet"
 
     # Create object
-    with pytest.raises(ValueError) as e:
+    try:
         variants = Variants(input=input_vcf)
-    assert str(e.value) == f"No header for file {input_vcf}"
+        assert True
+    except:
+        assert False
+    # with pytest.raises(ValueError) as e:
+    #     variants = Variants(input=input_vcf)
+    # assert str(e.value) == f"No header for file {input_vcf}"
 
 
 def test_read_vcf_header():

@@ -6,7 +6,7 @@ Usage:
 pytest tests/
 
 Coverage:
-coverage run -m pytest . -x -v
+coverage run -m pytest . -x -v --log-cli-level=INFO --capture=tee-sys
 coverage report --include=howard/* -m
 """
 
@@ -31,6 +31,90 @@ from test_needed import *
 
 
 
+
+def test_database_dbnsfp():
+    """
+    This function tests the "databases" function with a set of arguments.
+    """
+
+    # Tmp folder
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+        
+        #assemblies = 'hg19,hg38'
+        assemblies = 'hg19'
+        assemblies_list = [value for value in assemblies.split(',')]
+
+        # Download dbnsfp
+        dbnsfp_source = os.path.join(tests_databases_folder, "dbnsfp", "dbNSFP4.4a.zip")
+        dbnsfp_target = os.path.join(tmp_dir, "dbNSFP4.4a.zip")
+        shutil.copy(dbnsfp_source, dbnsfp_target)
+
+        # Try to convert 
+        try:
+            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=tmp_dir, generate_parquet_file = False, generate_sub_databases = False, generate_vcf = False) #dbnsfp_folder
+        except:
+            assert False
+
+        downloaded_files = os.listdir(tmp_dir)
+        for assembly in assemblies_list:
+            assert assembly in downloaded_files
+            downloaded_assembly_files = os.listdir(f"{tmp_dir}/{assembly}")
+            nb_files = 2
+            assert len(downloaded_assembly_files) == nb_files
+
+        # Try again to generate parquet
+        try:
+            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=tmp_dir, generate_parquet_file = True, generate_sub_databases = False, generate_vcf = False) #dbnsfp_folder
+        except:
+            assert False
+
+        downloaded_files = os.listdir(tmp_dir)
+        for assembly in assemblies_list:
+            assert assembly in downloaded_files
+            downloaded_assembly_files = os.listdir(f"{tmp_dir}/{assembly}")
+            nb_files = 4
+            assert len(downloaded_assembly_files) == nb_files
+
+        # Try again to generate parquet
+        try:
+            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=tmp_dir, generate_parquet_file = True, generate_sub_databases = True, generate_vcf = False) #dbnsfp_folder
+        except:
+            assert False
+
+        downloaded_files = os.listdir(tmp_dir)
+        for assembly in assemblies_list:
+            assert assembly in downloaded_files
+            downloaded_assembly_files = os.listdir(f"{tmp_dir}/{assembly}")
+            nb_files = 108
+            assert len(downloaded_assembly_files) == nb_files
+
+        # # Try again to generate VCF
+        # try:
+        #     databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=tmp_dir, generate_parquet_file = True, generate_sub_databases = True, generate_vcf = True) #dbnsfp_folder
+        # except:
+        #     assert False
+
+        # downloaded_files = os.listdir(tmp_dir)
+        # for assembly in assemblies_list:
+        #     assert assembly in downloaded_files
+        #     downloaded_assembly_files = os.listdir(f"{tmp_dir}/{assembly}")
+        #     nb_files = 162
+        #     assert len(downloaded_assembly_files) == nb_files
+
+        # Try again to generate nothing more
+        try:
+            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=tmp_dir, generate_parquet_file = True, generate_sub_databases = True, generate_vcf = True) #dbnsfp_folder
+        except:
+            assert False
+
+        downloaded_files = os.listdir(tmp_dir)
+        for assembly in assemblies_list:
+            assert assembly in downloaded_files
+            downloaded_assembly_files = os.listdir(f"{tmp_dir}/{assembly}")
+            nb_files = 108
+            assert len(downloaded_assembly_files) == nb_files
+
+
 def test_database():
     """
     This function tests the "databases" function with a set of arguments.
@@ -45,6 +129,7 @@ def test_database():
         download_annovar_url = None,
         download_snpeff = None,
         download_refseq = None,
+        download_dbnsfp = None,
         config = None,
     )
 
@@ -115,6 +200,7 @@ def test_databases_download():
             download_refseq_include_non_canonical_chr=True,
             download_refseq_include_non_coding_transcripts=True,
             download_refseq_include_transcript_version=True,
+            download_dbnsfp = None, # Too long...
             config=config,
             threads=threads
         )
@@ -189,6 +275,7 @@ def test_databases_download_genomes_only():
             download_annovar=None,
             download_snpeff=None,
             download_refseq=None,
+            download_dbnsfp = None,
             threads=threads
         )
 

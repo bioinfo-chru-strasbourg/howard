@@ -5,7 +5,10 @@
   "folders": {
     "databases": {
       "root": "",
-      "annotations": ["/databases/annotations/current/"],
+      "annotations": [
+        "/databases/annotations/current/",
+        "/databases/dbnsfp/current/"
+      ],
       "parquet": ["/databases/annotations/current/"],
       "bcftools": ["/databases/annotations/current/"],
       "annovar": "/databases/annovar/current/",

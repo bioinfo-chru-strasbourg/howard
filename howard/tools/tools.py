@@ -401,6 +401,50 @@ arguments = {
             "action": "store_true"
         },
         
+        # dbNSFP
+        "download-dbnsfp": {
+            "metavar": "FOLDER",
+            "help": "Download dbNSFP databases within dbNSFP folder",
+            "required": False
+        },
+        "download-dbnsfp-url": {
+            "metavar": "URL",
+            "help": """Download dbNSFP databases URL (see dbNSFP website)\n"""
+                    """Default: 'https://dbnsfp.s3.amazonaws.com'""",
+            "required": False,
+            "default": "https://dbnsfp.s3.amazonaws.com"
+        },
+        "download-dbnsfp-release": {
+            "metavar": "STRING",
+            "help": """Release of dbNSFP to download (see dbNSFP website)\n"""
+                    """Default: '4.4a'""",
+            "required": False,
+            "default": "4.4a"
+        },
+        "download-dbnsfp-nb-data-files": {
+            "metavar": "INTEGER",
+            "help": """Number of data files to generate for Parquet folder.\n"""
+                    """Parquet folder are partitioned (hive) by chromosome (sub-folder),\n"""
+                    """which contain N data files.\n"""
+                    """Default: None (correspond to number of threads)""",
+            "required": False,
+            "default": None
+        },
+        "download-dbnsfp-subdatabases": {
+            "help": """Generate dbNSFP sub-databases\n"""
+                    """dbNSFP provides multiple databases which are split onto multiple columns.\n"""
+                    """This option create a Parquet folder for each sub-database (based on columns names).""",
+            "action": "store_true"
+        },
+        "download-dbnsfp-parquet": {
+            "help": """Generate a Parquet file for each Parquet folder.""",
+            "action": "store_true"
+        },
+        # "download-dbnsfp-vcf": {
+        #     "help": """Generate a VCF file for each Parquet folder.""",
+        #     "action": "store_true"
+        # },
+
         # From Annovar
         "annovar-code": {
             "metavar": "CODE",
@@ -661,8 +705,17 @@ commands_arguments = {
                 "download-refseq-include-non-canonical-chr": False,
                 "download-refseq-include-non-coding-transcripts": False,
                 "download-refseq-include-transcript-version": False,
-            }
+            },
+            "dbNSFP": {
+                "download-dbnsfp": False,
+                "download-dbnsfp-url": False,
+                "download-dbnsfp-release": False,
+                "download-dbnsfp-nb-data-files": False,
+                "download-dbnsfp-subdatabases": False,
+                "download-dbnsfp-parquet": False,
+            },
         }
+
     },
     "from_annovar": {
         "function" : "from_annovar",
