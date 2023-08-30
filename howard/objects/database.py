@@ -1212,23 +1212,30 @@ class Database:
         return database_header_infos_list
     
 
-    def find_column(self, database:str = None, table:str = None, column:str = "INFO", prefixes:list = ["INFO/"]) -> str:
+    def find_column(self, database:str = None, table:str = None, column:str = "INFO", prefixes:list = ["INFO/"], database_columns:list = None) -> str:
         """
-        This function finds a specific column in a database table, with the option to search for a
-        column with a specific prefix or within the INFO column header.
+        The `find_column` function searches for a specific column in a database table, with the option
+        to search for a column with a specific prefix or within the INFO column header.
         
         :param database: The name of the database to search for the column in. If not provided, it will
         use the current database that the code is connected to
         :type database: str
-        :param table: The name of the table in the database where the column is located
+        :param table: The "table" parameter is the name of the table in the database where the column is
+        located
         :type table: str
-        :param column: The default value for the "column" parameter is "INFO", but it can be changed to
+        :param column: The "column" parameter is a string that represents the name of the column to
+        search for in the database table. By default, it is set to "INFO", but you can change it to
         search for a specific column name, defaults to INFO
         :type column: str (optional)
-        :param prefixes: The prefixes parameter is a list of strings that are used to search for a
+        :param prefixes: The `prefixes` parameter is a list of strings that are used to search for a
         column with a specific prefix in the database. For example, if the prefixes list contains "DP/",
         the function will search for a column named "DP/INFO" in addition to the default "INFO" column
         :type prefixes: list
+        :param database_columns: The `database_columns` parameter is a list that contains the names of
+        all the columns in a specific database table. It is used to check if a specific column exists in
+        the database. If the `database_columns` parameter is not provided, the function will call the
+        `get_columns` method to retrieve
+        :type database_columns: list
         :return: a string that represents the name of the column found in the database, based on the
         input parameters. If the column is found, it returns the column name. If the column is not
         found, it returns None.
@@ -1236,10 +1243,11 @@ class Database:
 
         if not database:
             database = self.get_database()
-
+        
         # Database columns
-        database_columns = self.get_columns(database=database, table=table)
-
+        if not database_columns:
+            database_columns = self.get_columns(database=database, table=table)
+        
         # Init
         column_found = None
 
@@ -1265,20 +1273,21 @@ class Database:
 
     def map_columns(self, database:str = None, table:str = None, columns:list = [], prefixes:list = ["INFO/"]) -> dict:
         """
-        This function maps columns in a database table to their corresponding columns with specified
-        prefixes.
+        The `map_columns` function maps input columns to their corresponding columns in a specified
+        database table, using specified prefixes to filter the columns.
         
         :param database: The name of the database to search for columns in. If no database is specified,
         the method will use the default database set in the connection
         :type database: str
-        :param table: The name of the table in the database that you want to map the columns for
+        :param table: The `table` parameter is the name of the table in the database that you want to
+        map the columns for
         :type table: str
         :param columns: A list of column names that you want to map to their corresponding column names
         in the database
         :type columns: list
         :param prefixes: The `prefixes` parameter is a list of strings that are used to filter the
         columns that are searched for. Only columns that start with one of the prefixes in the list will
-        be considered. In the code above, the default value for `prefixes` is `["INFO/"]`, which
+        be considered. In the code above, the default value for `prefixes` is `["INFO/"]`
         :type prefixes: list
         :return: a dictionary that maps the input columns to their corresponding columns found in the
         specified database and table, with the specified prefixes.
@@ -1290,8 +1299,11 @@ class Database:
         # Init
         columns_mapping = {}
 
+        # database_columns
+        database_columns = self.get_columns(database=database, table=table)
+
         for column in columns:
-            column_found = self.find_column(database=database, table=table, column=column, prefixes=prefixes)
+            column_found = self.find_column(database=database, table=table, column=column, prefixes=prefixes, database_columns=database_columns)
             columns_mapping[column] = column_found
 
         return columns_mapping
@@ -1553,10 +1565,6 @@ class Database:
 
         if not database:
             return False
-        
-        # Header
-        if output_header:
-            self.get_header_file(header_file=output_header)
 
         # Header columns
         existing_columns_header = self.get_header_file_columns(output_header)
@@ -1721,6 +1729,12 @@ class Database:
                 remove_if_exists([query_output_database_tmp])
             else:
                 shutil.move(query_output_database_tmp, output_database)
+
+            # Header
+            if output_header:
+                remove_if_exists([output_header])
+                database_for_header = Database(database=output_database)
+                database_for_header.get_header_file(header_file=output_header)
         
         return os.path.exists(output_database) and self.get_type(output_database)
 

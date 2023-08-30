@@ -258,8 +258,10 @@ class Variants:
                     with open(input_file+".hdr", 'rt') as f:
                         header_list = self.read_vcf_header(f)
                 else:
-                    log.error(f"No header for file {input_file}")
-                    raise ValueError(f"No header for file {input_file}")
+                    log.warning(f"No header for file {input_file}. Set as default VCF header")
+                    header_list = default_header_list
+                    # log.error(f"No header for file {input_file}")
+                    # raise ValueError(f"No header for file {input_file}")
             else:  # try for unknown format ?
                 log.error(f"Input file format '{input_format}' not available")
                 raise ValueError(
@@ -1331,7 +1333,15 @@ class Variants:
         It returns the number of threads to use for the current job
         :return: The number of threads.
         """
-        return int(self.config.get("threads", 1))
+
+        input_thread = self.config.get("threads", None)
+        if not input_thread:
+            threads = 1
+        elif int(input_thread) <= 0:
+            threads = os.cpu_count()
+        else:
+            threads = int(input_thread)
+        return threads
 
 
     def update_from_vcf(self, vcf_file: str) -> None:
@@ -2632,7 +2642,7 @@ class Variants:
         # drop indexes
         log.debug(f"Drop indexes...")
         self.drop_indexes()
-
+        
         if annotations:
 
             for annotation in annotations:
@@ -2653,7 +2663,7 @@ class Variants:
                 parquet_hdr_file = database.get_header_file()
                 parquet_format = database.get_format()
                 parquet_type = database.get_type()
-
+                
                 # Check if files exists
                 if not parquet_file or not parquet_hdr_file:
                     log.error("Annotation failed: file not found")
@@ -2668,6 +2678,12 @@ class Variants:
                     log.debug(f"Annotation '{annotation}' - file: " +
                               str(parquet_file) + " and " + str(parquet_hdr_file))
 
+                    # Database full header columns
+                    parquet_hdr_vcf_header_columns = database.get_header_file_columns(parquet_hdr_file)
+                    # Log
+                    log.debug("Annotation database header columns : " +
+                              str(parquet_hdr_vcf_header_columns))
+
                     # Load header as VCF object
                     parquet_hdr_vcf_header_infos = database.get_header().infos
                     # Log
@@ -2679,7 +2695,7 @@ class Variants:
                     # Log
                     log.debug("Annotation database Columns: " +
                               str(parquet_columns))
-
+                    
                     # Add extra columns if "ALL" in annotation_fields
                     # if "ALL" in annotation_fields:
                     #     allow_add_extra_column = True
@@ -2695,7 +2711,7 @@ class Variants:
                                     "unknown",
                                     self.code_type_map["String"]
                                 )
-
+                    
                     # For all fields in database
                     annotation_fields_ALL = False
                     if "ALL" in annotation_fields or "INFO" in annotation_fields:
@@ -2707,7 +2723,7 @@ class Variants:
                             "Annotation database header - All annotations added: " + str(annotation_fields))
 
                     # Init 
-
+                    
                     # List of annotation fields to use
                     sql_query_annotation_update_info_sets = []
 
@@ -2719,7 +2735,7 @@ class Variants:
 
                     # Annotation fields processed
                     annotation_fields_processed = []
-
+                    
                     # Columns mapping
                     map_columns = database.map_columns(columns=annotation_fields, prefixes=["INFO/"])
 
@@ -2777,7 +2793,7 @@ class Variants:
 
                             # Annotation/Update query fields
                             # Found in INFO column
-                            if annotation_field_column == "INFO":
+                            if annotation_field_column == "INFO" and "INFO" in parquet_hdr_vcf_header_columns:
                                 sql_query_annotation_update_info_sets.append(f"""
                                 || CASE WHEN REGEXP_EXTRACT(';' || table_parquet.INFO, ';{annotation_field}=([^;]*)',1) NOT IN ('','.')
                                         THEN '{annotation_field_sep}' || '{annotation_fields_new_name}=' || REGEXP_EXTRACT(';' || table_parquet.INFO, ';{annotation_field}=([^;]*)',1)
@@ -2788,7 +2804,7 @@ class Variants:
                             else:
                                 sql_query_annotation_update_info_sets.append(f"""
                                 || CASE WHEN table_parquet."{annotation_field_column}" NOT IN ('','.')
-                                        THEN '{annotation_field_sep}' || '{annotation_fields_new_name}=' || table_parquet."{annotation_field_column}"
+                                        THEN '{annotation_field_sep}' || '{annotation_fields_new_name}=' || replace(table_parquet."{annotation_field_column}", ';', ',')
                                         ELSE ''
                                     END
                                 """)
@@ -2815,7 +2831,7 @@ class Variants:
                     if parquet_type in ["regions"]:
                         allow_annotation_full_info = False
 
-                    if allow_annotation_full_info and nb_annotation_field == len(annotation_fields) and annotation_fields_ALL:
+                    if allow_annotation_full_info and nb_annotation_field == len(annotation_fields) and annotation_fields_ALL and "INFO" in parquet_hdr_vcf_header_columns:
                         sql_query_annotation_update_info_sets = []
                         sql_query_annotation_update_info_sets.append(
                             f"|| table_parquet.INFO ")
@@ -2939,7 +2955,8 @@ class Variants:
                                             FROM {parquet_file_link} as table_parquet 
                                         """
                                         sql_query_annotation_where_clause = f"""
-                                            ( {clause_where_regions_variants} )
+                                            table_parquet.\"#CHROM\" in ('{chrom}')
+                                            AND ( {clause_where_regions_variants} )
                                             AND table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
                                             AND table_parquet.\"POS\" = table_variants.\"POS\"
                                             AND table_parquet.\"ALT\" = table_variants.\"ALT\"
@@ -2969,6 +2986,10 @@ class Variants:
 
                         nb_of_query = len(query_dict)
                         num_query = 0
+
+                        # SET max_expression_depth TO x
+                        self.conn.execute("SET max_expression_depth TO 10000")
+
                         for query_name in query_dict:
                             query = query_dict[query_name]
                             num_query += 1
