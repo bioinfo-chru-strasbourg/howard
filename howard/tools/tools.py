@@ -456,32 +456,37 @@ arguments = {
         # Shared
         "config": {
             "metavar": "JSON",
-            "help": "Configuration file\nFormat: JSON\nDefault: {}",
+            "help": """Configuration file\n"""
+                    """Default: {}""",
             "required": False,
             "default": "{}"
         },
         "threads": {
             "metavar": "INTEGER",
-            "help": "Number of threads to use\nFormat: INTEGER\nDefault: 1",
+            "help": """Number of threads to use\n"""
+                    """Use -1 to detect number of CPU/cores\n"""
+                    """Default: 1""",
             "required": False,
             "default": 1
         },
         "memory": {
             "metavar": "FLOAT[kMG]",
-            "help": "Memory to use\nFormat: FLOAT[kMG]\nDefault: 8G",
+            "help": """Memory to use\n"""
+                    """Default: 8G""",
             "required": False,
             "default": "8G"
         },
         "verbosity": {
             "metavar": "LEVEL",
-            "help": "Verbosity level (CRITICAL, ERROR, WARNING, INFO, DEBUG or NOTSET)\nDefault: INFO",
+            "help": """Verbosity level\n"""
+                    """Available: CRITICAL, ERROR, WARNING, INFO, DEBUG or NOTSET\n"""
+                    """Default: INFO""",
             "required": False,
             "default": "info"
         },
         "log": {
             "metavar": "FILE",
             "help": """Logs file\n"""
-                    """Format: LOG\n"""
                     """Example: 'my.log'\n"""
                     """Default: None""",
             "default": None
