@@ -430,6 +430,15 @@ arguments = {
             "required": False,
             "default": None
         },
+        "download-dbnsfp-parquet-size": {
+            "metavar": "INTEGER",
+            "help": """Maximum size (Mb) of data files in Parquet folder.\n"""
+                    """Parquet folder are partitioned (hive) by chromosome (sub-folder),\n"""
+                    """which contain N data files.\n"""
+                    """Default: 100""",
+            "required": False,
+            "default": 100
+        },
         "download-dbnsfp-subdatabases": {
             "help": """Generate dbNSFP sub-databases\n"""
                     """dbNSFP provides multiple databases which are split onto multiple columns.\n"""
@@ -440,10 +449,16 @@ arguments = {
             "help": """Generate a Parquet file for each Parquet folder.""",
             "action": "store_true"
         },
-        # "download-dbnsfp-vcf": {
-        #     "help": """Generate a VCF file for each Parquet folder.""",
-        #     "action": "store_true"
-        # },
+        "download-dbnsfp-vcf": {
+            "help": """Generate a VCF file for each Parquet folder.\n"""
+                    """Notes: VCF may not be sorted. Take a while.\n""",
+            "action": "store_true"
+        },
+        "download-dbnsfp-vcf-all": {
+            "help": """Generate a VCF file for all database Parquet folder.\n"""
+                    """Notes: - Use at least 24 number of data files to avoid segmentation fault.""",
+            "action": "store_true"
+        },
 
         # From Annovar
         "annovar-code": {
@@ -451,6 +466,15 @@ arguments = {
             "help": """Annovar code, or database name. Usefull to name databases columns""",
             "required": False,
             "default": None
+        },
+
+        # Common
+        "genomes-folder": {
+            "metavar": "FOLDER",
+            "help": """Folder containing genomes\n"""
+                    f"""Default: {DEFAULT_GENOME_FOLDER}""",
+            "required": False,
+            "default": f"{DEFAULT_GENOME_FOLDER}"
         },
 
         # Shared
@@ -680,7 +704,12 @@ commands_arguments = {
         "description": """Download databases and needed files for howard and associated tools""",
         "help": """Download databases and needed files for howard and associated tools""",
         "epilog": """Usage examples:\n"""
-                    """   howard databases --assembly=hg19 --download-genomes=/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='^>chr[0-9XYM]*$' --download-annovar=/databases/annovar/current --download-annovar-files='refGene,gnomad_exome,dbnsfp42a,cosmic70,clinvar_202*,nci60' --download-snpeff=/databases/snpeff/current """, 
+                    """   howard databases --assembly=hg19 --download-genomes=/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='^>chr[0-9XYM]*$' --download-annovar=/databases/annovar/current --download-annovar-files='refGene,gnomad_exome,dbnsfp42a,cosmic70,clinvar_202*,nci60' --download-snpeff=/databases/snpeff/current  --download-snpeff=/databases/snpeff/current --download-refseq=/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-dbnsfp=/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases --download-dbnsfp-parquet --threads=8"""
+                    """\n"""
+                    """Notes:\n"""
+                    """   - Proxy: Beware of proxy configuration\n"""
+                    """   - dbNSFP download: More threads, more memory usage (8 threads ~ 16Gb, 24 threads ~ 32Gb)\n"""
+                    ,
         "groups": {
             "main": {
                 "assembly": False,
@@ -715,9 +744,13 @@ commands_arguments = {
                 "download-dbnsfp": False,
                 "download-dbnsfp-url": False,
                 "download-dbnsfp-release": False,
-                "download-dbnsfp-nb-data-files": False,
+                #"download-dbnsfp-nb-data-files": False,
+                "download-dbnsfp-parquet-size": False,
                 "download-dbnsfp-subdatabases": False,
                 "download-dbnsfp-parquet": False,
+                "download-dbnsfp-vcf": False,
+                #"download-dbnsfp-vcf-all": False,
+                "genomes-folder": False
             },
         }
 
