@@ -40,7 +40,86 @@ def test_database_dbnsfp():
     # Tmp folder
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
         
-        #assemblies = 'hg19,hg38'
+        assemblies = 'hg19,hg38'
+        assemblies_list = [value for value in assemblies.split(',')]
+
+        # Download dbnsfp
+        dbnsfp_source = os.path.join(tests_databases_folder, "dbnsfp", "dbNSFP4.4a.zip")
+        dbnsfp_target = os.path.join(tmp_dir, "dbNSFP4.4a.zip")
+        shutil.copy(dbnsfp_source, dbnsfp_target)
+
+        dbnsfp_folder = tmp_dir
+
+        # Try to convert 
+        try:
+            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=dbnsfp_folder, generate_parquet_file = False, generate_sub_databases = False, generate_vcf_file = False)
+        except:
+            assert False
+
+        downloaded_files = os.listdir(dbnsfp_folder)
+        for assembly in assemblies_list:
+            assert assembly in downloaded_files
+            downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
+            nb_files = 2
+            assert len(downloaded_assembly_files) == nb_files
+
+        # Try again to generate parquet
+        try:
+            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=dbnsfp_folder, generate_parquet_file = True, generate_sub_databases = False, generate_vcf_file = False)
+        except:
+            assert False
+
+        downloaded_files = os.listdir(dbnsfp_folder)
+        for assembly in assemblies_list:
+            assert assembly in downloaded_files
+            downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
+            nb_files = 4
+            assert len(downloaded_assembly_files) == nb_files
+
+
+        # Try again to generate parquet
+        try:
+            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=dbnsfp_folder, generate_parquet_file = True, generate_sub_databases = True, generate_vcf_file = False)
+        except:
+            assert False
+
+        downloaded_files = os.listdir(dbnsfp_folder)
+        for assembly in assemblies_list:
+            assert assembly in downloaded_files
+            downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
+            nb_files = 108
+            assert len(downloaded_assembly_files) == nb_files
+
+        # Try again to generate VCF
+        try:
+            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=dbnsfp_folder, generate_parquet_file = True, generate_sub_databases = True, generate_vcf_file = True)
+        except:
+            assert False
+
+        downloaded_files = os.listdir(dbnsfp_folder)
+        for assembly in assemblies_list:
+            assert assembly in downloaded_files
+            downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
+            nb_files = 162
+            assert len(downloaded_assembly_files) == nb_files
+
+        # Try again to generate nothing more
+        try:
+            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=dbnsfp_folder, generate_parquet_file = True, generate_sub_databases = True, generate_vcf_file = True)
+        except:
+            assert False
+
+        downloaded_files = os.listdir(dbnsfp_folder)
+        for assembly in assemblies_list:
+            assert assembly in downloaded_files
+            downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
+            nb_files = 162
+            assert len(downloaded_assembly_files) == nb_files
+
+
+    # Tmp folder
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
         assemblies = 'hg19'
         assemblies_list = [value for value in assemblies.split(',')]
 
@@ -49,69 +128,46 @@ def test_database_dbnsfp():
         dbnsfp_target = os.path.join(tmp_dir, "dbNSFP4.4a.zip")
         shutil.copy(dbnsfp_source, dbnsfp_target)
 
-        # Try to convert 
+        dbnsfp_folder = tmp_dir
+
+        # Try to generate vcf file without parquet
         try:
-            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=tmp_dir, generate_parquet_file = False, generate_sub_databases = False, generate_vcf = False) #dbnsfp_folder
+            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=dbnsfp_folder, generate_parquet_file = False, generate_sub_databases = True, generate_vcf_file = True)
         except:
             assert False
 
-        downloaded_files = os.listdir(tmp_dir)
+        downloaded_files = os.listdir(dbnsfp_folder)
         for assembly in assemblies_list:
             assert assembly in downloaded_files
-            downloaded_assembly_files = os.listdir(f"{tmp_dir}/{assembly}")
-            nb_files = 2
-            assert len(downloaded_assembly_files) == nb_files
-
-        # Try again to generate parquet
-        try:
-            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=tmp_dir, generate_parquet_file = True, generate_sub_databases = False, generate_vcf = False) #dbnsfp_folder
-        except:
-            assert False
-
-        downloaded_files = os.listdir(tmp_dir)
-        for assembly in assemblies_list:
-            assert assembly in downloaded_files
-            downloaded_assembly_files = os.listdir(f"{tmp_dir}/{assembly}")
-            nb_files = 4
-            assert len(downloaded_assembly_files) == nb_files
-
-        # Try again to generate parquet
-        try:
-            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=tmp_dir, generate_parquet_file = True, generate_sub_databases = True, generate_vcf = False) #dbnsfp_folder
-        except:
-            assert False
-
-        downloaded_files = os.listdir(tmp_dir)
-        for assembly in assemblies_list:
-            assert assembly in downloaded_files
-            downloaded_assembly_files = os.listdir(f"{tmp_dir}/{assembly}")
+            downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
             nb_files = 108
             assert len(downloaded_assembly_files) == nb_files
 
-        # # Try again to generate VCF
-        # try:
-        #     databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=tmp_dir, generate_parquet_file = True, generate_sub_databases = True, generate_vcf = True) #dbnsfp_folder
-        # except:
-        #     assert False
 
-        # downloaded_files = os.listdir(tmp_dir)
-        # for assembly in assemblies_list:
-        #     assert assembly in downloaded_files
-        #     downloaded_assembly_files = os.listdir(f"{tmp_dir}/{assembly}")
-        #     nb_files = 162
-        #     assert len(downloaded_assembly_files) == nb_files
+    # Tmp folder
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
-        # Try again to generate nothing more
+        assemblies = 'hg19'
+        assemblies_list = [value for value in assemblies.split(',')]
+
+        # Download dbnsfp
+        dbnsfp_source = os.path.join(tests_databases_folder, "dbnsfp", "dbNSFP4.4a.zip")
+        dbnsfp_target = os.path.join(tmp_dir, "dbNSFP4.4a.zip")
+        shutil.copy(dbnsfp_source, dbnsfp_target)
+
+        dbnsfp_folder = tmp_dir
+
+        # Try to generate all files with small parquet file size (1Mb)
         try:
-            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=tmp_dir, generate_parquet_file = True, generate_sub_databases = True, generate_vcf = True) #dbnsfp_folder
+            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=dbnsfp_folder, generate_parquet_file = True, generate_sub_databases = True, generate_vcf_file = True, parquet_size = 1)
         except:
             assert False
 
-        downloaded_files = os.listdir(tmp_dir)
+        downloaded_files = os.listdir(dbnsfp_folder)
         for assembly in assemblies_list:
             assert assembly in downloaded_files
-            downloaded_assembly_files = os.listdir(f"{tmp_dir}/{assembly}")
-            nb_files = 108
+            downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
+            nb_files = 162
             assert len(downloaded_assembly_files) == nb_files
 
 
@@ -138,7 +194,7 @@ def test_database():
         assert True
     except:
         assert False
-
+    
 
 def test_databases_download():
     """

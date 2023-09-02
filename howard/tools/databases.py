@@ -7,6 +7,8 @@ import multiprocessing
 import os
 import subprocess
 import pyarrow.parquet as pq
+import pyarrow as pa
+from pyarrow import csv
 import duckdb
 import pandas as pd
 import Bio.bgzf as bgzf
@@ -25,9 +27,38 @@ import zipfile
 import gzip
 import pandas as pd
 from typing import List
+from tempfile import TemporaryDirectory
 
 
 from howard.commons import *
+
+
+def query_and_concatenate_columns(parquet_file: str, output_file: str, columns: list):
+    """
+    This function performs an SQL query on a large Parquet file and concatenates multiple columns (if not empty),
+    including the column name in the concatenation.
+
+    :param parquet_file: The path to the Parquet file
+    :type parquet_file: str
+    :param output_file: The path to the output file where the concatenated data will be written
+    :type output_file: str
+    :param columns: The list of columns to concatenate
+    :type columns: list
+    """
+    parquet_reader = pq.ParquetFile(parquet_file)
+    num_rows = parquet_reader.metadata.num_rows
+
+    chunk_size = 100000  # Adjust the chunk size as per your memory constraints
+
+    with pd.HDFStore(output_file, mode='w') as store:
+        for i in range(0, num_rows, chunk_size):
+            table = parquet_reader.read_row_group(0, columns=columns, skip_rows=i, num_rows=chunk_size).to_pandas()
+            table = table.apply(lambda row: ';'.join([f"{col}={row[col]}" for col in columns if pd.notnull(row[col])]), axis=1)
+            store.append('data', table)
+
+    # Export the concatenated data to a CSV file
+    concatenated_data = pd.read_hdf(output_file, 'data')
+    concatenated_data.to_csv(output_file + '.csv', index=False)
 
 
 def databases(args:argparse) -> None:
@@ -123,17 +154,20 @@ def databases_download(args:argparse) -> None:
 
     # dbNSFP
     if args.download_dbnsfp:
-        log.debug(f"Download dbNSFP databases")
+        log.debug(f"Download dbNSFP")
         databases_download_dbnsfp(
             assemblies = assemblies,
             dbnsfp_folder=args.download_dbnsfp,
             dbnsfp_url=args.download_dbnsfp_url,
             dbnsfp_release=args.download_dbnsfp_release,
             threads=args.threads,
-            nb_data_files=args.download_dbnsfp_nb_data_files,
+            #nb_data_files=args.download_dbnsfp_nb_data_files,
+            parquet_size=args.download_dbnsfp_parquet_size,
             generate_sub_databases=args.download_dbnsfp_subdatabases,
             generate_parquet_file=args.download_dbnsfp_parquet,
-            #generate_vcf=args.download_dbnsfp_vcf,
+            generate_vcf_file=args.download_dbnsfp_vcf,
+            #generate_vcf_file_all=args.download_dbnsfp_vcf_all,
+            genomes_folder=args.genomes_folder,
             )
 
 
@@ -673,7 +707,7 @@ def databases_format_refseq(refseq_file:str, output_file:str, include_utr_5:bool
 
 
 
-def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_url:str = None, dbnsfp_release:str = "4.4a", threads:int = None, nb_data_files:int = None, generate_parquet_file:bool = False, generate_sub_databases:bool = False, generate_vcf:bool = False) -> bool:
+def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_url:str = None, dbnsfp_release:str = "4.4a", threads:int = None, nb_data_files:int = None, parquet_size:int = 100, generate_parquet_file:bool = False, generate_sub_databases:bool = False, generate_vcf_file:bool = False, generate_vcf_file_all:bool = True, genomes_folder:str = None) -> bool:
     """
     The function `databases_download_dbnsfp` is used to download and process dbNSFP databases for specified
     genome assemblies.
@@ -694,10 +728,12 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
     processing. It determines how many tasks can be executed simultaneously. Increasing the number of
     threads can potentially speed up the execution time of the function, especially if there are
     multiple cores available on the machine
-    :type threads: int
+    :type threads: int (optional)
     :param nb_data_files: The parameter "nb_data_files" is used to specify the number of data files to
     be processed. It is an optional parameter and its value should be an integer
-    :type nb_data_files: int
+    :type nb_data_files: int (optional)
+    :param parquet_size: The parameter "parquet_size" is used to specify the maximum size (Mb) of data files in parquet folder. It is an optional parameter and its value should be an integer
+    :type parquet_size: int (optional)
     :param generate_parquet_file: A boolean flag indicating whether to generate a parquet file or not,
     defaults to False
     :type generate_parquet_file: bool (optional)
@@ -705,6 +741,15 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
     or not. If set to True, the function will generate sub-databases based on the assemblies provided.
     If set to False, the function will not generate sub-databases, defaults to False
     :type generate_sub_databases: bool (optional)
+    :param generate_vcf_file: A boolean flag indicating whether to generate a VCF file or not,
+    defaults to False
+    :type generate_vcf_file: bool (optional)
+    :param generate_vcf_file_all: A boolean flag indicating whether to generate a ALL database VCF file or not,
+    defaults to True
+    :type generate_vcf_file_all: bool (optional)
+    :param genomes_folder: A string that specifies where are genomes
+    :type genomes_folder: str (optional)
+    :return: bool as success or not
     """
 
     def get_database_files(pattern:str) -> List:
@@ -724,7 +769,7 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
         return database_files
     
 
-    def get_columns_structure(database_file:str, sample_size:int = 1000000) -> dict:
+    def get_columns_structure(database_file:str, sample_size:int = 1000000, threads:int = 1) -> dict:
         """
         The function `get_columns_structure` creates a view of a database file and retrieves the structure
         of its columns.
@@ -742,7 +787,7 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
         """
         
         # Check columns structure
-        log.info(f"Download dbNSFP databases {assemblies} - Check database structure...")
+        log.info(f"Download dbNSFP {assemblies} - Check database structure...")
 
         # Create view and retrive structure
         query = f"""
@@ -751,27 +796,28 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
                     FROM read_csv_auto('{database_file}', compression=gzip, ALL_VARCHAR=0, delim='\t', nullstr='.', sample_size={sample_size})
                 )
             """
-        log.debug(query)
-        db_structure = duckdb.connect()
+        #log.debug(query)
+        db_structure = duckdb.connect(config={"threads":threads})
         db_structure.execute(query)
         res_structure = db_structure.query("PRAGMA table_info('view_for_structure');")
 
         # Constructure structure dict
         columns_structure = {}
         for column in res_structure.df().iterrows():
-            column_name = column[1][1]
-            data_type = column[1][2]
+            column_name = column[1].iloc[1]
+            data_type = column[1].iloc[2]
             columns_structure[column_name] = data_type
 
-        log.debug(f"columns_structure: {columns_structure}")
+        # Log
+        log.info(f"Download dbNSFP {assemblies} - Check database structure - {len(columns_structure)} columns found")
 
         db_structure.close()
 
         if not columns_structure:
-            log.error(f"Download dbNSFP databases {assemblies} - Check database structure - No database structure found")
-            raise ValueError(f"Download dbNSFP databases {assemblies} - Check database structure - No database structure found")
+            log.error(f"Download dbNSFP {assemblies} - Check database structure - No database structure found")
+            raise ValueError(f"Download dbNSFP {assemblies} - Check database structure - No database structure found")
         else:
-            log.info(f"Download dbNSFP databases {assemblies} - Check database structure - Database structure generated")
+            log.info(f"Download dbNSFP {assemblies} - Check database structure - Database structure generated")
 
         return columns_structure
     
@@ -789,31 +835,43 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
         return name.translate(mapping_table)
 
 
-    def get_columns_select_clause(columns_structure:dict, assembly:str = "hg19", sub_database:str = None, null_if_no_annotation:bool = True) -> str:
+    def get_columns_select_clause(columns_structure:dict, assembly:str = "hg19", for_parquet:bool = False, sub_database:str = None, null_if_no_annotation:bool = True, print_log:bool = True) -> dict:
         """
-        The function `get_columns_select_clause` generates the SELECT and WHERE clauses for a SQL query
+        The `get_columns_select_clause` function generates the SELECT and WHERE clauses for a SQL query
         based on the input columns structure, assembly, sub-database, and null_if_no_annotation flag.
         
-        :param columns_structure: A dictionary that represents the structure of the columns. Each key is a
-        column name and the corresponding value is the column type
+        :param columns_structure: A dictionary that represents the structure of the columns. Each key is
+        a column name and the corresponding value is the column type
         :type columns_structure: dict
         :param assembly: The `assembly` parameter specifies the genome assembly version. It can take
-        values like "hg19", "hg38", or "hg18", defaults to hg19
+        values like "hg19", "hg38", or "hg18". By default, it is set to "hg19", defaults to hg19
         :type assembly: str (optional)
+        :param for_parquet: The `for_parquet` parameter is a boolean flag that determines whether the
+        SQL query is being generated for a Parquet file. If `for_parquet` is set to `True`, the function
+        will include the position and REF/ALT columns in the SELECT clause, regardless of whether they
+        are specified, defaults to False
+        :type for_parquet: bool (optional)
         :param sub_database: The `sub_database` parameter is an optional parameter that specifies a
         sub-database within the main database. It is used to filter the columns based on the specified
         sub-database. If a sub-database is provided, only columns that belong to that sub-database or
         start with the sub-database
         :type sub_database: str
-        :param null_if_no_annotation: A boolean parameter that determines whether to return null if
-        there are no annotations found. If set to True, the function will return null if there are no
-        annotations. If set to False, the function will return an empty string if there are no
-        annotations, defaults to True
+        :param null_if_no_annotation: The `null_if_no_annotation` parameter is a boolean parameter that
+        determines whether to return null if there are no annotations found. If set to True, the
+        function will return null if there are no annotations. If set to False, the function will return
+        an empty string if there are no annotations, defaults to True
         :type null_if_no_annotation: bool (optional)
-        :return: a dictionary containing the "select" and "where" clauses for a SQL query. The "select"
-        clause includes the columns to be selected in the query, while the "where" clause includes the
-        conditions for filtering the data.
+        :param log: The `log` parameter is a boolean flag that determines whether to enable logging or
+        not. If set to `True`, the function will log debug messages during execution. If set to `False`,
+        logging will be disabled, defaults to True
+        :type log: bool (optional)
+        :return: The `get_columns_select_clause` function returns a dictionary containing the "select"
+        and "where" clauses for a SQL query. The "select" clause includes the columns to be selected in
+        the query, while the "where" clause includes the conditions for filtering the data.
+        Additionally, the dictionary also includes a "annotations" key that contains a dictionary of the
+        selected annotations and their corresponding column types.
         """
+        
 
         columns_select_position = {}
         columns_select_ref_alt = {}
@@ -891,9 +949,9 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
                 
                 # other columns - annotations
                 if not column_to_remove:
-                    if sub_database is None or column == sub_database or column.startswith(f"{sub_database}_"):
+                    if sub_database is None or sub_database in ['ALL'] or column == sub_database or column.startswith(f"{sub_database}_"):
                         column_alias = clean_name(column)
-                        if assembly == "parquet":
+                        if for_parquet:
                             column_key = f""" "{column_alias}" """
                             column_where = f""" "{column_alias}" IS NOT NULL """
                         else:
@@ -907,7 +965,7 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
                         columns_list_annotations[column_alias] = columns_structure[column]
 
         # Force position and ref/alt if parquet
-        if assembly == "parquet":
+        if for_parquet:
             columns_select_position = {'"#CHROM"': '#CHROM', '"POS"': 'POS'}
             columns_select_ref_alt = {'"REF"': 'REF', '"ALT"': 'ALT'}
 
@@ -917,10 +975,11 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
 
         # Create where clause
         columns_where = list(columns_where_annotations.keys())
-        columns_where_clause = " AND ".join(columns_where)
+        columns_where_clause = " OR ".join(columns_where)
 
         # log
-        log.debug(f"""Download dbNSFP databases ['{assembly}'] - Sub Database '{sub_database}' - Found {len(list(columns_select_annotations.keys()))} annotations """)
+        if print_log:
+            log.debug(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Check database structure - {len(list(columns_select_annotations.keys()))} annotations found""")
 
         # If no annotation found (usually for sub_database ref, alt, pos...)
         if null_if_no_annotation and not len(list(columns_select_annotations.keys())):
@@ -932,8 +991,6 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
             "where": columns_where_clause,
             "annotations": columns_list_annotations
         }
-
-        log.debug(f""" clauses: {clauses}""")
 
         return clauses
 
@@ -972,13 +1029,15 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
                     line_desc += f"""{sep} {line_split[2].strip()}"""
                 annotation_dict[line_name] = line_desc.replace('"', "'")
 
-        log.debug(f"""Number of annotations: {len(annotation_dict)}""")
-
         return annotation_dict
 
 
     # Log
-    log.info(f"Download dbNSFP databases {assemblies}")
+    log.info(f"Download dbNSFP {assemblies}")
+
+    # genomes folder
+    if not genomes_folder:
+        genomes_folder = DEFAULT_GENOME_FOLDER
 
     # Default refSeq Folder
     if not dbnsfp_folder:
@@ -1003,21 +1062,21 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
 
     # Download dbNSFP
     if not os.path.exists(dbnsfp_zip_dest):
-        log.info(f"Download dbNSFP databases {assemblies} - Download '{dbnsfp_zip}'...")
+        log.info(f"Download dbNSFP {assemblies} - Download '{dbnsfp_zip}'...")
         download_file(dbnsfp_zip_url, dbnsfp_zip_dest)
     else:
-        log.info(f"Download dbNSFP databases {assemblies} - Database '{dbnsfp_zip}' already exists")
+        log.info(f"Download dbNSFP {assemblies} - Database '{dbnsfp_zip}' already exists")
 
     # Extract dbNSFP
     if not os.path.exists(dbnsfp_readme_dest):
-        log.info(f"Download dbNSFP databases {assemblies} - Extract '{dbnsfp_zip}'...")
+        log.info(f"Download dbNSFP {assemblies} - Extract '{dbnsfp_zip}'...")
         extract_file(dbnsfp_zip_dest)
     else:
-        log.info(f"Download dbNSFP databases {assemblies} - Database '{dbnsfp_zip}' already extracted")
+        log.info(f"Download dbNSFP {assemblies} - Database '{dbnsfp_zip}' already extracted")
     
 
 
-    def get_header(header_file:str, dbnsfp_readme_dest:str = None, columns_structure:dict = {}, annotations:list = []) -> bool:
+    def get_header(header_file:str, dbnsfp_readme_dest:str = None, columns_structure:dict = {}, annotations:list = [], readme_annotations_description:dict = None) -> bool:
         """
         The function `get_header` generates a VCF header based on provided annotations and writes it to
         a file.
@@ -1059,7 +1118,11 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
         }
 
         # Extract annotation description
-        readme_annotations_description = get_annotation_description(dbnsfp_readme_dest)
+        if not readme_annotations_description:
+            readme_annotations_description = get_annotation_description(dbnsfp_readme_dest)
+
+        # Number of annotations
+        #log.debug(f"""{len(readme_annotations_description)} annotations found """)
 
         # Add annotations to header
         for annotation in readme_annotations_description:
@@ -1090,91 +1153,110 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
         return os.path.exists(header_file)
 
 
-    # Create duckdb connexion
-    db = duckdb.connect()
+    def size_to_mb(size:int) -> int:
+        """
+        The function `size_to_mb` converts a given size in megabytes to bytes.
+        
+        :param size: The size parameter represents the size of a partition in megabytes
+        :type size: int
+        :return: the partition size in megabytes as an integer.
+        """
+
+        if size:
+            byte = 1
+            kilobytes = byte * 1024
+            megabytes = kilobytes * 1024
+            return int(size * megabytes)
+        else:
+            return None
+
 
     # Init
+    partition_size = size_to_mb(parquet_size)
     sample_size = 1000000
     database_files = []
     columns_structure = {}
+    readme_annotations_description = None
     if not threads:
         threads = os.cpu_count()
     if not nb_data_files:
         nb_data_files = threads
 
+    # Create duckdb connexion
+    db = duckdb.connect(config={"threads":threads})
+
+    parquet_partition_generated_list = []
+    parquet_partition_already_generated_list = []
+    parquet_generated_list = []
+    parquet_already_generated_list = []
+    vcf_generated_list = []
+    vcf_already_generated_list = []
+
     for assembly in assemblies:
 
         output_assembly = f"{dbnsfp_folder}/{assembly}"
         if os.path.exists(output_assembly):
-            log.info(f"Download dbNSFP databases ['{assembly}'] - Parquet folder already exists")
+            log.info(f"Download dbNSFP ['{assembly}'] - Parquet folder already exists")
             continue
         else:
             # Create output chromosome
             Path(output_assembly).mkdir(parents=True, exist_ok=True)
   
         # Check database files
-        log.info(f"Download dbNSFP databases {assemblies} - Check database files...")
+        log.info(f"Download dbNSFP {assemblies} - Check database files...")
         database_files = get_database_files(f"{dbnsfp_zip_dest_folder}/dbNSFP{dbnsfp_release}_variant.chr*.gz")
-        log.debug(f"Download dbNSFP databases {assemblies} - Check database files - Found {len(database_files)} files")
+        log.debug(f"Download dbNSFP {assemblies} - Check database files - Found {len(database_files)} files")
         if not database_files:
-            log.error(f"Download dbNSFP databases {assemblies} - Check database files - No files found")
-            raise ValueError(f"Download dbNSFP databases {assemblies} - Check database files - No files found")
+            log.error(f"Download dbNSFP {assemblies} - Check database files - No files found")
+            raise ValueError(f"Download dbNSFP {assemblies} - Check database files - No files found")
 
         # Database structure
         if not columns_structure:
-            columns_structure = get_columns_structure(database_file=database_files[0], sample_size=sample_size)
+            columns_structure = get_columns_structure(database_file=database_files[0], sample_size=sample_size, threads=threads)
 
-        log.info(f"Download dbNSFP databases ['{assembly}']")
+        #log.info(f"Download dbNSFP ['{assembly}']")
 
         # Output prefix
         output_prefix = f"{dbnsfp_folder}/{assembly}/dbNSFP{dbnsfp_release}"
 
+        # Sub database
+        sub_database = "ALL"
+
         # Create clauses (select and where)
-        columns_select_clauses = {}
-
-        columns_clauses = get_columns_select_clause(columns_structure=columns_structure, assembly=assembly, sub_database=None)
+        columns_clauses = get_columns_select_clause(columns_structure=columns_structure, assembly=assembly, sub_database=sub_database)
         columns_select_clause = columns_clauses.get("select")
-        columns_where_clause = columns_clauses.get("where")
         columns_annotations = columns_clauses.get("annotations")
+        
+        # If clause select not empty
+        if columns_select_clause:
 
-        columns_select_clauses["ALL"] = columns_select_clause
+            log.info(f"""Download dbNSFP ['{assembly}']""")
+            log.info(f"""Download dbNSFP ['{assembly}'] - Parquet folder generation""")
 
-        # Process database files
-        for database_file in sorted(database_files, key=str.casefold, reverse=False):
+            # Process database files
+            for database_file in sorted(database_files, key=str.casefold, reverse=False):
 
-            log.info(f"""Download dbNSFP databases ['{assembly}'] - Process file '{os.path.basename(database_file)}'""")
+                log.info(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Process file '{os.path.basename(database_file)}'...""")
 
-            # Chromosome
-            log.info(f"""Download dbNSFP databases ['{assembly}'] - Process file '{os.path.basename(database_file)}' - Check chomosome...""")
-            query = f"""
-                        SELECT "#chr"
-                        FROM read_csv_auto('{database_file}', compression=gzip, ALL_VARCHAR=1, delim='\t', nullstr='.', SAMPLE_SIZE=10)
-                        WHERE \"#chr\" IS NOT NULL
-                        LIMIT 1
-                """
-            res = db.query(query).df()
-            chromosome = "chr" + res["#chr"][0]
-            log.info(f"""Download dbNSFP databases ['{assembly}'] - Process file '{os.path.basename(database_file)}' - Found chromosome '{chromosome}'""")
-
-            for subdatabase in columns_select_clauses:
+                # Chromosome
+                log.debug(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Process file '{os.path.basename(database_file)}' - Check chomosome...""")
+                query = f"""
+                            SELECT "#chr"
+                            FROM read_csv_auto('{database_file}', compression=gzip, ALL_VARCHAR=1, delim='\t', nullstr='.', SAMPLE_SIZE=10)
+                            WHERE \"#chr\" IS NOT NULL
+                            LIMIT 1
+                    """
+                res = db.query(query).df()
+                chromosome = "chr" + res["#chr"][0]
+                log.debug(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Process file '{os.path.basename(database_file)}' - Found chromosome '{chromosome}'""")
 
                 # Output
-                output = f"{output_prefix}.{subdatabase}.partition.parquet"
+                output = f"{output_prefix}.{sub_database}.partition.parquet"
                 if not os.path.exists(output):
                     Path(output).mkdir(parents=True, exist_ok=True)
                 output_parquet = os.path.join(output, f"#CHROM={chromosome}")
 
-                # Header
-                header_file = f"{output}.hdr"
-                if not os.path.exists(header_file):
-                    if get_header(header_file=header_file, dbnsfp_readme_dest=dbnsfp_readme_dest, columns_structure=columns_structure, annotations=columns_annotations.keys()):
-                        log.debug(f"Download dbNSFP databases ['{assembly}'] - Write header")
-                    else:
-                        log.error(f"Download dbNSFP databases ['{assembly}'] - Write header failed")
-                        raise ValueError(f"Download dbNSFP databases ['{assembly}'] - Write header failed")
-
                 # Query
-                columns_select_clause = columns_select_clauses[subdatabase]
                 query = f"""
                         COPY (
                             SELECT {columns_select_clause}
@@ -1191,18 +1273,56 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
                             )
                         TO '{output_parquet}' WITH (FORMAT PARQUET, PER_THREAD_OUTPUT TRUE)
                     """
-                log.debug(query)
-                log.info(f"""Download dbNSFP databases ['{assembly}'] - Process file '{os.path.basename(database_file)}' - Write parquet file...""")
+                
+                # Log
+                log.debug(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Process file '{os.path.basename(database_file)}' - Write parquet files...""")
+
                 if os.path.exists(f"{output_parquet}"):
-                    log.info(f"""Download dbNSFP databases ['{assembly}'] - Process file '{os.path.basename(database_file)}' - Parquet file already exists""")
+                    log.debug(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Process file '{os.path.basename(database_file)}' - Parquet file already exists""")
+
                 else:
+
+                    # Query
                     db_copy = duckdb.connect(config={"threads":nb_data_files})
                     db_copy.query(query)
                     db_copy.close()
-                    log.info(f"""Download dbNSFP databases ['{assembly}'] - Process file '{os.path.basename(database_file)}' - Write parquet file - done.""")
 
+                    # # Split parquet to max size
+                    if partition_size:
+                        log.debug(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Process file '{os.path.basename(database_file)}' - Split parquet files...""")
+                        for file in os.listdir(output_parquet):
+                            file_path = os.path.join(output_parquet,file)
+                            file_size = os.stat(file_path).st_size
+                            file_base = file.replace(".parquet","")
+                            log.debug(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Process file '{os.path.basename(database_file)}' - Split parquet files ['{file}']...""")
+                            if file_size > partition_size:
+                                schema = pq.ParquetFile(file_path).schema_arrow
+                                dd.read_parquet(file_path).repartition(partition_size=partition_size*8).to_parquet(output_parquet, schema=schema, name_function=lambda x: f"{file_base}-{x}.parquet")
+                                os.remove(file_path)
+                            else:
+                                new_file_name = os.path.join(output_parquet,file.replace(".parquet","-0.parquet"))
+                                os.rename(file_path, new_file_name)
+
+
+                    # Log
+                    log.debug(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Process file '{os.path.basename(database_file)}' - Write parquet file - done.""")
+
+            # Header
+            header_file = f"{output}.hdr"
+            if not os.path.exists(header_file):
+                if not readme_annotations_description:
+                    readme_annotations_description = get_annotation_description(dbnsfp_readme_dest)
+                if get_header(header_file=header_file, dbnsfp_readme_dest=dbnsfp_readme_dest, columns_structure=columns_structure, annotations=columns_annotations.keys(), readme_annotations_description=readme_annotations_description):
+                    log.debug(f"Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Write header")
+                else:
+                    log.error(f"Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Write header failed")
+                    raise ValueError(f"Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Write header failed")
+                
 
     if generate_sub_databases:
+
+        log.info(f"""Download dbNSFP ['{assembly}']""")
+        log.info(f"""Download dbNSFP ['{assembly}'] - Parquet folders generation""")
 
         for assembly in assemblies:
 
@@ -1210,14 +1330,12 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
             if not database_files:
                 database_files = get_database_files(f"{dbnsfp_zip_dest_folder}/dbNSFP{dbnsfp_release}_variant.chr*.gz")
             if not columns_structure:
-                columns_structure = get_columns_structure(database_file=database_files[0], sample_size=10)
+                columns_structure = get_columns_structure(database_file=database_files[0], sample_size=10, threads=threads)
 
             output_prefix = f"{dbnsfp_folder}/{assembly}/dbNSFP{dbnsfp_release}"
             parquet_all_annotation = f"{output_prefix}.ALL.partition.parquet/*/*.parquet"
 
             sub_databases_structure = {}
-            generated_list = []
-            already_generated_list = []
 
             # Find sub databases
             for column in columns_structure:
@@ -1232,34 +1350,26 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
             # for each sub database
             for sub_database in sorted(set(sub_databases_structure), key=str.casefold, reverse=False):
                 
-                columns_clauses = get_columns_select_clause(columns_structure=columns_structure, assembly="parquet", sub_database=sub_database, null_if_no_annotation=True)
+                # Clauses
+                columns_clauses = get_columns_select_clause(columns_structure=columns_structure, assembly=assembly, for_parquet=True, sub_database=sub_database, null_if_no_annotation=True, print_log=False)
                 columns_select_clause = columns_clauses.get("select")
                 columns_where_clause = columns_clauses.get("where")
                 columns_annotations = columns_clauses.get("annotations")
-                
-                log.debug(columns_select_clause)
-                log.debug(columns_where_clause)
 
+                # Clean sub database name
                 sub_database_name = clean_name(sub_database)
 
+                # Parquet folder
                 parquet_sub_database_annotation = f"{output_prefix}.{sub_database_name}.partition.parquet"
 
                 if columns_select_clause:
 
-                    # Header
-                    header_file = f"{parquet_sub_database_annotation}.hdr"
-                    if not os.path.exists(header_file):
-                        if get_header(header_file=header_file, dbnsfp_readme_dest=dbnsfp_readme_dest, columns_structure=columns_structure, annotations=columns_annotations.keys()):
-                            log.debug(f"Download dbNSFP databases ['{assembly}'] - Write header")
-                        else:
-                            log.error(f"Download dbNSFP databases ['{assembly}'] - Write header failed")
-                            raise ValueError(f"Download dbNSFP databases ['{assembly}'] - Write header failed")
-
+                    # Parquet Folder
                     if os.path.exists(f"{parquet_sub_database_annotation}"):
-                        log.debug(f"""Download dbNSFP databases ['{assembly}'] - Parquet folder for '{sub_database}' as '{sub_database_name}' already exists""")
-                        already_generated_list.append(sub_database)
+                        log.debug(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Parquet folder ['{sub_database_name}'] already exists""")
+                        parquet_partition_already_generated_list.append(sub_database)
                     else:
-                        log.info(f"""Download dbNSFP databases ['{assembly}'] - Parquet folder for '{sub_database}' as '{sub_database_name}' generation...""")
+                        log.info(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Parquet folder ['{sub_database_name}'] generation...""")
                         
                         db_copy = duckdb.connect(config={"threads":nb_data_files})
 
@@ -1271,11 +1381,7 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
                             res = db_copy.query(query_chromosomes)
                             chromosomes = sorted(list(res.df()["#CHROM"]))
 
-                        else:
-                            log.debug("already chromosomes list")
-                        
-                        log.debug(chromosomes)
-
+                        # Generate folder by chromosome
                         for chromosome in chromosomes:
                             parquet_sub_database_annotation_chromosome = os.path.join(parquet_sub_database_annotation, f"#CHROM={chromosome}")
                             Path(parquet_sub_database_annotation_chromosome).mkdir(parents=True, exist_ok=True)
@@ -1287,140 +1393,326 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
                                             AND ({columns_where_clause})
                                     )
                                 TO '{parquet_sub_database_annotation_chromosome}' WITH (FORMAT PARQUET, PER_THREAD_OUTPUT TRUE)
-                                
                                 """
-                        
-                            res = db_copy.query(query_copy)
-                            #log.debug(res)
+
+                            db_copy.query(query_copy)
+
+                            # Split parquet to max size
+                            if partition_size:
+                                #log.debug(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Parquet folder ['{sub_database_name}'] generation - Split parquet files...""")
+                                for file in os.listdir(parquet_sub_database_annotation_chromosome):
+                                    log.debug(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Parquet folder ['{sub_database_name}'] generation - Split parquet files ['{file}']...""")
+                                    file_path = os.path.join(parquet_sub_database_annotation_chromosome,file)
+                                    file_size = os.stat(file_path).st_size
+                                    file_base = file.replace(".parquet","")
+                                    if file_size > partition_size:
+                                        schema = pq.ParquetFile(file_path).schema_arrow
+                                        dd.read_parquet(file_path).repartition(partition_size=partition_size*8).to_parquet(parquet_sub_database_annotation_chromosome, schema=schema, name_function=lambda x: f"{file_base}-{x}.parquet")
+                                        os.remove(file_path)
+                                    else:
+                                        new_file_name = os.path.join(parquet_sub_database_annotation_chromosome,file.replace(".parquet","-0.parquet"))
+                                        os.rename(file_path, new_file_name)
+
                         
                         db_copy.close()
-                        generated_list.append(sub_database)
+                        parquet_partition_generated_list.append(sub_database)
 
-            if generated_list:
-                log.info(f"""Download dbNSFP databases ['{assembly}'] - {len(generated_list)} Parquet folders generated {generated_list}""")
-            if already_generated_list:
-                log.info(f"""Download dbNSFP databases ['{assembly}'] - {len(already_generated_list)} Parquet folders already generated {already_generated_list} """)
+                        log.debug(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Parquet folder ['{sub_database_name}'] generation - done.""")
+
+                    # Header
+                    header_file = f"{parquet_sub_database_annotation}.hdr"
+                    if not os.path.exists(header_file):
+                        if not readme_annotations_description:
+                            readme_annotations_description = get_annotation_description(dbnsfp_readme_dest)
+                        if get_header(header_file=header_file, dbnsfp_readme_dest=dbnsfp_readme_dest, columns_structure=columns_structure, annotations=columns_annotations.keys(), readme_annotations_description=readme_annotations_description):
+                            log.debug(f"Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Parquet folder ['{sub_database_name}'] generation - Write header")
+                        else:
+                            log.error(f"Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Parquet folder ['{sub_database_name}'] generation - Write header")
+                            raise ValueError(f"Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Parquet folder ['{sub_database_name}'] generation - Write header")
 
     
     # Full DB
-    if generate_parquet_file:
+    if generate_parquet_file or generate_vcf_file:
+
+        # Init
+        genomes_sizes = {}
 
         for assembly in assemblies:
 
-            log.info(f"Download dbNSFP databases ['{assembly}'] - Parquet file generation")
+            log.info(f"Download dbNSFP ['{assembly}']")
+            log.info(f"Download dbNSFP ['{assembly}'] - Parquet/VCF files generation")
 
             output_prefix = f"{dbnsfp_folder}/{assembly}/dbNSFP{dbnsfp_release}"
+            partition_parquet_folder_all = f"{output_prefix}.ALL.partition.parquet"
             partition_parquet_folders = sorted(glob.glob(f"{output_prefix}.*.partition.parquet"), key=os.path.basename, reverse=True)
-            
-            generated_list = []
-            already_generated_list = []
+            if partition_parquet_folders:
+                partition_parquet_folders.remove(partition_parquet_folder_all)
 
-            for partition_parquet_folder in sorted(partition_parquet_folders, key=str.casefold, reverse=False):
+            for partition_parquet_folder in [partition_parquet_folder_all] + sorted(partition_parquet_folders, key=str.casefold, reverse=False):
 
                 # sub database
-                subdatabase = os.path.basename(partition_parquet_folder).split(".")[-3]
+                sub_database = os.path.basename(partition_parquet_folder).split(".")[-3]
 
-                # Output
-                output = f"{output_prefix}.{subdatabase}.partition.parquet"
-                output_header = f"{output}.hdr"
-                output_parquet = f"{output_prefix}.{subdatabase}.parquet"
+                # Input Parquet folder
+                input_partition_parquet = f"{output_prefix}.{sub_database}.partition.parquet"
+                input_partition_parquet_header = f"{input_partition_parquet}.hdr"
 
-                # Parquet files
-                parquet_files = sorted(glob.glob(f"{output}/*/*parquet"), key=os.path.dirname, reverse=False)
+                # Input Parquet files
+                input_parquet_files = sorted(glob.glob(f"{input_partition_parquet}/*/*parquet"), key=os.path.normcase, reverse=False)
 
-                # Header
-                header_file = f"{output_parquet}.hdr"
-                if not os.path.exists(header_file):
-                    if os.path.exists(output_header):
-                        shutil.copy(output_header, header_file)
-                        log.debug(f"Download dbNSFP databases ['{assembly}'] - Write header")
-                    else:
-                        log.error(f"Download dbNSFP databases ['{assembly}'] - Write header failed")
-                        raise ValueError(f"Download dbNSFP databases ['{assembly}'] - Write header failed")
-
-                if not os.path.exists(output_parquet):
-                    if parquet_files:
-                        log.info(f"""Download dbNSFP databases ['{assembly}'] - Parquet file for '{subdatabase}'...""")
-                        with pq.ParquetWriter(output_parquet, schema=pq.ParquetFile(parquet_files[0]).schema_arrow) as writer:
-                            chromosome_folder_previous = ""
-                            for parquet_file in parquet_files:
-                                chromosome_folder = f'{os.path.basename(os.path.dirname(parquet_file))}'
-                                if chromosome_folder != chromosome_folder_previous:
-                                    chromosome_folder_previous = chromosome_folder
-                                    log.info(f"""Download dbNSFP databases ['{assembly}'] - Parquet file for '{subdatabase}' - Process '{os.path.basename(os.path.dirname(parquet_file))}/*' files...""")
-                                log.debug(f"""Download dbNSFP databases ['{assembly}'] - Parquet file for '{subdatabase}' - Process '{os.path.basename(os.path.dirname(parquet_file))}/{os.path.basename(parquet_file)}' file...""")
-                                writer.write_table(pq.read_table(parquet_file))
-                        generated_list.append(subdatabase)
-                    else:
-                        log.info(f"""Download dbNSFP databases ['{assembly}'] - Parquet file for '{subdatabase}' - No parquet files found""")
-                else:
-                    already_generated_list.append(subdatabase)
-            
-            if generated_list:
-                log.info(f"""Download dbNSFP databases ['{assembly}'] - {len(generated_list)} Parquet files generated {generated_list}""")
-            if already_generated_list:
-                log.info(f"""Download dbNSFP databases ['{assembly}'] - {len(already_generated_list)} Parquet files already generated {already_generated_list} """)
-
-
-    # VCF
-    # TODO: export by constructing INFO column
-    if generate_vcf and False:
-        
-        from howard.objects.variants import Variants
-
-        for assembly in assemblies:
-
-            log.info(f"Download dbNSFP databases ['{assembly}'] - VCF file generation")
-
-            output_prefix = f"{dbnsfp_folder}/{assembly}/dbNSFP{dbnsfp_release}"
-            partition_parquet_folders = sorted(glob.glob(f"{output_prefix}.*.partition.parquet"), key=os.path.basename, reverse=True)
-            
-            generated_list = []
-            already_generated_list = []
-
-            for partition_parquet_folder in sorted(partition_parquet_folders, key=str.casefold, reverse=False):
-
-                # sub database
-                subdatabase = os.path.basename(partition_parquet_folder).split(".")[-3]
-
-                # Output
-                input_parquet = f"{output_prefix}.{subdatabase}.partition.parquet"
-                #input_parquet_header = f"{input_parquet}.hdr"
-                output_vcf = f"{output_prefix}.{subdatabase}.vcf"
-
-                if not os.path.exists(output_vcf):
-
-                    log.info(f"""Download dbNSFP databases ['{assembly}'] - VCF file for '{subdatabase}'...""")
-
-                    config = {
-                        "access": "RO",
-                        "verbosity": "NOTSET",
-                        "threads": threads
-                        }
-                    param = {}
-
-                    # Create variants object
-                    vcfdata_obj = Variants(None, input=input_parquet, output=output_vcf, config=config, param=param)
-
-                    # Load data from input file
-                    vcfdata_obj.load_data()
-
-                    # Load data from input file
-                    vcfdata_obj.explode_infos()
+                # Parquet file
+                if generate_parquet_file:
 
                     # Output
-                    vcfdata_obj.export_output()
+                    output_parquet = f"{output_prefix}.{sub_database}.parquet"
+                    output_header_file = f"{output_parquet}.hdr"
 
-                    generated_list.append(subdatabase)
+                    # Parquet file
+                    if not os.path.exists(output_parquet):
 
-                else:
+                        if input_parquet_files:
 
-                    already_generated_list.append(subdatabase)
+                            # Log
+                            log.info(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Parquet file...""")
 
-            if generated_list:
-                log.info(f"""Download dbNSFP databases ['{assembly}'] - {len(generated_list)} VCF files generated {generated_list}""")
-            if already_generated_list:
-                log.info(f"""Download dbNSFP databases ['{assembly}'] - {len(already_generated_list)} VCF files already generated {already_generated_list} """)
+                            # Generate Parquet files
+                            #log.debug(pq.ParquetFile(input_parquet_files[0]).schema_arrow)
+                            with pq.ParquetWriter(output_parquet, schema=pq.ParquetFile(input_parquet_files[0]).schema_arrow) as writer:
+                                chromosome_folder_previous = ""
+                                for parquet_file in input_parquet_files:
+                                    chromosome_folder = f'{os.path.basename(os.path.dirname(parquet_file))}'
+                                    if chromosome_folder != chromosome_folder_previous:
+                                        chromosome_folder_previous = chromosome_folder
+                                        log.debug(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Parquet file - Process '{os.path.basename(os.path.dirname(parquet_file))}/*' files...""")
+                                    log.debug(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Parquet file - Process '{os.path.basename(os.path.dirname(parquet_file))}/{os.path.basename(parquet_file)}' file...""")
+                                    #log.debug(pq.ParquetFile(parquet_file).schema_arrow)
+                                    writer.write_table(pq.read_table(parquet_file))
+                            parquet_generated_list.append(sub_database)
+
+                        else:
+                            log.error(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Parquet file - No parquet files found""")
+                            raise ValueError(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Parquet file - No parquet files found""")
+
+                    else:
+
+                        # Log
+                        log.debug(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Parquet file already generated""")
+
+                        parquet_already_generated_list.append(sub_database)
+
+
+                    # Header
+                    if not os.path.exists(output_header_file):
+                        if os.path.exists(input_partition_parquet_header):
+                            shutil.copy(input_partition_parquet_header, output_header_file)
+                            log.debug(f"Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Parquet file - Write header")
+                        else:
+                            log.error(f"Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Parquet file - Write header failed")
+                            raise ValueError(f"Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Parquet file - Write header failed")
+
+                if generate_vcf_file:
+                    
+                    if sub_database in ['ALL'] and not generate_vcf_file_all:
+                        continue
+
+                    # Output VCF
+                    output_vcf = f"{output_prefix}.{sub_database}.vcf.gz"
+                    header_file = f"{output_vcf}.hdr"
+
+                    # Chromosome sizes
+                    if not genomes_sizes:
+                        genomes_sizes_file = os.path.join(genomes_folder, assembly, f"{assembly}.fa.sizes")
+                        if os.path.exists(genomes_sizes_file):
+                            with open(genomes_sizes_file, "r") as f:
+                                for line in f:
+                                    genomes_sizes[line.split("\t")[0]] = line.split("\t")[1].strip()
+                        else:
+                            genomes_sizes = None
+
+                    # VCF file
+                    if not os.path.exists(output_vcf):
+
+                        if input_parquet_files:
+
+                            # Init
+                            list_for_vcf = []
+
+                            # Log
+                            log.info(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - VCF file...""")
+
+                            # Find database structure
+                            if not database_files:
+                                database_files = get_database_files(f"{dbnsfp_zip_dest_folder}/dbNSFP{dbnsfp_release}_variant.chr*.gz")
+                            if not columns_structure:
+                                columns_structure = get_columns_structure(database_file=database_files[0], sample_size=10, threads=threads)
+                            columns_clauses = get_columns_select_clause(columns_structure=columns_structure, assembly=assembly, for_parquet=True, sub_database=sub_database, null_if_no_annotation=True, print_log=False)
+                            columns_annotations = columns_clauses.get("annotations")
+
+                            # Generate columns concat for INFO column
+                            column_INFO = ""
+                            i = 0
+                            for column_annotation in columns_annotations:
+                                if i < 1000000:
+                                    column_INFO += f"""
+                                    CASE
+                                        WHEN "{column_annotation}" IS NOT NULL
+                                        THEN '{column_annotation}=' || replace("{column_annotation}", ';', ',') || ';'
+                                        ELSE ''
+                                    END ||
+                                    """
+                                i += 1
+
+                            if column_INFO:
+                                
+                                # Generate VCF files within tmp folder
+                                with TemporaryDirectory(dir='/tmp') as tmp_dir:
+                                    
+                                    # Init
+                                    file_num = -1
+                                
+                                    # Create duckDB connexion
+                                    db_copy = duckdb.connect(config={"threads":threads})
+
+                                    # Set max expression depth for big sub databases (e.g. gnomAD, ALL)
+                                    db_copy.execute("SET max_expression_depth TO 10000")
+
+                                    # Log
+                                    log.debug(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - VCF file - Check chomosomes and number of variants...""")
+
+                                    # Check chomosomes and total number of variants
+                                    query_chromosomes = f"""
+                                                SELECT distinct "#CHROM" AS chromosome, count(*) AS nb_variants
+                                                FROM read_parquet('{input_partition_parquet}/*/*parquet')
+                                                GROUP BY "#CHROM"
+                                            """
+                                    chromosomes = sorted(list(db_copy.query(query_chromosomes).df()["chromosome"]))
+                                    nb_variants = sum(db_copy.query(query_chromosomes).df()["nb_variants"])
+                                    
+                                    # Log
+                                    log.debug(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - VCF file - Found {len(chromosomes)} chromosomes""")
+                                    log.debug(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - VCF file - Found {nb_variants} variants""")
+
+                                    log.debug(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - VCF file - Generate files...""")
+                                    
+                                    for parquet_file in input_parquet_files:
+                                        
+                                        # Check number of variant for parquet file
+                                        query_nb_variants = f"""
+                                                    SELECT count(*) AS nb_variants
+                                                    FROM read_parquet('{parquet_file}')
+                                                """
+                                        parquet_file_nb_variants = sum(db_copy.query(query_nb_variants).df()["nb_variants"])
+
+                                        # Log
+                                        log.debug(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - VCF file - Process '{os.path.basename(os.path.dirname(parquet_file))}/{os.path.basename(parquet_file)}' file [{parquet_file_nb_variants} variants]...""")
+
+                                        # Query for parquet file
+                                        query_copy = f"""
+                                                    SELECT "#CHROM", POS, '.' AS ID, REF, ALT, 0 AS QUAL, 'PASS' AS FILTER, regexp_replace(replace({column_INFO} '','"', ''), ';$', '') INFO
+                                                    FROM read_parquet('{parquet_file}')
+                                                """
+                                        # CSV generation with PyArrow
+                                        if parquet_file_nb_variants:
+
+                                            # Options
+                                            batch_size = 102400
+                                            write_options = csv.WriteOptions(include_header=False, delimiter="\t", quoting_style="none", batch_size=batch_size)
+
+                                            # Query
+                                            res = db_copy.execute(query_copy)
+
+                                            # Fetch rows
+                                            record_batch_reader = res.fetch_record_batch(rows_per_batch=nb_variants)
+                                            chunk = record_batch_reader.read_next_batch()
+                                            if len(chunk) > 0:
+                                                i += 1
+                                                # VCF file name
+                                                vcf_file = os.path.join(tmp_dir,f'variants.{file_num}.tsv')
+                                                # Write VCF file
+                                                csv.write_csv(chunk, vcf_file, write_options=write_options)
+                                                # Append to list of VCF file
+                                                list_for_vcf.append(vcf_file)
+
+                                    # Log
+                                    log.debug(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - VCF file - {len(list_for_vcf)} files generated""")
+
+                                    # Header
+                                    if not os.path.exists(header_file):
+
+                                        # Init
+                                        header_list = []
+
+                                        # Temporary header file for INFO fields
+                                        header_file_tmp = os.path.join(tmp_dir,f"header.hdr")
+                                        if os.path.exists(input_partition_parquet_header):
+                                            shutil.copy(input_partition_parquet_header, header_file_tmp)
+                                            log.debug(f"Download dbNSFP ['{assembly}'] - Database '{sub_database}' - VCF file - Write header")
+                                        else:
+                                            log.error(f"Download dbNSFP ['{assembly}'] - Database '{sub_database}' - VCF file - Write header failed")
+                                            raise ValueError(f"Download dbNSFP ['{assembly}'] - Database '{sub_database}' - VCF file - Write header failed")
+                                        
+                                        # Read header file to dict
+                                        with open(header_file_tmp, "r") as f:
+                                            for line in f:
+                                                header_list.append(line.strip())
+
+                                        # Remove last line with #CHROM
+                                        header_list = header_list[:-1]
+
+                                        # Append FILTER PASS
+                                        header_list.append('##FILTER=<ID=PASS,Description="All filters passed">')
+
+                                        # Add chromosomes
+                                        for chromosome in chromosomes:
+                                            header_list.append(f"##contig=<ID={chromosome},length={genomes_sizes.get(chromosome,0)},assembly={assembly}>")
+
+                                        # Add last line with #CHROM
+                                        header_list.append("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO")
+
+                                        # Write header
+                                        with open(header_file, 'w') as fp:
+                                            for item in header_list:
+                                                # write each item on a new line
+                                                fp.write("%s\n" % item)
+
+                                        # Insert header to lists of files to concat
+                                        list_for_vcf.insert(0, header_file)
+
+                                    # Log
+                                    log.debug(f"Download dbNSFP ['{assembly}'] - Database '{sub_database}' - VCF file - Concate and Compress files...")
+                                    concat_and_compress_files(input_files=list_for_vcf, output_file=output_vcf)
+
+                                    db_copy.close()
+
+                                    vcf_generated_list.append(sub_database)
+
+                            else:
+                                log.error(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - VCF file - No INFO columns found""")
+                                raise ValueError(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - VCF file - No INFO columns found""")
+
+                        else:
+                            log.error(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - VCF file - No parquet files found""")
+                            raise ValueError(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - VCF file - No parquet files found""")
+                                
+                        # if subdatabase in ['ALL']:
+                        #     exit()
+                    
+                    else:
+                        vcf_already_generated_list.append(sub_database)
+
+    # Log
+    if parquet_partition_generated_list:
+        log.info(f"""Download dbNSFP ['{assembly}'] - {len(set(parquet_partition_generated_list))} Parquet folders generated {list(set(parquet_partition_generated_list))}""")
+    if parquet_partition_already_generated_list:
+        log.info(f"""Download dbNSFP ['{assembly}'] - {len(set(parquet_partition_already_generated_list))} Parquet folders already generated {list(set(parquet_partition_already_generated_list))} """)
+    if parquet_generated_list:
+        log.info(f"""Download dbNSFP ['{assembly}'] - {len(set(parquet_generated_list))} Parquet files generated {list(set(parquet_generated_list))}""")
+    if parquet_already_generated_list:
+        log.info(f"""Download dbNSFP ['{assembly}'] - {len(set(parquet_already_generated_list))} Parquet files already generated {list(set(parquet_already_generated_list))} """)
+    if vcf_generated_list:
+        log.info(f"""Download dbNSFP ['{assembly}'] - {len(set(vcf_generated_list))} VCF files generated {list(set(vcf_generated_list))}""")
+    if vcf_already_generated_list:
+        log.info(f"""Download dbNSFP ['{assembly}'] - {len(set(vcf_already_generated_list))} VCF files already generated {list(set(vcf_already_generated_list))} """)
 
 
     # Close duckdb connexion

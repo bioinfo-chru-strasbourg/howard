@@ -1153,6 +1153,28 @@ def compress_file(input_file:str, output_file:str) -> bool:
     return os.path.exists(output_file)
 
 
+def concat_and_compress_files(input_files: list, output_file: str) -> bool:
+    """
+    This function concatenates multiple input files into a single output file and compresses it using the BGZF algorithm.
+
+    :param input_files: A list of file paths to the input files that need to be concatenated and compressed
+    :type input_files: list
+    :param output_file: The name and path of the output file where the concatenated and compressed data will be written
+    :type output_file: str
+    :return: A boolean value indicating whether the output file was successfully created or not
+    """
+    with bgzf.open(output_file, 'wb') as compressed_file:
+        for input_file in input_files:
+            if input_file.endswith('.gz'):
+                with gzip.open(input_file, 'rb') as infile:
+                    shutil.copyfileobj(infile, compressed_file)
+            else:
+                with open(input_file, 'rb') as infile:
+                    shutil.copyfileobj(infile, compressed_file)
+
+    return os.path.exists(output_file)
+
+
 def get_plateform_name() -> str:
     """
     This function returns the name of the platform and machine architecture in a specific format.
