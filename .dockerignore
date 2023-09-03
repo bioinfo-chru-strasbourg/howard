@@ -13,6 +13,6 @@ tests/databases/hg19.fa.fai
 tests/databases/.DS_Store
 tests/data/TEM*
 misc/
-*.DS_Store
+**.DS_Store
 snpEff_*
 .gitignore

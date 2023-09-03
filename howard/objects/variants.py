@@ -1285,12 +1285,16 @@ class Variants:
             sql_query_export = f"COPY ({sql_query_select}) TO '{tmp_variants_name}' WITH (FORMAT CSV, DELIMITER '\t', HEADER, QUOTE '', COMPRESSION 'gzip')"
             self.conn.execute(sql_query_export)
         elif connexion_format in ["sqlite"]:
+            import csv
             with gzip.open(tmp_variants_name, 'wt') as f:
                 writer = csv.writer(f, delimiter='\t',
                                     quotechar='', quoting=csv.QUOTE_NONE)
                 cursor = self.conn.execute(sql_query_select)
                 writer.writerow([i[0] for i in cursor.description])
                 writer.writerows(cursor)
+
+                # cursor = pd.read_sql(sql_query_select, self.conn)
+                # cursor.to_csv(tmp_variants_name, sep='\t', compression='gzip', quoting='', index=False)
 
         # Create output
 
@@ -3516,6 +3520,7 @@ class Variants:
             )
         """
         refseq_df = self.conn.query(refseq_query).pl()
+
 
         if refseqlink_file:
             log.debug(f"refSeqLink loading...")
