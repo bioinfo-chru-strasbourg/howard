@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import datetime
 from functools import partial
 import itertools
 import multiprocessing
@@ -1607,76 +1608,62 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
                                         log.debug(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - VCF file - Process '{os.path.basename(os.path.dirname(parquet_file))}/{os.path.basename(parquet_file)}' file [{parquet_file_nb_variants} variants]...""")
 
                                         # Query for parquet file
+                                        file_num += 1
+                                        vcf_file_gz = os.path.join(tmp_dir,f'variants.{file_num}.tsv.gz')
                                         query_copy = f"""
+                                                COPY (
                                                     SELECT "#CHROM", POS, '.' AS ID, REF, ALT, 0 AS QUAL, 'PASS' AS FILTER, regexp_replace(replace({column_INFO} '','"', ''), ';$', '') INFO
                                                     FROM read_parquet('{parquet_file}')
+                                                    )
+                                                TO '{vcf_file_gz}' WITH (FORMAT CSV, DELIM '\t', HEADER 0, QUOTE '', COMPRESSION 'gzip')
                                                 """
-                                        # CSV generation with PyArrow
-                                        if parquet_file_nb_variants:
-
-                                            # Options
-                                            batch_size = 102400
-                                            write_options = csv.WriteOptions(include_header=False, delimiter="\t", quoting_style="none", batch_size=batch_size)
-
-                                            # Query
-                                            res = db_copy.execute(query_copy)
-
-                                            # Fetch rows
-                                            record_batch_reader = res.fetch_record_batch(rows_per_batch=nb_variants)
-                                            chunk = record_batch_reader.read_next_batch()
-                                            if len(chunk) > 0:
-                                                i += 1
-                                                # VCF file name
-                                                vcf_file = os.path.join(tmp_dir,f'variants.{file_num}.tsv')
-                                                # Write VCF file
-                                                csv.write_csv(chunk, vcf_file, write_options=write_options)
-                                                # Append to list of VCF file
-                                                list_for_vcf.append(vcf_file)
+                                        # Query
+                                        db_copy.execute(query_copy)
+                                        list_for_vcf.append(vcf_file_gz)
 
                                     # Log
                                     log.debug(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - VCF file - {len(list_for_vcf)} files generated""")
 
                                     # Header
-                                    if not os.path.exists(header_file):
 
-                                        # Init
-                                        header_list = []
+                                    # Init
+                                    header_list = []
 
-                                        # Temporary header file for INFO fields
-                                        header_file_tmp = os.path.join(tmp_dir,f"header.hdr")
-                                        if os.path.exists(input_partition_parquet_header):
-                                            shutil.copy(input_partition_parquet_header, header_file_tmp)
-                                            log.debug(f"Download dbNSFP ['{assembly}'] - Database '{sub_database}' - VCF file - Write header")
-                                        else:
-                                            log.error(f"Download dbNSFP ['{assembly}'] - Database '{sub_database}' - VCF file - Write header failed")
-                                            raise ValueError(f"Download dbNSFP ['{assembly}'] - Database '{sub_database}' - VCF file - Write header failed")
-                                        
-                                        # Read header file to dict
-                                        with open(header_file_tmp, "r") as f:
-                                            for line in f:
-                                                header_list.append(line.strip())
+                                    # Temporary header file for INFO fields
+                                    header_file_tmp = os.path.join(tmp_dir,f"header.hdr")
+                                    if os.path.exists(input_partition_parquet_header):
+                                        shutil.copy(input_partition_parquet_header, header_file_tmp)
+                                        log.debug(f"Download dbNSFP ['{assembly}'] - Database '{sub_database}' - VCF file - Write header")
+                                    else:
+                                        log.error(f"Download dbNSFP ['{assembly}'] - Database '{sub_database}' - VCF file - Write header failed")
+                                        raise ValueError(f"Download dbNSFP ['{assembly}'] - Database '{sub_database}' - VCF file - Write header failed")
+                                    
+                                    # Read header file to dict
+                                    with open(header_file_tmp, "r") as f:
+                                        for line in f:
+                                            header_list.append(line.strip())
 
-                                        # Remove last line with #CHROM
-                                        header_list = header_list[:-1]
+                                    # Remove last line with #CHROM
+                                    header_list = header_list[:-1]
 
-                                        # Append FILTER PASS
-                                        header_list.append('##FILTER=<ID=PASS,Description="All filters passed">')
+                                    # Append FILTER PASS
+                                    header_list.append('##FILTER=<ID=PASS,Description="All filters passed">')
 
-                                        # Add chromosomes
-                                        for chromosome in chromosomes:
-                                            header_list.append(f"##contig=<ID={chromosome},length={genomes_sizes.get(chromosome,0)},assembly={assembly}>")
+                                    # Add chromosomes
+                                    for chromosome in chromosomes:
+                                        header_list.append(f"##contig=<ID={chromosome},length={genomes_sizes.get(chromosome,0)},assembly={assembly}>")
 
-                                        # Add last line with #CHROM
-                                        header_list.append("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO")
+                                    # Add last line with #CHROM
+                                    header_list.append("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO")
 
-                                        # Write header
-                                        with open(header_file, 'w') as fp:
-                                            for item in header_list:
-                                                # write each item on a new line
-                                                fp.write("%s\n" % item)
+                                    # Write header
+                                    with open(header_file, 'w') as fp:
+                                        for item in header_list:
+                                            # write each item on a new line
+                                            fp.write("%s\n" % item)
 
-                                        # Insert header to lists of files to concat
-                                        list_for_vcf.insert(0, header_file)
+                                    # Insert header to lists of files to concat
+                                    list_for_vcf.insert(0, header_file)
 
                                     # Log
                                     log.debug(f"Download dbNSFP ['{assembly}'] - Database '{sub_database}' - VCF file - Concate and Compress files...")
