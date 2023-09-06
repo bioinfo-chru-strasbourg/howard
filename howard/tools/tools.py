@@ -421,15 +421,6 @@ arguments = {
             "required": False,
             "default": "4.4a"
         },
-        "download-dbnsfp-nb-data-files": {
-            "metavar": "INTEGER",
-            "help": """Number of data files to generate for Parquet folder.\n"""
-                    """Parquet folder are partitioned (hive) by chromosome (sub-folder),\n"""
-                    """which contain N data files.\n"""
-                    """Default: None (correspond to number of threads)""",
-            "required": False,
-            "default": None
-        },
         "download-dbnsfp-parquet-size": {
             "metavar": "INTEGER",
             "help": """Maximum size (Mb) of data files in Parquet folder.\n"""
@@ -454,9 +445,10 @@ arguments = {
                     """Notes: VCF may not be sorted. Take a while.\n""",
             "action": "store_true"
         },
-        "download-dbnsfp-vcf-all": {
-            "help": """Generate a VCF file for all database Parquet folder.\n"""
-                    """Notes: - Use at least 24 number of data files to avoid segmentation fault.""",
+        "download-dbnsfp-no-files-all": {
+            "help": """Not generate database Parquet/VCF file for the entire database ('ALL').\n"""
+                    """Only sub-databases files will be generated.\n"""
+                    """(see '--download-dbnsfp-subdatabases')""",
             "action": "store_true"
         },
 
@@ -707,7 +699,7 @@ commands_arguments = {
                     """   howard databases --assembly=hg19 --download-genomes=/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='^>chr[0-9XYM]*$' --download-annovar=/databases/annovar/current --download-annovar-files='refGene,gnomad_exome,dbnsfp42a,cosmic70,clinvar_202*,nci60' --download-snpeff=/databases/snpeff/current  --download-snpeff=/databases/snpeff/current --download-refseq=/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-dbnsfp=/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases --download-dbnsfp-parquet --threads=8"""
                     """\n"""
                     """Notes:\n"""
-                    """   - Proxy: Beware of proxy configuration\n"""
+                    """   - Proxy: Beware of network and proxy configuration\n"""
                     """   - dbNSFP download: More threads, more memory usage (8 threads ~ 16Gb, 24 threads ~ 32Gb)\n"""
                     ,
         "groups": {
@@ -744,12 +736,11 @@ commands_arguments = {
                 "download-dbnsfp": False,
                 "download-dbnsfp-url": False,
                 "download-dbnsfp-release": False,
-                #"download-dbnsfp-nb-data-files": False,
                 "download-dbnsfp-parquet-size": False,
                 "download-dbnsfp-subdatabases": False,
                 "download-dbnsfp-parquet": False,
                 "download-dbnsfp-vcf": False,
-                #"download-dbnsfp-vcf-all": False,
+                "download-dbnsfp-no-files-all": False,
                 "genomes-folder": False
             },
         }

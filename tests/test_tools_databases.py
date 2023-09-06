@@ -43,7 +43,7 @@ def test_database_dbnsfp():
         assemblies = 'hg19,hg38'
         assemblies_list = [value for value in assemblies.split(',')]
 
-        # Download dbnsfp
+        # Download dbnsfp simulation
         dbnsfp_source = os.path.join(tests_databases_folder, "dbnsfp", "dbNSFP4.4a.zip")
         dbnsfp_target = os.path.join(tmp_dir, "dbNSFP4.4a.zip")
         shutil.copy(dbnsfp_source, dbnsfp_target)
@@ -87,7 +87,7 @@ def test_database_dbnsfp():
         for assembly in assemblies_list:
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
-            nb_files = 108
+            nb_files = 316
             assert len(downloaded_assembly_files) == nb_files
 
         # Try again to generate VCF
@@ -100,7 +100,7 @@ def test_database_dbnsfp():
         for assembly in assemblies_list:
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
-            nb_files = 162
+            nb_files = 474
             assert len(downloaded_assembly_files) == nb_files
 
         # Try again to generate nothing more
@@ -113,7 +113,7 @@ def test_database_dbnsfp():
         for assembly in assemblies_list:
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
-            nb_files = 162
+            nb_files = 474
             assert len(downloaded_assembly_files) == nb_files
 
 
@@ -140,7 +140,7 @@ def test_database_dbnsfp():
         for assembly in assemblies_list:
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
-            nb_files = 108
+            nb_files = 316
             assert len(downloaded_assembly_files) == nb_files
 
 
@@ -167,7 +167,7 @@ def test_database_dbnsfp():
         for assembly in assemblies_list:
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
-            nb_files = 162
+            nb_files = 474
             assert len(downloaded_assembly_files) == nb_files
 
 

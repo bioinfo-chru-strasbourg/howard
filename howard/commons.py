@@ -1163,6 +1163,7 @@ def concat_and_compress_files(input_files: list, output_file: str) -> bool:
     :type output_file: str
     :return: A boolean value indicating whether the output file was successfully created or not
     """
+
     with bgzf.open(output_file, 'wb') as compressed_file:
         for input_file in input_files:
             if input_file.endswith('.gz'):
@@ -1231,3 +1232,29 @@ def load_duckdb_extension(conn:duckdb.DuckDBPyConnection, duckdb_extensions:list
             loaded = False
 
     return loaded
+
+
+def duckdb_execute(query:str, threads:int = 1) -> bool:
+    """
+    The `duckdb_execute` function executes a query using the DuckDB database engine and returns a
+    boolean indicating whether the query was successful or not.
+    
+    :param query: The `query` parameter is a string that represents the SQL query you want to execute in
+    DuckDB. It can be any valid SQL statement, such as SELECT, INSERT, UPDATE, DELETE, etc
+    :type query: str
+    :param threads: The "threads" parameter specifies the number of threads to use for executing the
+    query. By default, it is set to 1, meaning that the query will be executed using a single thread,
+    defaults to 1
+    :type threads: int (optional)
+    :return: The function `duckdb_execute` returns a boolean value. It returns `True` if the query
+    execution is successful, and `False` if it is not successful.
+    """
+
+    conn = duckdb.connect(config={"threads":threads})
+    conn.execute("SET max_expression_depth TO 10000") 
+    if conn.execute(query):
+        conn.close()
+        return True
+    else:
+        conn.close()
+        return False
