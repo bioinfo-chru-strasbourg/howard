@@ -37,14 +37,18 @@ def test_database_dbnsfp():
     This function tests the "databases" function with a set of arguments.
     """
 
+    # Init
+    dbnsfp_source = os.path.join(tests_databases_folder, "dbnsfp", "dbNSFP4.4a.zip")
+
+
     # Tmp folder
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
-        
+
+        # Assembly
         assemblies = 'hg19,hg38'
         assemblies_list = [value for value in assemblies.split(',')]
 
         # Download dbnsfp simulation
-        dbnsfp_source = os.path.join(tests_databases_folder, "dbnsfp", "dbNSFP4.4a.zip")
         dbnsfp_target = os.path.join(tmp_dir, "dbNSFP4.4a.zip")
         shutil.copy(dbnsfp_source, dbnsfp_target)
 
@@ -120,11 +124,11 @@ def test_database_dbnsfp():
     # Tmp folder
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
+        # Assembly
         assemblies = 'hg19'
         assemblies_list = [value for value in assemblies.split(',')]
 
-        # Download dbnsfp
-        dbnsfp_source = os.path.join(tests_databases_folder, "dbnsfp", "dbNSFP4.4a.zip")
+        # Download dbnsfp simulation
         dbnsfp_target = os.path.join(tmp_dir, "dbNSFP4.4a.zip")
         shutil.copy(dbnsfp_source, dbnsfp_target)
 
@@ -147,17 +151,17 @@ def test_database_dbnsfp():
     # Tmp folder
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
+        # Assembly
         assemblies = 'hg19'
         assemblies_list = [value for value in assemblies.split(',')]
 
-        # Download dbnsfp
-        dbnsfp_source = os.path.join(tests_databases_folder, "dbnsfp", "dbNSFP4.4a.zip")
+        # Download dbnsfp simulation
         dbnsfp_target = os.path.join(tmp_dir, "dbNSFP4.4a.zip")
         shutil.copy(dbnsfp_source, dbnsfp_target)
 
         dbnsfp_folder = tmp_dir
 
-        # Try to generate all files with small parquet file size (1Mb)
+        # Try to generate all files in one time with parquet size of 1Mb
         try:
             databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=dbnsfp_folder, generate_parquet_file = True, generate_sub_databases = True, generate_vcf_file = True, parquet_size = 1)
         except:
@@ -168,6 +172,33 @@ def test_database_dbnsfp():
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
             nb_files = 474
+            assert len(downloaded_assembly_files) == nb_files
+
+
+    # Tmp folder
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Assembly
+        assemblies = 'hg19'
+        assemblies_list = [value for value in assemblies.split(',')]
+
+        # Download dbnsfp simulation
+        dbnsfp_target = os.path.join(tmp_dir, "dbNSFP4.4a.zip")
+        shutil.copy(dbnsfp_source, dbnsfp_target)
+
+        dbnsfp_folder = tmp_dir
+
+        # Try to generate ALL and sub-database parquet folders but only sub-database parquet files
+        try:
+            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=dbnsfp_folder, generate_parquet_file = True, generate_sub_databases = True, generate_vcf_file = False, not_generate_files_all = True)
+        except:
+            assert False
+
+        downloaded_files = os.listdir(dbnsfp_folder)
+        for assembly in assemblies_list:
+            assert assembly in downloaded_files
+            downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
+            nb_files = 314
             assert len(downloaded_assembly_files) == nb_files
 
 

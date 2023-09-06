@@ -1364,10 +1364,10 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
 
                     # Parquet Folder
                     if os.path.exists(f"{parquet_sub_database_annotation}"):
-                        log.debug(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Parquet folder ['{sub_database_name}'] already exists""")
+                        log.debug(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Parquet folder already exists""")
                         parquet_partition_already_generated_list.append(sub_database)
                     else:
-                        log.info(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Parquet folder ['{sub_database_name}'] generation...""")
+                        log.info(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Parquet folder...""")
                         
                         db_copy = duckdb.connect(config={"threads":threads})
 
