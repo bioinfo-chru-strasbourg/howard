@@ -257,6 +257,39 @@ class Database:
                     return header_list
     
 
+    def get_header_length(self, header_file:str = None) -> int:
+        """
+        The `get_header_length` function returns the length of a header file, excluding the first line.
+        
+        :param header_file: The `header_file` parameter is a string that represents the file path or
+        name of the header file. It is an optional parameter, which means it can be omitted when calling
+        the `get_header_length` method
+        :type header_file: str
+        :return: an integer, which represents the length of the header file.
+        """
+        
+
+        # No header is 0 header line
+        if not header_file:
+            header_list = []
+        # header_file is a list of header line
+        elif isinstance(header_file, list):
+            header_list = header_file
+        # header_file is a file path
+        elif isinstance(header_file, str):
+            header_list = self.read_header_file(header_file)
+        # Type not available
+        else:
+            header_list = []
+        
+        nb_line = 0
+        for line in header_list:
+            if not line.startswith('##'):
+                break
+            nb_line += 1
+        return nb_line
+
+
     def get_header_file_columns(self, header_file:str = None) -> list:
         """
         The function `get_header_columns` returns the header list of a VCF file.
@@ -1061,14 +1094,20 @@ class Database:
             delimiter = SEP_TYPE.get(database_format,"\t")
             # Check columns from file
             table_columns = self.get_table_columns_from_file(database=database, header_file=header_file)
-            nb_columns_detected_by_duckdb = len(self.conn.query(f"""SELECT * FROM read_csv('{database}', auto_detect=True, delim='{delimiter}') LIMIT 0""").df().columns)
+            header_length = self.get_header_length(header_file=database)
+            query = f"""
+                    SELECT *
+                    FROM read_csv('{database}', auto_detect=True, skip={header_length}, delim='{delimiter}')
+                    LIMIT 0
+                """
+            nb_columns_detected_by_duckdb = len(self.conn.query(query).df().columns)
             if not table_columns or (nb_columns_detected_by_duckdb != len(table_columns)):
                 # Check columns from header
                 table_columns = self.get_table_columns_from_format(database=database)
             if table_columns:
-                sql_form = f"""read_csv('{database}', names={table_columns}, auto_detect=True, delim='{delimiter}')"""
+                sql_form = f"""read_csv('{database}', names={table_columns}, auto_detect=True, skip={header_length}, delim='{delimiter}')"""
             else:
-                sql_form = f"read_csv('{database}', auto_detect=True, delim='{delimiter}')"
+                sql_form = f"read_csv('{database}', auto_detect=True, skip={header_length}, delim='{delimiter}')"
         elif database_format in ["json"]:
             sql_form = f"read_json('{database}', auto_detect=True)"
         elif database_format in ["duckdb"]:
@@ -1427,7 +1466,10 @@ class Database:
             table_header = None
 
         if table_header:
-            table_columns = table_header[len(table_header)-1].strip().split(delimiter)
+            try:
+                table_columns = table_header[self.get_header_length(header_file=table_header)].strip().split(delimiter)
+            except:
+                table_columns = None
         else:
             table_columns = None
 
@@ -1439,7 +1481,10 @@ class Database:
                 table_header = None
 
             if table_header:
-                table_columns = table_header[len(table_header)-1].strip().split(delimiter)
+                try:
+                    table_columns = table_header[self.get_header_length(header_file=table_header)].strip().split(delimiter)
+                except:
+                    table_columns = None
             else:
                 table_columns = None
 

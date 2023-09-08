@@ -344,7 +344,6 @@ class Variants:
         nb_of_samples = len(self.get_header_sample_list())
 
         # Variants by chr
-        #sql_query_nb_variant_by_chrom = f"SELECT \"#CHROM\" as CHROM, count(*) as count, '' as percentage FROM {table_variants_from} GROUP BY \"#CHROM\""
         sql_query_nb_variant_by_chrom = f"SELECT \"#CHROM\" as CHROM, count(*) as count FROM {table_variants_from} GROUP BY \"#CHROM\""
         log.debug(f"Query Variants by Chr: {sql_query_nb_variant_by_chrom}")
         df_nb_of_variants_by_chrom = self.get_query_to_df(sql_query_nb_variant_by_chrom)
@@ -356,14 +355,6 @@ class Variants:
         # Calculate percentage
         nb_of_variants_by_chrom['percent'] = nb_of_variants_by_chrom['count'].apply(lambda x: (x / nb_of_variants) * 100)
 
-        # # TS/TV
-        # sql_query_tstv = f"""
-        #     SELECT REF, ALT, count(*) as count FROM {table_variants_from} WHERE len(REF)=1 AND len(ALT)=1 GROUP BY REF, ALT
-        #     ORDER BY REF asc, ALT desc
-        #     """
-        # log.debug(f"Query Variants by Chr: {sql_query_tstv}")
-        # tstv = self.conn.execute(sql_query_tstv).df()
-
         # Genotypes
         genotypes = {}
         for sample in self.get_header_sample_list():
@@ -371,7 +362,7 @@ class Variants:
                 SELECT  '{sample}' as sample,
                         REGEXP_EXTRACT("{sample}", '^([0-9/|.]*)[:]*',1) as genotype,
                         count(REGEXP_EXTRACT("{sample}", '^([0-9/|.]*)[:]*',1)) as count,
-                        (count(REGEXP_EXTRACT("{sample}", '^([0-9/|.]*)[:]*',1))*100/{nb_of_variants}) || '%' as percentage
+                        concat((count(REGEXP_EXTRACT("{sample}", '^([0-9/|.]*)[:]*',1))*100/{nb_of_variants}), '%') as percentage
                 FROM {table_variants_from}
                 WHERE 1
                 GROUP BY genotype
@@ -384,9 +375,6 @@ class Variants:
         log.info("Number of Variant(s) by chromosomes:")
         for d in str(nb_of_variants_by_chrom).split("\n"):
             log.info("\t" + str(d))
-        # log.info("Ti/Ts/Tv Ratio:")
-        # for d in str(tstv).split("\n"):
-        #     log.info("\t" + str(d))
         log.info("Number of Sample(s): " + str(nb_of_samples))
         log.info(f"Genotypes:")
         for sample in genotypes:
@@ -572,13 +560,21 @@ class Variants:
                 return vcf_required
 
 
-    def get_header_length(self) -> int:
+    def get_header_length(self, file:str = None) -> int:
         """
-        This function retruns header length (without #CHROM line)
+        The function `get_header_length` returns the length of the header list, excluding the #CHROM
+        line.
+        
+        :param file: The `file` parameter is an optional argument that specifies the path to a VCF
+        header file. If this argument is provided, the function will read the header from the specified
+        file and return the length of the header list minus 1 (to exclude the #CHROM line)
+        :type file: str
+        :return: the length of the header list, excluding the #CHROM line.
+        """
 
-        :return: The length of the header list.
-        """
-        if self.get_header(type="list"):
+        if file:
+            return len(self.read_vcf_header_file(file=file)) -1 
+        elif self.get_header(type="list"):
             return len(self.get_header(type="list")) -1
         else:
             return 0
@@ -722,12 +718,22 @@ class Variants:
             # delimiter
             delimiter = file_format_delimiters.get(input_format, "\t")
 
+            # Skip header lines
+            skip = self.get_header_length(file=self.input)
+
             if connexion_format in ["duckdb"]:
                 if access in ["RO"]:
-                    sql_vcf = f"CREATE VIEW {table_variants} AS SELECT * FROM read_csv('{self.input}', auto_detect=True, delim='{delimiter}')"
+                    sql_vcf = f"""
+                    CREATE VIEW {table_variants} AS
+                        SELECT *
+                        FROM read_csv('{self.input}', auto_detect=True, skip={skip}, delim='{delimiter}')
+                    """
                 else:
-                    sql_vcf = f"CREATE TABLE {table_variants} AS SELECT * FROM read_csv('{self.input}', auto_detect=True, delim='{delimiter}')"
-
+                    sql_vcf = f"""
+                    CREATE TABLE {table_variants} AS 
+                        SELECT *
+                        FROM read_csv('{self.input}', auto_detect=True, skip={skip}, delim='{delimiter}')
+                    """
                 self.conn.execute(sql_vcf)
 
             elif connexion_format in ["sqlite"]:
@@ -944,9 +950,9 @@ class Variants:
                         update_info_field = f"""
                         "{info_id_sql}" =
                             CASE
-                                WHEN REGEXP_EXTRACT(';' || INFO, ';{info}=([^;]*)',1) == '' THEN NULL
-                                WHEN REGEXP_EXTRACT(';' || INFO, ';{info}=([^;]*)',1) == '.' THEN NULL
-                                ELSE REGEXP_EXTRACT(';' || INFO, ';{info}=([^;]*)',1)
+                                WHEN REGEXP_EXTRACT(concat(';', INFO), ';{info}=([^;]*)',1) == '' THEN NULL
+                                WHEN REGEXP_EXTRACT(concat(';', INFO), ';{info}=([^;]*)',1) == '.' THEN NULL
+                                ELSE REGEXP_EXTRACT(concat(';', INFO), ';{info}=([^;]*)',1)
                             END
                         """
                     elif connexion_format in ["sqlite"]:
@@ -1048,12 +1054,38 @@ class Variants:
         :param f: the file object
         :return: The header lines of the VCF file.
         """
+
         header_list = []
         for line in f:
             header_list.append(line)
             if line.startswith('#CHROM'):
                 break
         return header_list
+
+
+    def read_vcf_header_file(self, file:str = None) -> list:
+        """
+        The function `read_vcf_header_file` reads the header of a VCF file, either from a compressed or
+        uncompressed file.
+        
+        :param file: The `file` parameter is a string that represents the path to the VCF header file
+        that you want to read. It is an optional parameter, so if you don't provide a value, it will
+        default to `None`
+        :type file: str
+        :param compressed: The `compressed` parameter is a boolean flag that indicates whether the VCF
+        file is compressed or not. If `compressed` is set to `True`, it means that the VCF file is
+        compressed using the BGZF compression format. If `compressed` is set to `False`, it means that,
+        defaults to False
+        :type compressed: bool (optional)
+        :return: a list.
+        """
+
+        if self.get_input_compressed(input_file=file):
+            with bgzf.open(file, 'rt') as f:
+                return self.read_vcf_header(f=f)
+        else:
+            with open(file, 'rt') as f:
+                return self.read_vcf_header(f=f)
 
 
     def execute_query(self, query: str):
@@ -1401,7 +1433,26 @@ class Variants:
             sql_query_update = f"""
             UPDATE {table_variants} as table_variants
                 SET INFO = (
-                            SELECT CASE WHEN table_variants.INFO NOT IN ('','.') THEN table_variants.INFO ELSE '' END || CASE WHEN table_variants.INFO NOT IN ('','.') AND table_parquet.INFO NOT IN ('','.')  THEN ';' ELSE '' END || CASE WHEN table_parquet.INFO NOT IN ('','.') THEN table_parquet.INFO ELSE '' END
+                            SELECT 
+                                concat(
+                                    CASE
+                                        WHEN table_variants.INFO NOT IN ('','.')
+                                        THEN table_variants.INFO
+                                        ELSE ''
+                                    END
+                                    ,
+                                    CASE
+                                        WHEN table_variants.INFO NOT IN ('','.') AND table_parquet.INFO NOT IN ('','.')
+                                        THEN ';'
+                                        ELSE ''
+                                    END
+                                    ,
+                                    CASE
+                                        WHEN table_parquet.INFO NOT IN ('','.')
+                                        THEN table_parquet.INFO
+                                        ELSE ''
+                                    END
+                                )
                             FROM '{tmp_merged_vcf_name}' as table_parquet
                                     WHERE table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
                                     AND table_parquet.\"POS\" = table_variants.\"POS\"
@@ -1435,6 +1486,7 @@ class Variants:
         vcf_df.to_sql(table_vcf, self.conn, if_exists='append', index=False)
 
         # Update table 'variants' with VCF data
+        # warning: CONCAT as || operator
         sql_query_update = f"""
             UPDATE variants as table_variants
             SET INFO = (
@@ -2650,14 +2702,18 @@ class Variants:
         if annotations:
 
             for annotation in annotations:
-                annotation_fields = annotations[annotation]
 
+                # Annotation Name
+                annotation_name = os.path.basename(annotation)
+                            
+                # Annotation fields
+                annotation_fields = annotations[annotation]
                 if not annotation_fields:
                     annotation_fields = {"INFO": None}
 
-                log.debug(f"Annotation '{annotation}'")
+                log.debug(f"Annotation '{annotation_name}'")
                 log.debug(
-                    f"Annotation '{annotation}' - fields: {annotation_fields}")
+                    f"Annotation '{annotation_name}' - fields: {annotation_fields}")
 
                 # Create Database
                 database = Database(database=annotation, databases_folders=databases_folders, assembly=assembly)
@@ -2679,7 +2735,7 @@ class Variants:
                         self.conn.execute(parquet_sql_attach)
                     parquet_file_link = database.get_sql_database_link()
                     # Log
-                    log.debug(f"Annotation '{annotation}' - file: " +
+                    log.debug(f"Annotation '{annotation_name}' - file: " +
                               str(parquet_file) + " and " + str(parquet_hdr_file))
 
                     # Database full header columns
@@ -2771,7 +2827,7 @@ class Variants:
                                 annotation_field_sep = ""
 
                             log.info(
-                                f"Annotation '{annotation}' - '{annotation_field}' -> 'INFO/{annotation_fields_new_name}'")
+                                f"Annotation '{annotation_name}' - '{annotation_field}' -> 'INFO/{annotation_fields_new_name}'")
 
                             # Add INFO field to header
                             parquet_hdr_vcf_header_infos_number = parquet_hdr_vcf_header_infos[
@@ -2799,16 +2855,16 @@ class Variants:
                             # Found in INFO column
                             if annotation_field_column == "INFO" and "INFO" in parquet_hdr_vcf_header_columns:
                                 sql_query_annotation_update_info_sets.append(f"""
-                                || CASE WHEN REGEXP_EXTRACT(';' || table_parquet.INFO, ';{annotation_field}=([^;]*)',1) NOT IN ('','.')
-                                        THEN '{annotation_field_sep}' || '{annotation_fields_new_name}=' || REGEXP_EXTRACT(';' || table_parquet.INFO, ';{annotation_field}=([^;]*)',1)
+                                CASE WHEN REGEXP_EXTRACT(concat(';', table_parquet.INFO), ';{annotation_field}=([^;]*)',1) NOT IN ('','.')
+                                        THEN concat('{annotation_field_sep}', '{annotation_fields_new_name}=', REGEXP_EXTRACT(concat(';', table_parquet.INFO), ';{annotation_field}=([^;]*)',1))
                                         ELSE ''
                                     END
                                 """)
                             # Found in a specific column
                             else:
                                 sql_query_annotation_update_info_sets.append(f"""
-                                || CASE WHEN table_parquet."{annotation_field_column}" NOT IN ('','.')
-                                        THEN '{annotation_field_sep}' || '{annotation_fields_new_name}=' || replace(table_parquet."{annotation_field_column}", ';', ',')
+                                CASE WHEN table_parquet."{annotation_field_column}" NOT IN ('','.')
+                                        THEN concat('{annotation_field_sep}', '{annotation_fields_new_name}=', replace(table_parquet."{annotation_field_column}", ';', ','))
                                         ELSE ''
                                     END
                                 """)
@@ -2824,10 +2880,10 @@ class Variants:
 
                             if annotation_field not in parquet_hdr_vcf_header_infos:
                                 log.warning(
-                                    f"Annotation '{annotation}' - '{annotation_field}' [{nb_annotation_field}] - not available in parquet file")
+                                    f"Annotation '{annotation_name}' - '{annotation_field}' [{nb_annotation_field}] - not available in parquet file")
                             if annotation_fields_new_name in self.get_header().infos:
                                 log.warning(
-                                    f"Annotation '{annotation}' - '{annotation_fields_new_name}' [{nb_annotation_field}] - already exists in header ({annotation_message})")
+                                    f"Annotation '{annotation_name}' - '{annotation_fields_new_name}' [{nb_annotation_field}] - already exists in header ({annotation_message})")
 
                     # Check if ALL fields have to be annotated. Thus concat all INFO field
                     allow_annotation_full_info = True
@@ -2835,18 +2891,20 @@ class Variants:
                     if parquet_type in ["regions"]:
                         allow_annotation_full_info = False
 
-                    if allow_annotation_full_info and nb_annotation_field == len(annotation_fields) and annotation_fields_ALL and "INFO" in parquet_hdr_vcf_header_columns:
+                    #if allow_annotation_full_info and nb_annotation_field == len(annotation_fields) and annotation_fields_ALL and "INFO" in parquet_hdr_vcf_header_columns:
+                    if allow_annotation_full_info and nb_annotation_field == len(annotation_fields) and annotation_fields_ALL and ("INFO" in parquet_hdr_vcf_header_columns or "INFO" in database.get_extra_columns()):
+                        log.debug("Column INFO annotation enabled")
                         sql_query_annotation_update_info_sets = []
                         sql_query_annotation_update_info_sets.append(
-                            f"|| table_parquet.INFO ")
+                            f" table_parquet.INFO ")
 
                     if sql_query_annotation_update_info_sets:
 
                         # Annotate
-                        log.info(f"Annotation '{annotation}' - Annotation...")
+                        log.info(f"Annotation '{annotation_name}' - Annotation...")
 
                         # Join query annotation update info sets for SQL
-                        sql_query_annotation_update_info_sets_sql = " ".join(
+                        sql_query_annotation_update_info_sets_sql = ",".join(
                             sql_query_annotation_update_info_sets)
 
                         # Check chromosomes list (and variant max position)
@@ -2880,7 +2938,7 @@ class Variants:
 
                             # Autodetect range of bases to split/chunk
                             log.debug(
-                                f"Annotation '{annotation}' - Chromosome '{chrom}' - Start Autodetection Intervals...")
+                                f"Annotation '{annotation_name}' - Chromosome '{chrom}' - Start Autodetection Intervals...")
 
                             batch_annotation_databases_step = None
                             batch_annotation_databases_ncuts = 1
@@ -2890,7 +2948,7 @@ class Variants:
                                 sql_query_chromosomes_max_pos_dictionary_min_pos, sql_query_chromosomes_max_pos_dictionary_max_pos, step=batch_annotation_databases_step, ncuts=batch_annotation_databases_ncuts)
 
                             log.debug(
-                                f"Annotation '{annotation}' - Chromosome '{chrom}' - Stop Autodetection Intervals")
+                                f"Annotation '{annotation_name}' - Chromosome '{chrom}' - Stop Autodetection Intervals")
 
                             # Interval Start/Stop
                             sql_query_interval_start = sql_query_intervals[0]
@@ -2902,16 +2960,16 @@ class Variants:
                                 sql_query_interval_stop = i
 
                                 log.debug(
-                                    f"Annotation '{annotation}' - Chromosome '{chrom}' - Interval [{sql_query_interval_start}-{sql_query_interval_stop}] ...")
+                                    f"Annotation '{annotation_name}' - Chromosome '{chrom}' - Interval [{sql_query_interval_start}-{sql_query_interval_stop}] ...")
 
                                 log.debug(
-                                    f"Annotation '{annotation}' - Chromosome '{chrom}' - Interval [{sql_query_interval_start}-{sql_query_interval_stop}] - Start detecting regions...")
+                                    f"Annotation '{annotation_name}' - Chromosome '{chrom}' - Interval [{sql_query_interval_start}-{sql_query_interval_stop}] - Start detecting regions...")
 
                                 regions = [
                                     (chrom, sql_query_interval_start, sql_query_interval_stop)]
 
                                 log.debug(
-                                    f"Annotation '{annotation}' - Chromosome '{chrom}' - Interval [{sql_query_interval_start}-{sql_query_interval_stop}] - Stop detecting regions")
+                                    f"Annotation '{annotation_name}' - Chromosome '{chrom}' - Interval [{sql_query_interval_start}-{sql_query_interval_stop}] - Stop detecting regions")
 
                                 # Fusion des régions chevauchantes
                                 if regions:
@@ -2924,7 +2982,7 @@ class Variants:
                                         regions, table="table_variants")
 
                                     log.debug(
-                                        f"Annotation '{annotation}' - Chromosome '{chrom}' - Interval [{sql_query_interval_start}-{sql_query_interval_stop}] - {nb_regions} regions...")
+                                        f"Annotation '{annotation_name}' - Chromosome '{chrom}' - Interval [{sql_query_interval_start}-{sql_query_interval_stop}] - {nb_regions} regions...")
 
                                     # Annotation with regions database
                                     if parquet_type in ["regions"]:
@@ -2970,7 +3028,24 @@ class Variants:
                                     # Create update query
                                     sql_query_annotation_chrom_interval_pos = f"""
                                         UPDATE {table_variants} as table_variants
-                                            SET INFO = CASE WHEN table_variants.INFO NOT IN ('','.') THEN table_variants.INFO ELSE '' END || CASE WHEN table_variants.INFO NOT IN ('','.') AND ('' {sql_query_annotation_update_info_sets_sql}) NOT IN ('','.') THEN ';' ELSE '' END {sql_query_annotation_update_info_sets_sql}
+                                            SET INFO = 
+                                                concat(
+                                                    CASE WHEN table_variants.INFO NOT IN ('','.')
+                                                        THEN table_variants.INFO
+                                                        ELSE ''
+                                                    END
+                                                    ,
+                                                    CASE WHEN table_variants.INFO NOT IN ('','.')
+                                                              AND (
+                                                                concat({sql_query_annotation_update_info_sets_sql})
+                                                                )
+                                                                NOT IN ('','.') 
+                                                         THEN ';'
+                                                         ELSE ''
+                                                    END
+                                                    ,
+                                                    {sql_query_annotation_update_info_sets_sql}
+                                                    )
                                             {sql_query_annotation_from_clause}
                                             WHERE {sql_query_annotation_where_clause}
                                             ;
@@ -2998,21 +3073,21 @@ class Variants:
                             query = query_dict[query_name]
                             num_query += 1
                             log.info(
-                                f"Annotation '{annotation}' - Annotation - Query [{num_query}/{nb_of_query}] {query_name}...")
+                                f"Annotation '{annotation_name}' - Annotation - Query [{num_query}/{nb_of_query}] {query_name}...")
                             result = self.conn.execute(query)
                             nb_of_variant_annotated_by_query = result.df()[
                                 "Count"][0]
                             nb_of_variant_annotated += nb_of_variant_annotated_by_query
                             log.info(
-                                f"Annotation '{annotation}' - Annotation - Query [{num_query}/{nb_of_query}] {query_name} - {nb_of_variant_annotated_by_query} variants annotated")
+                                f"Annotation '{annotation_name}' - Annotation - Query [{num_query}/{nb_of_query}] {query_name} - {nb_of_variant_annotated_by_query} variants annotated")
 
                         log.info(
-                            f"Annotation '{annotation}' - Annotation of {nb_of_variant_annotated} variants out of {nb_variants} (with {nb_of_query} queries)")
+                            f"Annotation '{annotation_name}' - Annotation of {nb_of_variant_annotated} variants out of {nb_variants} (with {nb_of_query} queries)")
 
                     else:
 
                         log.info(
-                            f"Annotation '{annotation}' - No Annotations available")
+                            f"Annotation '{annotation_name}' - No Annotations available")
 
                     log.debug("Final header: " + str(vcf_reader.infos))
 
@@ -3156,16 +3231,10 @@ class Variants:
             for pzfield in list_of_pzfields:
                 if re.match("PZScore.*", pzfield):
                     self.add_column(table_name=table_variants, column_name=pzfield, column_type="INTEGER", default_value="0")
-                    # self.conn.execute(
-                    #     f"ALTER TABLE {table_variants} ADD COLUMN IF NOT EXISTS {pzfield} INTEGER DEFAULT 0")
                 elif re.match("PZFlag.*", pzfield):
                     self.add_column(table_name=table_variants, column_name=pzfield, column_type="BOOLEAN", default_value="1")
-                    # self.conn.execute(
-                    #     f"ALTER TABLE {table_variants} ADD COLUMN IF NOT EXISTS {pzfield} BOOLEAN DEFAULT 1")
                 else:
                     self.add_column(table_name=table_variants, column_name=pzfield, column_type="STRING", default_value="''")
-                    # self.conn.execute(
-                    #     f"ALTER TABLE {table_variants} ADD COLUMN IF NOT EXISTS {pzfield} STRING DEFAULT ''")
 
             # Profiles
             if profiles:
@@ -3186,36 +3255,66 @@ class Variants:
                         # PZScore
                         if f"PZScore{pzfields_sep}{profile}" in list_of_pzfields:
                             sql_set_info.append(
-                                f" || 'PZScore{pzfields_sep}{profile}=' || PZScore{pzfields_sep}{profile} ")
+                                f"""
+                                    concat(
+                                        'PZScore{pzfields_sep}{profile}=',
+                                        PZScore{pzfields_sep}{profile}
+                                    ) 
+                                """)
                             if profile == default_profile and "PZScore" in list_of_pzfields:
                                 sql_set_info.append(
-                                    f" || 'PZScore=' || PZScore{pzfields_sep}{profile} ")
+                                    f"""
+                                        concat(
+                                            'PZScore=',
+                                            PZScore{pzfields_sep}{profile}
+                                        )
+                                    """)
                                 
                         # PZFlag
                         if f"PZFlag{pzfields_sep}{profile}" in list_of_pzfields:
                             sql_set_info.append(
-                                f" || 'PZFlag{pzfields_sep}{profile}=' || CASE WHEN PZFlag{pzfields_sep}{profile}==1 THEN 'PASS' WHEN PZFlag{pzfields_sep}{profile}==0 THEN 'FILTERED' END ")
+                                f"""
+                                    concat(
+                                        'PZFlag{pzfields_sep}{profile}=',
+                                        CASE 
+                                            WHEN PZFlag{pzfields_sep}{profile}==1
+                                            THEN 'PASS'
+                                            WHEN PZFlag{pzfields_sep}{profile}==0
+                                            THEN 'FILTERED'
+                                        END
+                                    ) 
+                                """)
                             if profile == default_profile and "PZFlag" in list_of_pzfields:
                                 sql_set_info.append(
-                                    f" || 'PZFlag=' || CASE WHEN PZFlag{pzfields_sep}{profile}==1 THEN 'PASS' WHEN PZFlag{pzfields_sep}{profile}==0 THEN 'FILTERED' END ")
+                                    f"""
+                                        concat(
+                                            'PZFlag=',
+                                            CASE 
+                                                WHEN PZFlag{pzfields_sep}{profile}==1
+                                                THEN 'PASS'
+                                                WHEN PZFlag{pzfields_sep}{profile}==0
+                                                THEN 'FILTERED'
+                                            END
+                                        )
+                                    """)
 
                         # PZComment
                         if f"PZComment{pzfields_sep}{profile}" in list_of_pzfields:
                             sql_set_info.append(
                                 f"""
-                                || CASE
-                                    WHEN PZComment{pzfields_sep}{profile} NOT IN ('')
-                                        THEN 'PZComment{pzfields_sep}{profile}=' || PZComment{pzfields_sep}{profile}
-                                    ELSE ''
+                                    CASE
+                                        WHEN PZComment{pzfields_sep}{profile} NOT IN ('')
+                                        THEN concat('PZComment{pzfields_sep}{profile}=', PZComment{pzfields_sep}{profile})
+                                        ELSE ''
                                     END
                                 """)
                             if profile == default_profile and "PZComment" in list_of_pzfields:
                                 sql_set_info.append(
                                     f"""
-                                    || CASE
-                                        WHEN PZComment{pzfields_sep}{profile} NOT IN ('')
-                                            THEN 'PZComment=' || PZComment{pzfields_sep}{profile}
-                                        ELSE ''
+                                        CASE
+                                            WHEN PZComment{pzfields_sep}{profile} NOT IN ('')
+                                            THEN concat('PZComment=', PZComment{pzfields_sep}{profile})
+                                            ELSE ''
                                         END
                                     """)
                         
@@ -3223,25 +3322,35 @@ class Variants:
                         if f"PZInfos{pzfields_sep}{profile}" in list_of_pzfields:
                             sql_set_info.append(
                                 f"""
-                                || CASE
-                                    WHEN PZInfos{pzfields_sep}{profile} NOT IN ('')
-                                        THEN 'PZInfos{pzfields_sep}{profile}=' || PZInfos{pzfields_sep}{profile}
-                                    ELSE ''
+                                    CASE
+                                        WHEN PZInfos{pzfields_sep}{profile} NOT IN ('')
+                                        THEN concat('PZInfos{pzfields_sep}{profile}=', PZInfos{pzfields_sep}{profile})
+                                        ELSE ''
                                     END
                                 """)
                             if profile == default_profile and "PZInfos" in list_of_pzfields:
                                 sql_set_info.append(
                                     f"""
-                                    || CASE
-                                        WHEN PZInfos{pzfields_sep}{profile} NOT IN ('')
-                                            THEN 'PZInfos=' || PZInfos{pzfields_sep}{profile}
-                                        ELSE ''
+                                        CASE
+                                            WHEN PZInfos{pzfields_sep}{profile} NOT IN ('')
+                                            THEN concat('PZInfos=', PZInfos{pzfields_sep}{profile})
+                                            ELSE ''
                                         END
                                     """)
                                 
                         # Merge PZfields
-                        sql_set_info_option = " || ';' ".join(
-                            sql_set_info)
+                        sql_set_info_option = ""
+                        sql_set_sep = ""
+                        for sql_set in sql_set_info:
+                            if sql_set_sep:
+                                sql_set_info_option += f"""
+                                    , concat('{sql_set_sep}', {sql_set})
+                                """
+                            else:
+                                sql_set_info_option += f"""
+                                    , {sql_set}
+                                """
+                            sql_set_sep = ";"
 
 
                         sql_queries = []
@@ -3288,10 +3397,29 @@ class Variants:
                                         f"PZFlag{pzfields_sep}{profile} = PZFlag{pzfields_sep}{profile} AND {criterion_flag_bool}")
                                 if f"PZComment{pzfields_sep}{profile}" in list_of_pzfields:
                                     sql_set.append(
-                                        f"PZComment{pzfields_sep}{profile} = PZComment{pzfields_sep}{profile} || CASE WHEN PZComment{pzfields_sep}{profile}!='' THEN ', ' ELSE '' END || '{criterion_comment}'")
+                                        f"""
+                                            PZComment{pzfields_sep}{profile} = 
+                                                concat(
+                                                    PZComment{pzfields_sep}{profile},
+                                                    CASE 
+                                                        WHEN PZComment{pzfields_sep}{profile}!=''
+                                                        THEN ', '
+                                                        ELSE ''
+                                                    END,
+                                                    '{criterion_comment}'
+                                                )
+                                        """
+                                        )
                                 if f"PZInfos{pzfields_sep}{profile}" in list_of_pzfields:
                                     sql_set.append(
-                                        f"PZInfos{pzfields_sep}{profile} = PZInfos{pzfields_sep}{profile} || '{criterion_infos}'")
+                                        f"""
+                                            PZInfos{pzfields_sep}{profile} = 
+                                                concat(
+                                                    PZInfos{pzfields_sep}{profile},
+                                                    '{criterion_infos}'
+                                                )
+                                        """
+                                        )
                                 sql_set_option = ",".join(sql_set)
                                 
                                 # Criterion and comparison
@@ -3326,9 +3454,15 @@ class Variants:
                         log.info(f"""Profile '{profile}' - Update... """)
                         sql_query_update = f"""
                             UPDATE {table_variants}
-                            SET INFO = CASE WHEN INFO NOT IN ('','.') THEN INFO || ';' ELSE '' END
-                                {sql_set_info_option}
-
+                            SET INFO =  
+                                concat(
+                                    CASE
+                                        WHEN INFO NOT IN ('','.')
+                                        THEN concat(INFO, ';')
+                                        ELSE ''
+                                    END
+                                    {sql_set_info_option}
+                                )
                         """
                         self.conn.execute(sql_query_update)
 
@@ -3598,7 +3732,16 @@ class Variants:
         # Update INFO column
         sql_query_update = f"""
             UPDATE {table_variants}
-            SET INFO = CASE WHEN INFO NOT IN ('','.') THEN INFO || ';' ELSE '' END || 'hgvs=' || hgvs
+            SET INFO = 
+                concat(
+                    CASE 
+                        WHEN INFO NOT IN ('','.')
+                        THEN concat(INFO, ';')
+                        ELSE ''
+                    END,
+                    'hgvs=',
+                    hgvs
+                )
             WHERE hgvs NOT IN ('') AND hgvs NOT NULL
             """
         self.execute_query(sql_query_update)
@@ -3861,8 +4004,16 @@ class Variants:
         if operation_info:
             sql_update = f"""
                 UPDATE {table_variants}
-                SET "INFO" = CASE WHEN "INFO" IS NULL THEN '' ELSE "INFO" || ';' END
-                    || '{output_column_name}=' || "{prefix}{output_column_name}"
+                SET "INFO" = 
+                    concat(
+                        CASE
+                            WHEN "INFO" IS NULL
+                            THEN ''
+                            ELSE concat("INFO", ';')
+                        END,
+                        '{output_column_name}=',
+                        "{prefix}{output_column_name}"
+                    )
             """
             log.debug(sql_update)
             self.conn.execute(sql_update)
@@ -3914,9 +4065,16 @@ class Variants:
         # Update
         sql_update = f"""
             UPDATE {table_variants}
-            SET "INFO" = CASE WHEN "INFO" IS NULL OR "INFO" IN ('','.') THEN '' ELSE "INFO" || ';' END
-                || '{variant_id_tag}=' || "{variant_id_tag}"
-
+            SET "INFO" = 
+                concat(
+                    CASE
+                        WHEN "INFO" IS NULL OR "INFO" IN ('','.')
+                        THEN ''
+                        ELSE concat("INFO", ';')
+                    END,
+                    '{variant_id_tag}=',
+                    "{variant_id_tag}"
+                )
         """
         self.conn.execute(sql_update)
 
@@ -3982,24 +4140,26 @@ class Variants:
                         self.code_type_map.get("String")
                     )
             
-            # Create fields to add in INFO
-            # || CASE WHEN dataframe_snpeff_hgvs."{speff_hgvs_infos}" NOT NULL AND "INFO" IS NOT NULL THEN ';' ELSE '' END
-            #             || CASE WHEN dataframe_snpeff_hgvs."{speff_hgvs_infos}" NOT NULL
-            sql_snpeff_hgvs_fields = [f"""
-                        || CASE WHEN dataframe_snpeff_hgvs."{speff_hgvs_infos}" NOT IN ('','.','NaN')
-                             AND dataframe_snpeff_hgvs."{speff_hgvs_infos}" NOT NULL
-                            THEN '{snpeff_hgvs}=' || dataframe_snpeff_hgvs."{speff_hgvs_infos}"
-                            ELSE ''
-                            END """]
-            
-            # SQL set for update
-            sql_snpeff_hgvs_fields_set = "  ".join(sql_snpeff_hgvs_fields)
-
             # Update
             sql_update = f"""
                 UPDATE variants
-                SET "INFO" = CASE WHEN "INFO" IS NULL OR "INFO" IN ('','.') THEN '' ELSE "INFO" || ';' END
-                    {sql_snpeff_hgvs_fields_set}
+                SET "INFO" = 
+                    concat(
+                        CASE
+                            WHEN "INFO" IS NULL OR "INFO" IN ('','.')
+                            THEN ''
+                            ELSE concat("INFO", ';')
+                        END,
+                        CASE 
+                            WHEN dataframe_snpeff_hgvs."{speff_hgvs_infos}" NOT IN ('','.','NaN')
+                            AND dataframe_snpeff_hgvs."{speff_hgvs_infos}" NOT NULL
+                            THEN concat(
+                                    '{snpeff_hgvs}=',
+                                    dataframe_snpeff_hgvs."{speff_hgvs_infos}"
+                                )
+                            ELSE ''
+                        END
+                    )
                 FROM dataframe_snpeff_hgvs
                 WHERE {table_variants}."{variant_id_column}" = dataframe_snpeff_hgvs."{variant_id_column}"
 
@@ -4102,26 +4262,38 @@ class Variants:
                     "0",
                     self.code_type_map.get("String")
                 )
-                sql_nomen_fields.append(f"""
-                    || CASE WHEN dataframe_hgvs."{nomen_field}" NOT NULL
-                        THEN ';{nomen_field}=' || dataframe_hgvs."{nomen_field}"
-                        ELSE ''
-                        END """)
+                sql_nomen_fields.append(
+                    f"""
+                        CASE 
+                            WHEN dataframe_hgvs."{nomen_field}" NOT NULL
+                            THEN concat(
+                                    ';{nomen_field}=',
+                                    dataframe_hgvs."{nomen_field}"
+                                )
+                            ELSE ''
+                        END
+                    """)
 
             # SQL set for update
-            sql_nomen_fields_set = "  ".join(sql_nomen_fields)
+            sql_nomen_fields_set = ", ".join(sql_nomen_fields)
 
             # Update
             sql_update = f"""
                 UPDATE variants
-                SET "INFO" = CASE WHEN "INFO" IS NULL THEN '' ELSE "INFO" END
-                    {sql_nomen_fields_set}
+                SET "INFO" = 
+                    concat(
+                        CASE
+                            WHEN "INFO" IS NULL
+                            THEN ''
+                            ELSE "INFO"
+                        END,
+                        {sql_nomen_fields_set}
+                    )
                 FROM dataframe_hgvs
                 WHERE variants."#CHROM" = dataframe_hgvs."#CHROM"
                     AND variants."POS" = dataframe_hgvs."POS" 
                     AND variants."REF" = dataframe_hgvs."REF"
                     AND variants."ALT" = dataframe_hgvs."ALT"
-                    
             """
             self.conn.execute(sql_update)
 
@@ -4183,25 +4355,28 @@ class Variants:
                         self.code_type_map.get("String")
                     )
 
-            # Create fields to add in INFO
-            sql_findbypipeline_fields = [f"""
-                        || CASE WHEN dataframe_findbypipeline."{findbypipeline_infos}" NOT IN ('','.')
-                                AND dataframe_findbypipeline."{findbypipeline_infos}" NOT NULL
-                            THEN '{findbypipeline_tag}=' || dataframe_findbypipeline."{findbypipeline_infos}"
-                            ELSE ''
-                            END """]
-
-            # SQL set for update
-            sql_findbypipeline_fields_set = "  ".join(sql_findbypipeline_fields)
-
             # Update
             sql_update = f"""
                 UPDATE variants
-                SET "INFO" = CASE WHEN "INFO" IS NULL OR "INFO" IN ('','.') THEN '' ELSE "INFO" || ';' END
-                    {sql_findbypipeline_fields_set}
+                SET "INFO" = 
+                    concat(
+                        CASE
+                            WHEN "INFO" IS NULL OR "INFO" IN ('','.')
+                            THEN ''
+                            ELSE concat("INFO", ';')
+                        END,
+                        CASE 
+                            WHEN dataframe_findbypipeline."{findbypipeline_infos}" NOT IN ('','.')
+                                AND dataframe_findbypipeline."{findbypipeline_infos}" NOT NULL
+                            THEN concat(
+                                    '{findbypipeline_tag}=',
+                                    dataframe_findbypipeline."{findbypipeline_infos}"
+                                )
+                            ELSE ''
+                        END
+                    )
                 FROM dataframe_findbypipeline
                 WHERE variants."{variant_id_column}" = dataframe_findbypipeline."{variant_id_column}"
-
             """
             self.conn.execute(sql_update)
 
@@ -4264,26 +4439,28 @@ class Variants:
                         self.code_type_map.get("String")
                     )
 
-            # Create fields to add in INFO
-            # || CASE WHEN dataframe_genotypeconcordance."{genotypeconcordance_infos}" NOT IN (NULL,'','.') AND "INFO" IS NOT NULL THEN ';' ELSE '' END
-            sql_genotypeconcordance_fields = [f"""
-                        || CASE WHEN dataframe_genotypeconcordance."{genotypeconcordance_infos}" NOT IN ('','.')
-                                AND dataframe_genotypeconcordance."{genotypeconcordance_infos}" NOT NULL
-                            THEN '{genotypeconcordance_tag}=' || dataframe_genotypeconcordance."{genotypeconcordance_infos}"
-                            ELSE ''
-                            END """]
-
-            # SQL set for update
-            sql_genotypeconcordance_fields_set = "  ".join(sql_genotypeconcordance_fields)
-
             # Update
             sql_update = f"""
                 UPDATE variants
-                SET "INFO" = CASE WHEN "INFO" IS NULL OR "INFO" IN ('','.') THEN '' ELSE "INFO" || ';' END
-                    {sql_genotypeconcordance_fields_set}
+                SET "INFO" = 
+                    concat(
+                        CASE
+                            WHEN "INFO" IS NULL OR "INFO" IN ('','.')
+                            THEN ''
+                            ELSE concat("INFO", ';')
+                        END,
+                        CASE
+                            WHEN dataframe_genotypeconcordance."{genotypeconcordance_infos}" NOT IN ('','.')
+                                AND dataframe_genotypeconcordance."{genotypeconcordance_infos}" NOT NULL
+                            THEN concat(
+                                    '{genotypeconcordance_tag}=',
+                                    dataframe_genotypeconcordance."{genotypeconcordance_infos}"
+                                )
+                            ELSE ''
+                        END
+                    )
                 FROM dataframe_genotypeconcordance
                 WHERE variants."{variant_id_column}" = dataframe_genotypeconcordance."{variant_id_column}"
-
             """
             self.conn.execute(sql_update)
 
@@ -4346,25 +4523,28 @@ class Variants:
                         self.code_type_map.get("String")
                     )
 
-            # Create fields to add in INFO
-            sql_barcode_fields = [f"""
-                        || CASE WHEN dataframe_barcode."{barcode_infos}" NOT IN ('','.')
-                                AND dataframe_barcode."{barcode_infos}" NOT NULL
-                            THEN '{barcode_tag}=' || dataframe_barcode."{barcode_infos}"
-                            ELSE ''
-                            END """]
-
-            # SQL set for update
-            sql_barcode_fields_set = "  ".join(sql_barcode_fields)
-
             # Update
             sql_update = f"""
                 UPDATE {table_variants}
-                SET "INFO" = CASE WHEN "INFO" IS NULL OR "INFO" IN ('','.') THEN '' ELSE "INFO" || ';' END
-                    {sql_barcode_fields_set}
+                SET "INFO" = 
+                    concat(
+                        CASE
+                            WHEN "INFO" IS NULL OR "INFO" IN ('','.')
+                            THEN ''
+                            ELSE concat("INFO", ';')
+                        END,
+                        CASE
+                            WHEN dataframe_barcode."{barcode_infos}" NOT IN ('','.')
+                            AND dataframe_barcode."{barcode_infos}" NOT NULL
+                            THEN concat(
+                                    '{barcode_tag}=',
+                                    dataframe_barcode."{barcode_infos}"
+                                )
+                            ELSE ''
+                        END
+                    )
                 FROM dataframe_barcode
                 WHERE {table_variants}."{variant_id_column}" = dataframe_barcode."{variant_id_column}"
-
             """
             self.conn.execute(sql_update)
 
@@ -4441,25 +4621,28 @@ class Variants:
                         self.code_type_map.get("String")
                     )
 
-            # Create fields to add in INFO
-            sql_trio_fields = [f"""
-                        || CASE WHEN dataframe_trio."{trio_infos}" NOT IN ('','.')
-                                AND dataframe_trio."{trio_infos}" NOT NULL
-                            THEN '{trio_tag}=' || dataframe_trio."{trio_infos}"
-                            ELSE ''
-                            END """]
-
-            # SQL set for update
-            sql_trio_fields_set = "  ".join(sql_trio_fields)
-
             # Update
             sql_update = f"""
                 UPDATE {table_variants}
-                SET "INFO" = CASE WHEN "INFO" IS NULL OR "INFO" IN ('','.') THEN '' ELSE "INFO" || ';' END
-                    {sql_trio_fields_set}
+                SET "INFO" = 
+                    concat(
+                        CASE
+                            WHEN "INFO" IS NULL OR "INFO" IN ('','.')
+                            THEN ''
+                            ELSE concat("INFO", ';')
+                        END,
+                        CASE
+                            WHEN dataframe_trio."{trio_infos}" NOT IN ('','.')
+                             AND dataframe_trio."{trio_infos}" NOT NULL
+                            THEN concat(
+                                    '{trio_tag}=',
+                                    dataframe_trio."{trio_infos}"
+                                )
+                            ELSE ''
+                        END
+                    )
                 FROM dataframe_trio
                 WHERE {table_variants}."{variant_id_column}" = dataframe_trio."{variant_id_column}"
-
             """
             self.conn.execute(sql_update)
 
@@ -4624,20 +4807,33 @@ class Variants:
                     sep = ""
 
                 # Create fields to add in INFO
-                sql_vaf_stats_fields.append(f"""
-                            || CASE WHEN dataframe_vaf_stats."{stat}" NOT NULL
-                                THEN '{sep}{stat}=' || dataframe_vaf_stats."{stat}"
-                                ELSE ''
-                                END """)
+                sql_vaf_stats_fields.append(
+                    f"""
+                        CASE
+                            WHEN dataframe_vaf_stats."{stat}" NOT NULL
+                            THEN concat(
+                                    '{sep}{stat}=',
+                                    dataframe_vaf_stats."{stat}"
+                                )
+                            ELSE ''
+                        END
+                    """)
             
             # SQL set for update
-            sql_vaf_stats_fields_set = "  ".join(sql_vaf_stats_fields)
+            sql_vaf_stats_fields_set = ",  ".join(sql_vaf_stats_fields)
 
             # Update
             sql_update = f"""
                 UPDATE variants
-                SET "INFO" = CASE WHEN "INFO" IS NULL OR "INFO" IN ('','.') THEN '' ELSE "INFO" || ';' END
-                    {sql_vaf_stats_fields_set}
+                SET "INFO" = 
+                    concat(
+                        CASE
+                            WHEN "INFO" IS NULL OR "INFO" IN ('','.')
+                            THEN ''
+                            ELSE concat("INFO", ';')
+                        END,
+                        {sql_vaf_stats_fields_set}
+                    )
                 FROM dataframe_vaf_stats
                 WHERE variants."{variant_id_column}" = dataframe_vaf_stats."{variant_id_column}"
 
@@ -4649,27 +4845,3 @@ class Variants:
             gc.collect()
 
 
-
-
-
-    # def to_pyvcf(self):
-    #     """
-    #     Export data to vcf_reader object
-    #     """
-    #     tmp_vcf = NamedTemporaryFile(prefix=self.get_prefix(), suffix=".vcf.gz", dir=self.get_tmp_dir(), delete=False)
-    #     tmp_vcf_name = tmp_vcf.name
-    #     self.export_variant_vcf(tmp_vcf_name, file_type="gz", remove_info=False, add_samples=True, index=False)
-    #     vcf_reader = vcf.Reader(filename=tmp_vcf_name)
-    #     return vcf_reader
-
-
-    # def load_from_database(self):
-    #     """
-    #     It takes the data from the database and puts it into a dictionary
-    #     """
-    #     query = "SELECT * FROM variants"
-    #     cursor = self.connection.execute(query)
-    #     result = cursor.fetchall()
-    #     columns = [col[0] for col in cursor.description]
-    #     df = pd.DataFrame(result, columns=columns)
-    #     self.data = df.to_dict('list')

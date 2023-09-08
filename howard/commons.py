@@ -125,6 +125,7 @@ def set_log_level(verbosity: str, log_file:str = None) -> str:
         "warning": log.WARNING,
         "error": log.ERROR,
         "critical": log.CRITICAL,
+        "notset": log.NOTSET,
     }
     if verbosity not in configs.keys():
         raise ValueError("Unknown verbosity level:" + verbosity)

@@ -694,7 +694,7 @@ def test_get_type():
     assert database.get_type(database_files.get("tsv")) == "variants"
     assert database.get_type(database_files.get("tsv_gz")) == "variants"
     assert database.get_type(database_files.get("tsv_alternative_columns")) == "variants"
-    assert database.get_type(database_files.get("tsv_failed_columns")) == None
+    assert database.get_type(database_files.get("tsv_failed_columns")) == "variants"
     assert database.get_type(database_files.get("tsv_lower_columns")) == "variants"
 
     # Check csv
@@ -741,7 +741,7 @@ def test_is_vcf():
     assert database.is_vcf(database_files.get("tsv"))
     assert database.is_vcf(database_files.get("tsv_gz"))
     assert database.is_vcf(database_files.get("tsv_alternative_columns"))
-    assert not database.is_vcf(database_files.get("tsv_failed_columns"))
+    assert database.is_vcf(database_files.get("tsv_failed_columns"))
     assert database.is_vcf(database_files.get("tsv_lower_columns"))
 
     # Check csv
@@ -940,25 +940,25 @@ def test_get_sql_from():
     assert database.get_sql_from(database_files.get("parquet")) ==  f"""read_parquet('{database_files.get("parquet")}')"""
 
     # Check vcf
-    assert database.get_sql_from(database_files.get("vcf")) == f"""read_csv('{database_files.get("vcf")}', names=['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, delim='\t')"""
+    assert database.get_sql_from(database_files.get("vcf")) == f"""read_csv('{database_files.get("vcf")}', names=['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, skip=36, delim='\t')"""
 
     # Check vcf gz
-    assert database.get_sql_from(database_files.get("vcf_gz")) == f"""read_csv('{database_files.get("vcf_gz")}', names=['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, delim='\t')"""
+    assert database.get_sql_from(database_files.get("vcf_gz")) == f"""read_csv('{database_files.get("vcf_gz")}', names=['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, skip=36, delim='\t')"""
 
     # Check tsv
-    assert database.get_sql_from(database_files.get("tsv")) == f"""read_csv('{database_files.get("tsv")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, delim='\t')"""
+    assert database.get_sql_from(database_files.get("tsv")) == f"""read_csv('{database_files.get("tsv")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, skip=36, delim='\t')"""
 
     # Check tsv gz
-    assert database.get_sql_from(database_files.get("tsv_gz")) == f"""read_csv('{database_files.get("tsv_gz")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, delim='\t')"""
+    assert database.get_sql_from(database_files.get("tsv_gz")) == f"""read_csv('{database_files.get("tsv_gz")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, skip=36, delim='\t')"""
 
     # Check csv
-    assert database.get_sql_from(database_files.get("csv")) == f"""read_csv('{database_files.get("csv")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, delim=',')"""
+    assert database.get_sql_from(database_files.get("csv")) == f"""read_csv('{database_files.get("csv")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, skip=0, delim=',')"""
 
     # Check tbl
-    assert database.get_sql_from(database_files.get("tbl")) == f"""read_csv('{database_files.get("tbl")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, delim='|')"""
+    assert database.get_sql_from(database_files.get("tbl")) == f"""read_csv('{database_files.get("tbl")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, skip=0, delim='|')"""
 
     # Check bed
-    assert database.get_sql_from(database_files.get("bed")) == f"""read_csv('{database_files.get("bed")}', names=['#CHROM', 'START', 'END', 'annot1', 'annot2'], auto_detect=True, delim='\t')"""
+    assert database.get_sql_from(database_files.get("bed")) == f"""read_csv('{database_files.get("bed")}', names=['#CHROM', 'START', 'END', 'annot1', 'annot2'], auto_detect=True, skip=33, delim='\t')"""
 
     # Check json
     assert database.get_sql_from(database_files.get("json")) == f"""read_json('{database_files.get("json")}', auto_detect=True)"""
