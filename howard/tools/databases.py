@@ -167,6 +167,8 @@ def databases_download(args:argparse) -> None:
             generate_parquet_file=args.download_dbnsfp_parquet,
             generate_vcf_file=args.download_dbnsfp_vcf,
             not_generate_files_all=args.download_dbnsfp_no_files_all,
+            add_info=args.download_dbnsfp_add_info,
+            row_group_size=args.download_dbnsfp_row_group_size,
             genomes_folder=args.genomes_folder,
             )
 
@@ -707,7 +709,7 @@ def databases_format_refseq(refseq_file:str, output_file:str, include_utr_5:bool
 
 
 
-def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_url:str = None, dbnsfp_release:str = "4.4a", threads:int = None, parquet_size:int = 100, generate_parquet_file:bool = False, generate_sub_databases:bool = False, generate_vcf_file:bool = False, not_generate_files_all:bool = False, genomes_folder:str = None) -> bool:
+def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_url:str = None, dbnsfp_release:str = "4.4a", threads:int = None, parquet_size:int = 100, generate_parquet_file:bool = False, generate_sub_databases:bool = False, generate_vcf_file:bool = False, not_generate_files_all:bool = False, genomes_folder:str = None, add_info:bool = False, row_group_size:int = 100000) -> bool:
     """
     The function `databases_download_dbnsfp` is used to download and process dbNSFP databases for specified
     genome assemblies.
@@ -746,6 +748,10 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
     :type not_generate_files_all: bool (optional)
     :param genomes_folder: A string that specifies where are genomes
     :type genomes_folder: str (optional)
+    :param add_info: Add INFO column in Parquet folder/file
+    :type add_info: bool (optional)
+    :param row_group_size: Row group size to generate parquet folder and file (see duckDB doc)
+    :type row_group_size: int (optional)
     :return: bool as success or not
     """
 
@@ -832,7 +838,7 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
         return name.translate(mapping_table)
 
 
-    def get_columns_select_clause(columns_structure:dict, assembly:str = "hg19", for_parquet:bool = False, sub_database:str = None, null_if_no_annotation:bool = True, print_log:bool = True) -> dict:
+    def get_columns_select_clause(columns_structure:dict, assembly:str = "hg19", for_parquet:bool = False, sub_database:str = None, null_if_no_annotation:bool = True, print_log:bool = True, add_info:bool = False) -> dict:
         """
         The `get_columns_select_clause` function generates the SELECT and WHERE clauses for a SQL query
         based on the input columns structure, assembly, sub-database, and null_if_no_annotation flag.
@@ -858,10 +864,12 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
         function will return null if there are no annotations. If set to False, the function will return
         an empty string if there are no annotations, defaults to True
         :type null_if_no_annotation: bool (optional)
-        :param log: The `log` parameter is a boolean flag that determines whether to enable logging or
+        :param print_log: The `log` parameter is a boolean flag that determines whether to enable logging or
         not. If set to `True`, the function will log debug messages during execution. If set to `False`,
         logging will be disabled, defaults to True
-        :type log: bool (optional)
+        :type print_log: bool (optional)
+        :param add_info: Add INFO column in Parquet folder/file
+        :type add_info: bool (optional)
         :return: The `get_columns_select_clause` function returns a dictionary containing the "select"
         and "where" clauses for a SQL query. The "select" clause includes the columns to be selected in
         the query, while the "where" clause includes the conditions for filtering the data.
@@ -872,9 +880,11 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
 
         columns_select_position = {}
         columns_select_ref_alt = {}
+        columns_select_info = {}
         columns_select_annotations = {}
         columns_where_annotations = {}
         columns_list_annotations = {}
+        columns_info_annotations = {}
         variant_position_columns =  {
             "hg38": {
                     "#chr": {
@@ -947,18 +957,42 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
                 # other columns - annotations
                 if not column_to_remove:
                     column_alias = clean_name(column)
-                    #if sub_database is None or sub_database in ['ALL'] or column == sub_database or column.startswith(f"{sub_database}_"):
                     if sub_database is None or sub_database in ['ALL'] or column.upper() == sub_database or column_alias.upper().startswith(f"{sub_database}_"):
                         if for_parquet:
                             column_key = f""" "{column_alias}" """
                             column_where = f""" "{column_alias}" IS NOT NULL """
+                            column_info_key = f"""
+                                CASE
+                                    WHEN "{column_alias}" IS NOT NULL
+                                    THEN 
+                                        concat(
+                                            '{column_alias}=',
+                                            "{column_alias}",
+                                            ';'
+                                        )
+                                    ELSE ''
+                                END
+                            """
                         else:
+                            # columns for each annotation
                             column_key = f"""
                                 list_aggregate(list_distinct(array_filter(string_split("{column}", ';'), x -> x != '.')), 'string_agg', ',') AS "{column_alias}"
                             """
-                            # list_aggregate([2, 4, 8, 42], 'string_agg', '|');
-
+                            # columns for INFO clumn
+                            column_info_key = f"""
+                                CASE
+                                    WHEN len(list_distinct(array_filter(string_split("{column}", ';'), x -> x != '.'))) > 0
+                                    THEN 
+                                        concat(
+                                            '{column_alias}=',
+                                            list_aggregate(list_distinct(array_filter(string_split("{column}", ';'), x -> x != '.')), 'string_agg', ','),
+                                            ';'
+                                        )
+                                    ELSE ''
+                                END
+                            """
                             column_where = f""" "{column}" IS NOT NULL """
+                        columns_info_annotations[column_info_key] = None
                         columns_select_annotations[column_key] = columns_structure[column]
                         columns_where_annotations[column_where] = columns_structure[column]
                         columns_list_annotations[column_alias] = columns_structure[column]
@@ -968,8 +1002,21 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
             columns_select_position = {'"#CHROM"': '#CHROM', '"POS"': 'POS'}
             columns_select_ref_alt = {'"REF"': 'REF', '"ALT"': 'ALT'}
 
+        # DEVEL
+        if add_info:
+            info_concat = f"""
+                regexp_replace(
+                    replace(
+                        concat({", ".join(list(columns_info_annotations))}),
+                        '"', ''),
+                    ';$', '')
+                AS "INFO"
+            """
+            columns_select_info[info_concat] = "INFO"
+            columns_list_annotations["INFO"] = "VARCHAR"
+
         # Create select clause
-        columns_select = list(columns_select_position.keys()) + list(columns_select_ref_alt.keys()) + list(columns_select_annotations.keys())
+        columns_select = list(columns_select_position.keys()) + list(columns_select_ref_alt.keys()) + list(columns_select_info.keys()) + list(columns_select_annotations.keys())
         columns_select_clause = ", ".join(columns_select)
 
         # Create where clause
@@ -1073,7 +1120,6 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
         log.info(f"Download dbNSFP {assemblies} - Database '{dbnsfp_zip}' already extracted")
     
 
-
     def get_header(header_file:str, dbnsfp_readme_dest:str = None, columns_structure:dict = {}, annotations:list = [], readme_annotations_description:dict = None) -> bool:
         """
         The function `get_header` generates a VCF header based on provided annotations and writes it to
@@ -1175,6 +1221,7 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
     database_files = []
     columns_structure = {}
     readme_annotations_description = None
+    #row_group_size = 100000
     
     if not threads or int(threads) <= 0:
         threads = os.cpu_count()
@@ -1221,7 +1268,7 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
         sub_database = "ALL"
 
         # Create clauses (select and where)
-        columns_clauses = get_columns_select_clause(columns_structure=columns_structure, assembly=assembly, sub_database=sub_database)
+        columns_clauses = get_columns_select_clause(columns_structure=columns_structure, assembly=assembly, sub_database=sub_database, add_info=add_info)
         columns_select_clause = columns_clauses.get("select")
         columns_annotations = columns_clauses.get("annotations")
         
@@ -1269,7 +1316,7 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
                                 )
                             WHERE \"#CHROM\" IS NOT NULL
                             )
-                        TO '{output_parquet}' WITH (FORMAT PARQUET, PER_THREAD_OUTPUT TRUE)
+                        TO '{output_parquet}' WITH (FORMAT PARQUET, PER_THREAD_OUTPUT TRUE, ROW_GROUP_SIZE {row_group_size})
                     """
                 
                 # Log
@@ -1349,7 +1396,7 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
             for sub_database in sorted(set(sub_databases_structure), key=str.casefold, reverse=False):
                 
                 # Clauses
-                columns_clauses = get_columns_select_clause(columns_structure=columns_structure, assembly=assembly, for_parquet=True, sub_database=sub_database, null_if_no_annotation=True, print_log=False)
+                columns_clauses = get_columns_select_clause(columns_structure=columns_structure, assembly=assembly, for_parquet=True, sub_database=sub_database, null_if_no_annotation=True, print_log=False, add_info=add_info)
                 columns_select_clause = columns_clauses.get("select")
                 columns_where_clause = columns_clauses.get("where")
                 columns_annotations = columns_clauses.get("annotations")
@@ -1390,7 +1437,7 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
                                         WHERE "#CHROM" in ('{chromosome}')
                                             AND ({columns_where_clause})
                                     )
-                                TO '{parquet_sub_database_annotation_chromosome}' WITH (FORMAT PARQUET, PER_THREAD_OUTPUT TRUE)
+                                TO '{parquet_sub_database_annotation_chromosome}' WITH (FORMAT PARQUET, PER_THREAD_OUTPUT TRUE, ROW_GROUP_SIZE {row_group_size})
                                 """
 
                             db_copy.query(query_copy)
@@ -1545,19 +1592,32 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
                                 database_files = get_database_files(f"{dbnsfp_zip_dest_folder}/dbNSFP{dbnsfp_release}_variant.chr*.gz")
                             if not columns_structure:
                                 columns_structure = get_columns_structure(database_file=database_files[0], sample_size=10, threads=threads)
-                            columns_clauses = get_columns_select_clause(columns_structure=columns_structure, assembly=assembly, for_parquet=True, sub_database=sub_database, null_if_no_annotation=True, print_log=False)
+                            columns_clauses = get_columns_select_clause(columns_structure=columns_structure, assembly=assembly, for_parquet=True, sub_database=sub_database, null_if_no_annotation=True, print_log=False, add_info=add_info)
                             columns_annotations = columns_clauses.get("annotations")
 
                             # Generate columns concat for INFO column
                             column_INFO = []
-                            for column_annotation in columns_annotations:
-                                column_INFO.append(f"""
-                                CASE
-                                    WHEN "{column_annotation}" IS NOT NULL
-                                    THEN concat('{column_annotation}=', replace("{column_annotation}", ';', ','), ';')
-                                    ELSE ''
-                                END
-                                """)
+
+                            # INFO column check
+                            query_INFO_check = f"""
+                                    SELECT *
+                                    FROM read_parquet('{input_parquet_files[0]}')
+                                """
+                            columns_INFO_check = list(db.query(query_INFO_check).df())
+                            
+                            # If INFO column exists
+                            if "INFO" in columns_INFO_check:
+                                column_INFO.append(""" "INFO" """)
+
+                            else:
+                                for column_annotation in columns_annotations:
+                                    column_INFO.append(f"""
+                                    CASE
+                                        WHEN "{column_annotation}" IS NOT NULL
+                                        THEN concat('{column_annotation}=', replace("{column_annotation}", ';', ','), ';')
+                                        ELSE ''
+                                    END
+                                    """)
 
                             if column_INFO:
                                 
@@ -1608,7 +1668,7 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
                                         vcf_file_gz = os.path.join(tmp_dir,f'variants.{file_num}.tsv.gz')
                                         query_copy = f"""
                                                 COPY (
-                                                    SELECT "#CHROM", POS, '.' AS ID, REF, ALT, 0 AS QUAL, 'PASS' AS FILTER, regexp_replace(replace(concat({", ".join(column_INFO)}),'"', ''), ';$', '') INFO
+                                                    SELECT "#CHROM", POS, '.' AS ID, REF, ALT, 0 AS QUAL, 'PASS' AS FILTER, regexp_replace(replace(concat({", ".join(column_INFO)}),'"', ''), ';$', '') AS INFO
                                                     FROM read_parquet('{parquet_file}')
                                                     )
                                                 TO '{vcf_file_gz}' WITH (FORMAT CSV, DELIM '\t', HEADER 0, QUOTE '', COMPRESSION 'gzip')
@@ -1683,9 +1743,6 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
                             log.error(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - VCF file - No parquet files found""")
                             raise ValueError(f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - VCF file - No parquet files found""")
                                 
-                        # if subdatabase in ['ALL']:
-                        #     exit()
-                    
                     else:
                         vcf_already_generated_list.append(sub_database)
 

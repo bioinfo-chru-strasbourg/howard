@@ -451,6 +451,21 @@ arguments = {
                     """(see '--download-dbnsfp-subdatabases')""",
             "action": "store_true"
         },
+        "download-dbnsfp-add-info": {
+            "help": """Add INFO column (VCF format) in Parquet folder and file.\n"""
+                    """Useful for speed up full annotation (all available columns).\n"""
+                    """Increase memory and space during generation of files.""",
+            "action": "store_true"
+        },
+        "download-dbnsfp-row-group-size": {
+            "metavar": "INTEGER",
+            "help": """minimum number of rows in a parquet row group (see duckDB doc).\n"""
+                    """Lower can reduce memory usage and slightly increase space during generation,\n"""
+                    """speed up highly selective queries, slow down whole file queries (e.g. aggregations)"""
+                    """Default: 100000""",
+            "required": False,
+            "default": 100000
+        },
 
         # From Annovar
         "annovar-code": {
@@ -741,6 +756,8 @@ commands_arguments = {
                 "download-dbnsfp-parquet": False,
                 "download-dbnsfp-vcf": False,
                 "download-dbnsfp-no-files-all": False,
+                "download-dbnsfp-add-info": False,
+                "download-dbnsfp-row-group-size": False,
                 "genomes-folder": False
             },
         }

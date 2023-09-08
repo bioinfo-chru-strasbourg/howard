@@ -6,8 +6,8 @@ Usage:
 pytest tests/
 
 Coverage:
-coverage run -m pytest . -x -v
-coverage report --include=howard/* -m
+coverage run -m pytest . -x -v --log-cli-level=INFO --capture=tee-sys
+coverage report --include=howard/* -m 
 """
 
 import logging as log
