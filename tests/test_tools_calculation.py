@@ -47,7 +47,8 @@ def test_calculation():
         hgvs_field = "hgvs",
         transcripts = None,
         show_calculations = False,
-        trio_pedigree = '{"father":"sample1", "mother":"sample2", "child":"sample3"}'
+        trio_pedigree = '{"father":"sample1", "mother":"sample2", "child":"sample3"}',
+        calculation_config = None
     )
 
     # Remove if output file exists

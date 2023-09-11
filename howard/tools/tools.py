@@ -159,8 +159,16 @@ arguments = {
             "metavar": "BOOL",
             "default": "auto"
         },
+
+        # Calculation
+        "calculation_config": {
+            "help": """Calculation config file\n"""
+                    """Format: JSON""",
+            "metavar": "FILE",
+            "default": None
+        },
         "show_calculations": {
-            "help": """Show available calculation operations\n""",
+            "help": """Show available calculation operations""",
             "action": "store_true"
         },
         "hgvs_field": {
@@ -183,6 +191,8 @@ arguments = {
             "metavar": "JSON",
             "default": None
         },
+
+        # Other
         "overview": {
             "help": "Overview after loading data",
             "action": "store_true"
@@ -600,6 +610,7 @@ commands_arguments = {
                 "input": False,
                 "output": False,
                 "calculations": False,
+                "calculation_config": False,
                 "show_calculations": False
             },
             "NOMEN calculation": {

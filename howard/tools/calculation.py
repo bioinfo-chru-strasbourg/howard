@@ -40,8 +40,13 @@ def calculation(args:argparse) -> None:
 
     # Show available calculations
     if args.show_calculations:
+
         vcfdata_obj = Variants()
-        for help_line in vcfdata_obj.get_operations_help():
+
+        # Operations config file
+        operations_config_file = args.calculation_config
+
+        for help_line in vcfdata_obj.get_operations_help(operations_config_file=operations_config_file):
             log.info(help_line)
 
     # Create VCF object
@@ -50,6 +55,9 @@ def calculation(args:argparse) -> None:
         vcfdata_obj = Variants(None, args.input, args.output, config, param)
 
         params = vcfdata_obj.get_param()
+
+        # Operations config file
+        operations_config_file = args.calculation_config
 
         # Quick calculations
         if args.calculations:
@@ -90,7 +98,7 @@ def calculation(args:argparse) -> None:
 
         # Calculation
         if vcfdata_obj.get_param().get("calculations", None) or vcfdata_obj.get_param().get("calculation", None):
-            vcfdata_obj.calculation()
+            vcfdata_obj.calculation(operations_config_file=operations_config_file)
 
         # Export
         if vcfdata_obj.get_output():
@@ -104,8 +112,8 @@ def calculation(args:argparse) -> None:
     else:
 
         log.info("""The following arguments are required:""")
-        log.info("""   --input, --output, --calculations""")
-        log.info("""   --show_calculations""")
+        log.info("""   1/ --input, --output, --calculations""")
+        log.info("""   2/ --show_calculations""")
 
     log.info("End")
 

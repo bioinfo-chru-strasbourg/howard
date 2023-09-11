@@ -3751,11 +3751,11 @@ class Variants:
     # Calculation
     ###
 
-    def get_operations_help(self) -> list:
+    def get_operations_help(self, operations_config_dict:dict = {}, operations_config_file:str = None) -> list:
 
         operations_help = []
 
-        operations = self.get_operations()
+        operations = self.get_operations_config(operations_config_dict=operations_config_dict, operations_config_file=operations_config_file)
         operations_help.append(f"Available calculation operations:")
         for op in operations:
             op_name = operations[op].get("name", op).upper()
@@ -3766,19 +3766,19 @@ class Variants:
 
         return operations_help
 
-    def get_operations(self) -> dict:
+    def get_operations_config(self, operations_config_dict:dict = {}, operations_config_file:str = None) -> dict:
 
-        operations_config = {
-            "middle":
+        operations_config_default = {
+            "variant_chr_pos_alt_ref":
                 {
                     "type": "sql",
-                    "name": "middle",
-                    "description": "Devel operation middle",
+                    "name": "variant_chr_pos_alt_ref",
+                    "description": "Create a variant ID with chromosome, position, alt and ref",
                     "available": False,
-                    "output_column_name": "middle",
-                    "output_column_type": "Integer",
-                    "output_column_description": "middle of the position, completly useless",
-                    "operation_query": "(SELECT POS/2)",
+                    "output_column_name": "variant_chr_pos_alt_ref",
+                    "output_column_type": "String",
+                    "output_column_description": "variant ID with chromosome, position, alt and ref",
+                    "operation_query": """ concat("#CHROM", '_', "POS", '_', "REF", '_', "ALT") """,
                     "operation_info": True,
                 },
             "VARTYPE":
@@ -3904,10 +3904,28 @@ class Variants:
                 },
         }
 
+        # Create with default operations
+        operations_config = operations_config_default
+
+        # Replace operations from dict
+        for operation_config in operations_config_dict:
+            operations_config[operation_config] = operations_config_dict[operation_config]
+
+        # Replace operations from file
+        if operations_config_file:
+            if os.path.exists(operations_config_file):
+                with open(operations_config_file) as operations_config_file_content:
+                    operations_config_file_dict = json.load(operations_config_file_content)
+                for operation_config in operations_config_file_dict:
+                    operations_config[operation_config] = operations_config_file_dict[operation_config]
+            else:
+                log.error(f"Operations config file '{operations_config_file}' does NOT exist")
+                raise ValueError(f"Operations config file '{operations_config_file}' does NOT exist")
+
         return operations_config
 
 
-    def calculation(self) -> None:
+    def calculation(self, operations:dict = None, operations_config_dict:dict = {}, operations_config_file:str = None) -> None:
         """
         It takes a list of operations, and for each operation, it checks if it's a python or sql
         operation, and then calls the appropriate function
@@ -3923,13 +3941,14 @@ class Variants:
         """
 
         # operations config
-        operations_config = self.get_operations()
-        
+        operations_config = self.get_operations_config(operations_config_dict=operations_config_dict, operations_config_file=operations_config_file)
+
         # Upper keys
         operations_config = {k.upper(): v for k, v in operations_config.items()}
         
         # Operations for calculation
-        operations = self.get_param().get("calculation", {}).keys()
+        if not operations:
+            operations = self.get_param().get("calculation", {})
 
         # For each operations
         for operation_name in operations:
@@ -3937,12 +3956,17 @@ class Variants:
             if operation_name in operations_config:
                 log.info(f"Calculation '{operation_name}'")
                 operation = operations_config[operation_name]
-                if operation["type"] == "python":
-                    self.calculation_process_function(operation)
-                elif operation["type"] == "sql":
-                    self.calculation_process_sql(operation)
+                operation_type = operation.get("type", "sql")
+                if operation_type == "python":
+                    self.calculation_process_function(operation=operation, operation_name=operation_name)
+                elif operation_type == "sql":
+                    self.calculation_process_sql(operation=operation, operation_name=operation_name)
+                else:
+                    log.error(f"Operations config: Type '{operation_type}' NOT available")
+                    raise ValueError(f"Operations config: Type '{operation_type}' NOT available")
             else:
-                log.warning(f"No calculation '{operation_name}' available")
+                log.error(f"Operations config: Calculation '{operation_name}' NOT available")
+                raise ValueError(f"Operations config: Calculation '{operation_name}' NOT available")
 
         # Explode INFOS fields into table fields
         if self.get_param().get("explode_infos", None) is not None:
@@ -3950,7 +3974,7 @@ class Variants:
                 prefix=self.get_param().get("explode_infos", None))
 
 
-    def calculation_process_sql(self, operation) -> None:
+    def calculation_process_sql(self, operation:dict, operation_name:str = "unknown") -> None:
         """
         This function takes in a string of a mathematical operation and returns the result of that
         operation
@@ -3966,60 +3990,96 @@ class Variants:
         table_variants = self.get_table_variants(clause="alter")
 
         # Operation infos
-        operation_name = operation['name']
+        operation_name = operation.get('name', 'unknown')
         log.debug(f"process sql {operation_name}")
-        output_column_name = operation['output_column_name']
-        output_column_type = operation['output_column_type']
+        output_column_name = operation.get('output_column_name',operation_name)
+        output_column_type = operation.get('output_column_type', 'String')
         output_column_type_sql = code_type_map_to_sql.get(
             output_column_type, "VARCHAR")
-        output_column_description = operation['output_column_description']
-        operation_query = operation['operation_query']
-        operation_info_fields = operation.get('info_fields', None)
-        operation_info = operation['operation_info']
+        output_column_description = operation.get('output_column_description', f'{operation_name} operation')
+        operation_query = operation.get('operation_query', None)
+        if isinstance(operation_query, list):
+            operation_query = " ".join(operation_query)
+        operation_info_fields = operation.get('info_fields', [])
+        operation_info_fields_check = operation.get('info_fields_check', False)
+        operation_info = operation.get('operation_info', True)
 
-        # Create column
-        self.add_column(table_name=table_variants, column_name=prefix+output_column_name, column_type=output_column_type_sql, default_value="null")
+        if operation_query:
 
-        # Create VCF header field
-        vcf_reader = self.get_header()
-        vcf_reader.infos[output_column_name] = vcf.parser._Info(
-            output_column_name,
-            ".",
-            output_column_type,
-            output_column_description,
-            "howard calculation",
-            "0",
-            self.code_type_map.get(output_column_type)
-        )
+            # Info fields check
+            operation_info_fields_check_result = True
+            if operation_info_fields_check:
+                header_infos = self.get_header().infos
+                for info_field in operation_info_fields:
+                    operation_info_fields_check_result = operation_info_fields_check_result and info_field in header_infos
 
-        # Explode infos if needed
-        if operation_info_fields:
-            self.explode_infos(fields=operation_info_fields, force=True)
+            # If info fields available 
+            if operation_info_fields_check_result:
 
-        # Operation calculation
-        self.conn.execute(
-            f""" UPDATE {table_variants} SET "{prefix}{output_column_name}" = ({operation_query}) """)
+                # Create column
+                self.add_column(table_name=table_variants, column_name=prefix+output_column_name, column_type=output_column_type_sql, default_value="null")
 
-        # Add to INFO
-        if operation_info:
-            sql_update = f"""
-                UPDATE {table_variants}
-                SET "INFO" = 
-                    concat(
-                        CASE
-                            WHEN "INFO" IS NULL
-                            THEN ''
-                            ELSE concat("INFO", ';')
-                        END,
-                        '{output_column_name}=',
-                        "{prefix}{output_column_name}"
-                    )
-            """
-            log.debug(sql_update)
-            self.conn.execute(sql_update)
+                # Create VCF header field
+                vcf_reader = self.get_header()
+                vcf_reader.infos[output_column_name] = vcf.parser._Info(
+                    output_column_name,
+                    ".",
+                    output_column_type,
+                    output_column_description,
+                    "howard calculation",
+                    "0",
+                    self.code_type_map.get(output_column_type)
+                )
+
+                # Explode infos if needed
+                self.explode_infos(fields=[output_column_name] + operation_info_fields, force=True)
+
+                # Operation calculation
+                try:
+
+                    # Query to update calculation column
+                    sql_update = f"""
+                        UPDATE {table_variants}
+                        SET "{prefix}{output_column_name}" = ({operation_query})
+                    """
+                    self.conn.execute(sql_update)
+
+                    # Add to INFO
+                    if operation_info:
+                        sql_update_info = f"""
+                            UPDATE {table_variants}
+                            SET "INFO" =
+                                CASE
+                                    WHEN "{prefix}{output_column_name}" IS NOT NULL
+                                    THEN
+                                        concat(
+                                            CASE
+                                                WHEN "INFO" IS NULL
+                                                THEN ''
+                                                ELSE concat("INFO", ';')
+                                            END,
+                                            '{output_column_name}=',
+                                            "{prefix}{output_column_name}"
+                                        )
+                                    ELSE "INFO"
+                                END
+                        """
+                        self.conn.execute(sql_update_info)
+
+                except:
+                    log.error(f"Operations config: Calculation '{operation_name}' query failed")
+                    raise ValueError(f"Operations config: Calculation '{operation_name}' query failed")
+
+            else:
+                log.error(f"Operations config: Calculation '{operation_name}' DOES NOT contain all mandatory fields {operation_info_fields}")
+                raise ValueError(f"Operations config: Calculation '{operation_name}' DOES NOT contain all mandatory fields {operation_info_fields}")
+
+        else:
+            log.error(f"Operations config: Calculation '{operation_name}' query NOT defined")
+            raise ValueError(f"Operations config: Calculation '{operation_name}' query NOT defined")
 
 
-    def calculation_process_function(self, operation) -> None:
+    def calculation_process_function(self, operation:dict, operation_name:str = "unknown") -> None:
         """
         This function takes in a string, and returns a string
 
