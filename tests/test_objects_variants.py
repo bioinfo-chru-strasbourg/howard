@@ -6,7 +6,7 @@ Usage:
 pytest tests/
 
 Coverage:
-coverage run -m pytest . -x -v --log-cli-level=INFO --capture=tee-sys
+coverage run -m pytest tests/test_objects_variants.py -x -v --log-cli-level=INFO --capture=tee-sys
 coverage report --include=howard/* -m 
 """
 
@@ -3126,7 +3126,200 @@ def test_prioritization_no_infos():
 ### Calculation
 ###
 
-def test_calculation():
+
+def test_calculation_sql():
+    """
+    This function tests the calculation and annotation of genetic variants using input parameters and
+    checks if the output VCF file is in the correct format.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        tmp_dir = "/tmp"
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Create object
+        variants = Variants(input=input_vcf, output=output_vcf, load=True)
+
+        # Operations config file
+        operations_config_file = os.path.join(tests_data_folder, "operations_config_test.json")
+
+        # Operations config dict
+        operations_config_dict = {
+            "variant_chr_pos_alt_ref_dict":
+                {
+                    "type": "sql",
+                    "name": "variant_chr_pos_alt_ref_dict",
+                    "description": "Create a variant ID with chromosome, position, alt and ref",
+                    "available": False,
+                    "output_column_name": "variant_chr_pos_alt_ref_dict",
+                    "output_column_type": "String",
+                    "output_column_description": "variant ID with chromosome, position, alt and ref",
+                    "operation_query": """ concat("#CHROM", '_', "POS", '_', "REF", '_', "ALT") """,
+                    "operation_info": True,
+                }
+        }
+
+        # Operations
+        operations = {
+                    "variant_chr_pos_alt_ref": None,
+                    "variant_chr_pos_alt_ref_file": None,
+                    "variant_chr_pos_alt_ref_dict": None
+                }
+
+        # Calculation
+        variants.calculation(operations=operations, operations_config_dict=operations_config_dict, operations_config_file=operations_config_file)
+
+        # Check number of variant_chr_pos_alt_ref
+        result = variants.get_query_to_df("""SELECT INFO FROM variants WHERE INFO LIKE '%variant_chr_pos_alt_ref=%' """)
+        assert len(result) == 7
+
+        # Check number of variant_chr_pos_alt_ref_dict
+        result = variants.get_query_to_df("""SELECT INFO FROM variants WHERE INFO LIKE '%variant_chr_pos_alt_ref_dict=%' """)
+        assert len(result) == 7
+
+        # Check number of variant_chr_pos_alt_ref_file
+        result = variants.get_query_to_df("""SELECT INFO FROM variants WHERE INFO LIKE '%variant_chr_pos_alt_ref_file=%' """)
+        assert len(result) == 7
+
+        # Check number of middle (7)
+        result = variants.get_query_to_df("""SELECT INFO FROM variants WHERE INFO LIKE '%variant_chr_pos_alt_ref=chr1_28736_A_C%' """)
+        assert len(result) == 1
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
+def test_calculation_sql_fail():
+    """
+    This function tests the calculation and annotation of genetic variants using input parameters and
+    checks if the output VCF file is in the correct format.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        tmp_dir = "/tmp"
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Create object
+        variants = Variants(input=input_vcf, output=output_vcf, load=True)
+        
+        # Operations config dict
+        operations_config_dict = {
+            "QUERY_FAILED": {
+                "type": "sql",
+                "name": "QUERY_FAILED",
+                "description": "Variant type (e.g. SNV, INDEL, MNV, BND...)",
+                "available": True,
+                "output_column_name": "QUERY_FAILED",
+                "output_column_type": "String",
+                "output_column_description": "Variant type: SNV if X>Y, MOSAIC if X>Y,Z or X,Y>Z, INDEL if XY>Z or X>YZ",
+                "operation_query": "blabla",
+                "info_fields": ["FAILED"],
+                "operation_info": True
+            }
+        }
+
+        # Operations
+        operations = {
+                    "QUERY_FAILED": None
+                }
+
+        # Calculation
+        with pytest.raises(ValueError) as e:
+            variants.calculation(operations=operations, operations_config_dict=operations_config_dict)
+        assert str(e.value) == "Operations config: Calculation 'QUERY_FAILED' query failed"
+
+
+def test_calculation_sql_info_fields_check():
+    """
+    This function tests the calculation and annotation of genetic variants using input parameters and
+    checks if the output VCF file is in the correct format.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        tmp_dir = "/tmp"
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Create object
+        variants = Variants(input=input_vcf, output=output_vcf, load=True)
+
+        # Operations config dict
+        operations_config_dict = {
+            "variant_chr_pos_alt_ref_dict":
+                {
+                    "type": "sql",
+                    "name": "variant_chr_pos_alt_ref_dict",
+                    "description": "Create a variant ID with chromosome, position, alt and ref",
+                    "available": False,
+                    "output_column_name": "variant_chr_pos_alt_ref_dict",
+                    "output_column_type": "String",
+                    "output_column_description": "variant ID with chromosome, position, alt and ref",
+                    "operation_query": """ concat("#CHROM", '_', "POS", '_', "REF", '_', "ALT") """,
+                    "operation_info": True,
+                    "info_fields": ["SVTYPE"],
+                    "info_fields_check": False,
+                }
+        }
+
+        # Operations
+        operations = {
+                    "variant_chr_pos_alt_ref_dict": None
+                }
+
+        # Calculation
+        variants.calculation(operations=operations, operations_config_dict=operations_config_dict)
+
+        # Check number of variant_chr_pos_alt_ref
+        result = variants.get_query_to_df("""SELECT INFO FROM variants WHERE INFO LIKE '%variant_chr_pos_alt_ref_dict=%' """)
+        assert len(result) == 7
+
+
+        # Operations config dict
+        operations_config_dict = {
+            "variant_chr_pos_alt_ref_dict":
+                {
+                    "type": "sql",
+                    "name": "variant_chr_pos_alt_ref_dict",
+                    "description": "Create a variant ID with chromosome, position, alt and ref",
+                    "available": False,
+                    "output_column_name": "variant_chr_pos_alt_ref_dict",
+                    "output_column_type": "String",
+                    "output_column_description": "variant ID with chromosome, position, alt and ref",
+                    "operation_query": """ concat("#CHROM", '_', "POS", '_', "REF", '_', "ALT") """,
+                    "operation_info": True,
+                    "info_fields": ["SVTYPE"],
+                    "info_fields_check": True,
+                }
+        }
+
+        # Operations
+        operations = {
+                    "variant_chr_pos_alt_ref_dict": None
+                }
+
+        # Calculation
+        with pytest.raises(ValueError) as e:
+            variants.calculation(operations=operations, operations_config_dict=operations_config_dict)
+        assert str(e.value) == "Operations config: Calculation 'variant_chr_pos_alt_ref_dict' DOES NOT contain all mandatory fields ['SVTYPE']"
+
+
+def test_calculation_nomen():
     """
     This function tests the calculation and annotation of genetic variants using input parameters and
     checks if the output VCF file is in the correct format.
@@ -3160,11 +3353,9 @@ def test_calculation():
                         "options": {
                             "hgvs_field": "hgvs"
                         }
-                    },
-                    "middle": None,
-                    "no_existing_calculation": None
                 }
             }
+        }
 
         # Create object
         variants = Variants(input=input_vcf, output=output_vcf, config=tests_config, param=input_param, load=True)
@@ -3178,10 +3369,6 @@ def test_calculation():
         # Check number of NOMEN (2)
         result = variants.get_query_to_df("""SELECT INFO FROM variants WHERE INFO LIKE '%NOMEN=%' """)
         assert len(result) == 2
-
-        # Check number of middle (7)
-        result = variants.get_query_to_df("""SELECT INFO FROM variants WHERE INFO LIKE '%middle=%' """)
-        assert len(result) == 7
 
         # Check if VCF is in correct format with pyVCF
         remove_if_exists([output_vcf])
