@@ -24,9 +24,160 @@ from unittest.mock import patch
 
 from howard.objects.variants import Variants
 from howard.commons import *
+from test_needed import *
 
 
-tests_folder = os.path.dirname(__file__)
+
+def test_get_compression_type():
+    """
+    The function `test_get_compression_type` tests the `get_compression_type` function with different
+    file types and asserts that the returned compression type matches the expected value.
+    """
+
+    assert get_compression_type(database_files.get("vcf")) == "none"
+
+    assert get_compression_type(database_files.get("vcf_gz")) == "bgzip"
+
+    assert get_compression_type(database_files.get("example_vcf_gzip")) == "gzip"
+
+    assert get_compression_type(database_files.get("bcf")) == "unknown"
+
+    assert get_compression_type(database_files.get("parquet")) == "none"
+
+
+def test_concat_and_compress_files_vcf():
+    """
+    The function `test_concat_and_compress_files_vcf` tests the `concat_and_compress_files` function
+    with different input and output file types.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Input file as plain text, output as plain text
+        input_files = [database_files.get("vcf")]
+        output_file = os.path.join(tmp_dir, "test1")
+        compression_type = "none"
+        assert concat_and_compress_files(input_files=input_files, output_file=output_file, compression_type=compression_type)
+
+        # Input file as plain text, output as bgzip
+        input_files = [database_files.get("vcf")]
+        output_file = os.path.join(tmp_dir, "test2")
+        compression_type = "bgzip"
+        assert concat_and_compress_files(input_files=input_files, output_file=output_file, compression_type=compression_type)
+
+        # Input file as plain text, output as gzip
+        input_files = [database_files.get("vcf")]
+        output_file = os.path.join(tmp_dir, "test3")
+        compression_type = "gzip"
+        assert concat_and_compress_files(input_files=input_files, output_file=output_file, compression_type=compression_type)
+
+
+def test_concat_and_compress_files_vcf_gz():
+    """
+    The function `test_concat_and_compress_files_vcf_gz` tests the `concat_and_compress_files` function
+    with different compression types.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Input file as bgzip, output as plain text
+        input_files = [database_files.get("vcf_gz")]
+        output_file = os.path.join(tmp_dir, "test4")
+        compression_type = "none"
+        assert concat_and_compress_files(input_files=input_files, output_file=output_file, compression_type=compression_type)
+
+        # Input file as bgzip, output as bgzip
+        input_files = [database_files.get("vcf_gz")]
+        output_file = os.path.join(tmp_dir, "test5")
+        compression_type = "bgzip"
+        assert concat_and_compress_files(input_files=input_files, output_file=output_file, compression_type=compression_type)
+
+        # Input file as bgzip, output as gzip
+        input_files = [database_files.get("vcf_gz")]
+        output_file = os.path.join(tmp_dir, "test6")
+        compression_type = "gzip"
+        assert concat_and_compress_files(input_files=input_files, output_file=output_file, compression_type=compression_type)
+
+
+def test_concat_and_compress_files_vcf_gzip():
+    """
+    The function `test_concat_and_compress_files_vcf_gzip` tests the `concat_and_compress_files`
+    function with different compression types.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Input file as gzip, output as plain text
+        input_files = [database_files.get("example_vcf_gzip")]
+        output_file = os.path.join(tmp_dir, "test7")
+        compression_type = "none"
+        assert concat_and_compress_files(input_files=input_files, output_file=output_file, compression_type=compression_type)
+
+        # Input file as gzip, output as bgzip
+        input_files = [database_files.get("example_vcf_gzip")]
+        output_file = os.path.join(tmp_dir, "test8")
+        compression_type = "bgzip"
+        assert concat_and_compress_files(input_files=input_files, output_file=output_file, compression_type=compression_type)
+
+        # Input file as gzip, output as gzip
+        input_files = [database_files.get("example_vcf_gzip")]
+        output_file = os.path.join(tmp_dir, "test9")
+        compression_type = "gzip"
+        assert concat_and_compress_files(input_files=input_files, output_file=output_file, compression_type=compression_type)
+
+
+def test_concat_and_compress_files_sort_and_index():
+    """
+    The function `test_concat_and_compress_files_sort_and_index` tests the `concat_and_compress_files`
+    function by compressing, sorting, and indexing input files.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Compress and sort and index
+        input_files = [database_files.get("example_vcf_gzip")]
+        output_file = os.path.join(tmp_dir, "test10")
+        compression_type = "bgzip"
+        assert concat_and_compress_files(input_files=input_files, output_file=output_file, compression_type=compression_type, sort=True, index=True)
+
+        # Compress and sort and index gzip
+        input_files = [database_files.get("example_vcf_gzip")]
+        output_file = os.path.join(tmp_dir, "test11")
+        compression_type = "gzip"
+        assert concat_and_compress_files(input_files=input_files, output_file=output_file, compression_type=compression_type, sort=True, index=True)
+
+        # Compress and sort and index none
+        input_files = [database_files.get("example_vcf_gzip")]
+        output_file = os.path.join(tmp_dir, "test12")
+        compression_type = "none"
+        assert concat_and_compress_files(input_files=input_files, output_file=output_file, compression_type=compression_type, sort=True, index=True)
+
+
+def test_concat_and_compress_files_multiple_inputs():
+    """
+    The function `test_concat_and_compress_files_multiple_inputs()` tests the
+    `concat_and_compress_files()` function with multiple input files and different compression types.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Multiple Input files, output as none
+        input_files = [database_files.get("vcf"), database_files.get("example_vcf_gzip"), database_files.get("vcf_gz")]
+        output_file = os.path.join(tmp_dir, "test13")
+        compression_type = "none"
+        assert concat_and_compress_files(input_files=input_files, output_file=output_file, compression_type=compression_type)
+
+        # Multiple Input files, output as gzip
+        input_files = [database_files.get("vcf"), database_files.get("example_vcf_gzip"), database_files.get("vcf_gz")]
+        output_file = os.path.join(tmp_dir, "test14")
+        compression_type = "gzip"
+        assert concat_and_compress_files(input_files=input_files, output_file=output_file, compression_type=compression_type)
+
+        # Multiple Input files, output as bgzip
+        input_files = [database_files.get("vcf"), database_files.get("example_vcf_gzip"), database_files.get("vcf_gz")]
+        output_file = os.path.join(tmp_dir, "test15")
+        compression_type = "bgzip"
+        assert concat_and_compress_files(input_files=input_files, output_file=output_file, compression_type=compression_type)
 
 
 def test_get_file_compressed():
