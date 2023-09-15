@@ -6,15 +6,13 @@ import platform
 import re
 import statistics
 import subprocess
+import sys
 from tempfile import NamedTemporaryFile
 import tempfile
 import duckdb
 import json
 import argparse
-import Bio.bgzf as bgzf
 import pandas as pd
-# import pyarrow as pa
-# import pyarrow.parquet as pq
 import vcf
 import logging as log
 import shutil
@@ -22,6 +20,14 @@ import urllib.request
 import zipfile
 import gzip
 import requests
+
+import random
+
+import pgzip
+import bgzip
+
+import pysam
+import pysam.bcftools
 
 
 file_folder = os.path.dirname(__file__)
@@ -1141,39 +1147,190 @@ def compress_file(input_file:str, output_file:str) -> bool:
     :type output_file: str
     """
 
-    with open(input_file, 'rb') as input:
-        with bgzf.open(output_file, 'wb') as output:
-            shutil.copyfileobj(input, output)
-
-    # fp = open(input_file,"rb")
-    # data = fp.read()
-    # bindata = bytearray(data)
-    # with bgzf.open(output_file, "wb") as f:
-    #     f.write(bindata)
+    concat_and_compress_files(input_files=[input_file], output_file=output_file)
 
     return os.path.exists(output_file)
 
 
-def concat_and_compress_files(input_files: list, output_file: str) -> bool:
+def get_compression_type(filepath:str) -> str:
     """
-    This function concatenates multiple input files into a single output file and compresses it using the BGZF algorithm.
-
-    :param input_files: A list of file paths to the input files that need to be concatenated and compressed
-    :type input_files: list
-    :param output_file: The name and path of the output file where the concatenated and compressed data will be written
-    :type output_file: str
-    :return: A boolean value indicating whether the output file was successfully created or not
+    The function `get_compression_type` determines the compression type of a file based on its first few
+    bytes.
+    
+    :param filepath: The `filepath` parameter is a string that represents the path to the file for which
+    we want to determine the compression type
+    :type filepath: str
+    :return: The function `get_compression_type` returns a string indicating the compression type of the
+    file specified by the `filepath` parameter. The possible return values are "gzip" if the file is
+    compressed using gzip, "bgzip" if the file is compressed using bgzip, "unknown" if the compression
+    type is unknown, and "none" if the file is not compressed.
     """
 
-    with bgzf.open(output_file, 'wb') as compressed_file:
-        for input_file in input_files:
-            if input_file.endswith('.gz'):
-                with gzip.open(input_file, 'rb') as infile:
-                    shutil.copyfileobj(infile, compressed_file)
+    try:
+        with open(filepath, 'rb') as test_f:
+            # First 2 bits
+            bit_2 = test_f.read(2)
+            # Next 2 bits
+            bit_4 = test_f.read(2)
+            # If bit is compress
+            if bit_2 == b'\x1f\x8b':
+                # If bit is compress 'gzip' type
+                if bit_4 == b'\x08\x00':
+                    return "gzip"
+                # If bit is compress 'bgzip' type
+                elif bit_4 == b'\x08\x04':
+                    return "bgzip"
+                # If bit is unlnown compress type
+                else:
+                    return "unknown"
+            # If no compress type
             else:
-                with open(input_file, 'rb') as infile:
-                    shutil.copyfileobj(infile, compressed_file)
+                return "none"
+    except:
+        return "unknown"
 
+
+def concat_into_infile(input_files:list, compressed_file:object, compression_type:str = "none", threads:int = 1, block:int = 10 ** 6) -> bool:
+    """
+    The function `concat_into_infile` concatenates multiple input files into a compressed output file,
+    with support for different compression types and multi-threading.
+    
+    :param input_files: A list of input file paths that need to be concatenated into the compressed file
+    :type input_files: list
+    :param compressed_file: The `compressed_file` parameter is an object that represents the file where
+    the concatenated contents of the input files will be written. It is expected to be a file object
+    that has write capabilities
+    :type compressed_file: object
+    :param compression_type: The `compression_type` parameter specifies the type of compression to be
+    used for the output file. The default value is "none", which means no compression will be applied.
+    Other possible values include "bgzip" and "gzip", which indicate that the output file should be
+    compressed using the bgzip and, defaults to none
+    :type compression_type: str (optional)
+    :param threads: The "threads" parameter specifies the number of threads to use for compression or
+    decompression. It determines how many parallel processes can be executed simultaneously, which can
+    help improve performance when dealing with large files or multiple files, defaults to 1
+    :type threads: int (optional)
+    :param block: The `block` parameter is used to specify the size of the block when reading the input
+    files. It is set to `10 ** 6`, which means 1 million bytes. This parameter determines how much data
+    is read from the input files at a time
+    :type block: int
+    :return: a boolean value, specifically `True`.
+    """
+
+    # Output file compressions type
+    if compression_type in ['none']:
+        open_type = "t"
+    else:
+        open_type = "b"
+
+    # Open input files
+    for input_file in input_files:
+
+        # Input file compression type
+        input_compression_type = get_compression_type(input_file)
+        if input_compression_type in ['bgzip']:
+            with open(input_file, 'rb') as raw:
+                with bgzip.BGZipReader(raw, num_threads=threads, raw_read_chunk_size=block) as infile:
+                    if open_type in ['t']:
+                        compressed_file.write(str(infile.read(), 'utf-8'))
+                    else:
+                        shutil.copyfileobj(infile, compressed_file)
+        elif input_compression_type in ['gzip']:
+            with pgzip.open(input_file, 'r'+open_type, thread=threads) as infile:
+                shutil.copyfileobj(infile, compressed_file)
+        elif input_compression_type in ['none']:
+            with open(input_file, 'r'+open_type) as infile:
+                shutil.copyfileobj(infile, compressed_file)
+        else:
+            raise ValueError(f"Input file compression type unknown: {input_file}")
+
+    return True
+
+
+def concat_and_compress_files(input_files: list, output_file: str, compression_type:str = "bgzip", threads:int = 1, block:int = 10 ** 6, compression_level:int = 6, sort:bool = False, index:bool = False) -> bool:
+    """
+    The function `concat_and_compress_files` takes a list of input files, an output file name, and
+    optional parameters for compression type, number of threads, block size, compression level, sorting,
+    and indexing, and concatenates and compresses the input files into the output file.
+    
+    :param input_files: A list of input file paths that need to be concatenated and compressed
+    :type input_files: list
+    :param output_file: The `output_file` parameter is a string that specifies the path and name of the
+    output file that will be created after concatenating and compressing the input files
+    :type output_file: str
+    :param compression_type: The `compression_type` parameter specifies the type of compression to be
+    applied to the output file. It can take one of three values: "bgzip", "gzip", or "none", defaults to
+    bgzip
+    :type compression_type: str (optional)
+    :param threads: The `threads` parameter specifies the number of threads to use for compression and
+    decompression. It determines the level of parallelism in the compression process, allowing for
+    faster execution when multiple threads are used, defaults to 1
+    :type threads: int (optional)
+    :param block: The `block` parameter specifies the size of the block used for reading and writing
+    data during compression. It is set to a default value of 10^6 (1 million) bytes
+    :type block: int
+    :param compression_level: The `compression_level` parameter determines the level of compression to
+    be used when compressing the output file. It is an integer value ranging from 0 to 9, where 0
+    indicates no compression and 9 indicates maximum compression. The higher the compression level, the
+    smaller the resulting compressed file size, defaults to 6
+    :type compression_level: int (optional)
+    :param sort: The `sort` parameter is a boolean flag that determines whether the output file should
+    be sorted or not. If `sort` is set to `True`, the output file will be sorted using
+    `pysam.bcftools.sort` before renaming it. If `sort` is set to `False, defaults to False
+    :type sort: bool (optional)
+    :param index: The `index` parameter is a boolean flag that determines whether or not to index the
+    output file after concatenation and compression. If `index` is set to `True`, the output file will
+    be indexed using the `pysam.tabix_index` function with the preset "vcf" and, defaults to False
+    :type index: bool (optional)
+    :return: a boolean value indicating whether the output file exists or not.
+    """
+
+    # Prevent compression type not available
+    if compression_type not in ['bgzip', 'gzip', 'none']:
+        compression_type = 'bgzip'
+
+    # Output file compressions type
+    if compression_type in ['none']:
+        open_type = "t"
+    else:
+        open_type = "b"
+
+    output_file_tmp = output_file+"."+str(random.randrange(1000))+".tmp"
+
+    if compression_type in ['gzip']:
+        with pgzip.open(output_file_tmp, 'w'+open_type, thread=threads, blocksize=threads * block, compresslevel=compression_level) as compressed_file:
+            concat_into_infile(input_files, compressed_file, compression_type=compression_type, threads=threads, block=block)
+    elif compression_type in ['bgzip']:
+        with open(output_file_tmp, 'w'+open_type) as compressed_file_raw:
+            with bgzip.BGZipWriter(compressed_file_raw, num_threads=threads) as compressed_file:
+                concat_into_infile(input_files, compressed_file, compression_type=compression_type, threads=threads, block=block)
+    elif compression_type in ['none']:
+        with open(output_file_tmp, 'w'+open_type) as compressed_file:
+            concat_into_infile(input_files, compressed_file, compression_type=compression_type, threads=threads, block=block)     
+
+    # Output file
+    if sort:
+        # Sort with pysam
+        try:
+            pysam.bcftools.sort(f"-Oz{compression_level}", "-o", output_file, output_file_tmp, threads=threads, catch_stdout=False)
+            # Remove tmp file
+            os.remove(output_file_tmp)
+        except:
+            raise ValueError(f"Output file sorting failed: {output_file_tmp}")
+    
+    else:
+        # Rename tmp file
+        os.rename(output_file_tmp, output_file)
+
+    # Index file
+    if index:
+        # Index file with tabix
+        try:
+            pysam.tabix_index(output_file, preset="vcf", force=True)
+        except:
+            raise ValueError(f"Output file indexing failed: {output_file}")
+    
+    # Return output file
     return os.path.exists(output_file)
 
 

@@ -64,8 +64,18 @@ ENV TOOLS=/tools
 ENV DATA=/data
 ENV TOOL=/tool
 ENV DATABASES=/databases
-ENV YUM_INSTALL="gcc bc make wget perl-devel which zlib-devel zlib bzip2-devel bzip2 xz-devel xz ncurses-devel unzip curl-devel python39 java-17 htop"
+
+# YUM
+ENV YUM_INSTALL="gcc bc make wget perl-devel which zlib-devel zlib bzip2-devel bzip2 xz-devel xz ncurses-devel unzip curl-devel java-17 htop libgomp"
 ENV YUM_REMOVE="zlib-devel bzip2-devel xz-devel ncurses-devel gcc"
+
+
+
+##########
+# BASHRC #
+##########
+
+RUN echo 'alias ll="ls -lah"' >> ~/.bashrc
 
 
 
@@ -81,21 +91,6 @@ RUN yum install -y $YUM_INSTALL;
 ################
 # DEPENDENCIES #
 ################
-
-
-
-
-###########
-# PYTHON3 #
-###########
-
-ENV TOOL_NAME="python"
-ENV TOOL_VERSION="3"
-ENV PATH=$TOOLS/$TOOL_NAME/$TOOL_VERSION/bin:$PATH
-RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
-	ln -s /usr/bin/python$TOOL_VERSION /usr/bin/python; 
-
-
 
 
 
@@ -115,11 +110,12 @@ RUN	echo "#[INFO] System Perl packages installation"; \
 ##########
 
 ENV TOOL_NAME=htslib
-ENV TOOL_VERSION=1.15.1
+#ENV TOOL_VERSION=1.15.1
+ENV TOOL_VERSION=1.17
 ENV TARBALL_LOCATION=https://github.com/samtools/$TOOL_NAME/releases/download/$TOOL_VERSION/
 ENV TARBALL=$TOOL_NAME-$TOOL_VERSION.tar.bz2
 ENV DEST=$TOOLS/$TOOL_NAME/$TOOL_VERSION
-ENV PATH=$TOOLS/$TOOL_NAME/$TOOL_VERSION/bin:$PATH
+ENV PATH=$DEST/bin:$PATH
 
 # INSTALL
 RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
@@ -127,7 +123,7 @@ RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
     tar xf $TARBALL && \
     rm -rf $TARBALL && \
     cd $TOOL_NAME-$TOOL_VERSION && \
-    make -j $THREADS prefix=$TOOLS/$TOOL_NAME/$TOOL_VERSION install && \
+    make -j $THREADS prefix=$DEST install && \
     cd ../ && \
     ln -s $TOOL_VERSION $TOOLS/$TOOL_NAME/current && \
     rm -rf $TOOL_NAME-$TOOL_VERSION
@@ -139,11 +135,12 @@ RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
 ############
 
 ENV TOOL_NAME=bcftools
-ENV TOOL_VERSION=1.15.1
+#ENV TOOL_VERSION=1.15.1
+ENV TOOL_VERSION=1.17
 ENV TARBALL_LOCATION=https://github.com/samtools/$TOOL_NAME/releases/download/$TOOL_VERSION/
 ENV TARBALL=$TOOL_NAME-$TOOL_VERSION.tar.bz2
 ENV DEST=$TOOLS/$TOOL_NAME/$TOOL_VERSION
-ENV PATH=$TOOLS/$TOOL_NAME/$TOOL_VERSION/bin:$PATH
+ENV PATH=$DEST/bin:$PATH
 
 # INSTALL
 RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
@@ -151,22 +148,10 @@ RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
     tar xf $TARBALL && \
     rm -rf $TARBALL && \
     cd $TOOL_NAME-$TOOL_VERSION && \
-    make -j $THREADS prefix=$TOOLS/$TOOL_NAME/$TOOL_VERSION install && \
+    make -j $THREADS prefix=$DEST install && \
     cd ../ && \
     ln -s $TOOL_VERSION $TOOLS/$TOOL_NAME/current && \
     rm -rf $TOOL_NAME-$TOOL_VERSION
-
-
-########
-# JAVA #
-########
-
-# ENV TOOL_NAME=java
-# ENV TOOL_VERSION=1.8.0
-# RUN yum install -y java-$TOOL_VERSION && \
-# 	mkdir -p $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin && \
-# 	ln -s /usr/bin/java $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin/java && \
-# 	ln -s $TOOL_VERSION $TOOLS/$TOOL_NAME/current ;
 
 
 
@@ -182,20 +167,19 @@ ENV TARBALL_LOCATION=https://snpeff.blob.core.windows.net/versions
 ENV TARBALL_FOLDER=snpeff_folder
 ENV TOOL_DATABASE_FOLDER=$DATABASES/snpeff/current
 ENV DEST=$TOOLS/$TOOL_NAME/$TOOL_VERSION
-ENV PATH=$TOOLS/$TOOL_NAME/$TOOL_VERSION/bin:$PATH
+ENV PATH=$DEST/bin:$PATH
 ENV SNPEFF_DATABASES=$TOOL_DATABASE_FOLDER
-
 
 # INSTALL
 RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
     wget $TARBALL_LOCATION/$TARBALL && \
     unzip $TARBALL -d $TARBALL_FOLDER && \
-    mkdir -p $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin/ && \
-    cp $TARBALL_FOLDER/*/*jar $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin/ -R && \
-    cp $TARBALL_FOLDER/*/*.config $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin/ -R && \
+    mkdir -p $DEST/bin/ && \
+    cp $TARBALL_FOLDER/*/*jar $DEST/bin/ -R && \
+    cp $TARBALL_FOLDER/*/*.config $DEST/bin/ -R && \
     ln -s $TOOL_VERSION $TOOLS/$TOOL_NAME/current && \
     mkdir -p $TOOL_DATABASE_FOLDER && \
-    ln -s $TOOL_DATABASE_FOLDER $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin/data ;
+    ln -s $TOOL_DATABASE_FOLDER $DEST/bin/data ;
 
 
 
@@ -211,10 +195,8 @@ ENV TARBALL=annovar.latest.tar.gz
 ENV TARBALL_FOLDER=$TOOL_NAME
 ENV TOOL_DATABASE_FOLDER=$DATABASES/annovar/current
 ENV DEST=$TOOLS/$TOOL_NAME/$TOOL_VERSION
-ENV PATH=$TOOLS/$TOOL_NAME/$TOOL_VERSION/bin:$PATH
+ENV PATH=$DEST/bin:$PATH
 ENV ANNOVAR_DATABASES=$TOOL_DATABASE_FOLDER
-# http://www.openbioinformatics.org/annovar/download/0wgxR2rIVP/annovar.latest.tar.gz
-
 
 # INSTALL
 RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
@@ -222,13 +204,52 @@ RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
     tar xf $TARBALL && \
     rm -rf $TARBALL && \
     cd $TARBALL_FOLDER && \
-    mkdir -p $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin && \
-    cp *.pl $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin/ -R && \
+    mkdir -p $DEST/bin && \
+    cp *.pl $DEST/bin/ -R && \
     cd ../ && \
     rm -rf $TARBALL_FOLDER && \
     ln -s $TOOL_VERSION $TOOLS/$TOOL_NAME/current && \
     mkdir -p $TOOL_DATABASE_FOLDER && \
-    ln -s $TOOL_DATABASE_FOLDER $TOOLS/$TOOL_NAME/$TOOL_VERSION/bin/databases ;
+    ln -s $TOOL_DATABASE_FOLDER $DEST/bin/databases ;
+
+
+
+#########
+# MAMBA #
+#########
+
+ENV TOOL_NAME=mamba
+ENV TOOL_VERSION=23.3.1-1
+ENV TARBALL_LOCATION=https://github.com/conda-forge/miniforge/releases/download/$TOOL_VERSION
+ENV DEST=$TOOLS/$TOOL_NAME/$TOOL_VERSION
+ENV MAMBA=$DEST/bin/mamba
+ENV PIP=$DEST/bin/pip
+
+# INSTALL
+RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
+    wget "$TARBALL_LOCATION/Mambaforge-$TOOL_VERSION-$(uname)-$(uname -m).sh" && \
+    bash "Mambaforge-$TOOL_VERSION-$(uname)-$(uname -m).sh" -b -p $DEST && \
+    rm -f "Mambaforge-$TOOL_VERSION-$(uname)-$(uname -m).sh"
+    
+
+
+##########
+# PYTHON #
+##########
+
+ENV TOOL_NAME=python
+ENV PATH=$TOOLS/$TOOL_NAME/current/bin:$PATH
+
+# PYTHON 3.10 - current
+ENV TOOL_NAME=python
+ENV TOOL_VERSION=3.10
+ENV DEST=$TOOLS/$TOOL_NAME/$TOOL_VERSION
+
+# INSTALL
+RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
+    $MAMBA create python=$TOOL_VERSION -p $TOOLS/$TOOL_NAME/$TOOL_VERSION && \
+    cd $TOOLS/$TOOL_NAME && \
+    ln -s $TOOL_VERSION current
 
 
 
@@ -239,22 +260,20 @@ RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
 ENV DATABASES=/databases
 ENV TOOL_NAME=howard
 ENV TOOL_VERSION=devel
-#ENV TARBALL_LOCATION=https://github.com/bioinfo-chru-strasbourg/howard/repository/$TOOL_VERSION
-ENV TARBALL=archive.tar.gz
-ENV TARBALL_FOLDER=archive
 ENV DEST=$TOOLS/$TOOL_NAME/$TOOL_VERSION
-ENV PATH=$TOOLS/$TOOL_NAME/$TOOL_VERSION/bin:$PATH
+ENV PATH=$DEST/bin:$PATH
 
-
-ADD . $TOOLS/$TOOL_NAME/$TOOL_VERSION
-
+# INSTALL
+ADD . $DEST
 RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
-    ln -s $TOOLS/$TOOL_NAME/$TOOL_VERSION $TOOLS/$TOOL_NAME/current && \
-    chmod 0775 $TOOLS/$TOOL_NAME/$TOOL_VERSION $TOOLS/$TOOL_NAME/current -R && \
+    ln -s $DEST $TOOLS/$TOOL_NAME/current && \
+    chmod 0775 $DEST $TOOLS/$TOOL_NAME/current -R && \
 	mkdir -p $DATABASES && \
 	ln -s $TOOL_VERSION $TOOLS/$TOOL_NAME/current && \
-	ln -s $TOOLS/$TOOL_NAME/$TOOL_VERSION/ /tool && \
-    (cd /tool && python -m pip install -e .) ;
+	ln -s $DEST/ /tool && \
+    (cd /tool && python -m pip install -e .) && \
+    mkdir -p $DEST/bin && \
+    cp $(whereis howard | cut -d" " -f2) $DEST/bin/
 
 
 
@@ -262,7 +281,8 @@ RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
 # YUM REMOVE & CLEAR #
 ######################
 
-RUN yum erase -y $YUM_REMOVE ; yum clean all ;
+RUN [ "${YUM_REMOVE}" != "" ] && yum erase -y $YUM_REMOVE
+RUN yum clean all
 
 
 

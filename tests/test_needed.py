@@ -92,6 +92,7 @@ database_files = {
     "refgene_without_header" : tests_annotations_folder + "/refGene.without_header.bed",
     "refgene_gz" : tests_annotations_folder + "/refGene.bed.gz",
     "example_vcf" : tests_data_folder + "/example.vcf",
+    "example_vcf_gzip" : tests_data_folder + "/example.vcf.gzip",
 }
 
 
