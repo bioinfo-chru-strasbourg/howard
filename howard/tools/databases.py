@@ -1212,7 +1212,7 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
             megabytes = kilobytes * 1024
             return int(size * megabytes)
         else:
-            return None
+            return 0
 
 
     # Init
@@ -1221,7 +1221,6 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
     database_files = []
     columns_structure = {}
     readme_annotations_description = None
-    #row_group_size = 100000
     
     if not threads or int(threads) <= 0:
         threads = os.cpu_count()
@@ -1596,22 +1595,22 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
                             columns_annotations = columns_clauses.get("annotations")
 
                             # Generate columns concat for INFO column
-                            column_INFO = []
+                            column_info = []
 
                             # INFO column check
-                            query_INFO_check = f"""
+                            query_info_check = f"""
                                     SELECT *
                                     FROM read_parquet('{input_parquet_files[0]}')
                                 """
-                            columns_INFO_check = list(db.query(query_INFO_check).df())
+                            columns_info_check = list(db.query(query_info_check).df())
                             
                             # If INFO column exists
-                            if "INFO" in columns_INFO_check:
-                                column_INFO.append(""" "INFO" """)
+                            if "INFO" in columns_info_check:
+                                column_info.append(""" "INFO" """)
 
                             else:
                                 for column_annotation in columns_annotations:
-                                    column_INFO.append(f"""
+                                    column_info.append(f"""
                                     CASE
                                         WHEN "{column_annotation}" IS NOT NULL
                                         THEN concat('{column_annotation}=', replace("{column_annotation}", ';', ','), ';')
@@ -1619,7 +1618,7 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
                                     END
                                     """)
 
-                            if column_INFO:
+                            if column_info:
                                 
                                 # Generate VCF files within tmp folder
                                 with TemporaryDirectory(dir=output_assembly) as tmp_dir:
@@ -1668,7 +1667,7 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
                                         vcf_file_gz = os.path.join(tmp_dir,f'variants.{file_num}.tsv.gz')
                                         query_copy = f"""
                                                 COPY (
-                                                    SELECT "#CHROM", POS, '.' AS ID, REF, ALT, 0 AS QUAL, 'PASS' AS FILTER, regexp_replace(replace(concat({", ".join(column_INFO)}),'"', ''), ';$', '') AS INFO
+                                                    SELECT "#CHROM", POS, '.' AS ID, REF, ALT, 0 AS QUAL, 'PASS' AS FILTER, regexp_replace(replace(concat({", ".join(column_info)}),'"', ''), ';$', '') AS INFO
                                                     FROM read_parquet('{parquet_file}')
                                                     )
                                                 TO '{vcf_file_gz}' WITH (FORMAT CSV, DELIM '\t', HEADER 0, QUOTE '', COMPRESSION 'gzip')
@@ -1692,7 +1691,7 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
                                     header_list = []
 
                                     # Temporary header file for INFO fields
-                                    header_file_tmp = os.path.join(tmp_dir,f"header.hdr")
+                                    header_file_tmp = os.path.join(tmp_dir,"header.hdr")
                                     if os.path.exists(input_partition_parquet_header):
                                         shutil.copy(input_partition_parquet_header, header_file_tmp)
                                         log.debug(f"Download dbNSFP ['{assembly}'] - Database '{sub_database}' - VCF file - Write header")
