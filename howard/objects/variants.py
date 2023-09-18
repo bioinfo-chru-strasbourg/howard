@@ -434,18 +434,6 @@ class Variants:
         return output_format
 
 
-    # def get_output_compressed(self, output_file: str = None) -> str:
-    #     """
-    #     It returns the format of the input variable.
-    #     :return: The format is being returned.
-    #     """
-    #     if not output_file:
-    #         output_file = self.get_output()
-    #     output_compressed = get_file_compressed(output_file)
-
-    #     return output_compressed
-
-
     def get_config(self) -> dict:
         """
         It returns the config

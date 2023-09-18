@@ -238,15 +238,25 @@ class Database:
         else:
             
             header_file_compressed = get_file_compressed(header_file)
+            header_compression_type = get_compression_type(header_file)
 
             if header_file_compressed:
-                with bgzf.open(header_file, 'rt') as header_lines:
-                    header_list = []
-                    for line in header_lines:
-                        if not line.startswith('#'):
-                            break
-                        header_list.append(line)
-                    return header_list
+                if header_compression_type in ['bgzip']:
+                    with bgzf.open(header_file, 'rt') as header_lines:
+                        header_list = []
+                        for line in header_lines:
+                            if not line.startswith('#'):
+                                break
+                            header_list.append(line)
+                        return header_list
+                else:
+                    with pgzip.open(header_file, 'rt') as header_lines:
+                        header_list = []
+                        for line in header_lines:
+                            if not line.startswith('#'):
+                                break
+                            header_list.append(line)
+                        return header_list
             else:
                 with open(header_file, 'rt') as header_lines:
                     header_list = []
@@ -1095,9 +1105,14 @@ class Database:
             # Check columns from file
             table_columns = self.get_table_columns_from_file(database=database, header_file=header_file)
             header_length = self.get_header_length(header_file=database)
+            file_compressed = get_file_compressed(database)
+            if file_compressed:
+                database_compression = "gzip"
+            else:
+                database_compression = "none"
             query = f"""
                     SELECT *
-                    FROM read_csv('{database}', auto_detect=True, skip={header_length}, delim='{delimiter}')
+                    FROM read_csv('{database}', auto_detect=True, compression='{database_compression}', skip={header_length}, delim='{delimiter}')
                     LIMIT 0
                 """
             nb_columns_detected_by_duckdb = len(self.conn.query(query).df().columns)
@@ -1105,9 +1120,9 @@ class Database:
                 # Check columns from header
                 table_columns = self.get_table_columns_from_format(database=database)
             if table_columns:
-                sql_form = f"""read_csv('{database}', names={table_columns}, auto_detect=True, skip={header_length}, delim='{delimiter}')"""
+                sql_form = f"""read_csv('{database}', names={table_columns}, auto_detect=True, compression='{database_compression}', skip={header_length}, delim='{delimiter}')"""
             else:
-                sql_form = f"read_csv('{database}', auto_detect=True, skip={header_length}, delim='{delimiter}')"
+                sql_form = f"read_csv('{database}', auto_detect=True, compression='{database_compression}', skip={header_length}, delim='{delimiter}')"
         elif database_format in ["json"]:
             sql_form = f"read_json('{database}', auto_detect=True)"
         elif database_format in ["duckdb"]:

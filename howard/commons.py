@@ -628,22 +628,6 @@ def get_file_format(filename: str = None) -> str:
     return filename_format
 
 
-def get_file_compressed(filename: str = None) -> bool:
-    """
-    This function takes a filename as input and returns True if the file is compressed (in bgzip) and False if it
-    is not
-
-    :param filename: the name of the file to be checked
-    :type filename: str
-    :return: A boolean value.
-    """
-    compress_format = None
-    if filename:
-        filename_name, filename_extension = os.path.splitext(filename)
-        compress_format = filename_extension.replace(".", "")
-    return compress_format in ["gz"]
-
-
 def findbypipeline(df, samples:list = []):
     """
     This function takes a dataframe and a list of samples, and returns the number of pipelines found in
@@ -1166,6 +1150,34 @@ def get_compression_type(filepath:str) -> str:
                 return "none"
     except:
         return "unknown"
+
+
+
+def get_file_compressed(filename: str = None) -> bool:
+    """
+    This function takes a filename as input and returns True if the file is compressed (in bgzip) and False if it
+    is not
+
+    :param filename: the name of the file to be checked
+    :type filename: str
+    :return: A boolean value.
+    """
+
+    compression_type = None
+    if filename:
+        # If filename exists, try to detect compression within content (first bits)
+        if os.path.exists(filename):
+            compression_type = get_compression_type(filename)
+        # If filename does not exists, use extension to determine if it is compressed
+        else:
+            filename_name, filename_extension = os.path.splitext(filename)
+            compress_format = filename_extension.replace(".", "")
+            if compress_format in ["gz"]:
+                compression_type = "bgzip"
+            else:
+                compression_type = "none"
+    return compression_type in ["gzip", "bgzip"]
+
 
 
 def concat_into_infile(input_files:list, compressed_file:object, compression_type:str = "none", threads:int = 1, block:int = 10 ** 6) -> bool:
