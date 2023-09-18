@@ -1578,7 +1578,7 @@ class Database:
         return self.conn
     
 
-    def export(self, output_database:str, output_header:str = None, database:str = None, table:str = "variants", parquet_partitions:list = None) -> bool:
+    def export(self, output_database:str, output_header:str = None, database:str = None, table:str = "variants", parquet_partitions:list = None, threads:int = 1, sort:bool = False, index:bool = False) -> bool:
         """
         The `export` function exports data from a database to a specified output format, compresses it
         if necessary, and returns a boolean value indicating whether the export was successful or not.
@@ -1602,6 +1602,12 @@ class Database:
         column. The partitions are used to organize the data in the Parquet file based on the values of
         the specified columns
         :type parquet_partitions: list
+        :param threads: Number of threads (optional)
+        :type threads: int
+        :param sort: sort output file, only if VCF format (optional)
+        :type sort: bool
+        :param index: index output file, only if VCF format (optional)
+        :type index: int
         :return: a boolean value indicating whether the export was successful or not.
         """
 
@@ -1651,12 +1657,12 @@ class Database:
             else:
                 extra_columns = existing_columns_header
             default_empty_value = "."
-            query_export_format = f"FORMAT CSV, DELIMITER '{delimiter}', HEADER, QUOTE ''"
+            query_export_format = f"FORMAT CSV, DELIMITER '{delimiter}', HEADER, QUOTE '', COMPRESSION 'gzip'"
             include_header = True
 
         # TSV/CSV/TBL
         elif output_type in ["tsv", "csv", "tbl"]:
-            query_export_format = f"FORMAT CSV, DELIMITER '{delimiter}', HEADER"
+            query_export_format = f"FORMAT CSV, DELIMITER '{delimiter}', HEADER, COMPRESSION 'gzip'"
             if delimiter in ["\t"]:
                 include_header = True
 
@@ -1753,27 +1759,55 @@ class Database:
             # Export
             self.query(database=database, query=query_copy)
             
-            # Include header
-            if include_header:
-                # New tmp file
-                query_output_database_header_tmp = f"""{query_output_database_tmp}.{random_tmp}"""
-                # create tmp header file
-                query_output_header_tmp = f"""{query_output_database_tmp}.header.{random_tmp}"""
-                self.get_header_file(header_file=query_output_header_tmp, remove_header_line=True)
-                # Concat header and database
-                concat_file(input_files=[query_output_header_tmp, query_output_database_tmp], output_file=query_output_database_header_tmp)
-                # move file
-                shutil.move(query_output_database_header_tmp, query_output_database_tmp)
-                # remove tmp
-                remove_if_exists([query_output_header_tmp])
+            
 
-            # Compress
-            if compressed:
-                compress_file(input_file=query_output_database_tmp, output_file=output_database)
-                # remove tmp
-                remove_if_exists([query_output_database_tmp])
-            else:
-                shutil.move(query_output_database_tmp, output_database)
+            # Include header
+            if include_header or compressed or sort or index:
+
+                # Input files
+                input_files = []
+
+                if include_header:
+                    # create tmp header file
+                    query_output_header_tmp = f"""{query_output_database_tmp}.header.{random_tmp}"""
+                    self.get_header_file(header_file=query_output_header_tmp, remove_header_line=True)
+                    input_files.append(query_output_header_tmp)
+
+                # Add variants file
+                input_files.append(query_output_database_tmp)
+
+                # Compress
+                if compressed:
+                    compression_type = "bgzip"
+                else:
+                    compression_type = "none"
+                
+                # Output
+                concat_and_compress_files(input_files=input_files, output_file=output_database, compression_type=compression_type, threads=threads, sort=sort, index=index)
+
+            # # Include header
+            # if include_header:
+            #     # New tmp file
+            #     query_output_database_header_tmp = f"""{query_output_database_tmp}.{random_tmp}"""
+            #     # create tmp header file
+            #     query_output_header_tmp = f"""{query_output_database_tmp}.header.{random_tmp}"""
+            #     self.get_header_file(header_file=query_output_header_tmp, remove_header_line=True)
+            #     # Concat header and database
+            #     #concat_file(input_files=[query_output_header_tmp, query_output_database_tmp], output_file=query_output_database_header_tmp)
+            #     #concat_and_compress_files(input_files=[query_output_header_tmp, query_output_database_tmp], output_file=query_output_database_header_tmp, threads=threads)
+            #     concat_file(input_files=[query_output_header_tmp, query_output_database_tmp], output_file=query_output_database_header_tmp)
+            #     # move file
+            #     shutil.move(query_output_database_header_tmp, query_output_database_tmp)
+            #     # remove tmp
+            #     remove_if_exists([query_output_header_tmp])
+
+            # # Compress
+            # if compressed:
+            #     compress_file(input_file=query_output_database_tmp, output_file=output_database)
+            #     # remove tmp
+            #     remove_if_exists([query_output_database_tmp])
+            # else:
+            #     shutil.move(query_output_database_tmp, output_database)
 
             # Header
             if output_header:
