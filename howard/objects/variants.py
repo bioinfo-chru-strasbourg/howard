@@ -1101,7 +1101,7 @@ class Variants:
             return None
 
 
-    def export_output(self, output_file: str = None, output_header: str = None, export_header: bool = True, query: str = None, parquet_partitions:list = None) -> bool:
+    def export_output(self, output_file: str = None, output_header: str = None, export_header: bool = True, query: str = None, parquet_partitions:list = None, threads:int = None, sort:bool = False, index:bool = False) -> bool:
         """
         The `export_output` function exports data from a VCF file to a specified output file in various
         formats, including VCF, CSV, TSV, PSV, and Parquet.
@@ -1128,6 +1128,12 @@ class Variants:
         organize data in a hierarchical directory structure based on the values of one or more columns.
         This can improve query performance when working with large datasets
         :type parquet_partitions: list
+        :param threads: Number of threads (optional)
+        :type threads: int
+        :param sort: sort output file, only if VCF format (optional)
+        :type sort: bool
+        :param index: index output file, only if VCF format (optional)
+        :type index: int
         :return: a boolean value. It checks if the output file exists and returns True if it does, or
         None if it doesn't.
         """
@@ -1138,6 +1144,10 @@ class Variants:
         # If no output, get it
         if not output_file:
             output_file = self.get_output()
+
+        # If not threads
+        if not threads:
+            threads = self.get_threads()
 
         # Auto header name with extension
         if export_header or output_header:
@@ -1186,7 +1196,7 @@ class Variants:
         database = Database(database=database_source, table="variants", header_file=output_header)
 
         # Export file
-        database.export(output_database=output_file, output_header=output_header, parquet_partitions=parquet_partitions)
+        database.export(output_database=output_file, output_header=output_header, parquet_partitions=parquet_partitions, threads=threads, sort=sort, index=index)
 
         # Remove
         remove_if_exists(tmp_to_remove)
@@ -3740,10 +3750,11 @@ class Variants:
 
     def get_operations_help(self, operations_config_dict:dict = {}, operations_config_file:str = None) -> list:
 
+        # Init
         operations_help = []
 
+        # operations
         operations = self.get_operations_config(operations_config_dict=operations_config_dict, operations_config_file=operations_config_file)
-        operations_help.append(f"Available calculation operations:")
         for op in operations:
             op_name = operations[op].get("name", op).upper()
             op_description = operations[op].get("description", op_name)
@@ -3751,7 +3762,15 @@ class Variants:
             if op_available:
                 operations_help.append(f"   {op_name}: {op_description}")
 
+        # Sort operations
+        operations_help.sort()
+
+        # insert header
+        operations_help.insert(0, "Available calculation operations:")
+
+        # Return
         return operations_help
+
 
     def get_operations_config(self, operations_config_dict:dict = {}, operations_config_file:str = None) -> dict:
 
@@ -4036,20 +4055,16 @@ class Variants:
                         sql_update_info = f"""
                             UPDATE {table_variants}
                             SET "INFO" =
-                                CASE
-                                    WHEN "{prefix}{output_column_name}" IS NOT NULL
-                                    THEN
-                                        concat(
-                                            CASE
-                                                WHEN "INFO" IS NULL
-                                                THEN ''
-                                                ELSE concat("INFO", ';')
-                                            END,
-                                            '{output_column_name}=',
-                                            "{prefix}{output_column_name}"
-                                        )
-                                    ELSE "INFO"
-                                END
+                                concat(
+                                    CASE
+                                        WHEN "INFO" IS NOT NULL
+                                        THEN concat("INFO", ';')
+                                        ELSE ''
+                                    END,
+                                    '{output_column_name}=',
+                                    "{prefix}{output_column_name}"
+                                )
+                            WHERE "{prefix}{output_column_name}" IS NOT NULL AND "{prefix}{output_column_name}" NOT IN ('')
                         """
                         self.conn.execute(sql_update_info)
 
