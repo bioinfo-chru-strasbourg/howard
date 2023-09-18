@@ -1254,7 +1254,7 @@ class Variants:
         return tmp_header_name
 
 
-    def export_variant_vcf(self, vcf_file, file_type: str = "gz", remove_info: bool = False, add_samples: bool = True, compression: int = 1, index: bool = False) -> None:
+    def export_variant_vcf(self, vcf_file, file_type: str = "gz", remove_info: bool = False, add_samples: bool = True, compression: int = 1, index: bool = False, threads:int = None) -> None:
         """
         It takes a VCF file and a list of samples, and returns a VCF file with only the samples in the
         list
@@ -1270,6 +1270,7 @@ class Variants:
         :param compression: 1-9, 1 being the fastest and 9 being the most compressed, defaults to 1
         (optional)
         :param index: If True, the output VCF will be indexed with tabix, defaults to False (optional)
+        :param threads: Number of threads (optional)
         """
 
         # Extract VCF
@@ -1291,19 +1292,19 @@ class Variants:
             info_field = "INFO"
         # samples fields
         if add_samples:
-            #self.get_header_sample_list()
             samples_fields = " , FORMAT , " + \
                 " , ".join(self.get_header_sample_list())
         else:
             samples_fields = ""
 
-        # Header
+        # Header (without "#CHROM")
         tmp_header = NamedTemporaryFile(
             prefix=self.get_prefix(), dir=self.get_tmp_dir(), delete=False)
         tmp_header_name = tmp_header.name
-        f = open(tmp_header_name, 'w')
-        vcf.Writer(f, self.header_vcf)
-        f.close()
+        with open(tmp_header_name, 'w') as header_f:
+            for head in self.get_header("list"):
+                if not head.startswith("#CHROM"):
+                    header_f.write(head)
 
         # Variants
         tmp_variants = NamedTemporaryFile(
@@ -1317,41 +1318,27 @@ class Variants:
             sql_query_export = f"COPY ({sql_query_select}) TO '{tmp_variants_name}' WITH (FORMAT CSV, DELIMITER '\t', HEADER, QUOTE '', COMPRESSION 'gzip')"
             self.conn.execute(sql_query_export)
         elif connexion_format in ["sqlite"]:
-            import csv
-            with gzip.open(tmp_variants_name, 'wt') as f:
-                writer = csv.writer(f, delimiter='\t',
-                                    quotechar='', quoting=csv.QUOTE_NONE)
-                cursor = self.conn.execute(sql_query_select)
-                writer.writerow([i[0] for i in cursor.description])
-                writer.writerows(cursor)
+            # import csv
+            # with pgzip.open(tmp_variants_name, 'wt') as f:
+            #     writer = csv.writer(f, delimiter='\t',
+            #                         quotechar='', quoting=csv.QUOTE_NONE)
+            #     cursor = self.conn.execute(sql_query_select)
+            #     writer.writerow([i[0] for i in cursor.description])
+            #     writer.writerows(cursor)
+            cursor = pd.read_sql(sql_query_select, self.conn)
+            cursor.to_csv(tmp_variants_name, sep='\t', compression='gzip', quoting='', index=False)
 
-                # cursor = pd.read_sql(sql_query_select, self.conn)
-                # cursor.to_csv(tmp_variants_name, sep='\t', compression='gzip', quoting='', index=False)
-
-        # Create output
-
-        # header
-        command = f"grep '^#CHROM' -v {tmp_header_name} > {vcf_file}.tmp; "
-
-        # variants
-        command += f"gzip -dc {tmp_variants_name} >> {vcf_file}.tmp; "
+        # Threads
+        if not threads:
+            threads = self.get_threads()
 
         # export format
         if file_type in ["vcf"]:
-            export_format = "v"
+            compression_type = "none"
         else:
-            export_format = f"z{compression}"
+            compression_type = "bgzip"
 
-        # sort and compress
-        command += f"bcftools sort {vcf_file}.tmp -o {vcf_file} -O{export_format} 2>/dev/null; "
-
-        # tabix
-        if index:
-            command += f" tabix {vcf_file}; "
-        
-        log.debug(f"export_variant_vcf command: {command}")
-
-        subprocess.run(command, shell=True)
+        concat_and_compress_files(input_files=[tmp_header_name, tmp_variants_name], output_file=vcf_file, compression_type=compression_type, threads=threads, sort=True, index=index)
 
 
     def run_commands(self, commands: list = [], threads: int = 1) -> None:

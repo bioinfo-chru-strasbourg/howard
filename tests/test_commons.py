@@ -615,19 +615,6 @@ def test_find_nomen_full():
     assert find_nomen(hgvs, transcripts=transcripts) == expected_output
 
 
-def test_get_gzip():
-    """
-    This function tests the get_bgzip function by comparing the expected command with the actual command
-    generated.
-    """
-
-    command_gzip_expected = "bgzip -c  --threads=2 --compress-level=5"
-
-    command_gzip = get_bgzip(threads=2, level=5)
-
-    assert command_gzip.strip() == command_gzip_expected.strip()
-          
-
 def test_find():
     """
     This is a test function for the "find" function, which tests if the function can correctly locate

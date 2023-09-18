@@ -347,26 +347,6 @@ def find_all(name: str, path: str) -> list:
     return result
 
 
-def get_bgzip(threads: int = 1, level: int = 1):
-    """
-    It checks if the bgzip command supports the --threads option, and if it does, it adds it to the
-    command
-
-    :param threads: number of threads to use for compression, defaults to 1 (optional)
-    :param level: Compression level, defaults to 1 (optional)
-    :return: The command to use for bgzip or gzip.
-    """
-    command_gzip = f" bgzip -c "
-    # Check threads in bgzip command (error in macos)
-    result_command_bgzip = subprocess.run(
-        "bgzip --help 2>&1 | grep 'threads'", shell=True, stdout=subprocess.PIPE)
-    if not result_command_bgzip.returncode:
-        command_gzip += f" --threads={threads} --compress-level={level} "
-    else:
-        command_gzip = f" gzip -c -{level} "
-    return command_gzip
-
-
 def find_genome(genome_path: str, assembly: str = None, file: str = None) -> str:
     """
     The `find_genome` function checks if a genome file exists at the specified path, and if not, it
@@ -1168,21 +1148,19 @@ def get_compression_type(filepath:str) -> str:
 
     try:
         with open(filepath, 'rb') as test_f:
-            # First 2 bits
-            bit_2 = test_f.read(2)
-            # Next 2 bits
-            bit_4 = test_f.read(2)
+            # Firsts bits
+            bit_1 = test_f.read(1)
+            bit_2 = test_f.read(1)
+            bit_3 = test_f.read(1)
+            bit_4 = test_f.read(1)
             # If bit is compress
-            if bit_2 == b'\x1f\x8b':
-                # If bit is compress 'gzip' type
-                if bit_4 == b'\x08\x00':
-                    return "gzip"
-                # If bit is compress 'bgzip' type
-                elif bit_4 == b'\x08\x04':
+            if bit_1 == b'\x1f' and bit_2 == b'\x8b' and bit_3 == b'\x08':
+                # If bit 4 == x04 is compress 'bgzip' type
+                if bit_4 == b'\x04':
                     return "bgzip"
-                # If bit is unlnown compress type
+                # else is compress 'gzip' type
                 else:
-                    return "unknown"
+                    return "gzip"
             # If no compress type
             else:
                 return "none"
@@ -1309,7 +1287,7 @@ def concat_and_compress_files(input_files: list, output_file: str, compression_t
             concat_into_infile(input_files, compressed_file, compression_type=compression_type, threads=threads, block=block)     
 
     # Output file
-    if sort:
+    if sort or index:
         # Sort with pysam
         try:
             pysam.bcftools.sort(f"-Oz{compression_level}", "-o", output_file, output_file_tmp, threads=threads, catch_stdout=False)
