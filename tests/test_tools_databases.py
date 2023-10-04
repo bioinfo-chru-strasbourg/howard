@@ -32,6 +32,80 @@ from test_needed import *
 
 
 
+def test_databases_download_exomiser():
+    """
+    The function `test_databases_download_exomiser` tests the `databases_download_exomiser` function by
+    checking if the downloaded files match the expected number and if the specified assemblies are
+    present.
+    """
+
+    # Tmp folder
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Assembly
+        assemblies = 'hg19'
+        assemblies_list = [value for value in assemblies.split(',')]
+
+        # Exomiser folder
+        exomiser_folder = os.path.join(tmp_dir,"exomiser")
+
+        databases_download_exomiser(assemblies=assemblies_list, exomiser_folder=exomiser_folder)
+
+        # Check
+        downloaded_files = os.listdir(exomiser_folder)
+        for assembly in assemblies_list:
+            assert assembly in downloaded_files
+            downloaded_assembly_files = os.listdir(f"{exomiser_folder}/{assembly}")
+            log.debug(downloaded_assembly_files)
+            nb_files = 3
+            assert len(downloaded_assembly_files) == nb_files
+
+
+def test_download_alphamissense():
+    """
+    The function `test_download_alphamissense` tests the `databases_download_alphamissense` function by
+    downloading AlphaMissense databases for specified assemblies and checking if the files are
+    downloaded correctly.
+    """
+
+    # Tmp folder
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Assembly
+        assemblies = 'hg19'
+        assemblies_list = [value for value in assemblies.split(',')]
+
+        # AlphaMissense folder
+        alphamissense_folder = os.path.join(tmp_dir,"alphamissense")
+
+        # Threads
+        threads=4
+
+        # Download AlphaMissense
+        databases_download_alphamissense(assemblies=assemblies_list, alphamissense_folder=alphamissense_folder, threads=threads)
+
+        # Check
+        downloaded_files = os.listdir(alphamissense_folder)
+        for assembly in assemblies_list:
+            assert assembly in downloaded_files
+            downloaded_assembly_files = os.listdir(f"{alphamissense_folder}/{assembly}")
+            log.debug(downloaded_assembly_files)
+            nb_files = 3
+            assert len(downloaded_assembly_files) == nb_files
+
+        # Download AlphaMissense again
+        databases_download_alphamissense(assemblies=assemblies_list, alphamissense_folder=alphamissense_folder, threads=threads)
+
+        # Check
+        downloaded_files = os.listdir(alphamissense_folder)
+        for assembly in assemblies_list:
+            assert assembly in downloaded_files
+            downloaded_assembly_files = os.listdir(f"{alphamissense_folder}/{assembly}")
+            log.debug(downloaded_assembly_files)
+            nb_files = 3
+            assert len(downloaded_assembly_files) == nb_files
+
+
 def test_database_dbnsfp():
     """
     This function tests the "databases" function with a set of arguments.
@@ -39,7 +113,6 @@ def test_database_dbnsfp():
 
     # Init
     dbnsfp_source = os.path.join(tests_databases_folder, "dbnsfp", "dbNSFP4.4a.zip")
-
 
     # Tmp folder
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:

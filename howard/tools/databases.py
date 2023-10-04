@@ -30,8 +30,11 @@ import pandas as pd
 from typing import List
 from tempfile import TemporaryDirectory
 
+from jproperties import Properties # jproperties 2.1.1
+
 
 from howard.commons import *
+from howard.objects.variants import *
 
 
 def query_and_concatenate_columns(parquet_file: str, output_file: str, columns: list):
@@ -172,6 +175,33 @@ def databases_download(args:argparse) -> None:
             genomes_folder=args.genomes_folder,
             )
 
+    # AlphaMissense
+    if args.download_alphamissense:
+        log.debug(f"Download AlphaMissense")
+        databases_download_alphamissense(
+            assemblies = assemblies,
+            alphamissense_folder=args.download_alphamissense,
+            alphamissense_url=args.download_alphamissense_url,
+            threads=args.threads
+            )
+    
+    # Exomiser
+    if args.download_exomiser:
+        log.debug(f"Download Exomiser")
+        databases_download_exomiser(
+            assemblies = assemblies,
+            exomiser_folder=args.download_exomiser,
+            exomiser_application_properties=args.download_exomiser_application_properties,
+            exomiser_url=args.download_exomiser_url,
+            exomiser_release=args.download_exomiser_release,
+            exomiser_phenotype_release=args.download_exomiser_phenotype_release,
+            exomiser_remm_release=args.download_exomiser_remm_release,
+            exomiser_remm_url=args.download_exomiser_remm_url,
+            exomiser_cadd_release=args.download_exomiser_cadd_release,
+            exomiser_cadd_url=args.download_exomiser_cadd_url,
+            exomiser_cadd_url_snv_file=args.download_exomiser_cadd_url_snv_file,
+            exomiser_cadd_url_indel_file=args.download_exomiser_cadd_url_indel_file
+            )
 
 
 def databases_download_annovar(folder:str = None, files:list = None, assemblies:list = ["hg19"], annovar_url:str = "http://www.openbioinformatics.org/annovar/download") -> None:
@@ -443,9 +473,9 @@ def databases_download_genomes(assemblies: list, genome_folder: str = None, prov
 
     for assembly in assemblies:
         if assembly in installed_genomes:
-            log.info(f"Download Genomes '{[assembly]}' - already exists")
+            log.info(f"Download Genomes {[assembly]} - already exists")
         else:
-            log.info(f"Download Genomes '{[assembly]}' downloading...")
+            log.info(f"Download Genomes {[assembly]} downloading...")
             genomepy.install_genome(assembly, annotation=False, provider=provider, genomes_dir=genome_folder, threads=threads, regex=contig_regex)
 
     return None
@@ -1764,4 +1794,335 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
     db.close()
 
     return True
+
+
+def databases_download_alphamissense(assemblies:list, alphamissense_folder:str = DEFAULT_ANNOTATIONS_FOLDER, alphamissense_url:str = DEFAULT_ALPHAMISSENSE_URL, threads:int = None) -> bool:
+    """
+    The function `databases_download_alphamissense` downloads and converts AlphaMissense databases for a
+    list of assemblies.
+    
+    :param assemblies: A list of assemblies for which the AlphaMissense database needs to be downloaded
+    :type assemblies: list
+    :param alphamissense_folder: The `alphamissense_folder` parameter is a string that specifies the
+    folder where the AlphaMissense files will be downloaded and stored. It is set to
+    `DEFAULT_ANNOTATIONS_FOLDER` by default, which is likely a predefined constant or variable in your
+    code
+    :type alphamissense_folder: str
+    :param alphamissense_url: The `alphamissense_url` parameter is the URL where the AlphaMissense files
+    are located. It is used to construct the download URL for each assembly's AlphaMissense file
+    :type alphamissense_url: str
+    :param threads: The `threads` parameter is an optional parameter that specifies the number of
+    threads to use for the conversion process. It determines the level of parallelism when converting
+    the AlphaMissense TSV file to the Parquet format. If not specified, the default value will be used
+    :type threads: int
+    """
+
+    from howard.objects.database import Database
+
+    # Log
+    log.info(f"Download AlphaMissense {assemblies}")
+
+    for assembly in assemblies:
+
+        # Files for AlphaMissense
+        alphamissense_tsv = f"AlphaMissense_{assembly}.tsv.gz"
+        alphamissense_tsv_url = os.path.join(alphamissense_url, alphamissense_tsv)
+        alphamissense_tsv_dest = os.path.join(alphamissense_folder, assembly, alphamissense_tsv)
+        alphamissense_tsv_dest_folder = os.path.dirname(alphamissense_tsv_dest)
+        alphamissense_parquet = f"AlphaMissense.parquet"
+        alphamissense_parquet_dest = os.path.join(alphamissense_folder, assembly, alphamissense_parquet)
+
+        # Create folder if not exists
+        if not os.path.exists(alphamissense_tsv_dest_folder):
+            Path(alphamissense_tsv_dest_folder).mkdir(parents=True, exist_ok=True)
+
+        log.debug(f"{alphamissense_tsv}, {alphamissense_tsv_url}, {alphamissense_tsv_dest}, {alphamissense_tsv_dest_folder}")
+
+        # Download AlphaMissense
+        if not os.path.exists(alphamissense_tsv_dest):
+            log.info(f"Download AlphaMissense {assemblies} - Download '{alphamissense_tsv}'...")
+            download_file(alphamissense_tsv_url, alphamissense_tsv_dest)
+        else:
+            log.info(f"Download AlphaMissense {assemblies} - Database '{alphamissense_tsv}' already exists")
+
+        # Convert to Parquet
+        if os.path.exists(alphamissense_tsv_dest):
+            if not os.path.exists(alphamissense_parquet_dest):
+                log.info(f"Download AlphaMissense {assemblies} - Convert to '{alphamissense_parquet}'...")
+                alphamissense_database = Database(database=alphamissense_tsv_dest, conn_config={"threads":threads})
+                alphamissense_database.export(output_database=alphamissense_parquet_dest, output_header=alphamissense_parquet_dest+".hdr", threads=threads)
+            else:
+                log.info(f"Download AlphaMissense {assemblies} - Database '{alphamissense_parquet}' already exists")
+        else:
+            log.error(f"Download AlphaMissense {assemblies} - Database '{alphamissense_tsv}' DOES NOT exists")
+    
+    return True
+
+
+
+def databases_download_exomiser(assemblies:list, exomiser_folder:str = DEFAULT_EXOMISER_FOLDER, exomiser_application_properties:str = None, exomiser_url:str = DEFAULT_EXOMISER_URL, exomiser_release:str = None, exomiser_phenotype_release:str = None, exomiser_remm_release:str = None, exomiser_remm_url:str = "https://kircherlab.bihealth.org/download/ReMM", exomiser_cadd_release:str = None, exomiser_cadd_url:str = "https://kircherlab.bihealth.org/download/CADD", exomiser_cadd_url_snv_file:str = "whole_genome_SNVs.tsv.gz", exomiser_cadd_url_indel_file:str = "InDels.tsv.gz") -> str:
+    """
+    The `databases_download_exomiser` function downloads and sets up the Exomiser database for the
+    specified assemblies.
+    
+    :param assemblies: A list of assemblies for which to download Exomiser databases. Each assembly is a
+    string representing a genome build, such as "GRCh37" or "GRCh38"
+    :type assemblies: list
+    :param exomiser_folder: The `exomiser_folder` parameter is a string that specifies the folder where
+    the Exomiser databases will be downloaded and stored. If the folder does not exist, it will be
+    created
+    :type exomiser_folder: str
+    :param exomiser_application_properties: The `exomiser_application_properties` parameter is a string
+    representing the path to the Exomiser application properties file. This file contains configuration
+    settings for the Exomiser tool. If this parameter is not provided, the function will attempt to
+    locate the application properties file automatically based on the Exomiser
+    :type exomiser_application_properties: str
+    :param exomiser_url: The `exomiser_url` parameter is the URL where the Exomiser database files can
+    be downloaded from. It is used to construct the download URLs for the phenotype and assembly files
+    :type exomiser_url: str
+    :param exomiser_release: The `exomiser_release` parameter is used to specify the version of the
+    Exomiser data to download. If it is set to "default", "auto", or "config", the function will attempt
+    to retrieve the version from the `exomiser.application.properties` file. If it is
+    :type exomiser_release: str
+    :param exomiser_phenotype_release: The `exomiser_phenotype_release` parameter is used to specify the
+    release version of the Exomiser phenotype database. If not provided, it will default to the value
+    specified in the `application.properties` file or the latest available release
+    :type exomiser_phenotype_release: str
+    :param exomiser_remm_release: The `exomiser_remm_release` parameter is used to specify the version
+    of the ReMM (Regulatory Mendelian Mutation) database to download. If the value is set to "default",
+    "auto", or "config", it will try to retrieve the version from the `application.properties`
+    :type exomiser_remm_release: str
+    :param exomiser_remm_url: The `exomiser_remm_url` parameter is the URL where the ReMM (Regulatory
+    Mendelian Mutation) database can be downloaded from. It is used in the function to construct the
+    download URL for the ReMM database files, defaults to https://kircherlab.bihealth.org/download/ReMM
+    :type exomiser_remm_url: str (optional)
+    :param exomiser_cadd_release: The `exomiser_cadd_release` parameter is used to specify the version
+    of the CADD (Combined Annotation Dependent Depletion) database to download. If the value is set to
+    "default", "auto", or "config", it will try to retrieve the version from the `exom
+    :type exomiser_cadd_release: str
+    :param exomiser_cadd_url: The `exomiser_cadd_url` parameter is the URL where the CADD (Combined
+    Annotation Dependent Depletion) database files can be downloaded from. It is used to construct the
+    download URLs for the CADD database files, defaults to https://kircherlab.bihealth.org/download/CADD
+    :type exomiser_cadd_url: str (optional)
+    :param exomiser_cadd_url_snv_file: The parameter `exomiser_cadd_url_snv_file` is the name of the
+    file containing the SNV (Single Nucleotide Variant) data for the CADD (Combined Annotation Dependent
+    Depletion) database, defaults to whole_genome_SNVs.tsv.gz
+    :type exomiser_cadd_url_snv_file: str (optional)
+    :param exomiser_cadd_url_indel_file: The parameter `exomiser_cadd_url_indel_file` is the name of the
+    INDEL file that will be downloaded from the CADD database, defaults to InDels.tsv.gz
+    :type exomiser_cadd_url_indel_file: str (optional)
+    """
+
+    log.info(f"Download Exomiser {assemblies}")
+
+    # Variables
+    transcript_source_default = "refseq"
+
+    # Create folder if not exists
+    if not os.path.exists(exomiser_folder):
+        Path(exomiser_folder).mkdir(parents=True, exist_ok=True)
+
+    # application.properties as dict
+    exomiser_application_properties_dict = {}
+
+    # Find exomiser_application_properties
+    if not exomiser_application_properties:
+        exomiser_jar = get_bin(bin="exomiser-cli*.jar", tool="exomiser", bin_type="jar", default_folder=f"{DEFAULT_TOOLS_FOLDER}/exomiser")
+        if exomiser_jar and os.path.exists(exomiser_jar):
+            exomiser_jar_dirname = os.path.dirname(exomiser_jar)
+            exomiser_application_properties = os.path.join(exomiser_jar_dirname, "application.properties")
+
+    if os.path.exists(exomiser_application_properties):
+        configs = Properties()
+        with open(exomiser_application_properties, 'rb') as read_prop:
+            configs.load(read_prop)
+        for item in configs.items():
+            exomiser_application_properties_dict[item[0]] = item[1][0]
+
+    log.debug(exomiser_application_properties_dict)
+
+    for assembly in assemblies:
+
+        log.info(f"Download Exomiser ['{assembly}']")
+
+        if not exomiser_release or exomiser_release.lower() in ["default", "auto", "config"]:
+            exomiser_release = exomiser_application_properties_dict.get(f"exomiser.{assembly}.data-version", "2109")
+
+        if not exomiser_phenotype_release or exomiser_phenotype_release.lower() in ["default", "auto", "config"]:
+            exomiser_phenotype_release = exomiser_application_properties_dict.get(f"exomiser.phenotype.data-version", exomiser_release)
+
+        log.debug(f"exomiser_release: {exomiser_release}")
+
+        # Phenotype
+        exomiser_phenotype_filename = f"{exomiser_phenotype_release}_phenotype.zip"
+        exomiser_phenotype_filename_base = f"{exomiser_phenotype_release}_phenotype"
+        exomiser_phenotype_file = os.path.join(exomiser_folder, exomiser_phenotype_filename)
+        exomiser_phenotype_file_base = os.path.join(exomiser_folder, exomiser_phenotype_filename_base)
+        exomiser_download_phenotype_url = os.path.join(exomiser_url, "data", exomiser_phenotype_filename)
+
+        # Download Zip file 
+        if not os.path.exists(exomiser_phenotype_file):
+            log.info(f"Download Exomiser {assemblies} - Download Phenotype '{exomiser_phenotype_filename}'...")
+            download_file(url=exomiser_download_phenotype_url, dest_file_path=exomiser_phenotype_file)
+        else:
+            log.info(f"Download Exomiser {assemblies} - Database Phenotype '{exomiser_phenotype_filename}' already exists")
+
+        # Extract Zip file
+        if not os.path.exists(exomiser_phenotype_file_base):
+            log.info(f"Download Exomiser {assemblies} - Extract Phenotype '{exomiser_phenotype_filename}'...")
+            extract_file(file_path=exomiser_phenotype_file, path=None)
+        else:
+            log.info(f"Download Exomiser {assemblies} - Database Phenotype '{exomiser_phenotype_filename}' already extracted")
+
+        # Assembly
+        exomiser_assembly_filename = f"{exomiser_release}_{assembly}.zip"
+        exomiser_assembly_filename_base = f"{exomiser_release}_{assembly}"
+        exomiser_assembly_file = os.path.join(exomiser_folder, exomiser_assembly_filename)
+        #exomiser_assembly_file_base = os.path.join(exomiser_folder, exomiser_assembly_filename_base)
+        exomiser_assembly_folder = os.path.join(exomiser_folder, assembly)
+        exomiser_download_assembly_url = os.path.join(exomiser_url, "data", exomiser_assembly_filename)
+
+        # Download Zip file 
+        if not os.path.exists(exomiser_assembly_file):
+            log.info(f"Download Exomiser {assemblies} - Download Data '{exomiser_assembly_filename}'...")
+            download_file(url=exomiser_download_assembly_url, dest_file_path=exomiser_assembly_file)
+        else:
+            log.info(f"Download Exomiser {assemblies} - Database Data '{exomiser_assembly_filename}' already exists")
+
+        # Extract Zip file
+        if not os.path.exists(exomiser_assembly_folder):
+            log.info(f"Download Exomiser {assemblies} - Extract Data '{exomiser_assembly_filename}'...")
+            extract_file(file_path=exomiser_assembly_file, path=exomiser_assembly_folder)
+        else:
+            log.info(f"Download Exomiser {assemblies} - Database Data '{exomiser_assembly_filename}' already extracted")
+
+        # Link Phenotype to assembly
+        phenotype_assembly_link_src = f"../{exomiser_phenotype_filename_base}"
+        phenotype_assembly_link_dest = os.path.join(exomiser_assembly_folder, exomiser_phenotype_filename_base)
+        if not os.path.exists(phenotype_assembly_link_dest):
+            log.info(f"Download Exomiser {assemblies} - Create Data '{phenotype_assembly_link_dest}' Phenotype link...")
+            
+            os.symlink(phenotype_assembly_link_src, phenotype_assembly_link_dest)
+        else:
+            log.info(f"Download Exomiser {assemblies} - Link Data '{phenotype_assembly_link_dest}' Phenotype already created")
+
+        # Generate properties for assembly
+        exomiser_application_properties_assembly_file = os.path.join(exomiser_assembly_folder, "application.properties")
+        exomiser_application_properties_assembly = Properties()
+        exomiser_application_properties_assembly["exomiser.data-directory"] = exomiser_assembly_folder
+        exomiser_application_properties_assembly[f"exomiser.{assembly}.data-version"] = exomiser_release
+        exomiser_application_properties_assembly[f"exomiser.{assembly}.variant-white-list-path"] = f"{exomiser_release}_{assembly}_clinvar_whitelist.tsv.gz"
+        exomiser_application_properties_assembly[f"exomiser.phenotype.data-version"] = exomiser_phenotype_release
+        exomiser_application_properties_assembly[f"exomiser.{assembly}.transcript-source"] = transcript_source_default
+
+
+        # REMM
+        exomiser_remm_download = False
+
+        if exomiser_remm_release:
+            # Search release if autodetection
+            if exomiser_remm_release.lower() in ["default", "auto", "config"]:
+                exomiser_remm_release = exomiser_application_properties_dict.get("remm.version", None)
+                log.debug(f"exomiser_remm_release found: {exomiser_remm_release}")
+            # Force create of path and download
+            exomiser_remm_download = True
+        else:
+            # Check REMM release
+            exomiser_remm_release = exomiser_application_properties_dict.get("remm.version", None)
+
+        # Check if path is mandatory in application.properties
+        if exomiser_remm_release and exomiser_application_properties_dict.get(f"exomiser.{assembly}.remm-path", None):
+            exomiser_remm_download = True
+
+        exomiser_assembly_remm_folder = os.path.join(exomiser_assembly_folder, "remm")
+        exomiser_remm_path = os.path.join(exomiser_assembly_remm_folder, f"ReMM.v{exomiser_remm_release}.{assembly}.tsv.gz")
+        
+        if exomiser_remm_download and not os.path.exists(exomiser_remm_path):
+            if not os.path.exists(exomiser_assembly_remm_folder):
+                Path(exomiser_assembly_remm_folder).mkdir(parents=True, exist_ok=True)
+            exomiser_remm_path_tbi = f"{exomiser_remm_path}.tbi"
+            exomiser_remm_path_md5 = exomiser_remm_path.replace(".tsv.gz", ".md5")
+            log.info(f"Download Exomiser {assemblies} - Download REMM database '{os.path.basename(exomiser_remm_path)}'...")
+            exomiser_download_assembly_remm_url = os.path.join(exomiser_remm_url, f"ReMM.v{exomiser_remm_release}.{assembly}.tsv.gz") 
+            exomiser_download_assembly_remm_tbi_url = os.path.join(exomiser_remm_url, f"ReMM.v{exomiser_remm_release}.{assembly}.tsv.gz.tbi")
+            exomiser_download_assembly_remm_md5_url = os.path.join(exomiser_remm_url, f"ReMM.v{exomiser_remm_release}.{assembly}.md5")
+            download_file(url=exomiser_download_assembly_remm_url, dest_file_path=exomiser_remm_path)
+            download_file(url=exomiser_download_assembly_remm_tbi_url, dest_file_path=exomiser_remm_path_tbi)
+            download_file(url=exomiser_download_assembly_remm_md5_url, dest_file_path=exomiser_remm_path_md5)
+        else:
+            log.debug(f"Download Exomiser {assemblies} - Database REMM not downloaded")
+
+        log.debug(f"{exomiser_remm_release} and {exomiser_remm_path} and os.path.exists({exomiser_remm_path})")
+        if exomiser_remm_release and exomiser_remm_path and os.path.exists(exomiser_remm_path):
+            log.info(f"Download Exomiser {assemblies} - Database REMM '{os.path.basename(exomiser_remm_path)}' already exists")
+            exomiser_application_properties_assembly["remm.version"] = exomiser_remm_release
+            exomiser_application_properties_assembly[f"exomiser.{assembly}.remm-path"] = "/".join(["${exomiser.data-directory}", "remm", f"ReMM.v{exomiser_remm_release}.{assembly}.tsv.gz"])
+
+
+        # CADD
+        exomiser_cadd_download = False
+        
+        if exomiser_cadd_release:
+            if exomiser_cadd_release.lower() in ["default", "auto", "config"]:
+                exomiser_cadd_release = exomiser_application_properties_dict.get("cadd.version", None)
+                log.debug(f"exomiser_cadd_release found: {exomiser_cadd_release}")
+            # Force create of path and download
+            exomiser_cadd_download = True
+        else:
+            # Check REMM release
+            exomiser_cadd_release = exomiser_application_properties_dict.get("cadd.version", None)
+
+        log.debug(f"exomiser_cadd_release: {exomiser_cadd_release}")
+
+        # Check if path is mandatory in application.properties
+        if exomiser_cadd_release and exomiser_application_properties_dict.get(f"exomiser.{assembly}.cadd-snv-path", None) and exomiser_application_properties_dict.get(f"exomiser.{assembly}.cadd-in-del-path", None) :
+            exomiser_cadd_download = True
+
+        exomiser_assembly_cadd_folder = os.path.join(exomiser_assembly_folder, "cadd", exomiser_cadd_release)
+        exomiser_cadd_snv_path = os.path.join(exomiser_assembly_cadd_folder, exomiser_cadd_url_snv_file)
+        exomiser_cadd_indel_path = os.path.join(exomiser_assembly_cadd_folder, exomiser_cadd_url_indel_file)
+        
+        if exomiser_cadd_download and (not os.path.exists(exomiser_cadd_snv_path) or not os.path.exists(exomiser_cadd_indel_path)):
+
+            if not os.path.exists(exomiser_assembly_cadd_folder):
+                Path(exomiser_assembly_cadd_folder).mkdir(parents=True, exist_ok=True)
+            
+            # Genome build from gencode
+            log.debug(f"Download Exomiser {assemblies} - Search for assembly '{assembly}' into gencode...")
+            genome_build_switch_to_gencode = genome_build_switch(assembly=assembly)
+
+            # SNV
+            if not os.path.exists(exomiser_cadd_snv_path):
+                exomiser_cadd_snv_path_tbi = f"{exomiser_cadd_snv_path}.tbi"
+                log.info(f"Download Exomiser {assemblies} - Download CADD database '{os.path.basename(exomiser_cadd_snv_path)}'...")
+                exomiser_download_assembly_cadd_snv_url = os.path.join(exomiser_cadd_url, f"v{exomiser_cadd_release}", genome_build_switch_to_gencode, exomiser_cadd_url_snv_file) 
+                exomiser_download_assembly_cadd_snv_tbi_url = os.path.join(exomiser_cadd_url, f"v{exomiser_cadd_release}", genome_build_switch_to_gencode, f"{exomiser_cadd_url_snv_file}.tbi")
+                download_file(url=exomiser_download_assembly_cadd_snv_url, dest_file_path=exomiser_cadd_snv_path)
+                download_file(url=exomiser_download_assembly_cadd_snv_tbi_url, dest_file_path=exomiser_cadd_snv_path_tbi)
+
+            # INDEL
+            if not os.path.exists(exomiser_cadd_indel_path):
+                exomiser_cadd_indel_path_tbi = f"{exomiser_cadd_indel_path}.tbi"
+                log.info(f"Download Exomiser {assemblies} - Download CADD database '{os.path.basename(exomiser_cadd_indel_path)}'...")
+                exomiser_download_assembly_cadd_indel_url = os.path.join(exomiser_cadd_url, f"v{exomiser_cadd_release}", genome_build_switch_to_gencode, exomiser_cadd_url_indel_file) 
+                exomiser_download_assembly_cadd_indel_tbi_url = os.path.join(exomiser_cadd_url, f"v{exomiser_cadd_release}", genome_build_switch_to_gencode, f"{exomiser_cadd_url_indel_file}.gz.tbi")
+                download_file(url=exomiser_download_assembly_cadd_indel_url, dest_file_path=exomiser_cadd_indel_path)
+                download_file(url=exomiser_download_assembly_cadd_indel_tbi_url, dest_file_path=exomiser_cadd_indel_path_tbi)
+
+        else:
+            log.debug(f"Download Exomiser {assemblies} - Database CADD not downloaded")
+
+        log.debug(f"{exomiser_cadd_release} and {exomiser_cadd_snv_path} and {exomiser_cadd_indel_path}")
+        if exomiser_cadd_release and exomiser_cadd_snv_path and os.path.exists(exomiser_cadd_snv_path) and exomiser_cadd_indel_path and os.path.exists(exomiser_cadd_indel_path) :
+            log.info(f"Download Exomiser {assemblies} - Database REMM '{os.path.basename(exomiser_cadd_snv_path)}' and '{os.path.basename(exomiser_cadd_indel_path)}' already exists")
+            exomiser_application_properties_assembly["cadd.version"] = exomiser_cadd_release
+            exomiser_application_properties_assembly[f"exomiser.{assembly}.cadd-snv-path"] = "/".join(["${exomiser.data-directory}", "cadd", exomiser_cadd_release, exomiser_cadd_url_snv_file])
+            exomiser_application_properties_assembly[f"exomiser.{assembly}.cadd-in-del-path"] = "/".join(["${exomiser.data-directory}", "cadd", exomiser_cadd_release, exomiser_cadd_url_indel_file])
+
+        
+        # Create application.properties
+        with open(exomiser_application_properties_assembly_file, "wb") as f:
+            exomiser_application_properties_assembly.store(f, encoding="utf-8")
+        
+
 

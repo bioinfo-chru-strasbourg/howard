@@ -20,6 +20,7 @@ import urllib.request
 import zipfile
 import gzip
 import requests
+import fnmatch
 
 import random
 
@@ -31,6 +32,12 @@ import pysam.bcftools
 
 
 file_folder = os.path.dirname(__file__)
+
+
+# Main folder
+folder_main = os.path.abspath(os.path.join(file_folder, ".."))
+folder_config = os.path.abspath(os.path.join(folder_main, "config"))
+
 
 comparison_map = {
     "gt": ">",
@@ -75,18 +82,23 @@ vcf_required = [
             ]
 
 # Tools
-DEFAULT_SNPEFF_BIN = "/tools/snpeff/5.1d/bin/snpEff.jar"
+DEFAULT_TOOLS_FOLDER = "/tools"
+DEFAULT_SNPEFF_BIN = f"{DEFAULT_TOOLS_FOLDER}/snpeff/5.1d/bin/snpEff.jar"
 
 # URL
 DEFAULT_ANNOVAR_URL = "http://www.openbioinformatics.org/annovar/download"
 DEFAULT_REFSEQ_URL = "http://hgdownload.soe.ucsc.edu/goldenPath"
 DEFAULT_DBNSFP_URL = "https://dbnsfp.s3.amazonaws.com"
+DEFAULT_EXOMISER_URL = "http://data.monarchinitiative.org/exomiser"
+DEFAULT_ALPHAMISSENSE_URL = "https://storage.googleapis.com/dm_alphamissense"
 
 # Databases default folder
 DEFAULT_DATABASE_FOLDER = "/databases"
+DEFAULT_ANNOTATIONS_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/annotation/current"
 DEFAULT_GENOME_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/genomes/current"
 DEFAULT_REFSEQ_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/refseq/current"
 DEFAULT_DBNSFP_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/dbnsfp/current"
+DEFAULT_EXOMISER_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/exomiser/current"
 
 
 # DuckDB extension
@@ -99,6 +111,16 @@ MACHIN_LIST = {
 }
 
 LOG_FORMAT = "#[%(asctime)s] [%(levelname)s] %(message)s"
+
+
+CODE_TYPE_MAP = {
+            "Integer": 0,
+            "String": 1,
+            "Float": 2,
+            "Flag": 3
+        }
+
+DTYPE_LIMIT_AUTO = 10000
 
 def remove_if_exists(filepaths: list) -> None:
     """
@@ -340,10 +362,14 @@ def find_all(name: str, path: str) -> list:
     :param path: The path to search in
     :return: A list of all the files in the directory that have the name "name"
     """
+    
     result = []
     for root, dirs, files in os.walk(path):
-        if name in files:
-            result.append(os.path.join(root, name))
+        for filename in fnmatch.filter(files, name):
+            if os.path.exists(os.path.join(root, filename)):
+                result.append(os.path.join(root, filename))
+        # if name in files:
+        #     result.append(os.path.join(root, name))
     return result
 
 
@@ -995,7 +1021,7 @@ def genotype_stats(df, samples:list = [], info:str = "VAF"):
     return vaf_stats
 
 
-def extract_file(file_path:str):
+def extract_file(file_path:str, path:str = None):
     """
     The function extracts a compressed file in .zip or .gz format based on the file path provided.
     
@@ -1012,9 +1038,12 @@ def extract_file(file_path:str):
     accordingly
     :type file_path: str
     """
+
     if file_path.endswith('.zip'):
+        if not path:
+            path = os.path.dirname(file_path)
         with zipfile.ZipFile(file_path, 'r') as zip_ref:
-            zip_ref.extractall(os.path.dirname(file_path))
+            zip_ref.extractall(path)
     elif file_path.endswith('.gz'):
         with gzip.open(file_path, 'rb') as f_in:
             with open(file_path[:-3], 'wb') as f_out:
@@ -1043,6 +1072,51 @@ def download_file(url:str, dest_file_path:str, chunk_size:int = 1024*1024):
                 f.write(chunk)
     # Move the temporary file to the final destination
     shutil.move(tmp_file_path, dest_file_path)
+
+
+def get_bin(bin:str = None, tool:str = None, bin_type:str = "jar", config:dict = {}, default_folder:str = DEFAULT_TOOLS_FOLDER):
+    """
+    The `get_bin` function retrieves the path to a specified binary file from a configuration dictionary
+    or searches for it in the file system if it is not specified in the configuration.
+    
+    :param bin: The `bin` parameter is a string or a pattern that represents the name of the binary file (e.g.,
+    `snpEff.jar`, `exomiser-cli*.jar`) that you want to retrieve the path for
+    :type bin: str
+    :param tool: The `tool` parameter is a string that represents the name of the tool. It is used to
+    retrieve the path to the tool's binary file
+    :type tool: str
+    :param bin_type: The `bin_type` parameter is a string that specifies the type of binary file to
+    search for in the config dict (e.g., `jar`, `sh`). In this case, the default value is "jar", which indicates that the function is searching
+    for a JAR file, defaults to jar
+    :type bin_type: str (optional)
+    :param config: A dictionary containing configuration information for the snpEff tool, including the
+    path to the snpEff jar file. If no configuration is provided, an empty dictionary is used
+    :type config: dict
+    :param default_folder: The `default_folder` parameter is a string that represents the default folder
+    where the tool binaries are located. If the `bin_file` is not found in the configuration dictionary
+    or in the file system, the function will search for it in this default folder
+    :type default_folder: str
+    :return: the path to the snpEff.jar file. If the file is not found, it returns None.
+    """
+
+    # Config - snpEff
+    bin_file = config.get("tools", {}).get(
+        tool, {}).get(bin_type, None)
+
+    # Config - check tools
+    if not bin_file or not os.path.exists(bin_file):
+        
+        # Try to find bin file
+        try:
+            bin_file = find_all(bin, default_folder)[0]
+        except:
+            return None
+
+        # Check if found
+        if not os.path.exists(bin_file):
+            return None
+
+    return bin_file
 
 
 def get_snpeff_bin(config:dict = {}):
@@ -1406,3 +1480,36 @@ def duckdb_execute(query:str, threads:int = 1) -> bool:
     else:
         conn.close()
         return False
+
+
+def genome_build_switch(assembly:str) -> str:
+    """
+    The `genome_build_switch` function takes an assembly name as input and returns a new
+    assembly name if a different version of the same genome is available, otherwise it returns
+    None.
+    
+    :param assembly: The `assembly` parameter is a string that represents the name or identifier
+    of a genome assembly
+    :type assembly: str
+    :return: The function `genome_build_switch` returns a string.
+    """
+    
+    import genomepy
+    genome_list = genomepy.search(assembly, exact=False)
+
+    if genome_list:
+        for row in genome_list:
+            tax_id = row[3]
+            break
+    else:
+        log.error(f"Assembly '{assembly}' NOT found")
+        return None
+
+    genome_list = genomepy.search(assembly, exact=False)
+    for row in genome_list:
+        new_assembly = row[0].split(".")[0]
+        new_tax_id = row[3]
+        if new_assembly != assembly and tax_id == new_tax_id:
+            return new_assembly
+
+    return None

@@ -75,13 +75,6 @@ DEFAULT_HEADER_LIST = [
             '#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO'
         ]
 
-CODE_TYPE_MAP = {
-            "Integer": 0,
-            "String": 1,
-            "Float": 2,
-            "Flag": 3
-        }
-
 FILE_FORMAT_DELIMITERS = {
     "vcf": "\t",
     "tsv": "\t",
@@ -90,13 +83,12 @@ FILE_FORMAT_DELIMITERS = {
     "bed": "\t"
 }
 
-DTYPE_LIMIT_AUTO = 10000
 
 DUCKDB_EXTENSION_TO_LOAD = ["sqlite_scanner"]
 
 class Database:
 
-    def __init__(self, database:str = None, format:str = None, header:str = None, header_file:str = None, databases_folders:list = None, assembly:str = None, conn = None, table:str = None) -> None:
+    def __init__(self, database:str = None, format:str = None, header:str = None, header_file:str = None, databases_folders:list = None, assembly:str = None, conn = None, conn_config:dict = {}, table:str = None) -> None:
         """
         This is an initialization function for a class that sets up a database and header file for use
         in a DuckDB connection.
@@ -127,6 +119,7 @@ class Database:
         :param conn: An optional parameter that represents an existing DuckDBPyConnection object. If
         provided, the class will use this connection instead of creating a new one. If not provided, a
         new connection will be created
+        :param conn_config: An optional parameter for DuckDBPyConnection object config (see duckdb.connect)
         :param table: The `table` parameter is a string representing the name of the table in the
         database that will be used in the DuckDB connection. It is used in the `set_table()` method to
         set the table attribute of the class. If the `table` parameter is not provided, the default
@@ -149,7 +142,7 @@ class Database:
         elif type(database) == duckdb.DuckDBPyConnection:
             self.conn = database
         else:
-            self.conn = duckdb.connect()
+            self.conn = duckdb.connect(config=conn_config)
 
         # Install duckDB extensions
         load_duckdb_extension(self.conn,DUCKDB_EXTENSION_TO_LOAD)
@@ -236,7 +229,7 @@ class Database:
             return []
 
         else:
-            
+
             header_file_compressed = get_file_compressed(header_file)
             header_compression_type = get_compression_type(header_file)
 
@@ -294,7 +287,7 @@ class Database:
         
         nb_line = 0
         for line in header_list:
-            if not line.startswith('##'):
+            if not (line.startswith('##') or line.startswith('# ') or line.startswith('#\n') ):
                 break
             nb_line += 1
         return nb_line
@@ -615,7 +608,30 @@ class Database:
         self.header_file = header_file
 
 
-    def get_header_file(self, header_file:str = None, remove_header_line:bool = False) -> str:
+    def get_header_columns_from_database(self, database:str = None) -> list:
+        """
+        The function `get_header_columns_from_database` retrieves the column names from a specified
+        database table.
+        
+        :param database: The `database` parameter is a string that represents the name of the database
+        from which you want to retrieve the header columns. If no database is provided, the method will
+        use the `get_database()` method to retrieve the default database
+        :type database: str
+        :return: a list of column names from the specified database.
+        """
+
+        if not database:
+            database = self.get_database()
+
+        sql_from = self.get_sql_from(database=database)
+        if sql_from:
+            sql_query = f"SELECT * FROM {sql_from} LIMIT 0"
+            return list(self.conn.query(sql_query).df().columns)
+        else:
+            return []
+
+
+    def get_header_file(self, header_file:str = None, remove_header_line:bool = False, replace_header_line:list = None, force:bool = False) -> str:
         """
         This function generates a VCF header file if it does not exist or generates a default header
         file if the provided header file does not match the database.
@@ -626,35 +642,51 @@ class Database:
         :param remove_header_line: A boolean parameter that determines whether to remove the "#CHROM"
         line from the header file. If set to True, the line will be removed, defaults to False
         :type remove_header_line: bool (optional)
+        :param replace_header_line: a list of columns for header line (e.g. ['#CHROM', 'POS', 'ID'])
+        :type replace_header_line: list (optional)
+        :param force: force header file (replace if exists)
+        :type force: bool (optional)
         :return: a string which is the name of the header file that was generated or None if no header
         file was generated.
         """
-        
+
         if not header_file:
             header_file = self.header_file
-        
-        if header_file:
-            if header_file != self.get_database():
-                if self.get_header():
-                    header = self.get_header()
-                else:
-                    header = self.get_header(header_list=DEFAULT_HEADER_LIST)
-                # Generate header file
-                if not os.path.exists(header_file):
-                    f = open(header_file, 'w')
-                    vcf.Writer(f, header)
-                    f.close()
-        else:
-            # No header generated
-            header_file = None
 
-        if header_file and remove_header_line:
-            with open(header_file, "r") as file:
-                lines = file.readlines()
-            with open(header_file, "w") as file:
-                for line in lines:
-                    if not line.startswith("#CHROM"):
-                        file.write(line)
+        if header_file and os.path.exists(header_file) and not force:
+            return header_file
+
+        with TemporaryDirectory() as tmp_dir:
+            header_file_tmp = os.path.join(tmp_dir,"header.hdr")
+
+            if header_file:
+                if header_file != self.get_database():
+                    if self.get_header():
+                        header = self.get_header()
+                    else:
+                        header = self.get_header(header_list=DEFAULT_HEADER_LIST)
+                    # Generate header file
+                    if not os.path.exists(header_file_tmp):
+                        f = open(header_file_tmp, 'w')
+                        vcf.Writer(f, header)
+                        f.close()
+            else:
+                # No header generated
+                header_file = None
+
+            if header_file and header_file != self.get_database() and (not os.path.exists(header_file) or force):
+                with open(header_file_tmp, "r") as file:
+                    lines = file.readlines()
+                with open(header_file, "w") as file:
+                    for line in lines:
+                        if line.startswith("#CHROM"):
+                            if not remove_header_line:
+                                if replace_header_line:
+                                    file.write("\t".join(replace_header_line)+"\n")
+                                else:
+                                    file.write(line)
+                        else:
+                            file.write(line)
         
         return header_file
 
@@ -1444,7 +1476,7 @@ class Database:
         return table_columns
 
 
-    def get_table_columns_from_file(self, database:str = None, header_file:str = None) -> list:
+    def get_table_columns_from_file(self, database:str = None, header_file:str = None, header_file_find:bool = True) -> list:
         """
         The function `get_table_columns_from_file` retrieves the column names from a database or header
         file.
@@ -1457,6 +1489,8 @@ class Database:
         name of the header file. This file contains the header information for a table, which typically
         includes the names of the columns in the table
         :type header_file: str
+        :param header_file_find: Allow header file find if not provided
+        :type header_file_find: bool
         :return: a list of table columns.
         """
 
@@ -1465,10 +1499,10 @@ class Database:
         if not database:
             database = self.get_database()
 
-        if not header_file:
+        if not header_file and header_file_find:
             header_file = self.get_header_file()
 
-        if not header_file:
+        if not header_file and header_file_find:
             header_file = self.find_header_file(database)
 
         database_format = self.get_format(database=database)
@@ -1773,8 +1807,6 @@ class Database:
             
             # Export
             self.query(database=database, query=query_copy)
-            
-            
 
             # Include header
             if include_header or compressed or sort or index:
@@ -1800,35 +1832,12 @@ class Database:
                 # Output
                 concat_and_compress_files(input_files=input_files, output_file=output_database, compression_type=compression_type, threads=threads, sort=sort, index=index)
 
-            # # Include header
-            # if include_header:
-            #     # New tmp file
-            #     query_output_database_header_tmp = f"""{query_output_database_tmp}.{random_tmp}"""
-            #     # create tmp header file
-            #     query_output_header_tmp = f"""{query_output_database_tmp}.header.{random_tmp}"""
-            #     self.get_header_file(header_file=query_output_header_tmp, remove_header_line=True)
-            #     # Concat header and database
-            #     #concat_file(input_files=[query_output_header_tmp, query_output_database_tmp], output_file=query_output_database_header_tmp)
-            #     #concat_and_compress_files(input_files=[query_output_header_tmp, query_output_database_tmp], output_file=query_output_database_header_tmp, threads=threads)
-            #     concat_file(input_files=[query_output_header_tmp, query_output_database_tmp], output_file=query_output_database_header_tmp)
-            #     # move file
-            #     shutil.move(query_output_database_header_tmp, query_output_database_tmp)
-            #     # remove tmp
-            #     remove_if_exists([query_output_header_tmp])
-
-            # # Compress
-            # if compressed:
-            #     compress_file(input_file=query_output_database_tmp, output_file=output_database)
-            #     # remove tmp
-            #     remove_if_exists([query_output_database_tmp])
-            # else:
-            #     shutil.move(query_output_database_tmp, output_database)
-
             # Header
             if output_header:
                 remove_if_exists([output_header])
                 database_for_header = Database(database=output_database)
-                database_for_header.get_header_file(header_file=output_header)
+                header_columns_from_database = database_for_header.get_header_columns_from_database(database=output_database)
+                database_for_header.get_header_file(header_file=output_header, replace_header_line=header_columns_from_database, force=True)
         
         return os.path.exists(output_database) and self.get_type(output_database)
 

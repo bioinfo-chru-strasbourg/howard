@@ -253,6 +253,29 @@ RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
 
 
 
+############
+# EXOMISER #
+############
+
+ENV TOOL_NAME=exomiser
+ENV TOOL_VERSION=13.2.0
+ENV TARBALL_LOCATION=https://data.monarchinitiative.org/exomiser/$TOOL_VERSION
+ENV TARBALL=exomiser-cli-$TOOL_VERSION-distribution.zip
+ENV TARBALL_FOLDER=exomiser-cli-$TOOL_VERSION
+ENV DEST=$TOOLS/$TOOL_NAME/$TOOL_VERSION
+ENV PATH=$DEST/bin:$PATH
+
+# INSTALL
+RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
+    wget $TARBALL_LOCATION/$TARBALL && \
+    mkdir -p $DEST && \
+    unzip $TARBALL -d $DEST && \
+    mv $DEST/$TARBALL_FOLDER $DEST/bin && \
+    rm -rf $TARBALL && \
+    ln -s $TOOL_VERSION $TOOLS/$TOOL_NAME/current
+
+
+
 ###########
 # HOWARD #
 ###########
