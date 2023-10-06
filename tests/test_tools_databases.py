@@ -260,7 +260,7 @@ def test_database_dbnsfp():
         for assembly in assemblies_list:
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
-            nb_files = 474
+            nb_files = 553
             assert len(downloaded_assembly_files) == nb_files
 
         # Try again to generate nothing more
@@ -273,7 +273,7 @@ def test_database_dbnsfp():
         for assembly in assemblies_list:
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
-            nb_files = 474
+            nb_files = 553
             assert len(downloaded_assembly_files) == nb_files
 
 
@@ -300,7 +300,7 @@ def test_database_dbnsfp():
         for assembly in assemblies_list:
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
-            nb_files = 316
+            nb_files = 395
             assert len(downloaded_assembly_files) == nb_files
 
 
@@ -327,7 +327,7 @@ def test_database_dbnsfp():
         for assembly in assemblies_list:
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
-            nb_files = 474
+            nb_files = 553
             assert len(downloaded_assembly_files) == nb_files
 
 
@@ -381,7 +381,7 @@ def test_database_dbnsfp():
         for assembly in assemblies_list:
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
-            nb_files = 474
+            nb_files = 553
             assert len(downloaded_assembly_files) == nb_files
 
 
@@ -400,6 +400,9 @@ def test_database():
         download_snpeff = None,
         download_refseq = None,
         download_dbnsfp = None,
+        download_alphamissense = None,
+        download_exomiser = None,
+        download_dbsnp = None,
         config = None,
     )
 
@@ -471,6 +474,9 @@ def test_databases_download():
             download_refseq_include_non_coding_transcripts=True,
             download_refseq_include_transcript_version=True,
             download_dbnsfp = None, # Too long...
+            download_alphamissense = None,
+            download_exomiser = None,
+            download_dbsnp = None,
             config=config,
             threads=threads
         )
@@ -546,6 +552,9 @@ def test_databases_download_genomes_only():
             download_snpeff=None,
             download_refseq=None,
             download_dbnsfp = None,
+            download_alphamissense = None,
+            download_exomiser = None,
+            download_dbsnp = None,
             threads=threads
         )
 

@@ -2271,7 +2271,9 @@ def databases_download_dbsnp(assemblies:list, dbsnp_folder:str = DEFAULT_DBSNP_F
                     raise ValueError("No genome index")
 
                 # Database
-                db = Database(database=dbsnp_file, format="vcf", conn_config=conn_config)
+                conn_config_db = conn_config
+                conn_config_db["threads"] = 1
+                db = Database(database=dbsnp_file, format="vcf", conn_config=conn_config_db)
                 
                 # Header
                 header_file_tmp = f"{dbsnp_file}.tmp.hdr"
@@ -2330,7 +2332,8 @@ def databases_download_dbsnp(assemblies:list, dbsnp_folder:str = DEFAULT_DBSNP_F
                 dbsnp_vcf_partition_csv = glob.glob(f"{dbsnp_vcf_partition}/*csv")
 
                 # Concat and compress header and dbsnp csv.gz files
-                concat_and_compress_files(input_files=[header_file_tmp]+dbsnp_vcf_partition_csv, output_file=dbsnp_vcf, compression_type="bgzip", threads=threads, sort=True, index=True)
+                #concat_and_compress_files(input_files=[header_file_tmp]+dbsnp_vcf_partition_csv, output_file=dbsnp_vcf, compression_type="bgzip", threads=threads, sort=True, index=True)
+                concat_and_compress_files(input_files=[header_file_tmp]+dbsnp_vcf_partition_csv, output_file=dbsnp_vcf, compression_type="bgzip", threads=threads, sort=False, index=True)
 
                 # Clean
                 remove_if_exists([header_file_tmp, dbsnp_vcf_partition])

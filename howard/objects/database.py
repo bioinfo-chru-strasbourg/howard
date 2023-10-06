@@ -1272,10 +1272,47 @@ class Database:
         # database link
         sql_database_link = self.get_sql_database_link(database=database)
 
-        # Create view
-        self.get_conn().execute(f"CREATE OR REPLACE VIEW {view_name} AS {sql_database_link}")
+        # database format
+        database_format = self.get_format(database=database)
 
-        return view_name
+        # Create view
+        if sql_database_link and database_format not in ["duckdb"]:
+            #try:
+            self.get_conn().execute(f"CREATE OR REPLACE VIEW {view_name} AS {sql_database_link}")
+            self.view_name = view_name
+            return view_name
+            #except:
+            #    return None
+        else:
+            self.view_name = None
+            return None
+        
+
+    def get_view(self, database:str = None, create_view:str = None) -> str:
+        """
+        The `get_view` function returns the name of a view in a database, or creates a new view if
+        specified.
+        
+        :param database: The `database` parameter is a string that represents the name of the database.
+        It is an optional parameter and if not provided, the method `get_database()` is called to
+        retrieve the database name
+        :type database: str
+        :param create_view: The `create_view` parameter is a string that represents the name of the view
+        that you want to create. If this parameter is provided, the `get_view` method will call the
+        `create_view` method and pass the `database` and `view_name` parameters to it
+        :type create_view: str
+        :return: The method `get_view` returns a string.
+        """
+
+        if not database:
+            database = self.get_database()
+
+        if create_view:
+            return self.create_view(database=database, view_name=create_view)
+        elif self.view_name:
+            return self.view_name
+        else:
+            return None
 
 
     def is_compressed(self, database:str = None) -> bool:
