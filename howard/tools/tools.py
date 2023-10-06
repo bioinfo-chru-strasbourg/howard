@@ -452,7 +452,7 @@ arguments = {
         },
         "download-dbnsfp-vcf": {
             "help": """Generate a VCF file for each Parquet folder.\n"""
-                    """Notes: VCF may not be sorted. Take a while.\n""",
+                    """Note: Need genome (see --download-genome)""",
             "action": "store_true"
         },
         "download-dbnsfp-no-files-all": {
@@ -471,7 +471,7 @@ arguments = {
             "metavar": "INTEGER",
             "help": """minimum number of rows in a parquet row group (see duckDB doc).\n"""
                     """Lower can reduce memory usage and slightly increase space during generation,\n"""
-                    """speed up highly selective queries, slow down whole file queries (e.g. aggregations)"""
+                    """speed up highly selective queries, slow down whole file queries (e.g. aggregations)\n"""
                     """Default: 100000""",
             "required": False,
             "default": 100000
@@ -580,6 +580,58 @@ arguments = {
             "default": "InDels.tsv.gz"
         },
 
+        # dbSNP
+        "download-dbsnp": {
+            "metavar": "FOLDER",
+            "help": """Download dbSNP databases\n"""
+                    """Folder where the dbSNP databases will be downloaded and stored.\n"""
+                    """If the folder does not exist, it will be created.""",
+            "required": False
+        },
+        "download-dbsnp-url": {
+            "metavar": "URL",
+            "help": """URL where dbSNP database files can be downloaded from.\n"""
+                    """Default: 'https://ftp.ncbi.nih.gov/snp/latest_release/VCF'""",
+            "required": False,
+            "default": "https://ftp.ncbi.nih.gov/snp/latest_release/VCF"
+        },
+        "download-dbsnp-url-files": {
+            "metavar": "STRING",
+            "help": """Dictionary that maps assembly names to specific dbSNP URL files.\n"""
+                    """It allows you to provide custom dbSNP URL files for specific assemblies\n"""
+                    """instead of using the default file naming convention\n"""
+                    """Default: None""",
+            "required": False,
+            "default": None
+        },
+        "download-dbsnp-url-files-prefix": {
+            "metavar": "STRING",
+            "help": """String that represents the prefix of the dbSNP file name for a specific assembly.\n"""
+                    """It is used to construct the full URL of the dbSNP file to be downloaded.\n"""
+                    """Default: 'GCF_000001405'""",
+            "required": False,
+            "default": "GCF_000001405"
+        },
+        "download-dbsnp-assemblies-map": {
+            "metavar": "DICT",
+            "help": """dictionary that maps assembly names to their corresponding dbSNP versions.\n"""
+                    """It is used to construct the dbSNP file name based on the assembly name.\n"""
+                    """Default: {"hg19": "25", "hg38": "40"}""",
+            "required": False,
+            "default": {"hg19": "25", "hg38": "40"}
+        },
+        "download-dbsnp-vcf": {
+            "help": """Generate well-formatted VCF from downloaded file:\n"""
+                    """- Add and filter contigs associated to assembly\n"""
+                    """- Normalize by splitting multiallelics """
+                    """- Need genome (see --download-genome)""",
+            "action": "store_true"
+        },
+        "download-dbsnp-parquet": {
+            "help": """Generate Parquet file from VCF\n""",
+            "action": "store_true"
+        },
+
         # From Annovar
         "annovar-code": {
             "metavar": "CODE",
@@ -604,6 +656,13 @@ arguments = {
                     """Default: {}""",
             "required": False,
             "default": "{}"
+        },
+        "assembly": {
+            "metavar": "STRING",
+            "help": """Default assembly\n"""
+                    """Default: 'hg19'""",
+            "required": False,
+            "default": "hg19"
         },
         "threads": {
             "metavar": "INTEGER",
@@ -690,12 +749,13 @@ commands_arguments = {
         "help":         """Annotation of genetic variations using databases/files and tools.""",
         "epilog":       """Usage examples:\n"""
                         """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/hg19/avsnp150.parquet,tests/databases/annotations/hg19/dbnsfp42a.parquet,tests/databases/annotations/hg19/gnomad211_genome.parquet' \n"""
-                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --annotations='annovar:refGene,annovar:cosmic70,snpeff,tests/databases/annotations/hg19/clinvar_20210123.parquet' \n""", 
+                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotations='annovar:refGene,annovar:cosmic70,snpeff,tests/databases/annotations/hg19/clinvar_20210123.parquet' \n""", 
         "groups": {
             "main": {
                 "input": True,
                 "output": True,
-                "annotations": True
+                "annotations": True,
+                "assembly": False
             }
         }
     },
@@ -825,9 +885,10 @@ commands_arguments = {
         "description": """Download databases and needed files for howard and associated tools""",
         "help": """Download databases and needed files for howard and associated tools""",
         "epilog": """Usage examples:\n"""
-                    """   howard databases --assembly=hg19 --download-genomes=/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='^>chr[0-9XYM]*$' --download-annovar=/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' --download-snpeff=/databases/snpeff/current  --download-snpeff=/databases/snpeff/current --download-refseq=/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-dbnsfp=/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases --download-alphamissense=/databases/alphamissense/current --download-exomiser=/databases/exomiser/current --threads=8"""
+                    """   howard databases --assembly=hg19 --download-genomes=/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='^>chr[0-9XYM]*$' --download-annovar=/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' --download-snpeff=/databases/snpeff/current  --download-snpeff=/databases/snpeff/current --download-refseq=/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-dbnsfp=/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases --download-alphamissense=/databases/alphamissense/current --download-exomiser=/databases/exomiser/current --download-dbsnp=/databases/dbsnp/current --download-dbsnp-vcf --download-dbsnp-parquet --threads=8"""
                     """\n"""
                     """Notes:\n"""
+                    """   - Downloading databases can take a while, depending on network, threads and memory\n"""
                     """   - Proxy: Beware of network and proxy configuration\n"""
                     """   - dbNSFP download: More threads, more memory usage (8 threads ~ 16Gb, 24 threads ~ 32Gb)\n"""
                     ,
@@ -871,8 +932,7 @@ commands_arguments = {
                 "download-dbnsfp-vcf": False,
                 "download-dbnsfp-no-files-all": False,
                 "download-dbnsfp-add-info": False,
-                "download-dbnsfp-row-group-size": False,
-                "genomes-folder": False
+                "download-dbnsfp-row-group-size": False
             },
             "AlphaMissense": {
                 "download-alphamissense": False,
@@ -888,12 +948,19 @@ commands_arguments = {
                 "download-exomiser-remm-url": False,
                 "download-exomiser-cadd-release": False,
                 "download-exomiser-cadd-url": False,
-                "download-exomiser-cadd-url": False,
                 "download-exomiser-cadd-url-snv-file": False,
                 "download-exomiser-cadd-url-indel-file": False
             },
+            "dbSNP": {
+                "download-dbsnp": False,
+                "download-dbsnp-url": False,
+                "download-dbsnp-url-files": False,
+                "download-dbsnp-url-files-prefix": False,
+                "download-dbsnp-assemblies-map": False,
+                "download-dbsnp-vcf": False,
+                "download-dbsnp-parquet": False
+            },
         }
-
 
 
     },

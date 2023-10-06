@@ -172,7 +172,7 @@ def databases_download(args:argparse) -> None:
             not_generate_files_all=args.download_dbnsfp_no_files_all,
             add_info=args.download_dbnsfp_add_info,
             row_group_size=args.download_dbnsfp_row_group_size,
-            genomes_folder=args.genomes_folder,
+            genomes_folder=args.download_genomes,
             )
 
     # AlphaMissense
@@ -201,6 +201,21 @@ def databases_download(args:argparse) -> None:
             exomiser_cadd_url=args.download_exomiser_cadd_url,
             exomiser_cadd_url_snv_file=args.download_exomiser_cadd_url_snv_file,
             exomiser_cadd_url_indel_file=args.download_exomiser_cadd_url_indel_file
+            )
+
+    # dbSNP
+    if args.download_dbsnp:
+        log.debug(f"Download dbSNP")
+        databases_download_dbsnp(
+            assemblies = assemblies,
+            dbsnp_folder=args.download_dbsnp,
+            dbsnp_url=args.download_dbsnp_url,
+            dbsnp_url_files=args.download_dbsnp_url_files,
+            dbsnp_url_files_prefix=args.download_dbsnp_url_files_prefix,
+            dbsnp_assemblies_map=args.download_dbsnp_assemblies_map,
+            dbsnp_vcf=args.download_dbsnp_vcf,
+            dbsnp_parquet=args.download_dbsnp_parquet,
+            genome_folder=args.download_genomes
             )
 
 
@@ -1758,7 +1773,7 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
 
                                     # Log
                                     log.debug(f"Download dbNSFP ['{assembly}'] - Database '{sub_database}' - VCF file - Concate and Compress files...")
-                                    concat_and_compress_files(input_files=list_for_vcf, output_file=output_vcf)
+                                    concat_and_compress_files(input_files=list_for_vcf, output_file=output_vcf, sort=True, index=True)
 
                                     db_copy.close()
 
@@ -1860,7 +1875,7 @@ def databases_download_alphamissense(assemblies:list, alphamissense_folder:str =
 
 
 
-def databases_download_exomiser(assemblies:list, exomiser_folder:str = DEFAULT_EXOMISER_FOLDER, exomiser_application_properties:str = None, exomiser_url:str = DEFAULT_EXOMISER_URL, exomiser_release:str = None, exomiser_phenotype_release:str = None, exomiser_remm_release:str = None, exomiser_remm_url:str = "https://kircherlab.bihealth.org/download/ReMM", exomiser_cadd_release:str = None, exomiser_cadd_url:str = "https://kircherlab.bihealth.org/download/CADD", exomiser_cadd_url_snv_file:str = "whole_genome_SNVs.tsv.gz", exomiser_cadd_url_indel_file:str = "InDels.tsv.gz") -> str:
+def databases_download_exomiser(assemblies:list, exomiser_folder:str = DEFAULT_EXOMISER_FOLDER, exomiser_application_properties:str = None, exomiser_url:str = DEFAULT_EXOMISER_URL, exomiser_release:str = None, exomiser_phenotype_release:str = None, exomiser_remm_release:str = None, exomiser_remm_url:str = "https://kircherlab.bihealth.org/download/ReMM", exomiser_cadd_release:str = None, exomiser_cadd_url:str = "https://kircherlab.bihealth.org/download/CADD", exomiser_cadd_url_snv_file:str = "whole_genome_SNVs.tsv.gz", exomiser_cadd_url_indel_file:str = "InDels.tsv.gz") -> bool:
     """
     The `databases_download_exomiser` function downloads and sets up the Exomiser database for the
     specified assemblies.
@@ -2135,4 +2150,223 @@ def databases_download_exomiser(assemblies:list, exomiser_folder:str = DEFAULT_E
             exomiser_application_properties_assembly.store(f, encoding="utf-8")
         
 
+    return True
 
+def databases_download_dbsnp(assemblies:list, dbsnp_folder:str = DEFAULT_DBSNP_FOLDER, dbsnp_url:str = DEFAULT_DBSNP_URL, dbsnp_url_files:dict = None, dbsnp_url_files_prefix:str = "GCF_000001405", dbsnp_assemblies_map:dict = {"hg19": "25", "hg38": "40"}, genome_folder: str = DEFAULT_GENOME_FOLDER, threads:int = 1, dbsnp_vcf:bool = False, dbsnp_parquet:bool = False) -> str:
+    """
+    The function `databases_download_dbsnp` downloads dbSNP files, generates VCF files, and converts
+    them to Parquet format.
+    
+    :param assemblies: A list of genome assemblies for which to download dbSNP data
+    :type assemblies: list
+    :param dbsnp_folder: The folder where the dbSNP files will be downloaded and stored
+    :type dbsnp_folder: str
+    :param dbsnp_url: The `dbsnp_url` parameter is a string that represents the base URL where the dbSNP
+    files are located. This URL is used to construct the full URL for downloading the dbSNP files
+    :type dbsnp_url: str
+    :param dbsnp_url_files: The `dbsnp_url_files` parameter is a dictionary that maps assembly names to
+    specific dbSNP URL files. It allows you to provide custom dbSNP URL files for specific assemblies
+    instead of using the default file naming convention
+    :type dbsnp_url_files: dict
+    :param dbsnp_url_files_prefix: The `dbsnp_url_files_prefix` parameter is a string that represents the
+    prefix of the dbSNP file name for a specific assembly. It is used to construct the full URL of the
+    dbSNP file to be downloaded. By default, the value is set to "GCF_000001405"
+    :type dbsnp_url_files_prefix: str (optional)
+    :param dbsnp_assemblies_map: The `dbsnp_assemblies_map` parameter is a dictionary that maps assembly
+    names to their corresponding dbSNP versions. It is used to construct the dbSNP file name based on
+    the assembly name. For example, if the assembly is "hg19", the corresponding dbSNP version is "
+    :type dbsnp_assemblies_map: dict
+    :param genome_folder: The `genome_folder` parameter is a string that specifies the folder where the
+    genome index files are located. These index files are used for generating the VCF file from the
+    downloaded dbSNP file
+    :type genome_folder: str
+    :param threads: The `threads` parameter specifies the number of threads to use for downloading and
+    processing the dbSNP files, defaults to 1
+    :type threads: int (optional)
+    :param dbsnp_vcf: A boolean flag indicating whether to generate a VCF file from the downloaded
+    dbSNP data. If set to True, the function will generate a VCF file. If set to False, the function
+    will not generate a VCF file, defaults to False
+    :type dbsnp_vcf: bool (optional)
+    :param dbsnpparquet: A boolean flag indicating whether to generate a Parquet file from the
+    downloaded dbSNP data. If set to True, a Parquet file will be generated; if set to False, no Parquet
+    file will be generated, defaults to False
+    :type dbsnp_parquet: bool (optional)
+    """
+
+    # Import Database object
+    from howard.objects.database import Database
+
+    # Log
+    log.info(f"Download dbSNP {assemblies}")
+    
+    # Database config       
+    conn_config = {"threads": threads}
+
+    # Init
+    if dbsnp_parquet:
+        dbsnp_vcf = True
+
+    for assembly in assemblies:
+
+        # Log
+        log.info(f"Download dbSNP {[assembly]}")
+
+        # Construct URL
+        if dbsnp_url_files and dbsnp_url_files.get(assembly, None):
+            dbsnp_url_file = dbsnp_url_files.get(assembly)
+        elif dbsnp_assemblies_map.get(assembly, None):
+            dbsnp_url_file = f"{dbsnp_url_files_prefix}.{dbsnp_assemblies_map.get(assembly)}.gz"
+        else:
+            dbsnp_url_file = None
+
+        if dbsnp_url_file:
+            dbsnp_url_path = os.path.join(dbsnp_url, dbsnp_url_file)
+        else:
+            log.error("No dbSNP file from URL provided")
+            raise ValueError("No dbSNP file from URL provided")
+
+        # Construct File
+        dbsnp_file = os.path.join(dbsnp_folder, assembly, os.path.basename(dbsnp_url_path))
+
+
+        ### Download dbSNP
+        if not os.path.exists(dbsnp_file):
+
+            # Log
+            log.info(f"Download dbSNP {[assembly]} - Download {dbsnp_file} from {dbsnp_url_path}...")
+
+            # Create folder if not exists
+            if not os.path.exists(os.path.dirname(dbsnp_file)):
+                Path(os.path.dirname(dbsnp_file)).mkdir(parents=True, exist_ok=True)
+
+            # Download file
+            download_file(url=dbsnp_url_path, dest_file_path=dbsnp_file)
+
+            # Index tbi
+            dbsnp_url_path_tbi = f"{dbsnp_url_path}.tbi"
+            dbsnp_file_tbi = f"{dbsnp_file}.tbi"
+            download_file(url=dbsnp_url_path_tbi, dest_file_path=dbsnp_file_tbi)
+
+        else:
+
+            # Log
+            log.info(f"Download dbSNP {[assembly]} - Database {os.path.basename(dbsnp_file)} already downloaded")
+
+
+        ### Generate VCF
+        if os.path.exists(dbsnp_file) and dbsnp_vcf:
+
+            # Construct VCF File
+            dbsnp_vcf = os.path.join(dbsnp_folder, assembly, "dbsnp.vcf.gz")
+
+            if not os.path.exists(dbsnp_vcf):
+
+                # Log
+                log.info(f"Download dbSNP {[assembly]} - Database {os.path.basename(dbsnp_vcf)} generation...")
+
+                # Genome index
+                genome_index = os.path.join(genome_folder, assembly, f"{assembly}.fa.fai")
+                if not os.path.exists(genome_index):
+                    log.error("No genome index")
+                    raise ValueError("No genome index")
+
+                # Database
+                db = Database(database=dbsnp_file, format="vcf", conn_config=conn_config)
+                
+                # Header
+                header_file_tmp = f"{dbsnp_file}.tmp.hdr"
+                db_header_file = db.get_header_file(header_file=header_file_tmp)
+                db_header_list = db.read_header_file(header_file=db_header_file)
+
+                # Header info/format...
+                db_header_list_new = db_header_list[:-1]
+                # Header #CHROM line
+                db_header_list_chrom = [db_header_list[-1]]
+                # Header Contig
+                res = db.query(query=f"""
+                            SELECT
+                                    column0 AS chr,
+                                    concat(
+                                        '##contig=<ID=',
+                                        column0,
+                                        ',length=',
+                                        column1,
+                                        '>\n'
+                                    ) AS contig
+                            FROM read_csv_auto('{genome_index}')
+                            """)
+                db_header_list_chrs = list(res.df()['chr'])
+                db_header_list_contigs = list(res.df()['contig'])
+
+                # Write new heaer with contigs
+                db_header_new = db.get_header_from_list(header_list=db_header_list_new+db_header_list_contigs+db_header_list_chrom)
+                vcf.Writer(open(header_file_tmp, 'w'), db_header_new)
+
+                # Header
+                header_file = f"{dbsnp_vcf}.hdr"
+                shutil.copy(src=header_file_tmp, dst=header_file)
+
+                # Create dbsnp csv.gz files of variants
+                dbsnp_vcf_partition = f"{dbsnp_vcf}.partition"
+                query=f"""
+                        COPY (
+                                SELECT 
+                                        concat(
+                                            'chr',
+                                            replace(replace(replace(regexp_extract("#CHROM", 'NC_[0]*([0-9]*)_?', 1), '23', 'X'), '24', 'Y'), '25', 'M')
+                                        ) AS 'CHROM_NEW',
+                                        "POS", "ID", "REF",
+                                        UNNEST(string_split("ALT", ',')) AS 'ALT',
+                                        "QUAL", "FILTER", "INFO"
+                                FROM read_csv_auto('{dbsnp_file}', ALL_VARCHAR=1)
+                                WHERE list_contains({db_header_list_chrs}, "CHROM_NEW")
+                            )
+                            TO '{dbsnp_vcf_partition}'
+                            WITH (FORMAT CSV, DELIMITER '\t', COMPRESSION 'gzip', PER_THREAD_OUTPUT, OVERWRITE_OR_IGNORE)
+                        """
+                db.query(query=query)
+
+                # List of dbsnp csv.gz files
+                dbsnp_vcf_partition_csv = glob.glob(f"{dbsnp_vcf_partition}/*csv")
+
+                # Concat and compress header and dbsnp csv.gz files
+                concat_and_compress_files(input_files=[header_file_tmp]+dbsnp_vcf_partition_csv, output_file=dbsnp_vcf, compression_type="bgzip", threads=threads, sort=True, index=True)
+
+                # Clean
+                remove_if_exists([header_file_tmp, dbsnp_vcf_partition])
+
+            else:
+
+                # Log
+                log.info(f"Download dbSNP {[assembly]} - Database {os.path.basename(dbsnp_vcf)} already generated")
+
+        ### Generate Parquet
+        if os.path.exists(dbsnp_vcf):
+
+            # Construct File
+            dbsnp_parquet = os.path.join(dbsnp_folder, assembly, "dbsnp.parquet")
+            dbsnp_parquet_hdr = os.path.join(dbsnp_folder, assembly, "dbsnp.parquet.hdr")
+
+            if not os.path.exists(dbsnp_parquet):
+
+                # Log
+                log.info(f"Download dbSNP {[assembly]} - Database {os.path.basename(dbsnp_parquet)} generation...")
+
+                # Parquet convert
+                db_vcf = Database(database=dbsnp_vcf, conn_config=conn_config)
+                db_vcf.export(output_database=dbsnp_parquet, threads=threads)
+
+                # Header
+                header_file = f"{dbsnp_vcf}.hdr"
+                shutil.copy(src=header_file, dst=dbsnp_parquet_hdr)
+
+            else:
+
+                # Log
+                log.info(f"Download dbSNP {[assembly]} - Database {os.path.basename(dbsnp_parquet)} already generated")
+
+        else:
+
+            log.info(f" {dbsnp_file} already exists")
+
+    return True

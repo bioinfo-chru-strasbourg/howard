@@ -137,12 +137,14 @@ class Database:
         self.table = table
         
         # DuckDB connexion
+        create_view = False
         if conn:
             self.conn = conn
         elif type(database) == duckdb.DuckDBPyConnection:
             self.conn = database
         else:
             self.conn = duckdb.connect(config=conn_config)
+            create_view = True
 
         # Install duckDB extensions
         load_duckdb_extension(self.conn,DUCKDB_EXTENSION_TO_LOAD)
@@ -154,6 +156,8 @@ class Database:
         self.set_header_file(header_file=header_file)
         self.set_database(database=database, databases_folders=self.get_database_folders(), format=self.get_format(), assembly=self.get_assembly())
         self.set_header(database=self.get_database(), header=header, header_file=header_file)
+        if create_view:
+            self.create_view(database=database)
 
 
     def set_database(self, database:str, databases_folders:list = None, format:str = None, assembly:str = None) -> str:
@@ -425,6 +429,7 @@ class Database:
         else:
             # No header
             return None
+
 
     def get_header_from_columns(self, database:str = None, header_columns:list = []) -> object:
         """
@@ -1245,6 +1250,32 @@ class Database:
             sql_database_link = f"(SELECT * FROM {sql_from})"
         
         return sql_database_link
+
+
+    def create_view(self, database:str = None, view_name:str = "variants") -> str:
+        """
+        The `create_view` function creates a view in a specified database or the default database, using
+        a SQL database link.
+        
+        :param database: The `database` parameter is a string that represents the name of the database.
+        If no value is provided, it will use the value returned by the `get_database()` method
+        :type database: str
+        :param view_name: The `view_name` parameter is a string that specifies the name of the view that
+        will be created in the database, defaults to variants
+        :type view_name: str (optional)
+        :return: the name of the created view.
+        """
+
+        if not database:
+            database = self.get_database()
+
+        # database link
+        sql_database_link = self.get_sql_database_link(database=database)
+
+        # Create view
+        self.get_conn().execute(f"CREATE OR REPLACE VIEW {view_name} AS {sql_database_link}")
+
+        return view_name
 
 
     def is_compressed(self, database:str = None) -> bool:

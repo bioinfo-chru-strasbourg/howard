@@ -1611,7 +1611,7 @@ class Variants:
         """
 
         # Assembly
-        assembly = self.get_param().get("assembly", "hg19")
+        assembly = self.get_param().get("assembly", self.get_config().get("assembly", DEFAULT_ASSEMBLY))
 
         # INFO/Tag prefix
         prefix = "INFO/"
@@ -1675,7 +1675,10 @@ class Variants:
         param = self.get_param()
 
         # Param - Assembly
-        assembly = param.get("assembly", "hg19")
+        assembly = param.get("assembly", config.get("assembly", None))
+        if not assembly:
+            assembly = DEFAULT_ASSEMBLY
+            log.warning(f"Default assembly '{assembly}'")
 
         # annotations databases folders
         annotations_databases = set(
@@ -1727,16 +1730,21 @@ class Variants:
                         # Find within assembly folders
                         for annotations_database in annotations_databases:
                             found_files = find_all(annotation_file, os.path.join(annotations_database, assembly))
+                            # log.debug(f"find all: {annotation_file} {found_files}")
+                            #raise ValueError("FIND ALL")
                             if len(found_files) > 0:
                                 annotation_file_found = found_files[0]
                                 break
-                        if not annotation_file_found:
+                        if not annotation_file_found and not assembly:
                             # Find within folders
                             for annotations_database in annotations_databases:
                                 found_files = find_all(annotation_file, annotations_database)
+                                # log.debug(f"find all2: {annotation_file} {found_files}")
+                                # raise ValueError("FIND ALL")
                                 if len(found_files) > 0:
                                     annotation_file_found = found_files[0]
                                     break
+                    log.debug(f"for {annotation_file} annotation_file_found={annotation_file_found}")
 
                     if annotation_file_found:
 
@@ -1832,7 +1840,7 @@ class Variants:
         log.debug("Annotations: " + str(annotations))
 
         # Assembly
-        assembly = self.get_param().get("assembly", "hg19")
+        assembly = self.get_param().get("assembly", self.get_config().get("assembly", DEFAULT_ASSEMBLY))
 
         # Data
         table_variants = self.get_table_variants()
@@ -2216,7 +2224,7 @@ class Variants:
         # log.debug("Options: " + str(options))
 
         # Param - Assembly
-        assembly = param.get("assembly", "hg19")
+        assembly = param.get("assembly", config.get("assembly", DEFAULT_ASSEMBLY))
         log.debug("Assembly: " + str(assembly))
 
         # Data
@@ -2915,7 +2923,7 @@ class Variants:
         log.debug("Options: " + str(options))
 
         # Param - Assembly
-        assembly = param.get("assembly", "hg19")
+        assembly = param.get("assembly", config.get("assembly", DEFAULT_ASSEMBLY))
 
         # Param - Options
         snpeff_options = param.get("annotation", {}).get(
@@ -3112,7 +3120,7 @@ class Variants:
         log.debug("Annotations: " + str(annotations))
 
         # Param - Assembly
-        assembly = param.get("assembly", "hg19")
+        assembly = param.get("assembly", config.get("assembly", DEFAULT_ASSEMBLY))
 
         # Annovar database assembly
         annovar_databases_assembly = f"{annovar_databases}/{assembly}"
@@ -3399,7 +3407,7 @@ class Variants:
         log.debug("Annotations: " + str(annotations))
 
         # Assembly
-        assembly = self.get_param().get("assembly", "hg19")
+        assembly = self.get_param().get("assembly", self.get_config().get("assembly", DEFAULT_ASSEMBLY))
 
         # Data
         table_variants = self.get_table_variants()
@@ -4344,7 +4352,7 @@ class Variants:
         databases_refseqlink = param_hgvs.get("refseqlink", databases_refseqlink)
 
         # Assembly
-        assembly = param.get("assembly", "hg19")
+        assembly = param.get("assembly", config.get("assembly", DEFAULT_ASSEMBLY))
 
         # Genome
         genome_file = None

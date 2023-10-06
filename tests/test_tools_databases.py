@@ -24,12 +24,75 @@ from pandas.testing import assert_frame_equal
 from unittest.mock import patch
 
 from howard.objects.variants import Variants
+from howard.objects.database import Database
 from howard.commons import *
 from howard.tools.databases import *
 from test_needed import *
 
 
 
+
+
+def test_databases_download_dbsnp():
+    """
+    The function `test_databases_download_dbsnp` downloads and prepares the dbsnp database for specified
+    assemblies.
+    """
+
+    # Tmp folder
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Assembly
+        assemblies = 'hg19,hg38'
+        #assemblies = 'hg19'
+        assemblies_list = [value for value in assemblies.split(',')]
+
+        # Threads
+        threads = 2
+
+        # Exomiser folder
+        dbsnp_folder = tmp_dir
+        # dbsnp_folder = "/databases/dbsnp/test"
+        
+        # Download exomiser simulation
+        dnsnp_assemblies_map:dict = {"hg19": "25", "hg38": "40"}
+        for assembly in assemblies_list:
+            dbsnp_data_source = os.path.join(tests_databases_folder, "dbsnp", f"GCF_000001405.{dnsnp_assemblies_map.get(assembly)}.gz")
+            dbsnp_data_target = os.path.join(dbsnp_folder, assembly, f"GCF_000001405.{dnsnp_assemblies_map.get(assembly)}.gz")
+            if not os.path.exists(os.path.join(dbsnp_folder, assembly)):
+                Path(os.path.join(dbsnp_folder, assembly)).mkdir(parents=True, exist_ok=True)
+            shutil.copy(dbsnp_data_source, dbsnp_data_target)
+
+        # dbsnp_folder = "/databases/dbsnp/test"
+        # threads = 15
+
+        # Download and prepare database
+        databases_download_dbsnp(assemblies=assemblies_list, dbsnp_folder=dbsnp_folder, threads=threads, dbsnp_vcf=True, dbsnp_parquet=True)
+
+        # Check
+        downloaded_files = os.listdir(dbsnp_folder)
+        for assembly in assemblies_list:
+            assert assembly in downloaded_files
+            downloaded_assembly_files = os.listdir(f"{dbsnp_folder}/{assembly}")
+            expected_files = ['dbsnp.vcf.gz.hdr', 'dbsnp.vcf.gz.tbi', f'GCF_000001405.{dnsnp_assemblies_map.get(assembly)}.gz', 'dbsnp.vcf.gz', 'dbsnp.parquet.hdr', 'dbsnp.parquet']
+            for expected_file in expected_files:
+                if expected_file not in downloaded_assembly_files:
+                    assert False
+            assert True
+
+        # Download and prepare database again
+        databases_download_dbsnp(assemblies=assemblies_list, dbsnp_folder=dbsnp_folder, threads=threads, dbsnp_vcf=True, dbsnp_parquet=True)
+
+        # Check
+        downloaded_files = os.listdir(dbsnp_folder)
+        for assembly in assemblies_list:
+            assert assembly in downloaded_files
+            downloaded_assembly_files = os.listdir(f"{dbsnp_folder}/{assembly}")
+            expected_files = ['dbsnp.vcf.gz.hdr', 'dbsnp.vcf.gz.tbi', f'GCF_000001405.{dnsnp_assemblies_map.get(assembly)}.gz', 'dbsnp.vcf.gz', 'dbsnp.parquet.hdr', 'dbsnp.parquet']
+            for expected_file in expected_files:
+                if expected_file not in downloaded_assembly_files:
+                    assert False
+            assert True
 
 
 def test_databases_download_exomiser():

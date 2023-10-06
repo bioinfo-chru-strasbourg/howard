@@ -91,15 +91,21 @@ DEFAULT_REFSEQ_URL = "http://hgdownload.soe.ucsc.edu/goldenPath"
 DEFAULT_DBNSFP_URL = "https://dbnsfp.s3.amazonaws.com"
 DEFAULT_EXOMISER_URL = "http://data.monarchinitiative.org/exomiser"
 DEFAULT_ALPHAMISSENSE_URL = "https://storage.googleapis.com/dm_alphamissense"
+DEFAULT_DBSNP_URL = "https://ftp.ncbi.nih.gov/snp/latest_release/VCF"
+
 
 # Databases default folder
 DEFAULT_DATABASE_FOLDER = "/databases"
-DEFAULT_ANNOTATIONS_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/annotation/current"
+DEFAULT_ANNOTATIONS_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/annotations/current"
 DEFAULT_GENOME_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/genomes/current"
 DEFAULT_REFSEQ_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/refseq/current"
 DEFAULT_DBNSFP_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/dbnsfp/current"
 DEFAULT_EXOMISER_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/exomiser/current"
+DEFAULT_DBSNP_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/exomiser/dbsnp"
 
+
+# Deefault Assembly
+DEFAULT_ASSEMBLY = "hg19"
 
 # DuckDB extension
 DUCKDB_EXTENSION = f"{file_folder}/duckdb_extension"
@@ -111,7 +117,6 @@ MACHIN_LIST = {
 }
 
 LOG_FORMAT = "#[%(asctime)s] [%(levelname)s] %(message)s"
-
 
 CODE_TYPE_MAP = {
             "Integer": 0,
@@ -310,17 +315,6 @@ def run_parallel_functions(functions: list, threads: int = 1) -> list:
     pool.close()
     pool.join()
     return results
-
-
-def run_parallel_functions_new(functions: list, threads:int = 1) -> None:
-    """
-    Runs a list of functions in parallel using multiprocessing.Pool.
-
-    :param functions: A list of functions to run.
-    :param threads: Number of threads to use.
-    """
-    with multiprocessing.Pool(threads) as p:
-        p.map(lambda f: f(), functions)
 
 
 def example_function(num, word):
@@ -1021,7 +1015,7 @@ def genotype_stats(df, samples:list = [], info:str = "VAF"):
     return vaf_stats
 
 
-def extract_file(file_path:str, path:str = None):
+def extract_file(file_path:str, path:str = None, threads:int = 1):
     """
     The function extracts a compressed file in .zip or .gz format based on the file path provided.
     
@@ -1029,14 +1023,14 @@ def extract_file(file_path:str, path:str = None):
     to be extracted. The function checks if the file has a ".zip" or ".gz" extension and extracts it
     accordingly
     :type file_path: str
-    """
-    """
-    The function extracts a compressed file if it is in .zip or .gz format.
-    
-    :param file_path: The file path parameter is a string that represents the path to a file that needs
-    to be extracted. The function checks if the file has a ".zip" or ".gz" extension and extracts it
-    accordingly
-    :type file_path: str
+    :param path: The `path` parameter is an optional string that represents the directory where the
+    extracted files will be saved. If no `path` is provided, the function will use the directory of the
+    `file_path` as the extraction destination
+    :type path: str
+    :param threads: The `threads` parameter is an optional parameter that specifies the number of
+    threads to use for extraction. By default, it is set to 1, meaning the extraction will be done using
+    a single thread, defaults to 1
+    :type threads: int (optional)
     """
 
     if file_path.endswith('.zip'):
@@ -1045,9 +1039,7 @@ def extract_file(file_path:str, path:str = None):
         with zipfile.ZipFile(file_path, 'r') as zip_ref:
             zip_ref.extractall(path)
     elif file_path.endswith('.gz'):
-        with gzip.open(file_path, 'rb') as f_in:
-            with open(file_path[:-3], 'wb') as f_out:
-                f_out.write(f_in.read())
+        concat_and_compress_files(input_files=[file_path], output_file=file_path[:-3], compression_type="none", threads=threads)
 
 
 def download_file(url:str, dest_file_path:str, chunk_size:int = 1024*1024):
@@ -1226,7 +1218,6 @@ def get_compression_type(filepath:str) -> str:
         return "unknown"
 
 
-
 def get_file_compressed(filename: str = None) -> bool:
     """
     This function takes a filename as input and returns True if the file is compressed (in bgzip) and False if it
@@ -1376,7 +1367,7 @@ def concat_and_compress_files(input_files: list, output_file: str, compression_t
     if sort or index:
         # Sort with pysam
         try:
-            pysam.bcftools.sort(f"-Oz{compression_level}", "-o", output_file, output_file_tmp, threads=threads, catch_stdout=False)
+            pysam.bcftools.sort(f"-Oz{compression_level}", "-o", output_file, "-T", output_file_tmp, output_file_tmp, threads=threads, catch_stdout=False)
             # Remove tmp file
             os.remove(output_file_tmp)
         except:
