@@ -1682,7 +1682,7 @@ class Variants:
 
         # annotations databases folders
         annotations_databases = set(
-            config.get("folders", {}).get("databases", {}).get("annotations", ["/databases/annotations/current"])
+            config.get("folders", {}).get("databases", {}).get("annotations", [DEFAULT_ANNOTATIONS_FOLDER])
             + config.get("folders", {}).get("databases", {}).get("parquet", ["/databases/parquet/current"])
             + config.get("folders", {}).get("databases", {}).get("bcftools", ["/databases/bcftools/current"])
         )
@@ -2870,7 +2870,7 @@ class Variants:
         snpeff_jar = config.get("tools", {}).get(
             "snpeff", {}).get("jar", "snpEff.jar")
         snpeff_databases = config.get("folders", {}).get(
-            "databases", {}).get("snpeff", "/databases/snpeff/current")
+            "databases", {}).get("snpeff", DEFAULT_SNPEFF_FOLDER)
 
         # Config - check tools
         if not os.path.exists(java_bin):
@@ -3082,7 +3082,7 @@ class Variants:
         annovar_bin = config.get("tools", {}).get(
             "annovar", {}).get("bin", "table_annovar.pl")
         annovar_databases = config.get("folders", {}).get(
-            "databases", {}).get("annovar", "/databases/annovar/current")
+            "databases", {}).get("annovar", DEFAULT_ANNOVAR_FOLDER)
 
         if not os.path.exists(annovar_bin):
             log.warning(
@@ -4320,20 +4320,20 @@ class Variants:
 
         # Config
         config = self.get_config()
-
+        
         # Databases
         # Genome
         databases_genomes_folders = config.get("folders", {}).get(
-            "databases", {}).get("genomes", "/databases/genomes/current")
+            "databases", {}).get("genomes", DEFAULT_GENOME_FOLDER)
         databases_genome = config.get("databases", {}).get("genome", "")
         # refseq database folder
         databases_refseq_folders = config.get("folders", {}).get(
-            "databases", {}).get("refseq", "/databases/refseq/current")
+            "databases", {}).get("refseq", DEFAULT_REFSEQ_FOLDER)
         # refseq
         databases_refseq = config.get("databases", {}).get("refSeq", "")
         # refSeqLink
         databases_refseqlink = config.get("databases", {}).get("refSeqLink", "")
-
+        
         # Param
         param = self.get_param()
         

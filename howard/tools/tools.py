@@ -588,12 +588,30 @@ arguments = {
                     """If the folder does not exist, it will be created.""",
             "required": False
         },
+        "download-dbsnp-releases": {
+            "metavar": "LIST",
+            "help": """Release of dbSNP to download\n"""
+                    """Example: 'b152,b156'"""
+                    """Default: 'b156'""",
+            "required": False,
+            "default": 'b156'
+        },
+        "download-dbsnp-release-default": {
+            "metavar": "STRING",
+            "help": """Default Release of dbSNP ('default' symlink)\n"""
+                    """If None, first release to download will be assigned as dafault\n"""
+                    """only if it does not exists\n"""
+                    """Example: 'b156'"""
+                    """Default: None (first releases by default)""",
+            "required": False,
+            "default": None
+        },
         "download-dbsnp-url": {
             "metavar": "URL",
             "help": """URL where dbSNP database files can be downloaded from.\n"""
-                    """Default: 'https://ftp.ncbi.nih.gov/snp/latest_release/VCF'""",
+                    """Default: 'https://ftp.ncbi.nih.gov/snp/archive'""",
             "required": False,
-            "default": "https://ftp.ncbi.nih.gov/snp/latest_release/VCF"
+            "default": "https://ftp.ncbi.nih.gov/snp/archive"
         },
         "download-dbsnp-url-files": {
             "metavar": "STRING",
@@ -895,6 +913,7 @@ commands_arguments = {
         "groups": {
             "main": {
                 "assembly": False,
+                "genomes-folder": False
             },
             "Genomes": {
                 "download-genomes": False,
@@ -953,6 +972,8 @@ commands_arguments = {
             },
             "dbSNP": {
                 "download-dbsnp": False,
+                "download-dbsnp-releases": False,
+                "download-dbsnp-release-default": False,
                 "download-dbsnp-url": False,
                 "download-dbsnp-url-files": False,
                 "download-dbsnp-url-files-prefix": False,

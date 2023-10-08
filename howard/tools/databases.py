@@ -105,7 +105,7 @@ def databases_download(args:argparse) -> None:
         if assemblies:
             databases_download_genomes(
                 assemblies=assemblies, 
-                genome_folder=args.download_genomes,
+                genomes_folder=args.download_genomes,
                 provider=args.download_genomes_provider,
                 contig_regex=args.download_genomes_contig_regex,
                 threads=args.threads
@@ -122,7 +122,8 @@ def databases_download(args:argparse) -> None:
             folder=args.download_annovar,
             files=files,
             assemblies = assemblies,
-            annovar_url=args.download_annovar_url
+            annovar_url=args.download_annovar_url,
+            threads=args.threads
             )
 
     # snpEff
@@ -172,7 +173,7 @@ def databases_download(args:argparse) -> None:
             not_generate_files_all=args.download_dbnsfp_no_files_all,
             add_info=args.download_dbnsfp_add_info,
             row_group_size=args.download_dbnsfp_row_group_size,
-            genomes_folder=args.download_genomes,
+            genomes_folder=args.genomes_folder,
             )
 
     # AlphaMissense
@@ -206,20 +207,26 @@ def databases_download(args:argparse) -> None:
     # dbSNP
     if args.download_dbsnp:
         log.debug(f"Download dbSNP")
+        if args.download_dbsnp_releases:
+            dbsnp_releases = [value for value in args.download_dbsnp_releases.split(',')]
+        else:
+            dbsnp_releases = []
         databases_download_dbsnp(
             assemblies = assemblies,
             dbsnp_folder=args.download_dbsnp,
+            dbsnp_releases=dbsnp_releases,
+            dbsnp_release_default=args.download_dbsnp_release_default,
             dbsnp_url=args.download_dbsnp_url,
             dbsnp_url_files=args.download_dbsnp_url_files,
             dbsnp_url_files_prefix=args.download_dbsnp_url_files_prefix,
             dbsnp_assemblies_map=args.download_dbsnp_assemblies_map,
             dbsnp_vcf=args.download_dbsnp_vcf,
             dbsnp_parquet=args.download_dbsnp_parquet,
-            genome_folder=args.download_genomes
+            genomes_folder=args.genomes_folder
             )
 
 
-def databases_download_annovar(folder:str = None, files:list = None, assemblies:list = ["hg19"], annovar_url:str = "http://www.openbioinformatics.org/annovar/download") -> None:
+def databases_download_annovar(folder:str = None, files:list = None, assemblies:list = ["hg19"], annovar_url:str = "http://www.openbioinformatics.org/annovar/download", threads:int = 1) -> None:
     """
     This function downloads and extracts Annovar databases for specified assemblies and files.
     
@@ -235,6 +242,9 @@ def databases_download_annovar(folder:str = None, files:list = None, assemblies:
     :param annovar_url: The URL where Annovar databases can be downloaded from, defaults to
     http://www.openbioinformatics.org/annovar/download
     :type annovar_url: str (optional)
+    :param threads: The "threads" parameter specifies the number of threads (parallel processes) to use
+    for extract/uncompress files. Default: 1
+    :type threads: int (optional)
     """
 
     log.info(f"Download Annovar databases {assemblies}")
@@ -352,7 +362,7 @@ def databases_download_annovar(folder:str = None, files:list = None, assemblies:
                     log.debug(f"Download file {file} from {file_url} to {file_path}...")
                     download_file(file_url, file_path)
                     log.debug(f"Extract file {file} to {folder_assembly}...")
-                    extract_file(file_path)
+                    extract_file(file_path=file_path, threads=threads)
             else:
                 log.info(f"Download Annovar databases {[assembly]} - already exists")
 
@@ -447,16 +457,16 @@ def databases_download_snpeff(folder:str = None, assemblies:list = ["hg19"], con
             log.info(f"Download snpEff databases {[assembly]} - already exists")
 
 
-def databases_download_genomes(assemblies: list, genome_folder: str = None, provider:str = "UCSC", contig_regex:str = None, threads:int = 1) -> None:
+def databases_download_genomes(assemblies: list, genomes_folder: str = DEFAULT_GENOME_FOLDER, provider:str = "UCSC", contig_regex:str = None, threads:int = 1) -> None:
     """
     This function downloads genome assemblies using genomepy package with options to specify genome
     folder, provider, contig regex, and number of threads.
     
     :param assemblies: a list of genome assembly names to download
     :type assemblies: list
-    :param genome_folder: The folder where the downloaded genome files will be saved. If no folder is
+    :param genomes_folder: The folder where the downloaded genome files will be saved. If no folder is
     specified, the default folder will be used
-    :type genome_folder: str
+    :type genomes_folder: str
     :param provider: The provider parameter specifies the source of the genome data. In this case, the
     default provider is set to "UCSC", which refers to the University of California, Santa Cruz Genome
     Browser. Other possible providers could include NCBI or Ensembl, defaults to UCSC
@@ -478,11 +488,11 @@ def databases_download_genomes(assemblies: list, genome_folder: str = None, prov
 
     import genomepy
 
-    if not genome_folder:
-        genome_folder = DEFAULT_GENOME_FOLDER
+    if not genomes_folder:
+        genomes_folder = DEFAULT_GENOME_FOLDER
 
-    if os.path.exists(genome_folder):
-        installed_genomes = genomepy.list_installed_genomes(genomes_dir=genome_folder)
+    if os.path.exists(genomes_folder):
+        installed_genomes = genomepy.list_installed_genomes(genomes_dir=genomes_folder)
     else:
         installed_genomes = []
 
@@ -491,7 +501,7 @@ def databases_download_genomes(assemblies: list, genome_folder: str = None, prov
             log.info(f"Download Genomes {[assembly]} - already exists")
         else:
             log.info(f"Download Genomes {[assembly]} downloading...")
-            genomepy.install_genome(assembly, annotation=False, provider=provider, genomes_dir=genome_folder, threads=threads, regex=contig_regex)
+            genomepy.install_genome(assembly, annotation=False, provider=provider, genomes_dir=genomes_folder, threads=threads, regex=contig_regex)
 
     return None
 
@@ -2021,11 +2031,11 @@ def databases_download_exomiser(assemblies:list, exomiser_folder:str = DEFAULT_E
         phenotype_assembly_link_src = f"../{exomiser_phenotype_filename_base}"
         phenotype_assembly_link_dest = os.path.join(exomiser_assembly_folder, exomiser_phenotype_filename_base)
         if not os.path.exists(phenotype_assembly_link_dest):
-            log.info(f"Download Exomiser {assemblies} - Create Data '{phenotype_assembly_link_dest}' Phenotype link...")
+            log.info(f"Download Exomiser {assemblies} - Create Data '{os.path.basename(phenotype_assembly_link_dest)}' Phenotype link...")
             
             os.symlink(phenotype_assembly_link_src, phenotype_assembly_link_dest)
         else:
-            log.info(f"Download Exomiser {assemblies} - Link Data '{phenotype_assembly_link_dest}' Phenotype already created")
+            log.info(f"Download Exomiser {assemblies} - Database Data '{os.path.basename(phenotype_assembly_link_dest)}' Phenotype link already created")
 
         # Generate properties for assembly
         exomiser_application_properties_assembly_file = os.path.join(exomiser_assembly_folder, "application.properties")
@@ -2094,7 +2104,7 @@ def databases_download_exomiser(assemblies:list, exomiser_folder:str = DEFAULT_E
             # Force create of path and download
             exomiser_cadd_download = True
         else:
-            # Check REMM release
+            # Check CADD release
             exomiser_cadd_release_found = exomiser_application_properties_dict.get("cadd.version", None)
 
         log.debug(f"exomiser_cadd_release: {exomiser_cadd_release_found}")
@@ -2139,7 +2149,8 @@ def databases_download_exomiser(assemblies:list, exomiser_folder:str = DEFAULT_E
 
         log.debug(f"{exomiser_cadd_release_found} and {exomiser_cadd_snv_path} and {exomiser_cadd_indel_path}")
         if exomiser_cadd_release_found and exomiser_cadd_snv_path and os.path.exists(exomiser_cadd_snv_path) and exomiser_cadd_indel_path and os.path.exists(exomiser_cadd_indel_path) :
-            log.info(f"Download Exomiser {assemblies} - Database REMM '{os.path.basename(exomiser_cadd_snv_path)}' and '{os.path.basename(exomiser_cadd_indel_path)}' already exists")
+            log.info(f"Download Exomiser {assemblies} - Database CADD '{os.path.basename(exomiser_cadd_snv_path)}' already exists")
+            log.info(f"Download Exomiser {assemblies} - Database CADD '{os.path.basename(exomiser_cadd_indel_path)}' already exists")
             exomiser_application_properties_assembly["cadd.version"] = exomiser_cadd_release_found
             exomiser_application_properties_assembly[f"exomiser.{assembly}.cadd-snv-path"] = "/".join(["${exomiser.data-directory}", "cadd", exomiser_cadd_release_found, exomiser_cadd_url_snv_file])
             exomiser_application_properties_assembly[f"exomiser.{assembly}.cadd-in-del-path"] = "/".join(["${exomiser.data-directory}", "cadd", exomiser_cadd_release_found, exomiser_cadd_url_indel_file])
@@ -2152,7 +2163,7 @@ def databases_download_exomiser(assemblies:list, exomiser_folder:str = DEFAULT_E
 
     return True
 
-def databases_download_dbsnp(assemblies:list, dbsnp_folder:str = DEFAULT_DBSNP_FOLDER, dbsnp_url:str = DEFAULT_DBSNP_URL, dbsnp_url_files:dict = None, dbsnp_url_files_prefix:str = "GCF_000001405", dbsnp_assemblies_map:dict = {"hg19": "25", "hg38": "40"}, genome_folder: str = DEFAULT_GENOME_FOLDER, threads:int = 1, dbsnp_vcf:bool = False, dbsnp_parquet:bool = False) -> str:
+def databases_download_dbsnp(assemblies:list, dbsnp_folder:str = DEFAULT_DBSNP_FOLDER, dbsnp_releases:list = ["b156"], dbsnp_release_default:str = None, dbsnp_url:str = DEFAULT_DBSNP_URL, dbsnp_url_files:dict = None, dbsnp_url_files_prefix:str = "GCF_000001405", dbsnp_assemblies_map:dict = {"hg19": "25", "hg38": "40"}, genomes_folder: str = DEFAULT_GENOME_FOLDER, threads:int = 1, dbsnp_vcf:bool = False, dbsnp_parquet:bool = False) -> str:
     """
     The function `databases_download_dbsnp` downloads dbSNP files, generates VCF files, and converts
     them to Parquet format.
@@ -2161,6 +2172,10 @@ def databases_download_dbsnp(assemblies:list, dbsnp_folder:str = DEFAULT_DBSNP_F
     :type assemblies: list
     :param dbsnp_folder: The folder where the dbSNP files will be downloaded and stored
     :type dbsnp_folder: str
+    :param dbsnp_releases: List of releases to download. Default:["b156"]
+    :type dbsnp_releases: list
+    :param dbsnp_release_default: Default release to link in default folder. Default: first release in dbsnp_releases
+    :type dbsnp_release_default: str
     :param dbsnp_url: The `dbsnp_url` parameter is a string that represents the base URL where the dbSNP
     files are located. This URL is used to construct the full URL for downloading the dbSNP files
     :type dbsnp_url: str
@@ -2176,10 +2191,10 @@ def databases_download_dbsnp(assemblies:list, dbsnp_folder:str = DEFAULT_DBSNP_F
     names to their corresponding dbSNP versions. It is used to construct the dbSNP file name based on
     the assembly name. For example, if the assembly is "hg19", the corresponding dbSNP version is "
     :type dbsnp_assemblies_map: dict
-    :param genome_folder: The `genome_folder` parameter is a string that specifies the folder where the
+    :param genomes_folder: The `genomes_folder` parameter is a string that specifies the folder where the
     genome index files are located. These index files are used for generating the VCF file from the
     downloaded dbSNP file
-    :type genome_folder: str
+    :type genomes_folder: str
     :param threads: The `threads` parameter specifies the number of threads to use for downloading and
     processing the dbSNP files, defaults to 1
     :type threads: int (optional)
@@ -2202,6 +2217,17 @@ def databases_download_dbsnp(assemblies:list, dbsnp_folder:str = DEFAULT_DBSNP_F
     # Database config       
     conn_config = {"threads": threads}
 
+    # Genomes folder
+    if not genomes_folder:
+        genomes_folder = DEFAULT_GENOME_FOLDER
+
+    # Default release
+    dbsnp_release_default_found = None
+    if dbsnp_release_default:
+        dbsnp_release_default_found = dbsnp_release_default
+    elif len(dbsnp_releases) > 0:
+        dbsnp_release_default_found = dbsnp_releases[0]
+
     # Init
     if dbsnp_parquet:
         dbsnp_vcf = True
@@ -2211,68 +2237,109 @@ def databases_download_dbsnp(assemblies:list, dbsnp_folder:str = DEFAULT_DBSNP_F
         # Log
         log.info(f"Download dbSNP {[assembly]}")
 
-        # Construct URL
-        if dbsnp_url_files and dbsnp_url_files.get(assembly, None):
-            dbsnp_url_file = dbsnp_url_files.get(assembly)
-        elif dbsnp_assemblies_map.get(assembly, None):
-            dbsnp_url_file = f"{dbsnp_url_files_prefix}.{dbsnp_assemblies_map.get(assembly)}.gz"
-        else:
-            dbsnp_url_file = None
+        # Folder
+        dbsnp_folder_assembly = os.path.join(dbsnp_folder, assembly)
 
-        if dbsnp_url_file:
-            dbsnp_url_path = os.path.join(dbsnp_url, dbsnp_url_file)
-        else:
-            log.error("No dbSNP file from URL provided")
-            raise ValueError("No dbSNP file from URL provided")
-
-        # Construct File
-        dbsnp_file = os.path.join(dbsnp_folder, assembly, os.path.basename(dbsnp_url_path))
-
-
-        ### Download dbSNP
-        if not os.path.exists(dbsnp_file):
+        for dbsnp_release in dbsnp_releases:
 
             # Log
-            log.info(f"Download dbSNP {[assembly]} - Download {dbsnp_file} from {dbsnp_url_path}...")
+            log.info(f"Download dbSNP {[assembly]} - Release {[dbsnp_release]}")
+
+            # Folder
+            dbsnp_folder_assembly_release = os.path.join(dbsnp_folder_assembly, dbsnp_release)
 
             # Create folder if not exists
-            if not os.path.exists(os.path.dirname(dbsnp_file)):
-                Path(os.path.dirname(dbsnp_file)).mkdir(parents=True, exist_ok=True)
+            if not os.path.exists(dbsnp_folder_assembly_release):
+                Path(dbsnp_folder_assembly_release).mkdir(parents=True, exist_ok=True)
 
-            # Download file
-            download_file(url=dbsnp_url_path, dest_file_path=dbsnp_file)
+            # Construct URL
+            if dbsnp_url_files and dbsnp_url_files.get(assembly, None):
+                dbsnp_url_file = dbsnp_url_files.get(assembly)
+            elif dbsnp_assemblies_map.get(assembly, None):
+                dbsnp_url_file = f"{dbsnp_url_files_prefix}.{dbsnp_assemblies_map.get(assembly)}.gz"
+            else:
+                dbsnp_url_file = None
 
-            # Index tbi
-            dbsnp_url_path_tbi = f"{dbsnp_url_path}.tbi"
-            dbsnp_file_tbi = f"{dbsnp_file}.tbi"
-            download_file(url=dbsnp_url_path_tbi, dest_file_path=dbsnp_file_tbi)
+            if dbsnp_url_file:
+                dbsnp_url_path = os.path.join(dbsnp_url, dbsnp_release, "VCF", dbsnp_url_file)
+            else:
+                log.error("No dbSNP file from URL provided")
+                raise ValueError("No dbSNP file from URL provided")
 
-        else:
+            # Construct File
+            dbsnp_file = os.path.join(dbsnp_folder_assembly_release, os.path.basename(dbsnp_url_path))
 
-            # Log
-            log.info(f"Download dbSNP {[assembly]} - Database {os.path.basename(dbsnp_file)} already downloaded")
-
-
-        ### Generate VCF
-        if os.path.exists(dbsnp_file) and dbsnp_vcf:
-
-            # Construct VCF File
-            dbsnp_vcf = os.path.join(dbsnp_folder, assembly, "dbsnp.vcf.gz")
-
-            if not os.path.exists(dbsnp_vcf):
+            ### Download dbSNP
+            if not os.path.exists(dbsnp_file):
 
                 # Log
-                log.info(f"Download dbSNP {[assembly]} - Database {os.path.basename(dbsnp_vcf)} generation...")
+                log.info(f"Download dbSNP {[assembly]} - Release {[dbsnp_release]} - Download '{dbsnp_url_file}'...")
+
+                # Create folder if not exists
+                if not os.path.exists(os.path.dirname(dbsnp_file)):
+                    Path(os.path.dirname(dbsnp_file)).mkdir(parents=True, exist_ok=True)
+
+                # Download file
+                download_file(url=dbsnp_url_path, dest_file_path=dbsnp_file)
+
+                # Index tbi
+                dbsnp_url_path_tbi = f"{dbsnp_url_path}.tbi"
+                dbsnp_file_tbi = f"{dbsnp_file}.tbi"
+                download_file(url=dbsnp_url_path_tbi, dest_file_path=dbsnp_file_tbi)
+
+            else:
+
+                # Log
+                log.info(f"Download dbSNP {[assembly]} - Release {[dbsnp_release]} - Database {os.path.basename(dbsnp_file)} already downloaded")
+
+
+            ### Generate VCF and/or Parquet
+
+            # Construct VCF File
+            dbsnp_vcf_file = os.path.join(dbsnp_folder_assembly_release, "dbsnp.vcf.gz")
+            dbsnp_vcf_file_buffer = os.path.join(dbsnp_folder_assembly_release, "dbsnp.buffer.vcf.gz")
+
+            # Construct File
+            dbsnp_parquet_file = os.path.join(dbsnp_folder_assembly_release, "dbsnp.parquet")
+            dbsnp_parquet_hdr_file = os.path.join(dbsnp_folder_assembly_release, "dbsnp.parquet.hdr")
+
+            # Files to generate or already generated
+            dbsnp_files_to_generate = []
+            dbsnp_files_already_generated = []
+
+            if os.path.exists(dbsnp_file) and (dbsnp_vcf and not os.path.exists(dbsnp_vcf_file)) or (dbsnp_parquet and not os.path.exists(dbsnp_parquet_file)):
+
+                if (dbsnp_vcf and not os.path.exists(dbsnp_vcf_file)):
+                    write_vcf = True
+                    dbsnp_files_to_generate.append(os.path.basename(dbsnp_vcf_file))
+                else:
+                    write_vcf = False
+                    dbsnp_files_already_generated.append(os.path.basename(dbsnp_vcf_file))
+
+                if (dbsnp_parquet and not os.path.exists(dbsnp_parquet_file)):
+                    write_parquet = True
+                    dbsnp_files_to_generate.append(os.path.basename(dbsnp_parquet_file))
+                else:
+                    write_parquet = False
+                    dbsnp_files_already_generated.append(os.path.basename(dbsnp_parquet_file))
+
+                # Log
+                if dbsnp_files_already_generated:
+                    log.info(f"Download dbSNP {[assembly]} - Release {[dbsnp_release]} - Files {dbsnp_files_already_generated} already generated")
+                if dbsnp_files_to_generate:
+                    log.info(f"Download dbSNP {[assembly]} - Release {[dbsnp_release]} - Files {dbsnp_files_to_generate} generation...")
+
+                # Generate Header
 
                 # Genome index
-                genome_index = os.path.join(genome_folder, assembly, f"{assembly}.fa.fai")
+                genome_index = os.path.join(genomes_folder, assembly, f"{assembly}.fa.fai")
                 if not os.path.exists(genome_index):
                     log.error("No genome index")
                     raise ValueError("No genome index")
 
                 # Database
                 conn_config_db = conn_config
-                conn_config_db["threads"] = 1
+                #conn_config_db["threads"] = 1
                 db = Database(database=dbsnp_file, format="vcf", conn_config=conn_config_db)
                 
                 # Header
@@ -2308,68 +2375,89 @@ def databases_download_dbsnp(assemblies:list, dbsnp_folder:str = DEFAULT_DBSNP_F
                 header_file = f"{dbsnp_vcf}.hdr"
                 shutil.copy(src=header_file_tmp, dst=header_file)
 
-                # Create dbsnp csv.gz files of variants
-                dbsnp_vcf_partition = f"{dbsnp_vcf}.partition"
-                query=f"""
-                        COPY (
-                                SELECT 
-                                        concat(
-                                            'chr',
-                                            replace(replace(replace(regexp_extract("#CHROM", 'NC_[0]*([0-9]*)_?', 1), '23', 'X'), '24', 'Y'), '25', 'M')
-                                        ) AS 'CHROM_NEW',
-                                        "POS", "ID", "REF",
-                                        UNNEST(string_split("ALT", ',')) AS 'ALT',
-                                        "QUAL", "FILTER", "INFO"
-                                FROM read_csv_auto('{dbsnp_file}', ALL_VARCHAR=1)
-                                WHERE list_contains({db_header_list_chrs}, "CHROM_NEW")
-                            )
-                            TO '{dbsnp_vcf_partition}'
-                            WITH (FORMAT CSV, DELIMITER '\t', COMPRESSION 'gzip', PER_THREAD_OUTPUT, OVERWRITE_OR_IGNORE)
-                        """
-                db.query(query=query)
+                # Chunk CSV
+                chunksize = 1000000
+                skiprows = len(db_header_list)
+                names = ["CHROM_OLD", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO"]
+                chunk_csv = pd.read_csv(dbsnp_file, low_memory=False, chunksize = chunksize, sep="\t", skiprows=skiprows, names=names)
+                chunk_i = 0
 
-                # List of dbsnp csv.gz files
-                dbsnp_vcf_partition_csv = glob.glob(f"{dbsnp_vcf_partition}/*csv")
+                # Open CSV filewith pgzip compression
+                with pgzip.open(dbsnp_vcf_file_buffer, mode="w", thread=threads) as f:
 
-                # Concat and compress header and dbsnp csv.gz files
-                #concat_and_compress_files(input_files=[header_file_tmp]+dbsnp_vcf_partition_csv, output_file=dbsnp_vcf, compression_type="bgzip", threads=threads, sort=True, index=True)
-                concat_and_compress_files(input_files=[header_file_tmp]+dbsnp_vcf_partition_csv, output_file=dbsnp_vcf, compression_type="bgzip", threads=threads, sort=False, index=True)
+                    # fetch chunk
+                    for df_chunk in chunk_csv:
 
-                # Clean
-                remove_if_exists([header_file_tmp, dbsnp_vcf_partition])
+                        # Chunk i
+                        chunk_i += 1
+    
+                        # Query
+                        query=f"""
+                            SELECT 
+                                    concat(
+                                        'chr',
+                                        replace(replace(replace(regexp_extract("CHROM_OLD", 'NC_[0]*([0-9]*)_?', 1), '23', 'X'), '24', 'Y'), '25', 'M')
+                                    ) AS '#CHROM',
+                                    "POS", "ID", "REF",
+                                    UNNEST(string_split("ALT", ',')) AS 'ALT',
+                                    "QUAL", "FILTER", "INFO"
+                            FROM df_chunk
+                            WHERE list_contains({db_header_list_chrs}, "#CHROM")
+                            """
+                        res = db.query(query=query)
 
-            else:
+                        # Write CSV
+                        if write_vcf:
+                            # Use polars to parallelize csv write and an infile with pgzip to parallelise compression
+                            res.pl().write_csv(f, separator="\t", has_header=False)
 
-                # Log
-                log.info(f"Download dbSNP {[assembly]} - Database {os.path.basename(dbsnp_vcf)} already generated")
+                        # Write Parquet
+                        if write_parquet:
+                            # Use pandas an to_parquet with append option ans fastparquet engine (no append with other df like polars or pyarrow)
+                            if chunk_i == 1:
+                                append = False
+                            else:
+                                append = True
+                            res.df().to_parquet(dbsnp_parquet_file, engine='fastparquet', append=append)
 
-        ### Generate Parquet
-        if os.path.exists(dbsnp_vcf):
-
-            # Construct File
-            dbsnp_parquet = os.path.join(dbsnp_folder, assembly, "dbsnp.parquet")
-            dbsnp_parquet_hdr = os.path.join(dbsnp_folder, assembly, "dbsnp.parquet.hdr")
-
-            if not os.path.exists(dbsnp_parquet):
-
-                # Log
-                log.info(f"Download dbSNP {[assembly]} - Database {os.path.basename(dbsnp_parquet)} generation...")
-
-                # Parquet convert
-                db_vcf = Database(database=dbsnp_vcf, conn_config=conn_config)
-                db_vcf.export(output_database=dbsnp_parquet, threads=threads)
+                        # Log
+                        log.debug(f"chunk {chunk_i} - {chunksize*chunk_i} lines processed")
 
                 # Header
-                header_file = f"{dbsnp_vcf}.hdr"
-                shutil.copy(src=header_file, dst=dbsnp_parquet_hdr)
+
+                if write_vcf:
+                    # Concat and Compress CSV with header to VCF in BGZIP compression type
+                    concat_and_compress_files(input_files=[header_file_tmp, dbsnp_vcf_file_buffer], output_file=dbsnp_vcf_file, threads=threads, compression_type="bgzip", index=True)
+
+                if write_parquet:
+                    # Copy header file
+                    shutil.copy(src=header_file, dst=dbsnp_parquet_hdr_file)
+
+                # Clean
+                remove_if_exists([header_file_tmp,dbsnp_vcf_file_buffer])
 
             else:
 
-                # Log
-                log.info(f"Download dbSNP {[assembly]} - Database {os.path.basename(dbsnp_parquet)} already generated")
+                if os.path.exists(dbsnp_vcf_file):
+                    dbsnp_files_already_generated.append(os.path.basename(dbsnp_vcf_file))
+                if os.path.exists(dbsnp_vcf_file):
+                    dbsnp_files_already_generated.append(os.path.basename(dbsnp_parquet_file))
+                if dbsnp_files_already_generated:
+                    log.info(f"Download dbSNP {[assembly]} - Release {[dbsnp_release]} - Files {dbsnp_files_already_generated} already generated")
 
-        else:
-
-            log.info(f" {dbsnp_file} already exists")
+        # Generate default release link
+        if dbsnp_release_default_found:
+            dbsnp_release_default_link_src = dbsnp_release_default_found
+            dbsnp_release_default_link_dest = os.path.join(dbsnp_folder_assembly, "default")
+            if not os.path.exists(dbsnp_release_default_link_dest) or dbsnp_release_default:
+                log.info(f"Download dbSNP {[assembly]} - Release {[dbsnp_release_default_found]} - Defined as default")
+                if not os.path.exists(dbsnp_release_default_link_dest) or os.path.islink(dbsnp_release_default_link_dest):
+                    remove_if_exists(dbsnp_release_default_link_dest)
+                    os.symlink(dbsnp_release_default_link_src, dbsnp_release_default_link_dest)
+                else:
+                    log.warning(f"Download dbSNP {[assembly]} - Default release path is not a symlink. Change not allowed")
+            else:
+                dbsnp_release_default_already = os.path.basename(os.path.realpath(dbsnp_release_default_link_dest))
+                log.info(f"Download dbSNP {[assembly]} - Release {[dbsnp_release_default_already]} - Already defined as default")
 
     return True

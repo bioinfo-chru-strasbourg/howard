@@ -119,7 +119,7 @@ def download_needed_databases():
     provider = "UCSC"
     contig_regex = None
     threads = 1
-    databases_download_genomes(assemblies=[assembly], genome_folder=genome_folder, provider=provider, contig_regex=contig_regex, threads=threads)
+    databases_download_genomes(assemblies=[assembly], genomes_folder=genome_folder, provider=provider, contig_regex=contig_regex, threads=threads)
 
     # Annovar
     annovar_folder = config["folders"]["databases"]["annovar"]

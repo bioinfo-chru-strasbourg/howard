@@ -25,6 +25,7 @@ import fnmatch
 import random
 
 import pgzip
+import mgzip
 import bgzip
 
 import pysam
@@ -91,13 +92,15 @@ DEFAULT_REFSEQ_URL = "http://hgdownload.soe.ucsc.edu/goldenPath"
 DEFAULT_DBNSFP_URL = "https://dbnsfp.s3.amazonaws.com"
 DEFAULT_EXOMISER_URL = "http://data.monarchinitiative.org/exomiser"
 DEFAULT_ALPHAMISSENSE_URL = "https://storage.googleapis.com/dm_alphamissense"
-DEFAULT_DBSNP_URL = "https://ftp.ncbi.nih.gov/snp/latest_release/VCF"
+DEFAULT_DBSNP_URL = "https://ftp.ncbi.nih.gov/snp/archive"
 
 
 # Databases default folder
 DEFAULT_DATABASE_FOLDER = "/databases"
 DEFAULT_ANNOTATIONS_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/annotations/current"
 DEFAULT_GENOME_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/genomes/current"
+DEFAULT_SNPEFF_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/snpeff/current"
+DEFAULT_ANNOVAR_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/annovar/current"
 DEFAULT_REFSEQ_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/refseq/current"
 DEFAULT_DBNSFP_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/dbnsfp/current"
 DEFAULT_EXOMISER_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/exomiser/current"
@@ -387,7 +390,7 @@ def find_genome(genome_path: str, assembly: str = None, file: str = None) -> str
     if os.path.exists(genome_path) and not os.path.isdir(genome_path):
         return genome_path
     else:
-        log.warning(f"Genome warning: Try to find genome in '{genome_path}'...")
+        log.debug(f"Genome warning: Try to find genome in '{genome_path}'...")
         genome_dir = genome_path
         genome_path = ""
         # Try to find genome
@@ -1291,7 +1294,8 @@ def concat_into_infile(input_files:list, compressed_file:object, compression_typ
                     else:
                         shutil.copyfileobj(infile, compressed_file)
         elif input_compression_type in ['gzip']:
-            with pgzip.open(input_file, 'r'+open_type, thread=threads) as infile:
+            # See https://pypi.org/project/mgzip/
+            with mgzip.open(input_file, 'r'+open_type, thread=threads) as infile:
                 shutil.copyfileobj(infile, compressed_file)
         elif input_compression_type in ['none']:
             with open(input_file, 'r'+open_type) as infile:
@@ -1353,6 +1357,7 @@ def concat_and_compress_files(input_files: list, output_file: str, compression_t
     output_file_tmp = output_file+"."+str(random.randrange(1000))+".tmp"
 
     if compression_type in ['gzip']:
+        # See https://pypi.org/project/mgzip/
         with pgzip.open(output_file_tmp, 'w'+open_type, thread=threads, blocksize=threads * block, compresslevel=compression_level) as compressed_file:
             concat_into_infile(input_files, compressed_file, compression_type=compression_type, threads=threads, block=block)
     elif compression_type in ['bgzip']:

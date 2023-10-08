@@ -1277,12 +1277,12 @@ class Database:
 
         # Create view
         if sql_database_link and database_format not in ["duckdb"]:
-            #try:
-            self.get_conn().execute(f"CREATE OR REPLACE VIEW {view_name} AS {sql_database_link}")
-            self.view_name = view_name
-            return view_name
-            #except:
-            #    return None
+            try:
+                self.get_conn().execute(f"CREATE OR REPLACE VIEW {view_name} AS {sql_database_link}")
+                self.view_name = view_name
+                return view_name
+            except:
+                return None
         else:
             self.view_name = None
             return None
