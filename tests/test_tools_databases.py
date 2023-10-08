@@ -24,12 +24,230 @@ from pandas.testing import assert_frame_equal
 from unittest.mock import patch
 
 from howard.objects.variants import Variants
+from howard.objects.database import Database
 from howard.commons import *
 from howard.tools.databases import *
 from test_needed import *
 
 
 
+
+
+def test_databases_download_dbsnp():
+    """
+    The function `test_databases_download_dbsnp` downloads and prepares the dbsnp database for specified
+    assemblies.
+    """
+
+    genomes_folder = tests_config["folders"]["databases"]["genomes"]
+
+    # Full database generation, hg19 only (due to lack of hg38 assembly in tests)
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Assembly
+        assemblies = 'hg19'
+        #assemblies = 'hg19'
+        assemblies_list = [value for value in assemblies.split(',')]
+
+        # Releases
+        dbsnp_releases = ["b156"]
+
+        # Threads
+        threads = 2
+
+        # Exomiser folder
+        dbsnp_folder = tmp_dir
+        # dbsnp_folder = "/databases/dbsnp/test"
+        
+        # Download exomiser simulation
+        dnsnp_assemblies_map:dict = {"hg19": "25", "hg38": "40"}
+        for assembly in assemblies_list:
+            for dbsnp_release in dbsnp_releases:
+                dbsnp_data_source = os.path.join(tests_databases_folder, "dbsnp", f"GCF_000001405.{dnsnp_assemblies_map.get(assembly)}.gz")
+                dbsnp_data_target = os.path.join(dbsnp_folder, assembly, dbsnp_release, f"GCF_000001405.{dnsnp_assemblies_map.get(assembly)}.gz")
+                if not os.path.exists(os.path.join(dbsnp_folder, assembly, dbsnp_release)):
+                    Path(os.path.join(dbsnp_folder, assembly, dbsnp_release)).mkdir(parents=True, exist_ok=True)
+                if not os.path.exists(os.path.join(dbsnp_folder, assembly, dbsnp_data_target)):
+                    shutil.copy(dbsnp_data_source, dbsnp_data_target)
+
+        # dbsnp_folder = "/databases/dbsnp/test"
+        # threads = 15
+
+        # Download and prepare database
+        databases_download_dbsnp(assemblies=assemblies_list, dbsnp_folder=dbsnp_folder, threads=threads, dbsnp_vcf=True, dbsnp_parquet=True, genomes_folder=genomes_folder)
+
+        # Check
+        downloaded_files = os.listdir(dbsnp_folder)
+        for assembly in assemblies_list:
+            assert assembly in downloaded_files
+            downloaded_assembly_files = os.listdir(f"{dbsnp_folder}/{assembly}")
+            assert "default" in downloaded_assembly_files
+            for dbsnp_release in dbsnp_releases:
+                assert dbsnp_release in downloaded_assembly_files
+                downloaded_assembly_release_files = os.listdir(f"{dbsnp_folder}/{assembly}/{dbsnp_release}")
+                expected_files = ['dbsnp.vcf.gz.tbi', f'GCF_000001405.{dnsnp_assemblies_map.get(assembly)}.gz', 'dbsnp.vcf.gz', 'dbsnp.parquet.hdr', 'dbsnp.parquet']
+                for expected_file in expected_files:
+                    if expected_file not in downloaded_assembly_release_files:
+                        assert False
+                assert True
+
+        # Download and prepare database again
+        databases_download_dbsnp(assemblies=assemblies_list, dbsnp_folder=dbsnp_folder, threads=threads, dbsnp_vcf=True, dbsnp_parquet=True, genomes_folder=genomes_folder)
+
+        # Check
+        downloaded_files = os.listdir(dbsnp_folder)
+        for assembly in assemblies_list:
+            assert assembly in downloaded_files
+            downloaded_assembly_files = os.listdir(f"{dbsnp_folder}/{assembly}")
+            assert "default" in downloaded_assembly_files
+            for dbsnp_release in dbsnp_releases:
+                assert dbsnp_release in downloaded_assembly_files
+                downloaded_assembly_release_files = os.listdir(f"{dbsnp_folder}/{assembly}/{dbsnp_release}")
+                expected_files = ['dbsnp.vcf.gz.tbi', f'GCF_000001405.{dnsnp_assemblies_map.get(assembly)}.gz', 'dbsnp.vcf.gz', 'dbsnp.parquet.hdr', 'dbsnp.parquet']
+                for expected_file in expected_files:
+                    if expected_file not in downloaded_assembly_release_files:
+                        assert False
+                assert True
+
+
+    # Multi assembly (without VCF and PArquet generation, due to lack of assembly hg38 in tests)
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Assembly
+        assemblies = 'hg19,hg38'
+        assemblies_list = [value for value in assemblies.split(',')]
+
+        # Releases
+        dbsnp_releases = ["b156"]
+
+        # Threads
+        threads = 2
+
+        # Exomiser folder
+        dbsnp_folder = tmp_dir
+        
+        # Download exomiser simulation
+        dnsnp_assemblies_map:dict = {"hg19": "25", "hg38": "40"}
+        for assembly in assemblies_list:
+            for dbsnp_release in dbsnp_releases:
+                dbsnp_data_source = os.path.join(tests_databases_folder, "dbsnp", f"GCF_000001405.{dnsnp_assemblies_map.get(assembly)}.gz")
+                dbsnp_data_target = os.path.join(dbsnp_folder, assembly, dbsnp_release, f"GCF_000001405.{dnsnp_assemblies_map.get(assembly)}.gz")
+                if not os.path.exists(os.path.join(dbsnp_folder, assembly, dbsnp_release)):
+                    Path(os.path.join(dbsnp_folder, assembly, dbsnp_release)).mkdir(parents=True, exist_ok=True)
+                if not os.path.exists(os.path.join(dbsnp_folder, assembly, dbsnp_data_target)):
+                    shutil.copy(dbsnp_data_source, dbsnp_data_target)
+
+        # Download and prepare database
+        databases_download_dbsnp(assemblies=assemblies_list, dbsnp_folder=dbsnp_folder, threads=threads, dbsnp_vcf=False, dbsnp_parquet=False, genomes_folder=genomes_folder)
+
+        # Check
+        downloaded_files = os.listdir(dbsnp_folder)
+        for assembly in assemblies_list:
+            assert assembly in downloaded_files
+            downloaded_assembly_files = os.listdir(f"{dbsnp_folder}/{assembly}")
+            assert "default" in downloaded_assembly_files
+            for dbsnp_release in dbsnp_releases:
+                assert dbsnp_release in downloaded_assembly_files
+                downloaded_assembly_release_files = os.listdir(f"{dbsnp_folder}/{assembly}/{dbsnp_release}")
+                expected_files = [f'GCF_000001405.{dnsnp_assemblies_map.get(assembly)}.gz']
+                for expected_file in expected_files:
+                    if expected_file not in downloaded_assembly_release_files:
+                        assert False
+                assert True
+
+
+def test_databases_download_exomiser():
+    """
+    The function `test_databases_download_exomiser` tests the `databases_download_exomiser` function by
+    checking if the downloaded files match the expected number and if the specified assemblies are
+    present.
+    """
+
+    # Init
+    exomiser_data_hg19_source = os.path.join(tests_databases_folder, "exomiser", "test_hg19.zip")
+    exomiser_data_hg38_source = os.path.join(tests_databases_folder, "exomiser", "test_hg38.zip")
+    exomiser_phenotype_source = os.path.join(tests_databases_folder, "exomiser", "test_phenotype.zip")
+
+    # Tmp folder
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Assembly
+        assemblies = 'hg19,hg38'
+        assemblies_list = [value for value in assemblies.split(',')]
+
+        # Exomiser folder
+        exomiser_folder = tmp_dir
+
+        # Exomiser release
+        exomiser_release = "test"
+        exomiser_phenotype_release = "test"
+
+        # Download exomiser simulation
+        exomiser_data_hg19_target = os.path.join(tmp_dir, "test_hg19.zip")
+        shutil.copy(exomiser_data_hg19_source, exomiser_data_hg19_target)
+        exomiser_data_hg38_target = os.path.join(tmp_dir, "test_hg38.zip")
+        shutil.copy(exomiser_data_hg38_source, exomiser_data_hg38_target)
+        exomiser_phenotype_target = os.path.join(tmp_dir, "test_phenotype.zip")
+        shutil.copy(exomiser_phenotype_source, exomiser_phenotype_target)
+
+        # Download and prepare database
+        databases_download_exomiser(assemblies=assemblies_list, exomiser_folder=exomiser_folder, exomiser_release=exomiser_release, exomiser_phenotype_release=exomiser_phenotype_release)
+
+        # Check
+        downloaded_files = os.listdir(exomiser_folder)
+        for assembly in assemblies_list:
+            assert assembly in downloaded_files
+            downloaded_assembly_files = os.listdir(f"{exomiser_folder}/{assembly}")
+            expected_files = [f'test_{assembly}', 'application.properties', 'test_phenotype']
+            for expected_file in expected_files:
+                if expected_file not in downloaded_assembly_files:
+                    assert False
+            assert True
+
+
+def test_download_alphamissense():
+    """
+    The function `test_download_alphamissense` tests the `databases_download_alphamissense` function by
+    downloading AlphaMissense databases for specified assemblies and checking if the files are
+    downloaded correctly.
+    """
+
+    # Tmp folder
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Assembly
+        assemblies = 'hg19'
+        assemblies_list = [value for value in assemblies.split(',')]
+
+        # AlphaMissense folder
+        alphamissense_folder = os.path.join(tmp_dir,"alphamissense")
+
+        # Threads
+        threads=4
+
+        # Download AlphaMissense
+        databases_download_alphamissense(assemblies=assemblies_list, alphamissense_folder=alphamissense_folder, threads=threads)
+
+        # Check
+        downloaded_files = os.listdir(alphamissense_folder)
+        for assembly in assemblies_list:
+            assert assembly in downloaded_files
+            downloaded_assembly_files = os.listdir(f"{alphamissense_folder}/{assembly}")
+            log.debug(downloaded_assembly_files)
+            nb_files = 3
+            assert len(downloaded_assembly_files) == nb_files
+
+        # Download AlphaMissense again
+        databases_download_alphamissense(assemblies=assemblies_list, alphamissense_folder=alphamissense_folder, threads=threads)
+
+        # Check
+        downloaded_files = os.listdir(alphamissense_folder)
+        for assembly in assemblies_list:
+            assert assembly in downloaded_files
+            downloaded_assembly_files = os.listdir(f"{alphamissense_folder}/{assembly}")
+            log.debug(downloaded_assembly_files)
+            nb_files = 3
+            assert len(downloaded_assembly_files) == nb_files
 
 
 def test_database_dbnsfp():
@@ -39,7 +257,7 @@ def test_database_dbnsfp():
 
     # Init
     dbnsfp_source = os.path.join(tests_databases_folder, "dbnsfp", "dbNSFP4.4a.zip")
-
+    genomes_folder = tests_config["folders"]["databases"]["genomes"]
 
     # Tmp folder
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
@@ -56,7 +274,7 @@ def test_database_dbnsfp():
 
         # Try to convert 
         try:
-            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=dbnsfp_folder, generate_parquet_file = False, generate_sub_databases = False, generate_vcf_file = False)
+            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=dbnsfp_folder, generate_parquet_file = False, generate_sub_databases = False, generate_vcf_file = False, genomes_folder=genomes_folder)
         except:
             assert False
 
@@ -69,7 +287,7 @@ def test_database_dbnsfp():
 
         # Try again to generate parquet
         try:
-            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=dbnsfp_folder, generate_parquet_file = True, generate_sub_databases = False, generate_vcf_file = False)
+            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=dbnsfp_folder, generate_parquet_file = True, generate_sub_databases = False, generate_vcf_file = False, genomes_folder=genomes_folder)
         except:
             assert False
 
@@ -83,7 +301,7 @@ def test_database_dbnsfp():
 
         # Try again to generate parquet
         try:
-            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=dbnsfp_folder, generate_parquet_file = True, generate_sub_databases = True, generate_vcf_file = False)
+            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=dbnsfp_folder, generate_parquet_file = True, generate_sub_databases = True, generate_vcf_file = False, genomes_folder=genomes_folder)
         except:
             assert False
 
@@ -96,7 +314,7 @@ def test_database_dbnsfp():
 
         # Try again to generate VCF
         try:
-            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=dbnsfp_folder, generate_parquet_file = True, generate_sub_databases = True, generate_vcf_file = True)
+            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=dbnsfp_folder, generate_parquet_file = True, generate_sub_databases = True, generate_vcf_file = True, genomes_folder=genomes_folder)
         except:
             assert False
 
@@ -104,12 +322,12 @@ def test_database_dbnsfp():
         for assembly in assemblies_list:
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
-            nb_files = 474
+            nb_files = 553
             assert len(downloaded_assembly_files) == nb_files
 
         # Try again to generate nothing more
         try:
-            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=dbnsfp_folder, generate_parquet_file = True, generate_sub_databases = True, generate_vcf_file = True)
+            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=dbnsfp_folder, generate_parquet_file = True, generate_sub_databases = True, generate_vcf_file = True, genomes_folder=genomes_folder)
         except:
             assert False
 
@@ -117,7 +335,7 @@ def test_database_dbnsfp():
         for assembly in assemblies_list:
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
-            nb_files = 474
+            nb_files = 553
             assert len(downloaded_assembly_files) == nb_files
 
 
@@ -136,7 +354,7 @@ def test_database_dbnsfp():
 
         # Try to generate vcf file without parquet
         try:
-            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=dbnsfp_folder, generate_parquet_file = False, generate_sub_databases = True, generate_vcf_file = True)
+            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=dbnsfp_folder, generate_parquet_file = False, generate_sub_databases = True, generate_vcf_file = True, genomes_folder=genomes_folder)
         except:
             assert False
 
@@ -144,7 +362,7 @@ def test_database_dbnsfp():
         for assembly in assemblies_list:
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
-            nb_files = 316
+            nb_files = 395
             assert len(downloaded_assembly_files) == nb_files
 
 
@@ -163,7 +381,7 @@ def test_database_dbnsfp():
 
         # Try to generate all files in one time with parquet size of 1Mb
         try:
-            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=dbnsfp_folder, generate_parquet_file = True, generate_sub_databases = True, generate_vcf_file = True, parquet_size = 1)
+            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=dbnsfp_folder, generate_parquet_file = True, generate_sub_databases = True, generate_vcf_file = True, parquet_size = 1, genomes_folder=genomes_folder)
         except:
             assert False
 
@@ -171,7 +389,7 @@ def test_database_dbnsfp():
         for assembly in assemblies_list:
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
-            nb_files = 474
+            nb_files = 553
             assert len(downloaded_assembly_files) == nb_files
 
 
@@ -190,7 +408,7 @@ def test_database_dbnsfp():
 
         # Try to generate ALL and sub-database parquet folders but only sub-database parquet files
         try:
-            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=dbnsfp_folder, generate_parquet_file = True, generate_sub_databases = True, generate_vcf_file = False, not_generate_files_all = True)
+            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=dbnsfp_folder, generate_parquet_file = True, generate_sub_databases = True, generate_vcf_file = False, not_generate_files_all = True, genomes_folder=genomes_folder)
         except:
             assert False
 
@@ -217,7 +435,7 @@ def test_database_dbnsfp():
 
         # Try to generate ALL and sub-database parquet folders with INFO column
         try:
-            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=dbnsfp_folder, generate_parquet_file = True, generate_sub_databases = True, generate_vcf_file = True, add_info=True)
+            databases_download_dbnsfp(assemblies=assemblies_list, dbnsfp_folder=dbnsfp_folder, generate_parquet_file = True, generate_sub_databases = True, generate_vcf_file = True, add_info=True, genomes_folder=genomes_folder)
         except:
             assert False
 
@@ -225,7 +443,7 @@ def test_database_dbnsfp():
         for assembly in assemblies_list:
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
-            nb_files = 474
+            nb_files = 553
             assert len(downloaded_assembly_files) == nb_files
 
 
@@ -244,6 +462,9 @@ def test_database():
         download_snpeff = None,
         download_refseq = None,
         download_dbnsfp = None,
+        download_alphamissense = None,
+        download_exomiser = None,
+        download_dbsnp = None,
         config = None,
     )
 
@@ -315,6 +536,9 @@ def test_databases_download():
             download_refseq_include_non_coding_transcripts=True,
             download_refseq_include_transcript_version=True,
             download_dbnsfp = None, # Too long...
+            download_alphamissense = None,
+            download_exomiser = None,
+            download_dbsnp = None,
             config=config,
             threads=threads
         )
@@ -390,6 +614,9 @@ def test_databases_download_genomes_only():
             download_snpeff=None,
             download_refseq=None,
             download_dbnsfp = None,
+            download_alphamissense = None,
+            download_exomiser = None,
+            download_dbsnp = None,
             threads=threads
         )
 
@@ -665,12 +892,12 @@ def test_databases_download_genomes():
 
         assemblies = ["sacCer3"]
         
-        genome_folder = None
+        genomes_folder = None
         provider = "UCSC"
         contig_regex = None
         threads = 1
         try:
-            genome = databases_download_genomes(assemblies=assemblies, genome_folder=genome_folder, provider=provider, contig_regex=contig_regex, threads=threads)
+            genome = databases_download_genomes(assemblies=assemblies, genomes_folder=genomes_folder, provider=provider, contig_regex=contig_regex, threads=threads)
             for assembly in assemblies:
                 genome = genomepy.Genome(assembly, genomes_dir=DEFAULT_GENOME_FOLDER)
                 assert os.path.exists(genome.genome_file)
@@ -683,14 +910,14 @@ def test_databases_download_genomes():
 
         assemblies = ["sacCer3"]
         
-        genome_folder = tmpdir
+        genomes_folder = tmpdir
         provider = "UCSC"
         contig_regex = None
         threads = 1
         try:
-            genome = databases_download_genomes(assemblies=assemblies, genome_folder=genome_folder, provider=provider, contig_regex=contig_regex, threads=threads)
+            genome = databases_download_genomes(assemblies=assemblies, genomes_folder=genomes_folder, provider=provider, contig_regex=contig_regex, threads=threads)
             for assembly in assemblies:
-                genome = genomepy.Genome(assembly, genomes_dir=genome_folder)
+                genome = genomepy.Genome(assembly, genomes_dir=genomes_folder)
                 assert os.path.exists(genome.genome_file)
                 assert list(genome.keys()).sort() == assemblies_config.get(assembly).get("contigs",[]).sort()
         except:
@@ -701,14 +928,14 @@ def test_databases_download_genomes():
 
         assemblies = ["sacCer2", "sacCer3"]
         
-        genome_folder = tmpdir
+        genomes_folder = tmpdir
         provider = "UCSC"
         contig_regex = None
         threads = 1
         try:
-            genome = databases_download_genomes(assemblies=assemblies, genome_folder=genome_folder, provider=provider, contig_regex=contig_regex, threads=threads)
+            genome = databases_download_genomes(assemblies=assemblies, genomes_folder=genomes_folder, provider=provider, contig_regex=contig_regex, threads=threads)
             for assembly in assemblies:
-                genome = genomepy.Genome(assembly, genomes_dir=genome_folder)
+                genome = genomepy.Genome(assembly, genomes_dir=genomes_folder)
                 assert os.path.exists(genome.genome_file)
                 assert list(genome.keys()).sort() == assemblies_config.get(assembly).get("contigs",[]).sort()
         except:
@@ -719,14 +946,14 @@ def test_databases_download_genomes():
 
         assemblies = ["sacCer3"]
         
-        genome_folder = tmpdir
+        genomes_folder = tmpdir
         provider = "UCSC"
         contig_regex = "^>chrX.*$"
         threads = 1
         try:
-            genome = databases_download_genomes(assemblies=assemblies, genome_folder=genome_folder, provider=provider, contig_regex=contig_regex, threads=threads)
+            genome = databases_download_genomes(assemblies=assemblies, genomes_folder=genomes_folder, provider=provider, contig_regex=contig_regex, threads=threads)
             for assembly in assemblies:
-                genome = genomepy.Genome(assembly, genomes_dir=genome_folder)
+                genome = genomepy.Genome(assembly, genomes_dir=genomes_folder)
                 assert os.path.exists(genome.genome_file)
                 assert list(genome.keys()).sort() == ['chrXI', 'chrXVI', 'chrXII', 'chrXV', 'chrXIII', 'chrX', 'chrXIV'].sort()
         except:

@@ -25,21 +25,28 @@ from howard.tools.databases import *
 
 def hgvs(args:argparse) -> None:
     """
+    The `hgvs` function takes command line arguments, creates a VCF object, sets parameters and
+    configurations, loads data from an input file, performs annotation using HGVS notation, exports the
+    output, and closes the connection.
     
+    :param args: The `args` parameter is of type `argparse.Namespace` and is used to parse command line
+    arguments. It contains the following attributes:
+    :type args: argparse
     """
 
     log.info("Start")
 
     config = args.config
 
-    param = {}
+    params = {}
     
     # Create VCF object
     if args.input:
-        vcfdata_obj = Variants(None, args.input, args.output, config, param)
+        vcfdata_obj = Variants(None, args.input, args.output, config, params)
         
         # Params
         params = vcfdata_obj.get_param()
+        config = vcfdata_obj.get_config()
 
         if not params.get("hgvs", None):
             params["hgvs"] = {}
@@ -74,7 +81,22 @@ def hgvs(args:argparse) -> None:
         if "assembly" in args:
             params["assembly"] = args.assembly
 
+        if "genomes_folder" in args and args.genomes_folder:
+            if "folders" not in config:
+                config["folders"] = {}
+            if "databases" not in config["folders"]:
+                config["folders"]["databases"] = {}
+            config["folders"]["databases"]["genomes"] = args.genomes_folder
+
+        if "refseq_folder" in args and args.refseq_folder:
+            if "folders" not in config:
+                config["folders"] = {}
+            if "databases" not in config["folders"]:
+                config["folders"]["databases"] = {}
+            config["folders"]["databases"]["refseq"] = args.refseq_folder
+
         vcfdata_obj.set_param(params)
+        vcfdata_obj.set_config(config)
         
         # Load data from input file
         vcfdata_obj.load_data()

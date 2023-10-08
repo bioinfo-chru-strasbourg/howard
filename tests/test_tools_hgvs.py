@@ -6,7 +6,7 @@ Usage:
 pytest tests/
 
 Coverage:
-coverage run -m pytest . -x -v
+coverage run -m pytest . -x -v --log-cli-level=INFO --capture=tee-sys
 coverage report --include=howard/* -m
 """
 
@@ -35,14 +35,19 @@ def test_hgvs():
     input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/output_file.tsv"
     config = {}
+
+    genomes_folder = tests_config["folders"]["databases"]["genomes"]
+    refseq_folder = tests_config["folders"]["databases"]["refseq"]
     
     # prepare arguments for the query function
     args = argparse.Namespace(
         input = input_vcf,
         output = output_vcf,
-        config = config
+        config = config,
+        genomes_folder = genomes_folder,
+        refseq_folder = refseq_folder
     )
-
+    
     # Remove if output file exists
     remove_if_exists([output_vcf])
 

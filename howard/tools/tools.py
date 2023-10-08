@@ -452,7 +452,7 @@ arguments = {
         },
         "download-dbnsfp-vcf": {
             "help": """Generate a VCF file for each Parquet folder.\n"""
-                    """Notes: VCF may not be sorted. Take a while.\n""",
+                    """Note: Need genome (see --download-genome)""",
             "action": "store_true"
         },
         "download-dbnsfp-no-files-all": {
@@ -471,10 +471,183 @@ arguments = {
             "metavar": "INTEGER",
             "help": """minimum number of rows in a parquet row group (see duckDB doc).\n"""
                     """Lower can reduce memory usage and slightly increase space during generation,\n"""
-                    """speed up highly selective queries, slow down whole file queries (e.g. aggregations)"""
+                    """speed up highly selective queries, slow down whole file queries (e.g. aggregations)\n"""
                     """Default: 100000""",
             "required": False,
             "default": 100000
+        },
+
+        # AlphaMissense
+        "download-alphamissense": {
+            "metavar": "FOLDER",
+            "help": "Download AlphaMissense databases within Annotations folder",
+            "required": False
+        },
+        "download-alphamissense-url": {
+            "metavar": "URL",
+            "help": """Download AlphaMissense databases URL (see AlphaMissense website)\n"""
+                    """Default: 'https://storage.googleapis.com/dm_alphamissense'""",
+            "required": False,
+            "default": "https://storage.googleapis.com/dm_alphamissense"
+        },
+
+        # Exomiser
+        "download-exomiser": {
+            "metavar": "FOLDER",
+            "help": """Download Exomiser databases\n"""
+                    """Folder where the Exomiser databases will be downloaded and stored.\n"""
+                    """If the folder does not exist, it will be created.""",
+            "required": False
+        },
+        "download-exomiser-application-properties": {
+            "metavar": "FILE",
+            "help": """Exomiser Application Properties configuration file (see Exomiser website)\n"""
+                    """This file contains configuration settings for the Exomiser tool.\n"""
+                    """If this parameter is not provided, the function will attempt to locate\n"""
+                    """the application properties file automatically based on the Exomiser.\n"""
+                    """Configuration information will be used to download expected releases (if no other parameters)\n"""
+                    """CADD and REMM will be downloaded only if 'path' are provided\n""",
+            "required": False,
+            "default": None
+        },
+        "download-exomiser-url": {
+            "metavar": "URL",
+            "help": """URL where Exomiser database files can be downloaded from.\n"""
+                    """Default: 'http://data.monarchinitiative.org/exomiser'""",
+            "required": False,
+            "default": "http://data.monarchinitiative.org/exomiser"
+        },
+        "download-exomiser-release": {
+            "metavar": "STRING",
+            "help": """Release of Exomiser data to download.\n"""
+                    """If "default", "auto", or "config", retrieve from Application Properties file.\n"""
+                    """Default: None""",
+            "required": False,
+            "default": None
+        },
+        "download-exomiser-phenotype-release": {
+            "metavar": "STRING",
+            "help": """Release of Exomiser phenotype to download.\n"""
+                    """If not provided, retrieve from Application Properties file or Exomiser data release\n"""
+                    """Default: None""",
+            "required": False,
+            "default": None
+        },
+        "download-exomiser-remm-release": {
+            "metavar": "STRING",
+            "help": """Release of ReMM (Regulatory Mendelian Mutation) database to download.\n"""
+                    """If "default", "auto", or "config", retrieve from Application Properties file.\n"""
+                    """Default: None""",
+            "required": False,
+            "default": None
+        },
+        "download-exomiser-remm-url": {
+            "metavar": "URL",
+            "help": """URL where ReMM (Regulatory Mendelian Mutation) database files can be downloaded from.\n"""
+                    """Default: 'https://kircherlab.bihealth.org/download/ReMM'""",
+            "required": False,
+            "default": "https://kircherlab.bihealth.org/download/ReMM"
+        },
+        "download-exomiser-cadd-release": {
+            "metavar": "STRING",
+            "help": """Release of CADD (Combined Annotation Dependent Depletion) database to download.\n"""
+                    """If "default", "auto", or "config", retrieve from Application Properties file.\n"""
+                    """Default: None""",
+            "required": False,
+            "default": None
+        },
+        "download-exomiser-cadd-url": {
+            "metavar": "URL",
+            "help": """URL where CADD (Combined Annotation Dependent Depletion) database files can be downloaded from.\n"""
+                    """Default: 'https://kircherlab.bihealth.org/download/CADD'""",
+            "required": False,
+            "default": "https://kircherlab.bihealth.org/download/CADD"
+        },
+        "download-exomiser-cadd-url-snv-file": {
+            "metavar": "FILE",
+            "help": """Name of the file containing the SNV (Single Nucleotide Variant) data\n"""
+                    """for the CADD (Combined Annotation Dependent Depletion) database.\n"""
+                    """Default: 'whole_genome_SNVs.tsv.gz'""",
+            "required": False,
+            "default": "whole_genome_SNVs.tsv.gz"
+        },
+        "download-exomiser-cadd-url-indel-file": {
+            "metavar": "FILE",
+            "help": """Name of the file containing the INDEL (Insertion-Deletion) data\n"""
+                    """for the CADD (Combined Annotation Dependent Depletion) database.\n"""
+                    """Default: 'InDels.tsv.gz'""",
+            "required": False,
+            "default": "InDels.tsv.gz"
+        },
+
+        # dbSNP
+        "download-dbsnp": {
+            "metavar": "FOLDER",
+            "help": """Download dbSNP databases\n"""
+                    """Folder where the dbSNP databases will be downloaded and stored.\n"""
+                    """If the folder does not exist, it will be created.""",
+            "required": False
+        },
+        "download-dbsnp-releases": {
+            "metavar": "LIST",
+            "help": """Release of dbSNP to download\n"""
+                    """Example: 'b152,b156'"""
+                    """Default: 'b156'""",
+            "required": False,
+            "default": 'b156'
+        },
+        "download-dbsnp-release-default": {
+            "metavar": "STRING",
+            "help": """Default Release of dbSNP ('default' symlink)\n"""
+                    """If None, first release to download will be assigned as dafault\n"""
+                    """only if it does not exists\n"""
+                    """Example: 'b156'"""
+                    """Default: None (first releases by default)""",
+            "required": False,
+            "default": None
+        },
+        "download-dbsnp-url": {
+            "metavar": "URL",
+            "help": """URL where dbSNP database files can be downloaded from.\n"""
+                    """Default: 'https://ftp.ncbi.nih.gov/snp/archive'""",
+            "required": False,
+            "default": "https://ftp.ncbi.nih.gov/snp/archive"
+        },
+        "download-dbsnp-url-files": {
+            "metavar": "STRING",
+            "help": """Dictionary that maps assembly names to specific dbSNP URL files.\n"""
+                    """It allows you to provide custom dbSNP URL files for specific assemblies\n"""
+                    """instead of using the default file naming convention\n"""
+                    """Default: None""",
+            "required": False,
+            "default": None
+        },
+        "download-dbsnp-url-files-prefix": {
+            "metavar": "STRING",
+            "help": """String that represents the prefix of the dbSNP file name for a specific assembly.\n"""
+                    """It is used to construct the full URL of the dbSNP file to be downloaded.\n"""
+                    """Default: 'GCF_000001405'""",
+            "required": False,
+            "default": "GCF_000001405"
+        },
+        "download-dbsnp-assemblies-map": {
+            "metavar": "DICT",
+            "help": """dictionary that maps assembly names to their corresponding dbSNP versions.\n"""
+                    """It is used to construct the dbSNP file name based on the assembly name.\n"""
+                    """Default: {"hg19": "25", "hg38": "40"}""",
+            "required": False,
+            "default": {"hg19": "25", "hg38": "40"}
+        },
+        "download-dbsnp-vcf": {
+            "help": """Generate well-formatted VCF from downloaded file:\n"""
+                    """- Add and filter contigs associated to assembly\n"""
+                    """- Normalize by splitting multiallelics """
+                    """- Need genome (see --download-genome)""",
+            "action": "store_true"
+        },
+        "download-dbsnp-parquet": {
+            "help": """Generate Parquet file from VCF\n""",
+            "action": "store_true"
         },
 
         # From Annovar
@@ -501,6 +674,13 @@ arguments = {
                     """Default: {}""",
             "required": False,
             "default": "{}"
+        },
+        "assembly": {
+            "metavar": "STRING",
+            "help": """Default assembly\n"""
+                    """Default: 'hg19'""",
+            "required": False,
+            "default": "hg19"
         },
         "threads": {
             "metavar": "INTEGER",
@@ -587,12 +767,13 @@ commands_arguments = {
         "help":         """Annotation of genetic variations using databases/files and tools.""",
         "epilog":       """Usage examples:\n"""
                         """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/hg19/avsnp150.parquet,tests/databases/annotations/hg19/dbnsfp42a.parquet,tests/databases/annotations/hg19/gnomad211_genome.parquet' \n"""
-                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --annotations='annovar:refGene,snpeff,tests/databases/annotations/hg19/clinvar_20210123.parquet' \n""", 
+                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotations='annovar:refGene,annovar:cosmic70,snpeff,tests/databases/annotations/hg19/clinvar_20210123.parquet' \n""", 
         "groups": {
             "main": {
                 "input": True,
                 "output": True,
-                "annotations": True
+                "annotations": True,
+                "assembly": False
             }
         }
     },
@@ -722,15 +903,17 @@ commands_arguments = {
         "description": """Download databases and needed files for howard and associated tools""",
         "help": """Download databases and needed files for howard and associated tools""",
         "epilog": """Usage examples:\n"""
-                    """   howard databases --assembly=hg19 --download-genomes=/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='^>chr[0-9XYM]*$' --download-annovar=/databases/annovar/current --download-annovar-files='refGene,gnomad_exome,dbnsfp42a,cosmic70,clinvar_202*,nci60' --download-snpeff=/databases/snpeff/current  --download-snpeff=/databases/snpeff/current --download-refseq=/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-dbnsfp=/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases --download-dbnsfp-parquet --threads=8"""
+                    """   howard databases --assembly=hg19 --download-genomes=/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='^>chr[0-9XYM]*$' --download-annovar=/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' --download-snpeff=/databases/snpeff/current  --download-snpeff=/databases/snpeff/current --download-refseq=/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-dbnsfp=/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases --download-alphamissense=/databases/alphamissense/current --download-exomiser=/databases/exomiser/current --download-dbsnp=/databases/dbsnp/current --download-dbsnp-vcf --download-dbsnp-parquet --threads=8"""
                     """\n"""
                     """Notes:\n"""
+                    """   - Downloading databases can take a while, depending on network, threads and memory\n"""
                     """   - Proxy: Beware of network and proxy configuration\n"""
                     """   - dbNSFP download: More threads, more memory usage (8 threads ~ 16Gb, 24 threads ~ 32Gb)\n"""
                     ,
         "groups": {
             "main": {
                 "assembly": False,
+                "genomes-folder": False
             },
             "Genomes": {
                 "download-genomes": False,
@@ -768,10 +951,38 @@ commands_arguments = {
                 "download-dbnsfp-vcf": False,
                 "download-dbnsfp-no-files-all": False,
                 "download-dbnsfp-add-info": False,
-                "download-dbnsfp-row-group-size": False,
-                "genomes-folder": False
+                "download-dbnsfp-row-group-size": False
+            },
+            "AlphaMissense": {
+                "download-alphamissense": False,
+                "download-alphamissense-url": False
+            },
+            "Exomiser": {
+                "download-exomiser": False,
+                "download-exomiser-application-properties": False,
+                "download-exomiser-url": False,
+                "download-exomiser-release": False,
+                "download-exomiser-phenotype-release": False,
+                "download-exomiser-remm-release": False,
+                "download-exomiser-remm-url": False,
+                "download-exomiser-cadd-release": False,
+                "download-exomiser-cadd-url": False,
+                "download-exomiser-cadd-url-snv-file": False,
+                "download-exomiser-cadd-url-indel-file": False
+            },
+            "dbSNP": {
+                "download-dbsnp": False,
+                "download-dbsnp-releases": False,
+                "download-dbsnp-release-default": False,
+                "download-dbsnp-url": False,
+                "download-dbsnp-url-files": False,
+                "download-dbsnp-url-files-prefix": False,
+                "download-dbsnp-assemblies-map": False,
+                "download-dbsnp-vcf": False,
+                "download-dbsnp-parquet": False
             },
         }
+
 
     },
     "from_annovar": {

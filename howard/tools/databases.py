@@ -30,8 +30,11 @@ import pandas as pd
 from typing import List
 from tempfile import TemporaryDirectory
 
+from jproperties import Properties # jproperties 2.1.1
+
 
 from howard.commons import *
+from howard.objects.variants import *
 
 
 def query_and_concatenate_columns(parquet_file: str, output_file: str, columns: list):
@@ -102,7 +105,7 @@ def databases_download(args:argparse) -> None:
         if assemblies:
             databases_download_genomes(
                 assemblies=assemblies, 
-                genome_folder=args.download_genomes,
+                genomes_folder=args.download_genomes,
                 provider=args.download_genomes_provider,
                 contig_regex=args.download_genomes_contig_regex,
                 threads=args.threads
@@ -119,7 +122,8 @@ def databases_download(args:argparse) -> None:
             folder=args.download_annovar,
             files=files,
             assemblies = assemblies,
-            annovar_url=args.download_annovar_url
+            annovar_url=args.download_annovar_url,
+            threads=args.threads
             )
 
     # snpEff
@@ -172,9 +176,57 @@ def databases_download(args:argparse) -> None:
             genomes_folder=args.genomes_folder,
             )
 
+    # AlphaMissense
+    if args.download_alphamissense:
+        log.debug(f"Download AlphaMissense")
+        databases_download_alphamissense(
+            assemblies = assemblies,
+            alphamissense_folder=args.download_alphamissense,
+            alphamissense_url=args.download_alphamissense_url,
+            threads=args.threads
+            )
+    
+    # Exomiser
+    if args.download_exomiser:
+        log.debug(f"Download Exomiser")
+        databases_download_exomiser(
+            assemblies = assemblies,
+            exomiser_folder=args.download_exomiser,
+            exomiser_application_properties=args.download_exomiser_application_properties,
+            exomiser_url=args.download_exomiser_url,
+            exomiser_release=args.download_exomiser_release,
+            exomiser_phenotype_release=args.download_exomiser_phenotype_release,
+            exomiser_remm_release=args.download_exomiser_remm_release,
+            exomiser_remm_url=args.download_exomiser_remm_url,
+            exomiser_cadd_release=args.download_exomiser_cadd_release,
+            exomiser_cadd_url=args.download_exomiser_cadd_url,
+            exomiser_cadd_url_snv_file=args.download_exomiser_cadd_url_snv_file,
+            exomiser_cadd_url_indel_file=args.download_exomiser_cadd_url_indel_file
+            )
+
+    # dbSNP
+    if args.download_dbsnp:
+        log.debug(f"Download dbSNP")
+        if args.download_dbsnp_releases:
+            dbsnp_releases = [value for value in args.download_dbsnp_releases.split(',')]
+        else:
+            dbsnp_releases = []
+        databases_download_dbsnp(
+            assemblies = assemblies,
+            dbsnp_folder=args.download_dbsnp,
+            dbsnp_releases=dbsnp_releases,
+            dbsnp_release_default=args.download_dbsnp_release_default,
+            dbsnp_url=args.download_dbsnp_url,
+            dbsnp_url_files=args.download_dbsnp_url_files,
+            dbsnp_url_files_prefix=args.download_dbsnp_url_files_prefix,
+            dbsnp_assemblies_map=args.download_dbsnp_assemblies_map,
+            dbsnp_vcf=args.download_dbsnp_vcf,
+            dbsnp_parquet=args.download_dbsnp_parquet,
+            genomes_folder=args.genomes_folder
+            )
 
 
-def databases_download_annovar(folder:str = None, files:list = None, assemblies:list = ["hg19"], annovar_url:str = "http://www.openbioinformatics.org/annovar/download") -> None:
+def databases_download_annovar(folder:str = None, files:list = None, assemblies:list = ["hg19"], annovar_url:str = "http://www.openbioinformatics.org/annovar/download", threads:int = 1) -> None:
     """
     This function downloads and extracts Annovar databases for specified assemblies and files.
     
@@ -190,6 +242,9 @@ def databases_download_annovar(folder:str = None, files:list = None, assemblies:
     :param annovar_url: The URL where Annovar databases can be downloaded from, defaults to
     http://www.openbioinformatics.org/annovar/download
     :type annovar_url: str (optional)
+    :param threads: The "threads" parameter specifies the number of threads (parallel processes) to use
+    for extract/uncompress files. Default: 1
+    :type threads: int (optional)
     """
 
     log.info(f"Download Annovar databases {assemblies}")
@@ -307,7 +362,7 @@ def databases_download_annovar(folder:str = None, files:list = None, assemblies:
                     log.debug(f"Download file {file} from {file_url} to {file_path}...")
                     download_file(file_url, file_path)
                     log.debug(f"Extract file {file} to {folder_assembly}...")
-                    extract_file(file_path)
+                    extract_file(file_path=file_path, threads=threads)
             else:
                 log.info(f"Download Annovar databases {[assembly]} - already exists")
 
@@ -402,16 +457,16 @@ def databases_download_snpeff(folder:str = None, assemblies:list = ["hg19"], con
             log.info(f"Download snpEff databases {[assembly]} - already exists")
 
 
-def databases_download_genomes(assemblies: list, genome_folder: str = None, provider:str = "UCSC", contig_regex:str = None, threads:int = 1) -> None:
+def databases_download_genomes(assemblies: list, genomes_folder: str = DEFAULT_GENOME_FOLDER, provider:str = "UCSC", contig_regex:str = None, threads:int = 1) -> None:
     """
     This function downloads genome assemblies using genomepy package with options to specify genome
     folder, provider, contig regex, and number of threads.
     
     :param assemblies: a list of genome assembly names to download
     :type assemblies: list
-    :param genome_folder: The folder where the downloaded genome files will be saved. If no folder is
+    :param genomes_folder: The folder where the downloaded genome files will be saved. If no folder is
     specified, the default folder will be used
-    :type genome_folder: str
+    :type genomes_folder: str
     :param provider: The provider parameter specifies the source of the genome data. In this case, the
     default provider is set to "UCSC", which refers to the University of California, Santa Cruz Genome
     Browser. Other possible providers could include NCBI or Ensembl, defaults to UCSC
@@ -433,20 +488,20 @@ def databases_download_genomes(assemblies: list, genome_folder: str = None, prov
 
     import genomepy
 
-    if not genome_folder:
-        genome_folder = DEFAULT_GENOME_FOLDER
+    if not genomes_folder:
+        genomes_folder = DEFAULT_GENOME_FOLDER
 
-    if os.path.exists(genome_folder):
-        installed_genomes = genomepy.list_installed_genomes(genomes_dir=genome_folder)
+    if os.path.exists(genomes_folder):
+        installed_genomes = genomepy.list_installed_genomes(genomes_dir=genomes_folder)
     else:
         installed_genomes = []
 
     for assembly in assemblies:
         if assembly in installed_genomes:
-            log.info(f"Download Genomes '{[assembly]}' - already exists")
+            log.info(f"Download Genomes {[assembly]} - already exists")
         else:
-            log.info(f"Download Genomes '{[assembly]}' downloading...")
-            genomepy.install_genome(assembly, annotation=False, provider=provider, genomes_dir=genome_folder, threads=threads, regex=contig_regex)
+            log.info(f"Download Genomes {[assembly]} downloading...")
+            genomepy.install_genome(assembly, annotation=False, provider=provider, genomes_dir=genomes_folder, threads=threads, regex=contig_regex)
 
     return None
 
@@ -1728,7 +1783,7 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
 
                                     # Log
                                     log.debug(f"Download dbNSFP ['{assembly}'] - Database '{sub_database}' - VCF file - Concate and Compress files...")
-                                    concat_and_compress_files(input_files=list_for_vcf, output_file=output_vcf)
+                                    concat_and_compress_files(input_files=list_for_vcf, output_file=output_vcf, sort=True, index=True)
 
                                     db_copy.close()
 
@@ -1765,3 +1820,644 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
 
     return True
 
+
+def databases_download_alphamissense(assemblies:list, alphamissense_folder:str = DEFAULT_ANNOTATIONS_FOLDER, alphamissense_url:str = DEFAULT_ALPHAMISSENSE_URL, threads:int = None) -> bool:
+    """
+    The function `databases_download_alphamissense` downloads and converts AlphaMissense databases for a
+    list of assemblies.
+    
+    :param assemblies: A list of assemblies for which the AlphaMissense database needs to be downloaded
+    :type assemblies: list
+    :param alphamissense_folder: The `alphamissense_folder` parameter is a string that specifies the
+    folder where the AlphaMissense files will be downloaded and stored. It is set to
+    `DEFAULT_ANNOTATIONS_FOLDER` by default, which is likely a predefined constant or variable in your
+    code
+    :type alphamissense_folder: str
+    :param alphamissense_url: The `alphamissense_url` parameter is the URL where the AlphaMissense files
+    are located. It is used to construct the download URL for each assembly's AlphaMissense file
+    :type alphamissense_url: str
+    :param threads: The `threads` parameter is an optional parameter that specifies the number of
+    threads to use for the conversion process. It determines the level of parallelism when converting
+    the AlphaMissense TSV file to the Parquet format. If not specified, the default value will be used
+    :type threads: int
+    """
+
+    from howard.objects.database import Database
+
+    # Log
+    log.info(f"Download AlphaMissense {assemblies}")
+
+    for assembly in assemblies:
+
+        # Files for AlphaMissense
+        alphamissense_tsv = f"AlphaMissense_{assembly}.tsv.gz"
+        alphamissense_tsv_url = os.path.join(alphamissense_url, alphamissense_tsv)
+        alphamissense_tsv_dest = os.path.join(alphamissense_folder, assembly, alphamissense_tsv)
+        alphamissense_tsv_dest_folder = os.path.dirname(alphamissense_tsv_dest)
+        alphamissense_parquet = f"AlphaMissense.parquet"
+        alphamissense_parquet_dest = os.path.join(alphamissense_folder, assembly, alphamissense_parquet)
+
+        # Create folder if not exists
+        if not os.path.exists(alphamissense_tsv_dest_folder):
+            Path(alphamissense_tsv_dest_folder).mkdir(parents=True, exist_ok=True)
+
+        log.debug(f"{alphamissense_tsv}, {alphamissense_tsv_url}, {alphamissense_tsv_dest}, {alphamissense_tsv_dest_folder}")
+
+        # Download AlphaMissense
+        if not os.path.exists(alphamissense_tsv_dest):
+            log.info(f"Download AlphaMissense {assemblies} - Download '{alphamissense_tsv}'...")
+            download_file(alphamissense_tsv_url, alphamissense_tsv_dest)
+        else:
+            log.info(f"Download AlphaMissense {assemblies} - Database '{alphamissense_tsv}' already exists")
+
+        # Convert to Parquet
+        if os.path.exists(alphamissense_tsv_dest):
+            if not os.path.exists(alphamissense_parquet_dest):
+                log.info(f"Download AlphaMissense {assemblies} - Convert to '{alphamissense_parquet}'...")
+                alphamissense_database = Database(database=alphamissense_tsv_dest, conn_config={"threads":threads})
+                alphamissense_database.export(output_database=alphamissense_parquet_dest, output_header=alphamissense_parquet_dest+".hdr", threads=threads)
+            else:
+                log.info(f"Download AlphaMissense {assemblies} - Database '{alphamissense_parquet}' already exists")
+        else:
+            log.error(f"Download AlphaMissense {assemblies} - Database '{alphamissense_tsv}' DOES NOT exists")
+    
+    return True
+
+
+
+def databases_download_exomiser(assemblies:list, exomiser_folder:str = DEFAULT_EXOMISER_FOLDER, exomiser_application_properties:str = None, exomiser_url:str = DEFAULT_EXOMISER_URL, exomiser_release:str = None, exomiser_phenotype_release:str = None, exomiser_remm_release:str = None, exomiser_remm_url:str = "https://kircherlab.bihealth.org/download/ReMM", exomiser_cadd_release:str = None, exomiser_cadd_url:str = "https://kircherlab.bihealth.org/download/CADD", exomiser_cadd_url_snv_file:str = "whole_genome_SNVs.tsv.gz", exomiser_cadd_url_indel_file:str = "InDels.tsv.gz") -> bool:
+    """
+    The `databases_download_exomiser` function downloads and sets up the Exomiser database for the
+    specified assemblies.
+    
+    :param assemblies: A list of assemblies for which to download Exomiser databases. Each assembly is a
+    string representing a genome build, such as "GRCh37" or "GRCh38"
+    :type assemblies: list
+    :param exomiser_folder: The `exomiser_folder` parameter is a string that specifies the folder where
+    the Exomiser databases will be downloaded and stored. If the folder does not exist, it will be
+    created
+    :type exomiser_folder: str
+    :param exomiser_application_properties: The `exomiser_application_properties` parameter is a string
+    representing the path to the Exomiser application properties file. This file contains configuration
+    settings for the Exomiser tool. If this parameter is not provided, the function will attempt to
+    locate the application properties file automatically based on the Exomiser
+    :type exomiser_application_properties: str
+    :param exomiser_url: The `exomiser_url` parameter is the URL where the Exomiser database files can
+    be downloaded from. It is used to construct the download URLs for the phenotype and assembly files
+    :type exomiser_url: str
+    :param exomiser_release: The `exomiser_release` parameter is used to specify the version of the
+    Exomiser data to download. If it is set to "default", "auto", or "config", the function will attempt
+    to retrieve the version from the `exomiser.application.properties` file. If it is
+    :type exomiser_release: str
+    :param exomiser_phenotype_release: The `exomiser_phenotype_release` parameter is used to specify the
+    release version of the Exomiser phenotype database. If not provided, it will default to the value
+    specified in the `application.properties` file or the latest available release
+    :type exomiser_phenotype_release: str
+    :param exomiser_remm_release: The `exomiser_remm_release` parameter is used to specify the version
+    of the ReMM (Regulatory Mendelian Mutation) database to download. If the value is set to "default",
+    "auto", or "config", it will try to retrieve the version from the `application.properties`
+    :type exomiser_remm_release: str
+    :param exomiser_remm_url: The `exomiser_remm_url` parameter is the URL where the ReMM (Regulatory
+    Mendelian Mutation) database can be downloaded from. It is used in the function to construct the
+    download URL for the ReMM database files, defaults to https://kircherlab.bihealth.org/download/ReMM
+    :type exomiser_remm_url: str (optional)
+    :param exomiser_cadd_release: The `exomiser_cadd_release` parameter is used to specify the version
+    of the CADD (Combined Annotation Dependent Depletion) database to download. If the value is set to
+    "default", "auto", or "config", it will try to retrieve the version from the `exom
+    :type exomiser_cadd_release: str
+    :param exomiser_cadd_url: The `exomiser_cadd_url` parameter is the URL where the CADD (Combined
+    Annotation Dependent Depletion) database files can be downloaded from. It is used to construct the
+    download URLs for the CADD database files, defaults to https://kircherlab.bihealth.org/download/CADD
+    :type exomiser_cadd_url: str (optional)
+    :param exomiser_cadd_url_snv_file: The parameter `exomiser_cadd_url_snv_file` is the name of the
+    file containing the SNV (Single Nucleotide Variant) data for the CADD (Combined Annotation Dependent
+    Depletion) database, defaults to whole_genome_SNVs.tsv.gz
+    :type exomiser_cadd_url_snv_file: str (optional)
+    :param exomiser_cadd_url_indel_file: The parameter `exomiser_cadd_url_indel_file` is the name of the
+    INDEL file that will be downloaded from the CADD database, defaults to InDels.tsv.gz
+    :type exomiser_cadd_url_indel_file: str (optional)
+    """
+
+    log.info(f"Download Exomiser {assemblies}")
+
+    # Variables
+    transcript_source_default = "refseq"
+
+    # Create folder if not exists
+    if not os.path.exists(exomiser_folder):
+        Path(exomiser_folder).mkdir(parents=True, exist_ok=True)
+
+    # application.properties as dict
+    exomiser_application_properties_dict = {}
+
+    # Find exomiser_application_properties
+    if not exomiser_application_properties:
+        exomiser_jar = get_bin(bin="exomiser-cli*.jar", tool="exomiser", bin_type="jar", default_folder=f"{DEFAULT_TOOLS_FOLDER}/exomiser")
+        if exomiser_jar and os.path.exists(exomiser_jar):
+            exomiser_jar_dirname = os.path.dirname(exomiser_jar)
+            exomiser_application_properties = os.path.join(exomiser_jar_dirname, "application.properties")
+
+    if os.path.exists(exomiser_application_properties):
+        configs = Properties()
+        with open(exomiser_application_properties, 'rb') as read_prop:
+            configs.load(read_prop)
+        for item in configs.items():
+            exomiser_application_properties_dict[item[0]] = item[1][0]
+
+    log.debug(exomiser_application_properties_dict)
+
+    for assembly in assemblies:
+
+        log.info(f"Download Exomiser ['{assembly}']")
+
+        if not exomiser_release or exomiser_release.lower() in ["default", "auto", "config"]:
+            exomiser_release_found = exomiser_application_properties_dict.get(f"exomiser.{assembly}.data-version", "2109")
+        else:
+            exomiser_release_found = exomiser_release
+
+        if not exomiser_phenotype_release or exomiser_phenotype_release.lower() in ["default", "auto", "config"]:
+            exomiser_phenotype_release_found = exomiser_application_properties_dict.get(f"exomiser.phenotype.data-version", exomiser_release)
+        else:
+            exomiser_phenotype_release_found = exomiser_phenotype_release
+
+
+        log.debug(f"exomiser_release: {exomiser_release_found}")
+        log.debug(f"exomiser_phenotype_release: {exomiser_phenotype_release_found}")
+
+        # Phenotype
+        exomiser_phenotype_filename = f"{exomiser_phenotype_release_found}_phenotype.zip"
+        exomiser_phenotype_filename_base = f"{exomiser_phenotype_release_found}_phenotype"
+        exomiser_phenotype_file = os.path.join(exomiser_folder, exomiser_phenotype_filename)
+        exomiser_phenotype_file_base = os.path.join(exomiser_folder, exomiser_phenotype_filename_base)
+        exomiser_download_phenotype_url = os.path.join(exomiser_url, "data", exomiser_phenotype_filename)
+
+        # Download Zip file 
+        if not os.path.exists(exomiser_phenotype_file):
+            log.info(f"Download Exomiser {assemblies} - Download Phenotype '{exomiser_phenotype_filename}'...")
+            download_file(url=exomiser_download_phenotype_url, dest_file_path=exomiser_phenotype_file)
+        else:
+            log.info(f"Download Exomiser {assemblies} - Database Phenotype '{exomiser_phenotype_filename}' already exists")
+
+        # Extract Zip file
+        if not os.path.exists(exomiser_phenotype_file_base):
+            log.info(f"Download Exomiser {assemblies} - Extract Phenotype '{exomiser_phenotype_filename}'...")
+            extract_file(file_path=exomiser_phenotype_file, path=None)
+        else:
+            log.info(f"Download Exomiser {assemblies} - Database Phenotype '{exomiser_phenotype_filename}' already extracted")
+
+        # Assembly
+        exomiser_assembly_filename = f"{exomiser_release_found}_{assembly}.zip"
+        exomiser_assembly_filename_base = f"{exomiser_release_found}_{assembly}"
+        exomiser_assembly_file = os.path.join(exomiser_folder, exomiser_assembly_filename)
+        #exomiser_assembly_file_base = os.path.join(exomiser_folder, exomiser_assembly_filename_base)
+        exomiser_assembly_folder = os.path.join(exomiser_folder, assembly)
+        exomiser_download_assembly_url = os.path.join(exomiser_url, "data", exomiser_assembly_filename)
+
+        # Download Zip file 
+        if not os.path.exists(exomiser_assembly_file):
+            log.info(f"Download Exomiser {assemblies} - Download Data '{exomiser_assembly_filename}'...")
+            download_file(url=exomiser_download_assembly_url, dest_file_path=exomiser_assembly_file)
+        else:
+            log.info(f"Download Exomiser {assemblies} - Database Data '{exomiser_assembly_filename}' already exists")
+
+        # Extract Zip file
+        if not os.path.exists(exomiser_assembly_folder):
+            log.info(f"Download Exomiser {assemblies} - Extract Data '{exomiser_assembly_filename}'...")
+            extract_file(file_path=exomiser_assembly_file, path=exomiser_assembly_folder)
+        else:
+            log.info(f"Download Exomiser {assemblies} - Database Data '{exomiser_assembly_filename}' already extracted")
+
+        # Link Phenotype to assembly
+        phenotype_assembly_link_src = f"../{exomiser_phenotype_filename_base}"
+        phenotype_assembly_link_dest = os.path.join(exomiser_assembly_folder, exomiser_phenotype_filename_base)
+        if not os.path.exists(phenotype_assembly_link_dest):
+            log.info(f"Download Exomiser {assemblies} - Create Data '{os.path.basename(phenotype_assembly_link_dest)}' Phenotype link...")
+            
+            os.symlink(phenotype_assembly_link_src, phenotype_assembly_link_dest)
+        else:
+            log.info(f"Download Exomiser {assemblies} - Database Data '{os.path.basename(phenotype_assembly_link_dest)}' Phenotype link already created")
+
+        # Generate properties for assembly
+        exomiser_application_properties_assembly_file = os.path.join(exomiser_assembly_folder, "application.properties")
+        exomiser_application_properties_assembly = Properties()
+        exomiser_application_properties_assembly["exomiser.data-directory"] = exomiser_assembly_folder
+        exomiser_application_properties_assembly[f"exomiser.{assembly}.data-version"] = exomiser_release_found
+        exomiser_application_properties_assembly[f"exomiser.{assembly}.variant-white-list-path"] = f"{exomiser_release_found}_{assembly}_clinvar_whitelist.tsv.gz"
+        exomiser_application_properties_assembly[f"exomiser.phenotype.data-version"] = exomiser_phenotype_release_found
+        exomiser_application_properties_assembly[f"exomiser.{assembly}.transcript-source"] = transcript_source_default
+
+
+        # REMM
+        exomiser_remm_download = False
+
+        if exomiser_remm_release:
+            # Search release if autodetection
+            if exomiser_remm_release.lower() in ["default", "auto", "config"]:
+                exomiser_remm_release_found = exomiser_application_properties_dict.get("remm.version", None)
+                log.debug(f"exomiser_remm_release found: {exomiser_remm_release}")
+            else:
+                exomiser_remm_release_found = exomiser_remm_release
+            # Force create of path and download
+            exomiser_remm_download = True
+        else:
+            # Check REMM release
+            exomiser_remm_release_found = exomiser_application_properties_dict.get("remm.version", None)
+
+        # Check if path is mandatory in application.properties
+        if exomiser_remm_release_found and exomiser_application_properties_dict.get(f"exomiser.{assembly}.remm-path", None):
+            exomiser_remm_download = True
+
+        exomiser_assembly_remm_folder = os.path.join(exomiser_assembly_folder, "remm")
+        exomiser_remm_path = os.path.join(exomiser_assembly_remm_folder, f"ReMM.v{exomiser_remm_release_found}.{assembly}.tsv.gz")
+        
+        if exomiser_remm_download and not os.path.exists(exomiser_remm_path):
+            if not os.path.exists(exomiser_assembly_remm_folder):
+                Path(exomiser_assembly_remm_folder).mkdir(parents=True, exist_ok=True)
+            exomiser_remm_path_tbi = f"{exomiser_remm_path}.tbi"
+            exomiser_remm_path_md5 = exomiser_remm_path.replace(".tsv.gz", ".md5")
+            log.info(f"Download Exomiser {assemblies} - Download REMM database '{os.path.basename(exomiser_remm_path)}'...")
+            exomiser_download_assembly_remm_url = os.path.join(exomiser_remm_url, f"ReMM.v{exomiser_remm_release_found}.{assembly}.tsv.gz") 
+            exomiser_download_assembly_remm_tbi_url = os.path.join(exomiser_remm_url, f"ReMM.v{exomiser_remm_release_found}.{assembly}.tsv.gz.tbi")
+            exomiser_download_assembly_remm_md5_url = os.path.join(exomiser_remm_url, f"ReMM.v{exomiser_remm_release_found}.{assembly}.md5")
+            download_file(url=exomiser_download_assembly_remm_url, dest_file_path=exomiser_remm_path)
+            download_file(url=exomiser_download_assembly_remm_tbi_url, dest_file_path=exomiser_remm_path_tbi)
+            download_file(url=exomiser_download_assembly_remm_md5_url, dest_file_path=exomiser_remm_path_md5)
+        else:
+            log.debug(f"Download Exomiser {assemblies} - Database REMM not downloaded")
+
+        log.debug(f"{exomiser_remm_release_found} and {exomiser_remm_path} and os.path.exists({exomiser_remm_path})")
+        if exomiser_remm_release_found and exomiser_remm_path and os.path.exists(exomiser_remm_path):
+            log.info(f"Download Exomiser {assemblies} - Database REMM '{os.path.basename(exomiser_remm_path)}' already exists")
+            exomiser_application_properties_assembly["remm.version"] = exomiser_remm_release_found
+            exomiser_application_properties_assembly[f"exomiser.{assembly}.remm-path"] = "/".join(["${exomiser.data-directory}", "remm", f"ReMM.v{exomiser_remm_release_found}.{assembly}.tsv.gz"])
+
+
+        # CADD
+        exomiser_cadd_download = False
+        
+        if exomiser_cadd_release:
+            if exomiser_cadd_release.lower() in ["default", "auto", "config"]:
+                exomiser_cadd_release_found = exomiser_application_properties_dict.get("cadd.version", None)
+                log.debug(f"exomiser_cadd_release found: {exomiser_cadd_release}")
+            else:
+                exomiser_cadd_release_found = exomiser_cadd_release
+            # Force create of path and download
+            exomiser_cadd_download = True
+        else:
+            # Check CADD release
+            exomiser_cadd_release_found = exomiser_application_properties_dict.get("cadd.version", None)
+
+        log.debug(f"exomiser_cadd_release: {exomiser_cadd_release_found}")
+
+        # Check if path is mandatory in application.properties
+        if exomiser_cadd_release_found and exomiser_application_properties_dict.get(f"exomiser.{assembly}.cadd-snv-path", None) and exomiser_application_properties_dict.get(f"exomiser.{assembly}.cadd-in-del-path", None) :
+            exomiser_cadd_download = True
+
+        exomiser_assembly_cadd_folder = os.path.join(exomiser_assembly_folder, "cadd", exomiser_cadd_release_found)
+        exomiser_cadd_snv_path = os.path.join(exomiser_assembly_cadd_folder, exomiser_cadd_url_snv_file)
+        exomiser_cadd_indel_path = os.path.join(exomiser_assembly_cadd_folder, exomiser_cadd_url_indel_file)
+        
+        if exomiser_cadd_download and (not os.path.exists(exomiser_cadd_snv_path) or not os.path.exists(exomiser_cadd_indel_path)):
+
+            if not os.path.exists(exomiser_assembly_cadd_folder):
+                Path(exomiser_assembly_cadd_folder).mkdir(parents=True, exist_ok=True)
+            
+            # Genome build from gencode
+            log.debug(f"Download Exomiser {assemblies} - Search for assembly '{assembly}' into gencode...")
+            genome_build_switch_to_gencode = genome_build_switch(assembly=assembly)
+
+            # SNV
+            if not os.path.exists(exomiser_cadd_snv_path):
+                exomiser_cadd_snv_path_tbi = f"{exomiser_cadd_snv_path}.tbi"
+                log.info(f"Download Exomiser {assemblies} - Download CADD database '{os.path.basename(exomiser_cadd_snv_path)}'...")
+                exomiser_download_assembly_cadd_snv_url = os.path.join(exomiser_cadd_url, f"v{exomiser_cadd_release_found}", genome_build_switch_to_gencode, exomiser_cadd_url_snv_file) 
+                exomiser_download_assembly_cadd_snv_tbi_url = os.path.join(exomiser_cadd_url, f"v{exomiser_cadd_release_found}", genome_build_switch_to_gencode, f"{exomiser_cadd_url_snv_file}.tbi")
+                download_file(url=exomiser_download_assembly_cadd_snv_url, dest_file_path=exomiser_cadd_snv_path)
+                download_file(url=exomiser_download_assembly_cadd_snv_tbi_url, dest_file_path=exomiser_cadd_snv_path_tbi)
+
+            # INDEL
+            if not os.path.exists(exomiser_cadd_indel_path):
+                exomiser_cadd_indel_path_tbi = f"{exomiser_cadd_indel_path}.tbi"
+                log.info(f"Download Exomiser {assemblies} - Download CADD database '{os.path.basename(exomiser_cadd_indel_path)}'...")
+                exomiser_download_assembly_cadd_indel_url = os.path.join(exomiser_cadd_url, f"v{exomiser_cadd_release_found}", genome_build_switch_to_gencode, exomiser_cadd_url_indel_file) 
+                exomiser_download_assembly_cadd_indel_tbi_url = os.path.join(exomiser_cadd_url, f"v{exomiser_cadd_release_found}", genome_build_switch_to_gencode, f"{exomiser_cadd_url_indel_file}.gz.tbi")
+                download_file(url=exomiser_download_assembly_cadd_indel_url, dest_file_path=exomiser_cadd_indel_path)
+                download_file(url=exomiser_download_assembly_cadd_indel_tbi_url, dest_file_path=exomiser_cadd_indel_path_tbi)
+
+        else:
+            log.debug(f"Download Exomiser {assemblies} - Database CADD not downloaded")
+
+        log.debug(f"{exomiser_cadd_release_found} and {exomiser_cadd_snv_path} and {exomiser_cadd_indel_path}")
+        if exomiser_cadd_release_found and exomiser_cadd_snv_path and os.path.exists(exomiser_cadd_snv_path) and exomiser_cadd_indel_path and os.path.exists(exomiser_cadd_indel_path) :
+            log.info(f"Download Exomiser {assemblies} - Database CADD '{os.path.basename(exomiser_cadd_snv_path)}' already exists")
+            log.info(f"Download Exomiser {assemblies} - Database CADD '{os.path.basename(exomiser_cadd_indel_path)}' already exists")
+            exomiser_application_properties_assembly["cadd.version"] = exomiser_cadd_release_found
+            exomiser_application_properties_assembly[f"exomiser.{assembly}.cadd-snv-path"] = "/".join(["${exomiser.data-directory}", "cadd", exomiser_cadd_release_found, exomiser_cadd_url_snv_file])
+            exomiser_application_properties_assembly[f"exomiser.{assembly}.cadd-in-del-path"] = "/".join(["${exomiser.data-directory}", "cadd", exomiser_cadd_release_found, exomiser_cadd_url_indel_file])
+
+        
+        # Create application.properties
+        with open(exomiser_application_properties_assembly_file, "wb") as f:
+            exomiser_application_properties_assembly.store(f, encoding="utf-8")
+        
+
+    return True
+
+def databases_download_dbsnp(assemblies:list, dbsnp_folder:str = DEFAULT_DBSNP_FOLDER, dbsnp_releases:list = ["b156"], dbsnp_release_default:str = None, dbsnp_url:str = DEFAULT_DBSNP_URL, dbsnp_url_files:dict = None, dbsnp_url_files_prefix:str = "GCF_000001405", dbsnp_assemblies_map:dict = {"hg19": "25", "hg38": "40"}, genomes_folder: str = DEFAULT_GENOME_FOLDER, threads:int = 1, dbsnp_vcf:bool = False, dbsnp_parquet:bool = False) -> str:
+    """
+    The function `databases_download_dbsnp` downloads dbSNP files, generates VCF files, and converts
+    them to Parquet format.
+    
+    :param assemblies: A list of genome assemblies for which to download dbSNP data
+    :type assemblies: list
+    :param dbsnp_folder: The folder where the dbSNP files will be downloaded and stored
+    :type dbsnp_folder: str
+    :param dbsnp_releases: List of releases to download. Default:["b156"]
+    :type dbsnp_releases: list
+    :param dbsnp_release_default: Default release to link in default folder. Default: first release in dbsnp_releases
+    :type dbsnp_release_default: str
+    :param dbsnp_url: The `dbsnp_url` parameter is a string that represents the base URL where the dbSNP
+    files are located. This URL is used to construct the full URL for downloading the dbSNP files
+    :type dbsnp_url: str
+    :param dbsnp_url_files: The `dbsnp_url_files` parameter is a dictionary that maps assembly names to
+    specific dbSNP URL files. It allows you to provide custom dbSNP URL files for specific assemblies
+    instead of using the default file naming convention
+    :type dbsnp_url_files: dict
+    :param dbsnp_url_files_prefix: The `dbsnp_url_files_prefix` parameter is a string that represents the
+    prefix of the dbSNP file name for a specific assembly. It is used to construct the full URL of the
+    dbSNP file to be downloaded. By default, the value is set to "GCF_000001405"
+    :type dbsnp_url_files_prefix: str (optional)
+    :param dbsnp_assemblies_map: The `dbsnp_assemblies_map` parameter is a dictionary that maps assembly
+    names to their corresponding dbSNP versions. It is used to construct the dbSNP file name based on
+    the assembly name. For example, if the assembly is "hg19", the corresponding dbSNP version is "
+    :type dbsnp_assemblies_map: dict
+    :param genomes_folder: The `genomes_folder` parameter is a string that specifies the folder where the
+    genome index files are located. These index files are used for generating the VCF file from the
+    downloaded dbSNP file
+    :type genomes_folder: str
+    :param threads: The `threads` parameter specifies the number of threads to use for downloading and
+    processing the dbSNP files, defaults to 1
+    :type threads: int (optional)
+    :param dbsnp_vcf: A boolean flag indicating whether to generate a VCF file from the downloaded
+    dbSNP data. If set to True, the function will generate a VCF file. If set to False, the function
+    will not generate a VCF file, defaults to False
+    :type dbsnp_vcf: bool (optional)
+    :param dbsnpparquet: A boolean flag indicating whether to generate a Parquet file from the
+    downloaded dbSNP data. If set to True, a Parquet file will be generated; if set to False, no Parquet
+    file will be generated, defaults to False
+    :type dbsnp_parquet: bool (optional)
+    """
+
+    # Import Database object
+    from howard.objects.database import Database
+
+    # Log
+    log.info(f"Download dbSNP {assemblies}")
+    
+    # Database config       
+    conn_config = {"threads": threads}
+
+    # Genomes folder
+    if not genomes_folder:
+        genomes_folder = DEFAULT_GENOME_FOLDER
+
+    # Default release
+    dbsnp_release_default_found = None
+    if dbsnp_release_default:
+        dbsnp_release_default_found = dbsnp_release_default
+    elif len(dbsnp_releases) > 0:
+        dbsnp_release_default_found = dbsnp_releases[0]
+
+    # Init
+    if dbsnp_parquet:
+        dbsnp_vcf = True
+
+    for assembly in assemblies:
+
+        # Log
+        log.info(f"Download dbSNP {[assembly]}")
+
+        # Folder
+        dbsnp_folder_assembly = os.path.join(dbsnp_folder, assembly)
+
+        for dbsnp_release in dbsnp_releases:
+
+            # Log
+            log.info(f"Download dbSNP {[assembly]} - Release {[dbsnp_release]}")
+
+            # Folder
+            dbsnp_folder_assembly_release = os.path.join(dbsnp_folder_assembly, dbsnp_release)
+
+            # Create folder if not exists
+            if not os.path.exists(dbsnp_folder_assembly_release):
+                Path(dbsnp_folder_assembly_release).mkdir(parents=True, exist_ok=True)
+
+            # Construct URL
+            if dbsnp_url_files and dbsnp_url_files.get(assembly, None):
+                dbsnp_url_file = dbsnp_url_files.get(assembly)
+            elif dbsnp_assemblies_map.get(assembly, None):
+                dbsnp_url_file = f"{dbsnp_url_files_prefix}.{dbsnp_assemblies_map.get(assembly)}.gz"
+            else:
+                dbsnp_url_file = None
+
+            if dbsnp_url_file:
+                dbsnp_url_path = os.path.join(dbsnp_url, dbsnp_release, "VCF", dbsnp_url_file)
+            else:
+                log.error("No dbSNP file from URL provided")
+                raise ValueError("No dbSNP file from URL provided")
+
+            # Construct File
+            dbsnp_file = os.path.join(dbsnp_folder_assembly_release, os.path.basename(dbsnp_url_path))
+
+            ### Download dbSNP
+            if not os.path.exists(dbsnp_file):
+
+                # Log
+                log.info(f"Download dbSNP {[assembly]} - Release {[dbsnp_release]} - Download '{dbsnp_url_file}'...")
+
+                # Create folder if not exists
+                if not os.path.exists(os.path.dirname(dbsnp_file)):
+                    Path(os.path.dirname(dbsnp_file)).mkdir(parents=True, exist_ok=True)
+
+                # Download file
+                download_file(url=dbsnp_url_path, dest_file_path=dbsnp_file)
+
+                # Index tbi
+                dbsnp_url_path_tbi = f"{dbsnp_url_path}.tbi"
+                dbsnp_file_tbi = f"{dbsnp_file}.tbi"
+                download_file(url=dbsnp_url_path_tbi, dest_file_path=dbsnp_file_tbi)
+
+            else:
+
+                # Log
+                log.info(f"Download dbSNP {[assembly]} - Release {[dbsnp_release]} - Database {os.path.basename(dbsnp_file)} already downloaded")
+
+
+            ### Generate VCF and/or Parquet
+
+            # Construct VCF File
+            dbsnp_vcf_file = os.path.join(dbsnp_folder_assembly_release, "dbsnp.vcf.gz")
+            dbsnp_vcf_file_buffer = os.path.join(dbsnp_folder_assembly_release, "dbsnp.buffer.vcf.gz")
+
+            # Construct File
+            dbsnp_parquet_file = os.path.join(dbsnp_folder_assembly_release, "dbsnp.parquet")
+            dbsnp_parquet_hdr_file = os.path.join(dbsnp_folder_assembly_release, "dbsnp.parquet.hdr")
+
+            # Files to generate or already generated
+            dbsnp_files_to_generate = []
+            dbsnp_files_already_generated = []
+
+            if os.path.exists(dbsnp_file) and (dbsnp_vcf and not os.path.exists(dbsnp_vcf_file)) or (dbsnp_parquet and not os.path.exists(dbsnp_parquet_file)):
+
+                if (dbsnp_vcf and not os.path.exists(dbsnp_vcf_file)):
+                    write_vcf = True
+                    dbsnp_files_to_generate.append(os.path.basename(dbsnp_vcf_file))
+                else:
+                    write_vcf = False
+                    dbsnp_files_already_generated.append(os.path.basename(dbsnp_vcf_file))
+
+                if (dbsnp_parquet and not os.path.exists(dbsnp_parquet_file)):
+                    write_parquet = True
+                    dbsnp_files_to_generate.append(os.path.basename(dbsnp_parquet_file))
+                else:
+                    write_parquet = False
+                    dbsnp_files_already_generated.append(os.path.basename(dbsnp_parquet_file))
+
+                # Log
+                if dbsnp_files_already_generated:
+                    log.info(f"Download dbSNP {[assembly]} - Release {[dbsnp_release]} - Files {dbsnp_files_already_generated} already generated")
+                if dbsnp_files_to_generate:
+                    log.info(f"Download dbSNP {[assembly]} - Release {[dbsnp_release]} - Files {dbsnp_files_to_generate} generation...")
+
+                # Generate Header
+
+                # Genome index
+                genome_index = os.path.join(genomes_folder, assembly, f"{assembly}.fa.fai")
+                if not os.path.exists(genome_index):
+                    log.error("No genome index")
+                    raise ValueError("No genome index")
+
+                # Database
+                conn_config_db = conn_config
+                #conn_config_db["threads"] = 1
+                db = Database(database=dbsnp_file, format="vcf", conn_config=conn_config_db)
+                
+                # Header
+                header_file_tmp = f"{dbsnp_file}.tmp.hdr"
+                db_header_file = db.get_header_file(header_file=header_file_tmp)
+                db_header_list = db.read_header_file(header_file=db_header_file)
+
+                # Header info/format...
+                db_header_list_new = db_header_list[:-1]
+                # Header #CHROM line
+                db_header_list_chrom = [db_header_list[-1]]
+                # Header Contig
+                res = db.query(query=f"""
+                            SELECT
+                                    column0 AS chr,
+                                    concat(
+                                        '##contig=<ID=',
+                                        column0,
+                                        ',length=',
+                                        column1,
+                                        '>\n'
+                                    ) AS contig
+                            FROM read_csv_auto('{genome_index}')
+                            """)
+                db_header_list_chrs = list(res.df()['chr'])
+                db_header_list_contigs = list(res.df()['contig'])
+
+                # Write new heaer with contigs
+                db_header_new = db.get_header_from_list(header_list=db_header_list_new+db_header_list_contigs+db_header_list_chrom)
+                vcf.Writer(open(header_file_tmp, 'w'), db_header_new)
+
+                # Header
+                header_file = f"{dbsnp_vcf}.hdr"
+                shutil.copy(src=header_file_tmp, dst=header_file)
+
+                # Chunk CSV
+                chunksize = 1000000
+                skiprows = len(db_header_list)
+                names = ["CHROM_OLD", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO"]
+                chunk_csv = pd.read_csv(dbsnp_file, low_memory=False, chunksize = chunksize, sep="\t", skiprows=skiprows, names=names)
+                chunk_i = 0
+
+                # Open CSV filewith pgzip compression
+                with pgzip.open(dbsnp_vcf_file_buffer, mode="w", thread=threads) as f:
+
+                    # fetch chunk
+                    for df_chunk in chunk_csv:
+
+                        # Chunk i
+                        chunk_i += 1
+    
+                        # Query
+                        query=f"""
+                            SELECT 
+                                    concat(
+                                        'chr',
+                                        replace(replace(replace(regexp_extract("CHROM_OLD", 'NC_[0]*([0-9]*)_?', 1), '23', 'X'), '24', 'Y'), '25', 'M')
+                                    ) AS '#CHROM',
+                                    "POS", "ID", "REF",
+                                    UNNEST(string_split("ALT", ',')) AS 'ALT',
+                                    "QUAL", "FILTER", "INFO"
+                            FROM df_chunk
+                            WHERE list_contains({db_header_list_chrs}, "#CHROM")
+                            """
+                        res = db.query(query=query)
+
+                        # Write CSV
+                        if write_vcf:
+                            # Use polars to parallelize csv write and an infile with pgzip to parallelise compression
+                            res.pl().write_csv(f, separator="\t", has_header=False)
+
+                        # Write Parquet
+                        if write_parquet:
+                            # Use pandas an to_parquet with append option ans fastparquet engine (no append with other df like polars or pyarrow)
+                            if chunk_i == 1:
+                                append = False
+                            else:
+                                append = True
+                            res.df().to_parquet(dbsnp_parquet_file, engine='fastparquet', append=append)
+
+                        # Log
+                        log.debug(f"chunk {chunk_i} - {chunksize*chunk_i} lines processed")
+
+                # Header
+
+                if write_vcf:
+                    # Concat and Compress CSV with header to VCF in BGZIP compression type
+                    concat_and_compress_files(input_files=[header_file_tmp, dbsnp_vcf_file_buffer], output_file=dbsnp_vcf_file, threads=threads, compression_type="bgzip", index=True)
+
+                if write_parquet:
+                    # Copy header file
+                    shutil.copy(src=header_file, dst=dbsnp_parquet_hdr_file)
+
+                # Clean
+                remove_if_exists([header_file_tmp,dbsnp_vcf_file_buffer])
+
+            else:
+
+                if os.path.exists(dbsnp_vcf_file):
+                    dbsnp_files_already_generated.append(os.path.basename(dbsnp_vcf_file))
+                if os.path.exists(dbsnp_vcf_file):
+                    dbsnp_files_already_generated.append(os.path.basename(dbsnp_parquet_file))
+                if dbsnp_files_already_generated:
+                    log.info(f"Download dbSNP {[assembly]} - Release {[dbsnp_release]} - Files {dbsnp_files_already_generated} already generated")
+
+        # Generate default release link
+        if dbsnp_release_default_found:
+            dbsnp_release_default_link_src = dbsnp_release_default_found
+            dbsnp_release_default_link_dest = os.path.join(dbsnp_folder_assembly, "default")
+            if not os.path.exists(dbsnp_release_default_link_dest) or dbsnp_release_default:
+                log.info(f"Download dbSNP {[assembly]} - Release {[dbsnp_release_default_found]} - Defined as default")
+                if not os.path.exists(dbsnp_release_default_link_dest) or os.path.islink(dbsnp_release_default_link_dest):
+                    remove_if_exists(dbsnp_release_default_link_dest)
+                    os.symlink(dbsnp_release_default_link_src, dbsnp_release_default_link_dest)
+                else:
+                    log.warning(f"Download dbSNP {[assembly]} - Default release path is not a symlink. Change not allowed")
+            else:
+                dbsnp_release_default_already = os.path.basename(os.path.realpath(dbsnp_release_default_link_dest))
+                log.info(f"Download dbSNP {[assembly]} - Release {[dbsnp_release_default_already]} - Already defined as default")
+
+    return True

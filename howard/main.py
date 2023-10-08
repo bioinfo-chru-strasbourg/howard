@@ -121,6 +121,11 @@ def main() -> None:
     else:
         memory = "8G"
 
+    if "assembly" in args and args.assembly:
+        assembly = args.assembly
+    else:
+        assembly = "hg19"
+
     # Load configuration in JSON format
     if "config" in args:
         if os.path.exists(args.config):
@@ -135,6 +140,7 @@ def main() -> None:
     config["verbosity"] = args.verbosity
     config["threads"] = threads
     config["memory"] = memory
+    config["assembly"] = assembly
 
     # Change config
     args.config = config

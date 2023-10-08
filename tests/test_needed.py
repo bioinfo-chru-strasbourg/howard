@@ -92,6 +92,7 @@ database_files = {
     "refgene_without_header" : tests_annotations_folder + "/refGene.without_header.bed",
     "refgene_gz" : tests_annotations_folder + "/refGene.bed.gz",
     "example_vcf" : tests_data_folder + "/example.vcf",
+    "example_vcf_gz" : tests_data_folder + "/example.vcf.gz",
     "example_vcf_gzip" : tests_data_folder + "/example.vcf.gzip",
 }
 
@@ -118,7 +119,7 @@ def download_needed_databases():
     provider = "UCSC"
     contig_regex = None
     threads = 1
-    databases_download_genomes(assemblies=[assembly], genome_folder=genome_folder, provider=provider, contig_regex=contig_regex, threads=threads)
+    databases_download_genomes(assemblies=[assembly], genomes_folder=genome_folder, provider=provider, contig_regex=contig_regex, threads=threads)
 
     # Annovar
     annovar_folder = config["folders"]["databases"]["annovar"]

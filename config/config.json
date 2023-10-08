@@ -7,7 +7,9 @@
       "root": "",
       "annotations": [
         "/databases/annotations/current/",
-        "/databases/dbnsfp/current/"
+        "/databases/dbnsfp/current/",
+        "/databases/alphamissense/current/",
+        "/databases/dbsnp/current/"
       ],
       "parquet": ["/databases/annotations/current/"],
       "bcftools": ["/databases/annotations/current/"],
@@ -17,10 +19,10 @@
     }
   },
   "tools": {
-    "bcftools": {"bin": "bcftools"},
-    "bgzip": {"bin": "bgzip"},
-    "snpeff": {"jar": "/tools/snpeff/5.1d/bin/snpEff.jar"},
+    "bcftools": {"bin": "/tools/bcftools/current/bin/bcftools"},
+    "bgzip": {"bin": "/tools/htslib/current/bin/bgzip"},
+    "snpeff": {"jar": "/tools/snpeff/current/bin/snpEff.jar"},
     "java": {"bin": "/usr/bin/java"},
-    "annovar": {"bin": "/tools/annovar/2020Jun08/bin/table_annovar.pl"}
+    "annovar": {"bin": "/tools/annovar/current/bin/table_annovar.pl"}
   }
 }

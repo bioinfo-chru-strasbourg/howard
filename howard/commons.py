@@ -20,10 +20,12 @@ import urllib.request
 import zipfile
 import gzip
 import requests
+import fnmatch
 
 import random
 
 import pgzip
+import mgzip
 import bgzip
 
 import pysam
@@ -31,6 +33,12 @@ import pysam.bcftools
 
 
 file_folder = os.path.dirname(__file__)
+
+
+# Main folder
+folder_main = os.path.abspath(os.path.join(file_folder, ".."))
+folder_config = os.path.abspath(os.path.join(folder_main, "config"))
+
 
 comparison_map = {
     "gt": ">",
@@ -75,19 +83,32 @@ vcf_required = [
             ]
 
 # Tools
-DEFAULT_SNPEFF_BIN = "/tools/snpeff/5.1d/bin/snpEff.jar"
+DEFAULT_TOOLS_FOLDER = "/tools"
+DEFAULT_SNPEFF_BIN = f"{DEFAULT_TOOLS_FOLDER}/snpeff/5.1d/bin/snpEff.jar"
 
 # URL
 DEFAULT_ANNOVAR_URL = "http://www.openbioinformatics.org/annovar/download"
 DEFAULT_REFSEQ_URL = "http://hgdownload.soe.ucsc.edu/goldenPath"
 DEFAULT_DBNSFP_URL = "https://dbnsfp.s3.amazonaws.com"
+DEFAULT_EXOMISER_URL = "http://data.monarchinitiative.org/exomiser"
+DEFAULT_ALPHAMISSENSE_URL = "https://storage.googleapis.com/dm_alphamissense"
+DEFAULT_DBSNP_URL = "https://ftp.ncbi.nih.gov/snp/archive"
+
 
 # Databases default folder
 DEFAULT_DATABASE_FOLDER = "/databases"
+DEFAULT_ANNOTATIONS_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/annotations/current"
 DEFAULT_GENOME_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/genomes/current"
+DEFAULT_SNPEFF_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/snpeff/current"
+DEFAULT_ANNOVAR_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/annovar/current"
 DEFAULT_REFSEQ_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/refseq/current"
 DEFAULT_DBNSFP_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/dbnsfp/current"
+DEFAULT_EXOMISER_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/exomiser/current"
+DEFAULT_DBSNP_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/exomiser/dbsnp"
 
+
+# Deefault Assembly
+DEFAULT_ASSEMBLY = "hg19"
 
 # DuckDB extension
 DUCKDB_EXTENSION = f"{file_folder}/duckdb_extension"
@@ -99,6 +120,15 @@ MACHIN_LIST = {
 }
 
 LOG_FORMAT = "#[%(asctime)s] [%(levelname)s] %(message)s"
+
+CODE_TYPE_MAP = {
+            "Integer": 0,
+            "String": 1,
+            "Float": 2,
+            "Flag": 3
+        }
+
+DTYPE_LIMIT_AUTO = 10000
 
 def remove_if_exists(filepaths: list) -> None:
     """
@@ -290,17 +320,6 @@ def run_parallel_functions(functions: list, threads: int = 1) -> list:
     return results
 
 
-def run_parallel_functions_new(functions: list, threads:int = 1) -> None:
-    """
-    Runs a list of functions in parallel using multiprocessing.Pool.
-
-    :param functions: A list of functions to run.
-    :param threads: Number of threads to use.
-    """
-    with multiprocessing.Pool(threads) as p:
-        p.map(lambda f: f(), functions)
-
-
 def example_function(num, word):
     """
     `example_function` takes in a number and a word and returns a list of the number and the word
@@ -340,10 +359,14 @@ def find_all(name: str, path: str) -> list:
     :param path: The path to search in
     :return: A list of all the files in the directory that have the name "name"
     """
+    
     result = []
     for root, dirs, files in os.walk(path):
-        if name in files:
-            result.append(os.path.join(root, name))
+        for filename in fnmatch.filter(files, name):
+            if os.path.exists(os.path.join(root, filename)):
+                result.append(os.path.join(root, filename))
+        # if name in files:
+        #     result.append(os.path.join(root, name))
     return result
 
 
@@ -367,7 +390,7 @@ def find_genome(genome_path: str, assembly: str = None, file: str = None) -> str
     if os.path.exists(genome_path) and not os.path.isdir(genome_path):
         return genome_path
     else:
-        log.warning(f"Genome warning: Try to find genome in '{genome_path}'...")
+        log.debug(f"Genome warning: Try to find genome in '{genome_path}'...")
         genome_dir = genome_path
         genome_path = ""
         # Try to find genome
@@ -995,7 +1018,7 @@ def genotype_stats(df, samples:list = [], info:str = "VAF"):
     return vaf_stats
 
 
-def extract_file(file_path:str):
+def extract_file(file_path:str, path:str = None, threads:int = 1):
     """
     The function extracts a compressed file in .zip or .gz format based on the file path provided.
     
@@ -1003,22 +1026,23 @@ def extract_file(file_path:str):
     to be extracted. The function checks if the file has a ".zip" or ".gz" extension and extracts it
     accordingly
     :type file_path: str
+    :param path: The `path` parameter is an optional string that represents the directory where the
+    extracted files will be saved. If no `path` is provided, the function will use the directory of the
+    `file_path` as the extraction destination
+    :type path: str
+    :param threads: The `threads` parameter is an optional parameter that specifies the number of
+    threads to use for extraction. By default, it is set to 1, meaning the extraction will be done using
+    a single thread, defaults to 1
+    :type threads: int (optional)
     """
-    """
-    The function extracts a compressed file if it is in .zip or .gz format.
-    
-    :param file_path: The file path parameter is a string that represents the path to a file that needs
-    to be extracted. The function checks if the file has a ".zip" or ".gz" extension and extracts it
-    accordingly
-    :type file_path: str
-    """
+
     if file_path.endswith('.zip'):
+        if not path:
+            path = os.path.dirname(file_path)
         with zipfile.ZipFile(file_path, 'r') as zip_ref:
-            zip_ref.extractall(os.path.dirname(file_path))
+            zip_ref.extractall(path)
     elif file_path.endswith('.gz'):
-        with gzip.open(file_path, 'rb') as f_in:
-            with open(file_path[:-3], 'wb') as f_out:
-                f_out.write(f_in.read())
+        concat_and_compress_files(input_files=[file_path], output_file=file_path[:-3], compression_type="none", threads=threads)
 
 
 def download_file(url:str, dest_file_path:str, chunk_size:int = 1024*1024):
@@ -1043,6 +1067,51 @@ def download_file(url:str, dest_file_path:str, chunk_size:int = 1024*1024):
                 f.write(chunk)
     # Move the temporary file to the final destination
     shutil.move(tmp_file_path, dest_file_path)
+
+
+def get_bin(bin:str = None, tool:str = None, bin_type:str = "jar", config:dict = {}, default_folder:str = DEFAULT_TOOLS_FOLDER):
+    """
+    The `get_bin` function retrieves the path to a specified binary file from a configuration dictionary
+    or searches for it in the file system if it is not specified in the configuration.
+    
+    :param bin: The `bin` parameter is a string or a pattern that represents the name of the binary file (e.g.,
+    `snpEff.jar`, `exomiser-cli*.jar`) that you want to retrieve the path for
+    :type bin: str
+    :param tool: The `tool` parameter is a string that represents the name of the tool. It is used to
+    retrieve the path to the tool's binary file
+    :type tool: str
+    :param bin_type: The `bin_type` parameter is a string that specifies the type of binary file to
+    search for in the config dict (e.g., `jar`, `sh`). In this case, the default value is "jar", which indicates that the function is searching
+    for a JAR file, defaults to jar
+    :type bin_type: str (optional)
+    :param config: A dictionary containing configuration information for the snpEff tool, including the
+    path to the snpEff jar file. If no configuration is provided, an empty dictionary is used
+    :type config: dict
+    :param default_folder: The `default_folder` parameter is a string that represents the default folder
+    where the tool binaries are located. If the `bin_file` is not found in the configuration dictionary
+    or in the file system, the function will search for it in this default folder
+    :type default_folder: str
+    :return: the path to the snpEff.jar file. If the file is not found, it returns None.
+    """
+
+    # Config - snpEff
+    bin_file = config.get("tools", {}).get(
+        tool, {}).get(bin_type, None)
+
+    # Config - check tools
+    if not bin_file or not os.path.exists(bin_file):
+        
+        # Try to find bin file
+        try:
+            bin_file = find_all(bin, default_folder)[0]
+        except:
+            return None
+
+        # Check if found
+        if not os.path.exists(bin_file):
+            return None
+
+    return bin_file
 
 
 def get_snpeff_bin(config:dict = {}):
@@ -1152,7 +1221,6 @@ def get_compression_type(filepath:str) -> str:
         return "unknown"
 
 
-
 def get_file_compressed(filename: str = None) -> bool:
     """
     This function takes a filename as input and returns True if the file is compressed (in bgzip) and False if it
@@ -1226,7 +1294,8 @@ def concat_into_infile(input_files:list, compressed_file:object, compression_typ
                     else:
                         shutil.copyfileobj(infile, compressed_file)
         elif input_compression_type in ['gzip']:
-            with pgzip.open(input_file, 'r'+open_type, thread=threads) as infile:
+            # See https://pypi.org/project/mgzip/
+            with mgzip.open(input_file, 'r'+open_type, thread=threads) as infile:
                 shutil.copyfileobj(infile, compressed_file)
         elif input_compression_type in ['none']:
             with open(input_file, 'r'+open_type) as infile:
@@ -1288,6 +1357,7 @@ def concat_and_compress_files(input_files: list, output_file: str, compression_t
     output_file_tmp = output_file+"."+str(random.randrange(1000))+".tmp"
 
     if compression_type in ['gzip']:
+        # See https://pypi.org/project/mgzip/
         with pgzip.open(output_file_tmp, 'w'+open_type, thread=threads, blocksize=threads * block, compresslevel=compression_level) as compressed_file:
             concat_into_infile(input_files, compressed_file, compression_type=compression_type, threads=threads, block=block)
     elif compression_type in ['bgzip']:
@@ -1302,7 +1372,7 @@ def concat_and_compress_files(input_files: list, output_file: str, compression_t
     if sort or index:
         # Sort with pysam
         try:
-            pysam.bcftools.sort(f"-Oz{compression_level}", "-o", output_file, output_file_tmp, threads=threads, catch_stdout=False)
+            pysam.bcftools.sort(f"-Oz{compression_level}", "-o", output_file, "-T", output_file_tmp, output_file_tmp, threads=threads, catch_stdout=False)
             # Remove tmp file
             os.remove(output_file_tmp)
         except:
@@ -1406,3 +1476,36 @@ def duckdb_execute(query:str, threads:int = 1) -> bool:
     else:
         conn.close()
         return False
+
+
+def genome_build_switch(assembly:str) -> str:
+    """
+    The `genome_build_switch` function takes an assembly name as input and returns a new
+    assembly name if a different version of the same genome is available, otherwise it returns
+    None.
+    
+    :param assembly: The `assembly` parameter is a string that represents the name or identifier
+    of a genome assembly
+    :type assembly: str
+    :return: The function `genome_build_switch` returns a string.
+    """
+    
+    import genomepy
+    genome_list = genomepy.search(assembly, exact=False)
+
+    if genome_list:
+        for row in genome_list:
+            tax_id = row[3]
+            break
+    else:
+        log.error(f"Assembly '{assembly}' NOT found")
+        return None
+
+    genome_list = genomepy.search(assembly, exact=False)
+    for row in genome_list:
+        new_assembly = row[0].split(".")[0]
+        new_tax_id = row[3]
+        if new_assembly != assembly and tax_id == new_tax_id:
+            return new_assembly
+
+    return None
