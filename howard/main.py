@@ -111,10 +111,10 @@ def main() -> None:
     set_log_level(args.verbosity, args.log)
 
     # Threads
+    nb_threads = os.cpu_count()
+    threads = nb_threads
     if "threads" in args and args.threads:
         threads = args.threads
-    else:
-        threads = 1
 
     if "memory" in args and args.memory:
         memory = args.memory

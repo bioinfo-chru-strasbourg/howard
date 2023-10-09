@@ -161,8 +161,9 @@ class Variants:
 
         # Connexion config
         connexion_config = {}
-        if config.get("threads", None):
-            connexion_config["threads"] = config.get("threads")
+        threads = self.get_threads()
+        if threads:
+            connexion_config["threads"] = threads
         if config.get("memory", None):
             connexion_config["memory_limit"] = config.get("memory")
         default_connexion_db = ":memory:"
