@@ -57,7 +57,7 @@ def test_databases_download_dbsnp():
 
         # Exomiser folder
         dbsnp_folder = tmp_dir
-        # dbsnp_folder = "/databases/dbsnp/test"
+        #dbsnp_folder = "/databases/dbsnp/current"
         
         # Download exomiser simulation
         dnsnp_assemblies_map:dict = {"hg19": "25", "hg38": "40"}
@@ -70,7 +70,7 @@ def test_databases_download_dbsnp():
                 if not os.path.exists(os.path.join(dbsnp_folder, assembly, dbsnp_data_target)):
                     shutil.copy(dbsnp_data_source, dbsnp_data_target)
 
-        # dbsnp_folder = "/databases/dbsnp/test"
+        # dbsnp_folder = "/databases/dbsnp/current"
         # threads = 15
 
         # Download and prepare database
@@ -85,7 +85,7 @@ def test_databases_download_dbsnp():
             for dbsnp_release in dbsnp_releases:
                 assert dbsnp_release in downloaded_assembly_files
                 downloaded_assembly_release_files = os.listdir(f"{dbsnp_folder}/{assembly}/{dbsnp_release}")
-                expected_files = ['dbsnp.vcf.gz.tbi', f'GCF_000001405.{dnsnp_assemblies_map.get(assembly)}.gz', 'dbsnp.vcf.gz', 'dbsnp.parquet.hdr', 'dbsnp.parquet']
+                expected_files = [f'GCF_000001405.{dnsnp_assemblies_map.get(assembly)}.gz', 'dbsnp.vcf.gz', 'dbsnp.parquet.hdr', 'dbsnp.parquet']
                 for expected_file in expected_files:
                     if expected_file not in downloaded_assembly_release_files:
                         assert False
@@ -103,7 +103,7 @@ def test_databases_download_dbsnp():
             for dbsnp_release in dbsnp_releases:
                 assert dbsnp_release in downloaded_assembly_files
                 downloaded_assembly_release_files = os.listdir(f"{dbsnp_folder}/{assembly}/{dbsnp_release}")
-                expected_files = ['dbsnp.vcf.gz.tbi', f'GCF_000001405.{dnsnp_assemblies_map.get(assembly)}.gz', 'dbsnp.vcf.gz', 'dbsnp.parquet.hdr', 'dbsnp.parquet']
+                expected_files = [f'GCF_000001405.{dnsnp_assemblies_map.get(assembly)}.gz', 'dbsnp.vcf.gz', 'dbsnp.parquet.hdr', 'dbsnp.parquet']
                 for expected_file in expected_files:
                     if expected_file not in downloaded_assembly_release_files:
                         assert False

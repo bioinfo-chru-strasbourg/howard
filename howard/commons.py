@@ -1339,7 +1339,8 @@ def concat_and_compress_files(input_files: list, output_file: str, compression_t
     :type sort: bool (optional)
     :param index: The `index` parameter is a boolean flag that determines whether or not to index the
     output file after concatenation and compression. If `index` is set to `True`, the output file will
-    be indexed using the `pysam.tabix_index` function with the preset "vcf" and, defaults to False
+    be indexed using the `pysam.tabix_index` function with the preset "vcf". Make sure VCF is sorted.
+    Defaults to False
     :type index: bool (optional)
     :return: a boolean value indicating whether the output file exists or not.
     """
@@ -1369,7 +1370,7 @@ def concat_and_compress_files(input_files: list, output_file: str, compression_t
             concat_into_infile(input_files, compressed_file, compression_type=compression_type, threads=threads, block=block)     
 
     # Output file
-    if sort or index:
+    if sort:
         # Sort with pysam
         try:
             pysam.bcftools.sort(f"-Oz{compression_level}", "-o", output_file, "-T", output_file_tmp, output_file_tmp, threads=threads, catch_stdout=False)

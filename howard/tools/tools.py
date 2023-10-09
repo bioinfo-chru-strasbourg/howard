@@ -686,9 +686,9 @@ arguments = {
             "metavar": "INTEGER",
             "help": """Number of threads to use\n"""
                     """Use -1 to detect number of CPU/cores\n"""
-                    """Default: 1""",
+                    """Default: -1""",
             "required": False,
-            "default": 1
+            "default": -1
         },
         "memory": {
             "metavar": "FLOAT[kMG]",

@@ -99,6 +99,17 @@ def databases_download(args:argparse) -> None:
     # Assembly
     assemblies = [value for value in args.assembly.split(',')]
 
+    # Threads
+    nb_threads = os.cpu_count()
+    if "threads" in args:
+        input_thread = args.threads
+    else:
+        input_thread = None
+    if not input_thread or int(input_thread) <= 0:
+        threads = nb_threads
+    else:
+        threads = int(input_thread)
+
     # Genomes
     if args.download_genomes:
         log.debug(f"Download Genomes")
@@ -108,7 +119,7 @@ def databases_download(args:argparse) -> None:
                 genomes_folder=args.download_genomes,
                 provider=args.download_genomes_provider,
                 contig_regex=args.download_genomes_contig_regex,
-                threads=args.threads
+                threads=threads
                 )
 
     # Annovar
@@ -123,7 +134,7 @@ def databases_download(args:argparse) -> None:
             files=files,
             assemblies = assemblies,
             annovar_url=args.download_annovar_url,
-            threads=args.threads
+            threads=threads
             )
 
     # snpEff
@@ -165,7 +176,7 @@ def databases_download(args:argparse) -> None:
             dbnsfp_folder=args.download_dbnsfp,
             dbnsfp_url=args.download_dbnsfp_url,
             dbnsfp_release=args.download_dbnsfp_release,
-            threads=args.threads,
+            threads=threads,
             parquet_size=args.download_dbnsfp_parquet_size,
             generate_sub_databases=args.download_dbnsfp_subdatabases,
             generate_parquet_file=args.download_dbnsfp_parquet,
@@ -183,7 +194,7 @@ def databases_download(args:argparse) -> None:
             assemblies = assemblies,
             alphamissense_folder=args.download_alphamissense,
             alphamissense_url=args.download_alphamissense_url,
-            threads=args.threads
+            threads=threads
             )
     
     # Exomiser
@@ -220,9 +231,10 @@ def databases_download(args:argparse) -> None:
             dbsnp_url_files=args.download_dbsnp_url_files,
             dbsnp_url_files_prefix=args.download_dbsnp_url_files_prefix,
             dbsnp_assemblies_map=args.download_dbsnp_assemblies_map,
+            genomes_folder=args.genomes_folder,
+            threads=threads,
             dbsnp_vcf=args.download_dbsnp_vcf,
-            dbsnp_parquet=args.download_dbsnp_parquet,
-            genomes_folder=args.genomes_folder
+            dbsnp_parquet=args.download_dbsnp_parquet
             )
 
 
@@ -2301,6 +2313,7 @@ def databases_download_dbsnp(assemblies:list, dbsnp_folder:str = DEFAULT_DBSNP_F
 
             # Construct File
             dbsnp_parquet_file = os.path.join(dbsnp_folder_assembly_release, "dbsnp.parquet")
+            dbsnp_parquet_file_buffer = os.path.join(dbsnp_folder_assembly_release, "dbsnp.buffer.parquet")
             dbsnp_parquet_hdr_file = os.path.join(dbsnp_folder_assembly_release, "dbsnp.parquet.hdr")
 
             # Files to generate or already generated
@@ -2314,14 +2327,16 @@ def databases_download_dbsnp(assemblies:list, dbsnp_folder:str = DEFAULT_DBSNP_F
                     dbsnp_files_to_generate.append(os.path.basename(dbsnp_vcf_file))
                 else:
                     write_vcf = False
-                    dbsnp_files_already_generated.append(os.path.basename(dbsnp_vcf_file))
+                    if dbsnp_vcf:
+                        dbsnp_files_already_generated.append(os.path.basename(dbsnp_vcf_file))
 
                 if (dbsnp_parquet and not os.path.exists(dbsnp_parquet_file)):
                     write_parquet = True
                     dbsnp_files_to_generate.append(os.path.basename(dbsnp_parquet_file))
                 else:
                     write_parquet = False
-                    dbsnp_files_already_generated.append(os.path.basename(dbsnp_parquet_file))
+                    if dbsnp_parquet:
+                        dbsnp_files_already_generated.append(os.path.basename(dbsnp_parquet_file))
 
                 # Log
                 if dbsnp_files_already_generated:
@@ -2376,6 +2391,7 @@ def databases_download_dbsnp(assemblies:list, dbsnp_folder:str = DEFAULT_DBSNP_F
                 shutil.copy(src=header_file_tmp, dst=header_file)
 
                 # Chunk CSV
+                #chunksize = 1000000
                 chunksize = 1000000
                 skiprows = len(db_header_list)
                 names = ["CHROM_OLD", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO"]
@@ -2418,7 +2434,7 @@ def databases_download_dbsnp(assemblies:list, dbsnp_folder:str = DEFAULT_DBSNP_F
                                 append = False
                             else:
                                 append = True
-                            res.df().to_parquet(dbsnp_parquet_file, engine='fastparquet', append=append)
+                            res.df().to_parquet(dbsnp_parquet_file_buffer, engine='fastparquet', append=append)
 
                         # Log
                         log.debug(f"chunk {chunk_i} - {chunksize*chunk_i} lines processed")
@@ -2427,9 +2443,11 @@ def databases_download_dbsnp(assemblies:list, dbsnp_folder:str = DEFAULT_DBSNP_F
 
                 if write_vcf:
                     # Concat and Compress CSV with header to VCF in BGZIP compression type
-                    concat_and_compress_files(input_files=[header_file_tmp, dbsnp_vcf_file_buffer], output_file=dbsnp_vcf_file, threads=threads, compression_type="bgzip", index=True)
+                    concat_and_compress_files(input_files=[header_file_tmp, dbsnp_vcf_file_buffer], output_file=dbsnp_vcf_file, threads=threads, compression_type="bgzip", sort=False, index=False)
 
                 if write_parquet:
+                    # Move Parquet buffer to Parquet
+                    os.rename(dbsnp_parquet_file_buffer, dbsnp_parquet_file)
                     # Copy header file
                     shutil.copy(src=header_file, dst=dbsnp_parquet_hdr_file)
 
