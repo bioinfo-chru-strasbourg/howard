@@ -1866,10 +1866,9 @@ class Database:
                 query_output_database_tmp = output_database
             else:
                 query_output_database_tmp = f"""{output_database}.{random_tmp}"""
-            
-            if query_output_database_tmp:
                 tmp_files.append(query_output_database_tmp)
 
+            # Query copy
             query_copy = f""" 
                 COPY (
                     SELECT {query_export_columns}
