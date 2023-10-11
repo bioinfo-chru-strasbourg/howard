@@ -36,7 +36,7 @@ tests_tools = "/tools"
 
 # Test config
 tests_config = {
-  "threads": 1,
+  "threads": 2,
   "memory": None,
   "verbosity": "warning",
   "folders": {

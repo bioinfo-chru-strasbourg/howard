@@ -1734,6 +1734,9 @@ class Database:
         if not database:
             return False
 
+        # tmp files
+        tmp_files = []
+
         # Header columns
         existing_columns_header = self.get_header_file_columns(output_header)
 
@@ -1761,7 +1764,7 @@ class Database:
 
         # random
         random_tmp = ''.join(random.choice(string.ascii_lowercase) for i in range(10))
-
+        
         # Query values
         default_empty_value = ""
         query_export_format = None
@@ -1864,6 +1867,9 @@ class Database:
             else:
                 query_output_database_tmp = f"""{output_database}.{random_tmp}"""
             
+            if query_output_database_tmp:
+                tmp_files.append(query_output_database_tmp)
+
             query_copy = f""" 
                 COPY (
                     SELECT {query_export_columns}
@@ -1885,6 +1891,7 @@ class Database:
                 if include_header:
                     # create tmp header file
                     query_output_header_tmp = f"""{query_output_database_tmp}.header.{random_tmp}"""
+                    tmp_files.append(query_output_header_tmp)
                     self.get_header_file(header_file=query_output_header_tmp, remove_header_line=True)
                     input_files.append(query_output_header_tmp)
 
@@ -1899,13 +1906,16 @@ class Database:
                 
                 # Output
                 concat_and_compress_files(input_files=input_files, output_file=output_database, compression_type=compression_type, threads=threads, sort=sort, index=index)
-
+            
             # Header
             if output_header:
                 remove_if_exists([output_header])
                 database_for_header = Database(database=output_database)
                 header_columns_from_database = database_for_header.get_header_columns_from_database(database=output_database)
                 database_for_header.get_header_file(header_file=output_header, replace_header_line=header_columns_from_database, force=True)
+
+        # Clean
+        remove_if_exists(tmp_files)
         
         return os.path.exists(output_database) and self.get_type(output_database)
 
