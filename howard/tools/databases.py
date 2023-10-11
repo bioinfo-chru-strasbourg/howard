@@ -2033,7 +2033,8 @@ def databases_download_exomiser(assemblies:list, exomiser_folder:str = DEFAULT_E
             log.info(f"Download Exomiser {assemblies} - Database Data '{exomiser_assembly_filename}' already exists")
 
         # Extract Zip file
-        if not os.path.exists(exomiser_assembly_folder):
+        #if not os.path.exists(exomiser_assembly_folder):
+        if not os.path.exists(os.path.join(exomiser_assembly_folder,exomiser_assembly_filename_base)):
             log.info(f"Download Exomiser {assemblies} - Extract Data '{exomiser_assembly_filename}'...")
             extract_file(file_path=exomiser_assembly_file, path=exomiser_assembly_folder)
         else:

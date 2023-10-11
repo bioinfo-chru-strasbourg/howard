@@ -727,6 +727,9 @@ class Variants:
         # Connexion format
         connexion_format = self.get_connexion_format()
 
+        # Sample size
+        sample_size = -1
+
         # Load data
         log.debug(f"Load Data from {input_format}")
         if input_format in ["vcf", "tsv", "csv", "psv"]:
@@ -742,13 +745,13 @@ class Variants:
                     sql_vcf = f"""
                     CREATE VIEW {table_variants} AS
                         SELECT *
-                        FROM read_csv('{self.input}', auto_detect=True, skip={skip}, delim='{delimiter}')
+                        FROM read_csv('{self.input}', auto_detect=True, skip={skip}, delim='{delimiter}', sample_size={sample_size})
                     """
                 else:
                     sql_vcf = f"""
                     CREATE TABLE {table_variants} AS 
                         SELECT *
-                        FROM read_csv('{self.input}', auto_detect=True, skip={skip}, delim='{delimiter}')
+                        FROM read_csv('{self.input}', auto_detect=True, skip={skip}, delim='{delimiter}', sample_size={sample_size})
                     """
                 self.conn.execute(sql_vcf)
 
@@ -1210,10 +1213,10 @@ class Variants:
 
         # Create database
         database = Database(database=database_source, table="variants", header_file=output_header)
-
+        
         # Export file
         database.export(output_database=output_file, parquet_partitions=parquet_partitions, threads=threads, sort=sort, index=index)
-
+        
         # Remove
         remove_if_exists(tmp_to_remove)
 
@@ -1378,7 +1381,10 @@ class Variants:
         with open(tmp_header_name, 'w') as header_f:
             for head in self.get_header("list"):
                 if not head.startswith("#CHROM"):
-                    head_clean = head.replace("Type=Flag", "Type=String")
+                    # Clean head for malformed header
+                    head_clean = head
+                    head_clean = re.subn('##FORMAT=<ID=(.*),Number=(.*),Type=Flag', r'##FORMAT=<ID=\1,Number=\2,Type=String', head_clean,2)[0]
+                    # Write header
                     header_f.write(head_clean)
 
         # Variants
@@ -1468,44 +1474,18 @@ class Variants:
         # varaints table
         table_variants = self.get_table_variants()
 
-        # merged VCF
-        tmp_merged_vcf = NamedTemporaryFile(prefix=self.get_prefix(
-        ), dir=self.get_tmp_dir(), suffix=".parquet", delete=True)
-        tmp_merged_vcf_name = tmp_merged_vcf.name
-
-        # Fix error with multithreading
-        config = self.get_config()
-        config["threads"] = 1
-
-        mergeVCF = Variants(
-            None, vcf_file, tmp_merged_vcf_name, config=config)
-        mergeVCF.load_data()
-        mergeVCF.export_output(export_header=False)
-        del mergeVCF
-        gc.collect()
-
-        # Original number of variants
-        query = "SELECT count(*) AS count FROM variants"
-        count_original_variants = self.conn.execute(query).df()["count"][0]
-
-        # Annotated number of variants
-        query = f"SELECT count(*) AS count FROM '{tmp_merged_vcf_name}' as table_parquet"
-        count_annotated_variants = self.conn.execute(query).df()["count"][0]
-
-        if count_original_variants != count_annotated_variants:
-            log.warning(
-                f"Update from VCF - Discodance of number of variants between database ({count_original_variants}) and VCF for update ({count_annotated_variants})")
-
-        if count_annotated_variants:
-            sql_query_update = f"""
-            UPDATE {table_variants} as table_variants
-                SET INFO = concat(
-                                CASE
-                                    WHEN INFO NOT IN ('', '.')
-                                    THEN INFO
-                                    ELSE ''
-                                END,
-                                (
+        # Loading VCF into temporaire table
+        skip = self.get_header_length(file=vcf_file)
+        vcf_df = pd.read_csv(vcf_file, sep='\t', engine='c', skiprows=skip, header=0, low_memory=False, )
+        sql_query_update = f"""
+        UPDATE {table_variants} as table_variants
+            SET INFO = concat(
+                            CASE
+                                WHEN INFO NOT IN ('', '.')
+                                THEN INFO
+                                ELSE ''
+                            END,
+                            (
                                 SELECT 
                                     concat(
                                         CASE
@@ -1520,16 +1500,16 @@ class Variants:
                                             ELSE ''
                                         END
                                     )
-                                FROM '{tmp_merged_vcf_name}' as table_parquet
-                                        WHERE table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
+                                FROM vcf_df as table_parquet
+                                        WHERE CAST(table_parquet.\"#CHROM\" AS VARCHAR) = CAST(table_variants.\"#CHROM\" AS VARCHAR)
                                         AND table_parquet.\"POS\" = table_variants.\"POS\"
                                         AND table_parquet.\"ALT\" = table_variants.\"ALT\"
                                         AND table_parquet.\"REF\" = table_variants.\"REF\"
-                                )
                             )
-                ;
-                """
-            self.conn.execute(sql_query_update)
+                        )
+            ;
+            """
+        self.conn.execute(sql_query_update)
 
 
     def update_from_vcf_sqlite(self, vcf_file: str) -> None:
@@ -1715,6 +1695,42 @@ class Variants:
                     if len(annotation_file_split) > 1:
                         annotation_file_annotation = annotation_file_split[1]
                         param["annotation"]["annovar"]["annotations"][annotation_file_annotation] = annotations
+                        # for annotation_file_ann in annotation_file_annotation.split("+"):
+                        #     param["annotation"]["annovar"]["annotations"][annotation_file_ann] = annotations
+
+                # Annotation Exomiser
+                elif annotation_file.startswith("exomiser"):
+                    log.debug(f"Quick Annotation Exomiser")
+                    if "exomiser" not in param["annotation"]:
+                        param["annotation"]["exomiser"] = {}
+                    # if "annotations" not in param["annotation"]["exomiser"]:
+                    #     param["annotation"]["exomiser"]["annotations"] = {}
+                    annotation_file_split = annotation_file.split(":")
+                    if len(annotation_file_split) > 1:
+                        annotation_file_options = annotation_file_split[1]
+
+                        annotation_file_options_split = annotation_file_options.split('|')
+                        log.debug(annotation_file_options_split)
+                        
+                        for annotation_file_options_split_option in annotation_file_options_split:
+                            log.debug(annotation_file_options_split_option)
+                            annotation_file_options_split_option_var_val = annotation_file_options_split_option.split("=")
+                            annotation_file_options_split_option_var = annotation_file_options_split_option_var_val[0].strip()
+                            annotation_file_options_split_option_val = annotation_file_options_split_option_var_val[1].strip()
+                            log.debug(annotation_file_options_split_option_val)
+                            log.debug(annotation_file_options_split_option_val)
+                            if annotation_file_options_split_option_val:
+                                if not annotation_file_options_split_option_val:
+                                    annotation_file_options_split_option_val = None
+                                else:
+                                    annotation_file_options_split_option_val = annotation_file_options_split_option_val.replace("+", ",").replace(" ", "")
+                                param["annotation"]["exomiser"][annotation_file_options_split_option_var] = annotation_file_options_split_option_val
+
+                        log.debug(param["annotation"]["exomiser"])
+
+                        #exit()
+
+                        #param["annotation"]["annovar"]["annotations"][annotation_file_annotation] = annotations
                         # for annotation_file_ann in annotation_file_annotation.split("+"):
                         #     param["annotation"]["annovar"]["annotations"][annotation_file_ann] = annotations
 
@@ -2169,8 +2185,79 @@ class Variants:
         """
         This function annotate with Exomiser
 
+        This function uses args as parameters, in section "annotation" -> "exomiser", with sections:
+        - "analysis" (dict/file):
+            Full analysis dictionnary parameters (see Exomiser docs).
+            Either a dict, or a file in JSON or YAML format.
+            These parameters may change depending on other parameters (e.g. phenotipicFeatures/HPO)
+            Default : None
+        - "preset" (string):
+            Analysis preset (available in config folder).
+            Used if no full "analysis" is provided.
+            Default: "exome"
+        - "phenopacket" (dict/file):
+            Samples and phenotipic features parameters (see Exomiser docs).
+            Either a dict, or a file in JSON or YAML format.
+            Default: None
+        - "subject" (dict):
+            Sample parameters (see Exomiser docs).
+            Example: 
+                "subject": 
+                    {
+                        "id": "ISDBM322017",
+                        "sex": "FEMALE"
+                    }
+            Default: None
+        - "sample" (string):
+            Sample name to construct "subject" section:
+                "subject": 
+                    {
+                        "id": "<sample>",
+                        "sex": "UNKNOWN_SEX"
+                    }
+            Default: None
+        - "phenotypicFeatures" (dict)
+            Phenotypic features to construct "subject" section.
+            Example: 
+                "phenotypicFeatures":
+                    [
+                        { "type": { "id": "HP:0001159", "label": "Syndactyly" } },
+                        { "type": { "id": "HP:0000486", "label": "Strabismus" } }
+                    ]
+        - "hpo" (list)
+            List of HPO ids as phenotypic features.
+            Example:
+                "hpo": ['0001156', '0001363', '0011304', '0010055']
+            Default: []
+        - "outputOptions" (dict):
+            Output options (see Exomiser docs).
+            Default:
+                "output_options" =
+                    {
+                        "outputContributingVariantsOnly": False,
+                        "numGenes": 0,
+                        "outputFormats": ["TSV_VARIANT", "VCF"]
+                    }
+        - "transcript_source" (string):
+            Transcript source (either "refseq", "ucsc", "ensembl")
+            Default: "refseq"
+        - "exomiser_to_info" (boolean):
+            Add exomiser TSV file columns as INFO fields in VCF.
+            Default: False
+        - "release" (string):
+            Exomise database release.
+            If not exists, database release will be downloaded (take a while).
+            Default: None (provided by application.properties configuration file)
+        - "exomiser_application_properties" (file):
+            Exomiser configuration file (see Exomiser docs).
+            Useful to automatically download databases (especially for specific genome databases).
+
+        Notes:
+        - If no sample in parameters, first sample in VCF will be chosen
+        - If no HPO found, "hiPhivePrioritiser" analysis step will be switch off
+        
         :param threads: The number of threads to use
-        :return: the value of the variable "return_value".
+        :return: None.
         """
 
         # DEBUG
@@ -2180,12 +2267,6 @@ class Variants:
         if not threads:
             threads = self.get_threads()
         log.debug("Threads: "+str(threads))
-
-        # DEBUG
-        delete_tmp = True
-        if self.get_config().get("verbosity", "warning") in ["debug"]:
-            delete_tmp = False
-            log.debug("Delete tmp files/folders: "+str(delete_tmp))
 
         # Config
         config = self.get_config()
@@ -2217,13 +2298,6 @@ class Variants:
         param_exomiser = param.get("annotation", {}).get("exomiser", {})
         log.debug(f"Param Exomiser: {param_exomiser}")
 
-        # # Param - HPO
-        # options_hpo = param_exomiser.get("hpo", None)
-        # log.debug("HPO: " + str(options_hpo))
-
-        # options = param_exomiser.get("options", None)
-        # log.debug("Options: " + str(options))
-
         # Param - Assembly
         assembly = param.get("assembly", config.get("assembly", DEFAULT_ASSEMBLY))
         log.debug("Assembly: " + str(assembly))
@@ -2238,12 +2312,6 @@ class Variants:
             log.info(f"VCF empty")
             return False
 
-        # # Export in VCF
-        # log.debug("Create initial file to annotate")
-        # tmp_vcf = NamedTemporaryFile(prefix=self.get_prefix(), dir=self.get_tmp_dir(), suffix=".vcf.gz", delete=True)
-        # tmp_vcf_name = tmp_vcf.name
-        # log.debug(f"VCF exported: {tmp_vcf_name}")
-
         # VCF header
         vcf_reader = self.get_header()
         log.debug("Initial header: " + str(vcf_reader.infos))
@@ -2255,13 +2323,23 @@ class Variants:
             return False
         log.debug(f"Samples: {samples}")
         
-        # Existing annotations
-        # for vcf_annotation in self.get_header().infos:
+        # Memory limit
+        if config.get("memory", None):
+            memory_limit = config.get("memory", "8G")
+        else:
+            memory_limit = "8G"
+        log.debug(f"memory_limit: {memory_limit}")
 
-        #     vcf_annotation_line = self.get_header().infos.get(vcf_annotation)
-        #     log.debug(
-        #         f"Existing annotations in VCF: {vcf_annotation} [{vcf_annotation_line}]")
+        # Exomiser java options
+        exomiser_java_options = f" -Xmx{memory_limit} -XX:+UseParallelGC -XX:ParallelGCThreads={threads} "
+        log.debug(f"Exomiser java options: {exomiser_java_options}")
 
+        # Download Exomiser (if not exists)
+        exomiser_release = param_exomiser.get("release", None)
+        exomiser_application_properties = param_exomiser.get("exomiser_application_properties", None)
+        databases_download_exomiser(assemblies=[assembly], exomiser_folder=databases_folders, exomiser_release=exomiser_release, exomiser_phenotype_release=exomiser_release, exomiser_application_properties=exomiser_application_properties)
+
+        # Force annotation
         force_update_annotation = True
 
         if "Exomiser" not in self.get_header().infos or force_update_annotation:
@@ -2269,452 +2347,376 @@ class Variants:
 
             with TemporaryDirectory(dir=self.get_tmp_dir()) as tmp_dir:
 
-                
+                #tmp_dir = "/tmp/exomiser"
 
-                # time java -XX:ParallelGCThreads=8 -Xms2g -Xmx4g -jar exomiser-cli-13.2.0/exomiser-cli-13.2.0.jar  --analysis=exomiser-cli-13.2.0/examples/test.yml --spring.config.location=/databases/exomiser/current/hg19 --exomiser.data-directory=/databases/exomiser/current/hg19 --exomiser.hg19.data-version=2302 --exomiser.phenotype.data-version=2302
-                # time java -XX:ParallelGCThreads=8 -Xms2g -Xmx4g -jar exomiser-cli-13.2.0/exomiser-cli-13.2.0.jar  --analysis=exomiser-cli-13.2.0/examples/test.yml --exomiser.data-directory=/databases/exomiser/current/hg19 --exomiser.hg19.data-version=2302 --exomiser.phenotype.data-version=2302
-                # time java -XX:ParallelGCThreads=8 -Xms2g -Xmx4g -jar exomiser-cli-13.2.0/exomiser-cli-13.2.0.jar  --sample=exomiser-cli-13.2.0/examples/sample.test.yml --exomiser.data-directory=/databases/exomiser/current/hg19 --exomiser.hg19.data-version=2302 --exomiser.phenotype.data-version=2302
-                # time java -XX:ParallelGCThreads=8 -Xms2g -Xmx4g -jar exomiser-cli-13.2.0/exomiser-cli-13.2.0.jar  --sample=exomiser-cli-13.2.0/examples/sample.test.json --exomiser.data-directory=/databases/exomiser/current/hg19 --exomiser.hg19.data-version=2302 --exomiser.phenotype.data-version=2302
-                # # java -jar exomiser-cli-13.2.0.jar --sample examples/sample.test.json --preset exome --output-directory=/tmp/exomiser_output --output-format=HTML,JSON,TSV_GENE,TSV_VARIANT,VCF --outputContributingVariantsOnly=False --spring.config.location=/databases/exomiser/current/hg19/application.properties --exomiser.data-directory=/databases/exomiser/current/hg19 --exomiser.hg19.data-version=2302
+                ### ANALYSIS ###
+                ################
 
+                # Create analysis.json through analysis dict
+                # either analysis in param or by default
+                # depending on preset exome/genome)
 
-                ######  examples/sample.test.json
-
-                # {
-                #   "id": "manuel",
-                #   "subject": { "id": "manuel", "sex": "UNKNOWN_SEX" },
-                #   "phenotypicFeatures": [
-                #     { "type": { "id": "HP:0001159" } },
-                #     { "type": { "id": "HP:0000486" } },
-                #     { "type": { "id": "HP:0000327" } },
-                #     { "type": { "id": "HP:0000520" } },
-                #     { "type": { "id": "HP:0000316" } },
-                #     { "type": { "id": "HP:0000244" } }
-                #   ],
-                #   "htsFiles": [
-                #     {
-                #       "uri": "examples/Pfeiffer.vcf",
-                #       "htsFormat": "VCF",
-                #       "genomeAssembly": "hg19"
-                #     }
-                #   ]
-                # }
-
-
-                ###### examples/output-options.test.yml
-                # #
-                # ---
-                # outputContributingVariantsOnly: false
-                # #numGenes options: 0 = all or specify a limit e.g. 500 for the first 500 results
-                # numGenes: 0
-                # #minExomiserGeneScore: 0.7
-                # # Path to the desired output directory. Will default to the 'results' subdirectory of the exomiser install directory
-                # outputDirectory: /tmp/exomiser_results
-                # # Filename for the output files. Will default to {input-vcf-filename}-exomiser
-                # outputFileName: exomiser-output
-                # #out-format options: HTML, JSON, TSV_GENE, TSV_VARIANT, VCF (default: HTML)
-                # outputFormats: [ HTML, JSON, TSV_GENE, TSV_VARIANT, VCF ]
-
-                # Create sample YML/JSON
-                #exomiser_config_sample = {}
-
-                # with open('/databases/exomiser/13.2.0/exomiser-cli-13.2.0/examples/sample.test.yml', 'r') as file:
-                #     configuration = yaml.safe_load(file)
-
-                # with open('/databases/exomiser/13.2.0/exomiser-cli-13.2.0/examples/sample.test.json', 'w') as json_file:
-                #     json.dump(configuration, json_file)
-                    
-                # output = json.dumps(json.load(open('/databases/exomiser/13.2.0/exomiser-cli-13.2.0/examples/sample.test.json')), indent=2)
-                # print(output)
-
-                # {
-                # "id": "manuel",
-                # "subject": { "id": "manuel", "sex": "UNKNOWN_SEX" },
-                # "phenotypicFeatures": [
-                #     { "type": { "id": "HP:0001159" } },
-                #     { "type": { "id": "HP:0000486" } },
-                #     { "type": { "id": "HP:0000327" } },
-                #     { "type": { "id": "HP:0000520" } },
-                #     { "type": { "id": "HP:0000316" } },
-                #     { "type": { "id": "HP:0000244" } }
-                # ],
-                # "htsFiles": [
-                #     {
-                #     "uri": "exomiser-cli-13.2.0/examples/Pfeiffer.vcf",
-                #     "htsFormat": "VCF",
-                #     "genomeAssembly": "hg19"
-                #     }
-                # ]
-                # }
-
-
-                # STEPS
-                
-                # Initial file name
-                log.debug("Create initial file to annotate")
-                tmp_vcf_name = os.path.join(tmp_dir, "initial.vcf.gz")
-                log.debug(f"VCF exported: {tmp_vcf_name}")
-
-
-                # Create analysis.json (either analysis in param or by default, depending on preset exome/genome)
-                log.debug(f"file_folder: {file_folder}")
-                log.debug(f"folder_main: {folder_main}")
-                if os.path.exists(folder_main):
-                    log.debug(f"main folder exists: {folder_main}")
-                if os.path.exists(folder_config):
-                    log.debug(f"config folder exists: {folder_config}")
-
-                log.debug(f"param_exomiser: {param_exomiser}")
-
+                # Init analysis dict
                 param_exomiser_analysis_dict = {}
-                param_exomiser_analysis = param_exomiser.get("analysis", {})
-                #param_exomiser_analysis = param_exomiser.get("analysis", {"test": "truc"})
-                #param_exomiser_analysis = param_exomiser.get("analysis", os.path.join(folder_config, "preset-exome-analysis.json"))
-                if param_exomiser_analysis:
-                    if isinstance(param_exomiser_analysis, str) and os.path.exists(param_exomiser_analysis):
-                        log.debug(f"is str/file")
-                        with open(param_exomiser_analysis) as json_file:
-                            param_exomiser_analysis_dict = json.load(json_file)
-                    elif isinstance(param_exomiser_analysis, dict):
-                        log.debug(f"is dict")
-                        param_exomiser_analysis_dict = param_exomiser_analysis
-                    else:
-                        log.error(f"analysis type unknown")
 
-                log.debug(param_exomiser_analysis_dict)
+                # analysis from param
+                param_exomiser_analysis = param_exomiser.get("analysis", {})
+
+                # If analysis in param -> load anlaysis json
+                if param_exomiser_analysis:
+
+                    # If param analysis is a file and exists
+                    if isinstance(param_exomiser_analysis, str) and os.path.exists(param_exomiser_analysis):
+                        # Load analysis file into analysis dict (either yaml or json)
+                        with open(param_exomiser_analysis) as json_file:
+                            param_exomiser_analysis_dict = yaml.safe_load(json_file)
+
+                    # If param analysis is a dict
+                    elif isinstance(param_exomiser_analysis, dict):
+                        # Load analysis dict into analysis dict (either yaml or json)
+                        param_exomiser_analysis_dict = param_exomiser_analysis
+
+                    # Error analysis type
+                    else:
+                        log.error(f"Analysis type unknown. Check param file.")
+                        raise ValueError(f"Analysis type unknown. Check param file.")
 
                 # Case no input analysis config file/dict
                 # Use preset (exome/genome) to open default config file
-                #param_exomiser_preset = param_exomiser.get("preset", "")
-                if not param_exomiser_analysis_dict or "analysis" in param_exomiser_analysis_dict:
-                    param_exomiser_preset = param_exomiser.get("preset", "exome")
-                    param_exomiser_analysis_default_config_file = os.path.join(folder_config, f"preset-{param_exomiser_preset}-analysis.json")
-                    if os.path.exists(param_exomiser_analysis_default_config_file):
-                        log.debug(f"is str/file default config ({param_exomiser_analysis_default_config_file})")
-                        with open(param_exomiser_analysis_default_config_file) as json_file:
-                            param_exomiser_analysis_dict["analysis"] = json.load(json_file)
-                    else:
-                        log.error(f"No analysis default config file ({param_exomiser_analysis_default_config_file})")
+                if not param_exomiser_analysis_dict:
 
+                    # default preset
+                    default_preset = "exome"
+
+                    # Get param preset or default preset
+                    param_exomiser_preset = param_exomiser.get("preset", default_preset)
+
+                    # Try to find if preset is a file
+                    if os.path.exists(param_exomiser_preset):
+                        # Preset file is provided in full path
+                        param_exomiser_analysis_default_config_file = param_exomiser_preset
+                    elif os.path.exists(os.path.join(folder_config, param_exomiser_preset)):
+                        # Preset file is provided a basename in config folder (can be a path with subfolders)
+                        param_exomiser_analysis_default_config_file = os.path.join(folder_config, param_exomiser_preset)
+                    else:
+                        # Construct preset file
+                        param_exomiser_analysis_default_config_file = os.path.join(folder_config, f"preset-{param_exomiser_preset}-analysis.json")
+
+                    # If preset file exists
+                    if os.path.exists(param_exomiser_analysis_default_config_file):
+                        # Load prest file into analysis dict (either yaml or json)
+                        with open(param_exomiser_analysis_default_config_file) as json_file:
+                            #param_exomiser_analysis_dict[""] = json.load(json_file)
+                            param_exomiser_analysis_dict["analysis"] = yaml.safe_load(json_file)
+
+                    # Error preset file
+                    else:
+                        log.error(f"No analysis preset config file ({param_exomiser_analysis_default_config_file})")
+                        raise ValueError(f"No analysis preset config file ({param_exomiser_analysis_default_config_file})")
+
+                # If no analysis dict created
                 if not param_exomiser_analysis_dict:
                     log.error(f"No analysis config")
+                    raise ValueError(f"No analysis config")
 
-                log.debug(param_exomiser_analysis_dict)
+                # Log
+                log.debug(f"Pre analysis dict: {param_exomiser_analysis_dict}")
 
 
-                
+                ### PHENOPACKET ###
+                ###################
 
-                # Add input VCF ???
-                    # "genomeAssembly": "hg19",
-                    # "vcf": "/databases/exomiser/13.2.0/exomiser-cli-13.2.0/examples/Pfeiffer.test.hom.vcf",
-                    # "ped": null,
-                    # "proband": null,
-                    # "hpoIds": [
-                    #     "HP:0001156",
-                    #     "HP:0001363",
-                    #     "HP:0011304",
-                    #     "HP:0010055"
-                    # ]
-                    #
-                    # OR
-                    # 
-                    # 
-                    # "phenopacket": {
-                    #     "id": "manuell",
-                    #     "subject": {
-                    #         "id": "manuel",
-                    #         "sex": "MALE"
-                    #     },
-                    #     "phenotypicFeatures": [
-                    #     {
-                    #         "type": {
-                    #         "id": "HP:0001159",
-                    #         "label": "Syndactyly"
-                    #         }
-                    #     },
-                    #     {
-                    #         "type": {
-                    #         "id": "HP:0000486",
-                    #         "label": "Strabismus"
-                    #         }
-                    #     },
-                    #     {
-                    #         "type": {
-                    #         "id": "HP:0000327",
-                    #         "label": "Hypoplasia of the maxilla"
-                    #         }
-                    #     },
-                    #     {
-                    #         "type": {
-                    #         "id": "HP:0000520",
-                    #         "label": "Proptosis"
-                    #         }
-                    #     },
-                    #     {
-                    #         "type": {
-                    #         "id": "HP:0000316",
-                    #         "label": "Hypertelorism"
-                    #         }
-                    #     },
-                    #     {
-                    #         "type": {
-                    #         "id": "HP:0000244",
-                    #         "label": "Brachyturricephaly"
-                    #         }
-                    #     }
-                    #     ],
-                    #     "htsFiles": [
-                    #     {
-                    #         "uri": "/databases/exomiser/13.2.0/exomiser-cli-13.2.0/examples/Pfeiffer.vcf",
-                    #         "htsFormat": "VCF",
-                    #         "genomeAssembly": "hg19"
-                    #     }
-                    #     ],
-                    #     "metaData": {
-                    #     "created": "2019-11-12T13:47:51.948Z",
-                    #     "createdBy": "julesj",
-                    #     "resources": [
-                    #         {
-                    #         "id": "hp",
-                    #         "name": "human phenotype ontology",
-                    #         "url": "http://purl.obolibrary.org/obo/hp.owl",
-                    #         "version": "hp/releases/2019-11-08",
-                    #         "namespacePrefix": "HP",
-                    #         "iriPrefix": "http://purl.obolibrary.org/obo/HP_"
-                    #         }
-                    #     ],
-                    #     "phenopacketSchemaVersion": 1
-                    #     }
-                    # },
-
+                # If no PhenoPacket in analysis dict -> check in param
                 if "phenopacket" not in param_exomiser_analysis_dict:
+                    
+                    # If PhenoPacket in param -> load anlaysis json
+                    if param_exomiser.get("phenopacket", None):
 
+                        param_exomiser_phenopacket = param_exomiser.get("phenopacket")
+
+                        # If param phenopacket is a file and exists
+                        if isinstance(param_exomiser_phenopacket, str) and os.path.exists(param_exomiser_phenopacket):
+                            # Load phenopacket file into analysis dict (either yaml or json)
+                            with open(param_exomiser_phenopacket) as json_file:
+                                param_exomiser_analysis_dict["phenopacket"] = yaml.safe_load(json_file)
+
+                        # If param phenopacket is a dict
+                        elif isinstance(param_exomiser_phenopacket, dict):
+                            # Load phenopacket dict into analysis dict (either yaml or json)
+                            param_exomiser_analysis_dict["phenopacket"] = param_exomiser_phenopacket
+
+                        # Error phenopacket type
+                        else:
+                            log.error(f"Phenopacket type unknown. Check param file.")
+                            raise ValueError(f"Phenopacket type unknown. Check param file.")
+                    
+                # If no PhenoPacket in analysis dict -> construct from sample and HPO in param
+                if "phenopacket" not in param_exomiser_analysis_dict:
+                    
+                    # Init PhenoPacket
                     param_exomiser_analysis_dict["phenopacket"] = {
-                        "id": "analysis"
+                        "id": "analysis",
+                        "proband": {}
                     }
 
-                    # Add subject
+                    ### Add subject ###
+
+                    # If subject exists
                     param_exomiser_subject = param_exomiser.get("subject", {})
 
+                    # If subject not exists -> found sample ID
                     if not param_exomiser_subject:
-                        
-                        # Find sample ID (first sample)
-                        sample_list = self.get_header_sample_list()
-                        #log.debug(f"sample_list: {sample_list}")
-                        if len(sample_list) > 0:
-                            sample = sample_list[0]
-                        else:
-                            log.error(f"No sample found")
-                            # RAISE!!!
 
+                        # Found sample ID in param
+                        sample = param_exomiser.get("sample", None)
+
+                        # Find sample ID (first sample)
+                        if not sample:
+                            sample_list = self.get_header_sample_list()
+                            if len(sample_list) > 0:
+                                sample = sample_list[0]
+                            else:
+                                log.error(f"No sample found")
+                                raise ValueError(f"No sample found")
+
+                        # Create subject
                         param_exomiser_subject = {"id": sample,"sex": "UNKNOWN_SEX"}
 
+                    # Add to dict
                     param_exomiser_analysis_dict["phenopacket"]["subject"] = param_exomiser_subject
 
-                    # Add "phenotypicFeatures"
-                    param_exomiser_phenotypicFeatures = param_exomiser.get("phenotypicFeatures", [])
 
-                    # Try to infer from hpo list
-                    if not param_exomiser_phenotypicFeatures:
+                    ### Add "phenotypicFeatures" ###
+
+                    # If phenotypicFeatures exists
+                    param_exomiser_phenotypicfeatures = param_exomiser.get("phenotypicFeatures", [])
+
+                    # If phenotypicFeatures not exists -> Try to infer from hpo list
+                    if not param_exomiser_phenotypicfeatures:
+
+                        # Found HPO in param
                         param_exomiser_hpo = param_exomiser.get("hpo", [])
 
-                        # if not param_exomiser_hpo:
-                        #     log.debug(f"No HPO found")
+                        # Split HPO if list in string format separated by comma
+                        if isinstance(param_exomiser_hpo, str):
+                            param_exomiser_hpo = param_exomiser_hpo.split(',')
 
-                        #log.debug(f"HPO: {param_exomiser_hpo}")
+                        # Create HPO list
                         for hpo in param_exomiser_hpo:
-                            #log.debug(f"hpo: {hpo}")
-                            #hpo_clean = hpo.replace(["0", "1"], "L")
-                            characters_to_remove = ['h', 'p', 'o', 'H', 'P', 'O', ' ', ':']
-                            pattern = '[' +  ''.join(characters_to_remove) +  ']'
-                            hpo_clean = re.sub(pattern, '', hpo)
-                            #log.debug(f"hpo_clean: {hpo_clean}")
-                            param_exomiser_phenotypicFeatures.append({
+                            hpo_clean = re.sub("[^0-9]", '', hpo)
+                            param_exomiser_phenotypicfeatures.append({
                                 "type": {
                                     "id": f"HP:{hpo_clean}",
-                                    "label": "Syndactyly"
+                                    "label": f"HP:{hpo_clean}"
                                 }
                             })
 
-                    #log.debug(f"param_exomiser_phenotypicFeatures: {param_exomiser_phenotypicFeatures}")
+                    # Add to dict
+                    param_exomiser_analysis_dict["phenopacket"]["phenotypicFeatures"] = param_exomiser_phenotypicfeatures
 
-                    if not param_exomiser_phenotypicFeatures:
-                        param_exomiser_analysis_dict["phenopacket"]["phenotypicFeatures"] = []
-                        #log.error(f"No phenotypicFeatures found")
-                        # THEN REMOVE "hiPhivePrioritiser": {}
-                        #param_exomiser_analysis_dict["analysis"]
+                    # If phenotypicFeatures not exists -> Remove hiPhivePrioritiser step
+                    if not param_exomiser_phenotypicfeatures:
                         for step in param_exomiser_analysis_dict.get("analysis", {}).get("steps", []):
-                            #log.debug(f"step: {step}")
                             if "hiPhivePrioritiser" in step:
                                 param_exomiser_analysis_dict.get("analysis", {}).get("steps", []).remove(step)
 
-                        #param_exomiser_analysis_dict["analysis"].pop('k4', None)
 
-                    # Add Input File
-                    #if "htsFiles" not in param_exomiser_analysis_dict:
-                    param_exomiser_analysis_dict["phenopacket"]["htsFiles"] = [
-                        {
-                            "uri": tmp_vcf_name,
-                            "htsFormat": "VCF",
-                            "genomeAssembly": assembly
+                ### Add Input File ###
+
+                # Initial file name and htsFiles
+                tmp_vcf_name = os.path.join(tmp_dir, "initial.vcf.gz")
+                param_exomiser_analysis_dict["phenopacket"]["htsFiles"] = [
+                    {
+                        "uri": tmp_vcf_name,
+                        "htsFormat": "VCF",
+                        "genomeAssembly": assembly
+                    }
+                ]
+
+
+                ### Add metaData ###
+
+                # If metaData not in analysis dict
+                if "metaData" not in param_exomiser_analysis_dict:
+                    param_exomiser_analysis_dict["phenopacket"]["metaData"] = {
+                        "created": f"{datetime.datetime.now()}".replace(" ", "T") + "Z",
+                        "createdBy": "howard",
+                        "phenopacketSchemaVersion": 1
+                    }
+
+                ### OutputOptions ###
+
+                # Init output result folder
+                output_results = os.path.join(tmp_dir, "results")
+
+                # If no outputOptions in analysis dict
+                if "outputOptions" not in param_exomiser_analysis_dict:
+
+                    # default output formats
+                    defaut_output_formats = ["TSV_VARIANT", "VCF"]
+
+                    # Get outputOptions in param
+                    output_options = param_exomiser.get("outputOptions", None)
+
+                    # If no output_options in param -> check 
+                    if not output_options:
+                        output_options = {
+                            "outputContributingVariantsOnly": False,
+                            "numGenes": 0,
+                            "outputFormats": defaut_output_formats
                         }
-                    ]
 
+                    # Replace outputDirectory in output options 
+                    output_options["outputDirectory"] = output_results
+                    output_options["outputFileName"] = "howard"
 
-                    if "metaData" not in param_exomiser_analysis_dict:
-                        log.debug(f"NO 'metaData'")
-                        param_exomiser_analysis_dict["phenopacket"]["metaData"] = {
-                            "created": f"{datetime.datetime.now()}".replace(" ", "T") + "Z",
-                            "createdBy": "howard",
-                            "phenopacketSchemaVersion": 1
-                        }
-                    # if "metaData" not in param_exomiser_analysis_dict:
-                    #     log.debug(f"NO 'metaData'")
-                    #     # param_exomiser_analysis_dict["phenopacket"]["metaData"] =  {
-                    #     #     "created": f"{datetime.datetime.now()}".replace(" ", "T"),
-                    #     #     "createdBy": "howard",
-                    #     #     "resources": [
-                    #     #         {
-                    #     #         "id": "hp",
-                    #     #         "name": "human phenotype ontology",
-                    #     #         "url": "http://purl.obolibrary.org/obo/hp.owl",
-                    #     #         "version": "unknown",
-                    #     #         "namespacePrefix": "HP",
-                    #     #         "iriPrefix": "http://purl.obolibrary.org/obo/HP_"
-                    #     #         }
-                    #     #     ],
-                    #     #     "phenopacketSchemaVersion": 1
-                    #     # }
-                    #     param_exomiser_analysis_dict["phenopacket"]["metaData"] =  {
-                    #         "created": f"{datetime.datetime.now()}".replace(" ", "T") + "Z",
-                    #         "createdBy": "julesj",
-                    #         "resources": [
-                    #             {
-                    #             "id": "hp",
-                    #             "name": "human phenotype ontology",
-                    #             "url": "http://purl.obolibrary.org/obo/hp.owl",
-                    #             "version": "hp/releases/2019-11-08",
-                    #             "namespacePrefix": "HP",
-                    #             "iriPrefix": "http://purl.obolibrary.org/obo/HP_"
-                    #             }
-                    #         ],
-                    #         "phenopacketSchemaVersion": 1
-                    #     }
+                    # Add outputOptions in analysis dict
+                    param_exomiser_analysis_dict["outputOptions"] = output_options
 
-
-                    param_exomiser_analysis_dict["phenopacket"]["phenotypicFeatures"] = param_exomiser_phenotypicFeatures
-
-
-                # Find samples
-                # Main sample
-                sample = param_exomiser_analysis_dict.get("phenopacket",{}).get("subject",{}).get("id", None)
-                if sample is None:
-                    sample = []
                 else:
-                    sample = [sample]
-                # Pedigree
+                    
+                    # Replace output_results and output format (if exists in param)
+                    param_exomiser_analysis_dict["outputOptions"]["outputDirectory"] = output_results
+                    param_exomiser_analysis_dict["outputOptions"]["outputFormats"] = list(set(param_exomiser_analysis_dict.get("outputOptions",{}).get("outputFormats", []) + ["TSV_VARIANT", "VCF"]))
+
+                # log
+                log.debug(f"Pre analysis dict: {param_exomiser_analysis_dict}")
+
+
+                ### ANALYSIS FILE ###
+                #####################
+
+                ### Full JSON analysis config file ###
+
+                exomiser_analysis = os.path.join(tmp_dir, "analysis.json")
+                with open(exomiser_analysis, 'w') as fp:
+                    json.dump(param_exomiser_analysis_dict, fp, indent=4)
+
+                ### SPLIT analysis and sample config files
+
+                # Splitted analysis dict
+                param_exomiser_analysis_dict_for_split = param_exomiser_analysis_dict.copy()
+
+                # Phenopacket JSON file
+                exomiser_analysis_phenopacket = os.path.join(tmp_dir, "analysis_phenopacket.json")
+                with open(exomiser_analysis_phenopacket, 'w') as fp:
+                    json.dump(param_exomiser_analysis_dict_for_split.get("phenopacket"), fp, indent=4)
+
+                # Analysis JSON file without Phenopacket parameters
+                param_exomiser_analysis_dict_for_split.pop("phenopacket")
+                exomiser_analysis_analysis = os.path.join(tmp_dir, "analysis_analysis.json")
+                with open(exomiser_analysis_analysis, 'w') as fp:
+                    json.dump(param_exomiser_analysis_dict_for_split, fp, indent=4)
+                
+
+                ### INITAL VCF file ###
+                #######################
+
+                ### Create list of samples to use and include inti initial VCF file ####
+
+                # Subject (main sample)
+                # Get sample ID in analysis dict
+                sample_subject = param_exomiser_analysis_dict.get("phenopacket",{}).get("subject",{}).get("id", None)
+                sample_proband = param_exomiser_analysis_dict.get("phenopacket",{}).get("proband",{}).get("subject",{}).get("id", None)
+                sample = []
+                if sample_subject:
+                    sample.append(sample_subject)
+                if sample_proband:
+                    sample.append(sample_proband)
+
+                # Get sample ID within Pedigree
                 pedigree_persons_list = param_exomiser_analysis_dict.get("phenopacket",{}).get("pedigree",{}).get("persons",{})
+
+                # Create list with all sample ID in pedigree (if exists)
                 pedigree_persons = []
                 for person in pedigree_persons_list:
                     pedigree_persons.append(person.get("individualId"))
 
-                # Concat samples
-                samples = sample + pedigree_persons
+                # Concat subject sample ID and samples ID in pedigreesamples
+                samples = list(set(sample + pedigree_persons))
 
-                # Check if sample
+                # Check if sample list is not empty
                 if not samples:
                     log.error(f"No samples found")
-                    # RAISE !!!
+                    raise ValueError(f"No samples found")
 
-                # OutputOptions
-                output_results = os.path.join(tmp_dir, "results")
-                if "outputOptions" not in param_exomiser_analysis_dict:
-                    log.debug(f"NO 'outputOptions'")
-                    param_exomiser_analysis_dict["outputOptions"] = {
-                        "outputContributingVariantsOnly": False,
-                        "numGenes": 0,
-                        "outputDirectory": output_results,
-                        "outputFileName": "howard",
-                        #"outputFormats": ["HTML", "JSON", "TSV_GENE", "TSV_VARIANT", "VCF"]
-                        "outputFormats": ["TSV_VARIANT", "VCF"]
-                    }
-
-                else:
-                    log.debug(f"Found 'outputOptions'")
-                    param_exomiser_analysis_dict["outputOptions"]["outputDirectory"] = output_results
-                    param_exomiser_analysis_dict["outputOptions"]["outputFormats"] = list(set(param_exomiser_analysis_dict.get("outputOptions",{}).get("outputFormats", []) + ["TSV_VARIANT", "VCF"]))
-
-                    
                 # Create VCF with sample (either sample in param or first one by default)
-
                 # Export VCF file
                 self.export_variant_vcf(vcf_file=tmp_vcf_name, file_type="gz", remove_info=True, add_samples=True, list_samples=samples, compression=1, index=False)
 
                 
-                log.debug(f"param_exomiser_analysis_dict: {param_exomiser_analysis_dict}")
+                ### Execute Exomiser ###
+                ########################
 
-                exomiser_analysis = os.path.join(tmp_dir, "analysis.json")
-                with open(exomiser_analysis, 'w') as fp:
-                    json.dump(param_exomiser_analysis_dict, fp)
-
-                with open(exomiser_analysis) as json_file:
-                    analysis_json = json.load(json_file)
-                    log.debug(analysis_json)
-                    log.debug(json.dumps(analysis_json, indent=4))
-
-
-                shutil.copyfile(tmp_vcf_name, "/tmp/initial.vcf.gz")
-                shutil.copyfile(exomiser_analysis, "/tmp/analysis.json")
-
-
-                # java -jar exomiser-cli-13.2.0.jar --analysis /tmp/analysis.json --vcf /tmp/initial.vcf.gz --spring.config.location=/databases/exomiser/current/hg19/application.properties --exomiser.data-directory=/databases/exomiser/current/hg19
-                # java -jar exomiser-cli-13.2.0.jar --analysis /tmp/analysis.tmp.json --spring.config.location=/databases/exomiser/current/hg19/application.properties --exomiser.data-directory=/databases/exomiser/current/hg19
-                # java -jar exomiser-cli-13.2.0.jar --analysis /tool/tests/tmp/analysis.tmp.json --spring.config.location=/databases/exomiser/current/hg19/application.properties --exomiser.data-directory=/databases/exomiser/current/hg19
-                # 
-
-                #exit()
-                
-                # Execute Exomiser
-                # --analysis examples/test.json --spring.config.location=/databases/exomiser/current/hg19/application.properties --exomiser.data-directory=/databases/exomiser/current/hg19
-                # databases_folders
+                # Init command
                 exomiser_command = ""
 
-                #exomiser_java_options = f" -XX:ParallelGCThreads={threads} -Xms2g -Xmx4g "
-                exomiser_java_options = f" -XX:ParallelGCThreads={threads} "
-                #exomiser_java_options = ""
+                # Command exomiser options
+                exomiser_options = f" --spring.config.location={databases_folders}/{assembly}/application.properties --exomiser.data-directory={databases_folders}/{assembly} "
+
+                # Release
+                exomiser_release = param_exomiser.get("release", None)
+                if exomiser_release:
+                    exomiser_options += f" --exomiser.phenotype.data-version={exomiser_release} "
+                    exomiser_options += f" --exomiser.{assembly}.data-version={exomiser_release} "
+                    exomiser_options += f" --exomiser.{assembly}.variant-white-list-path={exomiser_release}_{assembly}_clinvar_whitelist.tsv.gz "
+
+                # transcript_source
+                transcript_source = param_exomiser.get("transcript_source", None) # ucsc, refseq, ensembl
+                if transcript_source:
+                    exomiser_options += f" --exomiser.{assembly}.transcript-source={transcript_source} "
+
+                # If analysis contain proband param
+                if param_exomiser_analysis_dict.get("phenopacket", {}).get("proband", {}):
+                    exomiser_command = f" {exomiser_java_options} -jar {exomiser_jar} --analysis={exomiser_analysis_analysis} --sample={exomiser_analysis_phenopacket} {exomiser_options} "
                 
+                # If no proband (usually uniq sample)
+                else:
+                    exomiser_command = f" {exomiser_java_options} -jar {exomiser_jar} --analysis={exomiser_analysis} {exomiser_options}"
 
+                # Log
+                log.debug(f"{java_bin} {exomiser_command}")
 
-                #exomiser_command = f"{java_bin} -jar {exomiser_jar} --analysis={exomiser_analysis} --spring.config.location={databases_folders}/{assembly}/application.properties --exomiser.data-directory={databases_folders}/{assembly}"
-                exomiser_command = f" {exomiser_java_options} -jar {exomiser_jar} --analysis={exomiser_analysis} --spring.config.location={databases_folders}/{assembly}/application.properties --exomiser.data-directory={databases_folders}/{assembly}"
-
-                log.debug(exomiser_command)
-
+                # Run command 
                 result = subprocess.call([java_bin] + exomiser_command.split(), stdout=subprocess.PIPE)
-                #result = subprocess.call([java_bin] + exomiser_command.split())
+                if result:
+                    log.error("Exomiser command failed")
+                    raise ValueError("Exomiser command failed")
 
-                log.debug(glob.glob(f'{output_results}/*'))
+                
+                ### RESULTS ###
+                ###############
 
-                log.debug(self.conn.query(f"SELECT \"#CHROM\", POS, REF, ALT, INFO FROM {table_variants} as table_variants").df())
+                ### Annotate with TSV fields ###
 
+                # Init result tsv file
+                exomiser_to_info = param_exomiser.get("exomiser_to_info", False)
 
+                # Init result tsv file
                 output_results_tsv = os.path.join(output_results,"howard.variants.tsv")
-                if os.path.exists(output_results_tsv):
 
+                # Parse TSV file and explode columns in INFO field
+                if exomiser_to_info and os.path.exists(output_results_tsv):
 
-                    query = f""" SELECT * FROM read_csv('{output_results_tsv}', auto_detect=True, delim='\t') LIMIT {DTYPE_LIMIT_AUTO} """
+                    # Log
+                    log.debug("Exomiser columns to VCF INFO field")
+
+                    # Retrieve columns and types
+                    query = f""" SELECT * FROM read_csv('{output_results_tsv}', auto_detect=True, delim='\t', sample_size=-1) LIMIT 0 """
                     output_results_tsv_df = self.get_query_to_df(query)
                     output_results_tsv_columns = output_results_tsv_df.columns.tolist()
-                    log.debug(output_results_tsv_df.columns)
-                    log.debug(output_results_tsv_df.dtypes)
-                    log.debug(output_results_tsv_columns)
 
+                    # Init concat fields for update 
                     sql_query_update_concat_fields = []
+
+                    # Fields to avoid
+                    fields_to_avoid = ["CONTIG", "START", "END", "REF", "ALT", "QUAL", "FILTER", "GENOTYPE"]
 
                     # List all columns to add into header
                     for header_column in output_results_tsv_columns:
 
-                        if header_column not in ["CONTIG", "START", "END", "REF", "ALT", "QUAL", "FILTER", "GENOTYPE"]:
+                        # If header column is enable
+                        if header_column not in fields_to_avoid:
 
                             # Header info type
                             header_info_type = "String"
@@ -2730,7 +2732,6 @@ class Variants:
                             characters_to_validate = ['-']
                             pattern = '[' +  ''.join(characters_to_validate) +  ']'
                             header_info_name = re.sub(pattern, '_', f"Exomiser_{header_column}".replace("#",""))
-                            #header_info_name = f"Exomiser_{header_column}".replace("#","").replace("-","")
                             header_info_number = "."
                             header_info_description = f"Exomiser {header_column} annotation"
                             header_info_source = "Exomiser"
@@ -2745,93 +2746,78 @@ class Variants:
                                 header_info_version,
                                 header_info_code
                             )
-                            # vcf.parser._Info
-                            log.debug(f"{header_column} >>> {header_info_name}")
-                            #vcf_reader.infos[header_info_name] = database_header_to_add
-
+                            
+                            # Add field to add for update to concat fields
                             sql_query_update_concat_fields.append(f"""
-                                                    CASE
-                                                        WHEN table_parquet."{header_column}" NOT IN ('','.')
-                                                        THEN concat(
-                                                            '{header_info_name}=',
-                                                            table_parquet."{header_column}",
-                                                            ';'
-                                                            )
-
-                                                        ELSE ''
-                                                    END
-                                                                """)
-
-                        # ",".join(sql_query_update_concat_fields)
-
-                    sql_query_update = f"""
-                    UPDATE {table_variants} as table_variants
-                        SET INFO = concat(
-                                        CASE
-                                            WHEN INFO NOT IN ('', '.')
-                                            THEN INFO
-                                            ELSE ''
-                                        END,
-                                        CASE
-                                            WHEN table_variants.INFO NOT IN ('','.')
-                                            THEN ';'
-                                            ELSE ''
-                                        END,
-                                        (
-                                        SELECT 
-                                            concat(
-                                                {",".join(sql_query_update_concat_fields)}
-                                            )
-                                        FROM read_csv('{output_results_tsv}', auto_detect=True, delim='\t') as table_parquet
-                                                WHERE concat('chr', CAST(table_parquet.\"CONTIG\" AS STRING)) = table_variants.\"#CHROM\"
-                                                AND table_parquet.\"START\" = table_variants.\"POS\"
-                                                AND table_parquet.\"ALT\" = table_variants.\"ALT\"
-                                                AND table_parquet.\"REF\" = table_variants.\"REF\"
+                                CASE
+                                    WHEN table_parquet."{header_column}" NOT IN ('','.')
+                                    THEN concat(
+                                        '{header_info_name}=',
+                                        table_parquet."{header_column}",
+                                        ';'
                                         )
-                                    )
-                        ;
+
+                                    ELSE ''
+                                END
+                            """)
+
+                    # Update query
+                    sql_query_update = f"""
+                        UPDATE {table_variants} as table_variants
+                            SET INFO = concat(
+                                            CASE
+                                                WHEN INFO NOT IN ('', '.')
+                                                THEN INFO
+                                                ELSE ''
+                                            END,
+                                            CASE
+                                                WHEN table_variants.INFO NOT IN ('','.')
+                                                THEN ';'
+                                                ELSE ''
+                                            END,
+                                            (
+                                            SELECT 
+                                                concat(
+                                                    {",".join(sql_query_update_concat_fields)}
+                                                )
+                                            FROM read_csv('{output_results_tsv}', auto_detect=True, delim='\t', sample_size=-1) as table_parquet
+                                                    WHERE concat('chr', CAST(table_parquet.\"CONTIG\" AS STRING)) = table_variants.\"#CHROM\"
+                                                    AND table_parquet.\"START\" = table_variants.\"POS\"
+                                                    AND table_parquet.\"ALT\" = table_variants.\"ALT\"
+                                                    AND table_parquet.\"REF\" = table_variants.\"REF\"
+                                            )
+                                        )
+                            ;
                         """
-                    log.debug(sql_query_update)
+                    
+                    # Update
                     self.conn.execute(sql_query_update)
 
 
-                #, auto_detect=True, skip={skip}, delim='{delimiter}'
-
-                log.debug(self.conn.query("SELECT \"#CHROM\", POS, REF, ALT, INFO FROM variants").df())
-
+                ### Annotate with VCF INFO field ###
+                
+                # Init result VCF file
                 output_results_vcf = os.path.join(output_results,"howard.vcf.gz")
+
+                # If VCF exists
                 if os.path.exists(output_results_vcf):
 
-                    # Find annotation in header
+                    # Log
+                    log.debug("Exomiser result VCF update variants")
+
+                    # Find Exomiser INFO field annotation in header
                     with gzip.open(output_results_vcf, 'rt') as f:
                         header_list = self.read_vcf_header(f)
-                    exomiser_vcf_header = vcf.Reader(
-                        io.StringIO("\n".join(header_list)))
-                    log.debug(exomiser_vcf_header.infos)
-                    log.debug(exomiser_vcf_header.infos["Exomiser"])
-
+                    exomiser_vcf_header = vcf.Reader(io.StringIO("\n".join(header_list)))
+                    
+                    # Add annotation INFO field to header
                     vcf_reader.infos["Exomiser"] = exomiser_vcf_header.infos["Exomiser"]
-                #    vcf_reader.infos["Exomiser"] = vcf.parser._Info(
-                #         "Exomiser",
-                #         ".",
-                #         "String",
-                #         "A pipe-separated set of values for the proband allele(s) from the record with one per compatible MOI following the format: {RANK|ID|GENE_SYMBOL|ENTREZ_GENE_ID|MOI|P-VALUE|EXOMISER_GENE_COMBINED_SCORE|EXOMISER_GENE_PHENO_SCORE|EXOMISER_GENE_VARIANT_SCORE|EXOMISER_VARIANT_SCORE|CONTRIBUTING_VARIANT|WHITELIST_VARIANT|FUNCTIONAL_CLASS|HGVS|EXOMISER_ACMG_CLASSIFICATION|EXOMISER_ACMG_EVIDENCE|EXOMISER_ACMG_DISEASE_ID|EXOMISER_ACMG_DISEASE_NAME}",
-                #         "Exomiser",
-                #         "unknown",
-                #         CODE_TYPE_MAP["String"]
-                #     )
-                    # vcf.parser._Info
-                    #vcf_reader.infos["Exomiser"] = database_header_to_add
-
-                    log.debug(f"VCF result found: {output_results_vcf}")
-                    # Update variants
-                    log.info(f"Annotation - Updating...")
+                
+                    # Update variants with VCF
                     self.update_from_vcf(output_results_vcf)
-
-                #log.debug(self.conn.query("SELECT INFO FROM variants WHERE INFO LIKE '%Exomiser%'").df())
-                log.debug(self.conn.query("SELECT \"#CHROM\", POS, REF, ALT, INFO FROM variants").df())
-
-
+        
+        return True
+     
 
     def annotation_snpeff(self, threads: int = None) -> None:
         """
@@ -2969,6 +2955,17 @@ class Variants:
             log.debug(
                 f"Existing annotations in VCF: {vcf_annotation} [{vcf_annotation_line}]")
 
+        # Memory limit
+        if config.get("memory", None):
+            memory_limit = config.get("memory", "8G")
+        else:
+            memory_limit = "8G"
+        log.debug(f"memory_limit: {memory_limit}")
+
+        # snpEff java options
+        snpeff_java_options = f" -Xmx{memory_limit} -XX:+UseParallelGC -XX:ParallelGCThreads={threads} "
+        log.debug(f"Exomiser java options: {snpeff_java_options}")
+
         force_update_annotation = True
 
         if "ANN" not in self.get_header().infos or force_update_annotation:
@@ -2990,7 +2987,7 @@ class Variants:
             err_files.append(tmp_annotate_vcf_name_err)
 
             # Command
-            snpeff_command = f"{java_bin} -Xmx4g -jar {snpeff_jar} {assembly} -dataDir {snpeff_databases} {snpeff_options} {tmp_vcf_name} 1>{tmp_annotate_vcf_name} 2>>{tmp_annotate_vcf_name_err}"
+            snpeff_command = f"{java_bin} {snpeff_java_options} -jar {snpeff_jar} {assembly} -dataDir {snpeff_databases} {snpeff_options} {tmp_vcf_name} 1>{tmp_annotate_vcf_name} 2>>{tmp_annotate_vcf_name_err}"
             log.debug(f"Annotation - snpEff command: {snpeff_command}")
             run_parallel_commands([snpeff_command], 1)
 
