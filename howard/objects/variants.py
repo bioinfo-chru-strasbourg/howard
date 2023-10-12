@@ -5077,7 +5077,7 @@ class Variants:
                 sql_nomen_fields.append(
                     f"""
                         CASE 
-                            WHEN dataframe_hgvs."{nomen_field}" NOT NULL
+                            WHEN dataframe_hgvs."{nomen_field}" NOT NULL AND dataframe_hgvs."{nomen_field}" NOT IN ('')
                             THEN concat(
                                     ';{nomen_field}=',
                                     dataframe_hgvs."{nomen_field}"

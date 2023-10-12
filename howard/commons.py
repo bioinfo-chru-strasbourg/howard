@@ -1410,7 +1410,7 @@ def get_plateform_name() -> str:
     return f"{system}_{machine_check}".lower()
     
 
-def get_duckdb_extension_file(extension_name:str) -> str:
+def get_duckdb_extension_file(extension_name:str, download:bool = True) -> str:
     """
     This function returns the file path of a DuckDB extension based on the extension name and platform.
     
@@ -1421,7 +1421,35 @@ def get_duckdb_extension_file(extension_name:str) -> str:
     `get_plateform_name()` function, and the extension name passed as an argument to the function.
     """
 
-    return f'{DUCKDB_EXTENSION}/{get_plateform_name()}/{extension_name}.duckdb_extension'
+    # Init
+    release_version_number = duckdb.__version__
+    platform_name = get_plateform_name()
+    extension_file_path = f'v{release_version_number}/{platform_name}/{extension_name}.duckdb_extension'
+    extension_file = f'{DUCKDB_EXTENSION}/{extension_file_path}'
+    extension_file_gz = f'{DUCKDB_EXTENSION}/{extension_file_path}.gz'
+    url = f"http://extensions.duckdb.org/{extension_file_path}.gz"
+
+    # Download and extract if not exists
+    if not os.path.exists(extension_file) and download:
+        # Create folder if not exists
+        if not os.path.exists(os.path.dirname(extension_file)):
+            Path(os.path.dirname(extension_file)).mkdir(parents=True, exist_ok=True)
+        # Download extension if not exists
+        if not os.path.exists(extension_file_gz):
+            try:
+                download_file(url, extension_file_gz)
+            except:
+                log.error(f"Fail download '{url}'")
+        # Uncompress extention file
+        if os.path.exists(extension_file_gz):
+            with mgzip.open(extension_file_gz, 'rb', thread=1) as infile:
+                with open(extension_file, 'wb') as compressed_file:
+                    shutil.copyfileobj(infile, compressed_file)
+
+    if os.path.exists(extension_file):
+        return extension_file
+    else:
+        return None
 
 
 def load_duckdb_extension(conn:duckdb.DuckDBPyConnection, duckdb_extensions:list) -> bool:
@@ -1441,14 +1469,19 @@ def load_duckdb_extension(conn:duckdb.DuckDBPyConnection, duckdb_extensions:list
     loaded = True
 
     for extension_name in duckdb_extensions:
+        duckdb_extension_file = get_duckdb_extension_file(extension_name)
         try:
-            duckdb_extension_file = get_duckdb_extension_file(extension_name)
-            if os.path.exists(duckdb_extension_file):
-                conn.query(f"INSTALL '{duckdb_extension_file}'; LOAD {extension_name}; ")
-            else:
-                conn.query(f"INSTALL '{extension_name}'; LOAD {extension_name}; ")
+            # Try loading extension by name
+            conn.query(f"INSTALL '{extension_name}'; LOAD {extension_name}; ")
         except:
-            loaded = False
+            try:
+                if duckdb_extension_file and os.path.exists(duckdb_extension_file):
+                    # Try loading extension by file
+                    conn.query(f"INSTALL '{duckdb_extension_file}'; LOAD {extension_name}; ")
+                else:
+                    loaded = False
+            except:
+                loaded = False
 
     return loaded
 
