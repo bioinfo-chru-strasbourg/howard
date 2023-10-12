@@ -34,4 +34,4 @@
 ##contig=<ID=chrM,length=16571>
 ##contig=<ID=chrX,length=155270560>
 ##contig=<ID=chrY,length=59373566>
-#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+#CHROM	POS	REF	ALT	ID	QUAL	FILTER	INFO	INFO/nci60

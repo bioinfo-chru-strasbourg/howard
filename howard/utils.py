@@ -64,7 +64,7 @@ def read_genepred(infile, skip_first_column=False):
     """
     for line in infile:
         # Skip comments.
-        if line.startswith('#'):
+        if line.startswith('#') or line.startswith('bin'):
             continue
         row = line.rstrip('\n').split('\t')
         if skip_first_column:
@@ -212,9 +212,9 @@ def read_transcripts(refgene_file):
     
     transcripts = {}
     for trans in (make_transcript(record)
-                  for record in read_refgene(refgene_file)):
-        transcripts[trans.name] = trans
-        transcripts[trans.full_name] = trans
+        for record in read_refgene(refgene_file)):
+            transcripts[trans.name] = trans
+            transcripts[trans.full_name] = trans
 
     return transcripts
 
@@ -920,7 +920,7 @@ def create_refseq_table(conn, refseq_table:str = "refseq", refseq_file:str = Non
             "cdsEndStat": "STRING",
             "exonFrames": "STRING"
         }
-        query = f"CREATE TABLE {refseq_table} AS SELECT * FROM read_csv_auto('{refseq_file}',HEADER=False,columns={refseq_structure})"
+        query = f"CREATE TABLE {refseq_table} AS SELECT * FROM read_csv_auto('{refseq_file}',HEADER=False,columns={refseq_structure},skip=1)"
     elif refseq_table == "refseqlink":
         refseq_structure = {
             "id": "STRING",
@@ -943,7 +943,7 @@ def create_refseq_table(conn, refseq_table:str = "refseq", refseq_file:str = Non
             "description": "STRING",
             "externalId": "STRING",
             }
-        query = rf"CREATE TABLE {refseq_table} AS SELECT *, regexp_extract(mrnaAcc, '(.*)\..*', 1) AS 'mrnaAcc_without_ver', regexp_extract(protAcc, '(.*)\..*', 1) AS 'protAcc_without_ver', mrnaAcc AS 'mrnaAcc_with_ver', protAcc AS 'protAcc_with_ver' FROM read_csv_auto('{refseq_file}',HEADER=False,columns={refseq_structure})"
+        query = rf"CREATE TABLE {refseq_table} AS SELECT *, regexp_extract(mrnaAcc, '(.*)\..*', 1) AS 'mrnaAcc_without_ver', regexp_extract(protAcc, '(.*)\..*', 1) AS 'protAcc_without_ver', mrnaAcc AS 'mrnaAcc_with_ver', protAcc AS 'protAcc_with_ver' FROM read_csv_auto('{refseq_file}',HEADER=False,columns={refseq_structure},skip=1)"
 
     # Create tabel with file
     if refseq_file:

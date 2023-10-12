@@ -616,7 +616,7 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
         log.debug(f"Create View From TSV to Parquet")
             
         # Create Parquet file from TSV
-        tsv_to_parquet(input_file, f'{output_file}.tmp.annovar.parquet', delim=delimiter, columns=columns_struct, quote=None, nullstr='.', skip=nb_header_line)
+        tsv_to_parquet(input_file, f'{output_file}.tmp.annovar.parquet', delim=delimiter, columns=columns_struct, nullstr='.', skip=nb_header_line)
 
         # Query Create view
         query = f""" CREATE VIEW annovar AS SELECT * FROM '{output_file}.tmp.annovar.parquet' """
@@ -627,7 +627,7 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
         log.debug("Create View From TSV")
 
         # Create view of input file
-        query = f""" CREATE VIEW annovar AS SELECT * FROM read_csv_auto('{input_file}', delim='{delimiter}', columns={columns_struct}, names={header}, dtypes={dtype_duckdb}, quote=None, nullstr='.', parallel=True, skip={nb_header_line}) """
+        query = f""" CREATE VIEW annovar AS SELECT * FROM read_csv_auto('{input_file}', delim='{delimiter}', columns={columns_struct}, names={header}, dtypes={dtype_duckdb}, nullstr='.', parallel=True, skip={nb_header_line}) """
     
     conn.execute(query)
 
@@ -798,7 +798,7 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
     # Query to copy file
     query = f"""
         COPY ({source})
-        TO '{output_file}.tmp.translation.variants.vcf.gz' WITH (FORMAT CSV, COMPRESSION GZIP, DELIMITER '\t', QUOTE '')
+        TO '{output_file}.tmp.translation.variants.vcf.gz' WITH (FORMAT CSV, COMPRESSION GZIP, DELIMITER '\t', QUOTE '', HEADER 0)
     """
     
     # Copy file

@@ -1099,17 +1099,17 @@ def test_get_columns():
     database = Database(database_files.get("duckdb"))
 
     # Check duckdb
-    assert database.get_columns() == ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'INFO/nci60']
-    assert database.get_columns(table="variants") == ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'INFO/nci60']
+    assert database.get_columns() == ['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO', 'INFO/nci60']
+    assert database.get_columns(table="variants") == ['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO', 'INFO/nci60']
 
     # Create empty object
     database = Database()
 
     # Check duckdb
-    assert database.get_columns(database=database_files.get("duckdb")) == ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'INFO/nci60']
-    assert database.get_columns(database=database_files.get("duckdb"), table="variants") == ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'INFO/nci60']
+    assert database.get_columns(database=database_files.get("duckdb")) == ['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO', 'INFO/nci60']
+    assert database.get_columns(database=database_files.get("duckdb"), table="variants") == ['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO', 'INFO/nci60']
     assert database.get_columns(database=database_files.get("duckdb_no_annotation_table")) == []
-    assert database.get_columns(database=database_files.get("duckdb_no_annotation_table"), table="variants") == ['#CHROM', 'NOTPOS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'INFO/nci60']
+    assert database.get_columns(database=database_files.get("duckdb_no_annotation_table"), table="variants") == ['#CHROM', 'NOTPOS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO', 'INFO/nci60']
 
     # Check sqlite
     assert database.get_columns(database=database_files.get("sqlite")) == ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'INFO/nci60']
