@@ -190,15 +190,12 @@ class Variants:
             elif connexion_format in ["sqlite"]:
                 conn = sqlite3.connect(connexion_db)
 
-        # Compression
-        # PRAGMA force_compression, expected Auto, Uncompressed, Constant, RLE, Dictionary, PFOR, BitPacking, FSST, Chimp, Patas
-        # conn.execute("PRAGMA force_compression='Patas';")
-
         # Set connexion
         self.connexion_format = connexion_format
         self.connexion_db = connexion_db
         self.conn = conn
 
+        # Log
         log.debug(f"connexion_format: {connexion_format}")
         log.debug(f"connexion_db: {connexion_db}")
         log.debug(f"connexion config: {connexion_config}")
@@ -506,12 +503,16 @@ class Variants:
         # Access
         access = self.get_config().get("access", None)
 
+        # Clauses "select", "where", "update"
         if clause in ["select", "where", "update"]:
             table_variants = self.table_variants
+        # Clause "from"
         elif clause in ["from"]:
+            # For Read Only
             if self.get_input_format() in ["parquet"] and access in ["RO"]:
                 input_file = self.get_input()
                 table_variants = f"'{input_file}' as variants"
+            # For Read Write
             else:
                 table_variants = f"{self.table_variants} as variants"
         else:
@@ -781,11 +782,8 @@ class Variants:
                 sql_create_table_columns_list = []
                 for column in structure_complete:
                     column_type = structure_complete[column]
-                    #sql_create_table_columns.append(f"\"{column}\" {column_type}")
                     sql_create_table_columns.append(f"\"{column}\" {column_type} default NULL")
                     sql_create_table_columns_list.append(f"\"{column}\"")
-
-                
 
                 # Create database
                 log.debug(f"Create Table {table_variants}")
@@ -861,48 +859,258 @@ class Variants:
             raise ValueError(f"Input file format '{self.input_format}' not available")
 
         # Explode INFOS fields into table fields
-        if self.get_param().get("explode_infos", None) is not None:
-            self.explode_infos(
-                prefix=self.get_param().get("explode_infos", None))
+        if self.get_explode_infos():
+            self.explode_infos(prefix=self.get_explode_infos_prefix(), fields=self.get_explode_infos_fields(), force=True)
 
         # Create index after insertion
         self.create_indexes()
 
 
-    def add_column(self, table_name, column_name, column_type, default_value=None):
+    def get_explode_infos(self) -> bool:
         """
-        Adds a column to a SQLite or DuckDB table with a default value if it doesn't already exist.
+        The function `get_explode_infos` returns the value of the "explode_infos" parameter, defaulting
+        to False if it is not set.
+        :return: The method is returning the value of the "explode_infos" parameter, which is a boolean
+        value. If the parameter is not present, it will return False.
+        """
 
-        table_name: the name of the table
-        column_name: the name of the column to add
-        column_type: the data type of the column to add
-        default_value: the default value of the column to add (optional)
+        return self.get_param().get("explode_infos", False)
+
+
+    def get_explode_infos_fields(self, explode_infos_fields:str = None, remove_fields_not_in_header:bool = False) -> list:
         """
+        The `get_explode_infos_fields` function returns a list of exploded information fields based on
+        the input parameter `explode_infos_fields`.
+        
+        :param explode_infos_fields: The `explode_infos_fields` parameter is a string that specifies the
+        fields to be exploded. It can be set to "ALL" to explode all fields, or it can be a
+        comma-separated list of field names to explode
+        :type explode_infos_fields: str
+        :param remove_fields_not_in_header: The parameter `remove_fields_not_in_header` is a boolean
+        flag that determines whether to remove fields that are not present in the header. If it is set
+        to `True`, any field that is not in the header will be excluded from the list of exploded
+        information fields. If it is set to `, defaults to False
+        :type remove_fields_not_in_header: bool (optional)
+        :return: The function `get_explode_infos_fields` returns a list of exploded information fields.
+        If the `explode_infos_fields` parameter is not provided or is set to None, it returns an empty
+        list. If the parameter is provided and its value is "ALL", it also returns an empty list.
+        Otherwise, it returns a list of exploded information fields after removing any spaces and
+        splitting the string by commas.
+        """
+
+        # If no fields, get it in param
+        if not explode_infos_fields:
+            explode_infos_fields = self.get_param().get("explode_infos_fields", None)
+
+        # If no fields, defined as all fields in header using keyword
+        if not explode_infos_fields:
+            explode_infos_fields = '*'
+
+        # If fields list not empty
+        if explode_infos_fields:
+
+            # Input fields list
+            if isinstance(explode_infos_fields, str):
+                fields_input = explode_infos_fields.split(",")
+            elif isinstance(explode_infos_fields, list):
+                fields_input = explode_infos_fields
+            else:
+                fields_input = []
+
+            # Fields list without * keyword
+            fields_without_all = fields_input.copy()
+            if "*".casefold() in (item.casefold() for item in fields_without_all):
+                fields_without_all.remove("*")
+
+            # Fields in header
+            fields_in_header = sorted(list(set(self.get_header().infos)))
+
+            # Construct list of fields
+            fields_output = []
+            for field in fields_input:
+
+                # Strip field
+                field = field.strip()
+
+                # format keyword * in regex
+                if field.upper() in ["*"]:
+                    field = '.*'
+
+                # Find all fields with pattern
+                r = re.compile(field)
+                fields_search = sorted(list(filter(r.match, fields_in_header)))
+                
+                # Remove fields input from search
+                if fields_search != [field]:
+                    fields_search = sorted(list(set(fields_search).difference(fields_input)))
+
+                # If field is not in header (avoid not well formatted header)
+                if not fields_search and not remove_fields_not_in_header:
+                    fields_search = [field]
+                
+                # Add found fields
+                for new_field in fields_search:
+                    # Add field, if not already exists, and if it is in header (if asked)
+                    if new_field not in fields_output and (not remove_fields_not_in_header or new_field in fields_in_header) and new_field not in [".*"]:
+                        fields_output.append(new_field)
+                        
+            return fields_output
+
+        else:
+
+            return []
+        
+
+    def get_explode_infos_prefix(self, explode_infos_prefix:str = None) -> str:
+        """
+        The function `get_explode_infos_prefix` returns the value of the `explode_infos_prefix` parameter, or
+        the value of `self.get_param().get("explode_infos_prefix", None)` if `explode_infos_prefix` is
+        not provided.
+        
+        :param explode_infos_prefix: The parameter `explode_infos_prefix` is a string that specifies a
+        prefix to be used for exploding or expanding information
+        :type explode_infos_prefix: str
+        :return: the value of the variable `explode_infos_prefix`.
+        """
+
+        if not explode_infos_prefix:
+            explode_infos_prefix = self.get_param().get("explode_infos_prefix", "")
+
+        return explode_infos_prefix
+
+
+    def add_column(self, table_name, column_name, column_type, default_value=None, drop:bool = False) -> dict:
+        """
+        The `add_column` function adds a column to a SQLite or DuckDB table with a default value if it
+        doesn't already exist.
+        
+        :param table_name: The name of the table to which you want to add a column
+        :param column_name: The parameter "column_name" is the name of the column that you want to add
+        to the table
+        :param column_type: The `column_type` parameter specifies the data type of the column that you
+        want to add to the table. It should be a string that represents the desired data type, such as
+        "INTEGER", "TEXT", "REAL", etc
+        :param default_value: The `default_value` parameter is an optional parameter that specifies the
+        default value for the newly added column. If a default value is provided, it will be assigned to
+        the column for any existing rows that do not have a value for that column
+        :param drop: The `drop` parameter is a boolean flag that determines whether to drop the column
+        if it already exists in the table. If `drop` is set to `True`, the function will drop the
+        existing column before adding the new column. If `drop` is set to `False` (default),, defaults
+        to False
+        :type drop: bool (optional)
+        :return: a boolean value indicating whether the column was successfully added to the table.
+        """
+        
+        # added
+        added = False
+        dropped = False
 
         # Check if the column already exists in the table
         query = f""" SELECT * FROM {table_name} LIMIT 0 """
         columns = self.get_query_to_df(query).columns.tolist()
         if column_name in columns:
             log.debug(f"The {column_name} column already exists in the {table_name} table")
-            return
+            if drop:
+                self.drop_column(table_name=table_name, column_name=column_name)
+                dropped = True
+            else:
+                return None
         else:
             log.debug(f"The {column_name} column NOT exists in the {table_name} table")
-        
+
         # Add column in table
         add_column_query = f""" ALTER TABLE {table_name} ADD COLUMN "{column_name}" {column_type} """
         if default_value is not None:
             add_column_query += f" DEFAULT {default_value}"
         self.execute_query(add_column_query)
+        added = not dropped
         log.debug(f"The {column_name} column was successfully added to the {table_name} table")
         
-        return
+        if added:
+            added_column = {
+                "table_name": table_name,
+                "column_name": column_name,
+                "column_type": column_type,
+                "default_value": default_value
+            }
+        else:
+            added_column = None
+
+        return added_column
 
 
-    def explode_infos(self, prefix: str = None, create_index: bool = False, fields: list = None, update: bool = True, force:bool = False) -> None:
+    def drop_column(self, column:dict = None, table_name:str = None, column_name:str = None) -> bool:
         """
-        The function takes a VCF file and explodes the INFO fields into individual columns
+        The `drop_column` function drops a specified column from a given table in a database and returns
+        True if the column was successfully dropped, and False if the column does not exist in the
+        table.
+        
+        :param column: The `column` parameter is a dictionary that contains information about the column
+        you want to drop. It has two keys:
+        :type column: dict
+        :param table_name: The `table_name` parameter is the name of the table from which you want to
+        drop a column
+        :type table_name: str
+        :param column_name: The `column_name` parameter is the name of the column that you want to drop
+        from the table
+        :type column_name: str
+        :return: a boolean value. It returns True if the column was successfully dropped from the table,
+        and False if the column does not exist in the table.
         """
 
+        # Find column infos
+        if column:
+            table_name = column.get("table_name", None)
+            column_name = column.get("column_name", None)
+
+        if not table_name and not column_name:
+            return False
+
+        # Removed
+        removed = False
+
+        # Check if the column already exists in the table
+        query = f""" SELECT * FROM {table_name} LIMIT 0 """
+        columns = self.get_query_to_df(query).columns.tolist()
+        if column_name in columns:
+            log.debug(f"The {column_name} column exists in the {table_name} table")
+        else:
+            log.debug(f"The {column_name} column NOT exists in the {table_name} table")
+            return False
+        
+        # Add column in table # ALTER TABLE integers DROP k
+        add_column_query = f""" ALTER TABLE {table_name} DROP "{column_name}" """
+        self.execute_query(add_column_query)
+        removed = True
+        log.debug(f"The {column_name} column was successfully dropped to the {table_name} table")
+        
+        return removed
+    
+
+    def explode_infos(self, prefix: str = None, create_index: bool = False, fields: list = None, force:bool = False) -> list:
+        """
+        The `explode_infos` function takes a VCF file and explodes the INFO fields into individual
+        columns.
+        
+        :param prefix: The `prefix` parameter is a string that is used as a prefix for the exploded INFO
+        fields. If the `prefix` is not provided or is set to `None`, the function will use the value of
+        `self.get_explode_infos_prefix()` as the prefix
+        :type prefix: str
+        :param create_index: The `create_index` parameter is a boolean flag that specifies whether to
+        create indexes on the exploded INFO fields. If set to `True`, indexes will be created; if set to
+        `False`, indexes will not be created. The default value is `False`, defaults to False
+        :type create_index: bool (optional)
+        :param fields: The `fields` parameter is a list of INFO fields that you want to explode into
+        individual columns. If this parameter is not provided, all INFO fields will be exploded
+        :type fields: list
+        :param force: The `force` parameter is a boolean flag that determines whether to drop and
+        recreate the column if it already exists in the table. If `force` is set to `True`, the column
+        will be dropped and recreated. If `force` is set to `False`, the column will not be dropped,
+        defaults to False
+        :type force: bool (optional)
+        :return: The function `explode_infos` returns a list of added columns.
+        """
+        
         # drop indexes
         self.drop_indexes()
 
@@ -912,12 +1120,15 @@ class Variants:
         # Access
         access = self.get_config().get("access", None)
 
+        # Added columns
+        added_columns = []
+
         if access not in ["RO"]:
 
             # prefix
-            if prefix in [None, True] or type(prefix) != str:
-                if self.get_param().get("explode_infos",None) not in [None, True]:
-                    prefix = self.get_param().get("explode_infos","INFO/")
+            if prefix in [None, True] or not isinstance(prefix, str):
+                if self.get_explode_infos_prefix() not in [None, True]:
+                    prefix = self.get_explode_infos_prefix()
                 else:
                     prefix = "INFO/"
 
@@ -925,7 +1136,10 @@ class Variants:
             table_variants = self.get_table_variants(clause="select")
 
             # extra infos
-            extra_infos = self.get_extra_infos()
+            try:
+                extra_infos = self.get_extra_infos()
+            except:
+                extra_infos = []
 
             log.debug(
                 f"Explode INFO fields - ADD [{len(self.get_header().infos)}] annotations fields")
@@ -938,11 +1152,18 @@ class Variants:
                 fields_list += fields
             fields_list = set(fields_list)
 
-            for info in fields_list:
+            # If no fields
+            if not fields:
+                fields = []
+
+            # Translate fields if patterns
+            fields = self.get_explode_infos_fields(explode_infos_fields=fields)
+
+            for info in fields:
 
                 info_id_sql = prefix+info
 
-                if (fields is None or info in fields or prefix+info in fields) and (update or info not in extra_infos):
+                if (info in fields_list or prefix+info in fields_list or info in extra_infos):
 
                     log.debug(
                         f"Explode INFO fields - ADD '{info}' annotations fields")
@@ -959,7 +1180,9 @@ class Variants:
                         type_sql = "VARCHAR"
 
                     # Add field
-                    self.add_column(table_name=table_variants, column_name=info_id_sql, column_type=type_sql, default_value="null")
+                    added_column = self.add_column(table_name=table_variants, column_name=info_id_sql, column_type=type_sql, default_value="null", drop=force)
+                    if added_column:
+                        added_columns.append(added_column)
 
                     # add field to index
                     self.index_additionnal_fields.append(info_id_sql)
@@ -987,12 +1210,22 @@ class Variants:
                     sql_info_alter_table_array.append(update_info_field)
 
             # By chromosomes
-            chromosomes_df = self.get_query_to_df(
-                f""" SELECT "#CHROM" FROM {table_variants} GROUP BY "#CHROM" """)
+            try:
+                chromosomes_list = list(self.get_query_to_df(
+                    f""" SELECT "#CHROM" FROM {table_variants} GROUP BY "#CHROM" """)["#CHROM"])
+            except:
+                chromosomes_list = [None]
 
-            for chrom in chromosomes_df["#CHROM"]:
+            #for chrom in chromosomes_df["#CHROM"]:
+            for chrom in chromosomes_list:
                 log.debug(
                     f"Explode INFO fields - Chromosome {chrom}...")
+                
+                # Where clause
+                where_clause = ""
+                if chrom:
+                    where_clause = f""" WHERE "#CHROM" = '{chrom}' """
+
                 # Update table
                 sql_info_alter_table_array_join = ", ".join(
                     sql_info_alter_table_array)
@@ -1000,15 +1233,17 @@ class Variants:
                     sql_info_alter_table = f"""
                         UPDATE {table_variants}
                         SET {sql_info_alter_table_array_join}
-                        WHERE "#CHROM" = '{chrom}'
+                        {where_clause}
                         """
-                    log.debug(
-                        f"Explode INFO fields - ADD [{len(self.get_header().infos)}]: {sql_info_alter_table}")
+                    # log.debug(
+                    #     f"Explode INFO fields - ADD [{len(self.get_header().infos)}]: {sql_info_alter_table}")
                     self.conn.execute(sql_info_alter_table)
 
         # create indexes
         if create_index:
             self.create_indexes()
+
+        return added_columns
 
 
     def create_indexes(self) -> None:
@@ -1120,7 +1355,7 @@ class Variants:
             return None
 
 
-    def export_output(self, output_file: str = None, output_header: str = None, export_header: bool = True, query: str = None, parquet_partitions:list = None, threads:int = None, sort:bool = False, index:bool = False) -> bool:
+    def export_output(self, output_file: str = None, output_header: str = None, export_header: bool = True, query: str = None, parquet_partitions:list = None, threads:int = None, sort:bool = False, index:bool = False, order_by:str = None) -> bool:
         """
         The `export_output` function exports data from a VCF file to a specified output file in various
         formats, including VCF, CSV, TSV, PSV, and Parquet.
@@ -1147,12 +1382,23 @@ class Variants:
         organize data in a hierarchical directory structure based on the values of one or more columns.
         This can improve query performance when working with large datasets
         :type parquet_partitions: list
-        :param threads: Number of threads (optional)
+        :param threads: The `threads` parameter is an optional parameter that specifies the number of
+        threads to be used during the export process. It determines the level of parallelism and can
+        improve the performance of the export operation. If not provided, the function will use the
+        default number of threads
         :type threads: int
-        :param sort: sort output file, only if VCF format (optional)
-        :type sort: bool
-        :param index: index output file, only if VCF format (optional)
-        :type index: int
+        :param sort: The `sort` parameter is a boolean flag that determines whether the output file
+        should be sorted or not. This parameter is only applicable when the output file format is VCF.
+        If `sort` is set to `True`, the output file will be sorted based on the genomic coordinates of
+        the variants, defaults to False
+        :type sort: bool (optional)
+        :param index: The `index` parameter is a boolean flag that determines whether an index should be
+        created on the output file. If `index` is True, an index will be created. If `index` is False,
+        no index will be created, defaults to False
+        :type index: bool (optional)
+        :param order_by: The `order_by` parameter is a string that specifies the column(s) to use for
+        sorting the output file. This parameter is only applicable when exporting data in VCF format
+        :type order_by: str
         :return: a boolean value. It checks if the output file exists and returns True if it does, or
         None if it doesn't.
         """
@@ -1179,11 +1425,22 @@ class Variants:
         if not parquet_partitions:
             parquet_partitions = self.get_param().get("parquet_partitions", None)
 
+        # Order by
+        if not order_by:
+            order_by = self.get_param().get("order_by", "")
+
+        # Header in output
+        header_in_output = self.get_param().get("header_in_output", False)
+
         # Database
         database_source=self.get_connexion()
 
         # Connexion format
         connexion_format = self.get_connexion_format()
+
+        # Explode infos
+        if self.get_explode_infos():
+            self.explode_infos(prefix=self.get_explode_infos_prefix(), fields=self.get_explode_infos_fields(), force=True)
 
         # Tmp files to remove
         tmp_to_remove = []
@@ -1214,8 +1471,11 @@ class Variants:
         # Create database
         database = Database(database=database_source, table="variants", header_file=output_header)
         
+        # Existing colomns header
+        existing_columns_header = database.get_header_file_columns(output_header)
+
         # Export file
-        database.export(output_database=output_file, parquet_partitions=parquet_partitions, threads=threads, sort=sort, index=index)
+        database.export(output_database=output_file, existing_columns_header=existing_columns_header, parquet_partitions=parquet_partitions, threads=threads, sort=sort, index=index, header_in_output=header_in_output, order_by=order_by)
         
         # Remove
         remove_if_exists(tmp_to_remove)
@@ -1237,13 +1497,20 @@ class Variants:
         columns separated by commas. If it's "list", it will return a list of the extra columns
         :return: A list of columns that are in the table but not in the header
         """
+
         header_columns = []
+
         if not table:
             table = self.get_table_variants(clause="from")
             header_columns = self.get_header_columns()
+
+        # Check all columns in the database
         query = f""" SELECT * FROM {table} LIMIT 1 """
+        log.debug(f"query {query}")
         table_columns = self.get_query_to_df(query).columns.tolist()
         extra_columns = []
+
+        # Construct extra infos (not in header)
         for column in table_columns:
             if column not in header_columns:
                 extra_columns.append(column)
@@ -1261,6 +1528,7 @@ class Variants:
         :type table: str
         :return: A string of the extra infos
         """
+
         return ", ".join(['"' + str(elem) + '"' for elem in self.get_extra_infos(table=table)])
 
 
@@ -1399,13 +1667,6 @@ class Variants:
             sql_query_export = f"COPY ({sql_query_select}) TO '{tmp_variants_name}' WITH (FORMAT CSV, DELIMITER '\t', HEADER, QUOTE '', COMPRESSION 'gzip')"
             self.conn.execute(sql_query_export)
         elif connexion_format in ["sqlite"]:
-            # import csv
-            # with pgzip.open(tmp_variants_name, 'wt') as f:
-            #     writer = csv.writer(f, delimiter='\t',
-            #                         quotechar='', quoting=csv.QUOTE_NONE)
-            #     cursor = self.conn.execute(sql_query_select)
-            #     writer.writerow([i[0] for i in cursor.description])
-            #     writer.writerows(cursor)
             cursor = pd.read_sql(sql_query_select, self.conn)
             cursor.to_csv(tmp_variants_name, sep='\t', compression='gzip', quoting='', index=False)
 
@@ -1419,7 +1680,7 @@ class Variants:
         else:
             compression_type = "bgzip"
 
-        concat_and_compress_files(input_files=[tmp_header_name, tmp_variants_name], output_file=vcf_file, compression_type=compression_type, threads=threads, sort=True, index=index)
+        concat_and_compress_files(input_files=[tmp_header_name, tmp_variants_name], output_file=vcf_file, compression_type=compression_type, threads=threads, sort=True, index=index, compression_level=compression)
 
 
     def run_commands(self, commands: list = [], threads: int = 1) -> None:
@@ -1429,6 +1690,7 @@ class Variants:
         :param commands: A list of commands to run
         :param threads: The number of threads to use, defaults to 1 (optional)
         """
+
         run_parallel_commands(commands, threads)
 
 
@@ -1573,6 +1835,7 @@ class Variants:
         """
         > This function drops the variants table
         """
+
         table_variants = self.get_table_variants()
         sql_table_variants = f"DROP TABLE IF EXISTS {table_variants}"
         self.conn.execute(sql_table_variants)
@@ -1595,10 +1858,10 @@ class Variants:
         assembly = self.get_param().get("assembly", self.get_config().get("assembly", DEFAULT_ASSEMBLY))
 
         # INFO/Tag prefix
-        prefix = "INFO/"
+        prefix = self.get_explode_infos_prefix()
 
         # Explode INFO/SVTYPE
-        self.explode_infos(prefix=prefix,fields=["SVTYPE"])
+        self.explode_infos(prefix=prefix, fields=["SVTYPE"])
 
         # variants table
         table_variants = self.get_table_variants()
@@ -1695,16 +1958,12 @@ class Variants:
                     if len(annotation_file_split) > 1:
                         annotation_file_annotation = annotation_file_split[1]
                         param["annotation"]["annovar"]["annotations"][annotation_file_annotation] = annotations
-                        # for annotation_file_ann in annotation_file_annotation.split("+"):
-                        #     param["annotation"]["annovar"]["annotations"][annotation_file_ann] = annotations
 
                 # Annotation Exomiser
                 elif annotation_file.startswith("exomiser"):
                     log.debug(f"Quick Annotation Exomiser")
                     if "exomiser" not in param["annotation"]:
                         param["annotation"]["exomiser"] = {}
-                    # if "annotations" not in param["annotation"]["exomiser"]:
-                    #     param["annotation"]["exomiser"]["annotations"] = {}
                     annotation_file_split = annotation_file.split(":")
                     if len(annotation_file_split) > 1:
                         annotation_file_options = annotation_file_split[1]
@@ -1728,12 +1987,6 @@ class Variants:
 
                         log.debug(param["annotation"]["exomiser"])
 
-                        #exit()
-
-                        #param["annotation"]["annovar"]["annotations"][annotation_file_annotation] = annotations
-                        # for annotation_file_ann in annotation_file_annotation.split("+"):
-                        #     param["annotation"]["annovar"]["annotations"][annotation_file_ann] = annotations
-
                 # Annotation Parquet or BCFTOOLS
                 else:
                     
@@ -1747,8 +2000,6 @@ class Variants:
                         # Find within assembly folders
                         for annotations_database in annotations_databases:
                             found_files = find_all(annotation_file, os.path.join(annotations_database, assembly))
-                            # log.debug(f"find all: {annotation_file} {found_files}")
-                            #raise ValueError("FIND ALL")
                             if len(found_files) > 0:
                                 annotation_file_found = found_files[0]
                                 break
@@ -1756,8 +2007,6 @@ class Variants:
                             # Find within folders
                             for annotations_database in annotations_databases:
                                 found_files = find_all(annotation_file, annotations_database)
-                                # log.debug(f"find all2: {annotation_file} {found_files}")
-                                # raise ValueError("FIND ALL")
                                 if len(found_files) > 0:
                                     annotation_file_found = found_files[0]
                                     break
@@ -1817,9 +2066,8 @@ class Variants:
                 log.info("Annotations 'varank'...")
 
         # Explode INFOS fields into table fields
-        if self.get_param().get("explode_infos", None) is not None:
-            self.explode_infos(
-                prefix=self.get_param().get("explode_infos", None))
+        if self.get_explode_infos():
+            self.explode_infos(prefix=self.get_explode_infos_prefix(), fields=self.get_explode_infos_fields(), force=True)
 
 
     def annotation_bcftools(self, threads: int = None) -> None:
@@ -3436,10 +3684,13 @@ class Variants:
                 f"Existing annotations in VCF: {vcf_annotation} [{vcf_annotation_line}]")
 
         # prefix
-        prefix=self.get_param().get("explode_infos", None)
+        prefix=self.get_explode_infos_prefix()
         
+        # Added columns
+        added_columns = []
+
         # explode infos
-        self.explode_infos(prefix=prefix)
+        added_columns += self.explode_infos(prefix=prefix)
 
         # drop indexes
         log.debug(f"Drop indexes...")
@@ -3637,8 +3888,6 @@ class Variants:
                     if parquet_type in ["regions"]:
                         allow_annotation_full_info = False
 
-                    #if allow_annotation_full_info and nb_annotation_field == len(annotation_fields) and annotation_fields_ALL and "INFO" in parquet_hdr_vcf_header_columns:
-                    #if allow_annotation_full_info and nb_annotation_field == len(annotation_fields) and annotation_fields_ALL and ("INFO" in parquet_hdr_vcf_header_columns or "INFO" in database.get_extra_columns()):
                     if allow_annotation_full_info and nb_annotation_field == len(annotation_fields) and annotation_fields_ALL and ("INFO" in parquet_hdr_vcf_header_columns and "INFO" in database.get_extra_columns()):
                         log.debug("Column INFO annotation enabled")
                         sql_query_annotation_update_info_sets = []
@@ -3890,6 +4139,9 @@ class Variants:
         # Variables
         table_variants = self.get_table_variants(clause="update")
 
+        # Added columns
+        added_columns = []
+
         # Create list of PZfields
         # List of PZFields
         list_of_pzfields_original = pzfields + \
@@ -3910,11 +4162,10 @@ class Variants:
         if list_of_pzfields:
 
             # Explode Infos fields
-            explode_infos_prefix = self.get_param().get("explode_infos", "INFO/")
-            if explode_infos_prefix == True:
-                explode_infos_prefix = "INFO/"
-            self.explode_infos(prefix=explode_infos_prefix)
+            explode_infos_prefix = self.get_explode_infos_prefix()
+            added_columns += self.explode_infos(prefix=explode_infos_prefix)
             extra_infos = self.get_extra_infos()
+
 
             # PZfields tags description
             PZfields_INFOS = {
@@ -3977,11 +4228,12 @@ class Variants:
             # Header
             for pzfield in list_of_pzfields:
                 if re.match("PZScore.*", pzfield):
-                    self.add_column(table_name=table_variants, column_name=pzfield, column_type="INTEGER", default_value="0")
+                    added_column = self.add_column(table_name=table_variants, column_name=pzfield, column_type="INTEGER", default_value="0")
                 elif re.match("PZFlag.*", pzfield):
-                    self.add_column(table_name=table_variants, column_name=pzfield, column_type="BOOLEAN", default_value="1")
+                    added_column = self.add_column(table_name=table_variants, column_name=pzfield, column_type="BOOLEAN", default_value="1")
                 else:
-                    self.add_column(table_name=table_variants, column_name=pzfield, column_type="STRING", default_value="''")
+                    added_column = self.add_column(table_name=table_variants, column_name=pzfield, column_type="STRING", default_value="''")
+                added_columns.append(added_column)
 
             # Profiles
             if profiles:
@@ -4104,7 +4356,7 @@ class Variants:
                         for annotation in config_profiles[profile]:
 
                             # Check if annotation field is present
-                            if not explode_infos_prefix+annotation in extra_infos:
+                            if not f"{explode_infos_prefix}{annotation}" in extra_infos:
                                 log.debug(
                                     f"Annotation '{annotation}' not in data")
                                 continue
@@ -4217,10 +4469,14 @@ class Variants:
 
             log.warning(f"No profiles in parameters")
 
+
+        # Remove added columns
+        for added_column in added_columns:
+            self.drop_column(column=added_column)
+
         # Explode INFOS fields into table fields
-        if self.get_param().get("explode_infos", None) is not None:
-            self.explode_infos(
-                prefix=self.get_param().get("explode_infos", None))
+        if self.get_explode_infos():
+            self.explode_infos(prefix=self.get_explode_infos_prefix(), fields=self.get_explode_infos_fields(), force=True)
 
 
     ###
@@ -4384,8 +4640,13 @@ class Variants:
             """
         df_variants = self.get_query_to_df(query_variants)
 
+        # Added columns
+        added_columns = []
+
         # Add hgvs column in variants table
-        self.add_column(table_variants, "hgvs", "STRING", default_value=None)
+        hgvs_column_name = "hgvs_" + str(random.randrange(1000))
+        added_column = self.add_column(table_variants, hgvs_column_name, "STRING", default_value=None)
+        added_columns.append(added_column)
 
         log.debug(f"refSeq loading...")
         # refSeq in duckDB
@@ -4453,7 +4714,7 @@ class Variants:
         ddf = dd.from_pandas(df_variants, npartitions=threads)
         
         # Use dask.dataframe.apply() to apply function on each partition
-        ddf["hgvs"] = ddf.map_partitions(partition_function)
+        ddf[hgvs_column_name] = ddf.map_partitions(partition_function)
 
         # Convert Dask DataFrame to Pandas Dataframe
         df = ddf.compute()
@@ -4466,13 +4727,13 @@ class Variants:
             # Update hgvs column
             update_variant_query = f"""
                 UPDATE {table_variants}
-                SET hgvs=df.hgvs
+                SET "{hgvs_column_name}"=df."{hgvs_column_name}"
                 FROM read_parquet('{df_parquet}') as df
                 WHERE variants."#CHROM" = df.CHROM
                 AND variants.POS = df.POS
                 AND variants.REF = df.REF
                 AND variants.ALT = df.ALT
-                AND df.hgvs NOT IN ('') AND df.hgvs NOT NULL
+                AND df."{hgvs_column_name}" NOT IN ('') AND df."{hgvs_column_name}" NOT NULL
                 """
             self.execute_query(update_variant_query)
 
@@ -4487,11 +4748,15 @@ class Variants:
                         ELSE ''
                     END,
                     'hgvs=',
-                    hgvs
+                    {hgvs_column_name}
                 )
-            WHERE hgvs NOT IN ('') AND hgvs NOT NULL
+            WHERE "{hgvs_column_name}" NOT IN ('') AND "{hgvs_column_name}" NOT NULL
             """
         self.execute_query(sql_query_update)
+
+        # Remove added columns
+        for added_column in added_columns:
+            self.drop_column(column=added_column)
 
 
     ###
@@ -4548,7 +4813,7 @@ class Variants:
                     "output_column_description": "Variant type: SNV if X>Y, MOSAIC if X>Y,Z or X,Y>Z, INDEL if XY>Z or X>YZ",
                     "operation_query": """
                         CASE
-                            WHEN "INFO/SVTYPE" NOT NULL THEN "INFO/SVTYPE"
+                            WHEN "SVTYPE" NOT NULL THEN "SVTYPE"
                             WHEN LENGTH(REF) = 1 AND LENGTH(ALT) = 1 THEN 'SNV'
                             WHEN REF LIKE '%,%' OR ALT LIKE '%,%' THEN 'MOSAIC'
                             WHEN LENGTH(REF) == LENGTH(ALT) AND LENGTH(REF) > 1 THEN 'MNV'
@@ -4725,22 +4990,23 @@ class Variants:
                 raise ValueError(f"Operations config: Calculation '{operation_name}' NOT available")
 
         # Explode INFOS fields into table fields
-        if self.get_param().get("explode_infos", None) is not None:
-            self.explode_infos(
-                prefix=self.get_param().get("explode_infos", None))
+        if self.get_explode_infos():
+            self.explode_infos(prefix=self.get_explode_infos_prefix(), fields=self.get_explode_infos_fields(), force=True)
 
 
     def calculation_process_sql(self, operation:dict, operation_name:str = "unknown") -> None:
         """
-        This function takes in a string of a mathematical operation and returns the result of that
-        operation
-
-        :param operation: The operation to be performed
+        The `calculation_process_sql` function takes in a mathematical operation as a string and
+        performs the operation, updating the specified table with the result.
+        
+        :param operation: The `operation` parameter is a dictionary that contains information about the
+        mathematical operation to be performed. It includes the following keys:
+        :type operation: dict
+        :param operation_name: The `operation_name` parameter is a string that represents the name of
+        the mathematical operation being performed. It is used for logging and error handling purposes,
+        defaults to unknown
+        :type operation_name: str (optional)
         """
-
-        # Param
-        param = self.get_param()
-        prefix = param.get("explode_infos", "INFO/")
 
         # table variants
         table_variants = self.get_table_variants(clause="alter")
@@ -4750,6 +5016,7 @@ class Variants:
         log.debug(f"process sql {operation_name}")
         output_column_name = operation.get('output_column_name',operation_name)
         output_column_type = operation.get('output_column_type', 'String')
+        prefix = operation.get('explode_infos_prefix', '')
         output_column_type_sql = code_type_map_to_sql.get(
             output_column_type, "VARCHAR")
         output_column_description = operation.get('output_column_description', f'{operation_name} operation')
@@ -4772,8 +5039,8 @@ class Variants:
             # If info fields available 
             if operation_info_fields_check_result:
 
-                # Create column
-                self.add_column(table_name=table_variants, column_name=prefix+output_column_name, column_type=output_column_type_sql, default_value="null")
+                # Added_columns
+                added_columns = []
 
                 # Create VCF header field
                 vcf_reader = self.get_header()
@@ -4788,7 +5055,12 @@ class Variants:
                 )
 
                 # Explode infos if needed
-                self.explode_infos(fields=[output_column_name] + operation_info_fields, force=True)
+                log.debug(f"calculation_process_sql prefix {prefix}")
+                added_columns += self.explode_infos(prefix=prefix, fields=[output_column_name] + operation_info_fields, force=True)
+
+                # Create column
+                added_column = self.add_column(table_name=table_variants, column_name=prefix+output_column_name, column_type=output_column_type_sql, default_value="null")
+                added_columns.append(added_column)
 
                 # Operation calculation
                 try:
@@ -4822,6 +5094,11 @@ class Variants:
                     log.error(f"Operations config: Calculation '{operation_name}' query failed")
                     raise ValueError(f"Operations config: Calculation '{operation_name}' query failed")
 
+                # Remove added columns
+                for added_column in added_columns:
+                    log.debug(f"added_column: {added_column}")
+                    self.drop_column(column=added_column)
+
             else:
                 log.error(f"Operations config: Calculation '{operation_name}' DOES NOT contain all mandatory fields {operation_info_fields}")
                 raise ValueError(f"Operations config: Calculation '{operation_name}' DOES NOT contain all mandatory fields {operation_info_fields}")
@@ -4829,24 +5106,33 @@ class Variants:
         else:
             log.error(f"Operations config: Calculation '{operation_name}' query NOT defined")
             raise ValueError(f"Operations config: Calculation '{operation_name}' query NOT defined")
-
+        
 
     def calculation_process_function(self, operation:dict, operation_name:str = "unknown") -> None:
         """
-        This function takes in a string, and returns a string
-
-        :param operation: The operation to be performed
+        The `calculation_process_function` takes in an operation dictionary and performs the specified
+        function with the given parameters.
+        
+        :param operation: The `operation` parameter is a dictionary that contains information about the
+        operation to be performed. It has the following keys:
+        :type operation: dict
+        :param operation_name: The `operation_name` parameter is a string that represents the name of
+        the operation being performed. It is used for logging purposes, defaults to unknown
+        :type operation_name: str (optional)
         """
+        
         operation_name = operation['name']
         log.debug(f"process sql {operation_name}")
         function_name = operation['function_name']
         function_params = operation['function_params']
         getattr(self, function_name)(*function_params)
 
-    # Operation functions
-
 
     def calculation_variant_id(self) -> None:
+        """
+        The function `calculation_variant_id` adds a variant ID annotation to a VCF file header and
+        updates the INFO field of a variants table with the variant ID.
+        """
 
         # variant_id annotation field
         variant_id_tag = self.get_variant_id_column()
@@ -4892,6 +5178,10 @@ class Variants:
 
 
     def calculation_extract_snpeff_hgvs(self) -> None:
+        """
+        The function `calculation_extract_snpeff_hgvs` extracts HGVS nomenclatures from the SnpEff
+        annotation field in a VCF file and adds them as a new column in the variants table.
+        """
 
         # SnpEff annotation field
         snpeff_ann = "ANN"
@@ -4899,18 +5189,17 @@ class Variants:
         # SnpEff annotation field
         snpeff_hgvs = "snpeff_hgvs"
 
-
         # Snpeff hgvs tags
         vcf_infos_tags = {
             snpeff_hgvs: "HGVS nomenclatures from snpEff annotation",
         }
 
-        # Param
-        param = self.get_param()
-        prefix = param.get("explode_infos", "INFO/")
-        if prefix == True:
+        # Prefix
+        prefix = self.get_explode_infos_prefix()
+        if prefix:
             prefix = "INFO/"
 
+        # snpEff fields
         speff_ann_infos = prefix+snpeff_ann
         speff_hgvs_infos = prefix+snpeff_hgvs
 
@@ -4920,8 +5209,11 @@ class Variants:
         # Header
         vcf_reader = self.get_header()
 
+        # Add columns
+        added_columns = []
+
         # Explode HGVS field in column
-        self.explode_infos(fields=[snpeff_ann])
+        added_columns += self.explode_infos(fields=[snpeff_ann])
 
         if "ANN" in vcf_reader.infos:
                 
@@ -4930,12 +5222,10 @@ class Variants:
             # Create variant id
             variant_id_column = self.get_variant_id_column()
 
-
             # Create dataframe
             dataframe_snpeff_hgvs = self.get_query_to_df(
                 f""" SELECT "{variant_id_column}", "{speff_ann_infos}" FROM {table_variants} """)
             
-
             # Create main NOMEN column
             dataframe_snpeff_hgvs[speff_hgvs_infos] = dataframe_snpeff_hgvs[speff_ann_infos].apply(
                     lambda x: extract_snpeff_hgvs(str(x)))
@@ -4986,6 +5276,10 @@ class Variants:
 
             log.warning("No snpEff annotation. Please Anotate with snpEff before use this calculation option")
 
+        # Remove added columns
+        for added_column in added_columns:
+            self.drop_column(column=added_column)
+
 
     def calculation_extract_nomen(self) -> None:
         """
@@ -5011,9 +5305,9 @@ class Variants:
 
         # Param
         param = self.get_param()
-        prefix = param.get("explode_infos", "INFO/")
-        if prefix == True:
-            prefix = "INFO/"
+
+        # Prefix
+        prefix = self.get_explode_infos_prefix()
 
         # Header
         vcf_reader = self.get_header()
@@ -5038,8 +5332,12 @@ class Variants:
             else:
                 log.error(f"Transcript file '{transcripts_file}' does NOT exist")
                 raise ValueError(f"Transcript file '{transcripts_file}' does NOT exist")
+            
+        # Added columns
+        added_columns = []
+
         # Explode HGVS field in column
-        self.explode_infos(fields=[hgvs_field])
+        added_columns += self.explode_infos(fields=[hgvs_field])
 
         # extra infos
         extra_infos = self.get_extra_infos()
@@ -5113,8 +5411,22 @@ class Variants:
             del dataframe_hgvs
             gc.collect()
 
+        # Remove added columns
+        for added_column in added_columns:
+            self.drop_column(column=added_column)
+
 
     def calculation_find_by_pipeline(self, tag:str = "findbypipeline") -> None:
+        """
+        The function `calculation_find_by_pipeline` performs a calculation to find the number of
+        pipeline/sample for a variant and updates the variant information in a VCF file.
+        
+        :param tag: The `tag` parameter is a string that represents the annotation field for the
+        "findbypipeline" information in the VCF file. It is used to create the annotation field in the
+        VCF header and to update the corresponding field in the variants table, defaults to
+        findbypipeline
+        :type tag: str (optional)
+        """
 
         # if FORMAT and samples
         if "FORMAT" in self.get_header_columns_as_list() and self.get_header_sample_list():
@@ -5127,12 +5439,10 @@ class Variants:
                 findbypipeline_tag: f"Number of pipeline/sample for a variant ({findbypipeline_tag})",
             }
 
-            # Param
-            param = self.get_param()
-            prefix = param.get("explode_infos", "INFO/")
-            if prefix == True:
-                prefix = "INFO/"
+            # Prefix
+            prefix = self.get_explode_infos_prefix()
 
+            # Field
             findbypipeline_infos = prefix+findbypipeline_tag
 
             # Variants table
@@ -5198,6 +5508,10 @@ class Variants:
 
 
     def calculation_genotype_concordance(self) -> None:
+        """
+        The function `calculation_genotype_concordance` calculates the genotype concordance for
+        multi-caller VCF files and updates the variant information in the database.
+        """
 
         # if FORMAT and samples
         if "FORMAT" in self.get_header_columns_as_list() and self.get_header_sample_list():
@@ -5210,12 +5524,10 @@ class Variants:
                 genotypeconcordance_tag: "Concordance of genotype for multi caller VCF",
             }
 
-            # Param
-            param = self.get_param()
-            prefix = param.get("explode_infos", "INFO/")
-            if prefix == True:
-                prefix = "INFO/"
+            # Prefix
+            prefix = self.get_explode_infos_prefix()
 
+            # Field
             genotypeconcordance_infos = prefix+genotypeconcordance_tag
 
             # Variants table
@@ -5282,6 +5594,10 @@ class Variants:
 
 
     def calculation_barcode(self) -> None:
+        """
+        The `calculation_barcode` function calculates barcode values for variants in a VCF file and
+        updates the INFO field in the file with the calculated barcode values.
+        """
 
         # if FORMAT and samples
         if "FORMAT" in self.get_header_columns_as_list() and self.get_header_sample_list():
@@ -5294,12 +5610,10 @@ class Variants:
                 "barcode": "barcode calculation (VaRank)",
             }
 
-            # Param
-            param = self.get_param()
-            prefix = param.get("explode_infos", "INFO/")
-            if prefix == True:
-                prefix = "INFO/"
+            # Prefix
+            prefix = self.get_explode_infos_prefix()
 
+            # Field
             barcode_infos = prefix+barcode_tag
 
             # Variants table
@@ -5319,7 +5633,6 @@ class Variants:
             dataframe_barcode = self.get_query_to_df(
                 f""" SELECT {samples_fields} FROM {table_variants} """)
 
-        
             # Create barcode column
             dataframe_barcode[barcode_infos] = dataframe_barcode.apply(lambda row: barcode(row, samples=self.get_header_sample_list()), axis=1)
             
@@ -5366,6 +5679,10 @@ class Variants:
 
 
     def calculation_trio(self) -> None:
+        """
+        The `calculation_trio` function performs trio calculations on a VCF file by adding trio
+        information to the INFO field of each variant.
+        """
 
         # if FORMAT and samples
         if "FORMAT" in self.get_header_columns_as_list() and self.get_header_sample_list():
@@ -5380,9 +5697,9 @@ class Variants:
 
             # Param
             param = self.get_param()
-            prefix = param.get("explode_infos", "INFO/")
-            if prefix == True:
-                prefix = "INFO/"
+
+            # Prefix
+            prefix = self.get_explode_infos_prefix()
 
             # Trio param
             trio_ped = param.get("calculation", {}).get("TRIO", {})
@@ -5398,6 +5715,7 @@ class Variants:
             log.debug(f"Param for trio sample: {trio_ped}")
             log.debug(f"List of trio sample: {trio_samples}")
 
+            # Field
             trio_infos = prefix+trio_tag
 
             # Variants table
@@ -5464,6 +5782,11 @@ class Variants:
 
 
     def calculation_vaf_normalization(self) -> None:
+        """
+        The `calculation_vaf_normalization` function calculates the VAF (Variant Allele Frequency)
+        normalization for each sample in a VCF file and updates the FORMAT and INFO fields accordingly.
+        :return: The function does not return anything.
+        """
 
         # if FORMAT and samples
         if "FORMAT" in self.get_header_columns_as_list() and self.get_header_sample_list():
@@ -5476,13 +5799,8 @@ class Variants:
                 "VAF": "VAF Variant Frequency",
             }
 
-            # Param
-            param = self.get_param()
-            prefix = param.get("explode_infos", "INFO/")
-            if prefix == True:
-                prefix = "INFO/"
-
-            #vaf_normalization_infos = prefix+vaf_normalization_tag
+            # Prefix
+            prefix = self.get_explode_infos_prefix()
 
             # Variants table
             table_variants = self.get_table_variants()
@@ -5546,6 +5864,17 @@ class Variants:
 
 
     def calculation_genotype_stats(self, info:str = "VAF") -> None:
+        """
+        The `calculation_genotype_stats` function calculates genotype statistics for a given information
+        field in a VCF file and updates the INFO column of the variants table with the calculated
+        statistics.
+        
+        :param info: The `info` parameter is a string that represents the type of information for which
+        genotype statistics are calculated. It is used to generate various VCF info tags for the
+        statistics, such as the number of occurrences, the list of values, the minimum value, the
+        maximum value, the mean, the median, defaults to VAF
+        :type info: str (optional)
+        """
 
         # if FORMAT and samples
         if "FORMAT" in self.get_header_columns_as_list() and self.get_header_sample_list():
@@ -5564,12 +5893,10 @@ class Variants:
                 info+"_stats_stdev": f"genotype {info} Statistics - standard deviation {info}",
             }
         
-            # Param
-            param = self.get_param()
-            prefix = param.get("explode_infos", "INFO/")
-            if prefix == True:
-                prefix = "INFO/"
+            # Prefix
+            prefix = self.get_explode_infos_prefix()
 
+            # Field
             vaf_stats_infos = prefix+vaf_stats_tag
 
             # Variants table

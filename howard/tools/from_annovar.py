@@ -83,10 +83,10 @@ def from_annovar(args:argparse) -> None:
     output_file_parquet = args.to_parquet
 
     # # Export Infos
-    # export_infos = args.export_infos
+    # args.explode_infos_prefix = args.args.explode_infos_prefix
 
     # # Export Infos Prefix
-    # export_infos_prefix = args.export_infos_prefix
+    # args.explode_infos_prefix_prefix = args.args.explode_infos_prefix_prefix
 
     # Multi Variant
     multi_variant = args.multi_variant

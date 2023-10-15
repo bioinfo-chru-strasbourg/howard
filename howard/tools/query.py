@@ -45,7 +45,9 @@ def query(args:argparse) -> None:
 
     # Explode Infos
     if args.explode_infos:
-        params["explode_infos"] = True
+        params["explode_infos"] = args.explode_infos
+        params["explode_infos_prefix"] = args.explode_infos_prefix
+        params["explode_infos_fields"] = args.explode_infos_fields
     else:
         config["access"] = "RO"
 
@@ -55,6 +57,14 @@ def query(args:argparse) -> None:
     # Load
     if args.input:
         vcfdata_obj.load_data()
+
+    # include_header
+    if "include_header" in args and args.include_header:
+        params["header_in_output"] = args.include_header
+
+    # Explode infos
+    if args.explode_infos:
+        vcfdata_obj.explode_infos()
 
     # Query
     if args.query or param.get("query", None):

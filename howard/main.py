@@ -39,15 +39,14 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         prog="howard",
         description="""howard annotates and prioritizes genetic variations, calculates and normalizes annotations, translates vcf format and generates variants statistics""",
-        #usage="howard [<shared-args>]",
         epilog="Usage examples:\n"
             """   howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json \n"""
             """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/hg19/dbnsfp42a.parquet,tests/databases/annotations/hg19/gnomad211_genome.parquet' \n"""
             """   howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations='vartype' \n"""
             """   howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations=config/prioritization_profiles.json --profiles='default,GERMLINE' \n"""
-            """   howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, "INFO/DP", "INFO/CLNSIG", sample2, sample3 FROM variants WHERE "INFO/DP" >= 50 OR "INFO/CLNSIG" NOT NULL ORDER BY "INFO/DP" DESC' \n"""
+            """   howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, "DP", "CLNSIG", sample2, sample3 FROM variants WHERE "DP" >= 50 OR "CLNSIG" NOT NULL ORDER BY "CLNSIG" DESC, "DP" DESC' \n"""
             """   howard stats --input=tests/data/example.vcf.gz \n"""
-            """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --export_infos \n"""
+            """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos && cat /tmp/example.tsv \n"""
             ,
         formatter_class=argparse.RawTextHelpFormatter
         )
@@ -88,9 +87,6 @@ def main() -> None:
     # Parse args
     args, remaining = parser.parse_known_args()
 
-    # Verbosity
-    # Default
-    #args.verbosity = "info"
     # Quiet
     if "quiet" in args and args.quiet:
         args.verbosity = "warning"
@@ -158,5 +154,3 @@ def main() -> None:
 if __name__ == '__main__':
     main()
 
-
-    

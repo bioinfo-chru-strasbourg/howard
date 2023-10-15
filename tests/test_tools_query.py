@@ -35,42 +35,58 @@ def test_query():
     input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/output_file.tsv"
     config = {'threads': 4}
-    input_query = "SELECT count(*) AS '#count' FROM variants"
+
+    query_list = {
+        "SELECT count(*) AS '#count' FROM variants": {"nb_lines": 54, "nb_variants": 1},
+        "SELECT * AS '#count' FROM variants": {"nb_lines": 60, "nb_variants": 7}
+    }
 
     for explode_infos in [True, False]:
 
-        # prepare arguments for the query function
-        args = argparse.Namespace(
-            input = input_vcf,
-            output = output_vcf,
-            config = config,
-            query = input_query,
-            explode_infos = explode_infos
-        )
+        for explode_infos_prefix in ["", "INFO/", "CUSTOM_"]:
 
-        # Remove if output file exists
-        remove_if_exists([output_vcf])
+            for explode_infos_fields in ['*', 'SIFT']:
 
-        # Query
-        query(args)
+                for input_query in query_list:
 
-        # read the contents of the actual output file
-        with open(output_vcf, 'r') as f:
-            result_output_nb_lines = 0
-            result_output_nb_variants = 0
-            result_lines = []
-            for line in f:
-                result_output_nb_lines += 1
-                if not line.startswith("#"):
-                    result_output_nb_variants += 1
-                    result_lines.append(line.strip())
+                    # Expected results
+                    expected_results = query_list[input_query]
 
-        # Expected result
-        expected_result_nb_lines = 54
-        expected_result_nb_variants = 1
-        expected_result_lines = ["7"]
+                    # prepare arguments for the query function
+                    args = argparse.Namespace(
+                        input = input_vcf,
+                        output = output_vcf,
+                        config = config,
+                        query = input_query,
+                        explode_infos = explode_infos,
+                        explode_infos_prefix = explode_infos_prefix,
+                        explode_infos_fields = explode_infos_fields,
+                        include_header = True
+                    )
 
-        # Compare
-        assert result_output_nb_lines == expected_result_nb_lines
-        assert result_output_nb_variants == expected_result_nb_variants
-        assert result_lines == expected_result_lines
+                    # Remove if output file exists
+                    remove_if_exists([output_vcf])
+
+                    # Query
+                    query(args)
+
+                    # read the contents of the actual output file
+                    with open(output_vcf, 'r') as f:
+                        result_output_nb_lines = 0
+                        result_output_nb_variants = 0
+                        result_lines = []
+                        for line in f:
+                            if not result_output_nb_lines:
+                                log.debug(line)
+                            result_output_nb_lines += 1
+                            if not line.startswith("#"):
+                                result_output_nb_variants += 1
+                                result_lines.append(line.strip())
+
+                    # Expected result
+                    expected_result_nb_lines = expected_results.get("nb_lines", None)
+                    expected_result_nb_variants = expected_results.get("nb_variants", None)
+
+                    # Compare
+                    assert result_output_nb_lines == expected_result_nb_lines
+                    assert result_output_nb_variants == expected_result_nb_variants

@@ -33,7 +33,7 @@ def test_process():
 
     # Init files
     input_vcf = tests_data_folder + "/example.vcf.gz"
-    output_vcf = "/tmp/output_file.tsv"
+    output_vcf = "/tmp/output_file.vcf"
     config = {}
     param = "{}"
     annotations = database_files.get("parquet")
@@ -51,6 +51,10 @@ def test_process():
         calculations = calculations,
         prioritizations = prioritizations,
         query = input_query,
+        explode_infos = False,
+        explode_infos_prefix = "",
+        explode_infos_fields = "*",
+        include_header = False
     )
 
     # Remove if output file exists
@@ -81,7 +85,7 @@ def test_process_with_param_file():
 
     # Init files
     input_vcf = tests_data_folder + "/example.vcf.gz"
-    output_vcf = "/tmp/output_file.tsv"
+    output_vcf = "/tmp/output_file.vcf"
     config = {}
     param = tests_folder +  "/data/param.snpeff_hgvs.json"
     annotations = database_files.get("parquet")
@@ -99,6 +103,10 @@ def test_process_with_param_file():
         calculations = calculations,
         prioritizations = prioritizations,
         query = input_query,
+        explode_infos = False,
+        explode_infos_prefix = "",
+        explode_infos_fields = "*",
+        include_header = False
     )
 
     # Remove if output file exists
@@ -147,6 +155,10 @@ def test_process_with_query():
         calculations = calculations,
         prioritizations = prioritizations,
         query = input_query,
+        explode_infos = False,
+        explode_infos_prefix = "",
+        explode_infos_fields = "*",
+        include_header = False
     )
 
     # Remove if output file exists
@@ -167,7 +179,7 @@ def test_process_with_query():
                 result_lines.append(line.strip())
 
     # Expected result
-    expected_result_nb_lines = 62
+    expected_result_nb_lines = 2
     expected_result_nb_variants = 1
     expected_result_lines = ["7"]
 
@@ -175,5 +187,4 @@ def test_process_with_query():
     assert result_output_nb_lines == expected_result_nb_lines
     assert result_output_nb_variants == expected_result_nb_variants
     assert result_lines == expected_result_lines
-
 
