@@ -82,6 +82,15 @@ def process(args:argparse) -> None:
         if args.query:
             params["query"] = args.query
 
+        # Explode infos
+        params["explode_infos"] = args.explode_infos
+        params["explode_infos_prefix"] = args.explode_infos_prefix
+        params["explode_infos_fields"] = args.explode_infos_fields
+
+        # include_header
+        if "include_header" in args and args.include_header:
+            params["header_in_output"] = args.include_header
+
         # Set param
         vcfdata_obj.set_param(params)
 

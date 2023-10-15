@@ -28,6 +28,138 @@ from test_needed import *
 
 
 
+def test_get_explode_infos_fields():
+    """
+    The function `test_get_explode_infos_fields()` tests the `get_explode_infos_fields()` method of the
+    `Variants` class.
+    """
+
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_tsv = f"{tmp_dir}/example.tsv"
+        fields_all = ['NS', 'DP', 'AA', 'CLNSIG', 'SIFT']
+        # ['AA', 'CLNSIG', 'DP', 'NS', 'SIFT'] # Sorted all fields list
+
+        # remove if exists
+        remove_if_exists([output_tsv])
+
+        # Create object
+        variants = Variants(input=input_vcf, output=output_tsv, load=True)
+    
+        # 1 field
+        explode_infos_fields = "SIFT"
+        explode_infos_fields_list = variants.get_explode_infos_fields(explode_infos_fields)
+        assert explode_infos_fields_list == ["SIFT"]
+
+        # multiple field
+        explode_infos_fields = "SIFT,DP,AD"
+        explode_infos_fields_list = variants.get_explode_infos_fields(explode_infos_fields)
+        assert explode_infos_fields_list == ["SIFT", "DP", "AD"]
+
+        # * fields
+        explode_infos_fields = "*"
+        explode_infos_fields_list = variants.get_explode_infos_fields(explode_infos_fields)
+        assert explode_infos_fields_list == sorted(fields_all)
+
+        # 1 field at beginning with all fields
+        explode_infos_fields = "DP,*"
+        explode_infos_fields_list = variants.get_explode_infos_fields(explode_infos_fields)
+        assert explode_infos_fields_list == ['DP', 'AA', 'CLNSIG', 'NS', 'SIFT']
+
+        # 1 field at the end with all fields
+        explode_infos_fields = "*,DP"
+        explode_infos_fields_list = variants.get_explode_infos_fields(explode_infos_fields)
+        assert explode_infos_fields_list == ['AA', 'CLNSIG', 'NS', 'SIFT', 'DP']
+
+        # all fields between 2 fields
+        explode_infos_fields = "SIFT,*,DP"
+        explode_infos_fields_list = variants.get_explode_infos_fields(explode_infos_fields)
+        assert explode_infos_fields_list == ['SIFT', 'AA', 'CLNSIG', 'NS', 'DP']
+
+        # 2 same fields
+        explode_infos_fields = "DP,DP"
+        explode_infos_fields_list = variants.get_explode_infos_fields(explode_infos_fields)
+        assert explode_infos_fields_list == ['DP']
+
+        # 2 same fields in a list
+        explode_infos_fields = "DP,SIFT,DP,AA"
+        explode_infos_fields_list = variants.get_explode_infos_fields(explode_infos_fields)
+        assert explode_infos_fields_list == ['DP', 'SIFT', 'AA']
+
+        # 2 same fields in a list conatining *
+        explode_infos_fields = "DP,*,DP,AA"
+        explode_infos_fields_list = variants.get_explode_infos_fields(explode_infos_fields)
+        assert explode_infos_fields_list == ['DP', 'CLNSIG', 'NS', 'SIFT', 'AA']
+
+        # 1 field not in header and keep it
+        explode_infos_fields = "NOT_field"
+        explode_infos_fields_list = variants.get_explode_infos_fields(explode_infos_fields, remove_fields_not_in_header=False)
+        assert explode_infos_fields_list == ['NOT_field']
+
+        # 1 field not in header and keep it, with another field
+        explode_infos_fields = "NOT_field,DP"
+        explode_infos_fields_list = variants.get_explode_infos_fields(explode_infos_fields, remove_fields_not_in_header=False)
+        assert explode_infos_fields_list == ['NOT_field', 'DP']
+
+        # 1 field not in header and remove it
+        explode_infos_fields = "NOT_field"
+        explode_infos_fields_list = variants.get_explode_infos_fields(explode_infos_fields, remove_fields_not_in_header=True)
+        assert explode_infos_fields_list == []
+
+        # 1 field not in header and remove it, with another field
+        explode_infos_fields = "NOT_field,DP"
+        explode_infos_fields_list = variants.get_explode_infos_fields(explode_infos_fields, remove_fields_not_in_header=True)
+        assert explode_infos_fields_list == ['DP']
+
+        # 1 field not in header and remove it, with ALL fields
+        explode_infos_fields = "NOT_field,*"
+        explode_infos_fields_list = variants.get_explode_infos_fields(explode_infos_fields, remove_fields_not_in_header=True)
+        assert explode_infos_fields_list == ['AA', 'CLNSIG', 'DP', 'NS', 'SIFT']
+
+        # multiple fields with spaces
+        explode_infos_fields = "AA, DP ,SIFT,NS "
+        explode_infos_fields_list = variants.get_explode_infos_fields(explode_infos_fields, remove_fields_not_in_header=True)
+        assert explode_infos_fields_list == ['AA', 'DP', 'SIFT', 'NS']
+
+        # 1 field with pattern
+        explode_infos_fields = ".*S.*"
+        explode_infos_fields_list = variants.get_explode_infos_fields(explode_infos_fields, remove_fields_not_in_header=True)
+        assert explode_infos_fields_list == ['CLNSIG', 'NS', 'SIFT']
+
+        # 1 field with pattern, with one field in pattern at the begenning
+        explode_infos_fields = "NS,.*S.*"
+        explode_infos_fields_list = variants.get_explode_infos_fields(explode_infos_fields, remove_fields_not_in_header=True)
+        assert explode_infos_fields_list == ['NS', 'CLNSIG', 'SIFT']
+
+        # 1 field with pattern, with one field in pattern at the end
+        explode_infos_fields = ".*S.*,NS"
+        explode_infos_fields_list = variants.get_explode_infos_fields(explode_infos_fields, remove_fields_not_in_header=True)
+        assert explode_infos_fields_list == ['CLNSIG', 'SIFT', 'NS']
+
+        # 1 field with pattern, with one field in pattern at the begenning, and all at the end
+        explode_infos_fields = "NS,.*S.*,*"
+        explode_infos_fields_list = variants.get_explode_infos_fields(explode_infos_fields, remove_fields_not_in_header=True)
+        assert explode_infos_fields_list == ['NS', 'CLNSIG', 'SIFT', 'AA', 'DP']
+
+        # 1 field with pattern, with one field in pattern in the middle, and all at the end
+        explode_infos_fields = ".*S.*,NS,*"
+        explode_infos_fields_list = variants.get_explode_infos_fields(explode_infos_fields, remove_fields_not_in_header=True)
+        assert explode_infos_fields_list == ['CLNSIG', 'SIFT', 'NS', 'AA', 'DP']
+
+        # 1 field with pattern, all at the middle, with one field in pattern at the end
+        explode_infos_fields = ".*S.*,*,NS"
+        explode_infos_fields_list = variants.get_explode_infos_fields(explode_infos_fields, remove_fields_not_in_header=True)
+        assert explode_infos_fields_list == ['CLNSIG', 'SIFT', 'AA', 'DP', 'NS']
+
+        # all at the middle, 1 field with pattern (not considered because of all before), with one field in pattern at the end
+        explode_infos_fields = "*,.*S.*,NS"
+        explode_infos_fields_list = variants.get_explode_infos_fields(explode_infos_fields, remove_fields_not_in_header=True)
+        assert explode_infos_fields_list == ['AA', 'CLNSIG', 'DP', 'SIFT', 'NS']
+
+
 def test_export_query():
     """
     This is a test function for exporting data from a VCF file to a TSV file using SQL queries.
@@ -1333,7 +1465,7 @@ def test_explode_infos():
     variants = Variants(input=input_vcf, load=True, param=param)
 
     # column to check
-    column_to_check = "INFO/CLNSIG"
+    column_to_check = "CLNSIG"
     value_to_check = "pathogenic"
 
     # check column found
@@ -1356,7 +1488,7 @@ def test_explode_infos_custom():
 
     # Init files
     input_vcf = tests_data_folder + "/example.vcf.gz"
-    param= {"explode_infos": "CUSTOM_"}
+    param= {"explode_infos": True, "explode_infos_prefix": "CUSTOM_"}
 
     # Create object
     variants = Variants(input=input_vcf, load=True, param=param)
@@ -1390,7 +1522,7 @@ def test_explode_infos_method():
     variants = Variants(input=input_vcf, load=True)
 
     # Explode infos fields
-    variants.explode_infos(prefix="CUSTOM_")
+    variants.explode_infos(prefix="CUSTOM_", fields=["*"])
 
     # column to check
     column_to_check = "CUSTOM_CLNSIG"
@@ -1455,7 +1587,7 @@ def test_explode_infos_sqlite():
     variants.annotation()
 
     # column to check
-    column_to_check = "INFO/CLNSIG"
+    column_to_check = "CLNSIG"
     value_to_check = "pathogenic"
 
     # check column found
@@ -1479,7 +1611,7 @@ def test_explode_infos_param_prefix():
     # Init files
     input_vcf = tests_data_folder + "/example.vcf.gz"
     infos_prefix = "INFO_"
-    input_param = {"explode_infos": infos_prefix}
+    input_param = {"explode_infos":True, "explode_infos_prefix": infos_prefix}
 
     # Create object
     variants = Variants(input=input_vcf, load=True, param=input_param)

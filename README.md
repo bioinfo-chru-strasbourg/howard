@@ -85,7 +85,7 @@ Convert genetic variations file to another format. Multiple format are available
 
 - Translate VCF into TSV, export INFO/tags into columns, and show output file
 ```
-howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --export_infos
+howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos && cat /tmp/example.tsv
 ```
 
 - Translate VCF into parquet
@@ -108,7 +108,7 @@ howard query --input=tests/data/example.vcf.gz --query="SELECT * FROM variants W
 
 - Select variants in VCF with INFO Tags criterions
 ```
-howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, "INFO/DP", "INFO/CLNSIG", sample2, sample3 FROM variants WHERE "INFO/DP" >= 50 OR "INFO/CLNSIG" NOT NULL ORDER BY "INFO/DP" DESC'
+howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, "DP", "CLNSIG", sample2, sample3 FROM variants WHERE "DP" >= 50 OR "CLNSIG" NOT NULL ORDER BY "CLNSIG" DESC, "DP" DESC'
 ```
 
 - Query a Parquet file with specific columns (e.g. from VCF convertion to Parquet)
@@ -146,16 +146,16 @@ howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.cal
 ```
 - and generate a table of variant type count
 ```
-howard query --input=/tmp/example.calculation.tsv --explode_infos --query='SELECT "INFO/VARTYPE" AS 'VariantType', count(*) AS 'Count' FROM variants GROUP BY "INFO/VARTYPE" ORDER BY count DESC'
+howard query --input=/tmp/example.calculation.tsv --explode_infos --query='SELECT "VARTYPE" AS 'VariantType', count(*) AS 'Count' FROM variants GROUP BY "VARTYPE" ORDER BY count DESC'
 ```
 
 - Calculate NOMEN by extracting hgvs from snpEff annotation and identifying default transcripts from a list
 ```
-howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.NOMEN.vcf.gz --calculations='snpeff_hgvs,NOMEN' --hgvs_field='snpeff_hgvs' --transcripts=tests/data/transcripts.tsv
+howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.NOMEN.vcf.gz --calculations='snpeff_hgvs,NOMEN' --hgvs_field='snpeff_hgvs' --transcripts=tests/data/transcripts.tsv && gzip -dc /tmp/example.NOMEN.vcf.gz | grep "##" -v | head -n2
 ```
 - and query NOMEN for gene 'EGFR'
 ```
-howard query --input=/tmp/example.NOMEN.vcf.gz --explode_infos --query="SELECT \"INFO/NOMEN\" AS 'NOMEN' FROM variants WHERE \"INFO/GNOMEN\" == 'EGFR'"
+howard query --input=/tmp/example.NOMEN.vcf.gz --explode_infos --query="SELECT \"NOMEN\" AS 'NOMEN' FROM variants WHERE \"GNOMEN\" == 'EGFR'"
 ```
 
 ## Prioritization
@@ -168,15 +168,15 @@ howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.pr
 ```
 - and query variants passing filters
 ```
-howard query --input=/tmp/example.prioritized.vcf.gz --explode_infos --query="SELECT \"#CHROM\", POS, ALT, REF, \"INFO/PZFlag\", \"INFO/PZScore\", \"INFO/DP\", \"INFO/CLNSIG\" FROM variants WHERE \"INFO/PZScore\" > 0 AND \"INFO/PZFlag\" == 'PASS' ORDER BY \"INFO/PZScore\" DESC"
+howard query --input=/tmp/example.prioritized.vcf.gz --explode_infos --query="SELECT \"#CHROM\", POS, ALT, REF, \"PZFlag\", \"PZScore\", \"DP\", \"CLNSIG\" FROM variants WHERE \"PZScore\" > 0 AND \"PZFlag\" == 'PASS' ORDER BY \"PZScore\" DESC"
 ```
 - and query variants with different prioritization flag between profiles
 ```
-howard query --input=/tmp/example.prioritized.vcf.gz --explode_infos --query="SELECT \"#CHROM\", POS, ALT, REF, \"INFO/PZFlag_default\", \"INFO/PZFlag_GERMLINE\" FROM variants WHERE \"INFO/PZFlag_default\" != \"INFO/PZFlag_GERMLINE\" ORDER BY \"INFO/PZScore\" DESC"
+howard query --input=/tmp/example.prioritized.vcf.gz --explode_infos --query="SELECT \"#CHROM\", POS, ALT, REF, \"PZFlag_default\", \"PZFlag_GERMLINE\" FROM variants WHERE \"PZFlag_default\" != \"PZFlag_GERMLINE\" ORDER BY \"PZScore\" DESC"
 ```
 - and showing propritization comments of variants, with flags and scores
 ```
-howard query --input=/tmp/example.prioritized.vcf.gz --explode_infos --query="SELECT \"#CHROM\", POS, ALT, REF, \"INFO/PZComment\", \"INFO/PZFlag\", \"INFO/PZScore\" FROM variants WHERE \"INFO/PZComment\" IS NOT NULL ORDER BY \"INFO/PZScore\" DESC"
+howard query --input=/tmp/example.prioritized.vcf.gz --explode_infos --query="SELECT \"#CHROM\", POS, ALT, REF, \"PZComment\", \"PZFlag\", \"PZScore\" FROM variants WHERE \"PZComment\" IS NOT NULL ORDER BY \"PZScore\" DESC"
 ```
 
 ## Process
@@ -193,7 +193,7 @@ This process tool combines all other tools to pipe them in a uniq command, throu
 
 - Full process command
 ```
-howard process --config=config/config.json --param=config/param.json --input=tests/data/example.vcf.gz --output=/tmp/example.process.tsv --query='SELECT "INFO/NOMEN" AS "NOMEN", "INFO/PZFlag" AS "PZFlag", "INFO/PZScore" AS "PZScore", "INFO/PZComment" AS "PZComment" FROM variants ORDER BY "INFO/PZScore" DESC' --explode_infos
+howard process --config=config/config.json --param=config/param.json --input=tests/data/example.vcf.gz --output=/tmp/example.process.tsv --query='SELECT "NOMEN", "PZFlag", "PZScore", "PZComment" FROM variants ORDER BY "PZScore" DESC' --explode_infos
 ```
 - to obtain this kind of table
 ```
@@ -261,7 +261,7 @@ howard process --config=config/config.json --param=config/param.json --input=tes
     "pzfields": ["PZScore", "PZFlag", "PZComment"],
     "profiles": ["default", "GERMLINE"]
   },
-  "explode_infos": "INFO/",
+  "explode_infos": True,
   "threads": 8
 }
 ```

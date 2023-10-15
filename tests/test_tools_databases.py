@@ -46,7 +46,6 @@ def test_databases_download_dbsnp():
 
         # Assembly
         assemblies = 'hg19'
-        #assemblies = 'hg19'
         assemblies_list = [value for value in assemblies.split(',')]
 
         # Releases
@@ -57,7 +56,6 @@ def test_databases_download_dbsnp():
 
         # Exomiser folder
         dbsnp_folder = tmp_dir
-        #dbsnp_folder = "/databases/dbsnp/current"
         
         # Download exomiser simulation
         dnsnp_assemblies_map:dict = {"hg19": "25", "hg38": "40"}
@@ -69,9 +67,6 @@ def test_databases_download_dbsnp():
                     Path(os.path.join(dbsnp_folder, assembly, dbsnp_release)).mkdir(parents=True, exist_ok=True)
                 if not os.path.exists(os.path.join(dbsnp_folder, assembly, dbsnp_data_target)):
                     shutil.copy(dbsnp_data_source, dbsnp_data_target)
-
-        # dbsnp_folder = "/databases/dbsnp/current"
-        # threads = 15
 
         # Download and prepare database
         databases_download_dbsnp(assemblies=assemblies_list, dbsnp_folder=dbsnp_folder, threads=threads, dbsnp_vcf=True, dbsnp_parquet=True, genomes_folder=genomes_folder)

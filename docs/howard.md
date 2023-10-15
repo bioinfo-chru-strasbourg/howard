@@ -434,7 +434,7 @@ Usage examples:
 # Convert
 
 ```
-usage: howard convert [-h] --input FILE --output FILE [--export_infos] [--export_infos_prefix PREFIX] [--config JSON] [--threads INTEGER]
+usage: howard convert [-h] --input FILE --output FILE [--explode_infos] [--explode_infos_prefix PREFIX] [--config JSON] [--threads INTEGER]
                       [--memory FLOAT[kMG]] [--verbosity LEVEL]
 
 Convert genetic variations file to another format. Multiple format are available, such as usual and official VCF and BCF format, but also other formats such as TSV, CSV, PSV and Parquet/duckDB. These formats need a header '.hdr' file to take advantage of the power of howard (especially through INFO/tag definition), and using howard convert tool automatically generate header file fo futher use. 
@@ -447,10 +447,10 @@ Options:
   --output FILE         Output file path
                         Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB
                         Files can be compressesd (e.g. vcf.gz, tsv.gz)
-  --export_infos        Export VCF INFO/Tag into columns file
+  --explode_infos        Export VCF INFO/Tag into columns file
                         Available only for non VCF format file (e.g. TSV, Parquet...) 
                         default: False
-  --export_infos_prefix PREFIX
+  --explode_infos_prefix PREFIX
                         VCF INFO/Tag prefix for exported columns
                         default: 'INFO/'
 
@@ -468,6 +468,6 @@ Shared options:
                         Default: INFO
 
 Usage examples:
-   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --export_infos   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.parquet
+   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.parquet
 ```
 

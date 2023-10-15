@@ -45,11 +45,21 @@ def convert(args:argparse) -> None:
     params = vcfdata_obj.get_param()
 
     # Explode Infos
-    if args.export_infos:
-        params["explode_infos"] = args.export_infos_prefix
-        params["export_extra_infos"] = True
+    if args.explode_infos:
+        params["explode_infos"] = args.explode_infos
+        params["explode_infos_prefix"] = args.explode_infos_prefix
+        params["explode_infos_fields"] = args.explode_infos_fields
+        
     else:
         config["access"] = "RO"
+
+    # order_by
+    if "order_by" in args and args.order_by:
+        params["order_by"] = args.order_by
+
+    # include_header
+    if "include_header" in args and args.include_header:
+        params["header_in_output"] = args.include_header
 
     # parquet_partitions
     if "parquet_partitions" in args and args.parquet_partitions:
@@ -60,13 +70,9 @@ def convert(args:argparse) -> None:
 
     # Create VCF object
     if args.input:
-        vcfdata_obj = Variants(None, args.input, args.output, config=config, param=params)
 
-        # Load data from input file
-        vcfdata_obj.load_data()
-
-        # Load data from input file
-        vcfdata_obj.explode_infos()
+        # Create
+        vcfdata_obj = Variants(None, args.input, args.output, config=config, param=params, load=True)
 
         # Output
         vcfdata_obj.export_output()

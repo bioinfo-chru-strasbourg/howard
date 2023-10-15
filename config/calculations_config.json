@@ -20,7 +20,7 @@
     "output_column_description": "Variant type: SNV if X>Y, MOSAIC if X>Y,Z or X,Y>Z, INDEL if XY>Z or X>YZ",
     "operation_query": [
       "CASE",
-      "WHEN \"INFO/SVTYPE\" NOT NULL THEN \"INFO/SVTYPE\"",
+      "WHEN \"SVTYPE\" NOT NULL THEN \"SVTYPE\"",
       "WHEN LENGTH(REF) = 1 AND LENGTH(ALT) = 1 THEN 'SNV'",
       "WHEN REF LIKE '%,%' OR ALT LIKE '%,%' THEN 'MOSAIC'",
       "WHEN LENGTH(REF) == LENGTH(ALT) AND LENGTH(REF) > 1 THEN 'MNV'",

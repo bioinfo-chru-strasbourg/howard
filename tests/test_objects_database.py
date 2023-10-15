@@ -20,6 +20,72 @@ from test_needed import *
 
 
 
+
+def test_export_order_by():
+    """
+    The function tests the export functionality of a database for various input and output formats.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        tmp_dir = "/tmp"
+
+        # No database input
+        database = Database()
+        input_database = database_files.get("example_vcf")
+        output_database = f"{tmp_dir}/output.tsv"
+
+        # Not order by
+        database = Database(database=input_database)
+        database.export(output_database, order_by="")
+        database = Database(database=output_database)
+        results = database.query(database=output_database, query=f"""SELECT POS, QUAL, ALT FROM variants""")
+        df_first_pos = results.df()["POS"][0]
+        df_first_qual = results.df()["QUAL"][0]
+        df_first_alt = results.df()["ALT"][0]
+        assert df_first_pos == 28736 and df_first_qual == 100
+
+        # Not order by QUAL DESC
+        database = Database(database=input_database)
+        database.export(output_database, order_by="QUAL DESC")
+        database = Database(database=output_database)
+        results = database.query(database=output_database, query=f"""SELECT POS, QUAL, ALT FROM variants""")
+        df_first_pos = results.df()["POS"][0]
+        df_first_qual = results.df()["QUAL"][0]
+        df_first_alt = results.df()["ALT"][0]
+        assert df_first_pos == 55249063 and df_first_qual == 5777
+
+        # Not order by ALT DESC, POS ASC
+        database = Database(database=input_database)
+        database.export(output_database, order_by="ALT DESC, POS ASC")
+        database = Database(database=output_database)
+        results = database.query(database=output_database, query=f"""SELECT POS, QUAL, ALT FROM variants""")
+        df_first_pos = results.df()["POS"][0]
+        df_first_qual = results.df()["QUAL"][0]
+        df_first_alt = results.df()["ALT"][0]
+        assert df_first_pos == 69101 and df_first_alt == "G"
+
+        # Not order by ALT DESC, POS (without ASC)
+        database = Database(database=input_database)
+        database.export(output_database, order_by="ALT DESC, POS")
+        database = Database(database=output_database)
+        results = database.query(database=output_database, query=f"""SELECT POS, QUAL, ALT FROM variants""")
+        df_first_pos = results.df()["POS"][0]
+        df_first_qual = results.df()["QUAL"][0]
+        df_first_alt = results.df()["ALT"][0]
+        assert df_first_pos == 69101 and df_first_alt == "G"
+
+        # Not order by ALT DESC, POS ASC BADCOLUMN
+        database = Database(database=input_database)
+        database.export(output_database, order_by="ALT DESC, POS ASC, BEDCOLUMN")
+        database = Database(database=output_database)
+        results = database.query(database=output_database, query=f"""SELECT POS, QUAL, ALT FROM variants""")
+        df_first_pos = results.df()["POS"][0]
+        df_first_qual = results.df()["QUAL"][0]
+        df_first_alt = results.df()["ALT"][0]
+        assert df_first_pos == 69101 and df_first_alt == "G"
+
+
 def test_database_as_conn():
     """
     This function test creation of a Database empty

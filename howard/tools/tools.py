@@ -90,12 +90,12 @@ arguments = {
         },
         "prioritizations": {
             "metavar": "JSON",
-            "help": "Prioritization file in JSON format (defines profiles, see doc)",
+            "help": "Prioritization file in JSON format (defines profiles, see doc).",
             "default": None
         },
         "profiles": {
             "metavar": "PROFILES",
-            "help": """Prioritization profiles to use (based on file in JSON)\n"""
+            "help": """Prioritization profiles to use (based on file in JSON).\n"""
                     """default: all profiles available""",
             "default": None
         },
@@ -107,37 +107,71 @@ arguments = {
         },
         "pzfields": {
             "metavar": "PZFIELD",
-            "help": """Prioritization fields to provide (see doc)\n"""
+            "help": """Prioritization fields to provide (see doc).\n"""
                     """available: PZScore, PZFlag, PZTags, PZComment, PZInfos\n"""
                     """default: PZScore,PZFlag""",
             "default": "PZScore,PZFlag"
         },
         "prioritization_score_mode": {
             "metavar": "MODE",
-            "help": """Prioritization Score mode (see doc)\n"""
+            "help": """Prioritization Score mode (see doc).\n"""
                     """available: HOWARD (increment score), VaRank (max score)\n"""
                     """default: HOWARD""",
             "default": '"HOWARD'
         },
+
+        # Explode infos
         "explode_infos": {
-            "help": """Explode VCF INFO/Tag into 'variants' table columns\n"""
+            "help": """Explode VCF INFO/Tag into 'variants' table columns.\n"""
                     """default: False""",
             "action": "store_true",
             "default": False
         },
-        "export_infos": {
-            "help": """Export VCF INFO/Tag into columns file\n"""
-                    """Available only for non VCF format file (e.g. TSV, Parquet...) \n"""
+        "explode_infos_prefix": {
+            "metavar": "STRING",
+            "help": """Explode VCF INFO/Tag with a specific prefix.\n"""
+                    """default: ''""",
+            "default": ""
+        },
+        "explode_infos_fields": {
+            "metavar": "LIST",
+            "help": """Explode VCF INFO/Tag specific fields/tags.\n"""
+                    """Keyword '*' specify all available fields, except those already specified.\n"""
+                    """Pattern (regex) can be used: '.*_score' for fields named with '_score' at the end.\n"""
+                    """Examples:\n"""
+                    """   - 'HGVS,SIFT,Clinvar' (list of fields)\n"""
+                    """   - 'HGVS,*,Clinvar' (list of fields with all other fields at the end)\n"""
+                    """   - 'HGVS,.*_score,Clinvar' (list of 2 fields with all scores in the middle)\n"""
+                    """   - 'HGVS,.*_score,*' (1 field, scores, all other fields)\n"""
+                    """   - 'HGVS,*,.*_score' (1 field and all other fields,\n"""
+                    """                        scores included in other fields)\n"""
+                    """default: '*'""",
+            "default": "*"
+        },
+
+        # Include header
+        "include_header": {
+            "help": """Include header (in VCF format) in output file.\n"""
+                    """Only for compatible formats (tab-delimiter format as TSV or BED).\n"""
                     """default: False""",
             "action": "store_true",
             "default": False
         },
-        "export_infos_prefix": {
-            "help": """VCF INFO/Tag prefix for exported columns\n"""
-                    """default: 'INFO/'""",
-            "metavar": "PREFIX",
-            "default": "INFO/"
+
+        # Sort By
+        "order_by": {
+            "metavar": "LIST",
+            "help": """List of columns to sort the result-set in ascending or descending order.\n"""
+                    """Use SQL format, and keywords ASC (ascending) and DESC (descending).\n"""
+                    """If a column is not available, order will not be considered.\n"""
+                    """Order is enable only for compatible format (e.g. TSV, CSV, JSON).\n"""
+                    """Examples:\n"""
+                    """   - 'ACMG_score DESC'\n"""
+                    """   - 'PZFlag DESC, PZScore DESC'\n"""
+                    """default: ''""",
+            "default": ""
         },
+
         "parquet_partitions": {
             "help": """Parquet partitioning (only for Parquet export format)\n"""
                     """examples: '#CHROM', '#CHROM,REF'\n"""
@@ -745,7 +779,7 @@ commands_arguments = {
         "help":         """Full genetic variations process: annotation, calculation, prioritization, format, query, filter...""",
         "epilog":       """Usage examples:\n"""
                         """   howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json \n"""
-                        """   howard process --input=tests/data/example.vcf.gz --annotations='snpeff' --calculations='snpeff_hgvs,NOMEN' --prioritizations=config/prioritization_profiles.json --query='SELECT "INFO/NOMEN" FROM variants' \n""", 
+                        """   howard process --input=tests/data/example.vcf.gz --annotations='snpeff' --calculations='snpeff_hgvs' --prioritizations=config/prioritization_profiles.json --explode_infos --output=/tmp/example.annotated.tsv --query='SELECT "#CHROM", POS, ALT, REF, snpeff_hgvs FROM variants' \n""", 
 
         "groups": {
             "main": {
@@ -757,7 +791,11 @@ commands_arguments = {
                 "annotations": False,
                 "calculations": False,
                 "prioritizations": False,
-                "query": False
+                "query": False,
+                "explode_infos": False,
+                "explode_infos_prefix": False,
+                "explode_infos_fields": False,
+                "include_header": False
             }
         }
     },
@@ -856,16 +894,19 @@ commands_arguments = {
         "help": "Query genetic variations in SQL format.",
         "epilog": """Usage examples:\n"""
                         """   howard query --input=tests/data/example.vcf.gz --query="SELECT * FROM variants WHERE REF = 'A' AND POS < 100000" \n"""
-                        """   howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, "INFO/DP", "INFO/CLNSIG", sample2, sample3 FROM variants WHERE "INFO/DP" >= 50 OR "INFO/CLNSIG" NOT NULL ORDER BY "INFO/DP" DESC' \n"""
-                        """   howard query --query="SELECT * FROM 'tests/databases/annotations/hg19/dbnsfp42a.parquet' WHERE \\"INFO/Interpro_domain\\" NOT NULL ORDER BY \\"INFO/SiPhy_29way_logOdds_rankscore\\" DESC" \n"""
-                        """   howard query --query="SELECT \\"#CHROM\\" AS \\"#CHROM\\", POS AS POS, '' AS ID, REF AS REF, ALT AS ALT, '' AS QUAL, '' AS FILTER, STRING_AGG(INFO, ';') AS INFO FROM 'tests/databases/annotations/hg19/*.parquet' GROUP BY \\"#CHROM\\", POS, REF, ALT" --output=/tmp/full_annotation.tsv \n"""
+                        """   howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, DP, CLNSIG, sample2, sample3 FROM variants WHERE DP >= 50 OR CLNSIG NOT NULL ORDER BY DP DESC' \n"""
+                        """   howard query --query="SELECT \"#CHROM\", POS, REF, ALT, \"INFO/Interpro_domain\" FROM 'tests/databases/annotations/hg19/dbnsfp42a.parquet' WHERE \"INFO/Interpro_domain\" NOT NULL ORDER BY \"INFO/SiPhy_29way_logOdds_rankscore\" DESC LIMIT 10" \n"""
+                        """   howard query --explode_infos --explode_infos_prefix='INFO/' --query="SELECT \"#CHROM\", POS, REF, ALT, STRING_AGG(INFO, ';') AS INFO FROM 'tests/databases/annotations/hg19/*.parquet' GROUP BY \"#CHROM\", POS, REF, ALT" --output=/tmp/full_annotation.tsv  && head -n2 /tmp/full_annotation.tsv \n"""
                         , 
         "groups": {
             "main": {
                 "input": False,
                 "output": False,
                 "query": True,
-                "explode_infos": False
+                "explode_infos": False,
+                "explode_infos_prefix": False,
+                "explode_infos_fields": False,
+                "include_header": False
             }
         }
     },
@@ -886,14 +927,19 @@ commands_arguments = {
         "description":  """Convert genetic variations file to another format. Multiple format are available, such as usual and official VCF and BCF format, but also other formats such as TSV, CSV, PSV and Parquet/duckDB. These formats need a header '.hdr' file to take advantage of the power of howard (especially through INFO/tag definition), and using howard convert tool automatically generate header file fo futher use. """,
         "help": "Convert genetic variations file to another format.",
         "epilog": """Usage examples:\n"""
-                        """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --export_infos"""
-                        """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.parquet""", 
+                        """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv \n"""
+                        """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.parquet \n"""
+                        """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos --explode_infos_fields='CLNSIG,SIFT,DP' --order_by='CLNSIG DESC, DP DESC' \n"""
+                        """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos --explode_infos_prefix='INFO/' --explode_infos_fields='CLNSIG,SIFT,DP,*' --order_by='"INFO/CLNSIG" DESC, "INFO/DP" DESC' --include_header """,
         "groups": {
             "main": {
                 "input": True,
                 "output": True,
-                "export_infos": False,
-                "export_infos_prefix": False,
+                "explode_infos": False,
+                "explode_infos_prefix": False,
+                "explode_infos_fields": False,
+                "order_by": False,
+                "include_header": False,
                 "parquet_partitions": False,
             }
         }
@@ -903,7 +949,7 @@ commands_arguments = {
         "description": """Download databases and needed files for howard and associated tools""",
         "help": """Download databases and needed files for howard and associated tools""",
         "epilog": """Usage examples:\n"""
-                    """   howard databases --assembly=hg19 --download-genomes=/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='^>chr[0-9XYM]*$' --download-annovar=/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' --download-snpeff=/databases/snpeff/current  --download-snpeff=/databases/snpeff/current --download-refseq=/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-dbnsfp=/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases --download-alphamissense=/databases/alphamissense/current --download-exomiser=/databases/exomiser/current --download-dbsnp=/databases/dbsnp/current --download-dbsnp-vcf --download-dbsnp-parquet --threads=8"""
+                    """   howard databases --assembly=hg19 --download-genomes=/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='^>chr[0-9XYM]*$' --download-annovar=/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' --download-snpeff=/databases/snpeff/current  --download-snpeff=/databases/snpeff/current --download-refseq=/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-dbnsfp=/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases --download-alphamissense=/databases/alphamissense/current --download-exomiser=/databases/exomiser/current --download-dbsnp=/databases/dbsnp/current --download-dbsnp-vcf --threads=8 """
                     """\n"""
                     """Notes:\n"""
                     """   - Downloading databases can take a while, depending on network, threads and memory\n"""
@@ -990,7 +1036,7 @@ commands_arguments = {
         "description": """(beta) Formatting Annovar database file to other format (VCF and Parquet). Exported Parquet file includes INFO/tags columns as VCF INFO columns had been exploded""",
         "help": """(beta) Formatting Annovar database file to other format (VCF and Parquet)""",
         "epilog": """Usage examples:\n"""
-                    """   howard from_annovar --input=/databases/annovar/current/hg19_nci60.txt --output=/databases/annotations/current/hg19/nci60.vcf.gz --to_parquet=/databases/annotations/current/hg19/nci60.parquet --annovar-code=nci60 --genome=/databases/genomes/current/hg19.fa --config=/tool/config/config.json --threads=8 """, 
+                    """   howard from_annovar --input=tests/databases/others/hg19_nci60.txt --output=/tmp/nci60.from_annovar.vcf.gz --to_parquet=/tmp/nci60.from_annovar.parquet --annovar-code=nci60 --genome=/databases/genomes/current/hg19.fa --config=/tool/config/config.json --threads=8 """, 
         "groups": {
             "main": {
                 "input": True,
@@ -1002,8 +1048,6 @@ commands_arguments = {
             },
             "Parquet": {
                 "to_parquet": False,
-                #"export_infos": False,
-                #"export_infos_prefix": False,
             },
             "Modes": {
                 "reduce_memory": False,

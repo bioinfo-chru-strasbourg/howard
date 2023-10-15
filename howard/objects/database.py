@@ -1695,7 +1695,7 @@ class Database:
         return self.conn
     
 
-    def export(self, output_database:str, output_header:str = None, database:str = None, table:str = "variants", parquet_partitions:list = None, threads:int = 1, sort:bool = False, index:bool = False) -> bool:
+    def export(self, output_database:str, output_header:str = None, header_in_output:bool = True, database:str = None, table:str = "variants", parquet_partitions:list = None, threads:int = 1, sort:bool = False, index:bool = False, existing_columns_header:list = [], order_by:str = "") -> bool:
         """
         The `export` function exports data from a database to a specified output format, compresses it
         if necessary, and returns a boolean value indicating whether the export was successful or not.
@@ -1707,6 +1707,11 @@ class Database:
         header of the output file. If it is not provided, the header will be automatically detected
         based on the output file format
         :type output_header: str
+        :param header_in_output: The `header_in_output` parameter is a boolean value that determines
+        whether the header should be included in the output file. If set to `True`, the header will be
+        included in the output file. If set to `False`, the header will not be included in the output
+        file. By default,, defaults to True
+        :type header_in_output: bool (optional)
         :param database: The `database` parameter is the name of the database from which you want to
         export data. If this parameter is not provided, the function will use the `get_database()`
         method to retrieve the current database
@@ -1719,12 +1724,29 @@ class Database:
         column. The partitions are used to organize the data in the Parquet file based on the values of
         the specified columns
         :type parquet_partitions: list
-        :param threads: Number of threads (optional)
-        :type threads: int
-        :param sort: sort output file, only if VCF format (optional)
-        :type sort: bool
-        :param index: index output file, only if VCF format (optional)
-        :type index: int
+        :param threads: The `threads` parameter is an optional integer that specifies the number of
+        threads to use for exporting the data. It determines the level of parallelism during the export
+        process. By default, it is set to 1, defaults to 1
+        :type threads: int (optional)
+        :param sort: The `sort` parameter is a boolean value that specifies whether the output file
+        should be sorted or not. If set to `True`, the output file will be sorted based on the genomic
+        coordinates of the variants. If set to `False`, the output file will not be sorted. By default,
+        it, defaults to False
+        :type sort: bool (optional)
+        :param index: The `index` parameter is a boolean value that specifies whether to index the
+        output file. If `index` is set to `True`, the output file will be indexed. If `index` is set to
+        `False` or not provided, the output file will not be indexed, defaults to False
+        :type index: bool (optional)
+        :param existing_columns_header: The `existing_columns_header` parameter is a list that
+        represents the existing columns in the header of the output file. It is used to determine the
+        columns that should be included in the output file. If this parameter is not provided, the
+        function will automatically detect the header columns based on the output file format
+        :type existing_columns_header: list
+        :param order_by: The `order_by` parameter is a string that specifies the columns by which the
+        output file should be ordered. It allows you to specify multiple columns separated by commas.
+        Each column can be followed by the keyword "ASC" (ascending) or "DESC" (descending) to specify
+        the sort order
+        :type order_by: str
         :return: a boolean value indicating whether the export was successful or not.
         """
 
@@ -1738,7 +1760,8 @@ class Database:
         tmp_files = []
 
         # Header columns
-        existing_columns_header = self.get_header_file_columns(output_header)
+        if not existing_columns_header and output_header:
+            existing_columns_header = self.get_header_file_columns(output_header)
 
         # Auto-detect output type and compression and delimiter
         output_type = get_file_format(output_database)
@@ -1762,13 +1785,35 @@ class Database:
         # Needed columns
         needed_columns = self.get_needed_columns(database_columns=existing_columns, database_type=database_type)
 
+        # Order by
+        order_by_list = []
+        if order_by:
+            # Split order by options
+            order_by_split = order_by.split(",")
+            for order_by_option in order_by_split:
+                # Split order by option
+                order_by_option_split = order_by_option.strip().split(" ")
+                order_by_option_split_column = order_by_option_split[0]
+                if len(order_by_option_split) > 1:
+                    order_by_option_split_order = order_by_option_split[1]
+                else:
+                    order_by_option_split_order = "ASC"
+                # Chek if column exists
+                if order_by_option_split_column.replace('"', '').strip() in existing_columns:
+                    order_by_list.append(f"{order_by_option_split_column} {order_by_option_split_order}")
+
+        # Clean order by
+        order_by_clean = ", ".join(order_by_list)
+
         # random
         random_tmp = ''.join(random.choice(string.ascii_lowercase) for i in range(10))
-        
+    
         # Query values
         default_empty_value = ""
         query_export_format = None
         include_header = False
+        post_process = False
+        order_by_sql = ""
 
         # VCF
         if output_type in ["vcf"]:
@@ -1779,17 +1824,28 @@ class Database:
             default_empty_value = "."
             query_export_format = f"FORMAT CSV, DELIMITER '{delimiter}', HEADER, QUOTE '', COMPRESSION 'gzip'"
             include_header = True
+            post_process = True
 
         # TSV/CSV/TBL
         elif output_type in ["tsv", "csv", "tbl"]:
-            query_export_format = f"FORMAT CSV, DELIMITER '{delimiter}', HEADER, COMPRESSION 'gzip'"
+            if output_type in ["csv", "tbl"]:
+                quote = '"'
+            else:
+                quote = ''
+            query_export_format = f"FORMAT CSV, DELIMITER '{delimiter}', HEADER, QUOTE '{quote}', COMPRESSION 'gzip'"
             if delimiter in ["\t"]:
-                include_header = True
+                include_header = header_in_output and True
+            post_process = True
+            if order_by_clean:
+                order_by_sql = f"ORDER BY {order_by_clean}"
 
         # JSON
         elif output_type in ["json"]:
             query_export_format = f"FORMAT JSON, ARRAY TRUE"
             include_header = False
+            post_process = True
+            if order_by_clean:
+                order_by_sql = f"ORDER BY {order_by_clean}"
 
         # Parquet
         elif output_type in ["parquet"]:
@@ -1806,6 +1862,9 @@ class Database:
         elif output_type in ["bed"]:
             query_export_format = f"FORMAT CSV, DELIMITER '{delimiter}', HEADER"
             include_header = True
+            post_process = True
+            if order_by_clean:
+                order_by_sql = f"ORDER BY {order_by_clean}"
 
         # duckDB
         elif output_type in ["duckdb"]:
@@ -1873,16 +1932,18 @@ class Database:
                 COPY (
                     SELECT {query_export_columns}
                     FROM {self.get_sql_database_link(database=database)}
+                    {order_by_sql}
                     )
                 TO '{query_output_database_tmp}'
                 WITH ({query_export_format})
                 """
-            
+            log.debug(f"query_copy={query_copy}")
             # Export
             self.query(database=database, query=query_copy)
 
             # Include header
-            if include_header or compressed or sort or index:
+            #if include_header or compressed or sort or index or post_process:
+            if post_process:
 
                 # Input files
                 input_files = []

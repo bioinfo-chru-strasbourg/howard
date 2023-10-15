@@ -876,7 +876,7 @@ def test_annotation_snpeff_full_unsorted():
         variants.annotation()
 
         # query annotated variant
-        result = variants.get_query_to_df(""" SELECT INFO, "INFO/ANN" FROM variants """)
+        result = variants.get_query_to_df(""" SELECT INFO, "ANN" FROM variants """)
         assert len(result) == 36
         
         # query annotated variant as gene_fusion
