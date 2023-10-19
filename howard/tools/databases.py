@@ -450,10 +450,13 @@ def databases_download_snpeff(folder:str = None, assemblies:list = ["hg19"], con
                     # try to download
                     try:
                         log.debug(f"Download snpEff '{file_url}'...")
-                        download_file(file_url, file_path)
+                        if not download_file(file_url, file_path):
+                            log.error(f"Download snpEff '{file_url}' failed")
+                            raise ValueError(f"Download snpEff '{file_url}' failed")
                     # If fail, just pass to next url
                     except:
-                        log.debug(f"Download snpEff '{file_url}' failed")
+                        log.error(f"Download snpEff '{file_url}' failed")
+                        raise ValueError(f"Download snpEff '{file_url}' failed")
 
             # If download file exists
             if file_path is not None and os.path.exists(file_path):
