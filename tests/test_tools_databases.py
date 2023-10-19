@@ -33,6 +33,37 @@ from test_needed import *
 
 
 
+def test_databases_download_snpeff():
+    """
+    The function `test_databases_download_snpeff` downloads and prepares the snpEff database for specified
+    assemblies.
+    """
+
+    # Full database generation, hg19 only (due to lack of hg38 assembly in tests)
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Assembly
+        assemblies = 'hg19'
+        assemblies_list = [value for value in assemblies.split(',')]
+
+        # snpEff folder
+        snpeff_folder = tmp_dir
+
+        # Download and prepare database
+        databases_download_snpeff(folder=snpeff_folder, assemblies=assemblies_list, config=tests_config)
+
+        # Check
+        downloaded_files = os.listdir(snpeff_folder)
+        for assembly in assemblies_list:
+            assert assembly in downloaded_files
+            downloaded_assembly_files = os.listdir(f"{snpeff_folder}/{assembly}")
+            expected_files = ['sequence.bin']
+            for expected_file in expected_files:
+                if expected_file not in downloaded_assembly_files:
+                    assert False
+            assert True
+
+
 def test_databases_download_dbsnp():
     """
     The function `test_databases_download_dbsnp` downloads and prepares the dbsnp database for specified
