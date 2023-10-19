@@ -1012,15 +1012,8 @@ def test_get_duckdb_extension_file():
     the argument "sqlite_scanner".
     """
 
-    assert get_duckdb_extension_file("sqlite_scanner")
+     # Create connexion
+    conn = duckdb.connect()
 
-
-def test_get_plateform_name():
-    """
-    The function "test_plateform_name" is incomplete and requires the implementation of a
-    "plateform_name" function to be tested.
-    """
-
-    assert get_plateform_name()
-
+    assert get_duckdb_extension_file("sqlite_scanner", conn=conn)
 

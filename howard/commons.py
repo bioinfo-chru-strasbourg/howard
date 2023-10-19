@@ -1047,14 +1047,24 @@ def extract_file(file_path:str, path:str = None, threads:int = 1):
 
 def download_file(url:str, dest_file_path:str, chunk_size:int = 1024*1024):
     """
-    This function downloads a file from a given URL and saves it to a specified destination file path in
-    chunks.
+    The `download_file` function downloads a file from a given URL and saves it to a specified
+    destination file path in chunks.
     
-    :param url: The URL of the file to be downloaded
-    :param dest_file_path: The path where the downloaded file will be saved
-    :param chunk_size: The size of each chunk of data to be downloaded at a time. The default value is 1
-    MB
+    :param url: The URL of the file you want to download. This should be a string that represents the
+    complete URL, including the protocol (e.g., "http://example.com/file.txt")
+    :type url: str
+    :param dest_file_path: The `dest_file_path` parameter is the path where the downloaded file will be
+    saved. It should be a string representing the file path, including the file name and extension. For
+    example, if you want to save the file as "myfile.txt" in the current directory, you can set `dest
+    :type dest_file_path: str
+    :param chunk_size: The `chunk_size` parameter determines the size of each chunk of data that is
+    downloaded at a time. In this case, the default value is set to 1 MB, which means that the file will
+    be downloaded in chunks of 1 MB at a time. This parameter can be adjusted according to
+    :type chunk_size: int
+    :return: a boolean value indicating whether the file was successfully downloaded and saved to the
+    specified destination file path.
     """
+    
     # Create a temporary file
     tmp_file_path = dest_file_path + '.tmp'
     with requests.get(url, stream=True) as r:
@@ -1067,6 +1077,8 @@ def download_file(url:str, dest_file_path:str, chunk_size:int = 1024*1024):
                 f.write(chunk)
     # Move the temporary file to the final destination
     shutil.move(tmp_file_path, dest_file_path)
+
+    return os.path.exists(dest_file_path)
 
 
 def get_bin(bin:str = None, tool:str = None, bin_type:str = "jar", config:dict = {}, default_folder:str = DEFAULT_TOOLS_FOLDER):
@@ -1395,22 +1407,20 @@ def concat_and_compress_files(input_files: list, output_file: str, compression_t
     return os.path.exists(output_file)
 
 
-def get_plateform_name() -> str:
+def get_plateform_name_from_duckdb(conn:duckdb.DuckDBPyConnection) -> str:
     """
-    This function returns the name of the platform and machine architecture in a specific format.
-    :return: a string that represents the platform name. The platform name is a combination of the
-    system name and the machine architecture. If the machine architecture is not found in the
-    MACHIN_LIST dictionary, it defaults to "amd64".
-    """
-
-    system = platform.system()
-    machine = platform.machine()
-    machine_check = MACHIN_LIST.get(machine,"amd64")
-
-    return f"{system}_{machine_check}".lower()
+    The function `get_plateform_name_from_duckdb` returns the platform information from a DuckDB connection.
     
+    :param conn: The `conn` parameter is an instance of the `DuckDBPyConnection` class from the `duckdb`
+    module. It represents a connection to a DuckDB database
+    :type conn: duckdb.DuckDBPyConnection
+    :return: the platform information from the DuckDB connection.
+    """
 
-def get_duckdb_extension_file(extension_name:str, download:bool = True) -> str:
+    return conn.query(f"PRAGMA platform").df()["platform"][0]    
+
+
+def get_duckdb_extension_file(extension_name:str, conn:duckdb.DuckDBPyConnection, download:bool = True) -> str:
     """
     This function returns the file path of a DuckDB extension based on the extension name and platform.
     
@@ -1418,12 +1428,14 @@ def get_duckdb_extension_file(extension_name:str, download:bool = True) -> str:
     :type extension_name: str
     :return: a string that represents the file path of a DuckDB extension file. The file path is
     constructed using the constant `DUCKDB_EXTENSION`, the platform name obtained from the
-    `get_plateform_name()` function, and the extension name passed as an argument to the function.
+    `get_plateform_name_from_duckdb()` function, and the extension name passed as an argument to the function.
     """
 
     # Init
     release_version_number = duckdb.__version__
-    platform_name = get_plateform_name()
+    platform_name = get_plateform_name_from_duckdb(conn)
+
+    # File
     extension_file_path = f'v{release_version_number}/{platform_name}/{extension_name}.duckdb_extension'
     extension_file = f'{DUCKDB_EXTENSION}/{extension_file_path}'
     extension_file_gz = f'{DUCKDB_EXTENSION}/{extension_file_path}.gz'
@@ -1469,7 +1481,7 @@ def load_duckdb_extension(conn:duckdb.DuckDBPyConnection, duckdb_extensions:list
     loaded = True
 
     for extension_name in duckdb_extensions:
-        duckdb_extension_file = get_duckdb_extension_file(extension_name)
+        duckdb_extension_file = get_duckdb_extension_file(extension_name, conn=conn, download=True)
         try:
             # Try loading extension by name
             conn.query(f"INSTALL '{extension_name}'; LOAD {extension_name}; ")
