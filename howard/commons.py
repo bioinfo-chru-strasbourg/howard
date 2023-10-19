@@ -31,6 +31,9 @@ import bgzip
 import pysam
 import pysam.bcftools
 
+import signal
+from contextlib import contextmanager
+
 
 file_folder = os.path.dirname(__file__)
 
@@ -1483,19 +1486,33 @@ def load_duckdb_extension(conn:duckdb.DuckDBPyConnection, duckdb_extensions:list
     for extension_name in duckdb_extensions:
         duckdb_extension_file = get_duckdb_extension_file(extension_name, conn=conn, download=True)
         try:
-            # Try loading extension by name
-            conn.query(f"INSTALL '{extension_name}'; LOAD {extension_name}; ")
+            if duckdb_extension_file and os.path.exists(duckdb_extension_file):
+                # Try loading extension by file
+                conn.query(f"INSTALL '{duckdb_extension_file}'; LOAD {extension_name}; ")
+            else:
+                loaded = False
         except:
             try:
-                if duckdb_extension_file and os.path.exists(duckdb_extension_file):
-                    # Try loading extension by file
-                    conn.query(f"INSTALL '{duckdb_extension_file}'; LOAD {extension_name}; ")
-                else:
-                    loaded = False
+                with time_limit(60):
+                    # Try loading extension by name
+                    conn.query(f"INSTALL '{extension_name}'; LOAD {extension_name}; ")
             except:
                 loaded = False
 
     return loaded
+
+
+class TimeoutException(Exception): pass
+
+def time_limit(seconds):
+    def signal_handler(signum, frame):
+        raise TimeoutException("Timed out!")
+    signal.signal(signal.SIGALRM, signal_handler)
+    signal.alarm(seconds)
+    try:
+        yield
+    finally:
+        signal.alarm(0)
 
 
 def duckdb_execute(query:str, threads:int = 1) -> bool:
