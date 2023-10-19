@@ -70,7 +70,9 @@ def test_databases_download_dbsnp():
     assemblies.
     """
 
+    # Genomes
     genomes_folder = tests_config["folders"]["databases"]["genomes"]
+    download_needed_databases()
 
     # Full database generation, hg19 only (due to lack of hg38 assembly in tests)
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
