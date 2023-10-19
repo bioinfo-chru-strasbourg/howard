@@ -437,7 +437,6 @@ def databases_download_snpeff(folder:str = None, assemblies:list = ["hg19"], con
 
             # Strat download
             log.info(f"Download snpEff databases for assembly '{assembly}'...")
-            #print(snpeff_list_databases.keys())
             # Try to download files
             file_path = None
             for file_url in snpeff_list_databases[assembly]:
@@ -450,13 +449,14 @@ def databases_download_snpeff(folder:str = None, assemblies:list = ["hg19"], con
                     # try to download
                     try:
                         log.debug(f"Download snpEff '{file_url}'...")
-                        if not download_file(file_url, file_path):
+                        # Download file
+                        if download_file(file_url, file_path):
+                            break
+                        else:
                             log.error(f"Download snpEff '{file_url}' failed")
-                            raise ValueError(f"Download snpEff '{file_url}' failed")
                     # If fail, just pass to next url
                     except:
                         log.error(f"Download snpEff '{file_url}' failed")
-                        raise ValueError(f"Download snpEff '{file_url}' failed")
 
             # If download file exists
             if file_path is not None and os.path.exists(file_path):
@@ -466,6 +466,9 @@ def databases_download_snpeff(folder:str = None, assemblies:list = ["hg19"], con
                 # Move to destination folder
                 extracted_folder = os.path.join(folder, "data", assembly)
                 shutil.move(extracted_folder, folder_assembly)
+            else:
+                log.error(f"Download snpEff '{file_url}' failed")
+                raise ValueError(f"Download snpEff '{file_url}' failed")
 
         else:
 
