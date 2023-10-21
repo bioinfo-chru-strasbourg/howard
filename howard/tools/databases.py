@@ -421,7 +421,7 @@ def databases_download_snpeff(folder:str = None, assemblies:list = ["hg19"], con
             # Download list of databases if file does not exists
             if not os.path.exists(snpeff_databases_list_path):
                 snpeff_command_list_databases = f""" {java_bin} -jar {snpeff_bin} databases > {snpeff_databases_list_path} """
-                log.info(f"snpEff databases downloading - list of databases...")
+                log.info(f"Download snpEff databases {assemblies} - list of databases...")
                 log.debug(f"snpEff databases downloading - list of databases: {snpeff_command_list_databases}")
                 command(snpeff_command_list_databases)
             
@@ -436,7 +436,7 @@ def databases_download_snpeff(folder:str = None, assemblies:list = ["hg19"], con
                     snpeff_list_databases[cols[0]].append(cols[-1].replace(",","").replace("]","").replace("[",""))
 
             # Strat download
-            log.info(f"Download snpEff databases for assembly '{assembly}'...")
+            log.info(f"Download snpEff databases {[assembly]} - downloading...")
             # Try to download files
             file_path = None
             for file_url in snpeff_list_databases[assembly]:
@@ -460,6 +460,7 @@ def databases_download_snpeff(folder:str = None, assemblies:list = ["hg19"], con
 
             # If download file exists
             if file_path is not None and os.path.exists(file_path):
+                log.info(f"Download snpEff databases {[assembly]} - extracting...")
                 log.debug(f"Extract file {file_path} to {folder}...")
                 # Extract file
                 extract_file(file_path)
