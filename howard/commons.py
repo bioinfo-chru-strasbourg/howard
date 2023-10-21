@@ -1070,14 +1070,23 @@ def download_file(url:str, dest_file_path:str, chunk_size:int = 1024*1024):
     
     # Create a temporary file
     tmp_file_path = dest_file_path + '.tmp'
+
+    # Create folder if not exists
+    if not os.path.exists(os.path.dirname(dest_file_path)):
+        Path(os.path.dirname(dest_file_path)).mkdir(parents=True, exist_ok=True)
+
     with requests.get(url, stream=True) as r:
         r.raise_for_status()
+
         # Open the temporary file for writing in binary mode
         with open(tmp_file_path, 'wb') as f:
+
             # Download the file by chunks
             for chunk in r.iter_content(chunk_size=chunk_size):
+
                 # Write the chunk to the temporary file
                 f.write(chunk)
+
     # Move the temporary file to the final destination
     shutil.move(tmp_file_path, dest_file_path)
 
