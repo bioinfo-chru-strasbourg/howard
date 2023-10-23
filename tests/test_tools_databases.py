@@ -33,6 +33,37 @@ from test_needed import *
 
 
 
+def test_download_hgmd():
+    """
+    The function `test_download_hgmd` downloads HGMD files for specified assemblies and checks if the
+    downloaded files match the expected files.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Assembly
+        assemblies = 'hg19'
+        assemblies_list = [value for value in assemblies.split(',')]
+
+        # Exomiser folder
+        hgmd_folder = tmp_dir
+
+        # HGMD conversion
+        hgmd_file_hg19 = os.path.join(tests_databases_folder, "hgmd", "HGMD_TEST_hg19.vcf.gz")
+        databases_download_hgmd(assemblies=assemblies_list, hgmd_file=hgmd_file_hg19, hgmd_folder=hgmd_folder, threads=8)
+
+        # Check
+        downloaded_files = os.listdir(hgmd_folder)
+        for assembly in assemblies_list:
+            assert assembly in downloaded_files
+            downloaded_assembly_files = os.listdir(f"{hgmd_folder}/{assembly}")
+            expected_files = ['HGMD_TEST.vcf.gz.tbi', 'HGMD_TEST.tsv.hdr', 'HGMD_TEST.parquet.hdr', 'HGMD_TEST.vcf.gz', 'HGMD_TEST.parquet', 'HGMD_TEST.tsv']
+            for expected_file in expected_files:
+                if expected_file not in downloaded_assembly_files:
+                    assert False
+            assert True
+
+
 def test_databases_download_snpeff():
     """
     The function `test_databases_download_snpeff` downloads and prepares the snpEff database for specified
@@ -493,6 +524,7 @@ def test_database():
         download_alphamissense = None,
         download_exomiser = None,
         download_dbsnp = None,
+        convert_hgmd = None,
         config = None,
     )
 
@@ -567,6 +599,7 @@ def test_databases_download():
             download_alphamissense = None,
             download_exomiser = None,
             download_dbsnp = None,
+            convert_hgmd = None,
             config=config,
             threads=threads
         )
@@ -645,6 +678,7 @@ def test_databases_download_genomes_only():
             download_alphamissense = None,
             download_exomiser = None,
             download_dbsnp = None,
+            convert_hgmd = None,
             threads=threads
         )
 

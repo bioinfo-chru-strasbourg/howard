@@ -1937,7 +1937,6 @@ class Database:
                 TO '{query_output_database_tmp}'
                 WITH ({query_export_format})
                 """
-            log.debug(f"query_copy={query_copy}")
             # Export
             self.query(database=database, query=query_copy)
 
@@ -1968,9 +1967,14 @@ class Database:
                 concat_and_compress_files(input_files=input_files, output_file=output_database, compression_type=compression_type, threads=threads, sort=sort, index=index)
             
             # Header
+            # if output_header:
+            #     remove_if_exists([output_header])
+            #     database_for_header = Database(database=output_database)
+            #     header_columns_from_database = database_for_header.get_header_columns_from_database(database=output_database)
+            #     database_for_header.get_header_file(header_file=output_header, replace_header_line=header_columns_from_database, force=True)
             if output_header:
-                remove_if_exists([output_header])
                 database_for_header = Database(database=output_database)
+                remove_if_exists([output_header])
                 header_columns_from_database = database_for_header.get_header_columns_from_database(database=output_database)
                 database_for_header.get_header_file(header_file=output_header, replace_header_line=header_columns_from_database, force=True)
 

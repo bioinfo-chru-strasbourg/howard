@@ -1472,10 +1472,12 @@ class Variants:
         database = Database(database=database_source, table="variants", header_file=output_header)
         
         # Existing colomns header
-        existing_columns_header = database.get_header_file_columns(output_header)
-
+        #existing_columns_header = database.get_header_file_columns(output_header)
+        existing_columns_header = database.get_header_columns_from_database()
+        
         # Export file
-        database.export(output_database=output_file, existing_columns_header=existing_columns_header, parquet_partitions=parquet_partitions, threads=threads, sort=sort, index=index, header_in_output=header_in_output, order_by=order_by)
+        #database.export(output_database=output_file, existing_columns_header=existing_columns_header, parquet_partitions=parquet_partitions, threads=threads, sort=sort, index=index, header_in_output=header_in_output, order_by=order_by)
+        database.export(output_database=output_file, output_header=output_header, existing_columns_header=existing_columns_header, parquet_partitions=parquet_partitions, threads=threads, sort=sort, index=index, header_in_output=header_in_output, order_by=order_by)
         
         # Remove
         remove_if_exists(tmp_to_remove)
