@@ -684,6 +684,30 @@ arguments = {
             "action": "store_true"
         },
 
+        # HGMD
+        "convert-hgmd": {
+            "metavar": "FOLDER",
+            "help": """Convert HGMD databases\n"""
+                    """Folder where the HGMD databases will be stored.\n"""
+                    """Fiels in VCF, Parquet and TSV will be generated.\n"""
+                    """If the folder does not exist, it will be created.""",
+            "required": False
+        },
+        "convert-hgmd-file": {
+            "metavar": "FILE",
+            "help": """File from HGMD\n"""
+                    """Name format 'HGMD_Pro_<release>_<assembly>.vcf.gz'.""",
+            "required": False
+        },
+        "convert-hgmd-basename": {
+            "metavar": "STR",
+            "help": """File output basename\n"""
+                    """Generated files will be prefixed by basename.\n"""
+                    """Example: 'HGMD_Pro_MY_RELEASE'\n"""
+                    """Default: Use input file name without '.vcf.gz'""",
+            "required": False
+        },
+
         # From Annovar
         "annovar-code": {
             "metavar": "CODE",
@@ -1026,6 +1050,11 @@ commands_arguments = {
                 "download-dbsnp-assemblies-map": False,
                 "download-dbsnp-vcf": False,
                 "download-dbsnp-parquet": False
+            },
+            "HGMD": {
+                "convert-hgmd": False,
+                "convert-hgmd-file": False,
+                "convert-hgmd-basename": False
             },
         }
 

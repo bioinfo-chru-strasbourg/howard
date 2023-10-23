@@ -237,6 +237,18 @@ def databases_download(args:argparse) -> None:
             dbsnp_parquet=args.download_dbsnp_parquet
             )
 
+    # HGMD
+    if args.convert_hgmd:
+        log.debug(f"Convert HGMD")
+        databases_download_hgmd(
+            assemblies = assemblies,
+            hgmd_folder=args.convert_hgmd,
+            hgmd_file=args.convert_hgmd_file,
+            output_basename=args.convert_hgmd_basename,
+            genomes_folder=args.genomes_folder,
+            threads=threads
+            )
+
 
 def databases_download_annovar(folder:str = None, files:list = None, assemblies:list = ["hg19"], annovar_url:str = "http://www.openbioinformatics.org/annovar/download", threads:int = 1) -> None:
     """
@@ -2487,3 +2499,202 @@ def databases_download_dbsnp(assemblies:list, dbsnp_folder:str = DEFAULT_DBSNP_F
                 log.info(f"Download dbSNP {[assembly]} - Release {[dbsnp_release_default_already]} - Already defined as default")
 
     return True
+
+
+
+
+def databases_download_hgmd(assemblies:list, hgmd_file:str, hgmd_folder:str = DEFAULT_ANNOTATIONS_FOLDER, output_basename:str = None, threads:int = None, genomes_folder:str = None) -> bool:
+    """
+    The function `databases_download_hgmd` converts an HGMD database file into VCF, Parquet, and TSV
+    formats.
+    
+    :param assemblies: A list of assemblies for which the HGMD database should be downloaded and
+    converted. Only one assembly can be specified
+    :type assemblies: list
+    :param hgmd_file: The `hgmd_file` parameter is a string that represents the path to the HGMD
+    database file in VCF format. This file contains the variants and their associated information
+    :type hgmd_file: str
+    :param hgmd_folder: The `hgmd_folder` parameter is the path to the folder where the HGMD database
+    files will be stored. If no value is provided, it will use the `DEFAULT_ANNOTATIONS_FOLDER` constant
+    as the default value
+    :type hgmd_folder: str
+    :param output_basename: The `output_basename` parameter is a string that specifies the base name for
+    the output files. If not provided, it will be set as the base name of the input HGMD file without
+    the assembly information
+    :type output_basename: str
+    :param threads: The `threads` parameter specifies the number of threads to use for processing the
+    HGMD database. It determines the level of parallelism and can help speed up the conversion process
+    :type threads: int
+    :param genomes_folder: The `genomes_folder` parameter is a string that specifies the folder where
+    the genome files are located. If this parameter is not provided, it will default to a constant value
+    `DEFAULT_GENOME_FOLDER`
+    :type genomes_folder: str
+    :return: a boolean value indicating whether the HGMD database conversion was successful or not.
+    """
+
+    # Check assemblies
+    if not assemblies or len(assemblies) > 1 or len(assemblies) == 0:
+        log.error("Uniq assembly is mandatory")
+        raise ValueError("Uniq assembly is mandatory")
+
+    # Check HGMD file
+    if not hgmd_file or not os.path.exists(hgmd_file):
+        log.error(f"HGMD file DOES NOT exist '{hgmd_file}'")
+        raise ValueError(f"HGMD file DOES NOT exist '{hgmd_file}'")
+
+    # Log
+    log.info(f"Convert HGMD database {assemblies}")
+
+    # genomes folder
+    if not genomes_folder:
+        genomes_folder = DEFAULT_GENOME_FOLDER
+
+    # Assembly
+    assembly = assemblies[0]
+
+    # Create folder if not exists
+    hgmd_folder_assembly = os.path.join(hgmd_folder,assembly)
+    if not os.path.exists(hgmd_folder_assembly):
+        Path(hgmd_folder_assembly).mkdir(parents=True, exist_ok=True)
+
+    # Output basename
+    if not output_basename:
+        output_basename = os.path.basename(hgmd_file).replace(f'_{assembly}.vcf.gz', '')
+
+    output_vcf = os.path.join(hgmd_folder_assembly, output_basename+".vcf.gz")
+
+    if os.path.exists(output_vcf):
+
+        log.info(f"Convert HGMD database {[assembly]} - File '{os.path.basename(output_vcf)}' already exists")
+
+    else:
+
+        log.info(f"Convert HGMD database {[assembly]} - File '{os.path.basename(hgmd_file)}' processing...")
+
+        with TemporaryDirectory() as tmp_dir:
+        
+            # Import Database object
+            from howard.objects.database import Database
+            from howard.objects.variants import Variants
+
+            # Database
+            database = Database(database=hgmd_file, assembly=assembly)
+
+            # Create duckDB connexion
+            db_copy = duckdb.connect(config={"threads":threads})
+
+            # Set max expression depth for big sub databases (e.g. gnomAD, ALL)
+            db_copy.execute("SET max_expression_depth TO 10000")
+
+            # Log
+            log.debug(f"""Convert HGMD database {[assembly]} - Check chromosomes and number of variants...""")
+
+            # Check chomosomes and total number of variants
+            query_chromosomes = f"""
+                        SELECT distinct concat('chr', "#CHROM") AS chromosome, count(*) AS nb_variants
+                        FROM read_csv('{hgmd_file}', AUTO_DETECT=TRUE, ALL_VARCHAR=1, SEP='\t')
+                        GROUP BY "#CHROM"
+                    """
+            chromosomes = sorted(list(db_copy.query(query_chromosomes).df()["chromosome"]))
+            nb_variants = sum(db_copy.query(query_chromosomes).df()["nb_variants"])
+            
+            # Log
+            log.debug(f"""Convert HGMD database {[assembly]} - Found {len(chromosomes)} chromosomes""")
+            log.debug(f"""Convert HGMD database {[assembly]} - Found {nb_variants} variants""")
+
+            log.debug(f"""Convert HGMD database {[assembly]} - Generate files...""")
+
+            # Chromosome sizes
+            genomes_sizes = {}
+            genomes_sizes_file = os.path.join(genomes_folder, assembly, f"{assembly}.fa.sizes")
+            if os.path.exists(genomes_sizes_file):
+                with open(genomes_sizes_file, "r") as f:
+                    for line in f:
+                        genomes_sizes[line.split("\t")[0]] = line.split("\t")[1].strip()
+
+            ### Header
+
+            # Init
+            header_list = []
+            header_file = os.path.join(tmp_dir, "header.hdr")
+            database_header = database.get_header_file()
+
+            # Read header file to dict
+            with mgzip.open(database_header, "r") as f:
+                for line in f:
+                    #log.debug(line)
+                    if line.decode().startswith("#"):
+                        header_list.append(line.decode().strip())
+                    else:
+                        break
+
+            # Remove last line with #CHROM
+            header_list = header_list[:-1]
+
+            # Append INFO MC
+            header_list.append('##INFO=<ID=MC,Number=1,Type=String,Description="HGMD Accession number">')
+
+            # Add chromosomes
+            for chromosome in chromosomes:
+                header_list.append(f"##contig=<ID={chromosome},length={genomes_sizes.get(chromosome,0)},assembly={assembly}>")
+
+            # Add last line with #CHROM
+            header_list.append("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO")
+
+            # Write header
+            with open(header_file, 'w') as fp:
+                for item in header_list:
+                    # write each item on a new line
+                    fp.write("%s\n" % item)
+
+            ### Variants
+
+            # Init
+            variants_file = os.path.join(tmp_dir, "variants.vcf")
+
+            # Query COPY TO
+            query_variants = f"""
+                COPY (
+                        SELECT
+                            concat('chr', "#CHROM") AS '#CHROM',
+                            POS,
+                            ID,
+                            REF,
+                            ALT,
+                            QUAL,
+                            FILTER,
+                            concat(
+                                replace(INFO, '"', ''),
+                                ';',
+                                'MC=',
+                                ID
+                                ) AS 'INFO'
+                        FROM read_csv('{hgmd_file}', AUTO_DETECT=TRUE, ALL_VARCHAR=1, SEP='\t', SAMPLE_SIZE=10000000)
+                    )
+                TO '{variants_file}' (FORMAT csv, delimiter '\t', HEADER 0)
+                    """
+            db_copy.query(query_variants)
+            
+            # Create HGMD VCF
+            log.info(f"""Convert HGMD database {[assembly]} - Generate VCF file '{os.path.basename(output_vcf)}'""")
+            concat_and_compress_files(input_files=[header_file, variants_file], output_file=output_vcf, sort=True, index=True, compression_type = "bgzip")
+
+
+            # Create HGMD Parquet
+            output_parquet = os.path.join(hgmd_folder_assembly, output_basename+".parquet")
+            output_parquet_header = os.path.join(hgmd_folder_assembly, output_basename+".parquet.hdr")
+            log.info(f"""Convert HGMD database {[assembly]} - Generate Parquet file '{os.path.basename(output_parquet)}'""")
+            hgmd_database_to_parquet = Variants(input=output_vcf, output=output_parquet, config={"threads":threads}, param={"explode_infos": True}, load=True)
+            hgmd_database_to_parquet.export_output(export_header=True)
+
+            # Create HGMD TSV
+            output_tsv = os.path.join(hgmd_folder_assembly, output_basename+".tsv")
+            output_tsv_header = os.path.join(hgmd_folder_assembly, output_basename+".tsv.hdr")
+            log.info(f"""Convert HGMD database {[assembly]} - Generate TSV file '{os.path.basename(output_tsv)}'""")
+            hgmd_database_to_parquet = Variants(input=output_parquet, output=output_tsv, config={"threads":threads}, param={"explode_infos": True}, load=True)
+            hgmd_database_to_parquet.export_output(export_header=True)
+
+
+    return True
+
+
