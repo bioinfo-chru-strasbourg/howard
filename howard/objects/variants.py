@@ -1209,32 +1209,35 @@ class Variants:
 
                     # Add field
                     added_column = self.add_column(table_name=table_variants, column_name=info_id_sql, column_type=type_sql, default_value="null", drop=force)
+                    
                     if added_column:
                         added_columns.append(added_column)
 
-                    # add field to index
-                    self.index_additionnal_fields.append(info_id_sql)
+                    if added_column or force:
+                        
+                        # add field to index
+                        self.index_additionnal_fields.append(info_id_sql)
 
-                    # Update field array
-                    if connexion_format in ["duckdb"]:
-                        update_info_field = f"""
-                        "{info_id_sql}" =
-                            CASE
-                                WHEN REGEXP_EXTRACT(concat(';', INFO), ';{info}=([^;]*)',1) IN ('','.') THEN NULL
-                                ELSE REGEXP_EXTRACT(concat(';', INFO), ';{info}=([^;]*)',1)
-                            END
-                        """
-                    elif connexion_format in ["sqlite"]:
-                        update_info_field = f"""
+                        # Update field array
+                        if connexion_format in ["duckdb"]:
+                            update_info_field = f"""
                             "{info_id_sql}" =
                                 CASE
-                                    WHEN instr(INFO, '{info}=') = 0 THEN NULL
-                                    WHEN instr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}),';') = 0 THEN substr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}), instr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}), '=')+1)
-                                    ELSE substr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}), instr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}), '=')+1, instr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}),';')-instr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}), '=')-1)
+                                    WHEN REGEXP_EXTRACT(concat(';', INFO), ';{info}=([^;]*)',1) IN ('','.') THEN NULL
+                                    ELSE REGEXP_EXTRACT(concat(';', INFO), ';{info}=([^;]*)',1)
                                 END
-                        """
-                        
-                    sql_info_alter_table_array.append(update_info_field)
+                            """
+                        elif connexion_format in ["sqlite"]:
+                            update_info_field = f"""
+                                "{info_id_sql}" =
+                                    CASE
+                                        WHEN instr(INFO, '{info}=') = 0 THEN NULL
+                                        WHEN instr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}),';') = 0 THEN substr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}), instr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}), '=')+1)
+                                        ELSE substr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}), instr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}), '=')+1, instr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}),';')-instr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}), '=')-1)
+                                    END
+                            """
+                            
+                        sql_info_alter_table_array.append(update_info_field)
 
             if sql_info_alter_table_array:
 

@@ -15,6 +15,7 @@ import pandas as pd
 import vcf
 import logging as log
 import sys
+import psutil
 
 from howard.objects.variants import Variants
 from howard.objects.database import Database
@@ -108,15 +109,25 @@ def main() -> None:
 
     # Threads
     nb_threads = os.cpu_count()
-    threads = nb_threads
     if "threads" in args and args.threads:
         threads = args.threads
+    else:
+        threads = nb_threads
+    if threads == -1:
+        threads = nb_threads
 
+    # Memory
+    mem = psutil.virtual_memory()
+    mem_total = mem.total / 1024 / 1024 / 1024
+    mem_default = int(mem_total * 0.8)
+    if mem_default < 1:
+        mem_default = 1
     if "memory" in args and args.memory:
         memory = args.memory
     else:
-        memory = "8G"
+        memory = f"{mem_default}G"
 
+    # Assembly
     if "assembly" in args and args.assembly:
         assembly = args.assembly
     else:
@@ -140,6 +151,7 @@ def main() -> None:
 
     # Change config
     args.config = config
+    log.debug(f"config: {config}")
 
     # Command eval
     if not args.command:

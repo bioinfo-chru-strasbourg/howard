@@ -763,9 +763,9 @@ arguments = {
         "memory": {
             "metavar": "FLOAT[kMG]",
             "help": """Memory to use\n"""
-                    """Default: 8G""",
+                    """Default: None (80%% of RAM)""",
             "required": False,
-            "default": "8G"
+            "default": None
         },
         "verbosity": {
             "metavar": "LEVEL",

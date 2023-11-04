@@ -4,6 +4,7 @@ howard.egg-info/
 .cache
 .vscode
 .coverage
+.tmp
 tests/databases/annovar/
 tests/databases/snpeff/
 tests/databases/genomes/
