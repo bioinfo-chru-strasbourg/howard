@@ -38,6 +38,7 @@ def stats(args:argparse) -> None:
     log.info("Start")
 
     config = args.config
+    config["access"] = "RO"
 
     param = {}
 
