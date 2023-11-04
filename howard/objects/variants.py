@@ -693,15 +693,23 @@ class Variants:
                                  if_exists='append', index=False)
 
 
-    def load_data(self, input_file:str = None, drop_variants_table:bool = False) -> None:
+    def load_data(self, input_file:str = None, drop_variants_table:bool = False, sample_size:int = 20480) -> None:
         """
-        It reads a VCF file and inserts it into a table
+        The `load_data` function reads a VCF file and inserts it into a table, with options to drop the
+        table before loading the data and specify a sample size.
         
-        :param input_file: The path to the input file
+        :param input_file: The path to the input file. This is the VCF file that will be loaded into the
+        table
         :type input_file: str
-        :param drop_variants_table: If True, the variants table will be dropped before loading the data,
-        defaults to False
+        :param drop_variants_table: The `drop_variants_table` parameter is a boolean flag that
+        determines whether the variants table should be dropped before loading the data. If set to
+        `True`, the variants table will be dropped. If set to `False` (default), the variants table will
+        not be dropped, defaults to False
         :type drop_variants_table: bool (optional)
+        :param sample_size: The `sample_size` parameter determines the number of rows to be sampled from
+        the input file. If it is set to `None`, the default value of 20480 will be used, defaults to
+        20480
+        :type sample_size: int (optional)
         """
 
         log.info("Loading...")
@@ -720,16 +728,28 @@ class Variants:
 
         # Access
         access = self.get_config().get("access", None)
+        log.debug(f"access: {access}")
 
         # Input format and compress
         input_format = self.get_input_format()
         input_compressed = self.get_input_compressed()
+        log.debug(f"input_format: {input_format}")
+        log.debug(f"input_compressed: {input_compressed}")
+
+        # input_compressed_format
+        if input_compressed:
+            input_compressed_format = "gzip"
+        else:
+            input_compressed_format = "none"
+        log.debug(f"input_compressed_format: {input_compressed_format}")
 
         # Connexion format
         connexion_format = self.get_connexion_format()
 
         # Sample size
-        sample_size = -1
+        if not sample_size:
+            sample_size = -1
+        log.debug(f"sample_size: {sample_size}")
 
         # Load data
         log.debug(f"Load Data from {input_format}")
@@ -746,13 +766,13 @@ class Variants:
                     sql_vcf = f"""
                     CREATE VIEW {table_variants} AS
                         SELECT *
-                        FROM read_csv('{self.input}', auto_detect=True, skip={skip}, delim='{delimiter}', sample_size={sample_size})
+                        FROM read_csv('{self.input}', auto_detect=True, skip={skip}, delim='{delimiter}', sample_size={sample_size}, compression={input_compressed_format})
                     """
                 else:
                     sql_vcf = f"""
                     CREATE TABLE {table_variants} AS 
                         SELECT *
-                        FROM read_csv('{self.input}', auto_detect=True, skip={skip}, delim='{delimiter}', sample_size={sample_size})
+                        FROM read_csv('{self.input}', auto_detect=True, skip={skip}, delim='{delimiter}', sample_size={sample_size}, compression={input_compressed_format})
                     """
                 self.conn.execute(sql_vcf)
 
@@ -1087,10 +1107,10 @@ class Variants:
         return removed
     
 
-    def explode_infos(self, prefix: str = None, create_index: bool = False, fields: list = None, force:bool = False) -> list:
+    def explode_infos(self, prefix: str = None, create_index: bool = False, fields: list = None, force:bool = False, proccess_all_fields_together:bool = False) -> list:
         """
         The `explode_infos` function takes a VCF file and explodes the INFO fields into individual
-        columns.
+        columns, returning a list of added columns.
         
         :param prefix: The `prefix` parameter is a string that is used as a prefix for the exploded INFO
         fields. If the `prefix` is not provided or is set to `None`, the function will use the value of
@@ -1108,6 +1128,11 @@ class Variants:
         will be dropped and recreated. If `force` is set to `False`, the column will not be dropped,
         defaults to False
         :type force: bool (optional)
+        :param proccess_all_fields_together: The `proccess_all_fields_together` parameter is a boolean
+        flag that determines whether to process all the INFO fields together or individually. If set to
+        `True`, all the INFO fields will be processed together. If set to `False`, each INFO field will
+        be processed individually, defaults to False
+        :type proccess_all_fields_together: bool (optional)
         :return: The function `explode_infos` returns a list of added columns.
         """
         
@@ -1141,13 +1166,16 @@ class Variants:
             except:
                 extra_infos = []
 
+            # Header infos
+            header_infos = self.get_header().infos
+
             log.debug(
-                f"Explode INFO fields - ADD [{len(self.get_header().infos)}] annotations fields")
+                f"Explode INFO fields - ADD [{len(header_infos)}] annotations fields")
 
             sql_info_alter_table_array = []
 
             # Info fields to check
-            fields_list = list(self.get_header().infos)
+            fields_list = list(header_infos)
             if fields:
                 fields_list += fields
             fields_list = set(fields_list)
@@ -1168,9 +1196,9 @@ class Variants:
                     log.debug(
                         f"Explode INFO fields - ADD '{info}' annotations fields")
 
-                    if info in self.get_header().infos:
-                        info_type = self.get_header().infos[info].type
-                        info_num = self.get_header().infos[info].num
+                    if info in header_infos:
+                        info_type = header_infos[info].type
+                        info_num = header_infos[info].num
                     else:
                         info_type = "String"
                         info_num = 0
@@ -1192,8 +1220,7 @@ class Variants:
                         update_info_field = f"""
                         "{info_id_sql}" =
                             CASE
-                                WHEN REGEXP_EXTRACT(concat(';', INFO), ';{info}=([^;]*)',1) == '' THEN NULL
-                                WHEN REGEXP_EXTRACT(concat(';', INFO), ';{info}=([^;]*)',1) == '.' THEN NULL
+                                WHEN REGEXP_EXTRACT(concat(';', INFO), ';{info}=([^;]*)',1) IN ('','.') THEN NULL
                                 ELSE REGEXP_EXTRACT(concat(';', INFO), ';{info}=([^;]*)',1)
                             END
                         """
@@ -1209,35 +1236,49 @@ class Variants:
                         
                     sql_info_alter_table_array.append(update_info_field)
 
-            # By chromosomes
-            try:
-                chromosomes_list = list(self.get_query_to_df(
-                    f""" SELECT "#CHROM" FROM {table_variants} GROUP BY "#CHROM" """)["#CHROM"])
-            except:
-                chromosomes_list = [None]
+            if sql_info_alter_table_array:
 
-            #for chrom in chromosomes_df["#CHROM"]:
-            for chrom in chromosomes_list:
-                log.debug(
-                    f"Explode INFO fields - Chromosome {chrom}...")
-                
-                # Where clause
-                where_clause = ""
-                if chrom:
-                    where_clause = f""" WHERE "#CHROM" = '{chrom}' """
+                # By chromosomes
+                try:
+                    chromosomes_list = list(self.get_query_to_df(
+                        f""" SELECT "#CHROM" FROM {table_variants} GROUP BY "#CHROM" """)["#CHROM"])
+                except:
+                    chromosomes_list = [None]
 
-                # Update table
-                sql_info_alter_table_array_join = ", ".join(
-                    sql_info_alter_table_array)
-                if sql_info_alter_table_array_join:
-                    sql_info_alter_table = f"""
-                        UPDATE {table_variants}
-                        SET {sql_info_alter_table_array_join}
-                        {where_clause}
-                        """
-                    # log.debug(
-                    #     f"Explode INFO fields - ADD [{len(self.get_header().infos)}]: {sql_info_alter_table}")
-                    self.conn.execute(sql_info_alter_table)
+                for chrom in chromosomes_list:
+                    log.debug(
+                        f"Explode INFO fields - Chromosome {chrom}...")
+                    
+                    # Where clause
+                    where_clause = ""
+                    if chrom and len(chromosomes_list) > 1:
+                        where_clause = f""" WHERE "#CHROM" = '{chrom}' """
+
+                    # Update table
+                    if proccess_all_fields_together:
+                        sql_info_alter_table_array_join = ", ".join(
+                            sql_info_alter_table_array)
+                        if sql_info_alter_table_array_join:
+                            sql_info_alter_table = f"""
+                                UPDATE {table_variants}
+                                SET {sql_info_alter_table_array_join}
+                                {where_clause}
+                                """
+                            log.debug(f"Explode INFO fields - Explode all {len(sql_info_alter_table_array)} fields...")
+                            #log.debug(sql_info_alter_table)
+                            self.conn.execute(sql_info_alter_table)
+                    else:
+                        sql_info_alter_num = 0
+                        for sql_info_alter in sql_info_alter_table_array:
+                            sql_info_alter_num += 1
+                            sql_info_alter_table = f"""
+                                UPDATE {table_variants}
+                                SET {sql_info_alter}
+                                {where_clause}
+                                """
+                            log.debug(f"Explode INFO fields - Explode field {sql_info_alter_num}/{len(sql_info_alter_table_array)}...")
+                            #log.debug(sql_info_alter_table)
+                            self.conn.execute(sql_info_alter_table)
 
         # create indexes
         if create_index:
@@ -1355,7 +1396,7 @@ class Variants:
             return None
 
 
-    def export_output(self, output_file: str = None, output_header: str = None, export_header: bool = True, query: str = None, parquet_partitions:list = None, threads:int = None, sort:bool = False, index:bool = False, order_by:str = None) -> bool:
+    def export_output(self, output_file: str = None, output_header: str = None, export_header: bool = True, query: str = None, parquet_partitions:list = None, parquet_number_of_files:int = None, threads:int = None, sort:bool = False, index:bool = False, order_by:str = None) -> bool:
         """
         The `export_output` function exports data from a VCF file to a specified output file in various
         formats, including VCF, CSV, TSV, PSV, and Parquet.
@@ -1382,19 +1423,24 @@ class Variants:
         organize data in a hierarchical directory structure based on the values of one or more columns.
         This can improve query performance when working with large datasets
         :type parquet_partitions: list
+        :param parquet_number_of_files: The `parquet_number_of_files` parameter specifies the number of
+        files to be created when exporting data in Parquet format. This parameter is used for
+        partitioning the Parquet file into multiple files. If the value of `parquet_number_of_files` is
+        set to `-1`, it means that
+        :type parquet_number_of_files: int
         :param threads: The `threads` parameter is an optional parameter that specifies the number of
         threads to be used during the export process. It determines the level of parallelism and can
         improve the performance of the export operation. If not provided, the function will use the
         default number of threads
         :type threads: int
         :param sort: The `sort` parameter is a boolean flag that determines whether the output file
-        should be sorted or not. This parameter is only applicable when the output file format is VCF.
-        If `sort` is set to `True`, the output file will be sorted based on the genomic coordinates of
-        the variants, defaults to False
+        should be sorted or not. If `sort` is set to `True`, the output file will be sorted based on the
+        genomic coordinates of the variants. By default, the value of `sort` is `False`, defaults to
+        False
         :type sort: bool (optional)
         :param index: The `index` parameter is a boolean flag that determines whether an index should be
         created on the output file. If `index` is True, an index will be created. If `index` is False,
-        no index will be created, defaults to False
+        no index will be created. The default value is False, defaults to False
         :type index: bool (optional)
         :param order_by: The `order_by` parameter is a string that specifies the column(s) to use for
         sorting the output file. This parameter is only applicable when exporting data in VCF format
@@ -1425,6 +1471,12 @@ class Variants:
         if not parquet_partitions:
             parquet_partitions = self.get_param().get("parquet_partitions", None)
 
+        # Parquet partition
+        if not parquet_number_of_files:
+            parquet_number_of_files = self.get_param().get("parquet_number_of_files", None)
+        if parquet_number_of_files and int(parquet_number_of_files) == -1:
+            parquet_number_of_files = threads
+
         # Order by
         if not order_by:
             order_by = self.get_param().get("order_by", "")
@@ -1440,7 +1492,7 @@ class Variants:
 
         # Explode infos
         if self.get_explode_infos():
-            self.explode_infos(prefix=self.get_explode_infos_prefix(), fields=self.get_explode_infos_fields(), force=True)
+            self.explode_infos(prefix=self.get_explode_infos_prefix(), fields=self.get_explode_infos_fields(), force=False)
 
         # Tmp files to remove
         tmp_to_remove = []
@@ -1474,10 +1526,10 @@ class Variants:
         # Existing colomns header
         #existing_columns_header = database.get_header_file_columns(output_header)
         existing_columns_header = database.get_header_columns_from_database()
-        
+
         # Export file
         #database.export(output_database=output_file, existing_columns_header=existing_columns_header, parquet_partitions=parquet_partitions, threads=threads, sort=sort, index=index, header_in_output=header_in_output, order_by=order_by)
-        database.export(output_database=output_file, output_header=output_header, existing_columns_header=existing_columns_header, parquet_partitions=parquet_partitions, threads=threads, sort=sort, index=index, header_in_output=header_in_output, order_by=order_by)
+        database.export(output_database=output_file, output_header=output_header, existing_columns_header=existing_columns_header, parquet_partitions=parquet_partitions, parquet_number_of_files=parquet_number_of_files, threads=threads, sort=sort, index=index, header_in_output=header_in_output, order_by=order_by)
         
         # Remove
         remove_if_exists(tmp_to_remove)

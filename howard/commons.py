@@ -76,6 +76,8 @@ file_format_delimiters = {
     "psv": "|"
 }
 
+file_compressed_format = ["gz", "bgz"]
+
 
 vcf_required_release = '##fileformat=VCFv4.2'
 vcf_required_columns = ['#CHROM','POS','ID','REF','ALT','QUAL','FILTER','INFO']
@@ -645,7 +647,7 @@ def get_file_format(filename: str = None) -> str:
     if filename:
         filename_name, filename_extension = os.path.splitext(filename)
         filename_format = filename_extension.replace(".", "")
-        if filename_format in ["gz"]:
+        if filename_format in file_compressed_format:
             filename_name_name, filename_name_extension = os.path.splitext(
                 filename_name)
             filename_format = filename_name_extension.replace(".", "")
@@ -1264,7 +1266,7 @@ def get_file_compressed(filename: str = None) -> bool:
         else:
             filename_name, filename_extension = os.path.splitext(filename)
             compress_format = filename_extension.replace(".", "")
-            if compress_format in ["gz"]:
+            if compress_format in file_compressed_format:
                 compression_type = "bgzip"
             else:
                 compression_type = "none"

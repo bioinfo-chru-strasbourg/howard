@@ -2503,9 +2503,9 @@ def databases_download_dbsnp(assemblies:list, dbsnp_folder:str = DEFAULT_DBSNP_F
 
 
 
-def databases_download_hgmd(assemblies:list, hgmd_file:str, hgmd_folder:str = DEFAULT_ANNOTATIONS_FOLDER, output_basename:str = None, threads:int = None, genomes_folder:str = None) -> bool:
+def databases_download_hgmd(assemblies:list, hgmd_file:str, hgmd_folder:str = DEFAULT_ANNOTATIONS_FOLDER, output_basename:str = None, threads:int = None, genomes_folder:str = None, to_parquet:bool = True, to_tsv:bool = True) -> bool:
     """
-    The function `databases_download_hgmd` converts an HGMD database file into VCF, Parquet, and TSV
+    The `databases_download_hgmd` function converts an HGMD database file into VCF, Parquet, and TSV
     formats.
     
     :param assemblies: A list of assemblies for which the HGMD database should be downloaded and
@@ -2514,9 +2514,9 @@ def databases_download_hgmd(assemblies:list, hgmd_file:str, hgmd_folder:str = DE
     :param hgmd_file: The `hgmd_file` parameter is a string that represents the path to the HGMD
     database file in VCF format. This file contains the variants and their associated information
     :type hgmd_file: str
-    :param hgmd_folder: The `hgmd_folder` parameter is the path to the folder where the HGMD database
-    files will be stored. If no value is provided, it will use the `DEFAULT_ANNOTATIONS_FOLDER` constant
-    as the default value
+    :param hgmd_folder: The `hgmd_folder` parameter is a string that represents the path to the folder
+    where the HGMD database files will be stored. If no value is provided, it will use the
+    `DEFAULT_ANNOTATIONS_FOLDER` constant as the default value
     :type hgmd_folder: str
     :param output_basename: The `output_basename` parameter is a string that specifies the base name for
     the output files. If not provided, it will be set as the base name of the input HGMD file without
@@ -2529,6 +2529,14 @@ def databases_download_hgmd(assemblies:list, hgmd_file:str, hgmd_folder:str = DE
     the genome files are located. If this parameter is not provided, it will default to a constant value
     `DEFAULT_GENOME_FOLDER`
     :type genomes_folder: str
+    :param to_parquet: The `to_parquet` parameter is a boolean value that specifies whether the HGMD
+    database should be converted to the Parquet format or not. If set to `True`, the database will be
+    converted to Parquet format. If set to `False`, the conversion will be skipped, defaults to True
+    :type to_parquet: bool (optional)
+    :param to_tsv: The `to_tsv` parameter is a boolean value that specifies whether the HGMD database
+    should be converted to TSV format or not. If set to `True`, the function will generate a TSV file
+    from the HGMD database. If set to `False`, the TSV conversion will be, defaults to True
+    :type to_tsv: bool (optional)
     :return: a boolean value indicating whether the HGMD database conversion was successful or not.
     """
 
@@ -2679,20 +2687,21 @@ def databases_download_hgmd(assemblies:list, hgmd_file:str, hgmd_folder:str = DE
             log.info(f"""Convert HGMD database {[assembly]} - Generate VCF file '{os.path.basename(output_vcf)}'""")
             concat_and_compress_files(input_files=[header_file, variants_file], output_file=output_vcf, sort=True, index=True, compression_type = "bgzip")
 
-
             # Create HGMD Parquet
-            output_parquet = os.path.join(hgmd_folder_assembly, output_basename+".parquet")
-            output_parquet_header = os.path.join(hgmd_folder_assembly, output_basename+".parquet.hdr")
-            log.info(f"""Convert HGMD database {[assembly]} - Generate Parquet file '{os.path.basename(output_parquet)}'""")
-            hgmd_database_to_parquet = Variants(input=output_vcf, output=output_parquet, config={"threads":threads}, param={"explode_infos": True}, load=True)
-            hgmd_database_to_parquet.export_output(export_header=True)
+            if to_parquet or to_tsv:
+                output_parquet = os.path.join(hgmd_folder_assembly, output_basename+".parquet")
+                log.info(f"""Convert HGMD database {[assembly]} - Generate Parquet file '{os.path.basename(output_parquet)}'""")
+                hgmd_database_to_parquet = Variants(input=output_vcf, output=output_parquet, config={"threads":threads}, param={"explode_infos": True}, load=False)
+                hgmd_database_to_parquet.load_data(sample_size=-1)
+                hgmd_database_to_parquet.export_output(export_header=True)
 
             # Create HGMD TSV
-            output_tsv = os.path.join(hgmd_folder_assembly, output_basename+".tsv")
-            output_tsv_header = os.path.join(hgmd_folder_assembly, output_basename+".tsv.hdr")
-            log.info(f"""Convert HGMD database {[assembly]} - Generate TSV file '{os.path.basename(output_tsv)}'""")
-            hgmd_database_to_parquet = Variants(input=output_parquet, output=output_tsv, config={"threads":threads}, param={"explode_infos": True}, load=True)
-            hgmd_database_to_parquet.export_output(export_header=True)
+            if to_tsv:
+                output_tsv = os.path.join(hgmd_folder_assembly, output_basename+".tsv")
+                log.info(f"""Convert HGMD database {[assembly]} - Generate TSV file '{os.path.basename(output_tsv)}'""")
+                hgmd_database_to_tsv = Variants(input=output_parquet, output=output_tsv, config={"threads":threads}, param={"explode_infos": True}, load=False)
+                hgmd_database_to_tsv.load_data(sample_size=-1)
+                hgmd_database_to_tsv.export_output(export_header=True)
 
 
     return True

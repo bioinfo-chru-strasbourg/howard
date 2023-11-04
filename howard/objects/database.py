@@ -1695,7 +1695,7 @@ class Database:
         return self.conn
     
 
-    def export(self, output_database:str, output_header:str = None, header_in_output:bool = True, database:str = None, table:str = "variants", parquet_partitions:list = None, threads:int = 1, sort:bool = False, index:bool = False, existing_columns_header:list = [], order_by:str = "") -> bool:
+    def export(self, output_database:str, output_header:str = None, header_in_output:bool = True, database:str = None, table:str = "variants", parquet_partitions:list = None, parquet_number_of_files:int = None, threads:int = 1, sort:bool = False, index:bool = False, existing_columns_header:list = [], order_by:str = "") -> bool:
         """
         The `export` function exports data from a database to a specified output format, compresses it
         if necessary, and returns a boolean value indicating whether the export was successful or not.
@@ -1724,6 +1724,11 @@ class Database:
         column. The partitions are used to organize the data in the Parquet file based on the values of
         the specified columns
         :type parquet_partitions: list
+        :param parquet_number_of_files: The `parquet_number_of_files` parameter is an optional integer
+        that specifies the number of files to create when exporting data in the Parquet format. It
+        determines the level of parallelism during the export process. If this parameter is not
+        provided, the export process will use the default number of files
+        :type parquet_number_of_files: int
         :param threads: The `threads` parameter is an optional integer that specifies the number of
         threads to use for exporting the data. It determines the level of parallelism during the export
         process. By default, it is set to 1, defaults to 1
@@ -1758,6 +1763,9 @@ class Database:
 
         # tmp files
         tmp_files = []
+
+        # query_set
+        query_set = ""
 
         # Header columns
         if not existing_columns_header and output_header:
@@ -1856,6 +1864,9 @@ class Database:
                     parquet_partitions_clean.append('"'+parquet_partition.translate( { '"': None, "'": None, " ": None } )+'"')
                 parquet_partitions_by = ",".join(parquet_partitions_clean)
                 query_export_format += f", PARTITION_BY ({parquet_partitions_by}), OVERWRITE_OR_IGNORE"
+            elif parquet_number_of_files:
+                query_set += f" SET threads TO {parquet_number_of_files}; "
+                query_export_format += f", PER_THREAD_OUTPUT TRUE"
             include_header = False
 
         # BED
@@ -1929,6 +1940,7 @@ class Database:
 
             # Query copy
             query_copy = f""" 
+                {query_set}
                 COPY (
                     SELECT {query_export_columns}
                     FROM {self.get_sql_database_link(database=database)}
@@ -1937,6 +1949,7 @@ class Database:
                 TO '{query_output_database_tmp}'
                 WITH ({query_export_format})
                 """
+            #log.debug(f"query_copy: {query_copy}")
             # Export
             self.query(database=database, query=query_copy)
 
@@ -1967,11 +1980,6 @@ class Database:
                 concat_and_compress_files(input_files=input_files, output_file=output_database, compression_type=compression_type, threads=threads, sort=sort, index=index)
             
             # Header
-            # if output_header:
-            #     remove_if_exists([output_header])
-            #     database_for_header = Database(database=output_database)
-            #     header_columns_from_database = database_for_header.get_header_columns_from_database(database=output_database)
-            #     database_for_header.get_header_file(header_file=output_header, replace_header_line=header_columns_from_database, force=True)
             if output_header:
                 database_for_header = Database(database=output_database)
                 remove_if_exists([output_header])
