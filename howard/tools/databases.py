@@ -2252,6 +2252,7 @@ def databases_download_dbsnp(assemblies:list, dbsnp_folder:str = DEFAULT_DBSNP_F
     # Genomes folder
     if not genomes_folder:
         genomes_folder = DEFAULT_GENOME_FOLDER
+    log.debug(f"genomes_folder: {genomes_folder}")
 
     # Default release
     dbsnp_release_default_found = None
@@ -2259,10 +2260,23 @@ def databases_download_dbsnp(assemblies:list, dbsnp_folder:str = DEFAULT_DBSNP_F
         dbsnp_release_default_found = dbsnp_release_default
     elif len(dbsnp_releases) > 0:
         dbsnp_release_default_found = dbsnp_releases[0]
+    log.debug(f"dbsnp_release_default_found: {dbsnp_release_default_found}")
+
+    # dbSNP assemblies map
+    if isinstance(dbsnp_assemblies_map, str):
+        dbsnp_assemblies_map = json.loads(dbsnp_assemblies_map)
+    log.debug(f"dbsnp_assemblies_map: {dbsnp_assemblies_map}")
+
+    # dbSNP URL files
+    if isinstance(dbsnp_url_files, str):
+        dbsnp_url_files = json.loads(dbsnp_url_files)
+    log.debug(f"dbsnp_url_files: {dbsnp_url_files}")
 
     # Init
     if dbsnp_parquet:
         dbsnp_vcf = True
+    log.debug(f"dbsnp_vcf: {dbsnp_vcf}")
+    log.debug(f"dbsnp_parquet: {dbsnp_parquet}")
 
     for assembly in assemblies:
 
