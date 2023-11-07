@@ -2195,7 +2195,7 @@ def databases_download_exomiser(assemblies:list, exomiser_folder:str = DEFAULT_E
 
     return True
 
-def databases_download_dbsnp(assemblies:list, dbsnp_folder:str = DEFAULT_DBSNP_FOLDER, dbsnp_releases:list = ["b156"], dbsnp_release_default:str = None, dbsnp_url:str = DEFAULT_DBSNP_URL, dbsnp_url_files:dict = None, dbsnp_url_files_prefix:str = "GCF_000001405", dbsnp_assemblies_map:dict = {"hg19": "25", "hg38": "40"}, genomes_folder: str = DEFAULT_GENOME_FOLDER, threads:int = 1, dbsnp_vcf:bool = False, dbsnp_parquet:bool = False) -> str:
+def databases_download_dbsnp(assemblies:list, dbsnp_folder:str = DEFAULT_DBSNP_FOLDER, dbsnp_releases:list = ["b156"], dbsnp_release_default:str = None, dbsnp_url:str = DEFAULT_DBSNP_URL, dbsnp_url_files:dict = None, dbsnp_url_files_prefix:str = "GCF_000001405", dbsnp_assemblies_map:dict = {"hg19": "25", "hg38": "40"}, genomes_folder: str = DEFAULT_GENOME_FOLDER, threads:int = 1, dbsnp_vcf:bool = False, dbsnp_parquet:bool = False, dbsnp_parquet_explode_infos:bool = True) -> str:
     """
     The function `databases_download_dbsnp` downloads dbSNP files, generates VCF files, and converts
     them to Parquet format.
@@ -2272,9 +2272,7 @@ def databases_download_dbsnp(assemblies:list, dbsnp_folder:str = DEFAULT_DBSNP_F
         dbsnp_url_files = json.loads(dbsnp_url_files)
     log.debug(f"dbsnp_url_files: {dbsnp_url_files}")
 
-    # Init
-    if dbsnp_parquet:
-        dbsnp_vcf = True
+    # Files to generate
     log.debug(f"dbsnp_vcf: {dbsnp_vcf}")
     log.debug(f"dbsnp_parquet: {dbsnp_parquet}")
 
@@ -2388,11 +2386,11 @@ def databases_download_dbsnp(assemblies:list, dbsnp_folder:str = DEFAULT_DBSNP_F
 
                 # Database
                 conn_config_db = conn_config
-                #conn_config_db["threads"] = 1
                 db = Database(database=dbsnp_file, format="vcf", conn_config=conn_config_db)
                 
                 # Header
                 header_file_tmp = f"{dbsnp_file}.tmp.hdr"
+                db_header = db.get_header(header_file=header_file_tmp)
                 db_header_file = db.get_header_file(header_file=header_file_tmp)
                 db_header_list = db.read_header_file(header_file=db_header_file)
 
@@ -2421,11 +2419,28 @@ def databases_download_dbsnp(assemblies:list, dbsnp_folder:str = DEFAULT_DBSNP_F
                 vcf.Writer(open(header_file_tmp, 'w'), db_header_new)
 
                 # Header
-                header_file = f"{dbsnp_vcf}.hdr"
+                header_file = f"{dbsnp_vcf_file}.hdr"
                 shutil.copy(src=header_file_tmp, dst=header_file)
 
+                # INFO fields
+                query_select_info_fields_array = []
+                if write_parquet and dbsnp_parquet_explode_infos:
+                    for info in db_header.infos:
+                        if db_header.infos[info].type == "Flag":
+                            query_select_info_fields_array.append(f"""
+                                concat(';', INFO, ';') LIKE '%;{info};%'
+                                AS {info}                             
+                            """)
+                        else:
+                            query_select_info_fields_array.append(f"""
+                                CASE
+                                    WHEN concat(';', INFO) NOT LIKE '%;{info}=%' THEN NULL
+                                    ELSE REGEXP_EXTRACT(concat(';', INFO), ';{info}=([^;]*)',1)
+                                END AS {info}                             
+                            """)
+                query_select_info_fields = " , ".join(query_select_info_fields_array)
+
                 # Chunk CSV
-                #chunksize = 1000000
                 chunksize = 1000000
                 skiprows = len(db_header_list)
                 names = ["CHROM_OLD", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO"]
@@ -2441,28 +2456,42 @@ def databases_download_dbsnp(assemblies:list, dbsnp_folder:str = DEFAULT_DBSNP_F
                         # Chunk i
                         chunk_i += 1
     
-                        # Query
-                        query=f"""
-                            SELECT 
-                                    concat(
-                                        'chr',
-                                        replace(replace(replace(regexp_extract("CHROM_OLD", 'NC_[0]*([0-9]*)_?', 1), '23', 'X'), '24', 'Y'), '25', 'M')
-                                    ) AS '#CHROM',
-                                    "POS", "ID", "REF",
-                                    UNNEST(string_split("ALT", ',')) AS 'ALT',
-                                    "QUAL", "FILTER", "INFO"
-                            FROM df_chunk
-                            WHERE list_contains({db_header_list_chrs}, "#CHROM")
-                            """
-                        res = db.query(query=query)
-
                         # Write CSV
                         if write_vcf:
+                            # Query
+                            query=f"""
+                                SELECT 
+                                        concat(
+                                            'chr',
+                                            replace(replace(replace(regexp_extract("CHROM_OLD", 'NC_[0]*([0-9]*)_?', 1), '23', 'X'), '24', 'Y'), '25', 'M')
+                                        ) AS '#CHROM',
+                                        "POS", "ID", "REF",
+                                        UNNEST(string_split("ALT", ',')) AS 'ALT',
+                                        "QUAL", "FILTER", "INFO"
+                                FROM df_chunk
+                                WHERE list_contains({db_header_list_chrs}, "#CHROM")
+                                """
+                            res = db.query(query=query)
                             # Use polars to parallelize csv write and an infile with pgzip to parallelise compression
                             res.pl().write_csv(f, separator="\t", has_header=False)
 
                         # Write Parquet
                         if write_parquet:
+                            # Query
+                            query=f"""
+                                SELECT 
+                                        concat(
+                                            'chr',
+                                            replace(replace(replace(regexp_extract("CHROM_OLD", 'NC_[0]*([0-9]*)_?', 1), '23', 'X'), '24', 'Y'), '25', 'M')
+                                        ) AS '#CHROM',
+                                        "POS", "ID", "REF",
+                                        UNNEST(string_split("ALT", ',')) AS 'ALT',
+                                        "QUAL", "FILTER", "INFO",
+                                        {query_select_info_fields}
+                                FROM df_chunk
+                                WHERE list_contains({db_header_list_chrs}, "#CHROM")
+                                """
+                            res = db.query(query=query)
                             # Use pandas an to_parquet with append option ans fastparquet engine (no append with other df like polars or pyarrow)
                             if chunk_i == 1:
                                 append = False
