@@ -1459,7 +1459,7 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
             # Find database structure
             if not database_files:
                 database_files = get_database_files(f"{dbnsfp_zip_dest_folder}/dbNSFP{dbnsfp_release}_variant.chr*.gz")
-            if not columns_structure:
+            if not columns_structure and len(database_files):
                 columns_structure = get_columns_structure(database_file=database_files[0], sample_size=10, threads=threads)
 
             output_prefix = f"{dbnsfp_folder}/{assembly}/dbNSFP{dbnsfp_release}"
