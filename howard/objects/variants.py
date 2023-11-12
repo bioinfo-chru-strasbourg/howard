@@ -165,8 +165,48 @@ class Variants:
             connexion_config["threads"] = threads
         if config.get("memory", None):
             connexion_config["memory_limit"] = config.get("memory")
+        if config.get("access", None):
+            access = config.get("access")
+            if access in ["RO"]:
+                access = "READ_ONLY"
+            elif access in ["RW"]:
+                access = "READ_WRITE"
+            connexion_db = self.get_connexion_db()
+            if connexion_db in ":memory:":
+                access = "READ_WRITE"
+            connexion_config["access_mode"] = access
 
         return connexion_config
+
+
+    def set_connexion_db(self) -> str:
+        """
+        The function `set_connexion_db` returns the appropriate database connection string based on the
+        input format and connection type.
+        :return: the value of the variable `connexion_db`.
+        """
+
+        # Default connexion db
+        default_connexion_db = ":memory:"
+
+        # Find connexion db
+        if self.get_input_format() in ["db", "duckdb"]:
+            connexion_db = self.get_input()
+        elif self.get_connexion_type() in ["memory", default_connexion_db, None]:
+            connexion_db = default_connexion_db
+        elif self.get_connexion_type() in ["tmpfile"]:
+            tmp_name = tempfile.mkdtemp(prefix=self.get_prefix(
+            ), dir=self.get_tmp_dir(), suffix=".db")
+            connexion_db = f"{tmp_name}/tmp.db"
+        elif self.get_connexion_type() != "":
+            connexion_db = self.get_connexion_type()
+        else:
+            connexion_db = default_connexion_db
+        
+        # Set connexion db
+        self.connexion_db = connexion_db
+
+        return connexion_db
 
 
     def set_connexion(self, conn) -> None:
@@ -177,35 +217,25 @@ class Variants:
         database is created
         """
 
+        # Connexion db
+        connexion_db = self.set_connexion_db()
+
         # Connexion config
         connexion_config = self.get_connexion_config()
-        default_connexion_db = ":memory:"
 
         # Connexion format
         connexion_format = self.get_config().get("connexion_format", "duckdb")
+        # Set connexion format
+        self.connexion_format = connexion_format
 
-        # Conn
-        connexion_db = default_connexion_db
+        # Connexion
         if not conn:
-            if self.get_input_format() in ["db", "duckdb"]:
-                connexion_db = self.get_input()
-            elif self.get_connexion_type() in ["memory", default_connexion_db, None]:
-                connexion_db = default_connexion_db
-            elif self.get_connexion_type() in ["tmpfile"]:
-                tmp_name = tempfile.mkdtemp(prefix=self.get_prefix(
-                ), dir=self.get_tmp_dir(), suffix=".db")
-                connexion_db = f"{tmp_name}/tmp.db"
-            elif self.get_connexion_type() != "":
-                connexion_db = self.get_connexion_type()
-
             if connexion_format in ["duckdb"]:
                 conn = duckdb.connect(connexion_db, config=connexion_config)
             elif connexion_format in ["sqlite"]:
                 conn = sqlite3.connect(connexion_db)
 
         # Set connexion
-        self.connexion_format = connexion_format
-        self.connexion_db = connexion_db
         self.conn = conn
 
         # Log

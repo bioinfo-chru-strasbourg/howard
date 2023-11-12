@@ -1985,16 +1985,22 @@ class Database:
             # Add Needed columns
             for needed_column in needed_columns:
                 if needed_columns[needed_column]:
+                    query_column_name = needed_columns[needed_column]
                     query_column = f""" "{needed_columns[needed_column]}" """
                 else:
+                    query_column_name = default_empty_value
                     query_column = f""" '{default_empty_value}' """
                 query_column_as = f""" "{needed_column}" """
-                query_columns.append(f""" {query_column} AS {query_column_as} """)
+                if query_column_name == needed_column:
+                    query_columns.append(f""" {query_column} """)
+                else:
+                    query_columns.append(f""" {query_column} AS {query_column_as} """)
 
             # Add Extra columns
             for extra_column in extra_columns:
                 if extra_column not in needed_columns:
-                    query_columns.append(f""" "{extra_column}" AS "{extra_column}" """)
+                    #query_columns.append(f""" "{extra_column}" AS "{extra_column}" """)
+                    query_columns.append(f""" "{extra_column}" """)
 
             # Query export columns
             query_export_columns = f""" {",".join(query_columns)} """
