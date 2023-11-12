@@ -68,15 +68,38 @@ def query(args:argparse) -> None:
 
     # Query
     if args.query or param.get("query", None):
-        log.info("Querying...")
+        query = ""
         if args.query:
             query = args.query
-        print(vcfdata_obj.get_query_to_df(query))
+        elif param.get("query", None):
+            query = param.get("query")
+        if args.output:
+            log.info("Exporting Querying...")
+            vcfdata_obj.export_output(query=query, export_header=True)
+        else:
+            log.info("Querying...")
+            print(vcfdata_obj.get_query_to_df(query))
 
-    # Output Query
-    if args.output:
-        log.info("Exporting Querying...")
-        vcfdata_obj.export_output(query=query, export_header=True)
+    # # Query
+    # # if args.query or param.get("query", None):
+    # #     log.info("Querying...")
+    # #     if args.query:
+    # #         query = args.query
+    # #     print(vcfdata_obj.get_query_to_df(query))
+
+    # # Query
+    # if args.query:
+    #     query = args.query
+
+    # # Output Query
+    # if args.output:
+    #     log.info("Exporting Querying...")
+    #     if args.query:
+    #         query = args.query
+    #     vcfdata_obj.export_output(query=query, export_header=True)
+    # elif args.query or param.get("query", None):
+
+
 
 
     log.info("End")
