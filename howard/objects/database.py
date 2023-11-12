@@ -1695,7 +1695,7 @@ class Database:
         return self.conn
     
 
-    def export(self, output_database:str, output_header:str = None, header_in_output:bool = True, database:str = None, table:str = "variants", parquet_partitions:list = None, parquet_number_of_files:int = None, threads:int = 1, sort:bool = False, index:bool = False, existing_columns_header:list = [], order_by:str = "") -> bool:
+    def export(self, output_database:str, output_header:str = None, header_in_output:bool = True, database:str = None, table:str = "variants", parquet_partitions:list = None, threads:int = 1, sort:bool = False, index:bool = False, existing_columns_header:list = [], order_by:str = "", query:str = None, compression_type:str = None, chunk_size:int = 1000000, export_mode:str = "pyarrow", compresslevel:int = 6) -> bool:
         """
         The `export` function exports data from a database to a specified output format, compresses it
         if necessary, and returns a boolean value indicating whether the export was successful or not.
@@ -1724,11 +1724,6 @@ class Database:
         column. The partitions are used to organize the data in the Parquet file based on the values of
         the specified columns
         :type parquet_partitions: list
-        :param parquet_number_of_files: The `parquet_number_of_files` parameter is an optional integer
-        that specifies the number of files to create when exporting data in the Parquet format. It
-        determines the level of parallelism during the export process. If this parameter is not
-        provided, the export process will use the default number of files
-        :type parquet_number_of_files: int
         :param threads: The `threads` parameter is an optional integer that specifies the number of
         threads to use for exporting the data. It determines the level of parallelism during the export
         process. By default, it is set to 1, defaults to 1
@@ -1752,242 +1747,537 @@ class Database:
         Each column can be followed by the keyword "ASC" (ascending) or "DESC" (descending) to specify
         the sort order
         :type order_by: str
+        :param query: Query in SQL to export
+        :type query: str (optional)
+        :param compression_type: Type of compression of output file (default "bgzip")
+        :type compression_type: str (optional)
+        :param chunk_size: Size of chunk (number of line) as batch group
+        :type chunk_size: int (optional)
+        :param export_mode: Export mode, either "pyarrow" (default) or "duckdb"
+        :type export_mode: str (optional)
+        :param compresslevel: Level of compression for gzip (default 6)
+        :type compresslevel: int (optional)
         :return: a boolean value indicating whether the export was successful or not.
         """
 
+        # Database
         if not database:
             database = self.get_database()
-
         if not database:
             return False
 
-        # tmp files
-        tmp_files = []
-
-        # query_set
-        query_set = ""
-
-        # Header columns
-        if not existing_columns_header and output_header:
-            existing_columns_header = self.get_header_file_columns(output_header)
-
-        # Auto-detect output type and compression and delimiter
-        output_type = get_file_format(output_database)
-        compressed = self.is_compressed(database=output_database)
-        delimiter = FILE_FORMAT_DELIMITERS.get(output_type, "\t")
-
-        # database type
-        if output_type in ["vcf"]:
-            database_type = "vcf"
-        elif output_type in ["bed"]:
-            database_type = "regions"
+        # Chunk size
+        if not chunk_size:
+            chunk_size = 1000000
         else:
-            database_type = self.get_type(database=database)
+            chunk_size = int(chunk_size)
 
-        # Existing columns
-        existing_columns = self.get_columns(database=database, table = self.get_database_table(database))
+        # Export mode
+        # Either "pyarrow" (default) or "duckdb"
+        if not export_mode:
+            export_mode = "pyarrow"
 
-        # Extra columns
-        extra_columns = self.get_extra_columns(database=database, database_type=output_type)
-        
-        # Needed columns
-        needed_columns = self.get_needed_columns(database_columns=existing_columns, database_type=database_type)
+        # Compression level
+        if not compresslevel:
+            compresslevel = 6
 
-        # Order by
-        order_by_list = []
-        if order_by:
-            # Split order by options
-            order_by_split = order_by.split(",")
-            for order_by_option in order_by_split:
-                # Split order by option
-                order_by_option_split = order_by_option.strip().split(" ")
-                order_by_option_split_column = order_by_option_split[0]
-                if len(order_by_option_split) > 1:
-                    order_by_option_split_order = order_by_option_split[1]
-                else:
-                    order_by_option_split_order = "ASC"
-                # Chek if column exists
-                if order_by_option_split_column.replace('"', '').strip() in existing_columns:
-                    order_by_list.append(f"{order_by_option_split_column} {order_by_option_split_order}")
+        # Remove output if exists
+        remove_if_exists(output_database)
 
-        # Clean order by
-        order_by_clean = ", ".join(order_by_list)
+        # Tmp
+        tmp_folder = os.path.dirname(output_database)
+        if not tmp_folder:
+            tmp_folder = "."
 
-        # random
-        random_tmp = ''.join(random.choice(string.ascii_lowercase) for i in range(10))
-    
-        # Query values
-        default_empty_value = ""
-        query_export_format = None
-        include_header = False
-        post_process = False
-        order_by_sql = ""
+        with TemporaryDirectory(dir=tmp_folder, prefix="howard_database_export_") as tmp_dir:
 
-        # VCF
-        if output_type in ["vcf"]:
-            if not self.is_vcf(database=database):
-                extra_columns = []
+            # tmp files
+            tmp_files = []
+
+            # query_set
+            query_set = ""
+
+            # Header columns
+            if not existing_columns_header and output_header:
+                existing_columns_header = self.get_header_file_columns(output_header)
+
+            # Auto-detect output type and compression and delimiter
+            output_type = get_file_format(output_database)
+            compressed = self.is_compressed(database=output_database)
+            delimiter = FILE_FORMAT_DELIMITERS.get(output_type, "\t")
+
+            # database type
+            if output_type in ["vcf"]:
+                database_type = "vcf"
+            elif output_type in ["bed"]:
+                database_type = "regions"
             else:
-                extra_columns = existing_columns_header
-            default_empty_value = "."
-            query_export_format = f"FORMAT CSV, DELIMITER '{delimiter}', HEADER, QUOTE '', COMPRESSION 'gzip'"
-            include_header = True
-            post_process = True
+                database_type = self.get_type(database=database)
 
-        # TSV/CSV/TBL
-        elif output_type in ["tsv", "csv", "tbl"]:
-            if output_type in ["csv", "tbl"]:
-                quote = '"'
-            else:
-                quote = ''
-            query_export_format = f"FORMAT CSV, DELIMITER '{delimiter}', HEADER, QUOTE '{quote}', COMPRESSION 'gzip'"
-            if delimiter in ["\t"]:
-                include_header = header_in_output and True
-            post_process = True
-            if order_by_clean:
-                order_by_sql = f"ORDER BY {order_by_clean}"
+            # Existing columns
+            existing_columns = self.get_columns(database=database, table = self.get_database_table(database))
 
-        # JSON
-        elif output_type in ["json"]:
-            query_export_format = f"FORMAT JSON, ARRAY TRUE"
-            include_header = False
-            post_process = True
-            if order_by_clean:
-                order_by_sql = f"ORDER BY {order_by_clean}"
-
-        # Parquet
-        elif output_type in ["parquet"]:
-            query_export_format = f"FORMAT PARQUET"
-            if parquet_partitions:
-                parquet_partitions_clean = []
-                for parquet_partition in parquet_partitions:
-                    parquet_partitions_clean.append('"'+parquet_partition.translate( { '"': None, "'": None, " ": None } )+'"')
-                parquet_partitions_by = ",".join(parquet_partitions_clean)
-                query_export_format += f", PARTITION_BY ({parquet_partitions_by}), OVERWRITE_OR_IGNORE"
-            elif parquet_number_of_files:
-                query_set += f" SET threads TO {parquet_number_of_files}; "
-                query_export_format += f", PER_THREAD_OUTPUT TRUE"
-            include_header = False
-
-        # BED
-        elif output_type in ["bed"]:
-            query_export_format = f"FORMAT CSV, DELIMITER '{delimiter}', HEADER"
-            include_header = True
-            post_process = True
-            if order_by_clean:
-                order_by_sql = f"ORDER BY {order_by_clean}"
-
-        # duckDB
-        elif output_type in ["duckdb"]:
-
-            # Needed column
-            needed_columns = []
-
-            # Export database as Parquet
-            database_export_parquet_file = f"""{output_database}.{random_tmp}.database_export.parquet"""
-            self.export(database=database, output_database=database_export_parquet_file)
+            # Extra columns
+            extra_columns = self.get_extra_columns(database=database, database_type=output_type)
             
-            # Create database and connexion
-            output_database_conn = duckdb.connect(output_database)
+            # Needed columns
+            needed_columns = self.get_needed_columns(database_columns=existing_columns, database_type=database_type)
 
-            # Create table in database connexion with Parquet file
-            query_copy = f""" 
-                CREATE TABLE {table}
-                AS {self.get_sql_database_link(database=database_export_parquet_file)}
-                """
-            output_database_conn.execute(query_copy)
+            # Order by
+            order_by_list = []
+            if order_by:
+                # Split order by options
+                order_by_split = order_by.split(",")
+                for order_by_option in order_by_split:
+                    # Split order by option
+                    order_by_option_split = order_by_option.strip().split(" ")
+                    order_by_option_split_column = order_by_option_split[0]
+                    if len(order_by_option_split) > 1:
+                        order_by_option_split_order = order_by_option_split[1]
+                    else:
+                        order_by_option_split_order = "ASC"
+                    # Chek if column exists
+                    if order_by_option_split_column.replace('"', '').strip() in existing_columns:
+                        order_by_list.append(f"{order_by_option_split_column} {order_by_option_split_order}")
 
-            # Close connexion
-            output_database_conn.close()
+            # Clean order by
+            order_by_clean = ", ".join(order_by_list)
 
-            # remove tmp
-            remove_if_exists([database_export_parquet_file])
+            # Query values
+            default_empty_value = ""
+            query_export_format = None
+            include_header = False
+            post_process = False
+            order_by_sql = ""
 
-            return os.path.exists(output_database)
+            # export options
+            export_options = {}
 
-        # else:
-        #     log.debug("Not available")
-
-        # Construct query columns
-        query_columns = []
-
-        # Add Needed columns
-        for needed_column in needed_columns:
-            if needed_columns[needed_column]:
-                query_column = f""" "{needed_columns[needed_column]}" """
-            else:
-                query_column = f""" '{default_empty_value}' """
-            query_column_as = f""" "{needed_column}" """
-            query_columns.append(f""" {query_column} AS {query_column_as} """)
-
-        # Add Extra columns
-        for extra_column in extra_columns:
-            if extra_column not in needed_columns:
-                query_columns.append(f""" "{extra_column}" AS "{extra_column}" """)
-
-        # Query export columns
-        query_export_columns = f""" {",".join(query_columns)} """
-
-        if query_columns:
-
-            # Compressed tmp file
-            query_output_database_tmp = ""
-            if not compressed and not include_header:
-                query_output_database_tmp = output_database
-            else:
-                query_output_database_tmp = f"""{output_database}.{random_tmp}"""
-                tmp_files.append(query_output_database_tmp)
-
-            # Query copy
-            query_copy = f""" 
-                {query_set}
-                COPY (
-                    SELECT {query_export_columns}
-                    FROM {self.get_sql_database_link(database=database)}
-                    {order_by_sql}
-                    )
-                TO '{query_output_database_tmp}'
-                WITH ({query_export_format})
-                """
-            #log.debug(f"query_copy: {query_copy}")
-            # Export
-            self.query(database=database, query=query_copy)
-
-            # Include header
-            #if include_header or compressed or sort or index or post_process:
-            if post_process:
-
-                # Input files
-                input_files = []
-
-                if include_header:
-                    # create tmp header file
-                    query_output_header_tmp = f"""{query_output_database_tmp}.header.{random_tmp}"""
-                    tmp_files.append(query_output_header_tmp)
-                    self.get_header_file(header_file=query_output_header_tmp, remove_header_line=True)
-                    input_files.append(query_output_header_tmp)
-
-                # Add variants file
-                input_files.append(query_output_database_tmp)
-
-                # Compress
-                if compressed:
+            # VCF
+            if output_type in ["vcf"]:
+                if not self.is_vcf(database=database):
+                    extra_columns = []
+                else:
+                    extra_columns = existing_columns_header
+                default_empty_value = "."
+                query_export_format = f"FORMAT CSV, DELIMITER '{delimiter}', HEADER, QUOTE '', COMPRESSION 'gzip'"
+                include_header = True
+                post_process = True
+                # Export options
+                if not compression_type:
                     compression_type = "bgzip"
-                else:
-                    compression_type = "none"
-                
-                # Output
-                concat_and_compress_files(input_files=input_files, output_file=output_database, compression_type=compression_type, threads=threads, sort=sort, index=index)
-            
-            # Header
-            if output_header:
-                database_for_header = Database(database=output_database)
-                remove_if_exists([output_header])
-                header_columns_from_database = database_for_header.get_header_columns_from_database(database=output_database)
-                database_for_header.get_header_file(header_file=output_header, replace_header_line=header_columns_from_database, force=True)
+                export_options = {
+                    "format": "CSV",
+                    "delimiter": delimiter,
+                    "header": True,
+                    "quote": None,
+                    "compression": compression_type
+                }
+                compresslevel = 1
 
-        # Clean
-        remove_if_exists(tmp_files)
-        
-        return os.path.exists(output_database) and self.get_type(output_database)
+            # TSV/CSV/TBL
+            elif output_type in ["tsv", "csv", "tbl"]:
+                if output_type in ["csv", "tbl"]:
+                    quote = '"'
+                else:
+                    quote = ''
+                query_export_format = f"FORMAT CSV, DELIMITER '{delimiter}', HEADER, QUOTE '{quote}', COMPRESSION 'gzip'"
+                if delimiter in ["\t"]:
+                    include_header = header_in_output and True
+                post_process = True
+                if order_by_clean:
+                    order_by_sql = f"ORDER BY {order_by_clean}"
+                # Export options
+                if not compression_type:
+                    compression_type = "gzip"
+                export_options = {
+                    "format": "CSV",
+                    "delimiter": delimiter,
+                    "header": True,
+                    "quote": quote,
+                    "compression": compression_type
+                }
+
+            # JSON
+            elif output_type in ["json"]:
+                query_export_format = f"FORMAT JSON, ARRAY TRUE"
+                include_header = False
+                post_process = True
+                if order_by_clean:
+                    order_by_sql = f"ORDER BY {order_by_clean}"
+                # Export options
+                if not compression_type:
+                    compression_type = "gzip"
+                export_options = {
+                    "format": "JSON",
+                    "array": True,
+                    "compression": compression_type
+                }
+
+            # Parquet
+            elif output_type in ["parquet"]:
+                query_export_format = f"FORMAT PARQUET"
+                # Export options
+                export_options = {
+                    "format": "PARQUET",
+                }
+                if parquet_partitions:
+                    parquet_partitions_clean = []
+                    parquet_partitions_array = []
+                    for parquet_partition in parquet_partitions:
+                        parquet_partitions_array.append(parquet_partition.translate( { '"': None, "'": None, " ": None } ))
+                        parquet_partitions_clean.append('"'+parquet_partition.translate( { '"': None, "'": None, " ": None } )+'"')
+                    parquet_partitions_by = ",".join(parquet_partitions_clean)
+                    query_export_format += f", PARTITION_BY ({parquet_partitions_by}), OVERWRITE_OR_IGNORE"
+                    export_options["partition_by"] = parquet_partitions_array
+                include_header = False
+                post_process = True
+
+            # BED
+            elif output_type in ["bed"]:
+                query_export_format = f"FORMAT CSV, DELIMITER '{delimiter}', HEADER"
+                include_header = True
+                post_process = True
+                if order_by_clean:
+                    order_by_sql = f"ORDER BY {order_by_clean}"
+                # Export options
+                if not compression_type:
+                    compression_type = "gzip"
+                export_options = {
+                    "format": "CSV",
+                    "delimiter": delimiter,
+                    "header": True,
+                    "quote": None,
+                    "compression": compression_type
+                }
+            
+            # duckDB
+            elif output_type in ["duckdb"]:
+                
+                # Needed column
+                needed_columns = []
+
+                # Export database as Parquet
+                database_export_parquet_file = os.path.join(tmp_dir, "output.parquet")
+                self.export(database=database, output_database=database_export_parquet_file)
+
+                # Create database and connexion
+                output_database_conn = duckdb.connect(output_database)
+
+                # Create table in database connexion with Parquet file
+                query_copy = f""" 
+                    CREATE TABLE {table}
+                    AS {self.get_sql_database_link(database=database_export_parquet_file)}
+                    """
+                output_database_conn.execute(query_copy)
+
+                # Close connexion
+                output_database_conn.close()
+
+                # remove tmp
+                remove_if_exists([database_export_parquet_file])
+
+                return os.path.exists(output_database)
+
+            # Construct query columns
+            query_columns = []
+
+            # Add Needed columns
+            for needed_column in needed_columns:
+                if needed_columns[needed_column]:
+                    query_column = f""" "{needed_columns[needed_column]}" """
+                else:
+                    query_column = f""" '{default_empty_value}' """
+                query_column_as = f""" "{needed_column}" """
+                query_columns.append(f""" {query_column} AS {query_column_as} """)
+
+            # Add Extra columns
+            for extra_column in extra_columns:
+                if extra_column not in needed_columns:
+                    query_columns.append(f""" "{extra_column}" AS "{extra_column}" """)
+
+            # Query export columns
+            query_export_columns = f""" {",".join(query_columns)} """
+
+            if query_columns:
+
+                # Compressed tmp file
+                query_output_database_tmp = os.path.join(tmp_dir, "output")
+
+                # Query
+                # If no query, generate query of the database
+                if not query:
+                    query = f"""
+                        SELECT {query_export_columns}
+                        FROM {self.get_sql_database_link(database=database)}
+                        {order_by_sql}
+                    """
+
+                # Export mode pyarrow
+                if export_mode == "pyarrow":
+                    
+                    # Compression mode
+                    # If compress required and compression type as gzip or bgzip
+                    # For bgzip compression, recompression will be done, and compression with gzip for tmp file done (level 1)
+                    # to reduce tmp file size
+                    compression_mode_gzip = compressed and (export_options.get("compression", None) in ["gzip","bgzip"])
+
+                    # File stream mode (str or bytes)
+                    f_mode = ""
+                    if compression_mode_gzip:
+                        f_mode = "b"
+
+                    if include_header:
+                        
+                        # Open stream files (uncompressed and compressed)
+                        with open(query_output_database_tmp, mode="w") as f, pgzip.open(query_output_database_tmp, mode="w", thread=threads, compresslevel=compresslevel) as f_gz:
+
+                                # Switch to compressed stream file
+                                if compression_mode_gzip:
+                                    f = f_gz
+
+                                # Generate header tmp file
+                                query_output_header_tmp = os.path.join(tmp_dir, "header")
+                                self.get_header_file(header_file=query_output_header_tmp, remove_header_line=True)
+                                
+                                # Write header to tmp file
+                                with open(query_output_header_tmp, 'r'+f_mode) as output_header_tmp:
+                                    f.write(output_header_tmp.read())
+
+                    # JSON format - Add special "[" character at the beginning of the file
+                    if export_options.get("format") in ["JSON"]:
+
+                        # Open stream files (uncompressed and compressed)
+                        with open(query_output_database_tmp, mode="a") as f, pgzip.open(query_output_database_tmp, mode="a", thread=threads, compresslevel=compresslevel) as f_gz:
+
+                            # Switch to compressed stream file
+                            if compression_mode_gzip:
+                                f = f_gz
+                                f.write(b'[\n')
+                            else:
+                                f.write('[\n')
+
+                    # Open stream files (uncompressed and compressed) for chunk
+                    with open(query_output_database_tmp, mode="a") as f, pgzip.open(query_output_database_tmp, mode="a", thread=threads, compresslevel=compresslevel) as f_gz:
+
+                            # Switch to compressed stream file
+                            if compression_mode_gzip:
+                                f = f_gz
+
+                            # Chunk query with batch of dataframes of chunk_size
+                            df = self.conn.execute(query).fetch_record_batch(chunk_size)
+                            
+                            # id of chunk
+                            i = 0
+                            
+                            # For each chunk dataframe
+                            for d in df:
+
+                                # id of chunk
+                                i += 1
+
+                                # Log - number of records
+                                log.debug(f"Chunk {i}: records process...")
+                                
+                                # Check process for first chunk
+                                if i == 1:
+
+                                    # If include header in file
+                                    header = export_options.get("header", True)
+
+                                    # Parquet output format
+                                    # Either a folder or a writer
+                                    if export_options.get("format") in ["PARQUET"]:
+
+                                        # For Parquet with multiple file - folder
+                                        if export_options.get("partition_by", None) or export_options.get("per_thread_output", False):
+                                            query_output_database_tmp = f"{query_output_database_tmp}.parquet"
+
+                                        # For Parquet as a unique file - writer 
+                                        else:
+                                            writer = pq.ParquetWriter(query_output_database_tmp, d.schema)
+
+                                else:
+
+                                    # Switch of header in file for not first chunk
+                                    header = False
+
+                                # CSV format
+                                if export_options.get("format") in ["CSV"]:
+
+                                    # With quote option
+                                    if export_options.get("quote", None):
+
+                                        # Polars write dataframe
+                                        pl.from_arrow(d).write_csv(file=f, separator=export_options.get("delimiter", ""), has_header=header, quote=export_options.get("quote", '"'))
+
+                                    # Without quote option
+                                    else:
+
+                                        # Polars write dataframe
+                                        pl.from_arrow(d).write_csv(file=f, separator=export_options.get("delimiter", ""), has_header=header)
+
+                                # JSON format
+                                elif export_options.get("format") in ["JSON"]:
+
+                                    # Compressed mode gzip
+                                    if compression_mode_gzip:
+
+                                        # Add comma at the beginning of dataframe (if not the first one) in bytes mode
+                                        if i > 1:
+                                            f.write(b',\n')
+
+                                        # Write dataframe in bytes mode
+                                        f.write(str.encode(pl.from_arrow(d).write_ndjson().replace("\n{",",\n{").replace("[","").replace("]","")))
+
+                                    # Not compressed mode gzip (string mode)
+                                    else:
+
+                                        # Add comma at the beginning of dataframe (if not the first one) in string mode
+                                        if i > 1:
+                                            f.write(',\n')
+
+                                        # Write dataframe in string mode
+                                        f.write(pl.from_arrow(d).write_ndjson().replace("\n{",",\n{").replace("[","").replace("]",""))
+
+                                # Parquet format
+                                elif export_options.get("format") in ["PARQUET"]:
+                                    
+                                    # Partition by fields
+                                    partition_by = export_options.get("partition_by", None)
+                                    
+                                    if partition_by:
+
+                                        # For No partition but split parquet files into a folder
+                                        if "None" in partition_by:
+                                            partition_by = None
+
+                                        # Pyarrow write 
+                                        pq.write_to_dataset(pa.Table.from_batches([d]), query_output_database_tmp, partition_cols=partition_by, use_threads=threads, existing_data_behavior='overwrite_or_ignore')
+
+                                    # # Partition by option
+                                    # if export_options.get("partition_by", None):
+
+                                    #     # Partition by fields
+                                    #     partition_by = export_options.get("partition_by")
+                                        
+                                    #     # Pyarrow write 
+                                    #     pq.write_to_dataset(pa.Table.from_batches([d]), query_output_database_tmp, partition_cols=partition_by, use_threads=threads, existing_data_behavior='overwrite_or_ignore')
+
+                                    # # per_thread_output option
+                                    # elif export_options.get("per_thread_output", False):
+
+                                    #     # per_thread_output option
+                                    #     per_thread_output = export_options.get("per_thread_output")
+                                        
+                                    #     # Pyarrow write 
+                                    #     pq.write_to_dataset(pa.Table.from_batches([d]), query_output_database_tmp, use_threads=threads, existing_data_behavior='overwrite_or_ignore')
+
+                                    # Parquet in unique file
+                                    else:
+                                        writer.write_batch(d)
+
+                    # Close Parquet writer
+                    if export_options.get("format") in ["PARQUET"] and not export_options.get("partition_by", None) and not export_options.get("per_thread_output", None):
+                        writer.close()
+
+                    # JSON format - Add special "]" character at the end of the file
+                    if export_options.get("format") in ["JSON"]:
+
+                        # Open stream files (uncompressed and compressed)
+                        with open(query_output_database_tmp, mode="a") as f, pgzip.open(query_output_database_tmp, mode="a", thread=threads, compresslevel=compresslevel) as f_gz:
+
+                            # Switch to compressed stream file
+                            if compression_mode_gzip:
+                                f = f_gz
+                                f.write(b']\n')
+                            else:
+                                f.write(']\n')
+
+                # Export mode duckdb
+                elif export_mode == "duckdb":
+
+                    # Create COPY TO query
+                    query_copy = f""" 
+                        {query_set}
+                        COPY (
+                            {query}
+                            )
+                        TO '{query_output_database_tmp}'
+                        WITH ({query_export_format})
+                        """
+                    
+                    # Export with duckdb
+                    self.query(database=database, query=query_copy)
+
+                # Export mode unknown
+                else:
+                    log.error(f"Export mode '{export_mode}' unknown")
+                    raise ValueError(f"Export mode '{export_mode}' unknown")
+
+
+                # Post process 
+                if post_process:
+
+                    # Log - number of records
+                    log.debug(f"Post processing...")
+
+                    # Input files
+                    input_files = []
+
+                    # Export mode duckdb and include header
+                    if export_mode == "duckdb" and include_header:
+                        
+                        # create tmp header file
+                        query_output_header_tmp = os.path.join(tmp_dir, "header")
+                        tmp_files.append(query_output_header_tmp)
+                        self.get_header_file(header_file=query_output_header_tmp, remove_header_line=True)
+
+                        # Add tmp header file for concat and compress
+                        input_files.append(query_output_header_tmp)
+
+                    # Add variants file
+                    input_files.append(query_output_database_tmp)
+                    
+                    # Output with concat and compress
+                    if export_mode == "duckdb" or (compressed and export_options.get("compression", None) == "bgzip") or sort or index:
+                        
+                        # Compression type
+                        if not compressed:
+                            compression_type = "none"
+                        else:
+                            compression_type = export_options.get("compression", "bgzip")
+                        
+                        # Concat and compress
+                        concat_and_compress_files(input_files=input_files, output_file=output_database, compression_type=compression_type, threads=threads, sort=sort, index=index)
+
+                    # Output already generated file (either compressed in gzip or not compressed, with included header if needed)
+                    else:
+
+                        # Move tmp file
+                        shutil.move(query_output_database_tmp, output_database)
+                
+                # Generate associated header file 
+                if output_header:
+
+                    # Log - number of records
+                    log.debug(f"Generate header...")
+
+                    # Create database
+                    database_for_header = Database(database=output_database)
+
+                    # Remove header if exists
+                    remove_if_exists([output_header])
+                    
+                    # Find columns in database
+                    header_columns_from_database = database_for_header.get_header_columns_from_database(database=output_database)
+
+                    # Generate header file
+                    database_for_header.get_header_file(header_file=output_header, replace_header_line=header_columns_from_database, force=True)
+
+            # Clean tmp files (deprecated)
+            remove_if_exists(tmp_files)
+            
+            # Return if file exists
+            return os.path.exists(output_database) and self.get_type(output_database)
 

@@ -172,25 +172,28 @@ arguments = {
             "default": ""
         },
 
+        # Parquet partition
         "parquet_partitions": {
             "help": """Parquet partitioning using huve (only for Parquet export format).\n"""
                     """This option is is faster parallel writing, but memory consuming.\n"""
-                    """examples: '#CHROM', '#CHROM,REF'\n"""
+                    """Use 'None' (string) for NO partition but split parquet files into a folder\n"""
+                    """examples: '#CHROM', '#CHROM,REF', 'None'\n"""
                     """default: None""",
             "metavar": "LIST",
             "default": None
         },
-        "parquet_number_of_files": {
-            "help": """Parquet partitioning using number of file (only for Parquet export format).\n"""
-                    """This option is faster parallel writing,\n"""
-                    """and will use one thread per file (do not use too much threads!).\n"""
-                    """Use -1 to assign to the number of threads.\n"""
-                    """examples: 8, 24\n"""
-                    """default: None""",
+
+        # Chunk size
+        "chunk_size": {
+            "help": """Number of records in batch to process.\n"""
+                    """This option depend on memory usage (greater is memory consuming).\n"""
+                    """For Parquet partitioning, files size will depend on the chunk size.\n"""
+                    """default: 1000000""",
             "metavar": "INTEGER",
-            "default": None
+            "default": 1000000
         },
         
+        # From annovar
         "multi_variant": {
             "help": """Variant with multiple annotation lines\n"""
                     """Values: 'auto' (auto-detection), 'enable', 'disable'\n"""
@@ -977,7 +980,7 @@ commands_arguments = {
                 "order_by": False,
                 "include_header": False,
                 "parquet_partitions": False,
-                "parquet_number_of_files": False
+                "chunk_size": False
             }
         }
     },

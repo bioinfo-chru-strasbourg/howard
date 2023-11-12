@@ -148,12 +148,11 @@ class Variants:
         return self.get_param().get("indexing", False)
 
 
-    def set_connexion(self, conn) -> None:
+    def get_connexion_config(self) -> dict:
         """
-        It creates a connection to the database
-
-        :param conn: The connection to the database. If not provided, a new connection to an in-memory
-        database is created
+        The function `get_connexion_config` returns a dictionary containing the configuration for a
+        connection, including the number of threads and memory limit.
+        :return: a dictionary containing the configuration for the Connexion library.
         """
 
         # config
@@ -166,6 +165,20 @@ class Variants:
             connexion_config["threads"] = threads
         if config.get("memory", None):
             connexion_config["memory_limit"] = config.get("memory")
+
+        return connexion_config
+
+
+    def set_connexion(self, conn) -> None:
+        """
+        It creates a connection to the database
+
+        :param conn: The connection to the database. If not provided, a new connection to an in-memory
+        database is created
+        """
+
+        # Connexion config
+        connexion_config = self.get_connexion_config()
         default_connexion_db = ":memory:"
 
         # Connexion format
@@ -1399,7 +1412,7 @@ class Variants:
             return None
 
 
-    def export_output(self, output_file: str = None, output_header: str = None, export_header: bool = True, query: str = None, parquet_partitions:list = None, parquet_number_of_files:int = None, threads:int = None, sort:bool = False, index:bool = False, order_by:str = None) -> bool:
+    def export_output(self, output_file: str = None, output_header: str = None, export_header: bool = True, query: str = None, parquet_partitions:list = None, chunk_size:int = None, threads:int = None, sort:bool = False, index:bool = False, order_by:str = None) -> bool:
         """
         The `export_output` function exports data from a VCF file to a specified output file in various
         formats, including VCF, CSV, TSV, PSV, and Parquet.
@@ -1426,11 +1439,10 @@ class Variants:
         organize data in a hierarchical directory structure based on the values of one or more columns.
         This can improve query performance when working with large datasets
         :type parquet_partitions: list
-        :param parquet_number_of_files: The `parquet_number_of_files` parameter specifies the number of
-        files to be created when exporting data in Parquet format. This parameter is used for
-        partitioning the Parquet file into multiple files. If the value of `parquet_number_of_files` is
-        set to `-1`, it means that
-        :type parquet_number_of_files: int
+        :param chunk_size: The `chunk_size` parameter specifies the number of
+        records in batch when exporting data in Parquet format. This parameter is used for
+        partitioning the Parquet file into multiple files.
+        :type chunk_size: int
         :param threads: The `threads` parameter is an optional parameter that specifies the number of
         threads to be used during the export process. It determines the level of parallelism and can
         improve the performance of the export operation. If not provided, the function will use the
@@ -1475,10 +1487,8 @@ class Variants:
             parquet_partitions = self.get_param().get("parquet_partitions", None)
 
         # Parquet partition
-        if not parquet_number_of_files:
-            parquet_number_of_files = self.get_param().get("parquet_number_of_files", None)
-        if parquet_number_of_files and int(parquet_number_of_files) == -1:
-            parquet_number_of_files = threads
+        if not chunk_size:
+            chunk_size = self.get_param().get("chunk_size", None)
 
         # Order by
         if not order_by:
@@ -1492,15 +1502,16 @@ class Variants:
 
         # Connexion format
         connexion_format = self.get_connexion_format()
-
+        
         # Explode infos
         if self.get_explode_infos():
             self.explode_infos(prefix=self.get_explode_infos_prefix(), fields=self.get_explode_infos_fields(), force=False)
-
+        
         # Tmp files to remove
         tmp_to_remove = []
 
-        if connexion_format in ["sqlite"] or query:
+        #if connexion_format in ["sqlite"] or query:
+        if connexion_format in ["sqlite"]:
 
             # Export in Parquet
             random_tmp = ''.join(random.choice(string.ascii_lowercase) for i in range(10))
@@ -1511,20 +1522,20 @@ class Variants:
             table_variants = self.get_table_variants()
 
             # Create export query
-            if query:
-                sql_query_export_subquery = f"""
-                    SELECT * FROM ({query})
-                    """
-            elif connexion_format in ["sqlite"]:
-                sql_query_export_subquery = f"""
-                    SELECT * FROM {table_variants}
-                    """
+            # if query:
+            #     sql_query_export_subquery = f"""
+            #         SELECT * FROM ({query})
+            #         """
+            #if connexion_format in ["sqlite"]:
+            sql_query_export_subquery = f"""
+                SELECT * FROM {table_variants}
+                """
 
             # Write source file
             fp.write(database_source, self.get_query_to_df(sql_query_export_subquery))
 
         # Create database
-        database = Database(database=database_source, table="variants", header_file=output_header)
+        database = Database(database=database_source, table="variants", header_file=output_header, conn_config=self.get_connexion_config())
         
         # Existing colomns header
         #existing_columns_header = database.get_header_file_columns(output_header)
@@ -1532,7 +1543,7 @@ class Variants:
 
         # Export file
         #database.export(output_database=output_file, existing_columns_header=existing_columns_header, parquet_partitions=parquet_partitions, threads=threads, sort=sort, index=index, header_in_output=header_in_output, order_by=order_by)
-        database.export(output_database=output_file, output_header=output_header, existing_columns_header=existing_columns_header, parquet_partitions=parquet_partitions, parquet_number_of_files=parquet_number_of_files, threads=threads, sort=sort, index=index, header_in_output=header_in_output, order_by=order_by)
+        database.export(output_database=output_file, output_header=output_header, existing_columns_header=existing_columns_header, parquet_partitions=parquet_partitions, chunk_size=chunk_size, threads=threads, sort=sort, index=index, header_in_output=header_in_output, order_by=order_by, query=query)
         
         # Remove
         remove_if_exists(tmp_to_remove)
