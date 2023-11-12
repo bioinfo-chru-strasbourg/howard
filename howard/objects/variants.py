@@ -148,12 +148,11 @@ class Variants:
         return self.get_param().get("indexing", False)
 
 
-    def set_connexion(self, conn) -> None:
+    def get_connexion_config(self) -> dict:
         """
-        It creates a connection to the database
-
-        :param conn: The connection to the database. If not provided, a new connection to an in-memory
-        database is created
+        The function `get_connexion_config` returns a dictionary containing the configuration for a
+        connection, including the number of threads and memory limit.
+        :return: a dictionary containing the configuration for the Connexion library.
         """
 
         # config
@@ -166,6 +165,20 @@ class Variants:
             connexion_config["threads"] = threads
         if config.get("memory", None):
             connexion_config["memory_limit"] = config.get("memory")
+
+        return connexion_config
+
+
+    def set_connexion(self, conn) -> None:
+        """
+        It creates a connection to the database
+
+        :param conn: The connection to the database. If not provided, a new connection to an in-memory
+        database is created
+        """
+
+        # Connexion config
+        connexion_config = self.get_connexion_config()
         default_connexion_db = ":memory:"
 
         # Connexion format
@@ -1522,7 +1535,7 @@ class Variants:
             fp.write(database_source, self.get_query_to_df(sql_query_export_subquery))
 
         # Create database
-        database = Database(database=database_source, table="variants", header_file=output_header)
+        database = Database(database=database_source, table="variants", header_file=output_header, conn_config=self.get_connexion_config())
         
         # Existing colomns header
         #existing_columns_header = database.get_header_file_columns(output_header)
