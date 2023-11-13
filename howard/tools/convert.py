@@ -65,10 +65,6 @@ def convert(args:argparse) -> None:
     if "parquet_partitions" in args and args.parquet_partitions:
         params["parquet_partitions"] = args.parquet_partitions.split(",")
 
-    # chunk_size
-    if "chunk_size" in args and args.chunk_size:
-        params["chunk_size"] = int(args.chunk_size)
-
     vcfdata_obj.set_param(params)
     vcfdata_obj.set_config(config)
 

@@ -15,6 +15,7 @@ import pandas as pd
 import vcf
 import logging as log
 import sys
+from tabulate import tabulate
 
 from howard.objects.variants import Variants
 from howard.objects.database import Database
@@ -62,6 +63,17 @@ def query(args:argparse) -> None:
     if "include_header" in args and args.include_header:
         params["header_in_output"] = args.include_header
 
+    # query_limit
+    query_limit=10
+    if "query_limit" in args and args.query_limit:
+        params["query_limit"] = int(args.query_limit)
+        query_limit = int(args.query_limit)
+
+    # query_print_mode
+    query_print_mode=None
+    if "query_print_mode" in args and args.query_print_mode:
+        query_print_mode = args.query_print_mode
+
     # Explode infos
     if args.explode_infos:
         vcfdata_obj.explode_infos()
@@ -78,31 +90,12 @@ def query(args:argparse) -> None:
             vcfdata_obj.export_output(query=query, export_header=True)
         else:
             log.info("Querying...")
-            print(vcfdata_obj.get_query_to_df(query))
-
-    # # Query
-    # # if args.query or param.get("query", None):
-    # #     log.info("Querying...")
-    # #     if args.query:
-    # #         query = args.query
-    # #     print(vcfdata_obj.get_query_to_df(query))
-
-    # # Query
-    # if args.query:
-    #     query = args.query
-
-    # # Output Query
-    # if args.output:
-    #     log.info("Exporting Querying...")
-    #     if args.query:
-    #         query = args.query
-    #     vcfdata_obj.export_output(query=query, export_header=True)
-    # elif args.query or param.get("query", None):
-
-
-
+            if query_print_mode in ["markdown"]:
+                print(vcfdata_obj.get_query_to_df(query, limit=query_limit).to_markdown())
+            elif query_print_mode in ["tabulate"]:
+                print(tabulate(vcfdata_obj.get_query_to_df(query, limit=query_limit), headers='keys', tablefmt='psql'))
+            else:
+                print(vcfdata_obj.get_query_to_df(query, limit=query_limit))
+            
 
     log.info("End")
-
-
-

@@ -127,6 +127,10 @@ def main() -> None:
     else:
         memory = f"{mem_default}G"
 
+    # chunk_size
+    if "chunk_size" in args and args.chunk_size:
+        chunk_size = int(args.chunk_size)
+
     # Assembly
     if "assembly" in args and args.assembly:
         assembly = args.assembly
@@ -147,6 +151,7 @@ def main() -> None:
     config["verbosity"] = args.verbosity
     config["threads"] = threads
     config["memory"] = memory
+    config["chunk_size"] = chunk_size
     config["assembly"] = assembly
 
     # Change config
