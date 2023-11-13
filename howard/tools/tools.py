@@ -259,6 +259,18 @@ arguments = {
             "help": "Overview before data processing",
             "action": "store_true"
         },
+
+        # Stats
+        "stats_md": {
+            "metavar": "FILE",
+            "help": """Stats Output file in MarkDown format\n""",
+            "required": False
+        },
+        "stats_json": {
+            "metavar": "FILE",
+            "help": """Stats Output file in JSON format\n""",
+            "required": False
+        },
         "stats": {
             "help": "Statistics after loading data",
             "action": "store_true"
@@ -987,7 +999,9 @@ commands_arguments = {
                         """   howard stats --input=tests/data/example.vcf.gz """, 
         "groups": {
             "main": {
-                "input": True
+                "input": True,
+                "stats_md": False,
+                "stats_json": False
             }
         }
     },

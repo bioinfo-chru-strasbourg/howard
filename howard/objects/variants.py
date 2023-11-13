@@ -453,9 +453,13 @@ class Variants:
         return None
 
 
-    def get_stats(self) -> None:
+    def get_stats(self) -> dict:
         """
-        The function prints statistics of the current object
+        The `get_stats` function calculates and returns various statistics of the current object,
+        including information about the input file, variants, samples, header fields, quality, and
+        SNVs/InDels.
+        :return: a dictionary containing various statistics of the current object. The dictionary has
+        the following structure:
         """
 
         # Log
@@ -464,46 +468,317 @@ class Variants:
         # table varaints
         table_variants_from = self.get_table_variants()
 
-        # Samples
-        nb_of_samples = len(self.get_header_sample_list())
+        # stats dict
+        stats = {
+            "Infos": {}
+        }
 
+        ### File
+        input_file = self.get_input()
+        stats["Infos"]["Input file"] = input_file
+
+        # Header
+        header_infos = self.get_header().infos
+        header_formats = self.get_header().formats
+        header_infos_list = list(header_infos)
+        header_formats_list = list(header_formats)
+
+
+        ### Variants
+        
         # Variants by chr
         sql_query_nb_variant_by_chrom = f"SELECT \"#CHROM\" as CHROM, count(*) as count FROM {table_variants_from} GROUP BY \"#CHROM\""
-        log.debug(f"Query Variants by Chr: {sql_query_nb_variant_by_chrom}")
         df_nb_of_variants_by_chrom = self.get_query_to_df(sql_query_nb_variant_by_chrom)
         nb_of_variants_by_chrom = df_nb_of_variants_by_chrom.sort_values(by=['CHROM'], kind='quicksort')
-
+        
         # Total number of variants
         nb_of_variants = nb_of_variants_by_chrom["count"].sum()
 
         # Calculate percentage
         nb_of_variants_by_chrom['percent'] = nb_of_variants_by_chrom['count'].apply(lambda x: (x / nb_of_variants) * 100)
 
-        # Genotypes
-        genotypes = {}
-        for sample in self.get_header_sample_list():
-            sql_query_genotype = f"""
-                SELECT  '{sample}' as sample,
-                        REGEXP_EXTRACT("{sample}", '^([0-9/|.]*)[:]*',1) as genotype,
-                        count(REGEXP_EXTRACT("{sample}", '^([0-9/|.]*)[:]*',1)) as count,
-                        concat((count(REGEXP_EXTRACT("{sample}", '^([0-9/|.]*)[:]*',1))*100/{nb_of_variants}), '%') as percentage
-                FROM {table_variants_from}
-                WHERE 1
-                GROUP BY genotype
-                """
-            genotypes[sample] = self.conn.execute(sql_query_genotype).df()
+        stats["Variants"] = {
+            "Number of variants by chromosome": nb_of_variants_by_chrom.to_json(orient="index"),
+        }
 
-        # Output
-        log.info("Number of Sample(s): " + str(nb_of_samples))
-        log.info("Number of Variant(s): " + str(nb_of_variants))
-        log.info("Number of Variant(s) by chromosomes:")
-        for d in str(nb_of_variants_by_chrom).split("\n"):
-            log.info("\t" + str(d))
-        log.info("Number of Sample(s): " + str(nb_of_samples))
-        log.info(f"Genotypes:")
-        for sample in genotypes:
-            for d in str(genotypes[sample]).split("\n"):
-                log.info("\t" + str(d))
+        stats["Infos"]["Number of variants"] = int(nb_of_variants)
+
+
+        ### Samples
+        nb_of_samples = len(self.get_header_sample_list())
+        if "FORMAT" in self.get_header_columns() and "DP" in header_formats_list:
+            stats["Infos"]["Number of samples"] = nb_of_samples
+        elif nb_of_samples:
+            stats["Infos"]["Number of samples"] = "not a VCF format"
+
+        samples = {}
+        
+        if "GT" in header_formats_list and "FORMAT" in self.get_header_columns():
+            i = 0
+            for sample in self.get_header_sample_list():
+                i += 1
+                sql_query_samples = f"""
+                    SELECT  '{sample}' as sample,
+                            REGEXP_EXTRACT("{sample}", '^([0-9/|.]*)[:]*',1) as genotype,
+                            count(REGEXP_EXTRACT("{sample}", '^([0-9/|.]*)[:]*',1)) as count,
+                            concat((count(REGEXP_EXTRACT("{sample}", '^([0-9/|.]*)[:]*',1))*100/{nb_of_variants})) as percentage
+                    FROM {table_variants_from}
+                    WHERE (
+                        regexp_matches("{sample}", '^[0-9]([/|][0-9])+')
+                      )
+                    GROUP BY genotype
+                    """
+                if i > 5:
+                    break
+                sql_query_genotype_df = self.conn.execute(sql_query_samples).df()
+                sample_genotype_count = sql_query_genotype_df["count"].sum()
+                if len(sql_query_genotype_df):
+                    samples[f"{sample} - {sample_genotype_count} variants"] = sql_query_genotype_df.to_json(orient="index")
+            
+            stats["Samples"] = samples
+
+
+        ### INFO and FORMAT fields
+        header_types_df = {}
+        header_types_list = {"List of INFO fields": header_infos, "List of FORMAT fields": header_formats}
+        i = 0
+        for header_type in header_types_list:
+            
+            header_type_infos = header_types_list.get(header_type)
+            header_infos_dict = {}
+
+            for info in header_type_infos:
+
+                i += 1
+                header_infos_dict[i] = {}
+
+                # ID
+                header_infos_dict[i]["id"] = info
+
+                # num
+                genotype_map = {
+                    None: ".",
+                    -1: "A",
+                    -2: "G",
+                    -3: "R"
+                }
+                if header_type_infos[info].num in genotype_map.keys():
+                    header_infos_dict[i]["Number"] = genotype_map.get(header_type_infos[info].num)
+                else:
+                    header_infos_dict[i]["Number"] = header_type_infos[info].num
+
+                # type
+                if header_type_infos[info].type:
+                    header_infos_dict[i]["Type"] = header_type_infos[info].type
+                else:
+                    header_infos_dict[i]["Type"] = "."
+
+                # desc
+                if header_type_infos[info].desc != None:
+                    header_infos_dict[i]["Description"] = header_type_infos[info].desc
+                else:
+                    header_infos_dict[i]["Description"] = ""
+
+            if len(header_infos_dict):
+                header_types_df[header_type] = pd.DataFrame.from_dict(header_infos_dict, orient="index").to_json(orient="index")
+
+        # Stats
+        stats["Infos"]["Number of INFO fields"] = len(header_infos_list)
+        stats["Infos"]["Number of FORMAT fields"] = len(header_formats_list)
+        stats["Header"] = header_types_df
+
+
+        ### QUAL
+        if "QUAL" in self.get_header_columns():
+            sql_query_qual = f"""
+                    SELECT
+                        avg(QUAL) AS Average,
+                        min(QUAL) AS Minimum,
+                        max(QUAL) AS Maximum,
+                        stddev(QUAL) AS StandardDeviation,
+                        median(QUAL) AS Median,
+                        variance(QUAL) AS Variance
+                    FROM {table_variants_from}
+                    """
+            
+            qual = self.conn.execute(sql_query_qual).df().to_json(orient="index")
+            stats["Quality"] = {
+                "Stats": qual
+            }
+
+        ### SNV and InDel
+
+        sql_query_snv = f"""
+            
+            SELECT Type, count FROM (
+
+                    SELECT
+                        'Total' AS Type,
+                        count(*) AS count
+                    FROM {table_variants_from}
+
+                    UNION
+
+                    SELECT
+                        'MNV' AS Type,
+                        count(*) AS count
+                    FROM {table_variants_from}
+                    WHERE len(REF) > 1 AND len(ALT) > 1
+                    AND len(REF) = len(ALT)
+
+                    UNION
+
+                    SELECT
+                        'InDel' AS Type,
+                        count(*) AS count
+                    FROM {table_variants_from}
+                    WHERE len(REF) > 1 OR len(ALT) > 1
+                    AND len(REF) != len(ALT)
+                    
+                    UNION
+
+                    SELECT
+                        'SNV' AS Type,
+                        count(*) AS count
+                    FROM {table_variants_from}
+                    WHERE len(REF) = 1 AND len(ALT) = 1
+
+                )
+
+            ORDER BY count DESC
+
+                """
+        snv_indel = self.conn.execute(sql_query_snv).df().to_json(orient="index")
+
+        sql_query_snv_substitution = f"""
+                SELECT
+                    concat(REF, '>', ALT) AS 'Substitution',
+                    count(*) AS count
+                FROM {table_variants_from}
+                WHERE len(REF) = 1 AND len(ALT) = 1
+                GROUP BY REF, ALT
+                ORDER BY count(*) DESC
+                """
+        snv_substitution = self.conn.execute(sql_query_snv_substitution).df().to_json(orient="index")
+        stats["Variants"]["Counts"] = snv_indel
+        stats["Variants"]["Substitutions"] = snv_substitution
+
+        return stats
+    
+
+    def stats_to_file(self, file:str = None) -> str:
+        """
+        The function `stats_to_file` takes a file name as input, retrieves statistics, serializes them
+        into a JSON object, and writes the JSON object to the specified file.
+        
+        :param file: The `file` parameter is a string that represents the file path where the JSON data
+        will be written
+        :type file: str
+        :return: the name of the file that was written to.
+        """
+
+        # Get stats
+        stats = self.get_stats()
+
+        # Serializing json
+        json_object = json.dumps(stats, indent=4)
+        
+        # Writing to sample.json
+        with open(file, "w") as outfile:
+            outfile.write(json_object)
+
+        return file
+
+
+    def print_stats(self, output_file:str = None, json_file:str = None) -> None:
+        """
+        The `print_stats` function generates a markdown file and prints the statistics contained in a
+        JSON file in a formatted manner.
+        
+        :param output_file: The `output_file` parameter is a string that specifies the path and filename
+        of the output file where the stats will be printed in Markdown format. If no `output_file` is
+        provided, a temporary directory will be created and the stats will be saved in a file named
+        "stats.md" within that
+        :type output_file: str
+        :param json_file: The `json_file` parameter is a string that represents the path to the JSON
+        file where the statistics will be saved. If no value is provided, a temporary directory will be
+        created and a default file name "stats.json" will be used
+        :type json_file: str
+        :return: The function `print_stats` does not return any value. It has a return type annotation
+        of `None`.
+        """
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+
+            # Files
+            if not output_file:
+                output_file = os.path.join(tmpdir, "stats.md")
+            if not json_file:
+                json_file = os.path.join(tmpdir, "stats.json")
+
+            # Create folders
+            if not os.path.exists(os.path.dirname(output_file)):
+                Path(os.path.dirname(output_file)).mkdir(parents=True, exist_ok=True)
+            if not os.path.exists(os.path.dirname(json_file)):
+                Path(os.path.dirname(json_file)).mkdir(parents=True, exist_ok=True)
+
+            # Create stats JSON file
+            stats_file = self.stats_to_file(file=json_file)
+
+            # Print stats file
+            with open(stats_file) as f:
+                stats = yaml.safe_load(f)
+
+            # Output 
+            output_title = []
+            output_index = []
+            output = []
+
+            # Title
+            output_title.append("# HOWARD Stats")
+
+            # Index
+            output_index.append("## Index")
+
+            # Process sections
+            for section in stats:
+                infos = stats.get(section)
+                section_link = "#" + section.lower().replace(" ", "-")
+                output.append(f"## {section}")
+                output_index.append(f"- [{section}]({section_link})")
+                
+                if len(infos):
+                    for info in infos:
+                        try:
+                            df = pd.DataFrame.from_dict(json.loads((infos.get(info))), orient="index")
+                            is_df = True
+                        except:
+                            is_df = False
+                        if is_df:
+                            output.append(f"### {info}")
+                            info_link = "#" + info.lower().replace(" ", "-")
+                            output_index.append(f"   - [{info}]({info_link})")
+                            output.append(f"{df.to_markdown(index=False)}")
+                        else:
+                            output.append(f"- {info}: {infos.get(info)}")
+                else:
+                    output.append(f"NA")
+
+            # Write stats in markdown file
+            with open(output_file, 'w') as fp:
+                for item in output_title:
+                    fp.write("%s\n" % item)
+                for item in output_index:
+                    fp.write("%s\n" % item)
+                for item in output:
+                    fp.write("%s\n" % item)
+
+            # Output stats in markdown
+            print("")
+            print("\n\n".join(output_title))
+            print("")
+            print("\n\n".join(output))
+            print("")
 
         return None
 

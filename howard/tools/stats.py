@@ -42,6 +42,18 @@ def stats(args:argparse) -> None:
 
     param = {}
 
+    # MarkDown file
+    stats_md=None
+    if "stats_md" in args and args.stats_md:
+        param["stats_md"] = args.stats_md
+        stats_md = args.stats_md
+
+    # JSON file
+    stats_json=None
+    if "stats_json" in args and args.stats_json:
+        param["stats_json"] = args.stats_json
+        stats_json = args.stats_json
+
     # Create VCF object
     if args.input:
         vcfdata_obj = Variants(None, args.input, config=config, param=param)
@@ -50,7 +62,7 @@ def stats(args:argparse) -> None:
         vcfdata_obj.load_data()
 
         # Stats
-        vcfdata_obj.get_stats()
+        vcfdata_obj.print_stats(output_file=stats_md, json_file=stats_json)
 
         # Close connexion
         vcfdata_obj.close_connexion()
