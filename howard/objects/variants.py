@@ -161,10 +161,20 @@ class Variants:
         # Connexion config
         connexion_config = {}
         threads = self.get_threads()
+
+        # Threads
         if threads:
             connexion_config["threads"] = threads
+
+        # Memory
         if config.get("memory", None):
             connexion_config["memory_limit"] = config.get("memory")
+
+        # Temporary directory
+        if config.get("tmp", None):
+            connexion_config["temp_directory"] = config.get("tmp")
+        
+        # Access
         if config.get("access", None):
             access = config.get("access")
             if access in ["RO"]:
@@ -177,6 +187,30 @@ class Variants:
             connexion_config["access_mode"] = access
 
         return connexion_config
+
+    def get_duckdb_settings(self) -> dict:
+        """
+        The function `get_duckdb_settings` retrieves DuckDB settings from a configuration file or a
+        string.
+        :return: The function `get_duckdb_settings` returns a dictionary object `duckdb_settings_dict`.
+        """
+
+        # config
+        config = self.get_config()
+
+        # duckdb settings
+        duckdb_settings_dict = {}
+        if config.get("duckdb_settings", None):
+            duckdb_settings = config.get("duckdb_settings")
+            # duckdb setting is a file
+            if os.path.exists(duckdb_settings):
+                with open(duckdb_settings) as json_file:
+                    duckdb_settings_dict = yaml.safe_load(json_file)
+            # duckdb settings is a string
+            else:
+                duckdb_settings_dict = json.loads(duckdb_settings)
+
+        return duckdb_settings_dict
 
 
     def set_connexion_db(self) -> str:
@@ -232,6 +266,14 @@ class Variants:
         if not conn:
             if connexion_format in ["duckdb"]:
                 conn = duckdb.connect(connexion_db, config=connexion_config)
+                # duckDB settings
+                duckdb_settings = self.get_duckdb_settings()
+                if duckdb_settings:
+                    for setting in duckdb_settings:
+                        setting_value = duckdb_settings.get(setting)
+                        if isinstance(setting_value, str):
+                            setting_value = f"'{setting_value}'"
+                        conn.execute(f"PRAGMA {setting}={setting_value};")
             elif connexion_format in ["sqlite"]:
                 conn = sqlite3.connect(connexion_db)
 
@@ -242,6 +284,7 @@ class Variants:
         log.debug(f"connexion_format: {connexion_format}")
         log.debug(f"connexion_db: {connexion_db}")
         log.debug(f"connexion config: {connexion_config}")
+        log.debug(f"connexion duckdb settings: {self.get_duckdb_settings()}")
 
 
     def set_output(self, output: str = None) -> None:
