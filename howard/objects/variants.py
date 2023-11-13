@@ -350,7 +350,7 @@ class Variants:
             self.header_vcf = None
 
 
-    def get_query_to_df(self, query: str = "") -> pd.DataFrame:
+    def get_query_to_df(self, query: str = "", limit:int = None) -> pd.DataFrame:
         """
         > The function `get_query_to_df` takes a query as a string and returns a pandas dataframe
 
@@ -359,11 +359,24 @@ class Variants:
         :return: A dataframe
         """
 
+        # Connexion format
         connexion_format = self.get_connexion_format()
-        if connexion_format in ["duckdb"]:
-            df = self.conn.execute(query).df()
-        elif connexion_format in ["sqlite"]:
-            df = pd.read_sql_query(query, self.conn)
+
+        # Limit in query
+        if limit:
+            pd.set_option('display.max_rows', limit)
+            if connexion_format in ["duckdb"]:
+                df = self.conn.execute(query).fetch_record_batch(limit).read_next_batch().to_pandas()
+            elif connexion_format in ["sqlite"]:
+                df = next(pd.read_sql_query(query, self.conn, chunksize=limit))
+                
+        # Full query
+        else:
+            if connexion_format in ["duckdb"]:
+                df = self.conn.execute(query).df()
+            elif connexion_format in ["sqlite"]:
+                df = pd.read_sql_query(query, self.conn)
+
         return df
 
 
@@ -1516,9 +1529,9 @@ class Variants:
         if not parquet_partitions:
             parquet_partitions = self.get_param().get("parquet_partitions", None)
 
-        # Parquet partition
+        # Chunk size
         if not chunk_size:
-            chunk_size = self.get_param().get("chunk_size", None)
+            chunk_size = self.get_config().get("chunk_size", None)
 
         # Order by
         if not order_by:

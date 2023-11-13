@@ -117,7 +117,22 @@ arguments = {
             "help": """Prioritization Score mode (see doc).\n"""
                     """available: HOWARD (increment score), VaRank (max score)\n"""
                     """default: HOWARD""",
-            "default": '"HOWARD'
+            "default": 'HOWARD'
+        },
+
+        # Query print options
+        "query_limit": {
+            "metavar": "INTEGER",
+            "help": """Limit of number of row for query (only for print result, not output).\n"""
+                    """default: 10""",
+            "default": 10
+        },
+        "query_print_mode": {
+            "metavar": "STRING",
+            "help": """Print mode of query result (only for print result, not output).\n"""
+                    """Either None (native), 'markdown' or 'tabulate'.\n"""
+                    """default: None""",
+            "default": None
         },
 
         # Explode infos
@@ -185,8 +200,8 @@ arguments = {
 
         # Chunk size
         "chunk_size": {
-            "help": """Number of records in batch to process.\n"""
-                    """This option depend on memory usage (greater is memory consuming).\n"""
+            "help": """Number of records in batch to export output file.\n"""
+                    """The lower the chunk size, the less memory consumption.\n"""
                     """For Parquet partitioning, files size will depend on the chunk size.\n"""
                     """default: 1000000""",
             "metavar": "INTEGER",
@@ -802,7 +817,7 @@ arguments = {
 
 
 # Shared arguments
-shared_arguments = ["config", "threads", "memory", "verbosity", "log", "quiet", "verbose", "debug"]
+shared_arguments = ["config", "threads", "memory", "chunk_size", "verbosity", "log", "quiet", "verbose", "debug"]
 
 # Command dict
 commands_arguments = {
@@ -942,6 +957,8 @@ commands_arguments = {
                 "input": False,
                 "output": False,
                 "query": True,
+                "query_limit": False,
+                "query_print_mode": False,
                 "explode_infos": False,
                 "explode_infos_prefix": False,
                 "explode_infos_fields": False,
@@ -979,8 +996,7 @@ commands_arguments = {
                 "explode_infos_fields": False,
                 "order_by": False,
                 "include_header": False,
-                "parquet_partitions": False,
-                "chunk_size": False
+                "parquet_partitions": False
             }
         }
     },
