@@ -197,16 +197,6 @@ arguments = {
             "metavar": "LIST",
             "default": None
         },
-
-        # Chunk size
-        "chunk_size": {
-            "help": """Number of records in batch to export output file.\n"""
-                    """The lower the chunk size, the less memory consumption.\n"""
-                    """For Parquet partitioning, files size will depend on the chunk size.\n"""
-                    """default: 1000000""",
-            "metavar": "INTEGER",
-            "default": 1000000
-        },
         
         # From annovar
         "multi_variant": {
@@ -785,6 +775,29 @@ arguments = {
             "required": False,
             "default": None
         },
+        "chunk_size": {
+            "help": """Number of records in batch to export output file.\n"""
+                    """The lower the chunk size, the less memory consumption.\n"""
+                    """For Parquet partitioning, files size will depend on the chunk size.\n"""
+                    """default: 1000000""",
+            "metavar": "INTEGER",
+            "default": 1000000
+        },
+        "tmp": {
+            "help": """Temporary folder.\n"""
+                    """Especially for duckDB, default '.tmp' (see doc).\n"""
+                    """default: None""",
+            "metavar": "PATH",
+            "default": None
+        },
+        "duckdb_settings": {
+            "help": """DuckDB settings (see duckDB doc) as JSON (string or file).\n"""
+                    """These settings have priority (see options 'threads', 'tmp'...).\n"""
+                    """Examples: '{"TimeZone": "GMT", "temp_directory": "/tmp/duckdb", "threads": 8}'\n"""
+                    """default: None""",
+            "metavar": "JSON",
+            "default": None
+        },
         "verbosity": {
             "metavar": "LEVEL",
             "help": """Verbosity level\n"""
@@ -817,7 +830,7 @@ arguments = {
 
 
 # Shared arguments
-shared_arguments = ["config", "threads", "memory", "chunk_size", "verbosity", "log", "quiet", "verbose", "debug"]
+shared_arguments = ["config", "threads", "memory", "chunk_size", "tmp", "duckdb_settings", "verbosity", "log", "quiet", "verbose", "debug"]
 
 # Command dict
 commands_arguments = {

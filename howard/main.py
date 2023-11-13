@@ -131,6 +131,16 @@ def main() -> None:
     if "chunk_size" in args and args.chunk_size:
         chunk_size = int(args.chunk_size)
 
+    # Temporary folder
+    tmp = None
+    if "tmp" in args and args.tmp:
+        tmp = args.tmp
+    
+    # duckdb settings
+    duckdb_settings = None
+    if "duckdb_settings" in args and args.duckdb_settings:
+        duckdb_settings = args.duckdb_settings
+        
     # Assembly
     if "assembly" in args and args.assembly:
         assembly = args.assembly
@@ -152,6 +162,8 @@ def main() -> None:
     config["threads"] = threads
     config["memory"] = memory
     config["chunk_size"] = chunk_size
+    config["tmp"] = tmp
+    config["duckdb_settings"] = duckdb_settings
     config["assembly"] = assembly
 
     # Change config
