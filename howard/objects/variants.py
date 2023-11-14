@@ -486,6 +486,8 @@ class Variants:
 
         ### Variants
         
+        stats["Variants"] = {}
+
         # Variants by chr
         sql_query_nb_variant_by_chrom = f"SELECT \"#CHROM\" as CHROM, count(*) as count FROM {table_variants_from} GROUP BY \"#CHROM\""
         df_nb_of_variants_by_chrom = self.get_query_to_df(sql_query_nb_variant_by_chrom)
@@ -495,11 +497,9 @@ class Variants:
         nb_of_variants = nb_of_variants_by_chrom["count"].sum()
 
         # Calculate percentage
-        nb_of_variants_by_chrom['percent'] = nb_of_variants_by_chrom['count'].apply(lambda x: (x / nb_of_variants) * 100)
+        nb_of_variants_by_chrom['percent'] = nb_of_variants_by_chrom['count'].apply(lambda x: (x / nb_of_variants))
 
-        stats["Variants"] = {
-            "Number of variants by chromosome": nb_of_variants_by_chrom.to_json(orient="index"),
-        }
+        stats["Variants"]["Number of variants by chromosome"] = nb_of_variants_by_chrom.to_dict(orient="index")
 
         stats["Infos"]["Number of variants"] = int(nb_of_variants)
 
@@ -521,7 +521,7 @@ class Variants:
                     SELECT  '{sample}' as sample,
                             REGEXP_EXTRACT("{sample}", '^([0-9/|.]*)[:]*',1) as genotype,
                             count(REGEXP_EXTRACT("{sample}", '^([0-9/|.]*)[:]*',1)) as count,
-                            concat((count(REGEXP_EXTRACT("{sample}", '^([0-9/|.]*)[:]*',1))*100/{nb_of_variants})) as percentage
+                            concat((count(REGEXP_EXTRACT("{sample}", '^([0-9/|.]*)[:]*',1))/{nb_of_variants})) as percentage
                     FROM {table_variants_from}
                     WHERE (
                         regexp_matches("{sample}", '^[0-9]([/|][0-9])+')
@@ -533,7 +533,7 @@ class Variants:
                 sql_query_genotype_df = self.conn.execute(sql_query_samples).df()
                 sample_genotype_count = sql_query_genotype_df["count"].sum()
                 if len(sql_query_genotype_df):
-                    samples[f"{sample} - {sample_genotype_count} variants"] = sql_query_genotype_df.to_json(orient="index")
+                    samples[f"{sample} - {sample_genotype_count} variants"] = sql_query_genotype_df.to_dict(orient="index")
             
             stats["Samples"] = samples
 
@@ -580,7 +580,7 @@ class Variants:
                     header_infos_dict[i]["Description"] = ""
 
             if len(header_infos_dict):
-                header_types_df[header_type] = pd.DataFrame.from_dict(header_infos_dict, orient="index").to_json(orient="index")
+                header_types_df[header_type] = pd.DataFrame.from_dict(header_infos_dict, orient="index").to_dict(orient="index")
 
         # Stats
         stats["Infos"]["Number of INFO fields"] = len(header_infos_list)
@@ -601,7 +601,7 @@ class Variants:
                     FROM {table_variants_from}
                     """
             
-            qual = self.conn.execute(sql_query_qual).df().to_json(orient="index")
+            qual = self.conn.execute(sql_query_qual).df().to_dict(orient="index")
             stats["Quality"] = {
                 "Stats": qual
             }
@@ -648,7 +648,7 @@ class Variants:
             ORDER BY count DESC
 
                 """
-        snv_indel = self.conn.execute(sql_query_snv).df().to_json(orient="index")
+        snv_indel = self.conn.execute(sql_query_snv).df().to_dict(orient="index")
 
         sql_query_snv_substitution = f"""
                 SELECT
@@ -659,7 +659,7 @@ class Variants:
                 GROUP BY REF, ALT
                 ORDER BY count(*) DESC
                 """
-        snv_substitution = self.conn.execute(sql_query_snv_substitution).df().to_json(orient="index")
+        snv_substitution = self.conn.execute(sql_query_snv_substitution).df().to_dict(orient="index")
         stats["Variants"]["Counts"] = snv_indel
         stats["Variants"]["Substitutions"] = snv_substitution
 
@@ -750,10 +750,14 @@ class Variants:
                 if len(infos):
                     for info in infos:
                         try:
-                            df = pd.DataFrame.from_dict(json.loads((infos.get(info))), orient="index")
+                            df = pd.DataFrame.from_dict(infos.get(info), orient='index')
                             is_df = True
                         except:
-                            is_df = False
+                            try:
+                                df = pd.DataFrame.from_dict(json.loads((infos.get(info))), orient="index")
+                                is_df = True
+                            except:
+                                is_df = False
                         if is_df:
                             output.append(f"### {info}")
                             info_link = "#" + info.lower().replace(" ", "-")
