@@ -592,13 +592,14 @@ class Variants:
         if "QUAL" in self.get_header_columns():
             sql_query_qual = f"""
                     SELECT
-                        avg(QUAL) AS Average,
-                        min(QUAL) AS Minimum,
-                        max(QUAL) AS Maximum,
-                        stddev(QUAL) AS StandardDeviation,
-                        median(QUAL) AS Median,
-                        variance(QUAL) AS Variance
+                        avg(CAST(QUAL AS INTEGER)) AS Average,
+                        min(CAST(QUAL AS INTEGER)) AS Minimum,
+                        max(CAST(QUAL AS INTEGER)) AS Maximum,
+                        stddev(CAST(QUAL AS INTEGER)) AS StandardDeviation,
+                        median(CAST(QUAL AS INTEGER)) AS Median,
+                        variance(CAST(QUAL AS INTEGER)) AS Variance
                     FROM {table_variants_from}
+                    WHERE QUAL NOT IN ('.')
                     """
             
             qual = self.conn.execute(sql_query_qual).df().to_dict(orient="index")

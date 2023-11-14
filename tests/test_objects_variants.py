@@ -1687,7 +1687,7 @@ def test_stats():
     # Stats
     stats = variants.get_stats()
 
-    assert stats == None
+    assert isinstance(stats, dict) and len(stats)
 
 
 def test_stats_no_samples():
@@ -1705,7 +1705,7 @@ def test_stats_no_samples():
     # Stats
     stats = variants.get_stats()
 
-    assert stats == None
+    assert isinstance(stats, dict) and len(stats)
    
 
 ###
