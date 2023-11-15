@@ -143,7 +143,8 @@ def databases_download(args:argparse) -> None:
         databases_download_snpeff(
             folder=args.download_snpeff,
             assemblies = assemblies,
-            config=args.config
+            config=args.config,
+            threads=threads
             )
         
     # refSeq
@@ -165,7 +166,8 @@ def databases_download(args:argparse) -> None:
             include_chrM=args.download_refseq_include_chrM,
             include_non_canonical_chr=args.download_refseq_include_non_canonical_chr,
             include_non_coding_transcripts=args.download_refseq_include_non_coding_transcripts,
-            include_transcript_ver=args.download_refseq_include_transcript_version
+            include_transcript_ver=args.download_refseq_include_transcript_version,
+            threads=threads
             )
 
     # dbNSFP
@@ -184,7 +186,7 @@ def databases_download(args:argparse) -> None:
             not_generate_files_all=args.download_dbnsfp_no_files_all,
             add_info=args.download_dbnsfp_add_info,
             row_group_size=args.download_dbnsfp_row_group_size,
-            genomes_folder=args.genomes_folder,
+            genomes_folder=args.genomes_folder
             )
 
     # AlphaMissense
@@ -212,7 +214,8 @@ def databases_download(args:argparse) -> None:
             exomiser_cadd_release=args.download_exomiser_cadd_release,
             exomiser_cadd_url=args.download_exomiser_cadd_url,
             exomiser_cadd_url_snv_file=args.download_exomiser_cadd_url_snv_file,
-            exomiser_cadd_url_indel_file=args.download_exomiser_cadd_url_indel_file
+            exomiser_cadd_url_indel_file=args.download_exomiser_cadd_url_indel_file,
+            threads=threads
             )
 
     # dbSNP
@@ -267,7 +270,7 @@ def databases_download_annovar(folder:str = None, files:list = None, assemblies:
     http://www.openbioinformatics.org/annovar/download
     :type annovar_url: str (optional)
     :param threads: The "threads" parameter specifies the number of threads (parallel processes) to use
-    for extract/uncompress files. Default: 1
+    for download and extract/uncompress files. Default: 1
     :type threads: int (optional)
     """
 
@@ -303,7 +306,7 @@ def databases_download_annovar(folder:str = None, files:list = None, assemblies:
         avdblist_url_file = f"{annovar_url}/{avdblist_file}"
         avdblist_folder_file = f"{folder_assembly}/{avdblist_file}"
         log.debug(f"Download list of Annovar files {avdblist_file} from Annovar URL {avdblist_url_file} to Annovar folder {avdblist_folder_file}")
-        download_file(avdblist_url_file, avdblist_folder_file)
+        download_file(avdblist_url_file, avdblist_folder_file, threads=threads)
 
         if not os.path.exists(avdblist_folder_file):
 
@@ -384,26 +387,34 @@ def databases_download_annovar(folder:str = None, files:list = None, assemblies:
                     file_path = os.path.join(folder_assembly, file)
 
                     log.debug(f"Download file {file} from {file_url} to {file_path}...")
-                    download_file(file_url, file_path)
+                    download_file(file_url, file_path, threads=threads)
                     log.debug(f"Extract file {file} to {folder_assembly}...")
                     extract_file(file_path=file_path, threads=threads)
             else:
                 log.info(f"Download Annovar databases {[assembly]} - already exists")
 
 
-def databases_download_snpeff(folder:str = None, assemblies:list = ["hg19"], config:dict = {}) -> None:
+def databases_download_snpeff(folder:str = None, assemblies:list = ["hg19"], config:dict = {}, threads:int = 1) -> None:
     """
-    This function downloads and extracts snpEff databases for specified genome assemblies.
+    The `databases_download_snpeff` function downloads and extracts snpEff databases for specified
+    genome assemblies.
     
-    :param folder: The folder where the snpEff databases will be downloaded and stored
+    :param folder: The `folder` parameter is a string that specifies the folder where the snpEff
+    databases will be downloaded and stored. If the folder does not exist, it will be created
     :type folder: str
-    :param assemblies: The assemblies parameter is a list of genome assemblies for which the snpEff
-    databases need to be downloaded
+    :param assemblies: The `assemblies` parameter is a list of genome assemblies for which the snpEff
+    databases need to be downloaded. It specifies the genome assemblies for which you want to download
+    the snpEff databases. For example, if you want to download the snpEff databases for the human genome
+    assembly hg
     :type assemblies: list
     :param config: The `config` parameter is a dictionary that contains information about the tools and
     their configurations. It is used to retrieve the path to the Java binary and the path to the snpEff
     binary
     :type config: dict
+    :param threads: The `threads` parameter specifies the number of threads to be used for downloading
+    the snpEff databases. It determines the parallelism of the download process, allowing multiple files
+    to be downloaded simultaneously, defaults to 1
+    :type threads: int (optional)
     """
 
     log.info(f"Download snpEff databases {assemblies}")
@@ -462,7 +473,7 @@ def databases_download_snpeff(folder:str = None, assemblies:list = ["hg19"], con
                     try:
                         log.debug(f"Download snpEff '{file_url}'...")
                         # Download file
-                        if download_file(file_url, file_path):
+                        if download_file(file_url, file_path, threads=threads):
                             break
                         else:
                             log.error(f"Download snpEff '{file_url}' failed")
@@ -537,7 +548,7 @@ def databases_download_genomes(assemblies: list, genomes_folder: str = DEFAULT_G
     return None
 
 
-def databases_download_refseq(assemblies:list, refseq_folder:str = None, refseq_url:str = None, refseq_prefix:str = "ncbiRefSeq", refseq_files:List = ["ncbiRefSeq.txt", "ncbiRefSeqLink.txt"], refseq_format_file:str = "ncbiRefSeq.txt", refseq_format_file_output:str = None, include_utr_5:bool = True, include_utr_3:bool = True, include_chrM:bool = True, include_non_canonical_chr:bool = True, include_non_coding_transcripts:bool = True, include_transcript_ver:bool = True) -> dict:
+def databases_download_refseq(assemblies:list, refseq_folder:str = None, refseq_url:str = None, refseq_prefix:str = "ncbiRefSeq", refseq_files:List = ["ncbiRefSeq.txt", "ncbiRefSeqLink.txt"], refseq_format_file:str = "ncbiRefSeq.txt", refseq_format_file_output:str = None, include_utr_5:bool = True, include_utr_3:bool = True, include_chrM:bool = True, include_non_canonical_chr:bool = True, include_non_coding_transcripts:bool = True, include_transcript_ver:bool = True, threads:int = 1) -> dict:
     """
     The `databases_download_refseq` function downloads RefSeq files for a list of assemblies and returns
     a dictionary of installed RefSeq files for each assembly.
@@ -574,20 +585,20 @@ def databases_download_refseq(assemblies:list, refseq_folder:str = None, refseq_
     region (UTR) in the downloaded RefSeq files. If set to True, the 5' UTR will be included. If set to
     False, the 5' UTR will be excluded, defaults to True
     :type include_utr_5: bool (optional)
-    :param include_utr_3: The `include_utr_3` parameter is a boolean that specifies whether to include
-    the 3' untranslated region (UTR) in the downloaded RefSeq files. If set to `True`, the 3' UTR will
-    be included. If set to `False`, the 3', defaults to True
+    :param include_utr_3: The `include_utr_3` parameter is a boolean value that specifies whether to
+    include the 3' untranslated region (UTR) in the downloaded RefSeq files. If set to `True`, the 3'
+    UTR will be included. If set to `False`, the 3, defaults to True
     :type include_utr_3: bool (optional)
-    :param include_chrM: A boolean parameter that determines whether to include the mitochondrial
-    chromosome (chrM) in the downloaded RefSeq files. If set to True, the chrM will be included; if set
-    to False, it will be excluded, defaults to True
+    :param include_chrM: The `include_chrM` parameter is a boolean value that determines whether to
+    include the mitochondrial chromosome (chrM) in the downloaded RefSeq files. If set to True, the chrM
+    will be included; if set to False, it will be excluded, defaults to True
     :type include_chrM: bool (optional)
     :param include_non_canonical_chr: The `include_non_canonical_chr` parameter is a boolean value that
     determines whether or not to include non-canonical chromosomes in the downloaded RefSeq files. If
     set to `True`, non-canonical chromosomes will be included. If set to `False`, non-canonical
     chromosomes will be excluded, defaults to True
     :type include_non_canonical_chr: bool (optional)
-    :param include_non_coding_transcripts: The parameter `include_non_coding_transcripts` is a boolean
+    :param include_non_coding_transcripts: The `include_non_coding_transcripts` parameter is a boolean
     flag that determines whether non-coding transcripts should be included in the downloaded RefSeq
     files. If set to `True`, non-coding transcripts will be included. If set to `False`, non-coding
     transcripts will be excluded, defaults to True
@@ -597,6 +608,11 @@ def databases_download_refseq(assemblies:list, refseq_folder:str = None, refseq_
     `True`, the transcript version will be included. If set to `False`, the transcript version will be
     excluded, defaults to True
     :type include_transcript_ver: bool (optional)
+    :param threads: The `threads` parameter specifies the number of threads to use for downloading and
+    extracting the RefSeq files. It determines the level of parallelism in the download and extraction
+    process. By default, it is set to 1, which means that the download and extraction will be performed
+    sequentially. If you want, defaults to 1
+    :type threads: int (optional)
     :return: The function `databases_download_refseq` returns a dictionary `installed_refseq` which
     contains information about the downloaded RefSeq files for each assembly. The keys of the dictionary
     are the assembly names, and the values are lists of the installed RefSeq files for each assembly.
@@ -648,9 +664,9 @@ def databases_download_refseq(assemblies:list, refseq_folder:str = None, refseq_
                     try:
                         log.info(f"Download refSeq databases ['{assembly}'] - '{refseq_file}' downloading...")
                         # Download file
-                        download_file(file_url, file_path)
+                        download_file(file_url, file_path, threads=threads)
                         # Extract file
-                        extract_file(file_path)
+                        extract_file(file_path, threads=threads)
                         # add to installed files
                         installed_refseq[assembly].append(refseq_file)
                         new_refseq_file = True
@@ -871,6 +887,11 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
         columns. By default, it is set to 1,000,000. This means that the function will read a sample of
         1,000, defaults to 1000000
         :type sample_size: int (optional)
+        :param threads: The `threads` parameter specifies the number of threads to use for parallel
+        processing. It determines how many tasks can be executed simultaneously. Increasing the number of
+        threads can potentially speed up the execution time of the function, especially if there are
+        multiple cores available on the machine
+        :type threads: int (optional)
         :return: a dictionary called `columns_structure` which contains the column names and their
         corresponding data types from the database file.
         """
@@ -1194,14 +1215,14 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
     # Download dbNSFP
     if not os.path.exists(dbnsfp_zip_dest):
         log.info(f"Download dbNSFP {assemblies} - Download '{dbnsfp_zip}'...")
-        download_file(dbnsfp_zip_url, dbnsfp_zip_dest)
+        download_file(dbnsfp_zip_url, dbnsfp_zip_dest, threads=threads)
     else:
         log.info(f"Download dbNSFP {assemblies} - Database '{dbnsfp_zip}' already exists")
 
     # Extract dbNSFP
     if not os.path.exists(dbnsfp_readme_dest):
         log.info(f"Download dbNSFP {assemblies} - Extract '{dbnsfp_zip}'...")
-        extract_file(dbnsfp_zip_dest)
+        extract_file(dbnsfp_zip_dest, threads=threads)
     else:
         log.info(f"Download dbNSFP {assemblies} - Database '{dbnsfp_zip}' already extracted")
     
@@ -1854,23 +1875,26 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
 
 def databases_download_alphamissense(assemblies:list, alphamissense_folder:str = DEFAULT_ANNOTATIONS_FOLDER, alphamissense_url:str = DEFAULT_ALPHAMISSENSE_URL, threads:int = None) -> bool:
     """
-    The function `databases_download_alphamissense` downloads and converts AlphaMissense databases for a
+    The `databases_download_alphamissense` function downloads and converts AlphaMissense databases for a
     list of assemblies.
     
-    :param assemblies: A list of assemblies for which the AlphaMissense database needs to be downloaded
+    :param assemblies: `assemblies` is a list of assemblies for which the AlphaMissense database needs
+    to be downloaded. Each assembly represents a specific genome or genetic sequence
     :type assemblies: list
     :param alphamissense_folder: The `alphamissense_folder` parameter is a string that specifies the
     folder where the AlphaMissense files will be downloaded and stored. It is set to
     `DEFAULT_ANNOTATIONS_FOLDER` by default, which is likely a predefined constant or variable in your
     code
     :type alphamissense_folder: str
-    :param alphamissense_url: The `alphamissense_url` parameter is the URL where the AlphaMissense files
-    are located. It is used to construct the download URL for each assembly's AlphaMissense file
+    :param alphamissense_url: The `alphamissense_url` parameter is a string that specifies the URL where
+    the AlphaMissense files are located. It is used to construct the download URL for each assembly's
+    AlphaMissense file
     :type alphamissense_url: str
     :param threads: The `threads` parameter is an optional parameter that specifies the number of
     threads to use for the conversion process. It determines the level of parallelism when converting
     the AlphaMissense TSV file to the Parquet format. If not specified, the default value will be used
     :type threads: int
+    :return: The function `databases_download_alphamissense` returns a boolean value `True`.
     """
 
     from howard.objects.database import Database
@@ -1897,7 +1921,7 @@ def databases_download_alphamissense(assemblies:list, alphamissense_folder:str =
         # Download AlphaMissense
         if not os.path.exists(alphamissense_tsv_dest):
             log.info(f"Download AlphaMissense {assemblies} - Download '{alphamissense_tsv}'...")
-            download_file(alphamissense_tsv_url, alphamissense_tsv_dest)
+            download_file(alphamissense_tsv_url, alphamissense_tsv_dest, threads=threads)
         else:
             log.info(f"Download AlphaMissense {assemblies} - Database '{alphamissense_tsv}' already exists")
 
@@ -1916,7 +1940,7 @@ def databases_download_alphamissense(assemblies:list, alphamissense_folder:str =
 
 
 
-def databases_download_exomiser(assemblies:list, exomiser_folder:str = DEFAULT_EXOMISER_FOLDER, exomiser_application_properties:str = None, exomiser_url:str = DEFAULT_EXOMISER_URL, exomiser_release:str = None, exomiser_phenotype_release:str = None, exomiser_remm_release:str = None, exomiser_remm_url:str = "https://kircherlab.bihealth.org/download/ReMM", exomiser_cadd_release:str = None, exomiser_cadd_url:str = "https://kircherlab.bihealth.org/download/CADD", exomiser_cadd_url_snv_file:str = "whole_genome_SNVs.tsv.gz", exomiser_cadd_url_indel_file:str = "InDels.tsv.gz") -> bool:
+def databases_download_exomiser(assemblies:list, exomiser_folder:str = DEFAULT_EXOMISER_FOLDER, exomiser_application_properties:str = None, exomiser_url:str = DEFAULT_EXOMISER_URL, exomiser_release:str = None, exomiser_phenotype_release:str = None, exomiser_remm_release:str = None, exomiser_remm_url:str = "https://kircherlab.bihealth.org/download/ReMM", exomiser_cadd_release:str = None, exomiser_cadd_url:str = "https://kircherlab.bihealth.org/download/CADD", exomiser_cadd_url_snv_file:str = "whole_genome_SNVs.tsv.gz", exomiser_cadd_url_indel_file:str = "InDels.tsv.gz", threads:int = 1) -> bool:
     """
     The `databases_download_exomiser` function downloads and sets up the Exomiser database for the
     specified assemblies.
@@ -1967,6 +1991,11 @@ def databases_download_exomiser(assemblies:list, exomiser_folder:str = DEFAULT_E
     :param exomiser_cadd_url_indel_file: The parameter `exomiser_cadd_url_indel_file` is the name of the
     INDEL file that will be downloaded from the CADD database, defaults to InDels.tsv.gz
     :type exomiser_cadd_url_indel_file: str (optional)
+    :param threads: The `threads` parameter specifies the number of threads to use for parallel
+    processing. It determines how many tasks can be executed simultaneously. Increasing the number of
+    threads can potentially speed up the execution time of the function, especially if there are
+    multiple cores available on the machine
+    :type threads: int (optional)
     """
 
     log.info(f"Download Exomiser {assemblies}")
@@ -2025,14 +2054,14 @@ def databases_download_exomiser(assemblies:list, exomiser_folder:str = DEFAULT_E
         # Download Zip file 
         if not os.path.exists(exomiser_phenotype_file):
             log.info(f"Download Exomiser {assemblies} - Download Phenotype '{exomiser_phenotype_filename}'...")
-            download_file(url=exomiser_download_phenotype_url, dest_file_path=exomiser_phenotype_file)
+            download_file(url=exomiser_download_phenotype_url, dest_file_path=exomiser_phenotype_file, threads=threads)
         else:
             log.info(f"Download Exomiser {assemblies} - Database Phenotype '{exomiser_phenotype_filename}' already exists")
 
         # Extract Zip file
         if not os.path.exists(exomiser_phenotype_file_base):
             log.info(f"Download Exomiser {assemblies} - Extract Phenotype '{exomiser_phenotype_filename}'...")
-            extract_file(file_path=exomiser_phenotype_file, path=None)
+            extract_file(file_path=exomiser_phenotype_file, path=None, threads=threads)
         else:
             log.info(f"Download Exomiser {assemblies} - Database Phenotype '{exomiser_phenotype_filename}' already extracted")
 
@@ -2047,7 +2076,7 @@ def databases_download_exomiser(assemblies:list, exomiser_folder:str = DEFAULT_E
         # Download Zip file 
         if not os.path.exists(exomiser_assembly_file):
             log.info(f"Download Exomiser {assemblies} - Download Data '{exomiser_assembly_filename}'...")
-            download_file(url=exomiser_download_assembly_url, dest_file_path=exomiser_assembly_file)
+            download_file(url=exomiser_download_assembly_url, dest_file_path=exomiser_assembly_file, threads=threads)
         else:
             log.info(f"Download Exomiser {assemblies} - Database Data '{exomiser_assembly_filename}' already exists")
 
@@ -2055,7 +2084,7 @@ def databases_download_exomiser(assemblies:list, exomiser_folder:str = DEFAULT_E
         #if not os.path.exists(exomiser_assembly_folder):
         if not os.path.exists(os.path.join(exomiser_assembly_folder,exomiser_assembly_filename_base)):
             log.info(f"Download Exomiser {assemblies} - Extract Data '{exomiser_assembly_filename}'...")
-            extract_file(file_path=exomiser_assembly_file, path=exomiser_assembly_folder)
+            extract_file(file_path=exomiser_assembly_file, path=exomiser_assembly_folder, threads=threads)
         else:
             log.info(f"Download Exomiser {assemblies} - Database Data '{exomiser_assembly_filename}' already extracted")
 
@@ -2111,9 +2140,9 @@ def databases_download_exomiser(assemblies:list, exomiser_folder:str = DEFAULT_E
             exomiser_download_assembly_remm_url = os.path.join(exomiser_remm_url, f"ReMM.v{exomiser_remm_release_found}.{assembly}.tsv.gz") 
             exomiser_download_assembly_remm_tbi_url = os.path.join(exomiser_remm_url, f"ReMM.v{exomiser_remm_release_found}.{assembly}.tsv.gz.tbi")
             exomiser_download_assembly_remm_md5_url = os.path.join(exomiser_remm_url, f"ReMM.v{exomiser_remm_release_found}.{assembly}.md5")
-            download_file(url=exomiser_download_assembly_remm_url, dest_file_path=exomiser_remm_path)
-            download_file(url=exomiser_download_assembly_remm_tbi_url, dest_file_path=exomiser_remm_path_tbi)
-            download_file(url=exomiser_download_assembly_remm_md5_url, dest_file_path=exomiser_remm_path_md5)
+            download_file(url=exomiser_download_assembly_remm_url, dest_file_path=exomiser_remm_path, threads=threads)
+            download_file(url=exomiser_download_assembly_remm_tbi_url, dest_file_path=exomiser_remm_path_tbi, threads=threads)
+            download_file(url=exomiser_download_assembly_remm_md5_url, dest_file_path=exomiser_remm_path_md5, threads=threads)
         else:
             log.debug(f"Download Exomiser {assemblies} - Database REMM not downloaded")
 
@@ -2164,8 +2193,8 @@ def databases_download_exomiser(assemblies:list, exomiser_folder:str = DEFAULT_E
                 log.info(f"Download Exomiser {assemblies} - Download CADD database '{os.path.basename(exomiser_cadd_snv_path)}'...")
                 exomiser_download_assembly_cadd_snv_url = os.path.join(exomiser_cadd_url, f"v{exomiser_cadd_release_found}", genome_build_switch_to_gencode, exomiser_cadd_url_snv_file) 
                 exomiser_download_assembly_cadd_snv_tbi_url = os.path.join(exomiser_cadd_url, f"v{exomiser_cadd_release_found}", genome_build_switch_to_gencode, f"{exomiser_cadd_url_snv_file}.tbi")
-                download_file(url=exomiser_download_assembly_cadd_snv_url, dest_file_path=exomiser_cadd_snv_path)
-                download_file(url=exomiser_download_assembly_cadd_snv_tbi_url, dest_file_path=exomiser_cadd_snv_path_tbi)
+                download_file(url=exomiser_download_assembly_cadd_snv_url, dest_file_path=exomiser_cadd_snv_path, threads=threads)
+                download_file(url=exomiser_download_assembly_cadd_snv_tbi_url, dest_file_path=exomiser_cadd_snv_path_tbi, threads=threads)
 
             # INDEL
             if not os.path.exists(exomiser_cadd_indel_path):
@@ -2173,8 +2202,8 @@ def databases_download_exomiser(assemblies:list, exomiser_folder:str = DEFAULT_E
                 log.info(f"Download Exomiser {assemblies} - Download CADD database '{os.path.basename(exomiser_cadd_indel_path)}'...")
                 exomiser_download_assembly_cadd_indel_url = os.path.join(exomiser_cadd_url, f"v{exomiser_cadd_release_found}", genome_build_switch_to_gencode, exomiser_cadd_url_indel_file) 
                 exomiser_download_assembly_cadd_indel_tbi_url = os.path.join(exomiser_cadd_url, f"v{exomiser_cadd_release_found}", genome_build_switch_to_gencode, f"{exomiser_cadd_url_indel_file}.gz.tbi")
-                download_file(url=exomiser_download_assembly_cadd_indel_url, dest_file_path=exomiser_cadd_indel_path)
-                download_file(url=exomiser_download_assembly_cadd_indel_tbi_url, dest_file_path=exomiser_cadd_indel_path_tbi)
+                download_file(url=exomiser_download_assembly_cadd_indel_url, dest_file_path=exomiser_cadd_indel_path, threads=threads)
+                download_file(url=exomiser_download_assembly_cadd_indel_tbi_url, dest_file_path=exomiser_cadd_indel_path_tbi, threads=threads)
 
         else:
             log.debug(f"Download Exomiser {assemblies} - Database CADD not downloaded")
@@ -2324,12 +2353,12 @@ def databases_download_dbsnp(assemblies:list, dbsnp_folder:str = DEFAULT_DBSNP_F
                     Path(os.path.dirname(dbsnp_file)).mkdir(parents=True, exist_ok=True)
 
                 # Download file
-                download_file(url=dbsnp_url_path, dest_file_path=dbsnp_file)
+                download_file(url=dbsnp_url_path, dest_file_path=dbsnp_file, threads=threads)
 
                 # Index tbi
                 dbsnp_url_path_tbi = f"{dbsnp_url_path}.tbi"
                 dbsnp_file_tbi = f"{dbsnp_file}.tbi"
-                download_file(url=dbsnp_url_path_tbi, dest_file_path=dbsnp_file_tbi)
+                download_file(url=dbsnp_url_path_tbi, dest_file_path=dbsnp_file_tbi, threads=threads)
 
             else:
 

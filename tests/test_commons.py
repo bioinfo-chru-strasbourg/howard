@@ -28,6 +28,40 @@ from test_needed import *
 
 
 
+
+def test_download_file():
+    """
+    The `test_download_file` function downloads a file from a specified URL using the Aria download
+    manager and checks if the downloaded file matches the expected file.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        url = "https://raw.githubusercontent.com/bioinfo-chru-strasbourg/howard/master/README.md"
+        dest = os.path.join(tmp_dir, "file")
+        threads = 2
+
+        log.debug("Download by Aria")
+        remove_if_exists([dest])
+        download_file(url=url, dest_file_path=dest)
+        assert os.path.exists(dest)
+
+        log.debug("Download by Aria with threads")
+        remove_if_exists([dest])
+        download_file(url=url, dest_file_path=dest, threads=threads)
+        assert os.path.exists(dest)
+
+        log.debug("Download by Request (no aria)")
+        remove_if_exists([dest])
+        download_file(url=url, dest_file_path=dest, try_aria=False)
+        assert os.path.exists(dest)
+
+        log.debug("Download by Request (no aria, with chunk)")
+        remove_if_exists([dest])
+        download_file(url=url, dest_file_path=dest, try_aria=False, chunk_size=1024)
+        assert os.path.exists(dest)
+
+
 def test_get_compression_type():
     """
     The function `test_get_compression_type` tests the `get_compression_type` function with different

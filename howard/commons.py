@@ -1050,13 +1050,13 @@ def extract_file(file_path:str, path:str = None, threads:int = 1):
         concat_and_compress_files(input_files=[file_path], output_file=file_path[:-3], compression_type="none", threads=threads)
 
 
-def download_file(url:str, dest_file_path:str, chunk_size:int = 1024*1024):
+def download_file(url:str, dest_file_path:str, chunk_size:int = 1024*1024, try_aria:bool = True, threads:int = 1):
     """
-    The `download_file` function downloads a file from a given URL and saves it to a specified
-    destination file path in chunks.
+    The `download_file` function is a Python function that downloads a file from a given URL and saves
+    it to a specified destination file path in chunks.
     
-    :param url: The URL of the file you want to download. This should be a string that represents the
-    complete URL, including the protocol (e.g., "http://example.com/file.txt")
+    :param url: The `url` parameter is the URL of the file you want to download. It should be a string
+    that represents the complete URL, including the protocol (e.g., "http://example.com/file.txt")
     :type url: str
     :param dest_file_path: The `dest_file_path` parameter is the path where the downloaded file will be
     saved. It should be a string representing the file path, including the file name and extension. For
@@ -1066,31 +1066,57 @@ def download_file(url:str, dest_file_path:str, chunk_size:int = 1024*1024):
     downloaded at a time. In this case, the default value is set to 1 MB, which means that the file will
     be downloaded in chunks of 1 MB at a time. This parameter can be adjusted according to
     :type chunk_size: int
+    :param try_aria: The `try_aria` parameter is a boolean value that determines whether to use the
+    Aria2c command-line tool for downloading the file. If set to `True`, the function will attempt to
+    download the file using Aria2c. If set to `False`, the function will use the, defaults to True
+    :type try_aria: bool (optional)
+    :param threads: The `threads` parameter specifies the number of threads to be used for downloading
+    the file. It determines the number of simultaneous connections that will be made to download the
+    file. By default, it is set to 1, which means that only one connection will be made at a time.
+    Increasing the value, defaults to 1
+    :type threads: int (optional)
     :return: a boolean value indicating whether the file was successfully downloaded and saved to the
     specified destination file path.
     """
-    
-    # Create a temporary file
-    tmp_file_path = dest_file_path + '.tmp'
 
     # Create folder if not exists
     if not os.path.exists(os.path.dirname(dest_file_path)):
         Path(os.path.dirname(dest_file_path)).mkdir(parents=True, exist_ok=True)
 
-    with requests.get(url, stream=True) as r:
-        r.raise_for_status()
+    try:
 
-        # Open the temporary file for writing in binary mode
-        with open(tmp_file_path, 'wb') as f:
+        if try_aria:
 
-            # Download the file by chunks
-            for chunk in r.iter_content(chunk_size=chunk_size):
+            # Aria command
+            aria_command = f"aria2c -c -s {threads} -x {threads} -j 1 {url} -d {os.path.dirname(dest_file_path)} -o {os.path.basename(dest_file_path)}"
 
-                # Write the chunk to the temporary file
-                f.write(chunk)
+            # Launch command
+            output = os.system(aria_command)
 
-    # Move the temporary file to the final destination
-    shutil.move(tmp_file_path, dest_file_path)
+        else:
+
+            assert False
+
+    except:
+
+        # Request
+        with requests.get(url, stream=True) as r:
+            r.raise_for_status()
+
+            # Create a temporary file
+            tmp_file_path = dest_file_path + '.tmp'
+
+            # Open the temporary file for writing in binary mode
+            with open(tmp_file_path, 'wb') as f:
+
+                # Download the file by chunks
+                for chunk in r.iter_content(chunk_size=chunk_size):
+
+                    # Write the chunk to the temporary file
+                    f.write(chunk)
+
+        # Move the temporary file to the final destination
+        shutil.move(tmp_file_path, dest_file_path)
 
     return os.path.exists(dest_file_path)
 
