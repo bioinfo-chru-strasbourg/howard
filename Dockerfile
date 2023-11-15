@@ -66,8 +66,8 @@ ENV TOOL=/tool
 ENV DATABASES=/databases
 
 # YUM
-ENV YUM_INSTALL="gcc bc make wget perl-devel which zlib-devel zlib bzip2-devel bzip2 xz-devel xz ncurses-devel unzip curl-devel java-17 htop libgomp"
-ENV YUM_REMOVE="zlib-devel bzip2-devel xz-devel ncurses-devel gcc"
+ENV YUM_INSTALL="gcc bc make wget perl-devel which zlib-devel zlib bzip2-devel bzip2 xz-devel xz ncurses-devel unzip curl-devel java-17 htop libgomp aria2"
+#ENV YUM_REMOVE="zlib-devel bzip2-devel xz-devel ncurses-devel gcc"
 
 
 
@@ -304,7 +304,7 @@ RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
 # YUM REMOVE & CLEAR #
 ######################
 
-RUN [ "${YUM_REMOVE}" != "" ] && yum erase -y $YUM_REMOVE
+RUN [ "${YUM_REMOVE}" != "" ] && yum erase -y $YUM_REMOVE || echo "Nothing to clean"
 RUN yum clean all
 
 
