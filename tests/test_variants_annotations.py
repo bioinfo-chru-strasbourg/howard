@@ -47,14 +47,10 @@ def test_annotations():
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
-        # annotation1 = "nci60.parquet"
-        # annotation2 = tests_data_folder + "/example.vcf.gz"
-        # annotation3 = "refGene.bed.gz"
 
         annotation1 = database_files.get("parquet")
         annotation2 = database_files.get("example_vcf_gz")
         annotation3 = database_files.get("refgene_gz")
-
 
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
@@ -118,7 +114,6 @@ def test_annotations():
             vcf.Reader(filename=output_vcf)
         except:
             assert False
-
 
 
 def test_annotations_all_available_annotations_databases():

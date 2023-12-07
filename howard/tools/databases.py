@@ -37,6 +37,7 @@ from howard.commons import *
 from howard.objects.variants import *
 
 
+
 def query_and_concatenate_columns(parquet_file: str, output_file: str, columns: list):
     """
     This function performs an SQL query on a large Parquet file and concatenates multiple columns (if not empty),
@@ -109,6 +110,59 @@ def databases_download(args:argparse) -> None:
         threads = nb_threads
     else:
         threads = int(input_thread)
+
+    # Param
+    if args.generate_param:
+        log.debug(f"Generate param config")
+
+        # Check assembly
+        if len(assemblies) == 1:
+            assembly = assemblies[0]
+        else:
+            log.debug(f"Error: choose one uniq assembly '{assemblies}'")
+            raise ValueError(f"Error: choose one uniq assembly '{assemblies}'")
+        
+        # Databases releases
+        if args.generate_param_releases:
+            generate_param_releases = [value for value in args.generate_param_releases.split(',')]
+        else:
+            generate_param_releases = []
+
+        # Databases formats
+        if args.generate_param_formats:
+            generate_param_formats = [value for value in args.generate_param_formats.split(',')]
+        else:
+            generate_param_formats = []
+
+        # databases infos
+        databases_infos_dict = databases_infos(
+            database_folder_releases=generate_param_releases,
+            assembly = assembly,
+            database_formats=generate_param_formats,
+            config=args.config
+            )
+        databases_param_stats = databases_param(
+            databases_infos_dict=databases_infos_dict,
+            bcftools_preference=args.generate_param_bcftools,
+            output=args.generate_param,
+            output_description=args.generate_param_description
+            )
+
+        # Show param (3 levels of param)
+        for databases_param_stat in databases_param_stats:
+            if not isinstance(databases_param_stats[databases_param_stat], dict):
+                log.info(f"{databases_param_stat}: {databases_param_stats[databases_param_stat]}")
+            else:
+                log.info(f"{databases_param_stat}")
+                for databases_param_substat in databases_param_stats[databases_param_stat]:
+                    if not isinstance(databases_param_stats[databases_param_stat][databases_param_substat], dict):
+                        log.info(f"   {databases_param_substat}: {databases_param_stats[databases_param_stat][databases_param_substat]}")
+                    else:
+                        log.info(f"   {databases_param_substat}")
+                        for databases_param_subsubstat in databases_param_stats[databases_param_stat][databases_param_substat]:
+                            log.info(f"      {databases_param_subsubstat}: {databases_param_stats[databases_param_stat][databases_param_substat][databases_param_subsubstat]}")
+
+        return None
 
     # Genomes
     if args.download_genomes:
@@ -251,6 +305,283 @@ def databases_download(args:argparse) -> None:
             genomes_folder=args.genomes_folder,
             threads=threads
             )
+
+
+
+def databases_infos(database_folders:list = [], database_folder_releases:list = ["current"], assembly:str = "hg19", database_formats:list = None, config:dict = {}) -> dict:
+    """
+    The `databases_infos` function scans database folders and retrieves information about the databases
+    found, including their folder, release, assembly, subdatabase, format, header, and parameters.
+    
+    :param database_folders: A list of folders where the databases are located
+    :type database_folders: list
+    :param database_folder_releases: A list of specific releases of the database folders to include in
+    the search. If None, all releases will be included
+    :type database_folder_releases: list
+    :param assembly: The `assembly` parameter is a string that specifies the assembly version of the
+    databases to be searched. It is used to filter the databases based on their assembly version. The
+    default value is "hg19", defaults to hg19
+    :type assembly: str (optional)
+    :param database_formats: The `database_formats` parameter is a list that specifies the formats of
+    the databases to include in the results. If this parameter is not provided or is set to `None`, all
+    database formats will be included
+    :type database_formats: list
+    :param config: The `config` parameter is a dictionary that contains configuration settings for the
+    function. It has the following structure:
+    :type config: dict
+    :return: The `databases_infos` function returns a dictionary containing information about the
+    databases found in the specified database folders. The keys of the dictionary are the paths to the
+    database files, and the values are dictionaries containing the following information: folder,
+    release, assembly, subdatabase, format, header, and parameters.
+    """
+
+    # Init Database object
+    from howard.objects.database import Database
+    vcfdata_obj = Database()
+
+    # Init results
+    infos = {}
+
+    # Check databases folders from config
+    if not database_folders:
+        config_database_folders = config.get("folders",{}).get("databases",{}).get("annotations",[])
+        for config_database_folder in config_database_folders:
+            config_database_folder_dirname = os.path.dirname(re.sub(r"/*$", "", config_database_folder))
+            log.debug(f"config_database_folder: {config_database_folder}")
+            log.debug(f"   config_database_folder_dirname: {config_database_folder_dirname}")
+            database_folders.append(config_database_folder_dirname)
+
+    # Find all databases folders
+    if not database_folders:
+        database_folders = []
+        default_database_folder = DEFAULT_DATABASE_FOLDER
+        database_folders_list = os.listdir(default_database_folder)
+        for database_folder in database_folders_list:
+            if os.path.isdir(os.path.join(default_database_folder, database_folder)):
+                database_folders.append(os.path.join(default_database_folder, database_folder))
+
+    log.debug(f"database_folders: {database_folders}")
+
+    # Scan database folders
+    for database_folder in database_folders:
+        
+        # Database folder name
+        database_folder_name = os.path.basename(database_folder)
+
+        # Scan all folder with allowed structure in database folder (<release>/<assembly>)
+        for root, dirs, files in os.walk(f"{database_folder}", followlinks=True):
+            
+            # database structure and level
+            database_subfolder = root.replace(database_folder, '')
+            database_subfolder_structure = database_subfolder.split("/")[1:]
+            level = database_subfolder.count(os.sep)
+
+            # Level as correct structure
+            if level == 2:
+
+                # If "(<release>/<assembly>" is a folder
+                if os.path.isdir(root):
+
+                    # Database infos (release and assembly)
+                    database_release = database_subfolder_structure[0]
+                    database_assembly = database_subfolder_structure[1]
+
+                    # Filter with input release and assembly
+                    if (not database_folder_releases or database_release in database_folder_releases) and (database_assembly == assembly):
+
+                        # List files within the folder
+                        list_of_files = glob.glob(os.path.join(root,"**"), recursive=True)
+
+                        # List file as a database (to check)
+                        for database in list_of_files:
+
+                            # Check if file exists (ERROR woth glob.glob???)
+                            if os.path.exists(database):
+
+                                # Format of the database
+                                database_format = vcfdata_obj.get_format(database=database)
+
+                                # Check if it is a database (header exists as file or within vcf)
+                                # Filter with input database format
+                                if (os.path.isfile(f"{database}.hdr") or (os.path.isfile(database) and database.endswith(("vcf","vcf.gz","vcf.bgz")))) and (not database_formats or database_format in database_formats):
+
+                                    # Database subfolder (allow files in subfolder, such as database versions)
+                                    database_subfolder = os.path.dirname(database.replace(f"{root}/", ''))
+
+                                    # Database header
+                                    database_header = vcfdata_obj.get_header(database=database).infos
+                                    
+                                    # Init
+                                    header_infos_dict = {}
+                                    header_infos_dict_param = {}
+
+                                    # List header infos 
+                                    for info in list(database_header):
+
+                                        # Init
+                                        header_infos_dict[info] = {}
+                                        header_infos_dict_param[info] = info
+
+                                        # ID
+                                        header_infos_dict[info]["id"] = info
+
+                                        # num
+                                        if database_header[info].num in GENOTYPE_MAP.keys():
+                                            header_infos_dict[info]["Number"] = GENOTYPE_MAP.get(database_header[info].num)
+                                        else:
+                                            header_infos_dict[info]["Number"] = database_header[info].num
+
+                                        # type
+                                        if database_header[info].type:
+                                            header_infos_dict[info]["Type"] = database_header[info].type
+                                        else:
+                                            header_infos_dict[info]["Type"] = "."
+
+                                        # desc
+                                        if database_header[info].desc != None:
+                                            header_infos_dict[info]["Description"] = database_header[info].desc
+                                        else:
+                                            header_infos_dict[info]["Description"] = ""
+
+                                    # Add database to dict
+                                    if header_infos_dict:
+                                        infos[database] = {
+                                            "folder": database_folder_name,
+                                            "release": database_release,
+                                            "assembly": database_assembly,
+                                            "subdatabase": database_subfolder,
+                                            "format": database_format,
+                                            "header": header_infos_dict,
+                                            "param": header_infos_dict_param
+                                        }
+
+                                        # Log
+                                        log.debug(f"---")
+                                        log.debug(f"database: {database}")
+                                        log.debug(json.dumps({
+                                            "folder": database_folder_name,
+                                            "release": database_release,
+                                            "assembly": database_assembly,
+                                            "subdatabase": database_subfolder,
+                                            "format": database_format,
+                                            "header": len(header_infos_dict),
+                                            "param": len(header_infos_dict_param)
+                                        }, indent=4))
+                        
+    return infos
+
+
+def databases_param(databases_infos_dict:dict, output:str = None, output_description:str = None, bcftools_preference:bool = False) -> dict:
+    """
+    The `databases_param` function takes in a dictionary of database information, an optional output
+    file path, and a boolean flag for bcftools preference, and returns a dictionary containing the
+    parameters for parquet and bcftools annotations.
+    
+    :param databases_infos_dict: A dictionary containing information about databases. Each key in the
+    dictionary represents the name of a database, and the corresponding value is another dictionary
+    containing information about the database, such as its format and parameters
+    :type databases_infos_dict: dict
+    :param output: The `output` parameter is a string that specifies the path and filename of the output
+    file where the generated JSON object will be written. If this parameter is not provided or is set to
+    `None`, the JSON object will not be written to a file
+    :type output: str
+    :param output_description: The `output_description` parameter is a string that specifies the path
+    and filename of the output file where the description of the databases will be written. If this
+    parameter is not provided or is set to `None`, the description will not be written to a file
+    :type output_description: str
+    :param bcftools_preference: The `bcftools_preference` parameter is a boolean flag that determines
+    whether to prioritize databases in the BCFTOOLS format. If `bcftools_preference` is set to `True`,
+    databases in the BCFTOOLS format will be given priority over other formats. If `bcftools, defaults
+    to False
+    :type bcftools_preference: bool (optional)
+    :return: The function `databases_param` returns a dictionary object named "param_stats_show".
+    """
+    
+    # Init
+    param = {
+                "annotation": {}
+    }
+    param_parquet = {}
+    param_bcftools = {}
+    param_stats = {
+        "assembly": [],
+        "databases": [],
+        "releases": [],
+        "formats": [],
+        "fields": []
+    }
+    param_stats_show = {}
+
+    # If None (not empty) dict in input, check by default
+    if databases_infos_dict == None:
+        databases_infos_dict = databases_infos()
+
+    # List databases
+    for database_infos in databases_infos_dict:
+
+        database_format = databases_infos_dict[database_infos].get("format", None)
+        
+        # If preference for bcftools
+        if bcftools_preference and database_format in BCFTOOLS_FORMAT:
+            param_bcftools[database_infos] = databases_infos_dict[database_infos].get("param")
+        else:
+            param_parquet[database_infos] = databases_infos_dict[database_infos].get("param")
+        
+        # Stats
+        param_stats["assembly"].append(databases_infos_dict[database_infos].get("assembly"))
+        param_stats["databases"].append(database_infos)
+        param_stats["releases"].append(databases_infos_dict[database_infos].get("release"))
+        param_stats["formats"].append(databases_infos_dict[database_infos].get("format"))
+        param_stats["fields"] += list(databases_infos_dict[database_infos].get("header").keys())
+
+    # Stats
+    param_stats_show["Assembly"] = param_stats["assembly"][0]
+    param_stats_show["Number of databases"] = len(set(param_stats["databases"])) 
+    param_stats_show["Releases of databases"] = list(set(param_stats["releases"]))
+    param_stats_show["Formats of databases"] = list(set(param_stats["formats"]))
+    param_stats_show["Number of Annotation fields"] = len(set(param_stats["fields"])) 
+
+    # Add parquet annotations to param
+    if param_parquet:
+        param["annotation"]["parquet"] = {
+            "annotations": param_parquet
+        }
+
+    # Add bcftools annotations to param
+    if bcftools_preference and param_bcftools:
+        param["annotation"]["bcftools"] = {
+            "annotations": param_bcftools
+        }
+
+    # Output
+    if output:
+
+        # Create json object
+        json_object = json.dumps(param, indent=4)
+        
+        # Create folder if not exists
+        if not os.path.exists(os.path.dirname(output)):
+            Path(os.path.dirname(output)).mkdir(parents=True, exist_ok=True)
+
+        # Write output file
+        with open(output, "w") as outfile:
+            outfile.write(json_object)
+
+    # Output description
+    if output_description:
+
+        # Create json object
+        json_object = json.dumps(databases_infos_dict, indent=4)
+        
+        # Create folder if not exists
+        if not os.path.exists(os.path.dirname(output_description)):
+            Path(os.path.dirname(output_description)).mkdir(parents=True, exist_ok=True)
+
+        # Write output file
+        with open(output_description, "w") as outfile:
+            outfile.write(json_object)
+
+    return param_stats_show
 
 
 def databases_download_annovar(folder:str = None, files:list = None, assemblies:list = ["hg19"], annovar_url:str = "http://www.openbioinformatics.org/annovar/download", threads:int = 1) -> None:

@@ -66,6 +66,9 @@ arguments = {
             "help": """Annotation with databases files, or with tools\n"""
                     """Format: list of files in Parquet, VCF, BED, or keywords\n"""
                     """For a Parquet/VCF/BED file, use file path (e.g. '/path/to/file.parquet')\n"""
+                    """For add all availalbe databases, use 'ALL' keyword:\n"""
+                    """   - Use 'ALL:<types>:<releases>'\n"""
+                    """   - e.g. 'ALL', 'ALL:parquet:currernt', 'ALL:parquet,vcf:devel'\n"""
                     """For snpeff annotation, use keyword 'snpeff'\n"""
                     """For Annovar annotation, use keyword 'annovar' with annovar code (e.g. 'annovar:refGene', 'annovar:cosmic70')\n"""
                     ,
@@ -740,6 +743,43 @@ arguments = {
             "required": False
         },
 
+        # Databases parameters
+        "generate-param": {
+            "metavar": "FILE",
+            "help": """Parameter file (JSON) with all databases found.\n"""
+                    """Databases folders scanned are defined in config file.\n"""
+                    """Structure of databases follow this structure (see doc):\n"""
+                    """   .../<database>/<release>/<assembly>/*.[parquet|vcf.gz|...]""",
+            "required": False
+        },
+        "generate-param-description": {
+            "metavar": "FILE",
+            "help": """Description file (JSON) with all databases found.\n"""
+                    """Contains all databases with description of format, assembly, fields...""",
+            "required": False
+        },
+        "generate-param-releases": {
+            "metavar": "LIST",
+            "help": """List of database folder releases to check\n"""
+                    """Examples: 'current', 'latest'\n"""
+                    """Default: 'current'""",
+            "required": False,
+            "default": "current"
+        },
+        "generate-param-formats": {
+            "metavar": "LIST",
+            "help": """List of database formats to check (e.g. parquet, vcf, bed, tsv...)\n"""
+                    """Examples: 'parquet', 'parquet,vcf,bed,tsv'\n"""
+                    """Default: 'parquet'""",
+            "required": False,
+            "default": "parquet"
+        },
+        "generate-param-bcftools": {
+            "help": """Generate parameter file with BCFTools annotation for allowed formats\n"""
+                    """Allowed formats with BCFTools: 'vcf', 'bed'""",
+            "action": "store_true"
+        },
+
         # From Annovar
         "annovar-code": {
             "metavar": "CODE",
@@ -884,7 +924,8 @@ commands_arguments = {
         "help":         """Annotation of genetic variations using databases/files and tools.""",
         "epilog":       """Usage examples:\n"""
                         """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/hg19/avsnp150.parquet,tests/databases/annotations/hg19/dbnsfp42a.parquet,tests/databases/annotations/hg19/gnomad211_genome.parquet' \n"""
-                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotations='annovar:refGene,annovar:cosmic70,snpeff,tests/databases/annotations/hg19/clinvar_20210123.parquet' \n""", 
+                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotations='annovar:refGene,annovar:cosmic70,snpeff,tests/databases/annotations/hg19/clinvar_20210123.parquet' \n"""
+                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotations='ALL:parquet' \n""", 
         "groups": {
             "main": {
                 "input": True,
@@ -1032,7 +1073,8 @@ commands_arguments = {
         "description": """Download databases and needed files for howard and associated tools""",
         "help": """Download databases and needed files for howard and associated tools""",
         "epilog": """Usage examples:\n"""
-                    """   howard databases --assembly=hg19 --download-genomes=/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' --download-annovar=/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' --download-snpeff=/databases/snpeff/current --download-refseq=/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-dbnsfp=/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases --download-alphamissense=/databases/alphamissense/current --download-exomiser=/databases/exomiser/current --download-dbsnp=/databases/dbsnp/current --download-dbsnp-vcf --threads=8 """
+                    """   howard databases --assembly=hg19 --download-genomes=/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' --download-annovar=/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' --download-snpeff=/databases/snpeff/current --download-refseq=/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-dbnsfp=/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases --download-alphamissense=/databases/alphamissense/current --download-exomiser=/databases/exomiser/current --download-dbsnp=/databases/dbsnp/current --download-dbsnp-vcf --threads=8\n"""
+                    """   howard databases --generate-param=/tmp/param.json --generate-param-description=/tmp/test.description.json --generate-param-formats=parquet """
                     """\n"""
                     """Notes:\n"""
                     """   - Downloading databases can take a while, depending on network, threads and memory\n"""
@@ -1115,6 +1157,14 @@ commands_arguments = {
                 "convert-hgmd-file": False,
                 "convert-hgmd-basename": False
             },
+            "Databases parameters file": {
+                "generate-param": False,
+                "generate-param-description": False,
+                "generate-param-releases": False,
+                "generate-param-formats": False,
+                "generate-param-bcftools": False
+            }
+
         }
 
 

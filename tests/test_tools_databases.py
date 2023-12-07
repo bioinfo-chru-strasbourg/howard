@@ -31,6 +31,37 @@ from test_needed import *
 
 
 
+def test_databases_infos():
+    """
+    The function `test_databases_infos` retrieves information about databases based on specified
+    configurations and parameters.
+    """
+
+    databases_infos_dict = databases_infos(config=tests_config, database_folder_releases=["annotations"], database_formats=["parquet","vcf"], assembly='hg19')
+
+    assert len(databases_infos_dict)
+
+
+def test_databases_param():
+    """
+    The `test_databases_param` function retrieves information about databases based on specified
+    configurations and parameters and asserts that the output files exist and contain the expected
+    information.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        output = os.path.join(tmp_dir, "param.json")
+        output_description = os.path.join(tmp_dir, "description.json")
+
+        databases_infos_dict = databases_infos(config=tests_config, database_folder_releases=["annotations"], database_formats=["parquet","vcf"], assembly='hg19')
+        databases_param_dict = databases_param(databases_infos_dict=databases_infos_dict, output=output, output_description=output_description)
+
+        assert len(databases_infos_dict)
+        assert len(databases_param_dict)
+        assert len(databases_infos_dict) == databases_param_dict.get("Number of databases")
+        assert os.path.exists(output)
+        assert os.path.exists(output_description)
 
 
 def test_download_hgmd():
@@ -525,6 +556,7 @@ def test_database():
         download_exomiser = None,
         download_dbsnp = None,
         convert_hgmd = None,
+        generate_param = None,
         config = None,
     )
 
@@ -600,6 +632,7 @@ def test_databases_download():
             download_exomiser = None,
             download_dbsnp = None,
             convert_hgmd = None,
+            generate_param = None,
             config=config,
             threads=threads
         )
@@ -679,6 +712,7 @@ def test_databases_download_genomes_only():
             download_exomiser = None,
             download_dbsnp = None,
             convert_hgmd = None,
+            generate_param = None,
             threads=threads
         )
 

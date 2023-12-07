@@ -2366,118 +2366,162 @@ class Variants:
         )
 
         if param.get("annotations"):
+
+            # Log
+            log.info("Annotations - Check annotation parameters")
+
             if not "annotation" in param:
                 param["annotation"] = {}
-            for annotation_file in param.get("annotations"):
 
-                annotations = param.get("annotations").get(
-                    annotation_file, None)
-                
-                # Annotation snpEff
-                if annotation_file == "snpeff":
-                    log.debug(f"Quick Annotation snpEff")
-                    if "snpeff" not in param["annotation"]:
-                        param["annotation"]["snpeff"] = {}
-                    if "options" not in param["annotation"]["snpeff"]:
-                        param["annotation"]["snpeff"]["options"] = ""
-                
-                # Annotation Annovar
-                elif annotation_file.startswith("annovar"):
-                    log.debug(f"Quick Annotation Annovar")
-                    if "annovar" not in param["annotation"]:
-                        param["annotation"]["annovar"] = {}
-                    if "annotations" not in param["annotation"]["annovar"]:
-                        param["annotation"]["annovar"]["annotations"] = {}
+            # List of annotations parameters
+            annotations_list_input = param.get("annotations", {})
+            annotations_list = {}
+
+            # Explode annotations if ALL
+            for annotation_file in annotations_list_input:
+
+                if annotation_file.upper() == "ALL" or annotation_file.upper().startswith("ALL:"):
+
+                    # check ALL parameters (formats, releases)
                     annotation_file_split = annotation_file.split(":")
+                    database_formats = ["parquet"]
+                    database_releases = ["current"]
                     if len(annotation_file_split) > 1:
-                        annotation_file_annotation = annotation_file_split[1]
-                        param["annotation"]["annovar"]["annotations"][annotation_file_annotation] = annotations
+                        database_formats = annotation_file_split[1].split("|")
+                    if len(annotation_file_split) > 2:
+                        database_releases = annotation_file_split[2].split("|")
 
-                # Annotation Exomiser
-                elif annotation_file.startswith("exomiser"):
-                    log.debug(f"Quick Annotation Exomiser")
-                    if "exomiser" not in param["annotation"]:
-                        param["annotation"]["exomiser"] = {}
-                    annotation_file_split = annotation_file.split(":")
-                    if len(annotation_file_split) > 1:
-                        annotation_file_options = annotation_file_split[1]
+                    # Scan for availabled databases
+                    log.info(f"Annotations - Check annotation parameters - Scan existing databases - Assembly {[assembly]} - Formats {database_formats} - Releases {database_releases}...")
+                    databases_infos_dict = databases_infos(database_folder_releases=database_releases, database_formats=database_formats, assembly=assembly, config=config)
+                    log.info(f"Annotations - Check annotation parameters - Scan existing databases - {len(databases_infos_dict)} databases found")
 
-                        annotation_file_options_split = annotation_file_options.split('|')
-                        log.debug(annotation_file_options_split)
-                        
-                        for annotation_file_options_split_option in annotation_file_options_split:
-                            log.debug(annotation_file_options_split_option)
-                            annotation_file_options_split_option_var_val = annotation_file_options_split_option.split("=")
-                            annotation_file_options_split_option_var = annotation_file_options_split_option_var_val[0].strip()
-                            annotation_file_options_split_option_val = annotation_file_options_split_option_var_val[1].strip()
-                            log.debug(annotation_file_options_split_option_val)
-                            log.debug(annotation_file_options_split_option_val)
-                            if annotation_file_options_split_option_val:
-                                if not annotation_file_options_split_option_val:
-                                    annotation_file_options_split_option_val = None
-                                else:
-                                    annotation_file_options_split_option_val = annotation_file_options_split_option_val.replace("+", ",").replace(" ", "")
-                                param["annotation"]["exomiser"][annotation_file_options_split_option_var] = annotation_file_options_split_option_val
+                    # Add found databases in annotation parameters
+                    for database_infos in databases_infos_dict.keys():
+                        annotations_list[database_infos] = {'INFO': None}
 
-                        log.debug(param["annotation"]["exomiser"])
-
-                # Annotation Parquet or BCFTOOLS
                 else:
+                    annotations_list[annotation_file] = annotations_list_input[annotation_file]
+            
+            # Check each databases
+            if len(annotations_list):
+
+                log.info(f"Annotations - Check annotation parameters - Check {len(annotations_list)} databases...")
+
+                for annotation_file in annotations_list:
+
+                    # Init
+                    annotations = annotations_list.get(
+                        annotation_file, None)
                     
-                    # Find file
-                    annotation_file_found = None
+                    # Annotation snpEff
+                    if annotation_file == "snpeff":
+                        log.debug(f"Quick Annotation snpEff")
+                        if "snpeff" not in param["annotation"]:
+                            param["annotation"]["snpeff"] = {}
+                        if "options" not in param["annotation"]["snpeff"]:
+                            param["annotation"]["snpeff"]["options"] = ""
+                    
+                    # Annotation Annovar
+                    elif annotation_file.startswith("annovar"):
+                        log.debug(f"Quick Annotation Annovar")
+                        if "annovar" not in param["annotation"]:
+                            param["annotation"]["annovar"] = {}
+                        if "annotations" not in param["annotation"]["annovar"]:
+                            param["annotation"]["annovar"]["annotations"] = {}
+                        annotation_file_split = annotation_file.split(":")
+                        if len(annotation_file_split) > 1:
+                            annotation_file_annotation = annotation_file_split[1]
+                            param["annotation"]["annovar"]["annotations"][annotation_file_annotation] = annotations
 
-                    if os.path.exists(annotation_file):
-                        annotation_file_found = annotation_file
+                    # Annotation Exomiser
+                    elif annotation_file.startswith("exomiser"):
+                        log.debug(f"Quick Annotation Exomiser")
+                        if "exomiser" not in param["annotation"]:
+                            param["annotation"]["exomiser"] = {}
+                        annotation_file_split = annotation_file.split(":")
+                        if len(annotation_file_split) > 1:
+                            annotation_file_options = annotation_file_split[1]
 
+                            annotation_file_options_split = annotation_file_options.split('|')
+                            log.debug(annotation_file_options_split)
+                            
+                            for annotation_file_options_split_option in annotation_file_options_split:
+                                log.debug(annotation_file_options_split_option)
+                                annotation_file_options_split_option_var_val = annotation_file_options_split_option.split("=")
+                                annotation_file_options_split_option_var = annotation_file_options_split_option_var_val[0].strip()
+                                annotation_file_options_split_option_val = annotation_file_options_split_option_var_val[1].strip()
+                                log.debug(annotation_file_options_split_option_val)
+                                log.debug(annotation_file_options_split_option_val)
+                                if annotation_file_options_split_option_val:
+                                    if not annotation_file_options_split_option_val:
+                                        annotation_file_options_split_option_val = None
+                                    else:
+                                        annotation_file_options_split_option_val = annotation_file_options_split_option_val.replace("+", ",").replace(" ", "")
+                                    param["annotation"]["exomiser"][annotation_file_options_split_option_var] = annotation_file_options_split_option_val
+
+                            log.debug(param["annotation"]["exomiser"])
+
+                    # Annotation Parquet or BCFTOOLS
                     else:
-                        # Find within assembly folders
-                        for annotations_database in annotations_databases:
-                            found_files = find_all(annotation_file, os.path.join(annotations_database, assembly))
-                            if len(found_files) > 0:
-                                annotation_file_found = found_files[0]
-                                break
-                        if not annotation_file_found and not assembly:
-                            # Find within folders
+                        
+                        # Find file
+                        annotation_file_found = None
+
+                        if os.path.exists(annotation_file):
+                            annotation_file_found = annotation_file
+
+                        else:
+                            # Find within assembly folders
                             for annotations_database in annotations_databases:
-                                found_files = find_all(annotation_file, annotations_database)
+                                found_files = find_all(annotation_file, os.path.join(annotations_database, assembly))
                                 if len(found_files) > 0:
                                     annotation_file_found = found_files[0]
                                     break
-                    log.debug(f"for {annotation_file} annotation_file_found={annotation_file_found}")
+                            if not annotation_file_found and not assembly:
+                                # Find within folders
+                                for annotations_database in annotations_databases:
+                                    found_files = find_all(annotation_file, annotations_database)
+                                    if len(found_files) > 0:
+                                        annotation_file_found = found_files[0]
+                                        break
+                        log.debug(f"for {annotation_file} annotation_file_found={annotation_file_found}")
 
-                    if annotation_file_found:
+                        if annotation_file_found:
 
-                        database = Database(database=annotation_file_found)
-                        quick_annotation_format = database.get_format()
+                            database = Database(database=annotation_file_found)
+                            quick_annotation_format = database.get_format()
+                            quick_annotation_is_compressed = database.is_compressed()
+                            quick_annotation_is_indexed = os.path.exists(f"{annotation_file_found}.tbi")
+                            bcftools_preference = True
 
-                        # Check Annotation Tool
-                        annotation_tool = None
-                        if quick_annotation_format in ["tsv", "tsv", "csv", "json", "tbl", "parquet", "duckdb"]:
-                            annotation_tool = "parquet"
-                        elif quick_annotation_format in ["vcf", "bed"]:
-                            annotation_tool = "bcftools"
+                            # Check Annotation Tool
+                            annotation_tool = None
+                            if bcftools_preference and quick_annotation_format in ["vcf", "bed"] and quick_annotation_is_compressed and quick_annotation_is_indexed:
+                                annotation_tool = "bcftools"
+                            elif quick_annotation_format in ["vcf", "bed", "tsv", "tsv", "csv", "json", "tbl", "parquet", "duckdb"]:
+                                annotation_tool = "parquet"
+                            else:
+                                log.error(
+                                    f"Quick Annotation File {annotation_file_found} - Format {quick_annotation_format} not supported yet")
+                                raise ValueError(
+                                    f"Quick Annotation File {annotation_file_found} - Format {quick_annotation_format} not supported yet"
+                                )
+                            
+                            log.debug(f"Quick Annotation File {annotation_file} - Annotation tool: {annotation_tool}")
+                            
+                            # Annotation Tool dispatch
+                            if annotation_tool:
+                                if annotation_tool not in param["annotation"]:
+                                    param["annotation"][annotation_tool] = {}
+                                if "annotations" not in param["annotation"][annotation_tool]:
+                                    param["annotation"][annotation_tool]["annotations"] = {}
+                                param["annotation"][annotation_tool]["annotations"][annotation_file_found] = annotations
+
                         else:
-                            log.error(
-                                f"Quick Annotation File {annotation_file_found} - Format {quick_annotation_format} not supported yet")
-                            raise ValueError(
-                                f"Quick Annotation File {annotation_file_found} - Format {quick_annotation_format} not supported yet"
-                            )
-                        
-                        log.debug(f"Quick Annotation File {annotation_file} - Annotation tool: {annotation_tool}")
-                        
-                        # Annotation Tool dispatch
-                        if annotation_tool:
-                            if annotation_tool not in param["annotation"]:
-                                param["annotation"][annotation_tool] = {}
-                            if "annotations" not in param["annotation"][annotation_tool]:
-                                param["annotation"][annotation_tool]["annotations"] = {}
-                            param["annotation"][annotation_tool]["annotations"][annotation_file_found] = annotations
+                            log.error(f"Quick Annotation File {annotation_file} does NOT exist")
 
-                    else:
-                        log.error(f"Quick Annotation File {annotation_file} does NOT exist")
-
-            self.set_param(param)
+                self.set_param(param)
 
         if param.get("annotation", None):
             log.info("Annotations")
@@ -2593,14 +2637,27 @@ class Variants:
                 db_file = database.get_database()
                 db_hdr_file = database.get_header_file()
                 db_file_type = database.get_format()
+                db_tbi_file = f"{db_file}.tbi"
+                db_file_compressed = database.is_compressed()
 
-                # if not db_file or (not db_hdr_file and db_file_format not in ["gz"]):
-                if not db_file or not db_hdr_file:
-                    log.error("Annotation failed: file not found")
+                # Check if compressed
+                if not db_file_compressed:
+                    log.error(f"Annotation '{annotation}' - {db_file} NOT compressed file")
+                    raise ValueError(f"Annotation '{annotation}' - {db_file} NOT compressed file")
+
+                # Check if indexed
+                if not os.path.exists(db_tbi_file):
+                    log.error(f"Annotation '{annotation}' - {db_file} NOT indexed file")
+                    raise ValueError(f"Annotation '{annotation}' - {db_file} NOT indexed file")
+
+                # Check index - try to create if not exists
+                if not os.path.exists(db_file) or not os.path.exists(db_hdr_file):
+                    log.error("Annotation failed: database not valid")
                     log.error(f"Annotation annotation file: {db_file}")
                     log.error(f"Annotation annotation header: {db_hdr_file}")
+                    log.error(f"Annotation annotation index: {db_tbi_file}")
                     raise ValueError(
-                        f"Annotation failed: databases not found - annotation file {db_file} / annotation header {db_hdr_file}")
+                        f"Annotation failed: database not valid - annotation file {db_file} / annotation header {db_hdr_file} / annotation index {db_tbi_file} / annotation compression {db_file_compressed}")
                 else:
 
                     log.debug(
