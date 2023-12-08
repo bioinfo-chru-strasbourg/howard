@@ -1908,7 +1908,6 @@ class Variants:
         existing_columns_header = database.get_header_columns_from_database()
 
         # Export file
-        #database.export(output_database=output_file, existing_columns_header=existing_columns_header, parquet_partitions=parquet_partitions, threads=threads, sort=sort, index=index, header_in_output=header_in_output, order_by=order_by)
         database.export(output_database=output_file, output_header=output_header, existing_columns_header=existing_columns_header, parquet_partitions=parquet_partitions, chunk_size=chunk_size, threads=threads, sort=sort, index=index, header_in_output=header_in_output, order_by=order_by, query=query)
         
         # Remove
