@@ -128,6 +128,7 @@ def main() -> None:
         memory = f"{mem_default}G"
 
     # chunk_size
+    chunk_size = DEFAULT_CHUNK_SIZE
     if "chunk_size" in args and args.chunk_size:
         chunk_size = int(args.chunk_size)
 

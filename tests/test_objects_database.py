@@ -603,6 +603,11 @@ def test_set_header():
     assert database.header
     assert list(database.header.infos) == ["nci60"]
 
+    # Set partition vcf gz
+    database = Database(database=database_files.get("partition_vcf_gz"))
+    assert database.header
+    assert list(database.header.infos) == ["nci60"]
+
     # Set vcf without header
     database = Database(database=database_files.get("vcf_without_header"))
     assert database.header
@@ -665,6 +670,7 @@ def test_get_format():
     # Check vcf
     assert database.get_format(database_files.get("vcf")) == "vcf"
     assert database.get_format(database_files.get("vcf_gz")) == "vcf"
+    assert database.get_format(database_files.get("partition_vcf_gz")) == "vcf"
 
     # Check tsv
     assert database.get_format(database_files.get("tsv")) == "tsv"
@@ -710,6 +716,7 @@ def test_get_is_compressed():
     # Check vcf
     assert not database.is_compressed(database_files.get("vcf"))
     assert database.is_compressed(database_files.get("vcf_gz"))
+    assert not database.is_compressed(database_files.get("partition_vcf_gz"))
 
     # Check tsv
     assert not database.is_compressed(database_files.get("tsv"))
@@ -755,6 +762,7 @@ def test_get_type():
     # Check vcf
     assert database.get_type(database_files.get("vcf")) == "variants"
     assert database.get_type(database_files.get("vcf_gz")) == "variants"
+    assert database.get_type(database_files.get("partition_vcf_gz")) == "variants"
 
     # Check tsv
     assert database.get_type(database_files.get("tsv")) == "variants"
@@ -802,6 +810,7 @@ def test_is_vcf():
     # Check vcf
     assert database.is_vcf(database_files.get("vcf"))
     assert database.is_vcf(database_files.get("vcf_gz"))
+    assert database.is_vcf(database_files.get("partition_vcf_gz"))
 
     # Check tsv
     assert database.is_vcf(database_files.get("tsv"))
@@ -825,52 +834,6 @@ def test_is_vcf():
     # Check None
     assert not database.is_vcf(None)
 
-
-def test_is_compressed():
-    """
-    This function test is a database is a vcf (contains all needed columns)
-    """
-
-    # Create object
-    database = Database(database_files.get("vcf"))
-
-    # Check duckdb
-    assert not database.is_compressed()
-
-    # Create object
-    database = Database()
-
-    # Check parquet
-    assert not database.is_compressed(database_files.get("parquet"))
-
-    # Check duckdb
-    assert not database.is_compressed(database_files.get("duckdb"))
-
-    # Check vcf
-    assert not database.is_compressed(database_files.get("vcf"))
-    assert database.is_compressed(database_files.get("vcf_gz"))
-
-    # Check tsv
-    assert not database.is_compressed(database_files.get("tsv"))
-    assert database.is_compressed(database_files.get("tsv_gz"))
-    assert not database.is_compressed(database_files.get("tsv_alternative_columns"))
-    assert not database.is_compressed(database_files.get("tsv_failed_columns"))
-    assert not database.is_compressed(database_files.get("tsv_lower_columns"))
-
-    # Check csv
-    assert not database.is_compressed(database_files.get("csv"))
-    assert database.is_compressed(database_files.get("csv_gz"))
-
-    # Check json
-    assert not database.is_compressed(database_files.get("json"))
-    assert database.is_compressed(database_files.get("json_gz"))
-
-    # Check bed
-    assert not database.is_compressed(database_files.get("bed"))
-    assert database.is_compressed(database_files.get("bed_gz"))
-
-    # Check None
-    assert not database.is_compressed(None)
 
 
 def test_get_database_tables():
@@ -1006,25 +969,28 @@ def test_get_sql_from():
     assert database.get_sql_from(database_files.get("parquet")) ==  f"""read_parquet('{database_files.get("parquet")}')"""
 
     # Check vcf # , compression='none'
-    assert database.get_sql_from(database_files.get("vcf")) == f"""read_csv('{database_files.get("vcf")}', names=['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='none', skip=36, delim='\t')"""
+    assert database.get_sql_from(database_files.get("vcf")) == f"""read_csv('{database_files.get("vcf")}', names=['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='none', skip=36, delim='\t', hive_partitioning=0)"""
 
     # Check vcf gz
-    assert database.get_sql_from(database_files.get("vcf_gz")) == f"""read_csv('{database_files.get("vcf_gz")}', names=['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='gzip', skip=36, delim='\t')"""
+    assert database.get_sql_from(database_files.get("vcf_gz")) == f"""read_csv('{database_files.get("vcf_gz")}', names=['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='gzip', skip=36, delim='\t', hive_partitioning=0)"""
+
+    # Check partition vcf gz
+    assert database.get_sql_from(database_files.get("partition_vcf_gz")) == f"""read_csv('{database_files.get("partition_vcf_gz")}/*/*csv', names=['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='gzip', skip=0, delim='\t', hive_partitioning=1)"""
 
     # Check tsv
-    assert database.get_sql_from(database_files.get("tsv")) == f"""read_csv('{database_files.get("tsv")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='none', skip=36, delim='\t')"""
+    assert database.get_sql_from(database_files.get("tsv")) == f"""read_csv('{database_files.get("tsv")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='none', skip=36, delim='\t', hive_partitioning=0)"""
 
     # Check tsv gz
-    assert database.get_sql_from(database_files.get("tsv_gz")) == f"""read_csv('{database_files.get("tsv_gz")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='gzip', skip=36, delim='\t')"""
+    assert database.get_sql_from(database_files.get("tsv_gz")) == f"""read_csv('{database_files.get("tsv_gz")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='gzip', skip=36, delim='\t', hive_partitioning=0)"""
 
     # Check csv
-    assert database.get_sql_from(database_files.get("csv")) == f"""read_csv('{database_files.get("csv")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='none', skip=0, delim=',')"""
+    assert database.get_sql_from(database_files.get("csv")) == f"""read_csv('{database_files.get("csv")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='none', skip=0, delim=',', hive_partitioning=0)"""
 
     # Check tbl
-    assert database.get_sql_from(database_files.get("tbl")) == f"""read_csv('{database_files.get("tbl")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='none', skip=0, delim='|')"""
+    assert database.get_sql_from(database_files.get("tbl")) == f"""read_csv('{database_files.get("tbl")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='none', skip=0, delim='|', hive_partitioning=0)"""
 
     # Check bed
-    assert database.get_sql_from(database_files.get("bed")) == f"""read_csv('{database_files.get("bed")}', names=['#CHROM', 'START', 'END', 'annot1', 'annot2'], auto_detect=True, compression='none', skip=33, delim='\t')"""
+    assert database.get_sql_from(database_files.get("bed")) == f"""read_csv('{database_files.get("bed")}', names=['#CHROM', 'START', 'END', 'annot1', 'annot2'], auto_detect=True, compression='none', skip=33, delim='\t', hive_partitioning=0)"""
 
     # Check json
     assert database.get_sql_from(database_files.get("json")) == f"""read_json('{database_files.get("json")}', auto_detect=True)"""
@@ -1109,6 +1075,16 @@ def test_get_sql_database_link():
     database = Database()
     sql_database_link = database.get_sql_database_link(database=database_files.get("vcf_gz"))
     sql_database_attach = database.get_sql_database_attach(database=database_files.get("vcf_gz"), output="query")
+    assert sql_database_link
+    assert not sql_database_attach
+    if sql_database_attach:
+        database.conn.query(sql_database_attach)
+    assert len(database.conn.query(f""" SELECT * FROM {sql_database_link} """).df())
+
+    # Check partition vcf gz
+    database = Database()
+    sql_database_link = database.get_sql_database_link(database=database_files.get("partition_vcf_gz"))
+    sql_database_attach = database.get_sql_database_attach(database=database_files.get("partition_vcf_gz"), output="query")
     assert sql_database_link
     assert not sql_database_attach
     if sql_database_attach:
@@ -1536,7 +1512,7 @@ def test_export():
         assert not database.export(output_database)
 
         # database input/format
-        for database_input_index in ["parquet", "partition_parquet", "vcf", "vcf_gz", "tsv", "csv", "tbl", "tsv_alternative_columns", "tsv_variants", "json", "example_vcf", "bed"]:
+        for database_input_index in ["parquet", "partition_parquet", "vcf", "vcf_gz", "partition_vcf_gz", "tsv", "csv", "tbl", "tsv_alternative_columns", "tsv_variants", "json", "example_vcf", "bed"]:
             for database_output_format in ["duckdb", "parquet", "partition_parquet", "vcf", "vcf.gz", "tsv", "csv", "tbl", "json", "bed"]:
                 parquet_partitions = None
                 # specific partition_parquet

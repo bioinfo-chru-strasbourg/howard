@@ -232,6 +232,9 @@ class Database:
         elif not os.path.exists(header_file):
             return []
 
+        elif os.path.isdir(header_file):
+            return []
+        
         else:
 
             header_file_compressed = get_file_compressed(header_file)
@@ -1124,9 +1127,14 @@ class Database:
 
         sql_form = None
 
+        # Connexion
         if type(database) == duckdb.DuckDBPyConnection:
             sql_form = self.get_database_table(database=database)
+
+        # Parquet
         elif database_format in ["parquet"]:
+
+            # Check for partition
             if os.path.isdir(database):
                 list_of_parquet = glob.glob(os.path.join(database,"**/*parquet"), recursive=True)
                 if list_of_parquet:
@@ -1135,11 +1143,18 @@ class Database:
                 else:
                     log.error(f"Input file '{database}' not a compatible partitionned parquet folder")
                     raise ValueError(f"Input file '{database}' not a compatible partitionned parquet folder")
+                
+            # No partition
             else:
                 sql_form = f"read_parquet('{database}')"
+
+        # CSV
         elif database_format in ["vcf","tsv", "csv", "tbl", "bed"]:
+
+            # Delimiter
             delimiter = SEP_TYPE.get(database_format,"\t")
-            # Check columns from file
+
+            # Check infos from database
             table_columns = self.get_table_columns_from_file(database=database, header_file=header_file)
             header_length = self.get_header_length(header_file=database)
             file_compressed = get_file_compressed(database)
@@ -1147,23 +1162,49 @@ class Database:
                 database_compression = "gzip"
             else:
                 database_compression = "none"
-            query = f"""
+            hive_partitioning = 0
+            database_ref = database
+
+            # Check for partition
+            if os.path.isdir(database):
+                list_of_parquet = glob.glob(os.path.join(database,"**/*csv"), recursive=True)
+                if list_of_parquet:
+                    database_compression = "gzip"
+                    hive_partitioning = 1
+                    list_of_parquet_level_path = "*/" * (list_of_parquet[0].replace(database, "").count('/')-1)
+                    database_ref = f"{database}/{list_of_parquet_level_path}*csv"
+                else:
+                    log.error(f"Input file '{database}' not a compatible partitionned parquet folder")
+                    raise ValueError(f"Input file '{database}' not a compatible partitionned parquet folder")
+                
+            # Query number of columns detected by duckdb
+            query_nb_columns_detected_by_duckdb = f"""
                     SELECT *
-                    FROM read_csv('{database}', auto_detect=True, compression='{database_compression}', skip={header_length}, delim='{delimiter}')
+                    FROM read_csv('{database_ref}', auto_detect=True, hive_partitioning={hive_partitioning}, compression='{database_compression}', skip={header_length}, delim='{delimiter}')
                     LIMIT 0
                 """
-            nb_columns_detected_by_duckdb = len(self.conn.query(query).df().columns)
+            nb_columns_detected_by_duckdb = len(self.conn.query(query_nb_columns_detected_by_duckdb).df().columns)
+
+            # Check table columns
             if not table_columns or (nb_columns_detected_by_duckdb != len(table_columns)):
                 # Check columns from header
                 table_columns = self.get_table_columns_from_format(database=database)
+
+            # If table columns
             if table_columns:
-                sql_form = f"""read_csv('{database}', names={table_columns}, auto_detect=True, compression='{database_compression}', skip={header_length}, delim='{delimiter}')"""
+                sql_form = f"""read_csv('{database_ref}', names={table_columns}, auto_detect=True, compression='{database_compression}', skip={header_length}, delim='{delimiter}', hive_partitioning={hive_partitioning})"""
             else:
-                sql_form = f"read_csv('{database}', auto_detect=True, compression='{database_compression}', skip={header_length}, delim='{delimiter}')"
+                sql_form = f"read_csv('{database_ref}', auto_detect=True, compression='{database_compression}', skip={header_length}, delim='{delimiter}', hive_partitioning={hive_partitioning})"
+
+        # JSON
         elif database_format in ["json"]:
             sql_form = f"read_json('{database}', auto_detect=True)"
+
+        # DuckDB
         elif database_format in ["duckdb"]:
             sql_form = f"'{database}'"
+
+        # SQLite
         elif database_format in ["sqlite"]:
             database_table = self.get_database_table(database=database)
             sql_form = f"(SELECT * FROM sqlite_scan('{database}', '{database_table}'))"
@@ -2161,24 +2202,6 @@ class Database:
                                         # Pyarrow write 
                                         pq.write_to_dataset(pa.Table.from_batches([d]), query_output_database_tmp, partition_cols=partition_by, use_threads=threads, existing_data_behavior='overwrite_or_ignore')
 
-                                    # # Partition by option
-                                    # if export_options.get("partition_by", None):
-
-                                    #     # Partition by fields
-                                    #     partition_by = export_options.get("partition_by")
-                                        
-                                    #     # Pyarrow write 
-                                    #     pq.write_to_dataset(pa.Table.from_batches([d]), query_output_database_tmp, partition_cols=partition_by, use_threads=threads, existing_data_behavior='overwrite_or_ignore')
-
-                                    # # per_thread_output option
-                                    # elif export_options.get("per_thread_output", False):
-
-                                    #     # per_thread_output option
-                                    #     per_thread_output = export_options.get("per_thread_output")
-                                        
-                                    #     # Pyarrow write 
-                                    #     pq.write_to_dataset(pa.Table.from_batches([d]), query_output_database_tmp, use_threads=threads, existing_data_behavior='overwrite_or_ignore')
-
                                     # Parquet in unique file
                                     else:
                                         writer.write_batch(d)
@@ -2287,3 +2310,7 @@ class Database:
             # Return if file exists
             return os.path.exists(output_database) and self.get_type(output_database)
 
+    # TODO
+    # partition with csv format
+    # COPY (    SELECT * FROM read_csv_auto('/databases/annotations/current/hg19/nci60.vcf.gz', auto_detect=True, compression='gzip', delim='\t', header=True)  ) TO '/databases/annotations/current/hg19/nci60.partition.vcf.gz' WITH (FORMAT CSV, DELIMITER '\t', HEADER, COMPRESSION 'gzip', partition_by ('#CHROM'))
+    

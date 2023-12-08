@@ -71,6 +71,7 @@ database_files = {
     "sqlite" : tests_annotations_folder + "/nci60.sqlite",
     "vcf" : tests_annotations_folder + "/nci60.vcf",
     "vcf_gz" : tests_annotations_folder + "/nci60.vcf.gz",
+    "partition_vcf_gz" : tests_annotations_folder + "/nci60.partition.vcf.gz",
     "vcf_without_header" : tests_annotations_folder + "/nci60.without_header.vcf",
     "vcf_gz_without_header" : tests_annotations_folder + "/nci60.without_header.vcf.gz",
     "tsv" : tests_annotations_folder + "/nci60.tsv",

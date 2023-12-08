@@ -73,8 +73,11 @@ file_format_delimiters = {
     "vcf": "\t",
     "tsv": "\t",
     "csv": ",",
-    "psv": "|"
+    "psv": "|",
+    "bed": "\t"
 }
+
+file_format_allowed = list(file_format_delimiters.keys()) + ["json", "parquet", "duckdb"]
 
 file_compressed_format = ["gz", "bgz"]
 
@@ -124,6 +127,9 @@ MACHIN_LIST = {
     "arm64": "arm64"
 }
 
+# bcftools format allowed 
+BCFTOOLS_FORMAT = ["vcf", "bed"]
+
 LOG_FORMAT = "#[%(asctime)s] [%(levelname)s] %(message)s"
 
 CODE_TYPE_MAP = {
@@ -133,7 +139,16 @@ CODE_TYPE_MAP = {
             "Flag": 3
         }
 
+GENOTYPE_MAP = {
+            None: ".",
+            -1: "A",
+            -2: "G",
+            -3: "R"
+        }
+
 DTYPE_LIMIT_AUTO = 10000
+
+DEFAULT_CHUNK_SIZE = 1024*1024
 
 def remove_if_exists(filepaths: list) -> None:
     """
