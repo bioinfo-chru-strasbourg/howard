@@ -1106,7 +1106,7 @@ class Database:
         return variants_columns_found
 
 
-    def get_sql_from(self, database:str = None, header_file:str = None) -> str:
+    def get_sql_from(self, database:str = None, header_file:str = None, sample_size:int = 20480) -> str:
         """
         This function returns a SQL query string based on the input database format.
         
@@ -1180,7 +1180,7 @@ class Database:
             # Query number of columns detected by duckdb
             query_nb_columns_detected_by_duckdb = f"""
                     SELECT *
-                    FROM read_csv('{database_ref}', auto_detect=True, hive_partitioning={hive_partitioning}, compression='{database_compression}', skip={header_length}, delim='{delimiter}')
+                    FROM read_csv('{database_ref}', auto_detect=True, hive_partitioning={hive_partitioning}, compression='{database_compression}', skip={header_length}, delim='{delimiter}', sample_size={sample_size})
                     LIMIT 0
                 """
             nb_columns_detected_by_duckdb = len(self.conn.query(query_nb_columns_detected_by_duckdb).df().columns)
@@ -1192,13 +1192,13 @@ class Database:
 
             # If table columns
             if table_columns:
-                sql_form = f"""read_csv('{database_ref}', names={table_columns}, auto_detect=True, compression='{database_compression}', skip={header_length}, delim='{delimiter}', hive_partitioning={hive_partitioning})"""
+                sql_form = f"""read_csv('{database_ref}', names={table_columns}, auto_detect=True, compression='{database_compression}', skip={header_length}, delim='{delimiter}', hive_partitioning={hive_partitioning}, sample_size={sample_size})"""
             else:
-                sql_form = f"read_csv('{database_ref}', auto_detect=True, compression='{database_compression}', skip={header_length}, delim='{delimiter}', hive_partitioning={hive_partitioning})"
+                sql_form = f"read_csv('{database_ref}', auto_detect=True, compression='{database_compression}', skip={header_length}, delim='{delimiter}', hive_partitioning={hive_partitioning}, sample_size={sample_size})"
 
         # JSON
         elif database_format in ["json"]:
-            sql_form = f"read_json('{database}', auto_detect=True)"
+            sql_form = f"read_json('{database}', auto_detect=True, sample_size={sample_size})"
 
         # DuckDB
         elif database_format in ["duckdb"]:
@@ -1890,6 +1890,7 @@ class Database:
             include_header = False
             post_process = False
             order_by_sql = ""
+            post_process_just_move = False
 
             # export options
             export_options = {}
@@ -1962,15 +1963,6 @@ class Database:
                 export_options = {
                     "format": "PARQUET",
                 }
-                if parquet_partitions:
-                    parquet_partitions_clean = []
-                    parquet_partitions_array = []
-                    for parquet_partition in parquet_partitions:
-                        parquet_partitions_array.append(parquet_partition.translate( { '"': None, "'": None, " ": None } ))
-                        parquet_partitions_clean.append('"'+parquet_partition.translate( { '"': None, "'": None, " ": None } )+'"')
-                    parquet_partitions_by = ",".join(parquet_partitions_clean)
-                    query_export_format += f", PARTITION_BY ({parquet_partitions_by}), OVERWRITE_OR_IGNORE"
-                    export_options["partition_by"] = parquet_partitions_array
                 include_header = False
                 post_process = True
 
@@ -2019,6 +2011,20 @@ class Database:
                 remove_if_exists([database_export_parquet_file])
 
                 return os.path.exists(output_database)
+
+            # Partition
+            if parquet_partitions:
+                parquet_partitions_clean = []
+                parquet_partitions_array = []
+                for parquet_partition in parquet_partitions:
+                    parquet_partitions_array.append(parquet_partition.translate( { '"': None, "'": None, " ": None } ))
+                    parquet_partitions_clean.append('"'+parquet_partition.translate( { '"': None, "'": None, " ": None } )+'"')
+                parquet_partitions_by = ",".join(parquet_partitions_clean)
+                query_export_format += f", PARTITION_BY ({parquet_partitions_by}), OVERWRITE_OR_IGNORE"
+                export_options["partition_by"] = parquet_partitions_array
+                if export_options.get("format", None) == "CSV":
+                    export_mode = "duckdb"
+                    post_process_just_move = True
 
             # Construct query columns
             query_columns = []
@@ -2269,7 +2275,7 @@ class Database:
                     input_files.append(query_output_database_tmp)
                     
                     # Output with concat and compress
-                    if export_mode == "duckdb" or (compressed and export_options.get("compression", None) == "bgzip") or sort or index:
+                    if not post_process_just_move and (export_mode == "duckdb" or (compressed and export_options.get("compression", None) == "bgzip") or sort or index):
                         
                         # Compression type
                         if not compressed:
@@ -2309,8 +2315,3 @@ class Database:
             
             # Return if file exists
             return os.path.exists(output_database) and self.get_type(output_database)
-
-    # TODO
-    # partition with csv format
-    # COPY (    SELECT * FROM read_csv_auto('/databases/annotations/current/hg19/nci60.vcf.gz', auto_detect=True, compression='gzip', delim='\t', header=True)  ) TO '/databases/annotations/current/hg19/nci60.partition.vcf.gz' WITH (FORMAT CSV, DELIMITER '\t', HEADER, COMPRESSION 'gzip', partition_by ('#CHROM'))
-    

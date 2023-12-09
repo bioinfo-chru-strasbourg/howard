@@ -330,7 +330,7 @@ class Variants:
                     with open(config.get("header_file"), 'rt') as f:
                         header_list = self.read_vcf_header(f)
                 # within a vcf file format (header within input file itsself)
-                elif input_format in ["vcf", "hdr"]:
+                elif input_format in ["vcf", "hdr"] and not os.path.isdir(input_file):
                     # within a compressed vcf file format (.vcf.gz)
                     if input_compressed:
                         with bgzf.open(input_file, 'rt') as f:
@@ -1132,130 +1132,105 @@ class Variants:
 
         # Load data
         log.debug(f"Load Data from {input_format}")
-        if input_format in ["vcf", "tsv", "csv", "psv"]:
+
+        # DuckDB connexion
+        if connexion_format in ["duckdb"]:
+
+            # Database already exists
+            if self.input_format in ["db", "duckdb"]:
+
+                if connexion_format in ["duckdb"]:
+                    log.debug(f"Input file format '{self.input_format}' duckDB")
+                else:
+                    log.error(f"Input file format '{self.input_format}' not compatilbe with database format '{connexion_format}'")
+                    raise ValueError(f"Input file format '{self.input_format}' not compatilbe with database format '{connexion_format}'")
+
+            # Load from existing database format
+            else:
+
+                try:
+                    # Create Table or View
+                    database = Database(database=self.input)
+                    sql_from = database.get_sql_from(sample_size=sample_size)
+
+                    if access in ["RO"]:
+                        sql_load = f"CREATE VIEW {table_variants} AS SELECT * FROM {sql_from}"
+                    else:
+                        sql_load = f"CREATE TABLE {table_variants} AS SELECT * FROM {sql_from}"
+                    self.conn.execute(sql_load)
+
+                except:
+                    # Format not available
+                    log.error(f"Input file format '{self.input_format}' not available")
+                    raise ValueError(f"Input file format '{self.input_format}' not available")
+
+        # SQLite connexion
+        elif connexion_format in ["sqlite"] and input_format in ["vcf", "tsv", "csv", "psv"]:
+
+            # Main structure
+            structure = {
+                "#CHROM": "VARCHAR",
+                "POS": "INTEGER",
+                "ID": "VARCHAR",
+                "REF": "VARCHAR",
+                "ALT": "VARCHAR",
+                "QUAL": "VARCHAR",
+                "FILTER": "VARCHAR",
+                "INFO": "VARCHAR",
+            }
+
+            # Strcuture with samples
+            structure_complete = structure
+            if self.get_header_sample_list():
+                structure["FORMAT"] = "VARCHAR"
+                for sample in self.get_header_sample_list():
+                    structure_complete[sample] = "VARCHAR"
+
+            # Columns list for create and insert
+            sql_create_table_columns = []
+            sql_create_table_columns_list = []
+            for column in structure_complete:
+                column_type = structure_complete[column]
+                sql_create_table_columns.append(f"\"{column}\" {column_type} default NULL")
+                sql_create_table_columns_list.append(f"\"{column}\"")
+
+            # Create database
+            log.debug(f"Create Table {table_variants}")
+            sql_create_table_columns_sql = ", ".join(sql_create_table_columns)
+            sql_create_table_columns_list_sql = ", ".join(
+                sql_create_table_columns_list)
+            sql_create_table = f"CREATE TABLE IF NOT EXISTS {table_variants} ({sql_create_table_columns_sql})"
+            self.conn.execute(sql_create_table)
+
+            # chunksize define length of file chunk load file
+            chunksize = 100000
 
             # delimiter
             delimiter = file_format_delimiters.get(input_format, "\t")
 
-            # Skip header lines
-            skip = self.get_header_length(file=self.input)
+            # Load the input file
+            with open(self.input, "rt") as input_file:
 
-            if connexion_format in ["duckdb"]:
-                if access in ["RO"]:
-                    sql_vcf = f"""
-                    CREATE VIEW {table_variants} AS
-                        SELECT *
-                        FROM read_csv('{self.input}', auto_detect=True, skip={skip}, delim='{delimiter}', sample_size={sample_size}, compression={input_compressed_format})
-                    """
+                # Use the appropriate file handler based on the input format
+                if input_compressed:
+                    input_file = bgzf.open(self.input, "rt")
+                if input_format in ["vcf"]:
+                    header_len = self.get_header_length()
                 else:
-                    sql_vcf = f"""
-                    CREATE TABLE {table_variants} AS 
-                        SELECT *
-                        FROM read_csv('{self.input}', auto_detect=True, skip={skip}, delim='{delimiter}', sample_size={sample_size}, compression={input_compressed_format})
-                    """
-                self.conn.execute(sql_vcf)
+                    header_len = 0
 
-            elif connexion_format in ["sqlite"]:
-
-                # Main structure
-                structure = {
-                    "#CHROM": "VARCHAR",
-                    "POS": "INTEGER",
-                    "ID": "VARCHAR",
-                    "REF": "VARCHAR",
-                    "ALT": "VARCHAR",
-                    "QUAL": "VARCHAR",
-                    "FILTER": "VARCHAR",
-                    "INFO": "VARCHAR",
-                }
-
-                # Strcuture with samples
-                structure_complete = structure
-                if self.get_header_sample_list():
-                    structure["FORMAT"] = "VARCHAR"
-                    for sample in self.get_header_sample_list():
-                        structure_complete[sample] = "VARCHAR"
-
-                # Columns list for create and insert
-                sql_create_table_columns = []
-                sql_create_table_columns_list = []
-                for column in structure_complete:
-                    column_type = structure_complete[column]
-                    sql_create_table_columns.append(f"\"{column}\" {column_type} default NULL")
-                    sql_create_table_columns_list.append(f"\"{column}\"")
-
-                # Create database
-                log.debug(f"Create Table {table_variants}")
-                sql_create_table_columns_sql = ", ".join(sql_create_table_columns)
-                sql_create_table_columns_list_sql = ", ".join(
-                    sql_create_table_columns_list)
-                sql_create_table = f"CREATE TABLE IF NOT EXISTS {table_variants} ({sql_create_table_columns_sql})"
-                self.conn.execute(sql_create_table)
-
-                # chunksize define length of file chunk load file
-                chunksize = 100000
-
-                # delimiter
-                delimiter = file_format_delimiters.get(input_format, "\t")
-
-                # Load the input file
-                with open(self.input, "rt") as input_file:
-                    # Use the appropriate file handler based on the input format
-                    if input_compressed:
-                        input_file = bgzf.open(self.input, "rt")
-                    if input_format in ["vcf"]:
-                        header_len = self.get_header_length()
-                    else:
-                        header_len = 0
-
-                    # Insert the file contents into a table
-                    self.insert_file_to_table(
-                        input_file,
-                        columns=sql_create_table_columns_list_sql,
-                        header_len=header_len,
-                        sep=delimiter,
-                        chunksize=chunksize,
-                    )
-
-        elif self.input_format in ["parquet"]:
-
-            # Load Parquet
-            if connexion_format in ["duckdb"]:
-
-                if os.path.isdir(self.input):
-                    list_of_parquet = glob.glob(os.path.join(self.input,"**/*parquet"), recursive=True)
-                    if list_of_parquet:
-                        list_of_parquet_level_path = "*/" * (list_of_parquet[0].replace(self.input, "").count('/')-1)
-                        sql_form = f"read_parquet('{self.input}/{list_of_parquet_level_path}*parquet', hive_partitioning=1)"
-                    else:
-                        log.error(f"Input file '{self.input}' not a compatible partitionned parquet folder")
-                        raise ValueError(f"Input file '{self.input}' not a compatible partitionned parquet folder")
-                else:
-                    sql_form = f"read_parquet('{self.input}')"
-
-                if access in ["RO"]:
-                    sql_parquet = f"CREATE VIEW {table_variants} AS SELECT * FROM {sql_form}"
-                else:
-                    sql_parquet = f"CREATE TABLE {table_variants} AS SELECT * FROM {sql_form}"
-
-                self.conn.execute(sql_parquet)
-
-            else:
-                log.error(f"Input file format '{self.input_format}' not compatilbe with database format '{connexion_format}'")
-                raise ValueError(f"Input file format '{self.input_format}' not compatilbe with database format '{connexion_format}'")
-
-
-        elif self.input_format in ["db", "duckdb"]:
-
-            if connexion_format in ["duckdb"]:
-                log.debug(f"Input file format '{self.input_format}' duckDB")
-            else:
-                log.error(f"Input file format '{self.input_format}' not compatilbe with database format '{connexion_format}'")
-                raise ValueError(f"Input file format '{self.input_format}' not compatilbe with database format '{connexion_format}'")
+                # Insert the file contents into a table
+                self.insert_file_to_table(
+                    input_file,
+                    columns=sql_create_table_columns_list_sql,
+                    header_len=header_len,
+                    sep=delimiter,
+                    chunksize=chunksize,
+                )
 
         else:
-            log.error(f"Input file format '{self.input_format}' not available")
-            raise ValueError(f"Input file format '{self.input_format}' not available")
+            log.error(f"Connexion format '{connexion_format}' not available with format '{input_format}'")
+            raise ValueError(f"Connexion format '{connexion_format}' not available with format '{input_format}'")
 
         # Explode INFOS fields into table fields
         if self.get_explode_infos():

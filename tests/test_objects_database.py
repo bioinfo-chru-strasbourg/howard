@@ -969,31 +969,31 @@ def test_get_sql_from():
     assert database.get_sql_from(database_files.get("parquet")) ==  f"""read_parquet('{database_files.get("parquet")}')"""
 
     # Check vcf # , compression='none'
-    assert database.get_sql_from(database_files.get("vcf")) == f"""read_csv('{database_files.get("vcf")}', names=['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='none', skip=36, delim='\t', hive_partitioning=0)"""
+    assert database.get_sql_from(database_files.get("vcf")) == f"""read_csv('{database_files.get("vcf")}', names=['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='none', skip=36, delim='\t', hive_partitioning=0, sample_size=20480)"""
 
     # Check vcf gz
-    assert database.get_sql_from(database_files.get("vcf_gz")) == f"""read_csv('{database_files.get("vcf_gz")}', names=['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='gzip', skip=36, delim='\t', hive_partitioning=0)"""
+    assert database.get_sql_from(database_files.get("vcf_gz")) == f"""read_csv('{database_files.get("vcf_gz")}', names=['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='gzip', skip=36, delim='\t', hive_partitioning=0, sample_size=20480)"""
 
     # Check partition vcf gz
-    assert database.get_sql_from(database_files.get("partition_vcf_gz")) == f"""read_csv('{database_files.get("partition_vcf_gz")}/*/*csv', names=['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='gzip', skip=0, delim='\t', hive_partitioning=1)"""
+    assert database.get_sql_from(database_files.get("partition_vcf_gz")) == f"""read_csv('{database_files.get("partition_vcf_gz")}/*/*csv', names=['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='gzip', skip=0, delim='\t', hive_partitioning=1, sample_size=20480)"""
 
     # Check tsv
-    assert database.get_sql_from(database_files.get("tsv")) == f"""read_csv('{database_files.get("tsv")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='none', skip=36, delim='\t', hive_partitioning=0)"""
+    assert database.get_sql_from(database_files.get("tsv")) == f"""read_csv('{database_files.get("tsv")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='none', skip=36, delim='\t', hive_partitioning=0, sample_size=20480)"""
 
     # Check tsv gz
-    assert database.get_sql_from(database_files.get("tsv_gz")) == f"""read_csv('{database_files.get("tsv_gz")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='gzip', skip=36, delim='\t', hive_partitioning=0)"""
+    assert database.get_sql_from(database_files.get("tsv_gz")) == f"""read_csv('{database_files.get("tsv_gz")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='gzip', skip=36, delim='\t', hive_partitioning=0, sample_size=20480)"""
 
     # Check csv
-    assert database.get_sql_from(database_files.get("csv")) == f"""read_csv('{database_files.get("csv")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='none', skip=0, delim=',', hive_partitioning=0)"""
+    assert database.get_sql_from(database_files.get("csv")) == f"""read_csv('{database_files.get("csv")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='none', skip=0, delim=',', hive_partitioning=0, sample_size=20480)"""
 
     # Check tbl
-    assert database.get_sql_from(database_files.get("tbl")) == f"""read_csv('{database_files.get("tbl")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='none', skip=0, delim='|', hive_partitioning=0)"""
+    assert database.get_sql_from(database_files.get("tbl")) == f"""read_csv('{database_files.get("tbl")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='none', skip=0, delim='|', hive_partitioning=0, sample_size=20480)"""
 
     # Check bed
-    assert database.get_sql_from(database_files.get("bed")) == f"""read_csv('{database_files.get("bed")}', names=['#CHROM', 'START', 'END', 'annot1', 'annot2'], auto_detect=True, compression='none', skip=33, delim='\t', hive_partitioning=0)"""
+    assert database.get_sql_from(database_files.get("bed")) == f"""read_csv('{database_files.get("bed")}', names=['#CHROM', 'START', 'END', 'annot1', 'annot2'], auto_detect=True, compression='none', skip=33, delim='\t', hive_partitioning=0, sample_size=20480)"""
 
     # Check json
-    assert database.get_sql_from(database_files.get("json")) == f"""read_json('{database_files.get("json")}', auto_detect=True)"""
+    assert database.get_sql_from(database_files.get("json")) == f"""read_json('{database_files.get("json")}', auto_detect=True, sample_size=20480)"""
 
     # Check None
     assert database.get_sql_from(None) == None
@@ -1513,11 +1513,15 @@ def test_export():
 
         # database input/format
         for database_input_index in ["parquet", "partition_parquet", "vcf", "vcf_gz", "partition_vcf_gz", "tsv", "csv", "tbl", "tsv_alternative_columns", "tsv_variants", "json", "example_vcf", "bed"]:
-            for database_output_format in ["duckdb", "parquet", "partition_parquet", "vcf", "vcf.gz", "tsv", "csv", "tbl", "json", "bed"]:
+            for database_output_format in ["duckdb", "parquet", "partition_parquet", "partition_vcf", "vcf", "vcf.gz", "tsv", "csv", "tbl", "json", "bed"]:
                 parquet_partitions = None
                 # specific partition_parquet
                 if database_output_format in ["partition_parquet"]:
                     database_output_format = "parquet"
+                    parquet_partitions = ["#CHROM"]
+                # specific partition_parquet
+                if database_output_format in ["partition_vcf"]:
+                    database_output_format = "vcf.gz"
                     parquet_partitions = ["#CHROM"]
                 input_database = database_files.get(database_input_index)
                 database = Database(database_files.get(database_input_index))
