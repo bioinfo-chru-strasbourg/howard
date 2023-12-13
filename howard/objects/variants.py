@@ -505,18 +505,15 @@ class Variants:
 
 
         ### Samples
-        nb_of_samples = len(self.get_header_sample_list())
-        if "FORMAT" in self.get_header_columns() and "DP" in header_formats_list:
-            stats["Infos"]["Number of samples"] = nb_of_samples
-        elif nb_of_samples:
-            stats["Infos"]["Number of samples"] = "not a VCF format"
 
+        # Init
         samples = {}
-        
+        nb_of_samples = 0
+
+        # Check Samples
         if "GT" in header_formats_list and "FORMAT" in self.get_header_columns():
-            i = 0
+            log.debug(f"Check samples...")
             for sample in self.get_header_sample_list():
-                i += 1
                 sql_query_samples = f"""
                     SELECT  '{sample}' as sample,
                             REGEXP_EXTRACT("{sample}", '^([0-9/|.]*)[:]*',1) as genotype,
@@ -525,18 +522,25 @@ class Variants:
                     FROM {table_variants_from}
                     WHERE (
                         regexp_matches("{sample}", '^[0-9]([/|][0-9])+')
+                        AND
+                        len(string_split(FORMAT, ':')) = len(string_split("{sample}", ':'))
                       )
                     GROUP BY genotype
                     """
-                if i > 5:
-                    break
                 sql_query_genotype_df = self.conn.execute(sql_query_samples).df()
                 sample_genotype_count = sql_query_genotype_df["count"].sum()
                 if len(sql_query_genotype_df):
+                    nb_of_samples += 1
                     samples[f"{sample} - {sample_genotype_count} variants"] = sql_query_genotype_df.to_dict(orient="index")
-            
-            stats["Samples"] = samples
 
+            stats["Samples"] = samples
+            stats["Infos"]["Number of samples"] = nb_of_samples
+
+        # # 
+        # if "FORMAT" in self.get_header_columns() and "DP" in header_formats_list:
+        #     stats["Infos"]["Number of samples"] = nb_of_samples
+        # elif nb_of_samples:
+        #     stats["Infos"]["Number of samples"] = "not a VCF format"
 
         ### INFO and FORMAT fields
         header_types_df = {}
