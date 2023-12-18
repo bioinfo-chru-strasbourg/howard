@@ -149,7 +149,12 @@ arguments = {
             "help": """Prioritization Score mode (see doc).\n"""
                     """available: HOWARD (increment score), VaRank (max score)\n"""
                     """default: HOWARD""",
-            "default": 'HOWARD'
+            "default": 'HOWARD',
+            "choices": ["HOWARD", "VaRank"],
+            "gooey": {
+                "widget": "Dropdown",
+                "options": {}
+            }
         },
 
         # Query print options
@@ -392,23 +397,37 @@ arguments = {
             "action": "store_true"
         },
         "codon_type": {
+            "metavar": "Codon type",
             "help": """Amino Acide Codon format type to use to generate HGVS annotation\n"""
                     """Available (default '3'):\n"""
                     """   '1': codon in 1 caracter (e.g. 'C', 'R')\n"""
                     """   '3': codon in 3 caracter (e.g. 'Cys', 'Arg')\n"""
                     """   'FULL': codon in full name (e.g. 'Cysteine', 'Arginine')\n""",
             "required": False,
-            "default": "3"
+            "default": "3",
+            "choices": ["1", "3", "FULL"],
+            "gooey": {
+                "widget": "Dropdown",
+                "options": {}
+            }
         },
         "refgene": {
+            "metavar": "refGene",
             "help": """refGene annotation file""",
             "required": False,
-            "default": ""
+            "default": "",
+            "gooey": {
+                "widget": "FileChooser"
+            }
         },
         "refseqlink": {
+            "metavar": "refSeqLink",
             "help": """refSeqLink annotation file""",
             "required": False,
-            "default": ""
+            "default": "",
+            "gooey": {
+                "widget": "FileChooser"
+            }
         },
 
         # Databases
@@ -779,7 +798,12 @@ arguments = {
                     """It is used to construct the dbSNP file name based on the assembly name.\n"""
                     """Default: {"hg19": "25", "hg38": "40"}""",
             "required": False,
-            "default": {"hg19": "25", "hg38": "40"}
+            "default": {"hg19": "25", "hg38": "40"},
+            "gooey": {
+                "options": {
+                    'initial_value': '{"hg19": "25", "hg38": "40"}'  
+                }
+            }
         },
         "download-dbsnp-vcf": {
             "help": """Generate well-formatted VCF from downloaded file:\n"""
@@ -957,13 +981,11 @@ arguments = {
                     """Available: CRITICAL, ERROR, WARNING, INFO, DEBUG or NOTSET\n"""
                     """Default: INFO""",
             "required": False,
-            #"choices": ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET'],
-            "default": "info",
+            "choices": ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET'],
+            "default": "INFO",
             "gooey": {
-                "widget": None,
-                "options": {
-                    
-                }
+                "widget": "Dropdown",
+                "options": {}
             }
         },
         "log": {
@@ -1082,7 +1104,8 @@ commands_arguments = {
         "groups": {
             "main": {
                 "input": True,
-                "output": False
+                "output": False,
+                "assembly": False
             },
             "HGVS": {
                 "use_gene": False,
@@ -1093,7 +1116,6 @@ commands_arguments = {
                 "codon_type": False
             },
             "Databases": {
-                "assembly": False,
                 "refgene": False,
                 "refseqlink": False,
             }
@@ -1314,7 +1336,7 @@ commands_arguments = {
 
 
 # get argument
-def get_argument(arguments:dict = {}, arg:str = "", required:bool = False, remove_infos:list = ["gooey"]) -> dict:
+def get_argument(arguments:dict = {}, arg:str = "", required:bool = False, remove_infos:list = ["gooey"], add_metavar:bool = False) -> dict:
     """
     The `get_argument` function retrieves information about a specific argument from a dictionary, and
     can also set its "required" status.
@@ -1347,6 +1369,8 @@ def get_argument(arguments:dict = {}, arg:str = "", required:bool = False, remov
             arg_infos.pop(arg_info, None)
         if required != None:
             arg_infos["required"] = required
+        if add_metavar and "metavar" not in arg_infos:
+            arg_infos["metavar"] = arg.replace("_", " ")
         return arg_infos
     else:
         return {}
