@@ -37,45 +37,71 @@ arguments = {
 
         # Process & other
         "input": {
-            "metavar": "FILE",
+            "metavar": "input",
             "help": "Input file path\nFormat: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB\nFiles can be compressesd (e.g. vcf.gz, tsv.gz)",
-            "required": False
+            "required": False,
+            "type": argparse.FileType('r'),
+            "gooey": {
+                "widget": "FileChooser"
+            }
         },
         "output": {
-            "metavar": "FILE",
+            "metavar": "output",
             "help": "Output file path\nFormat: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB\nFiles can be compressesd (e.g. vcf.gz, tsv.gz)",
-            "required": False
+            "required": False,
+            "type": argparse.FileType('w'),
+            "gooey": {
+                "widget": "FileSaver"
+            }
         },
         "param": {
-            "metavar": "JSON",
-            "help": "Parameters file\nFormat: JSON\nDefault: {}",
-            "default": "{}"
+            "metavar": "param",
+            "help": "Parameters file or JSON\nFormat: JSON\nDefault: {}",
+            "default": "{}",
+            "gooey": {
+                "widget": "FileChooser",
+                "options": {
+                    'initial_value': ''  
+                }
+            }
         },
         "query": {
-            "metavar": "QUERY",
+            "metavar": "query",
             "help": "Query in SQL format\nFormat: SQL\nExample: 'SELECT * FROM variants LIMIT 5'",
-            "default": None
+            "default": None,
+            "gooey": {
+                "widget": "Textarea",
+                "options": {
+                    'initial_value': 'SELECT * FROM variants'  
+                }
+            }
         },
         "output_query": {
-            "metavar": "FILE",
+            "metavar": "output",
             "help": "Output Query file\nformat: VCF, TSV, Parquet...",
-            "default": None
+            "default": None,
+            "gooey": {
+                "widget": "FileSaver"
+            }
         },
         "annotations": {
-            "metavar": "ANNOTATIONS",
+            "metavar": "annotations",
             "help": """Annotation with databases files, or with tools\n"""
                     """Format: list of files in Parquet, VCF, BED, or keywords\n"""
                     """For a Parquet/VCF/BED file, use file path (e.g. '/path/to/file.parquet')\n"""
                     """For add all availalbe databases, use 'ALL' keyword:\n"""
                     """   - Use 'ALL:<types>:<releases>'\n"""
-                    """   - e.g. 'ALL', 'ALL:parquet:currernt', 'ALL:parquet,vcf:devel'\n"""
+                    """   - e.g. 'ALL', 'ALL:parquet:current', 'ALL:parquet,vcf:devel'\n"""
                     """For snpeff annotation, use keyword 'snpeff'\n"""
                     """For Annovar annotation, use keyword 'annovar' with annovar code (e.g. 'annovar:refGene', 'annovar:cosmic70')\n"""
                     ,
-            "default": None
+            "default": None,
+            "gooey": {
+                "widget": "MultiFileChooser"
+            }
         },
         "calculations": {
-            "metavar": "OPERATIONS",
+            "metavar": "operations",
             "help": """Calculations on genetic variants information and genotype information\n"""
                     """Example: 'VARTYPE,barcode'\n"""
                     """List of available calculations (unsensitive case, see doc for more information):\n"""
@@ -92,31 +118,34 @@ arguments = {
             "default": None
         },
         "prioritizations": {
-            "metavar": "JSON",
+            "metavar": "prioritisations",
             "help": "Prioritization file in JSON format (defines profiles, see doc).",
-            "default": None
+            "default": None,
+            "gooey": {
+                "widget": "FileChooser"
+            }
         },
         "profiles": {
-            "metavar": "PROFILES",
+            "metavar": "profiles",
             "help": """Prioritization profiles to use (based on file in JSON).\n"""
                     """default: all profiles available""",
             "default": None
         },
         "default_profile": {
-            "metavar": "PROFILE",
+            "metavar": "default profile",
             "help": """Prioritization profile by default (see doc)\n"""
                     """default: First profile in JSON file""",
             "default": None
         },
         "pzfields": {
-            "metavar": "PZFIELD",
+            "metavar": "pzfields",
             "help": """Prioritization fields to provide (see doc).\n"""
                     """available: PZScore, PZFlag, PZTags, PZComment, PZInfos\n"""
                     """default: PZScore,PZFlag""",
             "default": "PZScore,PZFlag"
         },
         "prioritization_score_mode": {
-            "metavar": "MODE",
+            "metavar": "prioritization score mode",
             "help": """Prioritization Score mode (see doc).\n"""
                     """available: HOWARD (increment score), VaRank (max score)\n"""
                     """default: HOWARD""",
@@ -125,13 +154,13 @@ arguments = {
 
         # Query print options
         "query_limit": {
-            "metavar": "INTEGER",
+            "metavar": "query limit",
             "help": """Limit of number of row for query (only for print result, not output).\n"""
                     """default: 10""",
             "default": 10
         },
         "query_print_mode": {
-            "metavar": "STRING",
+            "metavar": "print mode",
             "help": """Print mode of query result (only for print result, not output).\n"""
                     """Either None (native), 'markdown' or 'tabulate'.\n"""
                     """default: None""",
@@ -146,13 +175,13 @@ arguments = {
             "default": False
         },
         "explode_infos_prefix": {
-            "metavar": "STRING",
+            "metavar": "explode infos prefix",
             "help": """Explode VCF INFO/Tag with a specific prefix.\n"""
                     """default: ''""",
             "default": ""
         },
         "explode_infos_fields": {
-            "metavar": "LIST",
+            "metavar": "explode infos list",
             "help": """Explode VCF INFO/Tag specific fields/tags.\n"""
                     """Keyword '*' specify all available fields, except those already specified.\n"""
                     """Pattern (regex) can be used: '.*_score' for fields named with '_score' at the end.\n"""
@@ -178,7 +207,7 @@ arguments = {
 
         # Sort By
         "order_by": {
-            "metavar": "LIST",
+            "metavar": "order by",
             "help": """List of columns to sort the result-set in ascending or descending order.\n"""
                     """Use SQL format, and keywords ASC (ascending) and DESC (descending).\n"""
                     """If a column is not available, order will not be considered.\n"""
@@ -192,61 +221,70 @@ arguments = {
 
         # Parquet partition
         "parquet_partitions": {
+            "metavar": "parquet partitions",
             "help": """Parquet partitioning using huve (only for Parquet export format).\n"""
                     """This option is is faster parallel writing, but memory consuming.\n"""
                     """Use 'None' (string) for NO partition but split parquet files into a folder\n"""
                     """examples: '#CHROM', '#CHROM,REF', 'None'\n"""
                     """default: None""",
-            "metavar": "LIST",
             "default": None
         },
         
         # From annovar
         "multi_variant": {
+            "metavar": "multi variant",
             "help": """Variant with multiple annotation lines\n"""
                     """Values: 'auto' (auto-detection), 'enable', 'disable'\n"""
                     """default: 'auto'""",
-            "metavar": "BOOL",
             "default": "auto"
         },
         "reduce_memory": {
+            "metavar": "reduce memory",
             "help": """Reduce memory option\n"""
                     """Values: 'auto' (auto-detection), 'enable', 'disable'\n"""
                     """default: 'auto'""",
-            "metavar": "BOOL",
             "default": "auto"
         },
 
         # Calculation
         "calculation_config": {
+            "metavar": "calculation config",
             "help": """Calculation config file\n"""
                     """Format: JSON""",
-            "metavar": "FILE",
-            "default": None
+            "default": None,
+            "gooey": {
+                "widget": "FileChooser"
+            }
         },
         "show_calculations": {
             "help": """Show available calculation operations""",
             "action": "store_true"
         },
         "hgvs_field": {
+            "metavar": "HGVS field",
             "help": """HGVS INFO/tag containing a list o HGVS annotations\n"""
                     """default: 'hgvs'""",
-            "metavar": "TAG",
             "default": "hgvs"
         },
         "transcripts": {
+            "metavar": "transcripts",
             "help": """Transcripts file in TSV format\n"""
                     """Format: Transcript in first column, optional Gene in second column \n"""
                     """default: None""",
-            "metavar": "FILE",
-            "default": None
+            "default": None,
+            "gooey": {
+                "widget": "FileChooser"
+            }
         },
         "trio_pedigree": {
+            "metavar": "trio pedigree",
             "help": """Pedigree Trio for trio inheritance calculation\n"""
                     """Format: JSON file or dict (e.g. 'trio.ped.json', '{"father":"sample1", "mother":"sample2", "child":"sample3"}') \n"""
                     """default: None""",
-            "metavar": "JSON",
-            "default": None
+            "default": None,
+            "gooey": {
+                "widget": "FileChooser"
+            }
         },
 
         # Other
@@ -265,14 +303,20 @@ arguments = {
 
         # Stats
         "stats_md": {
-            "metavar": "FILE",
+            "metavar": "stats markdown",
             "help": """Stats Output file in MarkDown format\n""",
-            "required": False
+            "required": False,
+            "gooey": {
+                "widget": "FileSaver"
+            }
         },
         "stats_json": {
-            "metavar": "FILE",
+            "metavar": "stats json",
             "help": """Stats Output file in JSON format\n""",
-            "required": False
+            "required": False,
+            "gooey": {
+                "widget": "FileSaver"
+            }
         },
         "stats": {
             "help": "Statistics after loading data",
@@ -287,24 +331,27 @@ arguments = {
             "action": "store_true"
         },
         "assembly": {
-            "metavar": "ASSEMBLY",
+            "metavar": "assembly",
             "help": """Genome Assembly\n"""
                     """Default: 'hg19'""",
             "required": False,
             "default": "hg19"
         },
         "genome": {
-            "metavar": "GENOME",
+            "metavar": "genome",
             "help": """Genome file in fasta format\n"""
                     """Default: 'hg19.fa'""",
             "required": False,
             "default": "hg19.fa"
         },
         "to_parquet": {
-            "metavar": "FILE",
+            "metavar": "to parquet",
             "help": """Parquet file conversion\n""",
             "required": False,
-            "default": None
+            "default": None,
+            "gooey": {
+                "widget": "FileSaver"
+            }
         },
 
         # HGVS
@@ -368,12 +415,15 @@ arguments = {
 
         # Genome
         "download-genomes": {
-            "metavar": "FOLDER",
+            "metavar": "genomes",
             "help": "Download Genomes within folder",
-            "required": False
+            "required": False,
+            "gooey": {
+                "widget": "DirChooser"
+            }
         },
         "download-genomes-provider": {
-            "metavar": "PROVIDER",
+            "metavar": "genomes provider",
             "help": """Download Genome from an external provider\n"""
                     """Available: GENCODE, Ensembl, UCSC, NCBI\n"""
                     """Default: UCSC\n""",
@@ -381,7 +431,7 @@ arguments = {
             "default": "UCSC"
         },
         "download-genomes-contig-regex": {
-            "metavar": "REGEXP",
+            "metavar": "genomes contig regex",
             "help": """Regular expression to select specific chromosome \n"""
                     """Default: None\n"""
                     """Example: 'chr[0-9XYM]+$'\n""",
@@ -391,12 +441,15 @@ arguments = {
 
         # Annovar
         "download-annovar": {
-            "metavar": "FOLDER",
+            "metavar": "Annovar",
             "help": "Download Annovar databases within Annovar folder",
-            "required": False
+            "required": False,
+            "gooey": {
+                "widget": "DirChooser"
+            }
         },
         "download-annovar-files": {
-            "metavar": "CODE",
+            "metavar": "Annovar code",
             "help": """Download Annovar databases for a list of Annovar file code (see Annovar Doc)\n"""
                     """Default: All available files\n"""
                     """Example: refGene,gnomad211_exome,cosmic70,clinvar_202*,nci60\n"""
@@ -406,7 +459,7 @@ arguments = {
             "default": None
         },
         "download-annovar-url": {
-            "metavar": "URL",
+            "metavar": "Annovar url",
             "help": """Download Annovar databases URL (see Annovar Doc)\n"""
                     """Default: 'http://www.openbioinformatics.org/annovar/download'""",
             "required": False,
@@ -415,40 +468,46 @@ arguments = {
 
         # snpEff
         "download-snpeff": {
-            "metavar": "FOLDER",
+            "metavar": "snpEff",
             "help": """Download snpEff databases within snpEff folder""",
-            "required": False
+            "required": False,
+            "gooey": {
+                "widget": "DirChooser"
+            }
         },
 
         # refSeq
         "download-refseq": {
-            "metavar": "FOLDER",
+            "metavar": "refSeq",
             "help": """Download refSeq databases within refSeq folder""",
-            "required": False
+            "required": False,
+            "gooey": {
+                "widget": "DirChooser"
+            }
         },
         "download-refseq-url": {
-            "metavar": "URL",
+            "metavar": "refSeq url",
             "help": """Download refSeq databases URL (see refSeq WebSite)\n"""
                     """Default: 'http://hgdownload.soe.ucsc.edu/goldenPath'""",
             "required": False,
             "default": "http://hgdownload.soe.ucsc.edu/goldenPath"
         },
         "download-refseq-prefix": {
-            "metavar": "STRING",
+            "metavar": "refSeq prefix",
             "help": """Check existing refSeq files in refSeq folder\n"""
                     """Default: 'ncbiRefSeq'""",
             "required": False,
             "default": "ncbiRefSeq"
         },
         "download-refseq-files": {
-            "metavar": "LIST",
+            "metavar": "refSeq files",
             "help": """List of refSeq files to download\n"""
                     """Default: 'ncbiRefSeq.txt,ncbiRefSeqLink.txt'""",
             "required": False,
             "default": "ncbiRefSeq.txt,ncbiRefSeqLink.txt"
         },
         "download-refseq-format-file": {
-            "metavar": "STRING",
+            "metavar": "refSeq format file",
             "help": """Name of refSeq file to format in BED format\n"""
                     """Exemple: 'ncbiRefSeq.txt'\n"""
                     """Default: None""",
@@ -482,26 +541,29 @@ arguments = {
         
         # dbNSFP
         "download-dbnsfp": {
-            "metavar": "FOLDER",
+            "metavar": "dbNSFP",
             "help": "Download dbNSFP databases within dbNSFP folder",
-            "required": False
+            "required": False,
+            "gooey": {
+                "widget": "DirChooser"
+            }
         },
         "download-dbnsfp-url": {
-            "metavar": "URL",
+            "metavar": "dbNSFP url",
             "help": """Download dbNSFP databases URL (see dbNSFP website)\n"""
                     """Default: 'https://dbnsfp.s3.amazonaws.com'""",
             "required": False,
             "default": "https://dbnsfp.s3.amazonaws.com"
         },
         "download-dbnsfp-release": {
-            "metavar": "STRING",
+            "metavar": "dnNSFP release",
             "help": """Release of dbNSFP to download (see dbNSFP website)\n"""
                     """Default: '4.4a'""",
             "required": False,
             "default": "4.4a"
         },
         "download-dbnsfp-parquet-size": {
-            "metavar": "INTEGER",
+            "metavar": "dbNSFP parquet size",
             "help": """Maximum size (Mb) of data files in Parquet folder.\n"""
                     """Parquet folder are partitioned (hive) by chromosome (sub-folder),\n"""
                     """which contain N data files.\n"""
@@ -537,7 +599,7 @@ arguments = {
             "action": "store_true"
         },
         "download-dbnsfp-row-group-size": {
-            "metavar": "INTEGER",
+            "metavar": "dnNSFP row grooup size",
             "help": """minimum number of rows in a parquet row group (see duckDB doc).\n"""
                     """Lower can reduce memory usage and slightly increase space during generation,\n"""
                     """speed up highly selective queries, slow down whole file queries (e.g. aggregations)\n"""
@@ -548,12 +610,15 @@ arguments = {
 
         # AlphaMissense
         "download-alphamissense": {
-            "metavar": "FOLDER",
+            "metavar": "AlphaMissense",
             "help": "Download AlphaMissense databases within Annotations folder",
-            "required": False
+            "required": False,
+            "gooey": {
+                "widget": "DirChooser"
+            }
         },
         "download-alphamissense-url": {
-            "metavar": "URL",
+            "metavar": "AlphaMissense url",
             "help": """Download AlphaMissense databases URL (see AlphaMissense website)\n"""
                     """Default: 'https://storage.googleapis.com/dm_alphamissense'""",
             "required": False,
@@ -562,14 +627,17 @@ arguments = {
 
         # Exomiser
         "download-exomiser": {
-            "metavar": "FOLDER",
+            "metavar": "Exomiser",
             "help": """Download Exomiser databases\n"""
                     """Folder where the Exomiser databases will be downloaded and stored.\n"""
                     """If the folder does not exist, it will be created.""",
-            "required": False
+            "required": False,
+            "gooey": {
+                "widget": "DirChooser"
+            }
         },
         "download-exomiser-application-properties": {
-            "metavar": "FILE",
+            "metavar": "Exomiser aplication properties",
             "help": """Exomiser Application Properties configuration file (see Exomiser website)\n"""
                     """This file contains configuration settings for the Exomiser tool.\n"""
                     """If this parameter is not provided, the function will attempt to locate\n"""
@@ -577,17 +645,20 @@ arguments = {
                     """Configuration information will be used to download expected releases (if no other parameters)\n"""
                     """CADD and REMM will be downloaded only if 'path' are provided\n""",
             "required": False,
-            "default": None
+            "default": None,
+            "gooey": {
+                "widget": "FileChooser"
+            }
         },
         "download-exomiser-url": {
-            "metavar": "URL",
+            "metavar": "Exomiser url",
             "help": """URL where Exomiser database files can be downloaded from.\n"""
                     """Default: 'http://data.monarchinitiative.org/exomiser'""",
             "required": False,
             "default": "http://data.monarchinitiative.org/exomiser"
         },
         "download-exomiser-release": {
-            "metavar": "STRING",
+            "metavar": "Exomiser release",
             "help": """Release of Exomiser data to download.\n"""
                     """If "default", "auto", or "config", retrieve from Application Properties file.\n"""
                     """Default: None""",
@@ -595,7 +666,7 @@ arguments = {
             "default": None
         },
         "download-exomiser-phenotype-release": {
-            "metavar": "STRING",
+            "metavar": "Exomiser phenoptye release",
             "help": """Release of Exomiser phenotype to download.\n"""
                     """If not provided, retrieve from Application Properties file or Exomiser data release\n"""
                     """Default: None""",
@@ -603,7 +674,7 @@ arguments = {
             "default": None
         },
         "download-exomiser-remm-release": {
-            "metavar": "STRING",
+            "metavar": "Exomiser remm release",
             "help": """Release of ReMM (Regulatory Mendelian Mutation) database to download.\n"""
                     """If "default", "auto", or "config", retrieve from Application Properties file.\n"""
                     """Default: None""",
@@ -611,14 +682,14 @@ arguments = {
             "default": None
         },
         "download-exomiser-remm-url": {
-            "metavar": "URL",
+            "metavar": "Exomiser remm url",
             "help": """URL where ReMM (Regulatory Mendelian Mutation) database files can be downloaded from.\n"""
                     """Default: 'https://kircherlab.bihealth.org/download/ReMM'""",
             "required": False,
             "default": "https://kircherlab.bihealth.org/download/ReMM"
         },
         "download-exomiser-cadd-release": {
-            "metavar": "STRING",
+            "metavar": "Exomiser cadd release",
             "help": """Release of CADD (Combined Annotation Dependent Depletion) database to download.\n"""
                     """If "default", "auto", or "config", retrieve from Application Properties file.\n"""
                     """Default: None""",
@@ -626,14 +697,14 @@ arguments = {
             "default": None
         },
         "download-exomiser-cadd-url": {
-            "metavar": "URL",
+            "metavar": "Exomiser cadd url",
             "help": """URL where CADD (Combined Annotation Dependent Depletion) database files can be downloaded from.\n"""
                     """Default: 'https://kircherlab.bihealth.org/download/CADD'""",
             "required": False,
             "default": "https://kircherlab.bihealth.org/download/CADD"
         },
         "download-exomiser-cadd-url-snv-file": {
-            "metavar": "FILE",
+            "metavar": "Exomiser url snv",
             "help": """Name of the file containing the SNV (Single Nucleotide Variant) data\n"""
                     """for the CADD (Combined Annotation Dependent Depletion) database.\n"""
                     """Default: 'whole_genome_SNVs.tsv.gz'""",
@@ -641,7 +712,7 @@ arguments = {
             "default": "whole_genome_SNVs.tsv.gz"
         },
         "download-exomiser-cadd-url-indel-file": {
-            "metavar": "FILE",
+            "metavar": "Exomiser cadd url indel",
             "help": """Name of the file containing the INDEL (Insertion-Deletion) data\n"""
                     """for the CADD (Combined Annotation Dependent Depletion) database.\n"""
                     """Default: 'InDels.tsv.gz'""",
@@ -651,14 +722,17 @@ arguments = {
 
         # dbSNP
         "download-dbsnp": {
-            "metavar": "FOLDER",
+            "metavar": "dnSNP",
             "help": """Download dbSNP databases\n"""
                     """Folder where the dbSNP databases will be downloaded and stored.\n"""
                     """If the folder does not exist, it will be created.""",
-            "required": False
+            "required": False,
+            "gooey": {
+                "widget": "DirChooser"
+            }
         },
         "download-dbsnp-releases": {
-            "metavar": "LIST",
+            "metavar": "dnSNP releases",
             "help": """Release of dbSNP to download\n"""
                     """Example: 'b152,b156'"""
                     """Default: 'b156'""",
@@ -666,7 +740,7 @@ arguments = {
             "default": 'b156'
         },
         "download-dbsnp-release-default": {
-            "metavar": "STRING",
+            "metavar": "dnSNP release default",
             "help": """Default Release of dbSNP ('default' symlink)\n"""
                     """If None, first release to download will be assigned as dafault\n"""
                     """only if it does not exists\n"""
@@ -676,14 +750,14 @@ arguments = {
             "default": None
         },
         "download-dbsnp-url": {
-            "metavar": "URL",
+            "metavar": "dbSNP url",
             "help": """URL where dbSNP database files can be downloaded from.\n"""
                     """Default: 'https://ftp.ncbi.nih.gov/snp/archive'""",
             "required": False,
             "default": "https://ftp.ncbi.nih.gov/snp/archive"
         },
         "download-dbsnp-url-files": {
-            "metavar": "STRING",
+            "metavar": "dbSNP url files",
             "help": """Dictionary that maps assembly names to specific dbSNP URL files.\n"""
                     """It allows you to provide custom dbSNP URL files for specific assemblies\n"""
                     """instead of using the default file naming convention\n"""
@@ -692,7 +766,7 @@ arguments = {
             "default": None
         },
         "download-dbsnp-url-files-prefix": {
-            "metavar": "STRING",
+            "metavar": "dbSNP url files prefix",
             "help": """String that represents the prefix of the dbSNP file name for a specific assembly.\n"""
                     """It is used to construct the full URL of the dbSNP file to be downloaded.\n"""
                     """Default: 'GCF_000001405'""",
@@ -700,7 +774,7 @@ arguments = {
             "default": "GCF_000001405"
         },
         "download-dbsnp-assemblies-map": {
-            "metavar": "DICT",
+            "metavar": "dbSNP assemblies map",
             "help": """dictionary that maps assembly names to their corresponding dbSNP versions.\n"""
                     """It is used to construct the dbSNP file name based on the assembly name.\n"""
                     """Default: {"hg19": "25", "hg38": "40"}""",
@@ -721,21 +795,27 @@ arguments = {
 
         # HGMD
         "convert-hgmd": {
-            "metavar": "FOLDER",
+            "metavar": "HGMD",
             "help": """Convert HGMD databases\n"""
                     """Folder where the HGMD databases will be stored.\n"""
-                    """Fiels in VCF, Parquet and TSV will be generated.\n"""
+                    """Fields in VCF, Parquet and TSV will be generated.\n"""
                     """If the folder does not exist, it will be created.""",
-            "required": False
+            "required": False,
+            "gooey": {
+                "widget": "DirChooser"
+            }
         },
         "convert-hgmd-file": {
-            "metavar": "FILE",
+            "metavar": "HGMD file",
             "help": """File from HGMD\n"""
                     """Name format 'HGMD_Pro_<release>_<assembly>.vcf.gz'.""",
-            "required": False
+            "required": False,
+            "gooey": {
+                "widget": "FileChooser"
+            }
         },
         "convert-hgmd-basename": {
-            "metavar": "STR",
+            "metavar": "HGMD basename",
             "help": """File output basename\n"""
                     """Generated files will be prefixed by basename.\n"""
                     """Example: 'HGMD_Pro_MY_RELEASE'\n"""
@@ -745,21 +825,27 @@ arguments = {
 
         # Databases parameters
         "generate-param": {
-            "metavar": "FILE",
+            "metavar": "param",
             "help": """Parameter file (JSON) with all databases found.\n"""
                     """Databases folders scanned are defined in config file.\n"""
                     """Structure of databases follow this structure (see doc):\n"""
                     """   .../<database>/<release>/<assembly>/*.[parquet|vcf.gz|...]""",
-            "required": False
+            "required": False,
+            "gooey": {
+                "widget": "FileSaver"
+            }
         },
         "generate-param-description": {
-            "metavar": "FILE",
+            "metavar": "param description",
             "help": """Description file (JSON) with all databases found.\n"""
                     """Contains all databases with description of format, assembly, fields...""",
-            "required": False
+            "required": False,
+            "gooey": {
+                "widget": "FileSaver"
+            }
         },
         "generate-param-releases": {
-            "metavar": "LIST",
+            "metavar": "param release",
             "help": """List of database folder releases to check\n"""
                     """Examples: 'current', 'latest'\n"""
                     """Default: 'current'""",
@@ -767,7 +853,7 @@ arguments = {
             "default": "current"
         },
         "generate-param-formats": {
-            "metavar": "LIST",
+            "metavar": "param formats",
             "help": """List of database formats to check (e.g. parquet, vcf, bed, tsv...)\n"""
                     """Examples: 'parquet', 'parquet,vcf,bed,tsv'\n"""
                     """Default: 'parquet'""",
@@ -782,7 +868,7 @@ arguments = {
 
         # From Annovar
         "annovar-code": {
-            "metavar": "CODE",
+            "metavar": "Annovar code",
             "help": """Annovar code, or database name. Usefull to name databases columns""",
             "required": False,
             "default": None
@@ -790,30 +876,39 @@ arguments = {
 
         # Common
         "genomes-folder": {
-            "metavar": "FOLDER",
+            "metavar": "genomes",
             "help": """Folder containing genomes\n"""
                     f"""Default: {DEFAULT_GENOME_FOLDER}""",
             "required": False,
-            "default": f"{DEFAULT_GENOME_FOLDER}"
+            "default": f"{DEFAULT_GENOME_FOLDER}",
+            "gooey": {
+                "widget": "DirChooser"
+            }
         },
 
         # Shared
         "config": {
-            "metavar": "JSON",
+            "metavar": "config",
             "help": """Configuration file\n"""
                     """Default: {}""",
             "required": False,
-            "default": "{}"
+            "default": "{}",
+            "gooey": {
+                "widget": "FileChooser",
+                "options": {
+                    'initial_value': ''  
+                }
+            }
         },
         "assembly": {
-            "metavar": "STRING",
+            "metavar": "assembly",
             "help": """Default assembly\n"""
                     """Default: 'hg19'""",
             "required": False,
             "default": "hg19"
         },
         "threads": {
-            "metavar": "INTEGER",
+            "metavar": "threads",
             "help": """Number of threads to use\n"""
                     """Use -1 to detect number of CPU/cores\n"""
                     """Default: -1""",
@@ -821,49 +916,65 @@ arguments = {
             "default": -1
         },
         "memory": {
-            "metavar": "FLOAT[kMG]",
-            "help": """Memory to use\n"""
+            "metavar": "memory",
+            "help": """Memory to use (FLOAT[kMG])\n"""
                     """Default: None (80%% of RAM)""",
             "required": False,
             "default": None
         },
         "chunk_size": {
+            "metavar": "chunk size",
             "help": """Number of records in batch to export output file.\n"""
                     """The lower the chunk size, the less memory consumption.\n"""
                     """For Parquet partitioning, files size will depend on the chunk size.\n"""
                     """default: 1000000""",
-            "metavar": "INTEGER",
             "default": 1000000
         },
         "tmp": {
+            "metavar": "tmp",
             "help": """Temporary folder.\n"""
                     """Especially for duckDB, default '.tmp' (see doc).\n"""
                     """default: None""",
-            "metavar": "PATH",
-            "default": None
+            "default": None,
+            "gooey": {
+                "widget": "DirChooser"
+            }
         },
         "duckdb_settings": {
+            "metavar": "duckDB settings",
             "help": """DuckDB settings (see duckDB doc) as JSON (string or file).\n"""
                     """These settings have priority (see options 'threads', 'tmp'...).\n"""
                     """Examples: '{"TimeZone": "GMT", "temp_directory": "/tmp/duckdb", "threads": 8}'\n"""
                     """default: None""",
-            "metavar": "JSON",
-            "default": None
+            "default": None,
+            "gooey": {
+                "widget": "FileChooser"
+            }
         },
         "verbosity": {
-            "metavar": "LEVEL",
+            "metavar": "verbosity",
             "help": """Verbosity level\n"""
                     """Available: CRITICAL, ERROR, WARNING, INFO, DEBUG or NOTSET\n"""
                     """Default: INFO""",
             "required": False,
-            "default": "info"
+            #"choices": ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET'],
+            "default": "info",
+            "gooey": {
+                "widget": None,
+                "options": {
+                    
+                }
+            }
         },
         "log": {
-            "metavar": "FILE",
+            "metavar": "log",
             "help": """Logs file\n"""
                     """Example: 'my.log'\n"""
                     """Default: None""",
-            "default": None
+            "default": None,
+            "gooey": {
+                "widget": "FileChooser"
+            }
         },
         "quiet": {
             "help": argparse.SUPPRESS,
@@ -1022,12 +1133,18 @@ commands_arguments = {
             "main": {
                 "input": False,
                 "output": False,
-                "query": True,
-                "query_limit": False,
-                "query_print_mode": False,
+                "query": True
+            },
+            "Explode infos": {
                 "explode_infos": False,
                 "explode_infos_prefix": False,
                 "explode_infos_fields": False,
+            },
+            "Query": {
+                "query_limit": False,
+                "query_print_mode": False,
+            },
+            "Output": {
                 "include_header": False
             }
         }
@@ -1197,33 +1314,73 @@ commands_arguments = {
 
 
 # get argument
-def get_argument(arguments:dict = {}, arg:str = "", required:bool = False) -> dict:
+def get_argument(arguments:dict = {}, arg:str = "", required:bool = False, remove_infos:list = ["gooey"]) -> dict:
     """
-    This function retrieves a specific argument from a dictionary and can also set its "required"
-    status.
+    The `get_argument` function retrieves information about a specific argument from a dictionary, and
+    can also set its "required" status.
     
     :param arguments: A dictionary containing information about the arguments passed to a function or
     method
     :type arguments: dict
-    :param arg: The name of the argument that you want to retrieve information for
+    :param arg: The `arg` parameter is a string that represents the name of the argument that you want
+    to retrieve information for
     :type arg: str
-    :param required: The "required" parameter is a boolean value that determines whether the argument is
+    :param required: The `required` parameter is a boolean value that determines whether the argument is
     required or not. If set to True, the function will return an empty dictionary if the argument is not
-    found in the "arguments" dictionary. If set to False (default), the function will still return an
+    found in the `arguments` dictionary. If set to False (default), the function will still return an
     empty dictionary if, defaults to False
     :type required: bool (optional)
+    :param remove_infos: The `remove_infos` parameter is a list that contains the names of specific
+    information that you want to remove from the argument dictionary. In the code, it is used to remove
+    specific argument information such as "gooey" from the `arg_infos` dictionary
+    :type remove_infos: list
     :return: a dictionary containing information about a specific argument, specified by the `arg`
     parameter. If the argument is found in the `arguments` dictionary, the function returns a dictionary
     containing the information about that argument. If the argument is not found, an empty dictionary is
     returned. The `required` parameter is used to specify whether the argument is required or not, and
-    this information is added
+    this information is added to
     """
-    
+
     if arg in arguments:
-        arg_infos = arguments.get(arg,{})
+        arg_infos = arguments.get(arg,{}).copy()
+        for arg_info in remove_infos:
+            arg_infos.pop(arg_info, None)
         if required != None:
             arg_infos["required"] = required
         return arg_infos
     else:
         return {}
 
+
+# get_argument_gooey
+def get_argument_gooey(arg:str):
+    """
+    The function `get_argument_gooey` takes an argument and returns the corresponding widget and options
+    for the Gooey library in Python.
+    
+    :param arg: The `arg` parameter is a string that represents the name of the argument you want to
+    retrieve information for
+    :type arg: str
+    :return: The function `get_argument_gooey` returns two values: `widget` and `options`.
+    """
+
+    # Init
+    argument = get_argument(arguments=arguments, arg=arg, remove_infos=[])
+    argument_type = argument.get("type", None)
+    gooey_argument = argument.get("gooey", {})
+
+    # Widget
+    widget = None
+    if gooey_argument.get("widget", None):
+        widget = gooey_argument.get("widget")
+    else:
+        if str(argument_type) == "FileType('r')":
+            widget = "FileChooser"
+        elif str(argument_type) == "FileType('w')":
+            widget = "FileSaver"
+    
+    # options
+    options = gooey_argument.get("options", {})
+
+    # Return
+    return widget, options
