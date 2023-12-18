@@ -30,17 +30,17 @@ from howard.tools.tools import *
        #auto_start=True,           # skip config screens all together
        #target="",     # Explicitly set the subprocess executable arguments
        program_name='HOWARD',       # Defaults to script name
-       program_description='Graphical User Interface of HOWARD',       # Defaults to ArgParse Description
-       default_size=(800, 600),   # starting size of the GUI
-       # required_cols=2,           # number of columns in the "Required" section
-       # optional_cols=2,           # number of columns in the "Optional" section
+       program_description='HOWARD Graphical User Interface',       # Defaults to ArgParse Description
+       default_size=(1200, 800),   # starting size of the GUI
+       required_cols=2,           # number of columns in the "Required" section
+       optional_cols=2,           # number of columns in the "Optional" section
        dump_build_config=False,   # Dump the JSON Gooey uses to configure itself
        load_build_config=None,    # Loads a JSON Gooey-generated configuration
        #monospace_display=False,   # Uses a mono-spaced font in the output screen
-       navigation="TABBED",    # SIDEBAR TABBED
+       navigation="SIDEBAR",    # SIDEBAR TABBED
        show_sidebar=True,
        sidebar_title="Commands",
-       #tabbed_groups=True,
+       tabbed_groups=True,
 )
 
 def main() -> None:
@@ -70,7 +70,7 @@ def main() -> None:
         if "main" in commands_arguments[command]["groups"]:
             for arg in commands_arguments[command]["groups"]["main"]:
                 required = commands_arguments[command]["groups"]["main"][arg]
-                arg_infos = get_argument(arguments=arguments, arg=arg, required=required)
+                arg_infos = get_argument(arguments=arguments, arg=arg, required=required, add_metavar=True)
                 widget, options = get_argument_gooey(arg=arg)
                 command_parser.add_argument(f"--{arg}", **arg_infos, widget=widget, gooey_options=options)
 
@@ -79,14 +79,14 @@ def main() -> None:
                 command_group = command_parser.add_argument_group(f"{group} options")
                 for arg in commands_arguments[command]["groups"][group]:
                     required = commands_arguments[command]["groups"][group][arg]
-                    arg_infos = get_argument(arguments=arguments, arg=arg, required=required)
+                    arg_infos = get_argument(arguments=arguments, arg=arg, required=required, add_metavar=True)
                     widget, options = get_argument_gooey(arg=arg)
                     command_group.add_argument(f"--{arg}", **arg_infos, widget=widget, gooey_options=options)
 
         # Shared arguments
         shared_group = command_parser.add_argument_group('Shared options')
         for arg in shared_arguments:
-            arg_infos = get_argument(arguments=arguments, arg=arg, required=required)
+            arg_infos = get_argument(arguments=arguments, arg=arg, required=required, add_metavar=True)
             widget, options = get_argument_gooey(arg=arg)
             #shared_group.add_argument(f"--{arg}", **get_argument(arguments=arguments, arg=arg, required=False))
             shared_group.add_argument(f"--{arg}", **arg_infos, widget=widget, gooey_options=options)
