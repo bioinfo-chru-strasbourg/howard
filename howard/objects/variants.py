@@ -303,7 +303,7 @@ class Variants:
         :param output: The name of the output file
         """
         
-        if output and not isinstance(output, str) and "name" in output:
+        if output and not isinstance(output, str):
             self.output = output.name
         else:
             self.output = output
