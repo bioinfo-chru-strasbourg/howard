@@ -77,7 +77,15 @@ class Variants:
 
         :param input: The input file
         """
-        self.input = input
+
+        if input and not isinstance(input, str):
+            try:
+                self.input = input.name
+            except:
+                log.error(f"Input file '{input} in bad format")
+                raise ValueError(f"Input file '{input} in bad format")
+        else:
+            self.input = input
         
         # Input format
         if input:
@@ -294,7 +302,11 @@ class Variants:
 
         :param output: The name of the output file
         """
-        self.output = output
+        
+        if output and not isinstance(output, str) and "name" in output:
+            self.output = output.name
+        else:
+            self.output = output
 
         # Output format
         if self.output:
