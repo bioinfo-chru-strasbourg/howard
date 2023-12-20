@@ -100,6 +100,10 @@ def databases_download(args:argparse) -> None:
     # Assembly
     assemblies = [value for value in args.assembly.split(',')]
 
+    # Genome folder
+    if "config" in args and args.config and args.config.get("folders",{}).get("databases",{}).get("genomes") and args.genomes_folder == DEFAULT_REFSEQ_FOLDER:
+        args.genomes_folder = args.config.get("folders",{}).get("databases",{}).get("genomes")
+
     # Threads
     nb_threads = os.cpu_count()
     if "threads" in args:

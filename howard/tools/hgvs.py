@@ -86,14 +86,16 @@ def hgvs(args:argparse) -> None:
                 config["folders"] = {}
             if "databases" not in config["folders"]:
                 config["folders"]["databases"] = {}
-            config["folders"]["databases"]["genomes"] = args.genomes_folder
+            if "genomes" not in config["folders"]["databases"] or args.genomes_folder != DEFAULT_GENOME_FOLDER:
+                config["folders"]["databases"]["genomes"] = args.genomes_folder
 
         if "refseq_folder" in args and args.refseq_folder:
             if "folders" not in config:
                 config["folders"] = {}
             if "databases" not in config["folders"]:
                 config["folders"]["databases"] = {}
-            config["folders"]["databases"]["refseq"] = args.refseq_folder
+            if "refseq" not in config["folders"]["databases"] or args.refseq_folder != DEFAULT_REFSEQ_FOLDER:
+                config["folders"]["databases"]["refseq"] = args.refseq_folder
 
         vcfdata_obj.set_param(params)
         vcfdata_obj.set_config(config)
