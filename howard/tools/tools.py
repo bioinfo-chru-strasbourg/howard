@@ -1118,6 +1118,7 @@ commands_arguments = {
             "Databases": {
                 "refgene": False,
                 "refseqlink": False,
+                "genomes-folder": False
             }
         }
     },
@@ -1296,7 +1297,7 @@ commands_arguments = {
                 "convert-hgmd-file": False,
                 "convert-hgmd-basename": False
             },
-            "Databases parameters file": {
+            "Parameters file": {
                 "generate-param": False,
                 "generate-param-description": False,
                 "generate-param-releases": False,

@@ -76,7 +76,7 @@ def main() -> None:
 
         for group in commands_arguments[command]["groups"]:
             if group != "main":
-                command_group = command_parser.add_argument_group(f"{group} options")
+                command_group = command_parser.add_argument_group(f"{group}")
                 for arg in commands_arguments[command]["groups"][group]:
                     required = commands_arguments[command]["groups"][group][arg]
                     arg_infos = get_argument(arguments=arguments, arg=arg, required=required, add_metavar=True)
@@ -84,7 +84,7 @@ def main() -> None:
                     command_group.add_argument(f"--{arg}", **arg_infos, widget=widget, gooey_options=options)
 
         # Shared arguments
-        shared_group = command_parser.add_argument_group('Shared options')
+        shared_group = command_parser.add_argument_group('Configuration')
         for arg in shared_arguments:
             arg_infos = get_argument(arguments=arguments, arg=arg, required=required, add_metavar=True)
             widget, options = get_argument_gooey(arg=arg)

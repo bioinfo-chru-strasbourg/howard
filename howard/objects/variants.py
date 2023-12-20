@@ -5060,7 +5060,7 @@ class Variants:
         # Genome
         databases_genomes_folders = config.get("folders", {}).get(
             "databases", {}).get("genomes", DEFAULT_GENOME_FOLDER)
-        databases_genome = config.get("databases", {}).get("genome", "")
+        databases_genome = config.get("folders", {}).get("databases", {}).get("genomes", "")
         # refseq database folder
         databases_refseq_folders = config.get("folders", {}).get(
             "databases", {}).get("refseq", DEFAULT_REFSEQ_FOLDER)
