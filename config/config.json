@@ -8,7 +8,6 @@
       "annotations": [
         "/databases/annotations/current/",
         "/databases/dbnsfp/current/",
-        "/databases/alphamissense/current/",
         "/databases/dbsnp/current/"
       ],
       "parquet": ["/databases/annotations/current/"],
