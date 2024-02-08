@@ -93,8 +93,7 @@ arguments = {
                     """   - Use 'ALL:<types>:<releases>'\n"""
                     """   - e.g. 'ALL', 'ALL:parquet:current', 'ALL:parquet,vcf:devel'\n"""
                     """For snpeff annotation, use keyword 'snpeff'\n"""
-                    """For Annovar annotation, use keyword 'annovar' with annovar code (e.g. 'annovar:refGene', 'annovar:cosmic70')\n"""
-                    ,
+                    """For Annovar annotation, use keyword 'annovar' with annovar code (e.g. 'annovar:refGene', 'annovar:cosmic70')""",
             "default": None,
             "gooey": {
                 "widget": "MultiFileChooser"
@@ -113,8 +112,7 @@ arguments = {
                     """ TRIO """
                     """ VAF """
                     """ VAF_STATS """
-                    """ DP_STATS """
-                    ,
+                    """ DP_STATS """,
             "default": None
         },
         "prioritizations": {
@@ -761,9 +759,9 @@ arguments = {
         "download-dbsnp-release-default": {
             "metavar": "dnSNP release default",
             "help": """Default Release of dbSNP ('default' symlink)\n"""
-                    """If None, first release to download will be assigned as dafault\n"""
+                    """If None, first release to download will be assigned as default\n"""
                     """only if it does not exists\n"""
-                    """Example: 'b156'"""
+                    """Example: 'b156'\n"""
                     """Default: None (first releases by default)""",
             "required": False,
             "default": None
@@ -896,6 +894,26 @@ arguments = {
             "help": """Annovar code, or database name. Usefull to name databases columns""",
             "required": False,
             "default": None
+        },
+
+        # Help
+        "help_md": {
+            "metavar": "help markdown",
+            "help": """Help Output file in MarkDown format\n""",
+            "required": False,
+            "type": argparse.FileType('w'),
+            "gooey": {
+                "widget": "FileSaver"
+            }
+        },
+        "help_html": {
+            "metavar": "help html",
+            "help": """Help Output file in HTML format\n""",
+            "required": False,
+            "type": argparse.FileType('w'),
+            "gooey": {
+                "widget": "FileSaver"
+            }
         },
 
         # Common
@@ -1332,6 +1350,19 @@ commands_arguments = {
                 "multi_variant": False
             }
         }
+    },
+    "help": {
+        "function" : "help_output",
+        "description": """Help tools""",
+        "help": """Help tools""",
+        "epilog": """Usage examples:\n"""
+                    """   howard help --help_md=/tmp/howard.help.mk --help_html=/tmp/howard.help.html """,
+        "groups": {
+            "main": {
+                "help_md": False,
+                "help_html": False,
+            }
+        }
     }
 }
 
@@ -1409,3 +1440,66 @@ def get_argument_gooey(arg:str):
 
     # Return
     return widget, options
+
+
+# get argument
+def get_argument_to_mk(arg:str, argument:dict = {}, mode:str = "mk") -> str:
+    """
+    The function `get_argument_to_mk` generates a formatted string containing information about a
+    command line argument, which can be output in either Markdown or HTML format.
+    
+    :param arg: The `arg` parameter is a string that represents the name of the argument. It is used to
+    generate the header and text for the argument
+    :type arg: str
+    :param argument: The `argument` parameter is a dictionary that contains information about the
+    argument. It has the following keys:
+    :type argument: dict
+    :param mode: The `mode` parameter is used to specify the format of the output. It can have two
+    possible values: "mk" or "html". If "mk" is specified, the output will be formatted using Markdown
+    syntax. If "html" is specified, the output will be formatted using HTML syntax, defaults to mk
+    :type mode: str (optional)
+    :return: a formatted string that provides information about a command line argument. The format of
+    the string depends on the value of the `mode` parameter. If `mode` is set to "html", the string is
+    formatted as an HTML `<pre>` block. Otherwise, the string is formatted as a Markdown code block. The
+    string includes the argument name, metavariable, help text, required
+    """
+
+    from html import escape
+
+    text = ""
+
+    # Option info
+    metavar = argument.get("metavar",arg)
+    help = argument.get("help",None)
+    required = argument.get("required",None)
+    choices = argument.get("choices",None)
+    default = argument.get("default",None)
+    action = argument.get("action",None)
+
+    # header
+    text_header = f"--{arg}"
+    if not action:
+        text_header += f"=<{metavar}>"
+    if choices:
+        text_header += f" {choices}"
+    if default:
+        text_header += f" ({default})"
+    if required:
+        text_header += " | required"
+    
+    # text
+    if mode == "html":
+        text += f"<pre>"
+        text += escape(text_header)
+        text += "\n"
+        text += escape(help)
+        text += "\n\n"
+        text += f"</pre>"
+    else:
+        text += f"```\n"
+        text += text_header
+        text += "\n\n"
+        text += help
+        text += "\n```\n\n"
+
+    return text

@@ -16,6 +16,7 @@ import vcf
 import logging as log
 import sys
 import psutil
+import markdown
 
 from howard.objects.variants import Variants
 from howard.objects.database import Database
@@ -56,34 +57,84 @@ def main() -> None:
 
     subparsers = parser.add_subparsers(title="Tools", dest='command')
 
+    options_mk = ""
+    options_html = ""
+    
+    options_mk += f"# HOWARD Help\n"
+    options_mk += f"HOWARD Commands and Options\n"
+    options_html += f"<H1>HOWARD Help - Commands and Options</h1>\n"
+    options_html += f"<p>HOWARD Commands and Options</p>\n"
+
     # Create commands arguments
     for command in commands_arguments:
+        
+        command_description = commands_arguments[command].get("description","")
+        command_help = commands_arguments[command].get("help","")
+        command_epilog = commands_arguments[command].get("epilog","")
+        
         command_parser = subparsers.add_parser(
             command,
-            description = commands_arguments[command].get("description",""),
-            help = commands_arguments[command].get("help",""),
-            epilog = commands_arguments[command].get("epilog",""),
+            description = command_description,
+            help = command_help,
+            epilog = command_epilog,
             formatter_class=argparse.RawTextHelpFormatter
         )
+
+        # Markdown
+        options_mk += f"## {command.upper()}\n"
+        options_mk += command_description.replace("\n","\n\n")
+        options_mk += "\n\n"
+        options_mk += re.sub(r'> $',"",command_epilog.replace("\n","\n\n").replace("   ","> "))
+        options_mk += "\n\n"
+
+        # HTML
+        options_html += f"<H2>{command.upper()}</H2>\n"
+        options_html += "<p>" + command_description.replace("\n","<br>") + "</p>"
+        options_html += command_epilog.replace("\n","<br>").replace("   ","&nbsp;&nbsp;&nbsp;")
+        
+        
         # Main args
         command_parser._optionals.title = "Options"
         if "main" in commands_arguments[command]["groups"]:
-            for arg in commands_arguments[command]["groups"]["main"]:
-                required = commands_arguments[command]["groups"]["main"][arg]
-                command_parser.add_argument(f"--{arg}", **get_argument(arguments=arguments, arg=arg, required=required))
+            group = "main"
+            options_mk += f"### Main options\n"
+            options_html += f"<H3>Main options</H3>\n"
+            for arg in commands_arguments[command]["groups"][group]:
+                required = commands_arguments[command]["groups"][group][arg]
+                argument = get_argument(arguments=arguments.copy(), arg=arg, required=required)
+                command_parser.add_argument(f"--{arg}", **argument)
+                options_mk += get_argument_to_mk(arg, argument)
+                options_html += get_argument_to_mk(arg, argument, mode="html")
 
         for group in commands_arguments[command]["groups"]:
             if group != "main":
+                options_mk += f"### {group}\n"
+                options_html += f"<H3>{group}</H3>\n"
                 command_group = command_parser.add_argument_group(f"{group} options")
                 for arg in commands_arguments[command]["groups"][group]:
                     required = commands_arguments[command]["groups"][group][arg]
-                    command_group.add_argument(f"--{arg}", **get_argument(arguments=arguments, arg=arg, required=required))
+                    argument = get_argument(arguments=arguments.copy(), arg=arg, required=required)
+                    command_group.add_argument(f"--{arg}", **argument)
+                    options_mk += get_argument_to_mk(arg, argument)
+                    options_html += get_argument_to_mk(arg, argument, mode="html")
 
         # Shared arguments
         shared_group = command_parser.add_argument_group('Shared options')
         for arg in shared_arguments:
             shared_group.add_argument(f"--{arg}", **get_argument(arguments=arguments, arg=arg, required=False))
 
+        #options_mk += "> " + re.sub(r'> $',"",command_epilog.replace("\n","\n\n> "))
+        options_mk += "\n\n"
+
+
+    options_mk += f"## Shared arguments\n"
+    options_html += f"<H2>Shared arguments</H2>\n".upper()
+    for arg in shared_arguments:
+        required = False
+        argument = get_argument(arguments=arguments.copy(), arg=arg, required=required)
+        options_mk += get_argument_to_mk(arg, argument)
+        options_html += get_argument_to_mk(arg, argument, mode="html")
+ 
 
     # Parse args
     args, remaining = parser.parse_known_args()
@@ -174,6 +225,20 @@ def main() -> None:
     # Command eval
     if not args.command:
         parser.print_help()
+        return
+    elif args.command == "help":
+        if "help_md" in args and args.help_md is not None:
+            help_file = args.help_md.name
+            f = open(help_file, "w")
+            f.write(options_mk)
+            f.close()
+        if "help_html" in args and args.help_html is not None:
+            help_file = args.help_html.name
+            f = open(help_file, "w")
+            f.write(options_html)
+            f.close()
+        else:
+            parser.print_help()
         return
     else:
         command_function = commands_arguments[args.command]["function"]

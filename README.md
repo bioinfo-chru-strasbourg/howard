@@ -329,3 +329,5 @@ howard --help
 ## Documentation
 
 More documentation in [docs/howard.md](docs/howard.md)
+
+See help documentation for all available commands and options documentation in [docs/help.md](docs/help.md)
