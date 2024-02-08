@@ -17,6 +17,7 @@ import logging as log
 import sys
 import psutil
 import markdown
+from configparser import ConfigParser
 
 from howard.objects.variants import Variants
 from howard.objects.database import Database
@@ -31,16 +32,30 @@ from howard.tools.tools import *
 # python -m howard.main --input=my.vcf.gz --output=my.output.vcf --annotations=my.annotations.vcf.gz --stats --overview_footer
 
 
+main_folder = os.path.dirname(__file__)
+
 # Main function
 def main() -> None:
     """
     It loads a VCF file in multiple format (VCF, parquet, DB), and process, query, export data
     """
+    
+    # Config Parser
+    cf = ConfigParser()
+    cf.read(f'{main_folder}/../setup.cfg')
+    prog_name = cf['metadata']['name']
+    prog_version = cf['metadata']['version']
+    prog_description = cf['metadata']['description']
+    prog_long_description_content_type = cf['metadata']['long_description_content_type']
+    # prog_author = cf['metadata']['author']
+    # prog_author_email = cf['metadata']['author_email']
 
     # Main parser
     parser = argparse.ArgumentParser(
         prog="howard",
-        description="""howard annotates and prioritizes genetic variations, calculates and normalizes annotations, translates vcf format and generates variants statistics""",
+        description=f"""{prog_name.upper()}:{prog_version}\n"""
+                    f"""{prog_description}\n"""
+                    f"""{prog_long_description_content_type}""",
         epilog="Usage examples:\n"
             """   howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json \n"""
             """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/hg19/dbnsfp42a.parquet,tests/databases/annotations/hg19/gnomad211_genome.parquet' \n"""
@@ -52,18 +67,24 @@ def main() -> None:
             ,
         formatter_class=argparse.RawTextHelpFormatter
         )
-
+    
     parser._optionals.title = "Shared arguments"
 
     subparsers = parser.add_subparsers(title="Tools", dest='command')
 
-    options_mk = ""
+    options_md = ""
     options_html = ""
     
-    options_mk += f"# HOWARD Help\n"
-    options_mk += f"HOWARD Commands and Options\n"
-    options_html += f"<H1>HOWARD Help - Commands and Options</h1>\n"
-    options_html += f"<p>HOWARD Commands and Options</p>\n"
+    options_md += f"# HOWARD Help"
+    options_md += "\n\n"
+    options_md += parser.description.replace("\n","\n\n")
+    options_md += re.sub(r'> $',"",parser.epilog.replace("\n","\n\n").replace("   ","> "))
+    options_md += "\n\n"
+
+    options_html += f"<H1>HOWARD Help</h1>\n"
+    options_html += "<p>" + parser.description.replace("\n","<br>") + "</p>"
+    options_html += parser.epilog.replace("\n","<br>").replace("   ","&nbsp;&nbsp;&nbsp;")
+        
 
     # Create commands arguments
     for command in commands_arguments:
@@ -81,11 +102,11 @@ def main() -> None:
         )
 
         # Markdown
-        options_mk += f"## {command.upper()}\n"
-        options_mk += command_description.replace("\n","\n\n")
-        options_mk += "\n\n"
-        options_mk += re.sub(r'> $',"",command_epilog.replace("\n","\n\n").replace("   ","> "))
-        options_mk += "\n\n"
+        options_md += f"## {command.upper()} tool\n"
+        options_md += command_description.replace("\n","\n\n")
+        options_md += "\n\n"
+        options_md += re.sub(r'> $',"",command_epilog.replace("\n","\n\n").replace("   ","> "))
+        options_md += "\n\n"
 
         # HTML
         options_html += f"<H2>{command.upper()}</H2>\n"
@@ -97,25 +118,25 @@ def main() -> None:
         command_parser._optionals.title = "Options"
         if "main" in commands_arguments[command]["groups"]:
             group = "main"
-            options_mk += f"### Main options\n"
+            options_md += f"### Main options\n"
             options_html += f"<H3>Main options</H3>\n"
             for arg in commands_arguments[command]["groups"][group]:
                 required = commands_arguments[command]["groups"][group][arg]
                 argument = get_argument(arguments=arguments.copy(), arg=arg, required=required)
                 command_parser.add_argument(f"--{arg}", **argument)
-                options_mk += get_argument_to_mk(arg, argument)
+                options_md += get_argument_to_mk(arg, argument)
                 options_html += get_argument_to_mk(arg, argument, mode="html")
 
         for group in commands_arguments[command]["groups"]:
             if group != "main":
-                options_mk += f"### {group}\n"
+                options_md += f"### {group}\n"
                 options_html += f"<H3>{group}</H3>\n"
                 command_group = command_parser.add_argument_group(f"{group} options")
                 for arg in commands_arguments[command]["groups"][group]:
                     required = commands_arguments[command]["groups"][group][arg]
                     argument = get_argument(arguments=arguments.copy(), arg=arg, required=required)
                     command_group.add_argument(f"--{arg}", **argument)
-                    options_mk += get_argument_to_mk(arg, argument)
+                    options_md += get_argument_to_mk(arg, argument)
                     options_html += get_argument_to_mk(arg, argument, mode="html")
 
         # Shared arguments
@@ -124,15 +145,15 @@ def main() -> None:
             shared_group.add_argument(f"--{arg}", **get_argument(arguments=arguments, arg=arg, required=False))
 
         #options_mk += "> " + re.sub(r'> $',"",command_epilog.replace("\n","\n\n> "))
-        options_mk += "\n\n"
+        options_md += "\n\n"
 
 
-    options_mk += f"## Shared arguments\n"
+    options_md += f"## Shared arguments\n"
     options_html += f"<H2>Shared arguments</H2>\n".upper()
     for arg in shared_arguments:
         required = False
         argument = get_argument(arguments=arguments.copy(), arg=arg, required=required)
-        options_mk += get_argument_to_mk(arg, argument)
+        options_md += get_argument_to_mk(arg, argument)
         options_html += get_argument_to_mk(arg, argument, mode="html")
  
 
@@ -230,14 +251,14 @@ def main() -> None:
         if "help_md" in args and args.help_md is not None:
             help_file = args.help_md.name
             f = open(help_file, "w")
-            f.write(options_mk)
+            f.write(options_md)
             f.close()
         if "help_html" in args and args.help_html is not None:
             help_file = args.help_html.name
             f = open(help_file, "w")
             f.write(options_html)
             f.close()
-        else:
+        if "help_md" not in args and "help_html" not in args:
             parser.print_help()
         return
     else:

@@ -1,5 +1,7 @@
 # HOWARD
 
+Highly Open and Valuable tool for Variant Annotation & Ranking for Discovery
+
 HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations, translates files in multiple formats (e.g. vcf, tsv, parquet) and generates variants statistics.
 
 HOWARD annotation is mainly based on a build-in Parquet annotation method, and external tools such as BCFTOOLS, ANNOVAR, snpEff and Exomiser (see docs, automatically downloaded if needed). Parquet annotation uses annotation database in VCF or BED format, in mutliple file format: Parquet/duckdb, VCF, BED, TSV, CSV, TBL, JSON.
@@ -19,15 +21,17 @@ HOWARD is multithreaded through the number of variants and by database (data-sca
 - [Installation](#installation)
   - [Python](#python)
   - [Docker](#docker)
-- [Quick HOWARD commands](#quick-howard-commands)
+  - [Databases](#databases)
+- [HOWARD tools](#howard-tools)
   - [Stats](#stats)
   - [Convert](#convert)
   - [Query](#query)
   - [Annotation](#annotation)
   - [Calculation](#calculation)
   - [Prioritization](#prioritization)
-  - [Docker HOWARD-CLI](#docker-howard-cli)
+- [Docker HOWARD-CLI](#docker-howard-cli)
 - [Documentation](#documentation)
+- [Contact](#contact)
 
 # Installation
 
@@ -47,9 +51,15 @@ In order to build, setup and create a persitent CLI (running container), docker-
 docker-compose up -d
 ```
 
+A setup container (HOWARD-setup) will download useful databases (take a while). To avoid databases download (see [Databases section](#databases) to download manually), just start:
+
+```
+docker-compose up -d HOWARD-CLI
+```
+
 A Command Line Interface container (HOWARD-CLI) is started with host data and databases folders mounted (by default in ${HOME}/HOWARD folder)
 
-# Databases
+## Databases
 
 Multiple databases can be automatically downloaded with databases tool, such as:
 
@@ -70,6 +80,8 @@ Multiple databases can be automatically downloaded with databases tool, such as:
 howard databases --assembly=hg19 --download-genomes=/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' --download-annovar=/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' --download-snpeff=/databases/snpeff/current --download-refseq=/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-dbnsfp=/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases --download-alphamissense=/databases/alphamissense/current --download-exomiser=/databases/exomiser/current --download-dbsnp=/databases/dbsnp/current --download-dbsnp-vcf --threads=8
 ```
 
+See [HOWARD Help Databases tool](docs/help.md#databases-tool) for more information.
+
 Databases can be home-made generated, starting with a existing annotation file, especially using [HOWARD convert](#convert) tool. These files need to contain specific fields (depending on the annotation type):
 
 - variant annotation: '#CHROM', 'POS', 'ALT', 'REF'
@@ -77,7 +89,7 @@ Databases can be home-made generated, starting with a existing annotation file, 
 
 Each database annotation file is associated with a 'header' file ('.hdr'), in VCF header format, to describe annotations within the database.
 
-# Quick HOWARD commands
+# HOWARD tools
 
 ## Stats
 
@@ -89,6 +101,8 @@ Theses statsitics can be applied to VCF files and all database annotation files.
 ```
 howard stats --input=tests/data/example.vcf.gz
 ```
+
+See [HOWARD Help Stats tool](docs/help.md#stats-tool) for more information.
 
 ## Convert
 
@@ -111,6 +125,8 @@ howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.parquet
 ```
 howard stats --input=/tmp/example.parquet
 ```
+
+See [HOWARD Help Convert tool](docs/help.md#convert-tool) for more options.
 
 ## Query
 
@@ -140,6 +156,8 @@ howard query --query="SELECT * FROM 'tests/databases/annotations/hg19/dbnsfp42a.
 howard query --query="SELECT \"#CHROM\" AS \"#CHROM\", POS AS POS, '' AS ID, REF AS REF, ALT AS ALT, '' AS QUAL, '' AS FILTER, STRING_AGG(INFO, ';') AS INFO FROM 'tests/databases/annotations/hg19/*.parquet' GROUP BY \"#CHROM\", POS, REF, ALT" --output=/tmp/full_annotation.tsv
 ```
 
+See [HOWARD Help Query tool](docs/help.md#query-tool) for more options.
+
 ## Annotation
 
 Annotation is mainly based on a build-in Parquet annotation method, and tools such as BCFTOOLS, Annovar, snpEff and Exomiser. It uses available databases and homemade databases. Format of databases are: Parquet/duckdb, VCF, BED, Annovar and snpEff (Annovar and snpEff databases are automatically downloaded, see howard databases tool).
@@ -161,6 +179,8 @@ howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard
 ```
 howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly='hg19' --annotations='ALL:parquet'
 ```
+
+See [HOWARD Help Annotation tool](docs/help.md#annotation-tool) for more options.
 
 ## Calculation
 
@@ -190,6 +210,8 @@ howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.N
 howard query --input=/tmp/example.NOMEN.vcf.gz --explode_infos --query="SELECT \"NOMEN\" AS 'NOMEN' FROM variants WHERE \"GNOMEN\" == 'EGFR'"
 ```
 
+See [HOWARD Help Calculation tool](docs/help.md#calculation-tool) for more options.
+
 ## Prioritization
 
 Prioritization algorithm uses profiles to flag variants (as passed or filtered), calculate a prioritization score, and automatically generate a comment for each variants (example: 'polymorphism identified in dbSNP. associated to Lung Cancer. Found in ClinVar database'). Prioritization profiles are defined in a configuration file in JSON format. A profile is defined as a list of annotation/value, using wildcards and comparison options (contains, lower than, greater than, equal...). Annotations fields may be quality values (usually from callers, such as 'DP') or other annotations fields provided by annotations tools, such as HOWARD itself (example: COSMIC, Clinvar, 1000genomes, PolyPhen, SIFT). Multiple profiles can be used simultaneously, which is useful to define multiple validation/prioritization levels (example: 'standard', 'stringent', 'rare variants', 'low allele frequency').
@@ -217,6 +239,8 @@ howard query --input=/tmp/example.prioritized.vcf.gz --explode_infos --query="SE
 ```
 howard query --input=/tmp/example.prioritized.vcf.gz --explode_infos --query="SELECT \"#CHROM\", POS, ALT, REF, \"PZComment\", \"PZFlag\", \"PZScore\" FROM variants WHERE \"PZComment\" IS NOT NULL ORDER BY \"PZScore\" DESC"
 ```
+
+See [HOWARD Help Prioritization tool](docs/help.md#prioritization-tool) for more options.
 
 ## Process
 
@@ -311,7 +335,9 @@ howard process --config=config/config.json --param=config/param.json --input=tes
 }
 ```
 
-## Docker HOWARD-CLI
+See [HOWARD Help Process tool](docs/help.md#process-tool) for more options.
+
+# Docker HOWARD-CLI
 
 VCF annotation (Parquet, BCFTOOLS, ANNOVAR, snpEff and Exomiser) using HOWARD-CLI (snpEff and ANNOVAR databases will be automatically downloaded), and query list of genes with HGVS
 
@@ -326,8 +352,23 @@ docker exec -ti HOWARD-CLI bash
 howard --help
 ```
 
-## Documentation
+# Documentation
 
-More documentation in [docs/howard.md](docs/howard.md)
+[HOWARD User Guide](docs/user_guide.md) is available to assist users for particular commands, such as software installation, databases download, annotation command, and so on.
 
-See help documentation for all available commands and options documentation in [docs/help.md](docs/help.md)
+HOWARD provides multiple tools to manage variants and databases, with many options. [HOWARD Help](docs/options.md) is availalbe in markdown format, and compiles all information also available in help command (for each tool):
+
+```
+howard --help               # Help to list all tools
+howard query --help         # Help for 'query' tool
+howard annotation --help    # Help for 'annotation' tool
+...
+```
+
+# Contact
+
+[Medical Bioinformatics applied to Diagnosis Lab](https://www.chru-strasbourg.fr/service/bioinformatique-medicale-appliquee-au-diagnostic-unite-de/) @ Strasbourg Univerty Hospital
+
+[bioinfo@chru-strasbourg.fr](bioinfo@chru-strasbourg.fr)
+
+[GitHub](https://github.com/bioinfo-chru-strasbourg)
