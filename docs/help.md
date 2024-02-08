@@ -1,6 +1,28 @@
 # HOWARD Help
-HOWARD Commands and Options
-## PROCESS
+
+HOWARD:1.0.0
+
+Highly Open and Valuable tool for Variant Annotation & Ranking for Discovery
+
+HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations, translates vcf format and generates variants statisticsUsage examples:
+
+> howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json 
+
+> howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/hg19/dbnsfp42a.parquet,tests/databases/annotations/hg19/gnomad211_genome.parquet' 
+
+> howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations='vartype' 
+
+> howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations=config/prioritization_profiles.json --profiles='default,GERMLINE' 
+
+> howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, "DP", "CLNSIG", sample2, sample3 FROM variants WHERE "DP" >= 50 OR "CLNSIG" NOT NULL ORDER BY "CLNSIG" DESC, "DP" DESC' 
+
+> howard stats --input=tests/data/example.vcf.gz 
+
+> howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos && cat /tmp/example.tsv 
+
+
+
+## PROCESS tool
 howard process tool manage genetic variations to:
 
 - annotates genetic variants with multiple annotation databases/files and tools
@@ -125,7 +147,7 @@ default: False
 
 
 
-## ANNOTATION
+## ANNOTATION tool
 Annotation is mainly based on a build-in Parquet annotation method, and tools such as BCFTOOLS, Annovar and snpEff. It uses available databases (see Annovar and snpEff) and homemade databases. Format of databases are: parquet, duckdb, vcf, bed, Annovar and snpEff (Annovar and snpEff databases are automatically downloaded, see howard databases tool). 
 
 Usage examples:
@@ -177,7 +199,7 @@ Default: 'hg19'
 
 
 
-## CALCULATION
+## CALCULATION tool
 Calculation processes variants information to generate new information, such as: identify variation type (VarType), harmonizes allele frequency (VAF) and calculate sttistics (VAF_stats), extracts Nomen (transcript, cNomen, pNomen...) from an HGVS field (e.g. snpEff, Annovar) with an optional list of personalized transcripts, generates VaRank format barcode, identify trio inheritance.
 
 Usage examples:
@@ -256,7 +278,7 @@ default: None
 
 
 
-## HGVS
+## HGVS tool
 HGVS annotation using HUGO HGVS internation Sequence Variant Nomenclature (http://varnomen.hgvs.org/). Annotation refere to refGene and genome to generate HGVS nomenclature for all available transcripts. This annotation add 'hgvs' field into VCF INFO column of a VCF file.
 
 Usage examples:
@@ -363,7 +385,7 @@ Default: /databases/genomes/current
 
 
 
-## PRIORITIZATION
+## PRIORITIZATION tool
 Prioritization algorithm uses profiles to flag variants (as passed or filtered), calculate a prioritization score, and automatically generate a comment for each variants (example: 'polymorphism identified in dbSNP. associated to Lung Cancer. Found in ClinVar database'). Prioritization profiles are defined in a configuration file in JSON format. A profile is defined as a list of annotation/value, using wildcards and comparison options (contains, lower than, greater than, equal...). Annotations fields may be quality values (usually from callers, such as 'DP') or other annotations fields provided by annotations tools, such as HOWARD itself (example: COSMIC, Clinvar, 1000genomes, PolyPhen, SIFT). Multiple profiles can be used simultaneously, which is useful to define multiple validation/prioritization levels (example: 'standard', 'stringent', 'rare variants', 'low allele frequency').
 
 
@@ -430,7 +452,7 @@ default: HOWARD
 
 
 
-## QUERY
+## QUERY tool
 Query genetic variations in SQL format. Data can be loaded into 'variants' table from various formats (e.g. VCF, TSV, Parquet...). Using --explode_infos allow query on INFO/tag annotations. SQL query can also use external data within the request, such as a Parquet file(s).  
 
 Usage examples:
@@ -528,7 +550,7 @@ default: False
 
 
 
-## STATS
+## STATS tool
 Statistics on genetic variations, such as: number of variants, number of samples, statistics by chromosome, genotypes by samples...
 
 Usage examples:
@@ -560,7 +582,7 @@ Stats Output file in JSON format
 
 
 
-## CONVERT
+## CONVERT tool
 Convert genetic variations file to another format. Multiple format are available, such as usual and official VCF and BCF format, but also other formats such as TSV, CSV, PSV and Parquet/duckDB. These formats need a header '.hdr' file to take advantage of the power of howard (especially through INFO/tag definition), and using howard convert tool automatically generate header file fo futher use. 
 
 Usage examples:
@@ -653,7 +675,7 @@ default: None
 
 
 
-## DATABASES
+## DATABASES tool
 Download databases and needed files for howard and associated tools
 
 Usage examples:
@@ -1136,7 +1158,7 @@ Allowed formats with BCFTools: 'vcf', 'bed'
 
 
 
-## FROM_ANNOVAR
+## FROM_ANNOVAR tool
 (beta) Formatting Annovar database file to other format (VCF and Parquet). Exported Parquet file includes INFO/tags columns as VCF INFO columns had been exploded
 
 Usage examples:
@@ -1201,7 +1223,7 @@ default: 'auto'
 
 
 
-## HELP
+## HELP tool
 Help tools
 
 Usage examples:
