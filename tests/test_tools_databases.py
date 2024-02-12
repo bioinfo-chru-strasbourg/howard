@@ -598,7 +598,7 @@ def test_databases_download():
         annovar_file_list_list = [value for value in annovar_file_list.split(',')]
 
         # config
-        config = {"tools": {"snpeff": {"jar": DEFAULT_SNPEFF_BIN}}}
+        config = {"tools": {"snpeff": {"jar": tests_config.get("tools").get("snpeff")}}}
 
         # threads
         threads = 1

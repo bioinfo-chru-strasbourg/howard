@@ -1,0 +1,57 @@
+{
+  "help": "Config JSON",
+  "threads": {
+    "help": "Number of threads to use.\nUse -1 to detect number of CPU/cores.\nDefault: -1"
+  },
+  "memory": {
+    "help": "Memory to use (FLOAT[kMG]).\nDefault: None (80% of RAM)"
+  },
+  "verbosity": {
+    "help": "Verbosity level\nAvailable: CRITICAL, ERROR, WARNING, INFO, DEBUG or NOTSET.\nDefault: INFO"
+  },
+  "folders": {
+    "help": "Default folders for databases, tools...",
+    "databases": {
+      "help": "Default folders for databases (without assembly subfolder).\nStructure of a database folder is: db_name/db_release/assembly/*",
+      "annotations": {
+        "help": "Default folders for annotations databases, such as Parquet and VCF files. Multiple folders can be defined.\nFormat: a list of folder path.\nExamples:\n   - [\"/databases/annotations/current/\"]\n   - [\"/databases/annotations/current/\",\"/databases/dejavu/current/\",\"/databases/dbnsfp/current/\"]"
+      },
+      "parquet": {
+        "help": "Folders for annotations databases in Parquet format.\nFormat: a list of folder path.\nExamples:\n   - [\"/databases/parquet/current/\"]\n   - [\"/databases/parquet/current/\",\"/databases/dejavu/current/\"]"
+      },
+      "bcftools": {
+        "help": "Folders for annotations databases for BCFTools annotation.\nFormat: a list of folder path.\nExamples:\n   - [\"/databases/bcftools/current/\"]\n   - [\"/databases/bcftools/current/\",\"/databases/dejavu/current/\"]"
+      },
+      "annovar": {
+        "help": "Folders for annotations databases for ANNOVAR annotation.\nFormat: a list of folder path.\nExamples:\n   - [\"/databases/annovar/current/\"]\n   - [\"/databases/annovar/current/\",\"/databases/annovar/homemade/\"]"
+      },
+      "snpeff": {
+        "help": "Folder for annotations databases for snpEff annotation.\nFormat: a uniq folder path.\nExample: [\"/databases/snpeff/current/\"]"
+      },
+      "exomiser": {
+        "help": "Folder for annotations databases for Exomiser annotation.\nFormat: a uniq folder path.\nExample: [\"/databases/exomiser/current/\"]"
+      }
+    }
+  },
+  "tools": {
+    "help": "External tools paths.\nValues can be defined as a binary path (e.g. \"/path/to/tool/bin/tool.bin\") or a dict with the binary type (e.g. {\"bin\": \"/path/to_tool/bin/tool.sh\"}, {\"jar\": \"/path/to_tool/bin/tool.jar\"}, {\"bin\": \"/path/to_tool/bin/java\"}, {\"perl\": \"/path/to_tool/bin/tool.pl\"})",
+    "bcftools": {
+      "help": "BCFTools binary (see https://samtools.github.io/bcftools/).\nExamples: \"/tools/bcftools/current/bin/bcftools\", {\"bin\": \"/tools/bcftools/current/bin/bcftools\"}"
+    },
+    "bgzip": {
+      "help": "BGZip binary (see https://samtools.github.io/bcftools/).\nExamples: \"/tools/htslib/current/bin/bgzip\", {\"bin\": \"/tools/htslib/current/bin/bgzip\"}"
+    },
+    "snpeff": {
+      "help": "snpEff binary (see https://pcingola.github.io/SnpEff/).\nExamples: \"/tools/snpeff/current/bin/snpEff.jar\", {\"jar\": \"/tools/snpeff/current/bin/snpEff.jar\"} "
+    },
+    "annovar": {
+      "help": "ANNOVAR perl script (see https://annovar.openbioinformatics.org/).\nExamples: \"/tools/annovar/current/bin/table_annovar.pl\", {\"perl\": \"/tools/annovar/current/bin/table_annovar.pl\"} "
+    },
+    "exomiser": {
+      "help": "Exomiser binary (see https://www.sanger.ac.uk/tool/exomiser/).\nExamples: \"/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar\", {\"jar\": \"/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar\"} "
+    },
+    "java": {
+      "help": "Java binary (see https://www.java.com).\nExamples: \"/tools/java/current/bin/java\", {\"bin\": \"/usr/bin/java\"} "
+    }
+  }
+}

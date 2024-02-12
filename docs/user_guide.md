@@ -1,6 +1,22 @@
 # HOWARD User Guide
 
-## Sommaire
+Highly Open and Valuable tool for Variant Annotation & Ranking for Discovery
+
+HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations, translates files in multiple formats (e.g. vcf, tsv, parquet) and generates variants statistics.
+
+HOWARD annotation is mainly based on a build-in Parquet annotation method, and external tools such as BCFTOOLS, ANNOVAR, snpEff and Exomiser (see docs, automatically downloaded if needed). Parquet annotation uses annotation database in VCF or BED format, in mutliple file format: Parquet/duckdb, VCF, BED, TSV, CSV, TBL, JSON.
+
+HOWARD calculation processes variants information to calculate new information, such as: harmonizes allele frequency (VAF), extracts Nomen (transcript, cNomen, pNomen...) from HGVS fields with an optional list of personalized transcripts, generates VaRank format barcode.
+
+HOWARD prioritization algorithm uses profiles to flag variants (as passed or filtered), calculate a prioritization score, and automatically generate a comment for each variants (example: 'polymorphism identified in dbSNP. associated to Lung Cancer. Found in ClinVar database').Prioritization profiles are defined in a configuration file. A profile is defined as a list of annotation/value, using wildcards and comparison options (contains, lower than, greater than, equal...). Annotations fields may be quality values (usually from callers, such as 'GQ', 'DP') or other annotations fields provided by annotations tools, such as HOWARD itself (example: COSMIC, Clinvar, 1000genomes, PolyPhen, SIFT). Multiple profiles can be used simultaneously, which is useful to define multiple validation/prioritization levels (example: 'standard', 'stringent', 'rare variants', 'low allele frequency').
+
+HOWARD translates VCF format into multiple formats (e.g. VCF, TSV, Parquet), by sorting variants using specific fields (example : 'prioritization score', 'allele frequency', 'gene symbol'), including/excluding annotations/fields, including/excluding variants, adding fixed columns.
+
+HOWARD generates statistics files with a specific algorithm, snpEff and BCFTOOLS.
+
+HOWARD is multithreaded through the number of variants and by database (data-scaling).
+
+## Table of Contents
 - [Installation](#installation)
   - [Python](#python)
   - [Docker](#docker)
@@ -96,8 +112,8 @@ Let's play within Docker HOWARD-CLI service!
 
 Multiple databases can be automatically downloaded with databases tool, such as:
 
-| database                                                          | description                                                                                                                                                                                                                                                                    | Link |
-| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---- |
+| database                                                          | description                                                                                                                                                                                                                                                                    |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | [Genome](https://genome.ucsc.edu/cgi-bin/hgGateway)               | Genome Reference Consortium Human                                                                                                                                                                                                                                              |
 | [Annovar](https://annovar.openbioinformatics.org/en/latest/)      | ANNOVAR is an efficient software tool to utilize update-to-date information to functionally annotate genetic variants detected from diverse genomes                                                                                                                            |      |
 | [snpEff](https://pcingola.github.io/SnpEff/)                      | Genetic variant annotation, and functional effect prediction toolbox                                                                                                                                                                                                           |
@@ -142,6 +158,67 @@ HOWARD configuration file is used to...
 
 HOWARD parameters file is use to...
 
+
+Parameter example:
+```
+{
+  "annotation": {
+    "snpeff": {
+      "options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "
+    },
+    "annovar": {
+      "annotations": {
+        "refGene": {
+          "INFO": null
+        }
+      },
+      "options": {
+        "genebase": "-hgvs -splicing_threshold 3 ",
+        "intronhgvs": 10
+      }
+    },
+    "parquet": {
+      "annotations": {
+        "tests/databases/annotations/hg19/avsnp150.parquet": {
+          "INFO": null
+        },
+        "tests/databases/annotations/hg19/dbnsfp42a.parquet": {
+          "INFO": null
+        },
+        "tests/databases/annotations/hg19/gnomad211_genome.parquet": {
+          "INFO": null
+        }
+      }
+    },
+    "bcftools": {
+      "annotations": {
+        "tests/databases/annotations/hg19/cosmic70.vcf.gz": {
+          "INFO": null
+        }
+      }
+    }
+  },
+  "calculation": {
+    "vartype": null,
+    "snpeff_hgvs": null,
+    "NOMEN": {
+      "options": {
+        "hgvs_field": "snpeff_hgvs",
+        "transcripts": "tests/data/transcripts.tsv"
+      }
+    },
+    "VAF": ""
+  },
+  "prioritization": {
+    "config_profiles": "config/prioritization_profiles.json",
+    "pzfields": ["PZScore", "PZFlag", "PZComment"],
+    "profiles": ["default", "GERMLINE"]
+  },
+  "explode_infos": True,
+  "threads": 8
+}
+```
+
 # Tools
 
 ## Process
@@ -162,13 +239,62 @@ See [HOWARD Help Prioritization tool](help.md#prioritization-tool) tool for more
 
 ## Query
 
+
+Query genetic variations in SQL format. Data can be loaded into 'variants' table from various formats (e.g. VCF, TSV, Parquet...). Using --explode_infos allow query on INFO/tag annotations. SQL query can also use external data within the request, such as a Parquet file(s).
+
+- Select variants in VCF with REF and POS fields
+
+```
+howard query --input=tests/data/example.vcf.gz --query="SELECT * FROM variants WHERE REF = 'A' AND POS < 100000"
+```
+
+- Select variants in VCF with INFO Tags criterions
+
+```
+howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, "DP", "CLNSIG", sample2, sample3 FROM variants WHERE "DP" >= 50 OR "CLNSIG" NOT NULL ORDER BY "CLNSIG" DESC, "DP" DESC'
+```
+
+- Query a Parquet file with specific columns (e.g. from VCF convertion to Parquet)
+
+```
+howard query --query="SELECT * FROM 'tests/databases/annotations/hg19/dbnsfp42a.parquet' WHERE \"INFO/Interpro_domain\" NOT NULL ORDER BY \"INFO/SiPhy_29way_logOdds_rankscore\" DESC"
+```
+
+- Query multiple Parquet files, merge INFO columns, and extract as TSV (in VCF format)
+
+```
+howard query --query="SELECT \"#CHROM\" AS \"#CHROM\", POS AS POS, '' AS ID, REF AS REF, ALT AS ALT, '' AS QUAL, '' AS FILTER, STRING_AGG(INFO, ';') AS INFO FROM 'tests/databases/annotations/hg19/*.parquet' GROUP BY \"#CHROM\", POS, REF, ALT" --output=/tmp/full_annotation.tsv
+```
+
 See [HOWARD Help Query tool](help.md#query-tool) tool for more information.
 
 ## Stats
 
+Statistics on genetic variations, such as: number of variants, number of samples, statistics by chromosome, genotypes by samples, annotations...
+Theses statsitics can be applied to VCF files and all database annotation files.
+
+Show example VCF statistics and brief overview
+```
+howard stats --input=tests/data/example.vcf.gz
+```
+
 See [HOWARD Help Stats tool](help.md#stats-tool) tool for more information.
 
 ## Convert
+
+Convert genetic variations file to another format. Multiple format are available, such as usual and official VCF format, but also other formats such as TSV, CSV, TBL, JSON and Parquet/duckDB. These formats need a header '.hdr' file to take advantage of the power of howard (especially through INFO/tag definition), and using howard convert tool automatically generate header file fo futher use (otherwise, an default '.hdr' file is generated).
+
+- Translate VCF into TSV, export INFO/tags into columns, and show output file
+
+```
+howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos && cat /tmp/example.tsv
+```
+
+- Translate VCF into parquet
+
+```
+howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.parquet
+```
 
 See [HOWARD Help Convert tool](help.md#convert-tool) tool for more information.
 

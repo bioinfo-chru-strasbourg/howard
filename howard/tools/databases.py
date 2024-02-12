@@ -755,8 +755,8 @@ def databases_download_snpeff(folder:str = None, assemblies:list = ["hg19"], con
     log.info(f"Download snpEff databases {assemblies}")
 
     # Java bin and snpEff jar
-    snpeff_bin = get_snpeff_bin(config=config)
-    java_bin = config.get("tools", {}).get("java", {}).get("bin", "java")
+    snpeff_bin = get_bin(tool="snpeff", bin="snpEff.jar", bin_type="jar", config=config, default_folder=f"{DEFAULT_TOOLS_FOLDER}/snpeff")
+    java_bin = get_bin(tool="java", bin="java", bin_type="bin", config=config, default_folder="/usr/bin")
 
     # database list
     snpeff_databases_list = "snpeff_databases.list"

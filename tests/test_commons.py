@@ -28,6 +28,53 @@ from test_needed import *
 
 
 
+def test_get_bin():
+    """
+    The `test_get_bin` function tests the `get_bin` function with different configurations and
+    inputs.
+    """
+    
+    # Test java
+    config = {"tools": {"java": {"bin": "java"}}}
+    java_bin = get_bin(tool="java", bin="java", bin_type="bin", config=config, default_folder="/usr/bin")
+    assert java_bin == "java"
+
+    # Config
+    tool_name = "snpeff"
+    tool_type = "bin"
+    tool_bin = "snpEff.jar"
+    tool_bin_path = tests_config.get("tools").get("snpeff")
+    config = {"tools": {tool_name: {tool_type: tool_bin_path}}}
+
+    # Test with config and tool name
+    assert get_bin(tool=tool_name, config=config) == tool_bin_path
+
+    # Test with config and tool bin
+    assert os.path.basename(get_bin(bin=tool_bin, config=config)) == tool_bin
+
+    # Test with config and tool name but config bin does NOT exists
+    config_bad = {"tools": {tool_name: "/tools/snpeff/5.1d/bin/NOT_snpEff.jar"}}
+    assert get_bin(tool=tool_name, config=config_bad) == None
+
+    # Test with config with tool type, and tool name but config bin does NOT exists
+    config_bad = {"tools": {tool_name: {"jar": tool_bin_path}}}
+    assert get_bin(tool=tool_name, config=config_bad) == None
+    
+    # Test with config and tool name and tool bin, but config bin does NOT exists, and search with tool bin in default tool folder
+    assert os.path.basename(get_bin(tool=tool_name, bin=tool_bin, config=config)) == tool_bin
+    
+    # Test with no config and tool name
+    assert get_bin(tool=tool_name) == None
+
+    # Test with no config and tool bin
+    assert os.path.basename(get_bin(bin=tool_bin)) == tool_bin
+
+    # Test with no config
+    assert get_bin() == None
+
+    # Test with no config, tool bin and default tool folder
+    assert os.path.basename(get_bin(bin=tool_bin, default_folder="/tools")) == tool_bin
+
 
 def test_download_file():
     """
@@ -1001,28 +1048,6 @@ def test_trio():
 
     # Test case 5: Non-existent sample name
     assert trio(df.iloc[0], ["sample1", "non_existent_sample", "sample2"]) == "unknown"
-
-
-def test_get_snpeff_bin():
-    """
-    The function is not provided, so a summary cannot be given.
-    """
-
-    # Test when the path is provided in the config
-    config = {"tools": {"snpeff": {"jar": DEFAULT_SNPEFF_BIN}}}
-    assert get_snpeff_bin(config) == DEFAULT_SNPEFF_BIN
-
-    # Test when bad path is provided in the config
-    config = {"tools": {"snpeff": {"jar": "/tools/snpeff/5.1d/bin/NOT_snpEff.jar"}}}
-    assert get_snpeff_bin(config) == DEFAULT_SNPEFF_BIN
-    
-    # Test when the path is not provided in the config but snpEff.jar is found
-    with patch("os.path.exists", return_value=True):
-        assert get_snpeff_bin({}) == DEFAULT_SNPEFF_BIN
-    
-    # Test when the path is not provided in the config and snpEff.jar is not found
-    with patch("os.path.exists", return_value=False):
-        assert get_snpeff_bin({}) == None
 
 
 def test_load_duckdb_extension():

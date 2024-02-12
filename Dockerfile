@@ -83,8 +83,10 @@ RUN echo 'alias ll="ls -lah"' >> ~/.bashrc
 # YUM INSTALL #
 ###############
 
-RUN yum install -y epel-release;
-RUN yum install -y $YUM_INSTALL;
+# AlmaLinux GPG key and YUM install
+RUN rpm --import https://repo.almalinux.org/almalinux/RPM-GPG-KEY-AlmaLinux && \
+    yum install -y epel-release && \
+    yum install -y $YUM_INSTALL;
 
 
 
