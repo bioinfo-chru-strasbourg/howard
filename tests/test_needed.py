@@ -38,7 +38,6 @@ tests_tools = "/tools"
 tests_config = {
   "threads": 2,
   "memory": None,
-  "verbosity": "warning",
   "folders": {
     "databases": {
       "root": "",
@@ -51,11 +50,11 @@ tests_config = {
     }
   },
   "tools": {
-    "bcftools": {"bin": "bcftools"},
-    "bgzip": {"bin": "bgzip"},
-    "snpeff": {"jar": f"{tests_tools}/snpeff/current/bin/snpEff.jar"},
-    "java": {"bin": "/usr/bin/java"},
-    "annovar": {"bin": f"{tests_tools}/annovar/current/bin/table_annovar.pl"}
+    "bcftools": "bcftools",
+    "bgzip": "bgzip",
+    "snpeff": f"{tests_tools}/snpeff/current/bin/snpEff.jar",
+    "java": "/usr/bin/java",
+    "annovar": f"{tests_tools}/annovar/current/bin/table_annovar.pl"
   },
   "verbosity": "debug"
 }

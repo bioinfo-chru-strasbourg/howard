@@ -15,6 +15,7 @@ import pandas as pd
 import vcf
 import logging as log
 import sys
+import imp
 
 # Import Commons
 from howard.commons import *
@@ -29,8 +30,18 @@ from howard.tools.query import *
 from howard.tools.stats import *
 from howard.tools.convert import *
 from howard.tools.databases import *
+from howard.tools.help import *
 from howard.tools.from_annovar import *
 
+
+# Import gui only if gooey is installed
+try:
+    imp.find_module('gooey')
+    tool_gui_enable = True
+    from howard.tools.gui import *
+except ImportError:
+    tool_gui_enable = False
+    #log.warning("Gooey not installed")
 
 # Arguments dict
 arguments = {
@@ -1037,6 +1048,135 @@ shared_arguments = ["config", "threads", "memory", "chunk_size", "tmp", "duckdb_
 
 # Command dict
 commands_arguments = {
+    "query": {
+        "function" : "query",
+        "description":  """Query genetic variations in SQL format. Data can be loaded into 'variants' table from various formats (e.g. VCF, TSV, Parquet...). Using --explode_infos allow query on INFO/tag annotations. SQL query can also use external data within the request, such as a Parquet file(s).  """,
+        "help": "Query genetic variations file in SQL format.",
+        "epilog": """Usage examples:\n"""
+                        """   howard query --input=tests/data/example.vcf.gz --query="SELECT * FROM variants WHERE REF = 'A' AND POS < 100000" \n"""
+                        """   howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, DP, CLNSIG, sample2, sample3 FROM variants WHERE DP >= 50 OR CLNSIG NOT NULL ORDER BY DP DESC' \n"""
+                        """   howard query --query="SELECT \\\"#CHROM\\\", POS, REF, ALT, \\\"INFO/Interpro_domain\\\" FROM 'tests/databases/annotations/hg19/dbnsfp42a.parquet' WHERE \\\"INFO/Interpro_domain\\\" NOT NULL ORDER BY \\\"INFO/SiPhy_29way_logOdds_rankscore\\\" DESC LIMIT 10" \n"""
+                        """   howard query --explode_infos --explode_infos_prefix='INFO/' --query="SELECT \\\"#CHROM\\\", POS, REF, ALT, STRING_AGG(INFO, ';') AS INFO FROM 'tests/databases/annotations/hg19/*.parquet' GROUP BY \\\"#CHROM\\\", POS, REF, ALT" --output=/tmp/full_annotation.tsv  && head -n2 /tmp/full_annotation.tsv \n"""
+                        , 
+        "groups": {
+            "main": {
+                "input": False,
+                "output": False,
+                "query": True
+            },
+            "Explode infos": {
+                "explode_infos": False,
+                "explode_infos_prefix": False,
+                "explode_infos_fields": False,
+            },
+            "Query": {
+                "query_limit": False,
+                "query_print_mode": False,
+            },
+            "Output": {
+                "include_header": False
+            }
+        }
+    },
+    "stats": {
+        "function" : "stats",
+        "description":  """Statistics on genetic variations, such as: number of variants, number of samples, statistics by chromosome, genotypes by samples...""",
+        "help": "Statistics on genetic variations file.",
+        "epilog": """Usage examples:\n"""
+                        """   howard stats --input=tests/data/example.vcf.gz """, 
+        "groups": {
+            "main": {
+                "input": True,
+                "stats_md": False,
+                "stats_json": False
+            }
+        }
+    },
+    "convert": {
+        "function" : "convert",
+        "description":  """Convert genetic variations file to another format. Multiple format are available, such as usual and official VCF and BCF format, but also other formats such as TSV, CSV, PSV and Parquet/duckDB. These formats need a header '.hdr' file to take advantage of the power of howard (especially through INFO/tag definition), and using howard convert tool automatically generate header file fo futher use. """,
+        "help": "Convert genetic variations file to another format.",
+        "epilog": """Usage examples:\n"""
+                        """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv \n"""
+                        """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.parquet \n"""
+                        """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos --explode_infos_fields='CLNSIG,SIFT,DP' --order_by='CLNSIG DESC, DP DESC' \n"""
+                        """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos --explode_infos_prefix='INFO/' --explode_infos_fields='CLNSIG,SIFT,DP,*' --order_by='"INFO/CLNSIG" DESC, "INFO/DP" DESC' --include_header """,
+        "groups": {
+            "main": {
+                "input": True,
+                "output": True,
+                "explode_infos": False,
+                "explode_infos_prefix": False,
+                "explode_infos_fields": False,
+                "order_by": False,
+                "include_header": False,
+                "parquet_partitions": False
+            }
+        }
+    },
+    "annotation": {
+        "function" : "annotation",
+        "description":  """Annotation is mainly based on a build-in Parquet annotation method, and tools such as BCFTOOLS, Annovar and snpEff. It uses available databases (see Annovar and snpEff) and homemade databases. Format of databases are: parquet, duckdb, vcf, bed, Annovar and snpEff (Annovar and snpEff databases are automatically downloaded, see howard databases tool). """,
+        "help":         """Annotation of genetic variations file using databases/files and tools.""",
+        "epilog":       """Usage examples:\n"""
+                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/hg19/avsnp150.parquet,tests/databases/annotations/hg19/dbnsfp42a.parquet,tests/databases/annotations/hg19/gnomad211_genome.parquet' \n"""
+                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotations='annovar:refGene,annovar:cosmic70,snpeff,tests/databases/annotations/hg19/clinvar_20210123.parquet' \n"""
+                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotations='ALL:parquet' \n""", 
+        "groups": {
+            "main": {
+                "input": True,
+                "output": True,
+                "annotations": True,
+                "assembly": False
+            }
+        }
+    },
+    "calculation": {
+        "function" : "calculation",
+        "description":  """Calculation processes variants information to generate new information, such as: identify variation type (VarType), harmonizes allele frequency (VAF) and calculate sttistics (VAF_stats), extracts Nomen (transcript, cNomen, pNomen...) from an HGVS field (e.g. snpEff, Annovar) with an optional list of personalized transcripts, generates VaRank format barcode, identify trio inheritance.""",
+        "help":         """Calculation operations on genetic variations file and genotype information.\n""",
+        "epilog":       """Usage examples:\n"""
+                        """   howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations='vartype' \n"""
+                        """   howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.calculated.tsv --calculations='snpeff_hgvs,NOMEN' --hgvs_field=snpeff_hgvs --transcripts=tests/data/transcripts.tsv \n"""
+                        """   howard calculation --show_calculations \n"""
+                        ,
+        "groups": {
+            "main": {
+                "input": False,
+                "output": False,
+                "calculations": False,
+                "calculation_config": False,
+                "show_calculations": False
+            },
+            "NOMEN calculation": {
+                "hgvs_field": False,
+                "transcripts": False
+            },
+            "TRIO calculation": {
+                "trio_pedigree": False
+            }
+        }
+    },
+    "prioritization": {
+        "function" : "prioritization",
+        "description":  """Prioritization algorithm uses profiles to flag variants (as passed or filtered), calculate a prioritization score, and automatically generate a comment for each variants (example: 'polymorphism identified in dbSNP. associated to Lung Cancer. Found in ClinVar database'). Prioritization profiles are defined in a configuration file in JSON format. A profile is defined as a list of annotation/value, using wildcards and comparison options (contains, lower than, greater than, equal...). Annotations fields may be quality values (usually from callers, such as 'DP') or other annotations fields provided by annotations tools, such as HOWARD itself (example: COSMIC, Clinvar, 1000genomes, PolyPhen, SIFT). Multiple profiles can be used simultaneously, which is useful to define multiple validation/prioritization levels (example: 'standard', 'stringent', 'rare variants', 'low allele frequency').\n""",
+        "help": "Prioritization of genetic variations based on annotations criteria (profiles).",
+        "epilog": """Usage examples:\n"""
+                        """   howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations=config/prioritization_profiles.json --profiles='default,GERMLINE' \n""", 
+        "groups": {
+            "main": {
+                "input": True,
+                "output": True,
+                "prioritizations": True
+            },
+            "Prioritization": {
+                "profiles": False,
+                "default_profile": False,
+                "pzfields": False,
+                "prioritization_score_mode": False
+            }
+        }
+    },
     "process": {
         "function" : "process",
         "description":  """howard process tool manage genetic variations to:\n"""
@@ -1069,53 +1209,10 @@ commands_arguments = {
             }
         }
     },
-    "annotation": {
-        "function" : "annotation",
-        "description":  """Annotation is mainly based on a build-in Parquet annotation method, and tools such as BCFTOOLS, Annovar and snpEff. It uses available databases (see Annovar and snpEff) and homemade databases. Format of databases are: parquet, duckdb, vcf, bed, Annovar and snpEff (Annovar and snpEff databases are automatically downloaded, see howard databases tool). """,
-        "help":         """Annotation of genetic variations using databases/files and tools.""",
-        "epilog":       """Usage examples:\n"""
-                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/hg19/avsnp150.parquet,tests/databases/annotations/hg19/dbnsfp42a.parquet,tests/databases/annotations/hg19/gnomad211_genome.parquet' \n"""
-                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotations='annovar:refGene,annovar:cosmic70,snpeff,tests/databases/annotations/hg19/clinvar_20210123.parquet' \n"""
-                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotations='ALL:parquet' \n""", 
-        "groups": {
-            "main": {
-                "input": True,
-                "output": True,
-                "annotations": True,
-                "assembly": False
-            }
-        }
-    },
-    "calculation": {
-        "function" : "calculation",
-        "description":  """Calculation processes variants information to generate new information, such as: identify variation type (VarType), harmonizes allele frequency (VAF) and calculate sttistics (VAF_stats), extracts Nomen (transcript, cNomen, pNomen...) from an HGVS field (e.g. snpEff, Annovar) with an optional list of personalized transcripts, generates VaRank format barcode, identify trio inheritance.""",
-        "help":         """Calculation operations on genetic variations and genotype information.\n""",
-        "epilog":       """Usage examples:\n"""
-                        """   howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations='vartype' \n"""
-                        """   howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.calculated.tsv --calculations='snpeff_hgvs,NOMEN' --hgvs_field=snpeff_hgvs --transcripts=tests/data/transcripts.tsv \n"""
-                        """   howard calculation --show_calculations \n"""
-                        ,
-        "groups": {
-            "main": {
-                "input": False,
-                "output": False,
-                "calculations": False,
-                "calculation_config": False,
-                "show_calculations": False
-            },
-            "NOMEN calculation": {
-                "hgvs_field": False,
-                "transcripts": False
-            },
-            "TRIO calculation": {
-                "trio_pedigree": False
-            }
-        }
-    },
     "hgvs": {
         "function" : "hgvs",
         "description":  """HGVS annotation using HUGO HGVS internation Sequence Variant Nomenclature (http://varnomen.hgvs.org/). Annotation refere to refGene and genome to generate HGVS nomenclature for all available transcripts. This annotation add 'hgvs' field into VCF INFO column of a VCF file.""",
-        "help":         """HGVS annotation.\n""",
+        "help":         """HGVS annotation (HUGO internation nomenclature) using refGene, genome and transcripts list.\n""",
         "epilog":       """Usage examples:\n"""
                         """   howard hgvs --input=tests/data/example.full.vcf --output=/tmp/example.hgvs.vcf \n"""
                         ,
@@ -1137,92 +1234,6 @@ commands_arguments = {
                 "refgene": False,
                 "refseqlink": False,
                 "genomes-folder": False
-            }
-        }
-    },
-    "prioritization": {
-        "function" : "prioritization",
-        "description":  """Prioritization algorithm uses profiles to flag variants (as passed or filtered), calculate a prioritization score, and automatically generate a comment for each variants (example: 'polymorphism identified in dbSNP. associated to Lung Cancer. Found in ClinVar database'). Prioritization profiles are defined in a configuration file in JSON format. A profile is defined as a list of annotation/value, using wildcards and comparison options (contains, lower than, greater than, equal...). Annotations fields may be quality values (usually from callers, such as 'DP') or other annotations fields provided by annotations tools, such as HOWARD itself (example: COSMIC, Clinvar, 1000genomes, PolyPhen, SIFT). Multiple profiles can be used simultaneously, which is useful to define multiple validation/prioritization levels (example: 'standard', 'stringent', 'rare variants', 'low allele frequency').\n""",
-        "help": "Prioritization of genetic variations based on annotations criteria (profiles).",
-        "epilog": """Usage examples:\n"""
-                        """   howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations=config/prioritization_profiles.json --profiles='default,GERMLINE' \n""", 
-        "groups": {
-            "main": {
-                "input": True,
-                "output": True,
-                "prioritizations": True
-            },
-            "Prioritization": {
-                "profiles": False,
-                "default_profile": False,
-                "pzfields": False,
-                "prioritization_score_mode": False
-            }
-        }
-    },
-    "query": {
-        "function" : "query",
-        "description":  """Query genetic variations in SQL format. Data can be loaded into 'variants' table from various formats (e.g. VCF, TSV, Parquet...). Using --explode_infos allow query on INFO/tag annotations. SQL query can also use external data within the request, such as a Parquet file(s).  """,
-        "help": "Query genetic variations in SQL format.",
-        "epilog": """Usage examples:\n"""
-                        """   howard query --input=tests/data/example.vcf.gz --query="SELECT * FROM variants WHERE REF = 'A' AND POS < 100000" \n"""
-                        """   howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, DP, CLNSIG, sample2, sample3 FROM variants WHERE DP >= 50 OR CLNSIG NOT NULL ORDER BY DP DESC' \n"""
-                        """   howard query --query="SELECT \\\"#CHROM\\\", POS, REF, ALT, \\\"INFO/Interpro_domain\\\" FROM 'tests/databases/annotations/hg19/dbnsfp42a.parquet' WHERE \\\"INFO/Interpro_domain\\\" NOT NULL ORDER BY \\\"INFO/SiPhy_29way_logOdds_rankscore\\\" DESC LIMIT 10" \n"""
-                        """   howard query --explode_infos --explode_infos_prefix='INFO/' --query="SELECT \\\"#CHROM\\\", POS, REF, ALT, STRING_AGG(INFO, ';') AS INFO FROM 'tests/databases/annotations/hg19/*.parquet' GROUP BY \\\"#CHROM\\\", POS, REF, ALT" --output=/tmp/full_annotation.tsv  && head -n2 /tmp/full_annotation.tsv \n"""
-                        , 
-        "groups": {
-            "main": {
-                "input": False,
-                "output": False,
-                "query": True
-            },
-            "Explode infos": {
-                "explode_infos": False,
-                "explode_infos_prefix": False,
-                "explode_infos_fields": False,
-            },
-            "Query": {
-                "query_limit": False,
-                "query_print_mode": False,
-            },
-            "Output": {
-                "include_header": False
-            }
-        }
-    },
-    "stats": {
-        "function" : "stats",
-        "description":  """Statistics on genetic variations, such as: number of variants, number of samples, statistics by chromosome, genotypes by samples...""",
-        "help": "Statistics on genetic variations.",
-        "epilog": """Usage examples:\n"""
-                        """   howard stats --input=tests/data/example.vcf.gz """, 
-        "groups": {
-            "main": {
-                "input": True,
-                "stats_md": False,
-                "stats_json": False
-            }
-        }
-    },
-    "convert": {
-        "function" : "convert",
-        "description":  """Convert genetic variations file to another format. Multiple format are available, such as usual and official VCF and BCF format, but also other formats such as TSV, CSV, PSV and Parquet/duckDB. These formats need a header '.hdr' file to take advantage of the power of howard (especially through INFO/tag definition), and using howard convert tool automatically generate header file fo futher use. """,
-        "help": "Convert genetic variations file to another format.",
-        "epilog": """Usage examples:\n"""
-                        """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv \n"""
-                        """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.parquet \n"""
-                        """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos --explode_infos_fields='CLNSIG,SIFT,DP' --order_by='CLNSIG DESC, DP DESC' \n"""
-                        """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos --explode_infos_prefix='INFO/' --explode_infos_fields='CLNSIG,SIFT,DP,*' --order_by='"INFO/CLNSIG" DESC, "INFO/DP" DESC' --include_header """,
-        "groups": {
-            "main": {
-                "input": True,
-                "output": True,
-                "explode_infos": False,
-                "explode_infos_prefix": False,
-                "explode_infos_fields": False,
-                "order_by": False,
-                "include_header": False,
-                "parquet_partitions": False
             }
         }
     },
@@ -1351,8 +1362,18 @@ commands_arguments = {
             }
         }
     },
+    "gui": {
+        "function" : "gui",
+        "description": """Graphical User Interface tools""",
+        "help": """Graphical User Interface tools""",
+        "epilog": """Usage examples:\n"""
+                    """   howard gui """,
+        "groups": {
+            
+        }
+    },
     "help": {
-        "function" : "help_output",
+        "function" : "help",
         "description": """Help tools""",
         "help": """Help tools""",
         "epilog": """Usage examples:\n"""
@@ -1366,140 +1387,3 @@ commands_arguments = {
     }
 }
 
-
-# get argument
-def get_argument(arguments:dict = {}, arg:str = "", required:bool = False, remove_infos:list = ["gooey"], add_metavar:bool = False) -> dict:
-    """
-    The `get_argument` function retrieves information about a specific argument from a dictionary, and
-    can also set its "required" status.
-    
-    :param arguments: A dictionary containing information about the arguments passed to a function or
-    method
-    :type arguments: dict
-    :param arg: The `arg` parameter is a string that represents the name of the argument that you want
-    to retrieve information for
-    :type arg: str
-    :param required: The `required` parameter is a boolean value that determines whether the argument is
-    required or not. If set to True, the function will return an empty dictionary if the argument is not
-    found in the `arguments` dictionary. If set to False (default), the function will still return an
-    empty dictionary if, defaults to False
-    :type required: bool (optional)
-    :param remove_infos: The `remove_infos` parameter is a list that contains the names of specific
-    information that you want to remove from the argument dictionary. In the code, it is used to remove
-    specific argument information such as "gooey" from the `arg_infos` dictionary
-    :type remove_infos: list
-    :return: a dictionary containing information about a specific argument, specified by the `arg`
-    parameter. If the argument is found in the `arguments` dictionary, the function returns a dictionary
-    containing the information about that argument. If the argument is not found, an empty dictionary is
-    returned. The `required` parameter is used to specify whether the argument is required or not, and
-    this information is added to
-    """
-
-    if arg in arguments:
-        arg_infos = arguments.get(arg,{}).copy()
-        for arg_info in remove_infos:
-            arg_infos.pop(arg_info, None)
-        if required != None:
-            arg_infos["required"] = required
-        if add_metavar and "metavar" not in arg_infos:
-            arg_infos["metavar"] = arg.replace("_", " ")
-        return arg_infos
-    else:
-        return {}
-
-
-# get_argument_gooey
-def get_argument_gooey(arg:str):
-    """
-    The function `get_argument_gooey` takes an argument and returns the corresponding widget and options
-    for the Gooey library in Python.
-    
-    :param arg: The `arg` parameter is a string that represents the name of the argument you want to
-    retrieve information for
-    :type arg: str
-    :return: The function `get_argument_gooey` returns two values: `widget` and `options`.
-    """
-
-    # Init
-    argument = get_argument(arguments=arguments, arg=arg, remove_infos=[])
-    argument_type = argument.get("type", None)
-    gooey_argument = argument.get("gooey", {})
-
-    # Widget
-    widget = None
-    if gooey_argument.get("widget", None):
-        widget = gooey_argument.get("widget")
-    else:
-        if str(argument_type) == "FileType('r')":
-            widget = "FileChooser"
-        elif str(argument_type) == "FileType('w')":
-            widget = "FileSaver"
-    
-    # options
-    options = gooey_argument.get("options", {})
-
-    # Return
-    return widget, options
-
-
-# get argument
-def get_argument_to_mk(arg:str, argument:dict = {}, mode:str = "mk") -> str:
-    """
-    The function `get_argument_to_mk` generates a formatted string containing information about a
-    command line argument, which can be output in either Markdown or HTML format.
-    
-    :param arg: The `arg` parameter is a string that represents the name of the argument. It is used to
-    generate the header and text for the argument
-    :type arg: str
-    :param argument: The `argument` parameter is a dictionary that contains information about the
-    argument. It has the following keys:
-    :type argument: dict
-    :param mode: The `mode` parameter is used to specify the format of the output. It can have two
-    possible values: "mk" or "html". If "mk" is specified, the output will be formatted using Markdown
-    syntax. If "html" is specified, the output will be formatted using HTML syntax, defaults to mk
-    :type mode: str (optional)
-    :return: a formatted string that provides information about a command line argument. The format of
-    the string depends on the value of the `mode` parameter. If `mode` is set to "html", the string is
-    formatted as an HTML `<pre>` block. Otherwise, the string is formatted as a Markdown code block. The
-    string includes the argument name, metavariable, help text, required
-    """
-
-    from html import escape
-
-    text = ""
-
-    # Option info
-    metavar = argument.get("metavar",arg)
-    help = argument.get("help",None)
-    required = argument.get("required",None)
-    choices = argument.get("choices",None)
-    default = argument.get("default",None)
-    action = argument.get("action",None)
-
-    # header
-    text_header = f"--{arg}"
-    if not action:
-        text_header += f"=<{metavar}>"
-    if choices:
-        text_header += f" {choices}"
-    if default:
-        text_header += f" ({default})"
-    if required:
-        text_header += " | required"
-    
-    # text
-    if mode == "html":
-        text += f"<pre>"
-        text += escape(text_header)
-        text += "\n"
-        text += escape(help)
-        text += "\n\n"
-        text += f"</pre>"
-    else:
-        text += f"```\n"
-        text += text_header
-        text += "\n\n"
-        text += help
-        text += "\n```\n\n"
-
-    return text

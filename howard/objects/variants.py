@@ -3009,15 +3009,12 @@ class Variants:
         log.debug("Databases annotations: " + str(databases_folders))
 
         # Config - Java
-        java_bin = config.get("tools", {}).get("java", {}).get("bin", "java")
+        java_bin = get_bin(tool="java", bin="java", bin_type="bin", config=config, default_folder="/usr/bin")
         log.debug("Java bin: " + str(java_bin))
 
         # Config - Exomiser
         exomiser_jar = get_bin(bin="exomiser-cli*.jar", tool="exomiser", bin_type="jar", config=config, default_folder=f"{DEFAULT_TOOLS_FOLDER}/exomiser")
         log.debug("Exomiser bin: " + str(exomiser_jar))
-
-        # Config - Java
-        java_bin = config.get("tools", {}).get("java", {}).get("bin", "java")
         
         # Param
         param = self.get_param()
@@ -3580,11 +3577,10 @@ class Variants:
         log.debug("Databases annotations: " + str(databases_folders))
 
         # Config - Java
-        java_bin = config.get("tools", {}).get("java", {}).get("bin", "java")
+        java_bin = get_bin(tool="java", bin="java", bin_type="bin", config=config, default_folder="/usr/bin")
 
         # Config - snpEff
-        snpeff_jar = config.get("tools", {}).get(
-            "snpeff", {}).get("jar", "snpEff.jar")
+        snpeff_jar = get_bin(tool="snpeff", bin="snpEff.jar", bin_type="jar", config=config, default_folder=f"{DEFAULT_TOOLS_FOLDER}/snpeff")
         snpeff_databases = config.get("folders", {}).get(
             "databases", {}).get("snpeff", DEFAULT_SNPEFF_FOLDER)
 
@@ -3806,8 +3802,7 @@ class Variants:
         log.debug("Databases annotations: " + str(databases_folders))
 
         # Config - annovar
-        annovar_bin = config.get("tools", {}).get(
-            "annovar", {}).get("bin", "table_annovar.pl")
+        annovar_bin = get_bin(tool="annovar", bin="table_annovar.pl", bin_type="perl", config=config, default_folder=f"{DEFAULT_TOOLS_FOLDER}/annovar")
         annovar_databases = config.get("folders", {}).get(
             "databases", {}).get("annovar", DEFAULT_ANNOVAR_FOLDER)
 

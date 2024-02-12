@@ -16,13 +16,13 @@ HOWARD generates statistics files with a specific algorithm, snpEff and BCFTOOLS
 
 HOWARD is multithreaded through the number of variants and by database (data-scaling).
 
-# Getting Started
+## Table of contents
 
 - [Installation](#installation)
   - [Python](#python)
   - [Docker](#docker)
   - [Databases](#databases)
-- [HOWARD tools](#howard-tools)
+- [Tools](#tools)
   - [Stats](#stats)
   - [Convert](#convert)
   - [Query](#query)
@@ -63,8 +63,8 @@ A Command Line Interface container (HOWARD-CLI) is started with host data and da
 
 Multiple databases can be automatically downloaded with databases tool, such as:
 
-| database                                                          | description                                                                                                                                                                                                                                                                    | Link |
-| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---- |
+| database                                                          | description                                                                                                                                                                                                                                                                    |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | [Genome](https://genome.ucsc.edu/cgi-bin/hgGateway)               | Genome Reference Consortium Human                                                                                                                                                                                                                                              |
 | [Annovar](https://annovar.openbioinformatics.org/en/latest/)      | ANNOVAR is an efficient software tool to utilize update-to-date information to functionally annotate genetic variants detected from diverse genomes                                                                                                                            |      |
 | [snpEff](https://pcingola.github.io/SnpEff/)                      | Genetic variant annotation, and functional effect prediction toolbox                                                                                                                                                                                                           |
@@ -89,18 +89,17 @@ Databases can be home-made generated, starting with a existing annotation file, 
 
 Each database annotation file is associated with a 'header' file ('.hdr'), in VCF header format, to describe annotations within the database.
 
-# HOWARD tools
+# Tools
 
 ## Stats
 
 Statistics on genetic variations, such as: number of variants, number of samples, statistics by chromosome, genotypes by samples, annotations...
 Theses statsitics can be applied to VCF files and all database annotation files.
 
-- Show example VCF statistics and brief overview
-
-```
-howard stats --input=tests/data/example.vcf.gz
-```
+> Example: Show example VCF statistics and brief overview
+> ```
+> howard stats --input=tests/data/example.vcf.gz
+> ```
 
 See [HOWARD Help Stats tool](docs/help.md#stats-tool) for more information.
 
@@ -108,23 +107,11 @@ See [HOWARD Help Stats tool](docs/help.md#stats-tool) for more information.
 
 Convert genetic variations file to another format. Multiple format are available, such as usual and official VCF format, but also other formats such as TSV, CSV, TBL, JSON and Parquet/duckDB. These formats need a header '.hdr' file to take advantage of the power of howard (especially through INFO/tag definition), and using howard convert tool automatically generate header file fo futher use (otherwise, an default '.hdr' file is generated).
 
-- Translate VCF into TSV, export INFO/tags into columns, and show output file
-
-```
-howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos && cat /tmp/example.tsv
-```
-
-- Translate VCF into parquet
-
-```
-howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.parquet
-```
-
-- and show statistics on output parquet file (same as VCF)
-
-```
-howard stats --input=/tmp/example.parquet
-```
+> Example: Translate VCF into TSV, export INFO/tags into columns, and show output file
+> 
+> ```
+> howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos && cat /tmp/example.tsv
+> ```
 
 See [HOWARD Help Convert tool](docs/help.md#convert-tool) for more options.
 
@@ -132,29 +119,11 @@ See [HOWARD Help Convert tool](docs/help.md#convert-tool) for more options.
 
 Query genetic variations in SQL format. Data can be loaded into 'variants' table from various formats (e.g. VCF, TSV, Parquet...). Using --explode_infos allow query on INFO/tag annotations. SQL query can also use external data within the request, such as a Parquet file(s).
 
-- Select variants in VCF with REF and POS fields
-
-```
-howard query --input=tests/data/example.vcf.gz --query="SELECT * FROM variants WHERE REF = 'A' AND POS < 100000"
-```
-
-- Select variants in VCF with INFO Tags criterions
-
-```
-howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, "DP", "CLNSIG", sample2, sample3 FROM variants WHERE "DP" >= 50 OR "CLNSIG" NOT NULL ORDER BY "CLNSIG" DESC, "DP" DESC'
-```
-
-- Query a Parquet file with specific columns (e.g. from VCF convertion to Parquet)
-
-```
-howard query --query="SELECT * FROM 'tests/databases/annotations/hg19/dbnsfp42a.parquet' WHERE \"INFO/Interpro_domain\" NOT NULL ORDER BY \"INFO/SiPhy_29way_logOdds_rankscore\" DESC"
-```
-
-- Query multiple Parquet files, merge INFO columns, and extract as TSV (in VCF format)
-
-```
-howard query --query="SELECT \"#CHROM\" AS \"#CHROM\", POS AS POS, '' AS ID, REF AS REF, ALT AS ALT, '' AS QUAL, '' AS FILTER, STRING_AGG(INFO, ';') AS INFO FROM 'tests/databases/annotations/hg19/*.parquet' GROUP BY \"#CHROM\", POS, REF, ALT" --output=/tmp/full_annotation.tsv
-```
+> Example: Select variants in VCF with INFO Tags criterions
+>
+> ```
+> howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, "DP", "CLNSIG", sample2, sample3 FROM variants WHERE "DP" >= 50 OR "CLNSIG" NOT NULL ORDER BY "CLNSIG" DESC, "DP" DESC'
+> ```
 
 See [HOWARD Help Query tool](docs/help.md#query-tool) for more options.
 
@@ -337,15 +306,23 @@ howard process --config=config/config.json --param=config/param.json --input=tes
 
 See [HOWARD Help Process tool](docs/help.md#process-tool) for more options.
 
-# Docker HOWARD-CLI
+# Command Line Interface
 
-VCF annotation (Parquet, BCFTOOLS, ANNOVAR, snpEff and Exomiser) using HOWARD-CLI (snpEff and ANNOVAR databases will be automatically downloaded), and query list of genes with HGVS
+Docker HOWARD-CLI container (Command Line Interface) can be used to execute commands.
+
+- Query of an existing VCF:
 
 ```
-docker exec --workdir=/tool HOWARD-CLI howard process --config=config/config.json --param=config/param.json --input=tests/data/example.vcf.gz --output=/tmp/example.process.tsv --query='SELECT "INFO/NOMEN" AS "NOMEN", "INFO/PZFlag" AS "PZFlag", "INFO/PZScore" AS "PZScore", "INFO/PZComment" AS "PZComment" FROM variants ORDER BY "INFO/PZScore" DESC' --explode_infos
+docker exec HOWARD-CLI howard query --input=/tool/tests/data/example.vcf.gz --query='SELECT * FROM variants'
 ```
 
-Let's play within Docker HOWARD-CLI service!
+- VCF annotation using HOWARD-CLI (snpEff and ANNOVAR databases will be automatically downloaded), and query list of genes with HGVS:
+
+```
+docker exec --workdir=/tool HOWARD-CLI howard process --config=config/config.json --param=config/param.json --input=tests/data/example.vcf.gz --output=/tmp/example.process.tsv --query='SELECT "NOMEN", "PZFlag", "PZScore", "PZComment" FROM variants ORDER BY "PZScore" DESC' --explode_infos
+```
+
+- Let's play within Docker HOWARD-CLI service!
 
 ```
 docker exec -ti HOWARD-CLI bash
@@ -367,8 +344,8 @@ howard annotation --help    # Help for 'annotation' tool
 
 # Contact
 
-[Medical Bioinformatics applied to Diagnosis Lab](https://www.chru-strasbourg.fr/service/bioinformatique-medicale-appliquee-au-diagnostic-unite-de/) @ Strasbourg Univerty Hospital
+:hospital: [Medical Bioinformatics applied to Diagnosis Lab](https://www.chru-strasbourg.fr/service/bioinformatique-medicale-appliquee-au-diagnostic-unite-de/) @ Strasbourg Univerty Hospital
 
-[bioinfo@chru-strasbourg.fr](bioinfo@chru-strasbourg.fr)
+:email: [bioinfo@chru-strasbourg.fr](bioinfo@chru-strasbourg.fr)
 
-[GitHub](https://github.com/bioinfo-chru-strasbourg)
+:bookmark: [GitHub](https://github.com/bioinfo-chru-strasbourg)

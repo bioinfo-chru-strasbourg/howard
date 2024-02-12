@@ -34,9 +34,9 @@ import pysam.bcftools
 import signal
 from contextlib import contextmanager
 
+from configparser import ConfigParser
 
 file_folder = os.path.dirname(__file__)
-
 
 # Main folder
 folder_main = os.path.abspath(os.path.join(file_folder, ".."))
@@ -92,7 +92,15 @@ vcf_required = [
 
 # Tools
 DEFAULT_TOOLS_FOLDER = "/tools"
-DEFAULT_SNPEFF_BIN = f"{DEFAULT_TOOLS_FOLDER}/snpeff/5.1d/bin/snpEff.jar"
+
+DEFAULT_TOOLS_BIN = {
+    "bcftools": {"bin": "/tools/bcftools/current/bin/bcftools"},
+    "bgzip": {"bin": "/tools/htslib/current/bin/bgzip"},
+    "snpeff": {"jar": "/tools/snpeff/current/bin/snpEff.jar"},
+    "java": {"bin": "java"},
+    "annovar": {"perl": "/tools/annovar/current/bin/table_annovar.pl"},
+    "exomiser": {"jar": "/tools/exomiser/current/bin/exomiser.jar"}
+  }
 
 # URL
 DEFAULT_ANNOVAR_URL = "http://www.openbioinformatics.org/annovar/download"
@@ -1136,7 +1144,7 @@ def download_file(url:str, dest_file_path:str, chunk_size:int = 1024*1024, try_a
     return os.path.exists(dest_file_path)
 
 
-def get_bin(bin:str = None, tool:str = None, bin_type:str = "jar", config:dict = {}, default_folder:str = DEFAULT_TOOLS_FOLDER):
+def get_bin(bin:str = None, tool:str = None, bin_type:str = "bin", config:dict = {}, default_folder:str = DEFAULT_TOOLS_FOLDER):
     """
     The `get_bin` function retrieves the path to a specified binary file from a configuration dictionary
     or searches for it in the file system if it is not specified in the configuration.
@@ -1148,8 +1156,8 @@ def get_bin(bin:str = None, tool:str = None, bin_type:str = "jar", config:dict =
     retrieve the path to the tool's binary file
     :type tool: str
     :param bin_type: The `bin_type` parameter is a string that specifies the type of binary file to
-    search for in the config dict (e.g., `jar`, `sh`). In this case, the default value is "jar", which indicates that the function is searching
-    for a JAR file, defaults to jar
+    search for in the config dict (e.g., `jar`, `bin`). In this case, the default value is "bin". A value "jar" indicates that the function is searching
+    for a JAR file. Defaults to bin
     :type bin_type: str (optional)
     :param config: A dictionary containing configuration information for the snpEff tool, including the
     path to the snpEff jar file. If no configuration is provided, an empty dictionary is used
@@ -1161,12 +1169,23 @@ def get_bin(bin:str = None, tool:str = None, bin_type:str = "jar", config:dict =
     :return: the path to the snpEff.jar file. If the file is not found, it returns None.
     """
 
+    # Import
+    from shutil import which
+
     # Config - snpEff
-    bin_file = config.get("tools", {}).get(
-        tool, {}).get(bin_type, None)
+    config_tool = config.get("tools", {}).get(tool)
+
+    # Find bin_file
+    bin_file = None
+    for conf in [config_tool, DEFAULT_TOOLS_BIN.get(tool)]:
+        if conf:
+            if isinstance(conf, dict) and bin_type in conf:
+                bin_file = conf.get(bin_type)
+            elif isinstance(conf, str):
+                bin_file = conf
 
     # Config - check tools
-    if not bin_file or not os.path.exists(bin_file):
+    if not bin_file or not (os.path.exists(bin_file) or (bin_file and which(bin_file))):
         
         # Try to find bin file
         try:
@@ -1179,37 +1198,6 @@ def get_bin(bin:str = None, tool:str = None, bin_type:str = "jar", config:dict =
             return None
 
     return bin_file
-
-
-def get_snpeff_bin(config:dict = {}):
-    """
-    This function retrieves the path to the snpEff.jar file from a configuration dictionary or searches
-    for it in the file system if it is not specified in the configuration.
-    
-    :param config: A dictionary containing configuration information for the snpEff tool, including the
-    path to the snpEff jar file. If no configuration is provided, an empty dictionary is used
-    :type config: dict
-    :return: the path to the snpEff.jar file, either from the configuration dictionary or by searching
-    for it in the file system. If the file is not found, it returns None.
-    """
-
-    # Config - snpEff
-    snpeff_jar = config.get("tools", {}).get(
-        "snpeff", {}).get("jar", None)
-
-    # Config - check tools
-    if not snpeff_jar or not os.path.exists(snpeff_jar):
-        # Try to find snpEff.jar
-        try:
-            snpeff_jar = find_all('snpEff.jar', '/')[0]
-        except:
-            return None
-        # Check if found
-        if not os.path.exists(snpeff_jar):
-            return None
-            
-    return snpeff_jar
-
 
 
 def concat_file(input_files:list, output_file:str) -> bool:
@@ -1624,3 +1612,302 @@ def genome_build_switch(assembly:str) -> str:
             return new_assembly
 
     return None
+
+
+# get argument
+def get_argument(arguments:dict = {}, arg:str = "", required:bool = False, remove_infos:list = ["gooey"], add_metavar:bool = False) -> dict:
+    """
+    The `get_argument` function retrieves information about a specific argument from a dictionary, and
+    can also set its "required" status.
+    
+    :param arguments: A dictionary containing information about the arguments passed to a function or
+    method
+    :type arguments: dict
+    :param arg: The `arg` parameter is a string that represents the name of the argument that you want
+    to retrieve information for
+    :type arg: str
+    :param required: The `required` parameter is a boolean value that determines whether the argument is
+    required or not. If set to True, the function will return an empty dictionary if the argument is not
+    found in the `arguments` dictionary. If set to False (default), the function will still return an
+    empty dictionary if, defaults to False
+    :type required: bool (optional)
+    :param remove_infos: The `remove_infos` parameter is a list that contains the names of specific
+    information that you want to remove from the argument dictionary. In the code, it is used to remove
+    specific argument information such as "gooey" from the `arg_infos` dictionary
+    :type remove_infos: list
+    :return: a dictionary containing information about a specific argument, specified by the `arg`
+    parameter. If the argument is found in the `arguments` dictionary, the function returns a dictionary
+    containing the information about that argument. If the argument is not found, an empty dictionary is
+    returned. The `required` parameter is used to specify whether the argument is required or not, and
+    this information is added to
+    """
+
+    if arg in arguments:
+        arg_infos = arguments.get(arg,{}).copy()
+        for arg_info in remove_infos:
+            arg_infos.pop(arg_info, None)
+        if required != None:
+            arg_infos["required"] = required
+        if add_metavar and "metavar" not in arg_infos:
+            arg_infos["metavar"] = arg.replace("_", " ")
+        return arg_infos
+    else:
+        return {}
+
+
+# get_argument_gooey
+def get_argument_gooey(arguments:dict = {}, arg:str = ""):
+    """
+    The function `get_argument_gooey` takes an argument and returns the corresponding widget and options
+    for the Gooey library in Python.
+    
+    :param arg: The `arg` parameter is a string that represents the name of the argument you want to
+    retrieve information for
+    :type arg: str
+    :return: The function `get_argument_gooey` returns two values: `widget` and `options`.
+    """
+
+    # Init
+    argument = get_argument(arguments=arguments, arg=arg, remove_infos=[])
+    argument_type = argument.get("type", None)
+    gooey_argument = argument.get("gooey", {})
+
+    # Widget
+    widget = None
+    if gooey_argument.get("widget", None):
+        widget = gooey_argument.get("widget")
+    else:
+        if str(argument_type) == "FileType('r')":
+            widget = "FileChooser"
+        elif str(argument_type) == "FileType('w')":
+            widget = "FileSaver"
+    
+    # options
+    options = gooey_argument.get("options", {})
+
+    # Return
+    return widget, options
+
+
+# get argument
+def get_argument_to_mk(arg:str, argument:dict = {}, mode:str = "mk") -> str:
+    """
+    The function `get_argument_to_mk` generates a formatted string containing information about a
+    command line argument, which can be output in either Markdown or HTML format.
+    
+    :param arg: The `arg` parameter is a string that represents the name of the argument. It is used to
+    generate the header and text for the argument
+    :type arg: str
+    :param argument: The `argument` parameter is a dictionary that contains information about the
+    argument. It has the following keys:
+    :type argument: dict
+    :param mode: The `mode` parameter is used to specify the format of the output. It can have two
+    possible values: "mk" or "html". If "mk" is specified, the output will be formatted using Markdown
+    syntax. If "html" is specified, the output will be formatted using HTML syntax, defaults to mk
+    :type mode: str (optional)
+    :return: a formatted string that provides information about a command line argument. The format of
+    the string depends on the value of the `mode` parameter. If `mode` is set to "html", the string is
+    formatted as an HTML `<pre>` block. Otherwise, the string is formatted as a Markdown code block. The
+    string includes the argument name, metavariable, help text, required
+    """
+
+    from html import escape
+
+    text = ""
+
+    # Option info
+    metavar = argument.get("metavar",arg)
+    help = argument.get("help",None)
+    required = argument.get("required",None)
+    choices = argument.get("choices",None)
+    default = argument.get("default",None)
+    action = argument.get("action",None)
+
+    # header
+    text_header = f"--{arg}"
+    if not action:
+        text_header += f"=<{metavar}>"
+    if choices:
+        text_header += f" {choices}"
+    if default:
+        text_header += f" ({default})"
+    if required:
+        text_header += " | required"
+    
+    # text
+    if mode == "html":
+        text += f"<pre>"
+        text += escape(text_header)
+        text += "\n"
+        text += escape(help)
+        text += "\n\n"
+        text += f"</pre>"
+    else:
+        text += f"```\n"
+        text += text_header
+        text += "\n\n"
+        text += help
+        text += "\n```\n\n"
+
+    return text
+
+
+def help_generation(arguments_dict:dict = {}, parser = None, setup:str = None, output_type:str = "parser"):
+    """
+    
+    """
+
+    # Arguments
+    arguments = arguments_dict.get("arguments", {})
+    commands_arguments = arguments_dict.get("commands_arguments", {})
+    shared_arguments = arguments_dict.get("shared_arguments", {})
+
+    # Config Parser
+    cf = ConfigParser()
+    cf.read(setup)
+    prog_name = cf['metadata']['name']
+    prog_version = cf['metadata']['version']
+    prog_description = cf['metadata']['description']
+    prog_long_description_content_type = cf['metadata']['long_description_content_type']
+
+    # Parser default
+    if not parser:
+        parser = argparse.ArgumentParser()
+    
+    # Parser information
+    parser.prog = prog_name
+    parser.description =    f"""{prog_name.upper()}:{prog_version}\n""" + \
+                            f"""{prog_description}\n""" + \
+                            f"""{prog_long_description_content_type}"""
+    parser.epilog =     "Usage examples:\n" + \
+                        """   howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json \n""" + \
+                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/hg19/dbnsfp42a.parquet,tests/databases/annotations/hg19/gnomad211_genome.parquet' \n""" + \
+                        """   howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations='vartype' \n""" + \
+                        """   howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations=config/prioritization_profiles.json --profiles='default,GERMLINE' \n""" + \
+                        """   howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, "DP", "CLNSIG", sample2, sample3 FROM variants WHERE "DP" >= 50 OR "CLNSIG" NOT NULL ORDER BY "CLNSIG" DESC, "DP" DESC' \n""" + \
+                        """   howard stats --input=tests/data/example.vcf.gz \n""" + \
+                        """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos && cat /tmp/example.tsv \n"""
+    parser.formatter_class = argparse.RawTextHelpFormatter
+
+    # Optionals
+    parser._optionals.title = "Shared arguments"
+
+    # Sub parser
+    subparsers = parser.add_subparsers(title="Tools", dest='command')
+
+    # Help options
+    options_md = ""
+    options_html = ""
+    
+    # Options for markdown
+    options_md += f"# HOWARD Help"
+    options_md += "\n\n"
+    options_md += parser.description.replace("\n","\n\n")
+    options_md += re.sub(r'> $',"",parser.epilog.replace("\n","\n\n").replace("   ","> "))
+    options_md += "\n\n"
+
+    # Options for HTML
+    options_html += f"<H1>HOWARD Help</h1>\n"
+    options_html += "<p>" + parser.description.replace("\n","<br>") + "</p>"
+    options_html += parser.epilog.replace("\n","<br>").replace("   ","&nbsp;&nbsp;&nbsp;")
+        
+    # Create commands arguments
+    for command in commands_arguments:
+        
+        # Command description
+        command_description = commands_arguments[command].get("description","")
+        command_help = commands_arguments[command].get("help","")
+        command_epilog = commands_arguments[command].get("epilog","")
+        
+        # Command parser
+        command_parser = subparsers.add_parser(
+            command,
+            description = command_description,
+            help = command_help,
+            epilog = command_epilog,
+            formatter_class=argparse.RawTextHelpFormatter
+        )
+
+        # Markdown
+        options_md += f"## {command.upper()} tool\n"
+        options_md += command_description.replace("\n","\n\n")
+        options_md += "\n\n"
+        options_md += re.sub(r'> $',"",command_epilog.replace("\n","\n\n").replace("   ","> "))
+        options_md += "\n\n"
+
+        # HTML
+        options_html += f"<H2>{command.upper()}</H2>\n"
+        options_html += "<p>" + command_description.replace("\n","<br>") + "</p>"
+        options_html += command_epilog.replace("\n","<br>").replace("   ","&nbsp;&nbsp;&nbsp;")
+        
+        # Gooey - add metavar
+        if output_type == "gooey":
+            add_metavar = True
+        else:
+            add_metavar = False
+
+        # Main args
+        command_parser._optionals.title = "Options"
+        if "main" in commands_arguments[command]["groups"]:
+            group = "main"
+            options_md += f"### Main options\n"
+            options_html += f"<H3>Main options</H3>\n"
+            for arg in commands_arguments[command]["groups"][group]:
+                required = commands_arguments[command]["groups"][group][arg]
+                argument = get_argument(arguments=arguments.copy(), arg=arg, required=required, add_metavar=add_metavar)
+                if output_type == "gooey":
+                    widget, options = get_argument_gooey(arguments=arguments, arg=arg)
+                    argument["widget"] = widget
+                    argument["gooey_options"] = options
+                command_parser.add_argument(f"--{arg}", **argument)
+                options_md += get_argument_to_mk(arg, argument)
+                options_html += get_argument_to_mk(arg, argument, mode="html")
+
+        for group in commands_arguments[command]["groups"]:
+            if group != "main":
+                options_md += f"### {group}\n"
+                options_html += f"<H3>{group}</H3>\n"
+                command_group = command_parser.add_argument_group(f"{group} options")
+                for arg in commands_arguments[command]["groups"][group]:
+                    required = commands_arguments[command]["groups"][group][arg]
+                    argument = get_argument(arguments=arguments.copy(), arg=arg, required=required, add_metavar=add_metavar)
+                    if output_type == "gooey":
+                        widget, options = get_argument_gooey(arguments=arguments, arg=arg)
+                        argument["widget"] = widget
+                        argument["gooey_options"] = options
+                    command_group.add_argument(f"--{arg}", **argument)
+                    options_md += get_argument_to_mk(arg, argument)
+                    options_html += get_argument_to_mk(arg, argument, mode="html")
+
+        # Shared arguments
+        shared_group = command_parser.add_argument_group('Shared options')
+        for arg in shared_arguments:
+            argument = get_argument(arguments=arguments, arg=arg, required=False, add_metavar=add_metavar)
+            if output_type == "gooey":
+                widget, options = get_argument_gooey(arguments=arguments, arg=arg)
+                argument["widget"] = widget
+                argument["gooey_options"] = options
+
+            shared_group.add_argument(f"--{arg}", **argument)
+
+        options_md += "\n\n"
+
+    # Shared arguments for help files
+    options_md += f"## Shared arguments\n"
+    options_html += f"<H2>Shared arguments</H2>\n".upper()
+    for arg in shared_arguments:
+        required = False
+        argument = get_argument(arguments=arguments.copy(), arg=arg, required=required)
+        options_md += get_argument_to_mk(arg, argument)
+        options_html += get_argument_to_mk(arg, argument, mode="html")
+ 
+    # Output
+    if output_type in ["parser", "gooey"]:
+        return parser
+    elif output_type == "markdown":
+        return options_md
+    elif output_type == "html":
+        return options_html
+    else:
+        return parser
+    

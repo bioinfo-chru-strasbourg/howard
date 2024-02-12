@@ -18,10 +18,10 @@
     }
   },
   "tools": {
-    "bcftools": {"bin": "/tools/bcftools/current/bin/bcftools"},
-    "bgzip": {"bin": "/tools/htslib/current/bin/bgzip"},
-    "snpeff": {"jar": "/tools/snpeff/current/bin/snpEff.jar"},
-    "java": {"bin": "/usr/bin/java"},
-    "annovar": {"bin": "/tools/annovar/current/bin/table_annovar.pl"}
+    "bcftools": "/tools/bcftools/current/bin/bcftools",
+    "bgzip": "/tools/htslib/current/bin/bgzip",
+    "snpeff": "/tools/snpeff/current/bin/snpEff.jar",
+    "java": "/usr/bin/java",
+    "annovar": "/tools/annovar/current/bin/table_annovar.pl"
   }
 }
