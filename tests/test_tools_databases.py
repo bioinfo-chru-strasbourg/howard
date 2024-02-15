@@ -877,7 +877,10 @@ def test_databases_download_refseq():
         refseq_folder = f"{tmp_dir}/test1"
 
         # downloaded_files expected 
-        downloaded_files_expected = {'hg19': ['ncbiRefSeq.txt', 'ncbiRefSeqLink.txt'], 'hg38': ['ncbiRefSeq.txt', 'ncbiRefSeqLink.txt']}
+        downloaded_files_expected = {
+            'hg19': ['ncbiRefSeq.txt', 'ncbiRefSeqLink.txt'],
+            'hg38': ['ncbiRefSeq.txt', 'ncbiRefSeqLink.txt']
+            }
 
         # download
         downloaded_files = databases_download_refseq(assemblies=assemblies, refseq_folder=refseq_folder)
@@ -948,7 +951,7 @@ def test_databases_download_refseq():
 
         # Param
         refseq_format_file = "ncbiRefSeq.txt"
-        refseq_format_file_output = f"{tmp_dir}/test.bed"
+        refseq_format_file_output = f"{tmp_dir}/test.bed.gz"
         include_utr_5 = True
         include_utr_3 = True
         include_chrM = True

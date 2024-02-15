@@ -1012,12 +1012,20 @@ def databases_download_refseq(assemblies:list, refseq_folder:str = None, refseq_
                 # format refSeq
                 file_path = f"{refseq_folder}/{assembly}/{refseq_file}"
                 if refseq_format_file_output:
-                    file_path_bed = refseq_format_file_output
+                    file_path_bed = f"{refseq_format_file_output}.uncompress.txt"
+                    file_path_bed_compressed = refseq_format_file_output
                 else:
                     file_path_bed = re.sub(r'txt$', 'bed', file_path)
+                    file_path_bed_compressed = f"{file_path_bed}.gz"
+                file_path_bed_basename = os.path.basename(file_path_bed)
+                file_path_bed_compressed_basename = os.path.basename(file_path_bed_compressed)
                 if refseq_file == refseq_format_file and (new_refseq_file or not os.path.exists(file_path_bed)):
-                    log.info(f"Download refSeq databases ['{assembly}'] - '{refseq_file}' formatting...")
+                    log.info(f"Download refSeq databases ['{assembly}'] - '{refseq_file}' formatting to '{file_path_bed_basename}'...")
+                    # Format refSeq in BED format
                     databases_format_refseq(refseq_file=file_path, output_file=file_path_bed, include_utr_5=include_utr_5, include_utr_3=include_utr_3, include_chrM=include_chrM, include_non_canonical_chr=include_non_canonical_chr, include_non_coding_transcripts=include_non_coding_transcripts, include_transcript_ver=include_transcript_ver)
+                    # compress file
+                    log.info(f"Download refSeq databases ['{assembly}'] - '{file_path_bed_basename}' compressing to '{file_path_bed_compressed_basename}'...")
+                    concat_and_compress_files(input_files=[file_path_bed], output_file=file_path_bed_compressed, threads=threads, compression_type="bgzip", sort=False, index=False)
 
     # Log
     log.debug(f"installed_refseq: {installed_refseq}")
