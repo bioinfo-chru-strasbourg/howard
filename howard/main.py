@@ -56,7 +56,7 @@ def main() -> None:
     parser = help_generation(arguments_dict=arguments_dict, parser=parser, setup=setup_cfg, output_type="parser")
 
     # Parse args
-    args, remaining = parser.parse_known_args()
+    args = parser.parse_args()
 
     # Quiet
     if "quiet" in args and args.quiet:

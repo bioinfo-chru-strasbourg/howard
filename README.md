@@ -37,15 +37,25 @@ HOWARD is multithreaded through the number of variants and by database (data-sca
 
 ## Python
 
-Install using Python Pip tool:
-
+Install HOWARD using Python Pip tool, and run HOWARD for help options:
 ```
 python -m pip install -e .
+howard --help
 ```
+
+Install HOWARD Graphical User Interface using Python Pip tool with supplementary packages, and run as a tool:
+```
+python -m pip install -r requirements-gui.txt
+howard gui
+```
+
+![HOWARD Graphical User Interface](images/howard-gui.png "HOWARD Graphical User Interface")
+
+
 
 ## Docker
 
-In order to build, setup and create a persitent CLI (running container), docker-compose command build images and launch services as containers.
+In order to build, setup and create a persitent CLI (running container with all useful external tools such as [BCFTools](https://samtools.github.io/bcftools/), [snpEff](https://pcingola.github.io/SnpEff/), [Annovar](https://annovar.openbioinformatics.org/), [Exomiser](https://www.sanger.ac.uk/tool/exomiser/)), docker-compose command build images and launch services as containers.
 
 ```
 docker-compose up -d
@@ -57,7 +67,13 @@ A setup container (HOWARD-setup) will download useful databases (take a while). 
 docker-compose up -d HOWARD-CLI
 ```
 
-A Command Line Interface container (HOWARD-CLI) is started with host data and databases folders mounted (by default in ${HOME}/HOWARD folder)
+A Command Line Interface container (HOWARD-CLI) is started with host data and databases folders mounted (by default in ${HOME}/HOWARD folder). Let's play within Docker HOWARD-CLI service!
+
+```
+docker exec -ti HOWARD-CLI bash
+howard --help
+```
+
 
 ## Databases
 
