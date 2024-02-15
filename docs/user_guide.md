@@ -38,10 +38,32 @@ HOWARD is multithreaded through the number of variants and by database (data-sca
 
 ## Python
 
-Install using Python Pip tool:
+### Quick install
+
+Install HOWARD using Python Pip tool:
 ```
 python -m pip install -e .
 ```
+
+Run HOWARD for help options:
+```
+howard --help
+```
+
+### GUI install
+
+Install HOWARD Graphical User Interface using Python Pip tool with supplementary packages:
+```
+python -m pip install -r requirements-gui.txt
+```
+
+Run HOWARD Graphical User Interface as a tool:
+```
+howard gui
+```
+
+![HOWARD Graphical User Interface](../images/howard-gui.png "HOWARD Graphical User Interface")
+
 
 ## Docker
 
@@ -52,6 +74,17 @@ In order to build images, launch default setup and create a persitent CLI (Comma
 ```
 docker-compose up -d
 ```
+
+The persitent CLI contains external tools, such as:
+| External tool | Description |
+| -- | -- |
+| [BCFTools](https://samtools.github.io/bcftools/) | Utilities for variant calling and manipulating VCFs and BCFs |
+| [snpEff](https://pcingola.github.io/SnpEff/) | Genomic variant annotations, and functional effect prediction toolbox |
+| [Annovar](https://annovar.openbioinformatics.org/) | Efficient software tool to utilize update-to-date information to functionally annotate genetic variants |
+| [Exomiser](https://www.sanger.ac.uk/tool/exomiser/) | Program that finds potential disease-causing variants from whole-exome or whole-genome sequencing data |
+
+
+
 
 ### Setup container
 
@@ -105,6 +138,17 @@ See [HOWARD Help](docs/help.md) for more options.
 
 Let's play within Docker HOWARD-CLI service!
 
+### Tests
+
+In order to test HOWARD within Docker, use this command:
+```
+docker exec -ti HOWARD-CLI bash
+cd /tool
+# Basic test
+coverage run -m pytest .
+# Debug test
+coverage run -m pytest . -x -v --log-cli-level=DEBUG --capture=tee-sys
+```
 
 # Databases
 
