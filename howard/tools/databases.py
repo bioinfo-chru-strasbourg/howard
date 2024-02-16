@@ -793,11 +793,15 @@ def databases_download_snpeff(folder:str = None, assemblies:list = ["hg19"], con
                     snpeff_list_databases[cols[0]].append(cols[-2].replace(",","").replace("]","").replace("[",""))
                     snpeff_list_databases[cols[0]].append(cols[-1].replace(",","").replace("]","").replace("[",""))
 
-            # Strat download
+            if not snpeff_list_databases:
+                log.error(f"Download snpEff databases {[assembly]} - list of databases empty - check file '{snpeff_databases_list_path}'")
+                raise ValueError(f"Download snpEff databases {[assembly]} - list of databases empty - check file '{snpeff_databases_list_path}'")
+
+            # Start download
             log.info(f"Download snpEff databases {[assembly]} - downloading...")
             # Try to download files
             file_path = None
-            for file_url in snpeff_list_databases[assembly]:
+            for file_url in snpeff_list_databases.get(assembly,[]):
                 # File to be downloaded
                 file_path = os.path.join(folder, os.path.basename(file_url))
                 # Check if file already downloaded
@@ -2450,7 +2454,7 @@ def databases_download_exomiser(assemblies:list, exomiser_folder:str = DEFAULT_E
             exomiser_jar_dirname = os.path.dirname(exomiser_jar)
             exomiser_application_properties = os.path.join(exomiser_jar_dirname, "application.properties")
 
-    if os.path.exists(exomiser_application_properties):
+    if exomiser_application_properties and os.path.exists(exomiser_application_properties):
         configs = Properties()
         with open(exomiser_application_properties, 'rb') as read_prop:
             configs.load(read_prop)
