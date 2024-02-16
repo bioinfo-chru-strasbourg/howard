@@ -2166,9 +2166,9 @@ class Database:
 
                                     # Without quote option
                                     else:
-
+                                        
                                         # Polars write dataframe
-                                        pl.from_arrow(d).write_csv(file=f, separator=export_options.get("delimiter", ""), has_header=header)
+                                        pl.from_arrow(d).write_csv(file=f, separator=export_options.get("delimiter", ""), has_header=header, quote_style="never")
 
                                 # JSON format
                                 elif export_options.get("format") in ["JSON"]:

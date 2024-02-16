@@ -4563,6 +4563,9 @@ class Variants:
 
                     log.debug("Final header: " + str(vcf_reader.infos))
 
+        # Remove added columns
+        for added_column in added_columns:
+            self.drop_column(column=added_column)
 
     ###
     # Prioritization

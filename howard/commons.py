@@ -1073,7 +1073,7 @@ def extract_file(file_path:str, path:str = None, threads:int = 1):
         concat_and_compress_files(input_files=[file_path], output_file=file_path[:-3], compression_type="none", threads=threads)
 
 
-def download_file(url:str, dest_file_path:str, chunk_size:int = 1024*1024, try_aria:bool = True, threads:int = 1):
+def download_file(url:str, dest_file_path:str, chunk_size:int = 1024*1024, try_aria:bool = True, aria_async_dns:bool = False, threads:int = 1):
     """
     The `download_file` function is a Python function that downloads a file from a given URL and saves
     it to a specified destination file path in chunks.
@@ -1093,6 +1093,11 @@ def download_file(url:str, dest_file_path:str, chunk_size:int = 1024*1024, try_a
     Aria2c command-line tool for downloading the file. If set to `True`, the function will attempt to
     download the file using Aria2c. If set to `False`, the function will use the, defaults to True
     :type try_aria: bool (optional)
+    :param aria_async_dns: The `aria_async_dns` parameter is a boolean value that determines whether to
+    use asynchronous DNS resolution with Aria2c. If set to `True`, Aria2c will use asynchronous DNS
+    resolution, which can improve download performance. If set to `False`, Aria2c will use synchronous,
+    defaults to False
+    :type aria_async_dns: bool (optional)
     :param threads: The `threads` parameter specifies the number of threads to be used for downloading
     the file. It determines the number of simultaneous connections that will be made to download the
     file. By default, it is set to 1, which means that only one connection will be made at a time.
@@ -1110,11 +1115,19 @@ def download_file(url:str, dest_file_path:str, chunk_size:int = 1024*1024, try_a
 
         if try_aria:
 
+            # Aria options
+            aria_async_dns_option = str(aria_async_dns).lower()
+
             # Aria command
-            aria_command = f"aria2c -c -s {threads} -x {threads} -j 1 {url} -d {os.path.dirname(dest_file_path)} -o {os.path.basename(dest_file_path)}"
+            aria_command = f"aria2c -c -s {threads} -x {threads} -j 1 {url} -d {os.path.dirname(dest_file_path)} -o {os.path.basename(dest_file_path)} --async-dns={aria_async_dns_option}"
+            log.debug(f"aria_command: {aria_command}")
 
             # Launch command
             output = os.system(aria_command)
+
+            # Test output file
+            if not (os.path.exists(dest_file_path) and os.stat(dest_file_path).st_size > 0):
+                assert False
 
         else:
 
@@ -1754,7 +1767,23 @@ def get_argument_to_mk(arg:str, argument:dict = {}, mode:str = "mk") -> str:
 
 def help_generation(arguments_dict:dict = {}, parser = None, setup:str = None, output_type:str = "parser"):
     """
+    The `help_generation` function generates a parser object for command-line arguments, as well as
+    markdown or HTML help documentation for those arguments.
     
+    :param arguments_dict: A dictionary containing the arguments for the function. It has three keys:
+    :type arguments_dict: dict
+    :param parser: The `parser` parameter is an instance of the `argparse.ArgumentParser` class. It is
+    used to define the command-line interface and parse the command-line arguments. If no `parser` is
+    provided, a new instance of `argparse.ArgumentParser` will be created
+    :param setup: The `setup` parameter is a string that represents the path to a configuration file.
+    This file contains metadata about the program, such as its name, version, description, and long
+    description content type
+    :type setup: str
+    :param output_type: The `output_type` parameter determines the format of the output. It can be one
+    of the following values:, defaults to parser
+    :type output_type: str (optional)
+    :return: The function `help_generation` returns different outputs based on the value of the
+    `output_type` parameter.
     """
 
     # Arguments
@@ -1911,3 +1940,26 @@ def help_generation(arguments_dict:dict = {}, parser = None, setup:str = None, o
     else:
         return parser
     
+
+def bed_sort(input:str, output:str) -> str:
+    """
+    The `bed_sort` function reads a tab-separated input file, sorts the data based on columns 0, 1, and
+    2 in ascending order, and writes the sorted data to a tab-separated output file.
+    
+    :param input: The `input` parameter is the path to the input file that contains the data to be
+    sorted. This file should be in a tab-separated format
+    :type input: str
+    :param output: The `output` parameter is a string that specifies the path and filename of the output
+    file where the sorted data will be saved
+    :type output: str
+    """
+
+    # Read input BED (uncompressed)
+    data = pd.read_csv(input, sep="\t", dtype={"chr": "string", "start": "int", "end": "int"}, header=None)
+
+    # Sort BED regions
+    data_sorted = data.sort_values([0, 1, 2], axis=0, ascending=True, na_position='first') 
+    
+    # Write output BED (uncompressed)
+    data_sorted.to_csv(output, sep="\t", header=0, index=0)
+

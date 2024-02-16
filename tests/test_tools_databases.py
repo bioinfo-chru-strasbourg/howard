@@ -752,14 +752,48 @@ def test_databases_format_refseq():
         include_non_canonical_chr = True
         include_non_coding_transcripts = True
         include_transcript_ver = True
+        sort = False
+        header = False
+        header_first_line = True
 
         # Format
-        databases_format_refseq(refseq_file=refseq_file_to_format, output_file=refseq_file_formatted, include_utr_3=include_utr_3, include_chrM=include_chrM, include_non_canonical_chr=include_non_canonical_chr, include_non_coding_transcripts=include_non_coding_transcripts, include_transcript_ver=include_transcript_ver)
+        databases_format_refseq(refseq_file=refseq_file_to_format, output_file=refseq_file_formatted, include_utr_3=include_utr_3, include_chrM=include_chrM, include_non_canonical_chr=include_non_canonical_chr, include_non_coding_transcripts=include_non_coding_transcripts, include_transcript_ver=include_transcript_ver, sort=sort, header=header, header_first_line=header_first_line)
 
         # Check
         assert os.path.exists(refseq_file_formatted) and os.stat(refseq_file_formatted).st_size > 0
         # Dataframe
-        df = pd.read_csv(refseq_file_formatted, sep="\t", header=None)
+        df = pd.read_csv(refseq_file_formatted, sep="\t", header=None, skiprows=1)
+        # Count number of transcript with version
+        count_transcript_with_ver = df[df[4].str.contains(r'\.')].shape[0]
+        # Count non canonical chromosome
+        count_non_canonical_chr = sum("_" in key for key in set(df[0]))
+        # Check
+        assert len(df) > 0
+        assert count_non_canonical_chr > 0
+        assert count_transcript_with_ver > 0
+
+        # Format refSeq by default with sort and header
+        
+        # Param
+        refseq_file_formatted = f"{tmp_dir}/test2.bed"
+        include_utr_5 = True
+        include_utr_3 = True
+        include_chrM = True
+        include_non_canonical_chr = True
+        include_non_coding_transcripts = True
+        include_transcript_ver = True
+        sort = True
+        header = True
+        header_first_line = True
+
+        # Format
+        databases_format_refseq(refseq_file=refseq_file_to_format, output_file=refseq_file_formatted, include_utr_3=include_utr_3, include_chrM=include_chrM, include_non_canonical_chr=include_non_canonical_chr, include_non_coding_transcripts=include_non_coding_transcripts, include_transcript_ver=include_transcript_ver, sort=sort, header=header, header_first_line=header_first_line)
+
+        # Check
+        assert os.path.exists(refseq_file_formatted) and os.stat(refseq_file_formatted).st_size > 0
+        assert os.path.exists(f"{refseq_file_formatted}.hdr") and os.stat(f"{refseq_file_formatted}.hdr").st_size > 0
+        # Dataframe
+        df = pd.read_csv(refseq_file_formatted, sep="\t", header=None, skiprows=1)
         # Count number of transcript with version
         count_transcript_with_ver = df[df[4].str.contains(r'\.')].shape[0]
         # Count non canonical chromosome
@@ -772,21 +806,24 @@ def test_databases_format_refseq():
         # Format refSeq all parameters False
 
         # Param
-        refseq_file_formatted = f"{tmp_dir}/test2.bed"
+        refseq_file_formatted = f"{tmp_dir}/test3.bed"
         include_utr_5 = False
         include_utr_3 = False
         include_chrM = False
         include_non_canonical_chr = False
         include_non_coding_transcripts = False
         include_transcript_ver = False
+        sort = False
+        header = False
+        header_first_line = False
 
         # Format
-        databases_format_refseq(refseq_file=refseq_file_to_format, output_file=refseq_file_formatted, include_utr_5=include_utr_5, include_utr_3=include_utr_3, include_chrM=include_chrM, include_non_canonical_chr=include_non_canonical_chr, include_non_coding_transcripts=include_non_coding_transcripts, include_transcript_ver=include_transcript_ver)
+        databases_format_refseq(refseq_file=refseq_file_to_format, output_file=refseq_file_formatted, include_utr_5=include_utr_5, include_utr_3=include_utr_3, include_chrM=include_chrM, include_non_canonical_chr=include_non_canonical_chr, include_non_coding_transcripts=include_non_coding_transcripts, include_transcript_ver=include_transcript_ver, sort=sort, header=header, header_first_line=header_first_line)
 
         # Check
         assert os.path.exists(refseq_file_formatted) and os.stat(refseq_file_formatted).st_size > 0
         # Dataframe
-        df = pd.read_csv(refseq_file_formatted, sep="\t", header=None)
+        df = pd.read_csv(refseq_file_formatted, sep="\t", header=None, skiprows=0)
         # Count number of transcript with version
         count_transcript_with_ver = df[df[4].str.contains(r'\.')].shape[0]
         # Start end position of the first gene
@@ -801,21 +838,24 @@ def test_databases_format_refseq():
         # Format refSeq only UTR 5
 
         # Param
-        refseq_file_formatted = f"{tmp_dir}/test3.bed"
+        refseq_file_formatted = f"{tmp_dir}/test4.bed"
         include_utr_5 = True
         include_utr_3 = False
         include_chrM = False
         include_non_canonical_chr = False
         include_non_coding_transcripts = False
         include_transcript_ver = False
+        sort = False
+        header = False
+        header_first_line = True
         
         # Format
-        databases_format_refseq(refseq_file=refseq_file_to_format, output_file=refseq_file_formatted, include_utr_5=include_utr_5, include_utr_3=include_utr_3, include_chrM=include_chrM, include_non_canonical_chr=include_non_canonical_chr, include_non_coding_transcripts=include_non_coding_transcripts, include_transcript_ver=include_transcript_ver)
+        databases_format_refseq(refseq_file=refseq_file_to_format, output_file=refseq_file_formatted, include_utr_5=include_utr_5, include_utr_3=include_utr_3, include_chrM=include_chrM, include_non_canonical_chr=include_non_canonical_chr, include_non_coding_transcripts=include_non_coding_transcripts, include_transcript_ver=include_transcript_ver, sort=sort, header=header, header_first_line=header_first_line)
         
         # Check
         assert os.path.exists(refseq_file_formatted) and os.stat(refseq_file_formatted).st_size > 0
         # Dataframe
-        df = pd.read_csv(refseq_file_formatted, sep="\t", header=None)
+        df = pd.read_csv(refseq_file_formatted, sep="\t", header=None, skiprows=1)
         # Count number of transcript with version
         count_transcript_with_ver = df[df[4].str.contains(r'\.')].shape[0]
         # Start end position of the first gene
@@ -831,21 +871,24 @@ def test_databases_format_refseq():
         # Format refSeq only UTR 3
 
         # Param
-        refseq_file_formatted = f"{tmp_dir}/test4.bed"
+        refseq_file_formatted = f"{tmp_dir}/test5.bed"
         include_utr_5 = False
         include_utr_3 = True
         include_chrM = False
         include_non_canonical_chr = False
         include_non_coding_transcripts = False
         include_transcript_ver = False
+        sort = False
+        header = False
+        header_first_line = True
 
         # Format
-        databases_format_refseq(refseq_file=refseq_file_to_format, output_file=refseq_file_formatted, include_utr_5=include_utr_5, include_utr_3=include_utr_3, include_chrM=include_chrM, include_non_canonical_chr=include_non_canonical_chr, include_non_coding_transcripts=include_non_coding_transcripts, include_transcript_ver=include_transcript_ver)
+        databases_format_refseq(refseq_file=refseq_file_to_format, output_file=refseq_file_formatted, include_utr_5=include_utr_5, include_utr_3=include_utr_3, include_chrM=include_chrM, include_non_canonical_chr=include_non_canonical_chr, include_non_coding_transcripts=include_non_coding_transcripts, include_transcript_ver=include_transcript_ver, sort=sort, header=header, header_first_line=header_first_line)
         
         # Check
         assert os.path.exists(refseq_file_formatted) and os.stat(refseq_file_formatted).st_size > 0
         # Dataframe
-        df = pd.read_csv(refseq_file_formatted, sep="\t", header=None)
+        df = pd.read_csv(refseq_file_formatted, sep="\t", header=None, skiprows=1)
         # Count number of transcript with version
         count_transcript_with_ver = df[df[4].str.contains(r'\.')].shape[0]
         # Start end position of the first gene
