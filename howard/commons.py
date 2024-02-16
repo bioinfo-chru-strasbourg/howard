@@ -182,6 +182,7 @@ def set_log_level(verbosity: str, log_file:str = None) -> str:
 
     :param verbosity: The level of verbosity
     """
+
     verbosity = verbosity.lower()
     configs = {
         "debug": log.DEBUG,
@@ -1073,7 +1074,7 @@ def extract_file(file_path:str, path:str = None, threads:int = 1):
         concat_and_compress_files(input_files=[file_path], output_file=file_path[:-3], compression_type="none", threads=threads)
 
 
-def download_file(url:str, dest_file_path:str, chunk_size:int = 1024*1024, try_aria:bool = True, aria_async_dns:bool = False, threads:int = 1):
+def download_file(url:str, dest_file_path:str, chunk_size:int = 1024*1024, try_aria:bool = True, aria_async_dns:bool = False, threads:int = 1, quiet:bool = True):
     """
     The `download_file` function is a Python function that downloads a file from a given URL and saves
     it to a specified destination file path in chunks.
@@ -1103,6 +1104,10 @@ def download_file(url:str, dest_file_path:str, chunk_size:int = 1024*1024, try_a
     file. By default, it is set to 1, which means that only one connection will be made at a time.
     Increasing the value, defaults to 1
     :type threads: int (optional)
+    :param quiet: The `quiet` parameter is a boolean value that determines whether to suppress the
+    output of the download process. If set to `True`, the output will be suppressed. If set to `False`,
+    the output will be displayed. By default, it is set to `True`, defaults to True
+    :type quiet: bool (optional)
     :return: a boolean value indicating whether the file was successfully downloaded and saved to the
     specified destination file path.
     """
@@ -1117,16 +1122,25 @@ def download_file(url:str, dest_file_path:str, chunk_size:int = 1024*1024, try_a
 
             # Aria options
             aria_async_dns_option = str(aria_async_dns).lower()
+            if quiet and log.root.level>=20:
+                aria_quiet_option = " --quiet "
+            else:
+                aria_quiet_option = ""
 
             # Aria command
-            aria_command = f"aria2c -c -s {threads} -x {threads} -j 1 {url} -d {os.path.dirname(dest_file_path)} -o {os.path.basename(dest_file_path)} --async-dns={aria_async_dns_option}"
-            log.debug(f"aria_command: {aria_command}")
+            aria_command = f"aria2c -c -s {threads} -x {threads} -j 1 {url} -d {os.path.dirname(dest_file_path)} -o {os.path.basename(dest_file_path)} {aria_quiet_option}"
 
             # Launch command
-            output = os.system(aria_command)
-
+            # Try with --async-dns option
+            try:
+                output = os.system(f"{aria_command} --async-dns={aria_async_dns_option}")
+                if output:
+                    assert False
+            except:
+                output = os.system(aria_command)
+            
             # Test output file
-            if not (os.path.exists(dest_file_path) and os.stat(dest_file_path).st_size > 0):
+            if output or not (os.path.exists(dest_file_path) and os.stat(dest_file_path).st_size > 0):
                 assert False
 
         else:
@@ -1955,7 +1969,8 @@ def bed_sort(input:str, output:str) -> str:
     """
 
     # Read input BED (uncompressed)
-    data = pd.read_csv(input, sep="\t", dtype={"chr": "string", "start": "int", "end": "int"}, header=None)
+    #data = pd.read_csv(input, sep="\t", dtype={"chr": "string", "start": "int", "end": "int"}, header=None)
+    data = pd.read_csv(input, sep="\t", header=None, low_memory=False)
 
     # Sort BED regions
     data_sorted = data.sort_values([0, 1, 2], axis=0, ascending=True, na_position='first') 
