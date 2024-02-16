@@ -644,9 +644,9 @@ def databases_download_annovar(folder:str = None, files:list = None, assemblies:
         download_file(avdblist_url_file, avdblist_folder_file, threads=threads)
 
         if not os.path.exists(avdblist_folder_file):
-
             log.error(f"Download list of Annovar files from Annovar URL: {avdblist_url_file}")
-            raise ValueError(f"Download list of Annovar files from Annovar URL: {avdblist_url_file}")
+            log.error(f"Annovar Database list: {avdblist_folder_file}")
+            raise FileNotFoundError(f"Annovar Database list: {avdblist_folder_file}")
         
         else:
 
@@ -793,11 +793,15 @@ def databases_download_snpeff(folder:str = None, assemblies:list = ["hg19"], con
                     snpeff_list_databases[cols[0]].append(cols[-2].replace(",","").replace("]","").replace("[",""))
                     snpeff_list_databases[cols[0]].append(cols[-1].replace(",","").replace("]","").replace("[",""))
 
-            # Strat download
+            if not snpeff_list_databases:
+                log.error(f"Download snpEff databases {[assembly]} - list of databases empty - check file '{snpeff_databases_list_path}'")
+                raise ValueError(f"Download snpEff databases {[assembly]} - list of databases empty - check file '{snpeff_databases_list_path}'")
+
+            # Start download
             log.info(f"Download snpEff databases {[assembly]} - downloading...")
             # Try to download files
             file_path = None
-            for file_url in snpeff_list_databases[assembly]:
+            for file_url in snpeff_list_databases.get(assembly,[]):
                 # File to be downloaded
                 file_path = os.path.join(folder, os.path.basename(file_url))
                 # Check if file already downloaded
@@ -1017,15 +1021,19 @@ def databases_download_refseq(assemblies:list, refseq_folder:str = None, refseq_
                 else:
                     file_path_bed = re.sub(r'txt$', 'bed', file_path)
                     file_path_bed_compressed = f"{file_path_bed}.gz"
+                file_path_bed_hdr = f"{file_path_bed}.hdr"
+                file_path_bed_compressed_hdr = f"{file_path_bed_compressed}.hdr"
                 file_path_bed_basename = os.path.basename(file_path_bed)
                 file_path_bed_compressed_basename = os.path.basename(file_path_bed_compressed)
                 if refseq_file == refseq_format_file and (new_refseq_file or not os.path.exists(file_path_bed)):
                     log.info(f"Download refSeq databases ['{assembly}'] - '{refseq_file}' formatting to '{file_path_bed_basename}'...")
                     # Format refSeq in BED format
-                    databases_format_refseq(refseq_file=file_path, output_file=file_path_bed, include_utr_5=include_utr_5, include_utr_3=include_utr_3, include_chrM=include_chrM, include_non_canonical_chr=include_non_canonical_chr, include_non_coding_transcripts=include_non_coding_transcripts, include_transcript_ver=include_transcript_ver)
+                    databases_format_refseq(refseq_file=file_path, output_file=file_path_bed, include_utr_5=include_utr_5, include_utr_3=include_utr_3, include_chrM=include_chrM, include_non_canonical_chr=include_non_canonical_chr, include_non_coding_transcripts=include_non_coding_transcripts, include_transcript_ver=include_transcript_ver, sort=True, header=True, header_first_line=True)
                     # compress file
                     log.info(f"Download refSeq databases ['{assembly}'] - '{file_path_bed_basename}' compressing to '{file_path_bed_compressed_basename}'...")
                     concat_and_compress_files(input_files=[file_path_bed], output_file=file_path_bed_compressed, threads=threads, compression_type="bgzip", sort=False, index=False)
+                    shutil.copy(file_path_bed_hdr, file_path_bed_compressed_hdr)
+                    
 
     # Log
     log.debug(f"installed_refseq: {installed_refseq}")
@@ -1033,29 +1041,30 @@ def databases_download_refseq(assemblies:list, refseq_folder:str = None, refseq_
     return installed_refseq
 
 
-def databases_format_refseq(refseq_file:str, output_file:str, include_utr_5:bool = True, include_utr_3:bool = True, include_chrM:bool = True, include_non_canonical_chr:bool = True, include_non_coding_transcripts:bool = True, include_transcript_ver:bool = True) -> str:
+def databases_format_refseq(refseq_file:str, output_file:str, include_utr_5:bool = True, include_utr_3:bool = True, include_chrM:bool = True, include_non_canonical_chr:bool = True, include_non_coding_transcripts:bool = True, include_transcript_ver:bool = True, sort:bool = False, header:bool = False, header_first_line:bool = True) -> str:
     """
-    The function `databases_format_refseq` takes a RefSeq file as input and formats it according to
-    specified criteria, such as including or excluding certain features, and outputs the formatted file.
+    The `databases_format_refseq` function takes a RefSeq file as input, formats it according to
+    specified criteria, and outputs the formatted file.
     
     :param refseq_file: The `refseq_file` parameter is a string that represents the path to the input
     RefSeq file. This file contains information about gene annotations, including chromosome, start and
     end positions, strand, and other details
     :type refseq_file: str
-    :param output_file: The output file is the name of the file where the formatted data will be written
+    :param output_file: The `output_file` parameter is a string that represents the name of the file
+    where the formatted data will be written
     :type output_file: str
-    :param include_utr_5: The parameter `include_utr_5` determines whether to include the 5' UTR
-    (untranslated region) in the output. If set to `True`, the 5' UTR will be included. If set to
-    `False`, the 5' UTR will be excluded, defaults to True
+    :param include_utr_5: The `include_utr_5` parameter is a boolean that determines whether to include
+    the 5' UTR (untranslated region) in the output file. If set to `True`, the 5' UTR will be included.
+    If set to `False`, the 5' U, defaults to True
     :type include_utr_5: bool (optional)
-    :param include_utr_3: The parameter `include_utr_3` determines whether to include the 3' UTR
-    (untranslated region) in the output. If set to `True`, the 3' UTR will be included. If set to
-    `False`, the 3' UTR will be excluded, defaults to True
+    :param include_utr_3: A boolean parameter that determines whether to include the 3' UTR
+    (untranslated region) in the output. If set to True, the 3' UTR will be included. If set to False,
+    the 3' UTR will be excluded, defaults to True
     :type include_utr_3: bool (optional)
-    :param include_chrM: A boolean parameter that determines whether to include transcripts from the
-    mitochondrial chromosome (chrM or chrMT) in the output file. If set to True, transcripts from the
-    mitochondrial chromosome will be included. If set to False, transcripts from the mitochondrial
-    chromosome will be excluded, defaults to True
+    :param include_chrM: The `include_chrM` parameter is a boolean that determines whether to include
+    transcripts from the mitochondrial chromosome (chrM or chrMT) in the output file. If set to True,
+    transcripts from the mitochondrial chromosome will be included. If set to False, transcripts from
+    the mitochondrial chromosome will be excluded, defaults to True
     :type include_chrM: bool (optional)
     :param include_non_canonical_chr: The parameter `include_non_canonical_chr` determines whether or
     not to include non-canonical chromosomes in the output. If set to `True`, non-canonical chromosomes
@@ -1066,19 +1075,39 @@ def databases_format_refseq(refseq_file:str, output_file:str, include_utr_5:bool
     transcripts will be included. If set to `False`, non-coding transcripts will be excluded, defaults
     to True
     :type include_non_coding_transcripts: bool (optional)
-    :param include_transcript_ver: The parameter `include_transcript_ver` determines whether to include
+    :param include_transcript_ver: The `include_transcript_ver` parameter determines whether to include
     the transcript version in the output file. If set to `True`, the transcript version will be included
-    in the output file. If set to `False`, the transcript version will be removed from the output file,
-    defaults to True
+    in the output file. If set to `False`, the transcript version will be removed from the output file.
+    The default value is `True, defaults to True
     :type include_transcript_ver: bool (optional)
-    :return: the path of the output file.
+    :param sort: The `sort` parameter determines whether to sort the output file in ascending order
+    based on the chromosome and start position. If set to `True`, the file will be sorted. If set to
+    `False`, the file will not be sorted. The default value is `False`, defaults to False
+    :type sort: bool (optional)
+    :param header: The `header` parameter is a boolean that determines whether to include a header line
+    in the output file. If set to `True`, a header line will be included. If set to `False`, no header
+    line will be included. The default value is `False`, defaults to False
+    :type header: bool (optional)
+    :param header_first_line: The `header_first_line` parameter is a boolean that determines whether to
+    include the header line as the first line in the output file. If set to `True`, the header line will
+    be included as the first line. If set to `False`, the header line will not be included as the first,
+    defaults to True
+    :type header_first_line: bool (optional)
+    :return: The function `databases_format_refseq` returns the path of the output file.
     """
+
+    # Header
+    header_line = '#CHROM\tSTART\tEND\tname\ttranscript\tstrand\texon'
 
     # Open refSeq file
     with open(refseq_file, "r") as fi:
 
         # Open refSeq output file
         with open(output_file, "w") as fo:
+
+            # Write haeder line
+            if header_first_line:
+                fo.write(header_line+"\n")
 
             # For each line
             for l in fi:
@@ -1149,9 +1178,74 @@ def databases_format_refseq(refseq_file:str, output_file:str, include_utr_5:bool
                             exons_to_write[i].append("exon"+str(exon_num))
                             exon_num += exon_num_incrementation
                             fo.write("\t".join(exons_to_write[i])+"\n")
-                
-    return output_file
+    
+    # Sort BED file
+    if sort:
+        bed_sort(input=output_file, output=output_file)
 
+    # Create header
+    if header:
+
+        # Header file
+        header_file = f"{output_file}.hdr"
+
+        # VCF header dict
+        header_dict = {
+            "name": {
+                "number": ".",
+                "type": "String",
+                "description": "Name of the refSeq Gene",
+                "source": "refSeq",
+                "version": "refSeq"
+            },
+            "transcript": {
+                "number": ".",
+                "type": "String",
+                "description": "Name of the refSeq Transcript",
+                "source": "refSeq",
+                "version": "refSeq"
+            },
+            "strand": {
+                "number": ".",
+                "type": "String",
+                "description": "DNA strand orientation",
+                "source": "refSeq",
+                "version": "refSeq"
+            },
+            "exon": {
+                "number": ".",
+                "type": "String",
+                "description": "Name of the refSeq Exon",
+                "source": "refSeq",
+                "version": "refSeq"
+            },
+        }
+
+        # Create header
+        header_list = [
+                '##fileformat=VCFv4.2',
+                header_line
+                ]
+        header_vcf = vcf.Reader(io.StringIO("\n".join(header_list)))
+
+        # List of header annotations
+        for annotation_name in header_dict:
+            header_vcf.infos[annotation_name] = vcf.parser._Info(
+                        annotation_name,
+                        header_dict[annotation_name]["number"],
+                        header_dict[annotation_name]["type"],
+                        header_dict[annotation_name]["description"],
+                        header_dict[annotation_name]["source"],
+                        header_dict[annotation_name]["version"],
+                        code_type_map[header_dict[annotation_name]["type"]]
+                    )
+
+        # Write file
+        f = open(header_file, 'w')
+        vcf.Writer(f, header_vcf)
+        f.close()
+
+    return output_file
 
 
 def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_url:str = None, dbnsfp_release:str = "4.4a", threads:int = None, parquet_size:int = 100, generate_parquet_file:bool = False, generate_sub_databases:bool = False, generate_vcf_file:bool = False, not_generate_files_all:bool = False, genomes_folder:str = None, add_info:bool = False, row_group_size:int = 100000) -> bool:
@@ -2360,7 +2454,7 @@ def databases_download_exomiser(assemblies:list, exomiser_folder:str = DEFAULT_E
             exomiser_jar_dirname = os.path.dirname(exomiser_jar)
             exomiser_application_properties = os.path.join(exomiser_jar_dirname, "application.properties")
 
-    if os.path.exists(exomiser_application_properties):
+    if exomiser_application_properties and os.path.exists(exomiser_application_properties):
         configs = Properties()
         with open(exomiser_application_properties, 'rb') as read_prop:
             configs.load(read_prop)
