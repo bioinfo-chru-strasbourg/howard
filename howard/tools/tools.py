@@ -15,7 +15,7 @@ import pandas as pd
 import vcf
 import logging as log
 import sys
-import imp
+import importlib
 
 # Import Commons
 from howard.commons import *
@@ -34,14 +34,17 @@ from howard.tools.help import *
 from howard.tools.from_annovar import *
 
 
-# Import gui only if gooey is installed
+# Import gui only if gooey and wx is installed
 try:
-    imp.find_module('gooey')
-    tool_gui_enable = True
-    from howard.tools.gui import *
+    check_gooey = importlib.util.find_spec("gooey")
+    check_wx = importlib.util.find_spec("wx")
+    tool_gui_enable = check_gooey and check_wx
 except ImportError:
     tool_gui_enable = False
-    #log.warning("Gooey not installed")
+
+if tool_gui_enable:
+    from howard.tools.gui import *
+
 
 # Arguments dict
 arguments = {

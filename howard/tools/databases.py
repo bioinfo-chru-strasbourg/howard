@@ -2939,7 +2939,7 @@ def databases_download_dbsnp(assemblies:list, dbsnp_folder:str = DEFAULT_DBSNP_F
                                 """
                             res = db.query(query=query)
                             # Use polars to parallelize csv write and an infile with pgzip to parallelise compression
-                            res.pl().write_csv(f, separator="\t", has_header=False)
+                            res.pl().write_csv(f, separator="\t", include_header=False)
 
                         # Write Parquet
                         if write_parquet:
