@@ -29,6 +29,7 @@ import mgzip
 import bgzip
 
 import pysam
+import yaml
 import pysam.bcftools
 
 import signal
@@ -1777,6 +1778,212 @@ def get_argument_to_mk(arg:str, argument:dict = {}, mode:str = "mk") -> str:
         text += "\n```\n\n"
 
     return text
+
+
+
+def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", output_type:str = "markdown", level:int = 1, table:str = "", generate_table:bool = False):
+    """
+    The function `help_generation_from_dict` generates help documentation from a dictionary input, with
+    support for markdown and HTML output formats.
+    
+    :param element: The `element` parameter in the `help_generation_from_dict` function is a string that
+    represents the current element or key in the dictionary for which help documentation is being
+    generated
+    :type element: str
+    :param help_dict: The `help_generation_from_dict` function takes in several parameters:
+    :type help_dict: dict
+    :param previous: The `previous` parameter in the `help_generation_from_dict` function is used to
+    keep track of the previous elements in the hierarchy. It is a string that represents the path to the
+    current element being processed. This parameter helps in maintaining the correct hierarchy level
+    when generating help documentation for nested elements in a
+    :type previous: str
+    :param output_type: The `output_type` parameter in the `help_generation_from_dict` function
+    specifies the type of output format that you want the generated help documentation to be in. It can
+    take two possible values:, defaults to markdown
+    :type output_type: str (optional)
+    :param level: The `level` parameter in the `help_generation_from_dict` function is used to keep
+    track of the depth or level of recursion in the generation process. It starts at 1 for the initial
+    call and increments by 1 for each level of recursion into sub-elements. This parameter helps in
+    formatting the, defaults to 1
+    :type level: int (optional)
+    :return: The function `help_generation_from_dict` is returning the generated help documentation
+    based on the input `help_dict` dictionary. The output is formatted based on the specified
+    `output_type` (either "markdown" or "html") and includes sections such as "__help", "__format",
+    "__default", and "__examples" if they are present in the `help_dict`.
+    """
+    """
+    
+    """
+
+    # Level marker
+    level_marker = "::"
+
+    # Output
+    output = ""
+    output_table = ""
+
+    # Specific help sections
+    section_list = ["__help", "__format", "__default", "__examples", "__code", "__examples_code"]
+
+    # If no section "__help" (mandatory)
+    if "__help" not in help_dict:
+        return output
+
+    # Previous level
+    if previous:
+        prefix = f"{previous}"
+        previous = f"{prefix}{level_marker}"
+    else:
+        prefix = f"{element}"
+        previous = ""
+
+    # For each help section
+    for section in section_list:
+        if section in help_dict:
+
+            # element content
+            help_dict_content = help_dict.get(section, None)
+            
+            # If content not empty
+            if help_dict_content:
+
+                # Break section
+                section_break = ""
+
+                # Output variables
+                output_header = ""
+                output_header_table = ""
+                output_content = ""
+
+                # Markdown
+                if output_type == "markdown":
+
+                    # Level
+                    level_md = "#" * level
+
+                    # line break
+                    if section in ["__code", "__examples_code"]:
+                        line_break = "\n"
+                    else:
+                        line_break = "\n\n"
+                    
+                    # Help content from type
+                    if isinstance(help_dict_content, str):
+                        help_md = help_dict_content.replace("\n", line_break)
+                    elif isinstance(help_dict_content, list):
+                        help_md = line_break.join(help_dict_content)
+                        section_break = "\n"
+                    
+                    if section in ["__code", "__examples_code"]:
+                        help_md = f"```\n{help_md}\n```"
+
+                    # Output variables
+                    output_header += f"{level_md} {prefix}\n\n"
+                    output_header_table += f"#{level_md} Table of contents\n\n{table}\n\n"
+                    output_content += f"{help_md}\n\n"
+
+                # HTML
+                elif output_type == "html":
+
+                    # Level
+                    level_html = f"H{level}"
+
+                    # Help content from type
+                    if isinstance(help_dict_content, str):
+                        help_html = help_dict_content.replace("\n", "<br>")
+                    elif isinstance(help_dict_content, list):
+                        if section in ["__code", "__examples_code"]:
+                            help_html = "\n".join(help_dict_content)
+                            section_break = ""
+                        else:
+                            help_html = "<br>".join(help_dict_content)
+                            section_break = "<br>"
+
+                    if section in ["__code", "__examples_code"]:
+                        help_html = f"<xmp>{help_html}</xmp>"
+                    
+                    # Output variables
+                    output_header += f"<{level_html} id='{prefix}'>{prefix}</{level_html}>"
+                    output_header_table += f"""
+                    <H{level+1}>Table of contents</{level_html}>
+                    {table}
+                    <br>
+                    """
+                    output_content += f"{help_html}<br>"
+
+                # Output section
+                output_section = re.sub(r'^__', '', section).split("_")[0].capitalize()
+
+                # Output construction
+                if section == "__help":
+                    output += output_header
+                    output += output_content
+                    if table and level == 1:
+                        output += output_header_table
+                else:
+                    output_section = re.sub(r'^__', '', section).split("_")[0].capitalize()
+                    output += f"{output_section}: {section_break}{output_content}"
+
+    # Output table construction
+    if output_type == "markdown":
+        output_table += "   " * (level - 1) + f"- [{element}](#{prefix.lower().replace(' ','-').replace(':','')})\n"
+    elif output_type == "html":
+        output_table += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" * (level - 1) + f"- <a href='#{prefix}'>{element}</a><BR>"
+        
+    # Recusivity to other sub-element
+    for element in help_dict:
+
+        # If element is a sub-element
+        if element not in section_list and isinstance(help_dict.get(element,None),dict):
+
+            # output_tabl
+            output_table += help_generation_from_dict(element=element, help_dict=help_dict.get(element,None), previous=f"{previous}{element}", output_type=output_type, level=level+1, table=output_table, generate_table=True)
+
+            # Add sub-element output
+            output += help_generation_from_dict(element=element, help_dict=help_dict.get(element,None), previous=f"{previous}{element}", output_type=output_type, level=level+1, table=output_table)
+
+    # Return output
+    if generate_table:
+        return output_table
+    else:
+        return output
+
+
+def help_generation_from_json(help_json_file:str, output_type:str = "markdown", title="Help"):
+    """
+    This Python function reads a JSON file containing help information, converts it into a specified
+    output format (default is markdown), and returns the generated help content.
+    
+    :param help_json_file: The `help_json_file` parameter is a string that should contain the file path
+    to the JSON file from which help information will be extracted. This JSON file likely contains
+    structured data that will be used to generate the help content
+    :type help_json_file: str
+    :param output_type: The `output_type` parameter in the `help_generation_from_json` function
+    specifies the format in which the generated help content will be output. It has a default value of
+    "markdown", which means the help content will be formatted using Markdown syntax. However, you can
+    also specify other output formats such as, defaults to markdown
+    :type output_type: str (optional)
+    :param title: The `title` parameter is a string that represents the title of the help documentation
+    that will be generated. It is used to provide a title for the help content to make it more organized
+    and informative, defaults to Help (optional)
+    :return: The function `help_generation_from_json` returns the generated help content based on the
+    information stored in the JSON file provided as input.
+    """
+
+    # Read JSON file
+    help_dict = {}
+    with open(help_json_file) as f:
+        help_dict = yaml.safe_load(f)
+
+    # Generate help table of content
+    output_table = help_generation_from_dict(element=title, help_dict=help_dict, previous="", output_type=output_type, level=1, generate_table=True)
+
+    # Generate help
+    output = help_generation_from_dict(element=title, help_dict=help_dict, previous="", output_type=output_type, level=1, table=output_table)
+
+    # Return help
+    return output
+
 
 
 def help_generation(arguments_dict:dict = {}, parser = None, setup:str = None, output_type:str = "parser"):

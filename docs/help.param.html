@@ -1,0 +1,106 @@
+<H1 id='HOWARD Parameters'>HOWARD Parameters</H1>HOWARD Parameters JSON file defined parameters to process annotations, prioritization, calculations, convertions and queries.<br>
+                    <H2>Table of contents</H1>
+                    - <a href='#HOWARD Parameters'>HOWARD Parameters</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#annotations'>annotations</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#annotations::parquet'>parquet</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#annotations::parquet::annotations'>annotations</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#annotations::annovar'>annovar</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#annotations::annovar::annotations'>annotations</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#annotations::annovar::options'>options</a><BR>
+                    <br>
+                    <H2 id='annotations'>annotations</H2>Annotation process using HOWARD algorithms or external tools.<br>For HOWARD Parquet algorithm, specify the list of database files available (formats such as Parquet, VCF, TSV, duckDB, JSON). This parameter enables users to select specific database fields and optionally rename them. Ue 'INFO' keyword to select all fields within the database. If a full path is not provided, the system will automatically detect files within database folders (see Configuration doc) and assembly (see Parameter option).<br>For external tools, such as Annovar, snpEff and Exomiser, specify parameters such as annotation keywords (Annovar) and options (depending on the tool).<br>Examples: <xmp># Annotation with multiple tools in multiple formats with multiple options
+"annotation": {
+   "parquet": {
+      "annotations": {
+         "/path/to/database1.parquet": {
+            ...
+         },
+         ...,
+      }
+   }
+   "annovar": {
+      "annotations": {
+         "/path/to/database1.txt": {
+            ...
+         },
+         ...
+      }
+   }
+}</xmp><br><H3 id='annotations::parquet'>annotations::parquet</H3>Annotation process using HOWARD parquet algorithm. Provide a list of database files and annotation fields<br>Examples: <xmp># Annotation with multiple databases in multiple formats
+"parquet": {
+   "annotations": {
+      "/path/to/database1.parquet": {
+         "field1": null
+         "field2": "field2_renamed",
+         ...
+      },
+      "database2.vcf.gz": {
+         ...
+      },
+      ...
+   }
+}</xmp><br><H4 id='annotations::parquet::annotations'>annotations::parquet::annotations</H4>Specify the list of database files available in multiple formats such as Parquet, VCF, BED, TSV, duckDB, JSON.<br>Examples: <xmp># Annotation with dbSNP database  with all fields
+"annotations": {
+   "tests/databases/annotations/hg19/avsnp150.parquet": {
+      "INFO": null
+   }
+}
+
+# Annotation with dbNSFP (only PolyPhen, ClinVar and REVEL score), and rename fields
+"annotations": {
+   "tests/databases/annotations/hg19/dbnsfp42a.parquet": {
+      "Polyphen2_HDIV_pred": "PolyPhen",
+      "ClinPred_pred": "ClinVar",
+      "REVEL_score": null
+   }
+}
+
+# Annotation with refSeq as a BED file
+"annotations": {
+   "tests/databases/annotations/hg19/refGene.bed": {
+      "INFO": null
+   }
+}
+
+# Annotation with dbNSFP REVEL annotation (as a VCF file) within configured annotation databases folders (default: '/databases/annotations/current') and assembly (default: 'hg19')
+"annotations": {
+   "dbnsfp42a.REVEL.vcf.gz": {
+      "REVEL_score": null,
+      "REVEL_rankscore": null
+   }
+}
+
+# Annotation with dbNSFP REVEL annotation (as a VCF file) within configured annotation databases folders (default: '/databases/annotations/current') and assembly (default: 'hg19')
+"annotations": {
+   "dbnsfp42a.REVEL.vcf.gz": {
+      "REVEL_score": null,
+      "REVEL_rankscore": null
+   }
+}</xmp><br><H3 id='annotations::annovar'>annotations::annovar</H3>Annotation process using Annovar tool. Provides a list of keywords to select Annovar databases, and defines Annovar options (see Annovar documentation).<br>Examples: <xmp># Annotation with multiple Annovar databases, with fields selection, and Annovar options
+"annovar": {
+   "annotations": {
+      "clinvar_20221231": {
+         "CLNSIG": "ClinVar_class"
+         "CLNDN": "ClinVar_desease",
+         ...
+      },
+      "cosmic70": {
+         "INFO": null
+      },
+      ...
+   }
+   "options": {
+      "splicing_threshold": 3,
+      ...,
+   }
+}</xmp><br><H4 id='annotations::annovar::annotations'>annotations::annovar::annotations</H4>List of keywords refering to Annovar databases (see Annovar documentation), with a list of selected fields for each of them (rename available)<br>Examples: <xmp># Annotation with ClinVar (fields CLNSIG and CLNDN renamed) and Cosmic (all fields)
+"annotations": {
+   "clinvar_20221231": {
+      "CLNSIG": "ClinVar_class"
+      "CLNDN": "ClinVar_desease",
+      ...
+   },
+   "cosmic70": {
+      "INFO": null
+   },
+   ...
+}</xmp><br><H4 id='annotations::annovar::options'>annotations::annovar::options</H4>List of options available with Annovar tool (see Annovar documentation). As example, these options allows to define splicing threashold or HGVS annotation with refGene database<br>Examples: <xmp># HGVS Annotation with refGene (add 'refGene' to 'annotations') and a splicing threshold as 3
+"options": {
+   "splicing_threshold": 3
+   "argument": "'-hgvs'"
+   }
+}</xmp><br>
