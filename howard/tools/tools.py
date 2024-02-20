@@ -929,6 +929,22 @@ arguments = {
                 "widget": "FileSaver"
             }
         },
+        "help_json_input": {
+            "metavar": "help JSON input",
+            "help": """Help input file in JSON format\n""",
+            "required": False,
+            "type": argparse.FileType('r'),
+            "gooey": {
+                "widget": "FileChooser"
+            }
+        },
+        "help_json_input_title": {
+            "metavar": "help JSON input title",
+            "help": """Help JSON input title.\n"""
+                    """Default: 'Help'\n""",
+            "required": False,
+            "default": "Help"
+        },
 
         # Common
         "genomes-folder": {
@@ -965,16 +981,23 @@ arguments = {
         },
         "threads": {
             "metavar": "threads",
-            "help": """Number of threads to use\n"""
-                    """Use -1 to detect number of CPU/cores\n"""
+            "help": """Specifies the number of threads to use for processing HOWARD.\n"""
+                    """It determines the level of parallelism,\n"""
+                    """either on python scripts, duckdb engine and external tools.\n"""
+                    """It and can help speed up the process/tool\n"""
+                    """Use -1 to use all available CPU/cores\n"""
                     """Default: -1""",
             "required": False,
             "default": -1
         },
         "memory": {
             "metavar": "memory",
-            "help": """Memory to use (FLOAT[kMG])\n"""
-                    """Default: None (80%% of RAM)""",
+            "help": """Specify the memory to use.\n"""
+                    """It determines the amount of memory for duckDB engine and external tools\n"""
+                    """(especially for JAR prorams).\n"""
+                    """It can help to prevvent 'out of memory' failures.\n"""
+                    """Format: (FLOAT[kMG])\n"""
+                    """Default: None (80%% of RAM for duckDB)""",
             "required": False,
             "default": None
         },
@@ -987,7 +1010,7 @@ arguments = {
             "default": 1000000
         },
         "tmp": {
-            "metavar": "tmp",
+            "metavar": "Temporary folder",
             "help": """Temporary folder.\n"""
                     """Especially for duckDB, default '.tmp' (see doc).\n"""
                     """default: None""",
@@ -1011,6 +1034,12 @@ arguments = {
             "metavar": "verbosity",
             "help": """Verbosity level\n"""
                     """Available: CRITICAL, ERROR, WARNING, INFO, DEBUG or NOTSET\n"""
+                    """- DEBUG: Detailed information, typically of interest only when diagnosing problems.\n"""
+                    """- INFO: Confirmation that things are working as expected.\n"""
+                    """- WARNING: An indication that something unexpected happened.\n"""
+                    """- ERROR: Due to a more serious problem.\n"""
+                    """- CRITICAL: A serious error.\n"""
+                    """- NOTSET: All messages.\n"""
                     """Default: INFO""",
             "required": False,
             "choices": ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET'],
@@ -1380,11 +1409,15 @@ commands_arguments = {
         "description": """Help tools""",
         "help": """Help tools""",
         "epilog": """Usage examples:\n"""
-                    """   howard help --help_md=/tmp/howard.help.mk --help_html=/tmp/howard.help.html """,
+                    """   howard help --help_md=/tmp/howard.help.md --help_html=docs/help.html\n"""
+                    """   howard help --help_json_input=docs/help.config.json --help_json_input_title='HOWARD Configuration' --help_md=docs/help.config.md --help_html=docs/help.config.html\n"""
+                    """   howard help --help_json_input=docs/help.param.json --help_json_input_title='HOWARD Parameters' --help_md=docs/help.param.md --help_html=docs/help.param.html """,
         "groups": {
             "main": {
                 "help_md": False,
                 "help_html": False,
+                "help_json_input": False,
+                "help_json_input_title": False
             }
         }
     }

@@ -196,14 +196,49 @@ See [HOWARD Help From ANNOVAR tool](help.md#from_annovar-tool) tool for more inf
 
 # Configuration
 
-HOWARD configuration file is used to...
+HOWARD Configuration JSON file defined default configuration regarding resources (e.g. threads, memory), settings (e.g. verbosity, temporary files), default folders (e.g. for databases) and paths to external tools.
+
+See [HOWARD Configuration JSON](help.config.md) for more information.
+
+Configuration file example:
+```
+{
+  "threads": 8,
+  "memory": null,
+  "verbosity": "warning",
+  "folders": {
+    "databases": {
+      "annotations": [
+        "/databases/annotations/current/",
+        "/databases/dbnsfp/current/",
+        "/databases/dbsnp/current/"
+      ],
+      "parquet": ["/databases/annotations/current/"],
+      "bcftools": ["/databases/annotations/current/"],
+      "annovar": "/databases/annovar/current/",
+      "snpeff": "/databases/snpeff/current/",
+      "exomiser": "/databases/exomiser/current/"
+    }
+  },
+  "tools": {
+    "bcftools": "/tools/bcftools/current/bin/bcftools",
+    "bgzip": "/tools/htslib/current/bin/bgzip",
+    "snpeff": "/tools/snpeff/current/bin/snpEff.jar",
+    "annovar": "/tools/annovar/current/bin/table_annovar.pl"
+    "exomiser": "/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar",
+    "java": "/usr/bin/java",
+  }
+}
+
+```
 
 # Parameters
 
-HOWARD parameters file is use to...
+HOWARD Parameters JSON file defined parameters to process annotations, prioritization, calculations, convertions and queries.
 
+See [HOWARD Parameters JSON](help.param.md) for more information.
 
-Parameter example:
+Parameters file example:
 ```
 {
   "annotation": {
