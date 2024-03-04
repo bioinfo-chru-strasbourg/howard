@@ -74,14 +74,14 @@ Examples:
 ```
 # Annotation with dbSNP database  with all fields
 "annotations": {
-   "tests/databases/annotations/hg19/avsnp150.parquet": {
+   "tests/databases/annotations/current/hg19/avsnp150.parquet": {
       "INFO": null
    }
 }
 
 # Annotation with dbNSFP (only PolyPhen, ClinVar and REVEL score), and rename fields
 "annotations": {
-   "tests/databases/annotations/hg19/dbnsfp42a.parquet": {
+   "tests/databases/annotations/current/hg19/dbnsfp42a.parquet": {
       "Polyphen2_HDIV_pred": "PolyPhen",
       "ClinPred_pred": "ClinVar",
       "REVEL_score": null
@@ -90,7 +90,7 @@ Examples:
 
 # Annotation with refSeq as a BED file
 "annotations": {
-   "tests/databases/annotations/hg19/refGene.bed": {
+   "tests/databases/annotations/current/hg19/refGene.bed": {
       "INFO": null
    }
 }
@@ -168,7 +168,6 @@ Examples:
 "options": {
    "splicing_threshold": 3
    "argument": "'-hgvs'"
-   }
 }
 ```
 

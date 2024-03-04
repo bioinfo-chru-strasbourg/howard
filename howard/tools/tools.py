@@ -1087,8 +1087,8 @@ commands_arguments = {
         "epilog": """Usage examples:\n"""
                         """   howard query --input=tests/data/example.vcf.gz --query="SELECT * FROM variants WHERE REF = 'A' AND POS < 100000" \n"""
                         """   howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, DP, CLNSIG, sample2, sample3 FROM variants WHERE DP >= 50 OR CLNSIG NOT NULL ORDER BY DP DESC' \n"""
-                        """   howard query --query="SELECT \\\"#CHROM\\\", POS, REF, ALT, \\\"INFO/Interpro_domain\\\" FROM 'tests/databases/annotations/hg19/dbnsfp42a.parquet' WHERE \\\"INFO/Interpro_domain\\\" NOT NULL ORDER BY \\\"INFO/SiPhy_29way_logOdds_rankscore\\\" DESC LIMIT 10" \n"""
-                        """   howard query --explode_infos --explode_infos_prefix='INFO/' --query="SELECT \\\"#CHROM\\\", POS, REF, ALT, STRING_AGG(INFO, ';') AS INFO FROM 'tests/databases/annotations/hg19/*.parquet' GROUP BY \\\"#CHROM\\\", POS, REF, ALT" --output=/tmp/full_annotation.tsv  && head -n2 /tmp/full_annotation.tsv \n"""
+                        """   howard query --query="SELECT \\\"#CHROM\\\", POS, REF, ALT, \\\"INFO/Interpro_domain\\\" FROM 'tests/databases/annotations/current/hg19/dbnsfp42a.parquet' WHERE \\\"INFO/Interpro_domain\\\" NOT NULL ORDER BY \\\"INFO/SiPhy_29way_logOdds_rankscore\\\" DESC LIMIT 10" \n"""
+                        """   howard query --explode_infos --explode_infos_prefix='INFO/' --query="SELECT \\\"#CHROM\\\", POS, REF, ALT, STRING_AGG(INFO, ';') AS INFO FROM 'tests/databases/annotations/current/hg19/*.parquet' GROUP BY \\\"#CHROM\\\", POS, REF, ALT" --output=/tmp/full_annotation.tsv  && head -n2 /tmp/full_annotation.tsv \n"""
                         , 
         "groups": {
             "main": {
@@ -1151,8 +1151,8 @@ commands_arguments = {
         "description":  """Annotation is mainly based on a build-in Parquet annotation method, and tools such as BCFTOOLS, Annovar and snpEff. It uses available databases (see Annovar and snpEff) and homemade databases. Format of databases are: parquet, duckdb, vcf, bed, Annovar and snpEff (Annovar and snpEff databases are automatically downloaded, see howard databases tool). """,
         "help":         """Annotation of genetic variations file using databases/files and tools.""",
         "epilog":       """Usage examples:\n"""
-                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/hg19/avsnp150.parquet,tests/databases/annotations/hg19/dbnsfp42a.parquet,tests/databases/annotations/hg19/gnomad211_genome.parquet' \n"""
-                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotations='annovar:refGene,annovar:cosmic70,snpeff,tests/databases/annotations/hg19/clinvar_20210123.parquet' \n"""
+                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/current/hg19/avsnp150.parquet,tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet' \n"""
+                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotations='annovar:refGene,annovar:cosmic70,snpeff,tests/databases/annotations/current/hg19/clinvar_20210123.parquet' \n"""
                         """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotations='ALL:parquet' \n""", 
         "groups": {
             "main": {
@@ -1409,7 +1409,7 @@ commands_arguments = {
         "description": """Help tools""",
         "help": """Help tools""",
         "epilog": """Usage examples:\n"""
-                    """   howard help --help_md=/tmp/howard.help.md --help_html=docs/help.html\n"""
+                    """   howard help --help_md=docs/help.md --help_html=docs/help.html\n"""
                     """   howard help --help_json_input=docs/help.config.json --help_json_input_title='HOWARD Configuration' --help_md=docs/help.config.md --help_html=docs/help.config.html\n"""
                     """   howard help --help_json_input=docs/help.param.json --help_json_input_title='HOWARD Parameters' --help_md=docs/help.param.md --help_html=docs/help.param.html """,
         "groups": {

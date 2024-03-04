@@ -37,7 +37,7 @@ def test_databases_infos():
     configurations and parameters.
     """
 
-    databases_infos_dict = databases_infos(config=tests_config, database_folder_releases=["annotations"], database_formats=["parquet","vcf"], assembly='hg19')
+    databases_infos_dict = databases_infos(config=tests_config, database_folder_releases=["current"], database_formats=["parquet","vcf"], assembly='hg19')
 
     assert len(databases_infos_dict)
 
@@ -54,7 +54,7 @@ def test_databases_param():
         output = os.path.join(tmp_dir, "param.json")
         output_description = os.path.join(tmp_dir, "description.json")
 
-        databases_infos_dict = databases_infos(config=tests_config, database_folder_releases=["annotations"], database_formats=["parquet","vcf"], assembly='hg19')
+        databases_infos_dict = databases_infos(config=tests_config, database_folder_releases=["current"], database_formats=["parquet","vcf"], assembly='hg19')
         databases_param_dict = databases_param(databases_infos_dict=databases_infos_dict, output=output, output_description=output_description)
 
         assert len(databases_infos_dict)

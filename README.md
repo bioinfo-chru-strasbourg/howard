@@ -1,4 +1,8 @@
+<style>body {text-align: justify}</style>
+
 # HOWARD
+
+![HOWARD Graphical User Interface](images/icon.png "HOWARD Graphical User Interface")
 
 Highly Open and Valuable tool for Variant Annotation & Ranking for Discovery
 
@@ -22,6 +26,8 @@ HOWARD is multithreaded through the number of variants and by database (data-sca
   - [Python](#python)
   - [Docker](#docker)
   - [Databases](#databases)
+- [Configuration](#configuration)
+- [Parameters](#parameters)
 - [Tools](#tools)
   - [Stats](#stats)
   - [Convert](#convert)
@@ -29,6 +35,7 @@ HOWARD is multithreaded through the number of variants and by database (data-sca
   - [Annotation](#annotation)
   - [Calculation](#calculation)
   - [Prioritization](#prioritization)
+  - [Process](#process)
 - [Docker HOWARD-CLI](#docker-howard-cli)
 - [Documentation](#documentation)
 - [Contact](#contact)
@@ -51,8 +58,6 @@ howard gui
 
 ![HOWARD Graphical User Interface](images/howard-gui.png "HOWARD Graphical User Interface")
 
-
-
 ## Docker
 
 In order to build, setup and create a persitent CLI (running container with all useful external tools such as [BCFTools](https://samtools.github.io/bcftools/), [snpEff](https://pcingola.github.io/SnpEff/), [Annovar](https://annovar.openbioinformatics.org/), [Exomiser](https://www.sanger.ac.uk/tool/exomiser/)), docker-compose command build images and launch services as containers.
@@ -73,7 +78,6 @@ A Command Line Interface container (HOWARD-CLI) is started with host data and da
 docker exec -ti HOWARD-CLI bash
 howard --help
 ```
-
 
 ## Databases
 
@@ -104,6 +108,18 @@ Databases can be home-made generated, starting with a existing annotation file, 
 - region annotation: '#CHROM', 'START', 'STOP'
 
 Each database annotation file is associated with a 'header' file ('.hdr'), in VCF header format, to describe annotations within the database.
+
+# Configuration
+
+HOWARD Configuration JSON file defined default configuration regarding resources (e.g. threads, memory), settings (e.g. verbosity, temporary files), default folders (e.g. for databases) and paths to external tools.
+
+See [HOWARD Configuration JSON](docs/help.config.md) for more information.
+
+# Parameters
+
+HOWARD Parameters JSON file defined parameters to process annotations, prioritization, calculations, convertions and queries.
+
+See [HOWARD Parameters JSON](docs/help.param.md) for more information.
 
 # Tools
 
@@ -145,25 +161,21 @@ See [HOWARD Help Query tool](docs/help.md#query-tool) for more options.
 
 ## Annotation
 
-Annotation is mainly based on a build-in Parquet annotation method, and tools such as BCFTOOLS, Annovar, snpEff and Exomiser. It uses available databases and homemade databases. Format of databases are: Parquet/duckdb, VCF, BED, Annovar and snpEff (Annovar and snpEff databases are automatically downloaded, see howard databases tool).
+Annotation is mainly based on a build-in Parquet annotation method, using database format such as Parquet, duckdb, VCF, BED, TSV, JSON. External annotation tools are also available, such as BCFTOOLS, Annovar, snpEff and Exomiser. It uses available databases and homemade databases. Annovar and snpEff databases are automatically downloaded (see [HOWARD Help Databases tool](docs/help.md#databases-tool)). All annotation parameters are defined in [HOWARD Parameters JSON](docs/help.param.md) file.
 
-- VCF annotation with Parquet and VCF databases, output as VCF format
+Quick annotation allows to annotates by simply listing annotation databases, or defining external tools keywords. These annotations can be combined.
 
-```
-howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/hg19/dbnsfp42a.parquet,tests/databases/annotations/hg19/gnomad211_genome.parquet,tests/databases/annotations/hg19/cosmic70.vcf.gz'
-```
+> Example: VCF annotation with Parquet and VCF databases, output as VCF format
+>
+> ```
+> howard annotation --input=tests/data/example.vcf.gz --annotations='tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/cosmic70.vcf.gz' --output=/tmp/example.howard.vcf.gz
+> ```
 
-- VCF annotation with Clinvar Parquet, Annovar refGene and snpEff databases, output as TSV format
-
-```
-howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --annotations='annovar:refGene,snpeff,tests/databases/annotations/hg19/clinvar_20210123.parquet'
-```
-
-- VCF annotation with all available database annotation files in Parquet format (within the database annotation folder in configuration):
-
-```
-howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly='hg19' --annotations='ALL:parquet'
-```
+> Example: VCF annotation with external tools (Annovar refGene and snpEff databases), output as TSV format
+> 
+> ```
+> howard annotation --input=tests/data/example.vcf.gz --annotations='annovar:refGene,snpeff' --output=/tmp/example.howard.tsv
+> ```
 
 See [HOWARD Help Annotation tool](docs/help.md#annotation-tool) for more options.
 
@@ -174,7 +186,7 @@ Calculation processes variants information to generate new information, such as:
 - Identify variant types
 
 ```
-howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations='vartype'
+howard calculation --input=tests/data/example.full.vcf --calculations='vartype' --output=/tmp/example.calculation.tsv
 ```
 
 - and generate a table of variant type count
@@ -186,7 +198,7 @@ howard query --input=/tmp/example.calculation.tsv --explode_infos --query='SELEC
 - Calculate NOMEN by extracting hgvs from snpEff annotation and identifying default transcripts from a list
 
 ```
-howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.NOMEN.vcf.gz --calculations='snpeff_hgvs,NOMEN' --hgvs_field='snpeff_hgvs' --transcripts=tests/data/transcripts.tsv && gzip -dc /tmp/example.NOMEN.vcf.gz | grep "##" -v | head -n2
+howard calculation --input=tests/data/example.ann.vcf.gz --calculations='snpeff_hgvs,NOMEN' --hgvs_field='snpeff_hgvs' --transcripts=tests/data/transcripts.tsv --output=/tmp/example.NOMEN.vcf.gz && gzip -dc /tmp/example.NOMEN.vcf.gz | grep "##" -v | head -n2
 ```
 
 - and query NOMEN for gene 'EGFR'
@@ -204,7 +216,7 @@ Prioritization algorithm uses profiles to flag variants (as passed or filtered),
 - Prioritize variants from criteria on INFO annotations for profiles 'default' and 'GERMLINE' (see 'prioritization_profiles.json'), and query variants on prioritization tags
 
 ```
-howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations=config/prioritization_profiles.json --profiles='default,GERMLINE' --pzfields='PZFlag,PZScore,PZComment'
+howard prioritization --input=tests/data/example.vcf.gz --prioritizations=config/prioritization_profiles.json --profiles='default,GERMLINE' --pzfields='PZFlag,PZScore,PZComment' --output=/tmp/example.prioritized.vcf.gz
 ```
 
 - and query variants passing filters
@@ -280,20 +292,20 @@ howard process --config=config/config.json --param=config/param.json --input=tes
     },
     "parquet": {
       "annotations": {
-        "tests/databases/annotations/hg19/avsnp150.parquet": {
+        "tests/databases/annotations/current/hg19/avsnp150.parquet": {
           "INFO": null
         },
-        "tests/databases/annotations/hg19/dbnsfp42a.parquet": {
+        "tests/databases/annotations/current/hg19/dbnsfp42a.parquet": {
           "INFO": null
         },
-        "tests/databases/annotations/hg19/gnomad211_genome.parquet": {
+        "tests/databases/annotations/current/hg19/gnomad211_genome.parquet": {
           "INFO": null
         }
       }
     },
     "bcftools": {
       "annotations": {
-        "tests/databases/annotations/hg19/cosmic70.vcf.gz": {
+        "tests/databases/annotations/current/hg19/cosmic70.vcf.gz": {
           "INFO": null
         }
       }

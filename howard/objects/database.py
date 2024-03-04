@@ -395,19 +395,31 @@ class Database:
         return database_header_file
     
 
-    def get_header(self, database:str = None, header_file:str = None, header_list:list = None) -> vcf:
+    def get_header(self, database:str = None, header_file:str = None, header_list:list = None, sql_query:str = None) -> vcf:
         """
-        This function returns the header of a VCF file either from a file, a list, or from the object
-        itself.
+        The `get_header` function in Python returns the header of a VCF file from a file, a list, or the
+        object itself based on specified conditions.
         
-        :param header_file: a string representing the path to a file containing the header information
-        for a VCF file
+        :param database: The `database` parameter in the `get_header` function represents a string that
+        specifies the database from which the header information should be retrieved or used. It is used
+        in various parts of the function to determine how to construct the header of the VCF file
+        :type database: str
+        :param header_file: The `header_file` parameter in the `get_header` function is a string
+        representing the path to a file containing the header information for a VCF file. This parameter
+        allows you to specify a file from which the function will read the header information
         :type header_file: str
-        :param header_list: A list containing the header lines of a VCF file
+        :param header_list: The `header_list` parameter in the `get_header` function is a list
+        containing the header lines of a VCF file. If provided, the function will construct the header
+        from this list using the `get_header_from_list` method. If `header_list` is not provided, the
+        function will
         :type header_list: list
-        :return: The method `get_header` returns an object of type `vcf`. However, if none of the
-        conditions are met (i.e. `self.header` is not set, `header_file` is not provided, and
-        `header_list` is not provided), then `None` is returned.
+        :param sql_query: The `sql_query` parameter in the `get_header` function is a string
+        representing an SQL query that can be used to retrieve data from a database. This parameter is
+        used in the function to help construct the header of a VCF file based on the query results or
+        other conditions specified in the function
+        :type sql_query: str
+        :return: The `get_header` function returns the header of a VCF file based on different
+        conditions:
         """
         
         if self.header:
@@ -422,9 +434,9 @@ class Database:
         elif self.find_header_file(database=database):
             # Construct header from header file found
             return self.get_header_from_file(self.find_header_file(database=database))
-        elif self.get_extra_columns(database=database):
+        elif self.get_extra_columns(database=database, sql_query=sql_query):
             # Construct header from a list of columns
-            return self.get_header_from_columns(database=database, header_columns=self.get_extra_columns(database=database))
+            return self.get_header_from_columns(database=database, header_columns=self.get_extra_columns(database=database, sql_query=sql_query), sql_query=sql_query)
         # elif "INFO" in self.get_columns(database=database):
         #     # Construct header from annotation in INFO column (in case of VCF database without header, e.g. in TSV)
         #     # TODO
@@ -434,22 +446,29 @@ class Database:
             return None
 
 
-    def get_header_from_columns(self, database:str = None, header_columns:list = []) -> object:
+    def get_header_from_columns(self, database:str = None, header_columns:list = [], sql_query:str = None) -> object:
         """
-        This function generates a VCF header based on the columns in a database and adds custom
-        annotations to it.
+        The function `get_header_from_columns` generates a VCF header based on database columns and adds
+        custom annotations to it.
         
         :param database: The `database` parameter is a string that represents the name of a database. It
-        is an optional parameter and if not provided, the `get_database()` method is called to retrieve
-        the default database
+        is an optional parameter, and if not provided, the `get_database()` method is called to retrieve
+        the default database. This parameter specifies the database from which the columns will be used
+        to generate the VCF header
         :type database: str
-        :param header_columns: A list of column names that will be used to generate header information
-        for a VCF file. If no header_columns are provided, the function will attempt to automatically
-        detect the columns to use based on the database being used
+        :param header_columns: The `header_columns` parameter is a list of column names that will be
+        used to generate header information for a VCF file. If no `header_columns` are provided, the
+        function will attempt to automatically detect the columns to use based on the database being
+        used
         :type header_columns: list
-        :return: a VCF header object that includes information about the columns in a database and their
-        data types. The header object is created based on the input parameters, including the database
-        name and a list of header columns.
+        :param sql_query: The `sql_query` parameter in the `get_header_from_columns` function is used to
+        specify a SQL query that will be executed to retrieve column information from the database. This
+        query can be customized to fetch specific columns or data based on the requirements of the VCF
+        header generation process. If provided,
+        :type sql_query: str
+        :return: The function `get_header_from_columns` returns a VCF header object that includes
+        information about the columns in a database and their data types. The header object is created
+        based on the input parameters, including the database name and a list of header columns.
         """
         
         if not database:
@@ -458,7 +477,7 @@ class Database:
         database_header = vcf.Reader(io.StringIO("\n".join(DEFAULT_HEADER_LIST)))
         
         if not header_columns:
-            header_columns = self.get_extra_columns(database=database)
+            header_columns = self.get_extra_columns(database=database, sql_query=sql_query)
 
         database_basename = self.get_database_basename(database=database) or "unknown"
 
@@ -469,11 +488,14 @@ class Database:
             self.query(database=database, query=self.get_sql_database_attach(database=database, output="attach"))
 
         # database columns
-        database_query_columns_sql = f""" SELECT * FROM {self.get_sql_database_link(database=database)} LIMIT {DTYPE_LIMIT_AUTO} """
-        database_query_columns = self.query(database=database, query=database_query_columns_sql)
+        if sql_query:
+            database_query_columns = self.query(sql_query)
+        else:
+            database_query_columns_sql = f""" SELECT * FROM {self.get_sql_database_link(database=database)} LIMIT {DTYPE_LIMIT_AUTO} """
+            database_query_columns = self.query(database=database, query=database_query_columns_sql)
 
         # Remove specific VCF column if is a VCF type
-        if self.get_type_from_columns(database_columns=self.get_columns(database=database), check_database_type="vcf") == "vcf":
+        if self.get_type_from_columns(database_columns=self.get_columns(database=database, sql_query=sql_query), check_database_type="vcf") == "vcf":
             header_columns = [x for x in header_columns if x not in DEFAULT_VCF_HEADER]
 
         # List all columns to add into header
@@ -634,28 +656,44 @@ class Database:
         sql_from = self.get_sql_from(database=database)
         if sql_from:
             sql_query = f"SELECT * FROM {sql_from} LIMIT 0"
-            return list(self.conn.query(sql_query).df().columns)
+            try:
+                columns_list = list(self.conn.query(sql_query).df().columns)
+            except:
+                columns_list = None
+            return columns_list
         else:
-            return []
+            return None
 
 
-    def get_header_file(self, header_file:str = None, remove_header_line:bool = False, replace_header_line:list = None, force:bool = False) -> str:
+    def get_header_file(self, header_file:str = None, remove_header_line:bool = False, replace_header_line:list = None, force:bool = False, sql_query:str = None) -> str:
         """
-        This function generates a VCF header file if it does not exist or generates a default header
-        file if the provided header file does not match the database.
+        The function `get_header_file` generates a VCF header file based on specified parameters or a
+        default header if needed.
         
-        :param header_file: A string representing the file path and name of the header file. If None,
-        the default header file path and name will be used
+        :param header_file: The `header_file` parameter is a string representing the file path and name
+        of the header file. If set to `None`, the default header file path and name will be used
         :type header_file: str
-        :param remove_header_line: A boolean parameter that determines whether to remove the "#CHROM"
-        line from the header file. If set to True, the line will be removed, defaults to False
+        :param remove_header_line: The `remove_header_line` parameter is a boolean parameter that
+        determines whether to remove the `#CHROM` line from the header file. If set to True, the line
+        will be removed; otherwise, it will remain in the header file. By default, this parameter is set
+        to False, meaning, defaults to False
         :type remove_header_line: bool (optional)
-        :param replace_header_line: a list of columns for header line (e.g. ['#CHROM', 'POS', 'ID'])
-        :type replace_header_line: list (optional)
-        :param force: force header file (replace if exists)
+        :param replace_header_line: The `replace_header_line` parameter is a list of columns that can be
+        used to replace the header line in the generated header file. For example, if you provide
+        `['#CHROM', 'POS', 'ID']`, these columns will be used as the header line in the generated file
+        instead
+        :type replace_header_line: list
+        :param force: The `force` parameter in the `get_header_file` function is a boolean parameter
+        that determines whether to force the generation of a header file even if a header file already
+        exists. If `force` is set to `True`, the function will replace the existing header file with a
+        new one. If, defaults to False
         :type force: bool (optional)
-        :return: a string which is the name of the header file that was generated or None if no header
-        file was generated.
+        :param sql_query: The `sql_query` parameter in the `get_header_file` function is used to specify
+        a SQL query that can be used to retrieve header information from a database. This query can be
+        passed to the function to customize the header generation process based on the query results
+        :type sql_query: str
+        :return: The function `get_header_file` returns a string which is the name of the header file
+        that was generated or None if no header file was generated.
         """
 
         if not header_file:
@@ -669,10 +707,10 @@ class Database:
 
             if header_file:
                 if header_file != self.get_database():
-                    if self.get_header():
-                        header = self.get_header()
+                    if self.get_header(sql_query=sql_query):
+                        header = self.get_header(sql_query=sql_query)
                     else:
-                        header = self.get_header(header_list=DEFAULT_HEADER_LIST)
+                        header = self.get_header(header_list=DEFAULT_HEADER_LIST, sql_query=sql_query)
                     # Generate header file
                     if not os.path.exists(header_file_tmp):
                         f = open(header_file_tmp, 'w')
@@ -941,23 +979,31 @@ class Database:
             return get_file_format(database)
 
 
-    def get_type(self, database:str = None) -> str:
+    def get_type(self, database:str = None, sql_query:str = None) -> str:
         """
-        This function gets the type of a database (variants VCF-like or regions BED-like) based on its columns.
+        The `get_type` function determines the type of a database (variants VCF-like or regions
+        BED-like) based on its columns and format.
         
-        :param database: A string representing the name of a database. If None, the function will
-        attempt to retrieve the database name using the get_database() method
+        :param database: The `database` parameter in the `get_type` function is a string representing
+        the name of a database. If this parameter is not provided when calling the function, it will
+        attempt to retrieve the database name using the `get_database()` method. This parameter is used
+        to specify the database for which you
         :type database: str
-        :return: a string that represents the type of database, which can be either "variants"
-        (VCF-like) or "regions" (BED-like). If the database is not found or does not exist, the function
-        returns None.
+        :param sql_query: The `sql_query` parameter in the `get_type` function is used to pass an SQL
+        query as a string. This query can be used to filter or manipulate the data before determining
+        the type of the database based on its columns. If provided, the function will use this SQL query
+        to fetch the
+        :type sql_query: str
+        :return: The `get_type` function returns a string that represents the type of the database,
+        which can be either "variants" (VCF-like) or "regions" (BED-like). If the database is not found
+        or does not exist, the function returns None.
         """
         
         if not database:
             database = self.get_database()
 
         if database and self.exists(database):
-            database_columns = self.get_columns(database, table=self.get_database_table(database))
+            database_columns = self.get_columns(database, table=self.get_database_table(database), sql_query=sql_query)
             database_type = self.get_type_from_columns(database_columns)
             if database_type:
                 return database_type
@@ -1504,21 +1550,34 @@ class Database:
         return columns_mapping
     
 
-    def get_columns(self, database:str = None, table:str = None, header_file:str = None) -> list:
+    def get_columns(self, database:str = None, table:str = None, header_file:str = None, sql_query:str = None) -> list:
         """
-        This function retrieves a list of columns from a specified database and table using SQL queries.
+        The function `get_columns` retrieves a list of column names from a specified database and table
+        using SQL queries.
         
-        :param database: The name of the database to get columns from. If None, it will use the current
-        database
+        :param database: The `database` parameter in the `get_columns` function is used to specify the
+        name of the database from which you want to retrieve the column names. If this parameter is not
+        provided, the function will default to using the current database
         :type database: str
-        :param table: The name of the table in the database for which you want to retrieve the column
-        names
+        :param table: The `table` parameter in the `get_columns` function represents the name of the
+        table in the database for which you want to retrieve the column names. If this parameter is not
+        provided, the function will attempt to get the table name from the specified database. If the
+        table parameter is not specified and
         :type table: str
-        :return: a list of column names for a given database and table. If no database is specified, it
-        gets the current database. If the database exists and its format is known (e.g. "duckdb"), it
-        connects to the database and retrieves the column names using a SQL query. Otherwise, it
-        retrieves the column names using a SQL query on the current connection. If the table parameter
-        is
+        :param header_file: The `header_file` parameter in the `get_columns` function is used to specify
+        the file containing the header information for the data source. This information is often used
+        in cases where the column names are not explicitly defined in the database schema or where the
+        data is stored in a file format that requires additional
+        :type header_file: str
+        :param sql_query: The `sql_query` parameter in the `get_columns` function is used to specify a
+        custom SQL query to retrieve column names from the database table. If a `sql_query` is provided,
+        the function will execute that query to get the column names and return them as a list
+        :type sql_query: str
+        :return: The function `get_columns` returns a list of column names for a given database and
+        table. If a SQL query is provided, it executes the query and returns the column names from the
+        result. If no database is specified, it uses the current database. It then checks the database
+        format and connects to the database accordingly to retrieve the column names using a SQL query.
+        If the table parameter is not provided
         """
         
         if not database:
@@ -1526,6 +1585,10 @@ class Database:
 
         if not table:
             table = self.get_database_table(database=database)
+
+        if sql_query:
+            columns_list = list(database.query(sql_query).df().columns)
+            return columns_list
 
         if database and self.exists(database):
             database_format = self.get_format(database)
@@ -1672,15 +1735,26 @@ class Database:
             return None
 
 
-    def get_extra_columns(self, database:str = None, database_type:str = None) -> list:
+    def get_extra_columns(self, database:str = None, database_type:str = None, sql_query:str = None) -> list:
         """
-        This function returns a list of extra columns in a database table that are not needed.
+        This Python function returns a list of extra columns in a database table that are not needed
+        based on the database type and existing columns.
         
         :param database: A string representing the name of the database to retrieve columns from. If
-        None, the default database will be used
+        None is provided, the default database will be used
         :type database: str
-        :return: a list of extra columns that exist in the database table but are not needed based on
-        the database type and the existing columns.
+        :param database_type: The `database_type` parameter in the `get_extra_columns` function
+        represents the type of the database for which you want to retrieve the list of extra columns. It
+        is used to determine which columns are needed based on the database type and the existing
+        columns in the specified database table
+        :type database_type: str
+        :param sql_query: The `sql_query` parameter in the `get_extra_columns` function is used to pass
+        an SQL query that can be used to retrieve specific columns from the database. This query can be
+        customized to filter columns based on certain conditions or criteria before analyzing them to
+        determine the extra columns that are not needed
+        :type sql_query: str
+        :return: A list of extra columns in a database table that are not needed based on the database
+        type and existing columns.
         """
 
         if not database:
@@ -1689,9 +1763,9 @@ class Database:
         if not database:
             return []
 
-        existing_columns = self.get_columns(database=database, table = self.get_database_table(database))
+        existing_columns = self.get_columns(database=database, table = self.get_database_table(database), sql_query=sql_query)
         if not database_type:
-            database_type = self.get_type(database=database)
+            database_type = self.get_type(database=database, sql_query=sql_query)
         needed_columns = self.get_needed_columns(database_columns=existing_columns, database_type=database_type)
 
         extra_columns = existing_columns.copy()
@@ -1703,16 +1777,22 @@ class Database:
         return extra_columns
 
        
-    def is_vcf(self, database:str = None) -> bool:
+    def is_vcf(self, database:str = None, sql_query:str = None) -> bool:
         """
-        This function checks if a given database is of type "vcf" by getting its columns and checking
+        The `is_vcf` function checks if a given database is of type "vcf" by examining its columns and
         their types.
         
-        :param database: The parameter `database` is a string that represents the name of the database
-        that the function will use to check if the file is a VCF (Variant Call Format) file. If
-        `database` is not provided, the function will use the default database
+        :param database: The `database` parameter in the `is_vcf` function is a string that represents
+        the name of the database that the function will use to check if the file is a VCF (Variant Call
+        Format) file. If the `database` parameter is not provided when calling the function, it will
         :type database: str
-        :return: a boolean value indicating whether the database type is "vcf" or not.
+        :param sql_query: The `sql_query` parameter in the `is_vcf` function is used to pass an SQL
+        query string that can be used to filter the columns retrieved from the database. This query can
+        be used to narrow down the columns that are considered when checking if the database is of type
+        "vcf"
+        :type sql_query: str
+        :return: The function `is_vcf` returns a boolean value indicating whether the database type is
+        "vcf" or not.
         """
 
         if not database:
@@ -1721,7 +1801,7 @@ class Database:
         if not database:
             return False
 
-        database_columns = self.get_columns(database=database, table=self.get_database_table(database))
+        database_columns = self.get_columns(database=database, table=self.get_database_table(database), sql_query=sql_query)
 
         # Assume VCF is 8 needed columns, either only or with extra FORMAT column (assume other are samples)
         return self.get_type_from_columns(database_columns=database_columns, check_database_type="vcf") == "vcf" and ("FORMAT" in database_columns or len(database_columns) == 8)
@@ -1853,13 +1933,13 @@ class Database:
             elif output_type in ["bed"]:
                 database_type = "regions"
             else:
-                database_type = self.get_type(database=database)
+                database_type = self.get_type(database=database, sql_query=query)
 
             # Existing columns
-            existing_columns = self.get_columns(database=database, table = self.get_database_table(database))
+            existing_columns = self.get_columns(database=database, table = self.get_database_table(database), sql_query=query)
 
             # Extra columns
-            extra_columns = self.get_extra_columns(database=database, database_type=output_type)
+            extra_columns = self.get_extra_columns(database=database, database_type=output_type, sql_query=query)
             
             # Needed columns
             needed_columns = self.get_needed_columns(database_columns=existing_columns, database_type=database_type)
@@ -1897,7 +1977,7 @@ class Database:
 
             # VCF
             if output_type in ["vcf"]:
-                if not self.is_vcf(database=database):
+                if not self.is_vcf(database=database, sql_query=query):
                     extra_columns = []
                 else:
                     extra_columns = existing_columns_header
@@ -2091,7 +2171,7 @@ class Database:
 
                                 # Generate header tmp file
                                 query_output_header_tmp = os.path.join(tmp_dir, "header")
-                                self.get_header_file(header_file=query_output_header_tmp, remove_header_line=True)
+                                self.get_header_file(header_file=query_output_header_tmp, remove_header_line=True, sql_query=query)
                                 
                                 # Write header to tmp file
                                 with open(query_output_header_tmp, 'r'+f_mode) as output_header_tmp:
