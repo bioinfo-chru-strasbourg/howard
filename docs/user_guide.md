@@ -1,8 +1,8 @@
-<style>body {text-align: justify}</style>
-
 # HOWARD User Guide
 
-Highly Open and Valuable tool for Variant Annotation & Ranking for Discovery
+![HOWARD Graphical User Interface](../images/icon.ico "HOWARD Graphical User Interface")
+
+Highly Open and Valuable tool for Variant Annotation & Ranking toward genetic Discovery
 
 HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations, translates files in multiple formats (e.g. vcf, tsv, parquet) and generates variants statistics.
 
@@ -44,14 +44,6 @@ HOWARD is multithreaded through the number of variants and by database (data-sca
   - [Calculation](#calculation)
   - [Prioritization](#prioritization)
   - [Process](#process)
-
-<!-- - [Annotation](#annotation)
-- [Calculation](#calculation)
-- [Prioritization](#prioritization)
-- [Process](#process)
-- [Query](#query)
-- [Stats](#stats)
-- [Convert](#convert) -->
 
 # Installation
 
@@ -153,7 +145,7 @@ docker exec HOWARD-CLI <howard command>
 > docker exec --workdir=/tool HOWARD-CLI howard process --config=config/config.json --param=config/param.json --input=tests/data/example.vcf.gz --output=/tmp/example.process.tsv --query='SELECT "NOMEN", "PZFlag", "PZScore", "PZComment" FROM variants ORDER BY "PZScore" DESC' --explode_infos
 > ```
 
-See [HOWARD Help](docs/help.md) for more options.
+See [HOWARD Help](help.md) for more options.
 
 Let's play within Docker HOWARD-CLI service!
 
@@ -201,7 +193,7 @@ Multiple databases can be automatically downloaded with databases tool, such as:
 >    --download-dbsnp=/databases/dbsnp/current --download-dbsnp-vcf --threads=8
 > ```
 
-See [HOWARD Help Databases tool](docs/help.md#databases-tool) for more information.
+See [HOWARD Help Databases tool](help.md#databases-tool) for more information.
 
 ## Home-made Databases
 
@@ -411,7 +403,7 @@ See [HOWARD Help Query tool](help.md#query-tool) for more information.
 
 Annotation is mainly based on a build-in Parquet annotation method, using annotation database file (in multiple format such as Parquet, duckdb, VCF, BED, TSV, JSON).
 
-These annotation databases can be automatically downloaded using [HOWARD Databases tool](docs/help.md#databases-tool) and manually generated using existing annotation files and [HOWARD Convert tool](help.md#convert-tool). Annotation databases need a header file (`.hdr`) to describe each annotation in the database. However, a default header will be generated if no header file is associated to the annotation database file.
+These annotation databases can be automatically downloaded using [HOWARD Databases tool](help.md#databases-tool) and manually generated using existing annotation files and [HOWARD Convert tool](help.md#convert-tool). Annotation databases need a header file (`.hdr`) to describe each annotation in the database. However, a default header will be generated if no header file is associated to the annotation database file.
 
 Moreover, some external annotation tools are integrated into HOWARD to extend annotation with their own options and databases.
 
@@ -487,11 +479,11 @@ In order to annotate with all available annotation databases, the keyword `ALL` 
 
 #### External tools annotation
 
-External annotation tools are also available, such as BCFTOOLS, Annovar, snpEff and Exomiser. Annovar, snpEff and Exomiser databases are automatically downloaded (see [HOWARD Help Databases tool](docs/help.md#databases-tool)). Quick annotation allows to annotates by simply defining external tools keywords.
+External annotation tools are also available, such as BCFTOOLS, Annovar, snpEff and Exomiser. Annovar, snpEff and Exomiser databases are automatically downloaded (see [HOWARD Help Databases tool](help.md#databases-tool)). Quick annotation allows to annotates by simply defining external tools keywords.
 
 ##### BCFTools annotation
 
-For BCFTools, use HOWARD keyword `bcftools` and list (separator `:` or `+`) annotation databases with format such as VCF or BED. More options are available using [HOWARD Parameters JSON](docs/help.param.md) file.
+For BCFTools, use HOWARD keyword `bcftools` and list (separator `:` or `+`) annotation databases with format such as VCF or BED. More options are available using [HOWARD Parameters JSON](help.param.md) file.
 
 > Example: VCF annotation with Cosmic VCF databases and refGene BED database
 > ```
@@ -503,7 +495,7 @@ For BCFTools, use HOWARD keyword `bcftools` and list (separator `:` or `+`) anno
 
 ##### Annovar annotation
 
-For Annovar tool, use HOWARD keyword `annovar` and mention specific Annovar database keywords. More options are available using [HOWARD Parameters JSON](docs/help.param.md) file.
+For Annovar tool, use HOWARD keyword `annovar` and mention specific Annovar database keywords. More options are available using [HOWARD Parameters JSON](help.param.md) file.
 
 > Example: VCF annotation with Annovar refGene and cosmic70
 > ```
@@ -515,7 +507,7 @@ For Annovar tool, use HOWARD keyword `annovar` and mention specific Annovar data
 
 ##### snpEff annotation
 
-For snpEff tool, use HOWARD keyword `snpeff`. No options are available for quick annotation with snpEff, see [HOWARD Parameters JSON](docs/help.param.md) for more options.
+For snpEff tool, use HOWARD keyword `snpeff`. No options are available for quick annotation with snpEff, see [HOWARD Parameters JSON](help.param.md) for more options.
 
 > Example: VCF annotation with snpEff 
 > ```
@@ -527,7 +519,7 @@ For snpEff tool, use HOWARD keyword `snpeff`. No options are available for quick
 
 ##### Exomiser Annotation
 
-For Exomiser tool, use HOWARD keyword `exomiser`. A list of options can be provided as key-value format. More options are available using [HOWARD Parameters JSON](docs/help.param.md) file.
+For Exomiser tool, use HOWARD keyword `exomiser`. A list of options can be provided as key-value format. More options are available using [HOWARD Parameters JSON](help.param.md) file.
 
 > Example: VCF annotation with Exomiser (exome preset, list of HPO terms, transcript as refseq and release 2109)
 > ```

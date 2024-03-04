@@ -1,10 +1,8 @@
-<style>body {text-align: justify}</style>
-
 # HOWARD
 
-![HOWARD Graphical User Interface](images/icon.png "HOWARD Graphical User Interface")
+![HOWARD Graphical User Interface](images/icon.ico "HOWARD Graphical User Interface")
 
-Highly Open and Valuable tool for Variant Annotation & Ranking for Discovery
+Highly Open and Valuable tool for Variant Annotation & Ranking toward genetic Discovery
 
 HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations, translates files in multiple formats (e.g. vcf, tsv, parquet) and generates variants statistics.
 
