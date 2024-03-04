@@ -29,7 +29,8 @@ from howard.tools.databases import *
 tests_folder = os.path.dirname(__file__)
 tests_data_folder = tests_folder + "/data"
 tests_databases_folder = tests_folder + "/databases"
-tests_annotations_folder = tests_databases_folder + "/annotations/hg19"
+tests_databases_release = "current"
+tests_annotations_folder = tests_databases_folder + f"/annotations/{tests_databases_release}/hg19"
 
 # Tools folder
 tests_tools = "/tools"
@@ -41,12 +42,12 @@ tests_config = {
   "folders": {
     "databases": {
       "root": "",
-      "annotations": [f"{tests_databases_folder}/annotations"],
-      "annovar": f"{tests_databases_folder}/annovar",
-      "snpeff": f"{tests_databases_folder}/snpeff",
-      "varank": f"{tests_databases_folder}/varank",
-      "genomes": f"{tests_databases_folder}/genomes",
-      "refseq": f"{tests_databases_folder}/refseq"
+      "annotations": [f"{tests_databases_folder}/annotations/{tests_databases_release}"],
+      "annovar": f"{tests_databases_folder}/annovar/{tests_databases_release}",
+      "snpeff": f"{tests_databases_folder}/snpeff/{tests_databases_release}",
+      "varank": f"{tests_databases_folder}/varank/{tests_databases_release}",
+      "genomes": f"{tests_databases_folder}/genomes/{tests_databases_release}",
+      "refseq": f"{tests_databases_folder}/refseq/{tests_databases_release}"
     }
   },
   "tools": {

@@ -1,3 +1,5 @@
+<style>body {text-align: justify}</style>
+
 # HOWARD User Guide
 
 Highly Open and Valuable tool for Variant Annotation & Ranking for Discovery
@@ -26,13 +28,30 @@ HOWARD is multithreaded through the number of variants and by database (data-sca
 - [Configuration](#configuration)
 - [Parameters](#parameters)
 - [Tools](#tools)
+  - [Stats](#stats)
+  - [Convert](#convert)
+  - [Query](#query)
   - [Annotation](#annotation)
+    - [Quick Annotation](#quick-annotation)
+      - [Parquet annotation method](#parquet-annotation-method)
+      - [External tools annotation](#external-tools-annotation)
+        - [Annovar annotation](#annovar-annotation)
+        - [snpEff annotation](#snpeff-annotation)
+        - [Exomiser annotation](#exomiser-annotation)
+        - [BCFTools annotation](#bcftools-annotation)
+      - [Annotation combination](#annotation-combination)
+    - [Annotation parameters](#annotation-parameters)
   - [Calculation](#calculation)
   - [Prioritization](#prioritization)
   - [Process](#process)
-  - [Query](#query)
-  - [Stats](#stats)
-  - [Convert](#convert)
+
+<!-- - [Annotation](#annotation)
+- [Calculation](#calculation)
+- [Prioritization](#prioritization)
+- [Process](#process)
+- [Query](#query)
+- [Stats](#stats)
+- [Convert](#convert) -->
 
 # Installation
 
@@ -122,17 +141,17 @@ To run a command into HOWARD-CLI container:
 docker exec HOWARD-CLI <howard command>
 ```
 
-- Query of an existing VCF:
+> Example: Query of an existing VCF:
+> 
+> ```
+> docker exec HOWARD-CLI howard query --input=/tool/tests/data/example.vcf.gz --query='SELECT * FROM variants'
+> ```
 
-```
-docker exec HOWARD-CLI howard query --input=/tool/tests/data/example.vcf.gz --query='SELECT * FROM variants'
-```
-
-- VCF annotation using HOWARD-CLI (snpEff and ANNOVAR databases will be automatically downloaded), and query list of genes with HGVS:
-
-```
-docker exec --workdir=/tool HOWARD-CLI howard process --config=config/config.json --param=config/param.json --input=tests/data/example.vcf.gz --output=/tmp/example.process.tsv --query='SELECT "NOMEN", "PZFlag", "PZScore", "PZComment" FROM variants ORDER BY "PZScore" DESC' --explode_infos
-```
+> Example: VCF annotation using HOWARD-CLI (snpEff and ANNOVAR databases will be automatically downloaded), and query list of genes with HGVS:
+> 
+> ```
+> docker exec --workdir=/tool HOWARD-CLI howard process --config=config/config.json --param=config/param.json --input=tests/data/example.vcf.gz --output=/tmp/example.process.tsv --query='SELECT "NOMEN", "PZFlag", "PZScore", "PZComment" FROM variants ORDER BY "PZScore" DESC' --explode_infos
+> ```
 
 See [HOWARD Help](docs/help.md) for more options.
 
@@ -167,11 +186,20 @@ Multiple databases can be automatically downloaded with databases tool, such as:
 | [AlphaMissense](https://github.com/google-deepmind/alphamissense) | AlphaMissense model implementation                                                                                                                                                                                                                                             |
 | [Exomiser](https://www.sanger.ac.uk/tool/exomiser/)               | The Exomiser is a Java program that finds potential disease-causing variants from whole-exome or whole-genome sequencing data                                                                                                                                                  |
 
-- Download Multiple databases in the same time for assembly 'hg19' (can take a while):
-
-```
-howard databases --assembly=hg19 --download-genomes=/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' --download-annovar=/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' --download-snpeff=/databases/snpeff/current --download-refseq=/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-dbnsfp=/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases --download-alphamissense=/databases/alphamissense/current --download-exomiser=/databases/exomiser/current --download-dbsnp=/databases/dbsnp/current --download-dbsnp-vcf --threads=8
-```
+> Example: Download Multiple databases in the same time for assembly 'hg19' (can take a while):
+> 
+> ```
+> howard databases \
+>    --assembly=hg19 \
+>    --download-genomes=/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' \
+>    --download-annovar=/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' \
+>    --download-snpeff=/databases/snpeff/current \
+>    --download-refseq=/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' \
+>    --download-dbnsfp=/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases \
+>    --download-alphamissense=/databases/alphamissense/current \
+>    --download-exomiser=/databases/exomiser/current \
+>    --download-dbsnp=/databases/dbsnp/current --download-dbsnp-vcf --threads=8
+> ```
 
 See [HOWARD Help Databases tool](docs/help.md#databases-tool) for more information.
 
@@ -258,20 +286,20 @@ Parameters file example:
     },
     "parquet": {
       "annotations": {
-        "tests/databases/annotations/hg19/avsnp150.parquet": {
+        "tests/databases/annotations/current/hg19/avsnp150.parquet": {
           "INFO": null
         },
-        "tests/databases/annotations/hg19/dbnsfp42a.parquet": {
+        "tests/databases/annotations/current/hg19/dbnsfp42a.parquet": {
           "INFO": null
         },
-        "tests/databases/annotations/hg19/gnomad211_genome.parquet": {
+        "tests/databases/annotations/current/hg19/gnomad211_genome.parquet": {
           "INFO": null
         }
       }
     },
     "bcftools": {
       "annotations": {
-        "tests/databases/annotations/hg19/cosmic70.vcf.gz": {
+        "tests/databases/annotations/current/hg19/cosmic70.vcf.gz": {
           "INFO": null
         }
       }
@@ -300,13 +328,232 @@ Parameters file example:
 
 # Tools
 
-## Process
+## Stats
 
-See [HOWARD Help Process tool](help.md#process-tool) tool for more information (under development).
+Statistics on genetic variations, such as: number of variants, number of samples, statistics by chromosome, genotypes by samples, annotations...
+Theses statsitics can be applied to VCF files and all database annotation files.
+
+> Example: Show example VCF statistics and brief overview
+> ```
+> howard stats --input=tests/data/example.vcf.gz
+> ```
+
+See [HOWARD Help Stats tool](help.md#stats-tool) for more information.
+
+## Convert
+
+Convert genetic variations file to another format. Multiple format are available, such as usual and official VCF format, but also other formats such as TSV, CSV, TBL, JSON and Parquet/duckDB. These formats need a header '.hdr' file to take advantage of the power of howard (especially through INFO/tag definition), and using howard convert tool automatically generate header file fo futher use (otherwise, an default '.hdr' file is generated).
+
+> Example: Translate VCF into TSV, export INFO/tags into columns, and show output file
+> ```
+> howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos && \
+> cat /tmp/example.tsv
+> ```
+
+> Example: Translate VCF into parquet
+> ```
+> howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.parquet
+> ```
+
+See [HOWARD Help Convert tool](help.md#convert-tool) for more information.
+
+## Query
+
+Query genetic variations in SQL format. Data can be loaded into 'variants' table from various formats (e.g. VCF, TSV, Parquet...). Using --explode_infos allow query on INFO/tag annotations. SQL query can also use external data within the request, such as a Parquet file(s).
+
+> Example: Select variants in VCF with REF and POS fields
+> ```
+> howard query --input=tests/data/example.vcf.gz \
+>    --query="SELECT * FROM variants WHERE REF = 'A' AND POS < 100000"
+> ```
+
+> Example: Select variants in VCF with INFO Tags criterions
+> ```
+> howard query --input=tests/data/example.vcf.gz --explode_infos \
+>    --query='SELECT "#CHROM", POS, REF, ALT, DP, CLNSIG, sample2, sample3 
+>             FROM variants 
+>             WHERE DP >= 50 OR CLNSIG NOT NULL 
+>             ORDER BY CLNSIG DESC, DP DESC'
+> ```
+
+> Example: Query a Parquet file with specific columns (e.g. from VCF convertion to Parquet)
+> ```
+> howard query \
+>    --query="SELECT * \
+>             FROM 'tests/databases/annotations/current/hg19/dbnsfp42a.parquet' \
+>             WHERE \"INFO/Interpro_domain\" NOT NULL \
+>             ORDER BY \"INFO/SiPhy_29way_logOdds_rankscore\" DESC"
+> ```
+
+> Example: Query multiple Parquet files, merge INFO columns, and extract as TSV (in VCF format)
+> ```
+> howard query \
+>    --query="
+>       SELECT \
+>          \"#CHROM\" AS \"#CHROM\", \
+>          POS AS POS, \
+>          '' AS ID, \
+>          REF AS REF, \
+>          ALT AS ALT, \
+>          '' AS QUAL, \
+>          '' AS FILTER, \
+>          STRING_AGG(INFO, ';') AS INFO \
+>       FROM 'tests/databases/annotations/current/hg19/*.parquet' \
+>       GROUP BY \"#CHROM\", POS, REF, ALT" \
+>    --output=/tmp/full_annotation.tsv \
+>    --include_header
+> ```
+
+
+See [HOWARD Help Query tool](help.md#query-tool) for more information.
 
 ## Annotation
 
+Annotation is mainly based on a build-in Parquet annotation method, using annotation database file (in multiple format such as Parquet, duckdb, VCF, BED, TSV, JSON).
+
+These annotation databases can be automatically downloaded using [HOWARD Databases tool](docs/help.md#databases-tool) and manually generated using existing annotation files and [HOWARD Convert tool](help.md#convert-tool). Annotation databases need a header file (`.hdr`) to describe each annotation in the database. However, a default header will be generated if no header file is associated to the annotation database file.
+
+Moreover, some external annotation tools are integrated into HOWARD to extend annotation with their own options and databases.
+
+HOWARD annotation tool can use annotation databases files in 2 differents ways: [Quick annotation](#quick-annotation) and [Annotation Parameters](#annotation-parameters) JSON file.
+
+### Quick annotation
+
+#### Parquet annotation method
+
+Quick annotation allows to annotates by simply listing annotation databases (in multiple format). 
+
+##### Parquet annotation with path
+
+These annotation databases are defined with their full path (e.g. `/full/path/to/my.database.parquet`) or relative path (e.g. `databases/my.database.parquet`). A list (separator `:` or `+`) of annotation databases files can be used.
+
+> Example: VCF annotation with full path Parquet databases
+> ```
+> howard annotation \
+>    --input=tests/data/example.vcf.gz \
+>    --annotations='/tool/tests/databases/annotations/current/hg19/dbnsfp42a.parquet' \
+>    --output=/tmp/example.howard.vcf.gz
+> ```
+
+> Example: VCF annotation with relative path VCF databases
+> ```
+> cd /tool && howard annotation --input=tests/data/example.vcf.gz --annotations='tests/databases/annotations/current/hg19/cosmic70.vcf.gz' --output=/tmp/example.howard.vcf.gz
+> ```
+
+> Example: VCF annotation with relative path BED databases
+> ```
+> cd /tool && \
+> howard annotation \
+>    --input=tests/data/example.vcf.gz \
+>    --annotations='tests/databases/annotations/current/hg19/refGene.bed.gz' \
+>    --output=/tmp/example.howard.vcf.gz
+> ```
+
+
+> Example: VCF annotation with 3 annotation databases files
+> ```
+> howard annotation \
+>    --input=tests/data/example.vcf.gz \
+>    --annotations='/tool/tests/databases/annotations/current/hg19/dbnsfp42a.parquet+tests/databases/annotations/current/hg19/cosmic70.vcf.gz+tests/databases/annotations/current/hg19/refGene.bed.gz' \
+>    --output=/tmp/example.howard.vcf.gz
+> ```
+
+##### Parquet annotation with annotation folder
+
+If annotation folder is configured in [HOWARD Configuration JSON](help.config.md), just mention the annotation database basename file. Annotation database file will be found (depending of the assembly).
+
+> Example: VCF annotation with Parquet and VCF databases, with annotation database defined in JSON configuration (as a string)
+> ```
+> howard annotation \
+>    --input=tests/data/example.vcf.gz \
+>    --annotations='dbnsfp42a.parquet,cosmic70.vcf.gz' \
+>    --config='{"folders": {"databases": {"annotations": ["/tool/tests/databases/annotations/current"]}}}' \
+>    --output=/tmp/example.howard.vcf.gz 
+> ```
+
+##### Full annotation 
+
+In order to annotate with all available annotation databases, the keyword `ALL` will auto-detect files in the databases annotation folder. The option `format` (defaut `parquet`) can filter annotation databases by listing (separator `+`) desired formats (such as `parquet`, `vcf`). The option `release` (default `current`) is able to scan annotation databases in one or more specific releases in a list (separator `+`). See [HOWARD Configuration JSON - Folders - Databases](help.config.md#foldersdatabases) for more information about databases structure.
+
+> Example: VCF annotation with all available database annotation files in Parquet format (within the database annotation folder in configuration):
+> ```
+> howard annotation \
+>    --input=tests/data/example.vcf.gz \
+>    --assembly='hg19' \
+>    --annotations='ALL:format=parquet+vcf:release=current' \
+>    --config='{"folders": {"databases": {"annotations": ["/tool/tests/databases/annotations/current"]}}}' \
+>    --output=/tmp/example.howard.tsv
+> ```
+
+#### External tools annotation
+
+External annotation tools are also available, such as BCFTOOLS, Annovar, snpEff and Exomiser. Annovar, snpEff and Exomiser databases are automatically downloaded (see [HOWARD Help Databases tool](docs/help.md#databases-tool)). Quick annotation allows to annotates by simply defining external tools keywords.
+
+##### BCFTools annotation
+
+For BCFTools, use HOWARD keyword `bcftools` and list (separator `:` or `+`) annotation databases with format such as VCF or BED. More options are available using [HOWARD Parameters JSON](docs/help.param.md) file.
+
+> Example: VCF annotation with Cosmic VCF databases and refGene BED database
+> ```
+> howard annotation \
+>    --input=tests/data/example.vcf.gz \
+>    --annotations='bcftools:tests/databases/annotations/current/hg19/cosmic70.vcf.gz+tests/databases/annotations/current/hg19/refGene.bed.gz' \
+>    --output=/tmp/example.howard.vcf.gz
+> ```
+
+##### Annovar annotation
+
+For Annovar tool, use HOWARD keyword `annovar` and mention specific Annovar database keywords. More options are available using [HOWARD Parameters JSON](docs/help.param.md) file.
+
+> Example: VCF annotation with Annovar refGene and cosmic70
+> ```
+> howard annotation \
+>    --input=tests/data/example.vcf.gz \
+>    --annotations='annovar:refGene:cosmic70' \
+>    --output=/tmp/example.howard.tsv
+> ```
+
+##### snpEff annotation
+
+For snpEff tool, use HOWARD keyword `snpeff`. No options are available for quick annotation with snpEff, see [HOWARD Parameters JSON](docs/help.param.md) for more options.
+
+> Example: VCF annotation with snpEff 
+> ```
+> howard annotation \
+>    --input=tests/data/example.vcf.gz \
+>    --annotations='snpeff' \
+>    --output=/tmp/example.howard.tsv
+> ```
+
+##### Exomiser Annotation
+
+For Exomiser tool, use HOWARD keyword `exomiser`. A list of options can be provided as key-value format. More options are available using [HOWARD Parameters JSON](docs/help.param.md) file.
+
+> Example: VCF annotation with Exomiser (exome preset, list of HPO terms, transcript as refseq and release 2109)
+> ```
+> howard annotation \
+>    --input=tests/data/example.vcf.gz \
+>    --annotations='exomiser:preset=exome:hpo=0001156+0001363+0011304+0010055:transcript_source=refseq:release=2109' \
+>    --output=/tmp/example.howard.tsv
+> ```
+
+#### Annotation combination
+
+Quick annotation allows to combine annotations, from build-in Parquet method and external tools. Simply use a list with a comma separator.
+
+> Example: VCF annotation with build-in Parquet method and external tools (Annovar, snpEff and Exomiser)
+> ```
+> howard annotation \
+>    --input=tests/data/example.vcf.gz \
+>    --annotations='tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/cosmic70.vcf.gz,annovar:cosmic70,snpeff,exomiser:preset=exome|hpo=0001156-0001363-0011304-0010055' \
+>    --output=/tmp/example.howard.tsv
+> ```
+
 See [HOWARD Help Annotation tool](help.md#annotation-tool) tool for more information.
+
+### Annotation parameters
+
+All annotation parameters can be defined in [HOWARD Parameters JSON](help.param.md) file. All annotations can be combined (bild-in parquet method and external tools annotation), and options can be detailed in a full JSON file format, including selection of annotation database columns (and rename them) and specific options for external tools.
 
 ## Calculation
 
@@ -316,64 +563,6 @@ See [HOWARD Help Calculation tool](help.md#calculation-tool) tool for more infor
 
 See [HOWARD Help Prioritization tool](help.md#prioritization-tool) tool for more information.
 
-## Query
+## Process
 
-
-Query genetic variations in SQL format. Data can be loaded into 'variants' table from various formats (e.g. VCF, TSV, Parquet...). Using --explode_infos allow query on INFO/tag annotations. SQL query can also use external data within the request, such as a Parquet file(s).
-
-- Select variants in VCF with REF and POS fields
-
-```
-howard query --input=tests/data/example.vcf.gz --query="SELECT * FROM variants WHERE REF = 'A' AND POS < 100000"
-```
-
-- Select variants in VCF with INFO Tags criterions
-
-```
-howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, "DP", "CLNSIG", sample2, sample3 FROM variants WHERE "DP" >= 50 OR "CLNSIG" NOT NULL ORDER BY "CLNSIG" DESC, "DP" DESC'
-```
-
-- Query a Parquet file with specific columns (e.g. from VCF convertion to Parquet)
-
-```
-howard query --query="SELECT * FROM 'tests/databases/annotations/hg19/dbnsfp42a.parquet' WHERE \"INFO/Interpro_domain\" NOT NULL ORDER BY \"INFO/SiPhy_29way_logOdds_rankscore\" DESC"
-```
-
-- Query multiple Parquet files, merge INFO columns, and extract as TSV (in VCF format)
-
-```
-howard query --query="SELECT \"#CHROM\" AS \"#CHROM\", POS AS POS, '' AS ID, REF AS REF, ALT AS ALT, '' AS QUAL, '' AS FILTER, STRING_AGG(INFO, ';') AS INFO FROM 'tests/databases/annotations/hg19/*.parquet' GROUP BY \"#CHROM\", POS, REF, ALT" --output=/tmp/full_annotation.tsv
-```
-
-See [HOWARD Help Query tool](help.md#query-tool) tool for more information.
-
-## Stats
-
-Statistics on genetic variations, such as: number of variants, number of samples, statistics by chromosome, genotypes by samples, annotations...
-Theses statsitics can be applied to VCF files and all database annotation files.
-
-Show example VCF statistics and brief overview
-```
-howard stats --input=tests/data/example.vcf.gz
-```
-
-See [HOWARD Help Stats tool](help.md#stats-tool) tool for more information.
-
-## Convert
-
-Convert genetic variations file to another format. Multiple format are available, such as usual and official VCF format, but also other formats such as TSV, CSV, TBL, JSON and Parquet/duckDB. These formats need a header '.hdr' file to take advantage of the power of howard (especially through INFO/tag definition), and using howard convert tool automatically generate header file fo futher use (otherwise, an default '.hdr' file is generated).
-
-- Translate VCF into TSV, export INFO/tags into columns, and show output file
-
-```
-howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos && cat /tmp/example.tsv
-```
-
-- Translate VCF into parquet
-
-```
-howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.parquet
-```
-
-See [HOWARD Help Convert tool](help.md#convert-tool) tool for more information.
-
+See [HOWARD Help Process tool](help.md#process-tool) tool for more information (under development).
