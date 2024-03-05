@@ -128,7 +128,8 @@ Theses statsitics can be applied to VCF files and all database annotation files.
 
 > Example: Show example VCF statistics and brief overview
 > ```
-> howard stats --input=tests/data/example.vcf.gz
+> howard stats \
+>    --input=tests/data/example.vcf.gz
 > ```
 
 See [HOWARD Help Stats tool](docs/help.md#stats-tool) for more information.
@@ -138,9 +139,12 @@ See [HOWARD Help Stats tool](docs/help.md#stats-tool) for more information.
 Convert genetic variations file to another format. Multiple format are available, such as usual and official VCF format, but also other formats such as TSV, CSV, TBL, JSON and Parquet/duckDB. These formats need a header '.hdr' file to take advantage of the power of howard (especially through INFO/tag definition), and using howard convert tool automatically generate header file fo futher use (otherwise, an default '.hdr' file is generated).
 
 > Example: Translate VCF into TSV, export INFO/tags into columns, and show output file
-> 
 > ```
-> howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos && cat /tmp/example.tsv
+> howard convert \
+>    --input=tests/data/example.vcf.gz \
+>    --explode_infos \
+>    --output=/tmp/example.tsv
+> cat /tmp/example.tsv
 > ```
 
 See [HOWARD Help Convert tool](docs/help.md#convert-tool) for more options.
@@ -150,9 +154,14 @@ See [HOWARD Help Convert tool](docs/help.md#convert-tool) for more options.
 Query genetic variations in SQL format. Data can be loaded into 'variants' table from various formats (e.g. VCF, TSV, Parquet...). Using --explode_infos allow query on INFO/tag annotations. SQL query can also use external data within the request, such as a Parquet file(s).
 
 > Example: Select variants in VCF with INFO Tags criterions
->
 > ```
-> howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, "DP", "CLNSIG", sample2, sample3 FROM variants WHERE "DP" >= 50 OR "CLNSIG" NOT NULL ORDER BY "CLNSIG" DESC, "DP" DESC'
+> howard query \
+>    --input=tests/data/example.vcf.gz \
+>    --explode_infos \
+>    --query='SELECT "#CHROM", POS, REF, ALT, DP, CLNSIG, sample2, sample3 
+>             FROM variants 
+>             WHERE DP >= 50 OR CLNSIG NOT NULL 
+>             ORDER BY CLNSIG DESC, DP DESC'
 > ```
 
 See [HOWARD Help Query tool](docs/help.md#query-tool) for more options.
@@ -164,15 +173,19 @@ Annotation is mainly based on a build-in Parquet annotation method, using databa
 Quick annotation allows to annotates by simply listing annotation databases, or defining external tools keywords. These annotations can be combined.
 
 > Example: VCF annotation with Parquet and VCF databases, output as VCF format
->
 > ```
-> howard annotation --input=tests/data/example.vcf.gz --annotations='tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/cosmic70.vcf.gz' --output=/tmp/example.howard.vcf.gz
+> howard annotation \
+>    --input=tests/data/example.vcf.gz \
+>    --annotations='tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/cosmic70.vcf.gz' \
+>    --output=/tmp/example.howard.vcf.gz
 > ```
 
 > Example: VCF annotation with external tools (Annovar refGene and snpEff databases), output as TSV format
-> 
 > ```
-> howard annotation --input=tests/data/example.vcf.gz --annotations='annovar:refGene,snpeff' --output=/tmp/example.howard.tsv
+> howard annotation \
+>    --input=tests/data/example.vcf.gz \
+>    --annotations='annovar:refGene,snpeff' \
+>    --output=/tmp/example.howard.tsv
 > ```
 
 See [HOWARD Help Annotation tool](docs/help.md#annotation-tool) for more options.
@@ -181,29 +194,37 @@ See [HOWARD Help Annotation tool](docs/help.md#annotation-tool) for more options
 
 Calculation processes variants information to generate new information, such as: identify variation type (VarType), harmonizes allele frequency (VAF) and calculate sttistics (VAF_stats), extracts Nomen (transcript, cNomen, pNomen...) from an HGVS field (e.g. snpEff, Annovar) with an optional list of personalized transcripts, generates VaRank format barcode, identify trio inheritance.
 
-- Identify variant types
+> Example: Identify variant types and generate a table of variant type count
+> ```
+> howard calculation \
+>    --input=tests/data/example.full.vcf \
+>    --calculations='vartype' \
+>    --output=/tmp/example.calculation.tsv
+> 
+> howard query \
+>    --input=/tmp/example.calculation.tsv \
+>    --explode_infos \
+>    --query='SELECT
+>                "VARTYPE" AS 'VariantType',
+>                count(*) AS 'Count'
+>             FROM variants
+>             GROUP BY "VARTYPE"
+>             ORDER BY count DESC'
+> ```
+> ```
+>   VariantType  Count
+> 0         BND      7
+> 1         DUP      6
+> 2         INS      5
+> 3         SNV      4
+> 4         CNV      3
+> 5         DEL      3
+> 6         INV      3
+> 7      MOSAIC      2
+> 8       INDEL      2
+> 9         MNV      1
+> ```
 
-```
-howard calculation --input=tests/data/example.full.vcf --calculations='vartype' --output=/tmp/example.calculation.tsv
-```
-
-- and generate a table of variant type count
-
-```
-howard query --input=/tmp/example.calculation.tsv --explode_infos --query='SELECT "VARTYPE" AS 'VariantType', count(*) AS 'Count' FROM variants GROUP BY "VARTYPE" ORDER BY count DESC'
-```
-
-- Calculate NOMEN by extracting hgvs from snpEff annotation and identifying default transcripts from a list
-
-```
-howard calculation --input=tests/data/example.ann.vcf.gz --calculations='snpeff_hgvs,NOMEN' --hgvs_field='snpeff_hgvs' --transcripts=tests/data/transcripts.tsv --output=/tmp/example.NOMEN.vcf.gz && gzip -dc /tmp/example.NOMEN.vcf.gz | grep "##" -v | head -n2
-```
-
-- and query NOMEN for gene 'EGFR'
-
-```
-howard query --input=/tmp/example.NOMEN.vcf.gz --explode_infos --query="SELECT \"NOMEN\" AS 'NOMEN' FROM variants WHERE \"GNOMEN\" == 'EGFR'"
-```
 
 See [HOWARD Help Calculation tool](docs/help.md#calculation-tool) for more options.
 

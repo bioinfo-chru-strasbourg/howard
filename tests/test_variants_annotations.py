@@ -221,10 +221,16 @@ def test_annotations_no_samples():
         # check param
         param_input = variants.get_param()
         expected_param = {'annotations': param_annotations,
-                        'annotation': {
-                            'parquet': {'annotations': {annotation1: {'INFO': None}}},
-                            'bcftools': {'annotations': {annotation2: {'CLNSIG': 'CLNSIG_new'}, annotation3: {'symbol': 'gene'}}}}
+                'annotation': {
+                    'parquet': {
+                        'annotations': {
+                            annotation1: {'INFO': None},
+                            annotation2: {'CLNSIG': 'CLNSIG_new'},
+                            annotation3: {'symbol': 'gene'}
                         }
+                    }
+                }
+            }
 
         assert param_input == expected_param
 
