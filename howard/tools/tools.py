@@ -239,8 +239,8 @@ arguments = {
         # Parquet partition
         "parquet_partitions": {
             "metavar": "parquet partitions",
-            "help": """Parquet partitioning using huve (only for Parquet export format).\n"""
-                    """This option is is faster parallel writing, but memory consuming.\n"""
+            "help": """Parquet partitioning using hive (available for any format).\n"""
+                    """This option is faster parallel writing, but memory consuming.\n"""
                     """Use 'None' (string) for NO partition but split parquet files into a folder\n"""
                     """examples: '#CHROM', '#CHROM,REF', 'None'\n"""
                     """default: None""",
