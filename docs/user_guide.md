@@ -591,6 +591,17 @@ Query tool is able to read variants (i.e. VCF) or regions files (i.e. BED) files
 >             ORDER BY CLNSIG DESC, DP DESC'
 > ```
 
+> Example: Select variants in VCF and generate VCF output with variants
+> ```
+> howard query \
+>    --input=tests/data/example.vcf.gz \
+>    --output=/tmp/example.filtered.vcf \
+>    --explode_infos \
+>    --query='SELECT "#CHROM", POS, REF, ALT, QUAL, FILTER, INFO 
+>             FROM variants 
+>             WHERE DP >= 50 OR CLNSIG NOT NULL'
+> ```
+
 #### External file
 
 Variants files can be used directly within the query, espacially if they already contain variants information (e.g. "#CHROM", "POS", "REF", "ALT") and annotations as columns.
