@@ -30,7 +30,18 @@ HOWARD is multithreaded through the number of variants and by database (data-sca
 - [Tools](#tools)
   - [Stats](#stats)
   - [Convert](#convert)
+    - [CSV, TSV and JSON convert](#csv-tsv-and-json-convert)
+    - [Parquet and duckDB convert](#parquet-and-duckdb-convert)
+    - [BED convert](#bed-convert)
+    - [Partitioning](#partitioning)
+    - [Explode INFO Tags](#explode-info-tags)
   - [Query](#query)
+    - [Variants file](#variants-file)
+      - [Loading data](#loading-data)
+      - [External file](#external-file)
+    - [Other files](#other-files)
+      - [Parquet format](#parquet-format)
+      - [CSV format](#csv-format)
   - [Annotation](#annotation)
     - [Quick Annotation](#quick-annotation)
       - [Parquet annotation method](#parquet-annotation-method)
@@ -93,8 +104,6 @@ The persitent CLI contains external tools, such as:
 | [snpEff](https://pcingola.github.io/SnpEff/) | Genomic variant annotations, and functional effect prediction toolbox |
 | [Annovar](https://annovar.openbioinformatics.org/) | Efficient software tool to utilize update-to-date information to functionally annotate genetic variants |
 | [Exomiser](https://www.sanger.ac.uk/tool/exomiser/) | Program that finds potential disease-causing variants from whole-exome or whole-genome sequencing data |
-
-
 
 
 ### Setup container
@@ -262,27 +271,15 @@ Parameters file example:
 ```
 {
   "annotation": {
-    "snpeff": {
-      "options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "
-    },
-    "annovar": {
-      "annotations": {
-        "refGene": {
-          "INFO": null
-        }
-      },
-      "options": {
-        "genebase": "-hgvs -splicing_threshold 3 ",
-        "intronhgvs": 10
-      }
-    },
     "parquet": {
       "annotations": {
         "tests/databases/annotations/current/hg19/avsnp150.parquet": {
           "INFO": null
         },
         "tests/databases/annotations/current/hg19/dbnsfp42a.parquet": {
-          "INFO": null
+          "Polyphen2_HDIV_pred": "PolyPhen",
+          "Polyphen2_HDIV_score": "PolyPhen_score",
+          "REVEL_score": null
         },
         "tests/databases/annotations/current/hg19/gnomad211_genome.parquet": {
           "INFO": null
@@ -292,9 +289,26 @@ Parameters file example:
     "bcftools": {
       "annotations": {
         "tests/databases/annotations/current/hg19/cosmic70.vcf.gz": {
-          "INFO": null
+          "cosmic70": "COSMIC"
         }
       }
+    },
+    "annovar": {
+      "annotations": {
+        "refGene": {
+          "INFO": null
+        },
+        "cosmic70": {
+          "cosmic70": "COSMIC_annovar"
+        }
+      },
+      "options": {
+        "genebase": "-hgvs -splicing_threshold 3 ",
+        "intronhgvs": 10
+      }
+    },
+    "snpeff": {
+      "options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "
     }
   },
   "calculation": {
@@ -322,51 +336,264 @@ Parameters file example:
 
 ## Stats
 
-Statistics on genetic variations, such as: number of variants, number of samples, statistics by chromosome, genotypes by samples, annotations...
-Theses statsitics can be applied to VCF files and all database annotation files.
+Generates statistics on genetic variations, such as number of variants, number of samples, statistics by chromosome, genotypes by samples, annotations. Theses statsitics can be applied to VCF files from all database annotation file formats. Statistics can be wrote into files in Markdown and JSON format (resp. `--stats_md` and `--stats_json` parameter).
+
+See [HOWARD Help Stats tool](help.md#stats-tool) for more information.
 
 > Example: Show example VCF statistics and brief overview
 > ```
-> howard stats --input=tests/data/example.vcf.gz
+> howard stats \
+>    --input=tests/data/example.vcf.gz
 > ```
 
-See [HOWARD Help Stats tool](help.md#stats-tool) for more information.
+> Example: Show example VCF statistics and generate a file in JSON and Markdown formats
+> ```
+> howard stats \
+>    --input=tests/data/example.vcf.gz \
+>    --stats_json=/tmp/stats.json \
+>    --stats_md=/tmp/stats.md
+> 
+> cat /tmp/stats.json /tmp/stats.md
+> ```
+> ```
+> {
+>     "Infos": {
+>         "Input file": "tests/data/example.vcf.gz",
+>         "Number of variants": 7,
+>         "Number of samples": 4,
+>         "Number of INFO fields": 5,
+>         "Number of FORMAT fields": 7
+>     },
+>     "Variants": {
+>         "Number of variants by chromosome": {
+>             "1": {
+>                 "CHROM": "chr1",
+>                 "count": 6,
+>                 "percent": 0.8571428571428571
+>             },
+>             "0": {
+>                 "CHROM": "chr7",
+>                 "count": 1,
+>                 "percent": 0.14285714285714285
+>             }
+>         },
+> ...
+> ```
+> ```
+> ...
+> ## Variants
+> ### Number of variants by chromosome
+> | CHROM   |   count |   percent |
+> |:--------|--------:|----------:|
+> | chr1    |       6 |  0.857143 |
+> | chr7    |       1 |  0.142857 |
+> ### Counts
+> | Type   |   count |
+> |:-------|--------:|
+> | Total  |       7 |
+> | SNV    |       7 |
+> | MNV    |       0 |
+> | InDel  |       0 |
+> ...
+> ```
+
+> Example of statistics in Markdown output
+
+- Input file: tests/data/example.vcf.gz
+- Number of variants: 7
+- Number of samples: 4
+- Number of INFO fields: 5
+- Number of FORMAT fields: 7
+
+| CHROM   |   count |   percent |
+|:--------|--------:|----------:|
+| chr1    |       6 |  0.857143 |
+| chr7    |       1 |  0.142857 |
+
+| Type   |   count |
+|:-------|--------:|
+| Total  |       7 |
+| SNV    |       7 |
+| MNV    |       0 |
+| InDel  |       0 |
+
 
 ## Convert
 
 Convert genetic variations file to another format. Multiple format are available, such as usual and official VCF format, but also other formats such as TSV, CSV, TBL, JSON and Parquet/duckDB. These formats need a header '.hdr' file to take advantage of the power of howard (especially through INFO/tag definition), and using howard convert tool automatically generate header file fo futher use (otherwise, an default '.hdr' file is generated).
 
-> Example: Translate VCF into TSV, export INFO/tags into columns, and show output file
+Multiple options are available, such as explode VCF INFO/tags (parameter `--explode_infos`, see [HOWARD Help query - Explode infos](help.md#explode-infos)), order by columns, include header within file (only TSV and CSV format), or use partitioning into multiple files within a folder. See [HOWARD Help Convert tool](help.md#convert-tool) for more information.
+
+### CSV, TSV and JSON convert
+
+To convert a file (multiple formats) into another flat file, such as CSV (tab-delimiter) and TSV (comma-delimiter), or JSON format, simply name output file with desired extension. Use `.gz` extension to compress file.
+
+> Example: Convert VCF into TSV and show output file
 > ```
-> howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos && \
+> howard convert \
+>    --input=tests/data/example.vcf.gz \
+>    --output=/tmp/example.tsv
 > cat /tmp/example.tsv
 > ```
 
-> Example: Translate VCF into parquet
+> Example: Convert TSV into VCF and show output file
 > ```
-> howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.parquet
+> howard convert \
+>    --input=tests/data/example.tsv \
+>    --output=/tmp/example.vcf
+> cat /tmp/example.vcf
 > ```
 
-See [HOWARD Help Convert tool](help.md#convert-tool) for more information.
+> Example: Convert VCF into CSV and compress file
+> ```
+> howard convert \
+>    --input=tests/data/example.vcf.gz \
+>    --output=/tmp/example.csv.gz
+> ```
+
+> Example: Convert VCF into JSON and compress file
+> ```
+> howard convert \
+>    --input=tests/data/example.vcf.gz \
+>    --output=/tmp/example.json.gz
+> ```
+
+### Parquet and duckDB convert
+
+Files can be format into Parquet and duckDB format. For duckDB format, a duckDB database will be created with a `variants` table.
+
+> Example: Convert VCF into parquet
+> ```
+> howard convert \
+>    --input=tests/data/example.vcf.gz \
+>    --output=/tmp/example.parquet
+> ```
+
+> Example: Convert VCF into duckDB
+> ```
+> howard convert \
+>    --input=tests/data/example.vcf.gz \
+>    --output=/tmp/example.duckdb
+> ```
+
+### BED convert
+
+To convert into BED format, input file needs mandatory columns chrommosome "#CHROM", and positions columns "START"/"END" or "POS" (corresponfing to regions with a uniq nucleotide). Header will be automatically included to decribe all columns. 
+
+> Example: Convert BED in TSV format into BED format
+> ```
+> howard convert \
+>    --input=tests/data/example.bed.tsv \
+>    --output=/tmp/example.bed
+> ```
+
+
+> Example: Convert BED in Parquet format into BED format
+> ```
+> howard convert \
+>    --input=tests/data/example.bed.parquet \
+>    --output=/tmp/example.bed
+> ```
+
+HOWARD input file format does not allow BED format. To read a BED file and export into a CSV or Parquet file format, see [Query BED format](#bed-format) section.
+
+### Partitioning
+
+Partitioning (or Hive partitioning) is a partitioning strategy that is used to split a table into multiple files based on partition keys. The files are organized into folders. Within each folder, the partition key has a value that is determined by the name of the folder (see [duckDB hive partitioning](https://duckdb.org/docs/data/partitioning/hive_partitioning.html)).
+
+Simply list columns as keys to process partitioning. Use 'None' (string) for NO partition but split parquet files into a folder. The partitioning is available for all format (e.g. Parquet, TSV, JSON, except duckDB format), by naming output file with desired extension. This option is faster parallel writing, but memory consuming, and also is faster reading.
+
+> Example: Convert VCF into partitioned Parquet and show tree structure
+> ```
+> howard convert \
+>    --input=tests/data/example.vcf.gz \
+>    --output=/tmp/example.partitioned.parquet \
+>    --parquet_partitions="#CHROM"
+> 
+> tree /tmp/example.partitioned.parquet
+> ```
+> ```
+> /tmp/example.partitioned.parquet
+> ├── #CHROM=chr1
+> │   └── fe61bf182de640f8840270a527aa1582-0.parquet
+> └── #CHROM=chr7
+>     └── fe61bf182de640f8840270a527aa1582-0.parquet
+> ```
+
+> Example: Convert VCF into partitioned TSV (compressed) and show tree structure (files are named with `.csv` extension, but are tab-delimited and compressed)
+> ```
+> howard convert \
+>    --input=tests/data/example.vcf.gz \
+>    --output=/tmp/example.partitioned.tsv.gz \
+>    --parquet_partitions="#CHROM,REF"
+> 
+> tree /tmp/example.partitioned.tsv.gz
+> ```
+> ```
+> /tmp/example.partitioned.tsv
+> ├── #CHROM=chr1
+> │   └── REF=A
+> │       └── data_0.csv
+> └── #CHROM=chr7
+>     └── REF=G
+>         └── data_0.csv
+> ```
+
+### Explode INFO tags
+
+Use `--explode_infos` parameter to extract all INFO tags (i.e. annotations) into columns (see [HOWARD Help query - Explode infos](help.md#explode-infos)).
+
+> Example: Convert VCF into TSV, export INFO/tags into columns, and show output file
+> ```
+> howard convert \
+>    --input=tests/data/example.vcf.gz \
+>    --explode_infos \
+>    --output=/tmp/example.tsv
+> 
+> cut /tmp/example.tsv -f1-4,7,15
+> ```
+> ```
+> #CHROM  POS       REF  ALT  FILTER  CLNSIG
+> chr1    28736     A    C    PASS    pathogenic
+> chr1    35144     A    C    PASS    non-pathogenic
+> chr1    69101     A    G    PASS
+> chr1    768251    A    G    PASS
+> ...
+> ```
 
 ## Query
 
-Query genetic variations in SQL format. Data can be loaded into 'variants' table from various formats (e.g. VCF, TSV, Parquet...). Using --explode_infos allow query on INFO/tag annotations. SQL query can also use external data within the request, such as a Parquet file(s).
+Query tool provides a simple way to query genetic variations in SQL format. Data are loaded into 'variants' table from various formats (e.g. VCF, TSV, Parquet...). Using `--explode_infos` allows querying on INFO/tag annotations. SQL query can also use external file within the request, such as a Parquet file(s), or TSV files.
 
-> Example: Select variants in VCF with REF and POS fields
+See [HOWARD Help Query tool](help.md#query-tool) for more information.
+
+### Variants file
+
+#### Loading data
+
+Query tool is able to read variants (i.e. VCF) or regions files (i.e. BED) files, in various format (e.g. VCF, BED, Parquet, TSV, JSON), using `--input` parameter. This allows to load data to perfom actions, such as explode VCF INFO/tags (parameter `--explode_infos`, see [HOWARD Help query - Explode infos](help.md#explode-infos)) in columns to be easier querying. Each columns format (e.g. string, integer) are automatically detected to be used in a SQL query.
+
+> Example: Select variants in VCF with REF and POS fields filter
 > ```
-> howard query --input=tests/data/example.vcf.gz \
+> howard query \
+>    --input=tests/data/example.vcf.gz \
 >    --query="SELECT * FROM variants WHERE REF = 'A' AND POS < 100000"
 > ```
 
-> Example: Select variants in VCF with INFO Tags criterions
+> Example: Select variants in VCF with INFO Tags criteria filters
 > ```
-> howard query --input=tests/data/example.vcf.gz --explode_infos \
+> howard query \
+>    --input=tests/data/example.vcf.gz \
+>    --explode_infos \
 >    --query='SELECT "#CHROM", POS, REF, ALT, DP, CLNSIG, sample2, sample3 
 >             FROM variants 
 >             WHERE DP >= 50 OR CLNSIG NOT NULL 
 >             ORDER BY CLNSIG DESC, DP DESC'
 > ```
+
+#### External file
+
+Variants files can be used directly within the query, espacially if they already contain variants information (e.g. "#CHROM", "POS", "REF", "ALT") and annotations as columns.
 
 > Example: Query a Parquet file with specific columns (e.g. from VCF convertion to Parquet)
 > ```
@@ -396,12 +623,92 @@ Query genetic variations in SQL format. Data can be loaded into 'variants' table
 >    --include_header
 > ```
 
+### Other files
 
-See [HOWARD Help Query tool](help.md#query-tool) for more information.
+Whatever the external file format, if it is compatible with duckDB, query tool is able to query data (see [duckDB Select Statement](https://duckdb.org/docs/sql/statements/select)).
+
+#### Parquet format
+
+Simply use Parquet file path within the query (as descibe above).
+
+> Example: Query a Parquet file with specific columns (e.g. from VCF convertion to Parquet)
+> ```
+> howard query \
+>    --query="SELECT * \
+>             FROM 'tests/databases/annotations/current/hg19/dbnsfp42a.parquet' \
+>             WHERE \"INFO/Interpro_domain\" NOT NULL \
+>             ORDER BY \"INFO/SiPhy_29way_logOdds_rankscore\" DESC"
+> ```
+
+#### CSV format
+
+Use duckDB function `read_csv_auto` to read a TSV file format as a table. See [duckDB CSV import](https://duckdb.org/docs/data/csv/overview.html) for more information.
+
+> Example: Query a TSV file
+> ```
+> howard query \
+>    --query="SELECT * FROM read_csv_auto('tests/data/transcripts.tsv')"
+> ```
+
+> Example: Query a TSV file with columns struct
+> ```
+> howard query \
+>    --query="SELECT * FROM read_csv_auto('tests/data/transcripts.tsv', columns={'transcript': 'VARCHAR','gene': 'VARCHAR'})"
+> ```
+
+#### BED format
+
+In order to read a BED file, create a query (using appropiate columns), and export file into a desired format.
+
+> Example: Read a BED file and export in Parquet format
+> ```
+> howard query \
+>    --query="SELECT * FROM read_csv_auto('tests/data/example.bed', columns={'#CHROM': 'VARCHAR', 'START': 'INTEGER', 'END': 'INTEGER'})" \
+>    --output=/tmp/example.bed.parquet
+> ```
+
+> Example: Convert a BED file in a Parquet format into a BED file format
+> ```
+> howard convert \
+>    --input=tests/data/example.bed.parquet \
+>    --output=/tmp/example.bed
+> 
+> cat /tmp/example.bed
+> ```
+> ```
+> #CHROM	START	END
+> chr1	28735	69101
+> chr1	768250	768253
+> chr7	55249060	55249069
+> ```
+
+A BED file can be filtered using positions or other columns such as gene names, or transcripts.
+
+> Example: Filter a BED using positions
+> ```
+> howard query \
+>    --input=tests/data/example.bed.parquet \
+>    --query="SELECT * \
+>             FROM variants \
+>             WHERE \
+>                \"#CHROM\" = 'chr1' and \
+>                ( \
+>                   (\"START\">28000 and \"END\"<70000) or \
+>                   (\"START\">760000 and \"END\"<770000) \
+>                )"
+> ```
+> ```
+>   #CHROM   START     END
+> 0   chr1   28735   69101
+> 1   chr1  768250  768253
+> ```
+
 
 ## Annotation
 
 Annotation is mainly based on a build-in Parquet annotation method, using annotation database file (in multiple format such as Parquet, duckdb, VCF, BED, TSV, JSON).
+
+See [HOWARD Help Annotation tool](help.md#annotation-tool) for more information.
 
 These annotation databases can be automatically downloaded using [HOWARD Databases tool](help.md#databases-tool) and manually generated using existing annotation files and [HOWARD Convert tool](help.md#convert-tool). Annotation databases need a header file (`.hdr`) to describe each annotation in the database. However, a default header will be generated if no header file is associated to the annotation database file.
 
@@ -429,12 +736,16 @@ These annotation databases are defined with their full path (e.g. `/full/path/to
 
 > Example: VCF annotation with relative path VCF databases
 > ```
-> cd /tool && howard annotation --input=tests/data/example.vcf.gz --annotations='tests/databases/annotations/current/hg19/cosmic70.vcf.gz' --output=/tmp/example.howard.vcf.gz
+> cd /tool
+> howard annotation \
+>    --input=tests/data/example.vcf.gz \
+>    --annotations='tests/databases/annotations/current/hg19/cosmic70.vcf.gz' \
+>    --output=/tmp/example.howard.vcf.gz
 > ```
 
 > Example: VCF annotation with relative path BED databases
 > ```
-> cd /tool && \
+> cd /tool
 > howard annotation \
 >    --input=tests/data/example.vcf.gz \
 >    --annotations='tests/databases/annotations/current/hg19/refGene.bed.gz' \
@@ -483,7 +794,7 @@ External annotation tools are also available, such as BCFTOOLS, Annovar, snpEff 
 
 ##### BCFTools annotation
 
-For BCFTools, use HOWARD keyword `bcftools` and list (separator `:` or `+`) annotation databases with format such as VCF or BED. More options are available using [HOWARD Parameters JSON](help.param.md) file.
+For BCFTools, use HOWARD keyword `bcftools` and list (separator `:` or `+`) annotation databases with format such as VCF or BED (compressed). More options are available using [HOWARD Parameters JSON](help.param.md) file.
 
 > Example: VCF annotation with Cosmic VCF databases and refGene BED database
 > ```
@@ -495,7 +806,7 @@ For BCFTools, use HOWARD keyword `bcftools` and list (separator `:` or `+`) anno
 
 ##### Annovar annotation
 
-For Annovar tool, use HOWARD keyword `annovar` and mention specific Annovar database keywords. More options are available using [HOWARD Parameters JSON](help.param.md) file.
+For Annovar tool, use HOWARD keyword `annovar` and mention specific Annovar database keywords (separator `:`). More options are available using [HOWARD Parameters JSON](help.param.md) file.
 
 > Example: VCF annotation with Annovar refGene and cosmic70
 > ```
@@ -507,7 +818,7 @@ For Annovar tool, use HOWARD keyword `annovar` and mention specific Annovar data
 
 ##### snpEff annotation
 
-For snpEff tool, use HOWARD keyword `snpeff`. No options are available for quick annotation with snpEff, see [HOWARD Parameters JSON](help.param.md) for more options.
+For snpEff tool, use HOWARD keyword `snpeff`. No options are available for quick annotation with snpEff, see [HOWARD Parameters JSON - snpEff](help.param.md#snpeff) for more options.
 
 > Example: VCF annotation with snpEff 
 > ```
@@ -537,7 +848,7 @@ Quick annotation allows to combine annotations, from build-in Parquet method and
 > ```
 > howard annotation \
 >    --input=tests/data/example.vcf.gz \
->    --annotations='tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/cosmic70.vcf.gz,annovar:cosmic70,snpeff,exomiser:preset=exome|hpo=0001156-0001363-0011304-0010055' \
+>    --annotations='tests/databases/annotations/current/hg19/dbnsfp42a.parquet,bcftools:tests/databases/annotations/current/hg19/cosmic70.vcf.gz,annovar:refGene:cosmic70,snpeff,exomiser:preset=exome:hpo=0001156+0001363+0011304+0010055' \
 >    --output=/tmp/example.howard.tsv
 > ```
 
@@ -549,7 +860,164 @@ All annotation parameters can be defined in [HOWARD Parameters JSON](help.param.
 
 ## Calculation
 
+Calculation processes variants annotations to generate new annotation, such as: identify variation type (VarType), harmonizes allele frequency (VAF) and calculate sttistics (VAF_stats), extracts Nomen (transcript, cNomen, pNomen...) from an HGVS field (e.g. snpEff, Annovar) with an optional list of personalized transcripts, generates VaRank format barcode, identify trio inheritance. These calculations are based on existing annotations of variants (and genotypes).
+
+Calculations are either provided by HOWARD within code, or configured into a JSON file. Calculations are either an inner HOWARD Python code, or a SQL query.
+
 See [HOWARD Help Calculation tool](help.md#calculation-tool) tool for more information.
+
+To process a calculation, use is keyword with the `--calculations` parameter.
+
+> Example: calculation of the variant type with `vartype` keyword
+> ```
+> howard calculation \
+>    --input=tests/data/example.full.vcf \
+>    --calculations='vartype' \
+>    --output=/tmp/example.calculation.tsv
+> ```
+
+### Available calculations
+
+To list all available calculations, from HOWARD default configuration or with a homemade Calculation configuration JSON file, use the `--show_calculations` parameter.
+
+> Example: List of build-in calculation
+> ```
+> howard calculation \
+>    --show_calculations
+> ```
+> ```
+> #[2024-03-05 10:53:30] [INFO] Start
+> #[2024-03-05 10:53:30] [INFO] Available calculation operations:
+> #[2024-03-05 10:53:30] [INFO]    BARCODE: BARCODE as VaRank tool
+> #[2024-03-05 10:53:30] [INFO]    DP_STATS: Depth (DP) statistics
+> #[2024-03-05 10:53:30] [INFO]    FINDBYPIPELINE: Number of pipeline that identify the variant (for multi pipeline VCF)
+> #[2024-03-05 10:53:30] [INFO]    FINDBYSAMPLE: Number of sample that have a genotype for the variant (for multi sample VCF)
+> #[2024-03-05 10:53:30] [INFO]    GENOTYPECONCORDANCE: Concordance of genotype for multi caller VCF
+> #[2024-03-05 10:53:30] [INFO]    NOMEN: NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature field
+> #[2024-03-05 10:53:30] [INFO]    SNPEFF_HGVS: HGVS nomenclatures from snpEff annotation
+> #[2024-03-05 10:53:30] [INFO]    TRIO: Inheritance for a trio family
+> #[2024-03-05 10:53:30] [INFO]    VAF: Variant Allele Frequency (VAF) harmonization
+> #[2024-03-05 10:53:30] [INFO]    VAF_STATS: Variant Allele Frequency (VAF) statistics
+> #[2024-03-05 10:53:30] [INFO]    VARIANT_ID: Variant ID generated from variant position and type
+> #[2024-03-05 10:53:30] [INFO]    VARTYPE: Variant type (e.g. SNV, INDEL, MNV, BND...)
+> #[2024-03-05 10:53:30] [INFO] End
+> ```
+
+### Calculation configuration JSON file
+
+All calculations are configured in a JSON file. A default configuration is provided with default calculations.
+
+Basically, a calculation is defined by:
+- Type: either 'sql' for a SQL query or 'python' for a Python function
+- Name/keyword: a keyword that is used with `--show_calculations` parameter (case unsensitive)
+- Description: a description of the calculation
+- Output column information: Name, type and decription of the new annotation calculated
+- Query and fields: an SQL query (for 'sql' type) with parameters such as mandatory INFO fields
+- Function name and parameters: a existing Python function and parameters (for 'python' type)
+
+> Example: Calculation of variant type using an SQL query
+> ```
+> "VARTYPE": {
+>     "type": "sql",
+>     "name": "VARTYPE",
+>     "description": "Variant type (e.g. SNV, INDEL, MNV, BND...)",
+>     "available": true,
+>     "output_column_name": "VARTYPE",
+>     "output_column_type": "String",
+>     "output_column_description": "Variant type: SNV if X>Y, MOSAIC if X>Y,Z or X,Y>Z, INDEL if XY>Z or X>YZ",
+>     "operation_query": [
+>       "CASE",
+>       "WHEN \"SVTYPE\" NOT NULL THEN \"SVTYPE\"",
+>       "WHEN LENGTH(REF) = 1 AND LENGTH(ALT) = 1 THEN 'SNV'",
+>       "WHEN REF LIKE '%,%' OR ALT LIKE '%,%' THEN 'MOSAIC'",
+>       "WHEN LENGTH(REF) == LENGTH(ALT) AND LENGTH(REF) > 1 THEN 'MNV'",
+>       "WHEN LENGTH(REF) <> LENGTH(ALT) THEN 'INDEL'",
+>       "ELSE 'UNDEFINED'",
+>       "END"
+>     ],
+>     "info_fields": ["SVTYPE"],
+>     "operation_info": true
+>   }
+> ```
+
+> Example: Calculation of variant id using an existing Python function `calculation_variant_id`
+> ```
+> "variant_id": {
+>     "type": "python",
+>     "name": "variant_id",
+>     "description": "Variant ID generated from variant position and type",
+>     "available": true,
+>     "function_name": "calculation_variant_id",
+>     "function_params": []
+>   }
+> ```
+
+See [Calculation configuration JSON file example](../config/calculations_config.json).
+
+See  [Calculation configuration JSON file](calculations.config.md) for more information.
+
+### Build-in calculations examples
+
+#### Variant type
+
+Variant type calculation `vartype` detect the type of variant (e.g. SNV, INDEL, MNV). Variant type are claculated with these criteria: SNV if X>Y, MOSAIC if X>Y,Z or X,Y>Z, INDEL if XY>Z or X>YZ.
+
+> Example: Identify variant types and generate a table of variant type count
+> ```
+> howard calculation \
+>    --input=tests/data/example.full.vcf \
+>    --calculations='vartype' \
+>    --output=/tmp/example.calculation.tsv
+> 
+> howard query \
+>    --input=/tmp/example.calculation.tsv \
+>    --explode_infos \
+>    --query='SELECT
+>                "VARTYPE" AS 'VariantType',
+>                count(*) AS 'Count'
+>             FROM variants
+>             GROUP BY "VARTYPE"
+>             ORDER BY count DESC'
+> ```
+> ```
+>   VariantType  Count
+> 0         BND      7
+> 1         DUP      6
+> 2         INS      5
+> 3         SNV      4
+> 4         CNV      3
+> 5         DEL      3
+> 6         INV      3
+> 7      MOSAIC      2
+> 8       INDEL      2
+> 9         MNV      1
+> ```
+
+#### HGVS and NOMEN from snpEff
+
+NOMEN can be extracted from snpEff annotation (see [HOWARD Parameters JSON - snpEff](help.param.md#snpeff)). The first calculation extract list of HGVS annotations from snpEff annotation (`snpeff_hgvs` keyword), the second calculation choose the NOMEN from snpEff HGVS annotations using a list of reference transcripts (`NOMEN` keyword, `--hgvs_field` and `--transcripts` parameters). More options are available (see [HOWARD Parameters JSON](help.param.md)).
+
+> Example: Calculate NOMEN by extracting hgvs from snpEff annotation and identifying transcripts from a list
+>
+> ```
+> howard calculation \
+>    --input=tests/data/example.ann.vcf.gz \
+>    --calculations='snpeff_hgvs,NOMEN' \
+>    --hgvs_field='snpeff_hgvs' \
+>    --transcripts=tests/data/transcripts.tsv \
+>    --output=/tmp/example.NOMEN.vcf.gz
+> 
+> howard query \
+>    --input=/tmp/example.NOMEN.vcf.gz \
+>    --explode_infos \
+>    --query="SELECT GNOMEN, NOMEN, snpeff_hgvs \
+>             FROM variants \
+>             WHERE GNOMEN='EGFR'"
+> ```
+> ```
+>   GNOMEN  NOMEN                                           snpeff_hgvs
+> 0   EGFR  EGFR:NM_001346897:exon19:c.2226G>A:p.Gln742Gln  EGFR:NM_005228.5:exon20:c.2361G>A:p.Gln787Gln,...
+> ```
 
 ## Prioritization
 
