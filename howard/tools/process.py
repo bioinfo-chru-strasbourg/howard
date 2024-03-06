@@ -40,8 +40,9 @@ def process(args:argparse) -> None:
     config = args.config
 
     # Load parameters in JSON format
-    if os.path.exists(args.param):
-        with open(args.param) as param_file:
+    #if os.path.exists(args.param):
+    if isinstance(args.param, str) and os.path.exists(full_path(args.param)):
+        with open(full_path(args.param)) as param_file:
             param = json.load(param_file)
     else:
         param = json.loads(args.param)

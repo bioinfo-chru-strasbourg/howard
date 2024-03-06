@@ -124,8 +124,8 @@ def main() -> None:
 
     # Load configuration in JSON format
     if "config" in args:
-        if os.path.exists(args.config):
-            with open(args.config) as config_file:
+        if isinstance(args.config, str) and os.path.exists(full_path(args.config)):
+            with open(full_path(args.config)) as config_file:
                 config = json.load(config_file)
         else:
             config = json.loads(args.config)

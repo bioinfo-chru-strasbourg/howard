@@ -6,22 +6,22 @@
     "databases": {
       "root": "",
       "annotations": [
-        "/databases/annotations/current/",
-        "/databases/dbnsfp/current/",
-        "/databases/dbsnp/current/"
+        "~/howard/databases/annotations/current/",
+        "~/howard/databases/dbnsfp/current/",
+        "~/howard/databases/dbsnp/current/"
       ],
-      "parquet": ["/databases/annotations/current/"],
-      "bcftools": ["/databases/annotations/current/"],
-      "annovar": "/databases/annovar/current/",
-      "snpeff": "/databases/snpeff/current/",
-      "varank": "/databases/varank/current/"
+      "parquet": ["~/howard/databases/annotations/current/"],
+      "bcftools": ["~/howard/databases/annotations/current/"],
+      "annovar": "~/howard/databases/annovar/current/",
+      "snpeff": "~/howard/databases/snpeff/current/",
+      "varank": "~/howard/databases/varank/current/"
     }
   },
   "tools": {
-    "bcftools": "/tools/bcftools/current/bin/bcftools",
-    "bgzip": "/tools/htslib/current/bin/bgzip",
-    "snpeff": "/tools/snpeff/current/bin/snpEff.jar",
+    "bcftools": "~/howard/tools/bcftools/current/bin/bcftools",
+    "bgzip": "~/howard/tools/htslib/current/bin/bgzip",
+    "snpeff": "~/howard/tools/snpeff/current/bin/snpEff.jar",
     "java": "/usr/bin/java",
-    "annovar": "/tools/annovar/current/bin/table_annovar.pl"
+    "annovar": "~/howard/tools/annovar/current/bin/table_annovar.pl"
   }
 }

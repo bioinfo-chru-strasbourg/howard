@@ -210,6 +210,7 @@ class Variants:
         duckdb_settings_dict = {}
         if config.get("duckdb_settings", None):
             duckdb_settings = config.get("duckdb_settings")
+            duckdb_settings = full_path(duckdb_settings)
             # duckdb setting is a file
             if os.path.exists(duckdb_settings):
                 with open(duckdb_settings) as json_file:
@@ -324,11 +325,15 @@ class Variants:
         """
         It reads the header of a VCF file and stores it as a list of strings and as a VCF object
         """
+
         input_file = self.get_input()
         default_header_list = [
             '##fileformat=VCFv4.2',
             '#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO'
             ]
+
+        # Full path
+        input_file = full_path(input_file)
 
         if input_file:
 
@@ -724,6 +729,10 @@ class Variants:
         :return: The function `print_stats` does not return any value. It has a return type annotation
         of `None`.
         """
+
+        # Full path
+        output_file = full_path(output_file)
+        json_file = full_path(json_file)
 
         with tempfile.TemporaryDirectory() as tmpdir:
 
@@ -1824,6 +1833,10 @@ class Variants:
         # Log
         log.info("Exporting...")
 
+        # Full path
+        output_file = full_path(output_file)
+        output_header = full_path(output_header)
+
         # If no output, get it
         if not output_file:
             output_file = self.get_output()
@@ -2351,8 +2364,8 @@ class Variants:
         # annotations databases folders
         annotations_databases = set(
             config.get("folders", {}).get("databases", {}).get("annotations", [DEFAULT_ANNOTATIONS_FOLDER])
-            + config.get("folders", {}).get("databases", {}).get("parquet", ["/databases/parquet/current"])
-            + config.get("folders", {}).get("databases", {}).get("bcftools", ["/databases/bcftools/current"])
+            + config.get("folders", {}).get("databases", {}).get("parquet", ["~/howard/databases/parquet/current"])
+            + config.get("folders", {}).get("databases", {}).get("bcftools", ["~/howard/databases/bcftools/current"])
         )
 
         if param.get("annotations"):
@@ -2374,6 +2387,8 @@ class Variants:
 
                     # check ALL parameters (formats, releases)
                     annotation_file_split = annotation_file.split(":")
+                    database_formats = "parquet"
+                    database_releases = "current"
                     for annotation_file_option in annotation_file_split[1:]:
                         database_all_options_split = annotation_file_option.split("=")
                         if database_all_options_split[0] == "format":
@@ -2474,6 +2489,9 @@ class Variants:
                             # Find file
                             annotation_file_found = None
 
+                            # Expand user
+                            annotation_file = full_path(annotation_file)
+
                             if os.path.exists(annotation_file):
                                 annotation_file_found = annotation_file
 
@@ -2492,6 +2510,9 @@ class Variants:
                                             annotation_file_found = found_files[0]
                                             break
                             log.debug(f"for {annotation_file} annotation_file_found={annotation_file_found}")
+
+                            # Full path
+                            annotation_file_found = full_path(annotation_file_found)
 
                             if annotation_file_found:
 
@@ -2641,7 +2662,9 @@ class Variants:
 
                 # Find files
                 db_file = database.get_database()
+                db_file = full_path(db_file)
                 db_hdr_file = database.get_header_file()
+                db_hdr_file = full_path(db_hdr_file)
                 db_file_type = database.get_format()
                 db_tbi_file = f"{db_file}.tbi"
                 db_file_compressed = database.is_compressed()
@@ -3020,6 +3043,7 @@ class Variants:
         # Config - Folders - Databases
         databases_folders = config.get("folders", {}).get(
             "databases", {}).get("exomiser", f"{DEFAULT_DATABASE_FOLDER}/exomiser/current")
+        databases_folders = full_path(databases_folders)
         if not os.path.exists(databases_folders):
             log.error(f"Databases annotations: {databases_folders} NOT found")
         log.debug("Databases annotations: " + str(databases_folders))
@@ -3103,6 +3127,7 @@ class Variants:
 
                 # analysis from param
                 param_exomiser_analysis = param_exomiser.get("analysis", {})
+                param_exomiser_analysis = full_path(param_exomiser_analysis)
 
                 # If analysis in param -> load anlaysis json
                 if param_exomiser_analysis:
@@ -3137,6 +3162,9 @@ class Variants:
                     if os.path.exists(param_exomiser_preset):
                         # Preset file is provided in full path
                         param_exomiser_analysis_default_config_file = param_exomiser_preset
+                    # elif os.path.exists(full_path(param_exomiser_preset)):
+                    #     # Preset file is provided in full path
+                    #     param_exomiser_analysis_default_config_file = full_path(param_exomiser_preset)
                     elif os.path.exists(os.path.join(folder_config, param_exomiser_preset)):
                         # Preset file is provided a basename in config folder (can be a path with subfolders)
                         param_exomiser_analysis_default_config_file = os.path.join(folder_config, param_exomiser_preset)
@@ -3145,6 +3173,7 @@ class Variants:
                         param_exomiser_analysis_default_config_file = os.path.join(folder_config, f"preset-{param_exomiser_preset}-analysis.json")
 
                     # If preset file exists
+                    param_exomiser_analysis_default_config_file = full_path(param_exomiser_analysis_default_config_file)
                     if os.path.exists(param_exomiser_analysis_default_config_file):
                         # Load prest file into analysis dict (either yaml or json)
                         with open(param_exomiser_analysis_default_config_file) as json_file:
@@ -3175,6 +3204,7 @@ class Variants:
                     if param_exomiser.get("phenopacket", None):
 
                         param_exomiser_phenopacket = param_exomiser.get("phenopacket")
+                        param_exomiser_phenopacket = full_path(param_exomiser_phenopacket)
 
                         # If param phenopacket is a file and exists
                         if isinstance(param_exomiser_phenopacket, str) and os.path.exists(param_exomiser_phenopacket):
@@ -3594,48 +3624,19 @@ class Variants:
 
         # Config - Java
         java_bin = get_bin(tool="java", bin="java", bin_type="bin", config=config, default_folder="/usr/bin")
+        if not (os.path.exists(java_bin) or (java_bin and which(java_bin))):
+            log.error(f"Annotation failed: no java bin '{java_bin}'")
+            raise ValueError(f"Annotation failed: no java bin '{java_bin}'")
 
-        # Config - snpEff
+        # Config - snpEff bin
         snpeff_jar = get_bin(tool="snpeff", bin="snpEff.jar", bin_type="jar", config=config, default_folder=f"{DEFAULT_TOOLS_FOLDER}/snpeff")
-        snpeff_databases = config.get("folders", {}).get(
-            "databases", {}).get("snpeff", DEFAULT_SNPEFF_FOLDER)
+        if not (os.path.exists(snpeff_jar) or (snpeff_jar and which(snpeff_jar))):
+            log.error(f"Annotation failed: no snpEff jar '{snpeff_jar}'")
+            raise ValueError(f"Annotation failed: no snpEff jar '{snpeff_jar}'")
 
-        # Config - check tools
-        if not os.path.exists(java_bin):
-            log.warning(
-                f"Annotation warning: no java bin '{java_bin}'. Try to find...")
-            # Try to find java
-            try:
-                java_bin = find_all('java', '/usr/bin')[0]
-            except:
-                log.error(f"Annotation failed: no java bin '{java_bin}'")
-                raise ValueError(
-                    f"Annotation failed: no java bin '{java_bin}'")
-            if not os.path.exists(java_bin):
-                log.error(f"Annotation failed: no java bin '{java_bin}'")
-                raise ValueError(
-                    f"Annotation failed: no java bin '{java_bin}'")
-            else:
-                log.warning(f"Annotation warning: snpEff jar bin found '{java_bin}'")
-
-        if not os.path.exists(snpeff_jar):
-            log.warning(
-                f"Annotation warning: no snpEff jar '{snpeff_jar}'. Try to find...")
-            # Try to find snpEff.jar
-            try:
-                snpeff_jar = find_all('snpEff.jar', '/')[0]
-            except:
-                log.error(f"Annotation failed: no snpEff jar '{snpeff_jar}'")
-                raise ValueError(
-                    f"Annotation failed: no snpEff jar '{snpeff_jar}'")
-            if not os.path.exists(snpeff_jar):
-                log.error(f"Annotation failed: no snpEff jar '{snpeff_jar}'")
-                raise ValueError(
-                    f"Annotation failed: no snpEff jar '{snpeff_jar}'")
-            else:
-                log.warning(
-                    f"Annotation warning: snpEff jar found '{snpeff_jar}'")
-
+        # Config - snpEff databases
+        snpeff_databases = config.get("folders", {}).get("databases", {}).get("snpeff", DEFAULT_SNPEFF_FOLDER)
+        snpeff_databases = full_path(snpeff_databases)
         if snpeff_databases is not None and snpeff_databases != "":
             log.debug(f"Create snpEff databases folder")
             if not os.path.exists(snpeff_databases):
@@ -3817,29 +3818,16 @@ class Variants:
             "databases", {}).get("annovar", ["."])
         log.debug("Databases annotations: " + str(databases_folders))
 
-        # Config - annovar
+        # Config - annovar bin
         annovar_bin = get_bin(tool="annovar", bin="table_annovar.pl", bin_type="perl", config=config, default_folder=f"{DEFAULT_TOOLS_FOLDER}/annovar")
-        annovar_databases = config.get("folders", {}).get(
-            "databases", {}).get("annovar", DEFAULT_ANNOVAR_FOLDER)
-
+        log.debug(f"annovar_bin={annovar_bin}")
         if not os.path.exists(annovar_bin):
-            log.warning(
-                f"Annotation warning: no annovar bin '{annovar_bin}'. Try to find...")
-            # Try to find table_annovar.pl
-            try:
-                annovar_bin = find_all('table_annovar.pl', '/')[0]
-            except:
-                log.error(f"Annotation failed: no annovar bin '{annovar_bin}'")
-                raise ValueError(
-                    f"Annotation failed: no annovar bin '{annovar_bin}'")
-            if not os.path.exists(annovar_bin):
-                log.error(f"Annotation failed: no annovar bin '{annovar_bin}'")
-                raise ValueError(
-                    f"Annotation failed: no annovar bin '{annovar_bin}'")
-            else:
-                log.warning(
-                    f"Annotation warning: annovar bin found '{annovar_bin}'")
+            log.error(f"Annotation failed: no annovar bin '{annovar_bin}'")
+            raise ValueError(f"Annotation failed: no annovar bin '{annovar_bin}'")
 
+        # Config - annovar databases
+        annovar_databases = config.get("folders", {}).get("databases", {}).get("annovar", DEFAULT_ANNOVAR_FOLDER)
+        annovar_databases = full_path(annovar_databases)
         if annovar_databases != "" and not os.path.exists(annovar_databases):
             os.makedirs(annovar_databases)
 
@@ -4078,8 +4066,7 @@ class Variants:
 
                 # Command merge
                 merge_command = f"bcftools merge --force-samples --threads={threads} {tmp_vcf_name} {tmp_annotates_vcf_name_to_merge} -o {tmp_annotate_vcf_name} -Oz 2>>{tmp_annotate_vcf_name_err} "
-                log.info(f"Annotation Annovar - Annotation merging " +
-                         str(len(commands)) + " annotated files")
+                log.info(f"Annotation Annovar - Annotation merging " + str(len(tmp_annotates_vcf_name_list)) + " annotated files")
                 log.debug(f"Annotation - merge command: {merge_command}")
                 run_parallel_commands([merge_command], 1)
 
@@ -4109,7 +4096,7 @@ class Variants:
                 log.debug(f"Annotation - cleaning command: {clean_command}")
                 run_parallel_commands([clean_command], 1)
 
-    # NEW def
+    # Parquet
     def annotation_parquet(self, threads: int = None) -> None:
         """
         It takes a VCF file, and annotates it with a parquet file
@@ -4597,13 +4584,13 @@ class Variants:
 
         # Config
         config = self.get_config()
-        config_profiles = config.get(
-            "prioritization", {}).get("config_profiles", None)
+        config_profiles = config.get("prioritization", {}).get("config_profiles", None)
+        config_profiles = full_path(config_profiles)
 
         # Param
         param = self.get_param()
-        config_profiles = param.get("prioritization", {}).get(
-            "config_profiles", config_profiles)
+        config_profiles = param.get("prioritization", {}).get("config_profiles", config_profiles)
+        config_profiles = full_path(config_profiles)
         profiles = param.get("prioritization", {}).get("profiles", None)
         pzfields = param.get("prioritization", {}).get(
             "pzfields", ["PZFlag", "PZScore"])
@@ -5079,10 +5066,10 @@ class Variants:
         databases_refseq_folders = config.get("folders", {}).get(
             "databases", {}).get("refseq", DEFAULT_REFSEQ_FOLDER)
         # refseq
-        databases_refseq = config.get("databases", {}).get("refSeq", "")
+        databases_refseq = config.get("databases", {}).get("refSeq", None)
         # refSeqLink
-        databases_refseqlink = config.get("databases", {}).get("refSeqLink", "")
-        
+        databases_refseqlink = config.get("databases", {}).get("refSeqLink", None)
+
         # Param
         param = self.get_param()
         
@@ -5428,6 +5415,7 @@ class Variants:
             operations_config[operation_config] = operations_config_dict[operation_config]
 
         # Replace operations from file
+        operations_config_file = full_path(operations_config_file)
         if operations_config_file:
             if os.path.exists(operations_config_file):
                 with open(operations_config_file) as operations_config_file_content:
@@ -5812,8 +5800,8 @@ class Variants:
             "NOMEN", {}).get("options", {}).get("hgvs_field", "hgvs")
         
         # Get transcripts
-        transcripts_file = param.get("calculation", {}).get(
-            "NOMEN", {}).get("options", {}).get("transcripts", None)
+        transcripts_file = param.get("calculation", {}).get("NOMEN", {}).get("options", {}).get("transcripts", None)
+        transcripts_file = full_path(transcripts_file)
         log.debug(f"Transcript file '{transcripts_file}'")
         transcripts = []
         if transcripts_file:

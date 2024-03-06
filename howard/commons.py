@@ -37,12 +37,15 @@ from contextlib import contextmanager
 
 from configparser import ConfigParser
 
+from shutil import which
+
 file_folder = os.path.dirname(__file__)
 
 # Main folder
 folder_main = os.path.abspath(os.path.join(file_folder, ".."))
 folder_config = os.path.abspath(os.path.join(folder_main, "config"))
-
+folder_user_home = os.path.abspath(os.path.expanduser('~'))
+folder_howard_home = os.path.join(folder_user_home,"howard")
 
 comparison_map = {
     "gt": ">",
@@ -92,15 +95,16 @@ vcf_required = [
             ]
 
 # Tools
-DEFAULT_TOOLS_FOLDER = "/tools"
+#DEFAULT_TOOLS_FOLDER = "/tools"
+DEFAULT_TOOLS_FOLDER = os.path.join(folder_howard_home,"tools")
 
 DEFAULT_TOOLS_BIN = {
-    "bcftools": {"bin": "/tools/bcftools/current/bin/bcftools"},
-    "bgzip": {"bin": "/tools/htslib/current/bin/bgzip"},
-    "snpeff": {"jar": "/tools/snpeff/current/bin/snpEff.jar"},
+    "bcftools": {"bin": "bcftools"},
+    "bgzip": {"bin": "bgzip"},
     "java": {"bin": "java"},
-    "annovar": {"perl": "/tools/annovar/current/bin/table_annovar.pl"},
-    "exomiser": {"jar": "/tools/exomiser/current/bin/exomiser.jar"}
+    "snpeff": {"jar": "~/howard/tools/snpeff/current/bin/snpEff.jar"},
+    "annovar": {"perl": "~/howard/tools/annovar/current/bin/table_annovar.pl"},
+    "exomiser": {"jar": "~/howard/tools/exomiser/current/bin/exomiser.jar"}
   }
 
 # URL
@@ -113,7 +117,8 @@ DEFAULT_DBSNP_URL = "https://ftp.ncbi.nih.gov/snp/archive"
 
 
 # Databases default folder
-DEFAULT_DATABASE_FOLDER = "/databases"
+#DEFAULT_DATABASE_FOLDER = "/databases"
+DEFAULT_DATABASE_FOLDER = os.path.join(folder_howard_home,"databases")
 DEFAULT_ANNOTATIONS_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/annotations/current"
 DEFAULT_GENOME_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/genomes/current"
 DEFAULT_SNPEFF_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/snpeff/current"
@@ -166,13 +171,24 @@ def remove_if_exists(filepaths: list) -> None:
     :param filepaths: A list of file paths that you want to check for existence and remove if they exist
     :type filepaths: list
     """
-    if type(filepaths) is str:
+
+    # If input is string
+    if isinstance(filepaths, str):
         filepaths = [filepaths]
+
     for filepath in filepaths:
+
+        # full path
+        filepath = full_path(filepath)
+
+        # If path exists
         if os.path.exists(filepath):
+
+            # Folder
             if os.path.isdir(filepath):
-                #os.rmdir(filepath)
                 shutil.rmtree(filepath)
+            
+            # File
             else:
                 os.remove(filepath)
 
@@ -390,7 +406,12 @@ def find_all(name: str, path: str) -> list:
     :return: A list of all the files in the directory that have the name "name"
     """
     
+    # result
     result = []
+
+    # Full path
+    path = full_path(path)
+
     for root, dirs, files in os.walk(path):
         for filename in fnmatch.filter(files, name):
             if os.path.exists(os.path.join(root, filename)):
@@ -415,6 +436,9 @@ def find_genome(genome_path: str, assembly: str = None, file: str = None) -> str
     :type file: str
     :return: the path to the genome file.
     """
+
+    # Full path
+    genome_path = full_path(genome_path)
 
     # check genome
     if os.path.exists(genome_path) and not os.path.isdir(genome_path):
@@ -449,8 +473,15 @@ def find_file_prefix(input_file:str = None, prefix:str = None, folder:str = None
     :return: the path of the output file.
     """
 
+    # Output
     output_file = None
-    if os.path.exists(input_file):
+
+    # Full path
+    input_file = full_path(input_file)
+    output_file = full_path(output_file)
+    folder = full_path(folder)
+
+    if input_file and os.path.exists(input_file):
         output_file = input_file
     else:
         #refgene_prefix = "refGene"
@@ -1113,6 +1144,9 @@ def download_file(url:str, dest_file_path:str, chunk_size:int = 1024*1024, try_a
     specified destination file path.
     """
 
+    # Full path
+    dest_file_path = full_path(dest_file_path)
+
     # Create folder if not exists
     if not os.path.exists(os.path.dirname(dest_file_path)):
         Path(os.path.dirname(dest_file_path)).mkdir(parents=True, exist_ok=True)
@@ -1197,11 +1231,13 @@ def get_bin(bin:str = None, tool:str = None, bin_type:str = "bin", config:dict =
     :return: the path to the snpEff.jar file. If the file is not found, it returns None.
     """
 
-    # Import
-    from shutil import which
+    # Full path
+    default_folder = full_path(default_folder)
+    log.debug(f"default_folder={default_folder}")
 
     # Config - snpEff
     config_tool = config.get("tools", {}).get(tool)
+    log.debug(f"config_tool={config_tool}")
 
     # Find bin_file
     bin_file = None
@@ -1212,6 +1248,9 @@ def get_bin(bin:str = None, tool:str = None, bin_type:str = "bin", config:dict =
             elif isinstance(conf, str):
                 bin_file = conf
 
+    # Full path
+    bin_file = full_path(bin_file)
+
     # Config - check tools
     if not bin_file or not (os.path.exists(bin_file) or (bin_file and which(bin_file))):
         
@@ -1220,6 +1259,9 @@ def get_bin(bin:str = None, tool:str = None, bin_type:str = "bin", config:dict =
             bin_file = find_all(bin, default_folder)[0]
         except:
             return None
+
+        # Full path
+        bin_file = full_path(bin_file)
 
         # Check if found
         if not os.path.exists(bin_file):
@@ -1243,8 +1285,12 @@ def concat_file(input_files:list, output_file:str) -> bool:
     exists and `False` otherwise.
     """
 
+    # Full path
+    output_file = full_path(output_file)
+
     with open(output_file, 'w') as outfile:
         for input_file in input_files:
+            input_file = full_path(input_file)
             with open(input_file) as infile:
                 for line in infile:
                     outfile.write(line)
@@ -1263,8 +1309,13 @@ def compress_file(input_file:str, output_file:str) -> bool:
     :type output_file: str
     """
 
+    # Full path
+    output_file = full_path(output_file)
+
+    # Concat and compress
     concat_and_compress_files(input_files=[input_file], output_file=output_file)
 
+    # Return
     return os.path.exists(output_file)
 
 
@@ -1313,6 +1364,9 @@ def get_file_compressed(filename: str = None) -> bool:
     :type filename: str
     :return: A boolean value.
     """
+
+    # Full path
+    filename = full_path(filename)
 
     compression_type = None
     if filename:
@@ -1366,6 +1420,9 @@ def concat_into_infile(input_files:list, compressed_file:object, compression_typ
 
     # Open input files
     for input_file in input_files:
+
+        # Full path
+        input_file = full_path(input_file)
 
         # Input file compression type
         input_compression_type = get_compression_type(input_file)
@@ -1438,6 +1495,10 @@ def concat_and_compress_files(input_files: list, output_file: str, compression_t
     else:
         open_type = "b"
 
+    # Full path
+    output_file = full_path(output_file)
+
+    # Tmp file
     output_file_tmp = output_file+"."+str(random.randrange(1000))+".tmp"
 
     if compression_type in ['gzip']:
@@ -1509,7 +1570,8 @@ def get_duckdb_extension_file(extension_name:str, conn:duckdb.DuckDBPyConnection
     # File
     extension_file_path = f'v{release_version_number}/{platform_name}/{extension_name}.duckdb_extension'
     extension_file = f'{DUCKDB_EXTENSION}/{extension_file_path}'
-    extension_file_gz = f'{DUCKDB_EXTENSION}/{extension_file_path}.gz'
+    extension_file = full_path(extension_file)
+    extension_file_gz = f'{extension_file}.gz'
     url = f"http://extensions.duckdb.org/{extension_file_path}.gz"
 
     # Download and extract if not exists
@@ -2185,3 +2247,20 @@ def bed_sort(input:str, output:str) -> str:
     # Write output BED (uncompressed)
     data_sorted.to_csv(output, sep="\t", header=0, index=0)
 
+
+def full_path(path: str) -> str:
+    """
+    The function `full_path` takes a path string as input and returns the full expanded path.
+    
+    :param path: The `full_path` function takes a string `path` as input and returns the full path by
+    expanding the user's home directory in the path if it is not None
+    :type path: str
+    :return: The function `full_path` is returning the expanded version of the input `path` using
+    `os.path.expanduser(path)`. This function expands the `~` character in the path to the user's home
+    directory.
+    """
+
+    if isinstance(path, str):
+        return os.path.abspath(os.path.expandvars(os.path.expanduser(path)))
+    else:
+        return path

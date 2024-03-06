@@ -427,7 +427,7 @@ arguments = {
             "metavar": "refGene",
             "help": """refGene annotation file""",
             "required": False,
-            "default": "",
+            "default": None,
             "gooey": {
                 "widget": "FileChooser"
             }
@@ -436,7 +436,7 @@ arguments = {
             "metavar": "refSeqLink",
             "help": """refSeqLink annotation file""",
             "required": False,
-            "default": "",
+            "default": None,
             "gooey": {
                 "widget": "FileChooser"
             }
@@ -692,6 +692,8 @@ arguments = {
             "metavar": "Exomiser release",
             "help": """Release of Exomiser data to download.\n"""
                     """If "default", "auto", or "config", retrieve from Application Properties file.\n"""
+                    """If not provided (None), from Application Properties file (Exomiser data-version) \n"""
+                    """   or default '2109'\n"""
                     """Default: None""",
             "required": False,
             "default": None
@@ -699,7 +701,8 @@ arguments = {
         "download-exomiser-phenotype-release": {
             "metavar": "Exomiser phenoptye release",
             "help": """Release of Exomiser phenotype to download.\n"""
-                    """If not provided, retrieve from Application Properties file or Exomiser data release\n"""
+                    """If not provided (None), from Application Properties file (Exomiser Phenotype data-version)\n"""
+                    """   or Exomiser release\n"""
                     """Default: None""",
             "required": False,
             "default": None
@@ -1274,7 +1277,7 @@ commands_arguments = {
         "description": """Download databases and needed files for howard and associated tools""",
         "help": """Download databases and needed files for howard and associated tools""",
         "epilog": """Usage examples:\n"""
-                    """   howard databases --assembly=hg19 --download-genomes=/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' --download-annovar=/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' --download-snpeff=/databases/snpeff/current --download-refseq=/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-dbnsfp=/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases --download-alphamissense=/databases/alphamissense/current --download-exomiser=/databases/exomiser/current --download-dbsnp=/databases/dbsnp/current --download-dbsnp-vcf --threads=8\n"""
+                    """   howard databases --assembly=hg19 --download-genomes=~/howard/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' --download-annovar=~/howard/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' --download-snpeff=~/howard/databases/snpeff/current --download-refseq=~/howard/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-dbnsfp=~/howard/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases --download-alphamissense=~/howard/databases/alphamissense/current --download-exomiser=~/howard/databases/exomiser/current --download-dbsnp=~/howard/databases/dbsnp/current --download-dbsnp-vcf --threads=8\n"""
                     """   howard databases --generate-param=/tmp/param.json --generate-param-description=/tmp/test.description.json --generate-param-formats=parquet """
                     """\n"""
                     """Notes:\n"""
@@ -1375,7 +1378,7 @@ commands_arguments = {
         "description": """(beta) Formatting Annovar database file to other format (VCF and Parquet). Exported Parquet file includes INFO/tags columns as VCF INFO columns had been exploded""",
         "help": """(beta) Formatting Annovar database file to other format (VCF and Parquet)""",
         "epilog": """Usage examples:\n"""
-                    """   howard from_annovar --input=tests/databases/others/hg19_nci60.txt --output=/tmp/nci60.from_annovar.vcf.gz --to_parquet=/tmp/nci60.from_annovar.parquet --annovar-code=nci60 --genome=/databases/genomes/current/hg19.fa --config=/tool/config/config.json --threads=8 """, 
+                    """   howard from_annovar --input=tests/databases/others/hg19_nci60.txt --output=/tmp/nci60.from_annovar.vcf.gz --to_parquet=/tmp/nci60.from_annovar.parquet --annovar-code=nci60 --genome=~/howard/databases/genomes/current/hg19.fa --config=/tool/config/config.json --threads=8 """, 
         "groups": {
             "main": {
                 "input": True,

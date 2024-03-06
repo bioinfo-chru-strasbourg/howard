@@ -192,14 +192,14 @@ Multiple databases can be automatically downloaded with databases tool, such as:
 > ```
 > howard databases \
 >    --assembly=hg19 \
->    --download-genomes=/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' \
->    --download-annovar=/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' \
->    --download-snpeff=/databases/snpeff/current \
->    --download-refseq=/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' \
->    --download-dbnsfp=/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases \
->    --download-alphamissense=/databases/alphamissense/current \
->    --download-exomiser=/databases/exomiser/current \
->    --download-dbsnp=/databases/dbsnp/current --download-dbsnp-vcf --threads=8
+>    --download-genomes=~/howard/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' \
+>    --download-annovar=~/howard/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' \
+>    --download-snpeff=~/howard/databases/snpeff/current \
+>    --download-refseq=~/howard/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' \
+>    --download-dbnsfp=~/howard/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases \
+>    --download-alphamissense=~/howard/databases/alphamissense/current \
+>    --download-exomiser=~/howard/databases/exomiser/current \
+>    --download-dbsnp=~/howard/databases/dbsnp/current --download-dbsnp-vcf --threads=8
 > ```
 
 See [HOWARD Help Databases tool](help.md#databases-tool) for more information.
@@ -238,23 +238,23 @@ Configuration file example:
   "folders": {
     "databases": {
       "annotations": [
-        "/databases/annotations/current/",
-        "/databases/dbnsfp/current/",
-        "/databases/dbsnp/current/"
+        "~/howard/databases/annotations/current/",
+        "~/howard/databases/dbnsfp/current/",
+        "~/howard/databases/dbsnp/current/"
       ],
-      "parquet": ["/databases/annotations/current/"],
-      "bcftools": ["/databases/annotations/current/"],
-      "annovar": "/databases/annovar/current/",
-      "snpeff": "/databases/snpeff/current/",
-      "exomiser": "/databases/exomiser/current/"
+      "parquet": ["~/howard/databases/annotations/current/"],
+      "bcftools": ["~/howard/databases/annotations/current/"],
+      "annovar": "~/howard/databases/annovar/current/",
+      "snpeff": "~/howard/databases/snpeff/current/",
+      "exomiser": "~/howard/databases/exomiser/current/"
     }
   },
   "tools": {
-    "bcftools": "/tools/bcftools/current/bin/bcftools",
-    "bgzip": "/tools/htslib/current/bin/bgzip",
-    "snpeff": "/tools/snpeff/current/bin/snpEff.jar",
-    "annovar": "/tools/annovar/current/bin/table_annovar.pl"
-    "exomiser": "/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar",
+    "bcftools": "~/howard/tools/bcftools/current/bin/bcftools",
+    "bgzip": "~/howard/tools/htslib/current/bin/bgzip",
+    "snpeff": "~/howard/tools/snpeff/current/bin/snpEff.jar",
+    "annovar": "~/howard/tools/annovar/current/bin/table_annovar.pl"
+    "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar",
     "java": "/usr/bin/java",
   }
 }

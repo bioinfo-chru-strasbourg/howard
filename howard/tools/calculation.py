@@ -84,8 +84,9 @@ def calculation(args:argparse) -> None:
         if args.trio_pedigree and "TRIO" in params["calculation"]:
             trio_pedigree = {}
             # Load trio_pedigree in JSON format
-            if os.path.exists(args.trio_pedigree):
-                with open(args.trio_pedigree) as trio_pedigree_file:
+            if isinstance(args.trio_pedigree, str) and os.path.exists(full_path(args.trio_pedigree)):
+            #if os.path.exists(args.trio_pedigree):
+                with open(full_path(args.trio_pedigree)) as trio_pedigree_file:
                     trio_pedigree = json.load(trio_pedigree_file)
             else:
                 trio_pedigree = json.loads(args.trio_pedigree)

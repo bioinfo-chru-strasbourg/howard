@@ -167,12 +167,12 @@ Annotation databases folders that contains databases in various format such as P
 
 Format: a list of folder path (without assembly)
 
-Default: ["/databases/annotations/current"]
+Default: ["~/howard/databases/annotations/current"]
 
 Examples: 
-- ["/databases/annotations/current/"]
+- ["~/howard/databases/annotations/current/"]
 
-- ["/databases/annotations/current/","/databases/dejavu/current/","/databases/dbnsfp/current/"]
+- ["~/howard/databases/annotations/current/","~/howard/databases/dejavu/current/","~/howard/databases/dbnsfp/current/"]
 
 #### folders::databases::parquet
 
@@ -180,14 +180,14 @@ Annotation databases folders that contains databases in Parquet format.
 
 Format: a list of folder path (without assembly)
 
-Default: ["/databases/annotations/current"]
+Default: ["~/howard/databases/annotations/current"]
 
 Examples: 
-- ["/databases/parquet/current/"]
+- ["~/howard/databases/parquet/current/"]
 
-- ["/databases/annotations/current/"]
+- ["~/howard/databases/annotations/current/"]
 
-- ["/databases/parquet/current/","/databases/dejavu/current/"]
+- ["~/howard/databases/parquet/current/","~/howard/databases/dejavu/current/"]
 
 #### folders::databases::bcftools
 
@@ -195,12 +195,12 @@ Annotation databases folders for BCFTools annotation.
 
 Format: a list of folder path (without assembly)
 
-Default: ["/databases/bcftools/current"]
+Default: ["~/howard/databases/bcftools/current"]
 
 Examples: 
-- ["/databases/bcftools/current/"]
+- ["~/howard/databases/bcftools/current/"]
 
-- ["/databases/bcftools/current/","/databases/dejavu/current/"]
+- ["~/howard/databases/bcftools/current/","~/howard/databases/dejavu/current/"]
 
 #### folders::databases::annovar
 
@@ -208,12 +208,12 @@ Annotation databases folders for Annovar annotation.
 
 Format: a list of folder path (without assembly)
 
-Default: ["/databases/annovar/current"]
+Default: ["~/howard/databases/annovar/current"]
 
 Examples: 
-- ["/databases/annovar/current/"]
+- ["~/howard/databases/annovar/current/"]
 
-- ["/databases/annovar/current/","/databases/annovar/homemade/"]
+- ["~/howard/databases/annovar/current/","~/howard/databases/annovar/homemade/"]
 
 #### folders::databases::snpeff
 
@@ -221,10 +221,10 @@ Annotation databases folders for snpEff annotation.
 
 Format: A folder path (without assembly)
 
-Default: /databases/snpeff/current
+Default: ~/howard/databases/snpeff/current
 
 Examples: 
-- "/databases/snpeff/current/"
+- "~/howard/databases/snpeff/current/"
 
 #### folders::databases::exomiser
 
@@ -232,10 +232,10 @@ Annotation databases folders for Exomiser annotation.
 
 Format: A folder path (without assembly)
 
-Default: /databases/exomiser/current
+Default: ~/howard/databases/exomiser/current
 
 Examples: 
-- "/databases/exomiser/current/"
+- "~/howard/databases/exomiser/current/"
 
 ## tools
 
@@ -252,65 +252,65 @@ Examples:
 
 BCFTools binary (see https://samtools.github.io/bcftools/).
 
-Default: /tools/bcftools/current/bin/bcftools
+Default: ~/howard/tools/bcftools/current/bin/bcftools
 
 Examples: 
-- "/tools/bcftools/current/bin/bcftools"
+- "~/howard/tools/bcftools/current/bin/bcftools"
 
-- {"bin": "/tools/bcftools/current/bin/bcftools"}
+- {"bin": "~/howard/tools/bcftools/current/bin/bcftools"}
 
 ### tools::bgzip
 
 BGZip binary (see https://samtools.github.io/bcftools/).
 
-Default: /tools/htslib/current/bin/bgzip
+Default: ~/howard/tools/htslib/current/bin/bgzip
 
 Examples: 
-- "/tools/htslib/current/bin/bgzip"
+- "~/howard/tools/htslib/current/bin/bgzip"
 
-- {"bin": "/tools/htslib/current/bin/bgzip"}
+- {"bin": "~/howard/tools/htslib/current/bin/bgzip"}
 
 ### tools::snpeff
 
 snpEff binary (see https://pcingola.github.io/SnpEff/).
 
-Default: /tools/snpeff/current/bin/snpEff.jar
+Default: ~/howard/tools/snpeff/current/bin/snpEff.jar
 
 Examples: 
-- "/tools/snpeff/current/bin/snpEff.jar"
+- "~/howard/tools/snpeff/current/bin/snpEff.jar"
 
-- {"jar": "/tools/snpeff/current/bin/snpEff.jar"}
+- {"jar": "~/howard/tools/snpeff/current/bin/snpEff.jar"}
 
 ### tools::annovar
 
 ANNOVAR perl script (see https://annovar.openbioinformatics.org/).
 
-Default: /tools/annovar/current/bin/table_annovar.pl
+Default: ~/howard/tools/annovar/current/bin/table_annovar.pl
 
 Examples: 
-- "/tools/annovar/current/bin/table_annovar.pl"
+- "~/howard/tools/annovar/current/bin/table_annovar.pl"
 
-- {"perl": "/tools/annovar/current/bin/table_annovar.pl"}
+- {"perl": "~/howard/tools/annovar/current/bin/table_annovar.pl"}
 
 ### tools::exomiser
 
 Exomiser binary (see https://www.sanger.ac.uk/tool/exomiser/).
 
-Default: /tools/exomiser/current/bin/exomiser-cli-13.2.0.jar
+Default: ~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar
 
 Examples: 
-- "/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar"
+- "~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar"
 
-- {"jar": "/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar"}
+- {"jar": "~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar"}
 
 ### tools::java
 
 Java binary (see https://www.java.com).
 
-Default: /tools/java/current/bin/java
+Default: ~/howard/tools/java/current/bin/java
 
 Examples: 
-- "/tools/java/current/bin/java"
+- "~/howard/tools/java/current/bin/java"
 
 - "java"
 
