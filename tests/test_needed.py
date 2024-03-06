@@ -33,7 +33,8 @@ tests_databases_release = "current"
 tests_annotations_folder = tests_databases_folder + f"/annotations/{tests_databases_release}/hg19"
 
 # Tools folder
-tests_tools = "/tools"
+#tests_tools = "~/howard/tools"
+tests_tools = full_path("~/howard/tools")
 
 # Test config
 tests_config = {
@@ -53,8 +54,8 @@ tests_config = {
   "tools": {
     "bcftools": "bcftools",
     "bgzip": "bgzip",
+    "java": "java",
     "snpeff": f"{tests_tools}/snpeff/current/bin/snpEff.jar",
-    "java": "/usr/bin/java",
     "annovar": f"{tests_tools}/annovar/current/bin/table_annovar.pl"
   },
   "verbosity": "debug"

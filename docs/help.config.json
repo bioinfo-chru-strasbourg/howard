@@ -115,20 +115,20 @@
           "Annotation databases folders that contains databases in various format such as Parquet, VCF, duckDB and TSV."
         ],
         "__format": "a list of folder path (without assembly)",
-        "__default": "[\"/databases/annotations/current\"]",
+        "__default": "[\"~/howard/databases/annotations/current\"]",
         "__examples": [
-          "- [\"/databases/annotations/current/\"]",
-          "- [\"/databases/annotations/current/\",\"/databases/dejavu/current/\",\"/databases/dbnsfp/current/\"]"
+          "- [\"~/howard/databases/annotations/current/\"]",
+          "- [\"~/howard/databases/annotations/current/\",\"~/howard/databases/dejavu/current/\",\"~/howard/databases/dbnsfp/current/\"]"
         ]
       },
       "parquet": {
         "__help": ["Annotation databases folders that contains databases in Parquet format."],
         "__format": "a list of folder path (without assembly)",
-        "__default": "[\"/databases/annotations/current\"]",
+        "__default": "[\"~/howard/databases/annotations/current\"]",
         "__examples": [
-          "- [\"/databases/parquet/current/\"]",
-          "- [\"/databases/annotations/current/\"]",
-          "- [\"/databases/parquet/current/\",\"/databases/dejavu/current/\"]"
+          "- [\"~/howard/databases/parquet/current/\"]",
+          "- [\"~/howard/databases/annotations/current/\"]",
+          "- [\"~/howard/databases/parquet/current/\",\"~/howard/databases/dejavu/current/\"]"
         ]
       },
       "bcftools": {
@@ -136,10 +136,10 @@
           "Annotation databases folders for BCFTools annotation."
         ],
         "__format": "a list of folder path (without assembly)",
-        "__default": "[\"/databases/bcftools/current\"]",
+        "__default": "[\"~/howard/databases/bcftools/current\"]",
         "__examples": [
-          "- [\"/databases/bcftools/current/\"]",
-          "- [\"/databases/bcftools/current/\",\"/databases/dejavu/current/\"]"
+          "- [\"~/howard/databases/bcftools/current/\"]",
+          "- [\"~/howard/databases/bcftools/current/\",\"~/howard/databases/dejavu/current/\"]"
         ]
       },
       "annovar": {
@@ -147,10 +147,10 @@
           "Annotation databases folders for Annovar annotation."
         ],
         "__format": "a list of folder path (without assembly)",
-        "__default": "[\"/databases/annovar/current\"]",
+        "__default": "[\"~/howard/databases/annovar/current\"]",
         "__examples": [
-          "- [\"/databases/annovar/current/\"]",
-          "- [\"/databases/annovar/current/\",\"/databases/annovar/homemade/\"]"
+          "- [\"~/howard/databases/annovar/current/\"]",
+          "- [\"~/howard/databases/annovar/current/\",\"~/howard/databases/annovar/homemade/\"]"
         ]
       },
       "snpeff": {
@@ -158,9 +158,9 @@
           "Annotation databases folders for snpEff annotation."
         ],
         "__format": "A folder path (without assembly)",
-        "__default": "/databases/snpeff/current",
+        "__default": "~/howard/databases/snpeff/current",
         "__examples": [
-          "- \"/databases/snpeff/current/\""
+          "- \"~/howard/databases/snpeff/current/\""
         ]
       },
       "exomiser": {
@@ -168,9 +168,9 @@
           "Annotation databases folders for Exomiser annotation."
         ],
         "__format": "A folder path (without assembly)",
-        "__default": "/databases/exomiser/current",
+        "__default": "~/howard/databases/exomiser/current",
         "__examples": [
-          "- \"/databases/exomiser/current/\""
+          "- \"~/howard/databases/exomiser/current/\""
         ]
       }
     }
@@ -188,59 +188,59 @@
       "__help": [
         "BCFTools binary (see https://samtools.github.io/bcftools/)."
       ],
-      "__default": "/tools/bcftools/current/bin/bcftools",
+      "__default": "~/howard/tools/bcftools/current/bin/bcftools",
       "__examples": [
-        "- \"/tools/bcftools/current/bin/bcftools\"",
-        "- {\"bin\": \"/tools/bcftools/current/bin/bcftools\"}"
+        "- \"~/howard/tools/bcftools/current/bin/bcftools\"",
+        "- {\"bin\": \"~/howard/tools/bcftools/current/bin/bcftools\"}"
       ]
     },
     "bgzip": {
       "__help": [
         "BGZip binary (see https://samtools.github.io/bcftools/)."
       ],
-      "__default": "/tools/htslib/current/bin/bgzip",
+      "__default": "~/howard/tools/htslib/current/bin/bgzip",
       "__examples": [
-        "- \"/tools/htslib/current/bin/bgzip\"",
-        "- {\"bin\": \"/tools/htslib/current/bin/bgzip\"}"
+        "- \"~/howard/tools/htslib/current/bin/bgzip\"",
+        "- {\"bin\": \"~/howard/tools/htslib/current/bin/bgzip\"}"
       ]
     },
     "snpeff": {
       "__help": [
         "snpEff binary (see https://pcingola.github.io/SnpEff/)."
       ],
-      "__default": "/tools/snpeff/current/bin/snpEff.jar",
+      "__default": "~/howard/tools/snpeff/current/bin/snpEff.jar",
       "__examples": [
-        "- \"/tools/snpeff/current/bin/snpEff.jar\"",
-        "- {\"jar\": \"/tools/snpeff/current/bin/snpEff.jar\"}"
+        "- \"~/howard/tools/snpeff/current/bin/snpEff.jar\"",
+        "- {\"jar\": \"~/howard/tools/snpeff/current/bin/snpEff.jar\"}"
       ]
     },
     "annovar": {
       "__help": [
         "ANNOVAR perl script (see https://annovar.openbioinformatics.org/)."
       ],
-      "__default": "/tools/annovar/current/bin/table_annovar.pl",
+      "__default": "~/howard/tools/annovar/current/bin/table_annovar.pl",
       "__examples": [
-        "- \"/tools/annovar/current/bin/table_annovar.pl\"",
-        "- {\"perl\": \"/tools/annovar/current/bin/table_annovar.pl\"}"
+        "- \"~/howard/tools/annovar/current/bin/table_annovar.pl\"",
+        "- {\"perl\": \"~/howard/tools/annovar/current/bin/table_annovar.pl\"}"
       ]
     },
     "exomiser": {
       "__help": [
         "Exomiser binary (see https://www.sanger.ac.uk/tool/exomiser/)."
       ],
-      "__default": "/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar",
+      "__default": "~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar",
       "__examples": [
-        "- \"/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar\"",
-        "- {\"jar\": \"/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar\"}"
+        "- \"~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar\"",
+        "- {\"jar\": \"~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar\"}"
       ]
     },
     "java": {
       "__help": [
         "Java binary (see https://www.java.com)."
       ],
-      "__default": "/tools/java/current/bin/java",
+      "__default": "~/howard/tools/java/current/bin/java",
       "__examples": [
-        "- \"/tools/java/current/bin/java\"",
+        "- \"~/howard/tools/java/current/bin/java\"",
         "- \"java\"",
         "- {\"bin\": \"/usr/bin/java\"}"
       ]

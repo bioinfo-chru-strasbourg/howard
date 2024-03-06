@@ -113,7 +113,7 @@ RUN	echo "#[INFO] System Perl packages installation"; \
 
 ENV TOOL_NAME=htslib
 #ENV TOOL_VERSION=1.15.1
-ENV TOOL_VERSION=1.17
+ENV TOOL_VERSION=1.19.1
 ENV TARBALL_LOCATION=https://github.com/samtools/$TOOL_NAME/releases/download/$TOOL_VERSION/
 ENV TARBALL=$TOOL_NAME-$TOOL_VERSION.tar.bz2
 ENV DEST=$TOOLS/$TOOL_NAME/$TOOL_VERSION
@@ -138,7 +138,7 @@ RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
 
 ENV TOOL_NAME=bcftools
 #ENV TOOL_VERSION=1.15.1
-ENV TOOL_VERSION=1.17
+ENV TOOL_VERSION=1.19
 ENV TARBALL_LOCATION=https://github.com/samtools/$TOOL_NAME/releases/download/$TOOL_VERSION/
 ENV TARBALL=$TOOL_NAME-$TOOL_VERSION.tar.bz2
 ENV DEST=$TOOLS/$TOOL_NAME/$TOOL_VERSION
@@ -161,10 +161,11 @@ RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
 # SNPEFF #
 ##########
 
-ENV DATABASES=/databases
 ENV TOOL_NAME=snpeff
-ENV TOOL_VERSION=5.1d
-ENV TARBALL="snpEff_latest_core.zip"
+#ENV TOOL_VERSION=5.1d
+ENV TOOL_VERSION=5.2a
+#ENV TARBALL="snpEff_latest_core.zip"
+ENV TARBALL="snpEff_v5_2a_core.zip"
 ENV TARBALL_LOCATION=https://snpeff.blob.core.windows.net/versions
 ENV TARBALL_FOLDER=snpeff_folder
 ENV TOOL_DATABASE_FOLDER=$DATABASES/snpeff/current
@@ -189,7 +190,6 @@ RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
 # ANNOVAR #
 ###########
 
-ENV DATABASES=/databases
 ENV TOOL_NAME=annovar
 ENV TOOL_VERSION=2020Jun08
 ENV TARBALL_LOCATION=http://www.openbioinformatics.org/annovar/download/0wgxR2rIVP
@@ -282,11 +282,12 @@ RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
 # HOWARD #
 ###########
 
-ENV DATABASES=/databases
 ENV TOOL_NAME=howard
 ENV TOOL_VERSION=devel
 ENV DEST=$TOOLS/$TOOL_NAME/$TOOL_VERSION
 ENV PATH=$DEST/bin:$PATH
+ENV USER_HOME=/root
+ENV HOWARD_HOME=$USER_HOME/howard
 
 # INSTALL
 ADD . $DEST
@@ -298,7 +299,11 @@ RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
 	ln -s $DEST/ /tool && \
     (cd /tool && python -m pip install -e .) && \
     mkdir -p $DEST/bin && \
-    cp $(whereis howard | cut -d" " -f2) $DEST/bin/
+    cp $(whereis howard | cut -d" " -f2) $DEST/bin/ && \
+    mkdir -p $HOWARD_HOME && \
+    ln -s $TOOLS $HOWARD_HOME$TOOLS && \
+    ln -s $DATABASES $HOWARD_HOME$DATABASES && \
+    ln -s $DATA $HOWARD_HOME$DATA
 
 
 

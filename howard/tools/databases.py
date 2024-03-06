@@ -400,6 +400,7 @@ def databases_infos(database_folders:list = [], database_folder_releases:list = 
                         for database in list_of_files:
 
                             # Check if file exists (ERROR woth glob.glob???)
+                            database = full_path(database)
                             if os.path.exists(database):
 
                                 # Format of the database
@@ -501,6 +502,10 @@ def databases_param(databases_infos_dict:dict, output:str = None, output_descrip
     :return: The function `databases_param` returns a dictionary object named "param_stats_show".
     """
     
+    # Full path
+    output = full_path(output)
+    output_description = full_path(output_description)
+
     # Init
     param = {
                 "annotation": {}
@@ -610,6 +615,9 @@ def databases_download_annovar(folder:str = None, files:list = None, assemblies:
     """
 
     log.info(f"Download Annovar databases {assemblies}")
+
+    # Full path
+    folder = full_path(folder)
 
     # Minimum files to download
     files_minimum = ["refGene*"]
@@ -754,6 +762,9 @@ def databases_download_snpeff(folder:str = None, assemblies:list = ["hg19"], con
 
     log.info(f"Download snpEff databases {assemblies}")
 
+    # Full path
+    folder = full_path(folder)
+
     # Java bin and snpEff jar
     snpeff_bin = get_bin(tool="snpeff", bin="snpEff.jar", bin_type="jar", config=config, default_folder=f"{DEFAULT_TOOLS_FOLDER}/snpeff")
     java_bin = get_bin(tool="java", bin="java", bin_type="bin", config=config, default_folder="/usr/bin")
@@ -872,6 +883,9 @@ def databases_download_genomes(assemblies: list, genomes_folder: str = DEFAULT_G
     if not genomes_folder:
         genomes_folder = DEFAULT_GENOME_FOLDER
 
+    # Full path
+    genomes_folder = full_path(genomes_folder)
+
     if os.path.exists(genomes_folder):
         installed_genomes = genomepy.list_installed_genomes(genomes_dir=genomes_folder)
     else:
@@ -963,6 +977,9 @@ def databases_download_refseq(assemblies:list, refseq_folder:str = None, refseq_
     # Default refSeq Folder
     if not refseq_folder:
         refseq_folder = DEFAULT_REFSEQ_FOLDER
+
+    # Full path
+    refseq_folder = full_path(refseq_folder)
 
     # Default refSeq URL
     if not refseq_url:
@@ -1628,9 +1645,15 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
     if not genomes_folder:
         genomes_folder = DEFAULT_GENOME_FOLDER
 
+    # Full path
+    genomes_folder = full_path(genomes_folder)
+
     # Default refSeq Folder
     if not dbnsfp_folder:
         dbnsfp_folder = DEFAULT_DBNSFP_FOLDER
+
+    # Full path
+    dbnsfp_folder = full_path(dbnsfp_folder)
 
     # Default refSeq URL
     if not dbnsfp_url:
@@ -1684,6 +1707,9 @@ def databases_download_dbnsfp(assemblies:list, dbnsfp_folder:str = None, dbnsfp_
         :type annotations: list
         :return: a boolean value indicating whether the header file was successfully created.
         """
+
+        # Full path
+        header_file = full_path(header_file)
 
         # Default VCF header
         default_header_list = [
@@ -2339,6 +2365,9 @@ def databases_download_alphamissense(assemblies:list, alphamissense_folder:str =
     # Log
     log.info(f"Download AlphaMissense {assemblies}")
 
+    # Full path
+    alphamissense_folder = full_path(alphamissense_folder)
+
     for assembly in assemblies:
 
         # Files for AlphaMissense
@@ -2439,6 +2468,11 @@ def databases_download_exomiser(assemblies:list, exomiser_folder:str = DEFAULT_E
 
     # Variables
     transcript_source_default = "refseq"
+    exomiser_release_default = "2109"
+
+    # Full Path
+    exomiser_folder = full_path(exomiser_folder)
+    exomiser_application_properties = full_path(exomiser_application_properties)
 
     # Create folder if not exists
     if not os.path.exists(exomiser_folder):
@@ -2468,12 +2502,12 @@ def databases_download_exomiser(assemblies:list, exomiser_folder:str = DEFAULT_E
         log.info(f"Download Exomiser ['{assembly}']")
 
         if not exomiser_release or exomiser_release.lower() in ["default", "auto", "config"]:
-            exomiser_release_found = exomiser_application_properties_dict.get(f"exomiser.{assembly}.data-version", "2109")
+            exomiser_release_found = exomiser_application_properties_dict.get(f"exomiser.{assembly}.data-version", exomiser_release_default)
         else:
             exomiser_release_found = exomiser_release
 
         if not exomiser_phenotype_release or exomiser_phenotype_release.lower() in ["default", "auto", "config"]:
-            exomiser_phenotype_release_found = exomiser_application_properties_dict.get(f"exomiser.phenotype.data-version", exomiser_release)
+            exomiser_phenotype_release_found = exomiser_application_properties_dict.get(f"exomiser.phenotype.data-version", exomiser_release_found)
         else:
             exomiser_phenotype_release_found = exomiser_phenotype_release
 
@@ -2611,9 +2645,14 @@ def databases_download_exomiser(assemblies:list, exomiser_folder:str = DEFAULT_E
         if exomiser_cadd_release_found and exomiser_application_properties_dict.get(f"exomiser.{assembly}.cadd-snv-path", None) and exomiser_application_properties_dict.get(f"exomiser.{assembly}.cadd-in-del-path", None) :
             exomiser_cadd_download = True
 
-        exomiser_assembly_cadd_folder = os.path.join(exomiser_assembly_folder, "cadd", exomiser_cadd_release_found)
-        exomiser_cadd_snv_path = os.path.join(exomiser_assembly_cadd_folder, exomiser_cadd_url_snv_file)
-        exomiser_cadd_indel_path = os.path.join(exomiser_assembly_cadd_folder, exomiser_cadd_url_indel_file)
+        if exomiser_cadd_release_found:
+            exomiser_assembly_cadd_folder = os.path.join(exomiser_assembly_folder, "cadd", exomiser_cadd_release_found)
+            exomiser_cadd_snv_path = os.path.join(exomiser_assembly_cadd_folder, exomiser_cadd_url_snv_file)
+            exomiser_cadd_indel_path = os.path.join(exomiser_assembly_cadd_folder, exomiser_cadd_url_indel_file)
+        else:
+            exomiser_cadd_snv_path = None
+            exomiser_cadd_indel_path = None
+            exomiser_cadd_download = False
         
         if exomiser_cadd_download and (not os.path.exists(exomiser_cadd_snv_path) or not os.path.exists(exomiser_cadd_indel_path)):
 
@@ -2719,6 +2758,10 @@ def databases_download_dbsnp(assemblies:list, dbsnp_folder:str = DEFAULT_DBSNP_F
     if not genomes_folder:
         genomes_folder = DEFAULT_GENOME_FOLDER
     log.debug(f"genomes_folder: {genomes_folder}")
+
+    # Full path
+    genomes_folder = full_path(genomes_folder)
+    dbsnp_folder = full_path(dbsnp_folder)
 
     # Default release
     dbsnp_release_default_found = None
@@ -3054,6 +3097,11 @@ def databases_download_hgmd(assemblies:list, hgmd_file:str, hgmd_folder:str = DE
         log.error("Uniq assembly is mandatory")
         raise ValueError("Uniq assembly is mandatory")
 
+    # Full path
+    hgmd_file = full_path(hgmd_file)
+    hgmd_folder = full_path(hgmd_folder)
+    
+
     # Check HGMD file
     if not hgmd_file or not os.path.exists(hgmd_file):
         log.error(f"HGMD file DOES NOT exist '{hgmd_file}'")
@@ -3065,6 +3113,9 @@ def databases_download_hgmd(assemblies:list, hgmd_file:str, hgmd_folder:str = DE
     # genomes folder
     if not genomes_folder:
         genomes_folder = DEFAULT_GENOME_FOLDER
+
+    # Full path
+    genomes_folder = full_path(genomes_folder)
 
     # Assembly
     assembly = assemblies[0]

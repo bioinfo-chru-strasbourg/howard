@@ -118,8 +118,8 @@ Only for compatible formats (tab-delimiter format as TSV or BED).
 default: False
 
 </pre><pre>--parquet_partitions=&lt;parquet partitions&gt;
-Parquet partitioning using huve (only for Parquet export format).
-This option is is faster parallel writing, but memory consuming.
+Parquet partitioning using hive (available for any format).
+This option is faster parallel writing, but memory consuming.
 Use &#x27;None&#x27; (string) for NO partition but split parquet files into a folder
 examples: &#x27;#CHROM&#x27;, &#x27;#CHROM,REF&#x27;, &#x27;None&#x27;
 default: None
@@ -350,19 +350,19 @@ refGene annotation file
 </pre><pre>--refseqlink=&lt;refSeqLink&gt;
 refSeqLink annotation file
 
-</pre><pre>--genomes-folder=&lt;genomes&gt; (/databases/genomes/current)
+</pre><pre>--genomes-folder=&lt;genomes&gt; (/Users/lebechea/howard/databases/genomes/current)
 Folder containing genomes
-Default: /databases/genomes/current
+Default: /Users/lebechea/howard/databases/genomes/current
 
 </pre><H2>DATABASES</H2>
-<p>Download databases and needed files for howard and associated tools</p>Usage examples:<br>&nbsp;&nbsp;&nbsp;howard databases --assembly=hg19 --download-genomes=/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' --download-annovar=/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' --download-snpeff=/databases/snpeff/current --download-refseq=/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-dbnsfp=/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases --download-alphamissense=/databases/alphamissense/current --download-exomiser=/databases/exomiser/current --download-dbsnp=/databases/dbsnp/current --download-dbsnp-vcf --threads=8<br>&nbsp;&nbsp;&nbsp;howard databases --generate-param=/tmp/param.json --generate-param-description=/tmp/test.description.json --generate-param-formats=parquet <br>Notes:<br>&nbsp;&nbsp;&nbsp;- Downloading databases can take a while, depending on network, threads and memory<br>&nbsp;&nbsp;&nbsp;- Proxy: Beware of network and proxy configuration<br>&nbsp;&nbsp;&nbsp;- dbNSFP download: More threads, more memory usage (8 threads ~ 16Gb, 24 threads ~ 32Gb)<br><H3>Main options</H3>
+<p>Download databases and needed files for howard and associated tools</p>Usage examples:<br>&nbsp;&nbsp;&nbsp;howard databases --assembly=hg19 --download-genomes=~/howard/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' --download-annovar=~/howard/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' --download-snpeff=~/howard/databases/snpeff/current --download-refseq=~/howard/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-dbnsfp=~/howard/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases --download-alphamissense=~/howard/databases/alphamissense/current --download-exomiser=~/howard/databases/exomiser/current --download-dbsnp=~/howard/databases/dbsnp/current --download-dbsnp-vcf --threads=8<br>&nbsp;&nbsp;&nbsp;howard databases --generate-param=/tmp/param.json --generate-param-description=/tmp/test.description.json --generate-param-formats=parquet <br>Notes:<br>&nbsp;&nbsp;&nbsp;- Downloading databases can take a while, depending on network, threads and memory<br>&nbsp;&nbsp;&nbsp;- Proxy: Beware of network and proxy configuration<br>&nbsp;&nbsp;&nbsp;- dbNSFP download: More threads, more memory usage (8 threads ~ 16Gb, 24 threads ~ 32Gb)<br><H3>Main options</H3>
 <pre>--assembly=&lt;assembly&gt; (hg19)
 Default assembly
 Default: &#x27;hg19&#x27;
 
-</pre><pre>--genomes-folder=&lt;genomes&gt; (/databases/genomes/current)
+</pre><pre>--genomes-folder=&lt;genomes&gt; (/Users/lebechea/howard/databases/genomes/current)
 Folder containing genomes
-Default: /databases/genomes/current
+Default: /Users/lebechea/howard/databases/genomes/current
 
 </pre><H3>Genomes</H3>
 <pre>--download-genomes=&lt;genomes&gt;
@@ -514,11 +514,14 @@ Default: &#x27;http://data.monarchinitiative.org/exomiser&#x27;
 </pre><pre>--download-exomiser-release=&lt;Exomiser release&gt;
 Release of Exomiser data to download.
 If &quot;default&quot;, &quot;auto&quot;, or &quot;config&quot;, retrieve from Application Properties file.
+If not provided (None), from Application Properties file (Exomiser data-version) 
+   or default &#x27;2109&#x27;
 Default: None
 
 </pre><pre>--download-exomiser-phenotype-release=&lt;Exomiser phenoptye release&gt;
 Release of Exomiser phenotype to download.
-If not provided, retrieve from Application Properties file or Exomiser data release
+If not provided (None), from Application Properties file (Exomiser Phenotype data-version)
+   or Exomiser release
 Default: None
 
 </pre><pre>--download-exomiser-remm-release=&lt;Exomiser remm release&gt;
@@ -638,7 +641,7 @@ Generate parameter file with BCFTools annotation for allowed formats
 Allowed formats with BCFTools: &#x27;vcf&#x27;, &#x27;bed&#x27;
 
 </pre><H2>FROM_ANNOVAR</H2>
-<p>(beta) Formatting Annovar database file to other format (VCF and Parquet). Exported Parquet file includes INFO/tags columns as VCF INFO columns had been exploded</p>Usage examples:<br>&nbsp;&nbsp;&nbsp;howard from_annovar --input=tests/databases/others/hg19_nci60.txt --output=/tmp/nci60.from_annovar.vcf.gz --to_parquet=/tmp/nci60.from_annovar.parquet --annovar-code=nci60 --genome=/databases/genomes/current/hg19.fa --config=/tool/config/config.json --threads=8 <H3>Main options</H3>
+<p>(beta) Formatting Annovar database file to other format (VCF and Parquet). Exported Parquet file includes INFO/tags columns as VCF INFO columns had been exploded</p>Usage examples:<br>&nbsp;&nbsp;&nbsp;howard from_annovar --input=tests/databases/others/hg19_nci60.txt --output=/tmp/nci60.from_annovar.vcf.gz --to_parquet=/tmp/nci60.from_annovar.parquet --annovar-code=nci60 --genome=~/howard/databases/genomes/current/hg19.fa --config=/tool/config/config.json --threads=8 <H3>Main options</H3>
 <pre>--input=&lt;input&gt; | required
 Input file path
 Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB

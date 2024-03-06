@@ -37,7 +37,7 @@ def test_get_bin():
     # Test java
     config = {"tools": {"java": {"bin": "java"}}}
     java_bin = get_bin(tool="java", bin="java", bin_type="bin", config=config, default_folder="/usr/bin")
-    assert java_bin == "java"
+    assert java_bin == "/usr/bin/java"
 
     # Config
     tool_name = "snpeff"
@@ -53,7 +53,7 @@ def test_get_bin():
     assert os.path.basename(get_bin(bin=tool_bin, config=config)) == tool_bin
 
     # Test with config and tool name but config bin does NOT exists
-    config_bad = {"tools": {tool_name: "/tools/snpeff/5.1d/bin/NOT_snpEff.jar"}}
+    config_bad = {"tools": {tool_name: "~/howard/tools/snpeff/5.1d/bin/NOT_snpEff.jar"}}
     assert get_bin(tool=tool_name, config=config_bad) == None
 
     # Test with config with tool type, and tool name but config bin does NOT exists
@@ -73,7 +73,7 @@ def test_get_bin():
     assert get_bin() == None
 
     # Test with no config, tool bin and default tool folder
-    assert os.path.basename(get_bin(bin=tool_bin, default_folder="/tools")) == tool_bin
+    assert os.path.basename(get_bin(bin=tool_bin, default_folder=full_path("~/howard/tools"))) == tool_bin
 
 
 def test_download_file():

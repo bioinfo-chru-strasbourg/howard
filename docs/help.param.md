@@ -95,7 +95,7 @@ Examples:
    }
 }
 
-# Annotation with dbNSFP REVEL annotation (as a VCF file) within configured annotation databases folders (default: '/databases/annotations/current') and assembly (default: 'hg19')
+# Annotation with dbNSFP REVEL annotation (as a VCF file) within configured annotation databases folders (default: '~/howard/databases/annotations/current') and assembly (default: 'hg19')
 "annotations": {
    "dbnsfp42a.REVEL.vcf.gz": {
       "REVEL_score": null,
@@ -103,7 +103,7 @@ Examples:
    }
 }
 
-# Annotation with dbNSFP REVEL annotation (as a VCF file) within configured annotation databases folders (default: '/databases/annotations/current') and assembly (default: 'hg19')
+# Annotation with dbNSFP REVEL annotation (as a VCF file) within configured annotation databases folders (default: '~/howard/databases/annotations/current') and assembly (default: 'hg19')
 "annotations": {
    "dbnsfp42a.REVEL.vcf.gz": {
       "REVEL_score": null,
@@ -121,18 +121,18 @@ Examples:
 # Annotation with multiple Annovar databases, with fields selection, and Annovar options
 "annovar": {
    "annotations": {
-      "clinvar_20221231": {
-         "CLNSIG": "ClinVar_class"
-         "CLNDN": "ClinVar_desease",
+      "annotation1": {
+         "field1": null
+         "field2": "field2_renamed",
          ...
       },
-      "cosmic70": {
+      "annotation2": {
          "INFO": null
       },
       ...
    }
    "options": {
-      "splicing_threshold": 3,
+      "option1": "value1",
       ...,
    }
 }
@@ -168,6 +168,7 @@ Examples:
 "options": {
    "splicing_threshold": 3
    "argument": "'-hgvs'"
+   }
 }
 ```
 

@@ -236,8 +236,8 @@ default: False
 ```
 --parquet_partitions=<parquet partitions>
 
-Parquet partitioning using huve (only for Parquet export format).
-This option is is faster parallel writing, but memory consuming.
+Parquet partitioning using hive (available for any format).
+This option is faster parallel writing, but memory consuming.
 Use 'None' (string) for NO partition but split parquet files into a folder
 examples: '#CHROM', '#CHROM,REF', 'None'
 default: None
@@ -667,10 +667,10 @@ refSeqLink annotation file
 ```
 
 ```
---genomes-folder=<genomes> (/databases/genomes/current)
+--genomes-folder=<genomes> (/Users/lebechea/howard/databases/genomes/current)
 
 Folder containing genomes
-Default: /databases/genomes/current
+Default: /Users/lebechea/howard/databases/genomes/current
 ```
 
 
@@ -680,7 +680,7 @@ Download databases and needed files for howard and associated tools
 
 Usage examples:
 
-> howard databases --assembly=hg19 --download-genomes=/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' --download-annovar=/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' --download-snpeff=/databases/snpeff/current --download-refseq=/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-dbnsfp=/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases --download-alphamissense=/databases/alphamissense/current --download-exomiser=/databases/exomiser/current --download-dbsnp=/databases/dbsnp/current --download-dbsnp-vcf --threads=8
+> howard databases --assembly=hg19 --download-genomes=~/howard/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' --download-annovar=~/howard/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' --download-snpeff=~/howard/databases/snpeff/current --download-refseq=~/howard/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-dbnsfp=~/howard/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases --download-alphamissense=~/howard/databases/alphamissense/current --download-exomiser=~/howard/databases/exomiser/current --download-dbsnp=~/howard/databases/dbsnp/current --download-dbsnp-vcf --threads=8
 
 > howard databases --generate-param=/tmp/param.json --generate-param-description=/tmp/test.description.json --generate-param-formats=parquet 
 
@@ -703,10 +703,10 @@ Default: 'hg19'
 ```
 
 ```
---genomes-folder=<genomes> (/databases/genomes/current)
+--genomes-folder=<genomes> (/Users/lebechea/howard/databases/genomes/current)
 
 Folder containing genomes
-Default: /databases/genomes/current
+Default: /Users/lebechea/howard/databases/genomes/current
 ```
 
 ### Genomes
@@ -960,6 +960,8 @@ Default: 'http://data.monarchinitiative.org/exomiser'
 
 Release of Exomiser data to download.
 If "default", "auto", or "config", retrieve from Application Properties file.
+If not provided (None), from Application Properties file (Exomiser data-version) 
+   or default '2109'
 Default: None
 ```
 
@@ -967,7 +969,8 @@ Default: None
 --download-exomiser-phenotype-release=<Exomiser phenoptye release>
 
 Release of Exomiser phenotype to download.
-If not provided, retrieve from Application Properties file or Exomiser data release
+If not provided (None), from Application Properties file (Exomiser Phenotype data-version)
+   or Exomiser release
 Default: None
 ```
 
@@ -1163,7 +1166,7 @@ Allowed formats with BCFTools: 'vcf', 'bed'
 
 Usage examples:
 
-> howard from_annovar --input=tests/databases/others/hg19_nci60.txt --output=/tmp/nci60.from_annovar.vcf.gz --to_parquet=/tmp/nci60.from_annovar.parquet --annovar-code=nci60 --genome=/databases/genomes/current/hg19.fa --config=/tool/config/config.json --threads=8 
+> howard from_annovar --input=tests/databases/others/hg19_nci60.txt --output=/tmp/nci60.from_annovar.vcf.gz --to_parquet=/tmp/nci60.from_annovar.parquet --annovar-code=nci60 --genome=~/howard/databases/genomes/current/hg19.fa --config=/tool/config/config.json --threads=8 
 
 ### Main options
 ```

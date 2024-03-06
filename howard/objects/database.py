@@ -226,6 +226,9 @@ class Database:
         :return: a list of header lines of a VCF file.
         """
         
+        # Full path
+        header_file = full_path(header_file)
+
         if not header_file:
             return []
         
@@ -385,6 +388,7 @@ class Database:
         database_header_file = None
         
         # header in extra header file
+        database = full_path(database)
         if os.path.exists(f"{database}.hdr"):
             database_header_file = f"{database}.hdr"
 
@@ -576,6 +580,10 @@ class Database:
         :type header_file: str
         """
         
+        # Full path
+        database = full_path(database)
+        header_file = full_path(header_file)
+
         if header:
 
             self.header = header
@@ -696,6 +704,9 @@ class Database:
         that was generated or None if no header file was generated.
         """
 
+        # Full path
+        header_file = full_path(header_file)
+
         if not header_file:
             header_file = self.header_file
 
@@ -813,6 +824,7 @@ class Database:
                 if  assembly:
                     for databases_folder in databases_folders:
                             
+                        databases_folder = full_path(databases_folder)
                         database_file_check = f"{databases_folder}/{assembly}/{database}{format_extension}"
                         
                         # Log
@@ -833,7 +845,7 @@ class Database:
                     # find in folders
                     for databases_folder in databases_folders:
                         
-                        #database_file_check = os.path.join(databases_folder, f"{database}{format_extension}")
+                        databases_folder = full_path(databases_folder)
                         database_file_check = f"{databases_folder}/{database}{format_extension}"
 
                         # Log
@@ -926,6 +938,9 @@ class Database:
         method and checks if it exists using the `os.path.exists()` function.
         """
         
+        # Full path
+        database = full_path(database)
+
         if not database:
             database = self.get_database()
         
@@ -1880,6 +1895,11 @@ class Database:
         :type compresslevel: int (optional)
         :return: a boolean value indicating whether the export was successful or not.
         """
+
+        # Full path
+        output_database = full_path(output_database)
+        output_header = full_path(output_header)
+        database = full_path(database)
 
         # Database
         if not database:
