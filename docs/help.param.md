@@ -8,16 +8,23 @@ HOWARD Parameters JSON file defined parameters to process annotations, prioritiz
    - [annotations](#annotations)
       - [parquet](#annotationsparquet)
          - [annotations](#annotationsparquetannotations)
+         - [update](#annotationsparquetupdate)
+      - [bcftools](#annotationsbcftools)
+         - [annotations](#annotationsbcftoolsannotations)
       - [annovar](#annotationsannovar)
          - [annotations](#annotationsannovarannotations)
          - [options](#annotationsannovaroptions)
+      - [snpeff](#annotationssnpeff)
+         - [options](#annotationssnpeffoptions)
+      - [exomiser](#annotationsexomiser)
+         - [release](#annotationsexomiserrelease)
 
 
 ## annotations
 
 Annotation process using HOWARD algorithms or external tools.
 
-For HOWARD Parquet algorithm, specify the list of database files available (formats such as Parquet, VCF, TSV, duckDB, JSON). This parameter enables users to select specific database fields and optionally rename them. Ue 'INFO' keyword to select all fields within the database. If a full path is not provided, the system will automatically detect files within database folders (see Configuration doc) and assembly (see Parameter option).
+For HOWARD Parquet algorithm, specify the list of database files available (formats such as Parquet, VCF, TSV, duckDB, JSON). This parameter enables users to select specific database fields and optionally rename them. Use 'INFO' keyword to select all fields within the database. If a full path is not provided, the system will automatically detect files within database folders (see Configuration doc) and assembly (see Parameter option).
 
 For external tools, such as Annovar, snpEff and Exomiser, specify parameters such as annotation keywords (Annovar) and options (depending on the tool).
 
@@ -46,7 +53,7 @@ Examples:
 
 ### annotations::parquet
 
-Annotation process using HOWARD parquet algorithm. Provide a list of database files and annotation fields
+Annotation process using HOWARD parquet algorithm. Provide a list of database files and annotation fields.
 
 Examples: 
 ```
@@ -103,6 +110,69 @@ Examples:
    }
 }
 
+```
+
+#### annotations::parquet::update
+
+Update option for Parquet annotation. If True, annotation fields will be updated if exists. If False, annotation fields will not change if it already exists. These options will be applied to all annotation databases.
+
+Examples: 
+```
+# Apply update on all annotation fields for all databases.
+"update": True
+```
+
+### annotations::bcftools
+
+Annotation process using BCFTools. Provide a list of database files and annotation fields.
+
+Examples: 
+```
+# Annotation with multiple databases in multiple formats
+"parquet": {
+   "bcftools": {
+      "/path/to/database1.vcf.gz": {
+         "field1": null
+         "field2": "field2_renamed",
+         ...
+      },
+      "database2.bed.gz": {
+         ...
+      },
+      ...
+   }
+}
+```
+
+#### annotations::bcftools::annotations
+
+Specify the list of database files in formats VCF or BED. Files need to be compressed and indexed.
+
+Examples: 
+```
+# Annotation with dbSNP database  with all fields
+"annotations": {
+   "tests/databases/annotations/current/hg19/avsnp150.vcf.gz": {
+      "INFO": null
+   }
+}
+
+# Annotation with dbNSFP (only PolyPhen, ClinVar and REVEL score), and rename fields
+"annotations": {
+   "tests/databases/annotations/current/hg19/dbnsfp42a.vcf.gz": {
+      "Polyphen2_HDIV_pred": "PolyPhen",
+      "ClinPred_pred": "ClinVar",
+      "REVEL_score": null
+   }
+}
+
+# Annotation with refSeq as a BED file
+"annotations": {
+   "tests/databases/annotations/current/hg19/refGene.bed": {
+      "INFO": null
+   }
+}
+
 # Annotation with dbNSFP REVEL annotation (as a VCF file) within configured annotation databases folders (default: '~/howard/databases/annotations/current') and assembly (default: 'hg19')
 "annotations": {
    "dbnsfp42a.REVEL.vcf.gz": {
@@ -110,11 +180,12 @@ Examples:
       "REVEL_rankscore": null
    }
 }
+
 ```
 
 ### annotations::annovar
 
-Annotation process using Annovar tool. Provides a list of keywords to select Annovar databases, and defines Annovar options (see Annovar documentation).
+Annotation process using Annovar tool. Provides a list of keywords to select Annovar databases, and defines Annovar options (see [Annovar documentation](https://annovar.openbioinformatics.org)).
 
 Examples: 
 ```
@@ -140,7 +211,7 @@ Examples:
 
 #### annotations::annovar::annotations
 
-List of keywords refering to Annovar databases (see Annovar documentation), with a list of selected fields for each of them (rename available)
+List of keywords refering to Annovar databases (see [Annovar Databases documentation](https://annovar.openbioinformatics.org/en/latest/user-guide/download/)), with a list of selected fields for each of them (rename available)
 
 Examples: 
 ```
@@ -160,7 +231,7 @@ Examples:
 
 #### annotations::annovar::options
 
-List of options available with Annovar tool (see Annovar documentation). As example, these options allows to define splicing threashold or HGVS annotation with refGene database
+List of options available with Annovar tool (see Annovar documentation). As example, these options allows to define splicing threshold or HGVS annotation with refGene database
 
 Examples: 
 ```
@@ -170,5 +241,61 @@ Examples:
    "argument": "'-hgvs'"
    }
 }
+```
+
+### annotations::snpeff
+
+Annotation process using snpEff tool and options (see [snpEff documentation](https://pcingola.github.io/SnpEff/snpeff/commandline/)).
+
+Examples: 
+```
+# Annotation with snpEff databases, with options for HGVS annotation and additional tags.
+"snpeff": {
+   "options": {
+      " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "}
+   }
+}
+```
+
+#### annotations::snpeff::options
+
+String (as command line) of options available such as:
+
+ - filters on variants (regions filter, specific changes as intronic or downstream)
+
+ - annotation (e.g. HGVS, loss of function) 
+
+ - database (e.g. only protein coding transcripts, splice sites size)
+
+Examples: 
+```
+# Annotation with snpEff databases, with options to generate HGVS annotation, specify to not shift variants according to HGVS notation, define splice sites size to 3, add loss of function (LOF), Nonsense mediated decay and OICR tags.
+"options": {
+   " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "}
+}
+```
+
+### annotations::exomiser
+
+Annotation process using Exomiser tool and options (see [Exomiser website documentation](https://www.sanger.ac.uk/tool/exomiser/)).
+
+Examples: 
+```
+# Annotation with Exomiser, using database relse '2109', transcripts source as UCSC and a list of HPO terms.
+"exomiser": {
+   "release": "2109"
+   "transcript_source": "refseq"
+   "hpo": ['HP:0001156', 'HP:0001363', 'HP:0011304', 'HP:0010055']
+}
+```
+
+#### annotations::exomiser::release
+
+Release of Exomiser database. This option replace the release variable in 'application.properties' file (see 'exomiser_application_properties' option). The release will be downloaded if it is not available locally. 
+
+Examples: 
+```
+# Annotation with release '2109' of Exomiser database.
+"release": "2109"
 ```
 

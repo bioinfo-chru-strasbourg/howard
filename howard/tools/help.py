@@ -83,6 +83,11 @@ def help(args:argparse) -> None:
         f.write(help_content)
         f.close()
 
+        # Generate Table Of Content (if marker <!--TOC-->)
+        import md_toc
+        toc = md_toc.build_toc(help_file)
+        md_toc.write_string_on_file_between_markers(help_file, toc, '<!--TOC-->')
+
     # HTML file
     if "help_html" in args and args.help_html:
 

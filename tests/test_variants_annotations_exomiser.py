@@ -55,7 +55,7 @@ def test_annotation_exomiser():
             "annotation":
                 {
                     "exomiser": {
-                        "hpo": ['0001156', '0001363', '0011304', '0010055'],
+                        "hpo": ['HP:0001156', '0001363', '0011304', '0010055'],
                         "transcript_source": "refseq",
                         "release": "2109"
                     }

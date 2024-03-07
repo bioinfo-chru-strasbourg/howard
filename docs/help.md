@@ -1,5 +1,57 @@
 # HOWARD Help
 
+<!--TOC-->
+
+- [HOWARD Help](#howard-help)
+  - [QUERY tool](#query-tool)
+    - [Main options](#main-options)
+    - [Explode infos](#explode-infos)
+    - [Query](#query)
+    - [Output](#output)
+  - [STATS tool](#stats-tool)
+    - [Main options](#main-options-1)
+  - [CONVERT tool](#convert-tool)
+    - [Main options](#main-options-2)
+  - [ANNOTATION tool](#annotation-tool)
+    - [Main options](#main-options-3)
+  - [CALCULATION tool](#calculation-tool)
+    - [Main options](#main-options-4)
+    - [NOMEN calculation](#nomen-calculation)
+    - [TRIO calculation](#trio-calculation)
+  - [PRIORITIZATION tool](#prioritization-tool)
+    - [Main options](#main-options-5)
+    - [Prioritization](#prioritization)
+  - [PROCESS tool](#process-tool)
+    - [Main options](#main-options-6)
+    - [Quick Processes](#quick-processes)
+  - [HGVS tool](#hgvs-tool)
+    - [Main options](#main-options-7)
+    - [HGVS](#hgvs)
+    - [Databases](#databases)
+  - [DATABASES tool](#databases-tool)
+    - [Main options](#main-options-8)
+    - [Genomes](#genomes)
+    - [snpEff](#snpeff)
+    - [Annovar](#annovar)
+    - [refSeq](#refseq)
+    - [dbNSFP](#dbnsfp)
+    - [AlphaMissense](#alphamissense)
+    - [Exomiser](#exomiser)
+    - [dbSNP](#dbsnp)
+    - [HGMD](#hgmd)
+    - [Parameters file](#parameters-file)
+  - [FROM_ANNOVAR tool](#from_annovar-tool)
+    - [Main options](#main-options-9)
+    - [Annovar](#annovar-1)
+    - [Parquet](#parquet)
+    - [Modes](#modes)
+  - [GUI tool](#gui-tool)
+  - [HELP tool](#help-tool)
+    - [Main options](#main-options-10)
+  - [Shared arguments](#shared-arguments)
+
+<!--TOC-->
+
 HOWARD:1.0.0
 
 Highly Open and Valuable tool for Variant Annotation & Ranking toward genetic Discovery
