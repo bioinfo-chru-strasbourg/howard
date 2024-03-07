@@ -347,6 +347,22 @@ Default assembly
 Default: 'hg19'
 ```
 
+```
+--annotations_update
+
+Update option for annotation (Only for Parquet annotation).
+If True, annotation fields will be removed and re-annotated.
+These options will be applied to all annotation databases.default: False
+```
+
+```
+--annotations_append
+
+Append option for annotation (Only for Parquet annotation).
+If True, annotation fields will be annotated only if not annotation exists for the variant.
+These options will be applied to all annotation databases.default: False
+```
+
 
 
 ## CALCULATION tool

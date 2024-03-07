@@ -8,7 +8,6 @@ HOWARD Parameters JSON file defined parameters to process annotations, prioritiz
    - [annotations](#annotations)
       - [parquet](#annotationsparquet)
          - [annotations](#annotationsparquetannotations)
-         - [update](#annotationsparquetupdate)
       - [bcftools](#annotationsbcftools)
          - [annotations](#annotationsbcftoolsannotations)
       - [annovar](#annotationsannovar)
@@ -18,6 +17,9 @@ HOWARD Parameters JSON file defined parameters to process annotations, prioritiz
          - [options](#annotationssnpeffoptions)
       - [exomiser](#annotationsexomiser)
          - [release](#annotationsexomiserrelease)
+      - [options](#annotationsoptions)
+         - [update](#annotationsoptionsupdate)
+         - [append](#annotationsoptionsappend)
 
 
 ## annotations
@@ -110,16 +112,6 @@ Examples:
    }
 }
 
-```
-
-#### annotations::parquet::update
-
-Update option for Parquet annotation. If True, annotation fields will be updated if exists. If False, annotation fields will not change if it already exists. These options will be applied to all annotation databases.
-
-Examples: 
-```
-# Apply update on all annotation fields for all databases.
-"update": True
 ```
 
 ### annotations::bcftools
@@ -270,9 +262,7 @@ String (as command line) of options available such as:
 Examples: 
 ```
 # Annotation with snpEff databases, with options to generate HGVS annotation, specify to not shift variants according to HGVS notation, define splice sites size to 3, add loss of function (LOF), Nonsense mediated decay and OICR tags.
-"options": {
-   " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "}
-}
+"options": " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "
 ```
 
 ### annotations::exomiser
@@ -297,5 +287,37 @@ Examples:
 ```
 # Annotation with release '2109' of Exomiser database.
 "release": "2109"
+```
+
+### annotations::options
+
+Options for annotations, such as annotation strategy (skip if exists, update, append)
+
+Examples: 
+```
+# Annotation with Parquet databases, with update annotation strategy.
+"options": {
+   "update": True
+}
+```
+
+#### annotations::options::update
+
+Update option for annotation (only for Parquet annotation). If True, annotation fields will be removed and re-annotated. These options will be applied to all annotation databases.
+
+Examples: 
+```
+# Apply update on all annotation fields for all databases.
+"update": True
+```
+
+#### annotations::options::append
+
+Append option for annotation (only for Parquet annotation). If True, annotation fields will be annotated only if not annotation exists for the variant. These options will be applied to all annotation databases.
+
+Examples: 
+```
+# Apply append on all annotation fields for all databases.
+"append": True
 ```
 

@@ -98,6 +98,8 @@ arguments = {
                 "widget": "FileSaver"
             }
         },
+
+        # Annotations
         "annotations": {
             "metavar": "annotations",
             "help": """Annotation with databases files, or with tools\n"""
@@ -113,6 +115,24 @@ arguments = {
                 "widget": "MultiFileChooser"
             }
         },
+        "annotations_update": {
+            "help": """Update option for annotation (Only for Parquet annotation).\n"""
+                    """If True, annotation fields will be removed and re-annotated.\n"""
+                    """These options will be applied to all annotation databases."""
+                    """default: False""",
+            "action": "store_true",
+            "default": False
+        },
+        "annotations_append": {
+            "help": """Append option for annotation (Only for Parquet annotation).\n"""
+                    """If True, annotation fields will be annotated only if not annotation exists for the variant.\n"""
+                    """These options will be applied to all annotation databases."""
+                    """default: False""",
+            "action": "store_true",
+            "default": False
+        },
+
+        # Calculations
         "calculations": {
             "metavar": "operations",
             "help": """Calculations on genetic variants information and genotype information\n"""
@@ -1162,7 +1182,9 @@ commands_arguments = {
                 "input": True,
                 "output": True,
                 "annotations": True,
-                "assembly": False
+                "assembly": False,
+                "annotations_update": False,
+                "annotations_append": False
             }
         }
     },
