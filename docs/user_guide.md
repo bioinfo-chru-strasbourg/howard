@@ -714,6 +714,17 @@ A BED file can be filtered using positions or other columns such as gene names, 
 > 1   chr1  768250  768253
 > ```
 
+### Extract variants
+
+In order to extract variants from a VCF file, without annotations and samples, use a query to construct the VCF.
+
+> Example: Extract variants onnly
+> ```
+> howard query \
+>    --input=tests/data/example.vcf.gz \
+>    --output=/tmp/example.vcf.gz \
+>    --query="SELECT \"#CHROM\", POS, ID, REF, ALT, QUAL, FILTER, '.' AS INFO \
+>             FROM variants"
 
 ## Annotation
 
@@ -841,7 +852,7 @@ For snpEff tool, use HOWARD keyword `snpeff`. No options are available for quick
 
 ##### Exomiser Annotation
 
-For Exomiser tool, use HOWARD keyword `exomiser`. A list of options can be provided as key-value format. More options are available using [HOWARD Parameters JSON](help.param.md) file.
+For Exomiser tool, use HOWARD keyword `exomiser`. A list of options can be provided as key-value format, such as exomiser release, a preset (pre-configured options), source of transcripts (e.g. 'refseq', 'ucsc'), a llist of HPO terms (do not use ':' separator, e.g. '0001156', 'HP0001156', 'hpo0001156'). More options are available using [HOWARD Parameters JSON](help.param.md) file.
 
 > Example: VCF annotation with Exomiser (exome preset, list of HPO terms, transcript as refseq and release 2109)
 > ```

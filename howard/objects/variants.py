@@ -2591,13 +2591,20 @@ class Variants:
             threads = self.get_threads()
         log.debug("Threads: "+str(threads))
 
+        # Config
+        config = self.get_config()
+        log.debug("Config: " + str(config))
+
         # DEBUG
         delete_tmp = True
         if self.get_config().get("verbosity", "warning") in ["debug"]:
             delete_tmp = False
             log.debug("Delete tmp files/folders: "+str(delete_tmp))
 
-        # Config
+        # Config - BCFTools bin
+        bcftools_bin = get_bin(bin="bcftools", tool="bcftools", bin_type="bin", config=config, default_folder=f"{DEFAULT_TOOLS_FOLDER}/bcftools")
+        
+        # Config - BCFTools databases folders
         databases_folders = set(
             self.get_config().get("folders", {}).get("databases", {}).get("annotations", ["."])
             + self.get_config().get("folders", {}).get("databases", {}).get("bcftools", ["."])
@@ -2855,7 +2862,10 @@ class Variants:
                             log.debug(
                                 f"Annotation '{annotation}' - add bcftools command")
 
-                            command_annotate = f"bcftools annotate --regions-file={tmp_bed_name} -a {db_file} -h {tmp_header_vcf_name} -c {annotation_infos} --rename-annots={tmp_rename_name} {tmp_vcf_name} -o {tmp_annotation_vcf_name} -Oz 2>>{tmp_annotation_vcf_name_err} && tabix {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} "
+                            # Command
+                            command_annotate = f"{bcftools_bin} annotate --regions-file={tmp_bed_name} -a {db_file} -h {tmp_header_vcf_name} -c {annotation_infos} --rename-annots={tmp_rename_name} {tmp_vcf_name} -o {tmp_annotation_vcf_name} -Oz 2>>{tmp_annotation_vcf_name_err} && tabix {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} "
+
+                            # bcftools_bin
 
                             commands.append(command_annotate)
 
@@ -2880,8 +2890,7 @@ class Variants:
                 if threads_bcftools_annotate > 1:
                     commands_threaded = []
                     for command in commands:
-                        commands_threaded.append(command.replace(
-                            "bcftools annotate ", f"bcftools annotate --threads={threads_bcftools_annotate} "))
+                        commands_threaded.append(command.replace(f"{bcftools_bin} annotate ", f"{bcftools_bin} annotate --threads={threads_bcftools_annotate} "))
                     commands = commands_threaded
 
                 # Command annotation multithreading
@@ -4127,12 +4136,15 @@ class Variants:
         log.debug("Databases annotations: " + str(databases_folders))
 
         # Param
-        annotations = self.get_param().get("annotation", {}).get(
-            "parquet", {}).get("annotations", None)
+        annotations = self.get_param().get("annotation", {}).get("parquet", {}).get("annotations", None)
         log.debug("Annotations: " + str(annotations))
 
         # Assembly
         assembly = self.get_param().get("assembly", self.get_config().get("assembly", DEFAULT_ASSEMBLY))
+
+        # Force Update Annotation
+        force_update_annotation = self.get_param().get("annotation", {}).get("parquet", {}).get("update", False)
+        log.debug(f"force_update_annotation={force_update_annotation}")
 
         # Data
         table_variants = self.get_table_variants()
@@ -4167,9 +4179,6 @@ class Variants:
         
         # Added columns
         added_columns = []
-
-        # explode infos
-        added_columns += self.explode_infos(prefix=prefix)
 
         # drop indexes
         log.debug(f"Drop indexes...")
@@ -4275,6 +4284,9 @@ class Variants:
                     # Columns mapping
                     map_columns = database.map_columns(columns=annotation_fields, prefixes=["INFO/"])
 
+                    # Query dict for fields to remove (update option)
+                    query_dict_remove = {}
+
                     # Fetch Anotation fields
                     for annotation_field in annotation_fields:
                         
@@ -4288,12 +4300,28 @@ class Variants:
                             annotation_fields_new_name = annotation_field
 
                         # To annotate
-                        force_update_annotation = False
+                        #force_update_annotation = True
                         if annotation_field in parquet_hdr_vcf_header_infos and (force_update_annotation or (annotation_fields_new_name not in self.get_header().infos)):
                             
                             # Add field to annotation to process list
                             annotation_fields_processed.append(
                                 annotation_fields_new_name)
+                            
+                            # explode infos for the field
+                            annotation_fields_new_name_info_msg = ""
+                            if force_update_annotation and annotation_fields_new_name in self.get_header().infos:
+                                # Remove field from INFO
+                                query=f"""
+                                    UPDATE {table_variants} as table_variants
+                                    SET INFO = REGEXP_REPLACE(
+                                                concat(table_variants.INFO,''),
+                                                ';*{annotation_fields_new_name}=[^;]*',
+                                                ''
+                                                )
+                                    WHERE concat(';',table_variants.INFO) LIKE '%;{annotation_fields_new_name}=%'
+                                """
+                                annotation_fields_new_name_info_msg = " [update]"
+                                query_dict_remove[f"remove 'INFO/{annotation_fields_new_name}'"] = query
 
                             # Sep between fields in INFO
                             nb_annotation_field += 1
@@ -4302,8 +4330,7 @@ class Variants:
                             else:
                                 annotation_field_sep = ""
 
-                            log.info(
-                                f"Annotation '{annotation_name}' - '{annotation_field}' -> 'INFO/{annotation_fields_new_name}'")
+                            log.info(f"Annotation '{annotation_name}' - '{annotation_field}' -> 'INFO/{annotation_fields_new_name}'{annotation_fields_new_name_info_msg}")
 
                             # Add INFO field to header
                             parquet_hdr_vcf_header_infos_number = parquet_hdr_vcf_header_infos[
@@ -4398,7 +4425,8 @@ class Variants:
                         # nb_of_variant_annotated
                         nb_of_query = 0
                         nb_of_variant_annotated = 0
-                        query_dict = {}
+                        #query_dict = {}
+                        query_dict = query_dict_remove
 
                         for chrom in sql_query_chromosomes_max_pos_dictionary:
 
@@ -4529,8 +4557,8 @@ class Variants:
                                     # Add update query to dict
                                     query_dict[f"{chrom}:{sql_query_interval_start}-{sql_query_interval_stop}"] = sql_query_annotation_chrom_interval_pos
 
-                                    log.debug(
-                                        "Create SQL query: " + str(sql_query_annotation_chrom_interval_pos))
+                                    # log.debug(
+                                    #     "Create SQL query: " + str(sql_query_annotation_chrom_interval_pos))
 
                                     # Interval Start/Stop
                                     sql_query_interval_start = sql_query_interval_stop

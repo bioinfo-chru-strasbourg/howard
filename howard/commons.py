@@ -1248,6 +1248,10 @@ def get_bin(bin:str = None, tool:str = None, bin_type:str = "bin", config:dict =
             elif isinstance(conf, str):
                 bin_file = conf
 
+    # Switch to which
+    if bin_file and which(bin_file):
+        bin_file = which(bin_file)
+
     # Full path
     bin_file = full_path(bin_file)
 
@@ -2113,6 +2117,8 @@ def help_generation(arguments_dict:dict = {}, parser = None, setup:str = None, o
     
     # Options for markdown
     options_md += f"# HOWARD Help"
+    options_md += "\n\n"
+    options_md += "<!--TOC-->"
     options_md += "\n\n"
     options_md += parser.description.replace("\n","\n\n")
     options_md += re.sub(r'> $',"",parser.epilog.replace("\n","\n\n").replace("   ","> "))

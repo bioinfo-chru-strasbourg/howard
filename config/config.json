@@ -18,10 +18,11 @@
     }
   },
   "tools": {
-    "bcftools": "~/howard/tools/bcftools/current/bin/bcftools",
-    "bgzip": "~/howard/tools/htslib/current/bin/bgzip",
+    "bcftools": "bcftools",
+    "bgzip": "bgzip",
+    "java": "java",
     "snpeff": "~/howard/tools/snpeff/current/bin/snpEff.jar",
-    "java": "/usr/bin/java",
-    "annovar": "~/howard/tools/annovar/current/bin/table_annovar.pl"
+    "annovar": "~/howard/tools/annovar/current/bin/table_annovar.pl",
+    "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar"
   }
 }
