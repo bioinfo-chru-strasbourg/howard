@@ -27,16 +27,17 @@ from test_needed import *
 
 
 
-def test_annotation_parquet_update():
+
+def test_annotation_parquet_append():
     """
-    This function tests if a field already present in a VCF file is not changed during annotation with a
-    Parquet file.
+    The function `test_annotation_parquet_append` tests the annotation functionality for appending data
+    to a Parquet file in a VCF file.
     """
 
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
-        input_vcf = tests_data_folder + "/example.nci60.vcf"
+        input_vcf = tests_data_folder + "/example.nci60_1.vcf"
         annotation1 = os.path.join(tests_annotations_folder, "nci60.parquet")
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
@@ -49,6 +50,93 @@ def test_annotation_parquet_update():
                                     "nci60": "nci60"
                                 }
                             },
+                        },
+                        'options': {
+                            'append': False
+                        }
+                    }
+                }
+        param_update = {
+                    'annotation': {
+                        'parquet': {
+                            'annotations': {
+                                annotation1: {
+                                    "nci60": "nci60"
+                                }
+                            },
+                        },
+                        'options': {
+                            'append': True
+                        }
+                        
+                    }
+                }
+        log.debug(f"param={param}")
+        log.debug(f"param_update={param_update}")
+
+        # Create object
+        variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+
+        # Remove if output file exists
+        remove_if_exists([output_vcf])
+
+        # Annotation
+        variants.annotation()
+
+        # Check annotation not changed
+        
+        result = variants.get_query_to_df("SELECT INFO FROM variants")
+        log.debug(result)
+        result1 = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr1' AND POS = 768253 AND REF = 'A' AND ALT = 'G' AND INFO LIKE '%nci60=0.321%'")
+        result2 = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO LIKE '%nci60=0.66%'")
+        #log.debug(result1)
+        assert len(result1) == 1
+        assert len(result2) == 0
+
+        variants.set_param(param=param_update)
+        variants.annotation()
+
+        # Check annotation changed (existing kept, one annotation added)
+        result = variants.get_query_to_df("SELECT INFO FROM variants")
+        log.debug(result)
+        result1 = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr1' AND POS = 768253 AND REF = 'A' AND ALT = 'G' AND INFO LIKE '%nci60=0.321%'")
+        result2 = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO LIKE '%nci60=0.66%'")
+        #log.debug(result)
+        assert len(result1) == 1
+        assert len(result2) == 1
+
+        # Check if VCF is in correct format with pyVCF
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
+def test_annotation_parquet_update():
+    """
+    The function `test_annotation_parquet_update` tests the updating functionality of annotations in a
+    VCF file using Parquet format.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.nci60_2.vcf"
+        annotation1 = os.path.join(tests_annotations_folder, "nci60.parquet")
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {
+                    'annotation': {
+                        'parquet': {
+                            'annotations': {
+                                annotation1: {
+                                    "nci60": "nci60"
+                                }
+                            },
+                        },
+                        'options': {
                             'update': False
                         }
                     }
@@ -61,6 +149,8 @@ def test_annotation_parquet_update():
                                     "nci60": "nci60"
                                 }
                             },
+                        },
+                        'options': {
                             'update': True
                         }
                     }
@@ -78,17 +168,19 @@ def test_annotation_parquet_update():
         variants.annotation()
 
         # Check annotation not changed
-        result = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO LIKE '%nci60=0.123%'")
-        log.debug(result)
-        assert len(result) == 1
+        result1 = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr1' AND POS = 768253 AND REF = 'A' AND ALT = 'G' AND INFO LIKE '%nci60=0.321%'")
+        result2 = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO LIKE '%nci60=0.123%'")
+        assert len(result1) == 1
+        assert len(result2) == 1
 
         variants.set_param(param=param_update)
         variants.annotation()
 
-        # Check annotation changed
-        result = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO LIKE '%nci60=0.66%'")
-        log.debug(result)
-        assert len(result) == 1
+        # Check annotation changed (all removed, but one added)
+        result1 = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr1' AND POS = 768253 AND REF = 'A' AND ALT = 'G' AND INFO LIKE '%nci60=0.321%'")
+        result2 = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO LIKE '%nci60=0.66%'")
+        assert len(result1) == 0
+        assert len(result2) == 1
 
         # Check if VCF is in correct format with pyVCF
         variants.export_output()

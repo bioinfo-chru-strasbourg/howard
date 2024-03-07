@@ -4143,8 +4143,10 @@ class Variants:
         assembly = self.get_param().get("assembly", self.get_config().get("assembly", DEFAULT_ASSEMBLY))
 
         # Force Update Annotation
-        force_update_annotation = self.get_param().get("annotation", {}).get("parquet", {}).get("update", False)
+        force_update_annotation = self.get_param().get("annotation", {}).get("options", {}).get("update", False)
         log.debug(f"force_update_annotation={force_update_annotation}")
+        force_append_annotation = self.get_param().get("annotation", {}).get("options", {}).get("append", False)
+        log.debug(f"force_append_annotation={force_append_annotation}")
 
         # Data
         table_variants = self.get_table_variants()
@@ -4301,7 +4303,9 @@ class Variants:
 
                         # To annotate
                         #force_update_annotation = True
-                        if annotation_field in parquet_hdr_vcf_header_infos and (force_update_annotation or (annotation_fields_new_name not in self.get_header().infos)):
+                        #force_append_annotation = True
+                        #if annotation_field in parquet_hdr_vcf_header_infos and (force_update_annotation or (annotation_fields_new_name not in self.get_header().infos)):
+                        if annotation_field in parquet_hdr_vcf_header_infos and (force_update_annotation or force_append_annotation or (annotation_fields_new_name not in self.get_header().infos)):
                             
                             # Add field to annotation to process list
                             annotation_fields_processed.append(
@@ -4354,11 +4358,17 @@ class Variants:
                                 self.code_type_map[parquet_hdr_vcf_header_infos_type]
                             )
 
+                            # Append
+                            if force_append_annotation:
+                                query_case_when_append = f""" AND REGEXP_EXTRACT(concat(';', table_variants.INFO), ';{annotation_fields_new_name}=([^;]*)',1) IN ('','.') """
+                            else:
+                                query_case_when_append = ""
+
                             # Annotation/Update query fields
                             # Found in INFO column
                             if annotation_field_column == "INFO" and "INFO" in parquet_hdr_vcf_header_columns:
                                 sql_query_annotation_update_info_sets.append(f"""
-                                CASE WHEN REGEXP_EXTRACT(concat(';', table_parquet.INFO), ';{annotation_field}=([^;]*)',1) NOT IN ('','.')
+                                CASE WHEN REGEXP_EXTRACT(concat(';', table_parquet.INFO), ';{annotation_field}=([^;]*)',1) NOT IN ('','.') {query_case_when_append}
                                         THEN concat('{annotation_field_sep}', '{annotation_fields_new_name}=', REGEXP_EXTRACT(concat(';', table_parquet.INFO), ';{annotation_field}=([^;]*)',1))
                                         ELSE ''
                                     END
@@ -4366,7 +4376,7 @@ class Variants:
                             # Found in a specific column
                             else:
                                 sql_query_annotation_update_info_sets.append(f"""
-                                CASE WHEN table_parquet."{annotation_field_column}" NOT IN ('','.')
+                                CASE WHEN table_parquet."{annotation_field_column}" NOT IN ('','.') {query_case_when_append}
                                         THEN concat('{annotation_field_sep}', '{annotation_fields_new_name}=', replace(table_parquet."{annotation_field_column}", ';', ','))
                                         ELSE ''
                                     END
@@ -4389,7 +4399,8 @@ class Variants:
                                     f"Annotation '{annotation_name}' - '{annotation_fields_new_name}' [{nb_annotation_field}] - already exists in header ({annotation_message})")
 
                     # Check if ALL fields have to be annotated. Thus concat all INFO field
-                    allow_annotation_full_info = True
+                    #allow_annotation_full_info = True
+                    allow_annotation_full_info = not force_append_annotation
                     
                     if parquet_type in ["regions"]:
                         allow_annotation_full_info = False
@@ -4557,8 +4568,8 @@ class Variants:
                                     # Add update query to dict
                                     query_dict[f"{chrom}:{sql_query_interval_start}-{sql_query_interval_stop}"] = sql_query_annotation_chrom_interval_pos
 
-                                    # log.debug(
-                                    #     "Create SQL query: " + str(sql_query_annotation_chrom_interval_pos))
+                                    log.debug(
+                                        "Create SQL query: " + str(sql_query_annotation_chrom_interval_pos))
 
                                     # Interval Start/Stop
                                     sql_query_interval_start = sql_query_interval_stop

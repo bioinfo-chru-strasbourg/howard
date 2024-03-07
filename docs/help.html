@@ -150,6 +150,16 @@ For Annovar annotation, use keyword &#x27;annovar&#x27; with annovar code (e.g. 
 Default assembly
 Default: &#x27;hg19&#x27;
 
+</pre><pre>--annotations_update
+Update option for annotation (Only for Parquet annotation).
+If True, annotation fields will be removed and re-annotated.
+These options will be applied to all annotation databases.default: False
+
+</pre><pre>--annotations_append
+Append option for annotation (Only for Parquet annotation).
+If True, annotation fields will be annotated only if not annotation exists for the variant.
+These options will be applied to all annotation databases.default: False
+
 </pre><H2>CALCULATION</H2>
 <p>Calculation processes variants information to generate new information, such as: identify variation type (VarType), harmonizes allele frequency (VAF) and calculate sttistics (VAF_stats), extracts Nomen (transcript, cNomen, pNomen...) from an HGVS field (e.g. snpEff, Annovar) with an optional list of personalized transcripts, generates VaRank format barcode, identify trio inheritance.</p>Usage examples:<br>&nbsp;&nbsp;&nbsp;howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations='vartype' <br>&nbsp;&nbsp;&nbsp;howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.calculated.tsv --calculations='snpeff_hgvs,NOMEN' --hgvs_field=snpeff_hgvs --transcripts=tests/data/transcripts.tsv <br>&nbsp;&nbsp;&nbsp;howard calculation --show_calculations <br><H3>Main options</H3>
 <pre>--input=&lt;input&gt;

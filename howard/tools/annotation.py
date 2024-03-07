@@ -47,6 +47,12 @@ def annotation(args:argparse) -> None:
 
         params = vcfdata_obj.get_param()
 
+        # Prapare annotation dict
+        if not params.get("annotation", None):
+            params["annotation"] = {}
+        if not params.get("annotation", {}).get("options", None):
+            params["annotation"]["options"] = {}
+
         # Quick Annotation
         if args.annotations:
             annotation_file_list = [value for value in args.annotations.split(',')]
@@ -56,6 +62,12 @@ def annotation(args:argparse) -> None:
                 param_quick_annotations[annotation_file] = {"INFO": None}
             params["annotations"] = param_quick_annotations
         
+        if args.annotations_update:
+            params["annotation"]["options"]["update"] = True
+
+        if args.annotations_append:
+            params["annotation"]["options"]["append"] = True
+
         vcfdata_obj.set_param(params)
         
         # Load data from input file
