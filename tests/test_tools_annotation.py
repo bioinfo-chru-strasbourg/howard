@@ -29,6 +29,141 @@ from test_needed import *
 
 
 
+def test_annotation_tsv_update():
+
+    # Init files
+    input_vcf = tests_data_folder + "/example.vcf.gz"
+    output_vcf = "/tmp/output_file.tsv"
+    config = {}
+    annotations = database_files.get("parquet")
+
+    # prepare arguments for the query function
+    args = argparse.Namespace(
+        input = input_vcf,
+        output = output_vcf,
+        config = config,
+        annotations = annotations,
+        annotations_update = True,
+        annotations_append = False
+    )
+
+    # Remove if output file exists
+    remove_if_exists([output_vcf])
+
+    # Query
+    annotation(args)
+
+    # Check output file exists
+    assert os.path.exists(output_vcf)
+
+    # read the contents of the actual output file
+    with open(output_vcf, 'r') as f:
+        result_output_nb_lines = 0
+        result_output_nb_variants = 0
+        for line in f:
+            result_output_nb_lines += 1
+            if not line.startswith("#"):
+                result_output_nb_variants += 1
+
+    # Expected result
+    expected_result_nb_lines = 8
+    expected_result_nb_variants = 7
+
+    # Compare
+    assert result_output_nb_lines == expected_result_nb_lines
+    assert result_output_nb_variants == expected_result_nb_variants
+
+
+def test_annotation_tsv_append():
+
+    # Init files
+    input_vcf = tests_data_folder + "/example.vcf.gz"
+    output_vcf = "/tmp/output_file.tsv"
+    config = {}
+    annotations = database_files.get("parquet")
+
+    # prepare arguments for the query function
+    args = argparse.Namespace(
+        input = input_vcf,
+        output = output_vcf,
+        config = config,
+        annotations = annotations,
+        annotations_update = False,
+        annotations_append = True
+    )
+
+    # Remove if output file exists
+    remove_if_exists([output_vcf])
+
+    # Query
+    annotation(args)
+
+    # Check output file exists
+    assert os.path.exists(output_vcf)
+
+    # read the contents of the actual output file
+    with open(output_vcf, 'r') as f:
+        result_output_nb_lines = 0
+        result_output_nb_variants = 0
+        for line in f:
+            result_output_nb_lines += 1
+            if not line.startswith("#"):
+                result_output_nb_variants += 1
+
+    # Expected result
+    expected_result_nb_lines = 8
+    expected_result_nb_variants = 7
+
+    # Compare
+    assert result_output_nb_lines == expected_result_nb_lines
+    assert result_output_nb_variants == expected_result_nb_variants
+
+
+def test_annotation_tsv_update_append():
+
+    # Init files
+    input_vcf = tests_data_folder + "/example.vcf.gz"
+    output_vcf = "/tmp/output_file.tsv"
+    config = {}
+    annotations = database_files.get("parquet")
+
+    # prepare arguments for the query function
+    args = argparse.Namespace(
+        input = input_vcf,
+        output = output_vcf,
+        config = config,
+        annotations = annotations,
+        annotations_update = True,
+        annotations_append = True
+    )
+
+    # Remove if output file exists
+    remove_if_exists([output_vcf])
+
+    # Query
+    annotation(args)
+
+    # Check output file exists
+    assert os.path.exists(output_vcf)
+
+    # read the contents of the actual output file
+    with open(output_vcf, 'r') as f:
+        result_output_nb_lines = 0
+        result_output_nb_variants = 0
+        for line in f:
+            result_output_nb_lines += 1
+            if not line.startswith("#"):
+                result_output_nb_variants += 1
+
+    # Expected result
+    expected_result_nb_lines = 8
+    expected_result_nb_variants = 7
+
+    # Compare
+    assert result_output_nb_lines == expected_result_nb_lines
+    assert result_output_nb_variants == expected_result_nb_variants
+
+
 def test_annotation_tsv():
 
     # Init files
@@ -43,6 +178,8 @@ def test_annotation_tsv():
         output = output_vcf,
         config = config,
         annotations = annotations,
+        annotations_update = False,
+        annotations_append = False
     )
 
     # Remove if output file exists
@@ -86,6 +223,8 @@ def test_annotation_vcf():
         output = output_vcf,
         config = config,
         annotations = annotations,
+        annotations_update = False,
+        annotations_append = False
     )
 
     # Remove if output file exists
