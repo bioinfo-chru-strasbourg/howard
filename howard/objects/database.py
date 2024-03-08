@@ -1244,7 +1244,10 @@ class Database:
                     FROM read_csv('{database_ref}', auto_detect=True, hive_partitioning={hive_partitioning}, compression='{database_compression}', skip={header_length}, delim='{delimiter}', sample_size={sample_size})
                     LIMIT 0
                 """
-            nb_columns_detected_by_duckdb = len(self.conn.query(query_nb_columns_detected_by_duckdb).df().columns)
+            try:
+                nb_columns_detected_by_duckdb = len(self.conn.query(query_nb_columns_detected_by_duckdb).df().columns)
+            except:
+                nb_columns_detected_by_duckdb = 0
 
             # Check table columns
             if not table_columns or (nb_columns_detected_by_duckdb != len(table_columns)):
@@ -1605,31 +1608,34 @@ class Database:
             columns_list = list(database.query(sql_query).df().columns)
             return columns_list
 
-        if database and self.exists(database):
-            database_format = self.get_format(database)
-            if database_format in ["conn"]:
-                if table:
-                    database_conn = database
-                    sql_query = f"SELECT * FROM {table} LIMIT 0"
-                    columns_list = list(database_conn.query(sql_query).df().columns)
-                    return columns_list
-            elif database_format in ["duckdb"]:
-                if table:
-                    database_conn = duckdb.connect(database)
-                    sql_query = f"SELECT * FROM {table} LIMIT 0"
-                    columns_list = list(database_conn.query(sql_query).df().columns)
-                    database_conn.close()
-                    return columns_list
-            elif database_format in ["sqlite"]:
-                if table:
-                    database_conn = sqlite3.connect(database)
-                    sql_query = f"SELECT * FROM {table} LIMIT 0"
-                    columns_list = list(pd.read_sql_query(sql_query, database_conn).columns)
-                    return columns_list
-            elif database_format in ["parquet", "vcf", "tsv", "csv", "tbl", "bed", "json"]:
-                sql_from = self.get_sql_from(database=database, header_file=header_file)
-                sql_query = f"SELECT * FROM {sql_from} LIMIT 0"
-                return list(self.conn.query(sql_query).df().columns)
+        try:
+            if database and self.exists(database):
+                database_format = self.get_format(database)
+                if database_format in ["conn"]:
+                    if table:
+                        database_conn = database
+                        sql_query = f"SELECT * FROM {table} LIMIT 0"
+                        columns_list = list(database_conn.query(sql_query).df().columns)
+                        return columns_list
+                elif database_format in ["duckdb"]:
+                    if table:
+                        database_conn = duckdb.connect(database)
+                        sql_query = f"SELECT * FROM {table} LIMIT 0"
+                        columns_list = list(database_conn.query(sql_query).df().columns)
+                        database_conn.close()
+                        return columns_list
+                elif database_format in ["sqlite"]:
+                    if table:
+                        database_conn = sqlite3.connect(database)
+                        sql_query = f"SELECT * FROM {table} LIMIT 0"
+                        columns_list = list(pd.read_sql_query(sql_query, database_conn).columns)
+                        return columns_list
+                elif database_format in ["parquet", "vcf", "tsv", "csv", "tbl", "bed", "json"]:
+                    sql_from = self.get_sql_from(database=database, header_file=header_file)
+                    sql_query = f"SELECT * FROM {sql_from} LIMIT 0"
+                    return list(self.conn.query(sql_query).df().columns)
+        except:
+            return []
 
         return []
 
@@ -2165,6 +2171,18 @@ class Database:
                         FROM {self.get_sql_database_link(database=database)}
                         {order_by_sql}
                     """
+
+                # Test empty query
+                df = self.conn.execute(query).fetch_record_batch(1)
+                query_empty = True
+                for d in df:
+                    query_empty = False
+                    break
+                if query_empty:
+                    log.error("Export failed: Empty")
+                    raise ValueError("Export failed: Empty")
+                else:
+                    log.debug(f"query NOT empty")
 
                 # Export mode pyarrow
                 if export_mode == "pyarrow":
