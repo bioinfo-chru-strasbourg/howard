@@ -1400,7 +1400,7 @@ commands_arguments = {
         "description": """(beta) Formatting Annovar database file to other format (VCF and Parquet). Exported Parquet file includes INFO/tags columns as VCF INFO columns had been exploded""",
         "help": """(beta) Formatting Annovar database file to other format (VCF and Parquet)""",
         "epilog": """Usage examples:\n"""
-                    """   howard from_annovar --input=tests/databases/others/hg19_nci60.txt --output=/tmp/nci60.from_annovar.vcf.gz --to_parquet=/tmp/nci60.from_annovar.parquet --annovar-code=nci60 --genome=~/howard/databases/genomes/current/hg19.fa --config=/tool/config/config.json --threads=8 """, 
+                    """   howard from_annovar --input=tests/databases/others/hg19_nci60.txt --output=/tmp/nci60.from_annovar.vcf.gz --to_parquet=/tmp/nci60.from_annovar.parquet --annovar-code=nci60 --genome=~/howard/databases/genomes/current/hg19.fa --threads=8 """, 
         "groups": {
             "main": {
                 "input": True,

@@ -53,19 +53,35 @@ def from_annovar(args:argparse) -> None:
     log.info("Start")
 
     # Input
-    input_file = args.input
+    if isinstance(args.input, str):
+        input_file = args.input
+    else:
+        input_file = args.input.name
+    input_file = full_path(input_file)
 
     # Output
-    output_file = args.output
-    
+    if isinstance(args.output, str):
+        output_file = args.output
+    else:
+        output_file = args.output.name
+    output_file = full_path(output_file)
+
     # Genome
-    genome_file = args.genome
-    
-    # Annovar Code
-    annovar_code = args.annovar_code
+    if isinstance(args.genome, str):
+        genome_file = args.genome
+    else:
+        genome_file = args.genome.name
+    genome_file = full_path(genome_file)
     
     # To Parquet
-    output_file_parquet = args.to_parquet
+    if isinstance(args.to_parquet, str):
+        output_file_parquet = args.to_parquet
+    else:
+        output_file_parquet = args.to_parquet.name
+    output_file_parquet = full_path(output_file_parquet)
+
+    # Annovar Code
+    annovar_code = args.annovar_code
 
     # # Export Infos
     # args.explode_infos_prefix = args.args.explode_infos_prefix
