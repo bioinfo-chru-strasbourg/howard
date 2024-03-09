@@ -45,14 +45,20 @@ def stats(args:argparse) -> None:
     # MarkDown file
     stats_md=None
     if "stats_md" in args and args.stats_md:
-        param["stats_md"] = args.stats_md
-        stats_md = args.stats_md
+        if isinstance(args.stats_md, str):
+            stats_md = args.stats_md
+        else:
+            stats_md = args.stats_md.name
+        param["stats_md"] = stats_md
 
     # JSON file
     stats_json=None
     if "stats_json" in args and args.stats_json:
-        param["stats_json"] = args.stats_json
-        stats_json = args.stats_json
+        if isinstance(args.stats_json, str):
+            stats_json = args.stats_json
+        else:
+            stats_json = args.stats_json.name
+        param["stats_json"] = stats_json
 
     # Create VCF object
     if args.input:

@@ -57,7 +57,13 @@ def calculation(args:argparse) -> None:
         params = vcfdata_obj.get_param()
 
         # Operations config file
-        operations_config_file = args.calculation_config
+        operations_config_file = None
+        if "calculation_config" in args and args.calculation_config:
+            if isinstance(args.calculation_config, str):
+                operations_config_file = args.calculation_config
+            else:
+                operations_config_file = args.calculation_config.name
+            param["calculation_config"] = operations_config_file
 
         # Quick calculations
         if args.calculations:
@@ -78,15 +84,22 @@ def calculation(args:argparse) -> None:
         if args.transcripts and "NOMEN" in params["calculation"]:
             if "options" not in params["calculation"]["NOMEN"]:
                 params["calculation"]["NOMEN"]["options"] = {}
-            params["calculation"]["NOMEN"]["options"]["transcripts"] = args.transcripts
+            if isinstance(args.transcripts, str):
+                transcripts_file = args.transcripts
+            else:
+                transcripts_file = args.transcripts.name
+            params["calculation"]["NOMEN"]["options"]["transcripts"] = transcripts_file
 
         # TRIO pedigree
         if args.trio_pedigree and "TRIO" in params["calculation"]:
             trio_pedigree = {}
+            if isinstance(args.trio_pedigree, str) or isinstance(args.trio_pedigree, dict):
+                trio_pedigree_file = args.trio_pedigree
+            else:
+                trio_pedigree_file = args.trio_pedigree.name
             # Load trio_pedigree in JSON format
-            if isinstance(args.trio_pedigree, str) and os.path.exists(full_path(args.trio_pedigree)):
-            #if os.path.exists(args.trio_pedigree):
-                with open(full_path(args.trio_pedigree)) as trio_pedigree_file:
+            if isinstance(trio_pedigree_file, str) and os.path.exists(full_path(trio_pedigree_file)):
+                with open(full_path(trio_pedigree_file)) as trio_pedigree_file:
                     trio_pedigree = json.load(trio_pedigree_file)
             else:
                 trio_pedigree = json.loads(args.trio_pedigree)

@@ -93,7 +93,7 @@ Usage examples:
 ```
 --input=<input>
 
-Input file path
+Input file path.
 Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB
 Files can be compressesd (e.g. vcf.gz, tsv.gz)
 ```
@@ -101,7 +101,7 @@ Files can be compressesd (e.g. vcf.gz, tsv.gz)
 ```
 --output=<output>
 
-Output file path
+Output file path.
 Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB
 Files can be compressesd (e.g. vcf.gz, tsv.gz)
 ```
@@ -109,7 +109,7 @@ Files can be compressesd (e.g. vcf.gz, tsv.gz)
 ```
 --query=<query> | required
 
-Query in SQL format
+Query in SQL format.
 Format: SQL
 Example: 'SELECT * FROM variants LIMIT 5'
 ```
@@ -154,7 +154,7 @@ default: 10
 ```
 
 ```
---query_print_mode=<print mode>
+--query_print_mode=<print mode> [None, 'markdown', 'tabulate']
 
 Print mode of query result (only for print result, not output).
 Either None (native), 'markdown' or 'tabulate'.
@@ -183,7 +183,7 @@ Usage examples:
 ```
 --input=<input> | required
 
-Input file path
+Input file path.
 Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB
 Files can be compressesd (e.g. vcf.gz, tsv.gz)
 ```
@@ -221,7 +221,7 @@ Usage examples:
 ```
 --input=<input> | required
 
-Input file path
+Input file path.
 Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB
 Files can be compressesd (e.g. vcf.gz, tsv.gz)
 ```
@@ -229,7 +229,7 @@ Files can be compressesd (e.g. vcf.gz, tsv.gz)
 ```
 --output=<output> | required
 
-Output file path
+Output file path.
 Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB
 Files can be compressesd (e.g. vcf.gz, tsv.gz)
 ```
@@ -314,7 +314,7 @@ Usage examples:
 ```
 --input=<input> | required
 
-Input file path
+Input file path.
 Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB
 Files can be compressesd (e.g. vcf.gz, tsv.gz)
 ```
@@ -322,7 +322,7 @@ Files can be compressesd (e.g. vcf.gz, tsv.gz)
 ```
 --output=<output> | required
 
-Output file path
+Output file path.
 Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB
 Files can be compressesd (e.g. vcf.gz, tsv.gz)
 ```
@@ -382,7 +382,7 @@ Usage examples:
 ```
 --input=<input>
 
-Input file path
+Input file path.
 Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB
 Files can be compressesd (e.g. vcf.gz, tsv.gz)
 ```
@@ -390,7 +390,7 @@ Files can be compressesd (e.g. vcf.gz, tsv.gz)
 ```
 --output=<output>
 
-Output file path
+Output file path.
 Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB
 Files can be compressesd (e.g. vcf.gz, tsv.gz)
 ```
@@ -459,7 +459,7 @@ Usage examples:
 ```
 --input=<input> | required
 
-Input file path
+Input file path.
 Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB
 Files can be compressesd (e.g. vcf.gz, tsv.gz)
 ```
@@ -467,7 +467,7 @@ Files can be compressesd (e.g. vcf.gz, tsv.gz)
 ```
 --output=<output> | required
 
-Output file path
+Output file path.
 Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB
 Files can be compressesd (e.g. vcf.gz, tsv.gz)
 ```
@@ -482,15 +482,15 @@ Prioritization file in JSON format (defines profiles, see doc).
 ```
 --profiles=<profiles>
 
-Prioritization profiles to use (based on file in JSON).
-default: all profiles available
+List of prioritization profiles to process (based on Prioritization JSON file).
+Examples: 'VARTYPE', 'VARTYPE,VARIANT_ID'default: all profiles available
 ```
 
 ```
 --default_profile=<default profile>
 
 Prioritization profile by default (see doc)
-default: First profile in JSON file
+default: First profile in the list of prioritization profiles
 ```
 
 ```
@@ -538,7 +538,7 @@ Usage examples:
 ```
 --input=<input> | required
 
-Input file path
+Input file path.
 Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB
 Files can be compressesd (e.g. vcf.gz, tsv.gz)
 ```
@@ -546,7 +546,7 @@ Files can be compressesd (e.g. vcf.gz, tsv.gz)
 ```
 --output=<output> | required
 
-Output file path
+Output file path.
 Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB
 Files can be compressesd (e.g. vcf.gz, tsv.gz)
 ```
@@ -554,7 +554,7 @@ Files can be compressesd (e.g. vcf.gz, tsv.gz)
 ```
 --param=<param> ({})
 
-Parameters file or JSON
+Parameters file or JSON.
 Format: JSON
 Default: {}
 ```
@@ -591,7 +591,7 @@ Prioritization file in JSON format (defines profiles, see doc).
 ```
 --query=<query>
 
-Query in SQL format
+Query in SQL format.
 Format: SQL
 Example: 'SELECT * FROM variants LIMIT 5'
 ```
@@ -649,7 +649,7 @@ Usage examples:
 ```
 --input=<input> | required
 
-Input file path
+Input file path.
 Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB
 Files can be compressesd (e.g. vcf.gz, tsv.gz)
 ```
@@ -657,7 +657,7 @@ Files can be compressesd (e.g. vcf.gz, tsv.gz)
 ```
 --output=<output>
 
-Output file path
+Output file path.
 Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB
 Files can be compressesd (e.g. vcf.gz, tsv.gz)
 ```
@@ -735,6 +735,13 @@ refSeqLink annotation file
 ```
 
 ```
+--refseq-folder=<refseq folder> (/Users/lebechea/howard/databases/refseq/current)
+
+Folder containing refseq files
+Default: /Users/lebechea/howard/databases/refseq/current
+```
+
+```
 --genomes-folder=<genomes> (/Users/lebechea/howard/databases/genomes/current)
 
 Folder containing genomes
@@ -781,11 +788,12 @@ Default: /Users/lebechea/howard/databases/genomes/current
 ```
 --download-genomes=<genomes>
 
-Download Genomes within folder
+Download Genomes within folder.
+ 
 ```
 
 ```
---download-genomes-provider=<genomes provider> (UCSC)
+--download-genomes-provider=<genomes provider> ['GENCODE', 'Ensembl', 'UCSC', 'NCBI'] (UCSC)
 
 Download Genome from an external provider
 Available: GENCODE, Ensembl, UCSC, NCBI
@@ -1234,13 +1242,13 @@ Allowed formats with BCFTools: 'vcf', 'bed'
 
 Usage examples:
 
-> howard from_annovar --input=tests/databases/others/hg19_nci60.txt --output=/tmp/nci60.from_annovar.vcf.gz --to_parquet=/tmp/nci60.from_annovar.parquet --annovar-code=nci60 --genome=~/howard/databases/genomes/current/hg19.fa --config=/tool/config/config.json --threads=8 
+> howard from_annovar --input=tests/databases/others/hg19_nci60.txt --output=/tmp/nci60.from_annovar.vcf.gz --to_parquet=/tmp/nci60.from_annovar.parquet --annovar-code=nci60 --genome=~/howard/databases/genomes/current/hg19.fa --threads=8 
 
 ### Main options
 ```
 --input=<input> | required
 
-Input file path
+Input file path.
 Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB
 Files can be compressesd (e.g. vcf.gz, tsv.gz)
 ```
@@ -1248,7 +1256,7 @@ Files can be compressesd (e.g. vcf.gz, tsv.gz)
 ```
 --output=<output> | required
 
-Output file path
+Output file path.
 Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB
 Files can be compressesd (e.g. vcf.gz, tsv.gz)
 ```
@@ -1264,7 +1272,8 @@ Default: 'hg19.fa'
 ```
 --annovar-code=<Annovar code>
 
-Annovar code, or database name. Usefull to name databases columns
+Annovar code, or database name.
+Usefull to name databases columns
 ```
 
 ### Parquet
@@ -1277,7 +1286,7 @@ Parquet file conversion
 
 ### Modes
 ```
---reduce_memory=<reduce memory> (auto)
+--reduce_memory=<reduce memory> ['auto', 'enable', 'disable'] (auto)
 
 Reduce memory option
 Values: 'auto' (auto-detection), 'enable', 'disable'
@@ -1285,7 +1294,7 @@ default: 'auto'
 ```
 
 ```
---multi_variant=<multi variant> (auto)
+--multi_variant=<multi variant> ['auto', 'enable', 'disable'] (auto)
 
 Variant with multiple annotation lines
 Values: 'auto' (auto-detection), 'enable', 'disable'
@@ -1373,6 +1382,7 @@ It determines the amount of memory for duckDB engine and external tools
 (especially for JAR prorams).
 It can help to prevvent 'out of memory' failures.
 Format: (FLOAT[kMG])
+Examples: '8G', '12.42G', '1024M'
 Default: None (80%% of RAM for duckDB)
 ```
 

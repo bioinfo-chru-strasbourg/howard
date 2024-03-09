@@ -72,30 +72,47 @@ def hgvs(args:argparse) -> None:
         if "codon_type" in args:
             params["hgvs"]["codon_type"] = args.codon_type
 
-        if "refgene" in args:
-            params["hgvs"]["refgene"] = args.refgene
+        if "refgene" in args and args.refgene:
+            log.debug(f"args.refgene={args.refgene}")
+            if isinstance(args.refgene, str):
+                refgene = args.refgene
+            else:
+                refgene = args.refgene.name
+            params["hgvs"]["refgene"] = refgene
 
-        if "refseqlink" in args:
-            params["hgvs"]["refseqlink"] = args.refseqlink
+        if "refseqlink" in args and args.refseqlink:
+            if isinstance(args.refseqlink, str):
+                refseqlink = args.refseqlink
+            else:
+                refseqlink = args.refseqlink.name
+            params["hgvs"]["refseqlink"] = refseqlink
 
         if "assembly" in args:
             params["assembly"] = args.assembly
 
         if "genomes_folder" in args and args.genomes_folder:
+            if isinstance(args.genomes_folder, str):
+                genomes_folder = args.genomes_folder
+            else:
+                genomes_folder = args.genomes_folder.name
             if "folders" not in config:
                 config["folders"] = {}
             if "databases" not in config["folders"]:
                 config["folders"]["databases"] = {}
-            if "genomes" not in config["folders"]["databases"] or args.genomes_folder != DEFAULT_GENOME_FOLDER:
-                config["folders"]["databases"]["genomes"] = args.genomes_folder
+            if "genomes" not in config["folders"]["databases"] or genomes_folder != DEFAULT_GENOME_FOLDER:
+                config["folders"]["databases"]["genomes"] = genomes_folder
 
         if "refseq_folder" in args and args.refseq_folder:
+            if isinstance(args.refseq_folder, str):
+                refseq_folder = args.refseq_folder
+            else:
+                refseq_folder = args.refseq_folder.name
             if "folders" not in config:
                 config["folders"] = {}
             if "databases" not in config["folders"]:
                 config["folders"]["databases"] = {}
-            if "refseq" not in config["folders"]["databases"] or args.refseq_folder != DEFAULT_REFSEQ_FOLDER:
-                config["folders"]["databases"]["refseq"] = args.refseq_folder
+            if "refseq" not in config["folders"]["databases"] or refseq_folder != DEFAULT_REFSEQ_FOLDER:
+                config["folders"]["databases"]["refseq"] = refseq_folder
 
         vcfdata_obj.set_param(params)
         vcfdata_obj.set_config(config)

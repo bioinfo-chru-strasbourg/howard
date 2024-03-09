@@ -46,22 +46,90 @@ if tool_gui_enable:
     from howard.tools.gui import *
 
 
+class PathType(object):
+    def __init__(self, exists=True, type='file', dash_ok=True):
+        '''exists:
+                True: a path that does exist
+                False: a path that does not exist, in a valid parent directory
+                None: don't care
+           type: file, dir, symlink, None, or a function returning True for valid paths
+                None: don't care
+           dash_ok: whether to allow "-" as stdin/stdout'''
+
+        assert exists in (True, False, None)
+        assert type in ('file','dir','symlink',None) or hasattr(type,'__call__')
+
+        self._exists = exists
+        self._type = type
+        self._dash_ok = dash_ok
+
+    def __call__(self, string):
+
+        string = full_path(string)
+        if string=='-':
+            # the special argument "-" means sys.std{in,out}
+            if self._type == 'dir':
+                raise ValueError('standard input/output (-) not allowed as directory path')
+            elif self._type == 'symlink':
+                raise ValueError('standard input/output (-) not allowed as symlink path')
+            elif not self._dash_ok:
+                raise ValueError('standard input/output (-) not allowed')
+        else:
+            e = os.path.exists(string)
+            if self._exists==True:
+                if not e:
+                    raise ValueError("path does not exist: '%s'" % string)
+
+                if self._type is None:
+                    pass
+                elif self._type=='file':
+                    if not os.path.isfile(string):
+                        raise ValueError("path is not a file: '%s'" % string)
+                elif self._type=='symlink':
+                    if not os.path.symlink(string):
+                        raise ValueError("path is not a symlink: '%s'" % string)
+                elif self._type=='dir':
+                    if not os.path.isdir(string):
+                        raise ValueError("path is not a directory: '%s'" % string)
+                elif not self._type(string):
+                    raise ValueError("path not valid: '%s'" % string)
+            else:
+                if self._exists==False and e:
+                    raise ValueError("path exists: '%s'" % string)
+
+                p = os.path.dirname(os.path.normpath(string)) or '.'
+                if not os.path.isdir(p):
+                    raise ValueError("parent path is not a directory: '%s'" % p)
+                elif not os.path.exists(p):
+                    raise ValueError("parent directory does not exist: '%s'" % p)
+
+        return string
+
 # Arguments dict
 arguments = {
 
         # Process & other
         "input": {
             "metavar": "input",
-            "help": "Input file path\nFormat: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB\nFiles can be compressesd (e.g. vcf.gz, tsv.gz)",
+            "help": """Input file path.\n"""
+                    """Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB\n"""
+                    """Files can be compressesd (e.g. vcf.gz, tsv.gz)""",
             "required": False,
             "type": argparse.FileType('r'),
             "gooey": {
-                "widget": "FileChooser"
+                "widget": "FileChooser",
+                "options": {
+                    "wildcard":
+                        "Parquet file (*.parquet)|*.parquet|"
+                        "All files (*)|*",
+                }
             }
         },
         "output": {
             "metavar": "output",
-            "help": "Output file path\nFormat: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB\nFiles can be compressesd (e.g. vcf.gz, tsv.gz)",
+            "help": """Output file path.\n"""
+                    """Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB\n"""
+                    """Files can be compressesd (e.g. vcf.gz, tsv.gz)""",
             "required": False,
             "type": argparse.FileType('w'),
             "gooey": {
@@ -70,18 +138,25 @@ arguments = {
         },
         "param": {
             "metavar": "param",
-            "help": "Parameters file or JSON\nFormat: JSON\nDefault: {}",
+            "help": """Parameters file or JSON.\n"""
+                    """Format: JSON\n"""
+                    """Default: {}""",
             "default": "{}",
             "gooey": {
                 "widget": "FileChooser",
                 "options": {
-                    'initial_value': ''  
+                    'initial_value': '',
+                    "wildcard":
+                        "JSON file (*.json)|*.json|"
+                        "All files (*)|*",
                 }
             }
         },
         "query": {
             "metavar": "query",
-            "help": "Query in SQL format\nFormat: SQL\nExample: 'SELECT * FROM variants LIMIT 5'",
+            "help": """Query in SQL format.\n"""
+                    """Format: SQL\n"""
+                    """Example: 'SELECT * FROM variants LIMIT 5'""",
             "default": None,
             "gooey": {
                 "widget": "Textarea",
@@ -92,10 +167,16 @@ arguments = {
         },
         "output_query": {
             "metavar": "output",
-            "help": "Output Query file\nformat: VCF, TSV, Parquet...",
+            "help": """Output Query file.\n"""
+                    """Format: VCF, TSV, Parquet...""",
             "default": None,
+            "type": argparse.FileType('w'),
             "gooey": {
-                "widget": "FileSaver"
+                "widget": "FileSaver",
+                "options": {
+                    "wildcard":
+                        "All files (*)|*",
+                }
             }
         },
 
@@ -121,7 +202,13 @@ arguments = {
                     """These options will be applied to all annotation databases."""
                     """default: False""",
             "action": "store_true",
-            "default": False
+            "default": False,
+            "gooey": {
+                "widget": "BlockCheckbox",
+                "options": {
+                    'checkbox_label': "Update annotation method"
+                }
+            }
         },
         "annotations_append": {
             "help": """Append option for annotation (Only for Parquet annotation).\n"""
@@ -129,7 +216,13 @@ arguments = {
                     """These options will be applied to all annotation databases."""
                     """default: False""",
             "action": "store_true",
-            "default": False
+            "default": False,
+            "gooey": {
+                "widget": "BlockCheckbox",
+                "options": {
+                    'checkbox_label': "Append annotation method"
+                }
+            }
         },
 
         # Calculations
@@ -153,20 +246,27 @@ arguments = {
             "metavar": "prioritisations",
             "help": "Prioritization file in JSON format (defines profiles, see doc).",
             "default": None,
+            "type": argparse.FileType('r'),
             "gooey": {
-                "widget": "FileChooser"
+                "widget": "FileChooser",
+                "options": {
+                    "wildcard":
+                        "JSON file (*.json)|*.json|"
+                        "All files (*)|*",
+                }
             }
         },
         "profiles": {
             "metavar": "profiles",
-            "help": """Prioritization profiles to use (based on file in JSON).\n"""
+            "help": """List of prioritization profiles to process (based on Prioritization JSON file).\n"""
+                    """Examples: 'VARTYPE', 'VARTYPE,VARIANT_ID'"""
                     """default: all profiles available""",
             "default": None
         },
         "default_profile": {
             "metavar": "default profile",
             "help": """Prioritization profile by default (see doc)\n"""
-                    """default: First profile in JSON file""",
+                    """default: First profile in the list of prioritization profiles""",
             "default": None
         },
         "pzfields": {
@@ -194,14 +294,27 @@ arguments = {
             "metavar": "query limit",
             "help": """Limit of number of row for query (only for print result, not output).\n"""
                     """default: 10""",
-            "default": 10
+            "default": 10,
+            "gooey": {
+                "widget": "IntegerField",
+                "options": {
+                    'min': 1, 
+                    'max': 10000,
+                    'increment': 10
+                }
+            }
         },
         "query_print_mode": {
             "metavar": "print mode",
             "help": """Print mode of query result (only for print result, not output).\n"""
                     """Either None (native), 'markdown' or 'tabulate'.\n"""
                     """default: None""",
-            "default": None
+            "choices": [None, "markdown", "tabulate"],
+            "default": None,
+            "gooey": {
+                "widget": "Dropdown",
+                "options": {}
+            }
         },
 
         # Explode infos
@@ -273,14 +386,24 @@ arguments = {
             "help": """Variant with multiple annotation lines\n"""
                     """Values: 'auto' (auto-detection), 'enable', 'disable'\n"""
                     """default: 'auto'""",
-            "default": "auto"
+            "default": "auto",
+            "choices": ["auto", "enable", "disable"],
+            "gooey": {
+                "widget": "Dropdown",
+                "options": {}
+            }
         },
         "reduce_memory": {
             "metavar": "reduce memory",
             "help": """Reduce memory option\n"""
                     """Values: 'auto' (auto-detection), 'enable', 'disable'\n"""
                     """default: 'auto'""",
-            "default": "auto"
+            "default": "auto",
+            "choices": ["auto", "enable", "disable"],
+            "gooey": {
+                "widget": "Dropdown",
+                "options": {}
+            }
         },
 
         # Calculation
@@ -289,8 +412,14 @@ arguments = {
             "help": """Calculation config file\n"""
                     """Format: JSON""",
             "default": None,
+            "type": argparse.FileType('r'),
             "gooey": {
-                "widget": "FileChooser"
+                "widget": "FileChooser",
+                "options": {
+                    "wildcard":
+                        "JSON file (*.json)|*.json|"
+                        "All files (*)|*",
+                }
             }
         },
         "show_calculations": {
@@ -309,8 +438,14 @@ arguments = {
                     """Format: Transcript in first column, optional Gene in second column \n"""
                     """default: None""",
             "default": None,
+            "type": argparse.FileType('r'),
             "gooey": {
-                "widget": "FileChooser"
+                "widget": "FileChooser",
+                "options": {
+                    "wildcard":
+                        "TSV file (*.tsv)|*.tsv|"
+                        "All files (*)|*",
+                }
             }
         },
         "trio_pedigree": {
@@ -319,8 +454,14 @@ arguments = {
                     """Format: JSON file or dict (e.g. 'trio.ped.json', '{"father":"sample1", "mother":"sample2", "child":"sample3"}') \n"""
                     """default: None""",
             "default": None,
+            "type": argparse.FileType('r'),
             "gooey": {
-                "widget": "FileChooser"
+                "widget": "FileChooser",
+                "options": {
+                    "wildcard":
+                        "JSON file (*.json)|*.json|"
+                        "All files (*)|*",
+                }
             }
         },
 
@@ -343,16 +484,26 @@ arguments = {
             "metavar": "stats markdown",
             "help": """Stats Output file in MarkDown format\n""",
             "required": False,
+            "type": argparse.FileType('w'),
             "gooey": {
-                "widget": "FileSaver"
+                "widget": "FileSaver",
+                "options": {
+                    "wildcard":
+                        "Markdown file (*.md)|*.md"
+                }
             }
         },
         "stats_json": {
             "metavar": "stats json",
             "help": """Stats Output file in JSON format\n""",
             "required": False,
+            "type": argparse.FileType('w'),
             "gooey": {
-                "widget": "FileSaver"
+                "widget": "FileSaver",
+                "options": {
+                    "wildcard":
+                        "JSON file (*.json)|*.json"
+                }
             }
         },
         "stats": {
@@ -367,6 +518,8 @@ arguments = {
             "help": "Statistics before data processing",
             "action": "store_true"
         },
+
+        # Assembly and Genome
         "assembly": {
             "metavar": "assembly",
             "help": """Genome Assembly\n"""
@@ -379,17 +532,17 @@ arguments = {
             "help": """Genome file in fasta format\n"""
                     """Default: 'hg19.fa'""",
             "required": False,
-            "default": "hg19.fa"
-        },
-        "to_parquet": {
-            "metavar": "to parquet",
-            "help": """Parquet file conversion\n""",
-            "required": False,
-            "default": None,
+            "default": "hg19.fa",
+            "type": argparse.FileType('r'),
             "gooey": {
-                "widget": "FileSaver"
+                "widget": "FileChooser",
+                "options": {
+                    "wildcard":
+                        "All files (*)|*"
+                }
             }
         },
+        
 
         # HGVS
         "use_gene": {
@@ -448,8 +601,13 @@ arguments = {
             "help": """refGene annotation file""",
             "required": False,
             "default": None,
+            "type": argparse.FileType('r'),
             "gooey": {
-                "widget": "FileChooser"
+                "widget": "FileChooser",
+                "options": {
+                    "wildcard":
+                        "All files (*)|*"
+                }
             }
         },
         "refseqlink": {
@@ -457,18 +615,36 @@ arguments = {
             "help": """refSeqLink annotation file""",
             "required": False,
             "default": None,
+            "type": argparse.FileType('r'),
             "gooey": {
-                "widget": "FileChooser"
+                "widget": "FileChooser",
+                "options": {
+                    "wildcard":
+                        "All files (*)|*"
+                }
             }
         },
-
+        "refseq-folder": {
+            "metavar": "refseq folder",
+            "help": """Folder containing refseq files\n"""
+                    f"""Default: {DEFAULT_REFSEQ_FOLDER}""",
+            "required": False,
+            "default": f"{DEFAULT_REFSEQ_FOLDER}",
+            "type": PathType(exists=True, type='dir'),
+            "gooey": {
+                "widget": "DirChooser"
+            }
+        },
+        
         # Databases
 
         # Genome
         "download-genomes": {
             "metavar": "genomes",
-            "help": "Download Genomes within folder",
+            "help": """Download Genomes within folder.\n"""
+                    """ """,
             "required": False,
+            "type": PathType(exists=None, type='dir'),
             "gooey": {
                 "widget": "DirChooser"
             }
@@ -479,7 +655,12 @@ arguments = {
                     """Available: GENCODE, Ensembl, UCSC, NCBI\n"""
                     """Default: UCSC\n""",
             "required": False,
-            "default": "UCSC"
+            "default": "UCSC",
+            "choices": ["GENCODE", "Ensembl", "UCSC", "NCBI"],
+            "gooey": {
+                "widget": "Dropdown",
+                "options": {}
+            }
         },
         "download-genomes-contig-regex": {
             "metavar": "genomes contig regex",
@@ -495,6 +676,7 @@ arguments = {
             "metavar": "Annovar",
             "help": "Download Annovar databases within Annovar folder",
             "required": False,
+            "type": PathType(exists=None, type='dir'),
             "gooey": {
                 "widget": "DirChooser"
             }
@@ -522,6 +704,7 @@ arguments = {
             "metavar": "snpEff",
             "help": """Download snpEff databases within snpEff folder""",
             "required": False,
+            "type": PathType(exists=None, type='dir'),
             "gooey": {
                 "widget": "DirChooser"
             }
@@ -532,6 +715,7 @@ arguments = {
             "metavar": "refSeq",
             "help": """Download refSeq databases within refSeq folder""",
             "required": False,
+            "type": PathType(exists=None, type='dir'),
             "gooey": {
                 "widget": "DirChooser"
             }
@@ -595,6 +779,7 @@ arguments = {
             "metavar": "dbNSFP",
             "help": "Download dbNSFP databases within dbNSFP folder",
             "required": False,
+            "type": PathType(exists=None, type='dir'),
             "gooey": {
                 "widget": "DirChooser"
             }
@@ -620,7 +805,15 @@ arguments = {
                     """which contain N data files.\n"""
                     """Default: 100""",
             "required": False,
-            "default": 100
+            "default": 100,
+            "gooey": {
+                "widget": "IntegerField",
+                "options": {
+                    'min': 1,
+                    'max': 100000,
+                    'increment': 10
+                }
+            }
         },
         "download-dbnsfp-subdatabases": {
             "help": """Generate dbNSFP sub-databases\n"""
@@ -656,7 +849,15 @@ arguments = {
                     """speed up highly selective queries, slow down whole file queries (e.g. aggregations)\n"""
                     """Default: 100000""",
             "required": False,
-            "default": 100000
+            "default": 100000,
+            "gooey": {
+                "widget": "IntegerField",
+                "options": {
+                    'min': 1,
+                    'max': 100000000000,
+                    'increment': 10000
+                }
+            }
         },
 
         # AlphaMissense
@@ -664,6 +865,7 @@ arguments = {
             "metavar": "AlphaMissense",
             "help": "Download AlphaMissense databases within Annotations folder",
             "required": False,
+            "type": PathType(exists=None, type='dir'),
             "gooey": {
                 "widget": "DirChooser"
             }
@@ -683,6 +885,7 @@ arguments = {
                     """Folder where the Exomiser databases will be downloaded and stored.\n"""
                     """If the folder does not exist, it will be created.""",
             "required": False,
+            "type": PathType(exists=None, type='dir'),
             "gooey": {
                 "widget": "DirChooser"
             }
@@ -697,8 +900,13 @@ arguments = {
                     """CADD and REMM will be downloaded only if 'path' are provided\n""",
             "required": False,
             "default": None,
+            "type": argparse.FileType('r'),
             "gooey": {
-                "widget": "FileChooser"
+                "widget": "FileChooser",
+                "options": {
+                    "wildcard":
+                        "All files (*)|*",
+                }
             }
         },
         "download-exomiser-url": {
@@ -781,6 +989,7 @@ arguments = {
                     """Folder where the dbSNP databases will be downloaded and stored.\n"""
                     """If the folder does not exist, it will be created.""",
             "required": False,
+            "type": PathType(exists=None, type='dir'),
             "gooey": {
                 "widget": "DirChooser"
             }
@@ -860,6 +1069,7 @@ arguments = {
                     """Fields in VCF, Parquet and TSV will be generated.\n"""
                     """If the folder does not exist, it will be created.""",
             "required": False,
+            "type": PathType(exists=None, type='dir'),
             "gooey": {
                 "widget": "DirChooser"
             }
@@ -869,6 +1079,7 @@ arguments = {
             "help": """File from HGMD\n"""
                     """Name format 'HGMD_Pro_<release>_<assembly>.vcf.gz'.""",
             "required": False,
+            "type": argparse.FileType('r'),
             "gooey": {
                 "widget": "FileChooser"
             }
@@ -890,8 +1101,13 @@ arguments = {
                     """Structure of databases follow this structure (see doc):\n"""
                     """   .../<database>/<release>/<assembly>/*.[parquet|vcf.gz|...]""",
             "required": False,
+            "type": argparse.FileType('w'),
             "gooey": {
-                "widget": "FileSaver"
+                "widget": "FileSaver",
+                "options": {
+                    "wildcard":
+                        "JSON file (*.json)|*.json"
+                }
             }
         },
         "generate-param-description": {
@@ -899,8 +1115,13 @@ arguments = {
             "help": """Description file (JSON) with all databases found.\n"""
                     """Contains all databases with description of format, assembly, fields...""",
             "required": False,
+            "type": argparse.FileType('w'),
             "gooey": {
-                "widget": "FileSaver"
+                "widget": "FileSaver",
+                "options": {
+                    "wildcard":
+                        "JSON file (*.json)|*.json"
+                }
             }
         },
         "generate-param-releases": {
@@ -928,9 +1149,19 @@ arguments = {
         # From Annovar
         "annovar-code": {
             "metavar": "Annovar code",
-            "help": """Annovar code, or database name. Usefull to name databases columns""",
+            "help": """Annovar code, or database name.\n"""
+                    """Usefull to name databases columns""",
             "required": False,
             "default": None
+        },
+        "to_parquet": {
+            "metavar": "to parquet",
+            "help": """Parquet file conversion\n""",
+            "required": False,
+            "default": None,
+            "gooey": {
+                "widget": "FileSaver"
+            }
         },
 
         # Help
@@ -949,7 +1180,11 @@ arguments = {
             "required": False,
             "type": argparse.FileType('w'),
             "gooey": {
-                "widget": "FileSaver"
+                "widget": "FileSaver",
+                "options": {
+                    "wildcard":
+                        "HTML file (*.html)|*.html",
+                }
             }
         },
         "help_json_input": {
@@ -958,7 +1193,12 @@ arguments = {
             "required": False,
             "type": argparse.FileType('r'),
             "gooey": {
-                "widget": "FileChooser"
+                "widget": "FileChooser",
+                "options": {
+                    "wildcard":
+                        "JSON file (*.json)|*.json|"
+                        "All files (*)|*",
+                }
             }
         },
         "help_json_input_title": {
@@ -976,6 +1216,8 @@ arguments = {
                     f"""Default: {DEFAULT_GENOME_FOLDER}""",
             "required": False,
             "default": f"{DEFAULT_GENOME_FOLDER}",
+            #"type": argparse.FileType('r'),
+            "type": PathType(exists=True, type='dir'),
             "gooey": {
                 "widget": "DirChooser"
             }
@@ -1011,7 +1253,15 @@ arguments = {
                     """Use -1 to use all available CPU/cores\n"""
                     """Default: -1""",
             "required": False,
-            "default": -1
+            "default": -1,
+            "gooey": {
+                "widget": "IntegerField",
+                "options": {
+                    'min': -1,
+                    'max': 1000,
+                    'increment': 1
+                }
+            }
         },
         "memory": {
             "metavar": "memory",
@@ -1020,6 +1270,7 @@ arguments = {
                     """(especially for JAR prorams).\n"""
                     """It can help to prevvent 'out of memory' failures.\n"""
                     """Format: (FLOAT[kMG])\n"""
+                    """Examples: '8G', '12.42G', '1024M'\n"""
                     """Default: None (80%% of RAM for duckDB)""",
             "required": False,
             "default": None
@@ -1030,7 +1281,15 @@ arguments = {
                     """The lower the chunk size, the less memory consumption.\n"""
                     """For Parquet partitioning, files size will depend on the chunk size.\n"""
                     """default: 1000000""",
-            "default": 1000000
+            "default": 1000000,
+            "gooey": {
+                "widget": "IntegerField",
+                "options": {
+                    'min': 1,
+                    'max': 100000000000,
+                    'increment': 10000
+                }
+            }
         },
         "tmp": {
             "metavar": "Temporary folder",
@@ -1038,6 +1297,7 @@ arguments = {
                     """Especially for duckDB, default '.tmp' (see doc).\n"""
                     """default: None""",
             "default": None,
+            "type": PathType(exists=True, type='dir'),
             "gooey": {
                 "widget": "DirChooser"
             }
@@ -1049,8 +1309,14 @@ arguments = {
                     """Examples: '{"TimeZone": "GMT", "temp_directory": "/tmp/duckdb", "threads": 8}'\n"""
                     """default: None""",
             "default": None,
+            "type": argparse.FileType('r'),
             "gooey": {
-                "widget": "FileChooser"
+                "widget": "FileChooser",
+                "options": {
+                    "wildcard":
+                        "JSON file (*.json)|*.json|"
+                        "All files (*)|*",
+                }
             }
         },
         "verbosity": {
@@ -1078,8 +1344,9 @@ arguments = {
                     """Example: 'my.log'\n"""
                     """Default: None""",
             "default": None,
+            "type": argparse.FileType('w'),
             "gooey": {
-                "widget": "FileChooser"
+                "widget": "FileSaver"
             }
         },
         "quiet": {
@@ -1290,6 +1557,7 @@ commands_arguments = {
             "Databases": {
                 "refgene": False,
                 "refseqlink": False,
+                "refseq-folder": False,
                 "genomes-folder": False
             }
         }
@@ -1390,10 +1658,7 @@ commands_arguments = {
                 "generate-param-formats": False,
                 "generate-param-bcftools": False
             }
-
         }
-
-
     },
     "from_annovar": {
         "function" : "from_annovar",

@@ -2174,6 +2174,8 @@ def help_generation(arguments_dict:dict = {}, parser = None, setup:str = None, o
                 required = commands_arguments[command]["groups"][group][arg]
                 argument = get_argument(arguments=arguments.copy(), arg=arg, required=required, add_metavar=add_metavar)
                 if output_type == "gooey":
+                    if argument.get("help","") == "==SUPPRESS==":
+                        argument["help"] = arg
                     widget, options = get_argument_gooey(arguments=arguments, arg=arg)
                     argument["widget"] = widget
                     argument["gooey_options"] = options
@@ -2190,6 +2192,8 @@ def help_generation(arguments_dict:dict = {}, parser = None, setup:str = None, o
                     required = commands_arguments[command]["groups"][group][arg]
                     argument = get_argument(arguments=arguments.copy(), arg=arg, required=required, add_metavar=add_metavar)
                     if output_type == "gooey":
+                        if argument.get("help","") == "==SUPPRESS==":
+                            argument["help"] = arg
                         widget, options = get_argument_gooey(arguments=arguments, arg=arg)
                         argument["widget"] = widget
                         argument["gooey_options"] = options
@@ -2202,6 +2206,8 @@ def help_generation(arguments_dict:dict = {}, parser = None, setup:str = None, o
         for arg in shared_arguments:
             argument = get_argument(arguments=arguments, arg=arg, required=False, add_metavar=add_metavar)
             if output_type == "gooey":
+                if argument.get("help","") == "==SUPPRESS==":
+                    argument["help"] = arg
                 widget, options = get_argument_gooey(arguments=arguments, arg=arg)
                 argument["widget"] = widget
                 argument["gooey_options"] = options

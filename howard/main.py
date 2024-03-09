@@ -73,6 +73,9 @@ def main() -> None:
     # log
     if "log" not in args:
         args.log = None
+    elif args.log:
+        if not isinstance(args.log, str):
+            args.log = args.log.name
 
     # Config infos
     args.arguments_dict = arguments_dict
@@ -114,7 +117,11 @@ def main() -> None:
     # duckdb settings
     duckdb_settings = None
     if "duckdb_settings" in args and args.duckdb_settings:
-        duckdb_settings = args.duckdb_settings
+        if isinstance(args.duckdb_settings, str) and os.path.exists(full_path(args.duckdb_settings)):
+            with open(full_path(args.duckdb_settings)) as config_file:
+                duckdb_settings = json.load(config_file)
+        else:
+            duckdb_settings = json.loads(args.duckdb_settings)
         
     # Assembly
     if "assembly" in args and args.assembly:
@@ -131,7 +138,7 @@ def main() -> None:
             config = json.loads(args.config)
     else:
         config = {}
-    
+
     # add to config
     config["verbosity"] = args.verbosity
     config["threads"] = threads
