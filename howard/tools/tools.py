@@ -115,7 +115,8 @@ arguments = {
                     """Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB\n"""
                     """Files can be compressesd (e.g. vcf.gz, tsv.gz)""",
             "required": False,
-            "type": argparse.FileType('r'),
+            #"type": argparse.FileType('r'),
+            "type": PathType(exists=True, type=None),
             "gooey": {
                 "widget": "FileChooser",
                 "options": {
@@ -131,7 +132,8 @@ arguments = {
                     """Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB\n"""
                     """Files can be compressesd (e.g. vcf.gz, tsv.gz)""",
             "required": False,
-            "type": argparse.FileType('w'),
+            #"type": argparse.FileType('w'),
+            "type": PathType(exists=None, type=None),
             "gooey": {
                 "widget": "FileSaver"
             }
@@ -170,7 +172,8 @@ arguments = {
             "help": """Output Query file.\n"""
                     """Format: VCF, TSV, Parquet...""",
             "default": None,
-            "type": argparse.FileType('w'),
+            #"type": argparse.FileType('w'),
+            "type": PathType(exists=None, type=None),
             "gooey": {
                 "widget": "FileSaver",
                 "options": {
@@ -246,7 +249,8 @@ arguments = {
             "metavar": "prioritisations",
             "help": "Prioritization file in JSON format (defines profiles, see doc).",
             "default": None,
-            "type": argparse.FileType('r'),
+            #"type": argparse.FileType('r'),
+            "type": PathType(exists=True, type='file'),
             "gooey": {
                 "widget": "FileChooser",
                 "options": {
@@ -412,7 +416,8 @@ arguments = {
             "help": """Calculation config file\n"""
                     """Format: JSON""",
             "default": None,
-            "type": argparse.FileType('r'),
+            #"type": argparse.FileType('r'),
+            "type": PathType(exists=True, type='file'),
             "gooey": {
                 "widget": "FileChooser",
                 "options": {
@@ -438,7 +443,8 @@ arguments = {
                     """Format: Transcript in first column, optional Gene in second column \n"""
                     """default: None""",
             "default": None,
-            "type": argparse.FileType('r'),
+            #"type": argparse.FileType('r'),
+            "type": PathType(exists=True, type='file'),
             "gooey": {
                 "widget": "FileChooser",
                 "options": {
@@ -454,7 +460,8 @@ arguments = {
                     """Format: JSON file or dict (e.g. 'trio.ped.json', '{"father":"sample1", "mother":"sample2", "child":"sample3"}') \n"""
                     """default: None""",
             "default": None,
-            "type": argparse.FileType('r'),
+            #"type": argparse.FileType('r'),
+            "type": PathType(exists=True, type='file'),
             "gooey": {
                 "widget": "FileChooser",
                 "options": {
@@ -484,7 +491,8 @@ arguments = {
             "metavar": "stats markdown",
             "help": """Stats Output file in MarkDown format\n""",
             "required": False,
-            "type": argparse.FileType('w'),
+            #"type": argparse.FileType('w'),
+            "type": PathType(exists=None, type='file'),
             "gooey": {
                 "widget": "FileSaver",
                 "options": {
@@ -497,7 +505,8 @@ arguments = {
             "metavar": "stats json",
             "help": """Stats Output file in JSON format\n""",
             "required": False,
-            "type": argparse.FileType('w'),
+            #"type": argparse.FileType('w'),
+            "type": PathType(exists=None, type='file'),
             "gooey": {
                 "widget": "FileSaver",
                 "options": {
@@ -533,7 +542,8 @@ arguments = {
                     """Default: 'hg19.fa'""",
             "required": False,
             "default": "hg19.fa",
-            "type": argparse.FileType('r'),
+            #"type": argparse.FileType('r'),
+            "type": PathType(exists=True, type='file'),
             "gooey": {
                 "widget": "FileChooser",
                 "options": {
@@ -601,7 +611,8 @@ arguments = {
             "help": """refGene annotation file""",
             "required": False,
             "default": None,
-            "type": argparse.FileType('r'),
+            #"type": argparse.FileType('r'),
+            "type": PathType(exists=True, type='file'),
             "gooey": {
                 "widget": "FileChooser",
                 "options": {
@@ -615,7 +626,8 @@ arguments = {
             "help": """refSeqLink annotation file""",
             "required": False,
             "default": None,
-            "type": argparse.FileType('r'),
+            #"type": argparse.FileType('r'),
+            "type": PathType(exists=True, type='file'),
             "gooey": {
                 "widget": "FileChooser",
                 "options": {
@@ -891,16 +903,17 @@ arguments = {
             }
         },
         "download-exomiser-application-properties": {
-            "metavar": "Exomiser aplication properties",
+            "metavar": "Exomiser application properties",
             "help": """Exomiser Application Properties configuration file (see Exomiser website)\n"""
                     """This file contains configuration settings for the Exomiser tool.\n"""
                     """If this parameter is not provided, the function will attempt to locate\n"""
                     """the application properties file automatically based on the Exomiser.\n"""
                     """Configuration information will be used to download expected releases (if no other parameters)\n"""
-                    """CADD and REMM will be downloaded only if 'path' are provided\n""",
+                    """CADD and REMM will be downloaded only if 'path' are provided""",
             "required": False,
             "default": None,
-            "type": argparse.FileType('r'),
+            #"type": argparse.FileType('r'),
+            "type": PathType(exists=True, type='file'),
             "gooey": {
                 "widget": "FileChooser",
                 "options": {
@@ -1079,7 +1092,8 @@ arguments = {
             "help": """File from HGMD\n"""
                     """Name format 'HGMD_Pro_<release>_<assembly>.vcf.gz'.""",
             "required": False,
-            "type": argparse.FileType('r'),
+            #"type": argparse.FileType('r'),
+            "type": PathType(exists=True, type='file'),
             "gooey": {
                 "widget": "FileChooser"
             }
@@ -1101,7 +1115,8 @@ arguments = {
                     """Structure of databases follow this structure (see doc):\n"""
                     """   .../<database>/<release>/<assembly>/*.[parquet|vcf.gz|...]""",
             "required": False,
-            "type": argparse.FileType('w'),
+            #"type": argparse.FileType('w'),
+            "type": PathType(exists=None, type=None),
             "gooey": {
                 "widget": "FileSaver",
                 "options": {
@@ -1115,7 +1130,8 @@ arguments = {
             "help": """Description file (JSON) with all databases found.\n"""
                     """Contains all databases with description of format, assembly, fields...""",
             "required": False,
-            "type": argparse.FileType('w'),
+            #"type": argparse.FileType('w'),
+            "type": PathType(exists=None, type=None),
             "gooey": {
                 "widget": "FileSaver",
                 "options": {
@@ -1169,7 +1185,8 @@ arguments = {
             "metavar": "help markdown",
             "help": """Help Output file in MarkDown format\n""",
             "required": False,
-            "type": argparse.FileType('w'),
+            #"type": argparse.FileType('w'),
+            "type": PathType(exists=None, type=None),
             "gooey": {
                 "widget": "FileSaver"
             }
@@ -1178,7 +1195,8 @@ arguments = {
             "metavar": "help html",
             "help": """Help Output file in HTML format\n""",
             "required": False,
-            "type": argparse.FileType('w'),
+            #"type": argparse.FileType('w'),
+            "type": PathType(exists=None, type=None),
             "gooey": {
                 "widget": "FileSaver",
                 "options": {
@@ -1191,7 +1209,8 @@ arguments = {
             "metavar": "help JSON input",
             "help": """Help input file in JSON format\n""",
             "required": False,
-            "type": argparse.FileType('r'),
+            #"type": argparse.FileType('r'),
+            "type": PathType(exists=True, type='file'),
             "gooey": {
                 "widget": "FileChooser",
                 "options": {
@@ -1309,7 +1328,8 @@ arguments = {
                     """Examples: '{"TimeZone": "GMT", "temp_directory": "/tmp/duckdb", "threads": 8}'\n"""
                     """default: None""",
             "default": None,
-            "type": argparse.FileType('r'),
+            #"type": argparse.FileType('r'),
+            "type": PathType(exists=True, type='file'),
             "gooey": {
                 "widget": "FileChooser",
                 "options": {
@@ -1344,7 +1364,8 @@ arguments = {
                     """Example: 'my.log'\n"""
                     """Default: None""",
             "default": None,
-            "type": argparse.FileType('w'),
+            #"type": argparse.FileType('w'),
+            "type": PathType(exists=None, type='file'),
             "gooey": {
                 "widget": "FileSaver"
             }

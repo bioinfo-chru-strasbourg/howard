@@ -1159,8 +1159,10 @@ def download_file(url:str, dest_file_path:str, chunk_size:int = 1024*1024, try_a
             aria_async_dns_option = str(aria_async_dns).lower()
             if quiet and log.root.level>=20:
                 aria_quiet_option = " --quiet "
+                aria_redirect_option = " 2>/dev/null "
             else:
                 aria_quiet_option = ""
+                aria_redirect_option = ""
 
             # Aria command
             aria_command = f"aria2c -c -s {threads} -x {threads} -j 1 {url} -d {os.path.dirname(dest_file_path)} -o {os.path.basename(dest_file_path)} {aria_quiet_option}"
@@ -1168,7 +1170,7 @@ def download_file(url:str, dest_file_path:str, chunk_size:int = 1024*1024, try_a
             # Launch command
             # Try with --async-dns option
             try:
-                output = os.system(f"{aria_command} --async-dns={aria_async_dns_option}")
+                output = os.system(f"{aria_command} --async-dns={aria_async_dns_option} {aria_redirect_option}")
                 if output:
                     assert False
             except:
@@ -2174,8 +2176,6 @@ def help_generation(arguments_dict:dict = {}, parser = None, setup:str = None, o
                 required = commands_arguments[command]["groups"][group][arg]
                 argument = get_argument(arguments=arguments.copy(), arg=arg, required=required, add_metavar=add_metavar)
                 if output_type == "gooey":
-                    if argument.get("help","") == "==SUPPRESS==":
-                        argument["help"] = arg
                     widget, options = get_argument_gooey(arguments=arguments, arg=arg)
                     argument["widget"] = widget
                     argument["gooey_options"] = options
@@ -2192,8 +2192,6 @@ def help_generation(arguments_dict:dict = {}, parser = None, setup:str = None, o
                     required = commands_arguments[command]["groups"][group][arg]
                     argument = get_argument(arguments=arguments.copy(), arg=arg, required=required, add_metavar=add_metavar)
                     if output_type == "gooey":
-                        if argument.get("help","") == "==SUPPRESS==":
-                            argument["help"] = arg
                         widget, options = get_argument_gooey(arguments=arguments, arg=arg)
                         argument["widget"] = widget
                         argument["gooey_options"] = options
@@ -2206,8 +2204,6 @@ def help_generation(arguments_dict:dict = {}, parser = None, setup:str = None, o
         for arg in shared_arguments:
             argument = get_argument(arguments=arguments, arg=arg, required=False, add_metavar=add_metavar)
             if output_type == "gooey":
-                if argument.get("help","") == "==SUPPRESS==":
-                    argument["help"] = arg
                 widget, options = get_argument_gooey(arguments=arguments, arg=arg)
                 argument["widget"] = widget
                 argument["gooey_options"] = options
