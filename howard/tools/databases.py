@@ -101,6 +101,8 @@ def databases_download(args:argparse) -> None:
     assemblies = [value for value in args.assembly.split(',')]
 
     # Genome folder
+    if "genomes_folder" in args and args.genomes_folder and not isinstance(args.genomes_folder, str):
+        args.genomes_folder = args.genomes_folder.name
     if "config" in args and args.config and args.config.get("folders",{}).get("databases",{}).get("genomes") and args.genomes_folder == DEFAULT_REFSEQ_FOLDER:
         args.genomes_folder = args.config.get("folders",{}).get("databases",{}).get("genomes")
 
@@ -116,8 +118,19 @@ def databases_download(args:argparse) -> None:
         threads = int(input_thread)
 
     # Param
-    if args.generate_param:
+    if "generate_param" in args and args.generate_param:
         log.debug(f"Generate param config")
+
+        if isinstance(args.generate_param, str):
+            generate_param_file = args.generate_param
+        else:
+            generate_param_file = args.generate_param.name
+
+        if "generate_param_description" in args and args.generate_param_description:
+            if isinstance(args.generate_param_description, str):
+                generate_param_description_file = args.generate_param_description
+            else:
+                generate_param_description_file = args.generate_param_description.name
 
         # Check assembly
         if len(assemblies) == 1:
@@ -148,8 +161,8 @@ def databases_download(args:argparse) -> None:
         databases_param_stats = databases_param(
             databases_infos_dict=databases_infos_dict,
             bcftools_preference=args.generate_param_bcftools,
-            output=args.generate_param,
-            output_description=args.generate_param_description
+            output=generate_param_file,
+            output_description=generate_param_description_file
             )
 
         # Show param (3 levels of param)
@@ -260,10 +273,15 @@ def databases_download(args:argparse) -> None:
     # Exomiser
     if args.download_exomiser:
         log.debug(f"Download Exomiser")
+        if download_exomiser_application_properties in args and args.download_exomiser_application_properties:
+            if isinstance(args.download_exomiser_application_properties, str):
+                download_exomiser_application_properties = args.download_exomiser_application_properties
+            else:
+                download_exomiser_application_properties = args.download_exomiser_application_properties.name
         databases_download_exomiser(
             assemblies = assemblies,
             exomiser_folder=args.download_exomiser,
-            exomiser_application_properties=args.download_exomiser_application_properties,
+            exomiser_application_properties=download_exomiser_application_properties,
             exomiser_url=args.download_exomiser_url,
             exomiser_release=args.download_exomiser_release,
             exomiser_phenotype_release=args.download_exomiser_phenotype_release,
@@ -301,10 +319,15 @@ def databases_download(args:argparse) -> None:
     # HGMD
     if args.convert_hgmd:
         log.debug(f"Convert HGMD")
+        if convert_hgmd_file in args and args.convert_hgmd_file:
+            if isinstance(args.convert_hgmd_file, str):
+                convert_hgmd_file = args.convert_hgmd_file
+            else:
+                convert_hgmd_file = args.convert_hgmd_file.name
         databases_download_hgmd(
             assemblies = assemblies,
             hgmd_folder=args.convert_hgmd,
-            hgmd_file=args.convert_hgmd_file,
+            hgmd_file=convert_hgmd_file,
             output_basename=args.convert_hgmd_basename,
             genomes_folder=args.genomes_folder,
             threads=threads
