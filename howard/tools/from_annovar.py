@@ -22,7 +22,7 @@ import itertools
 
 import pyarrow as pa
 import pyarrow.parquet as pq
-import pyarrow.csv as csv
+import pyarrow.csv as pcsv
 
 
 from howard.objects.variants import Variants
@@ -67,18 +67,21 @@ def from_annovar(args:argparse) -> None:
     output_file = full_path(output_file)
 
     # Genome
-    if isinstance(args.genome, str):
-        genome_file = args.genome
-    else:
-        genome_file = args.genome.name
-    genome_file = full_path(genome_file)
+    if "genome" in args and args.genome:
+        if isinstance(args.genome, str):
+            genome_file = args.genome
+        else:
+            genome_file = args.genome.name
+        genome_file = full_path(genome_file)
     
     # To Parquet
-    if isinstance(args.to_parquet, str):
-        output_file_parquet = args.to_parquet
-    else:
-        output_file_parquet = args.to_parquet.name
-    output_file_parquet = full_path(output_file_parquet)
+    output_file_parquet = None
+    if "to_parquet" in args and args.to_parquet:
+        if isinstance(args.to_parquet, str):
+            output_file_parquet = args.to_parquet
+        else:
+            output_file_parquet = args.to_parquet.name
+        output_file_parquet = full_path(output_file_parquet)
 
     # Annovar Code
     annovar_code = args.annovar_code
@@ -275,7 +278,7 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
                     log.debug("Found header")
                     header = line.strip().split('\t')
                     if "#CHROM" not in header:
-                        chrom_list_for_header = ["#Chr"]
+                        chrom_list_for_header = ["CHROM", "#Chr", "#chr", "Chr", "chr" "chromosome"]
                         for chr in chrom_list_for_header:
                             if chr in header:
                                 header[header.index(chr)] = "#CHROM"
@@ -284,7 +287,7 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
                             log.debug(f"default chromosome column is 0")
                             header[0] = "#CHROM"
                     if "POS" not in header:
-                        pos_list_for_header = ["Start"]
+                        pos_list_for_header = ["Pos", "pos", "Start", "START"]
                         for pos in pos_list_for_header:
                             if pos in header:
                                 header[header.index(pos)] = "POS"
@@ -293,7 +296,7 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
                             log.debug(f"default position column is 1")
                             header[1] = "POS"
                     if "REF" not in header:
-                        ref_list_for_header = ["Ref"]
+                        ref_list_for_header = ["Ref", "ref"]
                         for ref in ref_list_for_header:
                             if ref in header:
                                 header[header.index(ref)] = "REF"
@@ -302,7 +305,7 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
                             log.debug(f"default reference column is 3")
                             header[3] = "REF"
                     if "ALT" not in header:
-                        alt_list_for_header = ["Alt"]
+                        alt_list_for_header = ["Alt", "alt"]
                         for alt in alt_list_for_header:
                             if alt in header:
                                 header[header.index(alt)] = "ALT"
@@ -361,6 +364,12 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
             else:
                 break
     f.close()
+
+    # Clean nb header and skip line
+    nb_skip_line = nb_header_line
+    nb_header_line -= 1
+    if nb_header_line <= 0:
+        nb_header_line = None
     
     # Check dtype and force if needed
     dtype = {}
@@ -382,7 +391,7 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
     except:
         log.error("format not supported")
         raise ValueError("format not supported")
-    
+
     # Check multi variant (multiple annotation on same variant CHROM, POS REF, ALT)
     query_multi_variant = """
         SELECT "#CHROM", "POS", "REF", "ALT", count(*) AS count
@@ -617,7 +626,7 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
         log.debug(f"Create View From TSV to Parquet")
             
         # Create Parquet file from TSV
-        tsv_to_parquet(input_file, f'{output_file}.tmp.annovar.parquet', delim=delimiter, columns=columns_struct, nullstr='.', skip=nb_header_line)
+        tsv_to_parquet(input_file, f'{output_file}.tmp.annovar.parquet', delim=delimiter, columns=columns_struct, nullstr='.', skip=nb_skip_line)
 
         # Query Create view
         query = f""" CREATE VIEW annovar AS SELECT * FROM '{output_file}.tmp.annovar.parquet' """
@@ -628,7 +637,7 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
         log.debug("Create View From TSV")
 
         # Create view of input file
-        query = f""" CREATE VIEW annovar AS SELECT * FROM read_csv_auto('{input_file}', delim='{delimiter}', columns={columns_struct}, names={header}, dtypes={dtype_duckdb}, nullstr='.', parallel=True, skip={nb_header_line}) """
+        query = f""" CREATE VIEW annovar AS SELECT * FROM read_csv_auto('{input_file}', delim='{delimiter}', columns={columns_struct}, names={header}, dtypes={dtype_duckdb}, nullstr='.', parallel=True, skip={nb_skip_line}) """
     
     conn.execute(query)
 
@@ -983,9 +992,9 @@ def tsv_to_parquet(tsv:str, parquet:str, delim:str = None, columns:dict = None, 
     schema = pa.schema(columns_pyarrow_dict)
 
     # CSV options
-    convert_options = csv.ConvertOptions()
-    read_options = csv.ReadOptions()
-    parse_options = csv.ParseOptions()
+    convert_options = pcsv.ConvertOptions()
+    read_options = pcsv.ReadOptions()
+    parse_options = pcsv.ParseOptions()
 
     # Parameters to VCS options
     convert_options.auto_dict_encode = False
@@ -1004,7 +1013,7 @@ def tsv_to_parquet(tsv:str, parquet:str, delim:str = None, columns:dict = None, 
 
     # Read CSV and Write to Parquet
     writer = None
-    with csv.open_csv(tsv, convert_options=convert_options, read_options=read_options, parse_options=parse_options) as reader:
+    with pcsv.open_csv(tsv, convert_options=convert_options, read_options=read_options, parse_options=parse_options) as reader:
         for next_chunk in reader:
             if next_chunk is None:
                 break

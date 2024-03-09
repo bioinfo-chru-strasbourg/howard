@@ -155,8 +155,6 @@ def test_annotation_parquet_update():
                         }
                     }
                 }
-        log.debug(f"param={param}")
-        log.debug(f"param_update={param_update}")
 
         # Create object
         variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
