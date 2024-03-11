@@ -1,19 +1,5 @@
 {
   "annotation": {
-    "snpeff": {
-      "options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "
-    },
-    "annovar": {
-      "annotations": {
-        "refGene": {
-          "INFO": null
-        }
-      },
-      "options": {
-        "genebase": "-hgvs -splicing_threshold 3 ",
-        "intronhgvs": 10
-      }
-    },
     "parquet": {
       "annotations": {
         "tests/databases/annotations/current/hg19/avsnp150.parquet": {
@@ -33,6 +19,20 @@
           "INFO": null
         }
       }
+    },
+    "snpeff": {
+      "options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "
+    },
+    "annovar": {
+      "annotations": {
+        "refGene": {
+          "INFO": null
+        }
+      },
+      "options": {
+        "genebase": "-hgvs -splicing_threshold 3 ",
+        "intronhgvs": 10
+      }
     }
   },
   "calculation": {
@@ -49,8 +49,10 @@
   "prioritization": {
     "config_profiles": "config/prioritization_profiles.json",
     "pzfields": ["PZScore", "PZFlag", "PZComment"],
-    "profiles": ["default", "GERMLINE"]
+    "profiles": ["default", "GERMLINE"],
+    "prioritization_score_mode": "VaRank"
   },
-  "explode_infos": "INFO/",
+  "query": "SELECT \"#CHROM\", POS, REF, ALT, INFO FROM variants",
+  "explode_infos": true,
   "threads": 8
 }

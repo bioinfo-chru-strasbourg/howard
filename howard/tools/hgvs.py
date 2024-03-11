@@ -36,41 +36,57 @@ def hgvs(args:argparse) -> None:
 
     log.info("Start")
 
+    # Config infos
+    if "arguments_dict" in args:
+        arguments_dict = args.arguments_dict
+    else:
+        arguments_dict = None
+    if "setup_cfg" in args:
+        setup_cfg = args.setup_cfg
+    else:
+        setup_cfg = None
     config = args.config
 
-    params = {}
+    # Load parameters in JSON format
+    param = {}
+    if "param" in args:
+        if isinstance(args.param, str) and os.path.exists(full_path(args.param)):
+            with open(full_path(args.param)) as param_file:
+                param = json.load(param_file)
+        else:
+            param = json.loads(args.param)
     
     # Create VCF object
     if args.input:
-        vcfdata_obj = Variants(None, args.input, args.output, config, params)
+        vcfdata_obj = Variants(None, args.input, args.output, config, param)
         
         # Params
-        params = vcfdata_obj.get_param()
+        param = vcfdata_obj.get_param()
         config = vcfdata_obj.get_config()
 
-        if not params.get("hgvs", None):
-            params["hgvs"] = {}
+        if not param.get("hgvs", None):
+            param["hgvs"] = {}
 
         if "use_exon" in args:
-            params["hgvs"]["use_exon"] = args.use_exon
+            param["hgvs"]["use_exon"] = args.use_exon
 
         if "use_gene" in args:
-            params["hgvs"]["use_gene"] = args.use_gene
+            param["hgvs"]["use_gene"] = args.use_gene
 
         if "use_protein" in args:
-            params["hgvs"]["use_protein"] = args.use_protein
+            param["hgvs"]["use_protein"] = args.use_protein
 
         if "add_protein" in args:
-            params["hgvs"]["add_protein"] = args.add_protein
+            param["hgvs"]["add_protein"] = args.add_protein
 
         if "full_format" in args:
-            params["hgvs"]["full_format"] = args.full_format
+            param["hgvs"]["full_format"] = args.full_format
         
         if "use_version" in args:
-            params["hgvs"]["use_version"] = args.use_version
+            param["hgvs"]["use_version"] = args.use_version
 
         if "codon_type" in args:
-            params["hgvs"]["codon_type"] = args.codon_type
+            param["hgvs"]["codon_type"] = args.codon_type
 
         if "refgene" in args and args.refgene:
             log.debug(f"args.refgene={args.refgene}")
@@ -78,17 +94,17 @@ def hgvs(args:argparse) -> None:
                 refgene = args.refgene
             else:
                 refgene = args.refgene.name
-            params["hgvs"]["refgene"] = refgene
+            param["hgvs"]["refgene"] = refgene
 
         if "refseqlink" in args and args.refseqlink:
             if isinstance(args.refseqlink, str):
                 refseqlink = args.refseqlink
             else:
                 refseqlink = args.refseqlink.name
-            params["hgvs"]["refseqlink"] = refseqlink
+            param["hgvs"]["refseqlink"] = refseqlink
 
         if "assembly" in args:
-            params["assembly"] = args.assembly
+            param["assembly"] = args.assembly
 
         if "genomes_folder" in args and args.genomes_folder:
             if isinstance(args.genomes_folder, str):
@@ -114,7 +130,7 @@ def hgvs(args:argparse) -> None:
             if "refseq" not in config["folders"]["databases"] or refseq_folder != DEFAULT_REFSEQ_FOLDER:
                 config["folders"]["databases"]["refseq"] = refseq_folder
 
-        vcfdata_obj.set_param(params)
+        vcfdata_obj.set_param(param)
         vcfdata_obj.set_config(config)
         
         # Load data from input file

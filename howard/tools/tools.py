@@ -263,7 +263,7 @@ arguments = {
         "profiles": {
             "metavar": "profiles",
             "help": """List of prioritization profiles to process (based on Prioritization JSON file).\n"""
-                    """Examples: 'VARTYPE', 'VARTYPE,VARIANT_ID'"""
+                    """Examples: 'default', 'rare variants', 'low allele frequency', 'GERMLINE'\n"""
                     """default: all profiles available""",
             "default": None
         },
@@ -1405,7 +1405,8 @@ commands_arguments = {
             "main": {
                 "input": False,
                 "output": False,
-                "query": True
+                "query": False,
+                "param": False,
             },
             "Explode infos": {
                 "explode_infos": False,
@@ -1431,7 +1432,8 @@ commands_arguments = {
             "main": {
                 "input": True,
                 "stats_md": False,
-                "stats_json": False
+                "stats_json": False,
+                "param": False
             }
         }
     },
@@ -1453,7 +1455,8 @@ commands_arguments = {
                 "explode_infos_fields": False,
                 "order_by": False,
                 "include_header": False,
-                "parquet_partitions": False
+                "parquet_partitions": False,
+                "param": False
             }
         }
     },
@@ -1469,10 +1472,11 @@ commands_arguments = {
             "main": {
                 "input": True,
                 "output": True,
-                "annotations": True,
+                "annotations": False,
                 "assembly": False,
                 "annotations_update": False,
-                "annotations_append": False
+                "annotations_append": False,
+                "param": False
             }
         }
     },
@@ -1487,11 +1491,12 @@ commands_arguments = {
                         ,
         "groups": {
             "main": {
-                "input": False,
-                "output": False,
+                "input": True,
+                "output": True,
                 "calculations": False,
                 "calculation_config": False,
-                "show_calculations": False
+                "show_calculations": False,
+                "param": False
             },
             "NOMEN calculation": {
                 "hgvs_field": False,
@@ -1512,7 +1517,8 @@ commands_arguments = {
             "main": {
                 "input": True,
                 "output": True,
-                "prioritizations": True
+                "prioritizations": False,
+                "param": False
             },
             "Prioritization": {
                 "profiles": False,

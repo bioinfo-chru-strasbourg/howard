@@ -4727,9 +4727,8 @@ class Variants:
                 field_ID = PZfields_INFOS[field]["ID"]
                 field_description = PZfields_INFOS[field]["Description"]
                 if field_ID not in self.get_header().infos and field_ID in pzfields:
-                    if field != "PZTags":
-                        field_description = PZfields_INFOS[field]["Description"] + \
-                            f", profile {default_profile}"
+                    field_description = PZfields_INFOS[field]["Description"] + \
+                        f", profile {default_profile}"
                     self.get_header().infos[field_ID] = vcf.parser._Info(
                         field_ID, PZfields_INFOS[field]["Number"], PZfields_INFOS[field]["Type"], field_description, 'unknown', 'unknown', code_type_map[PZfields_INFOS[field]["Type"]])
 
@@ -4737,14 +4736,13 @@ class Variants:
             for profile in config_profiles:
                 if profile in profiles or profiles == []:
                     for field in PZfields_INFOS:
-                        if field != "PZTags":
-                            field_ID = PZfields_INFOS[field]["ID"] + \
-                                pzfields_sep+profile
-                            field_description = PZfields_INFOS[field]["Description"] + \
-                                f", profile {profile}"
-                            if field_ID not in self.get_header().infos and field in pzfields:
-                                self.get_header().infos[field_ID] = vcf.parser._Info(
-                                    field_ID, PZfields_INFOS[field]["Number"], PZfields_INFOS[field]["Type"], field_description, 'unknown', 'unknown', code_type_map[PZfields_INFOS[field]["Type"]])
+                        field_ID = PZfields_INFOS[field]["ID"] + \
+                            pzfields_sep+profile
+                        field_description = PZfields_INFOS[field]["Description"] + \
+                            f", profile {profile}"
+                        if field_ID not in self.get_header().infos and field in pzfields:
+                            self.get_header().infos[field_ID] = vcf.parser._Info(
+                                field_ID, PZfields_INFOS[field]["Number"], PZfields_INFOS[field]["Type"], field_description, 'unknown', 'unknown', code_type_map[PZfields_INFOS[field]["Type"]])
 
             # Header
             for pzfield in list_of_pzfields:
@@ -4946,21 +4944,68 @@ class Variants:
                                 try:
                                     float(criterion_value)
                                     sql_update = f"""
-                                        UPDATE {table_variants} \
-                                        SET {sql_set_option} \
-                                        WHERE "{explode_infos_prefix}{annotation}" NOT IN ('','.') \
+                                        UPDATE {table_variants}
+                                        SET {sql_set_option}
+                                        WHERE "{explode_infos_prefix}{annotation}" NOT IN ('','.')
                                         AND "{explode_infos_prefix}{annotation}"{comparison_map[criterion_type]}{criterion_value}
-                                    """
+                                        """
                                 except:
                                     contains_option = ""
                                     if criterion_type == "contains":
                                         contains_option = ".*"
                                     sql_update = f"""
-                                    UPDATE {table_variants} \
-                                        SET {sql_set_option} \
+                                        UPDATE {table_variants}
+                                        SET {sql_set_option}
                                         WHERE "{explode_infos_prefix}{annotation}" SIMILAR TO '{contains_option}{criterion_value}{contains_option}'
                                         """
                                 sql_queries.append(sql_update)
+
+                        # PZTags
+                        if f"PZTags{pzfields_sep}{profile}" in list_of_pzfields:
+                            
+                            # Create PZFalgs value
+                            pztags_value = ""
+                            pztags_sep_default = "|"
+                            pztags_sep = ""
+                            for pzfield in pzfields:
+                                if pzfield not in ["PZTags"]:
+                                    if f"{pzfield}{pzfields_sep}{profile}" in list_of_pzfields:
+                                        if pzfield in ["PZFlag"]:
+                                            pztags_value += f"""{pztags_sep}{pzfield}#', 
+                                                CASE WHEN PZFlag{pzfields_sep}{profile}
+                                                    THEN 'PASS'
+                                                    ELSE 'FILTERED'
+                                                END, '"""
+                                        else:
+                                            pztags_value += f"{pztags_sep}{pzfield}#', {pzfield}{pzfields_sep}{profile}, '"
+                                        pztags_sep = pztags_sep_default
+
+                            # Add Query update for PZFlags
+                            sql_update_pztags = f"""
+                                UPDATE {table_variants}
+                                SET INFO = concat(
+                                        INFO,
+                                        CASE WHEN INFO NOT in ('','.')
+                                                THEN ';'
+                                                ELSE ''
+                                        END,
+                                        'PZTags{pzfields_sep}{profile}={pztags_value}'
+                                    )
+                                """
+                            sql_queries.append(sql_update_pztags)
+
+                            # Add Query update for PZFlags for default
+                            if profile == default_profile:
+                                sql_update_pztags_default = f"""
+                                UPDATE {table_variants}
+                                SET INFO = concat(
+                                        INFO,
+                                        ';',
+                                        'PZTags={pztags_value}'
+                                    )
+                                """
+                                sql_queries.append(sql_update_pztags_default)
+
 
                         log.info(
                             f"""Profile '{profile}' - Prioritization... """)
