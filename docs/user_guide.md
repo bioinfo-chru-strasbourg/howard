@@ -287,7 +287,7 @@ See [HOWARD Help From ANNOVAR tool](help.md#from_annovar-tool) tool for more inf
 
 # Tools
 
-HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations, convert on multiple formats, query variations and generates statistics. Theses tools require options or a [ Parameters JSON](help.param.md) file.
+HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations, convert on multiple formats, query variations and generates statistics. These tools require options or a [ Parameters JSON](help.param.md) file.
 
 ## Parameters
 
