@@ -58,6 +58,10 @@ def stats(args:argparse) -> None:
         else:
             param = json.loads(args.param)
 
+    # Init param
+    if "stats" not in param:
+        param["stats"] = {}
+
     # MarkDown file
     stats_md=None
     if "stats_md" in args and args.stats_md:
@@ -65,7 +69,7 @@ def stats(args:argparse) -> None:
             stats_md = args.stats_md
         else:
             stats_md = args.stats_md.name
-        param["stats_md"] = stats_md
+        param["stats"]["stats_md"] = stats_md
 
     # JSON file
     stats_json=None
@@ -74,7 +78,7 @@ def stats(args:argparse) -> None:
             stats_json = args.stats_json
         else:
             stats_json = args.stats_json.name
-        param["stats_json"] = stats_json
+        param["stats"]["stats_json"] = stats_json
 
     # Create VCF object
     if args.input:
@@ -84,6 +88,8 @@ def stats(args:argparse) -> None:
         vcfdata_obj.load_data()
 
         # Stats
+        stats_md = param.get("stats",{}).get("stats_md",None)
+        stats_json = param.get("stats",{}).get("stats_json",None)
         vcfdata_obj.print_stats(output_file=stats_md, json_file=stats_json)
 
         # Close connexion

@@ -15,6 +15,8 @@ HOWARD Parameters JSON file defined parameters to process annotations, prioritiz
          - [options](#annotationsannovaroptions)
       - [snpeff](#annotationssnpeff)
          - [options](#annotationssnpeffoptions)
+         - [stats](#annotationssnpeffstats)
+         - [csvStats](#annotationssnpeffcsvstats)
       - [exomiser](#annotationsexomiser)
          - [release](#annotationsexomiserrelease)
       - [options](#annotationsoptions)
@@ -263,6 +265,30 @@ Examples:
 ```
 # Annotation with snpEff databases, with options to generate HGVS annotation, specify to not shift variants according to HGVS notation, define splice sites size to 3, add loss of function (LOF), Nonsense mediated decay and OICR tags.
 "options": " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "
+```
+
+#### annotations::snpeff::stats
+
+HTML file for snpEff stats. Use keyword 'OUTPUT' to generate file according to output file.
+
+Examples: 
+```
+# Annotation with snpEff databases, and generate a specific stats in HTML format.
+"stats": "/path/to/stats.html"
+# Annotation with snpEff databases, and generate stats in HTML format associated with output file.
+"stats": "OUTPUT.html"
+```
+
+#### annotations::snpeff::csvStats
+
+CSV file for snpEff stats. Use keyword 'OUTPUT' to generate file according to output file.
+
+Examples: 
+```
+# Annotation with snpEff databases, and generate a specific stats in CSV format.
+"csvStats": "/path/to/stats.csv"
+# Annotation with snpEff databases, and generate stats in CSV format associated with output file.
+"csvStats": "OUTPUT.csv"
 ```
 
 ### annotations::exomiser

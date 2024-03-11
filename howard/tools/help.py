@@ -58,7 +58,7 @@ def help(args:argparse) -> None:
 
     # Help JSON input
     if "help_json_input" in args and args.help_json_input:
-        help_json_file = args.help_json_input.name
+        help_json_file = args.help_json_input
     else:
         help_json_file = None
 
@@ -72,7 +72,7 @@ def help(args:argparse) -> None:
     if "help_md" in args and args.help_md:
 
         # Help file
-        help_file = args.help_md.name
+        help_file = args.help_md
         log.info(f"Help - generate Markdown help file ['{help_file}']")
 
         # If Help input JSON file
@@ -98,7 +98,7 @@ def help(args:argparse) -> None:
     if "help_html" in args and args.help_html:
 
         # Help file
-        help_file = args.help_html.name
+        help_file = args.help_html
         log.info(f"Help - generate HTML help file ['{help_file}']")
 
         # If Help input JSON file

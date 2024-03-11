@@ -140,13 +140,33 @@ def main() -> None:
         config = {}
 
     # add to config
+
+    # Verbosity
     config["verbosity"] = args.verbosity
-    config["threads"] = threads
-    config["memory"] = memory
-    config["chunk_size"] = chunk_size
-    config["tmp"] = tmp
-    config["duckdb_settings"] = duckdb_settings
-    config["assembly"] = assembly
+
+    # Threads
+    if "threads" not in config or not config.get("threads",None):
+        config["threads"] = threads
+
+    # Memory
+    if "memory" not in config or not config.get("memory",None):
+        config["memory"] = memory
+
+    # Chunk size
+    if "chunk_size" not in config or not config.get("chunk_size",None):
+        config["chunk_size"] = chunk_size
+    
+    # Tmp
+    if "tmp" not in config or not config.get("tmp",None):
+        config["tmp"] = tmp
+    
+    # duckDB settings
+    if "duckdb_settings" not in config or not config.get("duckdb_settings",None):
+        config["duckdb_settings"] = duckdb_settings
+    
+    # Assembly
+    if "assembly" not in config or not config.get("assembly",None):
+        config["assembly"] = assembly
 
     # Change config
     args.config = config

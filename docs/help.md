@@ -87,7 +87,7 @@ Usage examples:
 
 > howard query --explode_infos --explode_infos_prefix='INFO/' --query="SELECT \"#CHROM\", POS, REF, ALT, STRING_AGG(INFO, ';') AS INFO FROM 'tests/databases/annotations/current/hg19/*.parquet' GROUP BY \"#CHROM\", POS, REF, ALT" --output=/tmp/full_annotation.tsv  && head -n2 /tmp/full_annotation.tsv 
 
-
+> howard query --input=tests/data/example.vcf.gz --param=config/param.json
 
 ### Main options
 ```
@@ -107,11 +107,19 @@ Files can be compressesd (e.g. vcf.gz, tsv.gz)
 ```
 
 ```
---query=<query> | required
+--query=<query>
 
 Query in SQL format.
 Format: SQL
-Example: 'SELECT * FROM variants LIMIT 5'
+Example: 'SELECT * FROM variants LIMIT 50'
+```
+
+```
+--param=<param> ({})
+
+Parameters file or JSON.
+Format: JSON
+Default: {}
 ```
 
 ### Explode infos
@@ -179,6 +187,10 @@ Usage examples:
 
 > howard stats --input=tests/data/example.vcf.gz 
 
+> howard stats --input=tests/data/example.vcf.gz --stats_md=/tmp/stats.md 
+
+> howard stats --input=tests/data/example.vcf.gz --param=config/param.json 
+
 ### Main options
 ```
 --input=<input> | required
@@ -202,6 +214,14 @@ Stats Output file in JSON format
 
 ```
 
+```
+--param=<param> ({})
+
+Parameters file or JSON.
+Format: JSON
+Default: {}
+```
+
 
 
 ## CONVERT tool
@@ -216,6 +236,8 @@ Usage examples:
 > howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos --explode_infos_fields='CLNSIG,SIFT,DP' --order_by='CLNSIG DESC, DP DESC' 
 
 > howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos --explode_infos_prefix='INFO/' --explode_infos_fields='CLNSIG,SIFT,DP,*' --order_by='"INFO/CLNSIG" DESC, "INFO/DP" DESC' --include_header 
+
+> howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --param=config/param.json 
 
 ### Main options
 ```
@@ -295,6 +317,14 @@ examples: '#CHROM', '#CHROM,REF', 'None'
 default: None
 ```
 
+```
+--param=<param> ({})
+
+Parameters file or JSON.
+Format: JSON
+Default: {}
+```
+
 
 
 ## ANNOTATION tool
@@ -308,7 +338,7 @@ Usage examples:
 
 > howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotations='ALL:parquet' 
 
-
+> howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --param=config/param.json 
 
 ### Main options
 ```
@@ -328,7 +358,7 @@ Files can be compressesd (e.g. vcf.gz, tsv.gz)
 ```
 
 ```
---annotations=<annotations> | required
+--annotations=<annotations>
 
 Annotation with databases files, or with tools
 Format: list of files in Parquet, VCF, BED, or keywords
@@ -363,6 +393,14 @@ If True, annotation fields will be annotated only if not annotation exists for t
 These options will be applied to all annotation databases.default: False
 ```
 
+```
+--param=<param> ({})
+
+Parameters file or JSON.
+Format: JSON
+Default: {}
+```
+
 
 
 ## CALCULATION tool
@@ -373,6 +411,8 @@ Usage examples:
 > howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations='vartype' 
 
 > howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.calculated.tsv --calculations='snpeff_hgvs,NOMEN' --hgvs_field=snpeff_hgvs --transcripts=tests/data/transcripts.tsv 
+
+> howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.ann.tsv --param=config/param.json 
 
 > howard calculation --show_calculations 
 
@@ -417,6 +457,14 @@ Format: JSON
 Show available calculation operations
 ```
 
+```
+--param=<param> ({})
+
+Parameters file or JSON.
+Format: JSON
+Default: {}
+```
+
 ### NOMEN calculation
 ```
 --hgvs_field=<HGVS field> (hgvs)
@@ -453,7 +501,7 @@ Usage examples:
 
 > howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations=config/prioritization_profiles.json --profiles='default,GERMLINE' 
 
-
+> howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.tsv --param=config/param.json 
 
 ### Main options
 ```
@@ -473,9 +521,17 @@ Files can be compressesd (e.g. vcf.gz, tsv.gz)
 ```
 
 ```
---prioritizations=<prioritisations> | required
+--prioritizations=<prioritisations>
 
 Prioritization file in JSON format (defines profiles, see doc).
+```
+
+```
+--param=<param> ({})
+
+Parameters file or JSON.
+Format: JSON
+Default: {}
 ```
 
 ### Prioritization
@@ -483,7 +539,8 @@ Prioritization file in JSON format (defines profiles, see doc).
 --profiles=<profiles>
 
 List of prioritization profiles to process (based on Prioritization JSON file).
-Examples: 'VARTYPE', 'VARTYPE,VARIANT_ID'default: all profiles available
+Examples: 'default', 'rare variants', 'low allele frequency', 'GERMLINE'
+default: all profiles available
 ```
 
 ```
@@ -531,6 +588,10 @@ Usage examples:
 > howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json 
 
 > howard process --input=tests/data/example.vcf.gz --annotations='snpeff' --calculations='snpeff_hgvs' --prioritizations=config/prioritization_profiles.json --explode_infos --output=/tmp/example.annotated.tsv --query='SELECT "#CHROM", POS, ALT, REF, snpeff_hgvs FROM variants' 
+
+> howard process --input=tests/data/example.vcf.gz --hgvs='full_format,use_exon' --explode_infos --output=/tmp/example.annotated.tsv --query='SELECT "#CHROM", POS, ALT, REF, hgvs FROM variants' 
+
+> howard process --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --hgvs='full_format,use_exon' --annotations='tests/databases/annotations/current/hg19/avsnp150.parquet,tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet' --calculation='NOMEN' --explode_infos --query='SELECT NOMEN, REVEL_score, SIFT_score, AF AS 'gnomad_AF', ClinPred_score, ClinPred_pred FROM variants' 
 
 
 
@@ -589,11 +650,23 @@ Prioritization file in JSON format (defines profiles, see doc).
 ```
 
 ```
+--hgvs=<HGVS options>
+
+Quick HGVS annotation options
+This option will skip all other hgvs options
+Examples:
+   - 'default' (for default options)
+   - 'full_format' (for full format HGVS annotation)
+   - 'use_gene:True,add_protein:true,codon_type:FULL'
+Default: None
+```
+
+```
 --query=<query>
 
 Query in SQL format.
 Format: SQL
-Example: 'SELECT * FROM variants LIMIT 5'
+Example: 'SELECT * FROM variants LIMIT 50'
 ```
 
 ```
@@ -643,6 +716,12 @@ Usage examples:
 
 > howard hgvs --input=tests/data/example.full.vcf --output=/tmp/example.hgvs.vcf 
 
+> howard hgvs --input=tests/data/example.full.vcf --output=/tmp/example.hgvs.tsv --param=config/param.json 
+
+> howard hgvs --input=tests/data/example.full.vcf --output=/tmp/example.hgvs.vcf --full_format --use_exon 
+
+>  
+
 
 
 ### Main options
@@ -663,10 +742,30 @@ Files can be compressesd (e.g. vcf.gz, tsv.gz)
 ```
 
 ```
+--hgvs=<HGVS options>
+
+Quick HGVS annotation options
+This option will skip all other hgvs options
+Examples:
+   - 'default' (for default options)
+   - 'full_format' (for full format HGVS annotation)
+   - 'use_gene:True,add_protein:true,codon_type:FULL'
+Default: None
+```
+
+```
 --assembly=<assembly> (hg19)
 
 Default assembly
 Default: 'hg19'
+```
+
+```
+--param=<param> ({})
+
+Parameters file or JSON.
+Format: JSON
+Default: {}
 ```
 
 ### HGVS
@@ -721,7 +820,6 @@ Available (default '3'):
 
 ```
 
-### Databases
 ```
 --refgene=<refGene>
 
@@ -734,6 +832,7 @@ refGene annotation file
 refSeqLink annotation file
 ```
 
+### Databases
 ```
 --refseq-folder=<refseq folder> (/Users/lebechea/howard/databases/refseq/current)
 
@@ -755,7 +854,23 @@ Download databases and needed files for howard and associated tools
 
 Usage examples:
 
-> howard databases --assembly=hg19 --download-genomes=~/howard/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' --download-annovar=~/howard/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' --download-snpeff=~/howard/databases/snpeff/current --download-refseq=~/howard/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-dbnsfp=~/howard/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases --download-alphamissense=~/howard/databases/alphamissense/current --download-exomiser=~/howard/databases/exomiser/current --download-dbsnp=~/howard/databases/dbsnp/current --download-dbsnp-vcf --threads=8
+> howard databases --assembly=hg19 --download-genomes=~/howard/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' 
+
+> howard databases --assembly=hg19 --download-annovar=~/howard/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' 
+
+> howard databases --assembly=hg19 --download-snpeff=~/howard/databases/snpeff/current 
+
+> howard databases --assembly=hg19 --download-refseq=~/howard/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' 
+
+> howard databases --assembly=hg19 --download-dbnsfp=~/howard/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases 
+
+> howard databases --assembly=hg19 --download-alphamissense=~/howard/databases/alphamissense/current 
+
+> howard databases --assembly=hg19 --download-exomiser=~/howard/databases/exomiser/current 
+
+> howard databases --assembly=hg19 --download-dbsnp=~/howard/databases/dbsnp/current --download-dbsnp-vcf 
+
+> howard databases --assembly=hg19 --download-genomes=~/howard/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' --download-annovar=~/howard/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' --download-snpeff=~/howard/databases/snpeff/current --download-refseq=~/howard/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-dbnsfp=~/howard/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases --download-alphamissense=~/howard/databases/alphamissense/current --download-exomiser=~/howard/databases/exomiser/current --download-dbsnp=~/howard/databases/dbsnp/current --download-dbsnp-vcf --threads=8 
 
 > howard databases --generate-param=/tmp/param.json --generate-param-description=/tmp/test.description.json --generate-param-formats=parquet 
 
@@ -1013,7 +1128,7 @@ If the folder does not exist, it will be created.
 ```
 
 ```
---download-exomiser-application-properties=<Exomiser aplication properties>
+--download-exomiser-application-properties=<Exomiser application properties>
 
 Exomiser Application Properties configuration file (see Exomiser website)
 This file contains configuration settings for the Exomiser tool.
@@ -1021,7 +1136,6 @@ If this parameter is not provided, the function will attempt to locate
 the application properties file automatically based on the Exomiser.
 Configuration information will be used to download expected releases (if no other parameters)
 CADD and REMM will be downloaded only if 'path' are provided
-
 ```
 
 ```

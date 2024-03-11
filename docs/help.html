@@ -1,6 +1,6 @@
 <H1>HOWARD Help</h1>
 <p>HOWARD:1.0.0<br>Highly Open and Valuable tool for Variant Annotation & Ranking toward genetic Discovery<br>HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations, convert on multiple formats, query variations and generates statistics</p>Usage examples:<br>&nbsp;&nbsp;&nbsp;howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json <br>&nbsp;&nbsp;&nbsp;howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet' <br>&nbsp;&nbsp;&nbsp;howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations='vartype' <br>&nbsp;&nbsp;&nbsp;howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations=config/prioritization_profiles.json --profiles='default,GERMLINE' <br>&nbsp;&nbsp;&nbsp;howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, "DP", "CLNSIG", sample2, sample3 FROM variants WHERE "DP" >= 50 OR "CLNSIG" NOT NULL ORDER BY "CLNSIG" DESC, "DP" DESC' <br>&nbsp;&nbsp;&nbsp;howard stats --input=tests/data/example.vcf.gz <br>&nbsp;&nbsp;&nbsp;howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos && cat /tmp/example.tsv <br><H2>QUERY</H2>
-<p>Query genetic variations in SQL format. Data can be loaded into 'variants' table from various formats (e.g. VCF, TSV, Parquet...). Using --explode_infos allow query on INFO/tag annotations. SQL query can also use external data within the request, such as a Parquet file(s).  </p>Usage examples:<br>&nbsp;&nbsp;&nbsp;howard query --input=tests/data/example.vcf.gz --query="SELECT * FROM variants WHERE REF = 'A' AND POS < 100000" <br>&nbsp;&nbsp;&nbsp;howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, DP, CLNSIG, sample2, sample3 FROM variants WHERE DP >= 50 OR CLNSIG NOT NULL ORDER BY DP DESC' <br>&nbsp;&nbsp;&nbsp;howard query --query="SELECT \"#CHROM\", POS, REF, ALT, \"INFO/Interpro_domain\" FROM 'tests/databases/annotations/current/hg19/dbnsfp42a.parquet' WHERE \"INFO/Interpro_domain\" NOT NULL ORDER BY \"INFO/SiPhy_29way_logOdds_rankscore\" DESC LIMIT 10" <br>&nbsp;&nbsp;&nbsp;howard query --explode_infos --explode_infos_prefix='INFO/' --query="SELECT \"#CHROM\", POS, REF, ALT, STRING_AGG(INFO, ';') AS INFO FROM 'tests/databases/annotations/current/hg19/*.parquet' GROUP BY \"#CHROM\", POS, REF, ALT" --output=/tmp/full_annotation.tsv  && head -n2 /tmp/full_annotation.tsv <br><H3>Main options</H3>
+<p>Query genetic variations in SQL format. Data can be loaded into 'variants' table from various formats (e.g. VCF, TSV, Parquet...). Using --explode_infos allow query on INFO/tag annotations. SQL query can also use external data within the request, such as a Parquet file(s).  </p>Usage examples:<br>&nbsp;&nbsp;&nbsp;howard query --input=tests/data/example.vcf.gz --query="SELECT * FROM variants WHERE REF = 'A' AND POS < 100000" <br>&nbsp;&nbsp;&nbsp;howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, DP, CLNSIG, sample2, sample3 FROM variants WHERE DP >= 50 OR CLNSIG NOT NULL ORDER BY DP DESC' <br>&nbsp;&nbsp;&nbsp;howard query --query="SELECT \"#CHROM\", POS, REF, ALT, \"INFO/Interpro_domain\" FROM 'tests/databases/annotations/current/hg19/dbnsfp42a.parquet' WHERE \"INFO/Interpro_domain\" NOT NULL ORDER BY \"INFO/SiPhy_29way_logOdds_rankscore\" DESC LIMIT 10" <br>&nbsp;&nbsp;&nbsp;howard query --explode_infos --explode_infos_prefix='INFO/' --query="SELECT \"#CHROM\", POS, REF, ALT, STRING_AGG(INFO, ';') AS INFO FROM 'tests/databases/annotations/current/hg19/*.parquet' GROUP BY \"#CHROM\", POS, REF, ALT" --output=/tmp/full_annotation.tsv  && head -n2 /tmp/full_annotation.tsv <br>&nbsp;&nbsp;&nbsp;howard query --input=tests/data/example.vcf.gz --param=config/param.json<H3>Main options</H3>
 <pre>--input=&lt;input&gt;
 Input file path.
 Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB
@@ -11,10 +11,15 @@ Output file path.
 Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB
 Files can be compressesd (e.g. vcf.gz, tsv.gz)
 
-</pre><pre>--query=&lt;query&gt; | required
+</pre><pre>--query=&lt;query&gt;
 Query in SQL format.
 Format: SQL
-Example: &#x27;SELECT * FROM variants LIMIT 5&#x27;
+Example: &#x27;SELECT * FROM variants LIMIT 50&#x27;
+
+</pre><pre>--param=&lt;param&gt; ({})
+Parameters file or JSON.
+Format: JSON
+Default: {}
 
 </pre><H3>Explode infos</H3>
 <pre>--explode_infos
@@ -55,7 +60,7 @@ Only for compatible formats (tab-delimiter format as TSV or BED).
 default: False
 
 </pre><H2>STATS</H2>
-<p>Statistics on genetic variations, such as: number of variants, number of samples, statistics by chromosome, genotypes by samples...</p>Usage examples:<br>&nbsp;&nbsp;&nbsp;howard stats --input=tests/data/example.vcf.gz <H3>Main options</H3>
+<p>Statistics on genetic variations, such as: number of variants, number of samples, statistics by chromosome, genotypes by samples...</p>Usage examples:<br>&nbsp;&nbsp;&nbsp;howard stats --input=tests/data/example.vcf.gz <br>&nbsp;&nbsp;&nbsp;howard stats --input=tests/data/example.vcf.gz --stats_md=/tmp/stats.md <br>&nbsp;&nbsp;&nbsp;howard stats --input=tests/data/example.vcf.gz --param=config/param.json <H3>Main options</H3>
 <pre>--input=&lt;input&gt; | required
 Input file path.
 Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB
@@ -69,8 +74,13 @@ Stats Output file in MarkDown format
 Stats Output file in JSON format
 
 
+</pre><pre>--param=&lt;param&gt; ({})
+Parameters file or JSON.
+Format: JSON
+Default: {}
+
 </pre><H2>CONVERT</H2>
-<p>Convert genetic variations file to another format. Multiple format are available, such as usual and official VCF and BCF format, but also other formats such as TSV, CSV, PSV and Parquet/duckDB. These formats need a header '.hdr' file to take advantage of the power of howard (especially through INFO/tag definition), and using howard convert tool automatically generate header file fo futher use. </p>Usage examples:<br>&nbsp;&nbsp;&nbsp;howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv <br>&nbsp;&nbsp;&nbsp;howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.parquet <br>&nbsp;&nbsp;&nbsp;howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos --explode_infos_fields='CLNSIG,SIFT,DP' --order_by='CLNSIG DESC, DP DESC' <br>&nbsp;&nbsp;&nbsp;howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos --explode_infos_prefix='INFO/' --explode_infos_fields='CLNSIG,SIFT,DP,*' --order_by='"INFO/CLNSIG" DESC, "INFO/DP" DESC' --include_header <H3>Main options</H3>
+<p>Convert genetic variations file to another format. Multiple format are available, such as usual and official VCF and BCF format, but also other formats such as TSV, CSV, PSV and Parquet/duckDB. These formats need a header '.hdr' file to take advantage of the power of howard (especially through INFO/tag definition), and using howard convert tool automatically generate header file fo futher use. </p>Usage examples:<br>&nbsp;&nbsp;&nbsp;howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv <br>&nbsp;&nbsp;&nbsp;howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.parquet <br>&nbsp;&nbsp;&nbsp;howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos --explode_infos_fields='CLNSIG,SIFT,DP' --order_by='CLNSIG DESC, DP DESC' <br>&nbsp;&nbsp;&nbsp;howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos --explode_infos_prefix='INFO/' --explode_infos_fields='CLNSIG,SIFT,DP,*' --order_by='"INFO/CLNSIG" DESC, "INFO/DP" DESC' --include_header <br>&nbsp;&nbsp;&nbsp;howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --param=config/param.json <H3>Main options</H3>
 <pre>--input=&lt;input&gt; | required
 Input file path.
 Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB
@@ -124,8 +134,13 @@ Use &#x27;None&#x27; (string) for NO partition but split parquet files into a fo
 examples: &#x27;#CHROM&#x27;, &#x27;#CHROM,REF&#x27;, &#x27;None&#x27;
 default: None
 
+</pre><pre>--param=&lt;param&gt; ({})
+Parameters file or JSON.
+Format: JSON
+Default: {}
+
 </pre><H2>ANNOTATION</H2>
-<p>Annotation is mainly based on a build-in Parquet annotation method, and tools such as BCFTOOLS, Annovar and snpEff. It uses available databases (see Annovar and snpEff) and homemade databases. Format of databases are: parquet, duckdb, vcf, bed, Annovar and snpEff (Annovar and snpEff databases are automatically downloaded, see howard databases tool). </p>Usage examples:<br>&nbsp;&nbsp;&nbsp;howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/current/hg19/avsnp150.parquet,tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet' <br>&nbsp;&nbsp;&nbsp;howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotations='annovar:refGene,annovar:cosmic70,snpeff,tests/databases/annotations/current/hg19/clinvar_20210123.parquet' <br>&nbsp;&nbsp;&nbsp;howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotations='ALL:parquet' <br><H3>Main options</H3>
+<p>Annotation is mainly based on a build-in Parquet annotation method, and tools such as BCFTOOLS, Annovar and snpEff. It uses available databases (see Annovar and snpEff) and homemade databases. Format of databases are: parquet, duckdb, vcf, bed, Annovar and snpEff (Annovar and snpEff databases are automatically downloaded, see howard databases tool). </p>Usage examples:<br>&nbsp;&nbsp;&nbsp;howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/current/hg19/avsnp150.parquet,tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet' <br>&nbsp;&nbsp;&nbsp;howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotations='annovar:refGene,annovar:cosmic70,snpeff,tests/databases/annotations/current/hg19/clinvar_20210123.parquet' <br>&nbsp;&nbsp;&nbsp;howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotations='ALL:parquet' <br>&nbsp;&nbsp;&nbsp;howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --param=config/param.json <H3>Main options</H3>
 <pre>--input=&lt;input&gt; | required
 Input file path.
 Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB
@@ -136,7 +151,7 @@ Output file path.
 Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB
 Files can be compressesd (e.g. vcf.gz, tsv.gz)
 
-</pre><pre>--annotations=&lt;annotations&gt; | required
+</pre><pre>--annotations=&lt;annotations&gt;
 Annotation with databases files, or with tools
 Format: list of files in Parquet, VCF, BED, or keywords
 For a Parquet/VCF/BED file, use file path (e.g. &#x27;/path/to/file.parquet&#x27;)
@@ -160,8 +175,13 @@ Append option for annotation (Only for Parquet annotation).
 If True, annotation fields will be annotated only if not annotation exists for the variant.
 These options will be applied to all annotation databases.default: False
 
+</pre><pre>--param=&lt;param&gt; ({})
+Parameters file or JSON.
+Format: JSON
+Default: {}
+
 </pre><H2>CALCULATION</H2>
-<p>Calculation processes variants information to generate new information, such as: identify variation type (VarType), harmonizes allele frequency (VAF) and calculate sttistics (VAF_stats), extracts Nomen (transcript, cNomen, pNomen...) from an HGVS field (e.g. snpEff, Annovar) with an optional list of personalized transcripts, generates VaRank format barcode, identify trio inheritance.</p>Usage examples:<br>&nbsp;&nbsp;&nbsp;howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations='vartype' <br>&nbsp;&nbsp;&nbsp;howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.calculated.tsv --calculations='snpeff_hgvs,NOMEN' --hgvs_field=snpeff_hgvs --transcripts=tests/data/transcripts.tsv <br>&nbsp;&nbsp;&nbsp;howard calculation --show_calculations <br><H3>Main options</H3>
+<p>Calculation processes variants information to generate new information, such as: identify variation type (VarType), harmonizes allele frequency (VAF) and calculate sttistics (VAF_stats), extracts Nomen (transcript, cNomen, pNomen...) from an HGVS field (e.g. snpEff, Annovar) with an optional list of personalized transcripts, generates VaRank format barcode, identify trio inheritance.</p>Usage examples:<br>&nbsp;&nbsp;&nbsp;howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations='vartype' <br>&nbsp;&nbsp;&nbsp;howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.calculated.tsv --calculations='snpeff_hgvs,NOMEN' --hgvs_field=snpeff_hgvs --transcripts=tests/data/transcripts.tsv <br>&nbsp;&nbsp;&nbsp;howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.ann.tsv --param=config/param.json <br>&nbsp;&nbsp;&nbsp;howard calculation --show_calculations <br><H3>Main options</H3>
 <pre>--input=&lt;input&gt;
 Input file path.
 Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB
@@ -185,6 +205,11 @@ Format: JSON
 </pre><pre>--show_calculations
 Show available calculation operations
 
+</pre><pre>--param=&lt;param&gt; ({})
+Parameters file or JSON.
+Format: JSON
+Default: {}
+
 </pre><H3>NOMEN calculation</H3>
 <pre>--hgvs_field=&lt;HGVS field&gt; (hgvs)
 HGVS INFO/tag containing a list o HGVS annotations
@@ -202,7 +227,7 @@ Format: JSON file or dict (e.g. &#x27;trio.ped.json&#x27;, &#x27;{&quot;father&q
 default: None
 
 </pre><H2>PRIORITIZATION</H2>
-<p>Prioritization algorithm uses profiles to flag variants (as passed or filtered), calculate a prioritization score, and automatically generate a comment for each variants (example: 'polymorphism identified in dbSNP. associated to Lung Cancer. Found in ClinVar database'). Prioritization profiles are defined in a configuration file in JSON format. A profile is defined as a list of annotation/value, using wildcards and comparison options (contains, lower than, greater than, equal...). Annotations fields may be quality values (usually from callers, such as 'DP') or other annotations fields provided by annotations tools, such as HOWARD itself (example: COSMIC, Clinvar, 1000genomes, PolyPhen, SIFT). Multiple profiles can be used simultaneously, which is useful to define multiple validation/prioritization levels (example: 'standard', 'stringent', 'rare variants', 'low allele frequency').<br></p>Usage examples:<br>&nbsp;&nbsp;&nbsp;howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations=config/prioritization_profiles.json --profiles='default,GERMLINE' <br><H3>Main options</H3>
+<p>Prioritization algorithm uses profiles to flag variants (as passed or filtered), calculate a prioritization score, and automatically generate a comment for each variants (example: 'polymorphism identified in dbSNP. associated to Lung Cancer. Found in ClinVar database'). Prioritization profiles are defined in a configuration file in JSON format. A profile is defined as a list of annotation/value, using wildcards and comparison options (contains, lower than, greater than, equal...). Annotations fields may be quality values (usually from callers, such as 'DP') or other annotations fields provided by annotations tools, such as HOWARD itself (example: COSMIC, Clinvar, 1000genomes, PolyPhen, SIFT). Multiple profiles can be used simultaneously, which is useful to define multiple validation/prioritization levels (example: 'standard', 'stringent', 'rare variants', 'low allele frequency').<br></p>Usage examples:<br>&nbsp;&nbsp;&nbsp;howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations=config/prioritization_profiles.json --profiles='default,GERMLINE' <br>&nbsp;&nbsp;&nbsp;howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.tsv --param=config/param.json <H3>Main options</H3>
 <pre>--input=&lt;input&gt; | required
 Input file path.
 Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB
@@ -213,13 +238,19 @@ Output file path.
 Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB
 Files can be compressesd (e.g. vcf.gz, tsv.gz)
 
-</pre><pre>--prioritizations=&lt;prioritisations&gt; | required
+</pre><pre>--prioritizations=&lt;prioritisations&gt;
 Prioritization file in JSON format (defines profiles, see doc).
+
+</pre><pre>--param=&lt;param&gt; ({})
+Parameters file or JSON.
+Format: JSON
+Default: {}
 
 </pre><H3>Prioritization</H3>
 <pre>--profiles=&lt;profiles&gt;
 List of prioritization profiles to process (based on Prioritization JSON file).
-Examples: &#x27;VARTYPE&#x27;, &#x27;VARTYPE,VARIANT_ID&#x27;default: all profiles available
+Examples: &#x27;default&#x27;, &#x27;rare variants&#x27;, &#x27;low allele frequency&#x27;, &#x27;GERMLINE&#x27;
+default: all profiles available
 
 </pre><pre>--default_profile=&lt;default profile&gt;
 Prioritization profile by default (see doc)
@@ -236,7 +267,7 @@ available: HOWARD (increment score), VaRank (max score)
 default: HOWARD
 
 </pre><H2>PROCESS</H2>
-<p>howard process tool manage genetic variations to:<br>- annotates genetic variants with multiple annotation databases/files and tools<br>- calculates and normalizes annotations<br>- prioritizes variants with profiles (list of citeria) to calculate scores and flags<br>- translates into various formats<br>- query genetic variants and annotations<br>- generates variants statistics</p>Usage examples:<br>&nbsp;&nbsp;&nbsp;howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json <br>&nbsp;&nbsp;&nbsp;howard process --input=tests/data/example.vcf.gz --annotations='snpeff' --calculations='snpeff_hgvs' --prioritizations=config/prioritization_profiles.json --explode_infos --output=/tmp/example.annotated.tsv --query='SELECT "#CHROM", POS, ALT, REF, snpeff_hgvs FROM variants' <br><H3>Main options</H3>
+<p>howard process tool manage genetic variations to:<br>- annotates genetic variants with multiple annotation databases/files and tools<br>- calculates and normalizes annotations<br>- prioritizes variants with profiles (list of citeria) to calculate scores and flags<br>- translates into various formats<br>- query genetic variants and annotations<br>- generates variants statistics</p>Usage examples:<br>&nbsp;&nbsp;&nbsp;howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json <br>&nbsp;&nbsp;&nbsp;howard process --input=tests/data/example.vcf.gz --annotations='snpeff' --calculations='snpeff_hgvs' --prioritizations=config/prioritization_profiles.json --explode_infos --output=/tmp/example.annotated.tsv --query='SELECT "#CHROM", POS, ALT, REF, snpeff_hgvs FROM variants' <br>&nbsp;&nbsp;&nbsp;howard process --input=tests/data/example.vcf.gz --hgvs='full_format,use_exon' --explode_infos --output=/tmp/example.annotated.tsv --query='SELECT "#CHROM", POS, ALT, REF, hgvs FROM variants' <br>&nbsp;&nbsp;&nbsp;howard process --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --hgvs='full_format,use_exon' --annotations='tests/databases/annotations/current/hg19/avsnp150.parquet,tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet' --calculation='NOMEN' --explode_infos --query='SELECT NOMEN, REVEL_score, SIFT_score, AF AS 'gnomad_AF', ClinPred_score, ClinPred_pred FROM variants' <br><H3>Main options</H3>
 <pre>--input=&lt;input&gt; | required
 Input file path.
 Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB
@@ -272,10 +303,19 @@ List of available calculations (unsensitive case, see doc for more information):
 </pre><pre>--prioritizations=&lt;prioritisations&gt;
 Prioritization file in JSON format (defines profiles, see doc).
 
+</pre><pre>--hgvs=&lt;HGVS options&gt;
+Quick HGVS annotation options
+This option will skip all other hgvs options
+Examples:
+   - &#x27;default&#x27; (for default options)
+   - &#x27;full_format&#x27; (for full format HGVS annotation)
+   - &#x27;use_gene:True,add_protein:true,codon_type:FULL&#x27;
+Default: None
+
 </pre><pre>--query=&lt;query&gt;
 Query in SQL format.
 Format: SQL
-Example: &#x27;SELECT * FROM variants LIMIT 5&#x27;
+Example: &#x27;SELECT * FROM variants LIMIT 50&#x27;
 
 </pre><pre>--explode_infos
 Explode VCF INFO/Tag into &#x27;variants&#x27; table columns.
@@ -304,7 +344,7 @@ Only for compatible formats (tab-delimiter format as TSV or BED).
 default: False
 
 </pre><H2>HGVS</H2>
-<p>HGVS annotation using HUGO HGVS internation Sequence Variant Nomenclature (http://varnomen.hgvs.org/). Annotation refere to refGene and genome to generate HGVS nomenclature for all available transcripts. This annotation add 'hgvs' field into VCF INFO column of a VCF file.</p>Usage examples:<br>&nbsp;&nbsp;&nbsp;howard hgvs --input=tests/data/example.full.vcf --output=/tmp/example.hgvs.vcf <br><H3>Main options</H3>
+<p>HGVS annotation using HUGO HGVS internation Sequence Variant Nomenclature (http://varnomen.hgvs.org/). Annotation refere to refGene and genome to generate HGVS nomenclature for all available transcripts. This annotation add 'hgvs' field into VCF INFO column of a VCF file.</p>Usage examples:<br>&nbsp;&nbsp;&nbsp;howard hgvs --input=tests/data/example.full.vcf --output=/tmp/example.hgvs.vcf <br>&nbsp;&nbsp;&nbsp;howard hgvs --input=tests/data/example.full.vcf --output=/tmp/example.hgvs.tsv --param=config/param.json <br>&nbsp;&nbsp;&nbsp;howard hgvs --input=tests/data/example.full.vcf --output=/tmp/example.hgvs.vcf --full_format --use_exon <br>&nbsp;&nbsp;&nbsp; <br><H3>Main options</H3>
 <pre>--input=&lt;input&gt; | required
 Input file path.
 Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB
@@ -315,9 +355,23 @@ Output file path.
 Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB
 Files can be compressesd (e.g. vcf.gz, tsv.gz)
 
+</pre><pre>--hgvs=&lt;HGVS options&gt;
+Quick HGVS annotation options
+This option will skip all other hgvs options
+Examples:
+   - &#x27;default&#x27; (for default options)
+   - &#x27;full_format&#x27; (for full format HGVS annotation)
+   - &#x27;use_gene:True,add_protein:true,codon_type:FULL&#x27;
+Default: None
+
 </pre><pre>--assembly=&lt;assembly&gt; (hg19)
 Default assembly
 Default: &#x27;hg19&#x27;
+
+</pre><pre>--param=&lt;param&gt; ({})
+Parameters file or JSON.
+Format: JSON
+Default: {}
 
 </pre><H3>HGVS</H3>
 <pre>--use_gene
@@ -353,14 +407,14 @@ Available (default &#x27;3&#x27;):
    &#x27;FULL&#x27;: codon in full name (e.g. &#x27;Cysteine&#x27;, &#x27;Arginine&#x27;)
 
 
-</pre><H3>Databases</H3>
-<pre>--refgene=&lt;refGene&gt;
+</pre><pre>--refgene=&lt;refGene&gt;
 refGene annotation file
 
 </pre><pre>--refseqlink=&lt;refSeqLink&gt;
 refSeqLink annotation file
 
-</pre><pre>--refseq-folder=&lt;refseq folder&gt; (/Users/lebechea/howard/databases/refseq/current)
+</pre><H3>Databases</H3>
+<pre>--refseq-folder=&lt;refseq folder&gt; (/Users/lebechea/howard/databases/refseq/current)
 Folder containing refseq files
 Default: /Users/lebechea/howard/databases/refseq/current
 
@@ -369,7 +423,7 @@ Folder containing genomes
 Default: /Users/lebechea/howard/databases/genomes/current
 
 </pre><H2>DATABASES</H2>
-<p>Download databases and needed files for howard and associated tools</p>Usage examples:<br>&nbsp;&nbsp;&nbsp;howard databases --assembly=hg19 --download-genomes=~/howard/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' --download-annovar=~/howard/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' --download-snpeff=~/howard/databases/snpeff/current --download-refseq=~/howard/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-dbnsfp=~/howard/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases --download-alphamissense=~/howard/databases/alphamissense/current --download-exomiser=~/howard/databases/exomiser/current --download-dbsnp=~/howard/databases/dbsnp/current --download-dbsnp-vcf --threads=8<br>&nbsp;&nbsp;&nbsp;howard databases --generate-param=/tmp/param.json --generate-param-description=/tmp/test.description.json --generate-param-formats=parquet <br>Notes:<br>&nbsp;&nbsp;&nbsp;- Downloading databases can take a while, depending on network, threads and memory<br>&nbsp;&nbsp;&nbsp;- Proxy: Beware of network and proxy configuration<br>&nbsp;&nbsp;&nbsp;- dbNSFP download: More threads, more memory usage (8 threads ~ 16Gb, 24 threads ~ 32Gb)<br><H3>Main options</H3>
+<p>Download databases and needed files for howard and associated tools</p>Usage examples:<br>&nbsp;&nbsp;&nbsp;howard databases --assembly=hg19 --download-genomes=~/howard/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' <br>&nbsp;&nbsp;&nbsp;howard databases --assembly=hg19 --download-annovar=~/howard/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' <br>&nbsp;&nbsp;&nbsp;howard databases --assembly=hg19 --download-snpeff=~/howard/databases/snpeff/current <br>&nbsp;&nbsp;&nbsp;howard databases --assembly=hg19 --download-refseq=~/howard/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' <br>&nbsp;&nbsp;&nbsp;howard databases --assembly=hg19 --download-dbnsfp=~/howard/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases <br>&nbsp;&nbsp;&nbsp;howard databases --assembly=hg19 --download-alphamissense=~/howard/databases/alphamissense/current <br>&nbsp;&nbsp;&nbsp;howard databases --assembly=hg19 --download-exomiser=~/howard/databases/exomiser/current <br>&nbsp;&nbsp;&nbsp;howard databases --assembly=hg19 --download-dbsnp=~/howard/databases/dbsnp/current --download-dbsnp-vcf <br>&nbsp;&nbsp;&nbsp;howard databases --assembly=hg19 --download-genomes=~/howard/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' --download-annovar=~/howard/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' --download-snpeff=~/howard/databases/snpeff/current --download-refseq=~/howard/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-dbnsfp=~/howard/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases --download-alphamissense=~/howard/databases/alphamissense/current --download-exomiser=~/howard/databases/exomiser/current --download-dbsnp=~/howard/databases/dbsnp/current --download-dbsnp-vcf --threads=8 <br>&nbsp;&nbsp;&nbsp;howard databases --generate-param=/tmp/param.json --generate-param-description=/tmp/test.description.json --generate-param-formats=parquet <br>Notes:<br>&nbsp;&nbsp;&nbsp;- Downloading databases can take a while, depending on network, threads and memory<br>&nbsp;&nbsp;&nbsp;- Proxy: Beware of network and proxy configuration<br>&nbsp;&nbsp;&nbsp;- dbNSFP download: More threads, more memory usage (8 threads ~ 16Gb, 24 threads ~ 32Gb)<br><H3>Main options</H3>
 <pre>--assembly=&lt;assembly&gt; (hg19)
 Default assembly
 Default: &#x27;hg19&#x27;
@@ -513,14 +567,13 @@ Download Exomiser databases
 Folder where the Exomiser databases will be downloaded and stored.
 If the folder does not exist, it will be created.
 
-</pre><pre>--download-exomiser-application-properties=&lt;Exomiser aplication properties&gt;
+</pre><pre>--download-exomiser-application-properties=&lt;Exomiser application properties&gt;
 Exomiser Application Properties configuration file (see Exomiser website)
 This file contains configuration settings for the Exomiser tool.
 If this parameter is not provided, the function will attempt to locate
 the application properties file automatically based on the Exomiser.
 Configuration information will be used to download expected releases (if no other parameters)
 CADD and REMM will be downloaded only if &#x27;path&#x27; are provided
-
 
 </pre><pre>--download-exomiser-url=&lt;Exomiser url&gt; (http://data.monarchinitiative.org/exomiser)
 URL where Exomiser database files can be downloaded from.

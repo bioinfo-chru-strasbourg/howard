@@ -379,6 +379,42 @@ See [HOWARD Help Prioritization tool](docs/help.md#prioritization-tool) for more
 
 </details>
 
+## HGVS Annotation
+
+HOWARD annotates variants with HGVS annotation using HUGO HGVS internation Sequence Variant Nomenclature (http://varnomen.hgvs.org/). Annotation refere to refGene and genome to generate HGVS nomenclature for all available transcripts. This annotation add 'hgvs' field into VCF INFO column of a VCF file. Several options are available, to add gene, exon and protein information, to generate a "full format" detailed annotation, to choose codon format.
+
+See [HOWARD Help HGVS tool](docs/help.md#hgvs-tool) for more options.
+
+<details>
+
+<summary>More details</summary>
+
+> Example: HGVS annotation with quick options
+> ```
+> howard hgvs \
+>    --input=tests/data/example.vcf.gz \
+>    --output=/tmp/example.process.tsv \
+>    --hgvs=full_format,use_exon
+> 
+> howard query \
+>    --input=/tmp/example.process.tsv \
+>    --explode_infos \
+>    --query="SELECT hgvs \
+>             FROM variants "
+> ```
+> ```
+>                                                 hgvs
+> 0                     WASH7P:NR_024540.1:n.50+585T>G
+> 1     FAM138A:NR_026818.1:exon3:n.597T>G:p.Tyr199Asp
+> 2  OR4F5:NM_001005484.2:NP_001005484.2:exon3:c.74...
+> 3  LINC01128:NR_047526.1:n.287+3767A>G,LINC01128:...
+> 4  LINC01128:NR_047526.1:n.287+3768A>G,LINC01128:...
+> 5  LINC01128:NR_047526.1:n.287+3769A>G,LINC01128:...
+> 6  EGFR:NM_001346897.2:NP_001333826.1:exon19:c.22...
+> ```
+
+</details>
+
 ## Process
 
 HOWARD process tool manage genetic variations to:
@@ -386,40 +422,43 @@ HOWARD process tool manage genetic variations to:
 - annotates genetic variants with multiple annotation databases/files and tools
 - calculates and normalizes annotations
 - prioritizes variants with profiles (list of citeria) to calculate scores and flags
+- annotates genetic variants with HGVS nomenclature
 - translates into various formats
 - query genetic variants and annotations
 - generates variants statistics
 
 This process tool combines all other tools to pipe them in a uniq command, through available options or a parameters file in JSON format (see [HOWARD Parameters JSON](docs/help.param.md) file).
 
-See [HOWARD Help Process tool](docs/help.md#process-tool) tool for more information (under development).
+See [HOWARD Help Process tool](docs/help.md#process-tool) tool for more information.
 
 <details >
 
 <summary>More details</summary>
 
-> Example: Full process command with options 
+
+> Example: Full process command with options (HGVS, annotation, calculation and prioritization)
 > ```
 > howard process \
 >    --input=tests/data/example.vcf.gz \
 >    --output=/tmp/example.process.tsv \
+>    --hgvs=full_format,use_exon \
 >    --annotations="tests/databases/annotations/current/hg19/avsnp150.parquet,tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet,bcftools:tests/databases/annotations/current/hg19/cosmic70.vcf.gz,snpeff,annovar:refGene" \
->    --calculations="vartype,snpeff_hgvs,VAF" \
+>    --calculations="vartype,snpeff_hgvs,VAF,NOMEN" \
 >    --prioritizations="config/prioritization_profiles.json" \
 >    --explode_infos \
->    --query="SELECT snpeff_hgvs, PZFlag, PZScore \
+>    --query="SELECT NOMEN, PZFlag, PZScore, snpeff_hgvs \
 >             FROM variants \
 >             ORDER BY PZScore DESC"
 > ```
 > ```
->                                          snpeff_hgvs    PZFlag  PZScore
-> 0  MIR1302-2:NR_036051.1:n.-1630A>C,MIR1302-9:NR_...      PASS       15
-> 1       OR4F5:NM_001005484.1:exon1:c.11A>G:p.Glu4Gly      PASS        5
-> 2  EGFR:NM_005228.5:exon20:c.2361G>A:p.Gln787Gln,...      PASS        5
-> 3  LINC01128:NR_047519.1:exon2:n.287+3767A>G,LINC...      PASS        0
-> 4  LINC01128:NR_047519.1:exon2:n.287+3768A>G,LINC...      PASS        0
-> 5  LINC01128:NR_047519.1:exon2:n.287+3769A>G,LINC...      PASS        0
-> 6  MIR1302-2:NR_036051.1:n.*4641A>C,MIR1302-9:NR_...  FILTERED     -100
+>                                             NOMEN    PZFlag  PZScore                                        snpeff_hgvs
+> 0                    WASH7P:NR_024540:n.50+585T>G      PASS       15  MIR1302-2:NR_036051.1:n.-1630A>C,MIR1302-9:NR_...
+> 1     OR4F5:NP_001005484:exon3:c.74A>G:p.Glu25Gly      PASS        5       OR4F5:NM_001005484.1:exon1:c.11A>G:p.Glu4Gly
+> 2  EGFR:NP_001333826:exon19:c.2226G>A:p.Gln742Gln      PASS        5  EGFR:NM_005228.5:exon20:c.2361G>A:p.Gln787Gln,...
+> 3               LINC01128:NR_047526:n.287+3767A>G      PASS        0  LINC01128:NR_047519.1:exon2:n.287+3767A>G,LINC...
+> 4               LINC01128:NR_047526:n.287+3768A>G      PASS        0  LINC01128:NR_047519.1:exon2:n.287+3768A>G,LINC...
+> 5               LINC01128:NR_047526:n.287+3769A>G      PASS        0  LINC01128:NR_047519.1:exon2:n.287+3769A>G,LINC...
+> 6    FAM138A:NR_026818:exon3:n.597T>G:p.Tyr199Asp  FILTERED     -100  MIR1302-2:NR_036051.1:n.*4641A>C,MIR1302-9:NR_...
 > ```
 
 </details>

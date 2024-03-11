@@ -62,10 +62,28 @@ def process(args:argparse) -> None:
 
         param = vcfdata_obj.get_param()
 
+        # Quick HGVS
+        if "hgvs" in args and args.hgvs:
+            log.info(f"Quick HGVS: {args.hgvs}")
+            if not param.get("hgvs", None):
+                param["hgvs"] = {}
+            for option in args.hgvs.split(","):
+                option_var_val = option.split(":")
+                option_var = option_var_val[0]
+                if len(option_var_val) > 1:
+                    option_val = option_var_val[1]
+                else:
+                    option_val = "True"
+                if option_val.upper() in ["TRUE"]:
+                    option_val = True
+                elif option_val.upper() in ["FALSE"]:
+                    option_val = False
+                param["hgvs"][option_var] = option_val
+
         # Quick Annotation
         if args.annotations:
             annotation_file_list = [value for value in args.annotations.split(',')]
-            log.info(f"Quick Annotation Files: {annotation_file_list}")
+            log.info(f"Quick Annotation: {annotation_file_list}")
             param_quick_annotations = param.get("annotations",{})
             for annotation_file in annotation_file_list:
                 param_quick_annotations[annotation_file] = {"INFO": None}
@@ -74,7 +92,7 @@ def process(args:argparse) -> None:
         # Quick calculations
         if args.calculations:
             calculations_list= [value for value in args.calculations.split(',')]
-            log.info(f"Quick Calculations list: {calculations_list}")
+            log.info(f"Quick Calculations: {calculations_list}")
             param_quick_calculations = param.get("calculation",{})
             for calculation_operation in calculations_list:
                 param_quick_calculations[calculation_operation] = {}
@@ -87,7 +105,7 @@ def process(args:argparse) -> None:
             else:
                 config_profiles = args.prioritizations.name
             #config_profiles= args.prioritizations
-            log.info(f"Quick Prioritization Config file: {config_profiles}")
+            log.info(f"Quick Prioritization: {config_profiles}")
             param_quick_prioritizations = param.get("prioritization",{})
             param_quick_prioritizations["config_profiles"] = config_profiles
             param["prioritization"] = param_quick_prioritizations
@@ -112,6 +130,10 @@ def process(args:argparse) -> None:
         vcfdata_obj.load_data()
 
         # Annotation
+        if vcfdata_obj.get_param().get("hgvs", None):
+            vcfdata_obj.annotation_hgvs()
+
+        # Annotation
         if vcfdata_obj.get_param().get("annotations", None) or vcfdata_obj.get_param().get("annotation", None):
             vcfdata_obj.annotation()
 
@@ -122,6 +144,10 @@ def process(args:argparse) -> None:
         # Prioritization
         if vcfdata_obj.get_param().get("prioritizations", None) or vcfdata_obj.get_param().get("prioritization", None):
             vcfdata_obj.prioritization()
+
+        # param["explode_infos"]
+        if param.get("explode_infos", False):
+            vcfdata_obj.explode_infos()
 
         # Query
         if param.get("query", None):

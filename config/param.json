@@ -21,7 +21,9 @@
       }
     },
     "snpeff": {
-      "options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "
+      "options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 ",
+      "stats": "OUTPUT.html",
+      "csvStats": "OUTPUT.csv"
     },
     "annovar": {
       "annotations": {
@@ -52,7 +54,22 @@
     "profiles": ["default", "GERMLINE"],
     "prioritization_score_mode": "VaRank"
   },
+  "hgvs": {
+    "full_format": true,
+    "use_exon": true
+  },
+  "stats": {
+    "stats_md": null,
+    "stats_json": null
+  },
   "query": "SELECT \"#CHROM\", POS, REF, ALT, INFO FROM variants",
-  "explode_infos": true,
+  "explode_infos": false,
+  "explode_infos_prefix": "",
+  "explode_infos_fields": null,
+  "header_in_output": false,
+  "parquet_partitions": null,
+  "order_by": null,
+  "query_limit": 10,
+  "query_print_mode": "default",
   "threads": 8
 }
