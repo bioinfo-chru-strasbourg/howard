@@ -278,6 +278,8 @@ def databases_download(args:argparse) -> None:
                 download_exomiser_application_properties = args.download_exomiser_application_properties
             else:
                 download_exomiser_application_properties = args.download_exomiser_application_properties.name
+        else:
+            download_exomiser_application_properties=None
         databases_download_exomiser(
             assemblies = assemblies,
             exomiser_folder=args.download_exomiser,
