@@ -36,23 +36,39 @@ def query(args:argparse) -> None:
 
     log.info("Start")
 
+    # Config infos
+    if "arguments_dict" in args:
+        arguments_dict = args.arguments_dict
+    else:
+        arguments_dict = None
+    if "setup_cfg" in args:
+        setup_cfg = args.setup_cfg
+    else:
+        setup_cfg = None
     config = args.config
 
+    # Load parameters in JSON format
     param = {}
+    if "param" in args:
+        if isinstance(args.param, str) and os.path.exists(full_path(args.param)):
+            with open(full_path(args.param)) as param_file:
+                param = json.load(param_file)
+        else:
+            param = json.loads(args.param)
 
     vcfdata_obj = Variants(None, args.input, args.output, config, param)
 
-    params = vcfdata_obj.get_param()
+    param = vcfdata_obj.get_param()
 
     # Explode Infos
     if args.explode_infos:
-        params["explode_infos"] = args.explode_infos
-        params["explode_infos_prefix"] = args.explode_infos_prefix
-        params["explode_infos_fields"] = args.explode_infos_fields
+        param["explode_infos"] = args.explode_infos
+        param["explode_infos_prefix"] = args.explode_infos_prefix
+        param["explode_infos_fields"] = args.explode_infos_fields
     else:
         config["access"] = "RO"
 
-    vcfdata_obj.set_param(params)
+    vcfdata_obj.set_param(param)
     vcfdata_obj.set_config(config)
 
     # Load
@@ -61,12 +77,12 @@ def query(args:argparse) -> None:
 
     # include_header
     if "include_header" in args and args.include_header:
-        params["header_in_output"] = args.include_header
+        param["header_in_output"] = args.include_header
 
     # query_limit
     query_limit=10
     if "query_limit" in args and args.query_limit:
-        params["query_limit"] = int(args.query_limit)
+        param["query_limit"] = int(args.query_limit)
         query_limit = int(args.query_limit)
 
     # query_print_mode
@@ -96,6 +112,13 @@ def query(args:argparse) -> None:
                 print(tabulate(vcfdata_obj.get_query_to_df(query, limit=query_limit), headers='keys', tablefmt='psql'))
             else:
                 print(vcfdata_obj.get_query_to_df(query, limit=query_limit))
+    else:
+        # Parser
+        parser = help_generation(arguments_dict=arguments_dict, setup=setup_cfg, output_type="parser")
+        parser.print_help()
+        print("")
+        log.error(f"No query provided")
+        raise ValueError(f"No query provided")
             
 
     log.info("End")

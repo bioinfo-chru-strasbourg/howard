@@ -34,9 +34,25 @@ def calculation(args:argparse) -> None:
 
     log.info("Start")
 
+    # Config infos
+    if "arguments_dict" in args:
+        arguments_dict = args.arguments_dict
+    else:
+        arguments_dict = None
+    if "setup_cfg" in args:
+        setup_cfg = args.setup_cfg
+    else:
+        setup_cfg = None
     config = args.config
 
+        # Load parameters in JSON format
     param = {}
+    if "param" in args:
+        if isinstance(args.param, str) and os.path.exists(full_path(args.param)):
+            with open(full_path(args.param)) as param_file:
+                param = json.load(param_file)
+        else:
+            param = json.loads(args.param)
 
     # Show available calculations
     if args.show_calculations:
@@ -50,11 +66,12 @@ def calculation(args:argparse) -> None:
             log.info(help_line)
 
     # Create VCF object
-    elif args.input and args.output and args.calculations:
+    #elif args.input and args.output and args.calculations:
+    elif args.calculations or param.get("calculations", None) or param.get("calculation", None):
 
         vcfdata_obj = Variants(None, args.input, args.output, config, param)
 
-        params = vcfdata_obj.get_param()
+        param = vcfdata_obj.get_param()
 
         # Operations config file
         operations_config_file = None
@@ -72,26 +89,26 @@ def calculation(args:argparse) -> None:
             param_quick_calculations = param.get("calculation",{})
             for calculation_operation in calculations_list:
                 param_quick_calculations[calculation_operation.upper()] = {}
-            params["calculation"] = param_quick_calculations
+            param["calculation"] = param_quick_calculations
 
         # HGVS Field
-        if args.hgvs_field and "NOMEN" in params["calculation"]:
-            if "options" not in params["calculation"]["NOMEN"]:
-                params["calculation"]["NOMEN"]["options"] = {}
-            params["calculation"]["NOMEN"]["options"]["hgvs_field"] = args.hgvs_field
+        if args.hgvs_field and "NOMEN" in param["calculation"]:
+            if "options" not in param["calculation"]["NOMEN"]:
+                param["calculation"]["NOMEN"]["options"] = {}
+            param["calculation"]["NOMEN"]["options"]["hgvs_field"] = args.hgvs_field
 
         # HGVS Transcripts
-        if args.transcripts and "NOMEN" in params["calculation"]:
-            if "options" not in params["calculation"]["NOMEN"]:
-                params["calculation"]["NOMEN"]["options"] = {}
+        if args.transcripts and "NOMEN" in param["calculation"]:
+            if "options" not in param["calculation"]["NOMEN"]:
+                param["calculation"]["NOMEN"]["options"] = {}
             if isinstance(args.transcripts, str):
                 transcripts_file = args.transcripts
             else:
                 transcripts_file = args.transcripts.name
-            params["calculation"]["NOMEN"]["options"]["transcripts"] = transcripts_file
+            param["calculation"]["NOMEN"]["options"]["transcripts"] = transcripts_file
 
         # TRIO pedigree
-        if args.trio_pedigree and "TRIO" in params["calculation"]:
+        if args.trio_pedigree and "TRIO" in param["calculation"]:
             trio_pedigree = {}
             if isinstance(args.trio_pedigree, str) or isinstance(args.trio_pedigree, dict):
                 trio_pedigree_file = args.trio_pedigree
@@ -103,9 +120,9 @@ def calculation(args:argparse) -> None:
                     trio_pedigree = json.load(trio_pedigree_file)
             else:
                 trio_pedigree = json.loads(args.trio_pedigree)
-            params["calculation"]["TRIO"] = trio_pedigree
+            param["calculation"]["TRIO"] = trio_pedigree
 
-        vcfdata_obj.set_param(params)
+        vcfdata_obj.set_param(param)
 
         # Load data from input file
         vcfdata_obj.load_data()
@@ -124,10 +141,17 @@ def calculation(args:argparse) -> None:
 
     # If no arguments
     else:
+        # Parser
+        parser = help_generation(arguments_dict=arguments_dict, setup=setup_cfg, output_type="parser")
+        parser.print_help()
+        print("")
+        log.error(f"No calculations provided")
+        raise ValueError(f"No calculations provided")
+    # else:
 
-        log.info("""The following arguments are required:""")
-        log.info("""   1/ --input, --output, --calculations""")
-        log.info("""   2/ --show_calculations""")
+    #     log.info("""The following arguments are required:""")
+    #     log.info("""   1/ --input, --output, --calculations""")
+    #     log.info("""   2/ --show_calculations""")
 
     log.info("End")
 

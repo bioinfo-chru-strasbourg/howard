@@ -40,8 +40,14 @@ def help(args:argparse) -> None:
     """
 
     # Config infos
-    arguments_dict = args.arguments_dict
-    setup_cfg = args.setup_cfg
+    if "arguments_dict" in args:
+        arguments_dict = args.arguments_dict
+    else:
+        arguments_dict = None
+    if "setup_cfg" in args:
+        setup_cfg = args.setup_cfg
+    else:
+        setup_cfg = None
     
     # Parser
     parser = help_generation(arguments_dict=arguments_dict, setup=setup_cfg, output_type="parser")

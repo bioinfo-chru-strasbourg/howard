@@ -21,13 +21,21 @@ HOWARD is multithreaded through the number of variants and by database (data-sca
 ## Table of Contents
 - [Installation](#installation)
   - [Python](#python)
+    - [Quick install](#quick-install)
+    - [GUI install](#quick-install)
+    - [Configuration](#configuration)
+    - [External tools](#external-tools) TODO
   - [Docker](#docker)
+    - [Quick start](#quick-start)
+    - [Setup container](#setup-container)
+    - [Command Line Interface](#command-line-interface)
+    - [Tests](#tests)
 - [Databases](#databases)
     - [Databases tool](#databases-tool)
     - [Home-made databases](#home-made-databases)
-- [Configuration](#configuration)
-- [Parameters](#parameters)
+    - [VCF and Parquet from Annovar](#vcf-and-parquet-from-annovar)
 - [Tools](#tools)
+  - [Parameters](#parameters)
   - [Stats](#stats)
   - [Convert](#convert)
     - [CSV, TSV and JSON convert](#csv-tsv-and-json-convert)
@@ -53,8 +61,20 @@ HOWARD is multithreaded through the number of variants and by database (data-sca
       - [Annotation combination](#annotation-combination)
     - [Annotation parameters](#annotation-parameters)
   - [Calculation](#calculation)
+    - [Available calculations](#available-calculations)
+    - [Calculation configu JSON file](#calculation-configuration-json-file)
+    - [Build-in calculation examples](#build-in-calculations-examples)
+      - [Variant type](#variant-type)
+      - [HGVS and NOMEN from snpEff](#hgvs-and-nomen-from-snpeff)
   - [Prioritization](#prioritization)
+    - [Prioritization options](#prioritization-options)
+    - [Prioritization query](#prioritization-query)
   - [Process](#process)
+    - [Process with options](#process-with-options)
+    - [Process with Parameters JSON file](#process-with-parameters-json-file)
+  - [HGVS](#hgvs) TODO
+
+
 
 # Installation
 
@@ -85,6 +105,48 @@ howard gui
 ```
 
 ![HOWARD Graphical User Interface](../images/howard-gui.png "HOWARD Graphical User Interface")
+
+### Configuration
+
+HOWARD Configuration JSON file defined default configuration regarding resources (e.g. threads, memory), settings (e.g. verbosity, temporary files), default folders (e.g. for databases) and paths to external tools.
+
+See [HOWARD Configuration JSON](help.config.md) for more information.
+
+Configuration file example:
+```
+{
+  "threads": 8,
+  "memory": null,
+  "verbosity": "warning",
+  "folders": {
+    "databases": {
+      "annotations": [
+        "~/howard/databases/annotations/current/",
+        "~/howard/databases/dbnsfp/current/",
+        "~/howard/databases/dbsnp/current/"
+      ],
+      "parquet": ["~/howard/databases/annotations/current/"],
+      "bcftools": ["~/howard/databases/annotations/current/"],
+      "annovar": "~/howard/databases/annovar/current/",
+      "snpeff": "~/howard/databases/snpeff/current/",
+      "exomiser": "~/howard/databases/exomiser/current/"
+    }
+  },
+  "tools": {
+    "bcftools": "~/howard/tools/bcftools/current/bin/bcftools",
+    "bgzip": "~/howard/tools/htslib/current/bin/bgzip",
+    "snpeff": "~/howard/tools/snpeff/current/bin/snpEff.jar",
+    "annovar": "~/howard/tools/annovar/current/bin/table_annovar.pl"
+    "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar",
+    "java": "/usr/bin/java",
+  }
+}
+
+```
+
+### External tools
+
+In order to use external tools, mainly for annotation (e.g. Annovar, snpEff, Exomiser), they need to be installed.
 
 
 ## Docker
@@ -223,116 +285,108 @@ See [HOWARD Help Convert tool](help.md#convert-tool) for more information.
 
 See [HOWARD Help From ANNOVAR tool](help.md#from_annovar-tool) tool for more information (under development).
 
-# Configuration
+# Tools
 
-HOWARD Configuration JSON file defined default configuration regarding resources (e.g. threads, memory), settings (e.g. verbosity, temporary files), default folders (e.g. for databases) and paths to external tools.
+HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations, convert on multiple formats, query variations and generates statistics. Theses tools require options or a [ Parameters JSON](help.param.md) file.
 
-See [HOWARD Configuration JSON](help.config.md) for more information.
+## Parameters
 
-Configuration file example:
-```
-{
-  "threads": 8,
-  "memory": null,
-  "verbosity": "warning",
-  "folders": {
-    "databases": {
-      "annotations": [
-        "~/howard/databases/annotations/current/",
-        "~/howard/databases/dbnsfp/current/",
-        "~/howard/databases/dbsnp/current/"
-      ],
-      "parquet": ["~/howard/databases/annotations/current/"],
-      "bcftools": ["~/howard/databases/annotations/current/"],
-      "annovar": "~/howard/databases/annovar/current/",
-      "snpeff": "~/howard/databases/snpeff/current/",
-      "exomiser": "~/howard/databases/exomiser/current/"
-    }
-  },
-  "tools": {
-    "bcftools": "~/howard/tools/bcftools/current/bin/bcftools",
-    "bgzip": "~/howard/tools/htslib/current/bin/bgzip",
-    "snpeff": "~/howard/tools/snpeff/current/bin/snpEff.jar",
-    "annovar": "~/howard/tools/annovar/current/bin/table_annovar.pl"
-    "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar",
-    "java": "/usr/bin/java",
-  }
-}
-
-```
-
-# Parameters
-
-HOWARD Parameters JSON file defined parameters to process annotations, prioritization, calculations, convertions and queries.
+HOWARD Parameters JSON file defined parameters to process annotations, prioritization, calculations, convertions and queries. Use this parameters file to configure tools, instead of options or as a main configuration (options will replace parameters in JSON file).
 
 See [HOWARD Parameters JSON](help.param.md) for more information.
 
-Parameters file example:
-```
-{
-  "annotation": {
-    "parquet": {
-      "annotations": {
-        "tests/databases/annotations/current/hg19/avsnp150.parquet": {
-          "INFO": null
-        },
-        "tests/databases/annotations/current/hg19/dbnsfp42a.parquet": {
-          "Polyphen2_HDIV_pred": "PolyPhen",
-          "Polyphen2_HDIV_score": "PolyPhen_score",
-          "REVEL_score": null
-        },
-        "tests/databases/annotations/current/hg19/gnomad211_genome.parquet": {
-          "INFO": null
-        }
-      }
-    },
-    "bcftools": {
-      "annotations": {
-        "tests/databases/annotations/current/hg19/cosmic70.vcf.gz": {
-          "cosmic70": "COSMIC"
-        }
-      }
-    },
-    "annovar": {
-      "annotations": {
-        "refGene": {
-          "INFO": null
-        },
-        "cosmic70": {
-          "cosmic70": "COSMIC_annovar"
-        }
-      },
-      "options": {
-        "genebase": "-hgvs -splicing_threshold 3 ",
-        "intronhgvs": 10
-      }
-    },
-    "snpeff": {
-      "options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "
-    }
-  },
-  "calculation": {
-    "vartype": null,
-    "snpeff_hgvs": null,
-    "NOMEN": {
-      "options": {
-        "hgvs_field": "snpeff_hgvs",
-        "transcripts": "tests/data/transcripts.tsv"
-      }
-    },
-    "VAF": ""
-  },
-  "prioritization": {
-    "config_profiles": "config/prioritization_profiles.json",
-    "pzfields": ["PZScore", "PZFlag", "PZComment"],
-    "profiles": ["default", "GERMLINE"]
-  },
-  "explode_infos": True,
-  "threads": 8
-}
-```
+> Example: Use parameters JSON file with query tool
+> ```
+> howard query \
+>    --input=tests/data/example.vcf.gz \
+>    --param=config/param.json
+> ```
+> ```
+>   #CHROM       POS REF ALT                   INFO
+> 0   chr1     28736   A   C      CLNSIG=pathogenic
+> 1   chr1     35144   A   C  CLNSIG=non-pathogenic
+> 2   chr1     69101   A   G                  DP=50
+> 3   chr1    768251   A   G                   None
+> 4   chr1    768252   A   G                   None
+> 5   chr1    768253   A   G                   None
+> 6   chr7  55249063   G   A                 DP=125
+> ```
 
-# Tools
+> Example: Use parameters JSON file with query tool, and add an option to change the query (list of chromosomes)
+> ```
+> howard query \
+>    --input=tests/data/example.vcf.gz \
+>    --param=config/param.json \
+>    --query="SELECT distinct(\"#CHROM\") as 'chromosomes' FROM variants"
+> ```
+> ```
+>   chromosomes
+> 0        chr7
+> 1        chr1
+> ```
+
+> Example: Parameters JSON file with multiple options for tools
+> ```
+> {
+>   "annotation": {
+>     "parquet": {
+>       "annotations": {
+>         "tests/databases/annotations/current/hg19/avsnp150.parquet": {
+>           "INFO": null
+>         },
+>         "tests/databases/annotations/current/hg19/dbnsfp42a.parquet": {
+>           "INFO": null
+>         },
+>         "tests/databases/annotations/current/hg19/gnomad211_genome.parquet": {
+>           "INFO": null
+>         }
+>       }
+>     },
+>     "bcftools": {
+>       "annotations": {
+>         "tests/databases/annotations/current/hg19/cosmic70.vcf.gz": {
+>           "INFO": null
+>         }
+>       }
+>     },
+>     "snpeff": {
+>       "options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "
+>     },
+>     "annovar": {
+>       "annotations": {
+>         "refGene": {
+>           "INFO": null
+>         }
+>       },
+>       "options": {
+>         "genebase": "-hgvs -splicing_threshold 3 ",
+>         "intronhgvs": 10
+>       }
+>     }
+>   },
+>   "calculation": {
+>     "vartype": null,
+>     "snpeff_hgvs": null,
+>     "NOMEN": {
+>       "options": {
+>         "hgvs_field": "snpeff_hgvs",
+>         "transcripts": "tests/data/transcripts.tsv"
+>       }
+>     },
+>     "VAF": ""
+>   },
+>   "prioritization": {
+>     "config_profiles": "config/prioritization_profiles.json",
+>     "pzfields": ["PZScore", "PZFlag", "PZComment"],
+>     "profiles": ["default", "GERMLINE"],
+>     "prioritization_score_mode": "VaRank"
+>   },
+>   "query": "SELECT \"#CHROM\", POS, REF, ALT, INFO FROM variants",
+>   "explode_infos": True,
+>   "threads": 8
+> }
+> ```
+
 
 ## Stats
 
@@ -1045,6 +1099,290 @@ NOMEN can be extracted from snpEff annotation (see [HOWARD Parameters JSON - snp
 
 See [HOWARD Help Prioritization tool](help.md#prioritization-tool) tool for more information.
 
+Prioritization algorithm uses profiles to flag variants (as passed or filtered), calculate a prioritization score, and automatically generate a comment for each variants (example: 'polymorphism identified in dbSNP. associated to Lung Cancer. Found in ClinVar database'). Prioritization profiles are defined in a configuration file in JSON format. A profile is defined as a list of annotation/value, using wildcards and comparison options (contains, lower than, greater than, equal...). Annotations fields may be quality values (usually from callers, such as 'DP') or other annotations fields provided by annotations tools, such as HOWARD itself (example: COSMIC, Clinvar, 1000genomes, PolyPhen, SIFT). 
+
+### Prioritization options
+
+Multiple profiles can be used simultaneously (`--profiles` option), which is useful to define multiple validation/prioritization levels (e.g. 'standard', 'stringent', 'rare variants', 'low allele frequency', 'GERMLINE'). By default, all profiles will be processed. A default profile can be defined with `--default_profile` option (by default, the first profile in list of profiles is selected).
+
+Prioritization score can be calculated following multiple mode. The `HOWARD` mode will increment scores of all passing filters (default). The `VaRank` mode will select the maximum score from all passing filters.
+
+Prioritization fields can be selected from:
+- PZScore: calculated score from all passing filters, depending of the mode
+- PZFlag: final flag ('PASS' or 'FILTERED'), with strategy that consider a variant is filtered as soon as at least one filter do not pass. By default, the variant is considered as 'PASS' (no filter pass) 
+- PZComment: concatenation of all passing filter comments
+- PZTags: combinason of score, flags and comments in a tags format (e.g. 'PZFlag#PASS|PZScore#15|PZComment#Described on ...')
+- PZInfos: information about passing filter criteria
+
+> Example: Prioritize variants from criteria on INFO annotations for profiles 'default' and 'GERMLINE' (from 'prioritization_profiles.json' profiles configuration), export prioritization tags, and query variants passing filters
+> ```
+> howard prioritization \
+>    --input=tests/data/example.vcf.gz \
+>    --prioritizations=config/prioritization_profiles.json \
+>    --profiles='default,GERMLINE' \
+>    --default_profile='default' \
+>    --pzfields='PZFlag,PZScore,PZComment,PZTags,PZInfos' \
+>    --prioritization_score_mode='HOWARD' \
+>    --output=/tmp/example.prioritized.vcf.gz
+> 
+> howard query \
+>    --input=/tmp/example.prioritized.vcf.gz \
+>    --explode_infos \
+>    --query="SELECT \"#CHROM\", POS, ALT, REF, \"PZFlag\", \"PZScore\", \"PZTags\", \"DP\", \"CLNSIG\" \
+>             FROM variants \
+>             WHERE \"PZScore\" > 0 \
+>               AND \"PZFlag\" == 'PASS' \
+>             ORDER BY \"PZScore\" DESC"
+> ```
+> ```
+>   #CHROM       POS ALT REF    PZFlag  PZScore                                             PZTags     DP          CLNSIG
+> 0   chr1     28736   C   A      PASS       15  PZFlag#PASS|PZScore#15|PZComment#Described on ...    NaN      pathogenic
+> 1   chr1     35144   C   A  FILTERED     -100  PZFlag#FILTERED|PZScore#-100|PZComment#Describ...    NaN  non-pathogenic
+> 2   chr1     69101   G   A      PASS        5  PZFlag#PASS|PZScore#5|PZComment#DP higher than...   50.0            None
+> 3   chr1    768251   G   A      PASS        0          PZFlag#PASS|PZScore#0|PZComment#|PZInfos#    NaN            None
+> 4   chr1    768252   G   A      PASS        0          PZFlag#PASS|PZScore#0|PZComment#|PZInfos#    NaN            None
+> 5   chr1    768253   G   A      PASS        0          PZFlag#PASS|PZScore#0|PZComment#|PZInfos#    NaN            None
+> 6   chr7  55249063   A   G      PASS        5  PZFlag#PASS|PZScore#5|PZComment#DP higher than...  125.0            None
+> ```
+
+
+
+### Prioritization query
+
+Prioritization fields can be then easily querying, by filtering on fields and order by fields.
+
+> Example: Query variants using prioritization fields
+> ```
+> howard query \
+>    --input=/tmp/example.prioritized.vcf.gz \
+>    --explode_infos \
+>    --query="SELECT \"#CHROM\", POS, ALT, REF, \"PZFlag\", \"PZScore\", \"PZTags\", \"DP\", \"CLNSIG\" \
+>             FROM variants \
+>             WHERE \"PZScore\" > 0 \
+>               AND \"PZFlag\" == 'PASS' \
+>             ORDER BY \"PZScore\" DESC"
+> ```
+> ```
+>   #CHROM       POS ALT REF PZFlag  PZScore                                             PZTags     DP      CLNSIG
+> 0   chr1     28736   C   A   PASS       15  PZFlag#PASS|PZScore#15|PZComment#Described on ...    NaN  pathogenic
+> 1   chr1     69101   G   A   PASS        5  PZFlag#PASS|PZScore#5|PZComment#DP higher than 50   50.0        None
+> 2   chr7  55249063   A   G   PASS        5  PZFlag#PASS|PZScore#5|PZComment#DP higher than 50  125.0        None
+> ```
+
+> Example: Query variants with different prioritization flag between profiles
+> ```
+> howard query \
+>    --input=/tmp/example.prioritized.vcf.gz \
+>    --explode_infos \
+>    --query="SELECT \"#CHROM\", POS, ALT, REF, \"PZFlag_default\", \"PZFlag_GERMLINE\" \
+>             FROM variants \
+>             WHERE \"PZFlag_default\" != \"PZFlag_GERMLINE\" \
+>             ORDER BY \"PZScore\" DESC"
+> ```
+> ```
+>   #CHROM    POS ALT REF PZFlag_default PZFlag_GERMLINE
+> 0   chr1  35144   C   A       FILTERED            PASS
+> ```
+
+> Example: Showing propritization comments of variants, with flags and scores
+> ```
+> howard query \
+>    --input=/tmp/example.prioritized.vcf.gz \
+>    --explode_infos \
+>    --query="SELECT \"#CHROM\", POS, ALT, REF, \"PZComment\", \"PZFlag\", \"PZScore\" \
+>             FROM variants WHERE \"PZComment\" IS NOT NULL \
+>             ORDER BY \"PZScore\" DESC"
+> ```
+> ```
+>   #CHROM       POS ALT REF                                        PZComment    PZFlag  PZScore
+> 0   chr1     28736   C   A      Described on CLINVAR database as pathogenic      PASS       15
+> 1   chr1     69101   G   A                                DP higher than 50      PASS        5
+> 2   chr7  55249063   A   G                                DP higher than 50      PASS        5
+> 3   chr1     35144   C   A  Described on CLINVAR database as non-pathogenic  FILTERED     -100
+> ```
+
+Prioritization profiles are defined in a JSON configuration file. Each profiles are defined as a list of annotation fields with associated filters (type of comparison and threshold, with related score, flag and comment).
+
+> Example: Profiles 'default' with 2 filters on annotation field 'DP' (threashold 50) and 2 filters on annotation field 'CLNSIG' ("pathogenic" or "non-pathogenic")
+> ```
+> {
+>     "default": {
+>         "DP": [
+>             {
+>                 "type": "gte",
+>                 "value": "50",
+>                 "score": 5,
+>                 "flag": "PASS",
+>                 "comment": [
+>                     "DP higher than 50"
+>                 ]
+>             },
+>             {
+>                 "type": "lt",
+>                 "value": "50",
+>                 "score": 0,
+>                 "flag": "FILTERED",
+>                 "comment": [
+>                     "DP lower than 50"
+>                 ]
+>             }
+>         ],
+>         "CLNSIG": [
+>             {
+>                 "type": "equals",
+>                 "value": "pathogenic",
+>                 "score": 15,
+>                 "flag": "PASS",
+>                 "comment": [
+>                     "Described on CLINVAR database as pathogenic"
+>                 ]
+>             },
+>             {
+>                 "type": "equals",
+>                 "value": "non-pathogenic",
+>                 "score": -100,
+>                 "flag": "FILTERED",
+>                 "comment": [
+>                     "Described on CLINVAR database as non-pathogenic"
+>                 ]
+>             },
+>         ]
+>     }
+> }
+> ```
+        
+See [HOWARD Help Prioritization Profiles](help.prioritization.md) for more options.
+
 ## Process
 
+HOWARD process tool manage genetic variations to:
+
+- annotates genetic variants with multiple annotation databases/files and tools
+- calculates and normalizes annotations
+- prioritizes variants with profiles (list of citeria) to calculate scores and flags
+- translates into various formats
+- query genetic variants and annotations
+- generates variants statistics
+
+This process tool combines all other tools to pipe them in a uniq command, through available options or a parameters file in JSON format (see [HOWARD Parameters JSON](docs/help.param.md) file).
+
 See [HOWARD Help Process tool](help.md#process-tool) tool for more information (under development).
+
+
+### Process with options
+
+Process tool uses quick options for annotation, calculation and prioritization to enrich variant file, and to query variants annotations.
+
+> Example: Full process command with options 
+> ```
+> howard process \
+>    --input=tests/data/example.vcf.gz \
+>    --output=/tmp/example.process.tsv \
+>    --annotations="tests/databases/annotations/current/hg19/avsnp150.parquet,tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet,bcftools:tests/databases/annotations/current/hg19/cosmic70.vcf.gz,snpeff,annovar:refGene" \
+>    --calculations="vartype,snpeff_hgvs,VAF" \
+>    --prioritizations="config/prioritization_profiles.json" \
+>    --explode_infos \
+>    --query="SELECT snpeff_hgvs, PZFlag, PZScore \
+>             FROM variants \
+>             ORDER BY PZScore DESC"
+> ```
+> ```
+>                                          snpeff_hgvs    PZFlag  PZScore
+> 0  MIR1302-2:NR_036051.1:n.-1630A>C,MIR1302-9:NR_...      PASS       15
+> 1       OR4F5:NM_001005484.1:exon1:c.11A>G:p.Glu4Gly      PASS        5
+> 2  EGFR:NM_005228.5:exon20:c.2361G>A:p.Gln787Gln,...      PASS        5
+> 3  LINC01128:NR_047519.1:exon2:n.287+3767A>G,LINC...      PASS        0
+> 4  LINC01128:NR_047519.1:exon2:n.287+3768A>G,LINC...      PASS        0
+> 5  LINC01128:NR_047519.1:exon2:n.287+3769A>G,LINC...      PASS        0
+> 6  MIR1302-2:NR_036051.1:n.*4641A>C,MIR1302-9:NR_...  FILTERED     -100
+> ```
+
+### Process with parameters JSON file
+
+In order to fine tune process, all tools can be defined in a [HOWARD Parameters JSON](docs/help.param.md). This allows to add specific options, such as selecting specific fields (and rename them) for annotation, defining options for external tools, specifying a list of transcripts of preference for NOMEN calculation. This Parameters JSON file can be combine with options.
+
+> Example: Full process command with Parameters JSON file and a query as option
+> ```
+> howard process \
+>    --input=tests/data/example.vcf.gz \
+>    --output=/tmp/example.process.tsv \
+>    --param=config/param.json \
+>    --explode_infos \
+>    --query="SELECT NOMEN, PZFlag, PZScore, PZComment \
+>             FROM variants \
+>             ORDER BY PZScore DESC"
+> ```
+> ```
+>                                             NOMEN    PZFlag  PZScore                                        PZComment
+> 0              WASH7P:NR_024540:exon1:n.50+585T>G      PASS       15.0      Described on CLINVAR database as pathogenic
+> 1      OR4F5:NM_001005484:exon1:c.11A>G:p.Glu4Gly      PASS        5.0                                DP higher than 50
+> 2  EGFR:NM_001346897:exon19:c.2226G>A:p.Gln742Gln      PASS        5.0                                DP higher than 50
+> 3         LINC01128:NR_047519:exon2:n.287+3767A>G      PASS        0.0                                              NaN
+> 4         LINC01128:NR_047519:exon2:n.287+3768A>G      PASS        0.0                                              NaN
+> 5         LINC01128:NR_047519:exon2:n.287+3769A>G      PASS        0.0                                              NaN
+> 6                  MIR1302-9:NR_036266:n.*4641A>C  FILTERED     NaN  Described on CLINVAR database as non-pathogenic
+> ```
+
+> Example: Parameters JSON file
+> ```
+> {
+>   "annotation": {
+>     "parquet": {
+>       "annotations": {
+>         "tests/databases/annotations/current/hg19/avsnp150.parquet": {
+>           "INFO": null
+>         },
+>         "tests/databases/annotations/current/hg19/dbnsfp42a.parquet": {
+>           "INFO": null
+>         },
+>         "tests/databases/annotations/current/hg19/gnomad211_genome.parquet": {
+>           "INFO": null
+>         }
+>       }
+>     },
+>     "bcftools": {
+>       "annotations": {
+>         "tests/databases/annotations/current/hg19/cosmic70.vcf.gz": {
+>           "INFO": null
+>         }
+>       }
+>     },
+>     "snpeff": {
+>       "options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "
+>     },
+>     "annovar": {
+>       "annotations": {
+>         "refGene": {
+>           "INFO": null
+>         }
+>       },
+>       "options": {
+>         "genebase": "-hgvs -splicing_threshold 3 ",
+>         "intronhgvs": 10
+>       }
+>     }
+>   },
+>   "calculation": {
+>     "vartype": null,
+>     "snpeff_hgvs": null,
+>     "NOMEN": {
+>       "options": {
+>         "hgvs_field": "snpeff_hgvs",
+>         "transcripts": "tests/data/transcripts.tsv"
+>       }
+>     },
+>     "VAF": ""
+>   },
+>   "prioritization": {
+>     "config_profiles": "config/prioritization_profiles.json",
+>     "pzfields": ["PZScore", "PZFlag", "PZComment"],
+>     "profiles": ["default", "GERMLINE"],
+>     "prioritization_score_mode": "VaRank"
+>   },
+>   "query": "SELECT \"#CHROM\", POS, REF, ALT, INFO FROM variants",
+>   "explode_infos": True,
+>   "threads": 8
+> }
+> ```
+
+

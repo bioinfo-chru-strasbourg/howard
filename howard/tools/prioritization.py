@@ -36,15 +36,32 @@ def prioritization(args:argparse) -> None:
 
     log.info("Start")
 
+    # Config infos
+    if "arguments_dict" in args:
+        arguments_dict = args.arguments_dict
+    else:
+        arguments_dict = None
+    if "setup_cfg" in args:
+        setup_cfg = args.setup_cfg
+    else:
+        setup_cfg = None
     config = args.config
 
+    # Load parameters in JSON format
     param = {}
+    if "param" in args:
+        if isinstance(args.param, str) and os.path.exists(full_path(args.param)):
+            with open(full_path(args.param)) as param_file:
+                param = json.load(param_file)
+        else:
+            param = json.loads(args.param)
 
     # Create VCF object
-    if args.input:
+    #if args.input:
+    if args.prioritizations or param.get("prioritizations", None) or param.get("prioritization", None):
         vcfdata_obj = Variants(None, args.input, args.output, config, param)
 
-        params = vcfdata_obj.get_param()
+        param = vcfdata_obj.get_param()
 
         # Quick prioritization
         if args.prioritizations:
@@ -56,23 +73,23 @@ def prioritization(args:argparse) -> None:
             log.info(f"Quick Prioritization Config file: {config_profiles}")
             param_quick_prioritizations = param.get("prioritization",{})
             param_quick_prioritizations["config_profiles"] = config_profiles
-            params["prioritization"] = param_quick_prioritizations
+            param["prioritization"] = param_quick_prioritizations
 
             # Profiles
             if args.profiles:
-                params["prioritization"]["profiles"] = [value for value in args.profiles.split(',')]
+                param["prioritization"]["profiles"] = [value for value in args.profiles.split(',')]
 
             # PZFields
             if args.pzfields:
-                params["prioritization"]["pzfields"] = [value for value in args.pzfields.split(',')]
+                param["prioritization"]["pzfields"] = [value for value in args.pzfields.split(',')]
 
             # Default
             if args.default_profile:
-                params["prioritization"]["default_profile"] = args.default_profile
+                param["prioritization"]["default_profile"] = args.default_profile
 
             # Score Mode
             if args.prioritization_score_mode:
-                params["prioritization"]["prioritization_score_mode"] = args.prioritization_score_mode
+                param["prioritization"]["prioritization_score_mode"] = args.prioritization_score_mode
 
             # Config profiles
             if config_profiles in args and args.config_profiles:
@@ -80,9 +97,9 @@ def prioritization(args:argparse) -> None:
                     config_profiles_file = args.config_profiles
                 else:
                     config_profiles_file = args.config_profiles.name
-                params["prioritization"]["config_profiles"] = config_profiles_file
+                param["prioritization"]["config_profiles"] = config_profiles_file
 
-        vcfdata_obj.set_param(params)
+        vcfdata_obj.set_param(param)
             
         # Load data from input file
         vcfdata_obj.load_data()
@@ -98,6 +115,14 @@ def prioritization(args:argparse) -> None:
 
         # Close connexion
         vcfdata_obj.close_connexion()
+
+    else:
+        # Parser
+        parser = help_generation(arguments_dict=arguments_dict, setup=setup_cfg, output_type="parser")
+        parser.print_help()
+        print("")
+        log.error(f"No prioritizations provided")
+        raise ValueError(f"No prioritizations provided")
 
     log.info("End")
 

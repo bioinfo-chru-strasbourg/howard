@@ -36,22 +36,38 @@ def annotation(args:argparse) -> None:
 
     log.info("Start")
 
+    # Config infos
+    if "arguments_dict" in args:
+        arguments_dict = args.arguments_dict
+    else:
+        arguments_dict = None
+    if "setup_cfg" in args:
+        setup_cfg = args.setup_cfg
+    else:
+        setup_cfg = None
     config = args.config
 
+    # Load parameters in JSON format
     param = {}
-
+    if "param" in args:
+        if isinstance(args.param, str) and os.path.exists(full_path(args.param)):
+            with open(full_path(args.param)) as param_file:
+                param = json.load(param_file)
+        else:
+            param = json.loads(args.param)
 
     # Create VCF object
-    if args.input:
+    #if args.input:
+    if args.annotations or param.get("annotations", None) or param.get("annotation", None):
         vcfdata_obj = Variants(None, args.input, args.output, config, param)
 
-        params = vcfdata_obj.get_param()
+        param = vcfdata_obj.get_param()
 
         # Prapare annotation dict
-        if not params.get("annotation", None):
-            params["annotation"] = {}
-        if not params.get("annotation", {}).get("options", None):
-            params["annotation"]["options"] = {}
+        if not param.get("annotation", None):
+            param["annotation"] = {}
+        if not param.get("annotation", {}).get("options", None):
+            param["annotation"]["options"] = {}
 
         # Quick Annotation
         if args.annotations:
@@ -60,15 +76,15 @@ def annotation(args:argparse) -> None:
             param_quick_annotations = param.get("annotations",{})
             for annotation_file in annotation_file_list:
                 param_quick_annotations[annotation_file] = {"INFO": None}
-            params["annotations"] = param_quick_annotations
+            param["annotations"] = param_quick_annotations
         
         if args.annotations_update:
-            params["annotation"]["options"]["update"] = True
+            param["annotation"]["options"]["update"] = True
 
         if args.annotations_append:
-            params["annotation"]["options"]["append"] = True
+            param["annotation"]["options"]["append"] = True
 
-        vcfdata_obj.set_param(params)
+        vcfdata_obj.set_param(param)
         
         # Load data from input file
         vcfdata_obj.load_data()
@@ -84,6 +100,14 @@ def annotation(args:argparse) -> None:
 
         # Close connexion
         vcfdata_obj.close_connexion()
+
+    else:
+        # Parser
+        parser = help_generation(arguments_dict=arguments_dict, setup=setup_cfg, output_type="parser")
+        parser.print_help()
+        print("")
+        log.error(f"No annotations provided")
+        raise ValueError(f"No annotations provided")
 
     log.info("End")
 

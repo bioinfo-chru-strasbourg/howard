@@ -37,6 +37,15 @@ def process(args:argparse) -> None:
 
     log.info("Start")
 
+    # Config infos
+    if "arguments_dict" in args:
+        arguments_dict = args.arguments_dict
+    else:
+        arguments_dict = None
+    if "setup_cfg" in args:
+        setup_cfg = args.setup_cfg
+    else:
+        setup_cfg = None
     config = args.config
 
     # Load parameters in JSON format
@@ -51,7 +60,7 @@ def process(args:argparse) -> None:
     if args.input:
         vcfdata_obj = Variants(None, args.input, args.output, config, param)
 
-        params = vcfdata_obj.get_param()
+        param = vcfdata_obj.get_param()
 
         # Quick Annotation
         if args.annotations:
@@ -60,7 +69,7 @@ def process(args:argparse) -> None:
             param_quick_annotations = param.get("annotations",{})
             for annotation_file in annotation_file_list:
                 param_quick_annotations[annotation_file] = {"INFO": None}
-            params["annotations"] = param_quick_annotations
+            param["annotations"] = param_quick_annotations
 
         # Quick calculations
         if args.calculations:
@@ -69,7 +78,7 @@ def process(args:argparse) -> None:
             param_quick_calculations = param.get("calculation",{})
             for calculation_operation in calculations_list:
                 param_quick_calculations[calculation_operation] = {}
-            params["calculation"] = param_quick_calculations
+            param["calculation"] = param_quick_calculations
 
         # Quick prioritization
         if args.prioritizations:
@@ -81,23 +90,23 @@ def process(args:argparse) -> None:
             log.info(f"Quick Prioritization Config file: {config_profiles}")
             param_quick_prioritizations = param.get("prioritization",{})
             param_quick_prioritizations["config_profiles"] = config_profiles
-            params["prioritization"] = param_quick_prioritizations
+            param["prioritization"] = param_quick_prioritizations
 
         # Quick query
         if args.query:
-            params["query"] = args.query
+            param["query"] = args.query
 
         # Explode infos
-        params["explode_infos"] = args.explode_infos
-        params["explode_infos_prefix"] = args.explode_infos_prefix
-        params["explode_infos_fields"] = args.explode_infos_fields
+        param["explode_infos"] = args.explode_infos
+        param["explode_infos_prefix"] = args.explode_infos_prefix
+        param["explode_infos_fields"] = args.explode_infos_fields
 
         # include_header
         if "include_header" in args and args.include_header:
-            params["header_in_output"] = args.include_header
+            param["header_in_output"] = args.include_header
 
         # Set param
-        vcfdata_obj.set_param(params)
+        vcfdata_obj.set_param(param)
 
         # Load data from input file
         vcfdata_obj.load_data()
