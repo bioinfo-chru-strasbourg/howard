@@ -381,7 +381,7 @@ See [HOWARD Help Prioritization tool](docs/help.md#prioritization-tool) for more
 
 ## Process
 
-howard process tool manage genetic variations to:
+HOWARD process tool manage genetic variations to:
 
 - annotates genetic variants with multiple annotation databases/files and tools
 - calculates and normalizes annotations
@@ -390,119 +390,40 @@ howard process tool manage genetic variations to:
 - query genetic variants and annotations
 - generates variants statistics
 
-This process tool combines all other tools to pipe them in a uniq command, through a parameters file in JSON format (see [HOWARD Parameters JSON](docs/help.param.md) file).
+This process tool combines all other tools to pipe them in a uniq command, through available options or a parameters file in JSON format (see [HOWARD Parameters JSON](docs/help.param.md) file).
+
+See [HOWARD Help Process tool](docs/help.md#process-tool) tool for more information (under development).
 
 <details >
 
 <summary>More details</summary>
 
-- Full process command
-
-```
-howard process --config=config/config.json --param=config/param.json --input=tests/data/example.vcf.gz --output=/tmp/example.process.tsv --query='SELECT "NOMEN", "PZFlag", "PZScore", "PZComment" FROM variants ORDER BY "PZScore" DESC' --explode_infos
-```
-
-- to obtain this kind of table
-
-```
-                                            NOMEN    PZFlag  PZScore                                        PZComment
-0              WASH7P:NR_024540:exon1:n.50+585T>G      PASS       15      Described on CLINVAR database as pathogenic
-1      OR4F5:NM_001005484:exon1:c.11A>G:p.Glu4Gly      PASS        5                                DP higher than 50
-2  EGFR:NM_001346897:exon19:c.2226G>A:p.Gln742Gln      PASS        5                                DP higher than 50
-3         LINC01128:NR_047519:exon2:n.287+3767A>G      PASS        0                                              NaN
-4         LINC01128:NR_047519:exon2:n.287+3768A>G      PASS        0                                              NaN
-5         LINC01128:NR_047519:exon2:n.287+3769A>G      PASS        0                                              NaN
-6                  MIR1302-9:NR_036266:n.*4641A>C  FILTERED     -100  Described on CLINVAR database as non-pathogenic
-```
-
-- with parameter JSON file
-
-```
-{
-  "annotation": {
-    "snpeff": {
-      "options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "
-    },
-    "annovar": {
-      "annotations": {
-        "refGene": {
-          "INFO": null
-        }
-      },
-      "options": {
-        "genebase": "-hgvs -splicing_threshold 3 ",
-        "intronhgvs": 10
-      }
-    },
-    "parquet": {
-      "annotations": {
-        "tests/databases/annotations/current/hg19/avsnp150.parquet": {
-          "INFO": null
-        },
-        "tests/databases/annotations/current/hg19/dbnsfp42a.parquet": {
-          "INFO": null
-        },
-        "tests/databases/annotations/current/hg19/gnomad211_genome.parquet": {
-          "INFO": null
-        }
-      }
-    },
-    "bcftools": {
-      "annotations": {
-        "tests/databases/annotations/current/hg19/cosmic70.vcf.gz": {
-          "INFO": null
-        }
-      }
-    }
-  },
-  "calculation": {
-    "vartype": null,
-    "snpeff_hgvs": null,
-    "NOMEN": {
-      "options": {
-        "hgvs_field": "snpeff_hgvs",
-        "transcripts": "tests/data/transcripts.tsv"
-      }
-    },
-    "VAF": ""
-  },
-  "prioritization": {
-    "config_profiles": "config/prioritization_profiles.json",
-    "pzfields": ["PZScore", "PZFlag", "PZComment"],
-    "profiles": ["default", "GERMLINE"]
-  },
-  "explode_infos": True,
-  "threads": 8
-}
-```
-
-See [HOWARD Help Process tool](docs/help.md#process-tool) for more options.
+> Example: Full process command with options 
+> ```
+> howard process \
+>    --input=tests/data/example.vcf.gz \
+>    --output=/tmp/example.process.tsv \
+>    --annotations="tests/databases/annotations/current/hg19/avsnp150.parquet,tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet,bcftools:tests/databases/annotations/current/hg19/cosmic70.vcf.gz,snpeff,annovar:refGene" \
+>    --calculations="vartype,snpeff_hgvs,VAF" \
+>    --prioritizations="config/prioritization_profiles.json" \
+>    --explode_infos \
+>    --query="SELECT snpeff_hgvs, PZFlag, PZScore \
+>             FROM variants \
+>             ORDER BY PZScore DESC"
+> ```
+> ```
+>                                          snpeff_hgvs    PZFlag  PZScore
+> 0  MIR1302-2:NR_036051.1:n.-1630A>C,MIR1302-9:NR_...      PASS       15
+> 1       OR4F5:NM_001005484.1:exon1:c.11A>G:p.Glu4Gly      PASS        5
+> 2  EGFR:NM_005228.5:exon20:c.2361G>A:p.Gln787Gln,...      PASS        5
+> 3  LINC01128:NR_047519.1:exon2:n.287+3767A>G,LINC...      PASS        0
+> 4  LINC01128:NR_047519.1:exon2:n.287+3768A>G,LINC...      PASS        0
+> 5  LINC01128:NR_047519.1:exon2:n.287+3769A>G,LINC...      PASS        0
+> 6  MIR1302-2:NR_036051.1:n.*4641A>C,MIR1302-9:NR_...  FILTERED     -100
+> ```
 
 </details>
 
-
-# Command Line Interface
-
-Docker HOWARD-CLI container (Command Line Interface) can be used to execute commands.
-
-- Query of an existing VCF:
-
-```
-docker exec HOWARD-CLI howard query --input=/tool/tests/data/example.vcf.gz --query='SELECT * FROM variants'
-```
-
-- VCF annotation using HOWARD-CLI (snpEff and ANNOVAR databases will be automatically downloaded), and query list of genes with HGVS:
-
-```
-docker exec --workdir=/tool HOWARD-CLI howard process --config=config/config.json --param=config/param.json --input=tests/data/example.vcf.gz --output=/tmp/example.process.tsv --query='SELECT "NOMEN", "PZFlag", "PZScore", "PZComment" FROM variants ORDER BY "PZScore" DESC' --explode_infos
-```
-
-- Let's play within Docker HOWARD-CLI service!
-
-```
-docker exec -ti HOWARD-CLI bash
-howard --help
-```
 
 # Documentation
 

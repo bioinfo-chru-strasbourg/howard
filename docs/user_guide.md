@@ -204,17 +204,28 @@ To run a command into HOWARD-CLI container:
 docker exec HOWARD-CLI <howard command>
 ```
 
-> Example: Query of an existing VCF:
-> 
+Docker HOWARD-CLI container (Command Line Interface) can be used to execute commands.
+
+> Example: Query of an existing VCF
 > ```
-> docker exec HOWARD-CLI howard query --input=/tool/tests/data/example.vcf.gz --query='SELECT * FROM variants'
+> docker exec HOWARD-CLI \
+>    howard query \
+>       --input=/tool/tests/data/example.vcf.gz \
+>       --query='SELECT * FROM variants'
 > ```
 
-> Example: VCF annotation using HOWARD-CLI (snpEff and ANNOVAR databases will be automatically downloaded), and query list of genes with HGVS:
-> 
+> Example: VCF annotation using HOWARD-CLI (snpEff and ANNOVAR databases will be automatically downloaded), and query list of genes with HGVS
 > ```
-> docker exec --workdir=/tool HOWARD-CLI howard process --config=config/config.json --param=config/param.json --input=tests/data/example.vcf.gz --output=/tmp/example.process.tsv --query='SELECT "NOMEN", "PZFlag", "PZScore", "PZComment" FROM variants ORDER BY "PZScore" DESC' --explode_infos
+> docker exec --workdir=/tool HOWARD-CLI \
+>    howard process \
+>       --config=config/config.json \
+>       --param=config/param.json \
+>       --input=tests/data/example.vcf.gz \
+>       --output=/tmp/example.process.tsv \
+>       --explode_infos \
+>       --query='SELECT "NOMEN", "PZFlag", "PZScore", "PZComment" FROM variants ORDER BY "PZScore" DESC'
 > ```
+
 
 See [HOWARD Help](help.md) for more options.
 
