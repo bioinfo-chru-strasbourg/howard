@@ -18,21 +18,15 @@ HOWARD generates statistics files with a specific algorithm, snpEff and BCFTOOLS
 
 HOWARD is multithreaded through the number of variants and by database (data-scaling).
 
-<details open>
-
-<summary>
-
 ## Table of contents
-
-</summary>
 
 - [Installation](#installation)
   - [Python](#python)
   - [Docker](#docker)
   - [Databases](#databases)
-- [Configuration](#configuration)
-- [Parameters](#parameters)
+  - [Configuration](#configuration)
 - [Tools](#tools)
+  - [Parameters](#parameters)
   - [Stats](#stats)
   - [Convert](#convert)
   - [Query](#query)
@@ -40,21 +34,12 @@ HOWARD is multithreaded through the number of variants and by database (data-sca
   - [Calculation](#calculation)
   - [Prioritization](#prioritization)
   - [Process](#process)
-- [Command Line Interface](#command-line-interface)
 - [Documentation](#documentation)
 - [Contact](#contact)
 
-</details>
-
-<details open>
-
-<summary>
-
 # Installation
 
-</summary>
-
-HOWARD can be installed using [Python Pip](#python), and a [Docker Compose](#docker) installation provides a CLI (Cmmand Line Interface) with all external tools and useful databases. [Databases](#databases) can be automatically downloaded, or home-made generated (created or downloaded).
+HOWARD can be installed using [Python](#python), and a [Docker](#docker) installation provides a CLI (Command Line Interface) with all external tools and useful databases. [Databases](#databases) can be automatically downloaded, or home-made generated (created or downloaded).
 
 ## Python
 
@@ -128,7 +113,33 @@ docker exec -ti HOWARD-CLI bash
 howard --help
 ```
 
-See [Command Line Interface](#command-line-interface) for more informatin.
+<details >
+
+<summary>More details</summary>
+
+Docker HOWARD-CLI container (Command Line Interface) can be used to execute commands.
+
+> Example: Query of an existing VCF
+> ```
+> docker exec HOWARD-CLI \
+>    howard query \
+>       --input=/tool/tests/data/example.vcf.gz \
+>       --query='SELECT * FROM variants'
+> ```
+
+> Example: VCF annotation using HOWARD-CLI (snpEff and ANNOVAR databases will be automatically downloaded), and query list of genes with HGVS
+> ```
+> docker exec --workdir=/tool HOWARD-CLI \
+>    howard process \
+>       --config=config/config.json \
+>       --param=config/param.json \
+>       --input=tests/data/example.vcf.gz \
+>       --output=/tmp/example.process.tsv \
+>       --explode_infos \
+>       --query='SELECT "NOMEN", "PZFlag", "PZScore", "PZComment" FROM variants ORDER BY "PZScore" DESC'
+> ```
+
+</details>
 
 ## Databases
 
@@ -175,43 +186,22 @@ Each database annotation file is associated with a 'header' file ('.hdr'), in VC
 
 </details>
 
-</details>
-
-<details>
-
-<summary>
-
-# Configuration
-
-</summary>
+## Configuration
 
 HOWARD Configuration JSON file defined default configuration regarding resources (e.g. threads, memory), settings (e.g. verbosity, temporary files), default folders (e.g. for databases) and paths to external tools.
 
 See [HOWARD Configuration JSON](docs/help.config.md) for more information.
 
-</details>
-
-<details>
-
-<summary>
-
-# Parameters
-
-</summary>
-
-HOWARD Parameters JSON file defined parameters to process annotations, prioritization, calculations, convertions and queries.
-
-See [HOWARD Parameters JSON](docs/help.param.md) for more information.
-
-</details>
-
-<details open>
-
-<summary>
 
 # Tools
 
-</summary>
+HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations, convert on multiple formats, query variations and generates statistics. These tools require options or a [ Parameters JSON](help.param.md) file.
+
+## Parameters
+
+HOWARD Parameters JSON file defined parameters to process annotations, prioritization, calculations, convertions and queries. Use this parameters file to configure tools, instead of options or as a main configuration (options will replace parameters in JSON file).
+
+See [HOWARD Parameters JSON](docs/help.param.md) for more information.
 
 ## Stats
 
@@ -490,15 +480,8 @@ See [HOWARD Help Process tool](docs/help.md#process-tool) for more options.
 
 </details>
 
-</details>
-
-<details>
-
-<summary>
 
 # Command Line Interface
-
-</summary>
 
 Docker HOWARD-CLI container (Command Line Interface) can be used to execute commands.
 
@@ -521,15 +504,7 @@ docker exec -ti HOWARD-CLI bash
 howard --help
 ```
 
-</details>
-
-<details>
-
-<summary>
-
 # Documentation
-
-</summary>
 
 [HOWARD User Guide](docs/user_guide.md) is available to assist users for particular commands, such as software installation, databases download, annotation command, and so on.
 
@@ -542,20 +517,10 @@ howard annotation --help    # Help for 'annotation' tool
 ...
 ```
 
-</details>
-
-<details open>
-
-<summary>
-
 # Contact
-
-</summary>
 
 :hospital: [Medical Bioinformatics applied to Diagnosis Lab](https://www.chru-strasbourg.fr/service/bioinformatique-medicale-appliquee-au-diagnostic-unite-de/) @ Strasbourg Univerty Hospital
 
 :email: [bioinfo@chru-strasbourg.fr](bioinfo@chru-strasbourg.fr)
 
 :bookmark: [GitHub](https://github.com/bioinfo-chru-strasbourg)
-
-</details>
