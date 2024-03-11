@@ -273,7 +273,7 @@ def databases_download(args:argparse) -> None:
     # Exomiser
     if args.download_exomiser:
         log.debug(f"Download Exomiser")
-        if download_exomiser_application_properties in args and args.download_exomiser_application_properties:
+        if "download_exomiser_application_properties" in args and args.download_exomiser_application_properties:
             if isinstance(args.download_exomiser_application_properties, str):
                 download_exomiser_application_properties = args.download_exomiser_application_properties
             else:
@@ -319,7 +319,7 @@ def databases_download(args:argparse) -> None:
     # HGMD
     if args.convert_hgmd:
         log.debug(f"Convert HGMD")
-        if convert_hgmd_file in args and args.convert_hgmd_file:
+        if "convert_hgmd_file" in args and args.convert_hgmd_file:
             if isinstance(args.convert_hgmd_file, str):
                 convert_hgmd_file = args.convert_hgmd_file
             else:
