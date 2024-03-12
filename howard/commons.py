@@ -518,6 +518,8 @@ def find_nomen(hgvs: str = "", pattern="GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOME
         PNOMEN
         TVNOMEN
         TNOMEN
+        TPVNOMEN
+        TPNOMEN
         VNOMEN
         ENOMEN
         GNOMEN
@@ -531,6 +533,8 @@ def find_nomen(hgvs: str = "", pattern="GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOME
         "PNOMEN": None,
         "TVNOMEN": None,
         "TNOMEN": None,
+        "TPVNOMEN": None,
+        "TPNOMEN": None,
         "VNOMEN": None,
         "ENOMEN": None,
         "GNOMEN": None,
@@ -545,16 +549,14 @@ def find_nomen(hgvs: str = "", pattern="GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOME
         nomen_score_max = 0
 
         for one_hgvs in hgvs_split:
-            # print(one_hgvs)
             one_hgvs_split = one_hgvs.split(':')
-            # print(one_hgvs_split)
 
             one_nomen_score = 0
             one_nomen_dict = empty_nomen_dict.copy()
 
             for one_hgvs_infos in one_hgvs_split:
 
-                if re.match(r"^[NX][MRP]_(.*)$", one_hgvs_infos):
+                if re.match(r"^[NX][MR]_(.*)$", one_hgvs_infos):
                     # Transcript with version
                     one_nomen_dict["TVNOMEN"] = one_hgvs_infos
                     one_nomen_score += 1
@@ -576,6 +578,15 @@ def find_nomen(hgvs: str = "", pattern="GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOME
                         if rank >= 0:
                             one_nomen_score += (100 *
                                                 (len(transcripts) - rank))
+
+                elif re.match(r"^[NX][P]_(.*)$", one_hgvs_infos):
+                    # Transcript Protein with version
+                    one_nomen_dict["TPVNOMEN"] = one_hgvs_infos
+                    one_nomen_score += 1
+                    # Split transcript
+                    one_hgvs_infos_split = one_hgvs_infos.split('.')
+                    # Transcript Protein
+                    one_nomen_dict["TPNOMEN"] = one_hgvs_infos_split[0]
 
                 elif re.match(r"^c\.(.*)$", one_hgvs_infos) or re.match(r"^g\.(.*)$", one_hgvs_infos) or re.match(r"^m\.(.*)$", one_hgvs_infos):
                     one_nomen_dict["CNOMEN"] = one_hgvs_infos

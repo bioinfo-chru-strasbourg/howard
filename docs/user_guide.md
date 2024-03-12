@@ -408,6 +408,16 @@ See [HOWARD Parameters JSON](help.param.md) for more information.
 > }
 > ```
 
+Moreover, a transcripts file can be defined, especially to select NOMEN from a list of HGVS annotation (see [Calculation](#calculation) and [HGVS and NOMEN from snpEff](#hgvs-and-nomen-from-snpeff)). This file is a tab-delimited with 'transcript' as first column and 'gene' a second column. For a gene, transcripts of reference are ordered (first is priority, e.g. 'NM_001346897' has prior over 'NM_005228').
+
+> Example: Transcripts file in tab-delimited format with column 'transcript' and column 'gene'
+> ```
+> NR_024540	    WASH7P
+> NR_036266	    MIR1302-9
+> NM_001346897	EGFR
+> NM_005228	    EGFR
+> ```
+
 
 ## Stats
 
@@ -1092,7 +1102,7 @@ Variant type calculation `vartype` detect the type of variant (e.g. SNV, INDEL, 
 
 #### HGVS and NOMEN from snpEff
 
-NOMEN can be extracted from snpEff annotation (see [HOWARD Parameters JSON - snpEff](help.param.md#snpeff)). The first calculation extract list of HGVS annotations from snpEff annotation (`snpeff_hgvs` keyword), the second calculation choose the NOMEN from snpEff HGVS annotations using a list of reference transcripts (`NOMEN` keyword, `--hgvs_field` and `--transcripts` parameters). More options are available (see [HOWARD Parameters JSON](help.param.md)).
+NOMEN can be extracted from snpEff annotation (see [HOWARD Parameters JSON - snpEff](help.param.md#snpeff)). The first calculation extract list of HGVS annotations from snpEff annotation (`snpeff_hgvs` keyword), the second calculation choose the NOMEN from snpEff HGVS annotations using a list of reference transcripts (`NOMEN` keyword, `--hgvs_field` and `--transcripts` parameters). More options are available (see [HOWARD Parameters JSON](help.param.md)). See [Parameters](#parameters) for more information about list of reference transcripts
 
 > Example: Calculate NOMEN by extracting hgvs from snpEff annotation and identifying transcripts from a list
 >
@@ -1367,7 +1377,7 @@ Process tool uses quick options for annotation, calculation and prioritization t
 > 3               LINC01128:NR_047526:n.287+3767A>G        None       None      None           None          None
 > 4               LINC01128:NR_047526:n.287+3768A>G        None       None      None           None          None
 > 5               LINC01128:NR_047526:n.287+3769A>G        None       None      None           None          None
-> 6  EGFR:NP_001333826:exon19:c.2226G>A:p.Gln742Gln        None       None    0.5029           None          None
+> 6  EGFR:NM_001346897:exon19:c.2226G>A:p.Gln742Gln        None       None    0.5029           None          None
 > ```
 
 > Example: Full process command with options (HGVS, annotation parquet, snpEff and Annovar, calculation and prioritization)
@@ -1388,7 +1398,7 @@ Process tool uses quick options for annotation, calculation and prioritization t
 >                                             NOMEN    PZFlag  PZScore                                        snpeff_hgvs
 > 0                    WASH7P:NR_024540:n.50+585T>G      PASS       15  MIR1302-2:NR_036051.1:n.-1630A>C,MIR1302-9:NR_...
 > 1     OR4F5:NP_001005484:exon3:c.74A>G:p.Glu25Gly      PASS        5       OR4F5:NM_001005484.1:exon1:c.11A>G:p.Glu4Gly
-> 2  EGFR:NP_001333826:exon19:c.2226G>A:p.Gln742Gln      PASS        5  EGFR:NM_005228.5:exon20:c.2361G>A:p.Gln787Gln,...
+> 2  EGFR:NM_001346897:exon19:c.2226G>A:p.Gln742Gln      PASS        5  EGFR:NM_005228.5:exon20:c.2361G>A:p.Gln787Gln,...
 > 3               LINC01128:NR_047526:n.287+3767A>G      PASS        0  LINC01128:NR_047519.1:exon2:n.287+3767A>G,LINC...
 > 4               LINC01128:NR_047526:n.287+3768A>G      PASS        0  LINC01128:NR_047519.1:exon2:n.287+3768A>G,LINC...
 > 5               LINC01128:NR_047526:n.287+3769A>G      PASS        0  LINC01128:NR_047519.1:exon2:n.287+3769A>G,LINC...
