@@ -33,6 +33,7 @@ HOWARD is multithreaded through the number of variants and by database (data-sca
   - [Annotation](#annotation)
   - [Calculation](#calculation)
   - [Prioritization](#prioritization)
+  - [HGVS annotation](#hgvs-annotation)
   - [Process](#process)
 - [Documentation](#documentation)
 - [Contact](#contact)
