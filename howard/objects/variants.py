@@ -175,8 +175,10 @@ class Variants:
             connexion_config["threads"] = threads
 
         # Memory
-        if config.get("memory", None):
-            connexion_config["memory_limit"] = config.get("memory")
+        # if config.get("memory", None):
+        #     connexion_config["memory_limit"] = config.get("memory")
+        if self.get_memory():
+            connexion_config["memory_limit"] = self.get_memory()
 
         # Temporary directory
         if config.get("tmp", None):
@@ -2131,20 +2133,70 @@ class Variants:
         run_parallel_commands(commands, threads)
 
 
-    def get_threads(self) -> int:
+    def get_threads(self, default:int = 1) -> int:
         """
-        It returns the number of threads to use for the current job
-        :return: The number of threads.
+        This function returns the number of threads to use for a job, with a default value of 1 if not
+        specified.
+        
+        :param default: The `default` parameter in the `get_threads` method is used to specify the
+        default number of threads to use if no specific value is provided. If no value is provided for
+        the `threads` parameter in the configuration or input parameters, the `default` value will be
+        used, defaults to 1
+        :type default: int (optional)
+        :return: the number of threads to use for the current job.
         """
 
-        input_thread = self.config.get("threads", None)
+        # Config
+        config = self.get_config()
+
+        # Param
+        param = self.get_param()
+
+        # Input threads
+        input_thread = param.get("threads", config.get("threads", None))
+
+        # Check threads
         if not input_thread:
-            threads = 1
+            threads = default
         elif int(input_thread) <= 0:
             threads = os.cpu_count()
         else:
             threads = int(input_thread)
         return threads
+
+    def get_memory(self, default:str = None) -> str:
+        """
+        This function retrieves the memory value from parameters or configuration with a default value
+        if not found.
+        
+        :param default: The `get_memory` function takes in a default value as a string parameter. This
+        default value is used as a fallback in case the `memory` parameter is not provided in the
+        `param` dictionary or the `config` dictionary. If `memory` is not found in either dictionary,
+        the function
+        :type default: str
+        :return: The `get_memory` function returns a string value representing the memory parameter. If
+        the `input_memory` is provided in the parameters, it will return that value. Otherwise, it will
+        return the default value provided as an argument to the function.
+        """
+
+        # Config
+        config = self.get_config()
+
+        # Param
+        param = self.get_param()
+
+        # Input threads
+        input_memory = param.get("memory", config.get("memory", None))
+
+        # Check threads
+        if input_memory:
+            memory = input_memory
+        else:
+            memory = default
+
+        log.debug(f"memory={memory}")
+        
+        return memory
 
 
     def update_from_vcf(self, vcf_file: str) -> None:
@@ -3099,10 +3151,11 @@ class Variants:
         log.debug(f"Samples: {samples}")
         
         # Memory limit
-        if config.get("memory", None):
-            memory_limit = config.get("memory", "8G")
-        else:
-            memory_limit = "8G"
+        # if config.get("memory", None):
+        #     memory_limit = config.get("memory", "8G")
+        # else:
+        #     memory_limit = "8G"
+        memory_limit = self.get_memory("8G")
         log.debug(f"memory_limit: {memory_limit}")
 
         # Exomiser java options
@@ -3672,10 +3725,11 @@ class Variants:
             "snpeff", {}).get("csvStats", None)
         if snpeff_stats:
             snpeff_stats = snpeff_stats.replace("OUTPUT", self.get_output())
+            snpeff_stats = full_path(snpeff_stats)
             snpeff_options += f" -stats {snpeff_stats}"
         if snpeff_csvstats:
-            snpeff_csvstats = snpeff_csvstats.replace(
-                "OUTPUT", self.get_output())
+            snpeff_csvstats = snpeff_csvstats.replace("OUTPUT", self.get_output())
+            snpeff_csvstats = full_path(snpeff_csvstats)
             snpeff_options += f" -csvStats {snpeff_csvstats}"
 
         # Data
@@ -3707,10 +3761,11 @@ class Variants:
                 f"Existing annotations in VCF: {vcf_annotation} [{vcf_annotation_line}]")
 
         # Memory limit
-        if config.get("memory", None):
-            memory_limit = config.get("memory", "8G")
-        else:
-            memory_limit = "8G"
+        # if config.get("memory", None):
+        #     memory_limit = config.get("memory", "8G")
+        # else:
+        #     memory_limit = "8G"
+        memory_limit = self.get_memory("8G")
         log.debug(f"memory_limit: {memory_limit}")
 
         # snpEff java options
@@ -5319,6 +5374,22 @@ class Variants:
             WHERE "{hgvs_column_name}" NOT IN ('') AND "{hgvs_column_name}" NOT NULL
             """
         self.execute_query(sql_query_update)
+
+        # Add header
+        HGVS_INFOS = {
+                'hgvs': {
+                    'ID': 'hgvs',
+                    'Number': '.',
+                    'Type': 'String',
+                    'Description': f'HGVS annotatation with HOWARD'
+                }
+            }
+
+        for field in HGVS_INFOS:
+            field_ID = HGVS_INFOS[field]["ID"]
+            field_description = HGVS_INFOS[field]["Description"]
+            self.get_header().infos[field_ID] = vcf.parser._Info(
+                field_ID, HGVS_INFOS[field]["Number"], HGVS_INFOS[field]["Type"], field_description, 'unknown', 'unknown', code_type_map[HGVS_INFOS[field]["Type"]])
 
         # Remove added columns
         for added_column in added_columns:

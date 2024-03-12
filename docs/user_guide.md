@@ -24,7 +24,7 @@ HOWARD is multithreaded through the number of variants and by database (data-sca
     - [Quick install](#quick-install)
     - [GUI install](#quick-install)
     - [Configuration](#configuration)
-    - [External tools](#external-tools) TODO
+    <!-- - [External tools](#external-tools) TODO -->
   - [Docker](#docker)
     - [Quick start](#quick-start)
     - [Setup container](#setup-container)
@@ -69,11 +69,10 @@ HOWARD is multithreaded through the number of variants and by database (data-sca
   - [Prioritization](#prioritization)
     - [Prioritization options](#prioritization-options)
     - [Prioritization query](#prioritization-query)
+  - [HGVS annotation](#hgvs-annotation)
   - [Process](#process)
     - [Process with options](#process-with-options)
     - [Process with Parameters JSON file](#process-with-parameters-json-file)
-  - [HGVS](#hgvs) TODO
-
 
 
 # Installation
@@ -392,8 +391,19 @@ See [HOWARD Parameters JSON](help.param.md) for more information.
 >     "profiles": ["default", "GERMLINE"],
 >     "prioritization_score_mode": "VaRank"
 >   },
+>   "hgvs": {
+>     "full_format": true,
+>     "use_exon": true
+>   },
 >   "query": "SELECT \"#CHROM\", POS, REF, ALT, INFO FROM variants",
->   "explode_infos": True,
+>   "explode_infos": false,
+>   "explode_infos_prefix": "",
+>   "explode_infos_fields": null,
+>   "header_in_output": false,
+>   "parquet_partitions": null,
+>   "order_by": null,
+>   "query_limit": 10,
+>   "query_print_mode": "default",
 >   "threads": 8
 > }
 > ```
@@ -1264,6 +1274,58 @@ Prioritization profiles are defined in a JSON configuration file. Each profiles 
         
 See [HOWARD Help Prioritization Profiles](help.prioritization.md) for more options.
 
+## HGVS annotation
+
+HOWARD annotates variants with HGVS annotation using HUGO HGVS internation Sequence Variant Nomenclature (http://varnomen.hgvs.org/). Annotation refere to refGene and genome to generate HGVS nomenclature for all available transcripts. This annotation add 'hgvs' field into VCF INFO column of a VCF file.
+
+To enhance the functionality of HGVS tool, several options available. The `--use_gene` option enables the utilization of gene information for the generation of HGVS annotation, providing a concise representation such as 'NM_152232(TAS1R2):c.231T>C'. Alternatively, the `--use_exon` option incorporates exon details into the annotation, as seen in the example 'NM_152232(exon2):c.231T>C', but this is only applicable if 'use_gene' is not enabled. For a more detailed HGVS annotation, activate the `--full_format` option, which generates a comprehensive HGVS annotation, including all available information, such as 'TAS1R2:NM_152232:NP_689418:c.231T>C:p.Cys77Arg'. This is non-standard format that ensures exhaustive data representation. Furthermore, specify the format of amino acid codons with the `--codon_type` option, choosing between single-character ('1'), three-character ('3'), or full-name formats ('FULL'). Additionally, protein-level information can be integrated using the `--use_protein` option, enabling annotations like 'NP_689418:p.Cys77Arg', which can be combined with DNA-level annotations using the `--add_protein` option (e.g. 'NM_152232:c.231T>C,NP_689418:p.Cys77Arg').
+
+All these options can be combined into one quick option `--hgvs`. Simply concatenate options (separator ',') with there value (e.g `--hgvs=use_gene:True` or `--hgvs=use_gene:False,codon_type:FULL`). By default, value option is 'True' (e.g. `--hgvs=use_gene` is equal to `--hgvs=use_gene:True`)
+
+For database management, specify refSeq annotation files with `--refgene` and `--refseqlink` options (or set custom folders with `--refseq-folder`), and genomes folder using and `--genomes-folder` (folders are set by default, see [HOWARD Configuration JSON](help.config.md) file).
+
+See [HOWARD Help Prioritization tool](help.md#prioritization-tool) for more options.
+
+> Example: HGVS annotation with quick options
+> ```
+> howard hgvs \
+>    --input=tests/data/example.vcf.gz \
+>    --output=/tmp/example.process.tsv \
+>    --hgvs=full_format,use_exon
+> 
+> howard query \
+>    --input=/tmp/example.process.tsv \
+>    --explode_infos \
+>    --query="SELECT hgvs \
+>             FROM variants "
+> ```
+
+> Example: HGVS annotation with separated options
+> ```
+> howard hgvs \
+>    --input=tests/data/example.vcf.gz \
+>    --output=/tmp/example.process.tsv \
+>    --full_format \
+>    --use_exon
+> 
+> howard query \
+>    --input=/tmp/example.process.tsv \
+>    --explode_infos \
+>    --query="SELECT hgvs \
+>             FROM variants "
+> ```
+> ```
+>                                                 hgvs
+> 0                     WASH7P:NR_024540.1:n.50+585T>G
+> 1     FAM138A:NR_026818.1:exon3:n.597T>G:p.Tyr199Asp
+> 2  OR4F5:NM_001005484.2:NP_001005484.2:exon3:c.74...
+> 3  LINC01128:NR_047526.1:n.287+3767A>G,LINC01128:...
+> 4  LINC01128:NR_047526.1:n.287+3768A>G,LINC01128:...
+> 5  LINC01128:NR_047526.1:n.287+3769A>G,LINC01128:...
+> 6  EGFR:NM_001346897.2:NP_001333826.1:exon19:c.22...
+> ```
+
+
 ## Process
 
 HOWARD process tool manage genetic variations to:
@@ -1271,6 +1333,7 @@ HOWARD process tool manage genetic variations to:
 - annotates genetic variants with multiple annotation databases/files and tools
 - calculates and normalizes annotations
 - prioritizes variants with profiles (list of citeria) to calculate scores and flags
+- annotates genetic variants with HGVS nomenclature
 - translates into various formats
 - query genetic variants and annotations
 - generates variants statistics
@@ -1284,35 +1347,59 @@ See [HOWARD Help Process tool](help.md#process-tool) tool for more information (
 
 Process tool uses quick options for annotation, calculation and prioritization to enrich variant file, and to query variants annotations.
 
-> Example: Full process command with options 
+> Example: Process command with options (HGVS, annotation, calculation)
 > ```
 > howard process \
 >    --input=tests/data/example.vcf.gz \
 >    --output=/tmp/example.process.tsv \
+>    --hgvs=full_format,use_exon \
+>    --annotations='tests/databases/annotations/current/hg19/avsnp150.parquet,tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet' \
+>    --calculations="NOMEN" \
+>    --explode_infos \
+>    --query="SELECT NOMEN, REVEL_score, SIFT_score, AF AS 'gnomad_AF', ClinPred_score, ClinPred_pred \
+>             FROM variants"
+> ```
+> ```
+>                                             NOMEN REVEL_score SIFT_score gnomad_AF ClinPred_score ClinPred_pred
+> 0                    WASH7P:NR_024540:n.50+585T>G        None       None      None           None          None
+> 1    FAM138A:NR_026818:exon3:n.597T>G:p.Tyr199Asp        None       None      None           None          None
+> 2     OR4F5:NP_001005484:exon3:c.74A>G:p.Glu25Gly       0.076      0.005      None          0.688             D
+> 3               LINC01128:NR_047526:n.287+3767A>G        None       None      None           None          None
+> 4               LINC01128:NR_047526:n.287+3768A>G        None       None      None           None          None
+> 5               LINC01128:NR_047526:n.287+3769A>G        None       None      None           None          None
+> 6  EGFR:NP_001333826:exon19:c.2226G>A:p.Gln742Gln        None       None    0.5029           None          None
+> ```
+
+> Example: Full process command with options (HGVS, annotation parquet, snpEff and Annovar, calculation and prioritization)
+> ```
+> howard process \
+>    --input=tests/data/example.vcf.gz \
+>    --output=/tmp/example.process.tsv \
+>    --hgvs=full_format,use_exon \
 >    --annotations="tests/databases/annotations/current/hg19/avsnp150.parquet,tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet,bcftools:tests/databases/annotations/current/hg19/cosmic70.vcf.gz,snpeff,annovar:refGene" \
->    --calculations="vartype,snpeff_hgvs,VAF" \
+>    --calculations="vartype,snpeff_hgvs,VAF,NOMEN" \
 >    --prioritizations="config/prioritization_profiles.json" \
 >    --explode_infos \
->    --query="SELECT snpeff_hgvs, PZFlag, PZScore \
+>    --query="SELECT NOMEN, PZFlag, PZScore, snpeff_hgvs \
 >             FROM variants \
 >             ORDER BY PZScore DESC"
 > ```
 > ```
->                                          snpeff_hgvs    PZFlag  PZScore
-> 0  MIR1302-2:NR_036051.1:n.-1630A>C,MIR1302-9:NR_...      PASS       15
-> 1       OR4F5:NM_001005484.1:exon1:c.11A>G:p.Glu4Gly      PASS        5
-> 2  EGFR:NM_005228.5:exon20:c.2361G>A:p.Gln787Gln,...      PASS        5
-> 3  LINC01128:NR_047519.1:exon2:n.287+3767A>G,LINC...      PASS        0
-> 4  LINC01128:NR_047519.1:exon2:n.287+3768A>G,LINC...      PASS        0
-> 5  LINC01128:NR_047519.1:exon2:n.287+3769A>G,LINC...      PASS        0
-> 6  MIR1302-2:NR_036051.1:n.*4641A>C,MIR1302-9:NR_...  FILTERED     -100
+>                                             NOMEN    PZFlag  PZScore                                        snpeff_hgvs
+> 0                    WASH7P:NR_024540:n.50+585T>G      PASS       15  MIR1302-2:NR_036051.1:n.-1630A>C,MIR1302-9:NR_...
+> 1     OR4F5:NP_001005484:exon3:c.74A>G:p.Glu25Gly      PASS        5       OR4F5:NM_001005484.1:exon1:c.11A>G:p.Glu4Gly
+> 2  EGFR:NP_001333826:exon19:c.2226G>A:p.Gln742Gln      PASS        5  EGFR:NM_005228.5:exon20:c.2361G>A:p.Gln787Gln,...
+> 3               LINC01128:NR_047526:n.287+3767A>G      PASS        0  LINC01128:NR_047519.1:exon2:n.287+3767A>G,LINC...
+> 4               LINC01128:NR_047526:n.287+3768A>G      PASS        0  LINC01128:NR_047519.1:exon2:n.287+3768A>G,LINC...
+> 5               LINC01128:NR_047526:n.287+3769A>G      PASS        0  LINC01128:NR_047519.1:exon2:n.287+3769A>G,LINC...
+> 6    FAM138A:NR_026818:exon3:n.597T>G:p.Tyr199Asp  FILTERED     -100  MIR1302-2:NR_036051.1:n.*4641A>C,MIR1302-9:NR_...
 > ```
 
 ### Process with parameters JSON file
 
 In order to fine tune process, all tools can be defined in a [HOWARD Parameters JSON](docs/help.param.md). This allows to add specific options, such as selecting specific fields (and rename them) for annotation, defining options for external tools, specifying a list of transcripts of preference for NOMEN calculation. This Parameters JSON file can be combine with options.
 
-> Example: Full process command with Parameters JSON file and a query as option
+> Example: Full process command with [Parameters JSON file example](#parameters) and a query as option
 > ```
 > howard process \
 >    --input=tests/data/example.vcf.gz \
@@ -1331,69 +1418,6 @@ In order to fine tune process, all tools can be defined in a [HOWARD Parameters 
 > 3         LINC01128:NR_047519:exon2:n.287+3767A>G      PASS        0.0                                              NaN
 > 4         LINC01128:NR_047519:exon2:n.287+3768A>G      PASS        0.0                                              NaN
 > 5         LINC01128:NR_047519:exon2:n.287+3769A>G      PASS        0.0                                              NaN
-> 6                  MIR1302-9:NR_036266:n.*4641A>C  FILTERED     NaN  Described on CLINVAR database as non-pathogenic
+> 6                  MIR1302-9:NR_036266:n.*4641A>C  FILTERED        NaN  Described on CLINVAR database as non-pathogenic
 > ```
-
-> Example: Parameters JSON file
-> ```
-> {
->   "annotation": {
->     "parquet": {
->       "annotations": {
->         "tests/databases/annotations/current/hg19/avsnp150.parquet": {
->           "INFO": null
->         },
->         "tests/databases/annotations/current/hg19/dbnsfp42a.parquet": {
->           "INFO": null
->         },
->         "tests/databases/annotations/current/hg19/gnomad211_genome.parquet": {
->           "INFO": null
->         }
->       }
->     },
->     "bcftools": {
->       "annotations": {
->         "tests/databases/annotations/current/hg19/cosmic70.vcf.gz": {
->           "INFO": null
->         }
->       }
->     },
->     "snpeff": {
->       "options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "
->     },
->     "annovar": {
->       "annotations": {
->         "refGene": {
->           "INFO": null
->         }
->       },
->       "options": {
->         "genebase": "-hgvs -splicing_threshold 3 ",
->         "intronhgvs": 10
->       }
->     }
->   },
->   "calculation": {
->     "vartype": null,
->     "snpeff_hgvs": null,
->     "NOMEN": {
->       "options": {
->         "hgvs_field": "snpeff_hgvs",
->         "transcripts": "tests/data/transcripts.tsv"
->       }
->     },
->     "VAF": ""
->   },
->   "prioritization": {
->     "config_profiles": "config/prioritization_profiles.json",
->     "pzfields": ["PZScore", "PZFlag", "PZComment"],
->     "profiles": ["default", "GERMLINE"],
->     "prioritization_score_mode": "VaRank"
->   },
->   "query": "SELECT \"#CHROM\", POS, REF, ALT, INFO FROM variants",
->   "explode_infos": True,
->   "threads": 8
-> }
-> ```
-
 

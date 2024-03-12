@@ -61,11 +61,14 @@ def query(args:argparse) -> None:
     param = vcfdata_obj.get_param()
 
     # Explode Infos
-    if args.explode_infos:
+    if args.explode_infos and "explode_infos" not in param:
         param["explode_infos"] = args.explode_infos
+    if args.explode_infos_prefix and "explode_infos_prefix" not in param:
         param["explode_infos_prefix"] = args.explode_infos_prefix
+    if args.explode_infos_fields and "explode_infos_fields" not in param:
         param["explode_infos_fields"] = args.explode_infos_fields
-    else:
+
+    if not param.get("explode_infos",False):
         config["access"] = "RO"
 
     vcfdata_obj.set_param(param)
@@ -76,22 +79,22 @@ def query(args:argparse) -> None:
         vcfdata_obj.load_data()
 
     # include_header
-    if "include_header" in args and args.include_header:
+    if "include_header" in args and "include_header" not in param:
         param["header_in_output"] = args.include_header
 
     # query_limit
     query_limit=10
-    if "query_limit" in args and args.query_limit:
+    if "query_limit" in args and "query_limit" not in param:
         param["query_limit"] = int(args.query_limit)
         query_limit = int(args.query_limit)
 
     # query_print_mode
     query_print_mode=None
-    if "query_print_mode" in args and args.query_print_mode:
+    if "query_print_mode" in args and "query_print_mode" not in param:
         query_print_mode = args.query_print_mode
 
     # Explode infos
-    if args.explode_infos:
+    if param.get("explode_infos",False):
         vcfdata_obj.explode_infos()
 
     # Query

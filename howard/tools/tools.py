@@ -97,11 +97,13 @@ class PathType(object):
                 if self._exists==False and e:
                     raise ValueError("path exists: '%s'" % string)
 
-                p = os.path.dirname(os.path.normpath(string)) or '.'
-                if not os.path.isdir(p):
-                    raise ValueError("parent path is not a directory: '%s'" % p)
-                elif not os.path.exists(p):
-                    raise ValueError("parent directory does not exist: '%s'" % p)
+                # p = string
+                # if not os.path.isdir(p):
+                #     print("e1")
+                #     raise ValueError("parent path is not a directory: '%s'" % p)
+                # elif not os.path.exists(p):
+                #     print("e2")
+                #     raise ValueError("parent directory does not exist: '%s'" % p)
 
         return string
 
@@ -158,7 +160,7 @@ arguments = {
             "metavar": "query",
             "help": """Query in SQL format.\n"""
                     """Format: SQL\n"""
-                    """Example: 'SELECT * FROM variants LIMIT 5'""",
+                    """Example: 'SELECT * FROM variants LIMIT 50'""",
             "default": None,
             "gooey": {
                 "widget": "Textarea",
@@ -555,6 +557,18 @@ arguments = {
         
 
         # HGVS
+        "hgvs": {
+            "metavar": "HGVS options",
+            "help": """Quick HGVS annotation options\n"""
+                    """This option will skip all other hgvs options\n"""
+                    """Examples:\n"""
+                    """   - 'default' (for default options)\n"""
+                    """   - 'full_format' (for full format HGVS annotation)\n"""
+                    """   - 'use_gene:True,add_protein:true,codon_type:FULL'\n"""
+                    """Default: None""",
+            "required": False,
+            "default": None,
+        },
         "use_gene": {
             "help": """Use Gene information to generate HGVS annotation\n"""
                     """Example: 'NM_152232(TAS1R2):c.231T>C'""",
@@ -1400,6 +1414,9 @@ commands_arguments = {
                         """   howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, DP, CLNSIG, sample2, sample3 FROM variants WHERE DP >= 50 OR CLNSIG NOT NULL ORDER BY DP DESC' \n"""
                         """   howard query --query="SELECT \\\"#CHROM\\\", POS, REF, ALT, \\\"INFO/Interpro_domain\\\" FROM 'tests/databases/annotations/current/hg19/dbnsfp42a.parquet' WHERE \\\"INFO/Interpro_domain\\\" NOT NULL ORDER BY \\\"INFO/SiPhy_29way_logOdds_rankscore\\\" DESC LIMIT 10" \n"""
                         """   howard query --explode_infos --explode_infos_prefix='INFO/' --query="SELECT \\\"#CHROM\\\", POS, REF, ALT, STRING_AGG(INFO, ';') AS INFO FROM 'tests/databases/annotations/current/hg19/*.parquet' GROUP BY \\\"#CHROM\\\", POS, REF, ALT" --output=/tmp/full_annotation.tsv  && head -n2 /tmp/full_annotation.tsv \n"""
+                        """   howard query --input=tests/data/example.vcf.gz --param=config/param.json"""
+                        
+
                         , 
         "groups": {
             "main": {
@@ -1427,7 +1444,9 @@ commands_arguments = {
         "description":  """Statistics on genetic variations, such as: number of variants, number of samples, statistics by chromosome, genotypes by samples...""",
         "help": "Statistics on genetic variations file.",
         "epilog": """Usage examples:\n"""
-                        """   howard stats --input=tests/data/example.vcf.gz """, 
+                        """   howard stats --input=tests/data/example.vcf.gz \n"""
+                        """   howard stats --input=tests/data/example.vcf.gz --stats_md=/tmp/stats.md \n"""
+                        """   howard stats --input=tests/data/example.vcf.gz --param=config/param.json """,
         "groups": {
             "main": {
                 "input": True,
@@ -1445,7 +1464,8 @@ commands_arguments = {
                         """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv \n"""
                         """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.parquet \n"""
                         """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos --explode_infos_fields='CLNSIG,SIFT,DP' --order_by='CLNSIG DESC, DP DESC' \n"""
-                        """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos --explode_infos_prefix='INFO/' --explode_infos_fields='CLNSIG,SIFT,DP,*' --order_by='"INFO/CLNSIG" DESC, "INFO/DP" DESC' --include_header """,
+                        """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos --explode_infos_prefix='INFO/' --explode_infos_fields='CLNSIG,SIFT,DP,*' --order_by='"INFO/CLNSIG" DESC, "INFO/DP" DESC' --include_header \n"""
+                        """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --param=config/param.json """,
         "groups": {
             "main": {
                 "input": True,
@@ -1467,7 +1487,8 @@ commands_arguments = {
         "epilog":       """Usage examples:\n"""
                         """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/current/hg19/avsnp150.parquet,tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet' \n"""
                         """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotations='annovar:refGene,annovar:cosmic70,snpeff,tests/databases/annotations/current/hg19/clinvar_20210123.parquet' \n"""
-                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotations='ALL:parquet' \n""", 
+                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotations='ALL:parquet' \n"""
+                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --param=config/param.json """, 
         "groups": {
             "main": {
                 "input": True,
@@ -1487,12 +1508,13 @@ commands_arguments = {
         "epilog":       """Usage examples:\n"""
                         """   howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations='vartype' \n"""
                         """   howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.calculated.tsv --calculations='snpeff_hgvs,NOMEN' --hgvs_field=snpeff_hgvs --transcripts=tests/data/transcripts.tsv \n"""
+                        """   howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.ann.tsv --param=config/param.json \n"""
                         """   howard calculation --show_calculations \n"""
                         ,
         "groups": {
             "main": {
-                "input": True,
-                "output": True,
+                "input": False,
+                "output": False,
                 "calculations": False,
                 "calculation_config": False,
                 "show_calculations": False,
@@ -1512,7 +1534,8 @@ commands_arguments = {
         "description":  """Prioritization algorithm uses profiles to flag variants (as passed or filtered), calculate a prioritization score, and automatically generate a comment for each variants (example: 'polymorphism identified in dbSNP. associated to Lung Cancer. Found in ClinVar database'). Prioritization profiles are defined in a configuration file in JSON format. A profile is defined as a list of annotation/value, using wildcards and comparison options (contains, lower than, greater than, equal...). Annotations fields may be quality values (usually from callers, such as 'DP') or other annotations fields provided by annotations tools, such as HOWARD itself (example: COSMIC, Clinvar, 1000genomes, PolyPhen, SIFT). Multiple profiles can be used simultaneously, which is useful to define multiple validation/prioritization levels (example: 'standard', 'stringent', 'rare variants', 'low allele frequency').\n""",
         "help": "Prioritization of genetic variations based on annotations criteria (profiles).",
         "epilog": """Usage examples:\n"""
-                        """   howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations=config/prioritization_profiles.json --profiles='default,GERMLINE' \n""", 
+                        """   howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations=config/prioritization_profiles.json --profiles='default,GERMLINE' \n"""
+                        """   howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.tsv --param=config/param.json """, 
         "groups": {
             "main": {
                 "input": True,
@@ -1540,7 +1563,10 @@ commands_arguments = {
         "help":         """Full genetic variations process: annotation, calculation, prioritization, format, query, filter...""",
         "epilog":       """Usage examples:\n"""
                         """   howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json \n"""
-                        """   howard process --input=tests/data/example.vcf.gz --annotations='snpeff' --calculations='snpeff_hgvs' --prioritizations=config/prioritization_profiles.json --explode_infos --output=/tmp/example.annotated.tsv --query='SELECT "#CHROM", POS, ALT, REF, snpeff_hgvs FROM variants' \n""", 
+                        """   howard process --input=tests/data/example.vcf.gz --annotations='snpeff' --calculations='snpeff_hgvs' --prioritizations=config/prioritization_profiles.json --explode_infos --output=/tmp/example.annotated.tsv --query='SELECT "#CHROM", POS, ALT, REF, snpeff_hgvs FROM variants' \n"""
+                        """   howard process --input=tests/data/example.vcf.gz --hgvs='full_format,use_exon' --explode_infos --output=/tmp/example.annotated.tsv --query='SELECT "#CHROM", POS, ALT, REF, hgvs FROM variants' \n"""
+                        """   howard process --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --hgvs='full_format,use_exon' --annotations='tests/databases/annotations/current/hg19/avsnp150.parquet,tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet' --calculation='NOMEN' --explode_infos --query='SELECT NOMEN, REVEL_score, SIFT_score, AF AS 'gnomad_AF', ClinPred_score, ClinPred_pred FROM variants' \n"""
+                        , 
 
         "groups": {
             "main": {
@@ -1552,6 +1578,7 @@ commands_arguments = {
                 "annotations": False,
                 "calculations": False,
                 "prioritizations": False,
+                "hgvs": False,
                 "query": False,
                 "explode_infos": False,
                 "explode_infos_prefix": False,
@@ -1566,12 +1593,17 @@ commands_arguments = {
         "help":         """HGVS annotation (HUGO internation nomenclature) using refGene, genome and transcripts list.\n""",
         "epilog":       """Usage examples:\n"""
                         """   howard hgvs --input=tests/data/example.full.vcf --output=/tmp/example.hgvs.vcf \n"""
+                        """   howard hgvs --input=tests/data/example.full.vcf --output=/tmp/example.hgvs.tsv --param=config/param.json \n"""
+                        """   howard hgvs --input=tests/data/example.full.vcf --output=/tmp/example.hgvs.vcf --full_format --use_exon \n"""
+                        """    \n"""
                         ,
         "groups": {
             "main": {
                 "input": True,
                 "output": False,
-                "assembly": False
+                "hgvs": False,
+                "assembly": False,
+                "param": False
             },
             "HGVS": {
                 "use_gene": False,
@@ -1579,11 +1611,11 @@ commands_arguments = {
                 "use_protein": False,
                 "add_protein": False,
                 "full_format": False,
-                "codon_type": False
+                "codon_type": False,
+                "refgene": False,
+                "refseqlink": False
             },
             "Databases": {
-                "refgene": False,
-                "refseqlink": False,
                 "refseq-folder": False,
                 "genomes-folder": False
             }
@@ -1594,7 +1626,15 @@ commands_arguments = {
         "description": """Download databases and needed files for howard and associated tools""",
         "help": """Download databases and needed files for howard and associated tools""",
         "epilog": """Usage examples:\n"""
-                    """   howard databases --assembly=hg19 --download-genomes=~/howard/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' --download-annovar=~/howard/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' --download-snpeff=~/howard/databases/snpeff/current --download-refseq=~/howard/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-dbnsfp=~/howard/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases --download-alphamissense=~/howard/databases/alphamissense/current --download-exomiser=~/howard/databases/exomiser/current --download-dbsnp=~/howard/databases/dbsnp/current --download-dbsnp-vcf --threads=8\n"""
+                    """   howard databases --assembly=hg19 --download-genomes=~/howard/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' \n"""
+                    """   howard databases --assembly=hg19 --download-annovar=~/howard/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' \n"""
+                    """   howard databases --assembly=hg19 --download-snpeff=~/howard/databases/snpeff/current \n"""
+                    """   howard databases --assembly=hg19 --download-refseq=~/howard/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' \n"""
+                    """   howard databases --assembly=hg19 --download-dbnsfp=~/howard/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases \n"""
+                    """   howard databases --assembly=hg19 --download-alphamissense=~/howard/databases/alphamissense/current \n"""
+                    """   howard databases --assembly=hg19 --download-exomiser=~/howard/databases/exomiser/current \n"""
+                    """   howard databases --assembly=hg19 --download-dbsnp=~/howard/databases/dbsnp/current --download-dbsnp-vcf \n"""
+                    """   howard databases --assembly=hg19 --download-genomes=~/howard/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' --download-annovar=~/howard/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' --download-snpeff=~/howard/databases/snpeff/current --download-refseq=~/howard/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-dbnsfp=~/howard/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases --download-alphamissense=~/howard/databases/alphamissense/current --download-exomiser=~/howard/databases/exomiser/current --download-dbsnp=~/howard/databases/dbsnp/current --download-dbsnp-vcf --threads=8 \n"""
                     """   howard databases --generate-param=/tmp/param.json --generate-param-description=/tmp/test.description.json --generate-param-formats=parquet """
                     """\n"""
                     """Notes:\n"""

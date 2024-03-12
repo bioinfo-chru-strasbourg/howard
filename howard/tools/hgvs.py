@@ -56,6 +56,23 @@ def hgvs(args:argparse) -> None:
         else:
             param = json.loads(args.param)
     
+    if not param.get("hgvs", None):
+        param["hgvs"] = {}
+
+    if "hgvs" in args and args.hgvs:
+        for option in args.hgvs.split(","):
+            option_var_val = option.split(":")
+            option_var = option_var_val[0]
+            if len(option_var_val) > 1:
+                option_val = option_var_val[1]
+            else:
+                option_val = "True"
+            if option_val.upper() in ["TRUE"]:
+                option_val = True
+            elif option_val.upper() in ["FALSE"]:
+                option_val = False
+            param["hgvs"][option_var] = option_val
+
     # Create VCF object
     if args.input:
         vcfdata_obj = Variants(None, args.input, args.output, config, param)
@@ -67,28 +84,28 @@ def hgvs(args:argparse) -> None:
         if not param.get("hgvs", None):
             param["hgvs"] = {}
 
-        if "use_exon" in args:
+        if "use_exon" in args and "use_exon" not in param["hgvs"]:
             param["hgvs"]["use_exon"] = args.use_exon
 
-        if "use_gene" in args:
+        if "use_gene" in args and "use_gene" not in param["hgvs"]:
             param["hgvs"]["use_gene"] = args.use_gene
 
-        if "use_protein" in args:
+        if "use_protein" in args and "use_protein" not in param["hgvs"]:
             param["hgvs"]["use_protein"] = args.use_protein
 
-        if "add_protein" in args:
+        if "add_protein" in args and "add_protein" not in param["hgvs"]:
             param["hgvs"]["add_protein"] = args.add_protein
 
-        if "full_format" in args:
+        if "full_format" in args and "full_format" not in param["hgvs"]:
             param["hgvs"]["full_format"] = args.full_format
         
-        if "use_version" in args:
+        if "use_version" in args and "use_version" not in param["hgvs"]:
             param["hgvs"]["use_version"] = args.use_version
 
-        if "codon_type" in args:
+        if "codon_type" in args and "codon_type" not in param["hgvs"]:
             param["hgvs"]["codon_type"] = args.codon_type
 
-        if "refgene" in args and args.refgene:
+        if "refgene" in args and args.refgene and "refgene" not in param["hgvs"]:
             log.debug(f"args.refgene={args.refgene}")
             if isinstance(args.refgene, str):
                 refgene = args.refgene
@@ -96,7 +113,7 @@ def hgvs(args:argparse) -> None:
                 refgene = args.refgene.name
             param["hgvs"]["refgene"] = refgene
 
-        if "refseqlink" in args and args.refseqlink:
+        if "refseqlink" in args and args.refseqlink and "refseqlink" not in param["hgvs"]:
             if isinstance(args.refseqlink, str):
                 refseqlink = args.refseqlink
             else:
