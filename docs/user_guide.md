@@ -1,4 +1,4 @@
-# HOWARD User Guide
+# :information_source: HOWARD User Guide
 
 ![HOWARD Graphical User Interface](../images/icon.ico "HOWARD Graphical User Interface")
 
@@ -112,7 +112,7 @@ HOWARD Configuration JSON file defined default configuration regarding resources
 See [HOWARD Configuration JSON](help.config.md) for more information.
 
 Configuration file example:
-```
+```json
 {
   "threads": 8,
   "memory": null,
@@ -132,12 +132,12 @@ Configuration file example:
     }
   },
   "tools": {
-    "bcftools": "~/howard/tools/bcftools/current/bin/bcftools",
-    "bgzip": "~/howard/tools/htslib/current/bin/bgzip",
+    "bcftools": "bcftools",
+    "bgzip": "bgzip",
+    "java": "java",
     "snpeff": "~/howard/tools/snpeff/current/bin/snpEff.jar",
-    "annovar": "~/howard/tools/annovar/current/bin/table_annovar.pl"
-    "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar",
-    "java": "/usr/bin/java",
+    "annovar": "~/howard/tools/annovar/current/bin/table_annovar.pl",
+    "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar"
   }
 }
 
@@ -336,7 +336,7 @@ See [HOWARD Parameters JSON](help.param.md) for more information.
 > ```
 
 > Example: Parameters JSON file with multiple options for tools
-> ```
+> ```json
 > {
 >   "annotation": {
 >     "parquet": {
@@ -440,7 +440,7 @@ See [HOWARD Help Stats tool](help.md#stats-tool) for more information.
 > 
 > cat /tmp/stats.json /tmp/stats.md
 > ```
-> ```
+> ```json
 > {
 >     "Infos": {
 >         "Input file": "tests/data/example.vcf.gz",
@@ -464,7 +464,7 @@ See [HOWARD Help Stats tool](help.md#stats-tool) for more information.
 >         },
 > ...
 > ```
-> ```
+> ```markdown
 > ...
 > ## Variants
 > ### Number of variants by chromosome
@@ -993,21 +993,21 @@ To list all available calculations, from HOWARD default configuration or with a 
 >    --show_calculations
 > ```
 > ```
-> #[2024-03-05 10:53:30] [INFO] Start
-> #[2024-03-05 10:53:30] [INFO] Available calculation operations:
-> #[2024-03-05 10:53:30] [INFO]    BARCODE: BARCODE as VaRank tool
-> #[2024-03-05 10:53:30] [INFO]    DP_STATS: Depth (DP) statistics
-> #[2024-03-05 10:53:30] [INFO]    FINDBYPIPELINE: Number of pipeline that identify the variant (for multi pipeline VCF)
-> #[2024-03-05 10:53:30] [INFO]    FINDBYSAMPLE: Number of sample that have a genotype for the variant (for multi sample VCF)
-> #[2024-03-05 10:53:30] [INFO]    GENOTYPECONCORDANCE: Concordance of genotype for multi caller VCF
-> #[2024-03-05 10:53:30] [INFO]    NOMEN: NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature field
-> #[2024-03-05 10:53:30] [INFO]    SNPEFF_HGVS: HGVS nomenclatures from snpEff annotation
-> #[2024-03-05 10:53:30] [INFO]    TRIO: Inheritance for a trio family
-> #[2024-03-05 10:53:30] [INFO]    VAF: Variant Allele Frequency (VAF) harmonization
-> #[2024-03-05 10:53:30] [INFO]    VAF_STATS: Variant Allele Frequency (VAF) statistics
-> #[2024-03-05 10:53:30] [INFO]    VARIANT_ID: Variant ID generated from variant position and type
-> #[2024-03-05 10:53:30] [INFO]    VARTYPE: Variant type (e.g. SNV, INDEL, MNV, BND...)
-> #[2024-03-05 10:53:30] [INFO] End
+> #[INFO] Start
+> #[INFO] Available calculation operations:
+> #[INFO]    BARCODE: BARCODE as VaRank tool
+> #[INFO]    DP_STATS: Depth (DP) statistics
+> #[INFO]    FINDBYPIPELINE: Number of pipeline that identify the variant (for multi pipeline VCF)
+> #[INFO]    FINDBYSAMPLE: Number of sample that have a genotype for the variant (for multi sample VCF)
+> #[INFO]    GENOTYPECONCORDANCE: Concordance of genotype for multi caller VCF
+> #[INFO]    NOMEN: NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature field
+> #[INFO]    SNPEFF_HGVS: HGVS nomenclatures from snpEff annotation
+> #[INFO]    TRIO: Inheritance for a trio family
+> #[INFO]    VAF: Variant Allele Frequency (VAF) harmonization
+> #[INFO]    VAF_STATS: Variant Allele Frequency (VAF) statistics
+> #[INFO]    VARIANT_ID: Variant ID generated from variant position and type
+> #[INFO]    VARTYPE: Variant type (e.g. SNV, INDEL, MNV, BND...)
+> #[INFO] End
 > ```
 
 ### Calculation configuration JSON file
@@ -1023,7 +1023,7 @@ Basically, a calculation is defined by:
 - Function name and parameters: a existing Python function and parameters (for 'python' type)
 
 > Example: Calculation of variant type using an SQL query
-> ```
+> ```json
 > "VARTYPE": {
 >     "type": "sql",
 >     "name": "VARTYPE",
@@ -1048,7 +1048,7 @@ Basically, a calculation is defined by:
 > ```
 
 > Example: Calculation of variant id using an existing Python function `calculation_variant_id`
-> ```
+> ```json
 > "variant_id": {
 >     "type": "python",
 >     "name": "variant_id",
@@ -1235,7 +1235,7 @@ Prioritization fields can be then easily querying, by filtering on fields and or
 Prioritization profiles are defined in a JSON configuration file. Each profiles are defined as a list of annotation fields with associated filters (type of comparison and threshold, with related score, flag and comment).
 
 > Example: Profiles 'default' with 2 filters on annotation field 'DP' (threashold 50) and 2 filters on annotation field 'CLNSIG' ("pathogenic" or "non-pathogenic")
-> ```
+> ```json
 > {
 >     "default": {
 >         "DP": [
