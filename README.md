@@ -469,19 +469,21 @@ See [HOWARD Help Process tool](docs/help.md#process-tool) tool for more informat
 
 [HOWARD User Guide](docs/user_guide.md) is available to assist users for particular commands, such as software installation, databases download, annotation command, and so on.
 
-HOWARD provides multiple tools to manage variants and databases, with many options. [HOWARD Help](docs/options.md) is availalbe in markdown format, and compiles all information also available in help command (for each tool):
+[HOWARD Tips](docs/tips.md) proposes some additional advices to handle HOWARD for particular use cases.
 
-```
-howard --help               # Help to list all tools
-howard query --help         # Help for 'query' tool
-howard annotation --help    # Help for 'annotation' tool
-...
-```
+[HOWARD Help](docs/options.md) describes options of all HOWARD tools. All information are also available for each tool using `--help` option.
+
+[HOWARD Configuration JSON](docs/help.config.md) describes configuration JSON file structure and options.
+
+[HOWARD Configuration JSON](docs/help.config.md) describes configuration JSON file structure and options.
+
+[HOWARD Parameters JSON](docs/help.param.md) describes parameters JSON file structure and options.
+
 
 # Contact
 
-:hospital: [Medical Bioinformatics applied to Diagnosis Lab](https://www.chru-strasbourg.fr/service/bioinformatique-medicale-appliquee-au-diagnostic-unite-de/) @ Strasbourg Univerty Hospital
+[Medical Bioinformatics applied to Diagnosis Lab](https://www.chru-strasbourg.fr/service/bioinformatique-medicale-appliquee-au-diagnostic-unite-de/) @ Strasbourg Univerty Hospital
 
-:email: [bioinfo@chru-strasbourg.fr](bioinfo@chru-strasbourg.fr)
+[bioinfo@chru-strasbourg.fr](bioinfo@chru-strasbourg.fr)
 
-:bookmark: [GitHub](https://github.com/bioinfo-chru-strasbourg)
+[GitHub](https://github.com/bioinfo-chru-strasbourg)
