@@ -2193,8 +2193,6 @@ class Variants:
             memory = input_memory
         else:
             memory = default
-
-        log.debug(f"memory={memory}")
         
         return memory
 
@@ -5970,7 +5968,7 @@ class Variants:
             else:
                 log.error(f"Transcript file '{transcripts_file}' does NOT exist")
                 raise ValueError(f"Transcript file '{transcripts_file}' does NOT exist")
-            
+
         # Added columns
         added_columns = []
 

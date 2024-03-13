@@ -2181,8 +2181,6 @@ class Database:
                 if query_empty:
                     log.error("Export failed: Empty")
                     raise ValueError("Export failed: Empty")
-                else:
-                    log.debug(f"query NOT empty")
 
                 # Export mode pyarrow
                 if export_mode == "pyarrow":

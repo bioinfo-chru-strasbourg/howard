@@ -870,7 +870,7 @@ Usage examples:
 
 > howard databases --assembly=hg19 --download-dbsnp=~/howard/databases/dbsnp/current --download-dbsnp-vcf 
 
-> howard databases --assembly=hg19 --download-genomes=~/howard/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' --download-annovar=~/howard/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' --download-snpeff=~/howard/databases/snpeff/current --download-refseq=~/howard/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-dbnsfp=~/howard/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases --download-alphamissense=~/howard/databases/alphamissense/current --download-exomiser=~/howard/databases/exomiser/current --download-dbsnp=~/howard/databases/dbsnp/current --download-dbsnp-vcf --threads=8 
+> cd ~/howard/databases && howard databases --assembly=hg19 --download-genomes=genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' --download-annovar=annovar/current --download-annovar-files='refGene,cosmic70,nci60' --download-snpeff=snpeff/current --download-refseq=refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-dbnsfp=dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases --download-alphamissense=alphamissense/current --download-exomiser=exomiser/current --download-dbsnp=dbsnp/current --download-dbsnp-vcf --threads=8 
 
 > howard databases --generate-param=/tmp/param.json --generate-param-description=/tmp/test.description.json --generate-param-formats=parquet 
 
