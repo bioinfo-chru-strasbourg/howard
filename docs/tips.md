@@ -1,7 +1,26 @@
 # :bulb: HOWARD Tips
 
 
-<details><summary>How to hive partitioning into Parquet a huge VCF of SNV?</summary>
+<details><summary>How to hive partitioning into Parquet a VCF format file?</summary>
+
+In order to create a database from a VCF file, process partitioning highly speed up futher annotation process. Simply use HOWARD Convert tool with `--parquet_partitions` option. Format of input and output files can be any avaialbe format (e.g. Parquet, VCF, TSV).
+
+This process is not ressource intensive, but can take a while for huge databases. However, using `--explode_infos` option require much more memory for huge databases.
+
+```bash
+INPUT=~/howard/databases/dbsnp/current/hg19/b156/dbsnp.parquet
+OUTPUT=~/howard/databases/dbsnp/current/hg19/b156/dbsnp.partition.parquet
+PARTITIONS="#CHROM" # "#CHROM", "#CHROM,REF,ALT" (for SNV file only) 
+howard convert \
+   --input=$INPUT \
+   --output=$OUTPUT \
+   --parquet_partitions="#CHROM" \
+   --threads=8
+```
+
+</details>
+
+<details><summary>How to hive partitioning into Parquet a huge VCF format file with all annotations exploded into columns?</summary>
 
 Due to memory usage with duckDB, huge VCF file convertion can fail. This tip describe hive partitioning of huge VCF files into Parquet, to prevent memory resource crash.
 
@@ -94,7 +113,7 @@ tree -h $PARQUET
 </details>
 
 
-<details><summary>How to aggregate all INFO annotations from multiple Parquet databases into one INFI field?</summary>
+<details><summary>How to aggregate all INFO annotations from multiple Parquet databases into one INFO field?</summary>
 
 In order to merge all annotations in INFO column of multiple databases, use a SQL query on the list of Parquet databases, and use `STRING_AGG` duckDB function to aggretate values.
 This will probably work only for small databases.
