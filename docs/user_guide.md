@@ -119,16 +119,23 @@ Configuration file example:
   "verbosity": "warning",
   "folders": {
     "databases": {
+      "genomes": "~/howard/databases/genomes/current",
       "annotations": [
-        "~/howard/databases/annotations/current/",
-        "~/howard/databases/dbnsfp/current/",
-        "~/howard/databases/dbsnp/current/"
+        "~/howard/databases/annotations/current",
+        "~/howard/databases/dbnsfp/current",
+        "~/howard/databases/dbsnp/current"
       ],
-      "parquet": ["~/howard/databases/annotations/current/"],
-      "bcftools": ["~/howard/databases/annotations/current/"],
-      "annovar": "~/howard/databases/annovar/current/",
-      "snpeff": "~/howard/databases/snpeff/current/",
-      "exomiser": "~/howard/databases/exomiser/current/"
+      "parquet": [
+        "~/howard/databases/annotations/current"
+        ],
+      "bcftools": [
+        "~/howard/databases/annotations/current"
+        ],
+      "annovar": [
+        "~/howard/databases/annovar/current"
+      ],
+      "snpeff": "~/howard/databases/snpeff/current",
+      "exomiser": "~/howard/databases/exomiser/current"
     }
   },
   "tools": {
@@ -386,7 +393,7 @@ See [HOWARD Parameters JSON](help.param.md) for more information.
 >     "VAF": ""
 >   },
 >   "prioritization": {
->     "config_profiles": "config/prioritization_profiles.json",
+>     "prioritizations": "config/prioritization_profiles.json",
 >     "pzfields": ["PZScore", "PZFlag", "PZComment"],
 >     "profiles": ["default", "GERMLINE"],
 >     "prioritization_score_mode": "VaRank"

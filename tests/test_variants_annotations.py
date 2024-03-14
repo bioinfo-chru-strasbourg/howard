@@ -52,7 +52,7 @@ def test_annotation_parquet_append():
                             },
                         },
                         'options': {
-                            'append': False
+                            'annotations_append': False
                         }
                     }
                 }
@@ -66,7 +66,7 @@ def test_annotation_parquet_append():
                             },
                         },
                         'options': {
-                            'append': True
+                            'annotations_append': True
                         }
                         
                     }
@@ -137,7 +137,7 @@ def test_annotation_parquet_update():
                             },
                         },
                         'options': {
-                            'update': False
+                            'annotations_update': False
                         }
                     }
                 }
@@ -151,7 +151,7 @@ def test_annotation_parquet_update():
                             },
                         },
                         'options': {
-                            'update': True
+                            'annotations_update': True
                         }
                     }
                 }

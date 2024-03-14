@@ -4,17 +4,23 @@
   "verbosity": "warning",
   "folders": {
     "databases": {
-      "root": "",
+      "genomes": "~/howard/databases/genomes/current",
       "annotations": [
-        "~/howard/databases/annotations/current/",
-        "~/howard/databases/dbnsfp/current/",
-        "~/howard/databases/dbsnp/current/"
+        "~/howard/databases/annotations/current",
+        "~/howard/databases/dbnsfp/current",
+        "~/howard/databases/dbsnp/current"
       ],
-      "parquet": ["~/howard/databases/annotations/current/"],
-      "bcftools": ["~/howard/databases/annotations/current/"],
-      "annovar": "~/howard/databases/annovar/current/",
-      "snpeff": "~/howard/databases/snpeff/current/",
-      "varank": "~/howard/databases/varank/current/"
+      "parquet": [
+        "~/howard/databases/annotations/current"
+      ],
+      "bcftools": [
+        "~/howard/databases/annotations/current"
+      ],
+      "annovar": [
+        "~/howard/databases/annovar/current"
+      ],
+      "snpeff": "~/howard/databases/snpeff/current",
+      "varank": "~/howard/databases/varank/current"
     }
   },
   "tools": {

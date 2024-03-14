@@ -101,13 +101,12 @@ def process(args:argparse) -> None:
         # Quick prioritization
         if args.prioritizations:
             if isinstance(args.prioritizations, str):
-                config_profiles = args.prioritizations
+                prioritizations = args.prioritizations
             else:
-                config_profiles = args.prioritizations.name
-            #config_profiles= args.prioritizations
-            log.info(f"Quick Prioritization: {config_profiles}")
+                prioritizations = args.prioritizations.name
+            log.info(f"Quick Prioritization: {prioritizations}")
             param_quick_prioritizations = param.get("prioritization",{})
-            param_quick_prioritizations["config_profiles"] = config_profiles
+            param_quick_prioritizations["prioritizations"] = prioritizations
             param["prioritization"] = param_quick_prioritizations
 
         # Quick query

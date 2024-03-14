@@ -68,6 +68,13 @@ def help(args:argparse) -> None:
     else:
         help_json_input_title = ""
     
+    # Help example code type
+    if "code_type" in args and args.code_type:
+        code_type = args.code_type
+    else:
+        code_type = ""
+    log.debug(f"code_type={code_type}")
+
     # MarkDown file
     if "help_md" in args and args.help_md:
 
@@ -78,7 +85,7 @@ def help(args:argparse) -> None:
         # If Help input JSON file
         if help_json_file:
             log.info(f"Help -     from JSON help file ['{help_json_file}']")
-            help_content = help_generation_from_json(help_json_file=help_json_file, output_type="markdown", title=help_json_input_title)
+            help_content = help_generation_from_json(help_json_file=help_json_file, output_type="markdown", title=help_json_input_title, code_type=code_type)
 
         # Help from options
         else:

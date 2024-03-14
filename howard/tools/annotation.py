@@ -79,10 +79,10 @@ def annotation(args:argparse) -> None:
             param["annotations"] = param_quick_annotations
         
         if args.annotations_update:
-            param["annotation"]["options"]["update"] = True
+            param["annotation"]["options"]["annotations_update"] = True
 
         if args.annotations_append:
-            param["annotation"]["options"]["append"] = True
+            param["annotation"]["options"]["annotations_append"] = True
 
         vcfdata_obj.set_param(param)
         

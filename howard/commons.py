@@ -5,6 +5,7 @@ from pathlib import Path
 import platform
 import re
 import statistics
+import string
 import subprocess
 import sys
 from tempfile import NamedTemporaryFile
@@ -95,7 +96,6 @@ vcf_required = [
             ]
 
 # Tools
-#DEFAULT_TOOLS_FOLDER = "/tools"
 DEFAULT_TOOLS_FOLDER = os.path.join(folder_howard_home,"tools")
 
 DEFAULT_TOOLS_BIN = {
@@ -112,12 +112,13 @@ DEFAULT_ANNOVAR_URL = "http://www.openbioinformatics.org/annovar/download"
 DEFAULT_REFSEQ_URL = "http://hgdownload.soe.ucsc.edu/goldenPath"
 DEFAULT_DBNSFP_URL = "https://dbnsfp.s3.amazonaws.com"
 DEFAULT_EXOMISER_URL = "http://data.monarchinitiative.org/exomiser"
+DEFAULT_EXOMISER_REMM_URL = "https://kircherlab.bihealth.org/download/ReMM"
+DEFAULT_EXOMISER_CADD_URL = "https://kircherlab.bihealth.org/download/CADD"
 DEFAULT_ALPHAMISSENSE_URL = "https://storage.googleapis.com/dm_alphamissense"
 DEFAULT_DBSNP_URL = "https://ftp.ncbi.nih.gov/snp/archive"
 
 
 # Databases default folder
-#DEFAULT_DATABASE_FOLDER = "/databases"
 DEFAULT_DATABASE_FOLDER = os.path.join(folder_howard_home,"databases")
 DEFAULT_ANNOTATIONS_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/annotations/current"
 DEFAULT_GENOME_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/genomes/current"
@@ -128,6 +129,8 @@ DEFAULT_DBNSFP_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/dbnsfp/current"
 DEFAULT_EXOMISER_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/exomiser/current"
 DEFAULT_DBSNP_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/exomiser/dbsnp"
 
+# Data default folder
+DEFAULT_DATA_FOLDER = os.path.join(folder_howard_home,"data")
 
 # Deefault Assembly
 DEFAULT_ASSEMBLY = "hg19"
@@ -1860,16 +1863,21 @@ def get_argument_to_mk(arg:str, argument:dict = {}, mode:str = "mk") -> str:
 
 
 
-def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", output_type:str = "markdown", level:int = 1, table:str = "", generate_table:bool = False):
+def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", output_type:str = "markdown", level:int = 1, table:str = "", generate_table:bool = False, code_type:str = "", auto_default:bool = True):
     """
-    The function `help_generation_from_dict` generates help documentation from a dictionary input, with
-    support for markdown and HTML output formats.
+    The `help_generation_from_dict` function generates help documentation from a dictionary input,
+    supporting markdown and HTML output formats with specific sections like "__help", "__format",
+    "__default", "__examples", "__code", and "__examples_code".
     
     :param element: The `element` parameter in the `help_generation_from_dict` function is a string that
     represents the current element or key in the dictionary for which help documentation is being
-    generated
+    generated. It is the specific key or element within the dictionary that you want to generate help
+    documentation for
     :type element: str
-    :param help_dict: The `help_generation_from_dict` function takes in several parameters:
+    :param help_dict: The `help_dict` parameter in the `help_generation_from_dict` function is a
+    dictionary that contains the help documentation for various elements or keys. This dictionary
+    structure allows for organizing and storing information related to each element, such as help text,
+    formatting details, default values, and examples. The function processes
     :type help_dict: dict
     :param previous: The `previous` parameter in the `help_generation_from_dict` function is used to
     keep track of the previous elements in the hierarchy. It is a string that represents the path to the
@@ -1878,21 +1886,37 @@ def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", out
     :type previous: str
     :param output_type: The `output_type` parameter in the `help_generation_from_dict` function
     specifies the type of output format that you want the generated help documentation to be in. It can
-    take two possible values:, defaults to markdown
+    take two possible values: "markdown" or "html", defaults to markdown
     :type output_type: str (optional)
     :param level: The `level` parameter in the `help_generation_from_dict` function is used to keep
     track of the depth or level of recursion in the generation process. It starts at 1 for the initial
     call and increments by 1 for each level of recursion into sub-elements. This parameter helps in
     formatting the, defaults to 1
     :type level: int (optional)
+    :param table: The `table` parameter in the `help_generation_from_dict` function is used to store the
+    table of contents for the generated help documentation. It is a string that contains the formatted
+    table of contents with links to different sections or elements within the documentation. This table
+    helps users navigate through the documentation easily and
+    :type table: str
+    :param generate_table: The `generate_table` parameter in the `help_generation_from_dict` function is
+    a boolean flag that determines whether the function should generate a table of contents for the help
+    documentation. When set to `True`, the function will include a table of contents in the output based
+    on the hierarchy of elements in the, defaults to False
+    :type generate_table: bool (optional)
+    :param code_type: The `code_type` parameter in the `help_generation_from_dict`
+    function specifies the type of code examples that will be included in the generated help
+    documentation. It defaults to "json", meaning that the code examples provided in the
+    "__examples_code" section of the dictionary will be in JSON format, defaults to json
+    :type code_type: str (optional)
     :return: The function `help_generation_from_dict` is returning the generated help documentation
     based on the input `help_dict` dictionary. The output is formatted based on the specified
     `output_type` (either "markdown" or "html") and includes sections such as "__help", "__format",
     "__default", and "__examples" if they are present in the `help_dict`.
     """
-    """
-    
-    """
+
+    from howard.tools.tools import arguments
+
+    element_argument_infos = arguments.get(element,{})
 
     # Level marker
     level_marker = "::"
@@ -1902,11 +1926,7 @@ def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", out
     output_table = ""
 
     # Specific help sections
-    section_list = ["__help", "__format", "__default", "__examples", "__code", "__examples_code"]
-
-    # If no section "__help" (mandatory)
-    if "__help" not in help_dict:
-        return output
+    section_list = ["__help", "__type", "__choices",  "__format", "__default", "__default_eval", "__examples", "__code", "__examples_code"]
 
     # Previous level
     if previous:
@@ -1916,15 +1936,53 @@ def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", out
         prefix = f"{element}"
         previous = ""
 
+    if "__code_type" in help_dict:
+        code_type=help_dict.get("__code_type",code_type)
+
+    if auto_default and level > 1:
+
+        # default
+        if "__help" not in help_dict:
+            if "help" in element_argument_infos:
+                help_dict["__help"] = element_argument_infos.get("help", None) #
+                # Clean help
+                help_dict["__help"] = format_arg_help(help_dict["__help"])
+
+        # default
+        if "__default" not in help_dict:
+            if "default" in element_argument_infos:
+                help_dict["__default"] = element_argument_infos.get("default", None)
+
+        # type
+        if "__type" not in help_dict:
+            if "type" in element_argument_infos:
+                help_dict["__type"] = element_argument_infos.get("type", None).__name__
+
+        # format
+        if "__format" not in help_dict:
+            if "format" in element_argument_infos:
+                help_dict["__format"] = element_argument_infos.get("format", None)
+        
+        # choices
+        if "__choices" not in help_dict:
+            if "choices" in element_argument_infos:
+                help_dict["__choices"] = element_argument_infos.get("choices", None)
+            
+
+    # If no section "__help" (mandatory)
+    if "__help" not in help_dict:
+        return output
+
     # For each help section
     for section in section_list:
+
         if section in help_dict:
 
-            # element content
-            help_dict_content = help_dict.get(section, None)
-            
             # If content not empty
-            if help_dict_content:
+            if section in help_dict:
+
+                # element content
+                help_dict_content = help_dict.get(section, None)
 
                 # Break section
                 section_break = ""
@@ -1949,12 +2007,31 @@ def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", out
                     # Help content from type
                     if isinstance(help_dict_content, str):
                         help_md = help_dict_content.replace("\n", line_break)
-                    elif isinstance(help_dict_content, list):
+                    elif isinstance(help_dict_content, list) and section not in ["__choices"]:
                         help_md = line_break.join(help_dict_content)
                         section_break = "\n"
+                    else:
+                        help_md = help_dict_content
                     
                     if section in ["__code", "__examples_code"]:
-                        help_md = f"```\n{help_md}\n```"
+                        help_md = f"```{code_type}\n{help_md}\n```"
+
+                    if section in ["__default"]:
+                        if help_md in [""]:
+                            help_md = " "
+                        help_md = f"```{help_md}```"
+                        
+                    if section in ["__default_eval"]:
+                        help_md = "```" + eval(help_md) + "```"
+
+                    if section in ["__type"]:
+                        help_md = f"```{help_md}```"
+
+                    if section in ["__format"]:
+                        help_md = f"```{help_md}```"
+
+                    if section in ["__choices"]:
+                        help_md = f"```{help_md}```"
 
                     # Output variables
                     output_header += f"{level_md} {prefix}\n\n"
@@ -1971,12 +2048,15 @@ def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", out
                     if isinstance(help_dict_content, str):
                         help_html = help_dict_content.replace("\n", "<br>")
                     elif isinstance(help_dict_content, list):
+                        help_dict_content = map(str, help_dict_content)
                         if section in ["__code", "__examples_code"]:
                             help_html = "\n".join(help_dict_content)
                             section_break = ""
                         else:
                             help_html = "<br>".join(help_dict_content)
                             section_break = "<br>"
+                    else:
+                        help_html = help_dict_content
 
                     if section in ["__code", "__examples_code"]:
                         help_html = f"<xmp>{help_html}</xmp>"
@@ -2016,10 +2096,10 @@ def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", out
         if element not in section_list and isinstance(help_dict.get(element,None),dict):
 
             # output_tabl
-            output_table += help_generation_from_dict(element=element, help_dict=help_dict.get(element,None), previous=f"{previous}{element}", output_type=output_type, level=level+1, table=output_table, generate_table=True)
+            output_table += help_generation_from_dict(element=element, help_dict=help_dict.get(element,None), previous=f"{previous}{element}", output_type=output_type, level=level+1, table=output_table, generate_table=True, code_type=code_type)
 
             # Add sub-element output
-            output += help_generation_from_dict(element=element, help_dict=help_dict.get(element,None), previous=f"{previous}{element}", output_type=output_type, level=level+1, table=output_table)
+            output += help_generation_from_dict(element=element, help_dict=help_dict.get(element,None), previous=f"{previous}{element}", output_type=output_type, level=level+1, table=output_table, code_type=code_type)
 
     # Return output
     if generate_table:
@@ -2028,23 +2108,29 @@ def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", out
         return output
 
 
-def help_generation_from_json(help_json_file:str, output_type:str = "markdown", title="Help"):
+def help_generation_from_json(help_json_file:str, output_type:str = "markdown", title="Help", code_type:str = ""):
     """
-    This Python function reads a JSON file containing help information, converts it into a specified
-    output format (default is markdown), and returns the generated help content.
+    The function `help_generation_from_json` reads a JSON file containing help information, converts it
+    into a specified output format (default is markdown), and returns the generated help content.
     
     :param help_json_file: The `help_json_file` parameter is a string that should contain the file path
     to the JSON file from which help information will be extracted. This JSON file likely contains
     structured data that will be used to generate the help content
     :type help_json_file: str
     :param output_type: The `output_type` parameter in the `help_generation_from_json` function
-    specifies the format in which the generated help content will be output. It has a default value of
+    specifies the format in which the generated help content will be output. By default, it is set to
     "markdown", which means the help content will be formatted using Markdown syntax. However, you can
-    also specify other output formats such as, defaults to markdown
+    also specify other output formats such, defaults to markdown
     :type output_type: str (optional)
-    :param title: The `title` parameter is a string that represents the title of the help documentation
-    that will be generated. It is used to provide a title for the help content to make it more organized
-    and informative, defaults to Help (optional)
+    :param title: The `title` parameter in the `help_generation_from_json` function is a string that
+    represents the title of the help documentation that will be generated. It is used to provide a title
+    for the help content to make it more organized and informative. By default, the title is set to
+    "Help", defaults to Help (optional)
+    :param code_type: The `code_type` parameter in the `help_generation_from_json`
+    function is used to specify the type of code examples that will be included in the generated help
+    content. This parameter allows you to define the format or language of the code examples to be
+    displayed alongside the help information extracted from the JSON
+    :type code_type: str
     :return: The function `help_generation_from_json` returns the generated help content based on the
     information stored in the JSON file provided as input.
     """
@@ -2055,15 +2141,21 @@ def help_generation_from_json(help_json_file:str, output_type:str = "markdown", 
         help_dict = yaml.safe_load(f)
 
     # Generate help table of content
-    output_table = help_generation_from_dict(element=title, help_dict=help_dict, previous="", output_type=output_type, level=1, generate_table=True)
+    output_table = help_generation_from_dict(element=title, help_dict=help_dict, previous="", output_type=output_type, level=1, generate_table=True, code_type=code_type)
 
     # Generate help
-    output = help_generation_from_dict(element=title, help_dict=help_dict, previous="", output_type=output_type, level=1, table=output_table)
+    output = help_generation_from_dict(element=title, help_dict=help_dict, previous="", output_type=output_type, level=1, table=output_table, code_type=code_type)
 
     # Return help
     return output
 
 
+
+class RawTextArgumentDefaultsHelpFormatter(
+    argparse.ArgumentDefaultsHelpFormatter,
+    argparse.RawTextHelpFormatter
+):
+    pass
 
 def help_generation(arguments_dict:dict = {}, parser = None, setup:str = None, output_type:str = "parser"):
     """
@@ -2156,7 +2248,9 @@ def help_generation(arguments_dict:dict = {}, parser = None, setup:str = None, o
             description = command_description,
             help = command_help,
             epilog = command_epilog,
-            formatter_class=argparse.RawTextHelpFormatter
+            #formatter_class=argparse.RawTextHelpFormatter
+            #formatter_class=argparse.ArgumentDefaultsHelpFormatter
+            formatter_class=RawTextArgumentDefaultsHelpFormatter
         )
 
         # Markdown
@@ -2190,6 +2284,9 @@ def help_generation(arguments_dict:dict = {}, parser = None, setup:str = None, o
                     widget, options = get_argument_gooey(arguments=arguments, arg=arg)
                     argument["widget"] = widget
                     argument["gooey_options"] = options
+                    if argument["help"] in ["==SUPPRESS=="]:
+                        argument["help"] = arg
+                    argument["help"] = format_arg_help(argument["help"], str(argument.get('default',None)))
                 command_parser.add_argument(f"--{arg}", **argument)
                 options_md += get_argument_to_mk(arg, argument)
                 options_html += get_argument_to_mk(arg, argument, mode="html")
@@ -2206,6 +2303,9 @@ def help_generation(arguments_dict:dict = {}, parser = None, setup:str = None, o
                         widget, options = get_argument_gooey(arguments=arguments, arg=arg)
                         argument["widget"] = widget
                         argument["gooey_options"] = options
+                        if argument["help"] in ["==SUPPRESS=="]:
+                            argument["help"] = arg
+                        argument["help"] = format_arg_help(argument["help"], str(argument.get('default',None)))
                     command_group.add_argument(f"--{arg}", **argument)
                     options_md += get_argument_to_mk(arg, argument)
                     options_html += get_argument_to_mk(arg, argument, mode="html")
@@ -2218,7 +2318,9 @@ def help_generation(arguments_dict:dict = {}, parser = None, setup:str = None, o
                 widget, options = get_argument_gooey(arguments=arguments, arg=arg)
                 argument["widget"] = widget
                 argument["gooey_options"] = options
-
+                if argument["help"] in ["==SUPPRESS=="]:
+                    argument["help"] = arg
+                argument["help"] = format_arg_help(argument["help"], str(argument.get('default',None)))
             shared_group.add_argument(f"--{arg}", **argument)
 
         options_md += "\n\n"
@@ -2242,6 +2344,33 @@ def help_generation(arguments_dict:dict = {}, parser = None, setup:str = None, o
     else:
         return parser
     
+def format_arg_help(help_message:str, default_value:object = None) -> str:
+    """
+    The function `format_arg_help` formats a help message for a function argument, including a default
+    value if provided.
+    
+    :param help_message: The `help_message` parameter is a string that contains the description or help
+    message for a function or method argument. It provides information about the purpose or usage of the
+    argument
+    :type help_message: str
+    :param default_value: The `default_value` parameter in the `format_arg_help` function is an optional
+    parameter that specifies a default value for the argument being described in the help message. If a
+    default value is provided, it will be included in the formatted help message to indicate the default
+    value for that argument
+    :type default_value: object
+    :return: The function `format_arg_help` returns a formatted help message with a default value
+    appended at the end if provided.
+    """
+
+    help_return = help_message
+
+    random_string = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+    help_return = re.sub(r'\n\s*-', random_string,help_return).replace("\n", " ").replace(random_string, "\n-")
+    if default_value:
+        help_return += "\n(default: " + str(default_value) + ")"
+
+    return help_return
+
 
 def bed_sort(input:str, output:str) -> str:
     """

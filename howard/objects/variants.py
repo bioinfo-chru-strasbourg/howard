@@ -4196,9 +4196,9 @@ class Variants:
         assembly = self.get_param().get("assembly", self.get_config().get("assembly", DEFAULT_ASSEMBLY))
 
         # Force Update Annotation
-        force_update_annotation = self.get_param().get("annotation", {}).get("options", {}).get("update", False)
+        force_update_annotation = self.get_param().get("annotation", {}).get("options", {}).get("annotations_update", False)
         log.debug(f"force_update_annotation={force_update_annotation}")
-        force_append_annotation = self.get_param().get("annotation", {}).get("options", {}).get("append", False)
+        force_append_annotation = self.get_param().get("annotation", {}).get("options", {}).get("annotations_append", False)
         log.debug(f"force_append_annotation={force_append_annotation}")
 
         # Data
@@ -4676,13 +4676,13 @@ class Variants:
 
         # Config
         config = self.get_config()
-        config_profiles = config.get("prioritization", {}).get("config_profiles", None)
-        config_profiles = full_path(config_profiles)
+        prioritizations = config.get("prioritization", {}).get("prioritizations", None)
+        prioritizations = full_path(prioritizations)
 
         # Param
         param = self.get_param()
-        config_profiles = param.get("prioritization", {}).get("config_profiles", config_profiles)
-        config_profiles = full_path(config_profiles)
+        prioritizations = param.get("prioritization", {}).get("prioritizations", prioritizations)
+        prioritizations = full_path(prioritizations)
         profiles = param.get("prioritization", {}).get("profiles", None)
         pzfields = param.get("prioritization", {}).get(
             "pzfields", ["PZFlag", "PZScore"])
@@ -4693,21 +4693,21 @@ class Variants:
             "prioritization_score_mode", "HOWARD")
 
         # Profiles are in files
-        if config_profiles and os.path.exists(config_profiles):
-            with open(config_profiles) as profiles_file:
-                config_profiles = json.load(profiles_file)
+        if prioritizations and os.path.exists(prioritizations):
+            with open(prioritizations) as profiles_file:
+                prioritizations = json.load(profiles_file)
         else:
             log.error("NO Profiles configuration")
             raise ValueError(f"NO Profiles configuration")
 
         # If no profiles provided, all profiles in the config profiles
         if not profiles:
-            profiles = list(config_profiles.keys())
+            profiles = list(prioritizations.keys())
 
         if not default_profile:
             default_profile = profiles[0]
 
-        log.debug("Profiles availables: " + str(list(config_profiles.keys())))
+        log.debug("Profiles availables: " + str(list(prioritizations.keys())))
         log.debug("Profiles to check: " + str(list(profiles)))
 
         # Variables
@@ -4786,7 +4786,7 @@ class Variants:
                         field_ID, PZfields_INFOS[field]["Number"], PZfields_INFOS[field]["Type"], field_description, 'unknown', 'unknown', code_type_map[PZfields_INFOS[field]["Type"]])
 
             # Create INFO fields if not exist for each profile
-            for profile in config_profiles:
+            for profile in prioritizations:
                 if profile in profiles or profiles == []:
                     for field in PZfields_INFOS:
                         field_ID = PZfields_INFOS[field]["ID"] + \
@@ -4811,7 +4811,7 @@ class Variants:
             if profiles:
 
                 # foreach profile in configuration file
-                for profile in config_profiles:
+                for profile in prioritizations:
 
                     # If profile is asked in param, or ALL are asked (empty profile [])
                     if profile in profiles or profiles == []:
@@ -4925,7 +4925,7 @@ class Variants:
 
 
                         sql_queries = []
-                        for annotation in config_profiles[profile]:
+                        for annotation in prioritizations[profile]:
 
                             # Check if annotation field is present
                             if not f"{explode_infos_prefix}{annotation}" in extra_infos:
@@ -4937,7 +4937,7 @@ class Variants:
                                     f"Annotation '{annotation}' in data")
 
                             # For each criterions
-                            for criterion in config_profiles[profile][annotation]:
+                            for criterion in prioritizations[profile][annotation]:
                                 criterion_type = criterion['type']
                                 criterion_value = criterion['value']
                                 criterion_score = criterion.get('score', 0)
