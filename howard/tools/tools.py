@@ -47,6 +47,7 @@ if tool_gui_enable:
 
 
 class PathType(object):
+
     def __init__(self, exists=True, type='file', dash_ok=True):
         '''exists:
                 True: a path that does exist
@@ -55,6 +56,8 @@ class PathType(object):
            type: file, dir, symlink, None, or a function returning True for valid paths
                 None: don't care
            dash_ok: whether to allow "-" as stdin/stdout'''
+
+        self.__name__ = "Path"
 
         assert exists in (True, False, None)
         assert type in ('file','dir','symlink',None) or hasattr(type,'__call__')
@@ -65,7 +68,12 @@ class PathType(object):
 
     def __call__(self, string):
 
-        string = full_path(string)
+        # Full path if not a JSON string
+        try:
+            json.loads(string)
+        except:
+            string = full_path(string)
+
         if string=='-':
             # the special argument "-" means sys.std{in,out}
             if self._type == 'dir':
@@ -97,14 +105,6 @@ class PathType(object):
                 if self._exists==False and e:
                     raise ValueError("path exists: '%s'" % string)
 
-                # p = string
-                # if not os.path.isdir(p):
-                #     print("e1")
-                #     raise ValueError("parent path is not a directory: '%s'" % p)
-                # elif not os.path.exists(p):
-                #     print("e2")
-                #     raise ValueError("parent directory does not exist: '%s'" % p)
-
         return string
 
 # Arguments dict
@@ -114,27 +114,27 @@ arguments = {
         "input": {
             "metavar": "input",
             "help": """Input file path.\n"""
-                    """Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB\n"""
-                    """Files can be compressesd (e.g. vcf.gz, tsv.gz)""",
+                    """Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.\n"""
+                    """Files can be compressesd (e.g. vcf.gz, tsv.gz).\n""",
             "required": False,
-            #"type": argparse.FileType('r'),
+            "default": None,
             "type": PathType(exists=True, type=None),
             "gooey": {
                 "widget": "FileChooser",
                 "options": {
                     "wildcard":
                         "Parquet file (*.parquet)|*.parquet|"
-                        "All files (*)|*",
+                        "All files (*)|*"
                 }
             }
         },
         "output": {
             "metavar": "output",
             "help": """Output file path.\n"""
-                    """Format: BCF, VCF, TSV, CSV, PSV, Parquet or duckDB\n"""
-                    """Files can be compressesd (e.g. vcf.gz, tsv.gz)""",
+                    """Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.\n"""
+                    """Files can be compressesd (e.g. vcf.gz, tsv.gz).\n""",
             "required": False,
-            #"type": argparse.FileType('w'),
+            "default": None,
             "type": PathType(exists=None, type=None),
             "gooey": {
                 "widget": "FileSaver"
@@ -142,26 +142,25 @@ arguments = {
         },
         "param": {
             "metavar": "param",
-            "help": """Parameters file or JSON.\n"""
-                    """Format: JSON\n"""
-                    """Default: {}""",
+            "help": """Parameters JSON file or JSON string.\n""",
             "default": "{}",
+            "type": PathType(exists=None, type=None),
             "gooey": {
                 "widget": "FileChooser",
                 "options": {
                     'initial_value': '',
                     "wildcard":
                         "JSON file (*.json)|*.json|"
-                        "All files (*)|*",
+                        "All files (*)|*"
                 }
             }
         },
         "query": {
             "metavar": "query",
-            "help": """Query in SQL format.\n"""
-                    """Format: SQL\n"""
-                    """Example: 'SELECT * FROM variants LIMIT 50'""",
+            "help": """Query in SQL format\n"""
+                    """(e.g. 'SELECT * FROM variants LIMIT 50').\n""",
             "default": None,
+            "type": str,
             "gooey": {
                 "widget": "Textarea",
                 "options": {
@@ -172,9 +171,8 @@ arguments = {
         "output_query": {
             "metavar": "output",
             "help": """Output Query file.\n"""
-                    """Format: VCF, TSV, Parquet...""",
+                    """Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.\n""",
             "default": None,
-            #"type": argparse.FileType('w'),
             "type": PathType(exists=None, type=None),
             "gooey": {
                 "widget": "FileSaver",
@@ -188,24 +186,28 @@ arguments = {
         # Annotations
         "annotations": {
             "metavar": "annotations",
-            "help": """Annotation with databases files, or with tools\n"""
-                    """Format: list of files in Parquet, VCF, BED, or keywords\n"""
-                    """For a Parquet/VCF/BED file, use file path (e.g. '/path/to/file.parquet')\n"""
-                    """For add all availalbe databases, use 'ALL' keyword:\n"""
-                    """   - Use 'ALL:<types>:<releases>'\n"""
-                    """   - e.g. 'ALL', 'ALL:parquet:current', 'ALL:parquet,vcf:devel'\n"""
-                    """For snpeff annotation, use keyword 'snpeff'\n"""
-                    """For Annovar annotation, use keyword 'annovar' with annovar code (e.g. 'annovar:refGene', 'annovar:cosmic70')""",
+            "help": """Annotation with databases files, or with tools,\n"""
+                    """as a list of files in Parquet, VCF, BED, or keywords.\n"""
+                    """For a Parquet/VCF/BED file, use file path (e.g. '/path/to/file.parquet').\n"""
+                    """For Annovar annotation, use keyword 'annovar' with annovar code (e.g. 'annovar:refGene', 'annovar:cosmic70').\n"""
+                    """For add all availalbe databases files, use 'ALL' keyword:\n"""
+                    """- Use 'ALL:<types>:<releases>'\n"""
+                    """- e.g. 'ALL', 'ALL:parquet:current', 'ALL:parquet,vcf:devel'\n"""
+                    """For snpeff annotation, use keyword 'snpeff'\n""",
             "default": None,
+            "type": str,
             "gooey": {
-                "widget": "MultiFileChooser"
+                "widget": "MultiFileChooser",
+                "options": {
+                    "default_dir": DEFAULT_ANNOTATIONS_FOLDER,
+                    "message": "Database files"
+                }
             }
         },
         "annotations_update": {
             "help": """Update option for annotation (Only for Parquet annotation).\n"""
                     """If True, annotation fields will be removed and re-annotated.\n"""
-                    """These options will be applied to all annotation databases."""
-                    """default: False""",
+                    """These options will be applied to all annotation databases.\n""",
             "action": "store_true",
             "default": False,
             "gooey": {
@@ -218,8 +220,7 @@ arguments = {
         "annotations_append": {
             "help": """Append option for annotation (Only for Parquet annotation).\n"""
                     """If True, annotation fields will be annotated only if not annotation exists for the variant.\n"""
-                    """These options will be applied to all annotation databases."""
-                    """default: False""",
+                    """These options will be applied to all annotation databases.\n""",
             "action": "store_true",
             "default": False,
             "gooey": {
@@ -233,8 +234,8 @@ arguments = {
         # Calculations
         "calculations": {
             "metavar": "operations",
-            "help": """Calculations on genetic variants information and genotype information\n"""
-                    """Example: 'VARTYPE,barcode'\n"""
+            "help": """Calculations on genetic variants information and genotype information,\n"""
+                    """as a list of operations (e.g. 'VARTYPE,variant_id').\n"""
                     """List of available calculations (unsensitive case, see doc for more information):\n"""
                     """ VARTYPE """
                     """ snpeff_hgvs """
@@ -244,50 +245,53 @@ arguments = {
                     """ TRIO """
                     """ VAF """
                     """ VAF_STATS """
-                    """ DP_STATS """,
-            "default": None
+                    """ DP_STATS """
+                    """\n""",
+            "default": None,
+            "type": str
         },
         "prioritizations": {
             "metavar": "prioritisations",
-            "help": "Prioritization file in JSON format (defines profiles, see doc).",
+            "help": "Prioritization file in JSON format (defines profiles, see doc).\n",
             "default": None,
-            #"type": argparse.FileType('r'),
             "type": PathType(exists=True, type='file'),
             "gooey": {
                 "widget": "FileChooser",
                 "options": {
                     "wildcard":
                         "JSON file (*.json)|*.json|"
-                        "All files (*)|*",
+                        "All files (*)|*"
                 }
             }
         },
         "profiles": {
             "metavar": "profiles",
-            "help": """List of prioritization profiles to process (based on Prioritization JSON file).\n"""
-                    """Examples: 'default', 'rare variants', 'low allele frequency', 'GERMLINE'\n"""
-                    """default: all profiles available""",
-            "default": None
+            "help": """List of prioritization profiles to process (based on Prioritization JSON file),\n"""
+                    """such as 'default', 'rare variants', 'low allele frequency', 'GERMLINE'.\n"""
+                    """By default, all profiles available will be processed.\n""",
+            "default": None,
+            "type": str
         },
         "default_profile": {
             "metavar": "default profile",
-            "help": """Prioritization profile by default (see doc)\n"""
-                    """default: First profile in the list of prioritization profiles""",
-            "default": None
+            "help": """Prioritization profile by default (see doc).\n"""
+                    """Default is the first profile in the list of prioritization profiles.\n""",
+            "default": None,
+            "type": str
         },
         "pzfields": {
             "metavar": "pzfields",
             "help": """Prioritization fields to provide (see doc).\n"""
-                    """available: PZScore, PZFlag, PZTags, PZComment, PZInfos\n"""
-                    """default: PZScore,PZFlag""",
-            "default": "PZScore,PZFlag"
+                    """Available: PZScore, PZFlag, PZTags, PZComment, PZInfos\n""",
+            "default": "PZScore,PZFlag",
+            "type": str
         },
         "prioritization_score_mode": {
             "metavar": "prioritization score mode",
             "help": """Prioritization Score mode (see doc).\n"""
-                    """available: HOWARD (increment score), VaRank (max score)\n"""
-                    """default: HOWARD""",
+                    """Available: HOWARD (increment score), VaRank (max score)\n""",
             "default": 'HOWARD',
+            "type": str,
             "choices": ["HOWARD", "VaRank"],
             "gooey": {
                 "widget": "Dropdown",
@@ -298,9 +302,9 @@ arguments = {
         # Query print options
         "query_limit": {
             "metavar": "query limit",
-            "help": """Limit of number of row for query (only for print result, not output).\n"""
-                    """default: 10""",
+            "help": """Limit of number of row for query (only for print result, not output).\n""",
             "default": 10,
+            "type": int,
             "gooey": {
                 "widget": "IntegerField",
                 "options": {
@@ -313,10 +317,10 @@ arguments = {
         "query_print_mode": {
             "metavar": "print mode",
             "help": """Print mode of query result (only for print result, not output).\n"""
-                    """Either None (native), 'markdown' or 'tabulate'.\n"""
-                    """default: None""",
+                    """Either None (native), 'markdown' or 'tabulate'.\n""",
             "choices": [None, "markdown", "tabulate"],
             "default": None,
+            "type": str,
             "gooey": {
                 "widget": "Dropdown",
                 "options": {}
@@ -325,38 +329,35 @@ arguments = {
 
         # Explode infos
         "explode_infos": {
-            "help": """Explode VCF INFO/Tag into 'variants' table columns.\n"""
-                    """default: False""",
+            "help": """Explode VCF INFO/Tag into 'variants' table columns.\n""",
             "action": "store_true",
             "default": False
         },
         "explode_infos_prefix": {
             "metavar": "explode infos prefix",
-            "help": """Explode VCF INFO/Tag with a specific prefix.\n"""
-                    """default: ''""",
-            "default": ""
+            "help": """Explode VCF INFO/Tag with a specific prefix.\n""",
+            "default": "",
+            "type": str
         },
         "explode_infos_fields": {
             "metavar": "explode infos list",
             "help": """Explode VCF INFO/Tag specific fields/tags.\n"""
-                    """Keyword '*' specify all available fields, except those already specified.\n"""
-                    """Pattern (regex) can be used: '.*_score' for fields named with '_score' at the end.\n"""
+                    """Keyword `*` specify all available fields, except those already specified.\n"""
+                    """Pattern (regex) can be used, such as `.*_score` for fields named with '_score' at the end.\n"""
                     """Examples:\n"""
-                    """   - 'HGVS,SIFT,Clinvar' (list of fields)\n"""
-                    """   - 'HGVS,*,Clinvar' (list of fields with all other fields at the end)\n"""
-                    """   - 'HGVS,.*_score,Clinvar' (list of 2 fields with all scores in the middle)\n"""
-                    """   - 'HGVS,.*_score,*' (1 field, scores, all other fields)\n"""
-                    """   - 'HGVS,*,.*_score' (1 field and all other fields,\n"""
-                    """                        scores included in other fields)\n"""
-                    """default: '*'""",
-            "default": "*"
+                    """- 'HGVS,SIFT,Clinvar' (list of fields)\n"""
+                    """- 'HGVS,*,Clinvar' (list of fields with all other fields at the end)\n"""
+                    """- 'HGVS,.*_score,Clinvar' (list of 2 fields with all scores in the middle)\n"""
+                    """- 'HGVS,.*_score,*' (1 field, scores, all other fields)\n"""
+                    """- 'HGVS,*,.*_score' (1 field, all other fields, all scores)\n""",
+            "default": "*",
+            "type": str
         },
 
         # Include header
         "include_header": {
             "help": """Include header (in VCF format) in output file.\n"""
-                    """Only for compatible formats (tab-delimiter format as TSV or BED).\n"""
-                    """default: False""",
+                    """Only for compatible formats (tab-delimiter format as TSV or BED).\n""",
             "action": "store_true",
             "default": False
         },
@@ -368,11 +369,9 @@ arguments = {
                     """Use SQL format, and keywords ASC (ascending) and DESC (descending).\n"""
                     """If a column is not available, order will not be considered.\n"""
                     """Order is enable only for compatible format (e.g. TSV, CSV, JSON).\n"""
-                    """Examples:\n"""
-                    """   - 'ACMG_score DESC'\n"""
-                    """   - 'PZFlag DESC, PZScore DESC'\n"""
-                    """default: ''""",
-            "default": ""
+                    """Examples: 'ACMG_score DESC', 'PZFlag DESC, PZScore DESC'.\n""",
+            "default": "",
+            "type": str
         },
 
         # Parquet partition
@@ -380,19 +379,19 @@ arguments = {
             "metavar": "parquet partitions",
             "help": """Parquet partitioning using hive (available for any format).\n"""
                     """This option is faster parallel writing, but memory consuming.\n"""
-                    """Use 'None' (string) for NO partition but split parquet files into a folder\n"""
-                    """examples: '#CHROM', '#CHROM,REF', 'None'\n"""
-                    """default: None""",
-            "default": None
+                    """Use 'None' (string) for NO partition but split parquet files into a folder.\n"""
+                    """Examples: '#CHROM', '#CHROM,REF', 'None'.\n""",
+            "default": None,
+            "type": str
         },
         
         # From annovar
         "multi_variant": {
             "metavar": "multi variant",
-            "help": """Variant with multiple annotation lines\n"""
-                    """Values: 'auto' (auto-detection), 'enable', 'disable'\n"""
-                    """default: 'auto'""",
+            "help": """Variant with multiple annotation lines.\n"""
+                    """Either 'auto' (auto-detection), 'enable' or 'disable'.\n""",
             "default": "auto",
+            "type": str,
             "choices": ["auto", "enable", "disable"],
             "gooey": {
                 "widget": "Dropdown",
@@ -401,10 +400,10 @@ arguments = {
         },
         "reduce_memory": {
             "metavar": "reduce memory",
-            "help": """Reduce memory option\n"""
-                    """Values: 'auto' (auto-detection), 'enable', 'disable'\n"""
-                    """default: 'auto'""",
+            "help": """Reduce memory option,\n"""
+                    """either 'auto' (auto-detection), 'enable' or 'disable'.\n""",
             "default": "auto",
+            "type": str,
             "choices": ["auto", "enable", "disable"],
             "gooey": {
                 "widget": "Dropdown",
@@ -415,85 +414,67 @@ arguments = {
         # Calculation
         "calculation_config": {
             "metavar": "calculation config",
-            "help": """Calculation config file\n"""
-                    """Format: JSON""",
+            "help": """Calculation configuration JSON file.\n""",
             "default": None,
-            #"type": argparse.FileType('r'),
             "type": PathType(exists=True, type='file'),
             "gooey": {
                 "widget": "FileChooser",
                 "options": {
                     "wildcard":
                         "JSON file (*.json)|*.json|"
-                        "All files (*)|*",
+                        "All files (*)|*"
                 }
             }
         },
         "show_calculations": {
-            "help": """Show available calculation operations""",
-            "action": "store_true"
+            "help": """Show available calculation operations.\n""",
+            "action": "store_true",
+            "default": False
         },
         "hgvs_field": {
             "metavar": "HGVS field",
-            "help": """HGVS INFO/tag containing a list o HGVS annotations\n"""
-                    """default: 'hgvs'""",
-            "default": "hgvs"
+            "help": """HGVS INFO/tag containing a list o HGVS annotations.\n""",
+            "default": "hgvs",
+            "type": str
         },
         "transcripts": {
             "metavar": "transcripts",
-            "help": """Transcripts file in TSV format\n"""
-                    """Format: Transcript in first column, optional Gene in second column \n"""
-                    """default: None""",
+            "help": """Transcripts TSV file,\n"""
+                    """with Transcript in first column, optional Gene in second column.\n""",
             "default": None,
-            #"type": argparse.FileType('r'),
             "type": PathType(exists=True, type='file'),
             "gooey": {
                 "widget": "FileChooser",
                 "options": {
                     "wildcard":
                         "TSV file (*.tsv)|*.tsv|"
-                        "All files (*)|*",
+                        "All files (*)|*"
                 }
             }
         },
         "trio_pedigree": {
             "metavar": "trio pedigree",
-            "help": """Pedigree Trio for trio inheritance calculation\n"""
-                    """Format: JSON file or dict (e.g. 'trio.ped.json', '{"father":"sample1", "mother":"sample2", "child":"sample3"}') \n"""
-                    """default: None""",
+            "help": """Pedigree Trio for trio inheritance calculation.\n"""
+                    """either a JSON file or JSON string"""
+                    """(e.g. '{"father": "sample1", "mother": "sample2", "child": "sample3"}').\n""",
             "default": None,
-            #"type": argparse.FileType('r'),
             "type": PathType(exists=True, type='file'),
             "gooey": {
                 "widget": "FileChooser",
                 "options": {
                     "wildcard":
                         "JSON file (*.json)|*.json|"
-                        "All files (*)|*",
+                        "All files (*)|*"
                 }
             }
-        },
-
-        # Other
-        "overview": {
-            "help": "Overview after loading data",
-            "action": "store_true"
-        },
-        "overview_header": {
-            "help": "Overview after loading data",
-            "action": "store_true"
-        },
-        "overview_footer": {
-            "help": "Overview before data processing",
-            "action": "store_true"
         },
 
         # Stats
         "stats_md": {
             "metavar": "stats markdown",
-            "help": """Stats Output file in MarkDown format\n""",
+            "help": """Stats Output file in MarkDown format.\n""",
             "required": False,
-            #"type": argparse.FileType('w'),
+            "default": None,
             "type": PathType(exists=None, type='file'),
             "gooey": {
                 "widget": "FileSaver",
@@ -505,9 +486,9 @@ arguments = {
         },
         "stats_json": {
             "metavar": "stats json",
-            "help": """Stats Output file in JSON format\n""",
+            "help": """Stats Output file in JSON format.\n""",
             "required": False,
-            #"type": argparse.FileType('w'),
+            "default": None,
             "type": PathType(exists=None, type='file'),
             "gooey": {
                 "widget": "FileSaver",
@@ -518,33 +499,34 @@ arguments = {
             }
         },
         "stats": {
-            "help": "Statistics after loading data",
-            "action": "store_true"
+            "help": "Statistics after loading data.\n",
+            "action": "store_true",
+            "default": False
         },
         "stats_header": {
-            "help": "Statistics after loading data",
-            "action": "store_true"
+            "help": "Statistics after loading data.\n",
+            "action": "store_true",
+            "default": False
         },
         "stats_footer": {
-            "help": "Statistics before data processing",
-            "action": "store_true"
+            "help": "Statistics before data processing.\n",
+            "action": "store_true",
+            "default": False
         },
 
         # Assembly and Genome
         "assembly": {
             "metavar": "assembly",
-            "help": """Genome Assembly\n"""
-                    """Default: 'hg19'""",
+            "help": """Genome Assembly (e.g. 'hg19', 'hg38').\n""",
             "required": False,
-            "default": "hg19"
+            "default": DEFAULT_ASSEMBLY,
+            "type": str
         },
         "genome": {
             "metavar": "genome",
-            "help": """Genome file in fasta format\n"""
-                    """Default: 'hg19.fa'""",
+            "help": """Genome file in fasta format (e.g. 'hg19.fa', 'hg38.fa').\n""",
             "required": False,
-            "default": "hg19.fa",
-            #"type": argparse.FileType('r'),
+            "default": "~/howard/databases/genomes/current/hg19/hg19.fa",
             "type": PathType(exists=True, type='file'),
             "gooey": {
                 "widget": "FileChooser",
@@ -555,65 +537,70 @@ arguments = {
             }
         },
         
-
         # HGVS
         "hgvs": {
             "metavar": "HGVS options",
-            "help": """Quick HGVS annotation options\n"""
-                    """This option will skip all other hgvs options\n"""
+            "help": """Quick HGVS annotation options.\n"""
+                    """This option will skip all other hgvs options.\n"""
                     """Examples:\n"""
-                    """   - 'default' (for default options)\n"""
-                    """   - 'full_format' (for full format HGVS annotation)\n"""
-                    """   - 'use_gene:True,add_protein:true,codon_type:FULL'\n"""
-                    """Default: None""",
+                    """- 'default' (for default options)\n"""
+                    """- 'full_format' (for full format HGVS annotation)\n"""
+                    """- 'use_gene:True,add_protein:true,codon_type:FULL'\n""",
             "required": False,
             "default": None,
+            "type": str
         },
         "use_gene": {
             "help": """Use Gene information to generate HGVS annotation\n"""
-                    """Example: 'NM_152232(TAS1R2):c.231T>C'""",
-            "action": "store_true"
+                    """(e.g. 'NM_152232(TAS1R2):c.231T>C')""",
+            "action": "store_true",
+            "default": False
         },
         "use_exon": {
             "help": """Use Exon information to generate HGVS annotation\n"""
-                    """Only if 'use_gene' is not enabled\n"""
-                    """Example: 'NM_152232(exon2):c.231T>C'""",
-            "action": "store_true"
+                    """(e.g. 'NM_152232(exon2):c.231T>C').\n"""
+                    """Only if 'use_gene' is not enabled.\n""",
+            "action": "store_true",
+            "default": False
         },
         "use_protein": {
             "help": """Use Protein level to generate HGVS annotation\n"""
-                    """Can be used with 'use_exon' or 'use_gene'\n"""
-                    """Example: 'NP_689418:p.Cys77Arg'""",
-            "action": "store_true"
+                    """(e.g. 'NP_689418:p.Cys77Arg').\n"""
+                    """Can be used with 'use_exon' or 'use_gene'.\n""",
+            "action": "store_true",
+            "default": False
         },
         "add_protein": {
-            "help": """Add Protein level to DNA HGVS annotation\n"""
-                    """Example: 'NM_152232:c.231T>C,NP_689418:p.Cys77Arg'""",
-            "action": "store_true"
+            "help": """Add Protein level to DNA HGVS annotation """
+                    """(e.g 'NM_152232:c.231T>C,NP_689418:p.Cys77Arg').\n""",
+            "action": "store_true",
+            "default": False
         },
         "full_format": {
-            "help": """Generates HGVS annotation in a full format (non-standard)\n"""
-                    """Full format use all information to generates an exhaustive annotation.\n"""
-                    """Use specifically 'use_exon' to add exon information.\n"""
-                    """Example: 'TAS1R2:NM_152232:NP_689418:c.231T>C:p.Cys77Arg'\n"""
-                    """         'TAS1R2:NM_152232:NP_689418:exon2:c.231T>C:p.Cys77Arg'""",
-            "action": "store_true"
+            "help": """Generates HGVS annotation in a full format\n"""
+                    """by using all information to generates an exhaustive annotation\n"""
+                    """(non-standard, e.g. 'TAS1R2:NM_152232:NP_689418:c.231T>C:p.Cys77Arg').\n"""
+                    """Use 'use_exon' to add exon information\n"""
+                    """(e.g 'TAS1R2:NM_152232:NP_689418:exon2:c.231T>C:p.Cys77Arg').\n""",
+            "action": "store_true",
+            "default": False
         },
         "use_version": {
             "help": """Generates HGVS annotation with transcript version\n"""
-                    """Example: without version 'NM_152232:c.231T>C'\n"""
-                    """         with version 'NM_152232.1:c.231T>C'""",
-            "action": "store_true"
+                    """(e.g. 'NM_152232.1:c.231T>C').\n""",
+            "action": "store_true",
+            "default": False
         },
         "codon_type": {
             "metavar": "Codon type",
-            "help": """Amino Acide Codon format type to use to generate HGVS annotation\n"""
-                    """Available (default '3'):\n"""
-                    """   '1': codon in 1 caracter (e.g. 'C', 'R')\n"""
-                    """   '3': codon in 3 caracter (e.g. 'Cys', 'Arg')\n"""
-                    """   'FULL': codon in full name (e.g. 'Cysteine', 'Arginine')\n""",
+            "help": """Amino Acide Codon format type to use to generate HGVS annotation.\n"""
+                    """Available:\n"""
+                    """- '1': codon in 1 character (e.g. 'C', 'R')\n"""
+                    """- '3': codon in 3 character (e.g. 'Cys', 'Arg')\n"""
+                    """-'FULL': codon in full name (e.g. 'Cysteine', 'Arginine')\n""",
             "required": False,
             "default": "3",
+            "type": str,
             "choices": ["1", "3", "FULL"],
             "gooey": {
                 "widget": "Dropdown",
@@ -622,43 +609,50 @@ arguments = {
         },
         "refgene": {
             "metavar": "refGene",
-            "help": """refGene annotation file""",
+            "help": """Path to refGene annotation file.\n""",
             "required": False,
             "default": None,
-            #"type": argparse.FileType('r'),
             "type": PathType(exists=True, type='file'),
             "gooey": {
                 "widget": "FileChooser",
                 "options": {
                     "wildcard":
-                        "All files (*)|*"
+                        "All files (*)|*",
+                    "default_dir": DEFAULT_REFSEQ_FOLDER,
+                    "default_file": "ncbiRefSeq.txt",
+                    "message": "Path to refGene annotation file"
                 }
             }
         },
         "refseqlink": {
             "metavar": "refSeqLink",
-            "help": """refSeqLink annotation file""",
+            "help": """Path to refSeqLink annotation file.\n""",
             "required": False,
             "default": None,
-            #"type": argparse.FileType('r'),
             "type": PathType(exists=True, type='file'),
             "gooey": {
                 "widget": "FileChooser",
                 "options": {
                     "wildcard":
-                        "All files (*)|*"
+                        "All files (*)|*",
+                    "default_dir": DEFAULT_REFSEQ_FOLDER,
+                    "default_file": "ncbiRefSeq.txt",
+                    "message": "Path to refGeneLink annotation file"
                 }
             }
         },
         "refseq-folder": {
             "metavar": "refseq folder",
-            "help": """Folder containing refseq files\n"""
-                    f"""Default: {DEFAULT_REFSEQ_FOLDER}""",
+            "help": """Folder containing refSeq files.\n""",
             "required": False,
-            "default": f"{DEFAULT_REFSEQ_FOLDER}",
+            "default": DEFAULT_REFSEQ_FOLDER,
             "type": PathType(exists=True, type='dir'),
             "gooey": {
-                "widget": "DirChooser"
+                "widget": "DirChooser",
+                "options": {
+                    "default_dir": DEFAULT_REFSEQ_FOLDER,
+                    "message": "Path to refGenefolder"
+                }
             }
         },
         
@@ -667,21 +661,28 @@ arguments = {
         # Genome
         "download-genomes": {
             "metavar": "genomes",
-            "help": """Download Genomes within folder.\n"""
-                    """ """,
+            "help": """Path to genomes folder\n"""
+                    """with Fasta files, indexes,\n"""
+                    """and all files generated by pygenome module.\n"""
+                    f"""(e.g. '{DEFAULT_GENOME_FOLDER}').\n""",
             "required": False,
+            "default": None,
             "type": PathType(exists=None, type='dir'),
             "gooey": {
-                "widget": "DirChooser"
+                "widget": "DirChooser",
+                "options": {
+                    "default_dir": DEFAULT_DATABASE_FOLDER,
+                    "message": "Path to genomes folder"
+                }
             }
         },
         "download-genomes-provider": {
             "metavar": "genomes provider",
-            "help": """Download Genome from an external provider\n"""
-                    """Available: GENCODE, Ensembl, UCSC, NCBI\n"""
-                    """Default: UCSC\n""",
+            "help": """Download Genome from an external provider.\n"""
+                    """Available: GENCODE, Ensembl, UCSC, NCBI.\n""",
             "required": False,
             "default": "UCSC",
+            "type": str,
             "choices": ["GENCODE", "Ensembl", "UCSC", "NCBI"],
             "gooey": {
                 "widget": "Dropdown",
@@ -690,39 +691,46 @@ arguments = {
         },
         "download-genomes-contig-regex": {
             "metavar": "genomes contig regex",
-            "help": """Regular expression to select specific chromosome \n"""
-                    """Default: None\n"""
-                    """Example: 'chr[0-9XYM]+$'\n""",
+            "help": """Regular expression to select specific chromosome\n"""
+                    """(e.g 'chr[0-9XYM]+$').\n""",
             "required": False,
-            "default": None
+            "default": None,
+            "type": str
         },
 
         # Annovar
         "download-annovar": {
             "metavar": "Annovar",
-            "help": "Download Annovar databases within Annovar folder",
+            "help": """Path to Annovar databases\n"""
+                    f"""(e.g. '{DEFAULT_ANNOVAR_FOLDER}').\n""",
             "required": False,
             "type": PathType(exists=None, type='dir'),
+            "default": None,
             "gooey": {
-                "widget": "DirChooser"
+                "widget": "DirChooser",
+                "options": {
+                    "default_dir": DEFAULT_DATABASE_FOLDER,
+                    "message": "Path to Annovar databases folder"
+                }
             }
         },
         "download-annovar-files": {
             "metavar": "Annovar code",
-            "help": """Download Annovar databases for a list of Annovar file code (see Annovar Doc)\n"""
-                    """Default: All available files\n"""
-                    """Example: refGene,gnomad211_exome,cosmic70,clinvar_202*,nci60\n"""
-                    """Note: refGene will be at leaset downloaded\n"""
-                    """Note2: Only file that not exists or with a different size will be downloaded""",
+            "help": """Download Annovar databases for a list of Annovar file code (see Annovar Doc).\n"""
+                    """Use None to donwload all available files,\n"""
+                    """or Annovar keyword (e.g. 'refGene', 'cosmic70', 'clinvar_202*').\n"""
+                    """Note that refGene will at least be downloaded,\n"""
+                    """and only files that not already exist or changed will be downloaded.\n""",
             "required": False,
-            "default": None
+            "default": None,
+            "type": str
         },
         "download-annovar-url": {
             "metavar": "Annovar url",
-            "help": """Download Annovar databases URL (see Annovar Doc)\n"""
-                    """Default: 'http://www.openbioinformatics.org/annovar/download'""",
+            "help": """Annovar databases URL (see Annovar Doc).\n""",
             "required": False,
-            "default": "http://www.openbioinformatics.org/annovar/download"
+            "default": DEFAULT_ANNOVAR_URL,
+            "type": str
         },
 
         # snpEff
@@ -730,97 +738,123 @@ arguments = {
             "metavar": "snpEff",
             "help": """Download snpEff databases within snpEff folder""",
             "required": False,
+            "default": None,
             "type": PathType(exists=None, type='dir'),
             "gooey": {
-                "widget": "DirChooser"
+                "widget": "DirChooser",
+                "options": {
+                    "default_dir": DEFAULT_DATABASE_FOLDER,
+                    "message": "Path to snpEff databases folder"
+                }
             }
         },
 
         # refSeq
         "download-refseq": {
             "metavar": "refSeq",
-            "help": """Download refSeq databases within refSeq folder""",
+            "help": """Path to refSeq databases\n"""
+                    f"""(e.g. '{DEFAULT_REFSEQ_FOLDER}').\n""",
             "required": False,
+            "default": None,
             "type": PathType(exists=None, type='dir'),
             "gooey": {
-                "widget": "DirChooser"
+                "widget": "DirChooser",
+                "options": {
+                    "default_dir": DEFAULT_DATABASE_FOLDER,
+                    "message": "Path to refGene files folder"
+                }
             }
         },
         "download-refseq-url": {
             "metavar": "refSeq url",
-            "help": """Download refSeq databases URL (see refSeq WebSite)\n"""
-                    """Default: 'http://hgdownload.soe.ucsc.edu/goldenPath'""",
+            "help": """refSeq databases URL (see refSeq WebSite)\n"""
+                    f"""(e.g. '{DEFAULT_REFSEQ_URL}')•/n""",
             "required": False,
-            "default": "http://hgdownload.soe.ucsc.edu/goldenPath"
+            "default": DEFAULT_REFSEQ_URL,
+            "type": str
         },
         "download-refseq-prefix": {
             "metavar": "refSeq prefix",
-            "help": """Check existing refSeq files in refSeq folder\n"""
-                    """Default: 'ncbiRefSeq'""",
+            "help": """Check existing refSeq files in refSeq folder.\n""",
             "required": False,
-            "default": "ncbiRefSeq"
+            "default": "ncbiRefSeq",
+            "type": str
         },
         "download-refseq-files": {
             "metavar": "refSeq files",
-            "help": """List of refSeq files to download\n"""
-                    """Default: 'ncbiRefSeq.txt,ncbiRefSeqLink.txt'""",
+            "help": """List of refSeq files to download.\n""",
             "required": False,
-            "default": "ncbiRefSeq.txt,ncbiRefSeqLink.txt"
+            "default": "ncbiRefSeq.txt,ncbiRefSeqLink.txt",
+            "type": str
         },
         "download-refseq-format-file": {
             "metavar": "refSeq format file",
-            "help": """Name of refSeq file to format in BED format\n"""
-                    """Exemple: 'ncbiRefSeq.txt'\n"""
-                    """Default: None""",
+            "help": """Name of refSeq file to convert in BED format\n"""
+                    """(e.g. 'ncbiRefSeq.txt').\n"""
+                    """Process only if not None.\n""",
             "required": False,
-            "default": None
+            "default": None,
+            "type": str
         },
         "download-refseq-include-utr5": {
-            "help": """Formating BED refSeq file including 5'UTR""",
-            "action": "store_true"
+            "help": """Formating BED refSeq file including 5'UTR.\n""",
+            "action": "store_true",
+            "default": False
         },
         "download-refseq-include-utr3": {
-            "help": """Formating BED refSeq file including 3'UTR""",
-            "action": "store_true"
+            "help": """Formating BED refSeq file including 3'UTR.\n""",
+            "action": "store_true",
+            "default": False
         },
         "download-refseq-include-chrM": {
-            "help": """Formating BED refSeq file including Mitochondiral chromosome 'chrM' or 'chrMT'""",
-            "action": "store_true"
+            "help": """Formating BED refSeq file including Mitochondiral chromosome 'chrM' or 'chrMT'.\n""",
+            "action": "store_true",
+            "default": False
         },
         "download-refseq-include-non-canonical-chr": {
-            "help": """Formating BED refSeq file including non canonical chromosomes""",
-            "action": "store_true"
+            "help": """Formating BED refSeq file including non canonical chromosomes.\n""",
+            "action": "store_true",
+            "default": False
         },
         "download-refseq-include-non-coding-transcripts": {
-            "help": """Formating BED refSeq file including non coding transcripts""",
-            "action": "store_true"
+            "help": """Formating BED refSeq file including non coding transcripts.\n""",
+            "action": "store_true",
+            "default": False
         },
         "download-refseq-include-transcript-version": {
-            "help": """Formating BED refSeq file including transcript version""",
-            "action": "store_true"
+            "help": """Formating BED refSeq file including transcript version.\n""",
+            "action": "store_true",
+            "default": False
         },
         
         # dbNSFP
         "download-dbnsfp": {
             "metavar": "dbNSFP",
-            "help": "Download dbNSFP databases within dbNSFP folder",
+            "help": """Download dbNSFP databases within dbNSFP folder"""
+                    f"""(e.g. '{DEFAULT_DATABASE_FOLDER}').\n""",
             "required": False,
+            "default": None,
             "type": PathType(exists=None, type='dir'),
             "gooey": {
-                "widget": "DirChooser"
+                "widget": "DirChooser",
+                "options": {
+                    "default_dir": DEFAULT_DATABASE_FOLDER,
+                    "message": "Path to dbNSFP databases folder"
+                }
             }
         },
         "download-dbnsfp-url": {
             "metavar": "dbNSFP url",
             "help": """Download dbNSFP databases URL (see dbNSFP website)\n"""
-                    """Default: 'https://dbnsfp.s3.amazonaws.com'""",
+                    f"""(e.g. {DEFAULT_DBNSFP_URL}').\n""",
             "required": False,
-            "default": "https://dbnsfp.s3.amazonaws.com"
+            "default": DEFAULT_DBNSFP_URL,
+            "type": str
         },
         "download-dbnsfp-release": {
             "metavar": "dnNSFP release",
             "help": """Release of dbNSFP to download (see dbNSFP website)\n"""
-                    """Default: '4.4a'""",
+                    """(e.g. '4.4a').\n""",
             "required": False,
             "default": "4.4a"
         },
@@ -828,10 +862,10 @@ arguments = {
             "metavar": "dbNSFP parquet size",
             "help": """Maximum size (Mb) of data files in Parquet folder.\n"""
                     """Parquet folder are partitioned (hive) by chromosome (sub-folder),\n"""
-                    """which contain N data files.\n"""
-                    """Default: 100""",
+                    """which contain N data files.\n""",
             "required": False,
             "default": 100,
+            "type": int,
             "gooey": {
                 "widget": "IntegerField",
                 "options": {
@@ -842,40 +876,45 @@ arguments = {
             }
         },
         "download-dbnsfp-subdatabases": {
-            "help": """Generate dbNSFP sub-databases\n"""
+            "help": """Generate dbNSFP sub-databases.\n"""
                     """dbNSFP provides multiple databases which are split onto multiple columns.\n"""
-                    """This option create a Parquet folder for each sub-database (based on columns names).""",
-            "action": "store_true"
+                    """This option create a Parquet folder for each sub-database (based on columns names).\n""",
+            "action": "store_true",
+            "default": False
         },
         "download-dbnsfp-parquet": {
-            "help": """Generate a Parquet file for each Parquet folder.""",
-            "action": "store_true"
+            "help": """Generate a Parquet file for each Parquet folder.\n""",
+            "action": "store_true",
+            "default": False
         },
         "download-dbnsfp-vcf": {
             "help": """Generate a VCF file for each Parquet folder.\n"""
-                    """Note: Need genome (see --download-genome)""",
-            "action": "store_true"
+                    """Need genome FASTA file (see --download-genome).\n""",
+            "action": "store_true",
+            "default": False
         },
         "download-dbnsfp-no-files-all": {
             "help": """Not generate database Parquet/VCF file for the entire database ('ALL').\n"""
                     """Only sub-databases files will be generated.\n"""
-                    """(see '--download-dbnsfp-subdatabases')""",
-            "action": "store_true"
+                    """(see '--download-dbnsfp-subdatabases').\n""",
+            "action": "store_true",
+            "default": False
         },
         "download-dbnsfp-add-info": {
             "help": """Add INFO column (VCF format) in Parquet folder and file.\n"""
                     """Useful for speed up full annotation (all available columns).\n"""
-                    """Increase memory and space during generation of files.""",
-            "action": "store_true"
+                    """Increase memory and space during generation of files.\n""",
+            "action": "store_true",
+            "default": False
         },
         "download-dbnsfp-row-group-size": {
             "metavar": "dnNSFP row grooup size",
-            "help": """minimum number of rows in a parquet row group (see duckDB doc).\n"""
+            "help": """Minimum number of rows in a parquet row group (see duckDB doc).\n"""
                     """Lower can reduce memory usage and slightly increase space during generation,\n"""
-                    """speed up highly selective queries, slow down whole file queries (e.g. aggregations)\n"""
-                    """Default: 100000""",
+                    """speed up highly selective queries, slow down whole file queries (e.g. aggregations).\n""",
             "required": False,
             "default": 100000,
+            "type": int,
             "gooey": {
                 "widget": "IntegerField",
                 "options": {
@@ -889,187 +928,208 @@ arguments = {
         # AlphaMissense
         "download-alphamissense": {
             "metavar": "AlphaMissense",
-            "help": "Download AlphaMissense databases within Annotations folder",
+            "help": "Path to AlphaMissense databases",
             "required": False,
+            "default": None,
             "type": PathType(exists=None, type='dir'),
             "gooey": {
-                "widget": "DirChooser"
+                "widget": "DirChooser",
+                "options": {
+                    "default_dir": DEFAULT_DATABASE_FOLDER,
+                    "message": "Path to Alphamissense databases folder"
+                }
             }
         },
         "download-alphamissense-url": {
             "metavar": "AlphaMissense url",
             "help": """Download AlphaMissense databases URL (see AlphaMissense website)\n"""
-                    """Default: 'https://storage.googleapis.com/dm_alphamissense'""",
+                    f"""(e.g. '{DEFAULT_ALPHAMISSENSE_URL}').\n""",
             "required": False,
-            "default": "https://storage.googleapis.com/dm_alphamissense"
+            "default": DEFAULT_ALPHAMISSENSE_URL,
+            "type": str
         },
 
         # Exomiser
         "download-exomiser": {
             "metavar": "Exomiser",
-            "help": """Download Exomiser databases\n"""
-                    """Folder where the Exomiser databases will be downloaded and stored.\n"""
-                    """If the folder does not exist, it will be created.""",
+            "help": """Path to Exomiser databases\n"""
+                    f"""(e.g. {DEFAULT_EXOMISER_FOLDER}).\n""",
             "required": False,
+            "default": None,
             "type": PathType(exists=None, type='dir'),
             "gooey": {
-                "widget": "DirChooser"
+                "widget": "DirChooser",
+                "options": {
+                    "default_dir": DEFAULT_DATABASE_FOLDER,
+                    "message": "Path to Exomiser databases folder"
+                }
             }
         },
         "download-exomiser-application-properties": {
             "metavar": "Exomiser application properties",
-            "help": """Exomiser Application Properties configuration file (see Exomiser website)\n"""
+            "help": """Exomiser Application Properties configuration file (see Exomiser website).\n"""
                     """This file contains configuration settings for the Exomiser tool.\n"""
                     """If this parameter is not provided, the function will attempt to locate\n"""
                     """the application properties file automatically based on the Exomiser.\n"""
-                    """Configuration information will be used to download expected releases (if no other parameters)\n"""
-                    """CADD and REMM will be downloaded only if 'path' are provided""",
+                    """Configuration information will be used to download expected releases (if no other parameters).\n"""
+                    """CADD and REMM will be downloaded only if 'path' are provided.\n""",
             "required": False,
             "default": None,
-            #"type": argparse.FileType('r'),
             "type": PathType(exists=True, type='file'),
             "gooey": {
                 "widget": "FileChooser",
                 "options": {
                     "wildcard":
                         "All files (*)|*",
+                    "options": {
+                    "default_dir": DEFAULT_EXOMISER_FOLDER,
+                    "message": "Path to Exomiser application properties file"
+                }
                 }
             }
         },
         "download-exomiser-url": {
             "metavar": "Exomiser url",
-            "help": """URL where Exomiser database files can be downloaded from.\n"""
-                    """Default: 'http://data.monarchinitiative.org/exomiser'""",
+            "help": """URL where Exomiser database files can be downloaded from\n"""
+                    f"""(e.g. '{DEFAULT_EXOMISER_URL}').\n""",
             "required": False,
-            "default": "http://data.monarchinitiative.org/exomiser"
+            "default": DEFAULT_EXOMISER_URL,
+            "type": str
         },
         "download-exomiser-release": {
             "metavar": "Exomiser release",
             "help": """Release of Exomiser data to download.\n"""
                     """If "default", "auto", or "config", retrieve from Application Properties file.\n"""
                     """If not provided (None), from Application Properties file (Exomiser data-version) \n"""
-                    """   or default '2109'\n"""
-                    """Default: None""",
+                    """or default '2109'.\n""",
             "required": False,
-            "default": None
+            "default": None,
+            "type": str
         },
         "download-exomiser-phenotype-release": {
             "metavar": "Exomiser phenoptye release",
             "help": """Release of Exomiser phenotype to download.\n"""
                     """If not provided (None), from Application Properties file (Exomiser Phenotype data-version)\n"""
-                    """   or Exomiser release\n"""
-                    """Default: None""",
+                    """or Exomiser release.\n""",
             "required": False,
-            "default": None
+            "default": None,
+            "type": str
         },
         "download-exomiser-remm-release": {
             "metavar": "Exomiser remm release",
             "help": """Release of ReMM (Regulatory Mendelian Mutation) database to download.\n"""
-                    """If "default", "auto", or "config", retrieve from Application Properties file.\n"""
-                    """Default: None""",
+                    """If "default", "auto", or "config", retrieve from Application Properties file.\n""",
             "required": False,
-            "default": None
+            "default": None,
+            "type": str
         },
         "download-exomiser-remm-url": {
             "metavar": "Exomiser remm url",
-            "help": """URL where ReMM (Regulatory Mendelian Mutation) database files can be downloaded from.\n"""
-                    """Default: 'https://kircherlab.bihealth.org/download/ReMM'""",
+            "help": """URL where ReMM (Regulatory Mendelian Mutation) database files can be downloaded from\n"""
+                    f"""(e.g. '{DEFAULT_EXOMISER_REMM_URL}').\n""",
             "required": False,
-            "default": "https://kircherlab.bihealth.org/download/ReMM"
+            "default": DEFAULT_EXOMISER_REMM_URL,
+            "type": str
         },
         "download-exomiser-cadd-release": {
             "metavar": "Exomiser cadd release",
             "help": """Release of CADD (Combined Annotation Dependent Depletion) database to download.\n"""
-                    """If "default", "auto", or "config", retrieve from Application Properties file.\n"""
-                    """Default: None""",
+                    """If "default", "auto", or "config", retrieve from Application Properties file.\n""",
             "required": False,
-            "default": None
+            "default": None,
+            "type": str
         },
         "download-exomiser-cadd-url": {
             "metavar": "Exomiser cadd url",
-            "help": """URL where CADD (Combined Annotation Dependent Depletion) database files can be downloaded from.\n"""
-                    """Default: 'https://kircherlab.bihealth.org/download/CADD'""",
+            "help": """URL where CADD (Combined Annotation Dependent Depletion) database files can be downloaded from\n"""
+                    f"""(e.g. '{DEFAULT_EXOMISER_CADD_URL}').\n""",
             "required": False,
-            "default": "https://kircherlab.bihealth.org/download/CADD"
+            "default": DEFAULT_EXOMISER_CADD_URL,
+            "type": str
         },
         "download-exomiser-cadd-url-snv-file": {
-            "metavar": "Exomiser url snv",
+            "metavar": "Exomiser url snv file",
             "help": """Name of the file containing the SNV (Single Nucleotide Variant) data\n"""
-                    """for the CADD (Combined Annotation Dependent Depletion) database.\n"""
-                    """Default: 'whole_genome_SNVs.tsv.gz'""",
+                    """for the CADD (Combined Annotation Dependent Depletion) database.\n""",
             "required": False,
-            "default": "whole_genome_SNVs.tsv.gz"
+            "default": "whole_genome_SNVs.tsv.gz",
+            "type": str
         },
         "download-exomiser-cadd-url-indel-file": {
             "metavar": "Exomiser cadd url indel",
             "help": """Name of the file containing the INDEL (Insertion-Deletion) data\n"""
-                    """for the CADD (Combined Annotation Dependent Depletion) database.\n"""
-                    """Default: 'InDels.tsv.gz'""",
+                    """for the CADD (Combined Annotation Dependent Depletion) database.\n""",
             "required": False,
-            "default": "InDels.tsv.gz"
+            "default": "InDels.tsv.gz",
+            "type": str
         },
 
         # dbSNP
         "download-dbsnp": {
             "metavar": "dnSNP",
-            "help": """Download dbSNP databases\n"""
-                    """Folder where the dbSNP databases will be downloaded and stored.\n"""
-                    """If the folder does not exist, it will be created.""",
+            "help": """Path to dbSNP databases\n"""
+                    f"""(e.g. '{DEFAULT_DBSNP_FOLDER}').\n""",
             "required": False,
+            "default": None,
             "type": PathType(exists=None, type='dir'),
             "gooey": {
-                "widget": "DirChooser"
+                "widget": "DirChooser",
+                "options": {
+                    "default_dir": DEFAULT_DATABASE_FOLDER,
+                    "message": "Path to dbSNP databases folder"
+                }
             }
         },
         "download-dbsnp-releases": {
             "metavar": "dnSNP releases",
             "help": """Release of dbSNP to download\n"""
-                    """Example: 'b152,b156'"""
-                    """Default: 'b156'""",
+                    """(e.g. 'b152', 'b152,b156').\n""",
             "required": False,
-            "default": 'b156'
+            "default": 'b156',
+            "type": str
         },
         "download-dbsnp-release-default": {
             "metavar": "dnSNP release default",
             "help": """Default Release of dbSNP ('default' symlink)\n"""
+                    """(e.g. 'b156').\n"""
                     """If None, first release to download will be assigned as default\n"""
-                    """only if it does not exists\n"""
-                    """Example: 'b156'\n"""
-                    """Default: None (first releases by default)""",
+                    """only if it does not exists.\n""",
             "required": False,
-            "default": None
+            "default": None,
+            "type": str
         },
         "download-dbsnp-url": {
             "metavar": "dbSNP url",
             "help": """URL where dbSNP database files can be downloaded from.\n"""
-                    """Default: 'https://ftp.ncbi.nih.gov/snp/archive'""",
+                    f"""(e.g. '{DEFAULT_DBSNP_URL}').\n""",
             "required": False,
-            "default": "https://ftp.ncbi.nih.gov/snp/archive"
+            "default": DEFAULT_DBSNP_URL,
+            "type": str
         },
         "download-dbsnp-url-files": {
             "metavar": "dbSNP url files",
             "help": """Dictionary that maps assembly names to specific dbSNP URL files.\n"""
                     """It allows you to provide custom dbSNP URL files for specific assemblies\n"""
-                    """instead of using the default file naming convention\n"""
-                    """Default: None""",
+                    """instead of using the default file naming convention.\n""",
             "required": False,
-            "default": None
+            "default": None,
+            "type": str
         },
         "download-dbsnp-url-files-prefix": {
             "metavar": "dbSNP url files prefix",
             "help": """String that represents the prefix of the dbSNP file name for a specific assembly.\n"""
-                    """It is used to construct the full URL of the dbSNP file to be downloaded.\n"""
-                    """Default: 'GCF_000001405'""",
+                    """It is used to construct the full URL of the dbSNP file to be downloaded.\n""",
             "required": False,
-            "default": "GCF_000001405"
+            "default": "GCF_000001405",
+            "type": str
         },
         "download-dbsnp-assemblies-map": {
             "metavar": "dbSNP assemblies map",
             "help": """dictionary that maps assembly names to their corresponding dbSNP versions.\n"""
-                    """It is used to construct the dbSNP file name based on the assembly name.\n"""
-                    """Default: {"hg19": "25", "hg38": "40"}""",
+                    """It is used to construct the dbSNP file name based on the assembly name.\n""",
             "required": False,
             "default": {"hg19": "25", "hg38": "40"},
+            "type": str,
             "gooey": {
                 "options": {
                     'initial_value': '{"hg19": "25", "hg38": "40"}'  
@@ -1079,23 +1139,26 @@ arguments = {
         "download-dbsnp-vcf": {
             "help": """Generate well-formatted VCF from downloaded file:\n"""
                     """- Add and filter contigs associated to assembly\n"""
-                    """- Normalize by splitting multiallelics """
-                    """- Need genome (see --download-genome)""",
-            "action": "store_true"
+                    """- Normalize by splitting multiallelics\n"""
+                    """- Need genome (see --download-genome)\n""",
+            "action": "store_true",
+            "default": False
         },
         "download-dbsnp-parquet": {
-            "help": """Generate Parquet file from VCF\n""",
-            "action": "store_true"
+            "help": """Generate Parquet file from VCF.\n""",
+            "action": "store_true",
+            "default": False
         },
 
         # HGMD
         "convert-hgmd": {
             "metavar": "HGMD",
-            "help": """Convert HGMD databases\n"""
+            "help": """Convert HGMD databases.\n"""
                     """Folder where the HGMD databases will be stored.\n"""
                     """Fields in VCF, Parquet and TSV will be generated.\n"""
-                    """If the folder does not exist, it will be created.""",
+                    """If the folder does not exist, it will be created.\n""",
             "required": False,
+            "default": None,
             "type": PathType(exists=None, type='dir'),
             "gooey": {
                 "widget": "DirChooser"
@@ -1103,10 +1166,10 @@ arguments = {
         },
         "convert-hgmd-file": {
             "metavar": "HGMD file",
-            "help": """File from HGMD\n"""
-                    """Name format 'HGMD_Pro_<release>_<assembly>.vcf.gz'.""",
+            "help": """File from HGMD.\n"""
+                    """Name format 'HGMD_Pro_<release>_<assembly>.vcf.gz'.\n""",
             "required": False,
-            #"type": argparse.FileType('r'),
+            "default": None,
             "type": PathType(exists=True, type='file'),
             "gooey": {
                 "widget": "FileChooser"
@@ -1114,11 +1177,13 @@ arguments = {
         },
         "convert-hgmd-basename": {
             "metavar": "HGMD basename",
-            "help": """File output basename\n"""
-                    """Generated files will be prefixed by basename.\n"""
-                    """Example: 'HGMD_Pro_MY_RELEASE'\n"""
-                    """Default: Use input file name without '.vcf.gz'""",
-            "required": False
+            "help": """File output basename.\n"""
+                    """Generated files will be prefixed by basename\n"""
+                    """(e.g. 'HGMD_Pro_MY_RELEASE')\n"""
+                    """By default (None), input file name without '.vcf.gz'.\n""",
+            "required": False,
+            "default": None,
+            "type": str
         },
 
         # Databases parameters
@@ -1127,9 +1192,9 @@ arguments = {
             "help": """Parameter file (JSON) with all databases found.\n"""
                     """Databases folders scanned are defined in config file.\n"""
                     """Structure of databases follow this structure (see doc):\n"""
-                    """   .../<database>/<release>/<assembly>/*.[parquet|vcf.gz|...]""",
+                    """.../<database>/<release>/<assembly>/*.[parquet|vcf.gz|...]\n""",
             "required": False,
-            #"type": argparse.FileType('w'),
+            "default": None,
             "type": PathType(exists=None, type=None),
             "gooey": {
                 "widget": "FileSaver",
@@ -1142,9 +1207,9 @@ arguments = {
         "generate-param-description": {
             "metavar": "param description",
             "help": """Description file (JSON) with all databases found.\n"""
-                    """Contains all databases with description of format, assembly, fields...""",
+                    """Contains all databases with description of format, assembly, fields...\n""",
             "required": False,
-            #"type": argparse.FileType('w'),
+            "default": None,
             "type": PathType(exists=None, type=None),
             "gooey": {
                 "widget": "FileSaver",
@@ -1157,59 +1222,70 @@ arguments = {
         "generate-param-releases": {
             "metavar": "param release",
             "help": """List of database folder releases to check\n"""
-                    """Examples: 'current', 'latest'\n"""
-                    """Default: 'current'""",
+                    """(e.g. 'current', 'latest').\n""",
             "required": False,
-            "default": "current"
+            "default": "current",
+            "type": str
         },
         "generate-param-formats": {
             "metavar": "param formats",
-            "help": """List of database formats to check (e.g. parquet, vcf, bed, tsv...)\n"""
-                    """Examples: 'parquet', 'parquet,vcf,bed,tsv'\n"""
-                    """Default: 'parquet'""",
+            "help": """List of database formats to check\n"""
+                    """(e.g. 'parquet', 'parquet,vcf,bed,tsv').\n""",
             "required": False,
-            "default": "parquet"
+            "default": "parquet",
+            "type": str
         },
         "generate-param-bcftools": {
-            "help": """Generate parameter file with BCFTools annotation for allowed formats\n"""
-                    """Allowed formats with BCFTools: 'vcf', 'bed'""",
-            "action": "store_true"
+            "help": """Generate parameter JSON file with BCFTools annotation for allowed formats\n"""
+                    """(i.e. 'vcf', 'bed').\n""",
+            "action": "store_true",
+            "default": False
         },
 
         # From Annovar
         "annovar-code": {
             "metavar": "Annovar code",
             "help": """Annovar code, or database name.\n"""
-                    """Usefull to name databases columns""",
+                    """Usefull to name databases columns.\n""",
             "required": False,
-            "default": None
+            "default": None,
+            "type": str
         },
         "to_parquet": {
             "metavar": "to parquet",
-            "help": """Parquet file conversion\n""",
+            "help": """Parquet file conversion.\n""",
             "required": False,
             "default": None,
+            "type": PathType(exists=None, type=None),
             "gooey": {
-                "widget": "FileSaver"
+                "widget": "FileSaver",
+                "options": {
+                    "wildcard":
+                        "HTML file (*.parquet)|*.parquet",
+                }
             }
         },
 
         # Help
         "help_md": {
             "metavar": "help markdown",
-            "help": """Help Output file in MarkDown format\n""",
+            "help": """Help Output file in MarkDown format.\n""",
             "required": False,
-            #"type": argparse.FileType('w'),
+            "default": None,
             "type": PathType(exists=None, type=None),
             "gooey": {
-                "widget": "FileSaver"
+                "widget": "FileSaver",
+                "options": {
+                    "wildcard":
+                        "HTML file (*.md)|*.md",
+                }
             }
         },
         "help_html": {
             "metavar": "help html",
-            "help": """Help Output file in HTML format\n""",
+            "help": """Help Output file in HTML format.\n""",
             "required": False,
-            #"type": argparse.FileType('w'),
+            "default": None,
             "type": PathType(exists=None, type=None),
             "gooey": {
                 "widget": "FileSaver",
@@ -1221,9 +1297,9 @@ arguments = {
         },
         "help_json_input": {
             "metavar": "help JSON input",
-            "help": """Help input file in JSON format\n""",
+            "help": """Help input file in JSON format.\n""",
             "required": False,
-            #"type": argparse.FileType('r'),
+            "default": None,
             "type": PathType(exists=True, type='file'),
             "gooey": {
                 "widget": "FileChooser",
@@ -1234,58 +1310,71 @@ arguments = {
                 }
             }
         },
+        "code_type": {
+            "metavar": "example code type",
+            "help": """Help example code type for input JSON format\n"""
+                    """(e.g. 'json', 'bash').\n""",
+            "required": False,
+            "default": "",
+            "type": str
+        },
         "help_json_input_title": {
             "metavar": "help JSON input title",
-            "help": """Help JSON input title.\n"""
-                    """Default: 'Help'\n""",
+            "help": """Help JSON input title.\n""",
             "required": False,
-            "default": "Help"
+            "default": "Help",
+            "type": str
         },
 
         # Common
         "genomes-folder": {
             "metavar": "genomes",
-            "help": """Folder containing genomes\n"""
-                    f"""Default: {DEFAULT_GENOME_FOLDER}""",
+            "help": """Folder containing genomes.\n"""
+                    f"""(e.g. '{DEFAULT_GENOME_FOLDER}'""",
             "required": False,
-            "default": f"{DEFAULT_GENOME_FOLDER}",
-            #"type": argparse.FileType('r'),
+            "default": DEFAULT_GENOME_FOLDER,
             "type": PathType(exists=True, type='dir'),
             "gooey": {
-                "widget": "DirChooser"
+                "widget": "DirChooser",
+                "options": {
+                    "default_dir": DEFAULT_GENOME_FOLDER,
+                    "message": "Path to genomes databases folder"
+                }
             }
         },
 
         # Shared
         "config": {
             "metavar": "config",
-            "help": """Configuration file\n"""
-                    """Default: {}""",
+            "help": """Configuration JSON file or JSON string.\n""",
             "required": False,
             "default": "{}",
+            "type": str,
             "gooey": {
                 "widget": "FileChooser",
                 "options": {
-                    'initial_value': ''  
+                    'initial_value': '{}'  
                 }
             }
         },
         "assembly": {
             "metavar": "assembly",
             "help": """Default assembly\n"""
-                    """Default: 'hg19'""",
+                    f"""(e.g. '{DEFAULT_ASSEMBLY}'.\n""",
             "required": False,
-            "default": "hg19"
+            "default": DEFAULT_ASSEMBLY,
+            "type": str
         },
         "threads": {
             "metavar": "threads",
-            "help": """Specifies the number of threads to use for processing HOWARD.\n"""
+            "help": """Specify the number of threads to use for processing HOWARD.\n"""
                     """It determines the level of parallelism,\n"""
                     """either on python scripts, duckdb engine and external tools.\n"""
-                    """It and can help speed up the process/tool\n"""
-                    """Use -1 to use all available CPU/cores\n"""
-                    """Default: -1""",
+                    """It and can help speed up the process/tool.\n"""
+                    """Use -1 to use all available CPU/cores.\n"""
+                    """Either non valid value is 1 CPU/core.\n""",
             "required": False,
+            "type": int,
             "default": -1,
             "gooey": {
                 "widget": "IntegerField",
@@ -1298,23 +1387,24 @@ arguments = {
         },
         "memory": {
             "metavar": "memory",
-            "help": """Specify the memory to use.\n"""
+            "help": """Specify the memory to use in format FLOAT[kMG]\n"""
+                    """(e.g. '8G', '12.42G', '1024M').\n"""
                     """It determines the amount of memory for duckDB engine and external tools\n"""
-                    """(especially for JAR prorams).\n"""
-                    """It can help to prevvent 'out of memory' failures.\n"""
-                    """Format: (FLOAT[kMG])\n"""
-                    """Examples: '8G', '12.42G', '1024M'\n"""
-                    """Default: None (80%% of RAM for duckDB)""",
+                    """(especially for JAR programs).\n"""
+                    """It can help to prevent 'out of memory' failures.\n"""
+                    """By default (None) is 80%% of RAM (for duckDB).\n""",
             "required": False,
+            "type": str,
             "default": None
         },
         "chunk_size": {
             "metavar": "chunk size",
             "help": """Number of records in batch to export output file.\n"""
                     """The lower the chunk size, the less memory consumption.\n"""
-                    """For Parquet partitioning, files size will depend on the chunk size.\n"""
-                    """default: 1000000""",
+                    """For Parquet partitioning, files size will depend on the chunk size.\n""",
+            "required": False,
             "default": 1000000,
+            "type": int,
             "gooey": {
                 "widget": "IntegerField",
                 "options": {
@@ -1326,9 +1416,10 @@ arguments = {
         },
         "tmp": {
             "metavar": "Temporary folder",
-            "help": """Temporary folder.\n"""
-                    """Especially for duckDB, default '.tmp' (see doc).\n"""
-                    """default: None""",
+            "help": """Temporary folder (e.g. '/tmp').\n"""
+                    """By default, '.tmp' for duckDB (see doc),"""
+                    """external tools and python scripts.\n""",
+            "required": False,
             "default": None,
             "type": PathType(exists=True, type='dir'),
             "gooey": {
@@ -1339,10 +1430,9 @@ arguments = {
             "metavar": "duckDB settings",
             "help": """DuckDB settings (see duckDB doc) as JSON (string or file).\n"""
                     """These settings have priority (see options 'threads', 'tmp'...).\n"""
-                    """Examples: '{"TimeZone": "GMT", "temp_directory": "/tmp/duckdb", "threads": 8}'\n"""
-                    """default: None""",
+                    """Examples: '{"TimeZone": "GMT", "temp_directory": "/tmp/duckdb", "threads": 8}'.\n""",
+            "required": False,
             "default": None,
-            #"type": argparse.FileType('r'),
             "type": PathType(exists=True, type='file'),
             "gooey": {
                 "widget": "FileChooser",
@@ -1362,11 +1452,23 @@ arguments = {
                     """- WARNING: An indication that something unexpected happened.\n"""
                     """- ERROR: Due to a more serious problem.\n"""
                     """- CRITICAL: A serious error.\n"""
-                    """- NOTSET: All messages.\n"""
-                    """Default: INFO""",
+                    """- NOTSET: All messages.\n""",
             "required": False,
             "choices": ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET'],
             "default": "INFO",
+            "type": str,
+            "gooey": {
+                "widget": "Dropdown",
+                "options": {}
+            }
+        },
+        "access": {
+            "metavar": "access mode",
+            "help": """Access mode to variants file or database.\n"""
+                    """Either 'RW' for Read and Write, or 'RO' for Read Only.\n""",
+            "default": 'RW',
+            "type": str,
+            "choices": ["RW", "RO"],
             "gooey": {
                 "widget": "Dropdown",
                 "options": {}
@@ -1375,10 +1477,9 @@ arguments = {
         "log": {
             "metavar": "log",
             "help": """Logs file\n"""
-                    """Example: 'my.log'\n"""
-                    """Default: None""",
+                    """(e.g. 'my.log').\n""",
+            "required": False,
             "default": None,
-            #"type": argparse.FileType('w'),
             "type": PathType(exists=None, type='file'),
             "gooey": {
                 "widget": "FileSaver"
@@ -1386,15 +1487,18 @@ arguments = {
         },
         "quiet": {
             "help": argparse.SUPPRESS,
-            "action": "store_true"
+            "action": "store_true",
+            "default": False
         },
         "verbose": {
             "help": argparse.SUPPRESS,
-            "action": "store_true"
+            "action": "store_true",
+            "default": False
         },
         "debug": {
             "help": argparse.SUPPRESS,
-            "action": "store_true"
+            "action": "store_true",
+            "default": False
         },
 
     }
@@ -1767,14 +1871,15 @@ commands_arguments = {
         "help": """Help tools""",
         "epilog": """Usage examples:\n"""
                     """   howard help --help_md=docs/help.md --help_html=docs/help.html\n"""
-                    """   howard help --help_json_input=docs/help.config.json --help_json_input_title='HOWARD Configuration' --help_md=docs/help.config.md --help_html=docs/help.config.html\n"""
-                    """   howard help --help_json_input=docs/help.param.json --help_json_input_title='HOWARD Parameters' --help_md=docs/help.param.md --help_html=docs/help.param.html """,
+                    """   howard help --help_json_input=docs/help.config.json --help_json_input_title='HOWARD Configuration' --help_md=docs/help.config.md --help_html=docs/help.config.html --code_type='json'\n"""
+                    """   howard help --help_json_input=docs/help.param.json --help_json_input_title='HOWARD Parameters' --help_md=docs/help.param.md --help_html=docs/help.param.html --code_type='json'""",
         "groups": {
             "main": {
                 "help_md": False,
                 "help_html": False,
                 "help_json_input": False,
-                "help_json_input_title": False
+                "help_json_input_title": False,
+                "code_type": False
             }
         }
     }

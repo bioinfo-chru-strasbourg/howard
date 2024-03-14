@@ -3,102 +3,83 @@
     "HOWARD Configuration JSON file defined default configuration regarding resources (e.g. threads, memory), settings (e.g. verbosity, temporary files), default folders (e.g. for databases) and paths to external tools."
   ],
   "threads": {
-    "__help": [
-      "Number of threads to use for processing HOWARD. It determines the level of parallelism, either on python scripts, duckDB engine and external tools. It and can help speed up the process/tool",
-      "Use -1 to use all available CPU/cores."
-    ],
-    "__default": "-1",
-    "__examples": [
-      "- -1 (for all available CPU/cores)",
-      "- 8 (for 8 CPU/cores)"
+    "__examples_code": [
+      "# Automatically detect all available CPU/cores",
+      "\"threads\": -1",
+      "# Define 8 CPU/cores",
+      "\"threads\": 8"
     ]
   },
   "memory": {
-    "__help": [
-      "Specify the memory to use. It determines the amount of memory for duckDB engine and external tools (especially for JAR prorams). It can help to prevent 'out of memory' failures."
-    ],
     "__format": "FLOAT[kMG]",
-    "__default": "None (80% of RAM for duckDB)",
-    "__examples": [
-      "- 8G (for 8Go of memory)",
-      "- 1024M (for 1Go of memory)",
-      "- 24.8G (for 24Go and 800Mo of memory)"
+    "__examples_code": [
+      "# for 8Go of memory",
+      "\"memory\": \"8G\"",
+      "# for 1Go of memory",
+      "\"memory\": \"1024M\"",
+      "# for 24Go and 800Mo of memory",
+      "\"memory\": \"24.8G\""
     ]
   },
   "assembly": {
-    "__help": [
-      "Default assembly. This parameter will by overwritten in the paramter JSON file."
-    ],
-    "__default": "hg19",
-    "__examples": [
-      "- \"hg19\" (for Homo Sapiens hg19/GRCh37 assembly)",
-      "- \"hg38\" (for Homo Sapiens hg38/GRCh38 assembly)",
-      "- \"ailMel1.99\" (for Giant Panda assembly)"
+    "__examples_code": [
+      "# for Homo Sapiens hg19/GRCh37 assembly",
+      "\"assembly\": \"hg19\"",
+      "# for Homo Sapiens hg38/GRCh38 assembly",
+      "\"assembly\": \"hg38\"",
+      "# for Giant Panda assembly",
+      "\"assembly\": \"ailMel1.99\""
     ]
   },
   "verbosity": {
-    "__help": [
-      "Verbosity level, such as:",
-      "- DEBUG: Detailed information, typically of interest only when diagnosing problems.",
-      "- INFO: Confirmation that things are working as expected.",
-      "- WARNING: An indication that something unexpected happened, or indicative of some problem in the near future (e.g. ‘disk space low’). The software is still working as expected.",
-      "- ERROR: Due to a more serious problem, the software has not been able to perform some function.",
-      "- CRITICAL: A serious error, indicating that the program itself may be unable to continue running.",
-      "- NOTSET: All messages."
+    "__examples_code": [
+      "# Default verbosity",
+      "\"verbosity\": \"INFO\"",
+      "# ERROR level (quiet mode)",
+      "\"verbosity\": \"ERROR\"",
+      "# For debug",
+      "\"verbosity\": \"DEBUG\""
     ],
-    "__examples": "CRITICAL, ERROR, WARNING, INFO, DEBUG or NOTSET",
     "__default": "INFO"
   },
   "tmp": {
-    "__help": [
-      "Temporary folder, espacially for duckDB (see doc), external tools and python scripts."
-    ],
-    "__format": "Path",
-    "__default": "None",
-    "__examples": [
-      "- /tmp",
-      "- .tmp"
+    "__examples_code": [
+      "# System temporary folder",
+      "\"tmp\": \"/tmp\"",
+      "# Current work directory",
+      "\"tmp\": \".tmp\""
     ]
   },
   "access": {
-    "__help": [
-      "Access mode to variants file or database.Either 'RW' for Read and Write, or 'RO' for Read Only."
-    ],
-    "__format": "either 'RO' or 'RW'",
-    "__default": "RW",
-    "__examples": [
-      "- RO",
-      "- RW"
+    "__examples_code": [
+      "# Read and Write mode",
+      "\"access\": \"RW\"",
+      "# Read only mode",
+      "\"access\": \"RO\""
     ]
   },
   "duckdb_settings": {
-    "__help": [
-      "DuckDB settings (see duckDB doc) as JSON (string or file). These settings have priority (see options 'threads', 'tmp'...)."
-    ],
-    "__examples": [
-      "- {\"TimeZone\": \"GMT\", \"temp_directory\": \"/tmp/duckdb\", \"threads\": 8}",
-      "- /path/to/duckdb_config.json"
-    ],
-    "__default": "{}"
+    "__examples_code": [
+      "# DuckDB settings JSON file",
+      "\"duckdb_settings\": \"/path/to/duckdb_config.json\"",
+      "# JSON string for Time zone, temporary directory and threads for duckDB",
+      "\"duckdb_settings\": {\"TimeZone\": \"GMT\", \"temp_directory\": \"/tmp/duckdb\", \"threads\": 8}"
+    ]
   },
   "chunk_size": {
-    "__help": [
-      "Number of records in batch to export output file. The lower the chunk size, the less memory consumption. For Parquet partitioning, files size will depend on the chunk size."
-    ],
-    "__default": "1000000",
-    "__examples": [
-      "- 1000000",
-      "- 100000"
+    "__examples_code": [
+      "# Chunk size of 1.000.000 by default",
+      "\"chunk_size\": 1000000",
+      "# Smaller chunk size to reduce Parquet file size and memory usage",
+      "\"chunk_size\": 100000"
     ]
   },
   "log": {
-    "__help": [
-      "Log file."
-    ],
-    "__default": "None",
-    "__examples": [
-      "- my.log",
-      "- /tmp/my.log"
+    "__examples_code": [
+      "# Relative path to log file",
+      "\"log\": \"my.log\"",
+      "# Full path to log file",
+      "\"log\": \"/tmp/my.log\""
     ]
   },
   "folders": {
@@ -107,28 +88,76 @@
     ],
     "databases": {
       "__help": [
-        "Default folders for databases that follows the specific database HOWARD format. These folders will be used in HOWARD tools to autodetect databases by their name and using assembly."
+        "Default folders for databases that follows the specific database HOWARD format. These folders will be used in HOWARD tools to autodetect databases by their name and using assembly. Within database folders, multiple releases can be provides (e.g. 'b152' and 'b156' for dbSNP and 'hg19' assembly within folder '~/howard/databases/dbsnp/current/hg19', in 2 subfolders resp.)"
       ],
-      "__format": "/path/to/databases/db_name/db_release/assembly/database_file",
+      "__format": "/path/to/databases/<db_name>/<db_release>/<assembly>/<database_files>",
+      "__examples_code": [
+        "# Example of a configuration for databases folders",
+        "\"databases\": {",
+        "   \"genomes\": \"~/howard/databases/genomes/current\",",
+        "   \"annotations\": [",
+        "      \"~/howard/databases/annotations/current\",",
+        "      \"~/howard/databases/dbnsfp/current\",",
+        "      \"~/howard/databases/dbsnp/current\"",
+        "   ],",
+        "   \"parquet\": [",
+        "      \"~/howard/databases/annotations/current\"",
+        "   ],",
+        "   \"bcftools\": [",
+        "      \"~/howard/databases/bcftools/current\"",
+        "   ],",
+        "   \"annovar\": \"~/howard/databases/annovar/current\",",
+        "   \"snpeff\": \"~/howard/databases/snpeff/current\",",
+        "   \"exomiser\": \"~/howard/databases/exomiser/current\"",
+        "}"
+      ],
+      "genomes": {
+        "__help": [
+          "Genome folder with, for each assembly, FASTA files, indexes, and all files generated by pygenome module."
+        ],
+        "__type": "Path",
+        "__format": "A folder path (without assembly)",
+        "__default": "~/howard/databases/genomes/current",
+        "__examples_code": [
+          "# Path to genomes folder",
+          "\"genomes\": \"~/howard/databases/genomes/current\""
+        ]
+      },
       "annotations": {
         "__help": [
           "Annotation databases folders that contains databases in various format such as Parquet, VCF, duckDB and TSV."
         ],
+        "__type": "Path",
         "__format": "a list of folder path (without assembly)",
         "__default": "[\"~/howard/databases/annotations/current\"]",
-        "__examples": [
-          "- [\"~/howard/databases/annotations/current/\"]",
-          "- [\"~/howard/databases/annotations/current/\",\"~/howard/databases/dejavu/current/\",\"~/howard/databases/dbnsfp/current/\"]"
+        "__examples_code": [
+          "# Uniq folder with multiple annotations for Parquet annotation method, or other External tools",
+          "\"annotations\": [",
+          "   \"~/howard/databases/annotations/current\"",
+          "]",
+          "# Combinason of 2 folders with multiple annotations for Parquet annotation method, or other External tools",
+          "\"annotations\": [",
+          "   \"~/howard/databases/annotations/current\",",
+          "   \"~/howard/databases/dejavu/current\",",
+          "   \"~/howard/databases/dbnsfp/current\"",
+          "]"
         ]
       },
       "parquet": {
         "__help": ["Annotation databases folders that contains databases in Parquet format."],
         "__format": "a list of folder path (without assembly)",
         "__default": "[\"~/howard/databases/annotations/current\"]",
-        "__examples": [
-          "- [\"~/howard/databases/parquet/current/\"]",
-          "- [\"~/howard/databases/annotations/current/\"]",
-          "- [\"~/howard/databases/parquet/current/\",\"~/howard/databases/dejavu/current/\"]"
+        "__examples_code": [
+          "# Uniq folder with multiple annotations for Parquet annotation method",
+          "\"annotations\": [",
+          "   \"~/howard/databases/annotations/current\"",
+          "]",
+          "# Combinason of 2 folders with multiple annotations for Parquet annotation method",
+          "\"annotations\": [",
+          "   \"~/howard/databases/annotations/current\",",
+          "   \"~/howard/databases/dejavu/current\",",
+          "   \"~/howard/databases/dbnsfp/current\"",
+          "]"
         ]
       },
       "bcftools": {
@@ -137,9 +166,16 @@
         ],
         "__format": "a list of folder path (without assembly)",
         "__default": "[\"~/howard/databases/bcftools/current\"]",
-        "__examples": [
-          "- [\"~/howard/databases/bcftools/current/\"]",
-          "- [\"~/howard/databases/bcftools/current/\",\"~/howard/databases/dejavu/current/\"]"
+        "__examples_code": [
+          "# Uniq folder with multiple VCF and BED files for BCFTools annotation",
+          "\"bcftools\": [",
+          "   \"~/howard/databases/bcftools/current\"",
+          "]",
+          "# Combinason of 2 folders with multiple VCF and BED files for BCFTools annotation",
+          "\"bcftools\": [",
+          "   \"~/howard/databases/bcftools/current\",",
+          "   \"~/howard/databases/dejavu/current\"",
+          "]"
         ]
       },
       "annovar": {
@@ -148,9 +184,16 @@
         ],
         "__format": "a list of folder path (without assembly)",
         "__default": "[\"~/howard/databases/annovar/current\"]",
-        "__examples": [
-          "- [\"~/howard/databases/annovar/current/\"]",
-          "- [\"~/howard/databases/annovar/current/\",\"~/howard/databases/annovar/homemade/\"]"
+        "__examples_code": [
+          "# Uniq folder with multiple Annovar TXT files for Annovar annotation",
+          "\"annovar\": [",
+          "   \"~/howard/databases/annovar/current/\"",
+          "]",
+          "# Combinason of 2 folders with multiple Annovar TXT files for Annovar annotation",
+          "\"annovar\": [",
+          "   \"~/howard/databases/annovar/current/\",",
+          "   \"~/howard/databases/annovar/homemade/\"",
+          "]"
         ]
       },
       "snpeff": {
@@ -159,8 +202,9 @@
         ],
         "__format": "A folder path (without assembly)",
         "__default": "~/howard/databases/snpeff/current",
-        "__examples": [
-          "- \"~/howard/databases/snpeff/current/\""
+        "__examples_code": [
+          "# Path to snpEff database folder",
+          "\"snpeff\": \"~/howard/databases/snpeff/current/\""
         ]
       },
       "exomiser": {
@@ -169,8 +213,20 @@
         ],
         "__format": "A folder path (without assembly)",
         "__default": "~/howard/databases/exomiser/current",
-        "__examples": [
-          "- \"~/howard/databases/exomiser/current/\""
+        "__examples_code": [
+          "# Path to Exomiser database folder",
+          "\"exomiser\": \"~/howard/databases/exomiser/current/\""
+        ]
+      },
+      "refseq": {
+        "__help": [
+          "Annotation databases folders for refSeq annotation."
+        ],
+        "__format": "A folder path (without assembly)",
+        "__default": "~/howard/databases/refseq/current",
+        "__examples_code": [
+          "# Path to refSeq files folder",
+          "\"refseq\": \"~/howard/databases/refseq/current/\""
         ]
       }
     }
@@ -179,29 +235,51 @@
     "__help": [
       "External tools paths that can be defined as path to a binary or a dict including the binary type (such as \"bin\", \"jar\", \"perl\")."
     ],
-    "__examples": [
-      "- \"/path/to/tool/bin/tool.bin\"",
-      "- {\"bin\": \"/path/to_tool/bin/tool.sh\"}",
-      "- {\"bin\": \"/path/to_tool/bin/java\"}, {\"perl\": \"/path/to_tool/bin/tool.pl\"}"
+    "__examples_code": [
+      "# Example of a configuration for tools, with env $PATH, full path and path with type",
+      "\"tools\": {",
+      "   \"bcftools\": \"bcftools\",",
+      "   \"bgzip\": \"bgzip\",",
+      "   \"java\": \"/usr/bin/java\",",
+      "   \"snpeff\": \"~/howard/tools/snpeff/current/bin/snpEff.jar\",",
+      "   \"annovar\": {\"jar\": \"~/howard/tools/annovar/current/bin/table_annovar.pl\"},",
+      "   \"exomiser\": {\"jar\": \"~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar}\"",
+      "}"
     ],
     "bcftools": {
       "__help": [
         "BCFTools binary (see https://samtools.github.io/bcftools/)."
       ],
-      "__default": "~/howard/tools/bcftools/current/bin/bcftools",
-      "__examples": [
-        "- \"~/howard/tools/bcftools/current/bin/bcftools\"",
-        "- {\"bin\": \"~/howard/tools/bcftools/current/bin/bcftools\"}"
+      "__default": "bcftools",
+      "__examples_code": [
+        "# Path to binary in $PATH env variable",
+        "\"bcftools\": \"bcftools\"",
+        "# Path to binary as a dict with binary type 'bin'",
+        "\"bcftools\": {\"bin\": \"~/howard/tools/bcftools/current/bin/bcftools\"}"
       ]
     },
     "bgzip": {
       "__help": [
         "BGZip binary (see https://samtools.github.io/bcftools/)."
       ],
-      "__default": "~/howard/tools/htslib/current/bin/bgzip",
-      "__examples": [
-        "- \"~/howard/tools/htslib/current/bin/bgzip\"",
-        "- {\"bin\": \"~/howard/tools/htslib/current/bin/bgzip\"}"
+      "__default": "bgzip",
+      "__examples_code": [
+        "# Path to binary in $PATH env variable",
+        "\"bgzip\": \"bgzip\"",
+        "# Path to binary as a dict with binary type 'bin'",
+        "\"bgzip\": {\"bin\": \"~/howard/tools/htslib/current/bin/bgzip\"}"
+      ]
+    },
+    "java": {
+      "__help": [
+        "Java binary (see https://www.java.com)."
+      ],
+      "__default": "java",
+      "__examples_code": [
+        "# Path to binary in $PATH env variable",
+        "\"java\": \"java\"",
+        "# Path to binary as a dict with binary type 'bin'",
+        "\"java\": {\"bin\": \"/usr/bin/java\"}"
       ]
     },
     "snpeff": {
@@ -209,9 +287,9 @@
         "snpEff binary (see https://pcingola.github.io/SnpEff/)."
       ],
       "__default": "~/howard/tools/snpeff/current/bin/snpEff.jar",
-      "__examples": [
-        "- \"~/howard/tools/snpeff/current/bin/snpEff.jar\"",
-        "- {\"jar\": \"~/howard/tools/snpeff/current/bin/snpEff.jar\"}"
+      "__examples_code": [
+        "# Path to binary as a dict with binary type 'jar'",
+        "\"snpeff\": {\"jar\": \"~/howard/tools/snpeff/current/bin/snpEff.jar\"}"
       ]
     },
     "annovar": {
@@ -219,9 +297,9 @@
         "ANNOVAR perl script (see https://annovar.openbioinformatics.org/)."
       ],
       "__default": "~/howard/tools/annovar/current/bin/table_annovar.pl",
-      "__examples": [
-        "- \"~/howard/tools/annovar/current/bin/table_annovar.pl\"",
-        "- {\"perl\": \"~/howard/tools/annovar/current/bin/table_annovar.pl\"}"
+      "__examples_code": [
+        "# Path to binary as a dict with binary type 'perl'",
+        "\"annovar\": {\"jar\": \"~/howard/tools/annovar/current/bin/table_annovar.pl\"}"
       ]
     },
     "exomiser": {
@@ -229,20 +307,9 @@
         "Exomiser binary (see https://www.sanger.ac.uk/tool/exomiser/)."
       ],
       "__default": "~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar",
-      "__examples": [
-        "- \"~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar\"",
-        "- {\"jar\": \"~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar\"}"
-      ]
-    },
-    "java": {
-      "__help": [
-        "Java binary (see https://www.java.com)."
-      ],
-      "__default": "~/howard/tools/java/current/bin/java",
-      "__examples": [
-        "- \"~/howard/tools/java/current/bin/java\"",
-        "- \"java\"",
-        "- {\"bin\": \"/usr/bin/java\"}"
+      "__examples_code": [
+        "# Path to binary as a dict with binary type 'jar'",
+        "\"snpeff\": {\"jar\": \"~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar\"}"
       ]
     }
   }

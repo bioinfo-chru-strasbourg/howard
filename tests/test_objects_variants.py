@@ -1819,7 +1819,7 @@ def test_prioritization():
         # Construct config dict
         config = {
             "prioritization": {
-                "config_profiles": tests_data_folder + "/prioritization_profiles.json"
+                "prioritizations": tests_data_folder + "/prioritization_profiles.json"
                 }
             }
         
@@ -1925,7 +1925,7 @@ def test_prioritization_full_unsorted():
         # Construct config dict
         config = {
             "prioritization": {
-                "config_profiles": tests_data_folder + "/prioritization_profiles.json"
+                "prioritizations": tests_data_folder + "/prioritization_profiles.json"
                 }
             }
         
@@ -2028,7 +2028,7 @@ def test_prioritization_varank():
         # Construct config dict
         config = {
             "prioritization": {
-                "config_profiles": "config/prioritization_profiles.json"
+                "prioritizations": "config/prioritization_profiles.json"
                 }
             }
 
@@ -2076,7 +2076,7 @@ def test_prioritization_no_profiles():
     # Construct config dict
     config = {
         "prioritization": {
-            "config_profiles": None
+            "prioritizations": None
             }
         }
     # Create object
@@ -2103,7 +2103,7 @@ def test_prioritization_no_pzfields():
         # Construct config dict
         config = {
             "prioritization": {
-                "config_profiles": "config/prioritization_profiles.json"
+                "prioritizations": "config/prioritization_profiles.json"
                 }
             }
 
@@ -2149,7 +2149,7 @@ def test_prioritization_no_infos():
         # Construct config dict
         config = {
             "prioritization": {
-                "config_profiles": tests_data_folder + "/prioritization_profiles.json"
+                "prioritizations": tests_data_folder + "/prioritization_profiles.json"
                 }
             }
         

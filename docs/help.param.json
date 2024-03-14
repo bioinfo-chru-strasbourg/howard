@@ -2,7 +2,53 @@
   "__help": [
     "HOWARD Parameters JSON file defined parameters to process annotations, prioritization, calculations, convertions and queries."
   ],
-  "annotations": {
+  "__code_type": "json",
+  "__examples_code": [
+    "# Parameters for annotation, calculation, prioritization, HGVS annotation...",
+    "{",
+    "   \"annotation\": {",
+    "      \"parquet\": {",
+    "         \"annotations\": {",
+    "            \"/path/to/database1.parquet\": {",
+    "               ...",
+    "            },",
+    "            ...",
+    "         }",
+    "      }",
+    "      \"annovar\": {",
+    "         \"annotations\": {",
+    "            \"annovar_keyword1\": {",
+    "               ...",
+    "            },",
+    "            ...",
+    "         }",
+    "      }",
+    "   },",
+    "   \"calculation\": {",
+    "      \"operation1\": null,",
+    "      \"operation2\": {",
+    "        \"options\": {",
+    "          \"option1\": \"value1\",",
+    "          \"option2\": \"value2\"",
+    "          ...",
+    "        }",
+    "        ...",
+    "      }",
+    "   },",
+    "   \"prioritization\": {",
+    "      \"prioritizations\": \"config/prioritization_profiles.json\",",
+    "      \"profiles\": [\"GENOME\", \"GERMLINE\"],",
+    "      \"default_profile\": \"GERMLINE\",",
+    "      \"pzfields\": [\"PZScore\", \"PZFlag\", \"PZComment\"],",
+    "      \"prioritization_score_mode\": \"VaRank\"",
+    "   },",
+    "   \"hgvs\": {",
+    "      \"full_format\": true,",
+    "      \"use_exon\": true",
+    "   }",
+    "}"
+  ],
+  "annotation": {
     "__help": [
       "Annotation process using HOWARD algorithms or external tools.",
       "For HOWARD Parquet algorithm, specify the list of database files available (formats such as Parquet, VCF, TSV, duckDB, JSON). This parameter enables users to select specific database fields and optionally rename them. Use 'INFO' keyword to select all fields within the database. If a full path is not provided, the system will automatically detect files within database folders (see Configuration doc) and assembly (see Parameter option).",
@@ -21,7 +67,7 @@
       "   }",
       "   \"annovar\": {",
       "      \"annotations\": {",
-      "         \"/path/to/database1.txt\": {",
+      "         \"annovar_keyword1\": {",
       "            ...",
       "         },",
       "         ...",
@@ -283,7 +329,7 @@
         "   \"update\": True",
         "}"
       ],
-      "update": {
+      "annotations_update": {
         "__help": [
           "Update option for annotation (only for Parquet annotation). If True, annotation fields will be removed and re-annotated. These options will be applied to all annotation databases."
         ],
@@ -292,7 +338,7 @@
           "\"update\": True"
         ]
       },
-      "append": {
+      "annotations_append": {
         "__help": [
           "Append option for annotation (only for Parquet annotation). If True, annotation fields will be annotated only if not annotation exists for the variant. These options will be applied to all annotation databases."
         ],
@@ -302,5 +348,244 @@
         ]
       }
     }
+  },
+  "calculation": {
+    "__help": [
+      "Calculation process operations that are defiend in a Calculation Configuration JSON file. List available calculation operations with possible options (see [Calculation JSON file](help.calculation.md) help)."
+    ],
+    "__code_type": "json",
+    "__examples_code": [
+      "# Calculation with operations for generate variant_id and variant type, extract HGVS from snpEff annotation, select NOMEN from snpEff HGVS with a list of transcripts of preference",
+      "\"calculation\": {",
+      "  \"variant_id\": null,",
+      "  \"vartype\": null,",
+      "  \"snpeff_hgvs\": null,",
+      "  \"NOMEN\": {",
+      "    \"options\": {",
+      "      \"hgvs_field\": \"snpeff_hgvs\",",
+      "      \"transcripts\": \"tests/data/transcripts.tsv\"",
+      "    }",
+      "  }",
+      "}"
+    ]
+  },
+  "prioritization": {
+    "__help": [
+      "Prioritization process use a JSON configuration file that defines all profiles that can be used. By default, all profiles will be calculated from the JSON configuration file, and the first profile will be considered as default. Proritization annotations (INFO/tags) will be generated depending of a input list (default 'PZScore' and 'PZFlag'), for all profiles (e.g. 'PZScore_GERMLINE' for 'GERMLINE' profile) and for default profile (e.g. 'PZScore' for default). Prioritization score mode is 'HOWARD' by default."
+    ],
+    "__code_type": "json",
+    "__examples_code": [
+      "# Prioritization with 'GENOME' and 'GERMLINE' (default) profiles, from a list of configured profiles, only 3 prioritization fields returned, and score calculated in 'VaRank' mode",
+      "\"prioritization\": {",
+      "  \"prioritizations\": \"config/prioritization_profiles.json\",",
+      "  \"profiles\": [\"GENOME\", \"GERMLINE\"],",
+      "  \"default_profile\": \"GERMLINE\",",
+      "  \"pzfields\": [\"PZScore\", \"PZFlag\", \"PZComment\"],",
+      "  \"prioritization_score_mode\": \"VaRank\"",
+      "}"
+    ],
+    "prioritizations": {
+      "__help": [
+        "Prioritization configuration profiles JSON file defining profiles to calculate. All configured profiles will be calculated by default (see 'profiles' parameter). First profile will be considered as 'default' if none are provided (see 'default_profile' parameter). Default score calculation mode is 'HOWARD'. This option refers to the quick prioritization command line parameter `--prioritizations`."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Prioritization configuration profile JSON file",
+        "\"prioritizations\": \"config/prioritization_profiles.json\""
+      ]
+    },
+    "profiles": {
+      "__help": [
+        "Prioritization profiles to consider, from the list of configured profiles. If empty, all configured profiles will be calculated. First profile will be considered as 'default' if none are provided (see 'default_profile' parameter). Prioritization annotations (INFO/tags) will be generated for all these profiles (e.g. 'PZScore_GERMLINE' for 'GERMLINE' profile)."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Prioritization with 'GERMLINE' profile only",
+        "\"profiles\": [\"GERMLINE\"]",
+        "# Prioritization with 'GENOME' and 'GERMLINE' profiles",
+        "\"profiles\": [\"GENOME\", \"GERMLINE\"]"
+      ]
+    },
+    "default_profile": {
+      "__help": [
+        "Prioritization default profile from the list of processed profiles. Prioritization annotations (INFO/tags) will be generated for this default profile (e.g. 'PZScore', 'PZFlags')."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Prioritization default profile 'GERMLINE'",
+        "\"default_profile\": \"GERMLINE\""
+      ]
+    },
+    "pzfields": {
+      "__help": [
+        "Prioritization annotations (INFO/tags) to generate. By default 'PZScore', 'PZFlags'.",
+        "Prioritization fields can be selected from:",
+        "- PZScore: calculated score from all passing filters, depending of the mode",
+        "- PZFlag: final flag ('PASS' or 'FILTERED'), with strategy that consider a variant is filtered as soon as at least one filter do not pass. By default, the variant is considered as 'PASS' (no filter pass)",
+        "- PZComment: concatenation of all passing filter comments",
+        "- PZTags: combinason of score, flags and comments in a tags format (e.g. 'PZFlag#PASS|PZScore#15|PZComment#Described on ...')",
+        "- PZInfos: information about passing filter criteria"
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Prioritization annotations (INFO/tags) list",
+        "\"pzfields\": [\"PZScore\", \"PZFlag\", \"PZComment\"]"
+      ]
+    },
+    "prioritization_score_mode": {
+      "__help": [
+        "Prioritization score can be calculated following multiple mode. The HOWARD mode will increment scores of all passing filters (default). The VaRank mode will select the maximum score from all passing filters."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Prioritization score calculation mode 'HOWARD'",
+        "\"prioritization_score_mode\": \"HOWARD\"",
+        "# Prioritization score calculation mode 'VaRank'",
+        "\"prioritization_score_mode\": \"VaRank\""
+      ]
+    }
+  },
+  "hgvs": {
+    "__help": [
+      "HOWARD annotates variants with HGVS annotation using HUGO HGVS internation Sequence Variant Nomenclature (http://varnomen.hgvs.org/). Annotation refere to refGene and genome to generate HGVS nomenclature for all available transcripts. This annotation add 'hgvs' field into VCF INFO column of a VCF file. Several options are available, to add gene, exon and protein information, to generate a 'full format' detailed annotation, to choose codon format."
+    ],
+    "__code_type": "json",
+    "__examples_code": [
+      "# HGVS annotation  with operations for generate variant_id and variant type, extract HGVS from snpEff annotation, select NOMEN from snpEff HGVS with a list of transcripts of preference",
+      "\"hgvs\": {",
+      "  \"full_format\": true,",
+      "  \"use_exon\": true",
+      "}"
+    ],
+    "use_gene" : {
+      "__help": [
+        "Add Gene information to generate HGVS annotation (e.g. 'NM_152232**(TAS1R2)**:c.231T>C')."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Use Gene in HGVS annotation",
+        "\"use_gene\": true"
+      ]
+    },
+    "use_exon" : {
+      "__help": [
+        "Add Exon information to generate HGVS annotation (e.g. 'NM_152232(exon2):c.231T>C'). Only if 'use_gene' is not enabled."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Use Exon in HGVS annotation",
+        "\"use_exon\": true"
+      ]
+    },
+    "use_protein" : {
+      "__help": [
+        "Use Protein level to generate HGVS annotation (e.g. 'NP_689418:p.Cys77Arg'). Can be used with 'use_exon' or 'use_gene'."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Use Protein in HGVS annotation",
+        "\"use_protein\": true"
+      ]
+    },
+    "add_protein" : {
+      "__help": [
+        "Add Protein level to DNA HGVS annotation (e.g. 'NM_152232:c.231T>C,NP_689418:p.Cys77Arg')."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Add Protein level to DNA HGVS annotation",
+        "\"add_protein\": true"
+      ]
+    },
+    "full_format" : {
+      "__help": [
+        "Generates HGVS annotation in a full format (non-standard, e.g. 'TAS1R2:NM_152232:NP_689418:c.231T>C:p.Cys77Arg', 'TAS1R2:NM_152232:NP_689418:exon2:c.231T>C:p.Cys77Arg'). Full format use all information to generates an exhaustive annotation. Use specifically 'use_exon' to add exon information."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Use full format for HGVS annotation",
+        "\"full_format\": true"
+      ]
+    },
+    "codon_type" : {
+      "__help": [
+        "Amino Acide Codon format type to use to generate HGVS annotation (default '3'):",
+        "- '1': codon in 1 character (e.g. 'C', 'R')",
+        "- '3': codon in 3 character (e.g. 'Cys', 'Arg')",
+        "- 'FULL': codon in full name (e.g. 'Cysteine', 'Arginine')"
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Amino Acide Codon format with 1 character",
+        "\"codon_type\": '1'",
+        "# Amino Acide Codon format with 3 character",
+        "\"codon_type\": '3'",
+        "# Amino Acide Codon format with full name",
+        "\"codon_type\": 'FULL'"
+      ]
+    },
+    "refgene" : {
+      "__help": [
+        "Path to refGene annotation file (see [HOWARD User Guide](user_guide.md#databases-tool))."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Path to refSeq file",
+        "\"refgene\": '~/howard/databases/refseq/current/hg19/ncbiRefSeq.txt'"
+      ]
+    },
+    "refseqlink" : {
+      "__help": [
+        "Path to refGeneLink annotation file (see [HOWARD User Guide](user_guide.md#databases-tool))."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Path to refSeq file",
+        "\"refseqlink\": '~/howard/databases/refseq/current/hg19/ncbiRefSeqLink.txt'"
+      ]
+    }
+  },
+  "stats": {
+    "stats_md": {
+      
+    },
+    "stats_json": {
+      
+    }
+  },
+  "query": {
+    "__code_type": "",
+    "__examples_code": [
+      "# Simple query to show all variants file",
+      "SELECT \"#CHROM\", POS, REF, ALT, INFO ",
+      "FROM variants"
+    ]
+  },
+  "explode_infos": {
+
+  },
+  "explode_infos_prefix": {
+
+  },
+  "explode_infos_fields": {
+
+  },
+  "header_in_output": {
+
+  },
+  "parquet_partitions": {
+
+  },
+  "order_by": {
+
+  },
+  "query_limit": {
+
+  },
+  "query_print_mode": {
+
+  },
+  "threads": {
+
   }
 }

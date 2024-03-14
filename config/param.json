@@ -49,7 +49,7 @@
     "VAF": ""
   },
   "prioritization": {
-    "config_profiles": "config/prioritization_profiles.json",
+    "prioritizations": "config/prioritization_profiles.json",
     "pzfields": ["PZScore", "PZFlag", "PZComment"],
     "profiles": ["default", "GERMLINE"],
     "prioritization_score_mode": "VaRank"

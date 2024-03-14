@@ -66,13 +66,12 @@ def prioritization(args:argparse) -> None:
         # Quick prioritization
         if args.prioritizations:
             if isinstance(args.prioritizations, str):
-                config_profiles = args.prioritizations
+                prioritisations = args.prioritizations
             else:
-                config_profiles = args.prioritizations.name
-            #config_profiles= args.prioritizations
-            log.info(f"Quick Prioritization Config file: {config_profiles}")
+                prioritisations = args.prioritizations.name
+            log.info(f"Quick Prioritization Config file: {prioritisations}")
             param_quick_prioritizations = param.get("prioritization",{})
-            param_quick_prioritizations["config_profiles"] = config_profiles
+            param_quick_prioritizations["prioritizations"] = prioritisations
             param["prioritization"] = param_quick_prioritizations
 
             # Profiles
@@ -92,12 +91,12 @@ def prioritization(args:argparse) -> None:
                 param["prioritization"]["prioritization_score_mode"] = args.prioritization_score_mode
 
             # Config profiles
-            if config_profiles in args and args.config_profiles:
-                if isinstance(args.config_profiles, str):
-                    config_profiles_file = args.config_profiles
+            if prioritisations in args and args.prioritizations:
+                if isinstance(args.prioritizations, str):
+                    prioritizations_file = args.prioritizations
                 else:
-                    config_profiles_file = args.config_profiles.name
-                param["prioritization"]["config_profiles"] = config_profiles_file
+                    prioritizations_file = args.prioritizations.name
+                param["prioritization"]["prioritizations"] = prioritizations_file
 
         vcfdata_obj.set_param(param)
             
