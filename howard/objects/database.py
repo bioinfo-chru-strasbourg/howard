@@ -492,9 +492,10 @@ class Database:
             self.query(database=database, query=self.get_sql_database_attach(database=database, output="attach"))
 
         # database columns
+        database_query_columns = None
         if sql_query:
             database_query_columns = self.query(sql_query)
-        else:
+        if not database_query_columns:
             database_query_columns_sql = f""" SELECT * FROM {self.get_sql_database_link(database=database)} LIMIT {DTYPE_LIMIT_AUTO} """
             database_query_columns = self.query(database=database, query=database_query_columns_sql)
 
@@ -665,7 +666,8 @@ class Database:
         if sql_from:
             sql_query = f"SELECT * FROM {sql_from} LIMIT 0"
             try:
-                columns_list = list(self.conn.query(sql_query).df().columns)
+                #columns_list = list(self.conn.query(sql_query).df().columns)
+                columns_list = list(self.conn.query(sql_query).columns)
             except:
                 columns_list = None
             return columns_list
@@ -1245,7 +1247,8 @@ class Database:
                     LIMIT 0
                 """
             try:
-                nb_columns_detected_by_duckdb = len(self.conn.query(query_nb_columns_detected_by_duckdb).df().columns)
+                #nb_columns_detected_by_duckdb = len(self.conn.query(query_nb_columns_detected_by_duckdb).df().columns)
+                nb_columns_detected_by_duckdb = len(self.conn.query(query_nb_columns_detected_by_duckdb).columns)
             except:
                 nb_columns_detected_by_duckdb = 0
 
@@ -1605,7 +1608,8 @@ class Database:
             table = self.get_database_table(database=database)
 
         if sql_query:
-            columns_list = list(database.query(sql_query).df().columns)
+            #columns_list = list(database.query(sql_query).df().columns)
+            columns_list = list(database.query(sql_query).columns)
             return columns_list
 
         try:
@@ -1615,13 +1619,15 @@ class Database:
                     if table:
                         database_conn = database
                         sql_query = f"SELECT * FROM {table} LIMIT 0"
-                        columns_list = list(database_conn.query(sql_query).df().columns)
+                        #columns_list = list(database_conn.query(sql_query).df().columns)
+                        columns_list = list(database_conn.query(sql_query).columns)
                         return columns_list
                 elif database_format in ["duckdb"]:
                     if table:
                         database_conn = duckdb.connect(database)
                         sql_query = f"SELECT * FROM {table} LIMIT 0"
-                        columns_list = list(database_conn.query(sql_query).df().columns)
+                        #columns_list = list(database_conn.query(sql_query).df().columns)
+                        columns_list = list(database_conn.query(sql_query).columns)
                         database_conn.close()
                         return columns_list
                 elif database_format in ["sqlite"]:
@@ -1633,7 +1639,8 @@ class Database:
                 elif database_format in ["parquet", "vcf", "tsv", "csv", "tbl", "bed", "json"]:
                     sql_from = self.get_sql_from(database=database, header_file=header_file)
                     sql_query = f"SELECT * FROM {sql_from} LIMIT 0"
-                    return list(self.conn.query(sql_query).df().columns)
+                    #return list(self.conn.query(sql_query).df().columns)
+                    return list(self.conn.query(sql_query).columns)
         except:
             return []
 
@@ -2181,6 +2188,9 @@ class Database:
                 if query_empty:
                     log.error("Export failed: Empty")
                     raise ValueError("Export failed: Empty")
+                
+                # Schema names
+                schema_names = None
 
                 # Export mode pyarrow
                 if export_mode == "pyarrow":
@@ -2208,7 +2218,7 @@ class Database:
                                 # Generate header tmp file
                                 query_output_header_tmp = os.path.join(tmp_dir, "header")
                                 self.get_header_file(header_file=query_output_header_tmp, remove_header_line=True, sql_query=query)
-                                
+
                                 # Write header to tmp file
                                 with open(query_output_header_tmp, 'r'+f_mode) as output_header_tmp:
                                     f.write(output_header_tmp.read())
@@ -2241,6 +2251,9 @@ class Database:
                             
                             # For each chunk dataframe
                             for d in df:
+
+                                # Schema names
+                                schema_names = d.schema.names
 
                                 # id of chunk
                                 i += 1
@@ -2421,7 +2434,10 @@ class Database:
                     remove_if_exists([output_header])
                     
                     # Find columns in database
-                    header_columns_from_database = database_for_header.get_header_columns_from_database(database=output_database)
+                    if schema_names:
+                        header_columns_from_database = schema_names
+                    else:
+                        header_columns_from_database = database_for_header.get_header_columns_from_database(database=output_database)
 
                     # Generate header file
                     database_for_header.get_header_file(header_file=output_header, replace_header_line=header_columns_from_database, force=True)
