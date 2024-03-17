@@ -34,67 +34,35 @@ def convert(args:argparse) -> None:
     :type args: argparse
     """
     
-    log.info("Start")
+    # Load config args
+    arguments_dict, setup_cfg, config, param = load_config_args(args)
 
-    # Config infos
-    if "arguments_dict" in args:
-        arguments_dict = args.arguments_dict
-    else:
-        arguments_dict = None
-    if "setup_cfg" in args:
-        setup_cfg = args.setup_cfg
-    else:
-        setup_cfg = None
-    config = args.config
+    # Create variants object
+    vcfdata_obj = Variants(input=args.input, output=args.output, config=config, param=param)
 
-    # Load parameters in JSON format
-    param = {}
-    if "param" in args:
-        if isinstance(args.param, str) and os.path.exists(full_path(args.param)):
-            with open(full_path(args.param)) as param_file:
-                param = json.load(param_file)
-        else:
-            param = json.loads(args.param)
-
-    vcfdata_obj = Variants(None, args.input, args.output, config, param)
-
+    # Get Config and Params
+    config = vcfdata_obj.get_config()
     param = vcfdata_obj.get_param()
 
-    # Explode Infos
-    if args.explode_infos:
-        param["explode_infos"] = args.explode_infos
-        param["explode_infos_prefix"] = args.explode_infos_prefix
-        param["explode_infos_fields"] = args.explode_infos_fields
-        
-    else:
+    # Load args into param
+    param = load_args(param=param, args=args, arguments_dict=arguments_dict, command="convert", strict=False)
+
+    # Access
+    if not param.get("explode",{}).get("explode_infos",False):
         config["access"] = "RO"
 
-    # order_by
-    if "order_by" in args and args.order_by:
-        param["order_by"] = args.order_by
-
-    # include_header
-    if "include_header" in args and args.include_header:
-        param["header_in_output"] = args.include_header
-
-    # parquet_partitions
-    if "parquet_partitions" in args and args.parquet_partitions:
-        param["parquet_partitions"] = args.parquet_partitions.split(",")
-
+    # Re-Load Config and Params
     vcfdata_obj.set_param(param)
     vcfdata_obj.set_config(config)
 
-    # Create VCF object
-    if args.input:
+    # Load data
+    vcfdata_obj.load_data()
 
-        # Create
-        vcfdata_obj = Variants(None, args.input, args.output, config=config, param=param, load=True)
+    # Export
+    vcfdata_obj.export_output()
 
-        # Output
-        vcfdata_obj.export_output()
-
-        # Close connexion
-        vcfdata_obj.close_connexion()
+    # Close connexion
+    vcfdata_obj.close_connexion()
 
     log.info("End")
 

@@ -38,7 +38,7 @@ from contextlib import contextmanager
 
 from configparser import ConfigParser
 
-from shutil import which
+from shutil import which 
 
 file_folder = os.path.dirname(__file__)
 
@@ -1725,7 +1725,7 @@ def genome_build_switch(assembly:str) -> str:
 
 
 # get argument
-def get_argument(arguments:dict = {}, arg:str = "", required:bool = False, remove_infos:list = ["gooey"], add_metavar:bool = False) -> dict:
+def get_argument(arguments:dict = {}, arg:str = "", required:bool = False, remove_infos:list = ["gooey", "extra"], add_metavar:bool = False) -> dict:
     """
     The `get_argument` function retrieves information about a specific argument from a dictionary, and
     can also set its "required" status.
@@ -1849,14 +1849,14 @@ def get_argument_to_mk(arg:str, argument:dict = {}, mode:str = "mk") -> str:
         text += f"<pre>"
         text += escape(text_header)
         text += "\n"
-        text += escape(help)
+        text += escape(str(help))
         text += "\n\n"
         text += f"</pre>"
     else:
         text += f"```\n"
         text += text_header
         text += "\n\n"
-        text += help
+        text += str(help)
         text += "\n```\n\n"
 
     return text
@@ -1937,7 +1937,10 @@ def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", out
         previous = ""
 
     if "__code_type" in help_dict:
-        code_type=help_dict.get("__code_type",code_type)
+        code_type = help_dict.get("__code_type",code_type)
+
+    if "__auto" in help_dict:
+        auto_default = help_dict.get("__auto",True)
 
     if auto_default and level > 1:
 
@@ -1967,6 +1970,16 @@ def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", out
         if "__choices" not in help_dict:
             if "choices" in element_argument_infos:
                 help_dict["__choices"] = element_argument_infos.get("choices", None)
+
+        # format
+        if "__format" not in help_dict:
+            if "extra" in element_argument_infos and "format" in element_argument_infos.get("extra",{}):
+                help_dict["__format"] = element_argument_infos.get("extra", {}).get("format",None)
+            
+        # example (code)
+        if "__examples" not in help_dict and "__examples_code" not in help_dict and "__code" not in help_dict:
+            if "extra" in element_argument_infos and "examples" in element_argument_infos.get("extra",{}):
+                help_dict["__examples"] = element_argument_infos.get("extra", {}).get("examples",None)
             
 
     # If no section "__help" (mandatory)
@@ -1999,7 +2012,7 @@ def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", out
                     level_md = "#" * level
 
                     # line break
-                    if section in ["__code", "__examples_code"]:
+                    if section in ["__code", "__examples_code", "__examples"]:
                         line_break = "\n"
                     else:
                         line_break = "\n\n"
@@ -2007,14 +2020,48 @@ def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", out
                     # Help content from type
                     if isinstance(help_dict_content, str):
                         help_md = help_dict_content.replace("\n", line_break)
-                    elif isinstance(help_dict_content, list) and section not in ["__choices"]:
+                    #elif isinstance(help_dict_content, list) and section not in ["__choices"]:
+                    elif (isinstance(help_dict_content, list) or isinstance(help_dict_content, set)) and section not in ["__choices"]:
                         help_md = line_break.join(help_dict_content)
                         section_break = "\n"
                     else:
                         help_md = help_dict_content
                     
-                    if section in ["__code", "__examples_code"]:
-                        help_md = f"```{code_type}\n{help_md}\n```"
+                    if section in ["__code", "__examples_code", "__examples"]:
+
+                        # Format help dict
+                        # if isinstance(help_md, set):
+                        #     help_md = list(help_md)
+                        if isinstance(help_md, str):
+                            help_md_dict = {}
+                            example_header = ""
+                            for example_line in help_md.split("\n"):
+                                log.debug(example_line)
+                                if example_line.startswith("#"):
+                                    example_header += example_line
+                                else:
+                                    
+                                    if example_header not in help_md_dict:
+                                        help_md_dict[example_header] = ""
+                                        example_sep = ""
+                                    help_md_dict[example_header] += example_sep + example_line
+                                    example_sep = "\n"
+                        elif isinstance(help_md, dict):
+                            help_md_dict = help_md
+                        else:
+                            help_md_dict = help_md
+
+                        # Format examples
+                        help_md = ""
+                        for example in help_md_dict:
+                            # log.debug(f"example={example}")
+                            # log.debug(f"__examples_code={help_md_dict}")
+                            example_code = help_md_dict.get(example,"")
+                            if isinstance(example_code, list):
+                                example_code = "\n".join(example_code)
+                            example = re.sub(r'^#*\s*', '', example)
+                            help_md += f"""\n> {example}\n"""
+                            help_md += f"""\n```{code_type}\n{example_code}\n```"""
 
                     if section in ["__default"]:
                         if help_md in [""]:
@@ -2412,3 +2459,256 @@ def full_path(path: str) -> str:
         return os.path.abspath(os.path.expandvars(os.path.expanduser(path)))
     else:
         return path
+    
+def get_default_argument(arguments_dict:dict, argument:str):
+    """
+    The function `get_default_argument` retrieves the default value of a specified argument from a
+    dictionary of arguments.
+    
+    :param arguments_dict: The `arguments_dict` parameter is a dictionary that contains information
+    about arguments
+    :type arguments_dict: dict
+    :param argument: The `get_default_argument` function takes in two parameters:
+    :type argument: str
+    :return: The function is attempting to return the default value of a specific argument from a
+    dictionary of arguments. However, there is a mistake in the code. The correct key to access the
+    argument's default value should be "argument" instead of "arguments". Therefore, the function will
+    return the default value of the specified argument if it exists, otherwise it will return None.
+    """
+
+    return arguments_dict.get("arguments",{}).get(argument,{}).get("default", None)
+
+
+def set_param(param:dict, args:argparse, arguments_dict:dict, argument:str, section:str = None) -> dict:
+    """
+    The function `set_param` takes input arguments and adds them to a dictionary based on certain
+    conditions.
+    
+    :param param: The `param` parameter is a dictionary that stores configuration parameters or
+    settings. It is used to collect and store various arguments and their values based on the conditions
+    specified in the `set_param` function
+    :type param: dict
+    :param args: The `args` parameter in the `set_param` function is likely an instance of the
+    `argparse.Namespace` class, which is typically used to store the command-line arguments parsed by
+    the `argparse` module in Python. It contains the values of the arguments provided by the user when
+    the script
+    :type args: argparse
+    :param arguments_dict: The `arguments_dict` parameter seems to be a dictionary that likely contains
+    information about arguments and their default values. This dictionary is used in the function
+    `set_param` to determine whether a specific argument should be included in the `param` dictionary
+    based on certain conditions
+    :type arguments_dict: dict
+    :param argument: The `argument` parameter in the `set_param` function represents the specific
+    argument that you want to set in the `param` dictionary. It is the key that will be used to store
+    the value in the dictionary
+    :type argument: str
+    :param section: The `section` parameter in the `set_param` function is used to specify a section
+    within the `param` dictionary where the argument value should be stored. If a `section` is provided,
+    the argument value will be stored under that section in the `param` dictionary. If no `section
+    :type section: str
+    :return: the updated `param` dictionary after setting the specified argument value based on the
+    conditions provided in the function.
+    """
+    
+    # Argument value
+    value = vars(args).get(argument, None)
+
+    # Sections
+    if section:
+        sections = section.split(":")
+    else:
+        sections = []
+
+    # Check if to include in param
+    if argument in args and (not arguments_dict or value not in [get_default_argument(arguments_dict=arguments_dict, argument=argument)]):
+        sections.append(argument)
+        param = add_value_into_dict(dict_tree=param, sections=sections, value=value)
+
+    return param
+    
+def add_value_into_dict(dict_tree:dict, sections:list = [], value = None):
+    """
+    The function `add_value_into_dict` adds a value into a dictionary tree based on the provided
+    sections.
+    
+    :param dict_tree: The `dict_tree` parameter is a dictionary representing a tree structure. It serves
+    as the starting point for adding a value based on the provided sections
+    :type dict_tree: dict
+    :param sections: The `sections` parameter in the `add_value_into_dict` function represents a list of
+    sections corresponding to successive keys in the dictionary. These sections are used to traverse the
+    dictionary tree and determine the location where the value should be added. Each element in the
+    `sections` list corresponds to a key in
+    :type sections: list
+    :param value: The `value` parameter in the `add_value_into_dict` function represents the value that
+    you want to add into the dictionary tree at the specified location determined by the `sections`
+    list. This value can be of any data type (e.g., int, str, list, dict, etc.)
+    :return: The function `add_value_into_dict` returns the updated dictionary tree after adding the
+    value based on the given sections.
+    """
+
+    # Pointer to traverse the tree
+    current_node = dict_tree
+    
+    # If sections is empty, add the value to the root of the dictionary tree
+    if not sections:
+        return current_node
+    
+    # Traverse the tree based on sections to find the appropriate location for the value
+    for section in sections[:-1]:
+        # If the section does not exist yet in the current dictionary, create it
+        if section not in current_node:
+            current_node[section] = {}
+        # Move down the tree following the current section
+        current_node = current_node[section]
+    
+    # Add the value to the last section
+    last_section = sections[-1]
+    current_node[last_section] = value
+    
+    return dict_tree
+
+
+def load_param(args:argparse) -> dict:
+    """
+    The function `load_param` takes command line arguments and returns a dictionary containing
+    parameters loaded from a file or as JSON.
+    
+    :param args: It seems like the code snippet you provided is a function named `load_param` that takes
+    an argument `args` of type `argparse` and returns a dictionary. The function is intended to load
+    parameters from a file or a string
+    :type args: argparse
+    :return: A dictionary containing the loaded parameters is being returned.
+    """
+
+    param = {}
+    if "param" in args:
+        if isinstance(args.param, str) and os.path.exists(full_path(args.param)):
+            with open(full_path(args.param)) as param_file:
+                param = json.load(param_file)
+        else:
+            param = json.loads(args.param)
+
+    return param
+
+
+def load_config_args(args):
+    """
+    The function `load_config_args` takes in arguments, extracts specific keys from them, and loads
+    parameters in JSON format.
+    
+    :param args: The `load_config_args` function takes in an `args` object as input. This `args` object
+    seems to contain various configuration parameters that the function will use to load and return
+    specific values
+    :return: The function `load_config_args` returns the variables `arguments_dict`, `setup_cfg`,
+    `config`, and `param`.
+    """
+
+    # Arguments dict
+    if "arguments_dict" in args:
+        arguments_dict = args.arguments_dict
+    else:
+        arguments_dict = None
+
+    # Setup config 
+    if "setup_cfg" in args:
+        setup_cfg = args.setup_cfg
+    else:
+        setup_cfg = None
+
+    # Config
+    if "config" in args:
+        config = args.config
+    else:
+        config = {}
+
+    # Load parameters in JSON format
+    param = load_param(args)
+
+    return arguments_dict, setup_cfg, config, param
+
+
+def load_args(param:dict, args:argparse, arguments_dict:dict, command:str = None, arguments_list:dict = {}, strict:bool = False) -> dict:
+    """
+    The `load_args` function processes arguments based on specified parameters and conditions, raising
+    an error if a specified argument is not found.
+    
+    :param param: The `param` parameter in the `load_args` function is a dictionary that stores the
+    arguments and their values. It is used to keep track of the arguments that have been loaded or
+    processed during the argument parsing process
+    :type param: dict
+    :param args: The `args` parameter in the `load_args` function is an instance of the
+    `argparse.ArgumentParser` class from the `argparse` module in Python. This object is used to parse
+    command-line arguments and options. It contains information about the arguments passed to the script
+    when it was executed
+    :type args: argparse
+    :param arguments_dict: The `arguments_dict` parameter in the `load_args` function is a dictionary
+    that likely contains information about the arguments expected by the script. It may include details
+    such as the argument names, their corresponding sections, and any additional parameters related to
+    each argument. This dictionary is used within the `load_args
+    :type arguments_dict: dict
+    :param command: The `command` parameter in the `load_args` function is a string that represents a
+    specific command or action for which arguments need to be loaded. This parameter is used to identify
+    the command-specific arguments that should be processed during argument parsing
+    :type command: str
+    :param arguments_list: The `arguments_list` parameter in the `load_args` function is a dictionary
+    that contains the names of arguments that are expected to be present in the `args` object. This list
+    is used to specify which arguments should be processed by the function `load_args` during the
+    argument parsing process
+    :type arguments_list: dict
+    :param strict: The `strict` parameter in the `load_args` function is a boolean flag that determines
+    whether an error should be raised if an argument specified in the `arguments_list` list is not found
+    in the `args` object. If `strict` is set to `True`, an error will be raised, defaults to False
+    :type strict: bool (optional)
+    :return: The function `load_args` is returning a dictionary named `param` after processing the
+    arguments based on the input parameters and conditions specified in the function.
+    """
+    
+    # Variables
+    arguments_list_to_load = {}
+    param_section_not_found = get_random(N=16)
+
+    # List from command
+    if command:
+        command_infos = arguments_dict.get("commands_arguments",{}).get(command)
+        for command_group in command_infos.get("groups",{}):
+            for command_argument in command_infos.get("groups").get(command_group):
+                command_group_clean = command_group.replace(" ","_").lower()
+                if command_group_clean in ["main"]:
+                    command_group_clean = None
+                arguments_list_to_load[command_argument] = command_group_clean
+
+    # Add arguments from arguments
+    if arguments_list:
+        for argument in arguments_list:
+            arguments_list_to_load[argument] = arguments_list.get(argument)
+
+    # Load arguments
+    if arguments_list_to_load:
+        for argument in arguments_list_to_load:
+            if argument in args:
+                section = arguments_dict.get("arguments",{}).get(argument,{}).get("extra", {}).get("param_section", param_section_not_found)
+                if section in [param_section_not_found]:
+                    section = arguments_list_to_load.get(argument, None)
+                param = set_param(param=param, args=args, arguments_dict=arguments_dict, section=section, argument=argument)
+            elif strict:
+                msg_error = f"Argument '{argument}' not found in list of aguments"
+                log.error(msg_error)
+                raise ValueError(msg_error)
+
+    return param
+
+
+def get_random(N:int = 10) -> str:
+    """
+    The function `get_random` generates a random string of uppercase letters and digits with a default
+    length of 10.
+    
+    :param N: The parameter `N` in the `get_random` function represents the length of the random string
+    that will be generated. By default, if no value is provided for `N`, it will generate a random
+    string of length 10 consisting of uppercase letters and digits, defaults to 10
+    :type N: int (optional)
+    :return: A random string of length N consisting of uppercase letters and digits.
+    """
+
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=N))
+

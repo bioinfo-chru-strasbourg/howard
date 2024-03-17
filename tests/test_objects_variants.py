@@ -1459,7 +1459,11 @@ def test_explode_infos():
 
     # Init files
     input_vcf = tests_data_folder + "/example.vcf.gz"
-    param= {"explode_infos": True}
+    param= {
+        "explode": {
+            "explode_infos": True
+        }
+    }
 
     # Create object
     variants = Variants(input=input_vcf, load=True, param=param)
@@ -1470,6 +1474,7 @@ def test_explode_infos():
 
     # check column found
     result = variants.execute_query("SELECT * FROM variants LIMIT 0")
+    log.debug(f"result={result}")
     assert column_to_check in [col[0] for col in result.description]
 
     # Check value in column
@@ -1488,7 +1493,12 @@ def test_explode_infos_custom():
 
     # Init files
     input_vcf = tests_data_folder + "/example.vcf.gz"
-    param= {"explode_infos": True, "explode_infos_prefix": "CUSTOM_"}
+    param= {
+        "explode": {
+            "explode_infos": True,
+            "explode_infos_prefix": "CUSTOM_"
+        }
+    }
 
     # Create object
     variants = Variants(input=input_vcf, load=True, param=param)
@@ -1611,7 +1621,12 @@ def test_explode_infos_param_prefix():
     # Init files
     input_vcf = tests_data_folder + "/example.vcf.gz"
     infos_prefix = "INFO_"
-    input_param = {"explode_infos":True, "explode_infos_prefix": infos_prefix}
+    input_param = {
+        "explode": {
+            "explode_infos": True,
+            "explode_infos_prefix": infos_prefix
+        }
+    }
 
     # Create object
     variants = Variants(input=input_vcf, load=True, param=input_param)

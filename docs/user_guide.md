@@ -406,7 +406,7 @@ See [HOWARD Parameters JSON](help.param.md) for more information.
 >   "explode_infos": false,
 >   "explode_infos_prefix": "",
 >   "explode_infos_fields": null,
->   "header_in_output": false,
+>   "include_header": false,
 >   "parquet_partitions": null,
 >   "order_by": null,
 >   "query_limit": 10,

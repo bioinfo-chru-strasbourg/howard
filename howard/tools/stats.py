@@ -37,63 +37,38 @@ def stats(args:argparse) -> None:
 
     log.info("Start")
 
-    # Config infos
-    if "arguments_dict" in args:
-        arguments_dict = args.arguments_dict
-    else:
-        arguments_dict = None
-    if "setup_cfg" in args:
-        setup_cfg = args.setup_cfg
-    else:
-        setup_cfg = None
-    config = args.config
+    # Load config args
+    arguments_dict, setup_cfg, config, param = load_config_args(args)
+
+    # Create variants object
+    vcfdata_obj = Variants(input=args.input, config=config, param=param)
+
+    # Get Config and Params
+    config = vcfdata_obj.get_config()
+    param = vcfdata_obj.get_param()
+
+    # Load args into param
+    param = load_args(param=param, args=args, arguments_dict=arguments_dict, command="stats", strict=False)
+    
+    # Access
     config["access"] = "RO"
 
-    # Load parameters in JSON format
-    param = {}
-    if "param" in args:
-        if isinstance(args.param, str) and os.path.exists(full_path(args.param)):
-            with open(full_path(args.param)) as param_file:
-                param = json.load(param_file)
-        else:
-            param = json.loads(args.param)
+    # Re-Load Config and Params
+    vcfdata_obj.set_param(param)
+    vcfdata_obj.set_config(config)
 
-    # Init param
-    if "stats" not in param:
-        param["stats"] = {}
+    # Load data
+    vcfdata_obj.load_data()
 
-    # MarkDown file
-    stats_md=None
-    if "stats_md" in args and args.stats_md:
-        if isinstance(args.stats_md, str):
-            stats_md = args.stats_md
-        else:
-            stats_md = args.stats_md.name
-        param["stats"]["stats_md"] = stats_md
+    # Parameters
+    stats_md = param.get("stats",{}).get("stats_md",None)
+    stats_json = param.get("stats",{}).get("stats_json",None)
 
-    # JSON file
-    stats_json=None
-    if "stats_json" in args and args.stats_json:
-        if isinstance(args.stats_json, str):
-            stats_json = args.stats_json
-        else:
-            stats_json = args.stats_json.name
-        param["stats"]["stats_json"] = stats_json
+    # Stats
+    vcfdata_obj.print_stats(output_file=stats_md, json_file=stats_json)
 
-    # Create VCF object
-    if args.input:
-        vcfdata_obj = Variants(None, args.input, config=config, param=param)
-
-        # Load data from input file
-        vcfdata_obj.load_data()
-
-        # Stats
-        stats_md = param.get("stats",{}).get("stats_md",None)
-        stats_json = param.get("stats",{}).get("stats_json",None)
-        vcfdata_obj.print_stats(output_file=stats_md, json_file=stats_json)
-
-        # Close connexion
-        vcfdata_obj.close_connexion()
+    # Close connexion
+    vcfdata_obj.close_connexion()
 
     log.info("End")
 

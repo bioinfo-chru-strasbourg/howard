@@ -3,7 +3,7 @@
     "parquet": {
       "annotations": {
         "tests/databases/annotations/current/hg19/avsnp150.parquet": {
-          "INFO": null
+          "ALL": null
         },
         "tests/databases/annotations/current/hg19/dbnsfp42a.parquet": {
           "INFO": null
@@ -62,14 +62,20 @@
     "stats_md": null,
     "stats_json": null
   },
-  "query": "SELECT \"#CHROM\", POS, REF, ALT, INFO FROM variants",
-  "explode_infos": false,
-  "explode_infos_prefix": "",
-  "explode_infos_fields": null,
-  "header_in_output": false,
-  "parquet_partitions": null,
-  "order_by": null,
-  "query_limit": 10,
-  "query_print_mode": "default",
+  "query": {
+    "query": "SELECT \"#CHROM\", POS, REF, ALT, INFO FROM variants",
+    "query_limit": 10,
+    "query_print_mode": "default"
+  },
+  "explode_infos": {
+    "explode_infos": false,
+    "explode_infos_prefix": "",
+    "explode_infos_fields": null
+  },
+  "export": {
+    "header_in_output": false,
+    "parquet_partitions": null,
+    "order_by": null
+  },
   "threads": 8
 }

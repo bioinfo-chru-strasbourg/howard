@@ -38,7 +38,8 @@ def test_stats():
     # prepare arguments for the query function
     args = argparse.Namespace(
         input = input_vcf,
-        config = config
+        config = config,
+        arguments_dict = arguments_dict
     )
 
     # Query

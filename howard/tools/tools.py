@@ -166,6 +166,9 @@ arguments = {
                 "options": {
                     'initial_value': 'SELECT * FROM variants'  
                 }
+            },
+            "extra": {
+                "param_section": "query"
             }
         },
         "output_query": {
@@ -187,13 +190,20 @@ arguments = {
         "annotations": {
             "metavar": "annotations",
             "help": """Annotation with databases files, or with tools,\n"""
-                    """as a list of files in Parquet, VCF, BED, or keywords.\n"""
-                    """For a Parquet/VCF/BED file, use file path (e.g. '/path/to/file.parquet').\n"""
-                    """For Annovar annotation, use keyword 'annovar' with annovar code (e.g. 'annovar:refGene', 'annovar:cosmic70').\n"""
-                    """For add all availalbe databases files, use 'ALL' keyword:\n"""
-                    """- Use 'ALL:<types>:<releases>'\n"""
-                    """- e.g. 'ALL', 'ALL:parquet:current', 'ALL:parquet,vcf:devel'\n"""
-                    """For snpeff annotation, use keyword 'snpeff'\n""",
+                    """as a list of files in Parquet, VCF, BED, or keywords\n"""
+                    """ (e.g. '/path/to/file.parquet,bcftools:file2.vcf.gz,annovar:refGene,snpeff').\n"""
+                    """For a Parquet/VCF/BED file, use file paths\n"""
+                    """ (e.g. '/path/to/file.parquet', 'file1.parquet,file2.vcf.gz').\n"""
+                    """For BCFTools anotation, use keyword 'bcftools' with file paths\n"""
+                    """ (e.g. 'bcftools:/path/to/file.vcf.gz:/path/to/file.bed.gz').\n"""
+                    """For Annovar annotation, use keyword 'annovar' with annovar code\n"""
+                    """ (e.g. 'annovar:refGene', 'annovar:cosmic70').\n"""
+                    """For snpeff annotation, use keyword 'snpeff'.\n"""
+                    """For Exomiser annotation, use keyword 'exomiser' with options as key=value\n"""
+                    """ (e.g. 'exomiser:preset=exome:transcript_source=refseq').\n"""
+                    """For add all availalbe databases files, use 'ALL' keyword,\n"""
+                    """ with filters on type and release\n"""
+                    """ (e.g. 'ALL', 'ALL:parquet:current', 'ALL:parquet,vcf:current,devel').\n""",
             "default": None,
             "type": str,
             "gooey": {
@@ -201,6 +211,29 @@ arguments = {
                 "options": {
                     "default_dir": DEFAULT_ANNOTATIONS_FOLDER,
                     "message": "Database files"
+                }
+            },
+            "extra": {
+                "format": "DB[,DB]*[,bcftools:DB[:DB]*][,annovar:KEY[:KEY]*][,snpeff][,exomiser[:var=val]*]",
+                "examples": {
+                    "Parquet method annotation with 2 Parquet files":
+                       "\"annotations\": \"/path/to/database1.parquet,/path/to/database2.parquet\"",
+                    "Parquet method annotation with multiple file formats":
+                       "\"annotations\": \"/path/to/database1.parquet,/path/to/database2.vcf.gz,/path/to/database2.bed.gz\"",
+                    "Parquet method annotation with available Parquet databases in current release (check databases in production)":
+                       "\"annotations\": \"ALL:parquet:current\"",
+                    "Parquet method annotation with available Parquet databases in latest release (check databases before production)":
+                       "\"annotations\": \"ALL:parquet:latest\"",
+                    "Annovation with BCFTools":
+                       "\"annotations\": \"bcftools:/path/to/database2.vcf.gz:/path/to/database2.bed.gz\"",
+                    "Annovation with Annovar (refGene with hgvs and Cosmic)":
+                       "\"annotations\": \"annovar:refGene:cosmic70\"",
+                    "Annovation with snpEff (default options)":
+                       "\"annotations\": \"snpeff\"",
+                    "Annovation with Exomiser with options":
+                       "\"annotations\": \"exomiser:preset=exome:hpo=0001156+0001363+0011304+0010055:transcript_source=refseq:release=2109\"",
+                    "Multiple tools annotations (Parquet method, BCFTools, Annovar, snpEff and Exomiser)":
+                       "\"annotations\": \"/path/to/database1.parquet,bcftools:/path/to/database2.vcf.gz,annovar:refGene:cosmic70,snpeff,exomiser:preset=exome:transcript_source=refseq\""
                 }
             }
         },
@@ -215,6 +248,9 @@ arguments = {
                 "options": {
                     'checkbox_label': "Update annotation method"
                 }
+            },
+            "extra": {
+                "param_section": "annotation:options"
             }
         },
         "annotations_append": {
@@ -228,13 +264,16 @@ arguments = {
                 "options": {
                     'checkbox_label': "Append annotation method"
                 }
+            },
+            "extra": {
+                "param_section": "annotation:options"
             }
         },
 
         # Calculations
         "calculations": {
             "metavar": "operations",
-            "help": """Calculations on genetic variants information and genotype information,\n"""
+            "help": """Quick calculations on genetic variants information and genotype information,\n"""
                     """as a list of operations (e.g. 'VARTYPE,variant_id').\n"""
                     """List of available calculations (unsensitive case, see doc for more information):\n"""
                     """ VARTYPE """
@@ -250,6 +289,8 @@ arguments = {
             "default": None,
             "type": str
         },
+
+        # Prioritizations
         "prioritizations": {
             "metavar": "prioritisations",
             "help": "Prioritization file in JSON format (defines profiles, see doc).\n",
@@ -371,7 +412,15 @@ arguments = {
                     """Order is enable only for compatible format (e.g. TSV, CSV, JSON).\n"""
                     """Examples: 'ACMG_score DESC', 'PZFlag DESC, PZScore DESC'.\n""",
             "default": "",
-            "type": str
+            "type": str,
+            "extra": {
+                "examples": {
+                    "Order by ACMG score in descending order":
+                        """ACMG_score DESC""",
+                    "Order by PZFlag and PZScore in descending order":
+                        """PZFlag DESC, PZScore DESC"""
+                }
+            }
         },
 
         # Parquet partition
@@ -435,7 +484,10 @@ arguments = {
             "metavar": "HGVS field",
             "help": """HGVS INFO/tag containing a list o HGVS annotations.\n""",
             "default": "hgvs",
-            "type": str
+            "type": str,
+            "extra": {
+                "param_section": "calculation:NOMEN:options"
+            }
         },
         "transcripts": {
             "metavar": "transcripts",
@@ -450,6 +502,9 @@ arguments = {
                         "TSV file (*.tsv)|*.tsv|"
                         "All files (*)|*"
                 }
+            },
+            "extra": {
+                "param_section": "calculation:NOMEN:options"
             }
         },
         "trio_pedigree": {
@@ -458,7 +513,7 @@ arguments = {
                     """either a JSON file or JSON string"""
                     """(e.g. '{"father": "sample1", "mother": "sample2", "child": "sample3"}').\n""",
             "default": None,
-            "type": PathType(exists=True, type='file'),
+            #"type": PathType(exists=True, type='file'),
             "gooey": {
                 "widget": "FileChooser",
                 "options": {
@@ -466,6 +521,9 @@ arguments = {
                         "JSON file (*.json)|*.json|"
                         "All files (*)|*"
                 }
+            },
+            "extra": {
+                "param_section": "calculation:TRIO"
             }
         },
 
@@ -482,6 +540,12 @@ arguments = {
                     "wildcard":
                         "Markdown file (*.md)|*.md"
                 }
+            },
+            "extra": {
+                "examples": {
+                    "Export statistics in Markdown format":
+                        """"stats_md": '/tmp/stats.md'"""
+                }
             }
         },
         "stats_json": {
@@ -496,22 +560,13 @@ arguments = {
                     "wildcard":
                         "JSON file (*.json)|*.json"
                 }
+            },
+            "extra": {
+                "examples": {
+                    "Export statistics in JSON format":
+                        """"stats_json": '/tmp/stats.json'"""
+                }
             }
-        },
-        "stats": {
-            "help": "Statistics after loading data.\n",
-            "action": "store_true",
-            "default": False
-        },
-        "stats_header": {
-            "help": "Statistics after loading data.\n",
-            "action": "store_true",
-            "default": False
-        },
-        "stats_footer": {
-            "help": "Statistics before data processing.\n",
-            "action": "store_true",
-            "default": False
         },
 
         # Assembly and Genome
@@ -520,7 +575,15 @@ arguments = {
             "help": """Genome Assembly (e.g. 'hg19', 'hg38').\n""",
             "required": False,
             "default": DEFAULT_ASSEMBLY,
-            "type": str
+            "type": str,
+            "extra": {
+                "examples": {
+                    "Default assembly for all analysis tools":
+                        """"assembly": 'hg19'""",
+                    "List of assemblies for databases download tool":
+                        """"assembly": 'hg19,hg38'"""
+                }
+            }
         },
         "genome": {
             "metavar": "genome",
@@ -538,14 +601,14 @@ arguments = {
         },
         
         # HGVS
-        "hgvs": {
+        "hgvs_options": {
             "metavar": "HGVS options",
             "help": """Quick HGVS annotation options.\n"""
                     """This option will skip all other hgvs options.\n"""
                     """Examples:\n"""
                     """- 'default' (for default options)\n"""
                     """- 'full_format' (for full format HGVS annotation)\n"""
-                    """- 'use_gene:True,add_protein:true,codon_type:FULL'\n""",
+                    """- 'use_gene=True:add_protein=true:codon_type=FULL'\n""",
             "required": False,
             "default": None,
             "type": str
@@ -1357,14 +1420,6 @@ arguments = {
                 }
             }
         },
-        "assembly": {
-            "metavar": "assembly",
-            "help": """Default assembly\n"""
-                    f"""(e.g. '{DEFAULT_ASSEMBLY}'.\n""",
-            "required": False,
-            "default": DEFAULT_ASSEMBLY,
-            "type": str
-        },
         "threads": {
             "metavar": "threads",
             "help": """Specify the number of threads to use for processing HOWARD.\n"""
@@ -1383,6 +1438,14 @@ arguments = {
                     'max': 1000,
                     'increment': 1
                 }
+            },
+            "extra": {
+                "examples": {
+                    "# Automatically detect all available CPU/cores":
+                        "\"threads\": -1",
+                "# Define 8 CPU/cores":
+                  "\"threads\": 8"
+                }
             }
         },
         "memory": {
@@ -1395,7 +1458,17 @@ arguments = {
                     """By default (None) is 80%% of RAM (for duckDB).\n""",
             "required": False,
             "type": str,
-            "default": None
+            "default": None,
+            "extra": {
+                "format": "FLOAT[kMG]",
+                "examples": {
+                    "# Automatically detect all available CPU/cores":
+                        "\"threads\": -1",
+                "# Define 8 CPU/cores":
+                  "\"threads\": 8"
+                }
+            }
+            
         },
         "chunk_size": {
             "metavar": "chunk size",
@@ -1412,6 +1485,14 @@ arguments = {
                     'max': 100000000000,
                     'increment': 10000
                 }
+            },
+            "extra": {
+                "examples": {
+                    "Chunk size of 1.000.000 by default":
+                        "\"chunk_size\": 1000000",
+                    "Smaller chunk size to reduce Parquet file size and memory usage":
+                        "\"chunk_size\": 100000"
+                }
             }
         },
         "tmp": {
@@ -1424,6 +1505,16 @@ arguments = {
             "type": PathType(exists=True, type='dir'),
             "gooey": {
                 "widget": "DirChooser"
+            },
+            "extra": {
+                "examples": {
+                    "# System temporary folder":
+                        "\"tmp\": \"/tmp\"",
+                    "# HOWARD work directory":
+                        "\"tmp\": \"~/howard/tmp\"",
+                    "# Current work directory":
+                        "\"tmp\": \".tmp\""
+                }
             }
         },
         "duckdb_settings": {
@@ -1440,6 +1531,18 @@ arguments = {
                     "wildcard":
                         "JSON file (*.json)|*.json|"
                         "All files (*)|*",
+                }
+            },
+            "extra": {
+                "examples": {
+                    "DuckDB settings JSON file":
+                        "\"duckdb_settings\": \"/path/to/duckdb_config.json\"",
+                    "JSON string for Time zone, temporary directory and threads for duckDB":
+                        """\"duckdb_settings\": {\n"""
+                        """   \"TimeZone\": \"GMT\",\n"""
+                        """   \"temp_directory\": \"/tmp/duckdb\",\n"""
+                        """   \"threads\": 8\n"""
+                        """}"""
                 }
             }
         },
@@ -1460,6 +1563,16 @@ arguments = {
             "gooey": {
                 "widget": "Dropdown",
                 "options": {}
+            },
+            "extra": {
+                "examples": {
+                    "Default verbosity":
+                        "\"verbosity\": \"INFO\"",
+                    "ERROR level (quiet mode)":
+                        "\"verbosity\": \"ERROR\"",
+                    "For debug":
+                        "\"verbosity\": \"DEBUG\""
+                }
             }
         },
         "access": {
@@ -1472,6 +1585,14 @@ arguments = {
             "gooey": {
                 "widget": "Dropdown",
                 "options": {}
+            },
+            "extra": {
+                "examples": {
+                    "Read and Write mode":
+                        "\"access\": \"RW\"",
+                    "Read only mode":
+                        "\"access\": \"RO\""
+                }
             }
         },
         "log": {
@@ -1483,6 +1604,16 @@ arguments = {
             "type": PathType(exists=None, type='file'),
             "gooey": {
                 "widget": "FileSaver"
+            },
+            "extra": {
+                "examples": {
+                    "Relative path to log file":
+                        "\"log\": \"my.log\"",
+                    "# HOWARD work directory":
+                        "\"log\": \"~/howard/log\"",
+                    "Full path to log file":
+                        "\"log\": \"/tmp/my.log\""
+                }
             }
         },
         "quiet": {
@@ -1500,6 +1631,8 @@ arguments = {
             "action": "store_true",
             "default": False
         },
+
+        # Only for HELP
 
     }
 
@@ -1519,27 +1652,26 @@ commands_arguments = {
                         """   howard query --query="SELECT \\\"#CHROM\\\", POS, REF, ALT, \\\"INFO/Interpro_domain\\\" FROM 'tests/databases/annotations/current/hg19/dbnsfp42a.parquet' WHERE \\\"INFO/Interpro_domain\\\" NOT NULL ORDER BY \\\"INFO/SiPhy_29way_logOdds_rankscore\\\" DESC LIMIT 10" \n"""
                         """   howard query --explode_infos --explode_infos_prefix='INFO/' --query="SELECT \\\"#CHROM\\\", POS, REF, ALT, STRING_AGG(INFO, ';') AS INFO FROM 'tests/databases/annotations/current/hg19/*.parquet' GROUP BY \\\"#CHROM\\\", POS, REF, ALT" --output=/tmp/full_annotation.tsv  && head -n2 /tmp/full_annotation.tsv \n"""
                         """   howard query --input=tests/data/example.vcf.gz --param=config/param.json"""
-                        
-
                         , 
         "groups": {
             "main": {
                 "input": False,
                 "output": False,
-                "query": False,
                 "param": False,
+                "query": False
             },
-            "Explode infos": {
+            "Explode": {
                 "explode_infos": False,
                 "explode_infos_prefix": False,
                 "explode_infos_fields": False,
             },
             "Query": {
                 "query_limit": False,
-                "query_print_mode": False,
+                "query_print_mode": False
             },
-            "Output": {
-                "include_header": False
+            "Export": {
+                "include_header": False,
+                "parquet_partition": False
             }
         }
     },
@@ -1554,9 +1686,11 @@ commands_arguments = {
         "groups": {
             "main": {
                 "input": True,
-                "stats_md": False,
-                "stats_json": False,
                 "param": False
+            },
+            "Stats": {
+                "stats_md": False,
+                "stats_json": False
             }
         }
     },
@@ -1574,13 +1708,51 @@ commands_arguments = {
             "main": {
                 "input": True,
                 "output": True,
+                "param": False
+            },
+            "Explode": {
                 "explode_infos": False,
                 "explode_infos_prefix": False,
                 "explode_infos_fields": False,
-                "order_by": False,
+            },
+            "Export": {
                 "include_header": False,
-                "parquet_partitions": False,
-                "param": False
+                "order_by": False,
+                "parquet_partition": False
+            }
+        }
+    },
+    "hgvs": {
+        "function" : "hgvs",
+        "description":  """HGVS annotation using HUGO HGVS internation Sequence Variant Nomenclature (http://varnomen.hgvs.org/). Annotation refere to refGene and genome to generate HGVS nomenclature for all available transcripts. This annotation add 'hgvs' field into VCF INFO column of a VCF file.""",
+        "help":         """HGVS annotation (HUGO internation nomenclature) using refGene, genome and transcripts list.\n""",
+        "epilog":       """Usage examples:\n"""
+                        """   howard hgvs --input=tests/data/example.full.vcf --output=/tmp/example.hgvs.vcf \n"""
+                        """   howard hgvs --input=tests/data/example.full.vcf --output=/tmp/example.hgvs.tsv --param=config/param.json \n"""
+                        """   howard hgvs --input=tests/data/example.full.vcf --output=/tmp/example.hgvs.vcf --full_format --use_exon \n"""
+                        """    \n"""
+                        ,
+        "groups": {
+            "main": {
+                "input": True,
+                "output": True,
+                "param": False,
+                "hgvs_options": False,
+                "assembly": False
+            },
+            "HGVS": {
+                "use_gene": False,
+                "use_exon": False,
+                "use_protein": False,
+                "add_protein": False,
+                "full_format": False,
+                "codon_type": False,
+                "refgene": False,
+                "refseqlink": False
+            },
+            "Databases": {
+                "refseq-folder": False,
+                "genomes-folder": False
             }
         }
     },
@@ -1597,11 +1769,14 @@ commands_arguments = {
             "main": {
                 "input": True,
                 "output": True,
+                "param": False,
                 "annotations": False,
                 "assembly": False,
+            },
+            "annotation": {
                 "annotations_update": False,
                 "annotations_append": False,
-                "param": False
+                
             }
         }
     },
@@ -1619,16 +1794,16 @@ commands_arguments = {
             "main": {
                 "input": False,
                 "output": False,
+                "param": False,
                 "calculations": False,
                 "calculation_config": False,
-                "show_calculations": False,
-                "param": False
+                "show_calculations": False
             },
-            "NOMEN calculation": {
+            "NOMEN": {
                 "hgvs_field": False,
                 "transcripts": False
             },
-            "TRIO calculation": {
+            "TRIO": {
                 "trio_pedigree": False
             }
         }
@@ -1679,49 +1854,25 @@ commands_arguments = {
                 "param": False
             },
             "Quick Processes": {
+                "hgvs_options": False,
                 "annotations": False,
                 "calculations": False,
-                "prioritizations": False,
-                "hgvs": False,
+                "prioritizations": False
+            },
+            "Query": {
                 "query": False,
+                "query_limit": False,
+                "query_print_mode": False,
+            },
+            "Export": {
+                "include_header": False,
+                "order_by": False,
+                "parquet_partitions": False
+            },
+            "Explode": {
                 "explode_infos": False,
                 "explode_infos_prefix": False,
-                "explode_infos_fields": False,
-                "include_header": False
-            }
-        }
-    },
-    "hgvs": {
-        "function" : "hgvs",
-        "description":  """HGVS annotation using HUGO HGVS internation Sequence Variant Nomenclature (http://varnomen.hgvs.org/). Annotation refere to refGene and genome to generate HGVS nomenclature for all available transcripts. This annotation add 'hgvs' field into VCF INFO column of a VCF file.""",
-        "help":         """HGVS annotation (HUGO internation nomenclature) using refGene, genome and transcripts list.\n""",
-        "epilog":       """Usage examples:\n"""
-                        """   howard hgvs --input=tests/data/example.full.vcf --output=/tmp/example.hgvs.vcf \n"""
-                        """   howard hgvs --input=tests/data/example.full.vcf --output=/tmp/example.hgvs.tsv --param=config/param.json \n"""
-                        """   howard hgvs --input=tests/data/example.full.vcf --output=/tmp/example.hgvs.vcf --full_format --use_exon \n"""
-                        """    \n"""
-                        ,
-        "groups": {
-            "main": {
-                "input": True,
-                "output": False,
-                "hgvs": False,
-                "assembly": False,
-                "param": False
-            },
-            "HGVS": {
-                "use_gene": False,
-                "use_exon": False,
-                "use_protein": False,
-                "add_protein": False,
-                "full_format": False,
-                "codon_type": False,
-                "refgene": False,
-                "refseqlink": False
-            },
-            "Databases": {
-                "refseq-folder": False,
-                "genomes-folder": False
+                "explode_infos_fields": False
             }
         }
     },
@@ -1885,3 +2036,8 @@ commands_arguments = {
     }
 }
 
+arguments_dict = {
+    "arguments": arguments,
+    "commands_arguments": commands_arguments,
+    "shared_arguments": shared_arguments 
+}

@@ -34,126 +34,41 @@ def calculation(args:argparse) -> None:
 
     log.info("Start")
 
-    # Config infos
-    if "arguments_dict" in args:
-        arguments_dict = args.arguments_dict
-    else:
-        arguments_dict = None
-    if "setup_cfg" in args:
-        setup_cfg = args.setup_cfg
-    else:
-        setup_cfg = None
-    config = args.config
+    # Load config args
+    arguments_dict, setup_cfg, config, param = load_config_args(args)
 
-        # Load parameters in JSON format
-    param = {}
-    if "param" in args:
-        if isinstance(args.param, str) and os.path.exists(full_path(args.param)):
-            with open(full_path(args.param)) as param_file:
-                param = json.load(param_file)
-        else:
-            param = json.loads(args.param)
+    # Create variants object
+    vcfdata_obj = Variants(input=args.input, output=args.output, config=config, param=param)
 
-    # Show available calculations
-    if args.show_calculations:
+    # Get Config and Params
+    config = vcfdata_obj.get_config()
+    param = vcfdata_obj.get_param()
 
-        vcfdata_obj = Variants()
+    # Load args into param
+    param = load_args(param=param, args=args, arguments_dict=arguments_dict, command="calculation", strict=False)
+    
+    # Re-Load Config and Params
+    vcfdata_obj.set_param(param)
+    vcfdata_obj.set_config(config)
 
-        # Operations config file
-        operations_config_file = args.calculation_config
-
-        for help_line in vcfdata_obj.get_operations_help(operations_config_file=operations_config_file):
-            log.info(help_line)
-
-    # Create VCF object
-    #elif args.input and args.output and args.calculations:
-    elif args.calculations or param.get("calculations", None) or param.get("calculation", None):
-
-        vcfdata_obj = Variants(None, args.input, args.output, config, param)
-
-        param = vcfdata_obj.get_param()
-
-        # Operations config file
-        operations_config_file = None
-        if "calculation_config" in args and args.calculation_config:
-            if isinstance(args.calculation_config, str):
-                operations_config_file = args.calculation_config
-            else:
-                operations_config_file = args.calculation_config.name
-            param["calculation_config"] = operations_config_file
-
-        # Quick calculations
-        if args.calculations:
-            calculations_list= [value for value in args.calculations.split(',')]
-            log.info(f"Quick Calculations list: {calculations_list}")
-            param_quick_calculations = param.get("calculation",{})
-            for calculation_operation in calculations_list:
-                param_quick_calculations[calculation_operation.upper()] = {}
-            param["calculation"] = param_quick_calculations
-
-        # HGVS Field
-        if args.hgvs_field and "NOMEN" in param["calculation"]:
-            if "options" not in param["calculation"]["NOMEN"]:
-                param["calculation"]["NOMEN"]["options"] = {}
-            param["calculation"]["NOMEN"]["options"]["hgvs_field"] = args.hgvs_field
-
-        # HGVS Transcripts
-        if args.transcripts and "NOMEN" in param["calculation"]:
-            if "options" not in param["calculation"]["NOMEN"]:
-                param["calculation"]["NOMEN"]["options"] = {}
-            if isinstance(args.transcripts, str):
-                transcripts_file = args.transcripts
-            else:
-                transcripts_file = args.transcripts.name
-            param["calculation"]["NOMEN"]["options"]["transcripts"] = transcripts_file
-
-        # TRIO pedigree
-        if args.trio_pedigree and "TRIO" in param["calculation"]:
-            trio_pedigree = {}
-            if isinstance(args.trio_pedigree, str) or isinstance(args.trio_pedigree, dict):
-                trio_pedigree_file = args.trio_pedigree
-            else:
-                trio_pedigree_file = args.trio_pedigree.name
-            # Load trio_pedigree in JSON format
-            if isinstance(trio_pedigree_file, str) and os.path.exists(full_path(trio_pedigree_file)):
-                with open(full_path(trio_pedigree_file)) as trio_pedigree_file:
-                    trio_pedigree = json.load(trio_pedigree_file)
-            else:
-                trio_pedigree = json.loads(args.trio_pedigree)
-            param["calculation"]["TRIO"] = trio_pedigree
-
-        vcfdata_obj.set_param(param)
-
-        # Load data from input file
+    # Load data
+    if vcfdata_obj.get_input():
         vcfdata_obj.load_data()
 
-        # Calculation
-        if vcfdata_obj.get_param().get("calculations", None) or vcfdata_obj.get_param().get("calculation", None):
-            vcfdata_obj.calculation(operations_config_file=operations_config_file)
+    if param.get("show_calculations"):
+        operations_config_file = param.get("calculation_config")
+        log.debug(f"operations_config_file={operations_config_file}")
+        for help_line in vcfdata_obj.get_operations_help(operations_config_file=operations_config_file):
+            log.info(help_line)
+        exit()
 
-        # Export
-        if vcfdata_obj.get_output():
-            log.info("Exporting...")
-            vcfdata_obj.export_output(export_header=True)
+    # Annotation
+    vcfdata_obj.calculation()
 
-        # Close connexion
-        vcfdata_obj.close_connexion()
+    # Export
+    vcfdata_obj.export_output()
 
-    # If no arguments
-    else:
-        # Parser
-        parser = help_generation(arguments_dict=arguments_dict, setup=setup_cfg, output_type="parser")
-        parser.print_help()
-        print("")
-        log.error(f"No calculations provided")
-        raise ValueError(f"No calculations provided")
-    # else:
-
-    #     log.info("""The following arguments are required:""")
-    #     log.info("""   1/ --input, --output, --calculations""")
-    #     log.info("""   2/ --show_calculations""")
+    # Close connexion
+    vcfdata_obj.close_connexion()
 
     log.info("End")
-
-
-

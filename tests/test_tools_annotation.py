@@ -44,7 +44,8 @@ def test_annotation_tsv_update():
         config = config,
         annotations = annotations,
         annotations_update = True,
-        annotations_append = False
+        annotations_append = False,
+        arguments_dict = arguments_dict
     )
 
     # Remove if output file exists
@@ -89,7 +90,8 @@ def test_annotation_tsv_append():
         config = config,
         annotations = annotations,
         annotations_update = False,
-        annotations_append = True
+        annotations_append = True,
+        arguments_dict = arguments_dict
     )
 
     # Remove if output file exists
@@ -134,7 +136,8 @@ def test_annotation_tsv_update_append():
         config = config,
         annotations = annotations,
         annotations_update = True,
-        annotations_append = True
+        annotations_append = True,
+        arguments_dict = arguments_dict
     )
 
     # Remove if output file exists
@@ -179,7 +182,8 @@ def test_annotation_tsv():
         config = config,
         annotations = annotations,
         annotations_update = False,
-        annotations_append = False
+        annotations_append = False,
+        arguments_dict = arguments_dict
     )
 
     # Remove if output file exists
@@ -224,7 +228,8 @@ def test_annotation_vcf():
         config = config,
         annotations = annotations,
         annotations_update = False,
-        annotations_append = False
+        annotations_append = False,
+        arguments_dict = arguments_dict
     )
 
     # Remove if output file exists

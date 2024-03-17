@@ -5,29 +5,36 @@
 - [HOWARD Help](#howard-help)
   - [QUERY tool](#query-tool)
     - [Main options](#main-options)
-    - [Explode infos](#explode-infos)
+    - [Explode](#explode)
     - [Query](#query)
-    - [Output](#output)
+    - [Export](#export)
   - [STATS tool](#stats-tool)
     - [Main options](#main-options-1)
+    - [Stats](#stats)
   - [CONVERT tool](#convert-tool)
     - [Main options](#main-options-2)
-  - [ANNOTATION tool](#annotation-tool)
-    - [Main options](#main-options-3)
-  - [CALCULATION tool](#calculation-tool)
-    - [Main options](#main-options-4)
-    - [NOMEN calculation](#nomen-calculation)
-    - [TRIO calculation](#trio-calculation)
-  - [PRIORITIZATION tool](#prioritization-tool)
-    - [Main options](#main-options-5)
-    - [Prioritization](#prioritization)
-  - [PROCESS tool](#process-tool)
-    - [Main options](#main-options-6)
-    - [Quick Processes](#quick-processes)
+    - [Explode](#explode-1)
+    - [Export](#export-1)
   - [HGVS tool](#hgvs-tool)
-    - [Main options](#main-options-7)
+    - [Main options](#main-options-3)
     - [HGVS](#hgvs)
     - [Databases](#databases)
+  - [ANNOTATION tool](#annotation-tool)
+    - [Main options](#main-options-4)
+    - [annotation](#annotation)
+  - [CALCULATION tool](#calculation-tool)
+    - [Main options](#main-options-5)
+    - [NOMEN](#nomen)
+    - [TRIO](#trio)
+  - [PRIORITIZATION tool](#prioritization-tool)
+    - [Main options](#main-options-6)
+    - [Prioritization](#prioritization)
+  - [PROCESS tool](#process-tool)
+    - [Main options](#main-options-7)
+    - [Quick Processes](#quick-processes)
+    - [Query](#query-1)
+    - [Export](#export-2)
+    - [Explode](#explode-2)
   - [DATABASES tool](#databases-tool)
     - [Main options](#main-options-8)
     - [Genomes](#genomes)
@@ -109,6 +116,13 @@ Files can be compressesd (e.g. vcf.gz, tsv.gz).
 ```
 
 ```
+--param=<param> ({})
+
+Parameters JSON file or JSON string.
+
+```
+
+```
 --query=<query>
 
 Query in SQL format
@@ -116,14 +130,7 @@ Query in SQL format
 
 ```
 
-```
---param=<param> ({})
-
-Parameters JSON file or JSON string.
-
-```
-
-### Explode infos
+### Explode
 ```
 --explode_infos
 
@@ -169,13 +176,19 @@ Either None (native), 'markdown' or 'tabulate'.
 
 ```
 
-### Output
+### Export
 ```
 --include_header
 
 Include header (in VCF format) in output file.
 Only for compatible formats (tab-delimiter format as TSV or BED).
 
+```
+
+```
+--parquet_partition=<parquet_partition>
+
+None
 ```
 
 
@@ -202,6 +215,14 @@ Files can be compressesd (e.g. vcf.gz, tsv.gz).
 ```
 
 ```
+--param=<param> ({})
+
+Parameters JSON file or JSON string.
+
+```
+
+### Stats
+```
 --stats_md=<stats markdown>
 
 Stats Output file in MarkDown format.
@@ -212,13 +233,6 @@ Stats Output file in MarkDown format.
 --stats_json=<stats json>
 
 Stats Output file in JSON format.
-
-```
-
-```
---param=<param> ({})
-
-Parameters JSON file or JSON string.
 
 ```
 
@@ -259,6 +273,14 @@ Files can be compressesd (e.g. vcf.gz, tsv.gz).
 ```
 
 ```
+--param=<param> ({})
+
+Parameters JSON file or JSON string.
+
+```
+
+### Explode
+```
 --explode_infos
 
 Explode VCF INFO/Tag into 'variants' table columns.
@@ -287,6 +309,15 @@ Examples:
 
 ```
 
+### Export
+```
+--include_header
+
+Include header (in VCF format) in output file.
+Only for compatible formats (tab-delimiter format as TSV or BED).
+
+```
+
 ```
 --order_by=<order by>
 
@@ -299,20 +330,44 @@ Examples: 'ACMG_score DESC', 'PZFlag DESC, PZScore DESC'.
 ```
 
 ```
---include_header
+--parquet_partition=<parquet_partition>
 
-Include header (in VCF format) in output file.
-Only for compatible formats (tab-delimiter format as TSV or BED).
+None
+```
+
+
+
+## HGVS tool
+HGVS annotation using HUGO HGVS internation Sequence Variant Nomenclature (http://varnomen.hgvs.org/). Annotation refere to refGene and genome to generate HGVS nomenclature for all available transcripts. This annotation add 'hgvs' field into VCF INFO column of a VCF file.
+
+Usage examples:
+
+> howard hgvs --input=tests/data/example.full.vcf --output=/tmp/example.hgvs.vcf 
+
+> howard hgvs --input=tests/data/example.full.vcf --output=/tmp/example.hgvs.tsv --param=config/param.json 
+
+> howard hgvs --input=tests/data/example.full.vcf --output=/tmp/example.hgvs.vcf --full_format --use_exon 
+
+>  
+
+
+
+### Main options
+```
+--input=<input> | required
+
+Input file path.
+Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
+Files can be compressesd (e.g. vcf.gz, tsv.gz).
 
 ```
 
 ```
---parquet_partitions=<parquet partitions>
+--output=<output> | required
 
-Parquet partitioning using hive (available for any format).
-This option is faster parallel writing, but memory consuming.
-Use 'None' (string) for NO partition but split parquet files into a folder.
-Examples: '#CHROM', '#CHROM,REF', 'None'.
+Output file path.
+Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
+Files can be compressesd (e.g. vcf.gz, tsv.gz).
 
 ```
 
@@ -321,6 +376,109 @@ Examples: '#CHROM', '#CHROM,REF', 'None'.
 
 Parameters JSON file or JSON string.
 
+```
+
+```
+--hgvs_options=<HGVS options>
+
+Quick HGVS annotation options.
+This option will skip all other hgvs options.
+Examples:
+- 'default' (for default options)
+- 'full_format' (for full format HGVS annotation)
+- 'use_gene=True:add_protein=true:codon_type=FULL'
+
+```
+
+```
+--assembly=<assembly> (hg19)
+
+Genome Assembly (e.g. 'hg19', 'hg38').
+
+```
+
+### HGVS
+```
+--use_gene
+
+Use Gene information to generate HGVS annotation
+(e.g. 'NM_152232(TAS1R2):c.231T>C')
+```
+
+```
+--use_exon
+
+Use Exon information to generate HGVS annotation
+(e.g. 'NM_152232(exon2):c.231T>C').
+Only if 'use_gene' is not enabled.
+
+```
+
+```
+--use_protein
+
+Use Protein level to generate HGVS annotation
+(e.g. 'NP_689418:p.Cys77Arg').
+Can be used with 'use_exon' or 'use_gene'.
+
+```
+
+```
+--add_protein
+
+Add Protein level to DNA HGVS annotation (e.g 'NM_152232:c.231T>C,NP_689418:p.Cys77Arg').
+
+```
+
+```
+--full_format
+
+Generates HGVS annotation in a full format
+by using all information to generates an exhaustive annotation
+(non-standard, e.g. 'TAS1R2:NM_152232:NP_689418:c.231T>C:p.Cys77Arg').
+Use 'use_exon' to add exon information
+(e.g 'TAS1R2:NM_152232:NP_689418:exon2:c.231T>C:p.Cys77Arg').
+
+```
+
+```
+--codon_type=<Codon type> ['1', '3', 'FULL'] (3)
+
+Amino Acide Codon format type to use to generate HGVS annotation.
+Available:
+- '1': codon in 1 character (e.g. 'C', 'R')
+- '3': codon in 3 character (e.g. 'Cys', 'Arg')
+-'FULL': codon in full name (e.g. 'Cysteine', 'Arginine')
+
+```
+
+```
+--refgene=<refGene>
+
+Path to refGene annotation file.
+
+```
+
+```
+--refseqlink=<refSeqLink>
+
+Path to refSeqLink annotation file.
+
+```
+
+### Databases
+```
+--refseq-folder=<refseq folder> (/Users/lebechea/howard/databases/refseq/current)
+
+Folder containing refSeq files.
+
+```
+
+```
+--genomes-folder=<genomes> (/Users/lebechea/howard/databases/genomes/current)
+
+Folder containing genomes.
+(e.g. '/Users/lebechea/howard/databases/genomes/current'
 ```
 
 
@@ -358,27 +516,41 @@ Files can be compressesd (e.g. vcf.gz, tsv.gz).
 ```
 
 ```
+--param=<param> ({})
+
+Parameters JSON file or JSON string.
+
+```
+
+```
 --annotations=<annotations>
 
 Annotation with databases files, or with tools,
-as a list of files in Parquet, VCF, BED, or keywords.
-For a Parquet/VCF/BED file, use file path (e.g. '/path/to/file.parquet').
-For Annovar annotation, use keyword 'annovar' with annovar code (e.g. 'annovar:refGene', 'annovar:cosmic70').
-For add all availalbe databases files, use 'ALL' keyword:
-- Use 'ALL:<types>:<releases>'
-- e.g. 'ALL', 'ALL:parquet:current', 'ALL:parquet,vcf:devel'
-For snpeff annotation, use keyword 'snpeff'
+as a list of files in Parquet, VCF, BED, or keywords
+ (e.g. '/path/to/file.parquet,bcftools:file2.vcf.gz,annovar:refGene,snpeff').
+For a Parquet/VCF/BED file, use file paths
+ (e.g. '/path/to/file.parquet', 'file1.parquet,file2.vcf.gz').
+For BCFTools anotation, use keyword 'bcftools' with file paths
+ (e.g. 'bcftools:/path/to/file.vcf.gz:/path/to/file.bed.gz').
+For Annovar annotation, use keyword 'annovar' with annovar code
+ (e.g. 'annovar:refGene', 'annovar:cosmic70').
+For snpeff annotation, use keyword 'snpeff'.
+For Exomiser annotation, use keyword 'exomiser' with options as key=value
+ (e.g. 'exomiser:preset=exome:transcript_source=refseq').
+For add all availalbe databases files, use 'ALL' keyword,
+ with filters on type and release
+ (e.g. 'ALL', 'ALL:parquet:current', 'ALL:parquet,vcf:current,devel').
 
 ```
 
 ```
 --assembly=<assembly> (hg19)
 
-Default assembly
-(e.g. 'hg19'.
+Genome Assembly (e.g. 'hg19', 'hg38').
 
 ```
 
+### annotation
 ```
 --annotations_update
 
@@ -394,13 +566,6 @@ These options will be applied to all annotation databases.
 Append option for annotation (Only for Parquet annotation).
 If True, annotation fields will be annotated only if not annotation exists for the variant.
 These options will be applied to all annotation databases.
-
-```
-
-```
---param=<param> ({})
-
-Parameters JSON file or JSON string.
 
 ```
 
@@ -441,9 +606,16 @@ Files can be compressesd (e.g. vcf.gz, tsv.gz).
 ```
 
 ```
+--param=<param> ({})
+
+Parameters JSON file or JSON string.
+
+```
+
+```
 --calculations=<operations>
 
-Calculations on genetic variants information and genotype information,
+Quick calculations on genetic variants information and genotype information,
 as a list of operations (e.g. 'VARTYPE,variant_id').
 List of available calculations (unsensitive case, see doc for more information):
  VARTYPE  snpeff_hgvs  FINDBYPIPELINE  GENOTYPECONCORDANCE  BARCODE  TRIO  VAF  VAF_STATS  DP_STATS 
@@ -464,14 +636,7 @@ Show available calculation operations.
 
 ```
 
-```
---param=<param> ({})
-
-Parameters JSON file or JSON string.
-
-```
-
-### NOMEN calculation
+### NOMEN
 ```
 --hgvs_field=<HGVS field> (hgvs)
 
@@ -487,7 +652,7 @@ with Transcript in first column, optional Gene in second column.
 
 ```
 
-### TRIO calculation
+### TRIO
 ```
 --trio_pedigree=<trio pedigree>
 
@@ -633,23 +798,42 @@ Parameters JSON file or JSON string.
 
 ### Quick Processes
 ```
+--hgvs_options=<HGVS options>
+
+Quick HGVS annotation options.
+This option will skip all other hgvs options.
+Examples:
+- 'default' (for default options)
+- 'full_format' (for full format HGVS annotation)
+- 'use_gene=True:add_protein=true:codon_type=FULL'
+
+```
+
+```
 --annotations=<annotations>
 
 Annotation with databases files, or with tools,
-as a list of files in Parquet, VCF, BED, or keywords.
-For a Parquet/VCF/BED file, use file path (e.g. '/path/to/file.parquet').
-For Annovar annotation, use keyword 'annovar' with annovar code (e.g. 'annovar:refGene', 'annovar:cosmic70').
-For add all availalbe databases files, use 'ALL' keyword:
-- Use 'ALL:<types>:<releases>'
-- e.g. 'ALL', 'ALL:parquet:current', 'ALL:parquet,vcf:devel'
-For snpeff annotation, use keyword 'snpeff'
+as a list of files in Parquet, VCF, BED, or keywords
+ (e.g. '/path/to/file.parquet,bcftools:file2.vcf.gz,annovar:refGene,snpeff').
+For a Parquet/VCF/BED file, use file paths
+ (e.g. '/path/to/file.parquet', 'file1.parquet,file2.vcf.gz').
+For BCFTools anotation, use keyword 'bcftools' with file paths
+ (e.g. 'bcftools:/path/to/file.vcf.gz:/path/to/file.bed.gz').
+For Annovar annotation, use keyword 'annovar' with annovar code
+ (e.g. 'annovar:refGene', 'annovar:cosmic70').
+For snpeff annotation, use keyword 'snpeff'.
+For Exomiser annotation, use keyword 'exomiser' with options as key=value
+ (e.g. 'exomiser:preset=exome:transcript_source=refseq').
+For add all availalbe databases files, use 'ALL' keyword,
+ with filters on type and release
+ (e.g. 'ALL', 'ALL:parquet:current', 'ALL:parquet,vcf:current,devel').
 
 ```
 
 ```
 --calculations=<operations>
 
-Calculations on genetic variants information and genotype information,
+Quick calculations on genetic variants information and genotype information,
 as a list of operations (e.g. 'VARTYPE,variant_id').
 List of available calculations (unsensitive case, see doc for more information):
  VARTYPE  snpeff_hgvs  FINDBYPIPELINE  GENOTYPECONCORDANCE  BARCODE  TRIO  VAF  VAF_STATS  DP_STATS 
@@ -663,18 +847,7 @@ Prioritization file in JSON format (defines profiles, see doc).
 
 ```
 
-```
---hgvs=<HGVS options>
-
-Quick HGVS annotation options.
-This option will skip all other hgvs options.
-Examples:
-- 'default' (for default options)
-- 'full_format' (for full format HGVS annotation)
-- 'use_gene:True,add_protein:true,codon_type:FULL'
-
-```
-
+### Query
 ```
 --query=<query>
 
@@ -683,6 +856,52 @@ Query in SQL format
 
 ```
 
+```
+--query_limit=<query limit> (10)
+
+Limit of number of row for query (only for print result, not output).
+
+```
+
+```
+--query_print_mode=<print mode> [None, 'markdown', 'tabulate']
+
+Print mode of query result (only for print result, not output).
+Either None (native), 'markdown' or 'tabulate'.
+
+```
+
+### Export
+```
+--include_header
+
+Include header (in VCF format) in output file.
+Only for compatible formats (tab-delimiter format as TSV or BED).
+
+```
+
+```
+--order_by=<order by>
+
+List of columns to sort the result-set in ascending or descending order.
+Use SQL format, and keywords ASC (ascending) and DESC (descending).
+If a column is not available, order will not be considered.
+Order is enable only for compatible format (e.g. TSV, CSV, JSON).
+Examples: 'ACMG_score DESC', 'PZFlag DESC, PZScore DESC'.
+
+```
+
+```
+--parquet_partitions=<parquet partitions>
+
+Parquet partitioning using hive (available for any format).
+This option is faster parallel writing, but memory consuming.
+Use 'None' (string) for NO partition but split parquet files into a folder.
+Examples: '#CHROM', '#CHROM,REF', 'None'.
+
+```
+
+### Explode
 ```
 --explode_infos
 
@@ -710,161 +929,6 @@ Examples:
 - 'HGVS,.*_score,*' (1 field, scores, all other fields)
 - 'HGVS,*,.*_score' (1 field, all other fields, all scores)
 
-```
-
-```
---include_header
-
-Include header (in VCF format) in output file.
-Only for compatible formats (tab-delimiter format as TSV or BED).
-
-```
-
-
-
-## HGVS tool
-HGVS annotation using HUGO HGVS internation Sequence Variant Nomenclature (http://varnomen.hgvs.org/). Annotation refere to refGene and genome to generate HGVS nomenclature for all available transcripts. This annotation add 'hgvs' field into VCF INFO column of a VCF file.
-
-Usage examples:
-
-> howard hgvs --input=tests/data/example.full.vcf --output=/tmp/example.hgvs.vcf 
-
-> howard hgvs --input=tests/data/example.full.vcf --output=/tmp/example.hgvs.tsv --param=config/param.json 
-
-> howard hgvs --input=tests/data/example.full.vcf --output=/tmp/example.hgvs.vcf --full_format --use_exon 
-
->  
-
-
-
-### Main options
-```
---input=<input> | required
-
-Input file path.
-Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
-Files can be compressesd (e.g. vcf.gz, tsv.gz).
-
-```
-
-```
---output=<output>
-
-Output file path.
-Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
-Files can be compressesd (e.g. vcf.gz, tsv.gz).
-
-```
-
-```
---hgvs=<HGVS options>
-
-Quick HGVS annotation options.
-This option will skip all other hgvs options.
-Examples:
-- 'default' (for default options)
-- 'full_format' (for full format HGVS annotation)
-- 'use_gene:True,add_protein:true,codon_type:FULL'
-
-```
-
-```
---assembly=<assembly> (hg19)
-
-Default assembly
-(e.g. 'hg19'.
-
-```
-
-```
---param=<param> ({})
-
-Parameters JSON file or JSON string.
-
-```
-
-### HGVS
-```
---use_gene
-
-Use Gene information to generate HGVS annotation
-(e.g. 'NM_152232(TAS1R2):c.231T>C')
-```
-
-```
---use_exon
-
-Use Exon information to generate HGVS annotation
-(e.g. 'NM_152232(exon2):c.231T>C').
-Only if 'use_gene' is not enabled.
-
-```
-
-```
---use_protein
-
-Use Protein level to generate HGVS annotation
-(e.g. 'NP_689418:p.Cys77Arg').
-Can be used with 'use_exon' or 'use_gene'.
-
-```
-
-```
---add_protein
-
-Add Protein level to DNA HGVS annotation (e.g 'NM_152232:c.231T>C,NP_689418:p.Cys77Arg').
-
-```
-
-```
---full_format
-
-Generates HGVS annotation in a full format
-by using all information to generates an exhaustive annotation
-(non-standard, e.g. 'TAS1R2:NM_152232:NP_689418:c.231T>C:p.Cys77Arg').
-Use 'use_exon' to add exon information
-(e.g 'TAS1R2:NM_152232:NP_689418:exon2:c.231T>C:p.Cys77Arg').
-
-```
-
-```
---codon_type=<Codon type> ['1', '3', 'FULL'] (3)
-
-Amino Acide Codon format type to use to generate HGVS annotation.
-Available:
-- '1': codon in 1 character (e.g. 'C', 'R')
-- '3': codon in 3 character (e.g. 'Cys', 'Arg')
--'FULL': codon in full name (e.g. 'Cysteine', 'Arginine')
-
-```
-
-```
---refgene=<refGene>
-
-Path to refGene annotation file.
-
-```
-
-```
---refseqlink=<refSeqLink>
-
-Path to refSeqLink annotation file.
-
-```
-
-### Databases
-```
---refseq-folder=<refseq folder> (/Users/lebechea/howard/databases/refseq/current)
-
-Folder containing refSeq files.
-
-```
-
-```
---genomes-folder=<genomes> (/Users/lebechea/howard/databases/genomes/current)
-
-Folder containing genomes.
-(e.g. '/Users/lebechea/howard/databases/genomes/current'
 ```
 
 
@@ -908,8 +972,7 @@ Notes:
 ```
 --assembly=<assembly> (hg19)
 
-Default assembly
-(e.g. 'hg19'.
+Genome Assembly (e.g. 'hg19', 'hg38').
 
 ```
 

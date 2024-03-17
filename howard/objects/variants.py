@@ -1275,7 +1275,7 @@ class Variants:
         value. If the parameter is not present, it will return False.
         """
 
-        return self.get_param().get("explode_infos", False)
+        return self.get_param().get("explode",{}).get("explode_infos", False)
 
 
     def get_explode_infos_fields(self, explode_infos_fields:str = None, remove_fields_not_in_header:bool = False) -> list:
@@ -1301,7 +1301,7 @@ class Variants:
 
         # If no fields, get it in param
         if not explode_infos_fields:
-            explode_infos_fields = self.get_param().get("explode_infos_fields", None)
+            explode_infos_fields = self.get_param().get("explode",{}).get("explode_infos_fields", None)
 
         # If no fields, defined as all fields in header using keyword
         if not explode_infos_fields:
@@ -1375,7 +1375,7 @@ class Variants:
         """
 
         if not explode_infos_prefix:
-            explode_infos_prefix = self.get_param().get("explode_infos_prefix", "")
+            explode_infos_prefix = self.get_param().get("explode",{}).get("explode_infos_prefix", "")
 
         return explode_infos_prefix
 
@@ -1839,6 +1839,12 @@ class Variants:
         output_file = full_path(output_file)
         output_header = full_path(output_header)
 
+        # Config
+        config = self.get_config()
+
+        # Param
+        param = self.get_param()
+
         # If no output, get it
         if not output_file:
             output_file = self.get_output()
@@ -1854,20 +1860,20 @@ class Variants:
             # Export header
             self.export_header(output_file=output_file)
 
-        # Parquet partition
-        if not parquet_partitions:
-            parquet_partitions = self.get_param().get("parquet_partitions", None)
-
         # Chunk size
         if not chunk_size:
-            chunk_size = self.get_config().get("chunk_size", None)
+            chunk_size = config.get("chunk_size", None)
+
+        # Parquet partition
+        if not parquet_partitions:
+            parquet_partitions = param.get("export", {}).get("parquet_partitions", None)
 
         # Order by
         if not order_by:
-            order_by = self.get_param().get("order_by", "")
+            order_by = param.get("export", {}).get("order_by", "")
 
         # Header in output
-        header_in_output = self.get_param().get("header_in_output", False)
+        header_in_output = param.get("export", {}).get("include_header", False)
 
         # Database
         database_source=self.get_connexion()
@@ -2394,6 +2400,43 @@ class Variants:
     # Annotation
     ###
 
+    def scan_databases(self, database_formats:list ["parquet"], database_releases:list = ["current"]) -> dict:
+        """
+        The function `scan_databases` scans for available databases based on specified formats and
+        releases.
+        
+        :param database_formats: The `database_formats` parameter is a list that specifies the formats
+        of the databases to be scanned. In this case, the accepted format is "parquet"
+        :type database_formats: list ["parquet"]
+        :param database_releases: The `database_releases` parameter is a list that specifies the
+        releases of the databases to be scanned. In the provided function, the default value for
+        `database_releases` is set to `["current"]`, meaning that by default, the function will scan
+        databases that are in the "current"
+        :type database_releases: list
+        :return: The function `scan_databases` returns a dictionary containing information about
+        databases that match the specified formats and releases.
+        """
+
+        # Config
+        config = self.get_config()
+
+        # Param
+        param = self.get_param()
+
+        # Param - Assembly
+        assembly = param.get("assembly", config.get("assembly", None))
+        if not assembly:
+            assembly = DEFAULT_ASSEMBLY
+            log.warning(f"Default assembly '{assembly}'")
+
+        # Scan for availabled databases
+        log.info(f"Annotations - Check annotation parameters - Scan existing databases - Assembly {[assembly]} - Formats {database_formats} - Releases {database_releases}...")
+        databases_infos_dict = databases_infos(database_folder_releases=database_releases, database_formats=database_formats, assembly=assembly, config=config)
+        log.info(f"Annotations - Check annotation parameters - Scan existing databases - {len(databases_infos_dict)} databases found")
+
+        return databases_infos_dict
+
+
     def annotation(self) -> None:
         """
         It annotates the VCF file with the annotations specified in the config file.
@@ -2427,12 +2470,23 @@ class Variants:
                 param["annotation"] = {}
 
             # List of annotations parameters
-            annotations_list_input = param.get("annotations", {})
+            annotations_list_input = {}
+            if isinstance(param.get("annotations", None), str):
+                annotation_file_list = [value for value in param.get("annotations", "").split(',')]
+                for annotation_file in annotation_file_list:
+                    annotations_list_input[annotation_file] = {"INFO": None}
+            else:
+                annotations_list_input = param.get("annotations", {})
+
+            log.info(f"Quick Annotations: {annotations_list_input.keys()}")
+
+            # List of annotations and associated fields
             annotations_list = {}
 
-            # Explode annotations if ALL
             for annotation_file in annotations_list_input:
+                log.debug(f"annotation_file={annotation_file}")
 
+                # Explode annotations if ALL
                 if annotation_file.upper() == "ALL" or annotation_file.upper().startswith("ALL:"):
 
                     # check ALL parameters (formats, releases)
@@ -2447,9 +2501,7 @@ class Variants:
                             database_releases = database_all_options_split[1].split("+")
 
                     # Scan for availabled databases
-                    log.info(f"Annotations - Check annotation parameters - Scan existing databases - Assembly {[assembly]} - Formats {database_formats} - Releases {database_releases}...")
-                    databases_infos_dict = databases_infos(database_folder_releases=database_releases, database_formats=database_formats, assembly=assembly, config=config)
-                    log.info(f"Annotations - Check annotation parameters - Scan existing databases - {len(databases_infos_dict)} databases found")
+                    databases_infos_dict = self.scan_databases(database_formats=database_formats, database_releases=database_releases)
 
                     # Add found databases in annotation parameters
                     for database_infos in databases_infos_dict.keys():
@@ -2527,7 +2579,7 @@ class Variants:
                             annotation_file = ":".join(annotation_file.split(":")[1:])
                         else:
                             annotation_tool_initial = None
-                        
+
                         # list of files
                         annotation_file_list = annotation_file.replace("+", ":").split(":")
 
@@ -2617,8 +2669,6 @@ class Variants:
             if param.get("annotation", {}).get("exomiser", None):
                 log.info("Annotations 'exomiser'...")
                 self.annotation_exomiser()
-            if param.get("annotation", {}).get("varank", None):
-                log.info("Annotations 'varank'...")
 
         # Explode INFOS fields into table fields
         if self.get_explode_infos():
@@ -4241,7 +4291,21 @@ class Variants:
         
         if annotations:
 
+            if "ALL" in annotations:
+                
+                all_param = annotations.get("ALL", {})
+                all_param_formats = all_param.get("formats",None)
+                all_param_releases = all_param.get("releases",None)
+
+                databases_infos_dict = self.scan_databases(database_formats=all_param_formats, database_releases=all_param_releases)
+                for database_infos in databases_infos_dict.keys():
+                    if database_infos not in annotations:
+                        annotations[database_infos] = {'INFO': None}
+
             for annotation in annotations:
+
+                if annotation in ["ALL"]:
+                    continue
 
                 # Annotation Name
                 annotation_name = os.path.basename(annotation)
@@ -5210,6 +5274,24 @@ class Variants:
         # Param
         param = self.get_param()
         
+        # Quick HGVS
+        log.debug(f"param={param}")
+        if not param.get("hgvs", None):
+            param["hgvs"] = {}
+        if "hgvs_options" in param and param.get("hgvs_options",""):
+            for option in param.get("hgvs_options","").split(":"):
+                option_var_val = option.split("=")
+                option_var = option_var_val[0]
+                if len(option_var_val) > 1:
+                    option_val = option_var_val[1]
+                else:
+                    option_val = "True"
+                if option_val.upper() in ["TRUE"]:
+                    option_val = True
+                elif option_val.upper() in ["FALSE"]:
+                    option_val = False
+                param["hgvs"][option_var] = option_val
+
         # HGVS Param
         param_hgvs = param.get("hgvs",{})
         use_exon = param_hgvs.get("use_exon",False)
@@ -5597,33 +5679,46 @@ class Variants:
             }
         """
 
+        # Param
+        param = self.get_param()
+
         # operations config
         operations_config = self.get_operations_config(operations_config_dict=operations_config_dict, operations_config_file=operations_config_file)
 
         # Upper keys
         operations_config = {k.upper(): v for k, v in operations_config.items()}
         
+        # Calculations
+        calculations_list= [value for value in param.get("calculations", "").split(',')]
+        log.info(f"Quick Calculations list: {calculations_list}")
+        param_quick_calculations = param.get("calculation",{})
+        for calculation_operation in calculations_list:
+            if calculation_operation.upper() not in param.get("calculation", {}):
+                param_quick_calculations[calculation_operation.upper()] = {}
+        param["calculation"] = param_quick_calculations
+
         # Operations for calculation
         if not operations:
-            operations = self.get_param().get("calculation", {})
+            operations = param.get("calculation", {})
 
         # For each operations
         for operation_name in operations:
             operation_name = operation_name.upper()
-            if operation_name in operations_config:
-                log.info(f"Calculation '{operation_name}'")
-                operation = operations_config[operation_name]
-                operation_type = operation.get("type", "sql")
-                if operation_type == "python":
-                    self.calculation_process_function(operation=operation, operation_name=operation_name)
-                elif operation_type == "sql":
-                    self.calculation_process_sql(operation=operation, operation_name=operation_name)
+            if operation_name not in ['']:
+                if operation_name in operations_config:
+                    log.info(f"Calculation '{operation_name}'")
+                    operation = operations_config[operation_name]
+                    operation_type = operation.get("type", "sql")
+                    if operation_type == "python":
+                        self.calculation_process_function(operation=operation, operation_name=operation_name)
+                    elif operation_type == "sql":
+                        self.calculation_process_sql(operation=operation, operation_name=operation_name)
+                    else:
+                        log.error(f"Operations config: Type '{operation_type}' NOT available")
+                        raise ValueError(f"Operations config: Type '{operation_type}' NOT available")
                 else:
-                    log.error(f"Operations config: Type '{operation_type}' NOT available")
-                    raise ValueError(f"Operations config: Type '{operation_type}' NOT available")
-            else:
-                log.error(f"Operations config: Calculation '{operation_name}' NOT available")
-                raise ValueError(f"Operations config: Calculation '{operation_name}' NOT available")
+                    log.error(f"Operations config: Calculation '{operation_name}' NOT available")
+                    raise ValueError(f"Operations config: Calculation '{operation_name}' NOT available")
 
         # Explode INFOS fields into table fields
         if self.get_explode_infos():
@@ -6338,13 +6433,23 @@ class Variants:
             prefix = self.get_explode_infos_prefix()
 
             # Trio param
-            trio_ped = param.get("calculation", {}).get("TRIO", {})
+            trio_ped = param.get("calculation", {}).get("TRIO", {}).get("trio_pedigree", None)
             if trio_ped:
+
+                # Load trio
+                if isinstance(trio_ped, str) and os.path.exists(full_path(trio_ped)):
+                    with open(full_path(trio_ped)) as trio_ped:
+                        trio_ped = json.load(trio_ped)
+                else:
+                    trio_ped = json.loads(trio_ped)
+                
+                # Construct trio list
                 trio_samples = [
                     trio_ped.get("father",""),
                     trio_ped.get("mother",""),
                     trio_ped.get("child","")
                 ]
+
             else:
                 trio_samples = self.get_header_sample_list()[0:3]
 

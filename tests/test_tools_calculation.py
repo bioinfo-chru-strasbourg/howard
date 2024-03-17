@@ -48,7 +48,8 @@ def test_calculation_tsv():
         transcripts = None,
         show_calculations = False,
         trio_pedigree = '{"father":"sample1", "mother":"sample2", "child":"sample3"}',
-        calculation_config = None
+        calculation_config = None,
+        arguments_dict = arguments_dict
     )
 
     # Remove if output file exists
@@ -96,7 +97,8 @@ def test_calculation_vcf():
         transcripts = None,
         show_calculations = False,
         trio_pedigree = '{"father":"sample1", "mother":"sample2", "child":"sample3"}',
-        calculation_config = None
+        calculation_config = None,
+        arguments_dict = arguments_dict
     )
 
     # Remove if output file exists

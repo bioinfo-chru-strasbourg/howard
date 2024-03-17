@@ -54,7 +54,8 @@ def test_process():
         explode_infos = False,
         explode_infos_prefix = "",
         explode_infos_fields = "*",
-        include_header = False
+        include_header = False,
+        arguments_dict = arguments_dict
     )
 
     # Remove if output file exists
@@ -106,7 +107,8 @@ def test_process_with_param_file():
         explode_infos = False,
         explode_infos_prefix = "",
         explode_infos_fields = "*",
-        include_header = False
+        include_header = False,
+        arguments_dict = arguments_dict
     )
 
     # Remove if output file exists
@@ -158,7 +160,8 @@ def test_process_with_query():
         explode_infos = False,
         explode_infos_prefix = "",
         explode_infos_fields = "*",
-        include_header = False
+        include_header = False,
+        arguments_dict = arguments_dict
     )
 
     # Remove if output file exists

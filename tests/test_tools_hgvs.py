@@ -45,7 +45,8 @@ def test_hgvs_tsv():
         output = output_vcf,
         config = config,
         genomes_folder = genomes_folder,
-        refseq_folder = refseq_folder
+        refseq_folder = refseq_folder,
+        arguments_dict = arguments_dict
     )
     
     # Remove if output file exists
@@ -91,7 +92,8 @@ def test_hgvs_vcf():
         output = output_vcf,
         config = config,
         genomes_folder = genomes_folder,
-        refseq_folder = refseq_folder
+        refseq_folder = refseq_folder,
+        arguments_dict = arguments_dict
     )
     
     # Remove if output file exists

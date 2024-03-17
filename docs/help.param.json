@@ -1,137 +1,325 @@
 {
   "__help": [
-    "HOWARD Parameters JSON file defined parameters to process annotations, prioritization, calculations, convertions and queries."
+    "HOWARD Parameters JSON file defined parameters to process annotations, calculations, prioritization, convertions and queries."
   ],
   "__code_type": "json",
-  "__examples_code": [
-    "# Parameters for annotation, calculation, prioritization, HGVS annotation...",
-    "{",
-    "   \"annotation\": {",
-    "      \"parquet\": {",
-    "         \"annotations\": {",
-    "            \"/path/to/database1.parquet\": {",
-    "               ...",
-    "            },",
-    "            ...",
-    "         }",
-    "      }",
-    "      \"annovar\": {",
-    "         \"annotations\": {",
-    "            \"annovar_keyword1\": {",
-    "               ...",
-    "            },",
-    "            ...",
-    "         }",
-    "      }",
-    "   },",
-    "   \"calculation\": {",
-    "      \"operation1\": null,",
-    "      \"operation2\": {",
-    "        \"options\": {",
-    "          \"option1\": \"value1\",",
-    "          \"option2\": \"value2\"",
-    "          ...",
-    "        }",
-    "        ...",
-    "      }",
-    "   },",
-    "   \"prioritization\": {",
-    "      \"prioritizations\": \"config/prioritization_profiles.json\",",
-    "      \"profiles\": [\"GENOME\", \"GERMLINE\"],",
-    "      \"default_profile\": \"GERMLINE\",",
-    "      \"pzfields\": [\"PZScore\", \"PZFlag\", \"PZComment\"],",
-    "      \"prioritization_score_mode\": \"VaRank\"",
-    "   },",
-    "   \"hgvs\": {",
-    "      \"full_format\": true,",
-    "      \"use_exon\": true",
-    "   }",
-    "}"
-  ],
+  "__examples_code": {
+    "# Parameters for annotation, calculation, prioritization, HGVS annotation and export": [
+      "{",
+      "   \"hgvs\": {",
+      "      \"full_format\": true,",
+      "      \"use_exon\": true",
+      "   }",
+      "   \"annotation\": {",
+      "      \"parquet\": {",
+      "         \"annotations\": {",
+      "            \"/path/to/database3.parquet\": {",
+      "               \"field1\": null,",
+      "               \"field2\": \"field2_renamed\",",
+      "            },",
+      "            \"/path/to/database4.vcf.gz\": {",
+      "               \"INFO\": null",
+      "            }",
+      "            \"/path/to/database5.bed.gz\": {",
+      "               \"INFO\": null",
+      "            }",    
+      "         }",
+      "      }",
+      "      \"bcftools\": {",
+      "         \"annotations\": {",
+      "            \"/path/to/database6.vcf.gz\": {",
+      "               \"field1\": null,",
+      "               \"field2\": \"field2_renamed\",",
+      "            },",
+      "            \"/path/to/database7.bed\": {",
+      "               \"INFO\": null",
+      "            }",
+      "         }",
+      "      }",
+      "      \"annovar\": {",
+      "         \"annotations\": {",
+      "            \"annovar_keyword2\": {",
+      "               \"field1\": null,",
+      "               \"field2\": \"field2_renamed\",",
+      "            },",
+      "            \"annovar_keyword3\": {",
+      "               \"INFO\": null",
+      "            }",
+      "         }",
+      "      }",
+      "      \"snpeff\": {",
+      "         \"options\": {",
+      "            \" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr \"}",
+      "         }",
+      "      }",
+      "      \"exomiser\": {",
+      "         \"release\": \"2109\"",
+      "         \"transcript_source\": \"refseq\"",
+      "         \"hpo\": ['HP:0001156', 'HP:0001363', 'HP:0011304', 'HP:0010055']",
+      "      }",
+      "      \"options\": {",
+      "         \"append\": true",
+      "      }",
+      "   },",
+      "   \"calculation\": {",
+      "      \"operation1\": null,",
+      "      \"operation2\": {",
+      "        \"options\": {",
+      "          \"option1\": \"value1\",",
+      "          \"option2\": \"value2\"",
+      "        }",
+      "      }",
+      "   },",
+      "   \"prioritization\": {",
+      "      \"prioritizations\": \"config/prioritization_profiles.json\",",
+      "      \"profiles\": [\"GENOME\", \"GERMLINE\"],",
+      "      \"default_profile\": \"GERMLINE\",",
+      "      \"pzfields\": [\"PZScore\", \"PZFlag\", \"PZComment\"],",
+      "      \"prioritization_score_mode\": \"VaRank\"",
+      "   },",
+      "   \"export\": {",
+      "      \"include_header\": true",
+      "   }",
+      "}"
+    ]
+  },
+  "hgvs": {
+    "__help": [
+      "HOWARD annotates variants with HGVS annotation using HUGO HGVS internation Sequence Variant Nomenclature (http://varnomen.hgvs.org/). Annotation refere to refGene and genome to generate HGVS nomenclature for all available transcripts. This annotation add 'hgvs' field into VCF INFO column of a VCF file. Several options are available, to add gene, exon and protein information, to generate a 'full format' detailed annotation, to choose codon format."
+    ],
+    "__code_type": "json",
+    "__examples_code": [
+      "# HGVS annotation  with operations for generate variant_id and variant type, extract HGVS from snpEff annotation, select NOMEN from snpEff HGVS with a list of transcripts of preference",
+      "\"hgvs\": {",
+      "  \"full_format\": true,",
+      "  \"use_exon\": true",
+      "}"
+    ],
+    "use_gene" : {
+      "__help": [
+        "Add Gene information to generate HGVS annotation (e.g. 'NM_152232**(TAS1R2)**:c.231T>C')."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Use Gene in HGVS annotation",
+        "\"use_gene\": true"
+      ]
+    },
+    "use_exon" : {
+      "__help": [
+        "Add Exon information to generate HGVS annotation (e.g. 'NM_152232(exon2):c.231T>C'). Only if 'use_gene' is not enabled."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Use Exon in HGVS annotation",
+        "\"use_exon\": true"
+      ]
+    },
+    "use_protein" : {
+      "__help": [
+        "Use Protein level to generate HGVS annotation (e.g. 'NP_689418:p.Cys77Arg'). Can be used with 'use_exon' or 'use_gene'."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Use Protein in HGVS annotation",
+        "\"use_protein\": true"
+      ]
+    },
+    "add_protein" : {
+      "__help": [
+        "Add Protein level to DNA HGVS annotation (e.g. 'NM_152232:c.231T>C,NP_689418:p.Cys77Arg')."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Add Protein level to DNA HGVS annotation",
+        "\"add_protein\": true"
+      ]
+    },
+    "full_format" : {
+      "__help": [
+        "Generates HGVS annotation in a full format (non-standard, e.g. 'TAS1R2:NM_152232:NP_689418:c.231T>C:p.Cys77Arg', 'TAS1R2:NM_152232:NP_689418:exon2:c.231T>C:p.Cys77Arg'). Full format use all information to generates an exhaustive annotation. Use specifically 'use_exon' to add exon information."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Use full format for HGVS annotation",
+        "\"full_format\": true"
+      ]
+    },
+    "codon_type" : {
+      "__help": [
+        "Amino Acide Codon format type to use to generate HGVS annotation (default '3'):",
+        "- '1': codon in 1 character (e.g. 'C', 'R')",
+        "- '3': codon in 3 character (e.g. 'Cys', 'Arg')",
+        "- 'FULL': codon in full name (e.g. 'Cysteine', 'Arginine')"
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Amino Acide Codon format with 1 character",
+        "\"codon_type\": '1'",
+        "# Amino Acide Codon format with 3 character",
+        "\"codon_type\": '3'",
+        "# Amino Acide Codon format with full name",
+        "\"codon_type\": 'FULL'"
+      ]
+    },
+    "refgene" : {
+      "__help": [
+        "Path to refGene annotation file (see [HOWARD User Guide](user_guide.md#databases-tool))."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Path to refSeq file",
+        "\"refgene\": '~/howard/databases/refseq/current/hg19/ncbiRefSeq.txt'"
+      ]
+    },
+    "refseqlink" : {
+      "__help": [
+        "Path to refGeneLink annotation file (see [HOWARD User Guide](user_guide.md#databases-tool))."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Path to refSeq file",
+        "\"refseqlink\": '~/howard/databases/refseq/current/hg19/ncbiRefSeqLink.txt'"
+      ]
+    }
+  },
   "annotation": {
     "__help": [
-      "Annotation process using HOWARD algorithms or external tools.",
-      "For HOWARD Parquet algorithm, specify the list of database files available (formats such as Parquet, VCF, TSV, duckDB, JSON). This parameter enables users to select specific database fields and optionally rename them. Use 'INFO' keyword to select all fields within the database. If a full path is not provided, the system will automatically detect files within database folders (see Configuration doc) and assembly (see Parameter option).",
-      "For external tools, such as Annovar, snpEff and Exomiser, specify parameters such as annotation keywords (Annovar) and options (depending on the tool)."
+      "Annotation process using HOWARD algorithms or external tools.\n",
+      "For HOWARD Parquet algorithm, provide the list of database files available (formats such as Parquet, VCF, TSV, duckDB, JSON) and select fields (rename possible, 'INFO' keyword for all fields), or use 'ALL' keyword to detect available databases.\n",
+      "For external tools, such as Annovar, snpEff and Exomiser, specify parameters such as annotation keywords (Annovar) and options (depending on the tool), and select fields (BCFtools and Annovar, field rename available)."
     ],
     "__examples_code": [
       "# Annotation with multiple tools in multiple formats with multiple options",
       "\"annotation\": {",
       "   \"parquet\": {",
       "      \"annotations\": {",
-      "         \"/path/to/database1.parquet\": {",
-      "            ...",
+      "         \"/path/to/database3.parquet\": {",
+      "            \"field1\": null,",
+      "            \"field2\": \"field2_renamed\",",
       "         },",
-      "         ...,",
+      "         \"/path/to/database4.vcf.gz\": {",
+      "            \"INFO\": null",
+      "         }",
+      "         \"/path/to/database5.bed.gz\": {",
+      "            \"INFO\": null",
+      "         }",    
+      "      }",
+      "   }",
+      "   \"bcftools\": {",
+      "      \"annotations\": {",
+      "         \"/path/to/database6.vcf.gz\": {",
+      "            \"field1\": null,",
+      "            \"field2\": \"field2_renamed\",",
+      "         },",
+      "         \"/path/to/database7.bed\": {",
+      "            \"INFO\": null",
+      "         }",
       "      }",
       "   }",
       "   \"annovar\": {",
       "      \"annotations\": {",
-      "         \"annovar_keyword1\": {",
-      "            ...",
+      "         \"annovar_keyword2\": {",
+      "            \"field1\": null,",
+      "            \"field2\": \"field2_renamed\",",
       "         },",
-      "         ...",
+      "         \"annovar_keyword3\": {",
+      "            \"INFO\": null",
+      "         }",
       "      }",
+      "   }",
+      "   \"snpeff\": {",
+      "      \"options\": {",
+      "         \" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr \"}",
+      "      }",
+      "   }",
+      "   \"exomiser\": {",
+      "      \"release\": \"2109\"",
+      "      \"transcript_source\": \"refseq\"",
+      "      \"hpo\": ['HP:0001156', 'HP:0001363', 'HP:0011304', 'HP:0010055']",
+      "   }",
+      "   \"options\": {",
+      "      \"append\": True",
       "   }",
       "}"
     ],
     "parquet": {
       "__help": [
-        "Annotation process using HOWARD parquet algorithm. Provide a list of database files and annotation fields."
+        "Annotation process using HOWARD Parquet algorithm, for the list of databases available (formats such as Parquet, VCF, TSV, duckDB, JSON)."
       ],
-      "__examples_code": [
-        "# Annotation with multiple databases in multiple formats",
-        "\"parquet\": {",
-        "   \"annotations\": {",
-        "      \"/path/to/database1.parquet\": {",
-        "         \"field1\": null",
-        "         \"field2\": \"field2_renamed\",",
-        "         ...",
-        "      },",
-        "      \"database2.vcf.gz\": {",
-        "         ...",
-        "      },",
-        "      ...",
-        "   }",
-        "}"
-      ],
-      "annotations": {
-        "__help": [
-          "Specify the list of database files available in multiple formats such as Parquet, VCF, BED, TSV, duckDB, JSON."
-        ],
-        "__examples_code": [
-          "# Annotation with dbSNP database  with all fields",
-          "\"annotations\": {",
-          "   \"tests/databases/annotations/current/hg19/avsnp150.parquet\": {",
-          "      \"INFO\": null",
+      "__examples_code": {
+        "Annotation with multiple databases in multiple formats": [
+          "\"parquet\": {",
+          "   \"annotations\": {",
+          "      \"/path/to/database3.parquet\": {",
+          "         \"field1\": null,",
+          "         \"field2\": \"field2_renamed\",",
+          "      },",
+          "      \"/path/to/database4.vcf.gz\": {",
+          "         \"INFO\": null",
+          "      }",
+          "      \"/path/to/database5.bed.gz\": {",
+          "         \"ALL\": null",
+          "      }",    
           "   }",
-          "}",
-          "",
-          "# Annotation with dbNSFP (only PolyPhen, ClinVar and REVEL score), and rename fields",
-          "\"annotations\": {",
-          "   \"tests/databases/annotations/current/hg19/dbnsfp42a.parquet\": {",
-          "      \"Polyphen2_HDIV_pred\": \"PolyPhen\",",
-          "      \"ClinPred_pred\": \"ClinVar\",",
-          "      \"REVEL_score\": null",
-          "   }",
-          "}",
-          "",
-          "# Annotation with refSeq as a BED file",
-          "\"annotations\": {",
-          "   \"tests/databases/annotations/current/hg19/refGene.bed\": {",
-          "      \"INFO\": null",
-          "   }",
-          "}",
-          "",
-          "# Annotation with dbNSFP REVEL annotation (as a VCF file) within configured annotation databases folders (default: '~/howard/databases/annotations/current') and assembly (default: 'hg19')",
-          "\"annotations\": {",
-          "   \"dbnsfp42a.REVEL.vcf.gz\": {",
-          "      \"REVEL_score\": null,",
-          "      \"REVEL_rankscore\": null",
-          "   }",
-          "}",
-          ""
+          "}"
         ]
+      },
+      "annotations": {
+        "__auto": false,
+        "__help": [
+          "Specify a list of databases files available (formats such as Parquet, VCF, TSV, duckDB, JSON). This parameter enables users to select specific database fields and optionally rename them (e.g. '\"field\": null' to keep field name, '\"field\": \"new_name\"' to rename field). Use 'INFO' or 'ALL' keyword to select all fields within the database INFO/Tags header (e.g. '\"INFO\": null', '\"ALL\": null').\n",
+          "For add all availalbe databases files, use 'ALL' keyword, with filters on type and release (e.g. 'ALL', 'ALL:parquet:current', 'ALL:parquet,vcf:current,devel').\n",
+          "If a full path is not provided, the system will automatically detect files within database folders (see Configuration doc) and assembly (see Parameter option)."
+        ],
+        "__examples_code": {
+          "# Annotation with dbSNP and dbNSFP databases with all fields": [
+            "\"annotations\": {",
+            "   \"tests/databases/annotations/current/hg19/avsnp150.parquet\": {",
+            "      \"INFO\": null",
+            "   }",
+            "   \"tests/databases/annotations/current/hg19/dbnsfp42a.parquet\": {",
+            "      \"ALL\": null",
+            "   }",
+            "}"
+          ],
+          "# Annotation with dbNSFP (only PolyPhen, ClinVar and REVEL score), and rename fields": [
+            "\"annotations\": {",
+            "   \"tests/databases/annotations/current/hg19/dbnsfp42a.parquet\": {",
+            "      \"Polyphen2_HDIV_pred\": \"PolyPhen\",",
+            "      \"ClinPred_pred\": \"ClinVar\",",
+            "      \"REVEL_score\": null",
+            "   }",
+            "}",
+            ""
+          ],
+          "# Annotation with refSeq as a BED file": [
+            "\"annotations\": {",
+            "   \"tests/databases/annotations/current/hg19/refGene.bed\": {",
+            "      \"INFO\": null",
+            "   }",
+            "}"
+          ],
+          "# Annotation with dbNSFP REVEL annotation (as a VCF file) within configured annotation databases folders (default: '~/howard/databases/annotations/current') and assembly (default: 'hg19')": [
+            "\"annotations\": {",
+            "   \"dbnsfp42a.REVEL.vcf.gz\": {",
+            "      \"REVEL_score\": null,",
+            "      \"REVEL_rankscore\": null",
+            "   }",
+            "}",
+            ""
+          ],
+          "Annotation with all available databases in Parquet for ''current release": [
+            "\"parquet\": {",
+            "   \"annotations\": {",
+            "      \"ALL\": {",
+            "         \"formats\": [\"parquet\"],",
+            "         \"releases\": [\"current\"]",
+            "      }",
+            "   }",
+            "}"
+          ]
+        }
       }
     },
     "bcftools": {
@@ -145,18 +333,19 @@
         "      \"/path/to/database1.vcf.gz\": {",
         "         \"field1\": null",
         "         \"field2\": \"field2_renamed\",",
-        "         ...",
         "      },",
         "      \"database2.bed.gz\": {",
-        "         ...",
-        "      },",
-        "      ...",
+        "         \"INFO\": null",
+        "      }",
         "   }",
         "}"
       ],
       "annotations": {
+        "__auto": false,
         "__help": [
-          "Specify the list of database files in formats VCF or BED. Files need to be compressed and indexed."
+          "Specify the list of database files in formats VCF or BED. Files need to be compressed and indexed.",
+          "This parameter enables users to select specific database fields and optionally rename them (e.g. '\"field\": null' to keep field name, '\"field\": \"new_name\"' to rename field). Use 'INFO' or 'ALL' keyword to select all fields within the database INFO/Tags header (e.g. '\"INFO\": null', '\"ALL\": null').\n",
+          "If a full path is not provided, the system will automatically detect files within database folders (see Configuration doc) and assembly (see Parameter option)."
         ],
         "__examples_code": [
           "# Annotation with dbSNP database  with all fields",
@@ -165,7 +354,6 @@
           "      \"INFO\": null",
           "   }",
           "}",
-          "",
           "# Annotation with dbNSFP (only PolyPhen, ClinVar and REVEL score), and rename fields",
           "\"annotations\": {",
           "   \"tests/databases/annotations/current/hg19/dbnsfp42a.vcf.gz\": {",
@@ -174,22 +362,19 @@
           "      \"REVEL_score\": null",
           "   }",
           "}",
-          "",
           "# Annotation with refSeq as a BED file",
           "\"annotations\": {",
           "   \"tests/databases/annotations/current/hg19/refGene.bed\": {",
           "      \"INFO\": null",
           "   }",
           "}",
-          "",
           "# Annotation with dbNSFP REVEL annotation (as a VCF file) within configured annotation databases folders (default: '~/howard/databases/annotations/current') and assembly (default: 'hg19')",
           "\"annotations\": {",
           "   \"dbnsfp42a.REVEL.vcf.gz\": {",
           "      \"REVEL_score\": null,",
           "      \"REVEL_rankscore\": null",
           "   }",
-          "}",
-          ""
+          "}"
         ]
       }
     },
@@ -201,23 +386,18 @@
         "# Annotation with multiple Annovar databases, with fields selection, and Annovar options",
         "\"annovar\": {",
         "   \"annotations\": {",
-        "      \"annotation1\": {",
-        "         \"field1\": null",
+        "      \"annovar_keyword2\": {",
+        "         \"field1\": null,",
         "         \"field2\": \"field2_renamed\",",
-        "         ...",
         "      },",
-        "      \"annotation2\": {",
+        "      \"annovar_keyword3\": {",
         "         \"INFO\": null",
-        "      },",
-        "      ...",
-        "   }",
-        "   \"options\": {",
-        "      \"option1\": \"value1\",",
-        "      ...,",
+        "      }",
         "   }",
         "}"
       ],
       "annotations": {
+        "__auto": false,
         "__help": [
           "List of keywords refering to Annovar databases (see [Annovar Databases documentation](https://annovar.openbioinformatics.org/en/latest/user-guide/download/)), with a list of selected fields for each of them (rename available)"
         ],
@@ -227,12 +407,10 @@
           "   \"clinvar_20221231\": {",
           "      \"CLNSIG\": \"ClinVar_class\"",
           "      \"CLNDN\": \"ClinVar_desease\",",
-          "      ...",
           "   },",
           "   \"cosmic70\": {",
           "      \"INFO\": null",
           "   },",
-          "   ...",
           "}"
         ]
       },
@@ -445,147 +623,42 @@
       ]
     }
   },
-  "hgvs": {
-    "__help": [
-      "HOWARD annotates variants with HGVS annotation using HUGO HGVS internation Sequence Variant Nomenclature (http://varnomen.hgvs.org/). Annotation refere to refGene and genome to generate HGVS nomenclature for all available transcripts. This annotation add 'hgvs' field into VCF INFO column of a VCF file. Several options are available, to add gene, exon and protein information, to generate a 'full format' detailed annotation, to choose codon format."
-    ],
-    "__code_type": "json",
-    "__examples_code": [
-      "# HGVS annotation  with operations for generate variant_id and variant type, extract HGVS from snpEff annotation, select NOMEN from snpEff HGVS with a list of transcripts of preference",
-      "\"hgvs\": {",
-      "  \"full_format\": true,",
-      "  \"use_exon\": true",
-      "}"
-    ],
-    "use_gene" : {
-      "__help": [
-        "Add Gene information to generate HGVS annotation (e.g. 'NM_152232**(TAS1R2)**:c.231T>C')."
-      ],
-      "__code_type": "json",
-      "__examples_code": [
-        "# Use Gene in HGVS annotation",
-        "\"use_gene\": true"
-      ]
-    },
-    "use_exon" : {
-      "__help": [
-        "Add Exon information to generate HGVS annotation (e.g. 'NM_152232(exon2):c.231T>C'). Only if 'use_gene' is not enabled."
-      ],
-      "__code_type": "json",
-      "__examples_code": [
-        "# Use Exon in HGVS annotation",
-        "\"use_exon\": true"
-      ]
-    },
-    "use_protein" : {
-      "__help": [
-        "Use Protein level to generate HGVS annotation (e.g. 'NP_689418:p.Cys77Arg'). Can be used with 'use_exon' or 'use_gene'."
-      ],
-      "__code_type": "json",
-      "__examples_code": [
-        "# Use Protein in HGVS annotation",
-        "\"use_protein\": true"
-      ]
-    },
-    "add_protein" : {
-      "__help": [
-        "Add Protein level to DNA HGVS annotation (e.g. 'NM_152232:c.231T>C,NP_689418:p.Cys77Arg')."
-      ],
-      "__code_type": "json",
-      "__examples_code": [
-        "# Add Protein level to DNA HGVS annotation",
-        "\"add_protein\": true"
-      ]
-    },
-    "full_format" : {
-      "__help": [
-        "Generates HGVS annotation in a full format (non-standard, e.g. 'TAS1R2:NM_152232:NP_689418:c.231T>C:p.Cys77Arg', 'TAS1R2:NM_152232:NP_689418:exon2:c.231T>C:p.Cys77Arg'). Full format use all information to generates an exhaustive annotation. Use specifically 'use_exon' to add exon information."
-      ],
-      "__code_type": "json",
-      "__examples_code": [
-        "# Use full format for HGVS annotation",
-        "\"full_format\": true"
-      ]
-    },
-    "codon_type" : {
-      "__help": [
-        "Amino Acide Codon format type to use to generate HGVS annotation (default '3'):",
-        "- '1': codon in 1 character (e.g. 'C', 'R')",
-        "- '3': codon in 3 character (e.g. 'Cys', 'Arg')",
-        "- 'FULL': codon in full name (e.g. 'Cysteine', 'Arginine')"
-      ],
-      "__code_type": "json",
-      "__examples_code": [
-        "# Amino Acide Codon format with 1 character",
-        "\"codon_type\": '1'",
-        "# Amino Acide Codon format with 3 character",
-        "\"codon_type\": '3'",
-        "# Amino Acide Codon format with full name",
-        "\"codon_type\": 'FULL'"
-      ]
-    },
-    "refgene" : {
-      "__help": [
-        "Path to refGene annotation file (see [HOWARD User Guide](user_guide.md#databases-tool))."
-      ],
-      "__code_type": "json",
-      "__examples_code": [
-        "# Path to refSeq file",
-        "\"refgene\": '~/howard/databases/refseq/current/hg19/ncbiRefSeq.txt'"
-      ]
-    },
-    "refseqlink" : {
-      "__help": [
-        "Path to refGeneLink annotation file (see [HOWARD User Guide](user_guide.md#databases-tool))."
-      ],
-      "__code_type": "json",
-      "__examples_code": [
-        "# Path to refSeq file",
-        "\"refseqlink\": '~/howard/databases/refseq/current/hg19/ncbiRefSeqLink.txt'"
-      ]
-    }
-  },
+
   "stats": {
-    "stats_md": {
-      
-    },
-    "stats_json": {
-      
-    }
+    "__help": "Statistics on loaded variants.",
+    "stats_md": {},
+    "stats_json": {}
   },
   "query": {
-    "__code_type": "",
-    "__examples_code": [
-      "# Simple query to show all variants file",
-      "SELECT \"#CHROM\", POS, REF, ALT, INFO ",
-      "FROM variants"
-    ]
+    "__help": [
+      "Query options tools. Mainly a SQL query, based on 'variants' table corresponding on input file data, or a independant query. Print options for 'query' tool allow limiting number of lines and choose printing mode."
+    ],
+    "query": {
+      "__code_type": "",
+      "__examples_code": [
+        "# Simple query to show all variants file",
+        "SELECT \"#CHROM\", POS, REF, ALT, INFO ",
+        "FROM variants"
+      ]
+    },
+    "query_limit": {},
+    "query_print_mode": {}
   },
-  "explode_infos": {
-
+  "export": {
+    "__help": [
+      "Export options for output files, such as data order, include header in output and hive partitioning."
+    ],
+    "order_by": {},
+    "include_header": {},
+    "parquet_partitions": {}
   },
-  "explode_infos_prefix": {
-
+  "explode": {
+    "__help": [
+      "Explode options for INFO/tags annotations within VCF files."
+    ],
+    "explode_infos": {},
+    "explode_infos_prefix": {},
+    "explode_infos_fields": {}
   },
-  "explode_infos_fields": {
-
-  },
-  "header_in_output": {
-
-  },
-  "parquet_partitions": {
-
-  },
-  "order_by": {
-
-  },
-  "query_limit": {
-
-  },
-  "query_print_mode": {
-
-  },
-  "threads": {
-
-  }
+  "threads": {}
 }

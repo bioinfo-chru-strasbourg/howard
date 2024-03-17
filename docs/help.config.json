@@ -2,89 +2,47 @@
   "__help": [
     "HOWARD Configuration JSON file defined default configuration regarding resources (e.g. threads, memory), settings (e.g. verbosity, temporary files), default folders (e.g. for databases) and paths to external tools."
   ],
-  "threads": {
-    "__examples_code": [
-      "# Automatically detect all available CPU/cores",
-      "\"threads\": -1",
-      "# Define 8 CPU/cores",
-      "\"threads\": 8"
-    ]
-  },
-  "memory": {
-    "__format": "FLOAT[kMG]",
-    "__examples_code": [
-      "# for 8Go of memory",
-      "\"memory\": \"8G\"",
-      "# for 1Go of memory",
-      "\"memory\": \"1024M\"",
-      "# for 24Go and 800Mo of memory",
-      "\"memory\": \"24.8G\""
-    ]
-  },
-  "assembly": {
-    "__examples_code": [
-      "# for Homo Sapiens hg19/GRCh37 assembly",
-      "\"assembly\": \"hg19\"",
-      "# for Homo Sapiens hg38/GRCh38 assembly",
-      "\"assembly\": \"hg38\"",
-      "# for Giant Panda assembly",
-      "\"assembly\": \"ailMel1.99\""
-    ]
-  },
-  "verbosity": {
-    "__examples_code": [
-      "# Default verbosity",
-      "\"verbosity\": \"INFO\"",
-      "# ERROR level (quiet mode)",
-      "\"verbosity\": \"ERROR\"",
-      "# For debug",
-      "\"verbosity\": \"DEBUG\""
-    ],
-    "__default": "INFO"
-  },
-  "tmp": {
-    "__examples_code": [
-      "# System temporary folder",
-      "\"tmp\": \"/tmp\"",
-      "# Current work directory",
-      "\"tmp\": \".tmp\""
-    ]
-  },
-  "access": {
-    "__examples_code": [
-      "# Read and Write mode",
-      "\"access\": \"RW\"",
-      "# Read only mode",
-      "\"access\": \"RO\""
-    ]
-  },
-  "duckdb_settings": {
-    "__examples_code": [
-      "# DuckDB settings JSON file",
-      "\"duckdb_settings\": \"/path/to/duckdb_config.json\"",
-      "# JSON string for Time zone, temporary directory and threads for duckDB",
-      "\"duckdb_settings\": {\"TimeZone\": \"GMT\", \"temp_directory\": \"/tmp/duckdb\", \"threads\": 8}"
-    ]
-  },
-  "chunk_size": {
-    "__examples_code": [
-      "# Chunk size of 1.000.000 by default",
-      "\"chunk_size\": 1000000",
-      "# Smaller chunk size to reduce Parquet file size and memory usage",
-      "\"chunk_size\": 100000"
-    ]
-  },
-  "log": {
-    "__examples_code": [
-      "# Relative path to log file",
-      "\"log\": \"my.log\"",
-      "# Full path to log file",
-      "\"log\": \"/tmp/my.log\""
-    ]
-  },
+  "__examples": {
+      "Example of a configuration JSON file": [
+        "{",
+        "  \"threads\": 8,",
+        "  \"memory\": null,",
+        "  \"verbosity\": \"WARNING\",",
+        "  \"folders\": {",
+        "    \"databases\": {",
+        "      \"genomes\": \"~/howard/databases/genomes/current\",",
+        "      \"annotations\": [",
+        "        \"~/howard/databases/annotations/current\",",
+        "        \"~/howard/databases/dbnsfp/current\",",
+        "        \"~/howard/databases/dbsnp/current\"",
+        "      ],",
+        "      \"parquet\": [",
+        "        \"~/howard/databases/annotations/current\"",
+        "      ],",
+        "      \"bcftools\": [",
+        "        \"~/howard/databases/annotations/current\"",
+        "      ],",
+        "      \"annovar\": [",
+        "        \"~/howard/databases/annovar/current\"",
+        "      ],",
+        "      \"snpeff\": \"~/howard/databases/snpeff/current\",",
+        "      \"varank\": \"~/howard/databases/varank/current\"",
+        "    }",
+        "  },",
+        "  \"tools\": {",
+        "    \"bcftools\": \"bcftools\",",
+        "    \"bgzip\": \"bgzip\",",
+        "    \"java\": \"java\",",
+        "    \"snpeff\": \"~/howard/tools/snpeff/current/bin/snpEff.jar\",",
+        "    \"annovar\": \"~/howard/tools/annovar/current/bin/table_annovar.pl\",",
+        "    \"exomiser\": \"~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar\"",
+        "  }",
+        "}"
+      ]
+    },
   "folders": {
     "__help": [
-      "Configuration for folders such as databases"
+      "Folders configuration such as for databases."
     ],
     "databases": {
       "__help": [
@@ -288,6 +246,8 @@
       ],
       "__default": "~/howard/tools/snpeff/current/bin/snpEff.jar",
       "__examples_code": [
+        "# Path to binary as a dict without binary type",
+        "\"snpeff\": \"~/howard/tools/snpeff/current/bin/snpEff.jar\"",
         "# Path to binary as a dict with binary type 'jar'",
         "\"snpeff\": {\"jar\": \"~/howard/tools/snpeff/current/bin/snpEff.jar\"}"
       ]
@@ -298,6 +258,8 @@
       ],
       "__default": "~/howard/tools/annovar/current/bin/table_annovar.pl",
       "__examples_code": [
+        "# Path to binary as a dict without binary type",
+        "\"annovar\": \"~/howard/tools/annovar/current/bin/table_annovar.pl\"",
         "# Path to binary as a dict with binary type 'perl'",
         "\"annovar\": {\"jar\": \"~/howard/tools/annovar/current/bin/table_annovar.pl\"}"
       ]
@@ -308,9 +270,20 @@
       ],
       "__default": "~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar",
       "__examples_code": [
+        "# Path to binary as a dict without binary type",
+        "\"snpeff\": \"~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar\"",
         "# Path to binary as a dict with binary type 'jar'",
         "\"snpeff\": {\"jar\": \"~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar\"}"
       ]
     }
-  }
+  },
+  "threads": {},
+  "memory": {},
+  "assembly": {},
+  "verbosity": {},
+  "tmp": {},
+  "access": {},
+  "duckdb_settings": {},
+  "chunk_size": {},
+  "log": {}
 }

@@ -15,6 +15,7 @@ import pandas as pd
 import vcf
 import logging as log
 import sys
+from tabulate import tabulate
 
 from howard.objects.variants import Variants
 from howard.objects.database import Database
@@ -110,8 +111,20 @@ def process(args:argparse) -> None:
             param["prioritization"] = param_quick_prioritizations
 
         # Quick query
-        if args.query:
-            param["query"] = args.query
+        if "query" not in param:
+            param["query"] = {}
+
+        # query
+        if "query" in args and args.query not in [get_default_argument(arguments_dict=arguments_dict, argument='query')]:
+            param["query"]["query"] = args.query
+
+        # query_limit
+        if "query_limit" in args and args.query_limit not in [get_default_argument(arguments_dict=arguments_dict, argument='query_limit')]:
+            param["query"]["query_limit"] = args.query_limit
+
+        # query_print_mode
+        if "query_print_mode" in args and args.query_limit not in [get_default_argument(arguments_dict=arguments_dict, argument='query_print_mode')]:
+            param["query"]["query_print_mode"] = args.query_print_mode
 
         # Explode infos
         param["explode_infos"] = args.explode_infos
@@ -149,10 +162,18 @@ def process(args:argparse) -> None:
             vcfdata_obj.explode_infos()
 
         # Query
-        if param.get("query", None):
+        if param.get("query", {}).get("query", None):
             log.info("Querying...")
-            query = param.get("query", None)
-            print(vcfdata_obj.get_query_to_df(query))
+            query = param.get("query", {}).get("query", None)
+            query_limit = param.get("query", {}).get("query_limit", None)
+            query_print_mode = param.get("query", {}).get("query_print_mode", None)
+            if query_print_mode in ["markdown"]:
+                print(vcfdata_obj.get_query_to_df(query, limit=query_limit).to_markdown())
+            elif query_print_mode in ["tabulate"]:
+                print(tabulate(vcfdata_obj.get_query_to_df(query, limit=query_limit), headers='keys', tablefmt='psql'))
+            else:
+                print(vcfdata_obj.get_query_to_df(query, limit=query_limit))
+            #print(vcfdata_obj.get_query_to_df(query))
 
             # Output Query
             log.info("Exporting Querying...")
