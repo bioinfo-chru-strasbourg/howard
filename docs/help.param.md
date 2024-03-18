@@ -56,6 +56,7 @@ HOWARD Parameters JSON file defines parameters to process annotations, calculati
       - [explode_infos_prefix](#explodeexplode_infos_prefix)
       - [explode_infos_fields](#explodeexplode_infos_fields)
    - [threads](#threads)
+   - [databases](#databases)
 
 
 Examples: 
@@ -1070,4 +1071,8 @@ Examples:
 ```json
 "threads": 8
 ```
+
+## databases
+
+[HOWARD Parameters Databases JSON](help.param.databases.md) describes configuration JSON file for databases download and convert.
 

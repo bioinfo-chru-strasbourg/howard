@@ -16,7 +16,7 @@ import os
 import sys
 import duckdb
 
-from howard.commons import *
+from howard.functions.commons import *
 from howard.objects.variants import Variants
 
 

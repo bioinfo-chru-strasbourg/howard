@@ -681,5 +681,10 @@
     "explode_infos_prefix": {},
     "explode_infos_fields": {}
   },
-  "threads": {}
+  "threads": {},
+  "databases": {
+    "__help": [
+      "[HOWARD Parameters Databases JSON](help.param.databases.md) describes configuration JSON file for databases download and convert."
+    ]
+  }
 }

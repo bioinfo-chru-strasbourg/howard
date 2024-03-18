@@ -20,9 +20,9 @@ import Bio.bgzf as bgzf
 import gzip
 import pytest
 
-from howard.commons import *
+from howard.functions.commons import *
 from howard.objects.variants import Variants
-from howard.tools.databases import *
+from howard.functions.databases import *
 from howard.tools.tools import main_folder, arguments_dict
 
 

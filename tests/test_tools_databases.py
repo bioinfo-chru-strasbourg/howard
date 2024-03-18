@@ -25,7 +25,7 @@ from unittest.mock import patch
 
 from howard.objects.variants import Variants
 from howard.objects.database import Database
-from howard.commons import *
+from howard.functions.commons import *
 from howard.tools.databases import *
 from test_needed import *
 
@@ -556,8 +556,12 @@ def test_database():
         download_exomiser = None,
         download_dbsnp = None,
         convert_hgmd = None,
+        input_annovar = None,
+        output_annovar = None,
+        genome = None,
         generate_param = None,
         config = None,
+        arguments_dict = arguments_dict
     )
 
     try:
@@ -632,14 +636,18 @@ def test_databases_download():
             download_exomiser = None,
             download_dbsnp = None,
             convert_hgmd = None,
+            input_annovar = None,
+            output_annovar = None,
+            genome = None,
             generate_param = None,
             config=config,
-            threads=threads
+            threads=threads,
+            arguments_dict = arguments_dict
         )
 
         # Download
         try:
-            databases_download(args)
+            databases(args)
             assert True
         except:
             assert False
@@ -712,12 +720,16 @@ def test_databases_download_genomes_only():
             download_exomiser = None,
             download_dbsnp = None,
             convert_hgmd = None,
+            input_annovar = None,
+            output_annovar = None,
+            genome = None,
             generate_param = None,
-            threads=threads
+            threads=threads,
+            arguments_dict = arguments_dict
         )
 
         # Download
-        databases_download(args)
+        databases(args)
 
         # Dowloaded files
         downloaded_files = os.listdir(tmp_dir)

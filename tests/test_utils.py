@@ -23,7 +23,7 @@ from pandas.testing import assert_frame_equal
 from unittest.mock import patch
 
 from howard.objects.variants import Variants
-from howard.utils import *
+from howard.functions.utils import *
 from test_needed import *
 
 
