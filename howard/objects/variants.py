@@ -1461,8 +1461,15 @@ class Variants:
 
         # Find column infos
         if column:
-            table_name = column.get("table_name", None)
-            column_name = column.get("column_name", None)
+            if isinstance(column, dict):
+                table_name = column.get("table_name", None)
+                column_name = column.get("column_name", None)
+            elif isinstance(column, str):
+                table_name = self.get_table_variants()
+                column_name = column
+            else:
+                table_name = None
+                column_name = None
 
         if not table_name and not column_name:
             return False
@@ -2354,7 +2361,7 @@ class Variants:
         prefix = self.get_explode_infos_prefix()
 
         # Explode INFO/SVTYPE
-        self.explode_infos(prefix=prefix, fields=["SVTYPE"])
+        added_columns = self.explode_infos(prefix=prefix, fields=["SVTYPE"])
 
         # variants table
         table_variants = self.get_table_variants()
@@ -2376,6 +2383,10 @@ class Variants:
                     SET "{variant_id_column}" = hash('{assembly}', "#CHROM", "POS", "REF", "ALT", '"{prefix}SVTYPE"')
                 """)
         
+        # Remove added columns
+        for added_column in added_columns:
+            self.drop_column(column=added_column)
+
         # return variant_id column name
         return variant_id_column
 
@@ -2393,6 +2404,7 @@ class Variants:
         :type force: bool
         :return: The variant_id column name.
         """
+
         return self.set_variant_id(variant_id_column=variant_id_column, force=force)
     
 
@@ -2464,7 +2476,7 @@ class Variants:
         if param.get("annotations"):
 
             # Log
-            log.info("Annotations - Check annotation parameters")
+            #log.info("Annotations - Check annotation parameters")
 
             if not "annotation" in param:
                 param["annotation"] = {}
@@ -2478,13 +2490,14 @@ class Variants:
             else:
                 annotations_list_input = param.get("annotations", {})
 
-            log.info(f"Quick Annotations: {annotations_list_input.keys()}")
+            log.info(f"Quick Annotations:")
+            for annotation_key in list(annotations_list_input.keys()):
+                log.info(f"   {annotation_key}")
 
             # List of annotations and associated fields
             annotations_list = {}
 
             for annotation_file in annotations_list_input:
-                log.debug(f"annotation_file={annotation_file}")
 
                 # Explode annotations if ALL
                 if annotation_file.upper() == "ALL" or annotation_file.upper().startswith("ALL:"):
@@ -2835,7 +2848,7 @@ class Variants:
                         if annotation_field in db_hdr_vcf.get_header().infos and annotation_fields_new_name not in self.get_header().infos:
 
                             log.info(
-                                f"Annotation '{annotation}' - '{annotation_field}' -> 'INFO/{annotation_fields_new_name}'")
+                                f"Annotation '{annotation}' - '{annotation_field}' -> '{annotation_fields_new_name}'")
 
                             # Add INFO field to header
                             db_hdr_vcf_header_infos_number = db_hdr_vcf_header_infos[
@@ -4730,48 +4743,375 @@ class Variants:
     # Prioritization
     ###
 
+    def get_config_default(self, name:str) -> dict:
+        """
+        The function `get_config_default` returns a dictionary containing default configurations for
+        various calculations and prioritizations.
+        
+        :param name: The `get_config_default` function returns a dictionary containing default
+        configurations for different calculations and prioritizations. The `name` parameter is used to
+        specify which specific configuration to retrieve from the dictionary
+        :type name: str
+        :return: The function `get_config_default` returns a dictionary containing default configuration
+        settings for different calculations and prioritizations. The specific configuration settings are
+        retrieved based on the input `name` parameter provided to the function. If the `name` parameter
+        matches a key in the `config_default` dictionary, the corresponding configuration settings are
+        returned. If there is no match, an empty dictionary is returned.
+        """
+
+        config_default = {
+            "calculations": {
+                "variant_chr_pos_alt_ref":
+                    {
+                        "type": "sql",
+                        "name": "variant_chr_pos_alt_ref",
+                        "description": "Create a variant ID with chromosome, position, alt and ref",
+                        "available": False,
+                        "output_column_name": "variant_chr_pos_alt_ref",
+                        "output_column_type": "String",
+                        "output_column_description": "variant ID with chromosome, position, alt and ref",
+                        "operation_query": """ concat("#CHROM", '_', "POS", '_', "REF", '_', "ALT") """,
+                        "operation_info": True,
+                    },
+                "VARTYPE":
+                    {
+                        "type": "sql",
+                        "name": "VARTYPE",
+                        "description": "Variant type (e.g. SNV, INDEL, MNV, BND...)",
+                        "available": True,
+                        "output_column_name": "VARTYPE",
+                        "output_column_type": "String",
+                        "output_column_description": "Variant type: SNV if X>Y, MOSAIC if X>Y,Z or X,Y>Z, INDEL if XY>Z or X>YZ",
+                        "operation_query": """
+                            CASE
+                                WHEN "SVTYPE" NOT NULL THEN "SVTYPE"
+                                WHEN LENGTH(REF) = 1 AND LENGTH(ALT) = 1 THEN 'SNV'
+                                WHEN REF LIKE '%,%' OR ALT LIKE '%,%' THEN 'MOSAIC'
+                                WHEN LENGTH(REF) == LENGTH(ALT) AND LENGTH(REF) > 1 THEN 'MNV'
+                                WHEN LENGTH(REF) <> LENGTH(ALT) THEN 'INDEL'
+                                ELSE 'UNDEFINED'
+                            END
+                            """,
+                        "info_fields": ["SVTYPE"],
+                        "operation_info": True,
+                    },
+                "snpeff_hgvs":
+                    {
+                        "type": "python",
+                        "name": "snpeff_hgvs",
+                        "description": "HGVS nomenclatures from snpEff annotation",
+                        "available": True,
+                        "function_name": "calculation_extract_snpeff_hgvs",
+                        "function_params": []
+                    },
+                "NOMEN":
+                    {
+                        "type": "python",
+                        "name": "NOMEN",
+                        "description": "NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature field",
+                        "available": True,
+                        "function_name": "calculation_extract_nomen",
+                        "function_params": []
+                    },
+                "FINDBYPIPELINE":
+                    {
+                        "type": "python",
+                        "name": "FINDBYPIPELINE",
+                        "description": "Number of pipeline that identify the variant (for multi pipeline VCF)",
+                        "available": True,
+                        "function_name": "calculation_find_by_pipeline",
+                        "function_params": ["findbypipeline"]
+                    },
+                "FINDBYSAMPLE":
+                    {
+                        "type": "python",
+                        "name": "FINDBYSAMPLE",
+                        "description": "Number of sample that have a genotype for the variant (for multi sample VCF)",
+                        "available": True,
+                        "function_name": "calculation_find_by_pipeline",
+                        "function_params": ["findbysample"]
+                    },
+                "GENOTYPECONCORDANCE":
+                    {
+                        "type": "python",
+                        "name": "GENOTYPECONCORDANCE",
+                        "description": "Concordance of genotype for multi caller VCF",
+                        "available": True,
+                        "function_name": "calculation_genotype_concordance",
+                        "function_params": []
+                    },
+                "BARCODE":
+                    {
+                        "type": "python",
+                        "name": "BARCODE",
+                        "description": "BARCODE as VaRank tool",
+                        "available": True,
+                        "function_name": "calculation_barcode",
+                        "function_params": []
+                    },
+                "TRIO":
+                    {
+                        "type": "python",
+                        "name": "TRIO",
+                        "description": "Inheritance for a trio family",
+                        "available": True,
+                        "function_name": "calculation_trio",
+                        "function_params": []
+                    },
+                "VAF":
+                    {
+                        "type": "python",
+                        "name": "VAF",
+                        "description": "Variant Allele Frequency (VAF) harmonization",
+                        "available": True,
+                        "function_name": "calculation_vaf_normalization",
+                        "function_params": []
+                    },
+                "VAF_stats":
+                    {
+                        "type": "python",
+                        "name": "VAF_stats",
+                        "description": "Variant Allele Frequency (VAF) statistics",
+                        "available": True,
+                        "function_name": "calculation_genotype_stats",
+                        "function_params": ["VAF"]
+                    },
+                "DP_stats":
+                    {
+                        "type": "python",
+                        "name": "DP_stats",
+                        "description": "Depth (DP) statistics",
+                        "available": True,
+                        "function_name": "calculation_genotype_stats",
+                        "function_params": ["DP"]
+                    },
+                "variant_id":
+                    {
+                        "type": "python",
+                        "name": "variant_id",
+                        "description": "Variant ID generated from variant position and type",
+                        "available": True,
+                        "function_name": "calculation_variant_id",
+                        "function_params": []
+                    }
+            },
+            "prioritizations": {
+                "default": {
+                    "filter": [
+                        {
+                            "type": "notequals",
+                            "value": "!PASS|\\.",
+                            "score": 0,
+                            "flag": "FILTERED",
+                            "comment": [
+                                "Bad variant quality"
+                            ]
+                        },
+                        {
+                            "type": "equals",
+                            "value": "REJECT",
+                            "score": -20,
+                            "flag": "PASS",
+                            "comment": [
+                                "Bad variant quality"
+                            ]
+                        }
+                    ],
+                    "DP": [
+                        {
+                            "type": "gte",
+                            "value": "50",
+                            "score": 5,
+                            "flag": "PASS",
+                            "comment": [
+                                "DP higher than 50"
+                            ]
+                        }
+                    ],
+                    "ANN": [
+                        {
+                            "type": "contains",
+                            "value": "HIGH",
+                            "score": 5,
+                            "flag": "PASS",
+                            "comment": [
+                                "The variant is assumed to have high (disruptive) impact in the protein, probably causing protein truncation, loss of function or triggering nonsense mediated decay"
+                            ]
+                        },
+                        {
+                            "type": "contains",
+                            "value": "MODERATE",
+                            "score": 3,
+                            "flag": "PASS",
+                            "comment": [
+                                "A non-disruptive variant that might change protein effectiveness"
+                            ]
+                        },
+                        {
+                            "type": "contains",
+                            "value": "LOW",
+                            "score": 0,
+                            "flag": "FILTERED",
+                            "comment": [
+                                "Assumed to be mostly harmless or unlikely to change protein behavior"
+                            ]
+                        },
+                        {
+                            "type": "contains",
+                            "value": "MODIFIER",
+                            "score": 0,
+                            "flag": "FILTERED",
+                            "comment": [
+                                "Usually non-coding variants or variants affecting non-coding genes, where predictions are difficult or there is no evidence of impact"
+                            ]
+                        }
+                    ]
+                }
+            }
+        }
+
+        return config_default.get(name, None)
+    
+
+    def get_config_json(self, name:str, config_dict:dict = {}, config_file:str = None) -> dict:
+        """
+        The function `get_config_json` retrieves a configuration JSON object with prioritizations from
+        default values, a dictionary, and a file.
+        
+        :param name: The `name` parameter in the `get_config_json` function is a string that represents
+        the name of the configuration. It is used to identify and retrieve the configuration settings
+        for a specific component or module
+        :type name: str
+        :param config_dict: The `config_dict` parameter in the `get_config_json` function is a
+        dictionary that allows you to provide additional configuration settings or overrides. When you
+        call the `get_config_json` function, you can pass a dictionary containing key-value pairs where
+        the key is the configuration setting you want to override or
+        :type config_dict: dict
+        :param config_file: The `config_file` parameter in the `get_config_json` function is used to
+        specify the path to a configuration file that contains additional settings. If provided, the
+        function will read the contents of this file and update the configuration dictionary with the
+        values found in the file, overriding any existing values with the
+        :type config_file: str
+        :return: The function `get_config_json` returns a dictionary containing the configuration
+        settings.
+        """
+        
+        # Create with default prioritizations
+        config_default = self.get_config_default(name=name)
+        configuration = config_default
+        # log.debug(f"configuration={configuration}")
+
+        # Replace prioritizations from dict
+        for config in config_dict:
+            configuration[config] = config_dict[config]
+
+        # Replace prioritizations from file
+        config_file = full_path(config_file)
+        if config_file:
+            if os.path.exists(config_file):
+                with open(config_file) as config_file_content:
+                    config_file_dict = json.load(config_file_content)
+                for config in config_file_dict:
+                    configuration[config] = config_file_dict[config]
+            else:
+                msg_error = f"Config '{name}' file '{config_file}' does NOT exist"
+                log.error(msg_error)
+                raise ValueError(msg_error)
+
+        return configuration
+
+
+    # def get_prioritizations_config(self, prioritizations_config_dict:dict = {}, prioritizations_config_file:str = None) -> dict:
+
+        
+
+    #     # Create with default prioritizations
+    #     prioritizations_config = self.get_config_default("prioritization")
+
+    #     # Replace prioritizations from dict
+    #     for prioritization_config in prioritizations_config_dict:
+    #         prioritizations_config[prioritization_config] = prioritizations_config_dict[prioritization_config]
+
+    #     # Replace prioritizations from file
+    #     prioritizations_config_file = full_path(prioritizations_config_file)
+    #     if prioritizations_config_file:
+    #         if os.path.exists(prioritizations_config_file):
+    #             with open(prioritizations_config_file) as prioritizations_config_file_content:
+    #                 prioritizations_config_file_dict = json.load(prioritizations_config_file_content)
+    #             for prioritization_config in prioritizations_config_file_dict:
+    #                 prioritizations_config[prioritization_config] = prioritizations_config_file_dict[prioritization_config]
+    #         else:
+    #             log.error(f"Prioritizations config file '{prioritizations_config_file}' does NOT exist")
+    #             raise ValueError(f"Prioritizations config file '{prioritizations_config_file}' does NOT exist")
+
+    #     return prioritizations_config
+
+
+
     def prioritization(self) -> None:
         """
         It takes a VCF file, and adds a bunch of new INFO fields to it, based on the values of other
         INFO fields
         """
 
-        log.info(f"Prioritization... ")
-
         # Config
         config = self.get_config()
-        prioritizations = config.get("prioritization", {}).get("prioritizations", None)
-        prioritizations = full_path(prioritizations)
 
         # Param
         param = self.get_param()
-        prioritizations = param.get("prioritization", {}).get("prioritizations", prioritizations)
-        prioritizations = full_path(prioritizations)
-        profiles = param.get("prioritization", {}).get("profiles", None)
-        pzfields = param.get("prioritization", {}).get(
-            "pzfields", ["PZFlag", "PZScore"])
-        default_profile = param.get("prioritization", {}).get(
-            "default_profile", None)
+        
+        # Quick Prioritizations
+        #prioritizations = param.get("prioritization", {}).get("prioritizations", "")
+
+        # Configuration profiles
+        prioritization_config_file = param.get("prioritization", {}).get("prioritization_config", None)
+        prioritization_config_file = full_path(prioritization_config_file)
+        prioritizations_config = self.get_config_json(name="prioritizations", config_file=prioritization_config_file)
+
+        # Prioritization options
+        profiles = param.get("prioritization", {}).get("profiles", [])
+        if isinstance(profiles,str):
+            profiles = profiles.split(",")
+        pzfields = param.get("prioritization", {}).get("pzfields", ["PZFlag", "PZScore"])
+        if isinstance(pzfields,str):
+            pzfields = pzfields.split(",")
+        default_profile = param.get("prioritization", {}).get("default_profile", None)
         pzfields_sep = param.get("prioritization", {}).get("pzfields_sep", "_")
-        prioritization_score_mode = param.get("prioritization", {}).get(
-            "prioritization_score_mode", "HOWARD")
+        prioritization_score_mode = param.get("prioritization", {}).get("prioritization_score_mode", "HOWARD")
 
-        # Profiles are in files
-        if prioritizations and os.path.exists(prioritizations):
-            with open(prioritizations) as profiles_file:
-                prioritizations = json.load(profiles_file)
+        # Quick Prioritizations
+        #prioritizations = param.get("prioritization", {}).get("prioritizations", None)
+        prioritizations = param.get("prioritizations", None)
+        if prioritizations:
+            log.info("Quick Prioritization:")
+            for profile in prioritizations.split(","):
+                if profile not in profiles:
+                    profiles.append(profile)
+                    log.info(f"   {profile}")
+
+
+        # If profile "ALL" provided, all profiles in the config profiles
+        if "ALL" in profiles:
+            profiles = list(prioritizations_config.keys())
+
+        for profile in profiles:
+            if prioritizations_config.get(profile, None):
+                log.debug(f"Profile '{profile}' configured")
+            else:
+                msg_error = f"Profile '{profile}' NOT configured"
+                log.error(msg_error)
+                raise ValueError(msg_error)
+
+        if profiles:
+            log.info(f"Prioritization... ")
         else:
-            log.error("NO Profiles configuration")
-            raise ValueError(f"NO Profiles configuration")
-
-        # If no profiles provided, all profiles in the config profiles
-        if not profiles:
-            profiles = list(prioritizations.keys())
-
-        if not default_profile:
+            log.debug(f"No profile defined")
+            return 
+        
+        if not default_profile and len(profiles):
             default_profile = profiles[0]
 
-        log.debug("Profiles availables: " + str(list(prioritizations.keys())))
+        log.debug("Profiles availables: " + str(list(prioritizations_config.keys())))
         log.debug("Profiles to check: " + str(list(profiles)))
 
         # Variables
@@ -4850,7 +5190,7 @@ class Variants:
                         field_ID, PZfields_INFOS[field]["Number"], PZfields_INFOS[field]["Type"], field_description, 'unknown', 'unknown', code_type_map[PZfields_INFOS[field]["Type"]])
 
             # Create INFO fields if not exist for each profile
-            for profile in prioritizations:
+            for profile in prioritizations_config:
                 if profile in profiles or profiles == []:
                     for field in PZfields_INFOS:
                         field_ID = PZfields_INFOS[field]["ID"] + \
@@ -4875,7 +5215,7 @@ class Variants:
             if profiles:
 
                 # foreach profile in configuration file
-                for profile in prioritizations:
+                for profile in prioritizations_config:
 
                     # If profile is asked in param, or ALL are asked (empty profile [])
                     if profile in profiles or profiles == []:
@@ -4989,7 +5329,7 @@ class Variants:
 
 
                         sql_queries = []
-                        for annotation in prioritizations[profile]:
+                        for annotation in prioritizations_config[profile]:
 
                             # Check if annotation field is present
                             if not f"{explode_infos_prefix}{annotation}" in extra_infos:
@@ -5001,7 +5341,7 @@ class Variants:
                                     f"Annotation '{annotation}' in data")
 
                             # For each criterions
-                            for criterion in prioritizations[profile][annotation]:
+                            for criterion in prioritizations_config[profile][annotation]:
                                 criterion_type = criterion['type']
                                 criterion_value = criterion['value']
                                 criterion_score = criterion.get('score', 0)
@@ -5161,6 +5501,7 @@ class Variants:
         if self.get_explode_infos():
             self.explode_infos(prefix=self.get_explode_infos_prefix(), fields=self.get_explode_infos_fields(), force=True)
 
+        return
 
     ###
     # HGVS
@@ -5250,8 +5591,6 @@ class Variants:
 
             return hgvs_full
 
-        log.info(f"HGVS Annotation... ")
-
         # Polars connexion
         polars_conn = pl.SQLContext(register_globals=True, eager_execution=True)
 
@@ -5273,13 +5612,13 @@ class Variants:
 
         # Param
         param = self.get_param()
-        
+
         # Quick HGVS
-        log.debug(f"param={param}")
-        if not param.get("hgvs", None):
-            param["hgvs"] = {}
         if "hgvs_options" in param and param.get("hgvs_options",""):
-            for option in param.get("hgvs_options","").split(":"):
+            log.info(f"Quick HGVS Annotation:")
+            if not param.get("hgvs", None):
+                param["hgvs"] = {}
+            for option in param.get("hgvs_options","").split(","):
                 option_var_val = option.split("=")
                 option_var = option_var_val[0]
                 if len(option_var_val) > 1:
@@ -5290,7 +5629,16 @@ class Variants:
                     option_val = True
                 elif option_val.upper() in ["FALSE"]:
                     option_val = False
+                log.info(f"   {option_var}={option_val}")
                 param["hgvs"][option_var] = option_val
+
+        # Check if HGVS annotation enabled
+        if "hgvs" in param:
+            log.info(f"HGVS Annotation... ")
+            for hgvs_option in param.get("hgvs",{}):
+                log.info(f"{hgvs_option}: {param.get('hgvs',{}).get(hgvs_option)}")
+        else:
+            return
 
         # HGVS Param
         param_hgvs = param.get("hgvs",{})
@@ -5486,7 +5834,7 @@ class Variants:
         operations_help = []
 
         # operations
-        operations = self.get_operations_config(operations_config_dict=operations_config_dict, operations_config_file=operations_config_file)
+        operations = self.get_config_json(name="calculations", config_dict=operations_config_dict, config_file=operations_config_file)
         for op in operations:
             op_name = operations[op].get("name", op).upper()
             op_description = operations[op].get("description", op_name)
@@ -5504,167 +5852,7 @@ class Variants:
         return operations_help
 
 
-    def get_operations_config(self, operations_config_dict:dict = {}, operations_config_file:str = None) -> dict:
-
-        operations_config_default = {
-            "variant_chr_pos_alt_ref":
-                {
-                    "type": "sql",
-                    "name": "variant_chr_pos_alt_ref",
-                    "description": "Create a variant ID with chromosome, position, alt and ref",
-                    "available": False,
-                    "output_column_name": "variant_chr_pos_alt_ref",
-                    "output_column_type": "String",
-                    "output_column_description": "variant ID with chromosome, position, alt and ref",
-                    "operation_query": """ concat("#CHROM", '_', "POS", '_', "REF", '_', "ALT") """,
-                    "operation_info": True,
-                },
-            "VARTYPE":
-                {
-                    "type": "sql",
-                    "name": "VARTYPE",
-                    "description": "Variant type (e.g. SNV, INDEL, MNV, BND...)",
-                    "available": True,
-                    "output_column_name": "VARTYPE",
-                    "output_column_type": "String",
-                    "output_column_description": "Variant type: SNV if X>Y, MOSAIC if X>Y,Z or X,Y>Z, INDEL if XY>Z or X>YZ",
-                    "operation_query": """
-                        CASE
-                            WHEN "SVTYPE" NOT NULL THEN "SVTYPE"
-                            WHEN LENGTH(REF) = 1 AND LENGTH(ALT) = 1 THEN 'SNV'
-                            WHEN REF LIKE '%,%' OR ALT LIKE '%,%' THEN 'MOSAIC'
-                            WHEN LENGTH(REF) == LENGTH(ALT) AND LENGTH(REF) > 1 THEN 'MNV'
-                            WHEN LENGTH(REF) <> LENGTH(ALT) THEN 'INDEL'
-                            ELSE 'UNDEFINED'
-                        END
-                        """,
-                    "info_fields": ["SVTYPE"],
-                    "operation_info": True,
-                },
-            "snpeff_hgvs":
-                {
-                    "type": "python",
-                    "name": "snpeff_hgvs",
-                    "description": "HGVS nomenclatures from snpEff annotation",
-                    "available": True,
-                    "function_name": "calculation_extract_snpeff_hgvs",
-                    "function_params": []
-                },
-            "NOMEN":
-                {
-                    "type": "python",
-                    "name": "NOMEN",
-                    "description": "NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature field",
-                    "available": True,
-                    "function_name": "calculation_extract_nomen",
-                    "function_params": []
-                },
-            "FINDBYPIPELINE":
-                {
-                    "type": "python",
-                    "name": "FINDBYPIPELINE",
-                    "description": "Number of pipeline that identify the variant (for multi pipeline VCF)",
-                    "available": True,
-                    "function_name": "calculation_find_by_pipeline",
-                    "function_params": ["findbypipeline"]
-                },
-            "FINDBYSAMPLE":
-                {
-                    "type": "python",
-                    "name": "FINDBYSAMPLE",
-                    "description": "Number of sample that have a genotype for the variant (for multi sample VCF)",
-                    "available": True,
-                    "function_name": "calculation_find_by_pipeline",
-                    "function_params": ["findbysample"]
-                },
-            "GENOTYPECONCORDANCE":
-                {
-                    "type": "python",
-                    "name": "GENOTYPECONCORDANCE",
-                    "description": "Concordance of genotype for multi caller VCF",
-                    "available": True,
-                    "function_name": "calculation_genotype_concordance",
-                    "function_params": []
-                },
-            "BARCODE":
-                {
-                    "type": "python",
-                    "name": "BARCODE",
-                    "description": "BARCODE as VaRank tool",
-                    "available": True,
-                    "function_name": "calculation_barcode",
-                    "function_params": []
-                },
-            "TRIO":
-                {
-                    "type": "python",
-                    "name": "TRIO",
-                    "description": "Inheritance for a trio family",
-                    "available": True,
-                    "function_name": "calculation_trio",
-                    "function_params": []
-                },
-            "VAF":
-                {
-                    "type": "python",
-                    "name": "VAF",
-                    "description": "Variant Allele Frequency (VAF) harmonization",
-                    "available": True,
-                    "function_name": "calculation_vaf_normalization",
-                    "function_params": []
-                },
-            "VAF_stats":
-                {
-                    "type": "python",
-                    "name": "VAF_stats",
-                    "description": "Variant Allele Frequency (VAF) statistics",
-                    "available": True,
-                    "function_name": "calculation_genotype_stats",
-                    "function_params": ["VAF"]
-                },
-            "DP_stats":
-                {
-                    "type": "python",
-                    "name": "DP_stats",
-                    "description": "Depth (DP) statistics",
-                    "available": True,
-                    "function_name": "calculation_genotype_stats",
-                    "function_params": ["DP"]
-                },
-            "variant_id":
-                {
-                    "type": "python",
-                    "name": "variant_id",
-                    "description": "Variant ID generated from variant position and type",
-                    "available": True,
-                    "function_name": "calculation_variant_id",
-                    "function_params": []
-                },
-        }
-
-        # Create with default operations
-        operations_config = operations_config_default
-
-        # Replace operations from dict
-        for operation_config in operations_config_dict:
-            operations_config[operation_config] = operations_config_dict[operation_config]
-
-        # Replace operations from file
-        operations_config_file = full_path(operations_config_file)
-        if operations_config_file:
-            if os.path.exists(operations_config_file):
-                with open(operations_config_file) as operations_config_file_content:
-                    operations_config_file_dict = json.load(operations_config_file_content)
-                for operation_config in operations_config_file_dict:
-                    operations_config[operation_config] = operations_config_file_dict[operation_config]
-            else:
-                log.error(f"Operations config file '{operations_config_file}' does NOT exist")
-                raise ValueError(f"Operations config file '{operations_config_file}' does NOT exist")
-
-        return operations_config
-
-
-    def calculation(self, operations:dict = None, operations_config_dict:dict = {}, operations_config_file:str = None) -> None:
+    def calculation(self, operations:dict = {}, operations_config_dict:dict = {}, operations_config_file:str = None) -> None:
         """
         It takes a list of operations, and for each operation, it checks if it's a python or sql
         operation, and then calls the appropriate function
@@ -5683,23 +5871,33 @@ class Variants:
         param = self.get_param()
 
         # operations config
-        operations_config = self.get_operations_config(operations_config_dict=operations_config_dict, operations_config_file=operations_config_file)
+        operations_config =  self.get_config_json(name="calculations", config_dict=operations_config_dict, config_file=operations_config_file)
 
         # Upper keys
         operations_config = {k.upper(): v for k, v in operations_config.items()}
         
         # Calculations
-        calculations_list= [value for value in param.get("calculations", "").split(',')]
-        log.info(f"Quick Calculations list: {calculations_list}")
-        param_quick_calculations = param.get("calculation",{})
-        for calculation_operation in calculations_list:
-            if calculation_operation.upper() not in param.get("calculation", {}):
-                param_quick_calculations[calculation_operation.upper()] = {}
-        param["calculation"] = param_quick_calculations
+
+        # Operations from param
+        operations = param.get("calculation", {}).get("calculations", operations)
+
+        # Quick calculation - add
+        if param.get("calculations", None):
+            calculations_list= [value for value in param.get("calculations", "").split(',')]
+            log.info(f"Quick Calculations:")
+            for calculation_key in calculations_list:
+                log.info(f"   {calculation_key}")
+            for calculation_operation in calculations_list:
+                if calculation_operation.upper() not in operations:
+                    operations[calculation_operation.upper()] = {}
+                    add_value_into_dict(dict_tree=param, sections=["calculation", "calculations", calculation_operation.upper()], value = {})
 
         # Operations for calculation
         if not operations:
-            operations = param.get("calculation", {})
+            operations = param.get("calculation", {}).get("calculations", {})
+
+        if operations:
+            log.info(f"Calculations...")
 
         # For each operations
         for operation_name in operations:
@@ -5867,6 +6065,7 @@ class Variants:
 
         # variant_id annotation field
         variant_id_tag = self.get_variant_id_column()
+        added_columns = [variant_id_tag]
 
         # variant_id hgvs tags"
         vcf_infos_tags = {
@@ -5906,6 +6105,10 @@ class Variants:
                 )
         """
         self.conn.execute(sql_update)
+
+        # Remove added columns
+        for added_column in added_columns:
+            self.drop_column(column=added_column)
 
 
     def calculation_extract_snpeff_hgvs(self) -> None:
@@ -5952,6 +6155,7 @@ class Variants:
 
             # Create variant id
             variant_id_column = self.get_variant_id_column()
+            added_columns += [variant_id_column]
 
             # Create dataframe
             dataframe_snpeff_hgvs = self.get_query_to_df(
@@ -6044,22 +6248,17 @@ class Variants:
         vcf_reader = self.get_header()
 
         # Get HGVS field
-        hgvs_field = param.get("calculation", {}).get(
+        hgvs_field = param.get("calculation", {}).get("calculations", {}).get(
             "NOMEN", {}).get("options", {}).get("hgvs_field", "hgvs")
         
         # Get transcripts
-        transcripts_file = param.get("calculation", {}).get("NOMEN", {}).get("options", {}).get("transcripts", None)
+        transcripts_file = param.get("calculation", {}).get("calculations", {}).get("NOMEN", {}).get("options", {}).get("transcripts", None)
         transcripts_file = full_path(transcripts_file)
-        log.debug(f"Transcript file '{transcripts_file}'")
         transcripts = []
         if transcripts_file:
             if os.path.exists(transcripts_file):
-                log.debug(f"Transcript file '{transcripts_file}' does exist")
                 transcripts_dataframe = pd.read_csv(transcripts_file, sep="\t", header=None, names=['transcript', 'gene'])
                 transcripts = transcripts_dataframe.iloc[:, 0].tolist()
-                log.debug(f"Transcripts DF")
-                log.debug(transcripts_dataframe)
-                log.debug(f"Transcripts: {transcripts}")
             else:
                 log.error(f"Transcript file '{transcripts_file}' does NOT exist")
                 raise ValueError(f"Transcript file '{transcripts_file}' does NOT exist")
@@ -6184,6 +6383,7 @@ class Variants:
 
             # Create variant id
             variant_id_column = self.get_variant_id_column()
+            added_columns = [variant_id_column]
 
             # variant_id, FORMAT and samples
             samples_fields = f" {variant_id_column}, FORMAT , " + \
@@ -6233,6 +6433,10 @@ class Variants:
             """
             self.conn.execute(sql_update)
 
+            # Remove added columns
+            for added_column in added_columns:
+                self.drop_column(column=added_column)
+
             # Delete dataframe
             del dataframe_findbypipeline
             gc.collect()
@@ -6269,6 +6473,7 @@ class Variants:
 
             # Create variant id
             variant_id_column = self.get_variant_id_column()
+            added_columns = [variant_id_column]
 
             # variant_id, FORMAT and samples
             samples_fields = f" {variant_id_column}, FORMAT , " + \
@@ -6319,6 +6524,10 @@ class Variants:
             """
             self.conn.execute(sql_update)
 
+            # Remove added columns
+            for added_column in added_columns:
+                self.drop_column(column=added_column)
+
             # Delete dataframe
             del dataframe_genotypeconcordance
             gc.collect()
@@ -6355,6 +6564,7 @@ class Variants:
 
             # Create variant id
             variant_id_column = self.get_variant_id_column()
+            added_columns = [variant_id_column]
 
             # variant_id, FORMAT and samples
             samples_fields = f" {variant_id_column}, FORMAT , " + \
@@ -6404,6 +6614,10 @@ class Variants:
             """
             self.conn.execute(sql_update)
 
+            # Remove added columns
+            for added_column in added_columns:
+                self.drop_column(column=added_column)
+
             # Delete dataframe
             del dataframe_barcode
             gc.collect()
@@ -6433,7 +6647,7 @@ class Variants:
             prefix = self.get_explode_infos_prefix()
 
             # Trio param
-            trio_ped = param.get("calculation", {}).get("TRIO", {}).get("trio_pedigree", None)
+            trio_ped = param.get("calculation", {}).get("calculations", {}).get("TRIO", {}).get("trio_pedigree", None)
             if trio_ped:
 
                 # Load trio
@@ -6452,9 +6666,20 @@ class Variants:
 
             else:
                 trio_samples = self.get_header_sample_list()[0:3]
+                trio_ped = {
+                    "father": trio_samples[0],
+                    "mother": trio_samples[1],
+                    "child": trio_samples[2]
+                }
 
-            log.debug(f"Param for trio sample: {trio_ped}")
-            log.debug(f"List of trio sample: {trio_samples}")
+            # Check trio pedigree
+            if not trio_ped or len(trio_ped) != 3:
+                msg_error = f"Error in TRIO pedigree: {trio_ped}"
+                log.error(msg_error)
+                raise ValueError(msg_error)
+
+            # Log
+            log.info(f"Calculation 'TRIO' - Samples: " + ", ".join([f"{member}='{trio_ped[member]}'" for member in trio_ped]))
 
             # Field
             trio_infos = prefix+trio_tag
@@ -6467,6 +6692,7 @@ class Variants:
 
             # Create variant id
             variant_id_column = self.get_variant_id_column()
+            added_columns = [variant_id_column]
 
             # variant_id, FORMAT and samples
             samples_fields = f" {variant_id_column}, FORMAT , " + \
@@ -6517,6 +6743,10 @@ class Variants:
             """
             self.conn.execute(sql_update)
 
+            # Remove added columns
+            for added_column in added_columns:
+                self.drop_column(column=added_column)
+
             # Delete dataframe
             del dataframe_trio
             gc.collect()
@@ -6556,6 +6786,7 @@ class Variants:
 
             # Create variant id
             variant_id_column = self.get_variant_id_column()
+            added_columns = [variant_id_column]
 
             # variant_id, FORMAT and samples
             samples_fields = f" {variant_id_column}, FORMAT , " + \
@@ -6598,6 +6829,10 @@ class Variants:
 
             """
             self.conn.execute(sql_update)
+
+            # Remove added columns
+            for added_column in added_columns:
+                self.drop_column(column=added_column)
 
             # Delete dataframe
             del dataframe_vaf_normalization
@@ -6648,6 +6883,7 @@ class Variants:
 
             # Create variant id
             variant_id_column = self.get_variant_id_column()
+            added_columns = [variant_id_column]
 
             # variant_id, FORMAT and samples
             samples_fields = f" {variant_id_column}, FORMAT , " + \
@@ -6719,6 +6955,10 @@ class Variants:
 
             """
             self.conn.execute(sql_update)
+
+            # Remove added columns
+            for added_column in added_columns:
+                self.drop_column(column=added_column)
 
             # Delete dataframe
             del dataframe_vaf_stats

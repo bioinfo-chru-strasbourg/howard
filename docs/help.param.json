@@ -1,6 +1,6 @@
 {
   "__help": [
-    "HOWARD Parameters JSON file defined parameters to process annotations, calculations, prioritization, convertions and queries."
+    "HOWARD Parameters JSON file defines parameters to process annotations, calculations, prioritizations, convertions and queries."
   ],
   "__code_type": "json",
   "__examples_code": {
@@ -55,7 +55,7 @@
       "      \"exomiser\": {",
       "         \"release\": \"2109\"",
       "         \"transcript_source\": \"refseq\"",
-      "         \"hpo\": ['HP:0001156', 'HP:0001363', 'HP:0011304', 'HP:0010055']",
+      "         \"hpo\": [\"HP:0001156\", \"HP:0001363\", \"HP:0011304\", \"HP:0010055\"]",
       "      }",
       "      \"options\": {",
       "         \"append\": true",
@@ -155,11 +155,11 @@
       "__code_type": "json",
       "__examples_code": [
         "# Amino Acide Codon format with 1 character",
-        "\"codon_type\": '1'",
+        "\"codon_type\": \"1\"",
         "# Amino Acide Codon format with 3 character",
-        "\"codon_type\": '3'",
+        "\"codon_type\": \"3\"",
         "# Amino Acide Codon format with full name",
-        "\"codon_type\": 'FULL'"
+        "\"codon_type\": \"FULL\""
       ]
     },
     "refgene" : {
@@ -169,7 +169,7 @@
       "__code_type": "json",
       "__examples_code": [
         "# Path to refSeq file",
-        "\"refgene\": '~/howard/databases/refseq/current/hg19/ncbiRefSeq.txt'"
+        "\"refgene\": \"~/howard/databases/refseq/current/hg19/ncbiRefSeq.txt\""
       ]
     },
     "refseqlink" : {
@@ -179,7 +179,7 @@
       "__code_type": "json",
       "__examples_code": [
         "# Path to refSeq file",
-        "\"refseqlink\": '~/howard/databases/refseq/current/hg19/ncbiRefSeqLink.txt'"
+        "\"refseqlink\": \"~/howard/databases/refseq/current/hg19/ncbiRefSeqLink.txt\""
       ]
     }
   },
@@ -196,7 +196,7 @@
       "      \"annotations\": {",
       "         \"/path/to/database3.parquet\": {",
       "            \"field1\": null,",
-      "            \"field2\": \"field2_renamed\",",
+      "            \"field2\": \"field2_renamed\"",
       "         },",
       "         \"/path/to/database4.vcf.gz\": {",
       "            \"INFO\": null",
@@ -210,7 +210,7 @@
       "      \"annotations\": {",
       "         \"/path/to/database6.vcf.gz\": {",
       "            \"field1\": null,",
-      "            \"field2\": \"field2_renamed\",",
+      "            \"field2\": \"field2_renamed\"",
       "         },",
       "         \"/path/to/database7.bed\": {",
       "            \"INFO\": null",
@@ -221,7 +221,7 @@
       "      \"annotations\": {",
       "         \"annovar_keyword2\": {",
       "            \"field1\": null,",
-      "            \"field2\": \"field2_renamed\",",
+      "            \"field2\": \"field2_renamed\"",
       "         },",
       "         \"annovar_keyword3\": {",
       "            \"INFO\": null",
@@ -234,12 +234,12 @@
       "      }",
       "   }",
       "   \"exomiser\": {",
-      "      \"release\": \"2109\"",
-      "      \"transcript_source\": \"refseq\"",
-      "      \"hpo\": ['HP:0001156', 'HP:0001363', 'HP:0011304', 'HP:0010055']",
+      "      \"release\": \"2109\",",
+      "      \"transcript_source\": \"refseq\",",
+      "      \"hpo\": [\"HP:0001156\", \"HP:0001363\", \"HP:0011304\", \"HP:0010055\"]",
       "   }",
       "   \"options\": {",
-      "      \"append\": True",
+      "      \"append\": true",
       "   }",
       "}"
     ],
@@ -259,7 +259,7 @@
           "         \"INFO\": null",
           "      }",
           "      \"/path/to/database5.bed.gz\": {",
-          "         \"ALL\": null",
+          "         \"INFO\": null",
           "      }",    
           "   }",
           "}"
@@ -268,12 +268,12 @@
       "annotations": {
         "__auto": false,
         "__help": [
-          "Specify a list of databases files available (formats such as Parquet, VCF, TSV, duckDB, JSON). This parameter enables users to select specific database fields and optionally rename them (e.g. '\"field\": null' to keep field name, '\"field\": \"new_name\"' to rename field). Use 'INFO' or 'ALL' keyword to select all fields within the database INFO/Tags header (e.g. '\"INFO\": null', '\"ALL\": null').\n",
+          "Specify a list of databases files available (formats such as Parquet, VCF, TSV, duckDB, JSON). This parameter enables users to select specific database fields and optionally rename them (e.g. '\"field\": null' to keep field name, '\"field\": \"new_name\"' to rename field). Use 'INFO' keyword to select all fields within the database INFO/Tags header (e.g. '\"INFO\": null'). Use 'ALL' keyword to select all fields within the database regardless INFO/Tags header (e.g. '\"ALL\": null').\n",
           "For add all availalbe databases files, use 'ALL' keyword, with filters on type and release (e.g. 'ALL', 'ALL:parquet:current', 'ALL:parquet,vcf:current,devel').\n",
           "If a full path is not provided, the system will automatically detect files within database folders (see Configuration doc) and assembly (see Parameter option)."
         ],
         "__examples_code": {
-          "# Annotation with dbSNP and dbNSFP databases with all fields": [
+          "# Annotation with dbSNP database with INFO/tags fields, and dbNSFP databases with all fields": [
             "\"annotations\": {",
             "   \"tests/databases/annotations/current/hg19/avsnp150.parquet\": {",
             "      \"INFO\": null",
@@ -421,7 +421,7 @@
         "__examples_code": [
           "# HGVS Annotation with refGene (add 'refGene' to 'annotations') and a splicing threshold as 3",
           "\"options\": {",
-          "   \"splicing_threshold\": 3",
+          "   \"splicing_threshold\": 3,",
           "   \"argument\": \"'-hgvs'\"",
           "   }",
           "}"
@@ -436,7 +436,7 @@
         "# Annotation with snpEff databases, with options for HGVS annotation and additional tags.",
         "\"snpeff\": {",
         "   \"options\": {",
-        "      \" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr \"}",
+        "      \" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr \"",
         "   }",
         "}"
       ],
@@ -484,7 +484,7 @@
         "\"exomiser\": {",
         "   \"release\": \"2109\"",
         "   \"transcript_source\": \"refseq\"",
-        "   \"hpo\": ['HP:0001156', 'HP:0001363', 'HP:0011304', 'HP:0010055']",
+        "   \"hpo\": [\"HP:0001156\", \"HP:0001363\", \"HP:0011304\", \"HP:0010055\"]",
         "}"
       ],
       "release": {
@@ -504,7 +504,7 @@
       "__examples_code": [
         "# Annotation with Parquet databases, with update annotation strategy.",
         "\"options\": {",
-        "   \"update\": True",
+        "   \"update\": true",
         "}"
       ],
       "annotations_update": {
@@ -513,7 +513,7 @@
         ],
         "__examples_code": [
           "# Apply update on all annotation fields for all databases.",
-          "\"update\": True"
+          "\"update\": true"
         ]
       },
       "annotations_append": {
@@ -522,7 +522,7 @@
         ],
         "__examples_code": [
           "# Apply append on all annotation fields for all databases.",
-          "\"append\": True"
+          "\"append\": true"
         ]
       }
     }
@@ -533,19 +533,42 @@
     ],
     "__code_type": "json",
     "__examples_code": [
-      "# Calculation with operations for generate variant_id and variant type, extract HGVS from snpEff annotation, select NOMEN from snpEff HGVS with a list of transcripts of preference",
+      "# Calculation of operations 'operation1' and 'operation2' (with options) defined in 'calculation_config.json' file",
       "\"calculation\": {",
-      "  \"variant_id\": null,",
-      "  \"vartype\": null,",
-      "  \"snpeff_hgvs\": null,",
-      "  \"NOMEN\": {",
-      "    \"options\": {",
-      "      \"hgvs_field\": \"snpeff_hgvs\",",
-      "      \"transcripts\": \"tests/data/transcripts.tsv\"",
+      "  \"calculations\": {",
+      "    \"operation1\": null,",
+      "    \"operation2\": {",
+      "      \"options\": {",
+      "        \"option1\": \"value1\",",
+      "        \"option2\": \"value2\"",
+      "      }",
       "    }",
-      "  }",
+      "  },",
+      "  \"calculation_config\": \"calculation_config.json\"",
       "}"
-    ]
+    ],
+    "calculations": {
+      "__auto": false,
+      "__help": [
+        "List of operations to process with possible options (see [Calculation JSON file](help.calculation.md) help)."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Calculation with operations for generate variant_id and variant type, extract HGVS from snpEff annotation, select NOMEN from snpEff HGVS with a list of transcripts of preference",
+        "\"calculations\": {",
+        "  \"variant_id\": null,",
+        "  \"vartype\": null,",
+        "  \"snpeff_hgvs\": null,",
+        "  \"NOMEN\": {",
+        "    \"options\": {",
+        "      \"hgvs_field\": \"snpeff_hgvs\",",
+        "      \"transcripts\": \"tests/data/transcripts.tsv\"",
+        "    }",
+        "  }",
+        "}"
+      ]
+    },
+    "calculation_config": {}
   },
   "prioritization": {
     "__help": [

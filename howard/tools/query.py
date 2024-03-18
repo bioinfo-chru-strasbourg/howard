@@ -81,7 +81,7 @@ def query(args:argparse) -> None:
 
     # Export
     if vcfdata_obj.get_output():
-        vcfdata_obj.export_output(query=query, export_header=True)
+        vcfdata_obj.export_output(query=param.get("query", {}).get("query", None), export_header=True)
 
     # Close connexion
     vcfdata_obj.close_connexion()

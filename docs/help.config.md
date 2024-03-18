@@ -468,12 +468,12 @@ Examples:
 > Default assembly for all analysis tools
 
 ```json
-"assembly": 'hg19'
+"assembly": "hg19" 
 ```
 > List of assemblies for databases download tool
 
 ```json
-"assembly": 'hg19,hg38'
+"assembly": "hg19,hg38" 
 ```
 
 ## verbosity

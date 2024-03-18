@@ -3,7 +3,7 @@
     "parquet": {
       "annotations": {
         "tests/databases/annotations/current/hg19/avsnp150.parquet": {
-          "ALL": null
+          "INFO": null
         },
         "tests/databases/annotations/current/hg19/dbnsfp42a.parquet": {
           "INFO": null
@@ -38,20 +38,23 @@
     }
   },
   "calculation": {
-    "vartype": null,
-    "snpeff_hgvs": null,
-    "NOMEN": {
-      "options": {
-        "hgvs_field": "snpeff_hgvs",
-        "transcripts": "tests/data/transcripts.tsv"
-      }
+    "calculations": {
+      "vartype": null,
+      "snpeff_hgvs": null,
+      "NOMEN": {
+        "options": {
+          "hgvs_field": "snpeff_hgvs",
+          "transcripts": "tests/data/transcripts.tsv"
+        }
+      },
+      "VAF": ""
     },
-    "VAF": ""
+    "calculation_config": "config/calculations_config.json"
   },
   "prioritization": {
-    "prioritizations": "config/prioritization_profiles.json",
-    "pzfields": ["PZScore", "PZFlag", "PZComment"],
     "profiles": ["default", "GERMLINE"],
+    "prioritization_config": "config/prioritization_profiles.json",
+    "pzfields": ["PZScore", "PZFlag", "PZComment"],
     "prioritization_score_mode": "VaRank"
   },
   "hgvs": {
@@ -69,8 +72,7 @@
   },
   "explode_infos": {
     "explode_infos": false,
-    "explode_infos_prefix": "",
-    "explode_infos_fields": null
+    "explode_infos_prefix": ""
   },
   "export": {
     "header_in_output": false,

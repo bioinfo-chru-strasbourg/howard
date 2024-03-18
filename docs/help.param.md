@@ -1,6 +1,6 @@
 # HOWARD Parameters
 
-HOWARD Parameters JSON file defined parameters to process annotations, calculations, prioritization, convertions and queries.
+HOWARD Parameters JSON file defines parameters to process annotations, calculations, prioritizations, convertions and queries.
 
 ## Table of contents
 
@@ -32,6 +32,8 @@ HOWARD Parameters JSON file defined parameters to process annotations, calculati
          - [annotations_update](#annotationoptionsannotations_update)
          - [annotations_append](#annotationoptionsannotations_append)
    - [calculation](#calculation)
+      - [calculations](#calculationcalculations)
+      - [calculation_config](#calculationcalculation_config)
    - [prioritization](#prioritization)
       - [prioritizations](#prioritizationprioritizations)
       - [profiles](#prioritizationprofiles)
@@ -110,7 +112,7 @@ Examples:
       "exomiser": {
          "release": "2109"
          "transcript_source": "refseq"
-         "hpo": ['HP:0001156', 'HP:0001363', 'HP:0011304', 'HP:0010055']
+         "hpo": ["HP:0001156", "HP:0001363", "HP:0011304", "HP:0010055"]
       }
       "options": {
          "append": true
@@ -244,17 +246,17 @@ Examples:
 > Amino Acide Codon format with 1 character
 
 ```json
-"codon_type": '1'
+"codon_type": "1"
 ```
 > Amino Acide Codon format with 1 character# Amino Acide Codon format with 3 character
 
 ```json
-"codon_type": '3'
+"codon_type": "3"
 ```
 > Amino Acide Codon format with 1 character# Amino Acide Codon format with 3 character# Amino Acide Codon format with full name
 
 ```json
-"codon_type": 'FULL'
+"codon_type": "FULL"
 ```
 
 ### hgvs::refgene
@@ -270,7 +272,7 @@ Examples:
 > Path to refSeq file
 
 ```json
-"refgene": '~/howard/databases/refseq/current/hg19/ncbiRefSeq.txt'
+"refgene": "~/howard/databases/refseq/current/hg19/ncbiRefSeq.txt"
 ```
 
 ### hgvs::refseqlink
@@ -286,7 +288,7 @@ Examples:
 > Path to refSeq file
 
 ```json
-"refseqlink": '~/howard/databases/refseq/current/hg19/ncbiRefSeqLink.txt'
+"refseqlink": "~/howard/databases/refseq/current/hg19/ncbiRefSeqLink.txt"
 ```
 
 ## annotation
@@ -309,7 +311,7 @@ Examples:
       "annotations": {
          "/path/to/database3.parquet": {
             "field1": null,
-            "field2": "field2_renamed",
+            "field2": "field2_renamed"
          },
          "/path/to/database4.vcf.gz": {
             "INFO": null
@@ -323,7 +325,7 @@ Examples:
       "annotations": {
          "/path/to/database6.vcf.gz": {
             "field1": null,
-            "field2": "field2_renamed",
+            "field2": "field2_renamed"
          },
          "/path/to/database7.bed": {
             "INFO": null
@@ -334,7 +336,7 @@ Examples:
       "annotations": {
          "annovar_keyword2": {
             "field1": null,
-            "field2": "field2_renamed",
+            "field2": "field2_renamed"
          },
          "annovar_keyword3": {
             "INFO": null
@@ -347,12 +349,12 @@ Examples:
       }
    }
    "exomiser": {
-      "release": "2109"
-      "transcript_source": "refseq"
-      "hpo": ['HP:0001156', 'HP:0001363', 'HP:0011304', 'HP:0010055']
+      "release": "2109",
+      "transcript_source": "refseq",
+      "hpo": ["HP:0001156", "HP:0001363", "HP:0011304", "HP:0010055"]
    }
    "options": {
-      "append": True
+      "append": true
    }
 }
 ```
@@ -375,7 +377,7 @@ Examples:
          "INFO": null
       }
       "/path/to/database5.bed.gz": {
-         "ALL": null
+         "INFO": null
       }
    }
 }
@@ -383,7 +385,7 @@ Examples:
 
 #### annotation::parquet::annotations
 
-Specify a list of databases files available (formats such as Parquet, VCF, TSV, duckDB, JSON). This parameter enables users to select specific database fields and optionally rename them (e.g. '"field": null' to keep field name, '"field": "new_name"' to rename field). Use 'INFO' or 'ALL' keyword to select all fields within the database INFO/Tags header (e.g. '"INFO": null', '"ALL": null').
+Specify a list of databases files available (formats such as Parquet, VCF, TSV, duckDB, JSON). This parameter enables users to select specific database fields and optionally rename them (e.g. '"field": null' to keep field name, '"field": "new_name"' to rename field). Use 'INFO' keyword to select all fields within the database INFO/Tags header (e.g. '"INFO": null'). Use 'ALL' keyword to select all fields within the database regardless INFO/Tags header (e.g. '"ALL": null').
 
 
 For add all availalbe databases files, use 'ALL' keyword, with filters on type and release (e.g. 'ALL', 'ALL:parquet:current', 'ALL:parquet,vcf:current,devel').
@@ -392,7 +394,7 @@ For add all availalbe databases files, use 'ALL' keyword, with filters on type a
 If a full path is not provided, the system will automatically detect files within database folders (see Configuration doc) and assembly (see Parameter option).
 
 Examples: 
-> Annotation with dbSNP and dbNSFP databases with all fields
+> Annotation with dbSNP database with INFO/tags fields, and dbNSFP databases with all fields
 
 ```json
 "annotations": {
@@ -574,7 +576,7 @@ Examples:
 
 ```json
 "options": {
-   "splicing_threshold": 3
+   "splicing_threshold": 3,
    "argument": "'-hgvs'"
    }
 }
@@ -591,7 +593,7 @@ Examples:
 ```json
 "snpeff": {
    "options": {
-      " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "}
+      " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "
    }
 }
 ```
@@ -660,7 +662,7 @@ Examples:
 "exomiser": {
    "release": "2109"
    "transcript_source": "refseq"
-   "hpo": ['HP:0001156', 'HP:0001363', 'HP:0011304', 'HP:0010055']
+   "hpo": ["HP:0001156", "HP:0001363", "HP:0011304", "HP:0010055"]
 }
 ```
 
@@ -686,7 +688,7 @@ Examples:
 
 ```json
 "options": {
-   "update": True
+   "update": true
 }
 ```
 
@@ -701,7 +703,7 @@ Examples:
 > Apply update on all annotation fields for all databases.
 
 ```json
-"update": True
+"update": true
 ```
 
 #### annotation::options::annotations_append
@@ -715,7 +717,7 @@ Examples:
 > Apply append on all annotation fields for all databases.
 
 ```json
-"append": True
+"append": true
 ```
 
 ## calculation
@@ -724,10 +726,33 @@ Calculation process operations that are defiend in a Calculation Configuration J
 
 Examples: 
 
-> Calculation with operations for generate variant_id and variant type, extract HGVS from snpEff annotation, select NOMEN from snpEff HGVS with a list of transcripts of preference
+> Calculation of operations 'operation1' and 'operation2' (with options) defined in 'calculation_config.json' file
 
 ```json
 "calculation": {
+  "calculations": {
+    "operation1": null,
+    "operation2": {
+      "options": {
+        "option1": "value1",
+        "option2": "value2"
+      }
+    }
+  },
+  "calculation_config": "calculation_config.json"
+}
+```
+
+### calculation::calculations
+
+List of operations to process with possible options (see [Calculation JSON file](help.calculation.md) help).
+
+Examples: 
+
+> Calculation with operations for generate variant_id and variant type, extract HGVS from snpEff annotation, select NOMEN from snpEff HGVS with a list of transcripts of preference
+
+```json
+"calculations": {
   "variant_id": null,
   "vartype": null,
   "snpeff_hgvs": null,
@@ -738,6 +763,21 @@ Examples:
     }
   }
 }
+```
+
+### calculation::calculation_config
+
+Calculation configuration JSON file. 
+
+Type: ```Path```
+
+Default: ```None```
+
+Examples: 
+> Calculation configuration JSON file as an option
+
+```json
+"calculation_config": "calculation_config.json" 
 ```
 
 ## prioritization
@@ -762,7 +802,7 @@ Examples:
 
 Prioritization configuration profiles JSON file defining profiles to calculate. All configured profiles will be calculated by default (see 'profiles' parameter). First profile will be considered as 'default' if none are provided (see 'default_profile' parameter). Default score calculation mode is 'HOWARD'. This option refers to the quick prioritization command line parameter `--prioritizations`.
 
-Type: ```Path```
+Type: ```str```
 
 Default: ```None```
 
@@ -878,7 +918,7 @@ Examples:
 > Export statistics in Markdown format
 
 ```json
-"stats_md": '/tmp/stats.md'
+"stats_md": "/tmp/stats.md" 
 ```
 
 ### stats::stats_json
@@ -893,7 +933,7 @@ Examples:
 > Export statistics in JSON format
 
 ```json
-"stats_json": '/tmp/stats.json'
+"stats_json": "/tmp/stats.json" 
 ```
 
 ## query
@@ -955,12 +995,12 @@ Examples:
 > Order by ACMG score in descending order
 
 ```json
-ACMG_score DESC
+"order_by": "ACMG_score DESC" 
 ```
 > Order by PZFlag and PZScore in descending order
 
 ```json
-PZFlag DESC, PZScore DESC
+"order_by": PZFlag DESC, PZScore DESC" 
 ```
 
 ### export::include_header

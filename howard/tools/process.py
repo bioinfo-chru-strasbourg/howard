@@ -38,156 +38,55 @@ def process(args:argparse) -> None:
 
     log.info("Start")
 
-    # Config infos
-    if "arguments_dict" in args:
-        arguments_dict = args.arguments_dict
-    else:
-        arguments_dict = None
-    if "setup_cfg" in args:
-        setup_cfg = args.setup_cfg
-    else:
-        setup_cfg = None
-    config = args.config
+    # Load config args
+    arguments_dict, setup_cfg, config, param = load_config_args(args)
 
-    # Load parameters in JSON format
-    #if os.path.exists(args.param):
-    if isinstance(args.param, str) and os.path.exists(full_path(args.param)):
-        with open(full_path(args.param)) as param_file:
-            param = json.load(param_file)
-    else:
-        param = json.loads(args.param)
+    # Create variants object
+    vcfdata_obj = Variants(input=args.input, output=args.output, config=config, param=param)
 
-    # Create VCF object
-    if args.input:
-        vcfdata_obj = Variants(None, args.input, args.output, config, param)
+    # Get Config and Params
+    config = vcfdata_obj.get_config()
+    param = vcfdata_obj.get_param()
 
-        param = vcfdata_obj.get_param()
+    # Load args into param
+    param = load_args(param=param, args=args, arguments_dict=arguments_dict, command="process", strict=False)
 
-        # Quick HGVS
-        if "hgvs" in args and args.hgvs:
-            log.info(f"Quick HGVS: {args.hgvs}")
-            if not param.get("hgvs", None):
-                param["hgvs"] = {}
-            for option in args.hgvs.split(","):
-                option_var_val = option.split(":")
-                option_var = option_var_val[0]
-                if len(option_var_val) > 1:
-                    option_val = option_var_val[1]
-                else:
-                    option_val = "True"
-                if option_val.upper() in ["TRUE"]:
-                    option_val = True
-                elif option_val.upper() in ["FALSE"]:
-                    option_val = False
-                param["hgvs"][option_var] = option_val
+    # Re-Load Config and Params
+    vcfdata_obj.set_param(param)
+    vcfdata_obj.set_config(config)
 
-        # Quick Annotation
-        if args.annotations:
-            annotation_file_list = [value for value in args.annotations.split(',')]
-            log.info(f"Quick Annotation: {annotation_file_list}")
-            param_quick_annotations = param.get("annotations",{})
-            for annotation_file in annotation_file_list:
-                param_quick_annotations[annotation_file] = {"INFO": None}
-            param["annotations"] = param_quick_annotations
+    # Load data
+    vcfdata_obj.load_data()
 
-        # Quick calculations
-        if args.calculations:
-            calculations_list= [value for value in args.calculations.split(',')]
-            log.info(f"Quick Calculations: {calculations_list}")
-            param_quick_calculations = param.get("calculation",{})
-            for calculation_operation in calculations_list:
-                param_quick_calculations[calculation_operation] = {}
-            param["calculation"] = param_quick_calculations
+    # Annotation
+    vcfdata_obj.annotation_hgvs()
+    vcfdata_obj.annotation()
+    vcfdata_obj.calculation()
+    vcfdata_obj.prioritization()
+    
+    # Query
+    if param.get("query", {}).get("query", None):
 
-        # Quick prioritization
-        if args.prioritizations:
-            if isinstance(args.prioritizations, str):
-                prioritizations = args.prioritizations
-            else:
-                prioritizations = args.prioritizations.name
-            log.info(f"Quick Prioritization: {prioritizations}")
-            param_quick_prioritizations = param.get("prioritization",{})
-            param_quick_prioritizations["prioritizations"] = prioritizations
-            param["prioritization"] = param_quick_prioritizations
+        log.info("Querying...")
 
-        # Quick query
-        if "query" not in param:
-            param["query"] = {}
+        # Parameters
+        query = param.get("query", {}).get("query", None)
+        query_limit = param.get("query", {}).get("query_limit", None)
+        query_print_mode = param.get("query", {}).get("query_print_mode", None)
 
-        # query
-        if "query" in args and args.query not in [get_default_argument(arguments_dict=arguments_dict, argument='query')]:
-            param["query"]["query"] = args.query
+        # Print query
+        if query_print_mode in ["markdown"]:
+            print(vcfdata_obj.get_query_to_df(query, limit=query_limit).to_markdown())
+        elif query_print_mode in ["tabulate"]:
+            print(tabulate(vcfdata_obj.get_query_to_df(query, limit=query_limit), headers='keys', tablefmt='psql'))
+        else:
+            print(vcfdata_obj.get_query_to_df(query, limit=query_limit))
 
-        # query_limit
-        if "query_limit" in args and args.query_limit not in [get_default_argument(arguments_dict=arguments_dict, argument='query_limit')]:
-            param["query"]["query_limit"] = args.query_limit
+    # Export
+    vcfdata_obj.export_output(query=param.get("query", {}).get("query", None))
+    #vcfdata_obj.export_output()
 
-        # query_print_mode
-        if "query_print_mode" in args and args.query_limit not in [get_default_argument(arguments_dict=arguments_dict, argument='query_print_mode')]:
-            param["query"]["query_print_mode"] = args.query_print_mode
-
-        # Explode infos
-        param["explode_infos"] = args.explode_infos
-        param["explode_infos_prefix"] = args.explode_infos_prefix
-        param["explode_infos_fields"] = args.explode_infos_fields
-
-        # include_header
-        if "include_header" in args and args.include_header:
-            param["header_in_output"] = args.include_header
-
-        # Set param
-        vcfdata_obj.set_param(param)
-
-        # Load data from input file
-        vcfdata_obj.load_data()
-
-        # Annotation
-        if vcfdata_obj.get_param().get("hgvs", None):
-            vcfdata_obj.annotation_hgvs()
-
-        # Annotation
-        if vcfdata_obj.get_param().get("annotations", None) or vcfdata_obj.get_param().get("annotation", None):
-            vcfdata_obj.annotation()
-
-        # Calculation
-        if vcfdata_obj.get_param().get("calculations", None) or vcfdata_obj.get_param().get("calculation", None):
-            vcfdata_obj.calculation()
-
-        # Prioritization
-        if vcfdata_obj.get_param().get("prioritizations", None) or vcfdata_obj.get_param().get("prioritization", None):
-            vcfdata_obj.prioritization()
-
-        # param["explode_infos"]
-        if param.get("explode_infos", False):
-            vcfdata_obj.explode_infos()
-
-        # Query
-        if param.get("query", {}).get("query", None):
-            log.info("Querying...")
-            query = param.get("query", {}).get("query", None)
-            query_limit = param.get("query", {}).get("query_limit", None)
-            query_print_mode = param.get("query", {}).get("query_print_mode", None)
-            if query_print_mode in ["markdown"]:
-                print(vcfdata_obj.get_query_to_df(query, limit=query_limit).to_markdown())
-            elif query_print_mode in ["tabulate"]:
-                print(tabulate(vcfdata_obj.get_query_to_df(query, limit=query_limit), headers='keys', tablefmt='psql'))
-            else:
-                print(vcfdata_obj.get_query_to_df(query, limit=query_limit))
-            #print(vcfdata_obj.get_query_to_df(query))
-
-            # Output Query
-            log.info("Exporting Querying...")
-            vcfdata_obj.export_output(query=query, export_header=True)
-
-        # Export Ouptut
-        elif vcfdata_obj.get_output():
-            log.info("Exporting...")
-            vcfdata_obj.export_output(export_header=True)
-
-        # Close connexion
-        vcfdata_obj.close_connexion()
+    # Close connexion
+    vcfdata_obj.close_connexion()
 
     log.info("End")
-
-
-

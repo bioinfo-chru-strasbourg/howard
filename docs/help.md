@@ -18,12 +18,12 @@
   - [HGVS tool](#hgvs-tool)
     - [Main options](#main-options-3)
     - [HGVS](#hgvs)
-    - [Databases](#databases)
   - [ANNOTATION tool](#annotation-tool)
     - [Main options](#main-options-4)
-    - [annotation](#annotation)
+    - [Annotation](#annotation)
   - [CALCULATION tool](#calculation-tool)
     - [Main options](#main-options-5)
+    - [Calculation](#calculation)
     - [NOMEN](#nomen)
     - [TRIO](#trio)
   - [PRIORITIZATION tool](#prioritization-tool)
@@ -31,7 +31,10 @@
     - [Prioritization](#prioritization)
   - [PROCESS tool](#process-tool)
     - [Main options](#main-options-7)
-    - [Quick Processes](#quick-processes)
+    - [HGVS](#hgvs-1)
+    - [Annotation](#annotation-1)
+    - [Calculation](#calculation-1)
+    - [Prioritization](#prioritization-1)
     - [Query](#query-1)
     - [Export](#export-2)
     - [Explode](#explode-2)
@@ -94,7 +97,11 @@ Usage examples:
 
 > howard query --explode_infos --explode_infos_prefix='INFO/' --query="SELECT \"#CHROM\", POS, REF, ALT, STRING_AGG(INFO, ';') AS INFO FROM 'tests/databases/annotations/current/hg19/*.parquet' GROUP BY \"#CHROM\", POS, REF, ALT" --output=/tmp/full_annotation.tsv  && head -n2 /tmp/full_annotation.tsv 
 
-> howard query --input=tests/data/example.vcf.gz --param=config/param.json
+> howard query --input=tests/data/example.vcf.gz --param=config/param.json 
+
+>  
+
+
 
 ### Main options
 ```
@@ -118,7 +125,8 @@ Files can be compressesd (e.g. vcf.gz, tsv.gz).
 ```
 --param=<param> ({})
 
-Parameters JSON file or JSON string.
+Parameters JSON file (or string) defines parameters to process 
+annotations, calculations, prioritizations, convertions and queries.
 
 ```
 
@@ -186,9 +194,13 @@ Only for compatible formats (tab-delimiter format as TSV or BED).
 ```
 
 ```
---parquet_partition=<parquet_partition>
+--parquet_partitions=<parquet partitions>
 
-None
+Parquet partitioning using hive (available for any format).
+This option is faster parallel writing, but memory consuming.
+Use 'None' (string) for NO partition but split parquet files into a folder.
+Examples: '#CHROM', '#CHROM,REF', 'None'.
+
 ```
 
 
@@ -204,6 +216,10 @@ Usage examples:
 
 > howard stats --input=tests/data/example.vcf.gz --param=config/param.json 
 
+>  
+
+
+
 ### Main options
 ```
 --input=<input> | required
@@ -217,7 +233,8 @@ Files can be compressesd (e.g. vcf.gz, tsv.gz).
 ```
 --param=<param> ({})
 
-Parameters JSON file or JSON string.
+Parameters JSON file (or string) defines parameters to process 
+annotations, calculations, prioritizations, convertions and queries.
 
 ```
 
@@ -253,6 +270,10 @@ Usage examples:
 
 > howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --param=config/param.json 
 
+>  
+
+
+
 ### Main options
 ```
 --input=<input> | required
@@ -275,7 +296,8 @@ Files can be compressesd (e.g. vcf.gz, tsv.gz).
 ```
 --param=<param> ({})
 
-Parameters JSON file or JSON string.
+Parameters JSON file (or string) defines parameters to process 
+annotations, calculations, prioritizations, convertions and queries.
 
 ```
 
@@ -330,9 +352,13 @@ Examples: 'ACMG_score DESC', 'PZFlag DESC, PZScore DESC'.
 ```
 
 ```
---parquet_partition=<parquet_partition>
+--parquet_partitions=<parquet partitions>
 
-None
+Parquet partitioning using hive (available for any format).
+This option is faster parallel writing, but memory consuming.
+Use 'None' (string) for NO partition but split parquet files into a folder.
+Examples: '#CHROM', '#CHROM,REF', 'None'.
+
 ```
 
 
@@ -374,7 +400,8 @@ Files can be compressesd (e.g. vcf.gz, tsv.gz).
 ```
 --param=<param> ({})
 
-Parameters JSON file or JSON string.
+Parameters JSON file (or string) defines parameters to process 
+annotations, calculations, prioritizations, convertions and queries.
 
 ```
 
@@ -466,21 +493,6 @@ Path to refSeqLink annotation file.
 
 ```
 
-### Databases
-```
---refseq-folder=<refseq folder> (/Users/lebechea/howard/databases/refseq/current)
-
-Folder containing refSeq files.
-
-```
-
-```
---genomes-folder=<genomes> (/Users/lebechea/howard/databases/genomes/current)
-
-Folder containing genomes.
-(e.g. '/Users/lebechea/howard/databases/genomes/current'
-```
-
 
 
 ## ANNOTATION tool
@@ -495,6 +507,10 @@ Usage examples:
 > howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotations='ALL:parquet' 
 
 > howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --param=config/param.json 
+
+>  
+
+
 
 ### Main options
 ```
@@ -518,7 +534,8 @@ Files can be compressesd (e.g. vcf.gz, tsv.gz).
 ```
 --param=<param> ({})
 
-Parameters JSON file or JSON string.
+Parameters JSON file (or string) defines parameters to process 
+annotations, calculations, prioritizations, convertions and queries.
 
 ```
 
@@ -527,17 +544,17 @@ Parameters JSON file or JSON string.
 
 Annotation with databases files, or with tools,
 as a list of files in Parquet, VCF, BED, or keywords
- (e.g. '/path/to/file.parquet,bcftools:file2.vcf.gz,annovar:refGene,snpeff').
-For a Parquet/VCF/BED file, use file paths
- (e.g. '/path/to/file.parquet', 'file1.parquet,file2.vcf.gz').
-For BCFTools anotation, use keyword 'bcftools' with file paths
- (e.g. 'bcftools:/path/to/file.vcf.gz:/path/to/file.bed.gz').
-For Annovar annotation, use keyword 'annovar' with annovar code
+ (e.g. 'file.parquet,bcftools:file2.vcf.gz,annovar:refGene,snpeff').
+- For a Parquet/VCF/BED, use file paths
+ (e.g. 'file1.parquet,file2.vcf.gz').
+- For BCFTools annotation, use keyword 'bcftools' with file paths
+ (e.g. 'bcftools:file.vcf.gz:file.bed.gz').
+- For Annovar annotation, use keyword 'annovar' with annovar code
  (e.g. 'annovar:refGene', 'annovar:cosmic70').
-For snpeff annotation, use keyword 'snpeff'.
-For Exomiser annotation, use keyword 'exomiser' with options as key=value
+- For snpeff annotation, use keyword 'snpeff'.
+- For Exomiser annotation, use keyword 'exomiser' with options as key=value
  (e.g. 'exomiser:preset=exome:transcript_source=refseq').
-For add all availalbe databases files, use 'ALL' keyword,
+- For add all availalbe databases files, use 'ALL' keyword,
  with filters on type and release
  (e.g. 'ALL', 'ALL:parquet:current', 'ALL:parquet,vcf:current,devel').
 
@@ -550,7 +567,7 @@ Genome Assembly (e.g. 'hg19', 'hg38').
 
 ```
 
-### annotation
+### Annotation
 ```
 --annotations_update
 
@@ -584,6 +601,8 @@ Usage examples:
 
 > howard calculation --show_calculations 
 
+>  
+
 
 
 ### Main options
@@ -608,7 +627,8 @@ Files can be compressesd (e.g. vcf.gz, tsv.gz).
 ```
 --param=<param> ({})
 
-Parameters JSON file or JSON string.
+Parameters JSON file (or string) defines parameters to process 
+annotations, calculations, prioritizations, convertions and queries.
 
 ```
 
@@ -617,11 +637,13 @@ Parameters JSON file or JSON string.
 
 Quick calculations on genetic variants information and genotype information,
 as a list of operations (e.g. 'VARTYPE,variant_id').
-List of available calculations (unsensitive case, see doc for more information):
+List of available calculations by default
+ (unsensitive case, see doc for more information):
  VARTYPE  snpeff_hgvs  FINDBYPIPELINE  GENOTYPECONCORDANCE  BARCODE  TRIO  VAF  VAF_STATS  DP_STATS 
 
 ```
 
+### Calculation
 ```
 --calculation_config=<calculation config>
 
@@ -670,9 +692,15 @@ Prioritization algorithm uses profiles to flag variants (as passed or filtered),
 
 Usage examples:
 
-> howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations=config/prioritization_profiles.json --profiles='default,GERMLINE' 
+> howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations='default' 
+
+> howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations='default,GERMLINE' --prioritization_config=config/prioritization_profiles.json 
 
 > howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.tsv --param=config/param.json 
+
+>  
+
+
 
 ### Main options
 ```
@@ -694,22 +722,15 @@ Files can be compressesd (e.g. vcf.gz, tsv.gz).
 ```
 
 ```
---prioritizations=<prioritisations>
-
-Prioritization file in JSON format (defines profiles, see doc).
-
-```
-
-```
 --param=<param> ({})
 
-Parameters JSON file or JSON string.
+Parameters JSON file (or string) defines parameters to process 
+annotations, calculations, prioritizations, convertions and queries.
 
 ```
 
-### Prioritization
 ```
---profiles=<profiles>
+--prioritizations=<prioritisations>
 
 List of prioritization profiles to process (based on Prioritization JSON file),
 such as 'default', 'rare variants', 'low allele frequency', 'GERMLINE'.
@@ -717,6 +738,7 @@ By default, all profiles available will be processed.
 
 ```
 
+### Prioritization
 ```
 --default_profile=<default profile>
 
@@ -741,6 +763,13 @@ Available: HOWARD (increment score), VaRank (max score)
 
 ```
 
+```
+--prioritization_config=<prioritization config>
+
+Prioritization configuration JSON file (defines profiles, see doc).
+
+```
+
 
 
 ## PROCESS tool
@@ -762,11 +791,13 @@ Usage examples:
 
 > howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json 
 
-> howard process --input=tests/data/example.vcf.gz --annotations='snpeff' --calculations='snpeff_hgvs' --prioritizations=config/prioritization_profiles.json --explode_infos --output=/tmp/example.annotated.tsv --query='SELECT "#CHROM", POS, ALT, REF, snpeff_hgvs FROM variants' 
+> howard process --input=tests/data/example.vcf.gz --annotations='snpeff' --calculations='snpeff_hgvs' --prioritizations='default' --explode_infos --output=/tmp/example.annotated.tsv --query='SELECT "#CHROM", POS, ALT, REF, snpeff_hgvs FROM variants' 
 
-> howard process --input=tests/data/example.vcf.gz --hgvs='full_format,use_exon' --explode_infos --output=/tmp/example.annotated.tsv --query='SELECT "#CHROM", POS, ALT, REF, hgvs FROM variants' 
+> howard process --input=tests/data/example.vcf.gz --hgvs_options='full_format,use_exon' --explode_infos --output=/tmp/example.annotated.tsv --query='SELECT "#CHROM", POS, ALT, REF, hgvs FROM variants' 
 
-> howard process --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --hgvs='full_format,use_exon' --annotations='tests/databases/annotations/current/hg19/avsnp150.parquet,tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet' --calculation='NOMEN' --explode_infos --query='SELECT NOMEN, REVEL_score, SIFT_score, AF AS 'gnomad_AF', ClinPred_score, ClinPred_pred FROM variants' 
+> howard process --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --hgvs='full_format,use_exon' --annotations='tests/databases/annotations/current/hg19/avsnp150.parquet,tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet' --calculations='NOMEN' --explode_infos --query='SELECT NOMEN, REVEL_score, SIFT_score, AF AS 'gnomad_AF', ClinPred_score, ClinPred_pred FROM variants' 
+
+>  
 
 
 
@@ -792,11 +823,11 @@ Files can be compressesd (e.g. vcf.gz, tsv.gz).
 ```
 --param=<param> ({})
 
-Parameters JSON file or JSON string.
+Parameters JSON file (or string) defines parameters to process 
+annotations, calculations, prioritizations, convertions and queries.
 
 ```
 
-### Quick Processes
 ```
 --hgvs_options=<HGVS options>
 
@@ -814,17 +845,17 @@ Examples:
 
 Annotation with databases files, or with tools,
 as a list of files in Parquet, VCF, BED, or keywords
- (e.g. '/path/to/file.parquet,bcftools:file2.vcf.gz,annovar:refGene,snpeff').
-For a Parquet/VCF/BED file, use file paths
- (e.g. '/path/to/file.parquet', 'file1.parquet,file2.vcf.gz').
-For BCFTools anotation, use keyword 'bcftools' with file paths
- (e.g. 'bcftools:/path/to/file.vcf.gz:/path/to/file.bed.gz').
-For Annovar annotation, use keyword 'annovar' with annovar code
+ (e.g. 'file.parquet,bcftools:file2.vcf.gz,annovar:refGene,snpeff').
+- For a Parquet/VCF/BED, use file paths
+ (e.g. 'file1.parquet,file2.vcf.gz').
+- For BCFTools annotation, use keyword 'bcftools' with file paths
+ (e.g. 'bcftools:file.vcf.gz:file.bed.gz').
+- For Annovar annotation, use keyword 'annovar' with annovar code
  (e.g. 'annovar:refGene', 'annovar:cosmic70').
-For snpeff annotation, use keyword 'snpeff'.
-For Exomiser annotation, use keyword 'exomiser' with options as key=value
+- For snpeff annotation, use keyword 'snpeff'.
+- For Exomiser annotation, use keyword 'exomiser' with options as key=value
  (e.g. 'exomiser:preset=exome:transcript_source=refseq').
-For add all availalbe databases files, use 'ALL' keyword,
+- For add all availalbe databases files, use 'ALL' keyword,
  with filters on type and release
  (e.g. 'ALL', 'ALL:parquet:current', 'ALL:parquet,vcf:current,devel').
 
@@ -835,7 +866,8 @@ For add all availalbe databases files, use 'ALL' keyword,
 
 Quick calculations on genetic variants information and genotype information,
 as a list of operations (e.g. 'VARTYPE,variant_id').
-List of available calculations (unsensitive case, see doc for more information):
+List of available calculations by default
+ (unsensitive case, see doc for more information):
  VARTYPE  snpeff_hgvs  FINDBYPIPELINE  GENOTYPECONCORDANCE  BARCODE  TRIO  VAF  VAF_STATS  DP_STATS 
 
 ```
@@ -843,7 +875,144 @@ List of available calculations (unsensitive case, see doc for more information):
 ```
 --prioritizations=<prioritisations>
 
-Prioritization file in JSON format (defines profiles, see doc).
+List of prioritization profiles to process (based on Prioritization JSON file),
+such as 'default', 'rare variants', 'low allele frequency', 'GERMLINE'.
+By default, all profiles available will be processed.
+
+```
+
+```
+--assembly=<assembly> (hg19)
+
+Genome Assembly (e.g. 'hg19', 'hg38').
+
+```
+
+### HGVS
+```
+--use_gene
+
+Use Gene information to generate HGVS annotation
+(e.g. 'NM_152232(TAS1R2):c.231T>C')
+```
+
+```
+--use_exon
+
+Use Exon information to generate HGVS annotation
+(e.g. 'NM_152232(exon2):c.231T>C').
+Only if 'use_gene' is not enabled.
+
+```
+
+```
+--use_protein
+
+Use Protein level to generate HGVS annotation
+(e.g. 'NP_689418:p.Cys77Arg').
+Can be used with 'use_exon' or 'use_gene'.
+
+```
+
+```
+--add_protein
+
+Add Protein level to DNA HGVS annotation (e.g 'NM_152232:c.231T>C,NP_689418:p.Cys77Arg').
+
+```
+
+```
+--full_format
+
+Generates HGVS annotation in a full format
+by using all information to generates an exhaustive annotation
+(non-standard, e.g. 'TAS1R2:NM_152232:NP_689418:c.231T>C:p.Cys77Arg').
+Use 'use_exon' to add exon information
+(e.g 'TAS1R2:NM_152232:NP_689418:exon2:c.231T>C:p.Cys77Arg').
+
+```
+
+```
+--codon_type=<Codon type> ['1', '3', 'FULL'] (3)
+
+Amino Acide Codon format type to use to generate HGVS annotation.
+Available:
+- '1': codon in 1 character (e.g. 'C', 'R')
+- '3': codon in 3 character (e.g. 'Cys', 'Arg')
+-'FULL': codon in full name (e.g. 'Cysteine', 'Arginine')
+
+```
+
+```
+--refgene=<refGene>
+
+Path to refGene annotation file.
+
+```
+
+```
+--refseqlink=<refSeqLink>
+
+Path to refSeqLink annotation file.
+
+```
+
+### Annotation
+```
+--annotations_update
+
+Update option for annotation (Only for Parquet annotation).
+If True, annotation fields will be removed and re-annotated.
+These options will be applied to all annotation databases.
+
+```
+
+```
+--annotations_append
+
+Append option for annotation (Only for Parquet annotation).
+If True, annotation fields will be annotated only if not annotation exists for the variant.
+These options will be applied to all annotation databases.
+
+```
+
+### Calculation
+```
+--calculation_config=<calculation config>
+
+Calculation configuration JSON file.
+
+```
+
+### Prioritization
+```
+--default_profile=<default profile>
+
+Prioritization profile by default (see doc).
+Default is the first profile in the list of prioritization profiles.
+
+```
+
+```
+--pzfields=<pzfields> (PZScore,PZFlag)
+
+Prioritization fields to provide (see doc).
+Available: PZScore, PZFlag, PZTags, PZComment, PZInfos
+
+```
+
+```
+--prioritization_score_mode=<prioritization score mode> ['HOWARD', 'VaRank'] (HOWARD)
+
+Prioritization Score mode (see doc).
+Available: HOWARD (increment score), VaRank (max score)
+
+```
+
+```
+--prioritization_config=<prioritization config>
+
+Prioritization configuration JSON file (defines profiles, see doc).
 
 ```
 
@@ -965,6 +1134,8 @@ Notes:
 > - Proxy: Beware of network and proxy configuration
 
 > - dbNSFP download: More threads, more memory usage (8 threads ~ 16Gb, 24 threads ~ 32Gb)
+
+>  
 
 
 
@@ -1478,6 +1649,10 @@ Usage examples:
 
 > howard from_annovar --input=tests/databases/others/hg19_nci60.txt --output=/tmp/nci60.from_annovar.vcf.gz --to_parquet=/tmp/nci60.from_annovar.parquet --annovar-code=nci60 --genome=~/howard/databases/genomes/current/hg19.fa --threads=8 
 
+>  
+
+
+
 ### Main options
 ```
 --input=<input> | required
@@ -1558,7 +1733,11 @@ Usage examples:
 
 > howard help --help_json_input=docs/help.config.json --help_json_input_title='HOWARD Configuration' --help_md=docs/help.config.md --help_html=docs/help.config.html --code_type='json'
 
-> howard help --help_json_input=docs/help.param.json --help_json_input_title='HOWARD Parameters' --help_md=docs/help.param.md --help_html=docs/help.param.html --code_type='json'
+> howard help --help_json_input=docs/help.param.json --help_json_input_title='HOWARD Parameters' --help_md=docs/help.param.md --help_html=docs/help.param.html --code_type='json' 
+
+>  
+
+
 
 ### Main options
 ```
@@ -1603,7 +1782,11 @@ Help example code type for input JSON format
 ```
 --config=<config> ({})
 
-Configuration JSON file or JSON string.
+Configuration JSON file defined default configuration regarding 
+resources (e.g. threads, memory),
+settings (e.g. verbosity, temporary files),
+default folders (e.g. for databases)
+and paths to external tools.
 
 ```
 

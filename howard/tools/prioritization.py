@@ -36,92 +36,44 @@ def prioritization(args:argparse) -> None:
 
     log.info("Start")
 
-    # Config infos
-    if "arguments_dict" in args:
-        arguments_dict = args.arguments_dict
-    else:
-        arguments_dict = None
-    if "setup_cfg" in args:
-        setup_cfg = args.setup_cfg
-    else:
-        setup_cfg = None
-    config = args.config
+    # Load config args
+    arguments_dict, setup_cfg, config, param = load_config_args(args)
 
-    # Load parameters in JSON format
-    param = {}
-    if "param" in args:
-        if isinstance(args.param, str) and os.path.exists(full_path(args.param)):
-            with open(full_path(args.param)) as param_file:
-                param = json.load(param_file)
-        else:
-            param = json.loads(args.param)
+    # Create variants object
+    vcfdata_obj = Variants(input=args.input, output=args.output, config=config, param=param)
 
-    # Create VCF object
-    #if args.input:
-    if args.prioritizations or param.get("prioritizations", None) or param.get("prioritization", None):
-        vcfdata_obj = Variants(None, args.input, args.output, config, param)
+    # Get Config and Params
+    config = vcfdata_obj.get_config()
+    param = vcfdata_obj.get_param()
 
-        param = vcfdata_obj.get_param()
+    # Load args into param
+    param = load_args(param=param, args=args, arguments_dict=arguments_dict, command="prioritization", strict=False)
+    
+    # Re-Load Config and Params
+    vcfdata_obj.set_param(param)
+    vcfdata_obj.set_config(config)
 
-        # Quick prioritization
-        if args.prioritizations:
-            if isinstance(args.prioritizations, str):
-                prioritisations = args.prioritizations
-            else:
-                prioritisations = args.prioritizations.name
-            log.info(f"Quick Prioritization Config file: {prioritisations}")
-            param_quick_prioritizations = param.get("prioritization",{})
-            param_quick_prioritizations["prioritizations"] = prioritisations
-            param["prioritization"] = param_quick_prioritizations
-
-            # Profiles
-            if args.profiles:
-                param["prioritization"]["profiles"] = [value for value in args.profiles.split(',')]
-
-            # PZFields
-            if args.pzfields:
-                param["prioritization"]["pzfields"] = [value for value in args.pzfields.split(',')]
-
-            # Default
-            if args.default_profile:
-                param["prioritization"]["default_profile"] = args.default_profile
-
-            # Score Mode
-            if args.prioritization_score_mode:
-                param["prioritization"]["prioritization_score_mode"] = args.prioritization_score_mode
-
-            # Config profiles
-            if prioritisations in args and args.prioritizations:
-                if isinstance(args.prioritizations, str):
-                    prioritizations_file = args.prioritizations
-                else:
-                    prioritizations_file = args.prioritizations.name
-                param["prioritization"]["prioritizations"] = prioritizations_file
-
-        vcfdata_obj.set_param(param)
-            
-        # Load data from input file
+    # Load data
+    if vcfdata_obj.get_input():
         vcfdata_obj.load_data()
 
-        # Prioritization
-        if vcfdata_obj.get_param().get("prioritizations", None) or vcfdata_obj.get_param().get("prioritization", None):
-            vcfdata_obj.prioritization()
+    log.debug(f"param={param}")
 
-        # Export
-        if vcfdata_obj.get_output():
-            log.info("Exporting...")
-            vcfdata_obj.export_output(export_header=True)
+    # if param.get("calculation",{}).get("show_calculations",False):
+    #     operations_config_file = param.get("calculation").get("calculation_config")
+    #     log.debug(f"operations_config_file={operations_config_file}")
+    #     for help_line in vcfdata_obj.get_operations_help(operations_config_file=operations_config_file):
+    #         log.info(help_line)
+    #     exit()
 
-        # Close connexion
-        vcfdata_obj.close_connexion()
+    # Annotation
+    vcfdata_obj.prioritization()
 
-    else:
-        # Parser
-        parser = help_generation(arguments_dict=arguments_dict, setup=setup_cfg, output_type="parser")
-        parser.print_help()
-        print("")
-        log.error(f"No prioritizations provided")
-        raise ValueError(f"No prioritizations provided")
+    # Export
+    vcfdata_obj.export_output()
+
+    # Close connexion
+    vcfdata_obj.close_connexion()
 
     log.info("End")
 

@@ -38,7 +38,7 @@ from contextlib import contextmanager
 
 from configparser import ConfigParser
 
-from shutil import which 
+from shutil import which
 
 file_folder = os.path.dirname(__file__)
 
@@ -643,6 +643,8 @@ def extract_snpeff_hgvs(snpeff:str = "", header:str = ['Allele', 'Annotation', '
 
     if snpeff != "nan":
         snpeff_hgvs = "snpeff_hgvs_list"
+    
+    log.debug(f"snpeff={snpeff}")
 
     # Split snpeff ann values
     snpeff_infos = [x.split('|') for x in snpeff.split(",")]
@@ -2315,8 +2317,10 @@ def help_generation(arguments_dict:dict = {}, parser = None, setup:str = None, o
         # Gooey - add metavar
         if output_type == "gooey":
             add_metavar = True
+            command_group_suffix = ""
         else:
             add_metavar = False
+            command_group_suffix = " options"
 
         # Main args
         command_parser._optionals.title = "Options"
@@ -2331,7 +2335,7 @@ def help_generation(arguments_dict:dict = {}, parser = None, setup:str = None, o
                     widget, options = get_argument_gooey(arguments=arguments, arg=arg)
                     argument["widget"] = widget
                     argument["gooey_options"] = options
-                    if argument["help"] in ["==SUPPRESS=="]:
+                    if argument.get("help","") in ["==SUPPRESS=="]:
                         argument["help"] = arg
                     argument["help"] = format_arg_help(argument["help"], str(argument.get('default',None)))
                 command_parser.add_argument(f"--{arg}", **argument)
@@ -2342,7 +2346,7 @@ def help_generation(arguments_dict:dict = {}, parser = None, setup:str = None, o
             if group != "main":
                 options_md += f"### {group}\n"
                 options_html += f"<H3>{group}</H3>\n"
-                command_group = command_parser.add_argument_group(f"{group} options")
+                command_group = command_parser.add_argument_group(f"{group}{command_group_suffix}")
                 for arg in commands_arguments[command]["groups"][group]:
                     required = commands_arguments[command]["groups"][group][arg]
                     argument = get_argument(arguments=arguments.copy(), arg=arg, required=required, add_metavar=add_metavar)
@@ -2350,7 +2354,9 @@ def help_generation(arguments_dict:dict = {}, parser = None, setup:str = None, o
                         widget, options = get_argument_gooey(arguments=arguments, arg=arg)
                         argument["widget"] = widget
                         argument["gooey_options"] = options
-                        if argument["help"] in ["==SUPPRESS=="]:
+                        log.debug(f"arg={arg}")
+                        log.debug(f"argument={argument}")
+                        if argument.get("help","") in ["==SUPPRESS=="]:
                             argument["help"] = arg
                         argument["help"] = format_arg_help(argument["help"], str(argument.get('default',None)))
                     command_group.add_argument(f"--{arg}", **argument)
@@ -2365,7 +2371,7 @@ def help_generation(arguments_dict:dict = {}, parser = None, setup:str = None, o
                 widget, options = get_argument_gooey(arguments=arguments, arg=arg)
                 argument["widget"] = widget
                 argument["gooey_options"] = options
-                if argument["help"] in ["==SUPPRESS=="]:
+                if argument.get("help","") in ["==SUPPRESS=="]:
                     argument["help"] = arg
                 argument["help"] = format_arg_help(argument["help"], str(argument.get('default',None)))
             shared_group.add_argument(f"--{arg}", **argument)

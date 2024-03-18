@@ -142,7 +142,8 @@ arguments = {
         },
         "param": {
             "metavar": "param",
-            "help": """Parameters JSON file or JSON string.\n""",
+            "help": """Parameters JSON file (or string) defines parameters to process \n"""
+                    """annotations, calculations, prioritizations, convertions and queries.\n""",
             "default": "{}",
             "type": PathType(exists=None, type=None),
             "gooey": {
@@ -191,17 +192,17 @@ arguments = {
             "metavar": "annotations",
             "help": """Annotation with databases files, or with tools,\n"""
                     """as a list of files in Parquet, VCF, BED, or keywords\n"""
-                    """ (e.g. '/path/to/file.parquet,bcftools:file2.vcf.gz,annovar:refGene,snpeff').\n"""
-                    """For a Parquet/VCF/BED file, use file paths\n"""
-                    """ (e.g. '/path/to/file.parquet', 'file1.parquet,file2.vcf.gz').\n"""
-                    """For BCFTools anotation, use keyword 'bcftools' with file paths\n"""
-                    """ (e.g. 'bcftools:/path/to/file.vcf.gz:/path/to/file.bed.gz').\n"""
-                    """For Annovar annotation, use keyword 'annovar' with annovar code\n"""
+                    """ (e.g. 'file.parquet,bcftools:file2.vcf.gz,annovar:refGene,snpeff').\n"""
+                    """- For a Parquet/VCF/BED, use file paths\n"""
+                    """ (e.g. 'file1.parquet,file2.vcf.gz').\n"""
+                    """- For BCFTools annotation, use keyword 'bcftools' with file paths\n"""
+                    """ (e.g. 'bcftools:file.vcf.gz:file.bed.gz').\n"""
+                    """- For Annovar annotation, use keyword 'annovar' with annovar code\n"""
                     """ (e.g. 'annovar:refGene', 'annovar:cosmic70').\n"""
-                    """For snpeff annotation, use keyword 'snpeff'.\n"""
-                    """For Exomiser annotation, use keyword 'exomiser' with options as key=value\n"""
+                    """- For snpeff annotation, use keyword 'snpeff'.\n"""
+                    """- For Exomiser annotation, use keyword 'exomiser' with options as key=value\n"""
                     """ (e.g. 'exomiser:preset=exome:transcript_source=refseq').\n"""
-                    """For add all availalbe databases files, use 'ALL' keyword,\n"""
+                    """- For add all availalbe databases files, use 'ALL' keyword,\n"""
                     """ with filters on type and release\n"""
                     """ (e.g. 'ALL', 'ALL:parquet:current', 'ALL:parquet,vcf:current,devel').\n""",
             "default": None,
@@ -275,7 +276,8 @@ arguments = {
             "metavar": "operations",
             "help": """Quick calculations on genetic variants information and genotype information,\n"""
                     """as a list of operations (e.g. 'VARTYPE,variant_id').\n"""
-                    """List of available calculations (unsensitive case, see doc for more information):\n"""
+                    """List of available calculations by default\n"""
+                    """ (unsensitive case, see doc for more information):\n"""
                     """ VARTYPE """
                     """ snpeff_hgvs """
                     """ FINDBYPIPELINE """
@@ -293,7 +295,35 @@ arguments = {
         # Prioritizations
         "prioritizations": {
             "metavar": "prioritisations",
-            "help": "Prioritization file in JSON format (defines profiles, see doc).\n",
+            "help": """List of prioritization profiles to process (based on Prioritization JSON file),\n"""
+                    """such as 'default', 'rare variants', 'low allele frequency', 'GERMLINE'.\n"""
+                    """By default, all profiles available will be processed.\n""",
+            "default": None,
+            "type": str,
+            "extra": {
+                #"param_section": "prioritization",
+                "examples": {
+                    "Prioritization profile by default":
+                        """"prioritization": "default" """,
+                    "Prioritization profile by default and GERLINE from Configuration JSON file":
+                        """"prioritization": "default,GERMLINE" """,
+                }
+            }
+            # "default": None,
+            # "type": PathType(exists=True, type='file'),
+            # "gooey": {
+            #     "widget": "FileChooser",
+            #     "options": {
+            #         "wildcard":
+            #             "JSON file (*.json)|*.json|"
+            #             "All files (*)|*"
+            #     }
+            # }
+        },
+        # Prioritization config
+        "prioritization_config": {
+            "metavar": "prioritization config",
+            "help": """Prioritization configuration JSON file (defines profiles, see doc).\n""",
             "default": None,
             "type": PathType(exists=True, type='file'),
             "gooey": {
@@ -302,6 +332,13 @@ arguments = {
                     "wildcard":
                         "JSON file (*.json)|*.json|"
                         "All files (*)|*"
+                }
+            },
+            "extra": {
+                "param_section": "prioritization",
+                "examples": {
+                    "Prioritization configuration JSON file as an option":
+                        """"prioritization_config": "prioritization_config.json" """
                 }
             }
         },
@@ -416,9 +453,9 @@ arguments = {
             "extra": {
                 "examples": {
                     "Order by ACMG score in descending order":
-                        """ACMG_score DESC""",
+                        """"order_by": "ACMG_score DESC" """,
                     "Order by PZFlag and PZScore in descending order":
-                        """PZFlag DESC, PZScore DESC"""
+                        """"order_by": PZFlag DESC, PZScore DESC" """
                 }
             }
         },
@@ -473,6 +510,13 @@ arguments = {
                         "JSON file (*.json)|*.json|"
                         "All files (*)|*"
                 }
+            },
+            "extra": {
+                "param_section": "calculation",
+                "examples": {
+                    "Calculation configuration JSON file as an option":
+                        """"calculation_config": "calculation_config.json" """
+                }
             }
         },
         "show_calculations": {
@@ -486,7 +530,7 @@ arguments = {
             "default": "hgvs",
             "type": str,
             "extra": {
-                "param_section": "calculation:NOMEN:options"
+                "param_section": "calculation:calculations:NOMEN:options"
             }
         },
         "transcripts": {
@@ -504,7 +548,7 @@ arguments = {
                 }
             },
             "extra": {
-                "param_section": "calculation:NOMEN:options"
+                "param_section": "calculation:calculations:NOMEN:options"
             }
         },
         "trio_pedigree": {
@@ -523,7 +567,7 @@ arguments = {
                 }
             },
             "extra": {
-                "param_section": "calculation:TRIO"
+                "param_section": "calculation:calculations:TRIO"
             }
         },
 
@@ -544,7 +588,7 @@ arguments = {
             "extra": {
                 "examples": {
                     "Export statistics in Markdown format":
-                        """"stats_md": '/tmp/stats.md'"""
+                        """"stats_md": "/tmp/stats.md" """
                 }
             }
         },
@@ -564,7 +608,7 @@ arguments = {
             "extra": {
                 "examples": {
                     "Export statistics in JSON format":
-                        """"stats_json": '/tmp/stats.json'"""
+                        """"stats_json": "/tmp/stats.json" """
                 }
             }
         },
@@ -579,9 +623,9 @@ arguments = {
             "extra": {
                 "examples": {
                     "Default assembly for all analysis tools":
-                        """"assembly": 'hg19'""",
+                        """"assembly": "hg19" """,
                     "List of assemblies for databases download tool":
-                        """"assembly": 'hg19,hg38'"""
+                        """"assembly": "hg19,hg38" """
                 }
             }
         },
@@ -1409,7 +1453,11 @@ arguments = {
         # Shared
         "config": {
             "metavar": "config",
-            "help": """Configuration JSON file or JSON string.\n""",
+            "help": """Configuration JSON file defined default configuration regarding \n"""
+                    """resources (e.g. threads, memory),\n"""
+                    """settings (e.g. verbosity, temporary files),\n"""
+                    """default folders (e.g. for databases)\n"""
+                    """and paths to external tools.\n""",
             "required": False,
             "default": "{}",
             "type": str,
@@ -1651,8 +1699,8 @@ commands_arguments = {
                         """   howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, DP, CLNSIG, sample2, sample3 FROM variants WHERE DP >= 50 OR CLNSIG NOT NULL ORDER BY DP DESC' \n"""
                         """   howard query --query="SELECT \\\"#CHROM\\\", POS, REF, ALT, \\\"INFO/Interpro_domain\\\" FROM 'tests/databases/annotations/current/hg19/dbnsfp42a.parquet' WHERE \\\"INFO/Interpro_domain\\\" NOT NULL ORDER BY \\\"INFO/SiPhy_29way_logOdds_rankscore\\\" DESC LIMIT 10" \n"""
                         """   howard query --explode_infos --explode_infos_prefix='INFO/' --query="SELECT \\\"#CHROM\\\", POS, REF, ALT, STRING_AGG(INFO, ';') AS INFO FROM 'tests/databases/annotations/current/hg19/*.parquet' GROUP BY \\\"#CHROM\\\", POS, REF, ALT" --output=/tmp/full_annotation.tsv  && head -n2 /tmp/full_annotation.tsv \n"""
-                        """   howard query --input=tests/data/example.vcf.gz --param=config/param.json"""
-                        , 
+                        """   howard query --input=tests/data/example.vcf.gz --param=config/param.json \n"""
+                        """    \n""",
         "groups": {
             "main": {
                 "input": False,
@@ -1671,7 +1719,7 @@ commands_arguments = {
             },
             "Export": {
                 "include_header": False,
-                "parquet_partition": False
+                "parquet_partitions": False
             }
         }
     },
@@ -1682,7 +1730,8 @@ commands_arguments = {
         "epilog": """Usage examples:\n"""
                         """   howard stats --input=tests/data/example.vcf.gz \n"""
                         """   howard stats --input=tests/data/example.vcf.gz --stats_md=/tmp/stats.md \n"""
-                        """   howard stats --input=tests/data/example.vcf.gz --param=config/param.json """,
+                        """   howard stats --input=tests/data/example.vcf.gz --param=config/param.json \n"""
+                        """    \n""",
         "groups": {
             "main": {
                 "input": True,
@@ -1703,7 +1752,8 @@ commands_arguments = {
                         """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.parquet \n"""
                         """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos --explode_infos_fields='CLNSIG,SIFT,DP' --order_by='CLNSIG DESC, DP DESC' \n"""
                         """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos --explode_infos_prefix='INFO/' --explode_infos_fields='CLNSIG,SIFT,DP,*' --order_by='"INFO/CLNSIG" DESC, "INFO/DP" DESC' --include_header \n"""
-                        """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --param=config/param.json """,
+                        """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --param=config/param.json \n"""
+                        """    \n""",
         "groups": {
             "main": {
                 "input": True,
@@ -1718,7 +1768,7 @@ commands_arguments = {
             "Export": {
                 "include_header": False,
                 "order_by": False,
-                "parquet_partition": False
+                "parquet_partitions": False
             }
         }
     },
@@ -1730,8 +1780,7 @@ commands_arguments = {
                         """   howard hgvs --input=tests/data/example.full.vcf --output=/tmp/example.hgvs.vcf \n"""
                         """   howard hgvs --input=tests/data/example.full.vcf --output=/tmp/example.hgvs.tsv --param=config/param.json \n"""
                         """   howard hgvs --input=tests/data/example.full.vcf --output=/tmp/example.hgvs.vcf --full_format --use_exon \n"""
-                        """    \n"""
-                        ,
+                        """    \n""",
         "groups": {
             "main": {
                 "input": True,
@@ -1750,10 +1799,10 @@ commands_arguments = {
                 "refgene": False,
                 "refseqlink": False
             },
-            "Databases": {
-                "refseq-folder": False,
-                "genomes-folder": False
-            }
+            # "Databases": {
+            #     "refseq-folder": False,
+            #     "genomes-folder": False
+            # }
         }
     },
     "annotation": {
@@ -1764,7 +1813,8 @@ commands_arguments = {
                         """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/current/hg19/avsnp150.parquet,tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet' \n"""
                         """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotations='annovar:refGene,annovar:cosmic70,snpeff,tests/databases/annotations/current/hg19/clinvar_20210123.parquet' \n"""
                         """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotations='ALL:parquet' \n"""
-                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --param=config/param.json """, 
+                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --param=config/param.json \n"""
+                        """    \n""",
         "groups": {
             "main": {
                 "input": True,
@@ -1773,7 +1823,7 @@ commands_arguments = {
                 "annotations": False,
                 "assembly": False,
             },
-            "annotation": {
+            "Annotation": {
                 "annotations_update": False,
                 "annotations_append": False,
                 
@@ -1789,13 +1839,15 @@ commands_arguments = {
                         """   howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.calculated.tsv --calculations='snpeff_hgvs,NOMEN' --hgvs_field=snpeff_hgvs --transcripts=tests/data/transcripts.tsv \n"""
                         """   howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.ann.tsv --param=config/param.json \n"""
                         """   howard calculation --show_calculations \n"""
-                        ,
+                        """    \n""",
         "groups": {
             "main": {
                 "input": False,
                 "output": False,
                 "param": False,
-                "calculations": False,
+                "calculations": False
+            },
+            "Calculation": {
                 "calculation_config": False,
                 "show_calculations": False
             },
@@ -1813,20 +1865,22 @@ commands_arguments = {
         "description":  """Prioritization algorithm uses profiles to flag variants (as passed or filtered), calculate a prioritization score, and automatically generate a comment for each variants (example: 'polymorphism identified in dbSNP. associated to Lung Cancer. Found in ClinVar database'). Prioritization profiles are defined in a configuration file in JSON format. A profile is defined as a list of annotation/value, using wildcards and comparison options (contains, lower than, greater than, equal...). Annotations fields may be quality values (usually from callers, such as 'DP') or other annotations fields provided by annotations tools, such as HOWARD itself (example: COSMIC, Clinvar, 1000genomes, PolyPhen, SIFT). Multiple profiles can be used simultaneously, which is useful to define multiple validation/prioritization levels (example: 'standard', 'stringent', 'rare variants', 'low allele frequency').\n""",
         "help": "Prioritization of genetic variations based on annotations criteria (profiles).",
         "epilog": """Usage examples:\n"""
-                        """   howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations=config/prioritization_profiles.json --profiles='default,GERMLINE' \n"""
-                        """   howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.tsv --param=config/param.json """, 
+                        """   howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations='default' \n"""
+                        """   howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations='default,GERMLINE' --prioritization_config=config/prioritization_profiles.json \n"""
+                        """   howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.tsv --param=config/param.json \n"""
+                        """    \n""",
         "groups": {
             "main": {
                 "input": True,
                 "output": True,
-                "prioritizations": False,
-                "param": False
+                "param": False,
+                "prioritizations": False
             },
             "Prioritization": {
-                "profiles": False,
                 "default_profile": False,
                 "pzfields": False,
-                "prioritization_score_mode": False
+                "prioritization_score_mode": False,
+                "prioritization_config": False
             }
         }
     },
@@ -1842,22 +1896,44 @@ commands_arguments = {
         "help":         """Full genetic variations process: annotation, calculation, prioritization, format, query, filter...""",
         "epilog":       """Usage examples:\n"""
                         """   howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json \n"""
-                        """   howard process --input=tests/data/example.vcf.gz --annotations='snpeff' --calculations='snpeff_hgvs' --prioritizations=config/prioritization_profiles.json --explode_infos --output=/tmp/example.annotated.tsv --query='SELECT "#CHROM", POS, ALT, REF, snpeff_hgvs FROM variants' \n"""
-                        """   howard process --input=tests/data/example.vcf.gz --hgvs='full_format,use_exon' --explode_infos --output=/tmp/example.annotated.tsv --query='SELECT "#CHROM", POS, ALT, REF, hgvs FROM variants' \n"""
-                        """   howard process --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --hgvs='full_format,use_exon' --annotations='tests/databases/annotations/current/hg19/avsnp150.parquet,tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet' --calculation='NOMEN' --explode_infos --query='SELECT NOMEN, REVEL_score, SIFT_score, AF AS 'gnomad_AF', ClinPred_score, ClinPred_pred FROM variants' \n"""
-                        , 
+                        """   howard process --input=tests/data/example.vcf.gz --annotations='snpeff' --calculations='snpeff_hgvs' --prioritizations='default' --explode_infos --output=/tmp/example.annotated.tsv --query='SELECT "#CHROM", POS, ALT, REF, snpeff_hgvs FROM variants' \n"""
+                        """   howard process --input=tests/data/example.vcf.gz --hgvs_options='full_format,use_exon' --explode_infos --output=/tmp/example.annotated.tsv --query='SELECT "#CHROM", POS, ALT, REF, hgvs FROM variants' \n"""
+                        """   howard process --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --hgvs='full_format,use_exon' --annotations='tests/databases/annotations/current/hg19/avsnp150.parquet,tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet' --calculations='NOMEN' --explode_infos --query='SELECT NOMEN, REVEL_score, SIFT_score, AF AS 'gnomad_AF', ClinPred_score, ClinPred_pred FROM variants' \n"""
+                        """    \n""", 
 
         "groups": {
             "main": {
                 "input": True,
                 "output": True,
-                "param": False
-            },
-            "Quick Processes": {
+                "param": False,
                 "hgvs_options": False,
                 "annotations": False,
                 "calculations": False,
-                "prioritizations": False
+                "prioritizations": False,
+                "assembly": False
+            },
+            "HGVS": {
+                "use_gene": False,
+                "use_exon": False,
+                "use_protein": False,
+                "add_protein": False,
+                "full_format": False,
+                "codon_type": False,
+                "refgene": False,
+                "refseqlink": False
+            },
+            "Annotation": {
+                "annotations_update": False,
+                "annotations_append": False,
+            },
+            "Calculation": {
+                "calculation_config": False,
+            },
+            "Prioritization": {
+                "default_profile": False,
+                "pzfields": False,
+                "prioritization_score_mode": False,
+                "prioritization_config": False
             },
             "Query": {
                 "query": False,
@@ -1896,7 +1972,7 @@ commands_arguments = {
                     """   - Downloading databases can take a while, depending on network, threads and memory\n"""
                     """   - Proxy: Beware of network and proxy configuration\n"""
                     """   - dbNSFP download: More threads, more memory usage (8 threads ~ 16Gb, 24 threads ~ 32Gb)\n"""
-                    ,
+                    """    \n""",
         "groups": {
             "main": {
                 "assembly": False,
@@ -1987,7 +2063,8 @@ commands_arguments = {
         "description": """(beta) Formatting Annovar database file to other format (VCF and Parquet). Exported Parquet file includes INFO/tags columns as VCF INFO columns had been exploded""",
         "help": """(beta) Formatting Annovar database file to other format (VCF and Parquet)""",
         "epilog": """Usage examples:\n"""
-                    """   howard from_annovar --input=tests/databases/others/hg19_nci60.txt --output=/tmp/nci60.from_annovar.vcf.gz --to_parquet=/tmp/nci60.from_annovar.parquet --annovar-code=nci60 --genome=~/howard/databases/genomes/current/hg19.fa --threads=8 """, 
+                    """   howard from_annovar --input=tests/databases/others/hg19_nci60.txt --output=/tmp/nci60.from_annovar.vcf.gz --to_parquet=/tmp/nci60.from_annovar.parquet --annovar-code=nci60 --genome=~/howard/databases/genomes/current/hg19.fa --threads=8 \n"""
+                    """    \n""",
         "groups": {
             "main": {
                 "input": True,
@@ -2023,7 +2100,8 @@ commands_arguments = {
         "epilog": """Usage examples:\n"""
                     """   howard help --help_md=docs/help.md --help_html=docs/help.html\n"""
                     """   howard help --help_json_input=docs/help.config.json --help_json_input_title='HOWARD Configuration' --help_md=docs/help.config.md --help_html=docs/help.config.html --code_type='json'\n"""
-                    """   howard help --help_json_input=docs/help.param.json --help_json_input_title='HOWARD Parameters' --help_md=docs/help.param.md --help_html=docs/help.param.html --code_type='json'""",
+                    """   howard help --help_json_input=docs/help.param.json --help_json_input_title='HOWARD Parameters' --help_md=docs/help.param.md --help_html=docs/help.param.html --code_type='json' \n"""
+                    """    \n""",
         "groups": {
             "main": {
                 "help_md": False,
