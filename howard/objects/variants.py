@@ -2976,10 +2976,9 @@ class Variants:
                                 f"Annotation '{annotation}' - add bcftools command")
 
                             # Command
-                            command_annotate = f"{bcftools_bin} annotate --regions-file={tmp_bed_name} -a {db_file} -h {tmp_header_vcf_name} -c {annotation_infos} --rename-annots={tmp_rename_name} {tmp_vcf_name} -o {tmp_annotation_vcf_name} -Oz 2>>{tmp_annotation_vcf_name_err} && tabix {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} "
+                            command_annotate = f"{bcftools_bin} annotate --pair-logic exact --regions-file={tmp_bed_name} -a {db_file} -h {tmp_header_vcf_name} -c {annotation_infos} --rename-annots={tmp_rename_name} {tmp_vcf_name} -o {tmp_annotation_vcf_name} -Oz 2>>{tmp_annotation_vcf_name_err} && tabix {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} "
 
-                            # bcftools_bin
-
+                            # Add command
                             commands.append(command_annotate)
 
             # if some commands
@@ -3032,7 +3031,7 @@ class Variants:
                             " ".join(tmp_files)
 
                     # Command merge
-                    merge_command = f"bcftools merge --force-samples --threads={threads} {tmp_vcf_name} {tmp_ann_vcf_list_cmd} -o {tmp_annotate_vcf_name} -Oz 2>>{tmp_annotate_vcf_name_err} {tmp_files_remove_command}"
+                    merge_command = f"{bcftools_bin} merge --force-samples --threads={threads} {tmp_vcf_name} {tmp_ann_vcf_list_cmd} -o {tmp_annotate_vcf_name} -Oz 2>>{tmp_annotate_vcf_name_err} {tmp_files_remove_command}"
                     log.info(f"Annotation - Annotation merging " +
                              str(len(commands)) + " annotated files")
                     log.debug(f"Annotation - merge command: {merge_command}")
@@ -3945,10 +3944,13 @@ class Variants:
 
         # Config - annovar bin
         annovar_bin = get_bin(tool="annovar", bin="table_annovar.pl", bin_type="perl", config=config, default_folder=f"{DEFAULT_TOOLS_FOLDER}/annovar")
-        log.debug(f"annovar_bin={annovar_bin}")
+        #log.debug(f"annovar_bin={annovar_bin}")
         if not os.path.exists(annovar_bin):
             log.error(f"Annotation failed: no annovar bin '{annovar_bin}'")
             raise ValueError(f"Annotation failed: no annovar bin '{annovar_bin}'")
+
+        # Config - BCFTools bin
+        bcftools_bin = get_bin(bin="bcftools", tool="bcftools", bin_type="bin", config=config, default_folder=f"{DEFAULT_TOOLS_FOLDER}/bcftools")
 
         # Config - annovar databases
         annovar_databases = config.get("folders", {}).get("databases", {}).get("annovar", DEFAULT_ANNOVAR_FOLDER)
@@ -4119,7 +4121,7 @@ class Variants:
                 tmp_files.append(f"{tmp_annotate_vcf_name}.tmp.vcf")
 
                 # Command - start pipe
-                command_annovar += f""" && bcftools view --threads={threads} {tmp_annotate_vcf_name}.tmp.vcf 2>>{tmp_annotate_vcf_name_err} """
+                command_annovar += f""" && {bcftools_bin} view --threads={threads} {tmp_annotate_vcf_name}.tmp.vcf 2>>{tmp_annotate_vcf_name_err} """
 
                 # Command - Clean INFO/ANNOVAR_DATE (due to Annovar issue with multiple TAGS!)
                 command_annovar += """ | sed "s/ANNOVAR_DATE=[^;\t]*;//gi" """
@@ -4138,7 +4140,7 @@ class Variants:
                     for ann in annotation_list:
                         annovar_fields_to_keep.append(f"^INFO/{ann}")
 
-                command_annovar += f""" | bcftools annotate --threads={threads} -x {",".join(annovar_fields_to_keep)} --rename-annots={tmp_rename_name} -o {tmp_annotate_vcf_name} -Oz 2>>{tmp_annotate_vcf_name_err} """
+                command_annovar += f""" | {bcftools_bin} annotate --pair-logic exact --threads={threads} -x {",".join(annovar_fields_to_keep)} --rename-annots={tmp_rename_name} -o {tmp_annotate_vcf_name} -Oz 2>>{tmp_annotate_vcf_name_err} """
 
                 # Command - indexing
                 command_annovar += f"""  && tabix {tmp_annotate_vcf_name} """
@@ -4190,7 +4192,7 @@ class Variants:
                 tmp_files.append(tmp_annotate_vcf_name_err)
 
                 # Command merge
-                merge_command = f"bcftools merge --force-samples --threads={threads} {tmp_vcf_name} {tmp_annotates_vcf_name_to_merge} -o {tmp_annotate_vcf_name} -Oz 2>>{tmp_annotate_vcf_name_err} "
+                merge_command = f"{bcftools_bin} merge --force-samples --threads={threads} {tmp_vcf_name} {tmp_annotates_vcf_name_to_merge} -o {tmp_annotate_vcf_name} -Oz 2>>{tmp_annotate_vcf_name_err} "
                 log.info(f"Annotation Annovar - Annotation merging " + str(len(tmp_annotates_vcf_name_list)) + " annotated files")
                 log.debug(f"Annotation - merge command: {merge_command}")
                 run_parallel_commands([merge_command], 1)
