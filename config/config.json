@@ -1,7 +1,7 @@
 {
   "threads": 8,
   "memory": null,
-  "verbosity": "warning",
+  "verbosity": "WARNING",
   "folders": {
     "databases": {
       "genomes": "~/howard/databases/genomes/current",

@@ -36,80 +36,33 @@ def annotation(args:argparse) -> None:
 
     log.info("Start")
 
-    # Config infos
-    if "arguments_dict" in args:
-        arguments_dict = args.arguments_dict
-    else:
-        arguments_dict = None
-    if "setup_cfg" in args:
-        setup_cfg = args.setup_cfg
-    else:
-        setup_cfg = None
-    config = args.config
+    # Load config args
+    arguments_dict, setup_cfg, config, param = load_config_args(args)
 
-    # Load parameters in JSON format
-    param = {}
-    if "param" in args:
-        if isinstance(args.param, str) and os.path.exists(full_path(args.param)):
-            with open(full_path(args.param)) as param_file:
-                param = json.load(param_file)
-        else:
-            param = json.loads(args.param)
+    # Create variants object
+    vcfdata_obj = Variants(input=args.input, output=args.output, config=config, param=param)
 
-    # Create VCF object
-    #if args.input:
-    if args.annotations or param.get("annotations", None) or param.get("annotation", None):
-        vcfdata_obj = Variants(None, args.input, args.output, config, param)
+    # Get Config and Params
+    config = vcfdata_obj.get_config()
+    param = vcfdata_obj.get_param()
 
-        param = vcfdata_obj.get_param()
+    # Load args into param
+    param = load_args(param=param, args=args, arguments_dict=arguments_dict, command="annotation", strict=False)
 
-        # Prapare annotation dict
-        if not param.get("annotation", None):
-            param["annotation"] = {}
-        if not param.get("annotation", {}).get("options", None):
-            param["annotation"]["options"] = {}
+    # Re-Load Config and Params
+    vcfdata_obj.set_param(param)
+    vcfdata_obj.set_config(config)
 
-        # Quick Annotation
-        if args.annotations:
-            annotation_file_list = [value for value in args.annotations.split(',')]
-            log.info(f"Quick Annotation Files: {annotation_file_list}")
-            param_quick_annotations = param.get("annotations",{})
-            for annotation_file in annotation_file_list:
-                param_quick_annotations[annotation_file] = {"INFO": None}
-            param["annotations"] = param_quick_annotations
-        
-        if args.annotations_update:
-            param["annotation"]["options"]["annotations_update"] = True
+    # Load data
+    vcfdata_obj.load_data()
 
-        if args.annotations_append:
-            param["annotation"]["options"]["annotations_append"] = True
+    # Annotation
+    vcfdata_obj.annotation()
 
-        vcfdata_obj.set_param(param)
-        
-        # Load data from input file
-        vcfdata_obj.load_data()
+    # Export
+    vcfdata_obj.export_output()
 
-        # Annotation
-        if vcfdata_obj.get_param().get("annotations", None) or vcfdata_obj.get_param().get("annotation", None):
-            vcfdata_obj.annotation()
-
-        # Export
-        if vcfdata_obj.get_output():
-            log.info("Exporting...")
-            vcfdata_obj.export_output(export_header=True)
-
-        # Close connexion
-        vcfdata_obj.close_connexion()
-
-    else:
-        # Parser
-        parser = help_generation(arguments_dict=arguments_dict, setup=setup_cfg, output_type="parser")
-        parser.print_help()
-        print("")
-        log.error(f"No annotations provided")
-        raise ValueError(f"No annotations provided")
+    # Close connexion
+    vcfdata_obj.close_connexion()
 
     log.info("End")
-
-
-

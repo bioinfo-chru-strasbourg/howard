@@ -48,7 +48,8 @@ def test_calculation_tsv():
         transcripts = None,
         show_calculations = False,
         trio_pedigree = '{"father":"sample1", "mother":"sample2", "child":"sample3"}',
-        calculation_config = None
+        calculation_config = None,
+        arguments_dict = arguments_dict
     )
 
     # Remove if output file exists
@@ -77,6 +78,21 @@ def test_calculation_tsv():
     assert result_output_nb_lines == expected_result_nb_lines
     assert result_output_nb_variants == expected_result_nb_variants
 
+    # Create object
+    variants = Variants(conn=None, input=output_vcf, config=config, load=True)
+    
+    # Check annotation
+    result = variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%VARTYPE=%'")
+    assert len(result) == 7
+
+    # Check annotation
+    result = variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%trio=%'")
+    assert len(result) == 7
+
+    # Check annotation
+    result = variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%hgvs=%'")
+    assert len(result) == 0
+
 
 def test_calculation_vcf():
 
@@ -96,7 +112,8 @@ def test_calculation_vcf():
         transcripts = None,
         show_calculations = False,
         trio_pedigree = '{"father":"sample1", "mother":"sample2", "child":"sample3"}',
-        calculation_config = None
+        calculation_config = None,
+        arguments_dict = arguments_dict
     )
 
     # Remove if output file exists
@@ -125,4 +142,17 @@ def test_calculation_vcf():
     assert result_output_nb_lines == expected_result_nb_lines
     assert result_output_nb_variants == expected_result_nb_variants
 
+    # Create object
+    variants = Variants(conn=None, input=output_vcf, config=config, load=True)
+    
+    # Check annotation
+    result = variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%VARTYPE=%'")
+    assert len(result) == 7
 
+    # Check annotation
+    result = variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%trio=%'")
+    assert len(result) == 7
+
+    # Check annotation
+    result = variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%hgvs=%'")
+    assert len(result) == 0

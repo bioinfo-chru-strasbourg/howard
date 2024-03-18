@@ -3,7 +3,7 @@
     "type": "sql",
     "name": "variant_chr_pos_alt_ref",
     "description": "Create a variant ID with chromosome, position, alt and ref",
-    "available": false,
+    "available": true,
     "output_column_name": "variant_chr_pos_alt_ref",
     "output_column_type": "String",
     "output_column_description": "variant ID with chromosome, position, alt and ref",

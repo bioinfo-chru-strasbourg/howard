@@ -23,6 +23,7 @@ import pytest
 from howard.commons import *
 from howard.objects.variants import Variants
 from howard.tools.databases import *
+from howard.tools.tools import main_folder, arguments_dict
 
 
 # Main tests folder
@@ -35,6 +36,9 @@ tests_annotations_folder = tests_databases_folder + f"/annotations/{tests_databa
 # Tools folder
 #tests_tools = "~/howard/tools"
 tests_tools = full_path("~/howard/tools")
+
+setup_cfg = f'{main_folder}/../setup.cfg'
+
 
 # Test config
 tests_config = {

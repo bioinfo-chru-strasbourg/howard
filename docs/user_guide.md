@@ -382,35 +382,48 @@ See [HOWARD Parameters JSON](help.param.md) for more information.
 >     }
 >   },
 >   "calculation": {
->     "vartype": null,
->     "snpeff_hgvs": null,
->     "NOMEN": {
->       "options": {
->         "hgvs_field": "snpeff_hgvs",
->         "transcripts": "tests/data/transcripts.tsv"
+>     "calculations": {
+>       "vartype": null,
+>       "snpeff_hgvs": null,
+>       "VAF": "",
+>       "NOMEN": {
+>         "options": {
+>           "hgvs_field": "snpeff_hgvs",
+>           "transcripts": "tests/data/transcripts.tsv"
+>         }
 >       }
 >     },
->     "VAF": ""
+>     "config/calculations_config.json": "config/calculations_config.json"
 >   },
 >   "prioritization": {
->     "prioritizations": "config/prioritization_profiles.json",
->     "pzfields": ["PZScore", "PZFlag", "PZComment"],
 >     "profiles": ["default", "GERMLINE"],
+>     "prioritization_config": "config/prioritization_profiles.json",
+>     "pzfields": ["PZScore", "PZFlag", "PZComment"],
 >     "prioritization_score_mode": "VaRank"
 >   },
 >   "hgvs": {
 >     "full_format": true,
 >     "use_exon": true
 >   },
->   "query": "SELECT \"#CHROM\", POS, REF, ALT, INFO FROM variants",
->   "explode_infos": false,
->   "explode_infos_prefix": "",
->   "explode_infos_fields": null,
->   "header_in_output": false,
->   "parquet_partitions": null,
->   "order_by": null,
->   "query_limit": 10,
->   "query_print_mode": "default",
+>   "stats": {
+>     "stats_md": null,
+>     "stats_json": null
+>   },
+>   "query": {
+>     "query": "SELECT \"#CHROM\", POS, REF, ALT, INFO FROM variants",
+>     "query_limit": 10,
+>     "query_print_mode": "default"
+>   },
+>   "explode_infos": {
+>     "explode_infos": false,
+>     "explode_infos_prefix": "",
+>     "explode_infos_fields": null
+>   },
+>   "export": {
+>     "header_in_output": false,
+>     "parquet_partitions": null,
+>     "order_by": null
+>   },
 >   "threads": 8
 > }
 > ```
@@ -438,7 +451,7 @@ See [HOWARD Help Stats tool](help.md#stats-tool) for more information.
 >    --input=tests/data/example.vcf.gz
 > ```
 
-> Example: Show example VCF statistics and generate a file in JSON and Markdown formats
+> Example: Show example VCF statistics and generate a file in JSON and Markdown formats (extract)
 > ```
 > howard stats \
 >    --input=tests/data/example.vcf.gz \
@@ -468,8 +481,9 @@ See [HOWARD Help Stats tool](help.md#stats-tool) for more information.
 >                 "count": 1,
 >                 "percent": 0.14285714285714285
 >             }
->         },
-> ...
+>         }
+>     }
+> }
 > ```
 > ```markdown
 > ...
@@ -1029,9 +1043,10 @@ Basically, a calculation is defined by:
 - Query and fields: an SQL query (for 'sql' type) with parameters such as mandatory INFO fields
 - Function name and parameters: a existing Python function and parameters (for 'python' type)
 
-> Example: Calculation of variant type using an SQL query
+> Example: Configuration with calculation of variant type using an SQL query and calculation of variant id using an existing Python function `calculation_variant_id`
 > ```json
-> "VARTYPE": {
+> {
+>   "VARTYPE": {
 >     "type": "sql",
 >     "name": "VARTYPE",
 >     "description": "Variant type (e.g. SNV, INDEL, MNV, BND...)",
@@ -1051,12 +1066,8 @@ Basically, a calculation is defined by:
 >     ],
 >     "info_fields": ["SVTYPE"],
 >     "operation_info": true
->   }
-> ```
-
-> Example: Calculation of variant id using an existing Python function `calculation_variant_id`
-> ```json
-> "variant_id": {
+>   },
+>   "variant_id": {
 >     "type": "python",
 >     "name": "variant_id",
 >     "description": "Variant ID generated from variant position and type",
@@ -1064,6 +1075,7 @@ Basically, a calculation is defined by:
 >     "function_name": "calculation_variant_id",
 >     "function_params": []
 >   }
+> }
 > ```
 
 See [Calculation configuration JSON file example](../config/calculations_config.json).
@@ -1141,7 +1153,7 @@ Prioritization algorithm uses profiles to flag variants (as passed or filtered),
 
 ### Prioritization options
 
-Multiple profiles can be used simultaneously (`--profiles` option), which is useful to define multiple validation/prioritization levels (e.g. 'standard', 'stringent', 'rare variants', 'low allele frequency', 'GERMLINE'). By default, all profiles will be processed. A default profile can be defined with `--default_profile` option (by default, the first profile in list of profiles is selected).
+Multiple profiles can be used simultaneously (`--prioritizations` option), which is useful to define multiple validation/prioritization levels (e.g. 'standard', 'stringent', 'rare variants', 'low allele frequency', 'GERMLINE'). By default, all profiles will be processed. A default profile can be defined with `--default_profile` option (by default, the first profile in list of profiles is selected).
 
 Prioritization score can be calculated following multiple mode. The `HOWARD` mode will increment scores of all passing filters (default). The `VaRank` mode will select the maximum score from all passing filters.
 
@@ -1156,8 +1168,8 @@ Prioritization fields can be selected from:
 > ```
 > howard prioritization \
 >    --input=tests/data/example.vcf.gz \
->    --prioritizations=config/prioritization_profiles.json \
->    --profiles='default,GERMLINE' \
+>    --prioritizations='default,GERMLINE' \
+>    --prioritization_config=config/prioritization_profiles.json \
 >    --default_profile='default' \
 >    --pzfields='PZFlag,PZScore,PZComment,PZTags,PZInfos' \
 >    --prioritization_score_mode='HOWARD' \
@@ -1182,8 +1194,6 @@ Prioritization fields can be selected from:
 > 5   chr1    768253   G   A      PASS        0          PZFlag#PASS|PZScore#0|PZComment#|PZInfos#    NaN            None
 > 6   chr7  55249063   A   G      PASS        5  PZFlag#PASS|PZScore#5|PZComment#DP higher than...  125.0            None
 > ```
-
-
 
 ### Prioritization query
 
@@ -1241,7 +1251,7 @@ Prioritization fields can be then easily querying, by filtering on fields and or
 
 Prioritization profiles are defined in a JSON configuration file. Each profiles are defined as a list of annotation fields with associated filters (type of comparison and threshold, with related score, flag and comment).
 
-> Example: Profiles 'default' with 2 filters on annotation field 'DP' (threashold 50) and 2 filters on annotation field 'CLNSIG' ("pathogenic" or "non-pathogenic")
+> Example: Profiles with 2 filters on annotation field 'DP' (threashold 50) and 2 filters on annotation field 'CLNSIG' ("pathogenic" or "non-pathogenic")
 > ```json
 > {
 >     "default": {
@@ -1395,7 +1405,8 @@ Process tool uses quick options for annotation, calculation and prioritization t
 >    --hgvs=full_format,use_exon \
 >    --annotations="tests/databases/annotations/current/hg19/avsnp150.parquet,tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet,bcftools:tests/databases/annotations/current/hg19/cosmic70.vcf.gz,snpeff,annovar:refGene" \
 >    --calculations="vartype,snpeff_hgvs,VAF,NOMEN" \
->    --prioritizations="config/prioritization_profiles.json" \
+>    --prioritizations="default,GERMLINE" \
+>    --prioritization_config="config/prioritization_profiles.json" \
 >    --explode_infos \
 >    --query="SELECT NOMEN, PZFlag, PZScore, snpeff_hgvs \
 >             FROM variants \
@@ -1437,4 +1448,43 @@ In order to fine tune process, all tools can be defined in a [HOWARD Parameters 
 > 5         LINC01128:NR_047519:exon2:n.287+3769A>G      PASS        0.0                                              NaN
 > 6                  MIR1302-9:NR_036266:n.*4641A>C  FILTERED        NaN  Described on CLINVAR database as non-pathogenic
 > ```
+> ```
+> column -t  /tmp/example.process.tsv 
+> ```
+> ```
+> NOMEN                                           PZFlag    PZScore    PZComment
+> WASH7P:NR_024540:exon1:n.50+585T>G              PASS      15         Described  on       CLINVAR   database  as              pathogenic
+> OR4F5:NM_001005484:exon1:c.11A>G:p.Glu4Gly      PASS      5          DP         higher   than      50
+> EGFR:NM_001346897:exon19:c.2226G>A:p.Gln742Gln  PASS      5          DP         higher   than      50
+> LINC01128:NR_047519:exon2:n.287+3767A>G         PASS      0
+> LINC01128:NR_047519:exon2:n.287+3768A>G         PASS      0
+> LINC01128:NR_047519:exon2:n.287+3769A>G         PASS      0
+> MIR1302-9:NR_036266:n.*4641A>C                  FILTERED  Described  on         CLINVAR  database  as        non-pathogenic
+> ```
 
+> Example: Full process command with [Parameters JSON file example](#parameters) and switch off query and generate a VCF file
+> ```
+> howard process \
+>    --input=tests/data/example.vcf.gz \
+>    --output=/tmp/example.process.vcf \
+>    --param=config/param.json \
+>    --explode_infos \
+>    --query=""
+> 
+> howard query \
+>    --input=/tmp/example.process.vcf \
+>    --explode_infos \
+>    --query="SELECT \"#CHROM\", POS, ALT, REF, NOMEN, PZComment, PZFlag, PZScore \
+>             FROM variants \
+>             ORDER BY PZScore DESC"
+> ```
+> ```
+>   #CHROM       POS ALT REF                                           NOMEN                                        PZComment    PZFlag  PZScore
+> 0   chr1     28736   C   A              WASH7P:NR_024540:exon1:n.50+585T>G      Described on CLINVAR database as pathogenic      PASS     15.0
+> 1   chr1     69101   G   A      OR4F5:NM_001005484:exon1:c.11A>G:p.Glu4Gly                                DP higher than 50      PASS      5.0
+> 2   chr7  55249063   A   G  EGFR:NM_001346897:exon19:c.2226G>A:p.Gln742Gln                                DP higher than 50      PASS      5.0
+> 3   chr1    768251   G   A         LINC01128:NR_047519:exon2:n.287+3767A>G                                             None      PASS      0.0
+> 4   chr1    768252   G   A         LINC01128:NR_047519:exon2:n.287+3768A>G                                             None      PASS      0.0
+> 5   chr1    768253   G   A         LINC01128:NR_047519:exon2:n.287+3769A>G                                             None      PASS      0.0
+> 6   chr1     35144   C   A                  MIR1302-9:NR_036266:n.*4641A>C  Described on CLINVAR database as non-pathogenic  FILTERED      NaN
+> ```

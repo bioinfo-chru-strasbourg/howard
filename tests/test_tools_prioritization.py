@@ -35,7 +35,8 @@ def test_prioritization_tsv():
     input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/output_file.tsv"
     config = {}
-    prioritizations = tests_data_folder + "/prioritization_profiles.json"
+    prioritizations = "default,GERMLINE"
+    prioritization_config = tests_data_folder + "/prioritization_profiles.json"
 
     # prepare arguments for the query function
     args = argparse.Namespace(
@@ -43,10 +44,11 @@ def test_prioritization_tsv():
         output = output_vcf,
         config = config,
         prioritizations = prioritizations,
-        profiles = "default,GERMLINE",
+        prioritization_config = prioritization_config,
         pzfields = "PZScore,PZFlag",
         default_profile = "default",
-        prioritization_score_mode = "HOWARD"
+        prioritization_score_mode = "HOWARD",
+        arguments_dict = arguments_dict
     )
 
     # Remove if output file exists
@@ -72,6 +74,13 @@ def test_prioritization_tsv():
     assert result_output_nb_lines == expected_result_nb_lines
     assert result_output_nb_variants == expected_result_nb_variants
 
+    # Create object
+    variants = Variants(conn=None, input=output_vcf, config=config, load=True)
+    
+    # Check annotation
+    result = variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%PZScore=%'")
+    assert len(result) == 7
+
 
 def test_prioritization_vcf():
 
@@ -79,7 +88,8 @@ def test_prioritization_vcf():
     input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/output_file.vcf"
     config = {}
-    prioritizations = tests_data_folder + "/prioritization_profiles.json"
+    prioritizations = "default,GERMLINE"
+    prioritization_config = tests_data_folder + "/prioritization_profiles.json"
 
     # prepare arguments for the query function
     args = argparse.Namespace(
@@ -87,10 +97,11 @@ def test_prioritization_vcf():
         output = output_vcf,
         config = config,
         prioritizations = prioritizations,
-        profiles = "default,GERMLINE",
+        prioritization_config = prioritization_config,
         pzfields = "PZScore,PZFlag",
         default_profile = "default",
-        prioritization_score_mode = "HOWARD"
+        prioritization_score_mode = "HOWARD",
+        arguments_dict = arguments_dict
     )
 
     # Remove if output file exists
@@ -116,3 +127,9 @@ def test_prioritization_vcf():
     assert result_output_nb_lines == expected_result_nb_lines
     assert result_output_nb_variants == expected_result_nb_variants
 
+    # Create object
+    variants = Variants(conn=None, input=output_vcf, config=config, load=True)
+    
+    # Check annotation
+    result = variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%PZScore=%'")
+    assert len(result) == 7

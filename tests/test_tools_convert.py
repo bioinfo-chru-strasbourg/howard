@@ -53,7 +53,8 @@ def test_convert():
                     explode_infos = explode_infos,
                     explode_infos_prefix = explode_infos_prefix,
                     explode_infos_fields = explode_infos_fields,
-                    include_header = True
+                    include_header = True,
+                    arguments_dict = arguments_dict
                 )
 
                 # Remove if output file exists

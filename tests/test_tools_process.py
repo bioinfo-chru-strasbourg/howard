@@ -38,7 +38,7 @@ def test_process():
     param = "{}"
     annotations = database_files.get("parquet")
     calculations = "VARTYPE"
-    prioritizations = tests_data_folder + "/prioritization_profiles.json"
+    prioritizations = "default"
     input_query = None
 
     # prepare arguments for the query function
@@ -54,7 +54,8 @@ def test_process():
         explode_infos = False,
         explode_infos_prefix = "",
         explode_infos_fields = "*",
-        include_header = False
+        include_header = False,
+        arguments_dict = arguments_dict
     )
 
     # Remove if output file exists
@@ -73,12 +74,27 @@ def test_process():
                 result_output_nb_variants += 1
 
     # Expected result
-    expected_result_nb_lines = 68
+    expected_result_nb_lines = 66
     expected_result_nb_variants = 7
 
     # Compare
     assert result_output_nb_lines == expected_result_nb_lines
     assert result_output_nb_variants == expected_result_nb_variants
+
+    # Create object
+    variants = Variants(conn=None, input=output_vcf, config=config, load=True)
+    
+    # Check annotation
+    result = variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%VARTYPE=%'")
+    assert len(result) == 7
+
+    # Check annotation
+    result = variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%nci60=%'")
+    assert len(result) == 1
+
+    # Check annotation
+    result = variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%hgvs=%'")
+    assert len(result) == 0
 
 
 def test_process_with_param_file():
@@ -90,7 +106,7 @@ def test_process_with_param_file():
     param = tests_folder +  "/data/param.snpeff_hgvs.json"
     annotations = database_files.get("parquet")
     calculations = "VARTYPE"
-    prioritizations = tests_data_folder + "/prioritization_profiles.json"
+    prioritizations = "default"
     input_query = None
 
     # prepare arguments for the query function
@@ -106,7 +122,8 @@ def test_process_with_param_file():
         explode_infos = False,
         explode_infos_prefix = "",
         explode_infos_fields = "*",
-        include_header = False
+        include_header = False,
+        arguments_dict = arguments_dict
     )
 
     # Remove if output file exists
@@ -125,7 +142,7 @@ def test_process_with_param_file():
                 result_output_nb_variants += 1
 
     # Expected result
-    expected_result_nb_lines = 78
+    expected_result_nb_lines = 76
     expected_result_nb_variants = 7
 
     # Compare
@@ -142,7 +159,7 @@ def test_process_with_query():
     param = "{}"
     annotations = database_files.get("parquet")
     calculations = "VARTYPE"
-    prioritizations = tests_data_folder + "/prioritization_profiles.json"
+    prioritizations = "default"
     input_query = "SELECT count(*) AS '#count' FROM variants WHERE INFO LIKE '%VARTYPE%' AND INFO LIKE '%PZScore%'"
 
     # prepare arguments for the query function
@@ -158,7 +175,8 @@ def test_process_with_query():
         explode_infos = False,
         explode_infos_prefix = "",
         explode_infos_fields = "*",
-        include_header = False
+        include_header = False,
+        arguments_dict = arguments_dict
     )
 
     # Remove if output file exists

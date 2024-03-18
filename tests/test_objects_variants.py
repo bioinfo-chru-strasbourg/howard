@@ -1459,7 +1459,11 @@ def test_explode_infos():
 
     # Init files
     input_vcf = tests_data_folder + "/example.vcf.gz"
-    param= {"explode_infos": True}
+    param= {
+        "explode": {
+            "explode_infos": True
+        }
+    }
 
     # Create object
     variants = Variants(input=input_vcf, load=True, param=param)
@@ -1470,6 +1474,7 @@ def test_explode_infos():
 
     # check column found
     result = variants.execute_query("SELECT * FROM variants LIMIT 0")
+    log.debug(f"result={result}")
     assert column_to_check in [col[0] for col in result.description]
 
     # Check value in column
@@ -1488,7 +1493,12 @@ def test_explode_infos_custom():
 
     # Init files
     input_vcf = tests_data_folder + "/example.vcf.gz"
-    param= {"explode_infos": True, "explode_infos_prefix": "CUSTOM_"}
+    param= {
+        "explode": {
+            "explode_infos": True,
+            "explode_infos_prefix": "CUSTOM_"
+        }
+    }
 
     # Create object
     variants = Variants(input=input_vcf, load=True, param=param)
@@ -1611,7 +1621,12 @@ def test_explode_infos_param_prefix():
     # Init files
     input_vcf = tests_data_folder + "/example.vcf.gz"
     infos_prefix = "INFO_"
-    input_param = {"explode_infos":True, "explode_infos_prefix": infos_prefix}
+    input_param = {
+        "explode": {
+            "explode_infos": True,
+            "explode_infos_prefix": infos_prefix
+        }
+    }
 
     # Create object
     variants = Variants(input=input_vcf, load=True, param=input_param)
@@ -1817,15 +1832,12 @@ def test_prioritization():
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Construct config dict
-        config = {
-            "prioritization": {
-                "prioritizations": tests_data_folder + "/prioritization_profiles.json"
-                }
-            }
+        config = {}
         
         # Construct param dict
         param = {
                     "prioritization": {
+                        "prioritization_config": tests_data_folder + "/prioritization_profiles.json",
                         "profiles": ["default", "GERMLINE"],
                         "pzfields": ["PZFlag", "PZScore", "PZComment", "PZInfos"]
                     }
@@ -1923,15 +1935,12 @@ def test_prioritization_full_unsorted():
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Construct config dict
-        config = {
-            "prioritization": {
-                "prioritizations": tests_data_folder + "/prioritization_profiles.json"
-                }
-            }
+        config = {}
         
         # Construct param dict
         param = {
                     "prioritization": {
+                        "prioritization_config": tests_data_folder + "/prioritization_profiles.json",
                         "profiles": ["default", "GERMLINE"],
                         "pzfields": ["PZFlag", "PZScore", "PZComment", "PZInfos"]
                     }
@@ -2026,15 +2035,12 @@ def test_prioritization_varank():
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Construct config dict
-        config = {
-            "prioritization": {
-                "prioritizations": "config/prioritization_profiles.json"
-                }
-            }
+        config = {}
 
         # Construct param dict
         param = {
                     "prioritization": {
+                        "prioritization_config": tests_data_folder + "/prioritization_profiles.json",
                         "profiles": ["default", "GERMLINE"],
                         "pzfields": ["PZFlag", "PZScore", "PZComment", "PZInfos"],
                         "prioritization_score_mode": "VaRank"
@@ -2064,28 +2070,77 @@ def test_prioritization_varank():
             assert False
 
 
-def test_prioritization_no_profiles():
+def test_prioritization_all_profiles():
     """
     This function tests if an error is raised when there are no prioritization configuration profiles
     provided.
     """
 
-    # Init files
-    input_vcf = tests_data_folder + "/example.vcf.gz"
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
-    # Construct config dict
-    config = {
-        "prioritization": {
-            "prioritizations": None
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct config dict
+        config = {}
+        
+        # Construct param dict
+        param = {
+                    "prioritization": {
+                        "prioritization_config": tests_data_folder + "/prioritization_profiles.json"
+                    }
             }
-        }
-    # Create object
-    variants = Variants(input=input_vcf, load=True, config=config)
+        
+        # Create object
+        variants = Variants(input=input_vcf, output=output_vcf, load=True, config=config, param=param)
 
-    # Prioritization fail
-    with pytest.raises(ValueError) as e:
-        variants.prioritization()
-    assert str(e.value) == f"NO Profiles configuration"
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+        # # Prioritization fail
+        # with pytest.raises(ValueError) as e:
+        #     variants.prioritization()
+        # assert str(e.value) == f"NO Profiles configuration"
+
+
+
+def test_prioritization_profile_not_configured():
+    """
+    This function tests if an error is raised when there are no prioritization configuration profiles
+    provided.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+        profile_not_defined = "profile_not_defined"
+
+        # Construct config dict
+        config = {}
+        
+        # Construct param dict
+        param = {
+                    "prioritization": {
+                        #"prioritization_config": tests_data_folder + "/prioritization_profiles.json"
+                        "profiles": [profile_not_defined]
+                    }
+            }
+        
+        # Create object
+        variants = Variants(input=input_vcf, output=output_vcf, load=True, config=config, param=param)
+
+        # Prioritization fail
+        with pytest.raises(ValueError) as e:
+            variants.prioritization()
+        assert str(e.value) == f"Profile '{profile_not_defined}' NOT configured"
 
 
 def test_prioritization_no_pzfields():
@@ -2101,15 +2156,12 @@ def test_prioritization_no_pzfields():
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Construct config dict
-        config = {
-            "prioritization": {
-                "prioritizations": "config/prioritization_profiles.json"
-                }
-            }
+        config = {}
 
         # Construct param dict
         param = {
                     "prioritization": {
+                        "prioritization_config": tests_data_folder + "/prioritization_profiles.json",
                         "profiles": [],
                         "pzfields": []
                     }
@@ -2147,15 +2199,12 @@ def test_prioritization_no_infos():
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Construct config dict
-        config = {
-            "prioritization": {
-                "prioritizations": tests_data_folder + "/prioritization_profiles.json"
-                }
-            }
+        config = {}
         
         # Construct param dict
         param = {
                     "prioritization": {
+                        "prioritization_config": tests_data_folder + "/prioritization_profiles.json",
                         "profiles": ["default", "GERMLINE"],
                         "pzfields": ["PZFlag", "PZScore", "PZComment", "PZInfos"]
                     }
@@ -2408,13 +2457,15 @@ def test_calculation_nomen():
                     }
                 },
                 "calculation": {
-                    "NOMEN": {
-                        "options": {
-                            "hgvs_field": "hgvs"
+                    "calculations": {
+                        "NOMEN": {
+                            "options": {
+                                "hgvs_field": "hgvs"
+                            }
                         }
+                    }
                 }
             }
-        }
 
         # Create object
         variants = Variants(input=input_vcf, output=output_vcf, config=tests_config, param=input_param, load=True)
@@ -2452,7 +2503,9 @@ def test_calculation_vartype():
         # Construct param dict
         param = {
             "calculation": {
-                "VARTYPE": None
+                "calculations": {
+                    "VARTYPE": None
+                }
             }
         }
 
@@ -2494,7 +2547,9 @@ def test_calculation_vartype_full():
         # Construct param dict
         param = {
             "calculation": {
-                "VARTYPE": None
+                "calculations": {
+                    "VARTYPE": None
+                }
             }
         }
 
@@ -2554,7 +2609,9 @@ def test_calculation_snpeff_hgvs():
         # Construct param dict
         param = {
             "calculation": {
-                "snpeff_hgvs": None
+                "calculations": {
+                    "snpeff_hgvs": None
+                }
             }
         }
 
@@ -2595,7 +2652,9 @@ def test_calculation_snpeff_hgvs_no_ann():
         # Construct param dict
         param = {
             "calculation": {
-                "snpeff_hgvs": None
+                "calculations": {
+                    "snpeff_hgvs": None
+                }
             }
         }
 
@@ -2634,10 +2693,12 @@ def test_calculation_snpeff_hgvs_transcripts():
         # Construct param dict
         param = {
             "calculation": {
-                "NOMEN": {
-                    "options": {
-                        "hgvs_field": "snpeff_hgvs",
-                        "transcripts": transcripts_file
+                "calculations": {
+                    "NOMEN": {
+                        "options": {
+                            "hgvs_field": "snpeff_hgvs",
+                            "transcripts": transcripts_file
+                        }
                     }
                 }
             }
@@ -2678,10 +2739,12 @@ def test_calculation_snpeff_hgvs_notranscripts():
     # Construct param dict
     param = {
         "calculation": {
-            "NOMEN": {
-                "options": {
-                    "hgvs_field": "snpeff_hgvs",
-                    "transcripts": transcripts_file
+            "calculations": {
+                "NOMEN": {
+                    "options": {
+                        "hgvs_field": "snpeff_hgvs",
+                        "transcripts": transcripts_file
+                    }
                 }
             }
         }
@@ -2711,7 +2774,9 @@ def test_calculation_findbypipeline():
         # Construct param dict
         param = {
             "calculation": {
-                "FINDBYPIPELINE": None
+                "calculations": {
+                    "FINDBYPIPELINE": None
+                }
             }
         }
 
@@ -2754,7 +2819,9 @@ def test_calculation_findbysample():
         # Construct param dict
         param = {
             "calculation": {
-                "FINDBYSAMPLE": None
+                "calculations": {
+                    "FINDBYSAMPLE": None
+                }
             }
         }
 
@@ -2796,7 +2863,9 @@ def test_calculation_genotype_concordance():
         # Construct param dict
         param = {
             "calculation": {
-                "GENOTYPECONCORDANCE": None
+                "calculations": {
+                    "GENOTYPECONCORDANCE": None
+                }
             }
         }
 
@@ -2839,7 +2908,9 @@ def test_calculation_barcode():
         # Construct param dict
         param = {
             "calculation": {
-                "BARCODE": None
+                "calculations": {
+                    "BARCODE": None
+                }
             }
         }
 
@@ -2888,10 +2959,12 @@ def test_calculation_trio():
         # Construct param dict
         param = {
             "calculation": {
-                "trio": {
-                    "father": "sample1",
-                    "mother": "sample2",
-                    "child": "sample3"
+                "calculations": {
+                    "trio": {
+                        "father": "sample1",
+                        "mother": "sample2",
+                        "child": "sample3"
+                    }
                 }
             }
         }
@@ -2934,7 +3007,9 @@ def test_calculation_vaf_normalization():
         # Construct param dict
         param = {
             "calculation": {
-                "vaf": None
+                "calculations": {
+                    "vaf": None
+                }
             }
         }
 
@@ -2983,8 +3058,10 @@ def test_calculation_vaf_stats():
         # Construct param dict
         param = {
             "calculation": {
-                "vaf": None,
-                "vaf_stats": None
+                "calculations": {
+                    "vaf": None,
+                    "vaf_stats": None
+                }
             }
         }
 
@@ -3033,7 +3110,9 @@ def test_calculation_dp_stats():
         # Construct param dict
         param = {
             "calculation": {
-                "dp_stats": None
+                "calculations": {
+                    "dp_stats": None
+                }
             }
         }
 
@@ -3085,7 +3164,9 @@ def test_calculation_variant_id():
         # Construct param dict
         param = {
             "calculation": {
-                "variant_id": None
+                "calculations": {
+                    "variant_id": None
+                }
             }
         }
 

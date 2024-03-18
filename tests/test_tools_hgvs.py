@@ -43,9 +43,11 @@ def test_hgvs_tsv():
     args = argparse.Namespace(
         input = input_vcf,
         output = output_vcf,
+        hgvs_options = "full_format",
         config = config,
         genomes_folder = genomes_folder,
-        refseq_folder = refseq_folder
+        refseq_folder = refseq_folder,
+        arguments_dict = arguments_dict
     )
     
     # Remove if output file exists
@@ -74,6 +76,13 @@ def test_hgvs_tsv():
     assert result_output_nb_lines == expected_result_nb_lines
     assert result_output_nb_variants == expected_result_nb_variants
 
+    # Create object
+    variants = Variants(conn=None, input=output_vcf, config=config, load=True)
+    
+    # Check annotation
+    result = variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%hgvs=%'")
+    assert len(result) == 7
+
 
 def test_hgvs_vcf():
 
@@ -89,9 +98,11 @@ def test_hgvs_vcf():
     args = argparse.Namespace(
         input = input_vcf,
         output = output_vcf,
+        hgvs_options = "full_format",
         config = config,
         genomes_folder = genomes_folder,
-        refseq_folder = refseq_folder
+        refseq_folder = refseq_folder,
+        arguments_dict = arguments_dict
     )
     
     # Remove if output file exists
@@ -119,3 +130,10 @@ def test_hgvs_vcf():
     # Compare
     assert result_output_nb_lines == expected_result_nb_lines
     assert result_output_nb_variants == expected_result_nb_variants
+
+    # Create object
+    variants = Variants(conn=None, input=output_vcf, config=config, load=True)
+    
+    # Check annotation
+    result = variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%hgvs=%'")
+    assert len(result) == 7
