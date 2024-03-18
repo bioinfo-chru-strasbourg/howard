@@ -86,7 +86,7 @@ Examples:
          "annotations": {
             "/path/to/database6.vcf.gz": {
                "field1": null,
-               "field2": "field2_renamed",
+               "field2": "field2_renamed"
             },
             "/path/to/database7.bed": {
                "INFO": null
@@ -97,7 +97,7 @@ Examples:
          "annotations": {
             "annovar_keyword2": {
                "field1": null,
-               "field2": "field2_renamed",
+               "field2": "field2_renamed"
             },
             "annovar_keyword3": {
                "INFO": null
@@ -105,9 +105,7 @@ Examples:
          }
       },
       "snpeff": {
-         "options": {
-            " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "}
-         }
+         "options": " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "
       },
       "exomiser": {
          "release": "2109",
