@@ -13,7 +13,7 @@ coverage report --include=howard/* -m
 import os
 import pytest
 
-from howard.commons import *
+from howard.functions.commons import *
 from howard.objects.variants import Variants
 from howard.objects.database import Database
 from test_needed import *

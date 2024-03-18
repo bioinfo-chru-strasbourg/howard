@@ -24,10 +24,10 @@ import logging as log
 import fastparquet as fp
 from multiprocesspandas import applyparallel
 
-from howard.commons import *
+from howard.functions.commons import *
 from howard.objects.database import *
-from howard.tools.databases import *
-from howard.utils import *
+from howard.functions.databases import *
+from howard.functions.utils import *
 
 
 class Variants:

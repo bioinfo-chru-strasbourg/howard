@@ -475,10 +475,9 @@ See [HOWARD Help Process tool](docs/help.md#process-tool) tool for more informat
 
 [HOWARD Configuration JSON](docs/help.config.md) describes configuration JSON file structure and options.
 
-[HOWARD Configuration JSON](docs/help.config.md) describes configuration JSON file structure and options.
-
 [HOWARD Parameters JSON](docs/help.param.md) describes parameters JSON file structure and options.
 
+[HOWARD Parameters Databases JSON](docs/help.param.databases.md) describes configuration JSON file for databases download and convert.
 
 # Contact
 

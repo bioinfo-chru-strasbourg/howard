@@ -21,7 +21,7 @@ from configparser import ConfigParser
 
 from howard.objects.variants import Variants
 from howard.objects.database import Database
-from howard.commons import *
+#from howard.commons import *
 
 from howard.tools.tools import *
 

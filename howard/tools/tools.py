@@ -18,7 +18,7 @@ import sys
 import importlib
 
 # Import Commons
-from howard.commons import *
+from howard.functions.commons import *
 
 # Import tools
 from howard.tools.process import *
@@ -2039,7 +2039,7 @@ commands_arguments = {
                 "convert-hgmd-file": False,
                 "convert-hgmd-basename": False
             },
-            "Parameters file": {
+            "Parameters": {
                 "generate-param": False,
                 "generate-param-description": False,
                 "generate-param-releases": False,

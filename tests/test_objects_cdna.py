@@ -17,7 +17,7 @@ coverage report --include=howard/* -m
 import nose
 from howard.objects.hgvs import HGVSName
 
-from howard.utils import make_transcript
+from howard.functions.utils import make_transcript
 
 _HGVS_NM_015120_GRCh37_COORDS = [
     # Has Gap=M185 I3 M250 5' UTR length is 111 so last match is c.74 then 3 bases insert

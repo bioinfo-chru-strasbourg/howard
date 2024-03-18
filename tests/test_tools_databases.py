@@ -25,7 +25,7 @@ from unittest.mock import patch
 
 from howard.objects.variants import Variants
 from howard.objects.database import Database
-from howard.commons import *
+from howard.functions.commons import *
 from howard.tools.databases import *
 from test_needed import *
 
@@ -639,7 +639,7 @@ def test_databases_download():
 
         # Download
         try:
-            databases_download(args)
+            databases(args)
             assert True
         except:
             assert False
@@ -717,7 +717,7 @@ def test_databases_download_genomes_only():
         )
 
         # Download
-        databases_download(args)
+        databases(args)
 
         # Dowloaded files
         downloaded_files = os.listdir(tmp_dir)

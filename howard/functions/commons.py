@@ -43,7 +43,7 @@ from shutil import which
 file_folder = os.path.dirname(__file__)
 
 # Main folder
-folder_main = os.path.abspath(os.path.join(file_folder, ".."))
+folder_main = os.path.abspath(os.path.join(file_folder, "../.."))
 folder_config = os.path.abspath(os.path.join(folder_main, "config"))
 folder_user_home = os.path.abspath(os.path.expanduser('~'))
 folder_howard_home = os.path.join(folder_user_home,"howard")
@@ -1918,7 +1918,7 @@ def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", out
 
     from howard.tools.tools import arguments
 
-    element_argument_infos = arguments.get(element,{})
+    element_argument_infos = arguments.get(element,arguments.get(element.replace("_","-"),{}))
 
     # Level marker
     level_marker = "::"
@@ -1943,6 +1943,9 @@ def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", out
 
     if "__auto" in help_dict:
         auto_default = help_dict.get("__auto",True)
+
+    if not help_dict:
+        auto_default = True
 
     if auto_default and level > 1:
 
@@ -1982,7 +1985,6 @@ def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", out
         if "__examples" not in help_dict and "__examples_code" not in help_dict and "__code" not in help_dict:
             if "extra" in element_argument_infos and "examples" in element_argument_infos.get("extra",{}):
                 help_dict["__examples"] = element_argument_infos.get("extra", {}).get("examples",None)
-            
 
     # If no section "__help" (mandatory)
     if "__help" not in help_dict:
@@ -2038,7 +2040,6 @@ def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", out
                             help_md_dict = {}
                             example_header = ""
                             for example_line in help_md.split("\n"):
-                                log.debug(example_line)
                                 if example_line.startswith("#"):
                                     example_header += example_line
                                 else:
@@ -2491,7 +2492,7 @@ def get_default_argument(arguments_dict:dict, argument:str):
     return arguments_dict.get("arguments",{}).get(argument,{}).get("default", None)
 
 
-def set_param(param:dict, args:argparse, arguments_dict:dict, argument:str, section:str = None) -> dict:
+def set_param(param:dict, args:argparse, arguments_dict:dict, argument:str, section:list = None) -> dict:
     """
     The function `set_param` takes input arguments and adds them to a dictionary based on certain
     conditions.
@@ -2527,7 +2528,10 @@ def set_param(param:dict, args:argparse, arguments_dict:dict, argument:str, sect
 
     # Sections
     if section:
-        sections = section.split(":")
+        if isinstance(section, str):
+            sections = section.split(":")
+        else:
+            sections = section
     else:
         sections = []
 
@@ -2560,7 +2564,7 @@ def add_value_into_dict(dict_tree:dict, sections:list = [], value = None):
 
     # Pointer to traverse the tree
     current_node = dict_tree
-    
+
     # If sections is empty, add the value to the root of the dictionary tree
     if not sections:
         return current_node
@@ -2639,7 +2643,7 @@ def load_config_args(args):
     return arguments_dict, setup_cfg, config, param
 
 
-def load_args(param:dict, args:argparse, arguments_dict:dict, command:str = None, arguments_list:dict = {}, strict:bool = False) -> dict:
+def load_args(param:dict, args:argparse, arguments_dict:dict, command:str = None, arguments_list:dict = {}, strict:bool = False, section_prefix:list = []) -> dict:
     """
     The `load_args` function processes arguments based on specified parameters and conditions, raising
     an error if a specified argument is not found.
@@ -2687,6 +2691,7 @@ def load_args(param:dict, args:argparse, arguments_dict:dict, command:str = None
                 command_group_clean = command_group.replace(" ","_").lower()
                 if command_group_clean in ["main"]:
                     command_group_clean = None
+                command_argument = command_argument.replace("-", "_")
                 arguments_list_to_load[command_argument] = command_group_clean
 
     # Add arguments from arguments
@@ -2701,7 +2706,15 @@ def load_args(param:dict, args:argparse, arguments_dict:dict, command:str = None
                 section = arguments_dict.get("arguments",{}).get(argument,{}).get("extra", {}).get("param_section", param_section_not_found)
                 if section in [param_section_not_found]:
                     section = arguments_list_to_load.get(argument, None)
+                # section str to list
+                if section:
+                    section = [section]
+                else:
+                    section = []
+                if section_prefix:
+                    section = section_prefix + section
                 param = set_param(param=param, args=args, arguments_dict=arguments_dict, section=section, argument=argument)
+
             elif strict:
                 msg_error = f"Argument '{argument}' not found in list of aguments"
                 log.error(msg_error)

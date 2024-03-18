@@ -1,0 +1,120 @@
+{
+  "__help": [
+    "HOWARD Parameters JSON file defines parameters to process annotations, calculations, prioritizations, convertions and queries."
+  ],
+  "databases": {
+    "__help": [
+      "Databases download options"
+    ],
+    "assembly": {},
+    "genomes_folder": {},
+    "genomes": {
+        "__help": [
+          "Genomes download."
+        ],
+        "download_genomes": {},
+        "download_genomes_provider": {},
+        "download_genomes_contig_regex": {}
+    },
+    "snpeff": {
+        "__help": [
+          "snpEff download."
+        ],
+        "download_snpeff": {}
+    },
+    "annovar": {
+        "__help": [
+          "Annovar download."
+        ],
+        "download_annovar": {},
+        "download_annovar_files": {},
+        "download_annovar_url": {}
+    },
+    "refseq": {
+        "__help": [
+          "refSeq download."
+        ],
+        "download_refseq": {},
+        "download_refseq_url": {},
+        "download_refseq_prefix": {},
+        "download_refseq_files": {},
+        "download_refseq_format_file": {},
+        "download_refseq_include_utr5": {},
+        "download_refseq_include_utr3": {},
+        "download_refseq_include_chrM": {},
+        "download_refseq_include_non_canonical_chr": {},
+        "download_refseq_include_non_coding_transcripts": {},
+        "download_refseq_include_transcript_version": {}
+    },
+    "dbnsfp": {
+        "__help": [
+          "dbNSFP download."
+        ],
+        "download_dbnsfp": {},
+        "download_dbnsfp_url": {},
+        "download_dbnsfp_release": {},
+        "download_dbnsfp_parquet_size": {},
+        "download_dbnsfp_subdatabases": {},
+        "download_dbnsfp_parquet": {},
+        "download_dbnsfp_vcf": {},
+        "download_dbnsfp_no_files_all": {},
+        "download_dbnsfp_add_info": {},
+        "download_dbnsfp_row_group_size": {}
+    },
+    "alphamissense": {
+        "__help": [
+          "AlphaMissense download."
+        ],
+        "download_alphamissense": {},
+        "download_alphamissense_url": {}
+    },
+    "exomiser": {
+        "__help": [
+          "Exomiser download."
+        ],
+        "download_exomiser": {},
+        "download_exomiser_application_properties": {},
+        "download_exomiser_url": {},
+        "download_exomiser_release": {},
+        "download_exomiser_phenotype_release": {},
+        "download_exomiser_remm_release": {},
+        "download_exomiser_remm_url": {},
+        "download_exomiser_cadd_release": {},
+        "download_exomiser_cadd_url": {},
+        "download_exomiser_cadd_url_snv_file": {},
+        "download_exomiser_cadd_url_indel_file": {}
+    },
+    "dbsnp": {
+        "__help": [
+          "dbSNP download."
+        ],
+        "download_dbsnp": {},
+        "download_dbsnp_releases": {},
+        "download_dbsnp_release_default": {},
+        "download_dbsnp_url": {},
+        "download_dbsnp_url_files": {},
+        "download_dbsnp_url_files_prefix": {},
+        "download_dbsnp_assemblies_map": {},
+        "download_dbsnp_vcf": {},
+        "download_dbsnp_parquet": {}
+    },
+    "hgmd": {
+        "__help": [
+          "HGMD convert."
+        ],
+        "convert_hgmd": {},
+        "convert_hgmd_file": {},
+        "convert_hgmd_basename": {}
+    },
+    "Parameters": {
+        "__help": [
+          "Parameters generation."
+        ],
+        "generate_param": {},
+        "generate_param_description": {},
+        "generate_param_releases": {},
+        "generate_param_formats": {},
+        "generate_param_bcftools": {}
+    }
+  }
+}

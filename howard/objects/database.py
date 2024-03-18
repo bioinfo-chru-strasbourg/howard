@@ -14,8 +14,8 @@ import vcf
 #from Bio import bgzf
 import Bio.bgzf as bgzf
 
-from howard.commons import *
-from howard.tools.databases import *
+from howard.functions.commons import *
+from howard.functions.databases import *
 
 
 SEP_TYPE = {

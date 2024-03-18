@@ -15,7 +15,7 @@ from howard.objects.cdna import CDNACoord, CDNA_STOP_CODON
 from howard.objects.hgvs import HGVSName, InvalidHGVSName
 from howard.objects.genome import MockGenomeTestFile
 from howard.objects.variant import normalize_variant
-from howard.utils import read_transcripts, format_hgvs_name, matches_ref_allele, parse_hgvs_name
+from howard.functions.utils import read_transcripts, format_hgvs_name, matches_ref_allele, parse_hgvs_name
 from test_needed import *
 
 

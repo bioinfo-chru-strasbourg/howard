@@ -16,6 +16,8 @@ from howard.objects.genome import GenomeSubset
 from howard.objects.hgvs import HGVSName, InvalidHGVSName, CODON_1, CODON_3, CODON_FULL
 from howard.objects.variant import Position, justify_indel, normalize_variant, revcomp
 
+_indel_mutation_types = set(['ins', 'del', 'dup', 'delins'])
+
 
 def read_refgene(infile):
     """
@@ -239,31 +241,6 @@ def get_genomic_sequence(genome, chrom, start, end):
         return ''
     else:
         return str(genome[str(chrom)][start - 1:end]).upper()
-
-
-# def get_allele(hgvs, genome, transcript=None):
-#     """
-#     The function "get_allele" takes a HGVSName, a genome, and an optional transcript, and returns the
-#     chromosome, start and end positions, reference sequence, and alternate sequence of the allele.
-    
-#     :param hgvs: An object that provides methods for working with HGVS names
-#     :param genome: The genome parameter is the genomic sequence from which the allele will be extracted
-#     :param transcript: A transcript is a specific version of a gene that is transcribed into RNA. It
-#     contains the coding sequence as well as the non-coding regions such as introns and untranslated
-#     regions (UTRs). In this context, the transcript parameter is used to specify which transcript is
-#     being referred to when retrieving the
-#     :return: the chromosome, start position, end position, reference sequence, and alternate sequence
-#     for a given HGVS name, genome, and transcript.
-#     """
-    
-#     chrom, start, end = hgvs.get_ref_coords(transcript)
-#     _, alt = hgvs.get_ref_alt(
-#         transcript.tx_position.is_forward_strand if transcript else True)
-#     ref = get_genomic_sequence(genome, chrom, start, end)
-#     return chrom, start, end, ref, alt
-
-
-_indel_mutation_types = set(['ins', 'del', 'dup', 'delins'])
 
 
 def get_vcf_allele(hgvs, genome, transcript=None):
@@ -574,7 +551,6 @@ def parse_hgvs_name(hgvs_name, genome, transcript=None, get_transcript=lambda na
                                indels_start_with_same_base=indels_start_with_same_base)
         chrom, start, ref, [alt] = nv.variant
     return (chrom, start, ref, alt)
-
 
 
 def cdna_to_protein(hgvs, offset, genome, chrom, transcript, ref, alt, mutation_type, codon_type:str = "3"):
