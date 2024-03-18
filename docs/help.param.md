@@ -72,16 +72,16 @@ Examples:
          "annotations": {
             "/path/to/database3.parquet": {
                "field1": null,
-               "field2": "field2_renamed",
+               "field2": "field2_renamed"
             },
             "/path/to/database4.vcf.gz": {
                "INFO": null
-            }
+            },
             "/path/to/database5.bed.gz": {
                "INFO": null
             }
          }
-      }
+      },
       "bcftools": {
          "annotations": {
             "/path/to/database6.vcf.gz": {
@@ -92,7 +92,7 @@ Examples:
                "INFO": null
             }
          }
-      }
+      },
       "annovar": {
          "annotations": {
             "annovar_keyword2": {
@@ -103,17 +103,17 @@ Examples:
                "INFO": null
             }
          }
-      }
+      },
       "snpeff": {
          "options": {
             " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "}
          }
-      }
+      },
       "exomiser": {
-         "release": "2109"
-         "transcript_source": "refseq"
+         "release": "2109",
+         "transcript_source": "refseq",
          "hpo": ["HP:0001156", "HP:0001363", "HP:0011304", "HP:0010055"]
-      }
+      },
       "options": {
          "append": true
       }

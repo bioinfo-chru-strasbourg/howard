@@ -1842,7 +1842,7 @@ def get_argument_to_mk(arg:str, argument:dict = {}, mode:str = "mk") -> str:
     if choices:
         text_header += f" {choices}"
     if default:
-        text_header += f" ({default})"
+        text_header += f" (default: {default})"
     if required:
         text_header += " | required"
     
@@ -2098,16 +2098,24 @@ def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", out
                         help_html = help_dict_content.replace("\n", "<br>")
                     elif isinstance(help_dict_content, list):
                         help_dict_content = map(str, help_dict_content)
-                        if section in ["__code", "__examples_code"]:
+                        if section in ["__code", "__examples_code", "__examples"]:
                             help_html = "\n".join(help_dict_content)
                             section_break = ""
                         else:
                             help_html = "<br>".join(help_dict_content)
                             section_break = "<br>"
+                    elif isinstance(help_dict_content, dict):
+                        if section in ["__code", "__examples_code", "__examples"]:
+                            for example_header in help_dict_content:
+                                help_html = f"{example_header}"
+                                if isinstance(help_dict_content.get(example_header,[]),list):
+                                    help_html += "\n".join(help_dict_content.get(example_header,[]))
+                                else:
+                                    help_html += help_dict_content.get(example_header,"")
                     else:
                         help_html = help_dict_content
 
-                    if section in ["__code", "__examples_code"]:
+                    if section in ["__code", "__examples_code", "__examples"]:
                         help_html = f"<xmp>{help_html}</xmp>"
                     
                     # Output variables
@@ -2354,8 +2362,6 @@ def help_generation(arguments_dict:dict = {}, parser = None, setup:str = None, o
                         widget, options = get_argument_gooey(arguments=arguments, arg=arg)
                         argument["widget"] = widget
                         argument["gooey_options"] = options
-                        log.debug(f"arg={arg}")
-                        log.debug(f"argument={argument}")
                         if argument.get("help","") in ["==SUPPRESS=="]:
                             argument["help"] = arg
                         argument["help"] = format_arg_help(argument["help"], str(argument.get('default',None)))

@@ -309,16 +309,6 @@ arguments = {
                         """"prioritization": "default,GERMLINE" """,
                 }
             }
-            # "default": None,
-            # "type": PathType(exists=True, type='file'),
-            # "gooey": {
-            #     "widget": "FileChooser",
-            #     "options": {
-            #         "wildcard":
-            #             "JSON file (*.json)|*.json|"
-            #             "All files (*)|*"
-            #     }
-            # }
         },
         # Prioritization config
         "prioritization_config": {
@@ -1940,15 +1930,15 @@ commands_arguments = {
                 "query_limit": False,
                 "query_print_mode": False,
             },
-            "Export": {
-                "include_header": False,
-                "order_by": False,
-                "parquet_partitions": False
-            },
             "Explode": {
                 "explode_infos": False,
                 "explode_infos_prefix": False,
                 "explode_infos_fields": False
+            },
+            "Export": {
+                "include_header": False,
+                "order_by": False,
+                "parquet_partitions": False
             }
         }
     },

@@ -13,7 +13,7 @@ Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
 Files can be compressesd (e.g. vcf.gz, tsv.gz).
 
 
-</pre><pre>--param=&lt;param&gt; ({})
+</pre><pre>--param=&lt;param&gt; (default: {})
 Parameters JSON file (or string) defines parameters to process 
 annotations, calculations, prioritizations, convertions and queries.
 
@@ -32,7 +32,7 @@ Explode VCF INFO/Tag into &#x27;variants&#x27; table columns.
 Explode VCF INFO/Tag with a specific prefix.
 
 
-</pre><pre>--explode_infos_fields=&lt;explode infos list&gt; (*)
+</pre><pre>--explode_infos_fields=&lt;explode infos list&gt; (default: *)
 Explode VCF INFO/Tag specific fields/tags.
 Keyword `*` specify all available fields, except those already specified.
 Pattern (regex) can be used, such as `.*_score` for fields named with &#x27;_score&#x27; at the end.
@@ -45,7 +45,7 @@ Examples:
 
 
 </pre><H3>Query</H3>
-<pre>--query_limit=&lt;query limit&gt; (10)
+<pre>--query_limit=&lt;query limit&gt; (default: 10)
 Limit of number of row for query (only for print result, not output).
 
 
@@ -75,7 +75,7 @@ Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
 Files can be compressesd (e.g. vcf.gz, tsv.gz).
 
 
-</pre><pre>--param=&lt;param&gt; ({})
+</pre><pre>--param=&lt;param&gt; (default: {})
 Parameters JSON file (or string) defines parameters to process 
 annotations, calculations, prioritizations, convertions and queries.
 
@@ -103,7 +103,7 @@ Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
 Files can be compressesd (e.g. vcf.gz, tsv.gz).
 
 
-</pre><pre>--param=&lt;param&gt; ({})
+</pre><pre>--param=&lt;param&gt; (default: {})
 Parameters JSON file (or string) defines parameters to process 
 annotations, calculations, prioritizations, convertions and queries.
 
@@ -117,7 +117,7 @@ Explode VCF INFO/Tag into &#x27;variants&#x27; table columns.
 Explode VCF INFO/Tag with a specific prefix.
 
 
-</pre><pre>--explode_infos_fields=&lt;explode infos list&gt; (*)
+</pre><pre>--explode_infos_fields=&lt;explode infos list&gt; (default: *)
 Explode VCF INFO/Tag specific fields/tags.
 Keyword `*` specify all available fields, except those already specified.
 Pattern (regex) can be used, such as `.*_score` for fields named with &#x27;_score&#x27; at the end.
@@ -164,7 +164,7 @@ Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
 Files can be compressesd (e.g. vcf.gz, tsv.gz).
 
 
-</pre><pre>--param=&lt;param&gt; ({})
+</pre><pre>--param=&lt;param&gt; (default: {})
 Parameters JSON file (or string) defines parameters to process 
 annotations, calculations, prioritizations, convertions and queries.
 
@@ -178,7 +178,7 @@ Examples:
 - &#x27;use_gene=True:add_protein=true:codon_type=FULL&#x27;
 
 
-</pre><pre>--assembly=&lt;assembly&gt; (hg19)
+</pre><pre>--assembly=&lt;assembly&gt; (default: hg19)
 Genome Assembly (e.g. &#x27;hg19&#x27;, &#x27;hg38&#x27;).
 
 
@@ -211,7 +211,7 @@ Use &#x27;use_exon&#x27; to add exon information
 (e.g &#x27;TAS1R2:NM_152232:NP_689418:exon2:c.231T&gt;C:p.Cys77Arg&#x27;).
 
 
-</pre><pre>--codon_type=&lt;Codon type&gt; [&#x27;1&#x27;, &#x27;3&#x27;, &#x27;FULL&#x27;] (3)
+</pre><pre>--codon_type=&lt;Codon type&gt; [&#x27;1&#x27;, &#x27;3&#x27;, &#x27;FULL&#x27;] (default: 3)
 Amino Acide Codon format type to use to generate HGVS annotation.
 Available:
 - &#x27;1&#x27;: codon in 1 character (e.g. &#x27;C&#x27;, &#x27;R&#x27;)
@@ -241,7 +241,7 @@ Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
 Files can be compressesd (e.g. vcf.gz, tsv.gz).
 
 
-</pre><pre>--param=&lt;param&gt; ({})
+</pre><pre>--param=&lt;param&gt; (default: {})
 Parameters JSON file (or string) defines parameters to process 
 annotations, calculations, prioritizations, convertions and queries.
 
@@ -264,7 +264,7 @@ as a list of files in Parquet, VCF, BED, or keywords
  (e.g. &#x27;ALL&#x27;, &#x27;ALL:parquet:current&#x27;, &#x27;ALL:parquet,vcf:current,devel&#x27;).
 
 
-</pre><pre>--assembly=&lt;assembly&gt; (hg19)
+</pre><pre>--assembly=&lt;assembly&gt; (default: hg19)
 Genome Assembly (e.g. &#x27;hg19&#x27;, &#x27;hg38&#x27;).
 
 
@@ -295,7 +295,7 @@ Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
 Files can be compressesd (e.g. vcf.gz, tsv.gz).
 
 
-</pre><pre>--param=&lt;param&gt; ({})
+</pre><pre>--param=&lt;param&gt; (default: {})
 Parameters JSON file (or string) defines parameters to process 
 annotations, calculations, prioritizations, convertions and queries.
 
@@ -318,7 +318,7 @@ Show available calculation operations.
 
 
 </pre><H3>NOMEN</H3>
-<pre>--hgvs_field=&lt;HGVS field&gt; (hgvs)
+<pre>--hgvs_field=&lt;HGVS field&gt; (default: hgvs)
 HGVS INFO/tag containing a list o HGVS annotations.
 
 
@@ -347,7 +347,7 @@ Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
 Files can be compressesd (e.g. vcf.gz, tsv.gz).
 
 
-</pre><pre>--param=&lt;param&gt; ({})
+</pre><pre>--param=&lt;param&gt; (default: {})
 Parameters JSON file (or string) defines parameters to process 
 annotations, calculations, prioritizations, convertions and queries.
 
@@ -364,12 +364,12 @@ Prioritization profile by default (see doc).
 Default is the first profile in the list of prioritization profiles.
 
 
-</pre><pre>--pzfields=&lt;pzfields&gt; (PZScore,PZFlag)
+</pre><pre>--pzfields=&lt;pzfields&gt; (default: PZScore,PZFlag)
 Prioritization fields to provide (see doc).
 Available: PZScore, PZFlag, PZTags, PZComment, PZInfos
 
 
-</pre><pre>--prioritization_score_mode=&lt;prioritization score mode&gt; [&#x27;HOWARD&#x27;, &#x27;VaRank&#x27;] (HOWARD)
+</pre><pre>--prioritization_score_mode=&lt;prioritization score mode&gt; [&#x27;HOWARD&#x27;, &#x27;VaRank&#x27;] (default: HOWARD)
 Prioritization Score mode (see doc).
 Available: HOWARD (increment score), VaRank (max score)
 
@@ -392,7 +392,7 @@ Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
 Files can be compressesd (e.g. vcf.gz, tsv.gz).
 
 
-</pre><pre>--param=&lt;param&gt; ({})
+</pre><pre>--param=&lt;param&gt; (default: {})
 Parameters JSON file (or string) defines parameters to process 
 annotations, calculations, prioritizations, convertions and queries.
 
@@ -438,7 +438,7 @@ such as &#x27;default&#x27;, &#x27;rare variants&#x27;, &#x27;low allele frequen
 By default, all profiles available will be processed.
 
 
-</pre><pre>--assembly=&lt;assembly&gt; (hg19)
+</pre><pre>--assembly=&lt;assembly&gt; (default: hg19)
 Genome Assembly (e.g. &#x27;hg19&#x27;, &#x27;hg38&#x27;).
 
 
@@ -471,7 +471,7 @@ Use &#x27;use_exon&#x27; to add exon information
 (e.g &#x27;TAS1R2:NM_152232:NP_689418:exon2:c.231T&gt;C:p.Cys77Arg&#x27;).
 
 
-</pre><pre>--codon_type=&lt;Codon type&gt; [&#x27;1&#x27;, &#x27;3&#x27;, &#x27;FULL&#x27;] (3)
+</pre><pre>--codon_type=&lt;Codon type&gt; [&#x27;1&#x27;, &#x27;3&#x27;, &#x27;FULL&#x27;] (default: 3)
 Amino Acide Codon format type to use to generate HGVS annotation.
 Available:
 - &#x27;1&#x27;: codon in 1 character (e.g. &#x27;C&#x27;, &#x27;R&#x27;)
@@ -511,12 +511,12 @@ Prioritization profile by default (see doc).
 Default is the first profile in the list of prioritization profiles.
 
 
-</pre><pre>--pzfields=&lt;pzfields&gt; (PZScore,PZFlag)
+</pre><pre>--pzfields=&lt;pzfields&gt; (default: PZScore,PZFlag)
 Prioritization fields to provide (see doc).
 Available: PZScore, PZFlag, PZTags, PZComment, PZInfos
 
 
-</pre><pre>--prioritization_score_mode=&lt;prioritization score mode&gt; [&#x27;HOWARD&#x27;, &#x27;VaRank&#x27;] (HOWARD)
+</pre><pre>--prioritization_score_mode=&lt;prioritization score mode&gt; [&#x27;HOWARD&#x27;, &#x27;VaRank&#x27;] (default: HOWARD)
 Prioritization Score mode (see doc).
 Available: HOWARD (increment score), VaRank (max score)
 
@@ -531,13 +531,34 @@ Query in SQL format
 (e.g. &#x27;SELECT * FROM variants LIMIT 50&#x27;).
 
 
-</pre><pre>--query_limit=&lt;query limit&gt; (10)
+</pre><pre>--query_limit=&lt;query limit&gt; (default: 10)
 Limit of number of row for query (only for print result, not output).
 
 
 </pre><pre>--query_print_mode=&lt;print mode&gt; [None, &#x27;markdown&#x27;, &#x27;tabulate&#x27;]
 Print mode of query result (only for print result, not output).
 Either None (native), &#x27;markdown&#x27; or &#x27;tabulate&#x27;.
+
+
+</pre><H3>Explode</H3>
+<pre>--explode_infos
+Explode VCF INFO/Tag into &#x27;variants&#x27; table columns.
+
+
+</pre><pre>--explode_infos_prefix=&lt;explode infos prefix&gt;
+Explode VCF INFO/Tag with a specific prefix.
+
+
+</pre><pre>--explode_infos_fields=&lt;explode infos list&gt; (default: *)
+Explode VCF INFO/Tag specific fields/tags.
+Keyword `*` specify all available fields, except those already specified.
+Pattern (regex) can be used, such as `.*_score` for fields named with &#x27;_score&#x27; at the end.
+Examples:
+- &#x27;HGVS,SIFT,Clinvar&#x27; (list of fields)
+- &#x27;HGVS,*,Clinvar&#x27; (list of fields with all other fields at the end)
+- &#x27;HGVS,.*_score,Clinvar&#x27; (list of 2 fields with all scores in the middle)
+- &#x27;HGVS,.*_score,*&#x27; (1 field, scores, all other fields)
+- &#x27;HGVS,*,.*_score&#x27; (1 field, all other fields, all scores)
 
 
 </pre><H3>Export</H3>
@@ -561,34 +582,13 @@ Use &#x27;None&#x27; (string) for NO partition but split parquet files into a fo
 Examples: &#x27;#CHROM&#x27;, &#x27;#CHROM,REF&#x27;, &#x27;None&#x27;.
 
 
-</pre><H3>Explode</H3>
-<pre>--explode_infos
-Explode VCF INFO/Tag into &#x27;variants&#x27; table columns.
-
-
-</pre><pre>--explode_infos_prefix=&lt;explode infos prefix&gt;
-Explode VCF INFO/Tag with a specific prefix.
-
-
-</pre><pre>--explode_infos_fields=&lt;explode infos list&gt; (*)
-Explode VCF INFO/Tag specific fields/tags.
-Keyword `*` specify all available fields, except those already specified.
-Pattern (regex) can be used, such as `.*_score` for fields named with &#x27;_score&#x27; at the end.
-Examples:
-- &#x27;HGVS,SIFT,Clinvar&#x27; (list of fields)
-- &#x27;HGVS,*,Clinvar&#x27; (list of fields with all other fields at the end)
-- &#x27;HGVS,.*_score,Clinvar&#x27; (list of 2 fields with all scores in the middle)
-- &#x27;HGVS,.*_score,*&#x27; (1 field, scores, all other fields)
-- &#x27;HGVS,*,.*_score&#x27; (1 field, all other fields, all scores)
-
-
 </pre><H2>DATABASES</H2>
 <p>Download databases and needed files for howard and associated tools</p>Usage examples:<br>&nbsp;&nbsp;&nbsp;howard databases --assembly=hg19 --download-genomes=~/howard/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' <br>&nbsp;&nbsp;&nbsp;howard databases --assembly=hg19 --download-annovar=~/howard/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' <br>&nbsp;&nbsp;&nbsp;howard databases --assembly=hg19 --download-snpeff=~/howard/databases/snpeff/current <br>&nbsp;&nbsp;&nbsp;howard databases --assembly=hg19 --download-refseq=~/howard/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' <br>&nbsp;&nbsp;&nbsp;howard databases --assembly=hg19 --download-dbnsfp=~/howard/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases <br>&nbsp;&nbsp;&nbsp;howard databases --assembly=hg19 --download-alphamissense=~/howard/databases/alphamissense/current <br>&nbsp;&nbsp;&nbsp;howard databases --assembly=hg19 --download-exomiser=~/howard/databases/exomiser/current <br>&nbsp;&nbsp;&nbsp;howard databases --assembly=hg19 --download-dbsnp=~/howard/databases/dbsnp/current --download-dbsnp-vcf <br>&nbsp;&nbsp;&nbsp;cd ~/howard/databases && howard databases --assembly=hg19 --download-genomes=genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' --download-annovar=annovar/current --download-annovar-files='refGene,cosmic70,nci60' --download-snpeff=snpeff/current --download-refseq=refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-dbnsfp=dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases --download-alphamissense=alphamissense/current --download-exomiser=exomiser/current --download-dbsnp=dbsnp/current --download-dbsnp-vcf --threads=8 <br>&nbsp;&nbsp;&nbsp;howard databases --generate-param=/tmp/param.json --generate-param-description=/tmp/test.description.json --generate-param-formats=parquet <br>Notes:<br>&nbsp;&nbsp;&nbsp;- Downloading databases can take a while, depending on network, threads and memory<br>&nbsp;&nbsp;&nbsp;- Proxy: Beware of network and proxy configuration<br>&nbsp;&nbsp;&nbsp;- dbNSFP download: More threads, more memory usage (8 threads ~ 16Gb, 24 threads ~ 32Gb)<br>&nbsp;&nbsp;&nbsp; <br><H3>Main options</H3>
-<pre>--assembly=&lt;assembly&gt; (hg19)
+<pre>--assembly=&lt;assembly&gt; (default: hg19)
 Genome Assembly (e.g. &#x27;hg19&#x27;, &#x27;hg38&#x27;).
 
 
-</pre><pre>--genomes-folder=&lt;genomes&gt; (/Users/lebechea/howard/databases/genomes/current)
+</pre><pre>--genomes-folder=&lt;genomes&gt; (default: /Users/lebechea/howard/databases/genomes/current)
 Folder containing genomes.
 (e.g. &#x27;/Users/lebechea/howard/databases/genomes/current&#x27;
 
@@ -600,7 +600,7 @@ and all files generated by pygenome module.
 (e.g. &#x27;/Users/lebechea/howard/databases/genomes/current&#x27;).
 
 
-</pre><pre>--download-genomes-provider=&lt;genomes provider&gt; [&#x27;GENCODE&#x27;, &#x27;Ensembl&#x27;, &#x27;UCSC&#x27;, &#x27;NCBI&#x27;] (UCSC)
+</pre><pre>--download-genomes-provider=&lt;genomes provider&gt; [&#x27;GENCODE&#x27;, &#x27;Ensembl&#x27;, &#x27;UCSC&#x27;, &#x27;NCBI&#x27;] (default: UCSC)
 Download Genome from an external provider.
 Available: GENCODE, Ensembl, UCSC, NCBI.
 
@@ -628,7 +628,7 @@ Note that refGene will at least be downloaded,
 and only files that not already exist or changed will be downloaded.
 
 
-</pre><pre>--download-annovar-url=&lt;Annovar url&gt; (http://www.openbioinformatics.org/annovar/download)
+</pre><pre>--download-annovar-url=&lt;Annovar url&gt; (default: http://www.openbioinformatics.org/annovar/download)
 Annovar databases URL (see Annovar Doc).
 
 
@@ -638,15 +638,15 @@ Path to refSeq databases
 (e.g. &#x27;/Users/lebechea/howard/databases/refseq/current&#x27;).
 
 
-</pre><pre>--download-refseq-url=&lt;refSeq url&gt; (http://hgdownload.soe.ucsc.edu/goldenPath)
+</pre><pre>--download-refseq-url=&lt;refSeq url&gt; (default: http://hgdownload.soe.ucsc.edu/goldenPath)
 refSeq databases URL (see refSeq WebSite)
 (e.g. &#x27;http://hgdownload.soe.ucsc.edu/goldenPath&#x27;)•/n
 
-</pre><pre>--download-refseq-prefix=&lt;refSeq prefix&gt; (ncbiRefSeq)
+</pre><pre>--download-refseq-prefix=&lt;refSeq prefix&gt; (default: ncbiRefSeq)
 Check existing refSeq files in refSeq folder.
 
 
-</pre><pre>--download-refseq-files=&lt;refSeq files&gt; (ncbiRefSeq.txt,ncbiRefSeqLink.txt)
+</pre><pre>--download-refseq-files=&lt;refSeq files&gt; (default: ncbiRefSeq.txt,ncbiRefSeqLink.txt)
 List of refSeq files to download.
 
 
@@ -685,17 +685,17 @@ Formating BED refSeq file including transcript version.
 Download dbNSFP databases within dbNSFP folder(e.g. &#x27;/Users/lebechea/howard/databases&#x27;).
 
 
-</pre><pre>--download-dbnsfp-url=&lt;dbNSFP url&gt; (https://dbnsfp.s3.amazonaws.com)
+</pre><pre>--download-dbnsfp-url=&lt;dbNSFP url&gt; (default: https://dbnsfp.s3.amazonaws.com)
 Download dbNSFP databases URL (see dbNSFP website)
 (e.g. https://dbnsfp.s3.amazonaws.com&#x27;).
 
 
-</pre><pre>--download-dbnsfp-release=&lt;dnNSFP release&gt; (4.4a)
+</pre><pre>--download-dbnsfp-release=&lt;dnNSFP release&gt; (default: 4.4a)
 Release of dbNSFP to download (see dbNSFP website)
 (e.g. &#x27;4.4a&#x27;).
 
 
-</pre><pre>--download-dbnsfp-parquet-size=&lt;dbNSFP parquet size&gt; (100)
+</pre><pre>--download-dbnsfp-parquet-size=&lt;dbNSFP parquet size&gt; (default: 100)
 Maximum size (Mb) of data files in Parquet folder.
 Parquet folder are partitioned (hive) by chromosome (sub-folder),
 which contain N data files.
@@ -728,7 +728,7 @@ Useful for speed up full annotation (all available columns).
 Increase memory and space during generation of files.
 
 
-</pre><pre>--download-dbnsfp-row-group-size=&lt;dnNSFP row grooup size&gt; (100000)
+</pre><pre>--download-dbnsfp-row-group-size=&lt;dnNSFP row grooup size&gt; (default: 100000)
 Minimum number of rows in a parquet row group (see duckDB doc).
 Lower can reduce memory usage and slightly increase space during generation,
 speed up highly selective queries, slow down whole file queries (e.g. aggregations).
@@ -738,7 +738,7 @@ speed up highly selective queries, slow down whole file queries (e.g. aggregatio
 <pre>--download-alphamissense=&lt;AlphaMissense&gt;
 Path to AlphaMissense databases
 
-</pre><pre>--download-alphamissense-url=&lt;AlphaMissense url&gt; (https://storage.googleapis.com/dm_alphamissense)
+</pre><pre>--download-alphamissense-url=&lt;AlphaMissense url&gt; (default: https://storage.googleapis.com/dm_alphamissense)
 Download AlphaMissense databases URL (see AlphaMissense website)
 (e.g. &#x27;https://storage.googleapis.com/dm_alphamissense&#x27;).
 
@@ -758,7 +758,7 @@ Configuration information will be used to download expected releases (if no othe
 CADD and REMM will be downloaded only if &#x27;path&#x27; are provided.
 
 
-</pre><pre>--download-exomiser-url=&lt;Exomiser url&gt; (http://data.monarchinitiative.org/exomiser)
+</pre><pre>--download-exomiser-url=&lt;Exomiser url&gt; (default: http://data.monarchinitiative.org/exomiser)
 URL where Exomiser database files can be downloaded from
 (e.g. &#x27;http://data.monarchinitiative.org/exomiser&#x27;).
 
@@ -781,7 +781,7 @@ Release of ReMM (Regulatory Mendelian Mutation) database to download.
 If &quot;default&quot;, &quot;auto&quot;, or &quot;config&quot;, retrieve from Application Properties file.
 
 
-</pre><pre>--download-exomiser-remm-url=&lt;Exomiser remm url&gt; (https://kircherlab.bihealth.org/download/ReMM)
+</pre><pre>--download-exomiser-remm-url=&lt;Exomiser remm url&gt; (default: https://kircherlab.bihealth.org/download/ReMM)
 URL where ReMM (Regulatory Mendelian Mutation) database files can be downloaded from
 (e.g. &#x27;https://kircherlab.bihealth.org/download/ReMM&#x27;).
 
@@ -791,17 +791,17 @@ Release of CADD (Combined Annotation Dependent Depletion) database to download.
 If &quot;default&quot;, &quot;auto&quot;, or &quot;config&quot;, retrieve from Application Properties file.
 
 
-</pre><pre>--download-exomiser-cadd-url=&lt;Exomiser cadd url&gt; (https://kircherlab.bihealth.org/download/CADD)
+</pre><pre>--download-exomiser-cadd-url=&lt;Exomiser cadd url&gt; (default: https://kircherlab.bihealth.org/download/CADD)
 URL where CADD (Combined Annotation Dependent Depletion) database files can be downloaded from
 (e.g. &#x27;https://kircherlab.bihealth.org/download/CADD&#x27;).
 
 
-</pre><pre>--download-exomiser-cadd-url-snv-file=&lt;Exomiser url snv file&gt; (whole_genome_SNVs.tsv.gz)
+</pre><pre>--download-exomiser-cadd-url-snv-file=&lt;Exomiser url snv file&gt; (default: whole_genome_SNVs.tsv.gz)
 Name of the file containing the SNV (Single Nucleotide Variant) data
 for the CADD (Combined Annotation Dependent Depletion) database.
 
 
-</pre><pre>--download-exomiser-cadd-url-indel-file=&lt;Exomiser cadd url indel&gt; (InDels.tsv.gz)
+</pre><pre>--download-exomiser-cadd-url-indel-file=&lt;Exomiser cadd url indel&gt; (default: InDels.tsv.gz)
 Name of the file containing the INDEL (Insertion-Deletion) data
 for the CADD (Combined Annotation Dependent Depletion) database.
 
@@ -812,7 +812,7 @@ Path to dbSNP databases
 (e.g. &#x27;/Users/lebechea/howard/databases/exomiser/dbsnp&#x27;).
 
 
-</pre><pre>--download-dbsnp-releases=&lt;dnSNP releases&gt; (b156)
+</pre><pre>--download-dbsnp-releases=&lt;dnSNP releases&gt; (default: b156)
 Release of dbSNP to download
 (e.g. &#x27;b152&#x27;, &#x27;b152,b156&#x27;).
 
@@ -824,7 +824,7 @@ If None, first release to download will be assigned as default
 only if it does not exists.
 
 
-</pre><pre>--download-dbsnp-url=&lt;dbSNP url&gt; (https://ftp.ncbi.nih.gov/snp/archive)
+</pre><pre>--download-dbsnp-url=&lt;dbSNP url&gt; (default: https://ftp.ncbi.nih.gov/snp/archive)
 URL where dbSNP database files can be downloaded from.
 (e.g. &#x27;https://ftp.ncbi.nih.gov/snp/archive&#x27;).
 
@@ -835,12 +835,12 @@ It allows you to provide custom dbSNP URL files for specific assemblies
 instead of using the default file naming convention.
 
 
-</pre><pre>--download-dbsnp-url-files-prefix=&lt;dbSNP url files prefix&gt; (GCF_000001405)
+</pre><pre>--download-dbsnp-url-files-prefix=&lt;dbSNP url files prefix&gt; (default: GCF_000001405)
 String that represents the prefix of the dbSNP file name for a specific assembly.
 It is used to construct the full URL of the dbSNP file to be downloaded.
 
 
-</pre><pre>--download-dbsnp-assemblies-map=&lt;dbSNP assemblies map&gt; ({&#x27;hg19&#x27;: &#x27;25&#x27;, &#x27;hg38&#x27;: &#x27;40&#x27;})
+</pre><pre>--download-dbsnp-assemblies-map=&lt;dbSNP assemblies map&gt; (default: {&#x27;hg19&#x27;: &#x27;25&#x27;, &#x27;hg38&#x27;: &#x27;40&#x27;})
 dictionary that maps assembly names to their corresponding dbSNP versions.
 It is used to construct the dbSNP file name based on the assembly name.
 
@@ -889,12 +889,12 @@ Description file (JSON) with all databases found.
 Contains all databases with description of format, assembly, fields...
 
 
-</pre><pre>--generate-param-releases=&lt;param release&gt; (current)
+</pre><pre>--generate-param-releases=&lt;param release&gt; (default: current)
 List of database folder releases to check
 (e.g. &#x27;current&#x27;, &#x27;latest&#x27;).
 
 
-</pre><pre>--generate-param-formats=&lt;param formats&gt; (parquet)
+</pre><pre>--generate-param-formats=&lt;param formats&gt; (default: parquet)
 List of database formats to check
 (e.g. &#x27;parquet&#x27;, &#x27;parquet,vcf,bed,tsv&#x27;).
 
@@ -918,7 +918,7 @@ Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
 Files can be compressesd (e.g. vcf.gz, tsv.gz).
 
 
-</pre><pre>--genome=&lt;genome&gt; (~/howard/databases/genomes/current/hg19/hg19.fa) | required
+</pre><pre>--genome=&lt;genome&gt; (default: ~/howard/databases/genomes/current/hg19/hg19.fa) | required
 Genome file in fasta format (e.g. &#x27;hg19.fa&#x27;, &#x27;hg38.fa&#x27;).
 
 
@@ -934,12 +934,12 @@ Parquet file conversion.
 
 
 </pre><H3>Modes</H3>
-<pre>--reduce_memory=&lt;reduce memory&gt; [&#x27;auto&#x27;, &#x27;enable&#x27;, &#x27;disable&#x27;] (auto)
+<pre>--reduce_memory=&lt;reduce memory&gt; [&#x27;auto&#x27;, &#x27;enable&#x27;, &#x27;disable&#x27;] (default: auto)
 Reduce memory option,
 either &#x27;auto&#x27; (auto-detection), &#x27;enable&#x27; or &#x27;disable&#x27;.
 
 
-</pre><pre>--multi_variant=&lt;multi variant&gt; [&#x27;auto&#x27;, &#x27;enable&#x27;, &#x27;disable&#x27;] (auto)
+</pre><pre>--multi_variant=&lt;multi variant&gt; [&#x27;auto&#x27;, &#x27;enable&#x27;, &#x27;disable&#x27;] (default: auto)
 Variant with multiple annotation lines.
 Either &#x27;auto&#x27; (auto-detection), &#x27;enable&#x27; or &#x27;disable&#x27;.
 
@@ -959,7 +959,7 @@ Help Output file in HTML format.
 Help input file in JSON format.
 
 
-</pre><pre>--help_json_input_title=&lt;help JSON input title&gt; (Help)
+</pre><pre>--help_json_input_title=&lt;help JSON input title&gt; (default: Help)
 Help JSON input title.
 
 
@@ -969,7 +969,7 @@ Help example code type for input JSON format
 
 
 </pre><H2>SHARED ARGUMENTS</H2>
-<pre>--config=&lt;config&gt; ({})
+<pre>--config=&lt;config&gt; (default: {})
 Configuration JSON file defined default configuration regarding 
 resources (e.g. threads, memory),
 settings (e.g. verbosity, temporary files),
@@ -977,7 +977,7 @@ default folders (e.g. for databases)
 and paths to external tools.
 
 
-</pre><pre>--threads=&lt;threads&gt; (-1)
+</pre><pre>--threads=&lt;threads&gt; (default: -1)
 Specify the number of threads to use for processing HOWARD.
 It determines the level of parallelism,
 either on python scripts, duckdb engine and external tools.
@@ -995,7 +995,7 @@ It can help to prevent &#x27;out of memory&#x27; failures.
 By default (None) is 80%% of RAM (for duckDB).
 
 
-</pre><pre>--chunk_size=&lt;chunk size&gt; (1000000)
+</pre><pre>--chunk_size=&lt;chunk size&gt; (default: 1000000)
 Number of records in batch to export output file.
 The lower the chunk size, the less memory consumption.
 For Parquet partitioning, files size will depend on the chunk size.
@@ -1012,7 +1012,7 @@ These settings have priority (see options &#x27;threads&#x27;, &#x27;tmp&#x27;..
 Examples: &#x27;{&quot;TimeZone&quot;: &quot;GMT&quot;, &quot;temp_directory&quot;: &quot;/tmp/duckdb&quot;, &quot;threads&quot;: 8}&#x27;.
 
 
-</pre><pre>--verbosity=&lt;verbosity&gt; [&#x27;CRITICAL&#x27;, &#x27;ERROR&#x27;, &#x27;WARNING&#x27;, &#x27;INFO&#x27;, &#x27;DEBUG&#x27;, &#x27;NOTSET&#x27;] (INFO)
+</pre><pre>--verbosity=&lt;verbosity&gt; [&#x27;CRITICAL&#x27;, &#x27;ERROR&#x27;, &#x27;WARNING&#x27;, &#x27;INFO&#x27;, &#x27;DEBUG&#x27;, &#x27;NOTSET&#x27;] (default: INFO)
 Verbosity level
 Available: CRITICAL, ERROR, WARNING, INFO, DEBUG or NOTSET
 - DEBUG: Detailed information, typically of interest only when diagnosing problems.
