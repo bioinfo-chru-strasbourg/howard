@@ -36,6 +36,7 @@ from jproperties import Properties # jproperties 2.1.1
 from howard.functions.commons import *
 from howard.objects.variants import *
 from howard.functions.databases import *
+from howard.functions.from_annovar import *
 
 
 
@@ -248,5 +249,11 @@ def databases(args:argparse) -> None:
             genomes_folder=param.get("databases", {}).get("genomes_folder", None),
             threads=threads
             )
+
+    # from Annovar
+    if args.input_annovar and args.output_annovar and args.genome:
+        log.debug(f"Convert Annovar")
+        from_annovar(args=args)
+
 
     log.info("End")

@@ -2243,7 +2243,6 @@ def databases_download_alphamissense(assemblies:list, alphamissense_folder:str =
     return True
 
 
-
 def databases_download_exomiser(assemblies:list, exomiser_folder:str = DEFAULT_EXOMISER_FOLDER, exomiser_application_properties:str = None, exomiser_url:str = DEFAULT_EXOMISER_URL, exomiser_release:str = None, exomiser_phenotype_release:str = None, exomiser_remm_release:str = None, exomiser_remm_url:str = "https://kircherlab.bihealth.org/download/ReMM", exomiser_cadd_release:str = None, exomiser_cadd_url:str = "https://kircherlab.bihealth.org/download/CADD", exomiser_cadd_url_snv_file:str = "whole_genome_SNVs.tsv.gz", exomiser_cadd_url_indel_file:str = "InDels.tsv.gz", threads:int = 1) -> bool:
     """
     The `databases_download_exomiser` function downloads and sets up the Exomiser database for the
@@ -2537,6 +2536,7 @@ def databases_download_exomiser(assemblies:list, exomiser_folder:str = DEFAULT_E
         
 
     return True
+
 
 def databases_download_dbsnp(assemblies:list, dbsnp_folder:str = DEFAULT_DBSNP_FOLDER, dbsnp_releases:list = ["b156"], dbsnp_release_default:str = None, dbsnp_url:str = DEFAULT_DBSNP_URL, dbsnp_url_files:dict = None, dbsnp_url_files_prefix:str = "GCF_000001405", dbsnp_assemblies_map:dict = {"hg19": "25", "hg38": "40"}, genomes_folder: str = DEFAULT_GENOME_FOLDER, threads:int = 1, dbsnp_vcf:bool = False, dbsnp_parquet:bool = False, dbsnp_parquet_explode_infos:bool = True) -> str:
     """
@@ -2889,8 +2889,6 @@ def databases_download_dbsnp(assemblies:list, dbsnp_folder:str = DEFAULT_DBSNP_F
                 log.info(f"Download dbSNP {[assembly]} - Release {[dbsnp_release_default_already]} - Already defined as default")
 
     return True
-
-
 
 
 def databases_download_hgmd(assemblies:list, hgmd_file:str, hgmd_folder:str = DEFAULT_ANNOTATIONS_FOLDER, output_basename:str = None, threads:int = None, genomes_folder:str = None, to_parquet:bool = True, to_tsv:bool = True) -> bool:

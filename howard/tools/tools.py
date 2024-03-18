@@ -31,7 +31,6 @@ from howard.tools.stats import *
 from howard.tools.convert import *
 from howard.tools.databases import *
 from howard.tools.help import *
-from howard.tools.from_annovar import *
 
 
 # Import gui only if gooey and wx is installed
@@ -462,9 +461,83 @@ arguments = {
         },
         
         # From annovar
-        "multi_variant": {
-            "metavar": "multi variant",
-            "help": """Variant with multiple annotation lines.\n"""
+        "input_annovar": {
+            "metavar": "input annovar",
+            "help": """Input Annovar file path.\n"""
+                    """Format file must be a Annovar TXT file, associated with '.idx'.\n""",
+            "required": False,
+            "default": None,
+            "type": PathType(exists=True, type=None),
+            "gooey": {
+                "widget": "FileChooser",
+                "options": {
+                    "wildcard":
+                        "Parquet file (*.parquet)|*.parquet|"
+                        "All files (*)|*"
+                }
+            }
+        },
+        "output_annovar": {
+            "metavar": "output annovar",
+            "help": """Output Annovar file path.\n"""
+                    """Format file must be either VCF compressesd file '.vcf.gz'.\n""",
+            "required": False,
+            "default": None,
+            "type": PathType(exists=None, type=None),
+            "gooey": {
+                "widget": "FileSaver"
+            }
+        },
+        # From Annovar
+        "annovar_code": {
+            "metavar": "Annovar code",
+            "help": """Annovar code, or database name.\n"""
+                    """Usefull to name databases columns.\n""",
+            "required": False,
+            "default": None,
+            "type": str
+        },
+        "annovar_to_parquet": {
+            "metavar": "to parquet",
+            "help": """Parquet file conversion.\n""",
+            "required": False,
+            "default": None,
+            "type": PathType(exists=None, type=None),
+            "gooey": {
+                "widget": "FileSaver",
+                "options": {
+                    "wildcard":
+                        "HTML file (*.parquet)|*.parquet",
+                }
+            }
+        },
+        # "multi_variant": {
+        #     "metavar": "multi variant",
+        #     "help": """Variant with multiple annotation lines.\n"""
+        #             """Either 'auto' (auto-detection), 'enable' or 'disable'.\n""",
+        #     "default": "auto",
+        #     "type": str,
+        #     "choices": ["auto", "enable", "disable"],
+        #     "gooey": {
+        #         "widget": "Dropdown",
+        #         "options": {}
+        #     }
+        # },
+        # "reduce_memory": {
+        #     "metavar": "reduce memory",
+        #     "help": """Reduce memory option,\n"""
+        #             """either 'auto' (auto-detection), 'enable' or 'disable'.\n""",
+        #     "default": "auto",
+        #     "type": str,
+        #     "choices": ["auto", "enable", "disable"],
+        #     "gooey": {
+        #         "widget": "Dropdown",
+        #         "options": {}
+        #     }
+        # },
+        "annovar_multi_variant": {
+            "metavar": "Annovar multi variant",
+            "help": """Variant with multiple annotation lines on Annovar file.\n"""
                     """Either 'auto' (auto-detection), 'enable' or 'disable'.\n""",
             "default": "auto",
             "type": str,
@@ -474,9 +547,9 @@ arguments = {
                 "options": {}
             }
         },
-        "reduce_memory": {
+        "annovar_reduce_memory": {
             "metavar": "reduce memory",
-            "help": """Reduce memory option,\n"""
+            "help": """Reduce memory option for Annovar convert,\n"""
                     """either 'auto' (auto-detection), 'enable' or 'disable'.\n""",
             "default": "auto",
             "type": str,
@@ -1339,30 +1412,6 @@ arguments = {
             "default": False
         },
 
-        # From Annovar
-        "annovar-code": {
-            "metavar": "Annovar code",
-            "help": """Annovar code, or database name.\n"""
-                    """Usefull to name databases columns.\n""",
-            "required": False,
-            "default": None,
-            "type": str
-        },
-        "to_parquet": {
-            "metavar": "to parquet",
-            "help": """Parquet file conversion.\n""",
-            "required": False,
-            "default": None,
-            "type": PathType(exists=None, type=None),
-            "gooey": {
-                "widget": "FileSaver",
-                "options": {
-                    "wildcard":
-                        "HTML file (*.parquet)|*.parquet",
-                }
-            }
-        },
-
         # Help
         "help_md": {
             "metavar": "help markdown",
@@ -1956,7 +2005,8 @@ commands_arguments = {
                     """   howard databases --assembly=hg19 --download-exomiser=~/howard/databases/exomiser/current \n"""
                     """   howard databases --assembly=hg19 --download-dbsnp=~/howard/databases/dbsnp/current --download-dbsnp-vcf \n"""
                     """   cd ~/howard/databases && howard databases --assembly=hg19 --download-genomes=genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' --download-annovar=annovar/current --download-annovar-files='refGene,cosmic70,nci60' --download-snpeff=snpeff/current --download-refseq=refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-dbnsfp=dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases --download-alphamissense=alphamissense/current --download-exomiser=exomiser/current --download-dbsnp=dbsnp/current --download-dbsnp-vcf --threads=8 \n"""
-                    """   howard databases --generate-param=/tmp/param.json --generate-param-description=/tmp/test.description.json --generate-param-formats=parquet """
+                    """   howard databases --generate-param=/tmp/param.json --generate-param-description=/tmp/test.description.json --generate-param-formats=parquet \n"""
+                    """   howard databases --input_annovar=tests/databases/others/hg19_nci60.txt --output_annovar=/tmp/nci60.from_annovar.vcf.gz --annovar_to_parquet=/tmp/nci60.from_annovar.parquet --annovar_code=nci60 --genome=~/howard/databases/genomes/current/hg19.fa \n"""
                     """\n"""
                     """Notes:\n"""
                     """   - Downloading databases can take a while, depending on network, threads and memory\n"""
@@ -1966,7 +2016,8 @@ commands_arguments = {
         "groups": {
             "main": {
                 "assembly": False,
-                "genomes-folder": False
+                "genomes-folder": False,
+                "genome": False
             },
             "Genomes": {
                 "download-genomes": False,
@@ -2039,6 +2090,14 @@ commands_arguments = {
                 "convert-hgmd-file": False,
                 "convert-hgmd-basename": False
             },
+            "from_Annovar": {
+                "input_annovar": False,
+                "output_annovar": False,
+                "annovar_code": False,
+                "annovar_to_parquet": False,
+                "annovar_reduce_memory": False,
+                "annovar_multi_variant": False
+            },
             "Parameters": {
                 "generate-param": False,
                 "generate-param-description": False,
@@ -2048,31 +2107,31 @@ commands_arguments = {
             }
         }
     },
-    "from_annovar": {
-        "function" : "from_annovar",
-        "description": """(beta) Formatting Annovar database file to other format (VCF and Parquet). Exported Parquet file includes INFO/tags columns as VCF INFO columns had been exploded""",
-        "help": """(beta) Formatting Annovar database file to other format (VCF and Parquet)""",
-        "epilog": """Usage examples:\n"""
-                    """   howard from_annovar --input=tests/databases/others/hg19_nci60.txt --output=/tmp/nci60.from_annovar.vcf.gz --to_parquet=/tmp/nci60.from_annovar.parquet --annovar-code=nci60 --genome=~/howard/databases/genomes/current/hg19.fa --threads=8 \n"""
-                    """    \n""",
-        "groups": {
-            "main": {
-                "input": True,
-                "output": True,
-                "genome": True,
-            },
-            "Annovar": {
-                "annovar-code": False,
-            },
-            "Parquet": {
-                "to_parquet": False,
-            },
-            "Modes": {
-                "reduce_memory": False,
-                "multi_variant": False
-            }
-        }
-    },
+    # "from_annovar": {
+    #     "function" : "from_annovar",
+    #     "description": """(beta) Formatting Annovar database file to other format (VCF and Parquet). Exported Parquet file includes INFO/tags columns as VCF INFO columns had been exploded""",
+    #     "help": """(beta) Formatting Annovar database file to other format (VCF and Parquet)""",
+    #     "epilog": """Usage examples:\n"""
+    #                 """   howard from_annovar --input=tests/databases/others/hg19_nci60.txt --output=/tmp/nci60.from_annovar.vcf.gz --to_parquet=/tmp/nci60.from_annovar.parquet --annovar-code=nci60 --genome=~/howard/databases/genomes/current/hg19.fa --threads=8 \n"""
+    #                 """    \n""",
+    #     "groups": {
+    #         "main": {
+    #             "input": True,
+    #             "output": True,
+    #             "genome": True,
+    #         },
+    #         "Annovar": {
+    #             "annovar-code": False,
+    #         },
+    #         "Parquet": {
+    #             "to_parquet": False,
+    #         },
+    #         "Modes": {
+    #             "reduce_memory": False,
+    #             "multi_variant": False
+    #         }
+    #     }
+    # },
     "gui": {
         "function" : "gui",
         "description": """Graphical User Interface tools""",

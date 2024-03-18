@@ -558,6 +558,7 @@ def test_database():
         convert_hgmd = None,
         generate_param = None,
         config = None,
+        arguments_dict = arguments_dict
     )
 
     try:
@@ -634,7 +635,8 @@ def test_databases_download():
             convert_hgmd = None,
             generate_param = None,
             config=config,
-            threads=threads
+            threads=threads,
+            arguments_dict = arguments_dict
         )
 
         # Download
@@ -713,7 +715,8 @@ def test_databases_download_genomes_only():
             download_dbsnp = None,
             convert_hgmd = None,
             generate_param = None,
-            threads=threads
+            threads=threads,
+            arguments_dict = arguments_dict
         )
 
         # Download

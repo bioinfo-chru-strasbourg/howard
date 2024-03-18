@@ -8,6 +8,7 @@
     ],
     "assembly": {},
     "genomes_folder": {},
+    "genome": {},
     "genomes": {
         "__help": [
           "Genomes download."
@@ -105,6 +106,17 @@
         "convert_hgmd": {},
         "convert_hgmd_file": {},
         "convert_hgmd_basename": {}
+    },
+    "from_Annovar": {
+        "__help": [
+          "Annovar convert."
+        ],
+        "input_annovar": {},
+        "output_annovar": {},
+        "annovar_code": {},
+        "annovar_to_parquet": {},
+        "annovar_reduce_memory": {},
+        "annovar_multi_variant": {}
     },
     "Parameters": {
         "__help": [

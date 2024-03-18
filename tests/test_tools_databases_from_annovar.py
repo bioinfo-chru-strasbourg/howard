@@ -5,7 +5,7 @@ Usage:
 pytest tests/
 
 Coverage:
-coverage run -m pytest tests/test_from_annovar.py -x -v --log-cli-level=INFO --capture=tee-sys
+coverage run -m pytest tests/test_tools_databases_from_annovar.py -x -v --log-cli-level=DEBUG --capture=tee-sys
 coverage report --include=howard/* -m
 """
 
@@ -23,6 +23,7 @@ from unittest.mock import patch
 
 from howard.objects.variants import Variants
 from howard.functions.commons import *
+from howard.functions.from_annovar import *
 from howard.tools.tools import *
 from test_needed import *
 
@@ -54,14 +55,14 @@ def test_from_annovar():
 
         # prepare arguments for the query function
         args = argparse.Namespace(
-            input = input_vcf,
-            output = output_vcf,
+            input_annovar = input_vcf,
+            output_annovar = output_vcf,
             genome = genome,
             annovar_code = annovar_code,
-            to_parquet = output_parquet,
+            annovar_to_parquet = output_parquet,
             threads = "2",
-            reduce_memory = "disable",
-            multi_variant = "disable",
+            annovar_reduce_memory = "disable",
+            annovar_multi_variant = "disable",
             config = config
         )
 
@@ -103,14 +104,14 @@ def test_from_annovar_reduce_memory():
 
         # prepare arguments for the query function
         args = argparse.Namespace(
-            input = input_vcf,
-            output = output_vcf,
+            input_annovar = input_vcf,
+            output_annovar = output_vcf,
             genome = genome,
             annovar_code = annovar_code,
-            to_parquet = output_parquet,
+            annovar_to_parquet = output_parquet,
             threads = "2",
-            reduce_memory = "enable",
-            multi_variant = "disable",
+            annovar_reduce_memory = "enable",
+            annovar_multi_variant = "disable",
             config = config
         )
 
@@ -152,14 +153,14 @@ def test_from_annovar_multi_variant():
 
         # prepare arguments for the query function
         args = argparse.Namespace(
-            input = input_vcf,
-            output = output_vcf,
+            input_annovar = input_vcf,
+            output_annovar = output_vcf,
             genome = genome,
             annovar_code = annovar_code,
-            to_parquet = output_parquet,
+            annovar_to_parquet = output_parquet,
             threads = "2",
-            reduce_memory = "disable",
-            multi_variant = "enable",
+            annovar_reduce_memory = "disable",
+            annovar_multi_variant = "enable",
             config = config
         )
 
@@ -202,14 +203,14 @@ def test_from_annovar_reduce_memory_multi_variant():
 
         # prepare arguments for the query function
         args = argparse.Namespace(
-            input = input_vcf,
-            output = output_vcf,
+            input_annovar = input_vcf,
+            output_annovar = output_vcf,
             genome = genome,
             annovar_code = annovar_code,
-            to_parquet = output_parquet,
+            annovar_to_parquet = output_parquet,
             threads = "2",
-            reduce_memory = "enable",
-            multi_variant = "enable",
+            annovar_reduce_memory = "enable",
+            annovar_multi_variant = "enable",
             config = config
         )
 

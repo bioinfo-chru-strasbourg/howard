@@ -1,5 +1,6 @@
 __all__ = [
     "commons",
     "utils",
-    "databases"
+    "databases",
+    "from_annovar"
 ]

@@ -53,17 +53,17 @@ def from_annovar(args:argparse) -> None:
     log.info("Start")
 
     # Input
-    if isinstance(args.input, str):
-        input_file = args.input
+    if isinstance(args.input_annovar, str):
+        input_file = args.input_annovar
     else:
-        input_file = args.input.name
+        input_file = args.input_annovar.name
     input_file = full_path(input_file)
 
     # Output
-    if isinstance(args.output, str):
-        output_file = args.output
+    if isinstance(args.output_annovar, str):
+        output_file = args.output_annovar
     else:
-        output_file = args.output.name
+        output_file = args.output_annovar.name
     output_file = full_path(output_file)
 
     # Genome
@@ -76,11 +76,11 @@ def from_annovar(args:argparse) -> None:
     
     # To Parquet
     output_file_parquet = None
-    if "to_parquet" in args and args.to_parquet:
-        if isinstance(args.to_parquet, str):
-            output_file_parquet = args.to_parquet
+    if "annovar_to_parquet" in args and args.annovar_to_parquet:
+        if isinstance(args.annovar_to_parquet, str):
+            output_file_parquet = args.annovar_to_parquet
         else:
-            output_file_parquet = args.to_parquet.name
+            output_file_parquet = args.annovar_to_parquet.name
         output_file_parquet = full_path(output_file_parquet)
 
     # Annovar Code
@@ -93,10 +93,10 @@ def from_annovar(args:argparse) -> None:
     # args.explode_infos_prefix_prefix = args.args.explode_infos_prefix_prefix
 
     # Multi Variant
-    multi_variant = args.multi_variant
+    multi_variant = args.annovar_multi_variant
 
     # Reduce memory
-    reduce_memory = args.reduce_memory
+    reduce_memory = args.annovar_reduce_memory
 
     # config
     config = args.config

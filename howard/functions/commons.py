@@ -46,6 +46,7 @@ file_folder = os.path.dirname(__file__)
 folder_main = os.path.abspath(os.path.join(file_folder, "../.."))
 folder_config = os.path.abspath(os.path.join(folder_main, "config"))
 folder_user_home = os.path.abspath(os.path.expanduser('~'))
+#folder_user_home = '~'
 folder_howard_home = os.path.join(folder_user_home,"howard")
 
 comparison_map = {
