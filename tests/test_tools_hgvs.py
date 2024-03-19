@@ -28,7 +28,6 @@ from howard.tools.tools import *
 from test_needed import *
 
 
-
 def test_hgvs_tsv():
 
     # Init files
@@ -38,18 +37,18 @@ def test_hgvs_tsv():
 
     genomes_folder = tests_config["folders"]["databases"]["genomes"]
     refseq_folder = tests_config["folders"]["databases"]["refseq"]
-    
+
     # prepare arguments for the query function
     args = argparse.Namespace(
-        input = input_vcf,
-        output = output_vcf,
-        hgvs_options = "full_format",
-        config = config,
-        genomes_folder = genomes_folder,
-        refseq_folder = refseq_folder,
-        arguments_dict = arguments_dict
+        input=input_vcf,
+        output=output_vcf,
+        hgvs_options="full_format",
+        config=config,
+        genomes_folder=genomes_folder,
+        refseq_folder=refseq_folder,
+        arguments_dict=arguments_dict,
     )
-    
+
     # Remove if output file exists
     remove_if_exists([output_vcf])
 
@@ -60,7 +59,7 @@ def test_hgvs_tsv():
     assert os.path.exists(output_vcf)
 
     # read the contents of the actual output file
-    with open(output_vcf, 'r') as f:
+    with open(output_vcf, "r") as f:
         result_output_nb_lines = 0
         result_output_nb_variants = 0
         for line in f:
@@ -78,9 +77,11 @@ def test_hgvs_tsv():
 
     # Create object
     variants = Variants(conn=None, input=output_vcf, config=config, load=True)
-    
+
     # Check annotation
-    result = variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%hgvs=%'")
+    result = variants.get_query_to_df(
+        "SELECT INFO FROM variants WHERE INFO LIKE '%hgvs=%'"
+    )
     assert len(result) == 7
 
 
@@ -93,18 +94,18 @@ def test_hgvs_vcf():
 
     genomes_folder = tests_config["folders"]["databases"]["genomes"]
     refseq_folder = tests_config["folders"]["databases"]["refseq"]
-    
+
     # prepare arguments for the query function
     args = argparse.Namespace(
-        input = input_vcf,
-        output = output_vcf,
-        hgvs_options = "full_format",
-        config = config,
-        genomes_folder = genomes_folder,
-        refseq_folder = refseq_folder,
-        arguments_dict = arguments_dict
+        input=input_vcf,
+        output=output_vcf,
+        hgvs_options="full_format",
+        config=config,
+        genomes_folder=genomes_folder,
+        refseq_folder=refseq_folder,
+        arguments_dict=arguments_dict,
     )
-    
+
     # Remove if output file exists
     remove_if_exists([output_vcf])
 
@@ -115,7 +116,7 @@ def test_hgvs_vcf():
     assert os.path.exists(output_vcf)
 
     # read the contents of the actual output file
-    with open(output_vcf, 'r') as f:
+    with open(output_vcf, "r") as f:
         result_output_nb_lines = 0
         result_output_nb_variants = 0
         for line in f:
@@ -133,7 +134,9 @@ def test_hgvs_vcf():
 
     # Create object
     variants = Variants(conn=None, input=output_vcf, config=config, load=True)
-    
+
     # Check annotation
-    result = variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%hgvs=%'")
+    result = variants.get_query_to_df(
+        "SELECT INFO FROM variants WHERE INFO LIKE '%hgvs=%'"
+    )
     assert len(result) == 7

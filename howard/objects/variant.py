@@ -5,8 +5,7 @@ Methods for manipulating genetic variants.
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-_COMP = dict(A='T', C='G', G='C', T='A', N='N',
-             a='t', c='g', g='c', t='a', n='n')
+_COMP = dict(A="T", C="G", G="C", T="A", N="N", a="t", c="g", g="c", t="a", n="n")
 
 
 class Position(object):
@@ -19,13 +18,12 @@ class Position(object):
         self.is_forward_strand = is_forward_strand
 
     def __repr__(self):
-        return "<Position %s[%d:%d]>" % (
-            self.chrom, self.chrom_start, self.chrom_stop)
+        return "<Position %s[%d:%d]>" % (self.chrom, self.chrom_start, self.chrom_stop)
 
 
 def revcomp(seq):
     """Reverse complement."""
-    return ''.join(_COMP[base] for base in reversed(seq))
+    return "".join(_COMP[base] for base in reversed(seq))
 
 
 def get_sequence(genome, chrom, start, end, is_forward_strand=True):
@@ -37,7 +35,7 @@ def get_sequence(genome, chrom, start, end, is_forward_strand=True):
     start = max(start, 0)
 
     if start >= end:
-        return ''
+        return ""
     else:
         seq = genome[str(chrom)][start:end]
         if not is_forward_strand:
@@ -50,9 +48,13 @@ def get_sequence_from_position(genome, position):
 
     Position is 0-based, end-exclusive.
     """
-    return get_sequence(genome, position.chrom,
-                        position.chrom_start, position.chrom_stop,
-                        position.is_forward_strand)
+    return get_sequence(
+        genome,
+        position.chrom,
+        position.chrom_start,
+        position.chrom_stop,
+        position.is_forward_strand,
+    )
 
 
 def justify_indel(start, end, indel, seq, justify):
@@ -72,14 +74,14 @@ def justify_indel(start, end, indel, seq, justify):
     if len(indel) == 0:
         return start, end, indel
 
-    if justify == 'left':
+    if justify == "left":
         while start > 0 and seq[start - 1] == indel[-1]:
             seq_added = seq[start - 1]
             indel = seq_added + indel[:-1]
             start -= 1
             end -= 1
 
-    elif justify == 'right':
+    elif justify == "right":
         while end < len(seq) and seq[end] == indel[0]:
             seq_added = seq[end]
             indel = indel[1:] + seq_added
@@ -90,8 +92,7 @@ def justify_indel(start, end, indel, seq, justify):
     return start, end, indel
 
 
-def justify_genomic_indel(genome, chrom, start, end, indel, justify,
-                          flank_length=20):
+def justify_genomic_indel(genome, chrom, start, end, indel, justify, flank_length=20):
     """
     start, end: 0-based, end-exclusive coordinates of 'indel'.
     """
@@ -101,10 +102,9 @@ def justify_genomic_indel(genome, chrom, start, end, indel, justify,
         seq_start = max(start - flank_length, 0)
         indel_len = len(indel)
         fetch_len = indel_len + 2 * flank_length
-        seq = get_sequence(
-            genome, chrom, seq_start, seq_start + fetch_len)
+        seq = get_sequence(genome, chrom, seq_start, seq_start + fetch_len)
         seq_end = seq_start + len(seq)
-        if seq_end <= end and justify == 'right':
+        if seq_end <= end and justify == "right":
             # Indel is at end of chromosome, cannot justify right any further.
             return start, end, indel
         chrom_end = seq_end if seq_end < seq_start + fetch_len else 1e100
@@ -113,20 +113,30 @@ def justify_genomic_indel(genome, chrom, start, end, indel, justify,
         indel_start = flank_length
         indel_end = flank_length + indel_len
         indel_start, indel_end, indel = justify_indel(
-            indel_start, indel_end, indel, seq, justify)
+            indel_start, indel_end, indel, seq, justify
+        )
 
         # Get indel coordinates with chrom.
         start = seq_start + indel_start
         end = start + ref_len
-        if ((indel_start > 0 or seq_start == 0) and
-                (indel_end < len(seq) or seq_end == chrom_end)):
+        if (indel_start > 0 or seq_start == 0) and (
+            indel_end < len(seq) or seq_end == chrom_end
+        ):
             return start, end, indel
         # Since indel was justified to edge of seq, see if more justification
         # can be done.
 
 
-def normalize_variant(chrom, offset, ref_sequence, alt_sequences, genome,
-                      justify='left', flank_length=30, indels_start_with_same_base=True):
+def normalize_variant(
+    chrom,
+    offset,
+    ref_sequence,
+    alt_sequences,
+    genome,
+    justify="left",
+    flank_length=30,
+    indels_start_with_same_base=True,
+):
     """
     Normalize variant according to the GATK/VCF standard.
 
@@ -139,12 +149,16 @@ def normalize_variant(chrom, offset, ref_sequence, alt_sequences, genome,
     start = offset - 1
     end = start + len(ref_sequence)
     position = Position(
-        chrom=chrom,
-        chrom_start=start,
-        chrom_stop=end,
-        is_forward_strand=True)
-    return NormalizedVariant(position, ref_sequence, alt_sequences,
-                             genome=genome, justify=justify, indels_start_with_same_base=indels_start_with_same_base)
+        chrom=chrom, chrom_start=start, chrom_stop=end, is_forward_strand=True
+    )
+    return NormalizedVariant(
+        position,
+        ref_sequence,
+        alt_sequences,
+        genome=genome,
+        justify=justify,
+        indels_start_with_same_base=indels_start_with_same_base,
+    )
 
 
 class NormalizedVariant(object):
@@ -152,9 +166,17 @@ class NormalizedVariant(object):
     Normalizes variant representation to match GATK/VCF.
     """
 
-    def __init__(self, position, ref_allele, alt_alleles,
-                 seq_5p='', seq_3p='', genome=None, justify='left',
-                 indels_start_with_same_base=True):
+    def __init__(
+        self,
+        position,
+        ref_allele,
+        alt_alleles,
+        seq_5p="",
+        seq_3p="",
+        genome=None,
+        justify="left",
+        indels_start_with_same_base=True,
+    ):
         """
         position: a 0-index genomic Position.
         ref_allele: the reference allele sequence.
@@ -186,7 +208,7 @@ class NormalizedVariant(object):
         Ensure variant is on forward strand.
         """
         if not self.position.is_forward_strand:
-            self.log.append('flip strand')
+            self.log.append("flip strand")
             seq_5p = self.seq_5p
             seq_3p = self.seq_3p
             self.seq_5p = revcomp(seq_3p)
@@ -207,7 +229,7 @@ class NormalizedVariant(object):
 
         # Remove common prefix from all alleles.
         if common_prefix:
-            self.log.append('trim common prefix')
+            self.log.append("trim common prefix")
             self.position.chrom_start += common_prefix
             self.seq_5p += self.alleles[0][:common_prefix]
             for i, allele in enumerate(self.alleles):
@@ -227,7 +249,7 @@ class NormalizedVariant(object):
 
         # Remove common prefix from all alleles.
         if common_suffix:
-            self.log.append('trim common suffix')
+            self.log.append("trim common suffix")
             self.position.chrom_stop -= common_suffix
             self.seq_3p = self.alleles[0][-common_suffix:] + self.seq_3p
             for i, allele in enumerate(self.alleles):
@@ -242,8 +264,7 @@ class NormalizedVariant(object):
             return
 
         # Identify the inserted or deleted sequence.
-        alleles_with_seq = [i for i, allele in enumerate(self.alleles)
-                            if allele]
+        alleles_with_seq = [i for i, allele in enumerate(self.alleles) if allele]
 
         # Can only left-align biallelic, non ins-plus-del indels.
         if len(alleles_with_seq) == 1:
@@ -252,25 +273,32 @@ class NormalizedVariant(object):
 
             if self.genome:
                 start, end, allele = justify_genomic_indel(
-                    self.genome, self.position.chrom,
-                    self.position.chrom_start, self.position.chrom_stop,
-                    allele, justify)
+                    self.genome,
+                    self.position.chrom,
+                    self.position.chrom_start,
+                    self.position.chrom_stop,
+                    allele,
+                    justify,
+                )
                 # if right-aligning an insertion, insert at the end
-                if justify == 'right' and i != 0:
+                if justify == "right" and i != 0:
                     start += len(allele)
                     end += len(allele)
                 self.position.chrom_start = start
                 self.position.chrom_stop = end
                 flank_length = 30
-                self.seq_5p = get_sequence(self.genome, self.position.chrom,
-                                           start - flank_length, start)
-                self.seq_3p = get_sequence(self.genome, self.position.chrom,
-                                           end, end + flank_length)
+                self.seq_5p = get_sequence(
+                    self.genome, self.position.chrom, start - flank_length, start
+                )
+                self.seq_3p = get_sequence(
+                    self.genome, self.position.chrom, end, end + flank_length
+                )
                 self.alleles[i] = allele
             else:
                 offset = len(self.seq_5p)
                 offset2, _, allele = justify_indel(
-                    offset, offset, allele, self.seq_5p, justify)
+                    offset, offset, allele, self.seq_5p, justify
+                )
                 delta = offset - offset2
                 if delta > 0:
                     self.position.chrom_start -= delta
@@ -293,12 +321,13 @@ class NormalizedVariant(object):
         uniq_starts = set(allele[0] for allele in self.alleles if allele)
         if empty_seq or (self.indels_start_with_same_base and len(uniq_starts) > 1):
             # Fetch more 5p flanking sequence if needed.
-            if self.genome and self.seq_5p == '':
+            if self.genome and self.seq_5p == "":
                 start = self.position.chrom_start
                 self.seq_5p = get_sequence(
-                    self.genome, self.position.chrom, start - 5, start)
+                    self.genome, self.position.chrom, start - 5, start
+                )
 
-            self.log.append('1bp pad')
+            self.log.append("1bp pad")
             if self.seq_5p:
                 for i, allele in enumerate(self.alleles):
                     self.alleles[i] = self.seq_5p[-1] + self.alleles[i]
@@ -317,8 +346,7 @@ class NormalizedVariant(object):
 
         if self.indels_start_with_same_base:
             if len(set(a[0] for a in self.alleles)) != 1:
-                raise AssertionError(
-                    "All INDEL alleles should start with same base.")
+                raise AssertionError("All INDEL alleles should start with same base.")
 
     def _set_1based_position(self):
         """
@@ -330,8 +358,8 @@ class NormalizedVariant(object):
     def molecular_class(self):
         for allele in self.alleles:
             if len(allele) != 1:
-                return 'INDEL'
-        return 'SNP'
+                return "INDEL"
+        return "SNP"
 
     @property
     def ref_allele(self):
@@ -343,5 +371,9 @@ class NormalizedVariant(object):
 
     @property
     def variant(self):
-        return (self.position.chrom, self.position.chrom_start,
-                self.ref_allele, self.alt_alleles)
+        return (
+            self.position.chrom,
+            self.position.chrom_start,
+            self.ref_allele,
+            self.alt_alleles,
+        )

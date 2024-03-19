@@ -45,9 +45,8 @@ file_folder = os.path.dirname(__file__)
 # Main folder
 folder_main = os.path.abspath(os.path.join(file_folder, "../.."))
 folder_config = os.path.abspath(os.path.join(folder_main, "config"))
-folder_user_home = os.path.abspath(os.path.expanduser('~'))
-#folder_user_home = '~'
-folder_howard_home = os.path.join(folder_user_home,"howard")
+folder_user_home = os.path.abspath(os.path.expanduser("~"))
+folder_howard_home = os.path.join(folder_user_home, "howard")
 
 comparison_map = {
     "gt": ">",
@@ -55,49 +54,39 @@ comparison_map = {
     "lt": "<",
     "lte": "<=",
     "equals": "=",
-    "contains": "SIMILAR TO"
+    "contains": "SIMILAR TO",
 }
 
 
-code_type_map = {
-    "Integer": 0,
-    "String": 1,
-    "Float": 2,
-    "Flag": 3
-}
+code_type_map = {"Integer": 0, "String": 1, "Float": 2, "Flag": 3}
 
 
 code_type_map_to_sql = {
     "Integer": "INTEGER",
     "String": "VARCHAR",
     "Float": "FLOAT",
-    "Flag": "VARCHAR"
+    "Flag": "VARCHAR",
 }
 
 
-file_format_delimiters = {
-    "vcf": "\t",
-    "tsv": "\t",
-    "csv": ",",
-    "psv": "|",
-    "bed": "\t"
-}
+file_format_delimiters = {"vcf": "\t", "tsv": "\t", "csv": ",", "psv": "|", "bed": "\t"}
 
-file_format_allowed = list(file_format_delimiters.keys()) + ["json", "parquet", "duckdb"]
+file_format_allowed = list(file_format_delimiters.keys()) + [
+    "json",
+    "parquet",
+    "duckdb",
+]
 
 file_compressed_format = ["gz", "bgz"]
 
 
-vcf_required_release = '##fileformat=VCFv4.2'
-vcf_required_columns = ['#CHROM','POS','ID','REF','ALT','QUAL','FILTER','INFO']
+vcf_required_release = "##fileformat=VCFv4.2"
+vcf_required_columns = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO"]
 
-vcf_required = [
-            vcf_required_release,
-            "\t".join(vcf_required_columns)
-            ]
+vcf_required = [vcf_required_release, "\t".join(vcf_required_columns)]
 
 # Tools
-DEFAULT_TOOLS_FOLDER = os.path.join(folder_howard_home,"tools")
+DEFAULT_TOOLS_FOLDER = os.path.join(folder_howard_home, "tools")
 
 DEFAULT_TOOLS_BIN = {
     "bcftools": {"bin": "bcftools"},
@@ -105,8 +94,8 @@ DEFAULT_TOOLS_BIN = {
     "java": {"bin": "java"},
     "snpeff": {"jar": "~/howard/tools/snpeff/current/bin/snpEff.jar"},
     "annovar": {"perl": "~/howard/tools/annovar/current/bin/table_annovar.pl"},
-    "exomiser": {"jar": "~/howard/tools/exomiser/current/bin/exomiser.jar"}
-  }
+    "exomiser": {"jar": "~/howard/tools/exomiser/current/bin/exomiser.jar"},
+}
 
 # URL
 DEFAULT_ANNOVAR_URL = "http://www.openbioinformatics.org/annovar/download"
@@ -120,7 +109,7 @@ DEFAULT_DBSNP_URL = "https://ftp.ncbi.nih.gov/snp/archive"
 
 
 # Databases default folder
-DEFAULT_DATABASE_FOLDER = os.path.join(folder_howard_home,"databases")
+DEFAULT_DATABASE_FOLDER = os.path.join(folder_howard_home, "databases")
 DEFAULT_ANNOTATIONS_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/annotations/current"
 DEFAULT_GENOME_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/genomes/current"
 DEFAULT_SNPEFF_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/snpeff/current"
@@ -131,7 +120,7 @@ DEFAULT_EXOMISER_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/exomiser/current"
 DEFAULT_DBSNP_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/exomiser/dbsnp"
 
 # Data default folder
-DEFAULT_DATA_FOLDER = os.path.join(folder_howard_home,"data")
+DEFAULT_DATA_FOLDER = os.path.join(folder_howard_home, "data")
 
 # Deefault Assembly
 DEFAULT_ASSEMBLY = "hg19"
@@ -140,38 +129,26 @@ DEFAULT_ASSEMBLY = "hg19"
 DUCKDB_EXTENSION = f"{file_folder}/duckdb_extension"
 
 # Variables
-MACHIN_LIST = {
-    "amd64": "amd64",
-    "arm64": "arm64"
-}
+MACHIN_LIST = {"amd64": "amd64", "arm64": "arm64"}
 
-# bcftools format allowed 
+# bcftools format allowed
 BCFTOOLS_FORMAT = ["vcf", "bed"]
 
 LOG_FORMAT = "#[%(asctime)s] [%(levelname)s] %(message)s"
 
-CODE_TYPE_MAP = {
-            "Integer": 0,
-            "String": 1,
-            "Float": 2,
-            "Flag": 3
-        }
+CODE_TYPE_MAP = {"Integer": 0, "String": 1, "Float": 2, "Flag": 3}
 
-GENOTYPE_MAP = {
-            None: ".",
-            -1: "A",
-            -2: "G",
-            -3: "R"
-        }
+GENOTYPE_MAP = {None: ".", -1: "A", -2: "G", -3: "R"}
 
 DTYPE_LIMIT_AUTO = 10000
 
-DEFAULT_CHUNK_SIZE = 1024*1024
+DEFAULT_CHUNK_SIZE = 1024 * 1024
+
 
 def remove_if_exists(filepaths: list) -> None:
     """
     The function removes a file if it exists at the specified filepath(s).
-    
+
     :param filepaths: A list of file paths that you want to check for existence and remove if they exist
     :type filepaths: list
     """
@@ -191,13 +168,13 @@ def remove_if_exists(filepaths: list) -> None:
             # Folder
             if os.path.isdir(filepath):
                 shutil.rmtree(filepath)
-            
+
             # File
             else:
                 os.remove(filepath)
 
 
-def set_log_level(verbosity: str, log_file:str = None) -> str:
+def set_log_level(verbosity: str, log_file: str = None) -> str:
     """
     It sets the log level of the Python logging module
 
@@ -215,10 +192,10 @@ def set_log_level(verbosity: str, log_file:str = None) -> str:
     }
     if verbosity not in configs.keys():
         raise ValueError("Unknown verbosity level:" + verbosity)
-    
+
     log.basicConfig(
         filename=log_file,
-        encoding='utf-8', 
+        encoding="utf-8",
         format=LOG_FORMAT,
         datefmt="%Y-%m-%d %H:%M:%S",
         level=configs[verbosity],
@@ -246,7 +223,7 @@ def split_interval(start: int, end: int, step: int = None, ncuts: int = None):
         return list(range(start, end, step)) + [end]
     if ncuts is not None:
         step = (end - start) / ncuts
-        return [start + i*step for i in range(ncuts+1)]
+        return [start + i * step for i in range(ncuts + 1)]
 
 
 def merge_regions(regions: list) -> list:
@@ -274,8 +251,11 @@ def merge_regions(regions: list) -> list:
         for region in sorted_regions[1:]:
             # If current region overlap next region, merge both
             if current_region[0] == region[0] and current_region[2] >= region[1]:
-                current_region = (current_region[0], current_region[1], max(
-                    current_region[2], region[2]))
+                current_region = (
+                    current_region[0],
+                    current_region[1],
+                    max(current_region[2], region[2]),
+                )
             # Else, add current region to merged regions list, and next region
             else:
                 merged_regions.append(current_region)
@@ -309,7 +289,9 @@ def create_where_clause(merged_regions: list, table: str = "variants") -> str:
             where_clause_chrom_sep = ""
         else:
             where_clause_chrom_sep = " OR "
-        where_clause_chrom[chrom] += f" {where_clause_chrom_sep} ({table}.POS >= {start} AND {table}.POS <= {stop}) "
+        where_clause_chrom[
+            chrom
+        ] += f" {where_clause_chrom_sep} ({table}.POS >= {start} AND {table}.POS <= {stop}) "
 
     nb_chrom = 0
     where_clause_sep = ""
@@ -330,7 +312,7 @@ def command(command: str) -> str:
     :return: The return value is the exit status of the process.
     """
     output = subprocess.check_output(command, shell=True)
-    return output.decode('utf-8').strip()
+    return output.decode("utf-8").strip()
 
 
 def run_parallel_commands(commands: list, threads: int = 1) -> list:
@@ -344,8 +326,9 @@ def run_parallel_commands(commands: list, threads: int = 1) -> list:
     pool = multiprocessing.Pool(threads)
     results = []
     for cmd in commands:
-        results.append(pool.apply_async(command, args=(
-            cmd,), error_callback=lambda e: print(e)))
+        results.append(
+            pool.apply_async(command, args=(cmd,), error_callback=lambda e: print(e))
+        )
     pool.close()
     pool.join()
     return [result.get().strip() for result in results]
@@ -363,8 +346,9 @@ def run_parallel_functions(functions: list, threads: int = 1) -> list:
     pool = multiprocessing.Pool(threads)
     results = []
     for func in functions:
-        results.append(pool.apply_async(func, args=(1, "hello"),
-                       error_callback=lambda e: print(e)))
+        results.append(
+            pool.apply_async(func, args=(1, "hello"), error_callback=lambda e: print(e))
+        )
     pool.close()
     pool.join()
     return results
@@ -409,7 +393,7 @@ def find_all(name: str, path: str) -> list:
     :param path: The path to search in
     :return: A list of all the files in the directory that have the name "name"
     """
-    
+
     # result
     result = []
 
@@ -420,8 +404,6 @@ def find_all(name: str, path: str) -> list:
         for filename in fnmatch.filter(files, name):
             if os.path.exists(os.path.join(root, filename)):
                 result.append(os.path.join(root, filename))
-        # if name in files:
-        #     result.append(os.path.join(root, name))
     return result
 
 
@@ -429,7 +411,7 @@ def find_genome(genome_path: str, assembly: str = None, file: str = None) -> str
     """
     The `find_genome` function checks if a genome file exists at the specified path, and if not, it
     tries to find it using the provided assembly name or file name.
-    
+
     :param genome_path: The path to the genome file
     :type genome_path: str
     :param assembly: The `assembly` parameter is a string that represents the name of the genome
@@ -454,16 +436,18 @@ def find_genome(genome_path: str, assembly: str = None, file: str = None) -> str
         # Try to find genome
         if file and find_all(file, genome_dir):
             genome_path = find_all(file, genome_dir)[0]
-        elif assembly and find_all(assembly+".fa", genome_dir):
-            genome_path = find_all(assembly+".fa", genome_dir)[0]
+        elif assembly and find_all(assembly + ".fa", genome_dir):
+            genome_path = find_all(assembly + ".fa", genome_dir)[0]
     return genome_path
 
 
-def find_file_prefix(input_file:str = None, prefix:str = None, folder:str = None, assembly:str = None) -> str:
+def find_file_prefix(
+    input_file: str = None, prefix: str = None, folder: str = None, assembly: str = None
+) -> str:
     """
     The function `find_file_prefix` is used to find a specific file based on input parameters such as
     input file, folder, and assembly.
-    
+
     :param input_file: The input file is the file that you want to find the prefix for. It can be a file
     path or just the file name if it is in the current directory
     :type input_file: str
@@ -482,13 +466,11 @@ def find_file_prefix(input_file:str = None, prefix:str = None, folder:str = None
 
     # Full path
     input_file = full_path(input_file)
-    output_file = full_path(output_file)
     folder = full_path(folder)
 
     if input_file and os.path.exists(input_file):
         output_file = input_file
     else:
-        #refgene_prefix = "refGene"
         # Find in specific assembly folder
         if find_all(f"{prefix}.txt", f"{folder}/{assembly}"):
             output_file = find_all(f"{prefix}.txt", f"{folder}/{assembly}")[0]
@@ -502,7 +484,11 @@ def find_file_prefix(input_file:str = None, prefix:str = None, folder:str = None
     return output_file
 
 
-def find_nomen(hgvs: str = "", pattern="GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN", transcripts: list = []) -> dict:
+def find_nomen(
+    hgvs: str = "",
+    pattern="GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN",
+    transcripts: list = [],
+) -> dict:
     """
     > This function takes a HGVS string and a list of transcripts and returns a dictionary with the best
     NOMEN for each HGVS string
@@ -548,12 +534,12 @@ def find_nomen(hgvs: str = "", pattern="GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOME
 
     if hgvs != "nan":
 
-        hgvs_split = str(hgvs).split(',')
+        hgvs_split = str(hgvs).split(",")
 
         nomen_score_max = 0
 
         for one_hgvs in hgvs_split:
-            one_hgvs_split = one_hgvs.split(':')
+            one_hgvs_split = one_hgvs.split(":")
 
             one_nomen_score = 0
             one_nomen_dict = empty_nomen_dict.copy()
@@ -565,34 +551,45 @@ def find_nomen(hgvs: str = "", pattern="GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOME
                     one_nomen_dict["TVNOMEN"] = one_hgvs_infos
                     one_nomen_score += 1
                     # Split transcript
-                    one_hgvs_infos_split = one_hgvs_infos.split('.')
+                    one_hgvs_infos_split = one_hgvs_infos.split(".")
                     # Transcript
                     one_nomen_dict["TNOMEN"] = one_hgvs_infos_split[0]
                     # Transcript version
                     if len(one_hgvs_infos_split) > 1:
                         one_nomen_dict["VNOMEN"] = one_hgvs_infos_split[1]
                     # NOMEN Score
-                    if re.match(r"^NM_(.*)$", one_hgvs_infos) or re.match(r"^NM_(.*)$", one_hgvs_infos):
+                    if re.match(r"^NM_(.*)$", one_hgvs_infos) or re.match(
+                        r"^NM_(.*)$", one_hgvs_infos
+                    ):
                         one_nomen_score += 2
                     elif re.match(r"^NR_(.*)$", one_hgvs_infos):
                         one_nomen_score += 1
                     # NOMEN with default transcript
-                    if one_nomen_dict["TVNOMEN"] in transcripts or one_nomen_dict["TNOMEN"] in transcripts:
-                        rank = max( get_index(one_nomen_dict["TVNOMEN"], transcripts), get_index(one_nomen_dict["TNOMEN"], transcripts))
+                    if (
+                        one_nomen_dict["TVNOMEN"] in transcripts
+                        or one_nomen_dict["TNOMEN"] in transcripts
+                    ):
+                        rank = max(
+                            get_index(one_nomen_dict["TVNOMEN"], transcripts),
+                            get_index(one_nomen_dict["TNOMEN"], transcripts),
+                        )
                         if rank >= 0:
-                            one_nomen_score += (100 *
-                                                (len(transcripts) - rank))
+                            one_nomen_score += 100 * (len(transcripts) - rank)
 
-                elif re.match(r"^[NX][P]_(.*)$", one_hgvs_infos):
+                elif re.match(r"^[NX]P_(.*)$", one_hgvs_infos):
                     # Transcript Protein with version
                     one_nomen_dict["TPVNOMEN"] = one_hgvs_infos
                     one_nomen_score += 1
                     # Split transcript
-                    one_hgvs_infos_split = one_hgvs_infos.split('.')
+                    one_hgvs_infos_split = one_hgvs_infos.split(".")
                     # Transcript Protein
                     one_nomen_dict["TPNOMEN"] = one_hgvs_infos_split[0]
 
-                elif re.match(r"^c\.(.*)$", one_hgvs_infos) or re.match(r"^g\.(.*)$", one_hgvs_infos) or re.match(r"^m\.(.*)$", one_hgvs_infos):
+                elif (
+                    re.match(r"^c\.(.*)$", one_hgvs_infos)
+                    or re.match(r"^g\.(.*)$", one_hgvs_infos)
+                    or re.match(r"^m\.(.*)$", one_hgvs_infos)
+                ):
                     one_nomen_dict["CNOMEN"] = one_hgvs_infos
                     one_nomen_score += 1
                 elif re.match(r"^n\.(.*)$", one_hgvs_infos):
@@ -616,7 +613,7 @@ def find_nomen(hgvs: str = "", pattern="GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOME
 
         # Contruct NOMEN from pattern
         nomen = []
-        for n in pattern.split(':'):
+        for n in pattern.split(":"):
             if nomen_dict.get(n, None):
                 nomen.append(nomen_dict.get(n, None))
         nomen_dict["NOMEN"] = ":".join(nomen)
@@ -624,11 +621,31 @@ def find_nomen(hgvs: str = "", pattern="GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOME
     return nomen_dict
 
 
-def extract_snpeff_hgvs(snpeff:str = "", header:str = ['Allele', 'Annotation', 'Annotation_Impact', 'Gene_Name', 'Gene_ID', 'Feature_Type', 'Feature_ID', 'Transcript_BioType', 'Rank', 'HGVS.c', 'HGVS.p', 'cDNA.pos / cDNA.length', 'CDS.pos / CDS.length', 'AA.pos / AA.length', 'Distance', 'ERRORS / WARNINGS / INFO']) -> str:
+def extract_snpeff_hgvs(
+    snpeff: str = "",
+    header: str = [
+        "Allele",
+        "Annotation",
+        "Annotation_Impact",
+        "Gene_Name",
+        "Gene_ID",
+        "Feature_Type",
+        "Feature_ID",
+        "Transcript_BioType",
+        "Rank",
+        "HGVS.c",
+        "HGVS.p",
+        "cDNA.pos / cDNA.length",
+        "CDS.pos / CDS.length",
+        "AA.pos / AA.length",
+        "Distance",
+        "ERRORS / WARNINGS / INFO",
+    ],
+) -> str:
     """
     This function extracts HGVS annotations from a given snpEff annotation string and returns them as a
     comma-separated string.
-    
+
     :param snpeff: The `snpeff` parameter is a string that contains annotations for genetic variants in
     a specific format. It is used as input to extract HGVS notation for the variants
     :type snpeff: str
@@ -640,27 +657,22 @@ def extract_snpeff_hgvs(snpeff:str = "", header:str = ['Allele', 'Annotation', '
     string.
     """
 
-    snpeff_hgvs = ""
-
-    if snpeff != "nan":
-        snpeff_hgvs = "snpeff_hgvs_list"
-    
     log.debug(f"snpeff={snpeff}")
 
     # Split snpeff ann values
-    snpeff_infos = [x.split('|') for x in snpeff.split(",")]
+    snpeff_infos = [x.split("|") for x in snpeff.split(",")]
 
     # Create Dataframe
     snpeff_dict = {}
     for i in range(len(header)):
         snpeff_dict[header[i]] = [x[i] for x in snpeff_infos]
-    df = pd.DataFrame.from_dict(snpeff_dict, orient='index').transpose()
+    df = pd.DataFrame.from_dict(snpeff_dict, orient="index").transpose()
 
     # Fetch each annotations
     hgvs_list = []
     for i, row in df.iterrows():
 
-        # Catch values 
+        # Catch values
         gene_id = row["Gene_ID"]
         feature_id = row["Feature_ID"]
         rank = row["Rank"]
@@ -693,7 +705,7 @@ def extract_snpeff_hgvs(snpeff:str = "", header:str = ['Allele', 'Annotation', '
 def get_index(value, values: list = []) -> int:
     """
     The function returns the index of a given value in a list, or -1 if the value is not in the list.
-    
+
     :param value: The value to search for in the list
     :param values: The parameter "values" is a list of values in which we want to find the index of a
     specific value. It is an optional parameter with a default value of an empty list
@@ -705,7 +717,7 @@ def get_index(value, values: list = []) -> int:
     try:
         return values.index(value)
     except ValueError:
-        # Si l'élément n'existe pas dans la liste, renvoyer un index négatif pour qu'il soit ignoré dans le calcul
+        # If element does not exist, return -1
         return -1
 
 
@@ -721,19 +733,18 @@ def get_file_format(filename: str = None) -> str:
         filename_name, filename_extension = os.path.splitext(filename)
         filename_format = filename_extension.replace(".", "")
         if filename_format in file_compressed_format:
-            filename_name_name, filename_name_extension = os.path.splitext(
-                filename_name)
+            _, filename_name_extension = os.path.splitext(filename_name)
             filename_format = filename_name_extension.replace(".", "")
     else:
         filename_format = "unknown"
     return filename_format
 
 
-def findbypipeline(df, samples:list = []):
+def findbypipeline(df, samples: list = []):
     """
     This function takes a dataframe and a list of samples, and returns the number of pipelines found in
     the samples that have a non-null GT value.
-    
+
     :param df: The input dataframe containing genetic variant information
     :param samples: The `samples` parameter is a list of strings representing the names of the
     samples/pipelines to be searched for in the input dataframe `df`
@@ -764,20 +775,20 @@ def findbypipeline(df, samples:list = []):
         # Create Dataframe
         sample_dict = {}
         for i in range(len(format_fields)):
-            if len(sample_infos)>i:
+            if len(sample_infos) > i:
                 sample_dict[format_fields[i]] = sample_infos[i]
-        
+
         # Check if GT not null
-        if sample_dict["GT"].replace("0",".") not in ['','.','./.','.|.']:
+        if sample_dict["GT"].replace("0", ".") not in ["", ".", "./.", ".|."]:
             nb_pipeline_find += 1
 
     return f"{nb_pipeline_find}/{nb_pipeline}"
 
 
-def genotypeconcordance(df, samples:list = []):
+def genotypeconcordance(df, samples: list = []):
     """
     The function checks the genotype concordance of a given list of samples in a dataframe.
-    
+
     :param df: The input dataframe containing genetic variant information, including genotype
     information for each sample/pipeline
     :param samples: The parameter "samples" is a list of sample/pipeline names that are present in the
@@ -810,22 +821,22 @@ def genotypeconcordance(df, samples:list = []):
             # Create Dataframe
             sample_dict = {}
             for i in range(len(format_fields)):
-                if len(sample_infos)>i:
+                if len(sample_infos) > i:
                     sample_dict[format_fields[i]] = sample_infos[i]
-            
+
             # Check if GT not null
-            #genotype_list[sample_dict["GT"]] = 1
-            if sample_dict["GT"] not in ['','.','./.','.|.']:
+            # genotype_list[sample_dict["GT"]] = 1
+            if sample_dict["GT"] not in ["", ".", "./.", ".|."]:
                 genotype_list[sample_dict["GT"]] = 1
 
     return str(len(genotype_list) == 1).upper()
 
 
-def genotype_compression(genotype:str = "") -> str:
+def genotype_compression(genotype: str = "") -> str:
     """
     The function takes a genotype string, replaces dots with zeros, removes non-digit characters, sorts
     and removes duplicates, and returns the compressed genotype string.
-    
+
     :param genotype: The input genotype as a string. It is a DNA sequence that contains genetic
     information
     :type genotype: str
@@ -834,19 +845,18 @@ def genotype_compression(genotype:str = "") -> str:
     duplicates removed and sorted. The compressed string is returned as a string.
     """
 
-    genotype_compressed = genotype
-    genotype_compressed = re.sub(r'\.', '0', genotype_compressed)
-    genotype_compressed = re.sub(r'\D', '', genotype_compressed)
-    genotype_compressed = ''.join(sorted(set(genotype_compressed)))
+    genotype_compressed = "".join(
+        sorted(set(re.sub(r"\D", "", genotype.replace(".", "0"))))
+    )
 
     return genotype_compressed
 
 
-def genotype_barcode(genotype:str = "") -> str:
+def genotype_barcode(genotype: str = "") -> str:
     """
     This function takes a genotype string and compresses it, then returns a barcode string based on the
     length and content of the compressed genotype.
-    
+
     :param genotype: The genotype parameter is a string that represents a genetic sequence or code
     :type genotype: str
     :return: The function `genotype_barcode` returns a string representing the barcode for a given
@@ -868,7 +878,7 @@ def genotype_barcode(genotype:str = "") -> str:
     return barcode
 
 
-def barcode(df, samples:list = []):
+def barcode(df, samples: list = []):
     """
     Generates a barcode based on the genotype of the specified samples.
 
@@ -902,20 +912,20 @@ def barcode(df, samples:list = []):
             # Create Dataframe
             sample_dict = {}
             for i in range(len(format_fields)):
-                if len(sample_infos)>i:
+                if len(sample_infos) > i:
                     sample_dict[format_fields[i]] = sample_infos[i]
-            
+
             # generate barcode
             barcode.append(genotype_barcode(sample_dict["GT"]))
 
     return "".join(barcode)
 
 
-def trio(df, samples:list = []):
+def trio(df, samples: list = []):
     """
     The function trio(df, samples:list = []) determines the type of variant (denovo, dominant, or
     recessive) in a trio based on the barcode generated from the samples.
-    
+
     :param df: The input dataframe containing genetic variant information
     :param samples: A list of sample IDs to be used in the analysis
     :type samples: list
@@ -933,8 +943,8 @@ def trio(df, samples:list = []):
     # switcher
     switcher = {
         "001": "denovo",
-        ("011","101","111","021","201","121","211"): "dominant",
-        ("112","212","122","222"): "recessive"
+        ("011", "101", "111", "021", "201", "121", "211"): "dominant",
+        ("112", "212", "122", "222"): "recessive",
     }
 
     trio_variant_type = "unknown"
@@ -946,12 +956,12 @@ def trio(df, samples:list = []):
     return trio_variant_type
 
 
-def vaf_normalization(row, sample:str) -> str:
+def vaf_normalization(row, sample: str) -> str:
     """
     This function takes in a row of data and a sample name, extracts the genotype information for that
     sample, calculates the variant allele frequency (VAF) from the genotype information, and adds the
     VAF to the genotype information before returning it.
-    
+
     :param row: The input row of a pandas DataFrame containing information about a genetic variant
     :param sample: The parameter "sample" is a string representing the name of the sample for which we
     want to calculate the VAF (Variant Allele Frequency). It is used to extract the genotype information
@@ -963,21 +973,21 @@ def vaf_normalization(row, sample:str) -> str:
 
     # format
     format_fields = row["FORMAT"].split(":")
-    
+
     # Sample genotype
     sample_genotype = row[sample]
 
     # No genotype
     if not sample_genotype:
         sample_genotype = "./."
-    
+
     # Split samples values values
     sample_genotype_infos = sample_genotype.split(":")
 
     # Create Dataframe
     sample_genotype_dict = {}
     for i in range(len(format_fields)):
-        if len(sample_genotype_infos)>i:
+        if len(sample_genotype_infos) > i:
             sample_genotype_dict[format_fields[i]] = sample_genotype_infos[i]
         else:
             sample_genotype_dict[format_fields[i]] = "."
@@ -988,14 +998,16 @@ def vaf_normalization(row, sample:str) -> str:
     # VAF from FREQ
     if "FREQ" in sample_genotype_dict:
         if sample_genotype_dict["FREQ"] != ".":
-            vaf_freq = sum(map(float, sample_genotype_dict["FREQ"].replace('%', '').split(',')))
+            vaf_freq = sum(
+                map(float, sample_genotype_dict["FREQ"].replace("%", "").split(","))
+            )
             if vaf_freq:
                 vaf = round(vaf_freq / 100, 4)
     # VAF from DP4
     elif "DP4" in sample_genotype_dict:
         if sample_genotype_dict["DP4"] != ".":
             dp4_split = sample_genotype_dict["DP4"].split(",")
-            if dp4_split != ['.']:
+            if dp4_split != ["."]:
                 dp4_dp = sum(map(int, dp4_split))
                 pd4_alt = sum(map(int, dp4_split[2:]))
                 vaf = round(pd4_alt / dp4_dp, 6) if dp4_dp else "."
@@ -1003,7 +1015,7 @@ def vaf_normalization(row, sample:str) -> str:
     elif "AD" in sample_genotype_dict:
         if sample_genotype_dict["AD"] != ".":
             ad_split = sample_genotype_dict["AD"].split(",")
-            if ad_split != ['.']:
+            if ad_split != ["."]:
                 ad_dp = sum(map(int, ad_split))
                 ad_alt = sum(map(int, ad_split[1:]))
                 vaf = round(ad_alt / ad_dp, 6) if ad_dp else "."
@@ -1017,11 +1029,11 @@ def vaf_normalization(row, sample:str) -> str:
     return genotype_with_vaf
 
 
-def genotype_stats(df, samples:list = [], info:str = "VAF"):
+def genotype_stats(df, samples: list = [], info: str = "VAF"):
     """
     This function computes statistics on a specified information field (e.g. VAF) for a given set of
     samples in a pandas dataframe.
-    
+
     :param df: The input dataframe containing variant information
     :param samples: The list of sample/pipeline names for which to compute the genotype statistics. If
     empty, the function will return an empty dictionary
@@ -1041,13 +1053,13 @@ def genotype_stats(df, samples:list = [], info:str = "VAF"):
 
     # init
     vaf_stats = {
-        info+"_stats_nb": 0,
-        info+"_stats_list": None,
-        info+"_stats_min": None,
-        info+"_stats_max": None,
-        info+"_stats_mean": None,
-        info+"_stats_mediane": None,
-        info+"_stats_stdev": None
+        info + "_stats_nb": 0,
+        info + "_stats_list": None,
+        info + "_stats_min": None,
+        info + "_stats_max": None,
+        info + "_stats_mean": None,
+        info + "_stats_mediane": None,
+        info + "_stats_stdev": None,
     }
 
     # no sample/pipeline
@@ -1056,7 +1068,7 @@ def genotype_stats(df, samples:list = [], info:str = "VAF"):
 
     # init
     vaf_list = []
-    
+
     # For each sample/pipeline
     for sample in samples:
 
@@ -1066,9 +1078,9 @@ def genotype_stats(df, samples:list = [], info:str = "VAF"):
         # Create Dataframe
         sample_dict = {}
         for i in range(len(format_fields)):
-            if len(sample_infos)>i:
+            if len(sample_infos) > i:
                 sample_dict[format_fields[i]] = sample_infos[i]
-        
+
         # Check if GT not null
         if info in sample_dict:
             try:
@@ -1078,28 +1090,28 @@ def genotype_stats(df, samples:list = [], info:str = "VAF"):
             if vaf_float:
                 vaf_list.append(vaf_float)
 
-    vaf_stats[info+"_stats_nb"] = len(vaf_list)
+    vaf_stats[info + "_stats_nb"] = len(vaf_list)
     if vaf_list:
-        vaf_stats[info+"_stats_list"] = ":".join([str(x) for x in vaf_list])
+        vaf_stats[info + "_stats_list"] = ":".join([str(x) for x in vaf_list])
 
     # Compute min, max, mean and median only if the list is not empty
     if vaf_list:
-        vaf_stats[info+"_stats_min"] = min(vaf_list)
-        vaf_stats[info+"_stats_max"] = max(vaf_list)
-        vaf_stats[info+"_stats_mean"] = statistics.mean(vaf_list)
-        vaf_stats[info+"_stats_mediane"] = statistics.median(vaf_list)
+        vaf_stats[info + "_stats_min"] = min(vaf_list)
+        vaf_stats[info + "_stats_max"] = max(vaf_list)
+        vaf_stats[info + "_stats_mean"] = statistics.mean(vaf_list)
+        vaf_stats[info + "_stats_mediane"] = statistics.median(vaf_list)
 
     # Check if there are at least 2 values in the list before computing variance or stdev
     if len(vaf_list) >= 2:
-        vaf_stats[info+"_stats_stdev"] = statistics.stdev(vaf_list)
+        vaf_stats[info + "_stats_stdev"] = statistics.stdev(vaf_list)
 
     return vaf_stats
 
 
-def extract_file(file_path:str, path:str = None, threads:int = 1):
+def extract_file(file_path: str, path: str = None, threads: int = 1):
     """
     The function extracts a compressed file in .zip or .gz format based on the file path provided.
-    
+
     :param file_path: The file path parameter is a string that represents the path to a file that needs
     to be extracted. The function checks if the file has a ".zip" or ".gz" extension and extracts it
     accordingly
@@ -1114,20 +1126,33 @@ def extract_file(file_path:str, path:str = None, threads:int = 1):
     :type threads: int (optional)
     """
 
-    if file_path.endswith('.zip'):
+    if file_path.endswith(".zip"):
         if not path:
             path = os.path.dirname(file_path)
-        with zipfile.ZipFile(file_path, 'r') as zip_ref:
+        with zipfile.ZipFile(file_path, "r") as zip_ref:
             zip_ref.extractall(path)
-    elif file_path.endswith('.gz'):
-        concat_and_compress_files(input_files=[file_path], output_file=file_path[:-3], compression_type="none", threads=threads)
+    elif file_path.endswith(".gz"):
+        concat_and_compress_files(
+            input_files=[file_path],
+            output_file=file_path[:-3],
+            compression_type="none",
+            threads=threads,
+        )
 
 
-def download_file(url:str, dest_file_path:str, chunk_size:int = 1024*1024, try_aria:bool = True, aria_async_dns:bool = False, threads:int = 1, quiet:bool = True):
+def download_file(
+    url: str,
+    dest_file_path: str,
+    chunk_size: int = 1024 * 1024,
+    try_aria: bool = True,
+    aria_async_dns: bool = False,
+    threads: int = 1,
+    quiet: bool = True,
+):
     """
     The `download_file` function is a Python function that downloads a file from a given URL and saves
     it to a specified destination file path in chunks.
-    
+
     :param url: The `url` parameter is the URL of the file you want to download. It should be a string
     that represents the complete URL, including the protocol (e.g., "http://example.com/file.txt")
     :type url: str
@@ -1174,7 +1199,7 @@ def download_file(url:str, dest_file_path:str, chunk_size:int = 1024*1024, try_a
 
             # Aria options
             aria_async_dns_option = str(aria_async_dns).lower()
-            if quiet and log.root.level>=20:
+            if quiet and log.root.level >= 20:
                 aria_quiet_option = " --quiet "
                 aria_redirect_option = " 2>/dev/null "
             else:
@@ -1187,14 +1212,18 @@ def download_file(url:str, dest_file_path:str, chunk_size:int = 1024*1024, try_a
             # Launch command
             # Try with --async-dns option
             try:
-                output = os.system(f"{aria_command} --async-dns={aria_async_dns_option} {aria_redirect_option}")
+                output = os.system(
+                    f"{aria_command} --async-dns={aria_async_dns_option} {aria_redirect_option}"
+                )
                 if output:
                     assert False
             except:
                 output = os.system(aria_command)
-            
+
             # Test output file
-            if output or not (os.path.exists(dest_file_path) and os.stat(dest_file_path).st_size > 0):
+            if output or not (
+                os.path.exists(dest_file_path) and os.stat(dest_file_path).st_size > 0
+            ):
                 assert False
 
         else:
@@ -1208,10 +1237,10 @@ def download_file(url:str, dest_file_path:str, chunk_size:int = 1024*1024, try_a
             r.raise_for_status()
 
             # Create a temporary file
-            tmp_file_path = dest_file_path + '.tmp'
+            tmp_file_path = dest_file_path + ".tmp"
 
             # Open the temporary file for writing in binary mode
-            with open(tmp_file_path, 'wb') as f:
+            with open(tmp_file_path, "wb") as f:
 
                 # Download the file by chunks
                 for chunk in r.iter_content(chunk_size=chunk_size):
@@ -1225,11 +1254,17 @@ def download_file(url:str, dest_file_path:str, chunk_size:int = 1024*1024, try_a
     return os.path.exists(dest_file_path)
 
 
-def get_bin(bin:str = None, tool:str = None, bin_type:str = "bin", config:dict = {}, default_folder:str = DEFAULT_TOOLS_FOLDER):
+def get_bin(
+    bin: str = None,
+    tool: str = None,
+    bin_type: str = "bin",
+    config: dict = {},
+    default_folder: str = DEFAULT_TOOLS_FOLDER,
+):
     """
     The `get_bin` function retrieves the path to a specified binary file from a configuration dictionary
     or searches for it in the file system if it is not specified in the configuration.
-    
+
     :param bin: The `bin` parameter is a string or a pattern that represents the name of the binary file (e.g.,
     `snpEff.jar`, `exomiser-cli*.jar`) that you want to retrieve the path for
     :type bin: str
@@ -1276,7 +1311,7 @@ def get_bin(bin:str = None, tool:str = None, bin_type:str = "bin", config:dict =
 
     # Config - check tools
     if not bin_file or not (os.path.exists(bin_file) or (bin_file and which(bin_file))):
-        
+
         # Try to find bin file
         try:
             bin_file = find_all(bin, default_folder)[0]
@@ -1293,10 +1328,10 @@ def get_bin(bin:str = None, tool:str = None, bin_type:str = "bin", config:dict =
     return bin_file
 
 
-def concat_file(input_files:list, output_file:str) -> bool:
+def concat_file(input_files: list, output_file: str) -> bool:
     """
     This function concatenates multiple input files into a single output file.
-    
+
     :param input_files: A list of file paths to the input files that need to be concatenated
     :type input_files: list
     :param output_file: The parameter "output_file" is a string that represents the name of the file
@@ -1311,7 +1346,7 @@ def concat_file(input_files:list, output_file:str) -> bool:
     # Full path
     output_file = full_path(output_file)
 
-    with open(output_file, 'w') as outfile:
+    with open(output_file, "w") as outfile:
         for input_file in input_files:
             input_file = full_path(input_file)
             with open(input_file) as infile:
@@ -1321,10 +1356,10 @@ def concat_file(input_files:list, output_file:str) -> bool:
     return os.path.exists(output_file)
 
 
-def compress_file(input_file:str, output_file:str) -> bool:
+def compress_file(input_file: str, output_file: str) -> bool:
     """
     This function compresses a file using the BGZF compression algorithm.
-    
+
     :param input_file: The path and name of the input file that needs to be compressed
     :type input_file: str
     :param output_file: The output_file parameter is a string that represents the name and path of
@@ -1342,11 +1377,11 @@ def compress_file(input_file:str, output_file:str) -> bool:
     return os.path.exists(output_file)
 
 
-def get_compression_type(filepath:str) -> str:
+def get_compression_type(filepath: str) -> str:
     """
     The function `get_compression_type` determines the compression type of a file based on its first few
     bytes.
-    
+
     :param filepath: The `filepath` parameter is a string that represents the path to the file for which
     we want to determine the compression type
     :type filepath: str
@@ -1357,16 +1392,16 @@ def get_compression_type(filepath:str) -> str:
     """
 
     try:
-        with open(filepath, 'rb') as test_f:
+        with open(filepath, "rb") as test_f:
             # Firsts bits
             bit_1 = test_f.read(1)
             bit_2 = test_f.read(1)
             bit_3 = test_f.read(1)
             bit_4 = test_f.read(1)
             # If bit is compress
-            if bit_1 == b'\x1f' and bit_2 == b'\x8b' and bit_3 == b'\x08':
+            if bit_1 == b"\x1f" and bit_2 == b"\x8b" and bit_3 == b"\x08":
                 # If bit 4 == x04 is compress 'bgzip' type
-                if bit_4 == b'\x04':
+                if bit_4 == b"\x04":
                     return "bgzip"
                 # else is compress 'gzip' type
                 else:
@@ -1407,12 +1442,17 @@ def get_file_compressed(filename: str = None) -> bool:
     return compression_type in ["gzip", "bgzip"]
 
 
-
-def concat_into_infile(input_files:list, compressed_file:object, compression_type:str = "none", threads:int = 1, block:int = 10 ** 6) -> bool:
+def concat_into_infile(
+    input_files: list,
+    compressed_file: object,
+    compression_type: str = "none",
+    threads: int = 1,
+    block: int = 10**6,
+) -> bool:
     """
     The function `concat_into_infile` concatenates multiple input files into a compressed output file,
     with support for different compression types and multi-threading.
-    
+
     :param input_files: A list of input file paths that need to be concatenated into the compressed file
     :type input_files: list
     :param compressed_file: The `compressed_file` parameter is an object that represents the file where
@@ -1436,7 +1476,7 @@ def concat_into_infile(input_files:list, compressed_file:object, compression_typ
     """
 
     # Output file compressions type
-    if compression_type in ['none']:
+    if compression_type in ["none"]:
         open_type = "t"
     else:
         open_type = "b"
@@ -1449,19 +1489,21 @@ def concat_into_infile(input_files:list, compressed_file:object, compression_typ
 
         # Input file compression type
         input_compression_type = get_compression_type(input_file)
-        if input_compression_type in ['bgzip']:
-            with open(input_file, 'rb') as raw:
-                with bgzip.BGZipReader(raw, num_threads=threads, raw_read_chunk_size=block) as infile:
-                    if open_type in ['t']:
-                        compressed_file.write(str(infile.read(), 'utf-8'))
+        if input_compression_type in ["bgzip"]:
+            with open(input_file, "rb") as raw:
+                with bgzip.BGZipReader(
+                    raw, num_threads=threads, raw_read_chunk_size=block
+                ) as infile:
+                    if open_type in ["t"]:
+                        compressed_file.write(str(infile.read(), "utf-8"))
                     else:
                         shutil.copyfileobj(infile, compressed_file)
-        elif input_compression_type in ['gzip']:
+        elif input_compression_type in ["gzip"]:
             # See https://pypi.org/project/mgzip/
-            with mgzip.open(input_file, 'r'+open_type, thread=threads) as infile:
+            with mgzip.open(input_file, "r" + open_type, thread=threads) as infile:
                 shutil.copyfileobj(infile, compressed_file)
-        elif input_compression_type in ['none']:
-            with open(input_file, 'r'+open_type) as infile:
+        elif input_compression_type in ["none"]:
+            with open(input_file, "r" + open_type) as infile:
                 shutil.copyfileobj(infile, compressed_file)
         else:
             raise ValueError(f"Input file compression type unknown: {input_file}")
@@ -1469,12 +1511,21 @@ def concat_into_infile(input_files:list, compressed_file:object, compression_typ
     return True
 
 
-def concat_and_compress_files(input_files: list, output_file: str, compression_type:str = "bgzip", threads:int = 1, block:int = 10 ** 6, compression_level:int = 6, sort:bool = False, index:bool = False) -> bool:
+def concat_and_compress_files(
+    input_files: list,
+    output_file: str,
+    compression_type: str = "bgzip",
+    threads: int = 1,
+    block: int = 10**6,
+    compression_level: int = 6,
+    sort: bool = False,
+    index: bool = False,
+) -> bool:
     """
     The function `concat_and_compress_files` takes a list of input files, an output file name, and
     optional parameters for compression type, number of threads, block size, compression level, sorting,
     and indexing, and concatenates and compresses the input files into the output file.
-    
+
     :param input_files: A list of input file paths that need to be concatenated and compressed
     :type input_files: list
     :param output_file: The `output_file` parameter is a string that specifies the path and name of the
@@ -1509,11 +1560,11 @@ def concat_and_compress_files(input_files: list, output_file: str, compression_t
     """
 
     # Prevent compression type not available
-    if compression_type not in ['bgzip', 'gzip', 'none']:
-        compression_type = 'bgzip'
+    if compression_type not in ["bgzip", "gzip", "none"]:
+        compression_type = "bgzip"
 
     # Output file compressions type
-    if compression_type in ['none']:
+    if compression_type in ["none"]:
         open_type = "t"
     else:
         open_type = "b"
@@ -1522,30 +1573,65 @@ def concat_and_compress_files(input_files: list, output_file: str, compression_t
     output_file = full_path(output_file)
 
     # Tmp file
-    output_file_tmp = output_file+"."+str(random.randrange(1000))+".tmp"
+    output_file_tmp = output_file + "." + str(random.randrange(1000)) + ".tmp"
 
-    if compression_type in ['gzip']:
+    if compression_type in ["gzip"]:
         # See https://pypi.org/project/mgzip/
-        with pgzip.open(output_file_tmp, 'w'+open_type, thread=threads, blocksize=threads * block, compresslevel=compression_level) as compressed_file:
-            concat_into_infile(input_files, compressed_file, compression_type=compression_type, threads=threads, block=block)
-    elif compression_type in ['bgzip']:
-        with open(output_file_tmp, 'w'+open_type) as compressed_file_raw:
-            with bgzip.BGZipWriter(compressed_file_raw, num_threads=threads) as compressed_file:
-                concat_into_infile(input_files, compressed_file, compression_type=compression_type, threads=threads, block=block)
-    elif compression_type in ['none']:
-        with open(output_file_tmp, 'w'+open_type) as compressed_file:
-            concat_into_infile(input_files, compressed_file, compression_type=compression_type, threads=threads, block=block)     
+        with pgzip.open(
+            output_file_tmp,
+            "w" + open_type,
+            thread=threads,
+            blocksize=threads * block,
+            compresslevel=compression_level,
+        ) as compressed_file:
+            concat_into_infile(
+                input_files,
+                compressed_file,
+                compression_type=compression_type,
+                threads=threads,
+                block=block,
+            )
+    elif compression_type in ["bgzip"]:
+        with open(output_file_tmp, "w" + open_type) as compressed_file_raw:
+            with bgzip.BGZipWriter(
+                compressed_file_raw, num_threads=threads
+            ) as compressed_file:
+                concat_into_infile(
+                    input_files,
+                    compressed_file,
+                    compression_type=compression_type,
+                    threads=threads,
+                    block=block,
+                )
+    elif compression_type in ["none"]:
+        with open(output_file_tmp, "w" + open_type) as compressed_file:
+            concat_into_infile(
+                input_files,
+                compressed_file,
+                compression_type=compression_type,
+                threads=threads,
+                block=block,
+            )
 
     # Output file
     if sort:
         # Sort with pysam
         try:
-            pysam.bcftools.sort(f"-Oz{compression_level}", "-o", output_file, "-T", output_file_tmp, output_file_tmp, threads=threads, catch_stdout=False)
+            pysam.bcftools.sort(
+                f"-Oz{compression_level}",
+                "-o",
+                output_file,
+                "-T",
+                output_file_tmp,
+                output_file_tmp,
+                threads=threads,
+                catch_stdout=False,
+            )
             # Remove tmp file
             os.remove(output_file_tmp)
         except:
             raise ValueError(f"Output file sorting failed: {output_file_tmp}")
-    
+
     else:
         # Rename tmp file
         os.rename(output_file_tmp, output_file)
@@ -1557,28 +1643,30 @@ def concat_and_compress_files(input_files: list, output_file: str, compression_t
             pysam.tabix_index(output_file, preset="vcf", force=True)
         except:
             raise ValueError(f"Output file indexing failed: {output_file}")
-    
+
     # Return output file
     return os.path.exists(output_file)
 
 
-def get_plateform_name_from_duckdb(conn:duckdb.DuckDBPyConnection) -> str:
+def get_plateform_name_from_duckdb(conn: duckdb.DuckDBPyConnection) -> str:
     """
     The function `get_plateform_name_from_duckdb` returns the platform information from a DuckDB connection.
-    
+
     :param conn: The `conn` parameter is an instance of the `DuckDBPyConnection` class from the `duckdb`
     module. It represents a connection to a DuckDB database
     :type conn: duckdb.DuckDBPyConnection
     :return: the platform information from the DuckDB connection.
     """
 
-    return conn.query(f"PRAGMA platform").df()["platform"][0]    
+    return conn.query(f"PRAGMA platform").df()["platform"][0]
 
 
-def get_duckdb_extension_file(extension_name:str, conn:duckdb.DuckDBPyConnection, download:bool = True) -> str:
+def get_duckdb_extension_file(
+    extension_name: str, conn: duckdb.DuckDBPyConnection, download: bool = True
+) -> str:
     """
     This function returns the file path of a DuckDB extension based on the extension name and platform.
-    
+
     :param extension_name: The name of the DuckDB extension file that is being requested
     :type extension_name: str
     :return: a string that represents the file path of a DuckDB extension file. The file path is
@@ -1591,10 +1679,12 @@ def get_duckdb_extension_file(extension_name:str, conn:duckdb.DuckDBPyConnection
     platform_name = get_plateform_name_from_duckdb(conn)
 
     # File
-    extension_file_path = f'v{release_version_number}/{platform_name}/{extension_name}.duckdb_extension'
-    extension_file = f'{DUCKDB_EXTENSION}/{extension_file_path}'
+    extension_file_path = (
+        f"v{release_version_number}/{platform_name}/{extension_name}.duckdb_extension"
+    )
+    extension_file = f"{DUCKDB_EXTENSION}/{extension_file_path}"
     extension_file = full_path(extension_file)
-    extension_file_gz = f'{extension_file}.gz'
+    extension_file_gz = f"{extension_file}.gz"
     url = f"http://extensions.duckdb.org/{extension_file_path}.gz"
 
     # Download and extract if not exists
@@ -1610,8 +1700,8 @@ def get_duckdb_extension_file(extension_name:str, conn:duckdb.DuckDBPyConnection
                 log.error(f"Fail download '{url}'")
         # Uncompress extention file
         if os.path.exists(extension_file_gz):
-            with mgzip.open(extension_file_gz, 'rb', thread=1) as infile:
-                with open(extension_file, 'wb') as compressed_file:
+            with mgzip.open(extension_file_gz, "rb", thread=1) as infile:
+                with open(extension_file, "wb") as compressed_file:
                     shutil.copyfileobj(infile, compressed_file)
 
     if os.path.exists(extension_file):
@@ -1620,11 +1710,13 @@ def get_duckdb_extension_file(extension_name:str, conn:duckdb.DuckDBPyConnection
         return None
 
 
-def load_duckdb_extension(conn:duckdb.DuckDBPyConnection, duckdb_extensions:list) -> bool:
+def load_duckdb_extension(
+    conn: duckdb.DuckDBPyConnection, duckdb_extensions: list
+) -> bool:
     """
     This function loads DuckDB extensions into a connection object and returns a boolean indicating
     whether all extensions were successfully loaded.
-    
+
     :param conn: duckdb.DuckDBPyConnection object representing a connection to a DuckDB database
     :type conn: duckdb.DuckDBPyConnection
     :param duckdb_extensions: A list of strings representing the names of the DuckDB extensions to be
@@ -1637,11 +1729,15 @@ def load_duckdb_extension(conn:duckdb.DuckDBPyConnection, duckdb_extensions:list
     loaded = True
 
     for extension_name in duckdb_extensions:
-        duckdb_extension_file = get_duckdb_extension_file(extension_name, conn=conn, download=True)
+        duckdb_extension_file = get_duckdb_extension_file(
+            extension_name, conn=conn, download=True
+        )
         try:
             if duckdb_extension_file and os.path.exists(duckdb_extension_file):
                 # Try loading extension by file
-                conn.query(f"INSTALL '{duckdb_extension_file}'; LOAD {extension_name}; ")
+                conn.query(
+                    f"INSTALL '{duckdb_extension_file}'; LOAD {extension_name}; "
+                )
             else:
                 loaded = False
         except:
@@ -1655,11 +1751,14 @@ def load_duckdb_extension(conn:duckdb.DuckDBPyConnection, duckdb_extensions:list
     return loaded
 
 
-class TimeoutException(Exception): pass
+class TimeoutException(Exception):
+    pass
+
 
 def time_limit(seconds):
     def signal_handler(signum, frame):
         raise TimeoutException("Timed out!")
+
     signal.signal(signal.SIGALRM, signal_handler)
     signal.alarm(seconds)
     try:
@@ -1668,11 +1767,11 @@ def time_limit(seconds):
         signal.alarm(0)
 
 
-def duckdb_execute(query:str, threads:int = 1) -> bool:
+def duckdb_execute(query: str, threads: int = 1) -> bool:
     """
     The `duckdb_execute` function executes a query using the DuckDB database engine and returns a
     boolean indicating whether the query was successful or not.
-    
+
     :param query: The `query` parameter is a string that represents the SQL query you want to execute in
     DuckDB. It can be any valid SQL statement, such as SELECT, INSERT, UPDATE, DELETE, etc
     :type query: str
@@ -1684,8 +1783,8 @@ def duckdb_execute(query:str, threads:int = 1) -> bool:
     execution is successful, and `False` if it is not successful.
     """
 
-    conn = duckdb.connect(config={"threads":threads})
-    conn.execute("SET max_expression_depth TO 10000") 
+    conn = duckdb.connect(config={"threads": threads})
+    conn.execute("SET max_expression_depth TO 10000")
     if conn.execute(query):
         conn.close()
         return True
@@ -1694,19 +1793,20 @@ def duckdb_execute(query:str, threads:int = 1) -> bool:
         return False
 
 
-def genome_build_switch(assembly:str) -> str:
+def genome_build_switch(assembly: str) -> str:
     """
     The `genome_build_switch` function takes an assembly name as input and returns a new
     assembly name if a different version of the same genome is available, otherwise it returns
     None.
-    
+
     :param assembly: The `assembly` parameter is a string that represents the name or identifier
     of a genome assembly
     :type assembly: str
     :return: The function `genome_build_switch` returns a string.
     """
-    
+
     import genomepy
+
     genome_list = genomepy.search(assembly, exact=False)
 
     if genome_list:
@@ -1728,11 +1828,17 @@ def genome_build_switch(assembly:str) -> str:
 
 
 # get argument
-def get_argument(arguments:dict = {}, arg:str = "", required:bool = False, remove_infos:list = ["gooey", "extra"], add_metavar:bool = False) -> dict:
+def get_argument(
+    arguments: dict = {},
+    arg: str = "",
+    required: bool = False,
+    remove_infos: list = ["gooey", "extra"],
+    add_metavar: bool = False,
+) -> dict:
     """
     The `get_argument` function retrieves information about a specific argument from a dictionary, and
     can also set its "required" status.
-    
+
     :param arguments: A dictionary containing information about the arguments passed to a function or
     method
     :type arguments: dict
@@ -1756,7 +1862,7 @@ def get_argument(arguments:dict = {}, arg:str = "", required:bool = False, remov
     """
 
     if arg in arguments:
-        arg_infos = arguments.get(arg,{}).copy()
+        arg_infos = arguments.get(arg, {}).copy()
         for arg_info in remove_infos:
             arg_infos.pop(arg_info, None)
         if required != None:
@@ -1769,11 +1875,11 @@ def get_argument(arguments:dict = {}, arg:str = "", required:bool = False, remov
 
 
 # get_argument_gooey
-def get_argument_gooey(arguments:dict = {}, arg:str = ""):
+def get_argument_gooey(arguments: dict = {}, arg: str = ""):
     """
     The function `get_argument_gooey` takes an argument and returns the corresponding widget and options
     for the Gooey library in Python.
-    
+
     :param arg: The `arg` parameter is a string that represents the name of the argument you want to
     retrieve information for
     :type arg: str
@@ -1794,7 +1900,7 @@ def get_argument_gooey(arguments:dict = {}, arg:str = ""):
             widget = "FileChooser"
         elif str(argument_type) == "FileType('w')":
             widget = "FileSaver"
-    
+
     # options
     options = gooey_argument.get("options", {})
 
@@ -1803,11 +1909,11 @@ def get_argument_gooey(arguments:dict = {}, arg:str = ""):
 
 
 # get argument
-def get_argument_to_mk(arg:str, argument:dict = {}, mode:str = "mk") -> str:
+def get_argument_to_mk(arg: str, argument: dict = {}, mode: str = "mk") -> str:
     """
     The function `get_argument_to_mk` generates a formatted string containing information about a
     command line argument, which can be output in either Markdown or HTML format.
-    
+
     :param arg: The `arg` parameter is a string that represents the name of the argument. It is used to
     generate the header and text for the argument
     :type arg: str
@@ -1829,12 +1935,12 @@ def get_argument_to_mk(arg:str, argument:dict = {}, mode:str = "mk") -> str:
     text = ""
 
     # Option info
-    metavar = argument.get("metavar",arg)
-    help = argument.get("help",None)
-    required = argument.get("required",None)
-    choices = argument.get("choices",None)
-    default = argument.get("default",None)
-    action = argument.get("action",None)
+    metavar = argument.get("metavar", arg)
+    help = argument.get("help", None)
+    required = argument.get("required", None)
+    choices = argument.get("choices", None)
+    default = argument.get("default", None)
+    action = argument.get("action", None)
 
     # header
     text_header = f"--{arg}"
@@ -1846,7 +1952,7 @@ def get_argument_to_mk(arg:str, argument:dict = {}, mode:str = "mk") -> str:
         text_header += f" (default: {default})"
     if required:
         text_header += " | required"
-    
+
     # text
     if mode == "html":
         text += f"<pre>"
@@ -1865,13 +1971,22 @@ def get_argument_to_mk(arg:str, argument:dict = {}, mode:str = "mk") -> str:
     return text
 
 
-
-def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", output_type:str = "markdown", level:int = 1, table:str = "", generate_table:bool = False, code_type:str = "", auto_default:bool = True):
+def help_generation_from_dict(
+    element: str,
+    help_dict: dict,
+    previous: str = "",
+    output_type: str = "markdown",
+    level: int = 1,
+    table: str = "",
+    generate_table: bool = False,
+    code_type: str = "",
+    auto_default: bool = True,
+):
     """
     The `help_generation_from_dict` function generates help documentation from a dictionary input,
     supporting markdown and HTML output formats with specific sections like "__help", "__format",
     "__default", "__examples", "__code", and "__examples_code".
-    
+
     :param element: The `element` parameter in the `help_generation_from_dict` function is a string that
     represents the current element or key in the dictionary for which help documentation is being
     generated. It is the specific key or element within the dictionary that you want to generate help
@@ -1919,7 +2034,9 @@ def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", out
 
     from howard.tools.tools import arguments
 
-    element_argument_infos = arguments.get(element,arguments.get(element.replace("_","-"),{}))
+    element_argument_infos = arguments.get(
+        element, arguments.get(element.replace("_", "-"), {})
+    )
 
     # Level marker
     level_marker = "::"
@@ -1929,7 +2046,17 @@ def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", out
     output_table = ""
 
     # Specific help sections
-    section_list = ["__help", "__type", "__choices",  "__format", "__default", "__default_eval", "__examples", "__code", "__examples_code"]
+    section_list = [
+        "__help",
+        "__type",
+        "__choices",
+        "__format",
+        "__default",
+        "__default_eval",
+        "__examples",
+        "__code",
+        "__examples_code",
+    ]
 
     # Previous level
     if previous:
@@ -1940,10 +2067,10 @@ def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", out
         previous = ""
 
     if "__code_type" in help_dict:
-        code_type = help_dict.get("__code_type",code_type)
+        code_type = help_dict.get("__code_type", code_type)
 
     if "__auto" in help_dict:
-        auto_default = help_dict.get("__auto",True)
+        auto_default = help_dict.get("__auto", True)
 
     if not help_dict:
         auto_default = True
@@ -1953,7 +2080,7 @@ def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", out
         # default
         if "__help" not in help_dict:
             if "help" in element_argument_infos:
-                help_dict["__help"] = element_argument_infos.get("help", None) #
+                help_dict["__help"] = element_argument_infos.get("help", None)  #
                 # Clean help
                 help_dict["__help"] = format_arg_help(help_dict["__help"])
 
@@ -1971,7 +2098,7 @@ def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", out
         if "__format" not in help_dict:
             if "format" in element_argument_infos:
                 help_dict["__format"] = element_argument_infos.get("format", None)
-        
+
         # choices
         if "__choices" not in help_dict:
             if "choices" in element_argument_infos:
@@ -1979,13 +2106,27 @@ def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", out
 
         # format
         if "__format" not in help_dict:
-            if "extra" in element_argument_infos and "format" in element_argument_infos.get("extra",{}):
-                help_dict["__format"] = element_argument_infos.get("extra", {}).get("format",None)
-            
+            if (
+                "extra" in element_argument_infos
+                and "format" in element_argument_infos.get("extra", {})
+            ):
+                help_dict["__format"] = element_argument_infos.get("extra", {}).get(
+                    "format", None
+                )
+
         # example (code)
-        if "__examples" not in help_dict and "__examples_code" not in help_dict and "__code" not in help_dict:
-            if "extra" in element_argument_infos and "examples" in element_argument_infos.get("extra",{}):
-                help_dict["__examples"] = element_argument_infos.get("extra", {}).get("examples",None)
+        if (
+            "__examples" not in help_dict
+            and "__examples_code" not in help_dict
+            and "__code" not in help_dict
+        ):
+            if (
+                "extra" in element_argument_infos
+                and "examples" in element_argument_infos.get("extra", {})
+            ):
+                help_dict["__examples"] = element_argument_infos.get("extra", {}).get(
+                    "examples", None
+                )
 
     # If no section "__help" (mandatory)
     if "__help" not in help_dict:
@@ -2021,17 +2162,20 @@ def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", out
                         line_break = "\n"
                     else:
                         line_break = "\n\n"
-                    
+
                     # Help content from type
                     if isinstance(help_dict_content, str):
                         help_md = help_dict_content.replace("\n", line_break)
-                    #elif isinstance(help_dict_content, list) and section not in ["__choices"]:
-                    elif (isinstance(help_dict_content, list) or isinstance(help_dict_content, set)) and section not in ["__choices"]:
+                    # elif isinstance(help_dict_content, list) and section not in ["__choices"]:
+                    elif (
+                        isinstance(help_dict_content, list)
+                        or isinstance(help_dict_content, set)
+                    ) and section not in ["__choices"]:
                         help_md = line_break.join(help_dict_content)
                         section_break = "\n"
                     else:
                         help_md = help_dict_content
-                    
+
                     if section in ["__code", "__examples_code", "__examples"]:
 
                         # Format help dict
@@ -2044,11 +2188,13 @@ def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", out
                                 if example_line.startswith("#"):
                                     example_header += example_line
                                 else:
-                                    
+
                                     if example_header not in help_md_dict:
                                         help_md_dict[example_header] = ""
                                         example_sep = ""
-                                    help_md_dict[example_header] += example_sep + example_line
+                                    help_md_dict[example_header] += (
+                                        example_sep + example_line
+                                    )
                                     example_sep = "\n"
                         elif isinstance(help_md, dict):
                             help_md_dict = help_md
@@ -2060,10 +2206,10 @@ def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", out
                         for example in help_md_dict:
                             # log.debug(f"example={example}")
                             # log.debug(f"__examples_code={help_md_dict}")
-                            example_code = help_md_dict.get(example,"")
+                            example_code = help_md_dict.get(example, "")
                             if isinstance(example_code, list):
                                 example_code = "\n".join(example_code)
-                            example = re.sub(r'^#*\s*', '', example)
+                            example = re.sub(r"^#*\s*", "", example)
                             help_md += f"""\n> {example}\n"""
                             help_md += f"""\n```{code_type}\n{example_code}\n```"""
 
@@ -2071,7 +2217,7 @@ def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", out
                         if help_md in [""]:
                             help_md = " "
                         help_md = f"```{help_md}```"
-                        
+
                     if section in ["__default_eval"]:
                         help_md = "```" + eval(help_md) + "```"
 
@@ -2086,7 +2232,9 @@ def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", out
 
                     # Output variables
                     output_header += f"{level_md} {prefix}\n\n"
-                    output_header_table += f"#{level_md} Table of contents\n\n{table}\n\n"
+                    output_header_table += (
+                        f"#{level_md} Table of contents\n\n{table}\n\n"
+                    )
                     output_content += f"{help_md}\n\n"
 
                 # HTML
@@ -2110,18 +2258,26 @@ def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", out
                         if section in ["__code", "__examples_code", "__examples"]:
                             for example_header in help_dict_content:
                                 help_html = f"{example_header}"
-                                if isinstance(help_dict_content.get(example_header,[]),list):
-                                    help_html += "\n".join(help_dict_content.get(example_header,[]))
+                                if isinstance(
+                                    help_dict_content.get(example_header, []), list
+                                ):
+                                    help_html += "\n".join(
+                                        help_dict_content.get(example_header, [])
+                                    )
                                 else:
-                                    help_html += help_dict_content.get(example_header,"")
+                                    help_html += help_dict_content.get(
+                                        example_header, ""
+                                    )
                     else:
                         help_html = help_dict_content
 
                     if section in ["__code", "__examples_code", "__examples"]:
                         help_html = f"<xmp>{help_html}</xmp>"
-                    
+
                     # Output variables
-                    output_header += f"<{level_html} id='{prefix}'>{prefix}</{level_html}>"
+                    output_header += (
+                        f"<{level_html} id='{prefix}'>{prefix}</{level_html}>"
+                    )
                     output_header_table += f"""
                     <H{level+1}>Table of contents</{level_html}>
                     {table}
@@ -2130,7 +2286,7 @@ def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", out
                     output_content += f"{help_html}<br>"
 
                 # Output section
-                output_section = re.sub(r'^__', '', section).split("_")[0].capitalize()
+                output_section = re.sub(r"^__", "", section).split("_")[0].capitalize()
 
                 # Output construction
                 if section == "__help":
@@ -2139,26 +2295,53 @@ def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", out
                     if table and level == 1:
                         output += output_header_table
                 else:
-                    output_section = re.sub(r'^__', '', section).split("_")[0].capitalize()
+                    output_section = (
+                        re.sub(r"^__", "", section).split("_")[0].capitalize()
+                    )
                     output += f"{output_section}: {section_break}{output_content}"
 
     # Output table construction
     if output_type == "markdown":
-        output_table += "   " * (level - 1) + f"- [{element}](#{prefix.lower().replace(' ','-').replace(':','')})\n"
+        output_table += (
+            "   " * (level - 1)
+            + f"- [{element}](#{prefix.lower().replace(' ','-').replace(':','')})\n"
+        )
     elif output_type == "html":
-        output_table += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" * (level - 1) + f"- <a href='#{prefix}'>{element}</a><BR>"
-        
+        output_table += (
+            "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" * (level - 1)
+            + f"- <a href='#{prefix}'>{element}</a><BR>"
+        )
+
     # Recusivity to other sub-element
     for element in help_dict:
 
         # If element is a sub-element
-        if element not in section_list and isinstance(help_dict.get(element,None),dict):
+        if element not in section_list and isinstance(
+            help_dict.get(element, None), dict
+        ):
 
             # output_tabl
-            output_table += help_generation_from_dict(element=element, help_dict=help_dict.get(element,None), previous=f"{previous}{element}", output_type=output_type, level=level+1, table=output_table, generate_table=True, code_type=code_type)
+            output_table += help_generation_from_dict(
+                element=element,
+                help_dict=help_dict.get(element, None),
+                previous=f"{previous}{element}",
+                output_type=output_type,
+                level=level + 1,
+                table=output_table,
+                generate_table=True,
+                code_type=code_type,
+            )
 
             # Add sub-element output
-            output += help_generation_from_dict(element=element, help_dict=help_dict.get(element,None), previous=f"{previous}{element}", output_type=output_type, level=level+1, table=output_table, code_type=code_type)
+            output += help_generation_from_dict(
+                element=element,
+                help_dict=help_dict.get(element, None),
+                previous=f"{previous}{element}",
+                output_type=output_type,
+                level=level + 1,
+                table=output_table,
+                code_type=code_type,
+            )
 
     # Return output
     if generate_table:
@@ -2167,11 +2350,16 @@ def help_generation_from_dict(element:str,help_dict:dict, previous:str = "", out
         return output
 
 
-def help_generation_from_json(help_json_file:str, output_type:str = "markdown", title="Help", code_type:str = ""):
+def help_generation_from_json(
+    help_json_file: str,
+    output_type: str = "markdown",
+    title="Help",
+    code_type: str = "",
+):
     """
     The function `help_generation_from_json` reads a JSON file containing help information, converts it
     into a specified output format (default is markdown), and returns the generated help content.
-    
+
     :param help_json_file: The `help_json_file` parameter is a string that should contain the file path
     to the JSON file from which help information will be extracted. This JSON file likely contains
     structured data that will be used to generate the help content
@@ -2200,27 +2388,47 @@ def help_generation_from_json(help_json_file:str, output_type:str = "markdown", 
         help_dict = yaml.safe_load(f)
 
     # Generate help table of content
-    output_table = help_generation_from_dict(element=title, help_dict=help_dict, previous="", output_type=output_type, level=1, generate_table=True, code_type=code_type)
+    output_table = help_generation_from_dict(
+        element=title,
+        help_dict=help_dict,
+        previous="",
+        output_type=output_type,
+        level=1,
+        generate_table=True,
+        code_type=code_type,
+    )
 
     # Generate help
-    output = help_generation_from_dict(element=title, help_dict=help_dict, previous="", output_type=output_type, level=1, table=output_table, code_type=code_type)
+    output = help_generation_from_dict(
+        element=title,
+        help_dict=help_dict,
+        previous="",
+        output_type=output_type,
+        level=1,
+        table=output_table,
+        code_type=code_type,
+    )
 
     # Return help
     return output
 
 
-
 class RawTextArgumentDefaultsHelpFormatter(
-    argparse.ArgumentDefaultsHelpFormatter,
-    argparse.RawTextHelpFormatter
+    argparse.ArgumentDefaultsHelpFormatter, argparse.RawTextHelpFormatter
 ):
     pass
 
-def help_generation(arguments_dict:dict = {}, parser = None, setup:str = None, output_type:str = "parser"):
+
+def help_generation(
+    arguments_dict: dict = {},
+    parser=None,
+    setup: str = None,
+    output_type: str = "parser",
+):
     """
     The `help_generation` function generates a parser object for command-line arguments, as well as
     markdown or HTML help documentation for those arguments.
-    
+
     :param arguments_dict: A dictionary containing the arguments for the function. It has three keys:
     :type arguments_dict: dict
     :param parser: The `parser` parameter is an instance of the `argparse.ArgumentParser` class. It is
@@ -2245,85 +2453,97 @@ def help_generation(arguments_dict:dict = {}, parser = None, setup:str = None, o
     # Config Parser
     cf = ConfigParser()
     cf.read(setup)
-    prog_name = cf['metadata']['name']
-    prog_version = cf['metadata']['version']
-    prog_description = cf['metadata']['description']
-    prog_long_description_content_type = cf['metadata']['long_description_content_type']
+    prog_name = cf["metadata"]["name"]
+    prog_version = cf["metadata"]["version"]
+    prog_description = cf["metadata"]["description"]
+    prog_long_description_content_type = cf["metadata"]["long_description_content_type"]
 
     # Parser default
     if not parser:
         parser = argparse.ArgumentParser()
-    
+
     # Parser information
     parser.prog = prog_name
-    parser.description =    f"""{prog_name.upper()}:{prog_version}\n""" + \
-                            f"""{prog_description}\n""" + \
-                            f"""{prog_long_description_content_type}"""
-    parser.epilog =     "Usage examples:\n" + \
-                        """   howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json \n""" + \
-                        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet' \n""" + \
-                        """   howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations='vartype' \n""" + \
-                        """   howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations=config/prioritization_profiles.json --profiles='default,GERMLINE' \n""" + \
-                        """   howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, "DP", "CLNSIG", sample2, sample3 FROM variants WHERE "DP" >= 50 OR "CLNSIG" NOT NULL ORDER BY "CLNSIG" DESC, "DP" DESC' \n""" + \
-                        """   howard stats --input=tests/data/example.vcf.gz \n""" + \
-                        """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos && cat /tmp/example.tsv \n"""
+    parser.description = (
+        f"""{prog_name.upper()}:{prog_version}\n"""
+        + f"""{prog_description}\n"""
+        + f"""{prog_long_description_content_type}"""
+    )
+    parser.epilog = (
+        "Usage examples:\n"
+        + """   howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json \n"""
+        + """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet' \n"""
+        + """   howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations='vartype' \n"""
+        + """   howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations=config/prioritization_profiles.json --profiles='default,GERMLINE' \n"""
+        + """   howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, "DP", "CLNSIG", sample2, sample3 FROM variants WHERE "DP" >= 50 OR "CLNSIG" NOT NULL ORDER BY "CLNSIG" DESC, "DP" DESC' \n"""
+        + """   howard stats --input=tests/data/example.vcf.gz \n"""
+        + """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos && cat /tmp/example.tsv \n"""
+    )
     parser.formatter_class = argparse.RawTextHelpFormatter
 
     # Optionals
     parser._optionals.title = "Shared arguments"
 
     # Sub parser
-    subparsers = parser.add_subparsers(title="Tools", dest='command')
+    subparsers = parser.add_subparsers(title="Tools", dest="command")
 
     # Help options
     options_md = ""
     options_html = ""
-    
+
     # Options for markdown
     options_md += f"# HOWARD Help"
     options_md += "\n\n"
     options_md += "<!--TOC-->"
     options_md += "\n\n"
-    options_md += parser.description.replace("\n","\n\n")
-    options_md += re.sub(r'> $',"",parser.epilog.replace("\n","\n\n").replace("   ","> "))
+    options_md += parser.description.replace("\n", "\n\n")
+    options_md += re.sub(
+        r"> $", "", parser.epilog.replace("\n", "\n\n").replace("   ", "> ")
+    )
     options_md += "\n\n"
 
     # Options for HTML
     options_html += f"<H1>HOWARD Help</h1>\n"
-    options_html += "<p>" + parser.description.replace("\n","<br>") + "</p>"
-    options_html += parser.epilog.replace("\n","<br>").replace("   ","&nbsp;&nbsp;&nbsp;")
-        
+    options_html += "<p>" + parser.description.replace("\n", "<br>") + "</p>"
+    options_html += parser.epilog.replace("\n", "<br>").replace(
+        "   ", "&nbsp;&nbsp;&nbsp;"
+    )
+
     # Create commands arguments
     for command in commands_arguments:
-        
+
         # Command description
-        command_description = commands_arguments[command].get("description","")
-        command_help = commands_arguments[command].get("help","")
-        command_epilog = commands_arguments[command].get("epilog","")
-        
+        command_description = commands_arguments[command].get("description", "")
+        command_help = commands_arguments[command].get("help", "")
+        command_epilog = commands_arguments[command].get("epilog", "")
+
         # Command parser
         command_parser = subparsers.add_parser(
             command,
-            description = command_description,
-            help = command_help,
-            epilog = command_epilog,
-            #formatter_class=argparse.RawTextHelpFormatter
-            #formatter_class=argparse.ArgumentDefaultsHelpFormatter
-            formatter_class=RawTextArgumentDefaultsHelpFormatter
+            description=command_description,
+            help=command_help,
+            epilog=command_epilog,
+            # formatter_class=argparse.RawTextHelpFormatter
+            # formatter_class=argparse.ArgumentDefaultsHelpFormatter
+            formatter_class=RawTextArgumentDefaultsHelpFormatter,
         )
 
         # Markdown
         options_md += f"## {command.upper()} tool\n"
-        options_md += command_description.replace("\n","\n\n")
+        options_md += command_description.replace("\n", "\n\n")
         options_md += "\n\n"
-        options_md += re.sub(r'> $',"",command_epilog.replace("\n","\n\n").replace("   ","> "))
+        options_md += re.sub(
+            r"> $", "", command_epilog.replace("\n", "\n\n").replace("   ", "> ")
+        )
         options_md += "\n\n"
 
         # HTML
         options_html += f"<H2>{command.upper()}</H2>\n"
-        options_html += "<p>" + command_description.replace("\n","<br>") + "</p>"
-        options_html += command_epilog.replace("\n","<br>").replace("   ","&nbsp;&nbsp;&nbsp;")
-        
+        options_html += "<p>" + command_description.replace("\n", "<br>") + "</p>"
+        options_html += command_epilog.replace("\n", "<br>").replace(
+            "   ", "&nbsp;&nbsp;&nbsp;"
+        )
+
         # Gooey - add metavar
         if output_type == "gooey":
             add_metavar = True
@@ -2340,14 +2560,21 @@ def help_generation(arguments_dict:dict = {}, parser = None, setup:str = None, o
             options_html += f"<H3>Main options</H3>\n"
             for arg in commands_arguments[command]["groups"][group]:
                 required = commands_arguments[command]["groups"][group][arg]
-                argument = get_argument(arguments=arguments.copy(), arg=arg, required=required, add_metavar=add_metavar)
+                argument = get_argument(
+                    arguments=arguments.copy(),
+                    arg=arg,
+                    required=required,
+                    add_metavar=add_metavar,
+                )
                 if output_type == "gooey":
                     widget, options = get_argument_gooey(arguments=arguments, arg=arg)
                     argument["widget"] = widget
                     argument["gooey_options"] = options
-                    if argument.get("help","") in ["==SUPPRESS=="]:
+                    if argument.get("help", "") in ["==SUPPRESS=="]:
                         argument["help"] = arg
-                    argument["help"] = format_arg_help(argument["help"], str(argument.get('default',None)))
+                    argument["help"] = format_arg_help(
+                        argument["help"], str(argument.get("default", None))
+                    )
                 command_parser.add_argument(f"--{arg}", **argument)
                 options_md += get_argument_to_mk(arg, argument)
                 options_html += get_argument_to_mk(arg, argument, mode="html")
@@ -2356,32 +2583,47 @@ def help_generation(arguments_dict:dict = {}, parser = None, setup:str = None, o
             if group != "main":
                 options_md += f"### {group}\n"
                 options_html += f"<H3>{group}</H3>\n"
-                command_group = command_parser.add_argument_group(f"{group}{command_group_suffix}")
+                command_group = command_parser.add_argument_group(
+                    f"{group}{command_group_suffix}"
+                )
                 for arg in commands_arguments[command]["groups"][group]:
                     required = commands_arguments[command]["groups"][group][arg]
-                    argument = get_argument(arguments=arguments.copy(), arg=arg, required=required, add_metavar=add_metavar)
+                    argument = get_argument(
+                        arguments=arguments.copy(),
+                        arg=arg,
+                        required=required,
+                        add_metavar=add_metavar,
+                    )
                     if output_type == "gooey":
-                        widget, options = get_argument_gooey(arguments=arguments, arg=arg)
+                        widget, options = get_argument_gooey(
+                            arguments=arguments, arg=arg
+                        )
                         argument["widget"] = widget
                         argument["gooey_options"] = options
-                        if argument.get("help","") in ["==SUPPRESS=="]:
+                        if argument.get("help", "") in ["==SUPPRESS=="]:
                             argument["help"] = arg
-                        argument["help"] = format_arg_help(argument["help"], str(argument.get('default',None)))
+                        argument["help"] = format_arg_help(
+                            argument["help"], str(argument.get("default", None))
+                        )
                     command_group.add_argument(f"--{arg}", **argument)
                     options_md += get_argument_to_mk(arg, argument)
                     options_html += get_argument_to_mk(arg, argument, mode="html")
 
         # Shared arguments
-        shared_group = command_parser.add_argument_group('Shared options')
+        shared_group = command_parser.add_argument_group("Shared options")
         for arg in shared_arguments:
-            argument = get_argument(arguments=arguments, arg=arg, required=False, add_metavar=add_metavar)
+            argument = get_argument(
+                arguments=arguments, arg=arg, required=False, add_metavar=add_metavar
+            )
             if output_type == "gooey":
                 widget, options = get_argument_gooey(arguments=arguments, arg=arg)
                 argument["widget"] = widget
                 argument["gooey_options"] = options
-                if argument.get("help","") in ["==SUPPRESS=="]:
+                if argument.get("help", "") in ["==SUPPRESS=="]:
                     argument["help"] = arg
-                argument["help"] = format_arg_help(argument["help"], str(argument.get('default',None)))
+                argument["help"] = format_arg_help(
+                    argument["help"], str(argument.get("default", None))
+                )
             shared_group.add_argument(f"--{arg}", **argument)
 
         options_md += "\n\n"
@@ -2394,7 +2636,7 @@ def help_generation(arguments_dict:dict = {}, parser = None, setup:str = None, o
         argument = get_argument(arguments=arguments.copy(), arg=arg, required=required)
         options_md += get_argument_to_mk(arg, argument)
         options_html += get_argument_to_mk(arg, argument, mode="html")
- 
+
     # Output
     if output_type in ["parser", "gooey"]:
         return parser
@@ -2404,12 +2646,13 @@ def help_generation(arguments_dict:dict = {}, parser = None, setup:str = None, o
         return options_html
     else:
         return parser
-    
-def format_arg_help(help_message:str, default_value:object = None) -> str:
+
+
+def format_arg_help(help_message: str, default_value: object = None) -> str:
     """
     The function `format_arg_help` formats a help message for a function argument, including a default
     value if provided.
-    
+
     :param help_message: The `help_message` parameter is a string that contains the description or help
     message for a function or method argument. It provides information about the purpose or usage of the
     argument
@@ -2425,19 +2668,25 @@ def format_arg_help(help_message:str, default_value:object = None) -> str:
 
     help_return = help_message
 
-    random_string = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
-    help_return = re.sub(r'\n\s*-', random_string,help_return).replace("\n", " ").replace(random_string, "\n-")
+    random_string = "".join(
+        random.choices(string.ascii_uppercase + string.digits, k=10)
+    )
+    help_return = (
+        re.sub(r"\n\s*-", random_string, help_return)
+        .replace("\n", " ")
+        .replace(random_string, "\n-")
+    )
     if default_value:
         help_return += "\n(default: " + str(default_value) + ")"
 
     return help_return
 
 
-def bed_sort(input:str, output:str) -> str:
+def bed_sort(input: str, output: str) -> str:
     """
     The `bed_sort` function reads a tab-separated input file, sorts the data based on columns 0, 1, and
     2 in ascending order, and writes the sorted data to a tab-separated output file.
-    
+
     :param input: The `input` parameter is the path to the input file that contains the data to be
     sorted. This file should be in a tab-separated format
     :type input: str
@@ -2447,12 +2696,14 @@ def bed_sort(input:str, output:str) -> str:
     """
 
     # Read input BED (uncompressed)
-    #data = pd.read_csv(input, sep="\t", dtype={"chr": "string", "start": "int", "end": "int"}, header=None)
+    # data = pd.read_csv(input, sep="\t", dtype={"chr": "string", "start": "int", "end": "int"}, header=None)
     data = pd.read_csv(input, sep="\t", header=None, low_memory=False)
 
     # Sort BED regions
-    data_sorted = data.sort_values([0, 1, 2], axis=0, ascending=True, na_position='first') 
-    
+    data_sorted = data.sort_values(
+        [0, 1, 2], axis=0, ascending=True, na_position="first"
+    )
+
     # Write output BED (uncompressed)
     data_sorted.to_csv(output, sep="\t", header=0, index=0)
 
@@ -2460,7 +2711,7 @@ def bed_sort(input:str, output:str) -> str:
 def full_path(path: str) -> str:
     """
     The function `full_path` takes a path string as input and returns the full expanded path.
-    
+
     :param path: The `full_path` function takes a string `path` as input and returns the full path by
     expanding the user's home directory in the path if it is not None
     :type path: str
@@ -2473,12 +2724,13 @@ def full_path(path: str) -> str:
         return os.path.abspath(os.path.expandvars(os.path.expanduser(path)))
     else:
         return path
-    
-def get_default_argument(arguments_dict:dict, argument:str):
+
+
+def get_default_argument(arguments_dict: dict, argument: str):
     """
     The function `get_default_argument` retrieves the default value of a specified argument from a
     dictionary of arguments.
-    
+
     :param arguments_dict: The `arguments_dict` parameter is a dictionary that contains information
     about arguments
     :type arguments_dict: dict
@@ -2490,14 +2742,20 @@ def get_default_argument(arguments_dict:dict, argument:str):
     return the default value of the specified argument if it exists, otherwise it will return None.
     """
 
-    return arguments_dict.get("arguments",{}).get(argument,{}).get("default", None)
+    return arguments_dict.get("arguments", {}).get(argument, {}).get("default", None)
 
 
-def set_param(param:dict, args:argparse, arguments_dict:dict, argument:str, section:list = None) -> dict:
+def set_param(
+    param: dict,
+    args: argparse,
+    arguments_dict: dict,
+    argument: str,
+    section: list = None,
+) -> dict:
     """
     The function `set_param` takes input arguments and adds them to a dictionary based on certain
     conditions.
-    
+
     :param param: The `param` parameter is a dictionary that stores configuration parameters or
     settings. It is used to collect and store various arguments and their values based on the conditions
     specified in the `set_param` function
@@ -2523,7 +2781,7 @@ def set_param(param:dict, args:argparse, arguments_dict:dict, argument:str, sect
     :return: the updated `param` dictionary after setting the specified argument value based on the
     conditions provided in the function.
     """
-    
+
     # Argument value
     value = vars(args).get(argument, None)
 
@@ -2537,17 +2795,22 @@ def set_param(param:dict, args:argparse, arguments_dict:dict, argument:str, sect
         sections = []
 
     # Check if to include in param
-    if argument in args and (not arguments_dict or value not in [get_default_argument(arguments_dict=arguments_dict, argument=argument)]):
+    if argument in args and (
+        not arguments_dict
+        or value
+        not in [get_default_argument(arguments_dict=arguments_dict, argument=argument)]
+    ):
         sections.append(argument)
         param = add_value_into_dict(dict_tree=param, sections=sections, value=value)
 
     return param
-    
-def add_value_into_dict(dict_tree:dict, sections:list = [], value = None):
+
+
+def add_value_into_dict(dict_tree: dict, sections: list = [], value=None):
     """
     The function `add_value_into_dict` adds a value into a dictionary tree based on the provided
     sections.
-    
+
     :param dict_tree: The `dict_tree` parameter is a dictionary representing a tree structure. It serves
     as the starting point for adding a value based on the provided sections
     :type dict_tree: dict
@@ -2569,7 +2832,7 @@ def add_value_into_dict(dict_tree:dict, sections:list = [], value = None):
     # If sections is empty, add the value to the root of the dictionary tree
     if not sections:
         return current_node
-    
+
     # Traverse the tree based on sections to find the appropriate location for the value
     for section in sections[:-1]:
         # If the section does not exist yet in the current dictionary, create it
@@ -2577,19 +2840,19 @@ def add_value_into_dict(dict_tree:dict, sections:list = [], value = None):
             current_node[section] = {}
         # Move down the tree following the current section
         current_node = current_node[section]
-    
+
     # Add the value to the last section
     last_section = sections[-1]
     current_node[last_section] = value
-    
+
     return dict_tree
 
 
-def load_param(args:argparse) -> dict:
+def load_param(args: argparse) -> dict:
     """
     The function `load_param` takes command line arguments and returns a dictionary containing
     parameters loaded from a file or as JSON.
-    
+
     :param args: It seems like the code snippet you provided is a function named `load_param` that takes
     an argument `args` of type `argparse` and returns a dictionary. The function is intended to load
     parameters from a file or a string
@@ -2612,7 +2875,7 @@ def load_config_args(args):
     """
     The function `load_config_args` takes in arguments, extracts specific keys from them, and loads
     parameters in JSON format.
-    
+
     :param args: The `load_config_args` function takes in an `args` object as input. This `args` object
     seems to contain various configuration parameters that the function will use to load and return
     specific values
@@ -2626,7 +2889,7 @@ def load_config_args(args):
     else:
         arguments_dict = None
 
-    # Setup config 
+    # Setup config
     if "setup_cfg" in args:
         setup_cfg = args.setup_cfg
     else:
@@ -2644,11 +2907,19 @@ def load_config_args(args):
     return arguments_dict, setup_cfg, config, param
 
 
-def load_args(param:dict, args:argparse, arguments_dict:dict, command:str = None, arguments_list:dict = {}, strict:bool = False, section_prefix:list = []) -> dict:
+def load_args(
+    param: dict,
+    args: argparse,
+    arguments_dict: dict,
+    command: str = None,
+    arguments_list: dict = {},
+    strict: bool = False,
+    section_prefix: list = [],
+) -> dict:
     """
     The `load_args` function processes arguments based on specified parameters and conditions, raising
     an error if a specified argument is not found.
-    
+
     :param param: The `param` parameter in the `load_args` function is a dictionary that stores the
     arguments and their values. It is used to keep track of the arguments that have been loaded or
     processed during the argument parsing process
@@ -2679,17 +2950,17 @@ def load_args(param:dict, args:argparse, arguments_dict:dict, command:str = None
     :return: The function `load_args` is returning a dictionary named `param` after processing the
     arguments based on the input parameters and conditions specified in the function.
     """
-    
+
     # Variables
     arguments_list_to_load = {}
     param_section_not_found = get_random(N=16)
 
     # List from command
     if command:
-        command_infos = arguments_dict.get("commands_arguments",{}).get(command)
-        for command_group in command_infos.get("groups",{}):
+        command_infos = arguments_dict.get("commands_arguments", {}).get(command)
+        for command_group in command_infos.get("groups", {}):
             for command_argument in command_infos.get("groups").get(command_group):
-                command_group_clean = command_group.replace(" ","_").lower()
+                command_group_clean = command_group.replace(" ", "_").lower()
                 if command_group_clean in ["main"]:
                     command_group_clean = None
                 command_argument = command_argument.replace("-", "_")
@@ -2704,7 +2975,12 @@ def load_args(param:dict, args:argparse, arguments_dict:dict, command:str = None
     if arguments_list_to_load:
         for argument in arguments_list_to_load:
             if argument in args:
-                section = arguments_dict.get("arguments",{}).get(argument,{}).get("extra", {}).get("param_section", param_section_not_found)
+                section = (
+                    arguments_dict.get("arguments", {})
+                    .get(argument, {})
+                    .get("extra", {})
+                    .get("param_section", param_section_not_found)
+                )
                 if section in [param_section_not_found]:
                     section = arguments_list_to_load.get(argument, None)
                 # section str to list
@@ -2714,7 +2990,13 @@ def load_args(param:dict, args:argparse, arguments_dict:dict, command:str = None
                     section = []
                 if section_prefix:
                     section = section_prefix + section
-                param = set_param(param=param, args=args, arguments_dict=arguments_dict, section=section, argument=argument)
+                param = set_param(
+                    param=param,
+                    args=args,
+                    arguments_dict=arguments_dict,
+                    section=section,
+                    argument=argument,
+                )
 
             elif strict:
                 msg_error = f"Argument '{argument}' not found in list of aguments"
@@ -2724,11 +3006,11 @@ def load_args(param:dict, args:argparse, arguments_dict:dict, command:str = None
     return param
 
 
-def get_random(N:int = 10) -> str:
+def get_random(N: int = 10) -> str:
     """
     The function `get_random` generates a random string of uppercase letters and digits with a default
     length of 10.
-    
+
     :param N: The parameter `N` in the `get_random` function represents the length of the random string
     that will be generated. By default, if no value is provided for `N`, it will generate a random
     string of length 10 consisting of uppercase letters and digits, defaults to 10
@@ -2736,5 +3018,4 @@ def get_random(N:int = 10) -> str:
     :return: A random string of length N consisting of uppercase letters and digits.
     """
 
-    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=N))
-
+    return "".join(random.choices(string.ascii_uppercase + string.digits, k=N))

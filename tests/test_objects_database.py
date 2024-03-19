@@ -19,8 +19,6 @@ from howard.objects.database import Database
 from test_needed import *
 
 
-
-
 def test_export_order_by():
     """
     The function tests the export functionality of a database for various input and output formats.
@@ -39,7 +37,9 @@ def test_export_order_by():
         database = Database(database=input_database)
         database.export(output_database, order_by="")
         database = Database(database=output_database)
-        results = database.query(database=output_database, query=f"""SELECT POS, QUAL, ALT FROM variants""")
+        results = database.query(
+            database=output_database, query=f"""SELECT POS, QUAL, ALT FROM variants"""
+        )
         df_first_pos = results.df()["POS"][0]
         df_first_qual = results.df()["QUAL"][0]
         df_first_alt = results.df()["ALT"][0]
@@ -49,7 +49,9 @@ def test_export_order_by():
         database = Database(database=input_database)
         database.export(output_database, order_by="QUAL DESC")
         database = Database(database=output_database)
-        results = database.query(database=output_database, query=f"""SELECT POS, QUAL, ALT FROM variants""")
+        results = database.query(
+            database=output_database, query=f"""SELECT POS, QUAL, ALT FROM variants"""
+        )
         df_first_pos = results.df()["POS"][0]
         df_first_qual = results.df()["QUAL"][0]
         df_first_alt = results.df()["ALT"][0]
@@ -59,7 +61,9 @@ def test_export_order_by():
         database = Database(database=input_database)
         database.export(output_database, order_by="ALT DESC, POS ASC")
         database = Database(database=output_database)
-        results = database.query(database=output_database, query=f"""SELECT POS, QUAL, ALT FROM variants""")
+        results = database.query(
+            database=output_database, query=f"""SELECT POS, QUAL, ALT FROM variants"""
+        )
         df_first_pos = results.df()["POS"][0]
         df_first_qual = results.df()["QUAL"][0]
         df_first_alt = results.df()["ALT"][0]
@@ -69,7 +73,9 @@ def test_export_order_by():
         database = Database(database=input_database)
         database.export(output_database, order_by="ALT DESC, POS")
         database = Database(database=output_database)
-        results = database.query(database=output_database, query=f"""SELECT POS, QUAL, ALT FROM variants""")
+        results = database.query(
+            database=output_database, query=f"""SELECT POS, QUAL, ALT FROM variants"""
+        )
         df_first_pos = results.df()["POS"][0]
         df_first_qual = results.df()["QUAL"][0]
         df_first_alt = results.df()["ALT"][0]
@@ -79,7 +85,9 @@ def test_export_order_by():
         database = Database(database=input_database)
         database.export(output_database, order_by="ALT DESC, POS ASC, BEDCOLUMN")
         database = Database(database=output_database)
-        results = database.query(database=output_database, query=f"""SELECT POS, QUAL, ALT FROM variants""")
+        results = database.query(
+            database=output_database, query=f"""SELECT POS, QUAL, ALT FROM variants"""
+        )
         df_first_pos = results.df()["POS"][0]
         df_first_qual = results.df()["QUAL"][0]
         df_first_alt = results.df()["ALT"][0]
@@ -107,7 +115,11 @@ def test_database_as_conn():
 
         # Create database object using conn, variants object header, and point to table "variants"
         try:
-            database = Database(database=variants.get_connexion(), header=variants.get_header(), table="variants")
+            database = Database(
+                database=variants.get_connexion(),
+                header=variants.get_header(),
+                table="variants",
+            )
         except:
             assert False
 
@@ -122,7 +134,7 @@ def test_database_as_conn():
 
         # Check get_database_basename
         assert database.get_database_basename() == None
-        
+
         # Check is compressed
         assert not database.is_compressed()
 
@@ -131,7 +143,10 @@ def test_database_as_conn():
         remove_if_exists([output_database])
         try:
             assert database.export(output_database=output_database)
-            assert database.query(database=output_database, query=f"""{database.get_sql_database_link(database=output_database)}""")
+            assert database.query(
+                database=output_database,
+                query=f"""{database.get_sql_database_link(database=output_database)}""",
+            )
         except:
             assert False
 
@@ -151,7 +166,7 @@ def test_empty_database():
         database = Database()
     except:
         assert False
-    
+
 
 def test_get_database():
     """
@@ -199,7 +214,9 @@ def test_set_database():
     assert None == database.get_database()
 
     # Set database with base name and databases folders
-    database.set_database(database=database_file_basename, databases_folders=databases_folders)
+    database.set_database(
+        database=database_file_basename, databases_folders=databases_folders
+    )
     assert database_file == database.get_database()
 
 
@@ -211,19 +228,19 @@ def test_get_header_from_list():
 
     # Init files
     default_header_list = [
-        '##fileformat=VCFv4.2',
-        '#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO'
+        "##fileformat=VCFv4.2",
+        "#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO",
     ]
     example_header_list = [
-        '##fileformat=VCFv4.2',
+        "##fileformat=VCFv4.2",
         '##FILTER=<ID=PASS,Description="All filters passed">',
-        '##fileDate=20230212',
-        '##source=Example',
-        '##reference=hg19',
+        "##fileDate=20230212",
+        "##source=Example",
+        "##reference=hg19",
         '##INFO=<ID=nci60,Number=.,Type=Float,Description="nci60">',
-        '##contig=<ID=chr7,length=159138663>',
-        '##annotation_list=nci60',
-        '#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO'
+        "##contig=<ID=chr7,length=159138663>",
+        "##annotation_list=nci60",
+        "#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO",
     ]
 
     # Create object
@@ -251,8 +268,8 @@ def test_get_header_from_file():
 
         # Init files
         default_header_list = [
-            '##fileformat=VCFv4.2',
-            '#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO'
+            "##fileformat=VCFv4.2",
+            "#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO",
         ]
         default_header_file = f"{tmp_dir}/header_file.hdr"
         remove_if_exists(default_header_file)
@@ -261,7 +278,7 @@ def test_get_header_from_file():
         example_hearder_file = database_files.get("parquet") + ".hdr"
         example_hearder_inside_file = database_files.get("vcf")
         example_hearder_NO_file = f"{tmp_dir}/no_file.hdr"
-        
+
         # Create object
         database = Database()
 
@@ -274,15 +291,21 @@ def test_get_header_from_file():
         assert list(database_header.infos) == []
 
         # Header example
-        database_header = database.get_header_from_file(header_file=example_hearder_file)
+        database_header = database.get_header_from_file(
+            header_file=example_hearder_file
+        )
         assert list(database_header.infos) == ["nci60"]
 
         # Header example with header within file
-        database_header = database.get_header_from_file(header_file=example_hearder_inside_file)
+        database_header = database.get_header_from_file(
+            header_file=example_hearder_inside_file
+        )
         assert list(database_header.infos) == ["nci60"]
 
         # Header example with header within file
-        database_header = database.get_header_from_file(header_file=example_hearder_NO_file)
+        database_header = database.get_header_from_file(
+            header_file=example_hearder_NO_file
+        )
         assert list(database_header.infos) == []
 
 
@@ -301,14 +324,18 @@ def test_get_header_infos_list():
     assert database_header_infos_list == []
 
     # Header parquet
-    database_header_infos_list = database.get_header_infos_list(database=database_files.get("parquet"))
+    database_header_infos_list = database.get_header_infos_list(
+        database=database_files.get("parquet")
+    )
     assert database_header_infos_list == ["nci60"]
 
     # Create conn with variants in a table by loading a Parquet with Variants object
     # Header list is columns of the table
     variants = Variants(input=database_files.get("parquet"), load=True)
     database = Database(conn=variants.get_connexion())
-    database_header_infos_list = database.get_header_infos_list(database=database.get_conn())
+    database_header_infos_list = database.get_header_infos_list(
+        database=database.get_conn()
+    )
     assert database_header_infos_list == ["INFO/nci60"]
 
 
@@ -321,8 +348,8 @@ def test_get_header():
 
         # Init files
         default_header_list = [
-            '##fileformat=VCFv4.2',
-            '#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO'
+            "##fileformat=VCFv4.2",
+            "#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO",
         ]
         default_header_file = f"{tmp_dir}/header_file.hdr"
         remove_if_exists(default_header_file)
@@ -379,8 +406,8 @@ def test_read_header_file():
 
         # Init files
         default_header_list = [
-            '##fileformat=VCFv4.2',
-            '#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO'
+            "##fileformat=VCFv4.2",
+            "#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO",
         ]
         default_header_file = f"{tmp_dir}/header_file.hdr"
         remove_if_exists(default_header_file)
@@ -389,7 +416,7 @@ def test_read_header_file():
         example_hearder_file = database_files.get("parquet") + ".hdr"
         example_hearder_inside_file = database_files.get("vcf")
         example_hearder_NO_file = f"{tmp_dir}/no_file.hdr"
-        
+
         # Create object
         database = Database()
 
@@ -398,19 +425,29 @@ def test_read_header_file():
         assert list(database_header_list) == []
 
         # Header default
-        database_header_list = database.read_header_file(header_file=default_header_file)
-        assert [line.strip() for line in list(database_header_list)] == default_header_list
+        database_header_list = database.read_header_file(
+            header_file=default_header_file
+        )
+        assert [
+            line.strip() for line in list(database_header_list)
+        ] == default_header_list
 
         # Header example
-        database_header_list = database.read_header_file(header_file=example_hearder_file)
+        database_header_list = database.read_header_file(
+            header_file=example_hearder_file
+        )
         assert len(list(database_header_list)) == 37
 
         # Header example with header within file
-        database_header_list = database.read_header_file(header_file=example_hearder_inside_file)
+        database_header_list = database.read_header_file(
+            header_file=example_hearder_inside_file
+        )
         assert len(list(database_header_list)) == 37
 
         # Header example with header within file
-        database_header_list = database.read_header_file(header_file=example_hearder_NO_file)
+        database_header_list = database.read_header_file(
+            header_file=example_hearder_NO_file
+        )
         assert list(database_header_list) == []
 
 
@@ -424,8 +461,8 @@ def test_get_header_file():
         # Init
         database_file = database_files.get("parquet")
         hearder_file = database_files.get("parquet") + ".hdr"
-        database_without_header  = database_files.get("parquet_without_header")
-        database_within_header  = database_files.get("vcf_without_header")
+        database_without_header = database_files.get("parquet_without_header")
+        database_within_header = database_files.get("vcf_without_header")
         output_header_file = f"{tmp_dir}/header_file.hdr"
 
         # With with database and with header
@@ -468,10 +505,19 @@ def test_get_header_file_columns():
 
         # Init files
         default_header_list = [
-            '##fileformat=VCFv4.2',
-            '#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO'
+            "##fileformat=VCFv4.2",
+            "#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO",
         ]
-        default_header_file_columns = ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO']
+        default_header_file_columns = [
+            "#CHROM",
+            "POS",
+            "ID",
+            "REF",
+            "ALT",
+            "QUAL",
+            "FILTER",
+            "INFO",
+        ]
         default_header_file = f"{tmp_dir}/header_file.hdr"
         remove_if_exists(default_header_file)
         with open(default_header_file, "w") as f:
@@ -479,28 +525,38 @@ def test_get_header_file_columns():
         example_hearder_file = database_files.get("parquet") + ".hdr"
         example_hearder_inside_file = database_files.get("vcf")
         example_hearder_NO_file = f"{tmp_dir}/no_file.hdr"
-        
+
         # Create object
         database = Database()
 
         # Header None
-        database_header_file_columns = database.get_header_file_columns(header_file=None)
+        database_header_file_columns = database.get_header_file_columns(
+            header_file=None
+        )
         assert database_header_file_columns == []
 
         # Header default
-        database_header_file_columns = database.get_header_file_columns(header_file=default_header_file)
+        database_header_file_columns = database.get_header_file_columns(
+            header_file=default_header_file
+        )
         assert database_header_file_columns == default_header_file_columns
 
         # Header example
-        database_header_file_columns = database.get_header_file_columns(header_file=example_hearder_file)
+        database_header_file_columns = database.get_header_file_columns(
+            header_file=example_hearder_file
+        )
         assert database_header_file_columns == default_header_file_columns
 
         # Header example with header within file
-        database_header_file_columns = database.get_header_file_columns(header_file=example_hearder_inside_file)
+        database_header_file_columns = database.get_header_file_columns(
+            header_file=example_hearder_inside_file
+        )
         assert database_header_file_columns == default_header_file_columns
 
         # Header example with header within file
-        database_header_file_columns = database.get_header_file_columns(header_file=example_hearder_NO_file)
+        database_header_file_columns = database.get_header_file_columns(
+            header_file=example_hearder_NO_file
+        )
         assert database_header_file_columns == []
 
 
@@ -515,7 +571,7 @@ def test_exists():
 
     # Create object
     database = Database()
-    
+
     # Check if database exists
     assert database.exists(database=database_file)
 
@@ -535,7 +591,9 @@ def test_find_database():
     database_file = database_files.get("parquet")
     database_file_basename = os.path.basename(database_file)
     database_format = "parquet"
-    database_file_basename_without_extention_format = re.sub(f".{database_format}$", "", database_file_basename)
+    database_file_basename_without_extention_format = re.sub(
+        f".{database_format}$", "", database_file_basename
+    )
     databases_folders = [os.path.dirname(database_file)]
     databases_folders_with_subfolder_assembly = [os.path.dirname(databases_folders[0])]
     assembly = os.path.basename(databases_folders[0])
@@ -550,22 +608,62 @@ def test_find_database():
     assert database.find_database(database=database_file) == database_file
 
     # Find database with basename and folder list
-    assert database.find_database(database=database_file_basename, databases_folders=databases_folders) == database_file
-    
+    assert (
+        database.find_database(
+            database=database_file_basename, databases_folders=databases_folders
+        )
+        == database_file
+    )
+
     # Find database with basename and folder list multiple
-    assert database.find_database(database=database_file_basename, databases_folders=["/not_an_existing_folder"]+databases_folders) == database_file
-    assert database.find_database(database=database_file_basename, databases_folders=databases_folders+["/not_an_existing_folder"]) == database_file
+    assert (
+        database.find_database(
+            database=database_file_basename,
+            databases_folders=["/not_an_existing_folder"] + databases_folders,
+        )
+        == database_file
+    )
+    assert (
+        database.find_database(
+            database=database_file_basename,
+            databases_folders=databases_folders + ["/not_an_existing_folder"],
+        )
+        == database_file
+    )
 
     # Find database with basename and folder list without file
     assert database.find_database(database=database_file_basename) == None
-    assert database.find_database(database=database_file_basename, databases_folders=["."]) == None
-    assert database.find_database(database=database_file_basename, databases_folders=["/not_an_existing_folder"]) == None
+    assert (
+        database.find_database(database=database_file_basename, databases_folders=["."])
+        == None
+    )
+    assert (
+        database.find_database(
+            database=database_file_basename,
+            databases_folders=["/not_an_existing_folder"],
+        )
+        == None
+    )
 
     # Find database with basename and folder list and assembly
-    assert database.find_database(database=database_file_basename, databases_folders=databases_folders_with_subfolder_assembly, assembly=assembly) == database_file
+    assert (
+        database.find_database(
+            database=database_file_basename,
+            databases_folders=databases_folders_with_subfolder_assembly,
+            assembly=assembly,
+        )
+        == database_file
+    )
 
     # Find database with basename without extension/format and folder list
-    assert database.find_database(database=database_file_basename_without_extention_format, databases_folders=databases_folders, format=database_format) == database_file
+    assert (
+        database.find_database(
+            database=database_file_basename_without_extention_format,
+            databases_folders=databases_folders,
+            format=database_format,
+        )
+        == database_file
+    )
 
 
 def test_set_header():
@@ -579,7 +677,10 @@ def test_set_header():
     assert list(database.header.infos) == ["nci60"]
 
     # Set parquet with header
-    database = Database(database=database_files.get("parquet"), header_file=database_files.get("parquet")+".hdr")
+    database = Database(
+        database=database_files.get("parquet"),
+        header_file=database_files.get("parquet") + ".hdr",
+    )
     assert database.header
     assert list(database.header.infos) == ["nci60"]
 
@@ -594,7 +695,10 @@ def test_set_header():
     assert list(database.header.infos) == ["nci60"]
 
     # Set vcf with header as extra
-    database = Database(database=database_files.get("vcf"), header_file=database_files.get("vcf")+".hdr")
+    database = Database(
+        database=database_files.get("vcf"),
+        header_file=database_files.get("vcf") + ".hdr",
+    )
     assert database.header
     assert list(database.header.infos) == ["nci60"]
 
@@ -624,16 +728,19 @@ def test_set_header():
     assert list(database.header.infos) == []
 
     # Set tsv with header as extra
-    database = Database(database=database_files.get("tsv_without_header"), header_file=database_files.get("vcf"))
+    database = Database(
+        database=database_files.get("tsv_without_header"),
+        header_file=database_files.get("vcf"),
+    )
     assert database.header
     assert list(database.header.infos) == ["nci60"]
 
-    # Set bed 
+    # Set bed
     database = Database(database=database_files.get("bed"))
     assert database.header
-    assert list(database.header.infos) == ['annot1', 'annot2']
+    assert list(database.header.infos) == ["annot1", "annot2"]
 
-    # Set json 
+    # Set json
     database = Database(database=database_files.get("json"))
     assert database.header
     assert list(database.header.infos) == ["nci60"]
@@ -641,7 +748,9 @@ def test_set_header():
     # get haeder and set header
     database = Database(database=database_files.get("parquet"))
     header = database.get_header()
-    database_header = Database(database=database_files.get("parquet_without_header"), header=header)
+    database_header = Database(
+        database=database_files.get("parquet_without_header"), header=header
+    )
     assert list(database_header.header.infos) == ["nci60"]
 
 
@@ -767,7 +876,9 @@ def test_get_type():
     # Check tsv
     assert database.get_type(database_files.get("tsv")) == "variants"
     assert database.get_type(database_files.get("tsv_gz")) == "variants"
-    assert database.get_type(database_files.get("tsv_alternative_columns")) == "variants"
+    assert (
+        database.get_type(database_files.get("tsv_alternative_columns")) == "variants"
+    )
     assert database.get_type(database_files.get("tsv_failed_columns")) == "variants"
     assert database.get_type(database_files.get("tsv_lower_columns")) == "variants"
 
@@ -835,7 +946,6 @@ def test_is_vcf():
     assert not database.is_vcf(None)
 
 
-
 def test_get_database_tables():
     """
     This function list tables in a duckdb database
@@ -857,7 +967,9 @@ def test_get_database_tables():
     assert database.get_database_tables(database_files.get("sqlite")) == ["variants"]
 
     # Check duckdb without table anntation but tables
-    assert database.get_database_tables(database_files.get("duckdb_no_annotation_table")) == ["variants"]
+    assert database.get_database_tables(
+        database_files.get("duckdb_no_annotation_table")
+    ) == ["variants"]
 
     # Check parquet
     assert database.get_database_tables(database_files.get("parquet")) is None
@@ -883,7 +995,9 @@ def test_get_database_basename():
 
     # Check basename from database name
     database = Database()
-    assert database.get_database_basename(database_files.get("vcf")) == os.path.basename(database_files.get("vcf"))
+    assert database.get_database_basename(
+        database_files.get("vcf")
+    ) == os.path.basename(database_files.get("vcf"))
 
     # Check basename from NO database
     database = Database()
@@ -904,7 +1018,9 @@ def test_get_database_dirname():
 
     # Check basename from database name
     database = Database()
-    assert database.get_database_dirname(database_files.get("vcf")) == os.path.dirname(database_files.get("vcf"))
+    assert database.get_database_dirname(database_files.get("vcf")) == os.path.dirname(
+        database_files.get("vcf")
+    )
 
     # Check basename from NO database
     database = Database()
@@ -932,7 +1048,10 @@ def test_get_database_table():
     assert database.get_database_table(database_files.get("sqlite")) == "variants"
 
     # Check duckdb without table anntation
-    assert database.get_database_table(database_files.get("duckdb_no_annotation_table")) == None
+    assert (
+        database.get_database_table(database_files.get("duckdb_no_annotation_table"))
+        == None
+    )
 
     # Check parquet
     assert database.get_database_table(database_files.get("parquet")) is None
@@ -959,41 +1078,77 @@ def test_get_sql_from():
     database = Database()
 
     # Check duckdb
-    assert database.get_sql_from(database_files.get("duckdb")) == f"""'{database_files.get("duckdb")}'"""
+    assert (
+        database.get_sql_from(database_files.get("duckdb"))
+        == f"""'{database_files.get("duckdb")}'"""
+    )
 
     # Check sqlite
     database_table = database.get_database_table(database_files.get("sqlite"))
-    assert database.get_sql_from(database_files.get("sqlite")) == f"""(SELECT * FROM sqlite_scan('{database_files.get("sqlite")}', '{database_table}'))"""
+    assert (
+        database.get_sql_from(database_files.get("sqlite"))
+        == f"""(SELECT * FROM sqlite_scan('{database_files.get("sqlite")}', '{database_table}'))"""
+    )
 
     # Check parquet
-    assert database.get_sql_from(database_files.get("parquet")) ==  f"""read_parquet('{database_files.get("parquet")}')"""
+    assert (
+        database.get_sql_from(database_files.get("parquet"))
+        == f"""read_parquet('{database_files.get("parquet")}')"""
+    )
 
     # Check vcf # , compression='none'
-    assert database.get_sql_from(database_files.get("vcf")) == f"""read_csv('{database_files.get("vcf")}', names=['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='none', skip=36, delim='\t', hive_partitioning=0, sample_size=20480)"""
+    assert (
+        database.get_sql_from(database_files.get("vcf"))
+        == f"""read_csv('{database_files.get("vcf")}', names=['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='none', skip=36, delim='\t', hive_partitioning=0, sample_size=20480)"""
+    )
 
     # Check vcf gz
-    assert database.get_sql_from(database_files.get("vcf_gz")) == f"""read_csv('{database_files.get("vcf_gz")}', names=['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='gzip', skip=36, delim='\t', hive_partitioning=0, sample_size=20480)"""
+    assert (
+        database.get_sql_from(database_files.get("vcf_gz"))
+        == f"""read_csv('{database_files.get("vcf_gz")}', names=['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='gzip', skip=36, delim='\t', hive_partitioning=0, sample_size=20480)"""
+    )
 
     # Check partition vcf gz
-    assert database.get_sql_from(database_files.get("partition_vcf_gz")) == f"""read_csv('{database_files.get("partition_vcf_gz")}/*/*csv', names=['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='gzip', skip=0, delim='\t', hive_partitioning=1, sample_size=20480)"""
+    assert (
+        database.get_sql_from(database_files.get("partition_vcf_gz"))
+        == f"""read_csv('{database_files.get("partition_vcf_gz")}/*/*csv', names=['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='gzip', skip=0, delim='\t', hive_partitioning=1, sample_size=20480)"""
+    )
 
     # Check tsv
-    assert database.get_sql_from(database_files.get("tsv")) == f"""read_csv('{database_files.get("tsv")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='none', skip=36, delim='\t', hive_partitioning=0, sample_size=20480)"""
+    assert (
+        database.get_sql_from(database_files.get("tsv"))
+        == f"""read_csv('{database_files.get("tsv")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='none', skip=36, delim='\t', hive_partitioning=0, sample_size=20480)"""
+    )
 
     # Check tsv gz
-    assert database.get_sql_from(database_files.get("tsv_gz")) == f"""read_csv('{database_files.get("tsv_gz")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='gzip', skip=36, delim='\t', hive_partitioning=0, sample_size=20480)"""
+    assert (
+        database.get_sql_from(database_files.get("tsv_gz"))
+        == f"""read_csv('{database_files.get("tsv_gz")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='gzip', skip=36, delim='\t', hive_partitioning=0, sample_size=20480)"""
+    )
 
     # Check csv
-    assert database.get_sql_from(database_files.get("csv")) == f"""read_csv('{database_files.get("csv")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='none', skip=0, delim=',', hive_partitioning=0, sample_size=20480)"""
+    assert (
+        database.get_sql_from(database_files.get("csv"))
+        == f"""read_csv('{database_files.get("csv")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='none', skip=0, delim=',', hive_partitioning=0, sample_size=20480)"""
+    )
 
     # Check tbl
-    assert database.get_sql_from(database_files.get("tbl")) == f"""read_csv('{database_files.get("tbl")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='none', skip=0, delim='|', hive_partitioning=0, sample_size=20480)"""
+    assert (
+        database.get_sql_from(database_files.get("tbl"))
+        == f"""read_csv('{database_files.get("tbl")}', names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], auto_detect=True, compression='none', skip=0, delim='|', hive_partitioning=0, sample_size=20480)"""
+    )
 
     # Check bed
-    assert database.get_sql_from(database_files.get("bed")) == f"""read_csv('{database_files.get("bed")}', names=['#CHROM', 'START', 'END', 'annot1', 'annot2'], auto_detect=True, compression='none', skip=33, delim='\t', hive_partitioning=0, sample_size=20480)"""
+    assert (
+        database.get_sql_from(database_files.get("bed"))
+        == f"""read_csv('{database_files.get("bed")}', names=['#CHROM', 'START', 'END', 'annot1', 'annot2'], auto_detect=True, compression='none', skip=33, delim='\t', hive_partitioning=0, sample_size=20480)"""
+    )
 
     # Check json
-    assert database.get_sql_from(database_files.get("json")) == f"""read_json('{database_files.get("json")}', auto_detect=True, sample_size=20480)"""
+    assert (
+        database.get_sql_from(database_files.get("json"))
+        == f"""read_json('{database_files.get("json")}', auto_detect=True, sample_size=20480)"""
+    )
 
     # Check None
     assert database.get_sql_from(None) == None
@@ -1007,9 +1162,11 @@ def test_get_sql_database_link():
     # Check None
     database = Database()
     sql_database_link = database.get_sql_database_link(database=None)
-    sql_database_attach = database.get_sql_database_attach(database=None, output="query")
+    sql_database_attach = database.get_sql_database_attach(
+        database=None, output="query"
+    )
     assert not sql_database_link
-    assert not sql_database_attach    
+    assert not sql_database_attach
 
     # Check duckdb as init
     database = Database(database=database_files.get("duckdb"))
@@ -1033,8 +1190,12 @@ def test_get_sql_database_link():
 
     # Check duckdb
     database = Database()
-    sql_database_link = database.get_sql_database_link(database=database_files.get("duckdb"))
-    sql_database_attach = database.get_sql_database_attach(database=database_files.get("duckdb"), output="query")
+    sql_database_link = database.get_sql_database_link(
+        database=database_files.get("duckdb")
+    )
+    sql_database_attach = database.get_sql_database_attach(
+        database=database_files.get("duckdb"), output="query"
+    )
     assert sql_database_link
     assert sql_database_attach
     if sql_database_attach:
@@ -1043,8 +1204,12 @@ def test_get_sql_database_link():
 
     # Check sqlite
     database = Database()
-    sql_database_link = database.get_sql_database_link(database=database_files.get("sqlite"))
-    sql_database_attach = database.get_sql_database_attach(database=database_files.get("sqlite"), output="query")
+    sql_database_link = database.get_sql_database_link(
+        database=database_files.get("sqlite")
+    )
+    sql_database_attach = database.get_sql_database_attach(
+        database=database_files.get("sqlite"), output="query"
+    )
     assert sql_database_link
     assert sql_database_attach
     if sql_database_attach:
@@ -1053,8 +1218,12 @@ def test_get_sql_database_link():
 
     # Check parquet
     database = Database()
-    sql_database_link = database.get_sql_database_link(database=database_files.get("parquet"))
-    sql_database_attach = database.get_sql_database_attach(database=database_files.get("parquet"), output="query")
+    sql_database_link = database.get_sql_database_link(
+        database=database_files.get("parquet")
+    )
+    sql_database_attach = database.get_sql_database_attach(
+        database=database_files.get("parquet"), output="query"
+    )
     assert sql_database_link
     assert not sql_database_attach
     if sql_database_attach:
@@ -1063,8 +1232,12 @@ def test_get_sql_database_link():
 
     # Check vcf
     database = Database()
-    sql_database_link = database.get_sql_database_link(database=database_files.get("vcf"))
-    sql_database_attach = database.get_sql_database_attach(database=database_files.get("vcf"), output="query")
+    sql_database_link = database.get_sql_database_link(
+        database=database_files.get("vcf")
+    )
+    sql_database_attach = database.get_sql_database_attach(
+        database=database_files.get("vcf"), output="query"
+    )
     assert sql_database_link
     assert not sql_database_attach
     if sql_database_attach:
@@ -1073,8 +1246,12 @@ def test_get_sql_database_link():
 
     # Check vcf gz
     database = Database()
-    sql_database_link = database.get_sql_database_link(database=database_files.get("vcf_gz"))
-    sql_database_attach = database.get_sql_database_attach(database=database_files.get("vcf_gz"), output="query")
+    sql_database_link = database.get_sql_database_link(
+        database=database_files.get("vcf_gz")
+    )
+    sql_database_attach = database.get_sql_database_attach(
+        database=database_files.get("vcf_gz"), output="query"
+    )
     assert sql_database_link
     assert not sql_database_attach
     if sql_database_attach:
@@ -1083,8 +1260,12 @@ def test_get_sql_database_link():
 
     # Check partition vcf gz
     database = Database()
-    sql_database_link = database.get_sql_database_link(database=database_files.get("partition_vcf_gz"))
-    sql_database_attach = database.get_sql_database_attach(database=database_files.get("partition_vcf_gz"), output="query")
+    sql_database_link = database.get_sql_database_link(
+        database=database_files.get("partition_vcf_gz")
+    )
+    sql_database_attach = database.get_sql_database_attach(
+        database=database_files.get("partition_vcf_gz"), output="query"
+    )
     assert sql_database_link
     assert not sql_database_attach
     if sql_database_attach:
@@ -1093,8 +1274,12 @@ def test_get_sql_database_link():
 
     # Check tsv
     database = Database()
-    sql_database_link = database.get_sql_database_link(database=database_files.get("tsv"))
-    sql_database_attach = database.get_sql_database_attach(database=database_files.get("tsv"), output="query")
+    sql_database_link = database.get_sql_database_link(
+        database=database_files.get("tsv")
+    )
+    sql_database_attach = database.get_sql_database_attach(
+        database=database_files.get("tsv"), output="query"
+    )
     assert sql_database_link
     assert not sql_database_attach
     if sql_database_attach:
@@ -1103,8 +1288,12 @@ def test_get_sql_database_link():
 
     # Check csv
     database = Database()
-    sql_database_link = database.get_sql_database_link(database=database_files.get("csv"))
-    sql_database_attach = database.get_sql_database_attach(database=database_files.get("csv"), output="query")
+    sql_database_link = database.get_sql_database_link(
+        database=database_files.get("csv")
+    )
+    sql_database_attach = database.get_sql_database_attach(
+        database=database_files.get("csv"), output="query"
+    )
     assert sql_database_link
     assert not sql_database_attach
     if sql_database_attach:
@@ -1113,8 +1302,12 @@ def test_get_sql_database_link():
 
     # Check tbl
     database = Database()
-    sql_database_link = database.get_sql_database_link(database=database_files.get("tbl"))
-    sql_database_attach = database.get_sql_database_attach(database=database_files.get("tbl"), output="query")
+    sql_database_link = database.get_sql_database_link(
+        database=database_files.get("tbl")
+    )
+    sql_database_attach = database.get_sql_database_attach(
+        database=database_files.get("tbl"), output="query"
+    )
     assert sql_database_link
     assert not sql_database_attach
     if sql_database_attach:
@@ -1123,8 +1316,12 @@ def test_get_sql_database_link():
 
     # Check json
     database = Database()
-    sql_database_link = database.get_sql_database_link(database=database_files.get("json"))
-    sql_database_attach = database.get_sql_database_attach(database=database_files.get("json"), output="query")
+    sql_database_link = database.get_sql_database_link(
+        database=database_files.get("json")
+    )
+    sql_database_attach = database.get_sql_database_attach(
+        database=database_files.get("json"), output="query"
+    )
     assert sql_database_link
     assert not sql_database_attach
     if sql_database_attach:
@@ -1141,54 +1338,189 @@ def test_get_columns():
     database = Database(database_files.get("duckdb"))
 
     # Check duckdb
-    assert database.get_columns() == ['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO', 'INFO/nci60']
-    assert database.get_columns(table="variants") == ['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO', 'INFO/nci60']
+    assert database.get_columns() == [
+        "#CHROM",
+        "POS",
+        "REF",
+        "ALT",
+        "ID",
+        "QUAL",
+        "FILTER",
+        "INFO",
+        "INFO/nci60",
+    ]
+    assert database.get_columns(table="variants") == [
+        "#CHROM",
+        "POS",
+        "REF",
+        "ALT",
+        "ID",
+        "QUAL",
+        "FILTER",
+        "INFO",
+        "INFO/nci60",
+    ]
 
     # Create empty object
     database = Database()
 
     # Check duckdb
-    assert database.get_columns(database=database_files.get("duckdb")) == ['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO', 'INFO/nci60']
-    assert database.get_columns(database=database_files.get("duckdb"), table="variants") == ['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO', 'INFO/nci60']
-    assert database.get_columns(database=database_files.get("duckdb_no_annotation_table")) == []
-    assert database.get_columns(database=database_files.get("duckdb_no_annotation_table"), table="variants") == ['#CHROM', 'NOTPOS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO', 'INFO/nci60']
+    assert database.get_columns(database=database_files.get("duckdb")) == [
+        "#CHROM",
+        "POS",
+        "REF",
+        "ALT",
+        "ID",
+        "QUAL",
+        "FILTER",
+        "INFO",
+        "INFO/nci60",
+    ]
+    assert database.get_columns(
+        database=database_files.get("duckdb"), table="variants"
+    ) == ["#CHROM", "POS", "REF", "ALT", "ID", "QUAL", "FILTER", "INFO", "INFO/nci60"]
+    assert (
+        database.get_columns(database=database_files.get("duckdb_no_annotation_table"))
+        == []
+    )
+    assert database.get_columns(
+        database=database_files.get("duckdb_no_annotation_table"), table="variants"
+    ) == [
+        "#CHROM",
+        "NOTPOS",
+        "REF",
+        "ALT",
+        "ID",
+        "QUAL",
+        "FILTER",
+        "INFO",
+        "INFO/nci60",
+    ]
 
     # Check sqlite
-    assert database.get_columns(database=database_files.get("sqlite")) == ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'INFO/nci60']
-    assert database.get_columns(database=database_files.get("sqlite"), table="variants") == ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'INFO/nci60']
+    assert database.get_columns(database=database_files.get("sqlite")) == [
+        "#CHROM",
+        "POS",
+        "ID",
+        "REF",
+        "ALT",
+        "QUAL",
+        "FILTER",
+        "INFO",
+        "INFO/nci60",
+    ]
+    assert database.get_columns(
+        database=database_files.get("sqlite"), table="variants"
+    ) == ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "INFO/nci60"]
 
     # Check parquet
-    assert database.get_columns(database=database_files.get("parquet")) ==  ['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO', 'INFO/nci60']
+    assert database.get_columns(database=database_files.get("parquet")) == [
+        "#CHROM",
+        "POS",
+        "REF",
+        "ALT",
+        "ID",
+        "QUAL",
+        "FILTER",
+        "INFO",
+        "INFO/nci60",
+    ]
 
     # Check vcf
-    assert database.get_columns(database=database_files.get("vcf")) == ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO']
+    assert database.get_columns(database=database_files.get("vcf")) == [
+        "#CHROM",
+        "POS",
+        "ID",
+        "REF",
+        "ALT",
+        "QUAL",
+        "FILTER",
+        "INFO",
+    ]
 
     # Check vcf without header
-    assert database.get_columns(database=database_files.get("vcf_without_header")) == ['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO']
+    assert database.get_columns(database=database_files.get("vcf_without_header")) == [
+        "#CHROM",
+        "POS",
+        "ID",
+        "REF",
+        "ALT",
+        "QUAL",
+        "FILTER",
+        "INFO",
+    ]
 
     # Check tsv
-    assert database.get_columns(database=database_files.get("tsv")) == ['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO']
+    assert database.get_columns(database=database_files.get("tsv")) == [
+        "#CHROM",
+        "POS",
+        "REF",
+        "ALT",
+        "ID",
+        "QUAL",
+        "FILTER",
+        "INFO",
+    ]
 
     # Check csv
-    assert database.get_columns(database=database_files.get("csv")) == ['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO']
+    assert database.get_columns(database=database_files.get("csv")) == [
+        "#CHROM",
+        "POS",
+        "REF",
+        "ALT",
+        "ID",
+        "QUAL",
+        "FILTER",
+        "INFO",
+    ]
 
     # Check tbl
-    assert database.get_columns(database=database_files.get("tbl")) == ['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO']
+    assert database.get_columns(database=database_files.get("tbl")) == [
+        "#CHROM",
+        "POS",
+        "REF",
+        "ALT",
+        "ID",
+        "QUAL",
+        "FILTER",
+        "INFO",
+    ]
 
     # Check bed
-    assert database.get_columns(database=database_files.get("bed")) == ['#CHROM', 'START', 'END', 'annot1', 'annot2']
+    assert database.get_columns(database=database_files.get("bed")) == [
+        "#CHROM",
+        "START",
+        "END",
+        "annot1",
+        "annot2",
+    ]
 
     # Check refgene
-    assert database.get_columns(database=database_files.get("refgene")) == ['#CHROM', 'START', 'END', 'symbol', 'transcript', 'strand']
+    assert database.get_columns(database=database_files.get("refgene")) == [
+        "#CHROM",
+        "START",
+        "END",
+        "symbol",
+        "transcript",
+        "strand",
+    ]
 
     # Check refgene with an extra header file
-    assert database.get_columns(database=database_files.get("refgene"),header_file=database_files.get("refgene")+".hdr") == ['#CHROM', 'START', 'END', 'symbol', 'transcript', 'strand']
+    assert database.get_columns(
+        database=database_files.get("refgene"),
+        header_file=database_files.get("refgene") + ".hdr",
+    ) == ["#CHROM", "START", "END", "symbol", "transcript", "strand"]
 
     # Check refgene without header
-    assert database.get_columns(database=database_files.get("refgene_without_header")) == ['#CHROM', 'START', 'END', 'column3', 'column4', 'column5']
+    assert database.get_columns(
+        database=database_files.get("refgene_without_header")
+    ) == ["#CHROM", "START", "END", "column3", "column4", "column5"]
 
     # Check refgene gz
-    assert database.get_columns(database=database_files.get("refgene_gz"),header_file=database_files.get("refgene_gz")+".hdr") == ['#CHROM', 'START', 'END', 'symbol', 'transcript', 'strand']
+    assert database.get_columns(
+        database=database_files.get("refgene_gz"),
+        header_file=database_files.get("refgene_gz") + ".hdr",
+    ) == ["#CHROM", "START", "END", "symbol", "transcript", "strand"]
 
     # Check None
     assert database.get_columns(database=None) == []
@@ -1203,34 +1535,78 @@ def test_get_extra_colums():
     database = Database(database_files.get("duckdb"))
 
     # Check duckdb
-    assert database.get_extra_columns() == ['ID', 'QUAL', 'FILTER', 'INFO', 'INFO/nci60']
+    assert database.get_extra_columns() == [
+        "ID",
+        "QUAL",
+        "FILTER",
+        "INFO",
+        "INFO/nci60",
+    ]
 
     # Create empty object
     database = Database()
 
     # Check duckdb
-    assert database.get_extra_columns(database_files.get("duckdb")) == ['ID', 'QUAL', 'FILTER', 'INFO', 'INFO/nci60']
+    assert database.get_extra_columns(database_files.get("duckdb")) == [
+        "ID",
+        "QUAL",
+        "FILTER",
+        "INFO",
+        "INFO/nci60",
+    ]
 
     # Check sqlite
-    assert database.get_extra_columns(database_files.get("sqlite")) == ['ID', 'QUAL', 'FILTER', 'INFO', 'INFO/nci60']
+    assert database.get_extra_columns(database_files.get("sqlite")) == [
+        "ID",
+        "QUAL",
+        "FILTER",
+        "INFO",
+        "INFO/nci60",
+    ]
 
     # Check parquet
-    assert database.get_extra_columns(database_files.get("parquet")) ==  ['ID', 'QUAL', 'FILTER', 'INFO', 'INFO/nci60']
+    assert database.get_extra_columns(database_files.get("parquet")) == [
+        "ID",
+        "QUAL",
+        "FILTER",
+        "INFO",
+        "INFO/nci60",
+    ]
 
     # Check vcf
-    assert database.get_extra_columns(database_files.get("vcf")) == ['ID', 'QUAL', 'FILTER', 'INFO']
+    assert database.get_extra_columns(database_files.get("vcf")) == [
+        "ID",
+        "QUAL",
+        "FILTER",
+        "INFO",
+    ]
 
     # Check tsv
-    assert database.get_extra_columns(database_files.get("tsv")) == ['ID', 'QUAL', 'FILTER', 'INFO']
+    assert database.get_extra_columns(database_files.get("tsv")) == [
+        "ID",
+        "QUAL",
+        "FILTER",
+        "INFO",
+    ]
 
     # Check csv
-    assert database.get_extra_columns(database_files.get("csv")) == ['ID', 'QUAL', 'FILTER', 'INFO']
+    assert database.get_extra_columns(database_files.get("csv")) == [
+        "ID",
+        "QUAL",
+        "FILTER",
+        "INFO",
+    ]
 
     # Check tbl
-    assert database.get_extra_columns(database_files.get("tbl")) == ['ID', 'QUAL', 'FILTER', 'INFO']
+    assert database.get_extra_columns(database_files.get("tbl")) == [
+        "ID",
+        "QUAL",
+        "FILTER",
+        "INFO",
+    ]
 
     # Check bed
-    assert database.get_extra_columns(database_files.get("bed")) == ['annot1', 'annot2']
+    assert database.get_extra_columns(database_files.get("bed")) == ["annot1", "annot2"]
 
     # Check None
     assert database.get_extra_columns(None) == []
@@ -1254,10 +1630,11 @@ def test_find_column():
 
     assert database.find_column(column="INFO/nci60") == "INFO/nci60"
     assert database.find_column(column="INFO/nci60", prefixes=["INFO/"]) == "INFO/nci60"
-    assert database.find_column(column="INFO/nci60", prefixes=["PREFIX/"]) == "INFO/nci60"
+    assert (
+        database.find_column(column="INFO/nci60", prefixes=["PREFIX/"]) == "INFO/nci60"
+    )
 
     assert database.find_column(column="OTHER/nci60", prefixes=["PREFIX/"]) == None
-
 
     assert database.find_column(column="column") == None
     assert database.find_column(column="column", prefixes=["INFO/"]) == None
@@ -1265,11 +1642,32 @@ def test_find_column():
 
     # Empty Database
     database = Database()
-    assert database.find_column(database=database_files.get("parquet"), column="nci60") == "INFO/nci60"
-    assert database.find_column(database=database_files.get("parquet"), column="INFO/nci60") == "INFO/nci60"
-    assert database.find_column(database=database_files.get("parquet"), column="nci60", prefixes=["INFO/"]) == "INFO/nci60"
-    assert database.find_column(database=database_files.get("parquet"), column="nci60", prefixes=["OTHER/"]) == "INFO"
-    assert database.find_column(database=database_files.get("parquet"), column="column") == None
+    assert (
+        database.find_column(database=database_files.get("parquet"), column="nci60")
+        == "INFO/nci60"
+    )
+    assert (
+        database.find_column(
+            database=database_files.get("parquet"), column="INFO/nci60"
+        )
+        == "INFO/nci60"
+    )
+    assert (
+        database.find_column(
+            database=database_files.get("parquet"), column="nci60", prefixes=["INFO/"]
+        )
+        == "INFO/nci60"
+    )
+    assert (
+        database.find_column(
+            database=database_files.get("parquet"), column="nci60", prefixes=["OTHER/"]
+        )
+        == "INFO"
+    )
+    assert (
+        database.find_column(database=database_files.get("parquet"), column="column")
+        == None
+    )
 
 
 def test_map_columns():
@@ -1284,35 +1682,76 @@ def test_map_columns():
     assert database.map_columns() == {}
 
     assert database.map_columns(columns=["nci60"]) == {"nci60": "INFO/nci60"}
-    assert database.map_columns(columns=["nci60"], prefixes=["INFO/"]) == {"nci60": "INFO/nci60"}
-    assert database.map_columns(columns=["nci60"], prefixes=["PREFIX/"]) == {"nci60": "INFO"}
+    assert database.map_columns(columns=["nci60"], prefixes=["INFO/"]) == {
+        "nci60": "INFO/nci60"
+    }
+    assert database.map_columns(columns=["nci60"], prefixes=["PREFIX/"]) == {
+        "nci60": "INFO"
+    }
 
-    assert database.map_columns(columns=["nci60", "QUAL"]) == {"nci60": "INFO/nci60", "QUAL": "QUAL"}
-    assert database.map_columns(columns=["nci60", "QUAL"], prefixes=["INFO/"]) == {"nci60": "INFO/nci60", "QUAL": "QUAL"}
-    assert database.map_columns(columns=["nci60", "QUAL"], prefixes=["PREFIX/"]) == {"nci60": "INFO", "QUAL": "QUAL"}
-
+    assert database.map_columns(columns=["nci60", "QUAL"]) == {
+        "nci60": "INFO/nci60",
+        "QUAL": "QUAL",
+    }
+    assert database.map_columns(columns=["nci60", "QUAL"], prefixes=["INFO/"]) == {
+        "nci60": "INFO/nci60",
+        "QUAL": "QUAL",
+    }
+    assert database.map_columns(columns=["nci60", "QUAL"], prefixes=["PREFIX/"]) == {
+        "nci60": "INFO",
+        "QUAL": "QUAL",
+    }
 
     assert database.map_columns(columns=["INFO/nci60"]) == {"INFO/nci60": "INFO/nci60"}
-    assert database.map_columns(columns=["INFO/nci60"], prefixes=["INFO/"]) == {"INFO/nci60": "INFO/nci60"}
-    assert database.map_columns(columns=["INFO/nci60"], prefixes=["PREFIX/"]) == {"INFO/nci60": "INFO/nci60"}
+    assert database.map_columns(columns=["INFO/nci60"], prefixes=["INFO/"]) == {
+        "INFO/nci60": "INFO/nci60"
+    }
+    assert database.map_columns(columns=["INFO/nci60"], prefixes=["PREFIX/"]) == {
+        "INFO/nci60": "INFO/nci60"
+    }
 
     assert database.map_columns(columns=["column"]) == {"column": None}
-    assert database.map_columns(columns=["column"], prefixes=["INFO/"]) == {"column": None}
-    assert database.map_columns(columns=["column"], prefixes=["PREFIX/"]) == {"column": None}
+    assert database.map_columns(columns=["column"], prefixes=["INFO/"]) == {
+        "column": None
+    }
+    assert database.map_columns(columns=["column"], prefixes=["PREFIX/"]) == {
+        "column": None
+    }
 
-    assert database.map_columns(columns=["column", "QUAL"]) == {"column": None, "QUAL": "QUAL"}
-    assert database.map_columns(columns=["column", "QUAL"], prefixes=["INFO/"]) == {"column": None, "QUAL": "QUAL"}
-    assert database.map_columns(columns=["column", "QUAL"], prefixes=["PREFIX/"]) == {"column": None, "QUAL": "QUAL"}
+    assert database.map_columns(columns=["column", "QUAL"]) == {
+        "column": None,
+        "QUAL": "QUAL",
+    }
+    assert database.map_columns(columns=["column", "QUAL"], prefixes=["INFO/"]) == {
+        "column": None,
+        "QUAL": "QUAL",
+    }
+    assert database.map_columns(columns=["column", "QUAL"], prefixes=["PREFIX/"]) == {
+        "column": None,
+        "QUAL": "QUAL",
+    }
 
     # Empty Database
     database = Database()
-    assert database.map_columns(database=database_files.get("parquet"), columns=["nci60"]) == {"nci60": "INFO/nci60"}
-    assert database.map_columns(database=database_files.get("parquet"), columns=["INFO/nci60"]) == {"INFO/nci60": "INFO/nci60"}
-    assert database.map_columns(database=database_files.get("parquet"), columns=["nci60"], prefixes=["INFO/"]) == {"nci60": "INFO/nci60"}
-    assert database.map_columns(database=database_files.get("parquet"), columns=["nci60"], prefixes=["OTHER/"]) == {"nci60": "INFO"}
-    assert database.map_columns(database=database_files.get("parquet"), columns=["column"]) == {"column": None}
+    assert database.map_columns(
+        database=database_files.get("parquet"), columns=["nci60"]
+    ) == {"nci60": "INFO/nci60"}
+    assert database.map_columns(
+        database=database_files.get("parquet"), columns=["INFO/nci60"]
+    ) == {"INFO/nci60": "INFO/nci60"}
+    assert database.map_columns(
+        database=database_files.get("parquet"), columns=["nci60"], prefixes=["INFO/"]
+    ) == {"nci60": "INFO/nci60"}
+    assert database.map_columns(
+        database=database_files.get("parquet"), columns=["nci60"], prefixes=["OTHER/"]
+    ) == {"nci60": "INFO"}
+    assert database.map_columns(
+        database=database_files.get("parquet"), columns=["column"]
+    ) == {"column": None}
 
-    assert database.map_columns(database=database_files.get("parquet"), columns=["nci60", "QUAL"]) == {"nci60": "INFO/nci60", "QUAL": "QUAL"}
+    assert database.map_columns(
+        database=database_files.get("parquet"), columns=["nci60", "QUAL"]
+    ) == {"nci60": "INFO/nci60", "QUAL": "QUAL"}
 
 
 def test_get_header_from_columns():
@@ -1325,21 +1764,52 @@ def test_get_header_from_columns():
     database = Database()
 
     # duckdb with associated header file
-    assert list(database.get_header_from_columns(database=database_files.get("duckdb")).infos) == ["INFO/nci60"]
-    assert list(database.get_header_from_columns(database=database_files.get("duckdb"), header_columns=None).infos) == ["INFO/nci60"]
-    assert list(database.get_header_from_columns(database=database_files.get("duckdb"), header_columns=[]).infos) == ["INFO/nci60"]
+    assert list(
+        database.get_header_from_columns(database=database_files.get("duckdb")).infos
+    ) == ["INFO/nci60"]
+    assert list(
+        database.get_header_from_columns(
+            database=database_files.get("duckdb"), header_columns=None
+        ).infos
+    ) == ["INFO/nci60"]
+    assert list(
+        database.get_header_from_columns(
+            database=database_files.get("duckdb"), header_columns=[]
+        ).infos
+    ) == ["INFO/nci60"]
 
     # Parquet without header and a annotation column
-    assert list(database.get_header_from_columns(database=database_files.get("parquet_without_header")).infos) == ["INFO/nci60"]
+    assert list(
+        database.get_header_from_columns(
+            database=database_files.get("parquet_without_header")
+        ).infos
+    ) == ["INFO/nci60"]
 
     # TSV without header and no extra annotation columns
-    assert list(database.get_header_from_columns(database=database_files.get("tsv_without_header")).infos) == []
+    assert (
+        list(
+            database.get_header_from_columns(
+                database=database_files.get("tsv_without_header")
+            ).infos
+        )
+        == []
+    )
 
     # VCF
-    assert list(database.get_header_from_columns(database=database_files.get("vcf")).infos) == []
+    assert (
+        list(database.get_header_from_columns(database=database_files.get("vcf")).infos)
+        == []
+    )
 
     # VCF without external header
-    assert list(database.get_header_from_columns(database=database_files.get("vcf_without_header")).infos) == []
+    assert (
+        list(
+            database.get_header_from_columns(
+                database=database_files.get("vcf_without_header")
+            ).infos
+        )
+        == []
+    )
 
 
 def test_get_annotations():
@@ -1355,19 +1825,32 @@ def test_get_annotations():
     assert database.get_annotations(database=None) == None
 
     # duckdb with associated header file
-    assert list(database.get_annotations(database=database_files.get("duckdb"))) == ["nci60"]
+    assert list(database.get_annotations(database=database_files.get("duckdb"))) == [
+        "nci60"
+    ]
 
     # Parquet without header and a annotation column
-    assert list(database.get_annotations(database=database_files.get("parquet_without_header"))) == ["INFO/nci60"]
+    assert list(
+        database.get_annotations(database=database_files.get("parquet_without_header"))
+    ) == ["INFO/nci60"]
 
     # TSV without header and no extra annotation columns
-    assert list(database.get_annotations(database=database_files.get("tsv_without_header"))) == []
+    assert (
+        list(
+            database.get_annotations(database=database_files.get("tsv_without_header"))
+        )
+        == []
+    )
 
     # VCF
-    assert list(database.get_annotations(database=database_files.get("vcf"))) == ["nci60"]
+    assert list(database.get_annotations(database=database_files.get("vcf"))) == [
+        "nci60"
+    ]
 
     # VCF without external header
-    assert list(database.get_annotations(database=database_files.get("vcf_without_header"))) == ["nci60"]
+    assert list(
+        database.get_annotations(database=database_files.get("vcf_without_header"))
+    ) == ["nci60"]
 
 
 def test_query():
@@ -1377,7 +1860,7 @@ def test_query():
 
     # Create object
     database = Database()
-    
+
     # Query empty
     assert database.query() == None
 
@@ -1387,116 +1870,159 @@ def test_query():
 
 
 def test_get_needed_columns():
-    """
-    
-    """
+    """ """
 
     # Init
     variants_needed_columns_empty = {
-        '#CHROM': None,
-        'POS': None,
-        'REF': None,
-        'ALT': None
+        "#CHROM": None,
+        "POS": None,
+        "REF": None,
+        "ALT": None,
     }
     variants_needed_columns_only_CHROM = {
-        '#CHROM': "CHROM",
-        'POS': None,
-        'REF': None,
-        'ALT': None
+        "#CHROM": "CHROM",
+        "POS": None,
+        "REF": None,
+        "ALT": None,
     }
     variants_needed_columns_only_ALL = {
-        '#CHROM': "#CHROM",
-        'POS': "POS",
-        'REF': "REF",
-        'ALT': "ALT"
+        "#CHROM": "#CHROM",
+        "POS": "POS",
+        "REF": "REF",
+        "ALT": "ALT",
     }
     vcf_needed_columns_empty = {
-        '#CHROM': None,
-        'POS': None,
-        'ID': None,
-        'REF': None,
-        'ALT': None,
-        'QUAL': None,
-        'FILTER': None,
-        'INFO': None,
+        "#CHROM": None,
+        "POS": None,
+        "ID": None,
+        "REF": None,
+        "ALT": None,
+        "QUAL": None,
+        "FILTER": None,
+        "INFO": None,
     }
     vcf_needed_columns_only_CHROM = {
-        '#CHROM': "CHROM",
-        'POS': None,
-        'ID': None,
-        'REF': None,
-        'ALT': None,
-        'QUAL': None,
-        'FILTER': None,
-        'INFO': None,
+        "#CHROM": "CHROM",
+        "POS": None,
+        "ID": None,
+        "REF": None,
+        "ALT": None,
+        "QUAL": None,
+        "FILTER": None,
+        "INFO": None,
     }
     vcf_needed_columns_only_ALL = {
-        '#CHROM': "#CHROM",
-        'POS': "POS",
-        'ID': None,
-        'REF': "REF",
-        'ALT': "ALT",
-        'QUAL': None,
-        'FILTER': None,
-        'INFO': "INFO",
+        "#CHROM": "#CHROM",
+        "POS": "POS",
+        "ID": None,
+        "REF": "REF",
+        "ALT": "ALT",
+        "QUAL": None,
+        "FILTER": None,
+        "INFO": "INFO",
     }
-    regions_needed_columns_empty = {
-        '#CHROM': None,
-        'START': None,
-        'END': None
-    }
-    regions_needed_columns_only_CHROM = {
-        '#CHROM': "CHROM",
-        'START': None,
-        'END': None
-    }
+    regions_needed_columns_empty = {"#CHROM": None, "START": None, "END": None}
+    regions_needed_columns_only_CHROM = {"#CHROM": "CHROM", "START": None, "END": None}
     regions_needed_columns_only_ALL = {
-        '#CHROM': "#CHROM",
-        'START': "START",
-        'END': "END"
+        "#CHROM": "#CHROM",
+        "START": "START",
+        "END": "END",
     }
 
     # Create object
     database = Database()
 
     # empty
-    assert database.get_needed_columns(database_columns = [], database_type = None) == {}
+    assert database.get_needed_columns(database_columns=[], database_type=None) == {}
 
     # Variants No columns
-    assert database.get_needed_columns(database_columns = [], database_type = "variants") == variants_needed_columns_empty
+    assert (
+        database.get_needed_columns(database_columns=[], database_type="variants")
+        == variants_needed_columns_empty
+    )
 
     # Variants Only CHROM
-    assert database.get_needed_columns(database_columns = ["CHROM"], database_type = "variants") == variants_needed_columns_only_CHROM
+    assert (
+        database.get_needed_columns(
+            database_columns=["CHROM"], database_type="variants"
+        )
+        == variants_needed_columns_only_CHROM
+    )
 
     # Variants ALL
-    assert database.get_needed_columns(database_columns = ["#CHROM", "POS", "REF", "ALT"], database_type = "variants") == variants_needed_columns_only_ALL
+    assert (
+        database.get_needed_columns(
+            database_columns=["#CHROM", "POS", "REF", "ALT"], database_type="variants"
+        )
+        == variants_needed_columns_only_ALL
+    )
 
     # Variants INFO MORE
-    assert database.get_needed_columns(database_columns = ["#CHROM", "POS", "REF", "ALT", "INFO", "MORE"], database_type = "variants") == variants_needed_columns_only_ALL
+    assert (
+        database.get_needed_columns(
+            database_columns=["#CHROM", "POS", "REF", "ALT", "INFO", "MORE"],
+            database_type="variants",
+        )
+        == variants_needed_columns_only_ALL
+    )
 
     # VCF No columns
-    assert database.get_needed_columns(database_columns = [], database_type = "vcf") == vcf_needed_columns_empty
+    assert (
+        database.get_needed_columns(database_columns=[], database_type="vcf")
+        == vcf_needed_columns_empty
+    )
 
     # VCF Only CHROM
-    assert database.get_needed_columns(database_columns = ["CHROM"], database_type = "vcf") == vcf_needed_columns_only_CHROM
+    assert (
+        database.get_needed_columns(database_columns=["CHROM"], database_type="vcf")
+        == vcf_needed_columns_only_CHROM
+    )
 
     # VCF ALL
-    assert database.get_needed_columns(database_columns = ["#CHROM", "POS", "REF", "ALT", "INFO"], database_type = "vcf") == vcf_needed_columns_only_ALL
+    assert (
+        database.get_needed_columns(
+            database_columns=["#CHROM", "POS", "REF", "ALT", "INFO"],
+            database_type="vcf",
+        )
+        == vcf_needed_columns_only_ALL
+    )
 
     # VCF MORE
-    assert database.get_needed_columns(database_columns = ["#CHROM", "POS", "REF", "ALT", "INFO", "MORE"], database_type = "vcf") == vcf_needed_columns_only_ALL
+    assert (
+        database.get_needed_columns(
+            database_columns=["#CHROM", "POS", "REF", "ALT", "INFO", "MORE"],
+            database_type="vcf",
+        )
+        == vcf_needed_columns_only_ALL
+    )
 
     # Regions No columns
-    assert database.get_needed_columns(database_columns = [], database_type = "regions") == regions_needed_columns_empty
+    assert (
+        database.get_needed_columns(database_columns=[], database_type="regions")
+        == regions_needed_columns_empty
+    )
 
     # Regions Only CHROM
-    assert database.get_needed_columns(database_columns = ["CHROM"], database_type = "regions") == regions_needed_columns_only_CHROM
+    assert (
+        database.get_needed_columns(database_columns=["CHROM"], database_type="regions")
+        == regions_needed_columns_only_CHROM
+    )
 
     # Regions ALL
-    assert database.get_needed_columns(database_columns = ["#CHROM", "START", "END"], database_type = "regions") == regions_needed_columns_only_ALL
+    assert (
+        database.get_needed_columns(
+            database_columns=["#CHROM", "START", "END"], database_type="regions"
+        )
+        == regions_needed_columns_only_ALL
+    )
 
     # Regions MORE
-    assert database.get_needed_columns(database_columns = ["#CHROM", "START", "END", "MORE"], database_type = "regions") == regions_needed_columns_only_ALL
+    assert (
+        database.get_needed_columns(
+            database_columns=["#CHROM", "START", "END", "MORE"], database_type="regions"
+        )
+        == regions_needed_columns_only_ALL
+    )
 
 
 def test_export():
@@ -1508,12 +2034,38 @@ def test_export():
 
         # No database input
         database = Database()
-        output_database=f"{tmp_dir}/output_database.no_input.parquet"
+        output_database = f"{tmp_dir}/output_database.no_input.parquet"
         assert not database.export(output_database)
 
         # database input/format
-        for database_input_index in ["parquet", "partition_parquet", "vcf", "vcf_gz", "partition_vcf_gz", "tsv", "csv", "tbl", "tsv_alternative_columns", "tsv_variants", "json", "example_vcf", "bed"]:
-            for database_output_format in ["duckdb", "parquet", "partition_parquet", "partition_vcf", "vcf", "vcf.gz", "tsv", "csv", "tbl", "json", "bed"]:
+        for database_input_index in [
+            "parquet",
+            "partition_parquet",
+            "vcf",
+            "vcf_gz",
+            "partition_vcf_gz",
+            "tsv",
+            "csv",
+            "tbl",
+            "tsv_alternative_columns",
+            "tsv_variants",
+            "json",
+            "example_vcf",
+            "bed",
+        ]:
+            for database_output_format in [
+                "duckdb",
+                "parquet",
+                "partition_parquet",
+                "partition_vcf",
+                "vcf",
+                "vcf.gz",
+                "tsv",
+                "csv",
+                "tbl",
+                "json",
+                "bed",
+            ]:
                 parquet_partitions = None
                 # specific partition_parquet
                 if database_output_format in ["partition_parquet"]:
@@ -1525,15 +2077,24 @@ def test_export():
                     parquet_partitions = ["#CHROM"]
                 input_database = database_files.get(database_input_index)
                 database = Database(database_files.get(database_input_index))
-                output_database=f"{tmp_dir}/output_database.{database_output_format}"
-                output_header=output_database+".hdr"
-                remove_if_exists([output_database,output_header])
+                output_database = f"{tmp_dir}/output_database.{database_output_format}"
+                output_header = output_database + ".hdr"
+                remove_if_exists([output_database, output_header])
 
                 try:
-                    assert database.export(output_database=output_database, output_header=output_header, parquet_partitions=parquet_partitions)
+                    assert database.export(
+                        output_database=output_database,
+                        output_header=output_header,
+                        parquet_partitions=parquet_partitions,
+                    )
                     if database.get_sql_database_attach(database=output_database):
-                        database.query(database=output_database, query=f"""{database.get_sql_database_attach(database=output_database)}""")
-                    assert database.query(database=output_database, query=f"""{database.get_sql_database_link(database=output_database)}""")
+                        database.query(
+                            database=output_database,
+                            query=f"""{database.get_sql_database_attach(database=output_database)}""",
+                        )
+                    assert database.query(
+                        database=output_database,
+                        query=f"""{database.get_sql_database_link(database=output_database)}""",
+                    )
                 except:
                     assert False
-

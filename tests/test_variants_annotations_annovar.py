@@ -26,8 +26,6 @@ from howard.functions.databases import *
 from test_needed import *
 
 
-
-
 def test_annotation_annovar():
     """
     This function tests the annotation of variants using Annovar and checks if the output VCF file is in
@@ -42,10 +40,21 @@ def test_annotation_annovar():
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Construct param dict
-        param = {"annotation": {"annovar": {"annotations":  {annotation_annovar: {"INFO": None}}}}}
+        param = {
+            "annotation": {
+                "annovar": {"annotations": {annotation_annovar: {"INFO": None}}}
+            }
+        }
 
         # Create object
-        variants = Variants(conn=None, input=input_vcf, output=output_vcf, config=tests_config, param=param, load=True)
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=tests_config,
+            param=param,
+            load=True,
+        )
 
         # Remove if output file exists
         remove_if_exists([output_vcf])
@@ -54,7 +63,9 @@ def test_annotation_annovar():
         variants.annotation()
 
         # query annotated variant
-        result = variants.get_query_to_df("""SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'""")
+        result = variants.get_query_to_df(
+            """SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'"""
+        )
         assert len(result) == 1
 
         # Check if VCF is in correct format with pyVCF
@@ -81,10 +92,21 @@ def test_annotation_annovar_full_unsorted():
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Construct param dict
-        param = {"annotation": {"annovar": {"annotations":  {annotation_annovar: {"INFO": None}}}}}
+        param = {
+            "annotation": {
+                "annovar": {"annotations": {annotation_annovar: {"INFO": None}}}
+            }
+        }
 
         # Create object
-        variants = Variants(conn=None, input=input_vcf, output=output_vcf, config=tests_config, param=param, load=True)
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=tests_config,
+            param=param,
+            load=True,
+        )
 
         # Remove if output file exists
         remove_if_exists([output_vcf])
@@ -93,7 +115,9 @@ def test_annotation_annovar_full_unsorted():
         variants.annotation()
 
         # query annotated variant
-        result = variants.get_query_to_df("""SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'""")
+        result = variants.get_query_to_df(
+            """SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'"""
+        )
         assert len(result) == 1
 
         # Check if VCF is in correct format with pyVCF
@@ -117,10 +141,21 @@ def test_annotation_annovar_no_samples():
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Construct param dict
-        param = {"annotation": {"annovar": {"annotations":  {annotation_annovar: {"INFO": None}}}}}
+        param = {
+            "annotation": {
+                "annovar": {"annotations": {annotation_annovar: {"INFO": None}}}
+            }
+        }
 
         # Create object
-        variants = Variants(conn=None, input=input_vcf, output=output_vcf, config=tests_config, param=param, load=True)
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=tests_config,
+            param=param,
+            load=True,
+        )
 
         # Remove if output file exists
         remove_if_exists([output_vcf])
@@ -129,7 +164,9 @@ def test_annotation_annovar_no_samples():
         variants.annotation()
 
         # query annotated variant
-        result = variants.get_query_to_df(""" SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr12' AND POS = 68724951 AND REF = 'G' AND ALT = 'T' AND INFO = 'nci60=0.77' """)
+        result = variants.get_query_to_df(
+            """ SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr12' AND POS = 68724951 AND REF = 'G' AND ALT = 'T' AND INFO = 'nci60=0.77' """
+        )
         assert len(result) == 1
 
         # Check if VCF is in correct format with pyVCF
@@ -157,10 +194,21 @@ def test_annotation_annovar_sqlite():
         config["connexion_format"] = "sqlite"
 
         # Construct param dict
-        param = {"annotation": {"annovar": {"annotations":  {annotation_annovar: {"INFO": None}}}}}
+        param = {
+            "annotation": {
+                "annovar": {"annotations": {annotation_annovar: {"INFO": None}}}
+            }
+        }
 
         # Create object
-        variants = Variants(conn=None, input=input_vcf, output=output_vcf, config=config, param=param, load=True)
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            param=param,
+            load=True,
+        )
 
         # Remove if output file exists
         remove_if_exists([output_vcf])
@@ -169,7 +217,9 @@ def test_annotation_annovar_sqlite():
         variants.annotation()
 
         # query annotated variant
-        result = variants.get_query_to_df("""SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'""")
+        result = variants.get_query_to_df(
+            """SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'"""
+        )
         assert len(result) == 1
 
         # Check if VCF is in correct format with pyVCF
@@ -193,13 +243,17 @@ def test_annotation_quick_annovar():
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Construct param dict
-        param = {"annotations": {
-                    f"annovar:{annotation_annovar}": None
-                    }
-        }
+        param = {"annotations": {f"annovar:{annotation_annovar}": None}}
 
         # Create object
-        variants = Variants(conn=None, input=input_vcf, output=output_vcf, config=tests_config, param=param, load=True)
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=tests_config,
+            param=param,
+            load=True,
+        )
 
         # Remove if output file exists
         remove_if_exists([output_vcf])
@@ -208,13 +262,14 @@ def test_annotation_quick_annovar():
         variants.annotation()
 
         # query annotated variant
-        result = variants.get_query_to_df("""SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'""")
+        result = variants.get_query_to_df(
+            """SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'"""
+        )
         assert len(result) == 1
-        
+
         # Check if VCF is in correct format with pyVCF
         variants.export_output()
         try:
             vcf.Reader(filename=output_vcf)
         except:
             assert False
-

@@ -28,28 +28,26 @@ from howard.tools.tools import *
 from test_needed import *
 
 
-
-
 def test_calculation_tsv():
 
     # Init files
     input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/output_file.tsv"
     config = {}
-    calculations = 'VARTYPE,NOMEN,TRIO'
+    calculations = "VARTYPE,NOMEN,TRIO"
 
     # prepare arguments for the query function
     args = argparse.Namespace(
-        input = input_vcf,
-        output = output_vcf,
-        config = config,
-        calculations = calculations,
-        hgvs_field = "hgvs",
-        transcripts = None,
-        show_calculations = False,
-        trio_pedigree = '{"father":"sample1", "mother":"sample2", "child":"sample3"}',
-        calculation_config = None,
-        arguments_dict = arguments_dict
+        input=input_vcf,
+        output=output_vcf,
+        config=config,
+        calculations=calculations,
+        hgvs_field="hgvs",
+        transcripts=None,
+        show_calculations=False,
+        trio_pedigree='{"father":"sample1", "mother":"sample2", "child":"sample3"}',
+        calculation_config=None,
+        arguments_dict=arguments_dict,
     )
 
     # Remove if output file exists
@@ -62,7 +60,7 @@ def test_calculation_tsv():
     assert os.path.exists(output_vcf)
 
     # read the contents of the actual output file
-    with open(output_vcf, 'r') as f:
+    with open(output_vcf, "r") as f:
         result_output_nb_lines = 0
         result_output_nb_variants = 0
         for line in f:
@@ -80,17 +78,23 @@ def test_calculation_tsv():
 
     # Create object
     variants = Variants(conn=None, input=output_vcf, config=config, load=True)
-    
+
     # Check annotation
-    result = variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%VARTYPE=%'")
+    result = variants.get_query_to_df(
+        "SELECT INFO FROM variants WHERE INFO LIKE '%VARTYPE=%'"
+    )
     assert len(result) == 7
 
     # Check annotation
-    result = variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%trio=%'")
+    result = variants.get_query_to_df(
+        "SELECT INFO FROM variants WHERE INFO LIKE '%trio=%'"
+    )
     assert len(result) == 7
 
     # Check annotation
-    result = variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%hgvs=%'")
+    result = variants.get_query_to_df(
+        "SELECT INFO FROM variants WHERE INFO LIKE '%hgvs=%'"
+    )
     assert len(result) == 0
 
 
@@ -100,20 +104,20 @@ def test_calculation_vcf():
     input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/output_file.vcf"
     config = {}
-    calculations = 'VARTYPE,NOMEN,TRIO'
+    calculations = "VARTYPE,NOMEN,TRIO"
 
     # prepare arguments for the query function
     args = argparse.Namespace(
-        input = input_vcf,
-        output = output_vcf,
-        config = config,
-        calculations = calculations,
-        hgvs_field = "hgvs",
-        transcripts = None,
-        show_calculations = False,
-        trio_pedigree = '{"father":"sample1", "mother":"sample2", "child":"sample3"}',
-        calculation_config = None,
-        arguments_dict = arguments_dict
+        input=input_vcf,
+        output=output_vcf,
+        config=config,
+        calculations=calculations,
+        hgvs_field="hgvs",
+        transcripts=None,
+        show_calculations=False,
+        trio_pedigree='{"father":"sample1", "mother":"sample2", "child":"sample3"}',
+        calculation_config=None,
+        arguments_dict=arguments_dict,
     )
 
     # Remove if output file exists
@@ -126,7 +130,7 @@ def test_calculation_vcf():
     assert os.path.exists(output_vcf)
 
     # read the contents of the actual output file
-    with open(output_vcf, 'r') as f:
+    with open(output_vcf, "r") as f:
         result_output_nb_lines = 0
         result_output_nb_variants = 0
         for line in f:
@@ -144,15 +148,21 @@ def test_calculation_vcf():
 
     # Create object
     variants = Variants(conn=None, input=output_vcf, config=config, load=True)
-    
+
     # Check annotation
-    result = variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%VARTYPE=%'")
+    result = variants.get_query_to_df(
+        "SELECT INFO FROM variants WHERE INFO LIKE '%VARTYPE=%'"
+    )
     assert len(result) == 7
 
     # Check annotation
-    result = variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%trio=%'")
+    result = variants.get_query_to_df(
+        "SELECT INFO FROM variants WHERE INFO LIKE '%trio=%'"
+    )
     assert len(result) == 7
 
     # Check annotation
-    result = variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%hgvs=%'")
+    result = variants.get_query_to_df(
+        "SELECT INFO FROM variants WHERE INFO LIKE '%hgvs=%'"
+    )
     assert len(result) == 0

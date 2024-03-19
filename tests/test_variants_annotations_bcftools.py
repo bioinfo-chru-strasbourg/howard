@@ -26,8 +26,6 @@ from howard.functions.databases import *
 from test_needed import *
 
 
-
-
 def test_annotation_bcftools():
     """
     This function tests the annotation of a VCF file using bcftools annotations.
@@ -41,10 +39,16 @@ def test_annotation_bcftools():
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Construct param dict
-        param = {"annotation": {"bcftools": {"annotations":  {annotation_parquet: {"INFO": None}}}}}
+        param = {
+            "annotation": {
+                "bcftools": {"annotations": {annotation_parquet: {"INFO": None}}}
+            }
+        }
 
         # Create object
-        variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+        variants = Variants(
+            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+        )
 
         # Remove if output file exists
         remove_if_exists([output_vcf])
@@ -53,7 +57,9 @@ def test_annotation_bcftools():
         variants.annotation()
 
         # query annotated variant
-        result = variants.get_query_to_df("""SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'""")
+        result = variants.get_query_to_df(
+            """SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'"""
+        )
         assert len(result) == 1
 
         # Check if VCF is in correct format with pyVCF
@@ -77,10 +83,16 @@ def test_annotation_bcftools_bed():
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Construct param dict
-        param = {"annotation": {"bcftools": {"annotations":  {annotation_parquet: {"symbol": None}}}}}
+        param = {
+            "annotation": {
+                "bcftools": {"annotations": {annotation_parquet: {"symbol": None}}}
+            }
+        }
 
         # Create object
-        variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, load=True)
+        variants = Variants(
+            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+        )
 
         # Remove if output file exists
         remove_if_exists([output_vcf])
@@ -89,7 +101,9 @@ def test_annotation_bcftools_bed():
         variants.annotation()
 
         # query annotated variant
-        result = variants.get_query_to_df("""SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;symbol=EGFR,EGFR-AS1'""")
+        result = variants.get_query_to_df(
+            """SELECT 1 AS count FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;symbol=EGFR,EGFR-AS1'"""
+        )
         assert len(result) == 1
 
         # Check if VCF is in correct format with pyVCF
@@ -117,10 +131,21 @@ def test_annotation_bcftools_sqlite():
         config["connexion_format"] = "sqlite"
 
         # Construct param dict
-        param = {"annotation": {"bcftools": {"annotations":  {annotation_parquet: {"INFO": None}}}}}
+        param = {
+            "annotation": {
+                "bcftools": {"annotations": {annotation_parquet: {"INFO": None}}}
+            }
+        }
 
         # Create object
-        variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, config=config, load=True)
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            param=param,
+            config=config,
+            load=True,
+        )
 
         # Remove if output file exists
         remove_if_exists([output_vcf])
@@ -128,7 +153,9 @@ def test_annotation_bcftools_sqlite():
         # Annotation
         variants.annotation()
 
-        result = variants.get_query_to_df("""SELECT * FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'""")
+        result = variants.get_query_to_df(
+            """SELECT * FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66'"""
+        )
         assert len(result) == 1
 
         # Check if VCF is in correct format with pyVCF
@@ -137,5 +164,3 @@ def test_annotation_bcftools_sqlite():
             vcf.Reader(filename=output_vcf)
         except:
             assert False
-    
-    

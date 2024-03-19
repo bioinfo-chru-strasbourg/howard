@@ -26,8 +26,6 @@ from howard.functions.databases import *
 from test_needed import *
 
 
-
-
 def test_annotation_snpeff():
     """
     This function tests the annotation of variants using the snpEff tool.
@@ -40,10 +38,23 @@ def test_annotation_snpeff():
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Construct param dict
-        param = {"annotation": {"snpeff": {"options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "}}}
+        param = {
+            "annotation": {
+                "snpeff": {
+                    "options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "
+                }
+            }
+        }
 
         # Create object
-        variants = Variants(conn=None, input=input_vcf, output=output_vcf, config=tests_config, param=param, load=True)
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=tests_config,
+            param=param,
+            load=True,
+        )
 
         # Remove if output file exists
         remove_if_exists([output_vcf])
@@ -54,7 +65,7 @@ def test_annotation_snpeff():
         # query annotated variant
         result = variants.get_query_to_df(""" SELECT * FROM variants """)
         assert len(result) == 7
-        
+
         # Check if VCF is in correct format with pyVCF
         variants.export_output()
         try:
@@ -79,14 +90,23 @@ def test_annotation_snpeff_full_unsorted():
 
         # Construct param dict
         param = {
-            "annotation": {"snpeff": {"options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "}},
-            "explode": {
-                "explode_infos": True
-            } 
+            "annotation": {
+                "snpeff": {
+                    "options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "
+                }
+            },
+            "explode": {"explode_infos": True},
         }
 
         # Create object
-        variants = Variants(conn=None, input=input_vcf, output=output_vcf, config=tests_config, param=param, load=True)
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=tests_config,
+            param=param,
+            load=True,
+        )
 
         # Remove if output file exists
         remove_if_exists([output_vcf])
@@ -97,11 +117,13 @@ def test_annotation_snpeff_full_unsorted():
         # query annotated variant
         result = variants.get_query_to_df(""" SELECT INFO, "ANN" FROM variants """)
         assert len(result) == 36
-        
+
         # query annotated variant as gene_fusion
-        result = variants.get_query_to_df(""" SELECT INFO FROM variants WHERE INFO LIKE '%gene_fusion%'""")
+        result = variants.get_query_to_df(
+            """ SELECT INFO FROM variants WHERE INFO LIKE '%gene_fusion%'"""
+        )
         assert len(result) == 7
-        
+
         # Check if VCF is in correct format with pyVCF
         variants.export_output()
         try:
@@ -123,10 +145,23 @@ def test_annotation_snpeff_no_samples():
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Construct param dict
-        param = {"annotation": {"snpeff": {"options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "}}}
+        param = {
+            "annotation": {
+                "snpeff": {
+                    "options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "
+                }
+            }
+        }
 
         # Create object
-        variants = Variants(conn=None, input=input_vcf, output=output_vcf, config=tests_config, param=param, load=True)
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=tests_config,
+            param=param,
+            load=True,
+        )
 
         # Remove if output file exists
         remove_if_exists([output_vcf])
@@ -135,7 +170,9 @@ def test_annotation_snpeff_no_samples():
         variants.annotation()
 
         # query annotated variant
-        result = variants.get_query_to_df(""" SELECT * FROM variants WHERE "#CHROM" = 'chr12' AND POS = 68724951 AND REF = 'G' AND ALT = 'T' AND INFO LIKE '%T|synonymous_variant|LOW|MDM1|MDM1|transcript|NM_001354969.1|protein_coding|2/15|c.69C>A|p.Ser23Ser|238/3032|69/2175|23/724||%' """)
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE "#CHROM" = 'chr12' AND POS = 68724951 AND REF = 'G' AND ALT = 'T' AND INFO LIKE '%T|synonymous_variant|LOW|MDM1|MDM1|transcript|NM_001354969.1|protein_coding|2/15|c.69C>A|p.Ser23Ser|238/3032|69/2175|23/724||%' """
+        )
         assert len(result) == 1
 
         # query annotated variant
@@ -163,13 +200,17 @@ def test_annotation_quick_snpeff():
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Construct param dict
-        param = {"annotations": {
-                    f"{annotation_snpeff}": None
-                    }
-        }
+        param = {"annotations": {f"{annotation_snpeff}": None}}
 
         # Create object
-        variants = Variants(conn=None, input=input_vcf, output=output_vcf, config=tests_config, param=param, load=True)
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=tests_config,
+            param=param,
+            load=True,
+        )
 
         # Remove if output file exists
         remove_if_exists([output_vcf])
@@ -187,7 +228,7 @@ def test_annotation_quick_snpeff():
             vcf.Reader(filename=output_vcf)
         except:
             assert False
-    
+
 
 def test_annotation_snpeff_sqlite():
     """
@@ -205,10 +246,23 @@ def test_annotation_snpeff_sqlite():
         config["connexion_format"] = "sqlite"
 
         # Construct param dict
-        param = {"annotation": {"snpeff": {"options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "}}}
+        param = {
+            "annotation": {
+                "snpeff": {
+                    "options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "
+                }
+            }
+        }
 
         # Create object
-        variants = Variants(conn=None, input=input_vcf, output=output_vcf, config=config, param=param, load=True)
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            param=param,
+            load=True,
+        )
 
         # Remove if output file exists
         remove_if_exists([output_vcf])
@@ -217,7 +271,9 @@ def test_annotation_snpeff_sqlite():
         variants.annotation()
 
         # query annotated variant
-        result = variants.get_query_to_df(""" SELECT INFO FROM variants WHERE INFO LIKE '%ANN=%' """)
+        result = variants.get_query_to_df(
+            """ SELECT INFO FROM variants WHERE INFO LIKE '%ANN=%' """
+        )
         assert len(result) == 7
 
         # Check if VCF is in correct format with pyVCF
@@ -226,4 +282,3 @@ def test_annotation_snpeff_sqlite():
             vcf.Reader(filename=output_vcf)
         except:
             assert False
-

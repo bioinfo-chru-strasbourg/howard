@@ -30,7 +30,7 @@ import pandas as pd
 from typing import List
 from tempfile import TemporaryDirectory
 
-from jproperties import Properties # jproperties 2.1.1
+from jproperties import Properties  # jproperties 2.1.1
 
 
 from howard.functions.commons import *
@@ -39,12 +39,10 @@ from howard.functions.databases import *
 from howard.functions.from_annovar import *
 
 
-
-
-def databases(args:argparse) -> None:
+def databases(args: argparse) -> None:
     """
     The function downloads databases and logs the start and end of the process.
-    
+
     :param args: The "args" parameter is likely an object or dictionary containing various arguments or
     options related to the "databases" function. Without more context, it's difficult to say exactly
     what these arguments might be, but they could include things like the names or locations of
@@ -58,21 +56,41 @@ def databases(args:argparse) -> None:
     arguments_dict, setup_cfg, config, param = load_config_args(args)
 
     # Load args into param
-    param = load_args(param={}, args=args, arguments_dict=arguments_dict, command="databases", strict=False, section_prefix=["databases"])
-    #log.debug(f"param={param}")
+    param = load_args(
+        param={},
+        args=args,
+        arguments_dict=arguments_dict,
+        command="databases",
+        strict=False,
+        section_prefix=["databases"],
+    )
+    # log.debug(f"param={param}")
 
     # Assembly
-    assemblies = [value for value in args.assembly.split(',')]
-    param = add_value_into_dict(dict_tree=param, sections=["databases", "assemblies"], value=assemblies)
+    assemblies = [value for value in args.assembly.split(",")]
+    param = add_value_into_dict(
+        dict_tree=param, sections=["databases", "assemblies"], value=assemblies
+    )
 
     # Genome folder
     genomes_folder = param.get("databases", {}).get("genomes_folder", None)
-    if param.get("databases", {}).get("genomes_folder", None) and not isinstance(param.get("databases", {}).get("genomes_folder", None), str):
+    if param.get("databases", {}).get("genomes_folder", None) and not isinstance(
+        param.get("databases", {}).get("genomes_folder", None), str
+    ):
         genomes_folder = param.get("databases", {}).get("genomes_folder", None).name
-    if "config" in args and args.config and args.config.get("folders",{}).get("databases",{}).get("genomes") and param.get("databases", {}).get("genomes_folder", None) == DEFAULT_REFSEQ_FOLDER:
-        genomes_folder = args.config.get("folders",{}).get("databases",{}).get("genomes")
-    param = add_value_into_dict(dict_tree=param, sections=["databases", "genomes_folder"], value=genomes_folder)
-
+    if (
+        "config" in args
+        and args.config
+        and args.config.get("folders", {}).get("databases", {}).get("genomes")
+        and param.get("databases", {}).get("genomes_folder", None)
+        == DEFAULT_REFSEQ_FOLDER
+    ):
+        genomes_folder = (
+            args.config.get("folders", {}).get("databases", {}).get("genomes")
+        )
+    param = add_value_into_dict(
+        dict_tree=param, sections=["databases", "genomes_folder"], value=genomes_folder
+    )
 
     # Threads
     nb_threads = os.cpu_count()
@@ -90,58 +108,62 @@ def databases(args:argparse) -> None:
         generate_databases_param(args=args, assemblies=assemblies)
         return None
 
-
     # Param database
     param_databases = param.get("databases", {})
-    
 
     log.debug(f"param={param}")
     # Genomes
-    if param_databases.get("genomes",{}).get("download_genomes"):
+    if param_databases.get("genomes", {}).get("download_genomes"):
         log.debug(f"Download Genomes")
         if assemblies:
             databases_download_genomes(
-                assemblies=param_databases.get("assemblies",[]), 
-                genomes_folder=param_databases.get("genomes",{}).get("download_genomes"),
-                provider=param_databases.get("genomes",{}).get("download_genomes_provider"),
-                contig_regex=param_databases.get("genomes",{}).get("download_genomes_contig_regex"),
-                threads=threads
-                )
+                assemblies=param_databases.get("assemblies", []),
+                genomes_folder=param_databases.get("genomes", {}).get(
+                    "download_genomes"
+                ),
+                provider=param_databases.get("genomes", {}).get(
+                    "download_genomes_provider"
+                ),
+                contig_regex=param_databases.get("genomes", {}).get(
+                    "download_genomes_contig_regex"
+                ),
+                threads=threads,
+            )
 
     # Annovar
     if args.download_annovar:
         log.debug(f"Download Annovar databases")
         if args.download_annovar_files:
-            files = [value for value in args.download_annovar_files.split(',')]
+            files = [value for value in args.download_annovar_files.split(",")]
         else:
             files = []
         databases_download_annovar(
             folder=args.download_annovar,
             files=files,
-            assemblies = assemblies,
+            assemblies=assemblies,
             annovar_url=args.download_annovar_url,
-            threads=threads
-            )
+            threads=threads,
+        )
 
     # snpEff
     if args.download_snpeff:
         log.debug(f"Download snpEff databases")
         databases_download_snpeff(
             folder=args.download_snpeff,
-            assemblies = assemblies,
+            assemblies=assemblies,
             config=args.config,
-            threads=threads
-            )
-        
+            threads=threads,
+        )
+
     # refSeq
     if args.download_refseq:
         log.debug(f"Download refSeq databases")
         if args.download_refseq_files:
-            files = [value for value in args.download_refseq_files.split(',')]
+            files = [value for value in args.download_refseq_files.split(",")]
         else:
             files = []
         databases_download_refseq(
-            assemblies = assemblies,
+            assemblies=assemblies,
             refseq_folder=args.download_refseq,
             refseq_url=args.download_refseq_url,
             refseq_prefix=args.download_refseq_prefix,
@@ -153,14 +175,14 @@ def databases(args:argparse) -> None:
             include_non_canonical_chr=args.download_refseq_include_non_canonical_chr,
             include_non_coding_transcripts=args.download_refseq_include_non_coding_transcripts,
             include_transcript_ver=args.download_refseq_include_transcript_version,
-            threads=threads
-            )
+            threads=threads,
+        )
 
     # dbNSFP
     if args.download_dbnsfp:
         log.debug(f"Download dbNSFP")
         databases_download_dbnsfp(
-            assemblies = assemblies,
+            assemblies=assemblies,
             dbnsfp_folder=args.download_dbnsfp,
             dbnsfp_url=args.download_dbnsfp_url,
             dbnsfp_release=args.download_dbnsfp_release,
@@ -172,31 +194,38 @@ def databases(args:argparse) -> None:
             not_generate_files_all=args.download_dbnsfp_no_files_all,
             add_info=args.download_dbnsfp_add_info,
             row_group_size=args.download_dbnsfp_row_group_size,
-            genomes_folder=param.get("databases", {}).get("genomes_folder", None)
-            )
+            genomes_folder=param.get("databases", {}).get("genomes_folder", None),
+        )
 
     # AlphaMissense
     if args.download_alphamissense:
         log.debug(f"Download AlphaMissense")
         databases_download_alphamissense(
-            assemblies = assemblies,
+            assemblies=assemblies,
             alphamissense_folder=args.download_alphamissense,
             alphamissense_url=args.download_alphamissense_url,
-            threads=threads
-            )
-    
+            threads=threads,
+        )
+
     # Exomiser
     if args.download_exomiser:
         log.debug(f"Download Exomiser")
-        if "download_exomiser_application_properties" in args and args.download_exomiser_application_properties:
+        if (
+            "download_exomiser_application_properties" in args
+            and args.download_exomiser_application_properties
+        ):
             if isinstance(args.download_exomiser_application_properties, str):
-                download_exomiser_application_properties = args.download_exomiser_application_properties
+                download_exomiser_application_properties = (
+                    args.download_exomiser_application_properties
+                )
             else:
-                download_exomiser_application_properties = args.download_exomiser_application_properties.name
+                download_exomiser_application_properties = (
+                    args.download_exomiser_application_properties.name
+                )
         else:
-            download_exomiser_application_properties=None
+            download_exomiser_application_properties = None
         databases_download_exomiser(
-            assemblies = assemblies,
+            assemblies=assemblies,
             exomiser_folder=args.download_exomiser,
             exomiser_application_properties=download_exomiser_application_properties,
             exomiser_url=args.download_exomiser_url,
@@ -208,18 +237,20 @@ def databases(args:argparse) -> None:
             exomiser_cadd_url=args.download_exomiser_cadd_url,
             exomiser_cadd_url_snv_file=args.download_exomiser_cadd_url_snv_file,
             exomiser_cadd_url_indel_file=args.download_exomiser_cadd_url_indel_file,
-            threads=threads
-            )
+            threads=threads,
+        )
 
     # dbSNP
     if args.download_dbsnp:
         log.debug(f"Download dbSNP")
         if args.download_dbsnp_releases:
-            dbsnp_releases = [value for value in args.download_dbsnp_releases.split(',')]
+            dbsnp_releases = [
+                value for value in args.download_dbsnp_releases.split(",")
+            ]
         else:
             dbsnp_releases = []
         databases_download_dbsnp(
-            assemblies = assemblies,
+            assemblies=assemblies,
             dbsnp_folder=args.download_dbsnp,
             dbsnp_releases=dbsnp_releases,
             dbsnp_release_default=args.download_dbsnp_release_default,
@@ -230,8 +261,8 @@ def databases(args:argparse) -> None:
             genomes_folder=param.get("databases", {}).get("genomes_folder", None),
             threads=threads,
             dbsnp_vcf=args.download_dbsnp_vcf,
-            dbsnp_parquet=args.download_dbsnp_parquet
-            )
+            dbsnp_parquet=args.download_dbsnp_parquet,
+        )
 
     # HGMD
     if args.convert_hgmd:
@@ -242,18 +273,17 @@ def databases(args:argparse) -> None:
             else:
                 convert_hgmd_file = args.convert_hgmd_file.name
         databases_download_hgmd(
-            assemblies = assemblies,
+            assemblies=assemblies,
             hgmd_folder=args.convert_hgmd,
             hgmd_file=convert_hgmd_file,
             output_basename=args.convert_hgmd_basename,
             genomes_folder=param.get("databases", {}).get("genomes_folder", None),
-            threads=threads
-            )
+            threads=threads,
+        )
 
     # from Annovar
     if args.input_annovar and args.output_annovar and args.genome:
         log.debug(f"Convert Annovar")
         from_annovar(args=args)
-
 
     log.info("End")

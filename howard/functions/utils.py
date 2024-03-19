@@ -16,7 +16,7 @@ from howard.objects.genome import GenomeSubset
 from howard.objects.hgvs import HGVSName, InvalidHGVSName, CODON_1, CODON_3, CODON_FULL
 from howard.objects.variant import Position, justify_indel, normalize_variant, revcomp
 
-_indel_mutation_types = set(['ins', 'del', 'dup', 'delins'])
+_indel_mutation_types = set(["ins", "del", "dup", "delins"])
 
 
 def read_refgene(infile):
@@ -25,7 +25,7 @@ def read_refgene(infile):
     genePred data.
 
     refGene = genePred with extra column at front (and ignored ones after)
-    
+
     :param infile: The input file containing the refGene data
     :return: the result of calling the function `read_genepred` with the argument `infile` and the
     keyword argument `skip_first_column` set to `True`.
@@ -38,7 +38,7 @@ def read_genepred(infile, skip_first_column=False):
     """
     The function `read_genepred` reads a file in GenePred extension format and yields a dictionary for
     each line, containing information about a gene.
-    
+
     :param infile: The `infile` parameter is the input file object that contains the gene annotation
     data in the GenePred format. It is used to read the lines of the file and extract the necessary
     information
@@ -46,7 +46,7 @@ def read_genepred(infile, skip_first_column=False):
     whether to skip the first column of the input file when parsing the genePred format. By default, it
     is set to `False`, which means the first column (usually the transcript ID) will be included in the
     output. If you, defaults to False (optional)
-    
+
     GenePred extension format:
     http://genome.ucsc.edu/FAQ/FAQformat.html#GenePredExt
 
@@ -66,27 +66,27 @@ def read_genepred(infile, skip_first_column=False):
     """
     for line in infile:
         # Skip comments.
-        if line.startswith('#') or line.startswith('bin'):
+        if line.startswith("#") or line.startswith("bin"):
             continue
-        row = line.rstrip('\n').split('\t')
+        row = line.rstrip("\n").split("\t")
         if skip_first_column:
             row = row[1:]
 
         # Skip trailing ,
-        exon_starts = list(map(int, row[8].split(',')[:-1]))
-        exon_ends = list(map(int, row[9].split(',')[:-1]))
+        exon_starts = list(map(int, row[8].split(",")[:-1]))
+        exon_ends = list(map(int, row[9].split(",")[:-1]))
         exons = list(zip(exon_starts, exon_ends))
 
         yield {
-            'chrom': row[1],
-            'start': int(row[3]),
-            'end': int(row[4]),
-            'id': row[0],
-            'strand': row[2],
-            'cds_start': int(row[5]),
-            'cds_end': int(row[6]),
-            'gene_name': row[11],
-            'exons': exons,
+            "chrom": row[1],
+            "start": int(row[3]),
+            "end": int(row[4]),
+            "id": row[0],
+            "strand": row[2],
+            "cds_start": int(row[5]),
+            "cds_end": int(row[6]),
+            "gene_name": row[11],
+            "exons": exons,
         }
 
 
@@ -94,39 +94,41 @@ def make_transcript(transcript_json):
     """
     The function `make_transcript` takes a JSON object representing a transcript and creates a
     Transcript object from it.
-    
+
     :param transcript_json: The `transcript_json` parameter is a JSON object that contains information
     about a transcript. It should have the following keys:
     :return: a Transcript object.
     """
 
-    transcript_name = transcript_json['id']
-    if '.' in transcript_name:
-        name, version = transcript_name.split('.')
+    transcript_name = transcript_json["id"]
+    if "." in transcript_name:
+        name, version = transcript_name.split(".")
     else:
         name, version = transcript_name, None
 
     transcript = Transcript(
         name=name,
         version=int(version) if version is not None else None,
-        gene=transcript_json['gene_name'],
+        gene=transcript_json["gene_name"],
         tx_position=Position(
-            transcript_json['chrom'],
-            transcript_json['start'],
-            transcript_json['end'],
-            transcript_json['strand'] == '+'),
+            transcript_json["chrom"],
+            transcript_json["start"],
+            transcript_json["end"],
+            transcript_json["strand"] == "+",
+        ),
         cds_position=Position(
-            transcript_json['chrom'],
-            transcript_json['cds_start'],
-            transcript_json['cds_end'],
-            transcript_json['strand'] == '+'),
+            transcript_json["chrom"],
+            transcript_json["cds_start"],
+            transcript_json["cds_end"],
+            transcript_json["strand"] == "+",
+        ),
         start_codon_transcript_pos=transcript_json.get("start_codon_transcript_pos"),
         stop_codon_transcript_pos=transcript_json.get("stop_codon_transcript_pos"),
     )
 
-    exons = transcript_json['exons']
+    exons = transcript_json["exons"]
     exons.sort(key=operator.itemgetter(0))
-    cdna_match = transcript_json.get('cdna_match', [])
+    cdna_match = transcript_json.get("cdna_match", [])
     cdna_match.sort(key=operator.itemgetter(0))
 
     if not transcript.tx_position.is_forward_strand:
@@ -138,17 +140,24 @@ def make_transcript(transcript_json):
     if not cdna_match:
         cdna_match = json_perfect_exons_to_cdna_match(exons)
 
-    for number, (exon_start, exon_end, cdna_start, cdna_end, gap) in enumerate(cdna_match, 1):
-        transcript.cdna_match.append(CDNA_Match(transcript=transcript,
-                                                tx_position=Position(
-                                                    transcript_json['chrom'],
-                                                    exon_start,
-                                                    exon_end,
-                                                    transcript_json['strand'] == '+'),
-                                                cdna_start=cdna_start,
-                                                cdna_end=cdna_end,
-                                                gap=gap,
-                                                number=number))
+    for number, (exon_start, exon_end, cdna_start, cdna_end, gap) in enumerate(
+        cdna_match, 1
+    ):
+        transcript.cdna_match.append(
+            CDNA_Match(
+                transcript=transcript,
+                tx_position=Position(
+                    transcript_json["chrom"],
+                    exon_start,
+                    exon_end,
+                    transcript_json["strand"] == "+",
+                ),
+                cdna_start=cdna_start,
+                cdna_end=cdna_end,
+                gap=gap,
+                number=number,
+            )
+        )
 
     return transcript
 
@@ -161,7 +170,7 @@ def json_perfect_exons_to_cdna_match(ordered_exons, single=False):
 
     Perfectly matched exons are basically a no-gap case of cDNA match
     single - use a single cDNA match (deletions for introns) - this is currently broken do not use
-    
+
     :param ordered_exons: A list of tuples representing the start and end positions of exons in a gene
     sequence. The exons should be ordered based on their position in the gene
     :param single: The `single` parameter is a boolean flag that determines whether to use a single cDNA
@@ -171,7 +180,7 @@ def json_perfect_exons_to_cdna_match(ordered_exons, single=False):
     the start and end positions of the exon, the start and end positions of the corresponding cDNA
     match, and a string representing any gaps (intron lengths) between exons.
     """
-    
+
     cdna_match = []
     if single:
         ordered_exons = list(ordered_exons)
@@ -180,7 +189,7 @@ def json_perfect_exons_to_cdna_match(ordered_exons, single=False):
         last_exon_end = None
         gap_list = []
         cdna_length = 0
-        for (exon_start, exon_end) in ordered_exons:
+        for exon_start, exon_end in ordered_exons:
             # end up looking like "M D M D (M=exon, D=intron length)"
             if last_exon_end:
                 intron_length = abs(exon_start - last_exon_end)
@@ -192,7 +201,7 @@ def json_perfect_exons_to_cdna_match(ordered_exons, single=False):
         cdna_match = [[start, end, 1, cdna_length, " ".join(gap_list)]]
     else:
         cdna_start = 1
-        for (exon_start, exon_end) in ordered_exons:
+        for exon_start, exon_end in ordered_exons:
             exon_length = exon_end - exon_start
             cdna_end = cdna_start + exon_length - 1
             cdna_match.append([exon_start, exon_end, cdna_start, cdna_end, None])
@@ -204,19 +213,18 @@ def read_transcripts(refgene_file):
     """
     The function `read_transcripts` reads all transcripts in a RefGene file and returns them as a
     dictionary.
-    
+
     :param refgene_file: The `refgene_file` parameter is the file path to a RefGene file. This file
     contains information about gene transcripts, such as their names, full names, and other relevant
     details. The `read_transcripts` function reads this file and returns a dictionary of transcripts,
     where the keys are the
     :return: a dictionary of transcripts.
     """
-    
+
     transcripts = {}
-    for trans in (make_transcript(record)
-        for record in read_refgene(refgene_file)):
-            transcripts[trans.name] = trans
-            transcripts[trans.full_name] = trans
+    for trans in (make_transcript(record) for record in read_refgene(refgene_file)):
+        transcripts[trans.name] = trans
+        transcripts[trans.full_name] = trans
 
     return transcripts
 
@@ -224,7 +232,7 @@ def read_transcripts(refgene_file):
 def get_genomic_sequence(genome, chrom, start, end):
     """
     The function `get_genomic_sequence` returns a sequence for a given genomic region.
-    
+
     :param genome: A dictionary containing genomic sequences for different chromosomes. The keys of the
     dictionary are chromosome names (e.g., 'chr1', 'chr2', etc.), and the values are the corresponding
     genomic sequences
@@ -236,18 +244,18 @@ def get_genomic_sequence(genome, chrom, start, end):
     sequence
     :return: a sequence for the specified genomic region.
     """
-    
+
     if start > end:
-        return ''
+        return ""
     else:
-        return str(genome[str(chrom)][start - 1:end]).upper()
+        return str(genome[str(chrom)][start - 1 : end]).upper()
 
 
 def get_vcf_allele(hgvs, genome, transcript=None):
     """
     The function `get_vcf_allele` takes a HGVS name, a genome, and an optional transcript, and returns a
     VCF-style allele.
-    
+
     :param hgvs: The `hgvs` parameter is an object of type `HGVSName`. It likely contains information
     about a genetic variant, such as the chromosome, start and end positions, and the type of mutation
     (e.g., substitution, deletion, insertion, etc.)
@@ -259,10 +267,11 @@ def get_vcf_allele(hgvs, genome, transcript=None):
     alleles. If no
     :return: the chromosome, start position, end position, reference allele, and alternate allele.
     """
-    
+
     chrom, start, end = hgvs.get_vcf_coords(transcript)
     _, alt = hgvs.get_ref_alt(
-        transcript.tx_position.is_forward_strand if transcript else True)
+        transcript.tx_position.is_forward_strand if transcript else True
+    )
     ref = get_genomic_sequence(genome, chrom, start, end)
 
     # Sometimes we need to retrieve alt from reference
@@ -271,7 +280,7 @@ def get_vcf_allele(hgvs, genome, transcript=None):
         alt = ref
 
     if hgvs.mutation_type in _indel_mutation_types:
-        if hgvs.mutation_type == 'dup':
+        if hgvs.mutation_type == "dup":
             # No alt supplied: NM_000492.3:c.1155_1156dup
             # Number used:     NM_004119.2(FLT3):c.1794_1811dup18
             # We *know* what the sequence is for "dup18", but not for "ins18"
@@ -287,7 +296,7 @@ def get_alt_from_sequence(hgvs, genome, transcript):
     """
     The function "get_alt_from_sequence" returns a genomic sequence from a given HGVS notation, genome,
     and transcript.
-    
+
     :param hgvs: The `hgvs` parameter is an object that provides methods for working with Human Genome
     Variation Society (HGVS) nomenclature. It likely has a method called `get_raw_coords()` that takes a
     transcript as input and returns the chromosome, start position, and end position of the
@@ -306,7 +315,7 @@ def matches_ref_allele(hgvs, genome, transcript=None):
     """
     The function `matches_ref_allele` checks if the reference allele in a given HGVS notation matches
     the corresponding genomic sequence.
-    
+
     :param hgvs: The `hgvs` parameter is an object that represents a variant in the Human Genome
     Variation Society (HGVS) format. It contains information about the variant's reference allele,
     alternative allele, and genomic coordinates
@@ -317,9 +326,11 @@ def matches_ref_allele(hgvs, genome, transcript=None):
     genome, including whether it is on the forward or reverse strand
     :return: True if the reference allele matches the genomic sequence, and False otherwise.
     """
-    
+
     is_forward_strand = transcript.tx_position.is_forward_strand if transcript else True
-    ref, _ = hgvs.get_ref_alt(is_forward_strand, raw_dup_alleles=True)  # get raw values so dup isn't always True
+    ref, _ = hgvs.get_ref_alt(
+        is_forward_strand, raw_dup_alleles=True
+    )  # get raw values so dup isn't always True
     chrom, start, end = hgvs.get_raw_coords(transcript)
     genome_ref = get_genomic_sequence(genome, chrom, start, end)
     return genome_ref == ref
@@ -329,7 +340,7 @@ def hgvs_justify_dup(chrom, offset, ref, alt, genome):
     """
     The function `hgvs_justify_dup` determines if an allele is a duplication and justifies it by
     returning the duplicated region if applicable.
-    
+
     :param chrom: The chromosome name where the allele is located
     :param offset: The offset parameter is the 1-index genomic coordinate, which represents the position
     of the variant on the chromosome
@@ -345,15 +356,15 @@ def hgvs_justify_dup(chrom, offset, ref, alt, genome):
 
     if len(ref) == len(alt) == 0:
         # it's a SNP, just return.
-        return chrom, offset, ref, alt, '>'
+        return chrom, offset, ref, alt, ">"
 
     if len(ref) > 0 and len(alt) > 0:
         # complex indel, don't know how to dup check
-        return chrom, offset, ref, alt, 'delins'
+        return chrom, offset, ref, alt, "delins"
 
     if len(ref) > len(alt):
         # deletion -- don't dup check
-        return chrom, offset, ref, alt, 'del'
+        return chrom, offset, ref, alt, "del"
 
     indel_seq = alt
     indel_length = len(indel_seq)
@@ -362,25 +373,23 @@ def hgvs_justify_dup(chrom, offset, ref, alt, genome):
     offset -= 1
 
     # Get genomic sequence around the lesion.
-    prev_seq = str(
-        genome[str(chrom)][offset - indel_length:offset]).upper()
-    next_seq = str(
-        genome[str(chrom)][offset:offset + indel_length]).upper()
+    prev_seq = str(genome[str(chrom)][offset - indel_length : offset]).upper()
+    next_seq = str(genome[str(chrom)][offset : offset + indel_length]).upper()
 
     # Convert offset back to 1-index.
     offset += 1
 
     if prev_seq == indel_seq:
         offset = offset - indel_length
-        mutation_type = 'dup'
+        mutation_type = "dup"
         ref = indel_seq
         alt = indel_seq * 2
     elif next_seq == indel_seq:
-        mutation_type = 'dup'
+        mutation_type = "dup"
         ref = indel_seq
         alt = indel_seq * 2
     else:
-        mutation_type = 'ins'
+        mutation_type = "ins"
 
     return chrom, offset, ref, alt, mutation_type
 
@@ -390,7 +399,7 @@ def hgvs_justify_indel(chrom, offset, ref, alt, strand, genome):
     The function `hgvs_justify_indel` justifies an indel (insertion or deletion) according to the HGVS
     standard by determining the genomic sequence around the lesion, identifying the actual lesion
     sequence, and 3' justifying the offset.
-    
+
     :param chrom: The chromosome where the indel is located
     :param offset: The offset parameter represents the position of the indel (insertion or deletion)
     within the chromosome or genomic sequence
@@ -421,7 +430,7 @@ def hgvs_justify_indel(chrom, offset, ref, alt, strand, genome):
     size = window_size + max(len(ref), len(alt))
     start = max(offset - size, 0)
     end = offset + size
-    seq = str(genome[str(chrom)][start - 1:end]).upper()
+    seq = str(genome[str(chrom)][start - 1 : end]).upper()
     cds_offset = offset - start
 
     # indel -- strip off the ref base to get the actual lesion sequence
@@ -434,9 +443,10 @@ def hgvs_justify_indel(chrom, offset, ref, alt, strand, genome):
         cds_offset_end = cds_offset + len(indel_seq)
 
     # Now 3' justify (vs. cDNA not genome) the offset
-    justify = 'right' if strand == '+' else 'left'
+    justify = "right" if strand == "+" else "left"
     offset, _, indel_seq = justify_indel(
-        cds_offset, cds_offset_end, indel_seq, seq, justify)
+        cds_offset, cds_offset_end, indel_seq, seq, justify
+    )
     offset += start
 
     if is_insert:
@@ -451,7 +461,7 @@ def hgvs_normalize_variant(chrom, offset, ref, alt, genome, transcript=None):
     """
     The function `hgvs_normalize_variant` converts a variant in VCF-style to HGVS-style by adjusting the
     offset, reference and alternate alleles, and determining the mutation type.
-    
+
     :param chrom: The chromosome where the variant is located
     :param offset: The offset parameter represents the position of the variant within the chromosome. It
     is an integer value
@@ -468,9 +478,9 @@ def hgvs_normalize_variant(chrom, offset, ref, alt, genome, transcript=None):
 
     if len(ref) == len(alt) == 1:
         if ref == alt:
-            mutation_type = '='
+            mutation_type = "="
         else:
-            mutation_type = '>'
+            mutation_type = ">"
     else:
         # Remove 1bp padding
         offset += 1
@@ -478,22 +488,33 @@ def hgvs_normalize_variant(chrom, offset, ref, alt, genome, transcript=None):
         alt = alt[1:]
 
         # 3' justify allele.
-        strand = transcript.strand if transcript else '+'
+        strand = transcript.strand if transcript else "+"
         chrom, offset, ref, alt = hgvs_justify_indel(
-            chrom, offset, ref, alt, strand, genome)
+            chrom, offset, ref, alt, strand, genome
+        )
 
         # Represent as duplication if possible.
         chrom, offset, ref, alt, mutation_type = hgvs_justify_dup(
-            chrom, offset, ref, alt, genome)
+            chrom, offset, ref, alt, genome
+        )
     return chrom, offset, ref, alt, mutation_type
 
 
-def parse_hgvs_name(hgvs_name, genome, transcript=None, get_transcript=lambda name: None, flank_length=30, normalize=True, lazy=False, indels_start_with_same_base=True):
+def parse_hgvs_name(
+    hgvs_name,
+    genome,
+    transcript=None,
+    get_transcript=lambda name: None,
+    flank_length=30,
+    normalize=True,
+    lazy=False,
+    indels_start_with_same_base=True,
+):
     """
     The function `parse_hgvs_name` takes an HGVS name, a genome object, and optional parameters, and
     returns the chromosome, start position, reference allele, and alternate allele of the variant
     described by the HGVS name.
-    
+
     :param hgvs_name: The HGVS name to parse
     :param genome: A pygr compatible genome object. This object represents the reference genome and
     provides methods to access genomic sequences and annotations
@@ -524,40 +545,59 @@ def parse_hgvs_name(hgvs_name, genome, transcript=None, get_transcript=lambda na
     hgvs = HGVSName(hgvs_name)
 
     # Determine transcript.
-    if hgvs.kind in ('c', 'n') and not transcript:
-        if '.' in hgvs.transcript and lazy:
-            hgvs.transcript, _ = hgvs.transcript.split('.')
-        elif '.' in hgvs.gene and lazy:
-            hgvs.gene, _ = hgvs.gene.split('.')
+    if hgvs.kind in ("c", "n") and not transcript:
+        if "." in hgvs.transcript and lazy:
+            hgvs.transcript, _ = hgvs.transcript.split(".")
+        elif "." in hgvs.gene and lazy:
+            hgvs.gene, _ = hgvs.gene.split(".")
         if get_transcript:
             if hgvs.transcript:
                 transcript = get_transcript(hgvs.transcript)
             elif hgvs.gene:
                 transcript = get_transcript(hgvs.gene)
         if not transcript:
-            raise ValueError('transcript is required')
+            raise ValueError("transcript is required")
 
     if transcript and hgvs.transcript in genome:
         # Reference sequence is directly known, use it.
-        genome = GenomeSubset(genome, transcript.tx_position.chrom,
-                              transcript.tx_position.chrom_start,
-                              transcript.tx_position.chrom_stop,
-                              hgvs.transcript)
+        genome = GenomeSubset(
+            genome,
+            transcript.tx_position.chrom,
+            transcript.tx_position.chrom_start,
+            transcript.tx_position.chrom_stop,
+            hgvs.transcript,
+        )
 
     chrom, start, _, ref, alt = get_vcf_allele(hgvs, genome, transcript)
     if normalize:
-        nv = normalize_variant(chrom, start, ref, [alt], genome,
-                               flank_length=flank_length,
-                               indels_start_with_same_base=indels_start_with_same_base)
+        nv = normalize_variant(
+            chrom,
+            start,
+            ref,
+            [alt],
+            genome,
+            flank_length=flank_length,
+            indels_start_with_same_base=indels_start_with_same_base,
+        )
         chrom, start, ref, [alt] = nv.variant
     return (chrom, start, ref, alt)
 
 
-def cdna_to_protein(hgvs, offset, genome, chrom, transcript, ref, alt, mutation_type, codon_type:str = "3"):
+def cdna_to_protein(
+    hgvs,
+    offset,
+    genome,
+    chrom,
+    transcript,
+    ref,
+    alt,
+    mutation_type,
+    codon_type: str = "3",
+):
     """
     The function `cdna_to_protein` takes in various parameters related to a genetic mutation and returns
     an updated HGVS object with additional protein information.
-    
+
     :param hgvs: The parameter `hgvs` is an object that represents a variant in the Human Genome
     Variation Society (HGVS) format. It contains information about the variant, such as the cDNA start
     and end positions
@@ -612,12 +652,16 @@ def cdna_to_protein(hgvs, offset, genome, chrom, transcript, ref, alt, mutation_
         offset_protein = int(int(cdna_position_start) / 3)
         offset_protein_hgvs = offset_protein + gap_cdna_hgvs
         offset_protein_end = int(int(cdna_position_end) / 3)
-        offset_genomic_codon_start = genomic_position - offset_protein_mod #- gap_ins
-        offset_genomic_codon_end = offset_genomic_codon_start + 3 + ( (offset_protein_end - offset_protein) * 3 )
+        offset_genomic_codon_start = genomic_position - offset_protein_mod  # - gap_ins
+        offset_genomic_codon_end = (
+            offset_genomic_codon_start + 3 + ((offset_protein_end - offset_protein) * 3)
+        )
 
         # ref sequence
-        seq_ref = str(genome[str(chrom)][offset_genomic_codon_start:offset_genomic_codon_end])
-        
+        seq_ref = str(
+            genome[str(chrom)][offset_genomic_codon_start:offset_genomic_codon_end]
+        )
+
         # alt sequence
         if is_indel and not is_mnv:
             seq_alt = ""
@@ -629,7 +673,7 @@ def cdna_to_protein(hgvs, offset, genome, chrom, transcript, ref, alt, mutation_
             i = 0
             while i < len(ref):
                 nuleotide = alt_split[i].upper()
-                seq_alt_split[offset_protein_mod+i] = nuleotide
+                seq_alt_split[offset_protein_mod + i] = nuleotide
                 i += 1
             seq_alt = "".join(seq_alt_split)
 
@@ -639,8 +683,8 @@ def cdna_to_protein(hgvs, offset, genome, chrom, transcript, ref, alt, mutation_
             seq_alt = revcomp(seq_alt)
 
         # Split codons
-        seq_ref_split_codon = re.findall('...',seq_ref)
-        seq_alt_split_codon = re.findall('...',seq_alt)
+        seq_ref_split_codon = re.findall("...", seq_ref)
+        seq_alt_split_codon = re.findall("...", seq_alt)
         if not is_mnv:
             if len(seq_ref_split_codon):
                 seq_ref_split_codon = [seq_ref_split_codon[0]]
@@ -668,7 +712,7 @@ def cdna_to_protein(hgvs, offset, genome, chrom, transcript, ref, alt, mutation_
         # indel alt
         if is_indel and not is_mnv:
             codon3_alt = "fs"
-        
+
         # add protein infos
         hgvs.pep_extra = f"{codon3_ref}{offset_protein_hgvs}{codon3_alt}"
 
@@ -676,11 +720,23 @@ def cdna_to_protein(hgvs, offset, genome, chrom, transcript, ref, alt, mutation_
     return hgvs
 
 
-def variant_to_hgvs_name(chrom, offset, ref, alt, genome, transcript, transcript_protein=None, exon=None, max_allele_length=4, use_counsyl=False, codon_type:str = "3"):
+def variant_to_hgvs_name(
+    chrom,
+    offset,
+    ref,
+    alt,
+    genome,
+    transcript,
+    transcript_protein=None,
+    exon=None,
+    max_allele_length=4,
+    use_counsyl=False,
+    codon_type: str = "3",
+):
     """
     The function `variant_to_hgvs_name` takes in genomic coordinates, alleles, and other parameters, and
     returns a HGVS-style name for the variant.
-    
+
     :param chrom: The chromosome name where the variant is located
     :param offset: The `offset` parameter represents the genomic offset of the allele. It is the
     position of the variant on the chromosome
@@ -713,15 +769,17 @@ def variant_to_hgvs_name(chrom, offset, ref, alt, genome, transcript, transcript
 
     # Convert VCF-style variant to HGVS-style.
     chrom, offset, ref, [alt] = normalize_variant(
-        chrom, offset, ref, [alt], genome).variant
+        chrom, offset, ref, [alt], genome
+    ).variant
     chrom, offset, ref, alt, mutation_type = hgvs_normalize_variant(
-        chrom, offset, ref, alt, genome, transcript)
+        chrom, offset, ref, alt, genome, transcript
+    )
 
     # Populate HGVSName parse tree.
     hgvs = HGVSName()
 
     # Populate coordinates.
-    if mutation_type == 'ins':
+    if mutation_type == "ins":
         # Insert uses coordinates around the insert point.
         offset_start = offset - 1
         offset_end = offset
@@ -731,33 +789,42 @@ def variant_to_hgvs_name(chrom, offset, ref, alt, genome, transcript, transcript
 
     if not transcript:
         # Use genomic coordinate when no transcript is available.
-        hgvs.kind = 'g'
+        hgvs.kind = "g"
         hgvs.start = offset_start
         hgvs.end = offset_end
     else:
         # Use cDNA coordinates.
         if transcript.is_coding:
-            hgvs.kind = 'c'
+            hgvs.kind = "c"
         else:
-            hgvs.kind = 'n'
+            hgvs.kind = "n"
 
-        is_single_base_indel = (
-            (mutation_type == 'ins' and len(alt) == 1) or
-            (mutation_type in ('del', 'delins', 'dup') and len(ref) == 1))
+        is_single_base_indel = (mutation_type == "ins" and len(alt) == 1) or (
+            mutation_type in ("del", "delins", "dup") and len(ref) == 1
+        )
 
-        if mutation_type == '>' or (use_counsyl and is_single_base_indel):
+        if mutation_type == ">" or (use_counsyl and is_single_base_indel):
             # Use a single coordinate.
             hgvs.cdna_start = transcript.genomic_to_cdna_coord(offset)
             hgvs.cdna_end = hgvs.cdna_start
         else:
-            if transcript.strand == '-':
+            if transcript.strand == "-":
                 offset_start, offset_end = offset_end, offset_start
             hgvs.cdna_start = transcript.genomic_to_cdna_coord(offset_start)
             hgvs.cdna_end = transcript.genomic_to_cdna_coord(offset_end)
 
         # pep extra
-        hgvs = cdna_to_protein(hgvs, offset, genome, chrom, transcript, ref, alt, mutation_type, codon_type=codon_type)
-        
+        hgvs = cdna_to_protein(
+            hgvs,
+            offset,
+            genome,
+            chrom,
+            transcript,
+            ref,
+            alt,
+            mutation_type,
+            codon_type=codon_type,
+        )
 
     # Populate prefix.
     if transcript:
@@ -773,16 +840,17 @@ def variant_to_hgvs_name(chrom, offset, ref, alt, genome, transcript, transcript
         hgvs.exon = exon
 
     # Convert alleles to transcript strand.
-    if transcript and transcript.strand == '-':
+    if transcript and transcript.strand == "-":
         ref = revcomp(ref)
         alt = revcomp(alt)
 
     # Convert to allele length if alleles are long.
     ref_len = len(ref)
     alt_len = len(alt)
-    if ((mutation_type == 'dup' and ref_len > max_allele_length) or
-            (mutation_type != 'dup' and
-             (ref_len > max_allele_length or alt_len > max_allele_length))):
+    if (mutation_type == "dup" and ref_len > max_allele_length) or (
+        mutation_type != "dup"
+        and (ref_len > max_allele_length or alt_len > max_allele_length)
+    ):
         ref = str(ref_len)
         alt = str(alt_len)
 
@@ -794,10 +862,27 @@ def variant_to_hgvs_name(chrom, offset, ref, alt, genome, transcript, transcript
     return hgvs
 
 
-def format_hgvs_name(chrom, offset, ref, alt, genome, transcript, transcript_protein=None, exon=None, use_prefix=True, use_gene=True, use_protein=False, use_counsyl=False, max_allele_length=4, full_format=False, use_version=False, codon_type:str = "3"):
+def format_hgvs_name(
+    chrom,
+    offset,
+    ref,
+    alt,
+    genome,
+    transcript,
+    transcript_protein=None,
+    exon=None,
+    use_prefix=True,
+    use_gene=True,
+    use_protein=False,
+    use_counsyl=False,
+    max_allele_length=4,
+    full_format=False,
+    use_version=False,
+    codon_type: str = "3",
+):
     """
     The `format_hgvs_name` function generates a HGVS name from a genomic coordinate.
-    
+
     :param chrom: The `chrom` parameter represents the chromosome name. It is a string that specifies
     the chromosome on which the variant occurs
     :param offset: The `offset` parameter represents the genomic offset of the allele, which is the
@@ -851,18 +936,37 @@ def format_hgvs_name(chrom, offset, ref, alt, genome, transcript, transcript_pro
     :type codon_type: str (optional)
     :return: a formatted HGVS name generated from a genomic coordinate.
     """
-    
-    hgvs = variant_to_hgvs_name(chrom, offset, ref, alt, genome, transcript, transcript_protein=transcript_protein, exon=exon,
-                                max_allele_length=max_allele_length,
-                                use_counsyl=use_counsyl, codon_type=codon_type)
-    return hgvs.format(use_prefix=use_prefix, use_gene=use_gene, use_exon=exon, use_protein=use_protein, full_format=full_format, use_version=use_version)
+
+    hgvs = variant_to_hgvs_name(
+        chrom,
+        offset,
+        ref,
+        alt,
+        genome,
+        transcript,
+        transcript_protein=transcript_protein,
+        exon=exon,
+        max_allele_length=max_allele_length,
+        use_counsyl=use_counsyl,
+        codon_type=codon_type,
+    )
+    return hgvs.format(
+        use_prefix=use_prefix,
+        use_gene=use_gene,
+        use_exon=exon,
+        use_protein=use_protein,
+        full_format=full_format,
+        use_version=use_version,
+    )
 
 
-def create_refseq_table(conn, refseq_table:str = "refseq", refseq_file:str = None) -> str:
+def create_refseq_table(
+    conn, refseq_table: str = "refseq", refseq_file: str = None
+) -> str:
     """
     The function `create_refseq_table` creates a table in a database with the specified name and
     structure, either using a file or without a file.
-    
+
     :param conn: The `conn` parameter is a connection object that represents a connection to a database.
     It is used to execute SQL queries and interact with the database
     :param refseq_table: The `refseq_table` parameter is a string that specifies the name of the table
@@ -894,7 +998,7 @@ def create_refseq_table(conn, refseq_table:str = "refseq", refseq_file:str = Non
             "name2": "STRING",
             "cdsStartStat": "STRING",
             "cdsEndStat": "STRING",
-            "exonFrames": "STRING"
+            "exonFrames": "STRING",
         }
         query = f"CREATE TABLE {refseq_table} AS SELECT * FROM read_csv_auto('{refseq_file}',HEADER=False,columns={refseq_structure},skip=1)"
     elif refseq_table == "refseqlink":
@@ -908,7 +1012,7 @@ def create_refseq_table(conn, refseq_table:str = "refseq", refseq_file:str = Non
             "locusLinkId": "STRING",
             "omimId": "STRING",
             "hgnc": "STRING",
-            "genbank" :"STRING",
+            "genbank": "STRING",
             "pseudo": "STRING",
             "gbkey": "STRING",
             "source": "STRING",
@@ -918,19 +1022,21 @@ def create_refseq_table(conn, refseq_table:str = "refseq", refseq_file:str = Non
             "note": "STRING",
             "description": "STRING",
             "externalId": "STRING",
-            }
+        }
         query = rf"CREATE TABLE {refseq_table} AS SELECT *, regexp_extract(mrnaAcc, '(.*)\..*', 1) AS 'mrnaAcc_without_ver', regexp_extract(protAcc, '(.*)\..*', 1) AS 'protAcc_without_ver', mrnaAcc AS 'mrnaAcc_with_ver', protAcc AS 'protAcc_with_ver' FROM read_csv_auto('{refseq_file}',HEADER=False,columns={refseq_structure},skip=1)"
 
     # Create tabel with file
     if refseq_file:
-        #print(f"Create table refGene '{refseq_table}' with file '{refseq_file}'")
+        # print(f"Create table refGene '{refseq_table}' with file '{refseq_file}'")
         conn.query(query)
     # Create table without file
     else:
-        #print(f"Create table refGene '{refseq_table}' without file")
+        # print(f"Create table refGene '{refseq_table}' without file")
         sql_structure_list = []
         for col in refseq_structure:
-            col_format = refseq_structure.get(col,"VARCHAR").replace("STRING","VARCHAR")
+            col_format = refseq_structure.get(col, "VARCHAR").replace(
+                "STRING", "VARCHAR"
+            )
             sql_structure_list.append(f" {col} {col_format}")
         sql_structure = ",".join(sql_structure_list)
         conn.query(f"CREATE TABLE {refseq_table}({sql_structure})")
@@ -938,11 +1044,13 @@ def create_refseq_table(conn, refseq_table:str = "refseq", refseq_file:str = Non
     return refseq_table
 
 
-def get_refseq_table(conn, refseq_table:str = "refseq", refseq_file:str = None) -> str:
+def get_refseq_table(
+    conn, refseq_table: str = "refseq", refseq_file: str = None
+) -> str:
     """
     The function `get_refseq_table` checks if a table named `refseq` exists in a database, and if not,
     creates it using the `create_refseq_table` function.
-    
+
     :param conn: The parameter `conn` is expected to be a connection object that allows you to interact
     with a database. It could be an instance of a database connector class, such as `pymysql.connect()`
     for MySQL or `psycopg2.connect()` for PostgreSQL
@@ -965,15 +1073,17 @@ def get_refseq_table(conn, refseq_table:str = "refseq", refseq_file:str = None) 
         return refseq_table
     # Create refGene table
     else:
-        refseq_table = create_refseq_table(conn, refseq_table=refseq_table, refseq_file=refseq_file)
+        refseq_table = create_refseq_table(
+            conn, refseq_table=refseq_table, refseq_file=refseq_file
+        )
         return refseq_table
 
 
-def get_transcript(transcripts:dict, transcript_name:str) -> Transcript:
+def get_transcript(transcripts: dict, transcript_name: str) -> Transcript:
     """
     The function `get_transcript` takes a dictionary of transcripts and a name as input, and returns the
     transcript associated with that name.
-    
+
     :param transcripts: A dictionary containing transcripts as values, with names as keys
     :type transcripts: dict
     :param name: The name parameter is a string that represents the name of the transcript that you want
@@ -983,4 +1093,3 @@ def get_transcript(transcripts:dict, transcript_name:str) -> Transcript:
     """
 
     return transcripts.get(transcript_name)
-

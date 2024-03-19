@@ -27,11 +27,11 @@ from howard.tools.tools import *
 main_folder = os.path.dirname(__file__)
 
 
-def help(args:argparse) -> None:
+def help(args: argparse) -> None:
     """
     The `help` function generates help documentation in various formats (parser, Markdown, HTML) based
     on the provided arguments and setup configuration.
-    
+
     :param args: The `args` parameter is of type `argparse.Namespace`. It is used to pass command-line
     arguments to the `help` function. The `argparse` module provides a way to parse command-line
     arguments and generate help messages. The `Namespace` object holds the values of the command-line
@@ -48,9 +48,11 @@ def help(args:argparse) -> None:
         setup_cfg = args.setup_cfg
     else:
         setup_cfg = None
-    
+
     # Parser
-    parser = help_generation(arguments_dict=arguments_dict, setup=setup_cfg, output_type="parser")
+    parser = help_generation(
+        arguments_dict=arguments_dict, setup=setup_cfg, output_type="parser"
+    )
     parser.print_help()
     print("")
 
@@ -67,7 +69,7 @@ def help(args:argparse) -> None:
         help_json_input_title = args.help_json_input_title
     else:
         help_json_input_title = ""
-    
+
     # Help example code type
     if "code_type" in args and args.code_type:
         code_type = args.code_type
@@ -85,12 +87,19 @@ def help(args:argparse) -> None:
         # If Help input JSON file
         if help_json_file:
             log.info(f"Help -     from JSON help file ['{help_json_file}']")
-            help_content = help_generation_from_json(help_json_file=help_json_file, output_type="markdown", title=help_json_input_title, code_type=code_type)
+            help_content = help_generation_from_json(
+                help_json_file=help_json_file,
+                output_type="markdown",
+                title=help_json_input_title,
+                code_type=code_type,
+            )
 
         # Help from options
         else:
-            help_content = help_generation(arguments_dict=arguments_dict, setup=setup_cfg, output_type="markdown")
-       
+            help_content = help_generation(
+                arguments_dict=arguments_dict, setup=setup_cfg, output_type="markdown"
+            )
+
         # Write file
         f = open(help_file, "w")
         f.write(help_content)
@@ -98,8 +107,9 @@ def help(args:argparse) -> None:
 
         # Generate Table Of Content (if marker <!--TOC-->)
         import md_toc
+
         toc = md_toc.build_toc(help_file)
-        md_toc.write_string_on_file_between_markers(help_file, toc, '<!--TOC-->')
+        md_toc.write_string_on_file_between_markers(help_file, toc, "<!--TOC-->")
 
     # HTML file
     if "help_html" in args and args.help_html:
@@ -111,11 +121,17 @@ def help(args:argparse) -> None:
         # If Help input JSON file
         if help_json_file:
             log.info(f"Help -     from JSON help file ['{help_json_file}']")
-            help_content = help_generation_from_json(help_json_file=help_json_file, output_type="html", title=help_json_input_title)
+            help_content = help_generation_from_json(
+                help_json_file=help_json_file,
+                output_type="html",
+                title=help_json_input_title,
+            )
 
         # Help from options
         else:
-            help_content = help_generation(arguments_dict=arguments_dict, setup=setup_cfg, output_type="html")
+            help_content = help_generation(
+                arguments_dict=arguments_dict, setup=setup_cfg, output_type="html"
+            )
 
         # Write file
         f = open(help_file, "w")

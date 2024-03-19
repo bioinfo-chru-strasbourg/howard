@@ -38,8 +38,8 @@ def test_query_empty():
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
-        output_vcf = os.path.join(tmp_dir,"output_file.vcf")
-        output_parquet = os.path.join(tmp_dir,"output_file.parquet")
+        output_vcf = os.path.join(tmp_dir, "output_file.vcf")
+        output_parquet = os.path.join(tmp_dir, "output_file.parquet")
         query = "SELECT * FROM variants WHERE POS < 0"
 
         # Create object
@@ -52,7 +52,7 @@ def test_query_empty():
         result = variants.get_query_to_df(query)
         log.debug(result)
         assert len(result) == 0
-        
+
         # Check if VCF is in correct format with pyVCF
         with pytest.raises(ValueError) as e:
             variants.export_output(query=query)
@@ -65,7 +65,7 @@ def test_query_empty():
         with pytest.raises(ValueError) as e:
             variants.export_output(query=query)
         assert str(e.value) == "Export failed: Empty"
-            
+
 
 def test_query():
     """
@@ -77,19 +77,22 @@ def test_query():
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
-        output_vcf = os.path.join(tmp_dir,"output_file.tsv")
-        config = {'threads': 4}
+        output_vcf = os.path.join(tmp_dir, "output_file.tsv")
+        config = {"threads": 4}
 
         query_list = {
-            "SELECT count(*) AS '#count' FROM variants": {"nb_lines": 54, "nb_variants": 1},
-            "SELECT * AS '#count' FROM variants": {"nb_lines": 60, "nb_variants": 7}
+            "SELECT count(*) AS '#count' FROM variants": {
+                "nb_lines": 54,
+                "nb_variants": 1,
+            },
+            "SELECT * AS '#count' FROM variants": {"nb_lines": 60, "nb_variants": 7},
         }
 
         for explode_infos in [True, False]:
 
             for explode_infos_prefix in ["", "INFO/", "CUSTOM_"]:
 
-                for explode_infos_fields in ['*', 'SIFT']:
+                for explode_infos_fields in ["*", "SIFT"]:
 
                     for input_query in query_list:
 
@@ -98,15 +101,15 @@ def test_query():
 
                         # prepare arguments for the query function
                         args = argparse.Namespace(
-                            input = input_vcf,
-                            output = output_vcf,
-                            config = config,
-                            query = input_query,
-                            explode_infos = explode_infos,
-                            explode_infos_prefix = explode_infos_prefix,
-                            explode_infos_fields = explode_infos_fields,
-                            include_header = True,
-                            arguments_dict = arguments_dict
+                            input=input_vcf,
+                            output=output_vcf,
+                            config=config,
+                            query=input_query,
+                            explode_infos=explode_infos,
+                            explode_infos_prefix=explode_infos_prefix,
+                            explode_infos_fields=explode_infos_fields,
+                            include_header=True,
+                            arguments_dict=arguments_dict,
                         )
 
                         # Remove if output file exists
@@ -116,7 +119,7 @@ def test_query():
                         query(args)
 
                         # read the contents of the actual output file
-                        with open(output_vcf, 'r') as f:
+                        with open(output_vcf, "r") as f:
                             result_output_nb_lines = 0
                             result_output_nb_variants = 0
                             result_lines = []
@@ -129,8 +132,12 @@ def test_query():
                                     result_lines.append(line.strip())
 
                         # Expected result
-                        expected_result_nb_lines = expected_results.get("nb_lines", None)
-                        expected_result_nb_variants = expected_results.get("nb_variants", None)
+                        expected_result_nb_lines = expected_results.get(
+                            "nb_lines", None
+                        )
+                        expected_result_nb_variants = expected_results.get(
+                            "nb_variants", None
+                        )
 
                         # Compare
                         assert result_output_nb_lines == expected_result_nb_lines

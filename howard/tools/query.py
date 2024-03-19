@@ -23,12 +23,11 @@ from howard.functions.commons import *
 from howard.functions.databases import *
 
 
-
-def query(args:argparse) -> None:
+def query(args: argparse) -> None:
     """
     This Python function loads and queries data from a VCF file based on user input and exports the
     results.
-    
+
     :param args: args is an object that contains the arguments passed to the function. It is likely a
     Namespace object created by parsing command line arguments using argparse
     :type args: argparse
@@ -40,17 +39,25 @@ def query(args:argparse) -> None:
     arguments_dict, setup_cfg, config, param = load_config_args(args)
 
     # Create variants object
-    vcfdata_obj = Variants(input=args.input, output=args.output, config=config, param=param)
+    vcfdata_obj = Variants(
+        input=args.input, output=args.output, config=config, param=param
+    )
 
     # Get Config and Params
     config = vcfdata_obj.get_config()
     param = vcfdata_obj.get_param()
 
     # Load args into param
-    param = load_args(param=param, args=args, arguments_dict=arguments_dict, command="query", strict=False)
-    
+    param = load_args(
+        param=param,
+        args=args,
+        arguments_dict=arguments_dict,
+        command="query",
+        strict=False,
+    )
+
     # Access
-    if not param.get("explode",{}).get("explode_infos",False):
+    if not param.get("explode", {}).get("explode_infos", False):
         config["access"] = "RO"
 
     # Re-Load Config and Params
@@ -75,13 +82,21 @@ def query(args:argparse) -> None:
         if query_print_mode in ["markdown"]:
             print(vcfdata_obj.get_query_to_df(query, limit=query_limit).to_markdown())
         elif query_print_mode in ["tabulate"]:
-            print(tabulate(vcfdata_obj.get_query_to_df(query, limit=query_limit), headers='keys', tablefmt='psql'))
+            print(
+                tabulate(
+                    vcfdata_obj.get_query_to_df(query, limit=query_limit),
+                    headers="keys",
+                    tablefmt="psql",
+                )
+            )
         else:
             print(vcfdata_obj.get_query_to_df(query, limit=query_limit))
 
     # Export
     if vcfdata_obj.get_output():
-        vcfdata_obj.export_output(query=param.get("query", {}).get("query", None), export_header=True)
+        vcfdata_obj.export_output(
+            query=param.get("query", {}).get("query", None), export_header=True
+        )
 
     # Close connexion
     vcfdata_obj.close_connexion()

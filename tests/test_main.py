@@ -23,7 +23,6 @@ from howard.objects.variants import Variants
 tests_folder = os.path.dirname(__file__)
 
 
-
 def test_load():
     """
     This function tests that the input VCF file is correctly loaded into the Variants object
@@ -145,4 +144,3 @@ def test_get_table_variants_from_parquet_ro():
     vcf.load_data()
     variants_table = vcf.get_table_variants(clause="from")
     assert variants_table == f"'{input_vcf}' as variants"
-

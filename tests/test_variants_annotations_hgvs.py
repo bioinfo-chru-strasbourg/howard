@@ -26,8 +26,6 @@ from howard.functions.databases import *
 from test_needed import *
 
 
-
-    
 def test_annotation_hgvs():
     """
     The function `test_annotation_hgvs` tests the annotation of a VCF file using bcftools and SQLite.
@@ -49,7 +47,14 @@ def test_annotation_hgvs():
         param = {"hgvs": {"use_exon": True, "use_version": True}}
 
         # Create object
-        variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, config=config, load=True)
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            param=param,
+            config=config,
+            load=True,
+        )
 
         # Remove if output file exists
         remove_if_exists([output_vcf])
@@ -58,9 +63,13 @@ def test_annotation_hgvs():
         variants.annotation_hgvs()
 
         # Check
-        result = variants.get_query_to_df("""SELECT * FROM variants WHERE INFO LIKE '%hgvs%'""")
+        result = variants.get_query_to_df(
+            """SELECT * FROM variants WHERE INFO LIKE '%hgvs%'"""
+        )
         assert len(result) == 7
-        result = variants.get_query_to_df("""SELECT INFO FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO LIKE '%NM_001346897.2(exon19):c.2226G>A%'""")
+        result = variants.get_query_to_df(
+            """SELECT INFO FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO LIKE '%NM_001346897.2(exon19):c.2226G>A%'"""
+        )
         assert len(result) == 1
 
         # Gene Protein
@@ -69,7 +78,14 @@ def test_annotation_hgvs():
         param = {"hgvs": {"add_protein": True, "use_gene": True}}
 
         # Create object
-        variants = Variants(conn=None, input=input_vcf, output=output_vcf, param=param, config=config, load=True)
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            param=param,
+            config=config,
+            load=True,
+        )
 
         # Remove if output file exists
         remove_if_exists([output_vcf])
@@ -78,8 +94,11 @@ def test_annotation_hgvs():
         variants.annotation_hgvs()
 
         #  Check
-        result = variants.get_query_to_df("""SELECT * FROM variants WHERE INFO LIKE '%hgvs%'""")
+        result = variants.get_query_to_df(
+            """SELECT * FROM variants WHERE INFO LIKE '%hgvs%'"""
+        )
         assert len(result) == 7
-        result = variants.get_query_to_df("""SELECT INFO FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO LIKE '%NM_001346897(EGFR):c.2226G>A%' AND INFO LIKE '%NP_001333826(EGFR):p.Gln742Gln%'""")
+        result = variants.get_query_to_df(
+            """SELECT INFO FROM variants WHERE "#CHROM" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO LIKE '%NM_001346897(EGFR):c.2226G>A%' AND INFO LIKE '%NP_001333826(EGFR):p.Gln742Gln%'"""
+        )
         assert len(result) == 1
-
