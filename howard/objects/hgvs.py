@@ -89,34 +89,206 @@ import re
 from .cdna import CDNACoord
 from .variant import revcomp
 
-CHROM_PREFIX = 'chr'
+CHROM_PREFIX = "chr"
 
 
 CODON_1 = {
-    "TTT": "F", "TTC": "F", "TCT": "S", "TCC": "S", "TAT": "Y", "TAC": "Y", "TGT": "C", "TGC": "C", "TTA": "L", "TCA": "S", "TAA": "*", "TGA": "*", "TTG": "L", "TCG": "S", "TAG": "*", "TGG": "W", "CTT": "L", "CTC": "L", "CCT": "P", "CCC": "P", "CAT": "H", "CAC": "H", "CGT": "R", "CGC": "R", "CTA": "L", "CTG": "L", "CCA": "P", "CCG": "P", "CAA": "Q", "CAG": "Q", "CGA": "R", "CGG": "R", "ATT": "I", "ATC": "I", "ACT": "T", "ACC": "T", "AAT": "N", "AAC": "N", "AGT": "S", "AGC": "S", "ATA": "I", "ACA": "T", "AAA": "K", "AGA": "R", "ATG": "M", "ACG": "T", "AAG": "K", "AGG": "R", "GTT": "V", "GTC": "V", "GCT": "A", "GCC": "A", "GAT": "D", "GAC": "D", "GGT": "G", "GGC": "G", "GTA": "V", "GTG": "V", "GCA": "A", "GCG": "A", "GAA": "E", "GAG": "E", "GGA": "G", "GGG": "G"
+    "TTT": "F",
+    "TTC": "F",
+    "TCT": "S",
+    "TCC": "S",
+    "TAT": "Y",
+    "TAC": "Y",
+    "TGT": "C",
+    "TGC": "C",
+    "TTA": "L",
+    "TCA": "S",
+    "TAA": "*",
+    "TGA": "*",
+    "TTG": "L",
+    "TCG": "S",
+    "TAG": "*",
+    "TGG": "W",
+    "CTT": "L",
+    "CTC": "L",
+    "CCT": "P",
+    "CCC": "P",
+    "CAT": "H",
+    "CAC": "H",
+    "CGT": "R",
+    "CGC": "R",
+    "CTA": "L",
+    "CTG": "L",
+    "CCA": "P",
+    "CCG": "P",
+    "CAA": "Q",
+    "CAG": "Q",
+    "CGA": "R",
+    "CGG": "R",
+    "ATT": "I",
+    "ATC": "I",
+    "ACT": "T",
+    "ACC": "T",
+    "AAT": "N",
+    "AAC": "N",
+    "AGT": "S",
+    "AGC": "S",
+    "ATA": "I",
+    "ACA": "T",
+    "AAA": "K",
+    "AGA": "R",
+    "ATG": "M",
+    "ACG": "T",
+    "AAG": "K",
+    "AGG": "R",
+    "GTT": "V",
+    "GTC": "V",
+    "GCT": "A",
+    "GCC": "A",
+    "GAT": "D",
+    "GAC": "D",
+    "GGT": "G",
+    "GGC": "G",
+    "GTA": "V",
+    "GTG": "V",
+    "GCA": "A",
+    "GCG": "A",
+    "GAA": "E",
+    "GAG": "E",
+    "GGA": "G",
+    "GGG": "G",
 }
 CODON_3 = {
-    "TTT": "Phe", "TTC": "Phe", "TCT": "Ser", "TCC": "Ser", "TAT": "Tyr", "TAC": "Tyr", "TGT": "Cys", "TGC": "Cys",
-    "TTA": "Leu", "TCA": "Ser", "TAA": "*", "TGA": "*", "TTG": "Leu", "TCG": "Ser", "TAG": "*", "TGG": "Trp",
-    "CTT": "Leu", "CTC": "Leu", "CCT": "Pro", "CCC": "Pro", "CAT": "His", "CAC": "His", "CGT": "Arg", "CGC": "Arg",
-    "CTA": "Leu", "CTG": "Leu", "CCA": "Pro", "CCG": "Pro", "CAA": "Gln", "CAG": "Gln", "CGA": "Arg", "CGG": "Arg",
-    "ATT": "Ile", "ATC": "Ile", "ACT": "Thr", "ACC": "Thr", "AAT": "Asn", "AAC": "Asn", "AGT": "Ser", "AGC": "Ser",
-    "ATA": "Ile", "ACA": "Thr", "AAA": "Lys", "AGA": "Arg", "ATG": "Met", "ACG": "Thr", "AAG": "Lys", "AGG": "Arg",
-    "GTT": "Val", "GTC": "Val", "GCT": "Ala", "GCC": "Ala", "GAT": "Asp", "GAC": "Asp", "GGT": "Gly", "GGC": "Gly",
-    "GTA": "Val", "GTG": "Val", "GCA": "Ala", "GCG": "Ala", "GAA": "Glu", "GAG": "Glu", "GGA": "Gly", "GGG": "Gly"
+    "TTT": "Phe",
+    "TTC": "Phe",
+    "TCT": "Ser",
+    "TCC": "Ser",
+    "TAT": "Tyr",
+    "TAC": "Tyr",
+    "TGT": "Cys",
+    "TGC": "Cys",
+    "TTA": "Leu",
+    "TCA": "Ser",
+    "TAA": "*",
+    "TGA": "*",
+    "TTG": "Leu",
+    "TCG": "Ser",
+    "TAG": "*",
+    "TGG": "Trp",
+    "CTT": "Leu",
+    "CTC": "Leu",
+    "CCT": "Pro",
+    "CCC": "Pro",
+    "CAT": "His",
+    "CAC": "His",
+    "CGT": "Arg",
+    "CGC": "Arg",
+    "CTA": "Leu",
+    "CTG": "Leu",
+    "CCA": "Pro",
+    "CCG": "Pro",
+    "CAA": "Gln",
+    "CAG": "Gln",
+    "CGA": "Arg",
+    "CGG": "Arg",
+    "ATT": "Ile",
+    "ATC": "Ile",
+    "ACT": "Thr",
+    "ACC": "Thr",
+    "AAT": "Asn",
+    "AAC": "Asn",
+    "AGT": "Ser",
+    "AGC": "Ser",
+    "ATA": "Ile",
+    "ACA": "Thr",
+    "AAA": "Lys",
+    "AGA": "Arg",
+    "ATG": "Met",
+    "ACG": "Thr",
+    "AAG": "Lys",
+    "AGG": "Arg",
+    "GTT": "Val",
+    "GTC": "Val",
+    "GCT": "Ala",
+    "GCC": "Ala",
+    "GAT": "Asp",
+    "GAC": "Asp",
+    "GGT": "Gly",
+    "GGC": "Gly",
+    "GTA": "Val",
+    "GTG": "Val",
+    "GCA": "Ala",
+    "GCG": "Ala",
+    "GAA": "Glu",
+    "GAG": "Glu",
+    "GGA": "Gly",
+    "GGG": "Gly",
 }
 CODON_FULL = {
-    "TTT": "Phenylalanine", "TTC": "Phenylalanine", "TCT": "Serine", "TCC": "Serine", "TAT": "Tyrosine", "TAC": "Tyrosine",
-    "TGT": "Cysteine", "TGC": "Cysteine", "TTA": "Leucine", "TCA": "Serine", "TAA": "Stop", "TGA": "Stop", "TTG": "Leucine",
-    "TCG": "Serine", "TAG": "Stop", "TGG": "Tryptophan", "CTT": "Leucine", "CTC": "Leucine", "CCT": "Proline", "CCC": "Proline",
-    "CAT": "Histidine", "CAC": "Histidine", "CGT": "Arginine", "CGC": "Arginine", "CTA": "Leucine", "CTG": "Leucine",
-    "CCA": "Proline", "CCG": "Proline", "CAA": "Glutamine", "CAG": "Glutamine", "CGA": "Arginine", "CGG": "Arginine",
-    "ATT": "Isoleucine", "ATC": "Isoleucine", "ACT": "Threonine", "ACC": "Threonine", "AAT": "Asparagine", "AAC": "Asparagine",
-    "AGT": "Serine", "AGC": "Serine", "ATA": "Isoleucine", "ACA": "Threonine", "AAA": "Lysine", "AGA": "Arginine",
-    "ATG": "Methionine", "ACG": "Threonine", "AAG": "Lysine", "AGG": "Arginine", "GTT": "Valine", "GTC": "Valine",
-    "GCT": "Alanine", "GCC": "Alanine", "GAT": "Aspartic acid", "GAC": "Aspartic acid", "GGT": "Glycine", "GGC": "Glycine",
-    "GTA": "Valine", "GTG": "Valine", "GCA": "Alanine", "GCG": "Alanine", "GAA": "Glutamic acid", "GAG": "Glutamic acid",
-    "GGA": "Glycine", "GGG": "Glycine"
+    "TTT": "Phenylalanine",
+    "TTC": "Phenylalanine",
+    "TCT": "Serine",
+    "TCC": "Serine",
+    "TAT": "Tyrosine",
+    "TAC": "Tyrosine",
+    "TGT": "Cysteine",
+    "TGC": "Cysteine",
+    "TTA": "Leucine",
+    "TCA": "Serine",
+    "TAA": "Stop",
+    "TGA": "Stop",
+    "TTG": "Leucine",
+    "TCG": "Serine",
+    "TAG": "Stop",
+    "TGG": "Tryptophan",
+    "CTT": "Leucine",
+    "CTC": "Leucine",
+    "CCT": "Proline",
+    "CCC": "Proline",
+    "CAT": "Histidine",
+    "CAC": "Histidine",
+    "CGT": "Arginine",
+    "CGC": "Arginine",
+    "CTA": "Leucine",
+    "CTG": "Leucine",
+    "CCA": "Proline",
+    "CCG": "Proline",
+    "CAA": "Glutamine",
+    "CAG": "Glutamine",
+    "CGA": "Arginine",
+    "CGG": "Arginine",
+    "ATT": "Isoleucine",
+    "ATC": "Isoleucine",
+    "ACT": "Threonine",
+    "ACC": "Threonine",
+    "AAT": "Asparagine",
+    "AAC": "Asparagine",
+    "AGT": "Serine",
+    "AGC": "Serine",
+    "ATA": "Isoleucine",
+    "ACA": "Threonine",
+    "AAA": "Lysine",
+    "AGA": "Arginine",
+    "ATG": "Methionine",
+    "ACG": "Threonine",
+    "AAG": "Lysine",
+    "AGG": "Arginine",
+    "GTT": "Valine",
+    "GTC": "Valine",
+    "GCT": "Alanine",
+    "GCC": "Alanine",
+    "GAT": "Aspartic acid",
+    "GAC": "Aspartic acid",
+    "GGT": "Glycine",
+    "GGC": "Glycine",
+    "GTA": "Valine",
+    "GTG": "Valine",
+    "GCA": "Alanine",
+    "GCG": "Alanine",
+    "GAA": "Glutamic acid",
+    "GAG": "Glutamic acid",
+    "GGA": "Glycine",
+    "GGG": "Glycine",
 }
 
 NUCLEOTIDE_TRANSLATE = {
@@ -154,12 +326,18 @@ class HGVSRegex(object):
     COORD_RANGE = COORD_START + "_" + COORD_END
 
     # cDNA coordinate syntax
-    CDNA_COORD = (r"(?P<coord_prefix>|-|\*)(?P<coord>\d+)"
-                  r"((?P<offset_prefix>-|\+)(?P<offset>\d+))?")
-    CDNA_START = (r"(?P<start>(?P<start_coord_prefix>|-|\*)(?P<start_coord>\d+)"
-                  r"((?P<start_offset_prefix>-|\+)(?P<start_offset>\d+))?)")
-    CDNA_END = (r"(?P<end>(?P<end_coord_prefix>|-|\*)(?P<end_coord>\d+)"
-                r"((?P<end_offset_prefix>-|\+)(?P<end_offset>\d+))?)")
+    CDNA_COORD = (
+        r"(?P<coord_prefix>|-|\*)(?P<coord>\d+)"
+        r"((?P<offset_prefix>-|\+)(?P<offset>\d+))?"
+    )
+    CDNA_START = (
+        r"(?P<start>(?P<start_coord_prefix>|-|\*)(?P<start_coord>\d+)"
+        r"((?P<start_offset_prefix>-|\+)(?P<start_offset>\d+))?)"
+    )
+    CDNA_END = (
+        r"(?P<end>(?P<end_coord_prefix>|-|\*)(?P<end_coord>\d+)"
+        r"((?P<end_offset_prefix>-|\+)(?P<end_offset>\d+))?)"
+    )
     CDNA_RANGE = CDNA_START + "_" + CDNA_END
 
     # cDNA allele syntax
@@ -167,17 +345,14 @@ class HGVSRegex(object):
         # No change
         CDNA_START + EQUAL,
         CDNA_START + DNA_REF + EQUAL,
-
         # Substitution
         CDNA_START + DNA_REF + SUB + DNA_ALT,
-
         # 1bp insertion, deletion, duplication
         CDNA_START + INS + DNA_ALT,
         CDNA_START + DEL + DNA_REF,
         CDNA_START + DUP + DNA_REF,
         CDNA_START + DEL,
         CDNA_START + DUP,
-
         # Insertion, deletion, duplication
         COORD_RANGE + EQUAL,
         CDNA_RANGE + INS + DNA_ALT,
@@ -185,16 +360,14 @@ class HGVSRegex(object):
         CDNA_RANGE + DUP + DNA_REF,
         CDNA_RANGE + DEL,
         CDNA_RANGE + DUP,
-
         # Indels
-        "(?P<delins>" + CDNA_START + 'del' + DNA_REF + 'ins' + DNA_ALT + ")",
-        "(?P<delins>" + CDNA_RANGE + 'del' + DNA_REF + 'ins' + DNA_ALT + ")",
-        "(?P<delins>" + CDNA_START + 'delins' + DNA_ALT + ")",
-        "(?P<delins>" + CDNA_RANGE + 'delins' + DNA_ALT + ")",
+        "(?P<delins>" + CDNA_START + "del" + DNA_REF + "ins" + DNA_ALT + ")",
+        "(?P<delins>" + CDNA_RANGE + "del" + DNA_REF + "ins" + DNA_ALT + ")",
+        "(?P<delins>" + CDNA_START + "delins" + DNA_ALT + ")",
+        "(?P<delins>" + CDNA_RANGE + "delins" + DNA_ALT + ")",
     ]
 
-    CDNA_ALLELE_REGEXES = [re.compile("^" + regex + "$")
-                           for regex in CDNA_ALLELE]
+    CDNA_ALLELE_REGEXES = [re.compile("^" + regex + "$") for regex in CDNA_ALLELE]
 
     # Peptide syntax
     PEP = "([A-Z]([a-z]{2}))+"
@@ -209,38 +382,45 @@ class HGVSRegex(object):
         # No peptide change
         # Example: Glu1161=
         PEP_REF + COORD_START + PEP_EXTRA,
-
         # Peptide change
         # Example: Glu1161Ser
         PEP_REF + COORD_START + PEP_ALT + PEP_EXTRA,
-
         # Peptide indel
         # Example: Glu1161_Ser1164?fs
-        "(?P<delins>" + PEP_REF + COORD_START + "_" + PEP_REF2 + COORD_END +
-        PEP_EXTRA + ")",
-        "(?P<delins>" + PEP_REF + COORD_START + "_" + PEP_REF2 + COORD_END +
-        PEP_ALT + PEP_EXTRA + ")",
+        "(?P<delins>"
+        + PEP_REF
+        + COORD_START
+        + "_"
+        + PEP_REF2
+        + COORD_END
+        + PEP_EXTRA
+        + ")",
+        "(?P<delins>"
+        + PEP_REF
+        + COORD_START
+        + "_"
+        + PEP_REF2
+        + COORD_END
+        + PEP_ALT
+        + PEP_EXTRA
+        + ")",
     ]
 
-    PEP_ALLELE_REGEXES = [re.compile("^" + regex + "$")
-                          for regex in PEP_ALLELE]
+    PEP_ALLELE_REGEXES = [re.compile("^" + regex + "$") for regex in PEP_ALLELE]
 
     # Genomic allele syntax
     GENOMIC_ALLELE = [
         # No change
         COORD_START + EQUAL,
         COORD_START + DNA_REF + EQUAL,
-
         # Substitution
         COORD_START + DNA_REF + SUB + DNA_ALT,
-
         # 1bp insertion, deletion, duplication
         COORD_START + INS + DNA_ALT,
         COORD_START + DEL + DNA_REF,
         COORD_START + DUP + DNA_REF,
         COORD_START + DEL,
         COORD_START + DUP,
-
         # Insertion, deletion, duplication
         COORD_RANGE + EQUAL,
         COORD_RANGE + INS + DNA_ALT,
@@ -248,69 +428,64 @@ class HGVSRegex(object):
         COORD_RANGE + DUP + DNA_REF,
         COORD_RANGE + DEL,
         COORD_RANGE + DUP,
-
         # Indels
-        "(?P<delins>" + COORD_START + 'del' + DNA_REF + 'ins' + DNA_ALT + ")",
-        "(?P<delins>" + COORD_RANGE + 'del' + DNA_REF + 'ins' + DNA_ALT + ")",
-        "(?P<delins>" + COORD_START + 'delins' + DNA_ALT + ")",
-        "(?P<delins>" + COORD_RANGE + 'delins' + DNA_ALT + ")",
+        "(?P<delins>" + COORD_START + "del" + DNA_REF + "ins" + DNA_ALT + ")",
+        "(?P<delins>" + COORD_RANGE + "del" + DNA_REF + "ins" + DNA_ALT + ")",
+        "(?P<delins>" + COORD_START + "delins" + DNA_ALT + ")",
+        "(?P<delins>" + COORD_RANGE + "delins" + DNA_ALT + ")",
     ]
 
-    GENOMIC_ALLELE_REGEXES = [re.compile("^" + regex + "$")
-                              for regex in GENOMIC_ALLELE]
+    GENOMIC_ALLELE_REGEXES = [re.compile("^" + regex + "$") for regex in GENOMIC_ALLELE]
 
 
 # The RefSeq standard for naming contigs/transcripts/proteins:
 # http://www.ncbi.nlm.nih.gov/books/NBK21091/table/ch18.T.refseq_accession_numbers_and_mole/?report=objectonly  # nopep8
 REFSEQ_PREFIXES = [
-    ('AC_', 'genomic',
-     'Complete genomic molecule, usually alternate assembly'),
-    ('NC_', 'genomic',
-     'Complete genomic molecule, usually reference assembly'),
-    ('NG_', 'genomic', 'Incomplete genomic region'),
-    ('NT_', 'genomic', 'Contig or scaffold, clone-based or WGS'),
-    ('NW_', 'genomic', 'Contig or scaffold, primarily WGS'),
-    ('NS_', 'genomic', 'Environmental sequence'),
-    ('NZ_', 'genomic', 'Unfinished WGS'),
-    ('NM_', 'mRNA', ''),
-    ('NR_', 'RNA', ''),
-    ('XM_', 'mRNA', 'Predicted model'),
-    ('XR_', 'RNA', 'Predicted model'),
-    ('AP_', 'Protein', 'Annotated on AC_ alternate assembly'),
-    ('NP_', 'Protein', 'Associated with an NM_ or NC_ accession'),
-    ('YP_', 'Protein', ''),
-    ('XP_', 'Protein', 'Predicted model, associated with an XM_ accession'),
-    ('ZP_', 'Protein', 'Predicted model, annotated on NZ_ genomic records'),
+    ("AC_", "genomic", "Complete genomic molecule, usually alternate assembly"),
+    ("NC_", "genomic", "Complete genomic molecule, usually reference assembly"),
+    ("NG_", "genomic", "Incomplete genomic region"),
+    ("NT_", "genomic", "Contig or scaffold, clone-based or WGS"),
+    ("NW_", "genomic", "Contig or scaffold, primarily WGS"),
+    ("NS_", "genomic", "Environmental sequence"),
+    ("NZ_", "genomic", "Unfinished WGS"),
+    ("NM_", "mRNA", ""),
+    ("NR_", "RNA", ""),
+    ("XM_", "mRNA", "Predicted model"),
+    ("XR_", "RNA", "Predicted model"),
+    ("AP_", "Protein", "Annotated on AC_ alternate assembly"),
+    ("NP_", "Protein", "Associated with an NM_ or NC_ accession"),
+    ("YP_", "Protein", ""),
+    ("XP_", "Protein", "Predicted model, associated with an XM_ accession"),
+    ("ZP_", "Protein", "Predicted model, annotated on NZ_ genomic records"),
 ]
 
 
 REFSEQ_PREFIX_LOOKUP = dict(
-    (prefix, (kind, description))
-    for prefix, kind, description in REFSEQ_PREFIXES
+    (prefix, (kind, description)) for prefix, kind, description in REFSEQ_PREFIXES
 )
 
 
-def get_refseq_type(name:str) -> str:
+def get_refseq_type(name: str) -> str:
     """
     The `get_refseq_type` function returns the RefSeq type for a given RefSeq name.
-    
+
     :param name: The `name` parameter is a string representing a RefSeq name
     :type name: str
     :return: The function `get_refseq_type` returns the RefSeq type for a given RefSeq name.
     """
-    
+
     prefix = name[:3]
-    return REFSEQ_PREFIX_LOOKUP.get(prefix, (None, ''))[0]
+    return REFSEQ_PREFIX_LOOKUP.get(prefix, (None, ""))[0]
 
 
 # The InvalidHGVSName class is a subclass of ValueError and is used to represent an error when an
 # invalid HGVS name is encountered.
 class InvalidHGVSName(ValueError):
 
-    def __init__(self, name:str = '', part:str = 'name', reason:str = '') -> None:
+    def __init__(self, name: str = "", part: str = "name", reason: str = "") -> None:
         """
         The function initializes an InvalidHGVSName object with a message, name, part, and reason.
-        
+
         :param name: The name parameter is a string that represents the invalid HGVS name. It is the
         name that is considered invalid and does not meet the required criteria
         :type name: str
@@ -323,13 +498,13 @@ class InvalidHGVSName(ValueError):
         specific details about the error or to explain why the name does not meet the required criteria
         :type reason: str
         """
-        
+
         if name:
             message = 'Invalid HGVS %s "%s"' % (part, name)
         else:
-            message = 'Invalid HGVS %s' % part
+            message = "Invalid HGVS %s" % part
         if reason:
-            message += ': ' + reason
+            message += ": " + reason
         super(InvalidHGVSName, self).__init__(message)
 
         self.name = name
@@ -343,11 +518,30 @@ class HGVSName(object):
     Represents a HGVS variant name.
     """
 
-    def __init__(self, name:str = '', prefix:str = '', chrom:str = '', transcript:str = '', transcript_protein:str = None, gene:str = '', exon:str = None, kind:str = '', mutation_type:str = None, start:int = 0, end:int = 0, ref_allele:str = '', ref2_allele:str = '', alt_allele:str = '', cdna_start:int = None, cdna_end:int = None, pep_extra:str = ''):
+    def __init__(
+        self,
+        name: str = "",
+        prefix: str = "",
+        chrom: str = "",
+        transcript: str = "",
+        transcript_protein: str = None,
+        gene: str = "",
+        exon: str = None,
+        kind: str = "",
+        mutation_type: str = None,
+        start: int = 0,
+        end: int = 0,
+        ref_allele: str = "",
+        ref2_allele: str = "",
+        alt_allele: str = "",
+        cdna_start: int = None,
+        cdna_end: int = None,
+        pep_extra: str = "",
+    ):
         """
         The function is a constructor that initializes various attributes of an object and parses a
         given name to populate those attributes.
-        
+
         :param name: The full HGVS name of the variant
         :type name: str
         :param prefix: The `prefix` parameter is a string that is used as a prefix for the HGVS name. It
@@ -439,22 +633,21 @@ class HGVSName(object):
         if name:
             self.parse(name)
 
-
-    def parse(self, name:str) -> None:
+    def parse(self, name: str) -> None:
         """
         The `parse` function is used to split an HGVS name into a prefix and allele, and then validate
         the parsed components.
-        
+
         :param name: The `name` parameter is a string that represents an HGVS name. It is the input to
         the `parse` function and is used to parse the HGVS name by splitting it into a prefix and allele
         :type name: str
         """
-        
+
         # Does HGVS name have transcript/gene prefix?
-        if ':' in name:
-            prefix, allele = name.split(':', 1)
+        if ":" in name:
+            prefix, allele = name.split(":", 1)
         else:
-            prefix = ''
+            prefix = ""
             allele = name
 
         self.name = name
@@ -464,12 +657,11 @@ class HGVSName(object):
         self.parse_prefix(prefix)
         self._validate()
 
-
-    def parse_prefix(self, prefix:str):
+    def parse_prefix(self, prefix: str):
         """
         The `parse_prefix` function is used to parse a HGVS prefix (gene/transcript/chromosome) and
         assign the parsed values to the corresponding attributes of the object.
-        
+
         :param prefix: The `prefix` parameter is a string that represents a HGVS prefix, which can be a
         gene, transcript, or chromosome identifier. It is used to determine the type of prefix and
         assign the parsed values to the corresponding attributes of the object
@@ -481,57 +673,57 @@ class HGVSName(object):
         self.prefix = prefix
 
         # No prefix.
-        if prefix == '':
-            self.chrom = ''
-            self.transcript = ''
-            self.gene = ''
+        if prefix == "":
+            self.chrom = ""
+            self.transcript = ""
+            self.gene = ""
             return
 
         # Transcript and gene given with parens.
         # example: NM_007294.3(BRCA1):c.2207A>C
         match = re.match(r"^(?P<transcript>[^(]+)\((?P<gene>[^)]+)\)$", prefix)
         if match:
-            self.transcript = match.group('transcript')
-            self.gene = match.group('gene')
+            self.transcript = match.group("transcript")
+            self.gene = match.group("gene")
             return
 
         # Transcript and gene given with braces.
         # example: BRCA1{NM_007294.3}:c.2207A>C
         match = re.match(r"^(?P<gene>[^{]+){(?P<transcript>[^}]+)}$", prefix)
         if match:
-            self.transcript = match.group('transcript')
-            self.gene = match.group('gene')
+            self.transcript = match.group("transcript")
+            self.gene = match.group("gene")
             return
 
         # Determine using Ensembl type.
-        if prefix.startswith('ENST'):
+        if prefix.startswith("ENST"):
             self.transcript = prefix
             return
 
         # Determine using LRG type.
-        if prefix.startswith('LRG_'):
+        if prefix.startswith("LRG_"):
             self.transcript = prefix
             return
 
         # Determine using refseq type.
         refseq_type = get_refseq_type(prefix)
-        if refseq_type in ('mRNA', 'RNA'):
+        if refseq_type in ("mRNA", "RNA"):
             self.transcript = prefix
             return
 
         # Determine using refseq type.
-        if prefix.startswith(CHROM_PREFIX) or refseq_type == 'genomic':
+        if prefix.startswith(CHROM_PREFIX) or refseq_type == "genomic":
             self.chrom = prefix
             return
 
         # Assume gene name.
         self.gene = prefix
 
-    def parse_allele(self, allele:str) -> None:
+    def parse_allele(self, allele: str) -> None:
         """
         The function `parse_allele` parses a HGVS allele description and determines the kind of HGVS
         name (c., p., g., etc.) and the mutation type.
-        
+
         Some examples include:
           cDNA substitution: c.101A>C,
           cDNA indel: c.3428delCinsTA, c.1000_1003delATG, c.1000_1001insATG
@@ -548,37 +740,47 @@ class HGVSName(object):
         :type allele: str
         """
 
-        if '.' not in allele:
-            raise InvalidHGVSName(allele, 'allele',
-                                  'expected kind "c.", "p.", "g.", etc')
+        if "." not in allele:
+            raise InvalidHGVSName(
+                allele, "allele", 'expected kind "c.", "p.", "g.", etc'
+            )
 
         # Determine HGVS name kind.
-        kind, details = allele.split('.', 1)
+        kind, details = allele.split(".", 1)
         self.kind = kind
         self.mutation_type = None
 
-        if kind in ("c", 'n'):
+        if kind in ("c", "n"):
             self.parse_cdna(details)
-            if kind == 'n':  # Ensure no 3'UTR or 5'UTR coords in non-coding
+            if kind == "n":  # Ensure no 3'UTR or 5'UTR coords in non-coding
                 if self.cdna_start.coord < 0:
-                    raise InvalidHGVSName(allele, 'allele',
-                                          "Non-coding transcript cannot contain negative (5'UTR) coordinates")
-                if self.cdna_start.landmark == 'cdna_stop' or self.cdna_end and self.cdna_end.landmark == 'cdna_stop':
-                    raise InvalidHGVSName(allele, 'allele',
-                                          "Non-coding transcript cannot contain '*' (3'UTR) coordinates")
+                    raise InvalidHGVSName(
+                        allele,
+                        "allele",
+                        "Non-coding transcript cannot contain negative (5'UTR) coordinates",
+                    )
+                if (
+                    self.cdna_start.landmark == "cdna_stop"
+                    or self.cdna_end
+                    and self.cdna_end.landmark == "cdna_stop"
+                ):
+                    raise InvalidHGVSName(
+                        allele,
+                        "allele",
+                        "Non-coding transcript cannot contain '*' (3'UTR) coordinates",
+                    )
         elif kind == "p":
             self.parse_protein(details)
-        elif kind in ("g", 'm'):
+        elif kind in ("g", "m"):
             self.parse_genome(details)
         else:
             raise NotImplementedError("unknown kind: %s" % allele)
 
-
-    def parse_cdna(self, details:str) -> None:
+    def parse_cdna(self, details: str) -> None:
         """
         The function `parse_cdna` is used to parse a HGVS cDNA name and extract information such as
         mutation type, coordinates, and alleles.
-        
+
         Some examples include:
           Substitution: 101A>C,
           Indel: 3428delCinsTA, 1000_1003delATG, 1000_1001insATG
@@ -596,21 +798,21 @@ class HGVSName(object):
                 groups = match.groupdict()
 
                 # Parse mutation type.
-                if groups.get('delins'):
-                    self.mutation_type = 'delins'
+                if groups.get("delins"):
+                    self.mutation_type = "delins"
                 else:
-                    self.mutation_type = groups['mutation_type']
+                    self.mutation_type = groups["mutation_type"]
 
                 # Parse coordinates.
-                self.cdna_start = CDNACoord(string=groups.get('start'))
-                if groups.get('end'):
-                    self.cdna_end = CDNACoord(string=groups.get('end'))
+                self.cdna_start = CDNACoord(string=groups.get("start"))
+                if groups.get("end"):
+                    self.cdna_end = CDNACoord(string=groups.get("end"))
                 else:
-                    self.cdna_end = CDNACoord(string=groups.get('start'))
+                    self.cdna_end = CDNACoord(string=groups.get("start"))
 
                 # Parse alleles.
-                self.ref_allele = groups.get('ref', '')
-                self.alt_allele = groups.get('alt', '')
+                self.ref_allele = groups.get("ref", "")
+                self.alt_allele = groups.get("alt", "")
 
                 # Convert numerical allelles.
                 if self.ref_allele.isdigit():
@@ -627,14 +829,13 @@ class HGVSName(object):
                     self.alt_allele = self.ref_allele
                 return
 
-        raise InvalidHGVSName(details, 'cDNA allele')
+        raise InvalidHGVSName(details, "cDNA allele")
 
-
-    def parse_protein(self, details:str) -> None:
+    def parse_protein(self, details: str) -> None:
         """
         The function `parse_protein` is used to parse a HGVS protein name and extract information such
         as mutation type, coordinates, alleles, and additional details.
-        
+
         Some examples include:
           No change: Glu1161=
           Change: Glu1161Ser
@@ -654,40 +855,38 @@ class HGVSName(object):
                 groups = match.groupdict()
 
                 # Parse mutation type.
-                if groups.get('delins'):
-                    self.mutation_type = 'delins'
+                if groups.get("delins"):
+                    self.mutation_type = "delins"
                 else:
-                    self.mutation_type = '>'
+                    self.mutation_type = ">"
 
                 # Parse coordinates.
-                self.start = int(groups.get('start'))
-                if groups.get('end'):
-                    self.end = int(groups.get('end'))
+                self.start = int(groups.get("start"))
+                if groups.get("end"):
+                    self.end = int(groups.get("end"))
                 else:
                     self.end = self.start
 
                 # Parse alleles.
-                self.ref_allele = groups.get('ref', '')
-                if groups.get('ref2'):
-                    self.ref2_allele = groups.get('ref2')
-                    self.alt_allele = groups.get('alt', '')
+                self.ref_allele = groups.get("ref", "")
+                if groups.get("ref2"):
+                    self.ref2_allele = groups.get("ref2")
+                    self.alt_allele = groups.get("alt", "")
                 else:
                     # If alt is not given, assume matching with ref
                     self.ref2_allele = self.ref_allele
-                    self.alt_allele = groups.get(
-                        'alt', self.ref_allele)
+                    self.alt_allele = groups.get("alt", self.ref_allele)
 
-                self.pep_extra = groups.get('extra')
+                self.pep_extra = groups.get("extra")
                 return
 
-        raise InvalidHGVSName(details, 'protein allele')
+        raise InvalidHGVSName(details, "protein allele")
 
-
-    def parse_genome(self, details:str) -> None:
+    def parse_genome(self, details: str) -> None:
         """
         The function `parse_genome` is used to parse a HGVS genomic name and extract information such as
         mutation type, coordinates, and alleles.
-        
+
         Some examples include:
           Substitution: 1000100A>T
           Indel: 1000100_1000102delATG
@@ -704,21 +903,21 @@ class HGVSName(object):
                 groups = match.groupdict()
 
                 # Parse mutation type.
-                if groups.get('delins'):
-                    self.mutation_type = 'delins'
+                if groups.get("delins"):
+                    self.mutation_type = "delins"
                 else:
-                    self.mutation_type = groups['mutation_type']
+                    self.mutation_type = groups["mutation_type"]
 
                 # Parse coordinates.
-                self.start = int(groups.get('start'))
-                if groups.get('end'):
-                    self.end = int(groups.get('end'))
+                self.start = int(groups.get("start"))
+                if groups.get("end"):
+                    self.end = int(groups.get("end"))
                 else:
                     self.end = self.start
 
                 # Parse alleles.
-                self.ref_allele = groups.get('ref', '')
-                self.alt_allele = groups.get('alt', '')
+                self.ref_allele = groups.get("ref", "")
+                self.alt_allele = groups.get("alt", "")
 
                 # Convert numerical alleles.
                 if self.ref_allele.isdigit():
@@ -735,17 +934,15 @@ class HGVSName(object):
                     self.alt_allele = self.ref_allele
                 return
 
-        raise InvalidHGVSName(details, 'genomic allele')
-
+        raise InvalidHGVSName(details, "genomic allele")
 
     def _validate(self) -> None:
         """
         The function checks for internal inconsistencies in the representation of coordinates.
         """
-        
+
         if self.start > self.end:
             raise InvalidHGVSName(reason="Coordinates are nonincreasing")
-
 
     def __repr__(self) -> str:
         """
@@ -761,7 +958,6 @@ class HGVSName(object):
         except NotImplementedError:
             return "HGVSName('%s')" % self.name
 
-
     def __unicode__(self) -> str:
         """
         The function returns a formatted string representation of the object.
@@ -770,11 +966,18 @@ class HGVSName(object):
 
         return self.format()
 
-
-    def format(self, use_prefix:bool = True, use_gene:bool = True, use_exon:bool = False, use_protein:bool = False, full_format=False, use_version:bool = False) -> str:
+    def format(
+        self,
+        use_prefix: bool = True,
+        use_gene: bool = True,
+        use_exon: bool = False,
+        use_protein: bool = False,
+        full_format=False,
+        use_version: bool = False,
+    ) -> str:
         """
         The `format` function generates a HGVS name as a string based on various formatting options.
-        
+
         :param use_prefix: A boolean indicating whether to include the prefix in the HGVS name. If set
         to True, the prefix will be included in the HGVS name. If set to False, the prefix will be
         excluded. The default value is True, defaults to True
@@ -803,33 +1006,49 @@ class HGVSName(object):
         """
 
         if use_protein and self.format_protein():
-            allele = 'p.' + self.format_protein()
+            allele = "p." + self.format_protein()
         else:
-            if self.kind in ('c', 'n'):
-                allele = self.kind + '.' + self.format_cdna()
-            elif self.kind == 'p':
-                allele = 'p.' + self.format_protein()
-            elif self.kind in ('g', 'm'):
-                allele = self.kind + '.' + self.format_genome()
+            if self.kind in ("c", "n"):
+                allele = self.kind + "." + self.format_cdna()
+            elif self.kind == "p":
+                allele = "p." + self.format_protein()
+            elif self.kind in ("g", "m"):
+                allele = self.kind + "." + self.format_genome()
             else:
                 raise NotImplementedError("not implemented: '%s'" % self.kind)
 
         if full_format and not use_protein and self.format_protein():
-            allele += ':p.' + self.format_protein()
-        
-        prefix = self.format_prefix(use_gene=use_gene, use_exon=use_exon, use_protein=use_protein, full_format=full_format, use_version=use_version) if use_prefix else ''
-        
+            allele += ":p." + self.format_protein()
+
+        prefix = (
+            self.format_prefix(
+                use_gene=use_gene,
+                use_exon=use_exon,
+                use_protein=use_protein,
+                full_format=full_format,
+                use_version=use_version,
+            )
+            if use_prefix
+            else ""
+        )
+
         if prefix:
-            return prefix + ':' + allele
+            return prefix + ":" + allele
         else:
             return allele
 
-
-    def format_prefix(self, use_gene:bool = True, use_exon:bool = False, use_protein:bool = False, full_format:bool = False, use_version:bool = False) -> str:
+    def format_prefix(
+        self,
+        use_gene: bool = True,
+        use_exon: bool = False,
+        use_protein: bool = False,
+        full_format: bool = False,
+        use_version: bool = False,
+    ) -> str:
         """
         The `format_prefix` function generates an HGVS transcript/gene prefix based on various
         parameters.
-        
+
         :param use_gene: A boolean parameter that determines whether to include the gene name in the
         prefix. If set to True, the gene name will be included in the prefix. If set to False, the gene
         name will not be included in the prefix. The default value is True, defaults to True
@@ -864,13 +1083,13 @@ class HGVSName(object):
                 prefix.append(self.transcript)
             if self.transcript_protein:
                 prefix.append(self.transcript_protein)
-            if self.exon: # TODO
-                prefix.append("exon"+str(self.exon))
+            if self.exon:  # TODO
+                prefix.append("exon" + str(self.exon))
             return ":".join(prefix)
 
         else:
 
-            if self.kind in ('g', 'm'):
+            if self.kind in ("g", "m"):
                 if self.chrom:
                     return self.chrom
 
@@ -880,19 +1099,18 @@ class HGVSName(object):
                 else:
                     transcript = self.transcript
                 if not use_version and transcript:
-                    transcript = transcript.split('.')[0]
+                    transcript = transcript.split(".")[0]
                 if use_gene and self.gene:
-                    return '%s(%s)' % (transcript, self.gene)
+                    return "%s(%s)" % (transcript, self.gene)
                 elif use_exon and self.exon:
-                    return '%s(exon%s)' % (transcript, self.exon)
+                    return "%s(exon%s)" % (transcript, self.exon)
                 else:
                     return transcript
             else:
                 if use_gene:
                     return self.gene
                 else:
-                    return ''
-
+                    return ""
 
     def format_cdna_coords(self) -> str:
         """
@@ -903,13 +1121,12 @@ class HGVSName(object):
         same, it returns just the start coordinate. Otherwise, it returns a string in the format
         "start_end".
         """
-        
+
         # Format coordinates.
         if self.cdna_start == self.cdna_end:
             return str(self.cdna_start)
         else:
             return "%s_%s" % (self.cdna_start, self.cdna_end)
-
 
     def format_dna_allele(self) -> str:
         """
@@ -919,39 +1136,37 @@ class HGVSName(object):
         specific format of the returned string depends on the value of the `mutation_type` attribute of
         the object. The possible return values are:
         """
-        
-        if self.mutation_type == '=':
+
+        if self.mutation_type == "=":
             # No change.
             # example: 101A=
-            return self.ref_allele + '='
+            return self.ref_allele + "="
 
-        if self.mutation_type == '>':
+        if self.mutation_type == ">":
             # SNP.
             # example: 101A>C
-            return self.ref_allele + '>' + self.alt_allele
+            return self.ref_allele + ">" + self.alt_allele
 
-        elif self.mutation_type == 'delins':
+        elif self.mutation_type == "delins":
             # Indel.
             # example: 112_117delAGGTCAinsTG, 112_117delinsTG
-            return 'del' + self.ref_allele + 'ins' + self.alt_allele
+            return "del" + self.ref_allele + "ins" + self.alt_allele
 
-        elif self.mutation_type in ('del', 'dup'):
+        elif self.mutation_type in ("del", "dup"):
             # Delete, duplication.
             # example: 1000_1003delATG, 1000_1003dupATG
             return self.mutation_type + self.ref_allele
 
-        elif self.mutation_type == 'ins':
+        elif self.mutation_type == "ins":
             # Insert.
             # example: 1000_1001insATG
             return self.mutation_type + self.alt_allele
 
-        elif self.mutation_type == 'inv':
+        elif self.mutation_type == "inv":
             return self.mutation_type
 
         else:
-            raise AssertionError(
-                "unknown mutation type: '%s'" % self.mutation_type)
-
+            raise AssertionError("unknown mutation type: '%s'" % self.mutation_type)
 
     def format_cdna(self) -> str:
         """
@@ -964,9 +1179,8 @@ class HGVSName(object):
 
         :return: a string that represents the HGVS cDNA allele.
         """
-        
-        return self.format_cdna_coords() + self.format_dna_allele()
 
+        return self.format_cdna_coords() + self.format_dna_allele()
 
     def format_protein(self) -> str:
         """
@@ -980,34 +1194,41 @@ class HGVSName(object):
 
         :return: The method `format_protein` returns a string representing the HGVS protein name.
         """
-        
-        if (self.start == self.end and
-                self.ref_allele == self.ref2_allele == self.alt_allele):
+
+        if (
+            self.start == self.end
+            and self.ref_allele == self.ref2_allele == self.alt_allele
+        ):
             # Match.
             # Example: Glu1161=
-            pep_extra = self.pep_extra if self.pep_extra else '='
+            pep_extra = self.pep_extra if self.pep_extra else "="
             return self.ref_allele + str(self.start) + pep_extra
 
-        elif (self.start == self.end and
-              self.ref_allele == self.ref2_allele and
-              self.ref_allele != self.alt_allele):
+        elif (
+            self.start == self.end
+            and self.ref_allele == self.ref2_allele
+            and self.ref_allele != self.alt_allele
+        ):
             # Change.
             # Example: Glu1161Ser
-            return (self.ref_allele + str(self.start) +
-                    self.alt_allele + self.pep_extra)
+            return self.ref_allele + str(self.start) + self.alt_allele + self.pep_extra
 
         elif self.start != self.end:
             # Range change.
             # Example: Glu1161_Ser1164?fs
-            return (self.ref_allele + str(self.start) + '_' +
-                    self.ref2_allele + str(self.end) +
-                    self.pep_extra)
+            return (
+                self.ref_allele
+                + str(self.start)
+                + "_"
+                + self.ref2_allele
+                + str(self.end)
+                + self.pep_extra
+            )
         elif self.pep_extra:
             return self.pep_extra
 
         else:
             return None
-
 
     def format_coords(self) -> str:
         """
@@ -1016,13 +1237,12 @@ class HGVSName(object):
         are the same, it returns just the start coordinate. Otherwise, it returns a string in the format
         "start_end".
         """
-        
+
         # Format coordinates.
         if self.start == self.end:
             return str(self.start)
         else:
             return "%s_%s" % (self.start, self.end)
-
 
     def format_genome(self) -> str:
         """
@@ -1035,15 +1255,14 @@ class HGVSName(object):
 
         :return: a string that represents the HGVS genomic allele.
         """
-        
+
         return self.format_coords() + self.format_dna_allele()
 
-
-    def get_raw_coords(self, transcript:object = None) -> tuple:
+    def get_raw_coords(self, transcript: object = None) -> tuple:
         """
         The function `get_raw_coords` returns the genomic coordinates based on the given transcript or
         the provided chromosomal coordinates.
-        
+
         :param transcript: The `transcript` parameter is an object that represents a transcript. It is
         used to retrieve genomic coordinates based on the type of HGVS name (`self.kind`). The
         `transcript` object should have the following attributes and methods:
@@ -1051,8 +1270,8 @@ class HGVSName(object):
         :return: a tuple containing the genomic coordinates. The tuple consists of three elements: the
         chromosome, the start position, and the end position.
         """
-        
-        if self.kind in ('c', 'n'):
+
+        if self.kind in ("c", "n"):
             chrom = transcript.tx_position.chrom
             start = transcript.cdna_to_genomic_coord(self.cdna_start)
             end = transcript.cdna_to_genomic_coord(self.cdna_end)
@@ -1061,39 +1280,41 @@ class HGVSName(object):
                 start, end = end, start
 
             if start > end:
-                raise AssertionError(
-                    "cdna_start cannot be greater than cdna_end")
-        elif self.kind in ('g', 'm'):
+                raise AssertionError("cdna_start cannot be greater than cdna_end")
+        elif self.kind in ("g", "m"):
             chrom = self.chrom
             start = self.start
             end = self.end
         else:
             raise NotImplementedError(
                 'Coordinates are not available for this kind of HGVS name "%s"'
-                % self.kind)
+                % self.kind
+            )
 
         # Check coordinate span is equal to reference bases
         if self.ref_allele:
             coordinate_span = end - start + 1  # Ref will always be >=1 base
             ref_length = len(self.ref_allele)
             if coordinate_span != ref_length:
-                raise InvalidHGVSName("Coordinate span (%d) not equal to ref length %d" % (coordinate_span, ref_length))
+                raise InvalidHGVSName(
+                    "Coordinate span (%d) not equal to ref length %d"
+                    % (coordinate_span, ref_length)
+                )
 
         return chrom, start, end
 
-
-    def get_ref_coords(self, transcript:object = None) -> tuple:
+    def get_ref_coords(self, transcript: object = None) -> tuple:
         """
         The function "get_ref_coords" returns the genomic coordinates of the reference allele, taking
         into account different mutation types.
-        
+
         :param transcript: The `transcript` parameter is an optional object that represents a transcript
         or gene. It is used to retrieve the genomic coordinates of the reference allele
         :type transcript: object
         :return: a tuple containing the genomic coordinates of the reference allele. The tuple consists
         of three elements: the chromosome, the start position, and the end position.
         """
-        
+
         chrom, start, end = self.get_raw_coords(transcript)
 
         if self.mutation_type == "ins":
@@ -1108,19 +1329,18 @@ class HGVSName(object):
             end = start - 1
         return chrom, start, end
 
-
-    def get_vcf_coords(self, transcript:object = None) -> tuple:
+    def get_vcf_coords(self, transcript: object = None) -> tuple:
         """
         The function "get_vcf_coords" returns the genomic coordinates of the reference allele in
         VCF-style, with left-padding for indels.
-        
+
         :param transcript: The `transcript` parameter is an object that represents a transcript or gene.
         It is used to retrieve the genomic coordinates of the reference allele
         :type transcript: object
         :return: a tuple containing the genomic coordinates of the reference allele in VCF-style. The
         tuple consists of three elements: the chromosome, the start position, and the end position.
         """
-        
+
         chrom, start, end = self.get_ref_coords(transcript)
 
         # Inserts and deletes require left-padding by 1 base
@@ -1130,16 +1350,16 @@ class HGVSName(object):
             # Indels have left-padding.
             start -= 1
         else:
-            raise NotImplementedError("Unknown mutation_type '%s'" %
-                                      self.mutation_type)
+            raise NotImplementedError("Unknown mutation_type '%s'" % self.mutation_type)
         return chrom, start, end
-    
 
-    def get_ref_alt(self, is_forward_strand:bool = True, raw_dup_alleles:bool = False) -> tuple:
+    def get_ref_alt(
+        self, is_forward_strand: bool = True, raw_dup_alleles: bool = False
+    ) -> tuple:
         """
         The function `get_ref_alt` returns the reference and alternate alleles, with an option to modify
         duplications to look like inserts.
-        
+
         :param is_forward_strand: The parameter `is_forward_strand` is a boolean flag that indicates
         whether the alleles should be returned for the forward strand or the reverse complement strand.
         If `is_forward_strand` is `True`, the alleles will be returned as is. If `is_forward_strand` is
@@ -1154,15 +1374,16 @@ class HGVSName(object):
         alleles.
         """
 
-        if self.kind == 'p':
+        if self.kind == "p":
             raise NotImplementedError(
-                'get_ref_alt is not implemented for protein HGVS names')
+                "get_ref_alt is not implemented for protein HGVS names"
+            )
         alleles = [self.ref_allele, self.alt_allele]
 
         # Represent duplications are inserts.
         if not raw_dup_alleles and self.mutation_type == "dup":
             alleles[0] = ""
-            alleles[1] = alleles[1][:len(alleles[1]) // 2]
+            alleles[1] = alleles[1][: len(alleles[1]) // 2]
 
         if is_forward_strand:
             return alleles

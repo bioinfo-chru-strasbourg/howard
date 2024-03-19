@@ -37,8 +37,8 @@ def test_from_annovar():
 
         # Init files
         input_vcf = tests_databases_folder + "/others/hg19_nci60.txt"
-        output_vcf = os.path.join(tmp_dir,"hg19_nci60.vcf.gz")
-        output_parquet = os.path.join(tmp_dir,"hg19_nci60.parquet")
+        output_vcf = os.path.join(tmp_dir, "hg19_nci60.vcf.gz")
+        output_parquet = os.path.join(tmp_dir, "hg19_nci60.parquet")
         genomes_folder = tests_config["folders"]["databases"]["genomes"]
         genome = genomes_folder + "/hg19//hg19.fa"
         annovar_code = "nci60"
@@ -46,24 +46,24 @@ def test_from_annovar():
 
         # remove
         remove_if_exists([output_vcf])
-        remove_if_exists([output_vcf+".hdr"])
+        remove_if_exists([output_vcf + ".hdr"])
         remove_if_exists([output_parquet])
-        remove_if_exists([output_parquet+".hdr"])
+        remove_if_exists([output_parquet + ".hdr"])
 
         # Find genome
         genome = find_genome(genome)
 
         # prepare arguments for the query function
         args = argparse.Namespace(
-            input_annovar = input_vcf,
-            output_annovar = output_vcf,
-            genome = genome,
-            annovar_code = annovar_code,
-            annovar_to_parquet = output_parquet,
-            threads = "2",
-            annovar_reduce_memory = "disable",
-            annovar_multi_variant = "disable",
-            config = config
+            input_annovar=input_vcf,
+            output_annovar=output_vcf,
+            genome=genome,
+            annovar_code=annovar_code,
+            annovar_to_parquet=output_parquet,
+            threads="2",
+            annovar_reduce_memory="disable",
+            annovar_multi_variant="disable",
+            config=config,
         )
 
         # Process
@@ -75,9 +75,9 @@ def test_from_annovar():
 
         # Files exists
         assert os.path.exists(output_vcf)
-        assert os.path.exists(output_vcf+".hdr")
+        assert os.path.exists(output_vcf + ".hdr")
         assert os.path.exists(output_parquet)
-        assert os.path.exists(output_parquet+".hdr")
+        assert os.path.exists(output_parquet + ".hdr")
 
 
 def test_from_annovar_reduce_memory():
@@ -86,8 +86,8 @@ def test_from_annovar_reduce_memory():
 
         # Init files
         input_vcf = tests_databases_folder + "/others/hg19_nci60.txt"
-        output_vcf = os.path.join(tmp_dir,"hg19_nci60.vcf.gz")
-        output_parquet = os.path.join(tmp_dir,"hg19_nci60.parquet")
+        output_vcf = os.path.join(tmp_dir, "hg19_nci60.vcf.gz")
+        output_parquet = os.path.join(tmp_dir, "hg19_nci60.parquet")
         genomes_folder = tests_config["folders"]["databases"]["genomes"]
         genome = genomes_folder + "/hg19//hg19.fa"
         annovar_code = "nci60"
@@ -95,24 +95,24 @@ def test_from_annovar_reduce_memory():
 
         # remove
         remove_if_exists([output_vcf])
-        remove_if_exists([output_vcf+".hdr"])
+        remove_if_exists([output_vcf + ".hdr"])
         remove_if_exists([output_parquet])
-        remove_if_exists([output_parquet+".hdr"])
+        remove_if_exists([output_parquet + ".hdr"])
 
         # Find genome
         genome = find_genome(genome)
 
         # prepare arguments for the query function
         args = argparse.Namespace(
-            input_annovar = input_vcf,
-            output_annovar = output_vcf,
-            genome = genome,
-            annovar_code = annovar_code,
-            annovar_to_parquet = output_parquet,
-            threads = "2",
-            annovar_reduce_memory = "enable",
-            annovar_multi_variant = "disable",
-            config = config
+            input_annovar=input_vcf,
+            output_annovar=output_vcf,
+            genome=genome,
+            annovar_code=annovar_code,
+            annovar_to_parquet=output_parquet,
+            threads="2",
+            annovar_reduce_memory="enable",
+            annovar_multi_variant="disable",
+            config=config,
         )
 
         # Process
@@ -124,9 +124,9 @@ def test_from_annovar_reduce_memory():
 
         # Files exists
         assert os.path.exists(output_vcf)
-        assert os.path.exists(output_vcf+".hdr")
+        assert os.path.exists(output_vcf + ".hdr")
         assert os.path.exists(output_parquet)
-        assert os.path.exists(output_parquet+".hdr")
+        assert os.path.exists(output_parquet + ".hdr")
 
 
 def test_from_annovar_multi_variant():
@@ -135,8 +135,8 @@ def test_from_annovar_multi_variant():
 
         # Init files
         input_vcf = tests_databases_folder + "/others/hg19_nci60.txt"
-        output_vcf = os.path.join(tmp_dir,"hg19_nci60.vcf.gz")
-        output_parquet = os.path.join(tmp_dir,"hg19_nci60.parquet")
+        output_vcf = os.path.join(tmp_dir, "hg19_nci60.vcf.gz")
+        output_parquet = os.path.join(tmp_dir, "hg19_nci60.parquet")
         genomes_folder = tests_config["folders"]["databases"]["genomes"]
         genome = genomes_folder + "/hg19//hg19.fa"
         annovar_code = "nci60"
@@ -144,24 +144,24 @@ def test_from_annovar_multi_variant():
 
         # remove
         remove_if_exists([output_vcf])
-        remove_if_exists([output_vcf+".hdr"])
+        remove_if_exists([output_vcf + ".hdr"])
         remove_if_exists([output_parquet])
-        remove_if_exists([output_parquet+".hdr"])
+        remove_if_exists([output_parquet + ".hdr"])
 
         # Find genome
         genome = find_genome(genome)
 
         # prepare arguments for the query function
         args = argparse.Namespace(
-            input_annovar = input_vcf,
-            output_annovar = output_vcf,
-            genome = genome,
-            annovar_code = annovar_code,
-            annovar_to_parquet = output_parquet,
-            threads = "2",
-            annovar_reduce_memory = "disable",
-            annovar_multi_variant = "enable",
-            config = config
+            input_annovar=input_vcf,
+            output_annovar=output_vcf,
+            genome=genome,
+            annovar_code=annovar_code,
+            annovar_to_parquet=output_parquet,
+            threads="2",
+            annovar_reduce_memory="disable",
+            annovar_multi_variant="enable",
+            config=config,
         )
 
         # Process
@@ -173,20 +173,19 @@ def test_from_annovar_multi_variant():
 
         # Files exists
         assert os.path.exists(output_vcf)
-        assert os.path.exists(output_vcf+".hdr")
+        assert os.path.exists(output_vcf + ".hdr")
         assert os.path.exists(output_parquet)
-        assert os.path.exists(output_parquet+".hdr")
+        assert os.path.exists(output_parquet + ".hdr")
 
 
 def test_from_annovar_reduce_memory_multi_variant():
-
 
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
         input_vcf = tests_databases_folder + "/others/hg19_nci60.txt"
-        output_vcf = os.path.join(tmp_dir,"hg19_nci60.vcf.gz")
-        output_parquet = os.path.join(tmp_dir,"hg19_nci60.parquet")
+        output_vcf = os.path.join(tmp_dir, "hg19_nci60.vcf.gz")
+        output_parquet = os.path.join(tmp_dir, "hg19_nci60.parquet")
         genomes_folder = tests_config["folders"]["databases"]["genomes"]
         genome = genomes_folder + "/hg19//hg19.fa"
         annovar_code = "nci60"
@@ -194,24 +193,24 @@ def test_from_annovar_reduce_memory_multi_variant():
 
         # remove
         remove_if_exists([output_vcf])
-        remove_if_exists([output_vcf+".hdr"])
+        remove_if_exists([output_vcf + ".hdr"])
         remove_if_exists([output_parquet])
-        remove_if_exists([output_parquet+".hdr"])
+        remove_if_exists([output_parquet + ".hdr"])
 
         # Find genome
         genome = find_genome(genome)
 
         # prepare arguments for the query function
         args = argparse.Namespace(
-            input_annovar = input_vcf,
-            output_annovar = output_vcf,
-            genome = genome,
-            annovar_code = annovar_code,
-            annovar_to_parquet = output_parquet,
-            threads = "2",
-            annovar_reduce_memory = "enable",
-            annovar_multi_variant = "enable",
-            config = config
+            input_annovar=input_vcf,
+            output_annovar=output_vcf,
+            genome=genome,
+            annovar_code=annovar_code,
+            annovar_to_parquet=output_parquet,
+            threads="2",
+            annovar_reduce_memory="enable",
+            annovar_multi_variant="enable",
+            config=config,
         )
 
         # Process
@@ -223,7 +222,6 @@ def test_from_annovar_reduce_memory_multi_variant():
 
         # Files exists
         assert os.path.exists(output_vcf)
-        assert os.path.exists(output_vcf+".hdr")
+        assert os.path.exists(output_vcf + ".hdr")
         assert os.path.exists(output_parquet)
-        assert os.path.exists(output_parquet+".hdr")
-
+        assert os.path.exists(output_parquet + ".hdr")

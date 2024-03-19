@@ -1,7 +1,7 @@
 import re
 
-CDNA_START_CODON = 'cdna_start'
-CDNA_STOP_CODON = 'cdna_stop'
+CDNA_START_CODON = "cdna_start"
+CDNA_STOP_CODON = "cdna_stop"
 
 
 class CDNACoord(object):
@@ -31,8 +31,7 @@ class CDNACoord(object):
     *N+M / *N-M = nucleotide in an intron in the 3'UTR (e.g. *212-2A>G)
     """
 
-    def __init__(self, coord=0, offset=0, landmark=CDNA_START_CODON,
-                 string=''):
+    def __init__(self, coord=0, offset=0, landmark=CDNA_START_CODON, string=""):
         """
         coord: main coordinate along cDNA on the same strand as the transcript
 
@@ -49,8 +48,10 @@ class CDNACoord(object):
 
         if string:
             if coord != 0 or offset != 0 or landmark != CDNA_START_CODON:
-                raise ValueError("coord, offset, and landmark should not "
-                                 "be given with string argument")
+                raise ValueError(
+                    "coord, offset, and landmark should not "
+                    "be given with string argument"
+                )
 
             self.parse(string)
         else:
@@ -71,19 +72,19 @@ class CDNACoord(object):
         self.coord = int(coord)
         self.offset = int(offset) if offset else 0
 
-        if offset_prefix == '-':
+        if offset_prefix == "-":
             self.offset *= -1
-        elif offset_prefix == '+' or offset is None:
+        elif offset_prefix == "+" or offset is None:
             pass
         else:
             raise ValueError("unknown offset_prefix '%s'" % offset_prefix)
 
-        if coord_prefix == '':
+        if coord_prefix == "":
             self.landmark = CDNA_START_CODON
         elif coord_prefix == "-":
             self.coord *= -1
             self.landmark = CDNA_START_CODON
-        elif coord_prefix == '*':
+        elif coord_prefix == "*":
             self.landmark = CDNA_STOP_CODON
         else:
             raise ValueError("unknown coord_prefix '%s'" % coord_prefix)
@@ -94,30 +95,32 @@ class CDNACoord(object):
         Return a formatted cDNA coordinate
         """
         if self.landmark == CDNA_STOP_CODON:
-            coord_prefix = '*'
+            coord_prefix = "*"
         else:
-            coord_prefix = ''
+            coord_prefix = ""
 
         if self.offset < 0:
-            offset = '%d' % self.offset
+            offset = "%d" % self.offset
         elif self.offset > 0:
-            offset = '+%d' % self.offset
+            offset = "+%d" % self.offset
         else:
-            offset = ''
+            offset = ""
 
-        return '%s%d%s' % (coord_prefix, self.coord, offset)
+        return "%s%d%s" % (coord_prefix, self.coord, offset)
 
     def __eq__(self, other):
         """Equality operator."""
-        return ((self.coord, self.offset, self.landmark) ==
-                (other.coord, other.offset, other.landmark))
+        return (self.coord, self.offset, self.landmark) == (
+            other.coord,
+            other.offset,
+            other.landmark,
+        )
 
     def __repr__(self):
         """
         Returns a string representation of a cDNA coordinate.
         """
         if self.landmark != CDNA_START_CODON:
-            return "CDNACoord(%d, %d, '%s')" % (
-                self.coord, self.offset, self.landmark)
+            return "CDNACoord(%d, %d, '%s')" % (self.coord, self.offset, self.landmark)
         else:
             return "CDNACoord(%d, %d)" % (self.coord, self.offset)

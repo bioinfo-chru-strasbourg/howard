@@ -28,33 +28,32 @@ from howard.tools.tools import *
 from test_needed import *
 
 
-
 def test_convert():
 
     # Init files
     input_vcf = tests_data_folder + "/example.vcf.gz"
     output_vcf = "/tmp/output_file.tsv"
-    config = {'threads': 4}
+    config = {"threads": 4}
 
-    #for explode_infos in [True, False]:
+    # for explode_infos in [True, False]:
     for explode_infos in [True]:
 
-        #for explode_infos_prefix in ["", "INFO/", "CUSTOM_"]:
+        # for explode_infos_prefix in ["", "INFO/", "CUSTOM_"]:
         for explode_infos_prefix in [""]:
 
-            #for explode_infos_fields in ['ALL', 'DP,SIFT,AA']:
-            for explode_infos_fields in ['DP,SIFT,AA']:
+            # for explode_infos_fields in ['ALL', 'DP,SIFT,AA']:
+            for explode_infos_fields in ["DP,SIFT,AA"]:
 
                 # prepare arguments for the query function
                 args = argparse.Namespace(
-                    input = input_vcf,
-                    output = output_vcf,
-                    config = config,
-                    explode_infos = explode_infos,
-                    explode_infos_prefix = explode_infos_prefix,
-                    explode_infos_fields = explode_infos_fields,
-                    include_header = True,
-                    arguments_dict = arguments_dict
+                    input=input_vcf,
+                    output=output_vcf,
+                    config=config,
+                    explode_infos=explode_infos,
+                    explode_infos_prefix=explode_infos_prefix,
+                    explode_infos_fields=explode_infos_fields,
+                    include_header=True,
+                    arguments_dict=arguments_dict,
                 )
 
                 # Remove if output file exists
@@ -72,7 +71,7 @@ def test_convert():
                 log.debug(res)
 
                 # read the contents of the actual output file
-                with open(output_vcf, 'r') as f:
+                with open(output_vcf, "r") as f:
                     result_output_nb_lines = 0
                     result_output_nb_variants = 0
                     for line in f:

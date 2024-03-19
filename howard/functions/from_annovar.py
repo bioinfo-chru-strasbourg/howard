@@ -36,15 +36,14 @@ TYPES = {
     "int64": "Integer",
     "float": "Float",
     "float64": "Float",
-    "object": "String"
+    "object": "String",
 }
 
 
-
-def from_annovar(args:argparse) -> None:
+def from_annovar(args: argparse) -> None:
     """
     This function converts an Annovar database to a VCF and Parquet format.
-    
+
     :param args: `args` is an object with several attributes representing the input parameters for the
     function. These attributes include:
     :type args: argparse
@@ -73,7 +72,7 @@ def from_annovar(args:argparse) -> None:
         else:
             genome_file = args.genome.name
         genome_file = full_path(genome_file)
-    
+
     # To Parquet
     output_file_parquet = None
     if "annovar_to_parquet" in args and args.annovar_to_parquet:
@@ -122,7 +121,9 @@ def from_annovar(args:argparse) -> None:
     output_file_name, output_file_ext = os.path.splitext(os.path.basename(output_file))
     if output_file_ext not in [".gz"]:
         log.error(f"Output file '{output_file}' without compress '.gz' extension")
-        raise ValueError(f"Output file '{output_file}' without compress '.gz' extension")
+        raise ValueError(
+            f"Output file '{output_file}' without compress '.gz' extension"
+        )
     if not os.path.exists(output_dirname):
         try:
             os.makedirs(output_dirname, exist_ok=True)
@@ -133,28 +134,38 @@ def from_annovar(args:argparse) -> None:
     # To Parquet
     if output_file_parquet:
         output_parquet_dirname = os.path.dirname(output_file_parquet)
-        output_file_parquet_name, output_file_parquet_ext = os.path.splitext(os.path.basename(output_file_parquet))
+        output_file_parquet_name, output_file_parquet_ext = os.path.splitext(
+            os.path.basename(output_file_parquet)
+        )
         if output_file_parquet_ext not in [".parquet"]:
-            log.error(f"Output file '{output_file_parquet}' without '.parquet' extension")
-            raise ValueError(f"Output file '{output_file_parquet}' without '.parquet' extension")
+            log.error(
+                f"Output file '{output_file_parquet}' without '.parquet' extension"
+            )
+            raise ValueError(
+                f"Output file '{output_file_parquet}' without '.parquet' extension"
+            )
         if not os.path.exists(output_parquet_dirname):
             try:
                 os.makedirs(output_parquet_dirname, exist_ok=True)
             except:
                 log.error(f"Fail create output folder '{output_parquet_dirname}'")
-                raise ValueError(f"Fail create output folder '{output_parquet_dirname}'")
+                raise ValueError(
+                    f"Fail create output folder '{output_parquet_dirname}'"
+                )
 
     # Genome
     if not os.path.exists(genome_file):
         log.error(f"No genome file '{genome_file}'")
         raise ValueError(f"No genome file '{genome_file}'")
-    if not os.path.exists(genome_file+".fai"):
+    if not os.path.exists(genome_file + ".fai"):
         log.error(f"No genome index file '{genome_file}.fai'")
         raise ValueError(f"No genome index file '{genome_file}.fai'")
-    
+
     # Annovar code
     if not annovar_code:
-        annovar_code = os.path.basename(output_file).replace('.vcf.gz','').replace('.','_')
+        annovar_code = (
+            os.path.basename(output_file).replace(".vcf.gz", "").replace(".", "_")
+        )
 
     # Log
     log.info(f"Input Annovar database: {input_file}")
@@ -171,7 +182,21 @@ def from_annovar(args:argparse) -> None:
 
     # Annovar to VCF
     log.info(f"Annovar to VCF and Parquet...")
-    annovar_to_vcf(input_file=input_file, output_file=output_file, output_file_parquet=output_file_parquet, annotations=None, header_file=None, database_name=annovar_code, bcftools=bcftools, genome=genome_file, threads=threads, maxmem=memory, remove_annotations=["ID"], reduce_memory=reduce_memory, multi_variant=multi_variant)
+    annovar_to_vcf(
+        input_file=input_file,
+        output_file=output_file,
+        output_file_parquet=output_file_parquet,
+        annotations=None,
+        header_file=None,
+        database_name=annovar_code,
+        bcftools=bcftools,
+        genome=genome_file,
+        threads=threads,
+        maxmem=memory,
+        remove_annotations=["ID"],
+        reduce_memory=reduce_memory,
+        multi_variant=multi_variant,
+    )
 
     # Header VCF hdr
     log.info(f"VCF Extract header hdr for VCF...")
@@ -191,12 +216,25 @@ def from_annovar(args:argparse) -> None:
     log.info("End")
 
 
-   
-def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = None, annotations:str = None, header_file:str = None, database_name:str = None, bcftools:str = "bcftools", genome:str = "hg19.fa", threads:int = None, maxmem:str = None, remove_annotations:list = [], reduce_memory:bool = None, multi_variant:bool = None) -> None: 
+def annovar_to_vcf(
+    input_file: str,
+    output_file: str,
+    output_file_parquet: str = None,
+    annotations: str = None,
+    header_file: str = None,
+    database_name: str = None,
+    bcftools: str = "bcftools",
+    genome: str = "hg19.fa",
+    threads: int = None,
+    maxmem: str = None,
+    remove_annotations: list = [],
+    reduce_memory: bool = None,
+    multi_variant: bool = None,
+) -> None:
     """
     This function converts an ANNOVAR file to a VCF file and optionally to a Parquet file, with various
     options for annotations, headers, databases, and memory usage.
-    
+
     :param input_file: The path to the input file in ANNOVAR format that needs to be converted to VCF
     format
     :type input_file: str
@@ -241,11 +279,11 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
     auto-detemine the parameter value with a sample of variants. Defaults to None (auto)
     :type multivariant: bool (optional)
     """
-    
+
     # Check input file
     if not os.path.exists(input_file):
         raise ValueError("No input file")
-        
+
     # Log
     log.debug("input_file: " + input_file)
 
@@ -253,7 +291,7 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
     threads_connexion = threads
     if not threads:
         threads = 1
-    
+
     # maxmem
     maxmem_connexion = maxmem
     if not maxmem:
@@ -263,22 +301,28 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
     header = []
     header_ok = True
     if header_file:
-        with open(header_file, 'r') as f:
-            header = f.readline().strip().split('\t')
+        with open(header_file, "r") as f:
+            header = f.readline().strip().split("\t")
         f.close()
     else:
-        
-        with open(input_file, 'r') as f:
+
+        with open(input_file, "r") as f:
             for line in f:
-                if str(line).startswith("##"):                
+                if str(line).startswith("##"):
                     continue
-                elif len(line.strip().split('\t')) < 5:
+                elif len(line.strip().split("\t")) < 5:
                     header_ok = False
                 elif str(line).startswith("#"):
                     log.debug("Found header")
-                    header = line.strip().split('\t')
+                    header = line.strip().split("\t")
                     if "#CHROM" not in header:
-                        chrom_list_for_header = ["CHROM", "#Chr", "#chr", "Chr", "chr" "chromosome"]
+                        chrom_list_for_header = [
+                            "CHROM",
+                            "#Chr",
+                            "#chr",
+                            "Chr",
+                            "chr" "chromosome",
+                        ]
                         for chr in chrom_list_for_header:
                             if chr in header:
                                 header[header.index(chr)] = "#CHROM"
@@ -316,7 +360,7 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
                     break
                 else:
                     log.debug("NO Header")
-                    header = line.strip().split('\t')
+                    header = line.strip().split("\t")
                     if len(header) >= 5:
                         log.debug(header)
                         header[0] = "#CHROM"
@@ -329,14 +373,16 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
                                 prefix = database_name
                             else:
                                 prefix = "column"
-                            info_tag_name = str(h[0]+1).replace('-', '_').replace('+', '_')
+                            info_tag_name = (
+                                str(h[0] + 1).replace("-", "_").replace("+", "_")
+                            )
                             if h[0]:
                                 column_name = prefix + "_" + info_tag_name
                             else:
                                 column_name = prefix
                             if column_name[0].isdigit():
                                 column_name = "A" + column_name
-                            header[h[0]+5] = column_name
+                            header[h[0] + 5] = column_name
                     else:
                         header_ok = False
                     break
@@ -348,13 +394,13 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
     # protect info tag from unauthorized characters
     header_fixed = []
     for h in header:
-        h = h.replace('-', '_').replace('+', '').replace('.', '_')
+        h = h.replace("-", "_").replace("+", "").replace(".", "_")
         header_fixed.append(h)
     header = header_fixed
 
     # determine nb header line
     nb_header_line = 0
-    with open(input_file, 'r') as f:
+    with open(input_file, "r") as f:
         for line in f:
             if str(line).startswith("##"):
                 nb_header_line += 1
@@ -370,11 +416,11 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
     nb_header_line -= 1
     if nb_header_line <= 0:
         nb_header_line = None
-    
+
     # Check dtype and force if needed
     dtype = {}
     for h in header:
-        column_type=None
+        column_type = None
         if h in ["#CHROM", "REF", "ALT"]:
             column_type = str
             dtype[h] = column_type
@@ -383,11 +429,19 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
             dtype[h] = column_type
 
     # Check format VCF readable
-    #nrows = 100000
+    # nrows = 100000
     log.debug("Check input file struct...")
     nrows_sampling = 1000000
     try:
-        df = pd.read_csv(input_file, delimiter='\t', nrows=nrows_sampling, na_values=['.'], header=nb_header_line, names=header, dtype=dtype)
+        df = pd.read_csv(
+            input_file,
+            delimiter="\t",
+            nrows=nrows_sampling,
+            na_values=["."],
+            header=nb_header_line,
+            names=header,
+            dtype=dtype,
+        )
     except:
         log.error("format not supported")
         raise ValueError("format not supported")
@@ -401,12 +455,14 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
     """
     query_multi_variant_connexion = duckdb.connect(":memory:")
     res_multi_variant = query_multi_variant_connexion.query(query_multi_variant)
-                   
+
     # Check Multi Variant
     if multi_variant is None or multi_variant.lower() == "auto":
         if res_multi_variant.df()["count"][0] > 1:
             multi_variant = True
-            log.debug("""Multi Variant mode enabled: because some variant with multiple annotation lines""")
+            log.debug(
+                """Multi Variant mode enabled: because some variant with multiple annotation lines"""
+            )
         else:
             multi_variant = False
     elif multi_variant.lower().startswith("enable"):
@@ -427,12 +483,16 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
         log.debug("""Reduce memory mode as None (Auto)""")
         if multi_variant:
             reduce_memory = True
-            log.debug("""Reduce memory mode enabled: because Multi Variant mode enabled""")
+            log.debug(
+                """Reduce memory mode enabled: because Multi Variant mode enabled"""
+            )
         else:
             # Check number of variants
             if len(df) == nrows_sampling:
                 reduce_memory = True
-                log.debug(f"""Reduce memory mode enabled: because more than {nrows_sampling} variants""")
+                log.debug(
+                    f"""Reduce memory mode enabled: because more than {nrows_sampling} variants"""
+                )
             else:
                 reduce_memory = False
     elif reduce_memory.lower().startswith("enable"):
@@ -447,14 +507,14 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
         log.info("""Reduce memory mode enabled""")
     else:
         log.info("""Reduce memory mode disabled""")
-    
+
     # Create connexion
     if reduce_memory:
-        #log.info("""Reduce memory mode enabled""")
+        # log.info("""Reduce memory mode enabled""")
         connexion_type = f"{output_file}.tmp.duckdb"
         remove_if_exists([connexion_type])
     else:
-        #log.info("""Reduce memory mode disabled""")
+        # log.info("""Reduce memory mode disabled""")
         connexion_type = ":memory:"
     duckdb_config = {}
     if threads_connexion:
@@ -464,15 +524,15 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
 
     # Connexion
     conn = duckdb.connect(connexion_type, config=duckdb_config)
-    delimiter = '\t'
+    delimiter = "\t"
 
     # Recheck column type les types de chaque colonne
     for col in df.columns:
         if df[col].dtype == object:
-            if pd.to_numeric(df[col], errors='coerce').notnull().all():
-                df[col] = pd.to_numeric(df[col], errors='coerce').astype(float)
+            if pd.to_numeric(df[col], errors="coerce").notnull().all():
+                df[col] = pd.to_numeric(df[col], errors="coerce").astype(float)
         else:
-            df[col] = pd.to_numeric(df[col], errors='coerce')
+            df[col] = pd.to_numeric(df[col], errors="coerce")
     column_types = df.dtypes
 
     # Dictionnary to mapper data types from pandas to SQL
@@ -486,8 +546,8 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
     # replace if dtype forced
     dtype_final = {}
     for column in dict(column_types):
-        if sql_types_forces.get(column,None):
-            dtype_final[column] = sql_types_forces.get(column,None)
+        if sql_types_forces.get(column, None):
+            dtype_final[column] = sql_types_forces.get(column, None)
         else:
             dtype_final[column] = "STRING"
 
@@ -499,7 +559,7 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
     # Indexes
     input_file_index = input_file + ".idx"
     genome_index = genome + ".fai"
-    
+
     # Find chromosomes list in input file
     log.debug("Check original chromosomes")
 
@@ -511,30 +571,36 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
         log.debug("Check original chromosomes - from idx file...")
 
         # Read index of input file
-        df = pd.read_csv(input_file_index, delimiter='\t', header=1,  names = ["#CHROM", "col1", "col2", "col3"], dtype = {"#CHROM": str})
+        df = pd.read_csv(
+            input_file_index,
+            delimiter="\t",
+            header=1,
+            names=["#CHROM", "col1", "col2", "col3"],
+            dtype={"#CHROM": str},
+        )
 
         # Unique values
-        input_file_chromosomes = df['#CHROM'].unique()
+        input_file_chromosomes = df["#CHROM"].unique()
 
     else:
-        
+
         # Log
         log.debug("Check original chromosomes - from input file...")
 
         # Set config value
         csv.field_size_limit(sys.maxsize // 10)
-        
+
         # Find chromosomes in corresponding column
         unique_values = set()
         chromosome_index = header.index("#CHROM")
-        with open(input_file, newline='') as csvfile:
+        with open(input_file, newline="") as csvfile:
             reader = csv.reader(csvfile, delimiter="\t")
             for row in reader:
                 unique_values.add(row[chromosome_index])
 
         # Unique values
         input_file_chromosomes = unique_values
-    
+
     # Init lists
     chrom_list_fixed = []
     chrom_list_original = []
@@ -542,13 +608,19 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
     if os.path.exists(genome_index):
 
         # Check chromosomes in genome
-        df_genome = pd.read_csv(genome_index, delimiter='\t', header=None,  names = ["CHROM", "length", "col2", "col3", "col4"], dtype = {"CHROM": str, "Start": int, "End": int})
+        df_genome = pd.read_csv(
+            genome_index,
+            delimiter="\t",
+            header=None,
+            names=["CHROM", "length", "col2", "col3", "col4"],
+            dtype={"CHROM": str, "Start": int, "End": int},
+        )
         genome_chrom_length = {}
         for item in df_genome.iterrows():
             genome_chrom_length[item[1].CHROM] = item[1].length
 
         # Uniquify
-        genome_chrom = df_genome['CHROM'].unique()
+        genome_chrom = df_genome["CHROM"].unique()
 
         # Fix chromosomes
         for chrom in input_file_chromosomes:
@@ -574,32 +646,38 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
     # Write VCF header
 
     # open file input in read only, open (temporary) vcf output in write mode
-    with bgzf.open(output_file+".tmp.translation.header.vcf.gz", 'wt') as vcf_file:
+    with bgzf.open(output_file + ".tmp.translation.header.vcf.gz", "wt") as vcf_file:
 
         # header fileformat
-        vcf_file.write('##fileformat=VCFv4.3\n')
+        vcf_file.write("##fileformat=VCFv4.3\n")
 
         # header INFO TAGS
         for col, type_ in vcf_types.items():
             if col not in ["#CHROM", "POS", "REF", "ALT"] + remove_annotations:
                 info_tag = col
                 info_tag.replace("-", "_").replace("+", "_")
-                vcf_file.write(f"""##INFO=<ID={info_tag},Number=.,Type={type_},Description="{info_tag} annotation">\n""")
+                vcf_file.write(
+                    f"""##INFO=<ID={info_tag},Number=.,Type={type_},Description="{info_tag} annotation">\n"""
+                )
 
         # header contig
         for chrom in chrom_list_fixed:
             log.debug(f"""##contig=<ID={chrom},length={genome_chrom_length[chrom]}>""")
-            vcf_file.write(f"""##contig=<ID={chrom},length={genome_chrom_length[chrom]}>\n""")
+            vcf_file.write(
+                f"""##contig=<ID={chrom},length={genome_chrom_length[chrom]}>\n"""
+            )
 
         # header #CHROM line
-        vcf_file.write('#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n')
+        vcf_file.write("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n")
 
     # Determine annotations if not annotations in input
     annotations_auto = []
     if not annotations:
         for h in header:
-            if h not in ["#CHROM", "POS", "REF", "ALT", "-", ""] and not str(h).startswith("-"):
-                #log.debug(h)
+            if h not in ["#CHROM", "POS", "REF", "ALT", "-", ""] and not str(
+                h
+            ).startswith("-"):
+                # log.debug(h)
                 annotations_auto.append(h)
         annotations = annotations_auto
 
@@ -624,9 +702,16 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
 
         # Log
         log.debug(f"Create View From TSV to Parquet")
-            
+
         # Create Parquet file from TSV
-        tsv_to_parquet(input_file, f'{output_file}.tmp.annovar.parquet', delim=delimiter, columns=columns_struct, nullstr='.', skip=nb_skip_line)
+        tsv_to_parquet(
+            input_file,
+            f"{output_file}.tmp.annovar.parquet",
+            delim=delimiter,
+            columns=columns_struct,
+            nullstr=".",
+            skip=nb_skip_line,
+        )
 
         # Query Create view
         query = f""" CREATE VIEW annovar AS SELECT * FROM '{output_file}.tmp.annovar.parquet' """
@@ -638,7 +723,7 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
 
         # Create view of input file
         query = f""" CREATE VIEW annovar AS SELECT * FROM read_csv_auto('{input_file}', delim='{delimiter}', columns={columns_struct}, names={header}, dtypes={dtype_duckdb}, nullstr='.', parallel=True, skip={nb_skip_line}) """
-    
+
     conn.execute(query)
 
     # Check existing columns
@@ -671,13 +756,17 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
         if column not in ["#CHROM", "POS", "REF", "ALT", "ID"]:
             nb_annotation_column += 1
             if multi_variant:
-                any_value_list.append(f""" 
+                any_value_list.append(
+                    f""" 
                     CASE WHEN STRING_AGG(DISTINCT "{column}") IS NULL THEN '' ELSE '{column}=' || REPLACE(STRING_AGG(DISTINCT "{column}"),';',',') || ';' END
-                """)
+                """
+                )
             else:
-                any_value_list.append(f""" 
+                any_value_list.append(
+                    f""" 
                     CASE WHEN "{column}" IS NULL THEN '' ELSE '{column}=' || REPLACE("{column}",';',',') || ';' END
-                """)
+                """
+                )
 
     # Join to create INFO column
     any_value_sql = " || ".join(any_value_list)
@@ -707,7 +796,7 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
         # Window calculation
         window_base = 100000000
         if multi_variant:
-            window = round( window_base / nb_annotation_column )
+            window = round(window_base / nb_annotation_column)
         else:
             window = window_base
 
@@ -717,10 +806,12 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
             log.info(f"Formatting VCF and Parquet - Chromosome '{chrom}'...")
 
             # max pos
-            log.debug(f"Formatting VCF and Parquet - Chromosome '{chrom}' - Check range...")
+            log.debug(
+                f"Formatting VCF and Parquet - Chromosome '{chrom}' - Check range..."
+            )
 
             min_pos = 0
-            max_pos = genome_chrom_length.get(chrom_list_map.get(chrom,0))
+            max_pos = genome_chrom_length.get(chrom_list_map.get(chrom, 0))
 
             start = min_pos - 1
             stop = start + window
@@ -728,15 +819,19 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
             while True:
 
                 # Log
-                log.debug(f"Formatting VCF and Parquet - Chromosome '{chrom}' - Range {start}-{stop}...")
+                log.debug(
+                    f"Formatting VCF and Parquet - Chromosome '{chrom}' - Range {start}-{stop}..."
+                )
 
                 # If out of bound
                 if start > max_pos or max_pos == 0:
                     break
 
                 # Parquet File
-                #log.info(f"Formatting VCF and Parquet - Chromosome '{chrom}' - Exporting...")
-                log.debug(f"Create parquet file for chromosome '{chrom}' range {start}-{stop}...")
+                # log.info(f"Formatting VCF and Parquet - Chromosome '{chrom}' - Exporting...")
+                log.debug(
+                    f"Create parquet file for chromosome '{chrom}' range {start}-{stop}..."
+                )
                 query_select_parquet = f"""
                     COPY
                         (
@@ -752,8 +847,10 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
                 stop = start + window
 
                 # Formatted Parquet file
-                #log.info(f"Formatting VCF and Parquet - Chromosome '{chrom}' - Formatting...")
-                log.debug(f"Create formatted parquet file for chromosome '{chrom}' range {start}-{stop}...")
+                # log.info(f"Formatting VCF and Parquet - Chromosome '{chrom}' - Formatting...")
+                log.debug(
+                    f"Create formatted parquet file for chromosome '{chrom}' range {start}-{stop}..."
+                )
                 query_select_parquet = f"""
                     COPY
                         (
@@ -766,8 +863,10 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
                     TO '{output_file}.tmp.chrom.{chrom}.start.{start}.stop.{stop}.parquet' WITH (FORMAT PARQUET)
                 """
                 res = conn.execute(query_select_parquet)
-                count_insert = res.df()["Count"][0] 
-                log.debug(f"Create formatted parquet file for chromosome '{chrom}' range {start}-{stop}... {count_insert} variants")
+                count_insert = res.df()["Count"][0]
+                log.debug(
+                    f"Create formatted parquet file for chromosome '{chrom}' range {start}-{stop}... {count_insert} variants"
+                )
                 del res
                 gc.collect()
 
@@ -776,7 +875,6 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
         res = conn.execute(query_parquet)
         del res
         gc.collect()
-
 
     else:
 
@@ -798,7 +896,6 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
         del res
         gc.collect()
 
-
     # Export VCF
     log.info("Exporting VCF...")
 
@@ -810,7 +907,7 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
         COPY ({source})
         TO '{output_file}.tmp.translation.variants.vcf.gz' WITH (FORMAT CSV, COMPRESSION GZIP, DELIMITER '\t', QUOTE '', HEADER 0)
     """
-    
+
     # Copy file
     res = conn.execute(query)
     del res
@@ -835,7 +932,6 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
     # Run
     subprocess.run(command, shell=True)
 
-
     # Export Parquet
     if output_file_parquet:
 
@@ -843,20 +939,30 @@ def annovar_to_vcf(input_file:str, output_file:str, output_file_parquet:str = No
         log.info("Exporting Parquet...")
 
         # Check source
-        parquet_info_explode(input_file=output_file, output_file=output_file_parquet, threads=threads, memory=maxmem_connexion, reduce_memory=reduce_memory)
-
+        parquet_info_explode(
+            input_file=output_file,
+            output_file=output_file_parquet,
+            threads=threads,
+            memory=maxmem_connexion,
+            reduce_memory=reduce_memory,
+        )
 
     # Clean
     clean_command = f""" rm -rf {output_file}.tmp.* {output_file_parquet}.tmp.* """
     subprocess.run(clean_command, shell=True)
 
 
-
-def parquet_info_explode(input_file:str, output_file:str, threads:int = None, memory:str = None, reduce_memory:bool = False) -> None:
+def parquet_info_explode(
+    input_file: str,
+    output_file: str,
+    threads: int = None,
+    memory: str = None,
+    reduce_memory: bool = False,
+) -> None:
     """
     This function takes a parquet file, splits it by chromosome, explodes the INFO column, and then
     merges the exploded files back together.
-    
+
     :param input_file: The path to the input file, which can be either a TSV or VCF file
     :type input_file: str
     :param output_file: The name of the output file in Parquet format after exploding the input file
@@ -873,14 +979,9 @@ def parquet_info_explode(input_file:str, output_file:str, threads:int = None, me
     """
 
     # Config
-    config_ro = {
-        "access": "RO"
-    }
+    config_ro = {"access": "RO"}
     config_threads = {}
-    param_explode = {
-        "explode_infos": True,
-        "export_extra_infos": True
-    }
+    param_explode = {"explode_infos": True, "export_extra_infos": True}
 
     # Threads
     if threads:
@@ -897,12 +998,14 @@ def parquet_info_explode(input_file:str, output_file:str, threads:int = None, me
         # List of exploded parquet files
         list_of_exploded_files = []
 
-        # Create 
+        # Create
         parquet_input = Variants(input=input_file, config=config_ro)
-        parquet_chromosomes = parquet_input.get_query_to_df(query=f""" SELECT "#CHROM" FROM read_csv('{input_file}',AUTO_DETECT=TRUE) WHERE "#CHROM" NOT NULL GROUP BY "#CHROM" """)
+        parquet_chromosomes = parquet_input.get_query_to_df(
+            query=f""" SELECT "#CHROM" FROM read_csv('{input_file}',AUTO_DETECT=TRUE) WHERE "#CHROM" NOT NULL GROUP BY "#CHROM" """
+        )
 
         for chrom in parquet_chromosomes["#CHROM"]:
-            
+
             # Split Chrom
             query_chrom = f""" SELECT * FROM read_csv('{input_file}',AUTO_DETECT=TRUE) WHERE "#CHROM"='{chrom}'  """
             query_chrom_output = f"{output_file}.{chrom}.parquet"
@@ -913,34 +1016,52 @@ def parquet_info_explode(input_file:str, output_file:str, threads:int = None, me
 
             # Extract
             log.debug(f"Extract chromosome {chrom}: {query_chrom_explode_output}")
-            remove_if_exists([query_chrom_output,query_chrom_output+".hdr"])
-            parquet_input.export_output(output_file=query_chrom_output, query=query_chrom, export_header=True)
-            
+            remove_if_exists([query_chrom_output, query_chrom_output + ".hdr"])
+            parquet_input.export_output(
+                output_file=query_chrom_output, query=query_chrom, export_header=True
+            )
+
             # Explode
-            log.debug(f"Explode infos for chromosome {chrom}: {query_chrom_explode_output}")
+            log.debug(
+                f"Explode infos for chromosome {chrom}: {query_chrom_explode_output}"
+            )
             list_of_exploded_files.append(query_chrom_explode_output)
-            parquet_explode = Variants(input=query_chrom_output, output=query_chrom_explode_output, config=config_threads, param=param_explode)
+            parquet_explode = Variants(
+                input=query_chrom_output,
+                output=query_chrom_explode_output,
+                config=config_threads,
+                param=param_explode,
+            )
             parquet_explode.load_data()
-            remove_if_exists([query_chrom_explode_output,query_chrom_explode_output+".hdr"])
+            remove_if_exists(
+                [query_chrom_explode_output, query_chrom_explode_output + ".hdr"]
+            )
             parquet_explode.export_output()
-            remove_if_exists([query_chrom_output,query_chrom_output+".hdr"])
+            remove_if_exists([query_chrom_output, query_chrom_output + ".hdr"])
 
         # list_of_exploded_files
         log.info(f"Merge explode infos")
         log.debug(f"Merge explode infos files: {list_of_exploded_files}")
         query_explode = f""" SELECT * FROM read_parquet({list_of_exploded_files}) """
         query_explode_output = output_file
-        remove_if_exists([query_explode_output,query_explode_output+".hdr"])
-        parquet_explode.export_output(output_file=query_explode_output, query=query_explode, export_header=True)
+        remove_if_exists([query_explode_output, query_explode_output + ".hdr"])
+        parquet_explode.export_output(
+            output_file=query_explode_output, query=query_explode, export_header=True
+        )
 
         # Clear
         for file in list_of_exploded_files:
-            remove_if_exists([file,file+".hdr"])
+            remove_if_exists([file, file + ".hdr"])
 
     else:
 
-        # Create 
-        parquet_explode = Variants(input=input_file, output=output_file, config=config_threads, param=param_explode)
+        # Create
+        parquet_explode = Variants(
+            input=input_file,
+            output=output_file,
+            config=config_threads,
+            param=param_explode,
+        )
         parquet_explode.load_data()
         parquet_explode.export_output()
 
@@ -949,10 +1070,18 @@ def parquet_info_explode(input_file:str, output_file:str, threads:int = None, me
     # log.debug(df)
 
 
-def tsv_to_parquet(tsv:str, parquet:str, delim:str = None, columns:dict = None, quote:str = None, nullstr:str = None, skip:int = None) -> None:
+def tsv_to_parquet(
+    tsv: str,
+    parquet: str,
+    delim: str = None,
+    columns: dict = None,
+    quote: str = None,
+    nullstr: str = None,
+    skip: int = None,
+) -> None:
     """
     The function converts a TSV file to a Parquet file with customizable options.
-    
+
     :param tsv: The path to the TSV file that needs to be converted to Parquet format
     :type tsv: str
     :param parquet: `parquet` is the file path and name of the output Parquet file that will be created
@@ -982,11 +1111,11 @@ def tsv_to_parquet(tsv:str, parquet:str, delim:str = None, columns:dict = None, 
     columns_pyarrow_dict = []
     for col in columns:
         if columns[col] in ["STRING"]:
-            columns_pyarrow_dict.append((col,pa.string()))
+            columns_pyarrow_dict.append((col, pa.string()))
         elif columns[col] in ["INTEGER"]:
-            columns_pyarrow_dict.append((col,pa.int64()))
+            columns_pyarrow_dict.append((col, pa.int64()))
         elif columns[col] in ["FLOAT"]:
-            columns_pyarrow_dict.append((col,pa.float64()))
+            columns_pyarrow_dict.append((col, pa.float64()))
 
     # Create Schema
     schema = pa.schema(columns_pyarrow_dict)
@@ -1013,7 +1142,12 @@ def tsv_to_parquet(tsv:str, parquet:str, delim:str = None, columns:dict = None, 
 
     # Read CSV and Write to Parquet
     writer = None
-    with pcsv.open_csv(tsv, convert_options=convert_options, read_options=read_options, parse_options=parse_options) as reader:
+    with pcsv.open_csv(
+        tsv,
+        convert_options=convert_options,
+        read_options=read_options,
+        parse_options=parse_options,
+    ) as reader:
         for next_chunk in reader:
             if next_chunk is None:
                 break
@@ -1022,4 +1156,3 @@ def tsv_to_parquet(tsv:str, parquet:str, delim:str = None, columns:dict = None, 
             next_table = pa.Table.from_batches([next_chunk])
             writer.write_table(next_table)
     writer.close()
-

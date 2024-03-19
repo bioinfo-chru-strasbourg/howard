@@ -28,7 +28,6 @@ from howard.tools.tools import *
 from test_needed import *
 
 
-
 def test_stats():
 
     # Init files
@@ -37,9 +36,7 @@ def test_stats():
 
     # prepare arguments for the query function
     args = argparse.Namespace(
-        input = input_vcf,
-        config = config,
-        arguments_dict = arguments_dict
+        input=input_vcf, config=config, arguments_dict=arguments_dict
     )
 
     # Query
@@ -48,4 +45,3 @@ def test_stats():
         assert True
     except:
         assert False
-

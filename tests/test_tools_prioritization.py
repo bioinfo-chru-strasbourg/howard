@@ -28,7 +28,6 @@ from howard.tools.tools import *
 from test_needed import *
 
 
-
 def test_prioritization_tsv():
 
     # Init files
@@ -40,15 +39,15 @@ def test_prioritization_tsv():
 
     # prepare arguments for the query function
     args = argparse.Namespace(
-        input = input_vcf,
-        output = output_vcf,
-        config = config,
-        prioritizations = prioritizations,
-        prioritization_config = prioritization_config,
-        pzfields = "PZScore,PZFlag",
-        default_profile = "default",
-        prioritization_score_mode = "HOWARD",
-        arguments_dict = arguments_dict
+        input=input_vcf,
+        output=output_vcf,
+        config=config,
+        prioritizations=prioritizations,
+        prioritization_config=prioritization_config,
+        pzfields="PZScore,PZFlag",
+        default_profile="default",
+        prioritization_score_mode="HOWARD",
+        arguments_dict=arguments_dict,
     )
 
     # Remove if output file exists
@@ -58,7 +57,7 @@ def test_prioritization_tsv():
     prioritization(args)
 
     # read the contents of the actual output file
-    with open(output_vcf, 'r') as f:
+    with open(output_vcf, "r") as f:
         result_output_nb_lines = 0
         result_output_nb_variants = 0
         for line in f:
@@ -76,9 +75,11 @@ def test_prioritization_tsv():
 
     # Create object
     variants = Variants(conn=None, input=output_vcf, config=config, load=True)
-    
+
     # Check annotation
-    result = variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%PZScore=%'")
+    result = variants.get_query_to_df(
+        "SELECT INFO FROM variants WHERE INFO LIKE '%PZScore=%'"
+    )
     assert len(result) == 7
 
 
@@ -93,15 +94,15 @@ def test_prioritization_vcf():
 
     # prepare arguments for the query function
     args = argparse.Namespace(
-        input = input_vcf,
-        output = output_vcf,
-        config = config,
-        prioritizations = prioritizations,
-        prioritization_config = prioritization_config,
-        pzfields = "PZScore,PZFlag",
-        default_profile = "default",
-        prioritization_score_mode = "HOWARD",
-        arguments_dict = arguments_dict
+        input=input_vcf,
+        output=output_vcf,
+        config=config,
+        prioritizations=prioritizations,
+        prioritization_config=prioritization_config,
+        pzfields="PZScore,PZFlag",
+        default_profile="default",
+        prioritization_score_mode="HOWARD",
+        arguments_dict=arguments_dict,
     )
 
     # Remove if output file exists
@@ -111,7 +112,7 @@ def test_prioritization_vcf():
     prioritization(args)
 
     # read the contents of the actual output file
-    with open(output_vcf, 'r') as f:
+    with open(output_vcf, "r") as f:
         result_output_nb_lines = 0
         result_output_nb_variants = 0
         for line in f:
@@ -129,7 +130,9 @@ def test_prioritization_vcf():
 
     # Create object
     variants = Variants(conn=None, input=output_vcf, config=config, load=True)
-    
+
     # Check annotation
-    result = variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%PZScore=%'")
+    result = variants.get_query_to_df(
+        "SELECT INFO FROM variants WHERE INFO LIKE '%PZScore=%'"
+    )
     assert len(result) == 7

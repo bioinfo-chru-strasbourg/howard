@@ -22,10 +22,21 @@ class Gene(object):
 # We need both exons and cdna_match as need to know exact exon boundaries to work out flanking
 class Transcript(object):
 
-    def __init__(self, name:str, version:str, gene:str, tx_position:int, cds_position:int, is_default:bool = False, cdna_match:list = None, start_codon_transcript_pos:int = None, stop_codon_transcript_pos:int = None) -> None:
+    def __init__(
+        self,
+        name: str,
+        version: str,
+        gene: str,
+        tx_position: int,
+        cds_position: int,
+        is_default: bool = False,
+        cdna_match: list = None,
+        start_codon_transcript_pos: int = None,
+        stop_codon_transcript_pos: int = None,
+    ) -> None:
         """
         The function initializes an object with various attributes related to a gene and its transcript.
-        
+
         :param name: A string representing the name of the coding sequence
         :type name: str
         :param version: The `version` parameter is a string that represents the version of the object.
@@ -71,7 +82,6 @@ class Transcript(object):
         self._start_codon_transcript_pos = start_codon_transcript_pos
         self._stop_codon_transcript_pos = stop_codon_transcript_pos
 
-
     @property
     def full_name(self) -> str:
         """
@@ -81,10 +91,9 @@ class Transcript(object):
         """
 
         if self.version is not None:
-            return '%s.%d' % (self.name, self.version)
+            return "%s.%d" % (self.name, self.version)
         else:
             return self.name
-
 
     @property
     def is_coding(self) -> bool:
@@ -93,10 +102,8 @@ class Transcript(object):
         :return: a boolean value indicating whether the coding transcript has a coding sequence (CDS)
         with a non-zero length.
         """
-        
-        return (self.cds_position.chrom_stop -
-                self.cds_position.chrom_start > 0)
 
+        return self.cds_position.chrom_stop - self.cds_position.chrom_start > 0
 
     @property
     def strand(self) -> str:
@@ -108,8 +115,7 @@ class Transcript(object):
         string returned is '-'.
         """
 
-        return ('+' if self.tx_position.is_forward_strand else '-')
-
+        return "+" if self.tx_position.is_forward_strand else "-"
 
     @lazy
     def ordered_cdna_match(self) -> str:
@@ -118,14 +124,13 @@ class Transcript(object):
         tx_position.chrom_start attribute and returns the sorted list.
         :return: a sorted list of cdna_match objects.
         """
-        
+
         transcript_strand = self.tx_position.is_forward_strand
         cdna_match = list(self.cdna_match)
         cdna_match.sort(key=lambda cm: cm.tx_position.chrom_start)
         if not transcript_strand:
             cdna_match.reverse()
         return cdna_match
-
 
     def get_cds_start_stop(self) -> tuple:
         """
@@ -138,7 +143,6 @@ class Transcript(object):
         if not self.tx_position.is_forward_strand:
             (stop, start) = (start, stop)
         return start, stop
-
 
     @lazy
     def start_codon(self) -> int:
@@ -153,7 +157,6 @@ class Transcript(object):
         start_genomic_coordinate, _ = self.get_cds_start_stop()
         return self._get_transcript_position(start_genomic_coordinate)
 
-
     @lazy
     def stop_codon(self) -> int:
         """
@@ -161,19 +164,20 @@ class Transcript(object):
         :return: The method `stop_codon` returns an integer, which represents the transcript position of
         the stop codon.
         """
-        
+
         if self._stop_codon_transcript_pos is not None:
             return self._stop_codon_transcript_pos
 
         _, stop_genomic_coordinate = self.get_cds_start_stop()
         return self._get_transcript_position(stop_genomic_coordinate)
 
-
-    def _get_transcript_position(self, genomic_coordinate:int, label:str = None) -> int:
+    def _get_transcript_position(
+        self, genomic_coordinate: int, label: str = None
+    ) -> int:
         """
         The function `_get_transcript_position` calculates the position of a genomic coordinate within a
         transcript.
-        
+
         :param genomic_coordinate: The `genomic_coordinate` parameter is an integer representing a
         specific position on the genome. It is the coordinate for which we want to determine the
         corresponding position in the transcript
@@ -204,25 +208,24 @@ class Transcript(object):
                 cdna_offset += cdna_match.length
         if label is None:
             label = "Genomic coordinate: %d" % genomic_coordinate
-        raise ValueError('%s is not in any of the exons' % label)
+        raise ValueError("%s is not in any of the exons" % label)
 
-
-    def cdna_to_genomic_coord(self, coord:object) -> int:
+    def cdna_to_genomic_coord(self, coord: object) -> int:
         """
         The function `cdna_to_genomic_coord` converts a HGVS cDNA coordinate to a genomic coordinate.
-        
+
         :param coord: The parameter `coord` is an object that represents a cDNA coordinate. It is used
         to specify a position along a cDNA sequence
         :type coord: object
         :return: an integer value, which represents the genomic coordinate corresponding to the given
         cDNA coordinate.
         """
-        
+
         transcript_strand = self.tx_position.is_forward_strand
 
         # compute starting position along spliced transcript.
         if coord.landmark == CDNA_START_CODON:
-            utr5p = (self.start_codon if self.is_coding else 0)
+            utr5p = self.start_codon if self.is_coding else 0
 
             if coord.coord > 0:
                 cdna_pos = utr5p + coord.coord
@@ -230,8 +233,10 @@ class Transcript(object):
                 cdna_pos = utr5p + coord.coord + 1
         elif coord.landmark == CDNA_STOP_CODON:
             if coord.coord < 0:
-                raise ValueError('CDNACoord cannot have a negative coord and '
-                                 'landmark CDNA_STOP_CODON')
+                raise ValueError(
+                    "CDNACoord cannot have a negative coord and "
+                    "landmark CDNA_STOP_CODON"
+                )
             cdna_pos = self.stop_codon + coord.coord
         else:
             raise ValueError('unknown CDNACoord landmark "%s"' % coord.landmark)
@@ -264,27 +269,24 @@ class Transcript(object):
             else:
                 return self.cds_position.chrom_start + 1 - coord.coord
 
-
-    def genomic_to_cdna_coord(self, genomic_coord:int) -> object:
+    def genomic_to_cdna_coord(self, genomic_coord: int) -> object:
         """
         The function `genomic_to_cdna_coord` converts a genomic coordinate to a cDNA coordinate and
         offset, taking into account exons, strand, and coding transcript information.
-        
+
         :param genomic_coord: The `genomic_coord` parameter is an integer representing a genomic
         coordinate
         :type genomic_coord: int
         :return: an object of type `CDNACoord`.
         """
-        
-        exons = [exon.get_as_interval()
-                 for exon in self.ordered_cdna_match]
+
+        exons = [exon.get_as_interval() for exon in self.ordered_cdna_match]
 
         if len(exons) == 0:
             return None
 
         strand = self.strand
-        distances = [exon.distance(genomic_coord)
-                     for exon in exons]
+        distances = [exon.distance(genomic_coord) for exon in exons]
         min_distance_to_exon = min(map(abs, distances))
         if min_distance_to_exon:
             # We're outside of exon - so need to find closest point
@@ -301,11 +303,15 @@ class Transcript(object):
                     if strand == "+":
                         distance *= -1
 
-                    nearest_exon_coord = self._exon_genomic_to_cdna_coord(genomic_nearest_exon)
+                    nearest_exon_coord = self._exon_genomic_to_cdna_coord(
+                        genomic_nearest_exon
+                    )
 
                     # If outside transcript, don't use offset.
-                    if (genomic_coord < self.tx_position.chrom_start + 1 or
-                            genomic_coord > self.tx_position.chrom_stop):
+                    if (
+                        genomic_coord < self.tx_position.chrom_start + 1
+                        or genomic_coord > self.tx_position.chrom_stop
+                    ):
                         nearest_exon_coord += distance
                         distance = 0
                     cdna_coord = CDNACoord(nearest_exon_coord, distance)
@@ -327,19 +333,21 @@ class Transcript(object):
                 # Detect if position is after stop_codon.
                 stop_codon = self.stop_codon
                 stop_codon -= utr5p
-                if (cdna_coord.coord > stop_codon or
-                        cdna_coord.coord == stop_codon and cdna_coord.offset > 0):
+                if (
+                    cdna_coord.coord > stop_codon
+                    or cdna_coord.coord == stop_codon
+                    and cdna_coord.offset > 0
+                ):
                     cdna_coord.coord -= stop_codon
                     cdna_coord.landmark = CDNA_STOP_CODON
 
         return cdna_coord
 
-
-    def _exon_genomic_to_cdna_coord(self, genomic_coord:int) -> int:
+    def _exon_genomic_to_cdna_coord(self, genomic_coord: int) -> int:
         """
         The function `_exon_genomic_to_cdna_coord` converts a genomic coordinate to a cDNA coordinate
         within an exon.
-        
+
         :param genomic_coord: The `genomic_coord` parameter represents the genomic coordinate that you
         want to convert to cDNA coordinate. It is an integer value that specifies the position on the
         genome
@@ -350,7 +358,11 @@ class Transcript(object):
         cdna_offset = 0
         for cdna_match in self.ordered_cdna_match:
             # Inside the exon.
-            if cdna_match.tx_position.chrom_start <= genomic_coord <= cdna_match.tx_position.chrom_stop:
+            if (
+                cdna_match.tx_position.chrom_start
+                <= genomic_coord
+                <= cdna_match.tx_position.chrom_stop
+            ):
                 if self.strand == "+":
                     position = genomic_coord - (cdna_match.tx_position.chrom_start + 1)
                 else:
@@ -360,40 +372,39 @@ class Transcript(object):
             cdna_offset += cdna_match.length
 
         raise ValueError(f"Couldn't find {genomic_coord=}!")
-    
 
-    def find_exon_number(self, offset:int) -> int:
+    def find_exon_number(self, offset: int) -> int:
         """
         The function `find_exon_number` returns the exon number for a given position.
-        
+
         :param offset: The offset parameter represents a position in the genome. It is an integer value
         that indicates the position of interest within the genome
         :type offset: int
         :return: an integer value, which represents the exon number for a given position.
         """
-        
+
         exon_number = 1
         for cdna_match in self.ordered_cdna_match:
-            if cdna_match.tx_position.chrom_start <= offset <= cdna_match.tx_position.chrom_stop:
+            if (
+                cdna_match.tx_position.chrom_start
+                <= offset
+                <= cdna_match.tx_position.chrom_stop
+            ):
                 return exon_number
             exon_number += 1
         return None
-        
+
 
 BED6Interval_base = namedtuple(
-    "BED6Interval_base", (
-        "chrom",
-        "chrom_start",
-        "chrom_end",
-        "name",
-        "score",
-        "strand"))
+    "BED6Interval_base",
+    ("chrom", "chrom_start", "chrom_end", "name", "score", "strand"),
+)
 
 
 # The BED6Interval class is a subclass of BED6Interval_base.
 class BED6Interval(BED6Interval_base):
 
-    def distance(self, offset:int) -> int:
+    def distance(self, offset: int) -> int:
         """
         The `distance` function calculates the distance between an offset and an interval, returning
         zero if the offset is inside the interval, a positive value if the interval comes after the
@@ -402,7 +413,7 @@ class BED6Interval(BED6Interval_base):
         otherwise, distance is the distance to the nearest edge.
         distance is positive if the exon comes after the offset.
         distance is negative if the exon comes before the offset.
-        
+
         :param offset: The offset parameter represents a position or point in the genome. It is an
         integer value that indicates the position within the genome sequence
         :type offset: int
@@ -428,11 +439,11 @@ class BED6Interval(BED6Interval_base):
 # We still need exons to work out the flanking boundaries
 class Exon(object):
 
-    def __init__(self, transcript:Transcript, tx_position:int, number:int) -> None:
+    def __init__(self, transcript: Transcript, tx_position: int, number: int) -> None:
         """
         The function initializes an object with a transcript, a position in the transcript, and a
         number.
-        
+
         :param transcript: The `transcript` parameter is of type `Transcript`. It represents a
         transcript object that contains information about a conversation or dialogue
         :type transcript: Transcript
@@ -449,7 +460,6 @@ class Exon(object):
         self.tx_position = tx_position
         self.number = number
 
-
     @property
     def name(self) -> str:
         """
@@ -460,8 +470,7 @@ class Exon(object):
 
         return "%s.%d" % (self.transcript.name, self.number)
 
-
-    def get_as_interval(self, coding_only:bool = False) -> object:
+    def get_as_interval(self, coding_only: bool = False) -> object:
         """
         The function `get_as_interval` returns the coding region for an exon as a BED6Interval object.
         This function returns a BED6Interval objects containing  position
@@ -482,37 +491,47 @@ class Exon(object):
 
         # Get only exon coding region if requested
         if coding_only:
-            if (exon_stop <= self.transcript.cds_position.chrom_start or
-                    exon_start >= self.transcript.cds_position.chrom_stop):
+            if (
+                exon_stop <= self.transcript.cds_position.chrom_start
+                or exon_start >= self.transcript.cds_position.chrom_stop
+            ):
                 return None
-            exon_start = max(exon_start,
-                             self.transcript.cds_position.chrom_start)
+            exon_start = max(exon_start, self.transcript.cds_position.chrom_start)
             exon_stop = min(
                 max(exon_stop, self.transcript.cds_position.chrom_start),
-                self.transcript.cds_position.chrom_stop)
+                self.transcript.cds_position.chrom_stop,
+            )
 
         return BED6Interval(
             self.tx_position.chrom,
             exon_start,
             exon_stop,
             self.name,
-            '.',
+            ".",
             self.strand,
         )
 
     @property
     def strand(self):
-        strand = '+' if self.tx_position.is_forward_strand else '-'
+        strand = "+" if self.tx_position.is_forward_strand else "-"
         return strand
 
 
 # The CDNA_Match class is a subclass of the Exon class.
 class CDNA_Match(Exon):
 
-    def __init__(self, transcript:Transcript, tx_position:int, cdna_start:int, cdna_end:int, gap:int, number:int) -> None:
+    def __init__(
+        self,
+        transcript: Transcript,
+        tx_position: int,
+        cdna_start: int,
+        cdna_end: int,
+        gap: int,
+        number: int,
+    ) -> None:
         """
         The function initializes a CDNA_Match object with specified attributes.
-        
+
         :param transcript: The `transcript` parameter is an instance of the `Transcript` class. It
         represents the transcript that the CDNA match belongs to
         :type transcript: Transcript
@@ -540,7 +559,6 @@ class CDNA_Match(Exon):
         self.cdna_end = cdna_end
         self.gap = gap
 
-
     @property
     def length(self) -> int:
         """
@@ -552,8 +570,7 @@ class CDNA_Match(Exon):
 
         return self.cdna_end - self.cdna_start + 1
 
-
-    def get_offset(self, position:int, validate:bool = True) -> int:
+    def get_offset(self, position: int, validate: bool = True) -> int:
         """
         The `get_offset` function calculates the offset for a given position in a cDNA sequence based on
         the GAP attribute.
@@ -564,7 +581,7 @@ class CDNA_Match(Exon):
         I 	insert a gap into the reference sequence
         D 	insert a gap into the target (delete from reference)
         If you want the whole exon, then pass the end
-        
+
         :param position: The `position` parameter is an integer that represents the position in the
         sequence. It is used to calculate the offset based on the GAP attribute of the cDNA match
         :type position: int
@@ -589,11 +606,17 @@ class CDNA_Match(Exon):
                 cdna_match_index += length
             elif code == "I":
                 if validate and position_1_based < cdna_match_index + length:
-                    raise ValueError("Coordinate (%d) inside insertion (%s) - no mapping possible!" % (position_1_based, gap_op))
+                    raise ValueError(
+                        "Coordinate (%d) inside insertion (%s) - no mapping possible!"
+                        % (position_1_based, gap_op)
+                    )
                 offset += length
             elif code == "D":
                 if validate and position < cdna_match_index + length:
-                    raise ValueError("Coordinate (%d) inside deletion (%s) - no mapping possible!" % (position_1_based, gap_op))
+                    raise ValueError(
+                        "Coordinate (%d) inside deletion (%s) - no mapping possible!"
+                        % (position_1_based, gap_op)
+                    )
                 offset -= length
             else:
                 raise ValueError(f"Unknown code in cDNA GAP: {gap_op}")

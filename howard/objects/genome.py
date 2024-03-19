@@ -6,6 +6,7 @@ from .variant import revcomp
 
 try:
     from pyfaidx import Genome as SequenceFileDB
+
     # Allow pyflakes to ignore redefinition in except clause.
     SequenceFileDB
 except ImportError:
@@ -31,8 +32,9 @@ class ChromosomeSubset(object):
             end -= self.genome.start
             return self.genome.genome[self.genome.seqid][start:end]
         else:
-            raise TypeError('Expected a slice object but '
-                            'received a {0}.'.format(type(key)))
+            raise TypeError(
+                "Expected a slice object but " "received a {0}.".format(type(key))
+            )
 
     def __repr__(self):
         return 'ChromosomeSubset("%s")' % self.name
@@ -92,15 +94,14 @@ class MockChromosome(object):
         if isinstance(n, slice):
             return self.genome.get_seq(self.name, n.start, n.stop)
         else:
-            return self.genome.get_seq(self.name, n, n+1)
+            return self.genome.get_seq(self.name, n, n + 1)
 
     def __repr__(self):
         return 'MockChromosome("%s")' % (self.name)
 
 
 class MockGenome(object):
-    def __init__(self, lookup=None, filename=None, db_filename=None,
-                 default_seq=None):
+    def __init__(self, lookup=None, filename=None, db_filename=None, default_seq=None):
         """
         A mock genome object that provides a pygr compatible interface.
 
@@ -121,7 +122,7 @@ class MockGenome(object):
         if db_filename:
             # Use a real genome database.
             if SequenceFileDB is None:
-                raise ValueError('pygr is not available.')
+                raise ValueError("pygr is not available.")
             self._genome = SequenceFileDB(db_filename)
             self._source_filename = db_filename
         elif filename:
@@ -156,27 +157,30 @@ class MockGenome(object):
             except KeyError:
                 if self._default_seq:
                     # Generate default sequence.
-                    return ''.join(itertools.islice(
-                        itertools.cycle(self._default_seq),
-                        None, end - start))
+                    return "".join(
+                        itertools.islice(
+                            itertools.cycle(self._default_seq), None, end - start
+                        )
+                    )
                 else:
                     raise MockGenomeError(
-                        'Sequence not in test data: %s:%d-%d source: %s' %
-                        (chrom, start, end, self._source_filename))
+                        "Sequence not in test data: %s:%d-%d source: %s"
+                        % (chrom, start, end, self._source_filename)
+                    )
 
     def read(self, filename):
         """Read a sequence lookup table from a file.
 
         filename: a filename string or file stream.
         """
-        if hasattr(filename, 'read'):
+        if hasattr(filename, "read"):
             infile = filename
         else:
             with open(filename) as infile:
                 return self.read(infile)
 
         for line in infile:
-            tokens = line.rstrip().split('\t')
+            tokens = line.rstrip().split("\t")
             chrom, start, end, seq = tokens
             self._lookup[(chrom, int(start), int(end))] = seq
             if chrom not in self._lookup:
@@ -184,28 +188,36 @@ class MockGenome(object):
 
     def write(self, filename):
         """Write a sequence lookup table to file."""
-        if hasattr(filename, 'write'):
+        if hasattr(filename, "write"):
             out = filename
         else:
-            with open(filename, 'w') as out:
+            with open(filename, "w") as out:
                 return self.write(out)
 
         for (chrom, start, end), seq in self._lookup.items():
-            out.write('\t'.join(map(str, [chrom, start, end, seq])) + '\n')
+            out.write("\t".join(map(str, [chrom, start, end, seq])) + "\n")
 
 
 class MockGenomeTestFile(MockGenome):
-    def __init__(self, lookup=None, filename=None, db_filename=None,
-                 default_seq=None, create_data=False):
+    def __init__(
+        self,
+        lookup=None,
+        filename=None,
+        db_filename=None,
+        default_seq=None,
+        create_data=False,
+    ):
         if not create_data:
             db_filename = None
         super(MockGenomeTestFile, self).__init__(
-            lookup=lookup, db_filename=db_filename,
+            lookup=lookup,
+            db_filename=db_filename,
             filename=filename,
-            default_seq=default_seq)
+            default_seq=default_seq,
+        )
 
         self._filename = filename
-        self._create_data = (db_filename is not None)
+        self._create_data = db_filename is not None
 
         if self._create_data and os.path.exists(filename):
             # Clear output file when creating data.
@@ -216,6 +228,6 @@ class MockGenomeTestFile(MockGenome):
 
         # Save each query in append mode.
         if self._create_data:
-            with open(self._filename, 'a') as out:
-                out.write('\t'.join(map(str, [chrom, start, end, seq])) + '\n')
+            with open(self._filename, "a") as out:
+                out.write("\t".join(map(str, [chrom, start, end, seq])) + "\n")
         return seq

@@ -28,7 +28,6 @@ from howard.tools.tools import *
 from test_needed import *
 
 
-
 def test_annotation_tsv_update():
 
     # Init files
@@ -39,13 +38,13 @@ def test_annotation_tsv_update():
 
     # prepare arguments for the query function
     args = argparse.Namespace(
-        input = input_vcf,
-        output = output_vcf,
-        config = config,
-        annotations = annotations,
-        annotations_update = True,
-        annotations_append = False,
-        arguments_dict = arguments_dict
+        input=input_vcf,
+        output=output_vcf,
+        config=config,
+        annotations=annotations,
+        annotations_update=True,
+        annotations_append=False,
+        arguments_dict=arguments_dict,
     )
 
     # Remove if output file exists
@@ -58,7 +57,7 @@ def test_annotation_tsv_update():
     assert os.path.exists(output_vcf)
 
     # read the contents of the actual output file
-    with open(output_vcf, 'r') as f:
+    with open(output_vcf, "r") as f:
         result_output_nb_lines = 0
         result_output_nb_variants = 0
         for line in f:
@@ -85,13 +84,13 @@ def test_annotation_tsv_append():
 
     # prepare arguments for the query function
     args = argparse.Namespace(
-        input = input_vcf,
-        output = output_vcf,
-        config = config,
-        annotations = annotations,
-        annotations_update = False,
-        annotations_append = True,
-        arguments_dict = arguments_dict
+        input=input_vcf,
+        output=output_vcf,
+        config=config,
+        annotations=annotations,
+        annotations_update=False,
+        annotations_append=True,
+        arguments_dict=arguments_dict,
     )
 
     # Remove if output file exists
@@ -104,7 +103,7 @@ def test_annotation_tsv_append():
     assert os.path.exists(output_vcf)
 
     # read the contents of the actual output file
-    with open(output_vcf, 'r') as f:
+    with open(output_vcf, "r") as f:
         result_output_nb_lines = 0
         result_output_nb_variants = 0
         for line in f:
@@ -131,13 +130,13 @@ def test_annotation_tsv_update_append():
 
     # prepare arguments for the query function
     args = argparse.Namespace(
-        input = input_vcf,
-        output = output_vcf,
-        config = config,
-        annotations = annotations,
-        annotations_update = True,
-        annotations_append = True,
-        arguments_dict = arguments_dict
+        input=input_vcf,
+        output=output_vcf,
+        config=config,
+        annotations=annotations,
+        annotations_update=True,
+        annotations_append=True,
+        arguments_dict=arguments_dict,
     )
 
     # Remove if output file exists
@@ -150,7 +149,7 @@ def test_annotation_tsv_update_append():
     assert os.path.exists(output_vcf)
 
     # read the contents of the actual output file
-    with open(output_vcf, 'r') as f:
+    with open(output_vcf, "r") as f:
         result_output_nb_lines = 0
         result_output_nb_variants = 0
         for line in f:
@@ -177,13 +176,13 @@ def test_annotation_tsv():
 
     # prepare arguments for the query function
     args = argparse.Namespace(
-        input = input_vcf,
-        output = output_vcf,
-        config = config,
-        annotations = annotations,
-        annotations_update = False,
-        annotations_append = False,
-        arguments_dict = arguments_dict
+        input=input_vcf,
+        output=output_vcf,
+        config=config,
+        annotations=annotations,
+        annotations_update=False,
+        annotations_append=False,
+        arguments_dict=arguments_dict,
     )
 
     # Remove if output file exists
@@ -196,7 +195,7 @@ def test_annotation_tsv():
     assert os.path.exists(output_vcf)
 
     # read the contents of the actual output file
-    with open(output_vcf, 'r') as f:
+    with open(output_vcf, "r") as f:
         result_output_nb_lines = 0
         result_output_nb_variants = 0
         for line in f:
@@ -223,13 +222,13 @@ def test_annotation_vcf():
 
     # prepare arguments for the query function
     args = argparse.Namespace(
-        input = input_vcf,
-        output = output_vcf,
-        config = config,
-        annotations = annotations,
-        annotations_update = False,
-        annotations_append = False,
-        arguments_dict = arguments_dict
+        input=input_vcf,
+        output=output_vcf,
+        config=config,
+        annotations=annotations,
+        annotations_update=False,
+        annotations_append=False,
+        arguments_dict=arguments_dict,
     )
 
     # Remove if output file exists
@@ -242,7 +241,7 @@ def test_annotation_vcf():
     assert os.path.exists(output_vcf)
 
     # read the contents of the actual output file
-    with open(output_vcf, 'r') as f:
+    with open(output_vcf, "r") as f:
         result_output_nb_lines = 0
         result_output_nb_variants = 0
         for line in f:
@@ -257,4 +256,3 @@ def test_annotation_vcf():
     # Compare
     assert result_output_nb_lines == expected_result_nb_lines
     assert result_output_nb_variants == expected_result_nb_variants
-

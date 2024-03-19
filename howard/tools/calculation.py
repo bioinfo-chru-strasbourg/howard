@@ -22,11 +22,10 @@ from howard.functions.commons import *
 from howard.functions.databases import *
 
 
-
-def calculation(args:argparse) -> None:
+def calculation(args: argparse) -> None:
     """
     This function performs calculations on VCF data based on user input and exports the results.
-    
+
     :param args: The `args` parameter is a command line argument parser object that contains the
     arguments passed to the script when it was executed
     :type args: argparse
@@ -38,15 +37,23 @@ def calculation(args:argparse) -> None:
     arguments_dict, setup_cfg, config, param = load_config_args(args)
 
     # Create variants object
-    vcfdata_obj = Variants(input=args.input, output=args.output, config=config, param=param)
+    vcfdata_obj = Variants(
+        input=args.input, output=args.output, config=config, param=param
+    )
 
     # Get Config and Params
     config = vcfdata_obj.get_config()
     param = vcfdata_obj.get_param()
 
     # Load args into param
-    param = load_args(param=param, args=args, arguments_dict=arguments_dict, command="calculation", strict=False)
-    
+    param = load_args(
+        param=param,
+        args=args,
+        arguments_dict=arguments_dict,
+        command="calculation",
+        strict=False,
+    )
+
     # Re-Load Config and Params
     vcfdata_obj.set_param(param)
     vcfdata_obj.set_config(config)
@@ -55,10 +62,12 @@ def calculation(args:argparse) -> None:
     if vcfdata_obj.get_input():
         vcfdata_obj.load_data()
 
-    if param.get("calculation",{}).get("show_calculations",False):
+    if param.get("calculation", {}).get("show_calculations", False):
         operations_config_file = param.get("calculation").get("calculation_config")
         log.debug(f"operations_config_file={operations_config_file}")
-        for help_line in vcfdata_obj.get_operations_help(operations_config_file=operations_config_file):
+        for help_line in vcfdata_obj.get_operations_help(
+            operations_config_file=operations_config_file
+        ):
             log.info(help_line)
         exit()
 

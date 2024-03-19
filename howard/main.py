@@ -21,7 +21,6 @@ from configparser import ConfigParser
 
 from howard.objects.variants import Variants
 from howard.objects.database import Database
-#from howard.commons import *
 
 from howard.tools.tools import *
 
@@ -37,6 +36,7 @@ from howard.tools.tools import *
 
 main_folder = os.path.dirname(__file__)
 
+
 # Main function
 def main() -> None:
     """
@@ -44,16 +44,21 @@ def main() -> None:
     """
 
     # Config infos
-    setup_cfg = f'{main_folder}/../setup.cfg'
+    setup_cfg = f"{main_folder}/../setup.cfg"
     arguments_dict = {
         "arguments": arguments,
         "commands_arguments": commands_arguments,
-        "shared_arguments": shared_arguments 
+        "shared_arguments": shared_arguments,
     }
-    
+
     # Generate parser
     parser = argparse.ArgumentParser()
-    parser = help_generation(arguments_dict=arguments_dict, parser=parser, setup=setup_cfg, output_type="parser")
+    parser = help_generation(
+        arguments_dict=arguments_dict,
+        parser=parser,
+        setup=setup_cfg,
+        output_type="parser",
+    )
 
     # Parse args
     args = parser.parse_args()
@@ -113,16 +118,18 @@ def main() -> None:
     tmp = None
     if "tmp" in args and args.tmp:
         tmp = args.tmp
-    
+
     # duckdb settings
     duckdb_settings = None
     if "duckdb_settings" in args and args.duckdb_settings:
-        if isinstance(args.duckdb_settings, str) and os.path.exists(full_path(args.duckdb_settings)):
+        if isinstance(args.duckdb_settings, str) and os.path.exists(
+            full_path(args.duckdb_settings)
+        ):
             with open(full_path(args.duckdb_settings)) as config_file:
                 duckdb_settings = json.load(config_file)
         else:
             duckdb_settings = json.loads(args.duckdb_settings)
-        
+
     # Assembly
     if "assembly" in args and args.assembly:
         assembly = args.assembly
@@ -145,27 +152,27 @@ def main() -> None:
     config["verbosity"] = args.verbosity
 
     # Threads
-    if "threads" not in config or not config.get("threads",None):
+    if "threads" not in config or not config.get("threads", None):
         config["threads"] = threads
 
     # Memory
-    if "memory" not in config or not config.get("memory",None):
+    if "memory" not in config or not config.get("memory", None):
         config["memory"] = memory
 
     # Chunk size
-    if "chunk_size" not in config or not config.get("chunk_size",None):
+    if "chunk_size" not in config or not config.get("chunk_size", None):
         config["chunk_size"] = chunk_size
-    
+
     # Tmp
-    if "tmp" not in config or not config.get("tmp",None):
+    if "tmp" not in config or not config.get("tmp", None):
         config["tmp"] = tmp
-    
+
     # duckDB settings
-    if "duckdb_settings" not in config or not config.get("duckdb_settings",None):
+    if "duckdb_settings" not in config or not config.get("duckdb_settings", None):
         config["duckdb_settings"] = duckdb_settings
-    
+
     # Assembly
-    if "assembly" not in config or not config.get("assembly",None):
+    if "assembly" not in config or not config.get("assembly", None):
         config["assembly"] = assembly
 
     # Change config
@@ -177,16 +184,18 @@ def main() -> None:
         parser.print_help()
     else:
         if args.command == "gui" and not tool_gui_enable:
-            #from gooey import Gooey, GooeyParser
+            # from gooey import Gooey, GooeyParser
             log.error("""HOWARD GUI disabled""")
             log.error("""ModuleNotFoundError: No module named 'gooey'""")
             log.error("""Install module 'gooey': pip install gooey""")
-            log.error("""Or install requirements: pip install -r requirements-gui.txt""")
+            log.error(
+                """Or install requirements: pip install -r requirements-gui.txt"""
+            )
             raise ValueError("""HOWARD GUI disabled""")
         command_function = commands_arguments[args.command]["function"]
         log.debug(f"Command/Tool: {command_function}")
         eval(f"{command_function}(args)")
 
-if __name__ == '__main__':
-    main()
 
+if __name__ == "__main__":
+    main()

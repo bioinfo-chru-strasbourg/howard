@@ -22,12 +22,11 @@ from howard.functions.commons import *
 from howard.functions.databases import *
 
 
-
-def stats(args:argparse) -> None:
+def stats(args: argparse) -> None:
     """
     The stats() function takes in arguments, loads data from an input file, gets statistics on the data,
     and closes the connection.
-    
+
     :param args: args is a parameter that is passed to the function stats(). It is likely an object or a
     dictionary that contains various arguments or parameters that are needed by the function to perform
     its tasks. Some of the arguments that may be included in args are input file path, configuration
@@ -48,8 +47,14 @@ def stats(args:argparse) -> None:
     param = vcfdata_obj.get_param()
 
     # Load args into param
-    param = load_args(param=param, args=args, arguments_dict=arguments_dict, command="stats", strict=False)
-    
+    param = load_args(
+        param=param,
+        args=args,
+        arguments_dict=arguments_dict,
+        command="stats",
+        strict=False,
+    )
+
     # Access
     config["access"] = "RO"
 
@@ -61,8 +66,8 @@ def stats(args:argparse) -> None:
     vcfdata_obj.load_data()
 
     # Parameters
-    stats_md = param.get("stats",{}).get("stats_md",None)
-    stats_json = param.get("stats",{}).get("stats_json",None)
+    stats_md = param.get("stats", {}).get("stats_md", None)
+    stats_json = param.get("stats", {}).get("stats_json", None)
 
     # Stats
     vcfdata_obj.print_stats(output_file=stats_md, json_file=stats_json)
@@ -71,6 +76,3 @@ def stats(args:argparse) -> None:
     vcfdata_obj.close_connexion()
 
     log.info("End")
-
-
-

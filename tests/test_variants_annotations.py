@@ -26,8 +26,6 @@ from howard.functions.databases import *
 from test_needed import *
 
 
-
-
 def test_annotations():
     """
     This function tests the annotation process of a VCF file with multiple annotations.
@@ -59,34 +57,30 @@ def test_annotations():
 
         # Construct param dict
         param_annotation = {
-                                'parquet': {
-                                    'annotations': {
-                                        annotation1: {
-                                            'INFO': None
-                                        },
-                                        annotation2: {
-                                            'CLNSIG': 'CLNSIG_new'
-                                        }
-                                    },
-                                },
-                                'bcftools': {
-                                    'annotations': {
-                                        annotation2: {
-                                            'CLNSIG': 'CLNSIG_new_bcftools'
-                                        },
-                                        annotation3: {
-                                            'symbol': 'gene'
-                                        }
-                                    },
-                                }
-                            }
-        param = {
-            "annotation": param_annotation,
-            "assembly": "hg19"
-            }
+            "parquet": {
+                "annotations": {
+                    annotation1: {"INFO": None},
+                    annotation2: {"CLNSIG": "CLNSIG_new"},
+                },
+            },
+            "bcftools": {
+                "annotations": {
+                    annotation2: {"CLNSIG": "CLNSIG_new_bcftools"},
+                    annotation3: {"symbol": "gene"},
+                },
+            },
+        }
+        param = {"annotation": param_annotation, "assembly": "hg19"}
 
         # Create object
-        variants = Variants(conn=None, input=input_vcf, output=output_vcf, config=config, param=param, load=True)
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            param=param,
+            load=True,
+        )
 
         # Remove if output file exists
         remove_if_exists([output_vcf])
@@ -101,11 +95,15 @@ def test_annotations():
         assert param_input == expected_param
 
         # Check annotation1
-        result = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr1' AND POS = 28736 AND REF = 'A' AND ALT = 'C' AND INFO LIKE '%CLNSIG_new=%'")
+        result = variants.get_query_to_df(
+            "SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr1' AND POS = 28736 AND REF = 'A' AND ALT = 'C' AND INFO LIKE '%CLNSIG_new=%'"
+        )
         assert len(result) == 1
 
         # Check annotation2
-        result = variants.get_query_to_df("SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66;gene=EGFR,EGFR-AS1'")
+        result = variants.get_query_to_df(
+            "SELECT 1 AS count FROM variants WHERE \"#CHROM\" = 'chr7' AND POS = 55249063 AND REF = 'G' AND ALT = 'A' AND INFO = 'DP=125;nci60=0.66;gene=EGFR,EGFR-AS1'"
+        )
         assert len(result) == 1
 
         # Check if VCF is in correct format with pyVCF
@@ -114,4 +112,3 @@ def test_annotations():
             vcf.Reader(filename=output_vcf)
         except:
             assert False
-
