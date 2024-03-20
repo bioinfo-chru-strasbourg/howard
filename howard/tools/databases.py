@@ -37,6 +37,7 @@ from howard.functions.commons import *
 from howard.objects.variants import *
 from howard.functions.databases import *
 from howard.functions.from_annovar import *
+from howard.functions.from_extann import from_extann
 
 
 def databases(args: argparse) -> None:
@@ -285,5 +286,10 @@ def databases(args: argparse) -> None:
     if args.input_annovar and args.output_annovar and args.genome:
         log.debug(f"Convert Annovar")
         from_annovar(args=args)
+
+    # from ExtAnn
+    if args.input_extann and args.output_extann:
+        log.debug("Convert ExtAnn")
+        from_extann(args=args)
 
     log.info("End")

@@ -1862,6 +1862,14 @@ commands_arguments = {
                 "annovar_reduce_memory": False,
                 "annovar_multi_variant": False,
             },
+            "from_extann": {
+                "input_extann": False,
+                "output_extann": False,
+                "refgene_extann": False,
+                "transcript_extann": False,
+                "param_extann": False,
+                "mode_extann": False,
+            },
             "Parameters": {
                 "generate-param": False,
                 "generate-param-description": False,
