@@ -1446,11 +1446,11 @@ def get_bin_command(
 
         # Threads
         if threads:
-            java_options += f" -XX:+UseParallelGC -XX:ParallelGCThreads={threads} "
+            java_options += f" -XX:ParallelGCThreads={threads} "
 
         # Memory
         if memory:
-            java_options += f" -Xmx{memory}G "
+            java_options += f" -XX:MaxHeapSize={memory}G "
 
         # Additional options
         if add_options:

@@ -148,10 +148,7 @@ def test_get_bin_command():
     # Test command snpeff found with java/jar (added options for java optional)
     tool_command = get_bin_command(tool="snpeff", config=config, param=param)
     assert tool_command.endswith("snpEff.jar")
-    assert (
-        "java  -XX:+UseParallelGC -XX:ParallelGCThreads=2  -Xmx16G  -jar "
-        in tool_command
-    )
+    assert "java  -XX:ParallelGCThreads=2  -XX:MaxHeapSize=16G  -jar " in tool_command
 
 
 def test_download_file():
