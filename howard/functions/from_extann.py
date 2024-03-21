@@ -9,8 +9,6 @@ import os
 import time
 from howard.functions import commons
 
-mandatory = ["#CHROM", "START", "END"]
-
 
 # Aim: This script was created to transform VARANK extann file to vcf, in order to be use in HOWARD 1.0.
 def create_metaheader(
@@ -143,7 +141,7 @@ def write_extann(
     """
     Write ExtAnn into a bed like file and his hdr mate
     """
-
+    mandatory = ["#CHROM", "START", "END"]
     # Variants and write to file
     headerfile = output + ".hdr"
     with open(output, "w+") as o, open(headerfile, "w+") as h:
@@ -336,8 +334,17 @@ def from_extann(args: argparse) -> None:
     # Transcript
     if args.transcript_extann:
         df_transcript = pd.read_csv(args.transcript_extann, header=0, sep="\t")
+    elif param.get("transcript_extann"):
+        df_transcript = pd.read_csv(param.get("transcript_extann"), header=0, sep="\t")
     else:
-        df_transcript = pd.read_csv(param["transcript_extann"], header=0, sep="\t")
+        if param.get("mode_extann") == "chosen":
+            log.error(
+                "Extann mode is set to user-specific but no transcript file provided EXIT"
+            )
+            exit()
+        else:
+            log.debug("No transcript provided for extann")
+            df_transcript = None
 
     # Header
     log.info("Create metaheader")
