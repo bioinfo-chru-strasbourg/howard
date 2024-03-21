@@ -6,7 +6,7 @@ Usage:
 pytest tests/
 
 Coverage:
-coverage run -m pytest . -x -v --log-cli-level=INFO --capture=tee-sys
+coverage run -m pytest tests/test_commons.py -x -v --log-cli-level=INFO --capture=tee-sys
 coverage report --include=howard/* -m
 """
 
@@ -63,7 +63,7 @@ def test_get_bin():
 
     # Test with config with tool type, and tool name but config bin does NOT exists
     config_bad = {"tools": {tool_name: {"jar": tool_bin_path}}}
-    assert get_bin(tool=tool_name, config=config_bad) == None
+    assert get_bin(tool=tool_name, config=config_bad) == tool_bin_path
 
     # Test with config and tool name and tool bin, but config bin does NOT exists, and search with tool bin in default tool folder
     assert (
@@ -72,7 +72,7 @@ def test_get_bin():
     )
 
     # Test with no config and tool name
-    assert get_bin(tool=tool_name) == None
+    assert get_bin(tool=tool_name) == tool_bin_path
 
     # Test with no config and tool bin
     assert os.path.basename(get_bin(bin=tool_bin)) == tool_bin
@@ -87,6 +87,68 @@ def test_get_bin():
         )
         == tool_bin
     )
+
+
+def test_get_bin_command():
+    """ """
+
+    # Test docker
+    snpeff_bin_path = tests_config.get("tools").get("snpeff")
+    config = {
+        "tools": {
+            "docker": {"bin": "docker"},
+            "java": {"bin": "java"},
+            "snpeff": {"jar": snpeff_bin_path},
+            "bcftools": {
+                "bin": "bcftools",
+                "docker": {
+                    "image": "howard:1.0.0",
+                    "entrypoint": "bcftools",
+                    "options": None,
+                    "command": None,
+                },
+            },
+        },
+        "threads": 12,
+        "memory": "40g",
+        "tmp": "/tmp",
+    }
+    param = {
+        "threads": 2,
+        "memory": "16g",
+        "tmp": "/tmp/howard",
+    }
+
+    # Test command bcftools found with bin
+    tool_command = get_bin_command(tool="bcftools", config=config, param=param)
+    assert os.path.basename(tool_command) == "bcftools"
+
+    # Test command bcftools found with docker (specified)
+    tool_command = get_bin_command(
+        tool="bcftools", bin_type="docker", config=config, param=param
+    )
+    assert (
+        "run  --rm  -v /tmp/howard:/tmp/howard  --cpus=2  --memory=16g  --entrypoint='bcftools'  howard:1.0.0 "
+        in tool_command
+    )
+
+    # Test command bcftools found with docker with added options
+    tool_command = get_bin_command(
+        tool="bcftools",
+        bin_type="docker",
+        config=config,
+        param=param,
+        add_options="-v /host/path/to/mount:/inner/path_to/mount",
+    )
+    assert (
+        "run  --rm  -v /tmp/howard:/tmp/howard  --cpus=2  --memory=16g  --entrypoint='bcftools'  -v /host/path/to/mount:/inner/path_to/mount  howard:1.0.0 "
+        in tool_command
+    )
+
+    # Test command snpeff found with java/jar (added options for java optional)
+    tool_command = get_bin_command(tool="snpeff", config=config, param=param)
+    assert tool_command.endswith("snpEff.jar")
+    assert "java  -Dmaximum.threads=2  -Xmx16G  -jar " in tool_command
 
 
 def test_download_file():

@@ -311,6 +311,7 @@ def command(command: str) -> str:
     :param command: The command to run
     :return: The return value is the exit status of the process.
     """
+
     output = subprocess.check_output(command, shell=True)
     return output.decode("utf-8").strip()
 
@@ -1254,13 +1255,37 @@ def download_file(
     return os.path.exists(dest_file_path)
 
 
+def whereis_bin(bin_file: str) -> str:
+    """ """
+
+    if isinstance(bin_file, str):
+        whereis_bin = bin_file
+    else:
+        return None
+
+    # Switch to which
+    if whereis_bin and which(whereis_bin):
+        whereis_bin = which(whereis_bin)
+
+    # Full path
+    whereis_bin = full_path(whereis_bin)
+
+    if whereis_bin and (
+        os.path.exists(whereis_bin) or (whereis_bin and which(whereis_bin))
+    ):
+        return whereis_bin
+    else:
+        return None
+
+
 def get_bin(
     bin: str = None,
     tool: str = None,
     bin_type: str = "bin",
     config: dict = {},
     default_folder: str = DEFAULT_TOOLS_FOLDER,
-):
+    output_type: str = "bin",
+) -> str:
     """
     The `get_bin` function retrieves the path to a specified binary file from a configuration dictionary
     or searches for it in the file system if it is not specified in the configuration.
@@ -1287,30 +1312,80 @@ def get_bin(
 
     # Full path
     default_folder = full_path(default_folder)
-    log.debug(f"default_folder={default_folder}")
+    # log.debug(f"default_folder={default_folder}")
 
     # Config - snpEff
     config_tool = config.get("tools", {}).get(tool)
-    log.debug(f"config_tool={config_tool}")
+    # log.debug(f"config_tool={config_tool}")
+
+    # Allowed dict conf
+    tool_dict_conf_type_allowed = ["jar", "java", "docker"]
 
     # Find bin_file
     bin_file = None
-    for conf in [config_tool, DEFAULT_TOOLS_BIN.get(tool)]:
-        if conf:
-            if isinstance(conf, dict) and bin_type in conf:
-                bin_file = conf.get(bin_type)
+    bin_file_type = bin_type
+
+    # For input config for tool and default config (if not provided)
+    for conf in [config_tool, DEFAULT_TOOLS_BIN.get(tool, {})]:
+
+        # If config not empty and bin_file not already found
+        if conf and not bin_file:
+
+            # If tool config is a dict (simple dict with type of more complex such as docker)
+            if isinstance(conf, dict) and bin_type:
+
+                # If type found in dict (simple dict such as
+                # {'bin': '/path/to/tool'})
+                # {'jar': '/path/to/tool.jar'})
+                if bin_type in conf:
+                    bin_file_new = conf.get(bin_type)
+                    # If bin is a env binary or a existing file (see whereis function)
+                    log.debug(f"bin_file_new={bin_file_new} - bin_type={bin_type}")
+                    if whereis_bin(bin_file_new):
+                        bin_file = whereis_bin(bin_file_new)
+                    # If specific bin type is asked (e.g. docker, which is a dict not a string)
+                    elif bin_type in tool_dict_conf_type_allowed and isinstance(
+                        bin_file_new, dict
+                    ):
+                        if output_type in ["bin", "dict"]:
+                            return bin_file_new
+                        elif output_type in ["type"]:
+                            return bin_type
+
+                # If bin not found as a specific input type
+                if not bin_file:
+
+                    # For each other type in conf (if any)
+                    for bin_type_conf in conf:
+
+                        # Bin file/config and bin type
+                        bin_file = conf.get(bin_type_conf)
+                        bin_file_type = bin_type_conf
+
+                        # If type is allowed to be return (e.g. 'docker', 'java')
+                        if bin_file_type in tool_dict_conf_type_allowed:
+
+                            # return if output type is for a dict (for futher configuration, e.g. for 'docker', 'java')
+                            if output_type in ["dict"] and isinstance(bin_file, dict):
+                                return bin_file
+                            # else:
+                            #     return None
+
+            # If config is a path to binary/file as a string
             elif isinstance(conf, str):
                 bin_file = conf
 
-    # Switch to which
-    if bin_file and which(bin_file):
-        bin_file = which(bin_file)
+    # Return not "bin"
+    if output_type in ["type"]:
+        return bin_file_type
+    elif output_type in ["dict"] and isinstance(bin_file, dict):
+        return bin_file
 
-    # Full path
-    bin_file = full_path(bin_file)
+    # Check bin_file validation
+    bin_file = whereis_bin(bin_file)
 
     # Config - check tools
-    if not bin_file or not (os.path.exists(bin_file) or (bin_file and which(bin_file))):
+    if not bin_file:
 
         # Try to find bin file
         try:
@@ -1326,6 +1401,313 @@ def get_bin(
             return None
 
     return bin_file
+
+
+def get_bin_command(
+    bin: str = None,
+    tool: str = None,
+    bin_type: str = "bin",
+    config: dict = {},
+    param: dict = {},
+    default_folder: str = DEFAULT_TOOLS_FOLDER,
+    add_options: str = None,
+) -> str:
+    """ """
+
+    # Tool bin and type
+    tool_bin = get_bin(
+        bin=bin,
+        tool=tool,
+        bin_type=bin_type,
+        config=config,
+        default_folder=default_folder,
+    )
+    tool_bin_type = get_bin(
+        bin=bin,
+        tool=tool,
+        bin_type=bin_type,
+        config=config,
+        output_type="type",
+        default_folder=default_folder,
+    )
+
+    # Threads and memory
+    threads = get_threads(config=config, param=param)
+    memory = extract_memory_in_go(get_memory(config=config, param=param))
+    tmp = get_tmp(config=config, param=param)
+
+    # Java and jar command
+    if tool_bin_type in ["jar", "java"]:
+
+        # Find java bin
+        java_bin = get_bin(tool="java", config=config)
+
+        # Java options
+        java_options = ""
+
+        # Threads
+        if threads:
+            java_options += f" -Dmaximum.threads={threads} "
+
+        # Memory
+        if memory:
+            java_options += f" -Xmx{memory}G "
+
+        # Additional options
+        if add_options:
+            java_options += f" {add_options} "
+
+        # Java Command for tool
+        tool_command = f"{java_bin} {java_options} -jar {tool_bin}"
+
+        # Return tool java command
+        return tool_command
+
+    # Docker command
+    elif tool_bin_type in ["docker"]:
+
+        # Find docker bin
+        docker_bin = get_bin(tool="docker", config=config)
+
+        # Docker param for tool
+        tool_bin_dict = get_bin(
+            tool=tool, config=config, bin_type="docker", output_type="dict"
+        )
+        tool_bin_docker_image = tool_bin_dict.get("image", None)
+        tool_bin_docker_entrypoint = tool_bin_dict.get("entrypoint", None)
+        tool_bin_docker_command = tool_bin_dict.get("command", "")
+        tool_bin_docker_options = tool_bin_dict.get("options", "")
+
+        if not tool_bin_docker_image:
+            msg_error = f"Error in Docker command for tool '{tool}'"
+            log.error(msg_error)
+            raise ValueError(msg_error)
+
+        # Create default param
+        tool_bin_docker_params = " --rm "
+
+        # Temp folder by default
+        tool_bin_docker_params += f" -v {tmp}:{tmp} "
+
+        # Threads
+        if threads:
+            tool_bin_docker_params += f" --cpus={threads} "
+
+        # Memory
+        if memory:
+            tool_bin_docker_params += f" --memory={memory}g "
+
+        # Init docker param
+        if tool_bin_docker_options:
+            tool_bin_docker_params += f" {tool_bin_docker_options} "
+
+        # Check params to add
+
+        # Entrypoint
+        if tool_bin_docker_entrypoint:
+            tool_bin_docker_params += f" --entrypoint='{tool_bin_docker_entrypoint}' "
+
+        # Additional options
+        if add_options:
+            tool_bin_docker_params += f" {add_options} "
+
+        # Additioanl command
+        if not tool_bin_docker_command:
+            tool_bin_docker_command = ""
+
+        # Docker command
+        tool_command = f"{docker_bin} run {tool_bin_docker_params} {tool_bin_docker_image} {tool_bin_docker_command}"
+
+        # Return tool docker command
+        return tool_command
+
+    else:
+        return tool_bin
+
+
+def get_tmp(config: dict = {}, param: dict = None, default_tmp: str = "/tmp") -> str:
+    """
+    The `get_tmp` function returns the value of the "tmp" parameter from either the `param` dictionary,
+    `config` dictionary, or a default value "/tmp".
+
+    :param config: Config is a dictionary that contains configuration settings for the function. It is
+    an optional parameter with a default value of an empty dictionary. It can be used to provide
+    additional configuration settings to the function `get_tmp`
+    :type config: dict
+    :param param: The `param` parameter is a dictionary containing parameters that can be passed to the
+    function `get_tmp`. It can include various key-value pairs, but in this context, the function
+    specifically looks for the key "tmp" within the `param` dictionary to determine the temporary path
+    value. If the "
+    :type param: dict
+    :param default_tmp: The `default_tmp` parameter in the `get_tmp` function is a string that
+    represents the default path for temporary files. If the "tmp" key is not found in the `param`
+    dictionary or the `config` dictionary, the function will return this `default_tmp` value, which is,
+    defaults to /tmp
+    :type default_tmp: str (optional)
+    :return: The function `get_tmp` returns the value of the "tmp" key from the `param` dictionary if it
+    exists. If the "tmp" key is not found in the `param` dictionary, it returns the value of the "tmp"
+    key from the `config` dictionary. If neither key is found in `param` or `config`, it returns the
+    default value "/tmp".
+    """
+
+    # Tmp in param or config
+    tmp_param = param.get("tmp", config.get("tmp", default_tmp))
+
+    # Return tmp
+    return tmp_param
+
+
+def get_threads(config: dict = {}, param: dict = None) -> int:
+    """
+    This Python function retrieves the number of threads to use based on input parameters and system
+    configuration.
+
+    :param config: The `config` parameter is a dictionary that contains configuration settings for the
+    function `get_threads`. It can be used to provide default values for the number of threads to use in
+    the function
+    :type config: dict
+    :param param: The `param` parameter is a dictionary that may contain the key "threads" which
+    specifies the number of threads to use. If the "threads" key is not present in the `param`
+    dictionary, the function will look for the "threads" key in the `config` dictionary. If neither
+    :type param: dict
+    :return: The function `get_threads` returns the number of threads to be used based on the input
+    parameters.
+    """
+
+    # Threads system
+    nb_threads = os.cpu_count()
+
+    # Threads in param or config
+    threads_param = int(param.get("threads", config.get("threads", 0)))
+
+    # Check threads in params
+    if threads_param:
+        input_thread = threads_param
+    else:
+        input_thread = None
+
+    # Check threads value
+    if not threads_param or int(threads_param) <= 0:
+        threads = nb_threads
+    else:
+        threads = int(input_thread)
+
+    # Return threads
+    return threads
+
+
+def get_memory(config: dict = {}, param: dict = None) -> str:
+    """
+    The `get_memory` function retrieves memory information using psutil and calculates a default memory
+    value based on total memory, with the option to specify a custom memory value.
+
+    :param config: The `config` parameter is a dictionary that may contain configuration settings for
+    the function `get_memory`. It is used to provide default values or settings for the function
+    :type config: dict
+    :param param: The `param` parameter is a dictionary that may contain a key "memory" which represents
+    the amount of memory to be used. If the "memory" key is not present in the `param` dictionary, the
+    function will try to retrieve the value from the `config` dictionary using the key "
+    :type param: dict
+    :return: The function `get_memory` returns a string representing the amount of memory to be used.
+    This memory value is calculated based on the total memory available on the system, with a default
+    value set to 80% of the total memory. The function first checks if a specific memory value is
+    provided in the `param` dictionary, and if not, it looks for a default value in the `config`
+    """
+
+    import psutil
+
+    # Memory system
+    mem = psutil.virtual_memory()
+    mem_total = mem.total / 1024 / 1024 / 1024
+    mem_default = int(mem_total * 0.8)
+
+    # Threads in param or config
+    memory_param = param.get("memory", config.get("memory", "0"))
+
+    # Check memory value
+    if mem_default < 1:
+        mem_default = 1
+    if memory_param:
+        memory = memory_param
+    else:
+        memory = f"{mem_default}G"
+
+    return memory
+
+
+def extract_float_from_str(text: str = "") -> float:
+    """
+    The function `extract_float_from_str` extracts a float value from a given string input.
+
+    :param text: The `extract_float_from_str` function is designed to extract a floating-point number
+    from a given string input. The function uses a regular expression to find the first occurrence of a
+    floating-point number in the input string and returns it as a float
+    :type text: str
+    :return: The function `extract_float_from_str` returns a float value extracted from the input text
+    string. If a float value is found in the text, it is returned as a float. If no float value is
+    found, it returns `None`.
+    """
+
+    value_in_float = re.findall(r"[-+]?\d*\.*\d+", text)
+
+    if len(value_in_float):
+        return float(value_in_float[0])
+    else:
+        return None
+
+
+def extract_memory_in_go(
+    memory_str, default_value: int = 1, default_unit: str = "G"
+) -> int:
+    """
+    The `extract_memory_in_go` function converts a memory size string in the format FLOAT[kMG] to an
+    integer value in Go memory units.
+
+    :param memory_str: The `memory_str` parameter should be a string representing a memory value with a
+    unit suffix in the format FLOAT[kMG]. For example, it could be "1G", "512M", or "2k"
+    :param default: The `default` parameter in the `extract_memory_in_go` function is used to specify a
+    default integer value if the conversion of the memory size string fails or if the value cannot be
+    extracted from the input string. If no valid value can be extracted from the input string, the
+    function will return the, defaults to 1
+    :type default: int (optional)
+    :return: The `extract_memory_in_go` function is returning an integer value representing the memory
+    size in Go units based on the input memory string provided.
+    """
+
+    # Convert in upper ccase
+    memory_str = str(memory_str).upper()
+
+    # Coefficient
+    coefficient = {
+        "K": 1 / (1024 * 1024),
+        "M": 1 / 1024,
+        "G": 1,
+    }
+
+    try:
+        # Extract in float
+        value = extract_float_from_str(text=memory_str)
+        if not value:
+            value = default_value
+
+        # Extract unit
+        unit = re.findall(r"[?([A-Za-z]+", memory_str)
+        if not unit:
+            unit = default_unit
+        else:
+            unit = unit[0]
+
+        # Convert in int Go
+        if unit in coefficient:
+            return int(value * coefficient[unit])
+        else:
+            raise ValueError(
+                f"Invalid unit '{unit}'. Use 'k', 'm' ou 'g' i upper or lower case."
+            )
+    except ValueError:
+        raise ValueError(
+            f"Invalid memory format '{memory_str}'. Use format FLOAT[kMG]."
+        )
 
 
 def concat_file(input_files: list, output_file: str) -> bool:
