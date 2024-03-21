@@ -2567,7 +2567,7 @@ def help_generation_from_dict(
                             example_header = ""
                             for example_line in help_md.split("\n"):
                                 if example_line.startswith("#"):
-                                    example_header += example_line
+                                    example_header = example_line
                                 else:
 
                                     if example_header not in help_md_dict:

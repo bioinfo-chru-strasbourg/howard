@@ -90,14 +90,25 @@
 ]</xmp><br><H4 id='folders::databases::snpeff'>folders::databases::snpeff</H4>Annotation databases folders for snpEff annotation.<br>Format: A folder path (without assembly)<br>Default: ~/howard/databases/snpeff/current<br>Examples: <xmp># Path to snpEff database folder
 "snpeff": "~/howard/databases/snpeff/current/"</xmp><br><H4 id='folders::databases::exomiser'>folders::databases::exomiser</H4>Annotation databases folders for Exomiser annotation.<br>Format: A folder path (without assembly)<br>Default: ~/howard/databases/exomiser/current<br>Examples: <xmp># Path to Exomiser database folder
 "exomiser": "~/howard/databases/exomiser/current/"</xmp><br><H4 id='folders::databases::refseq'>folders::databases::refseq</H4>Annotation databases folders for refSeq annotation.<br>Format: A folder path (without assembly)<br>Default: ~/howard/databases/refseq/current<br>Examples: <xmp># Path to refSeq files folder
-"refseq": "~/howard/databases/refseq/current/"</xmp><br><H2 id='tools'>tools</H2>External tools paths that can be defined as path to a binary or a dict including the binary type (such as "bin", "jar", "perl").<br>Examples: <xmp># Example of a configuration for tools, with env $PATH, full path and path with type
+"refseq": "~/howard/databases/refseq/current/"</xmp><br><H2 id='tools'>tools</H2>External tools paths that can be defined as path to a binary or a dict including the binary type (such as "bin", "jar", "perl"). External tools can be configured with docker, using 'docker' as binary type and options to define docker 'image' (mandatory), to specify 'entrypoint', 'command' and docker 'options' (e.g. folder mount '-v /path/to/folder:/path/to/folder').<br>Examples: <xmp># Example of a configuration for tools, with env $PATH, full path and path with type
 "tools": {
    "bcftools": "bcftools",
    "bgzip": "bgzip",
    "java": "/usr/bin/java",
    "snpeff": "~/howard/tools/snpeff/current/bin/snpEff.jar",
    "annovar": {"jar": "~/howard/tools/annovar/current/bin/table_annovar.pl"},
-   "exomiser": {"jar": "~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar}"
+   "exomiser": {"jar": "~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar"}
+}
+# Example of a configuration for bcftools with a docker image (example with howard docker image)
+"tools": {
+   "bcftools": {
+      "docker": {
+        "image": "howard:1.0.0",
+        "entrypoint": "bcftools",
+        "options": null,
+        "command": null
+      }
+   }
 }</xmp><br><H3 id='tools::bcftools'>tools::bcftools</H3>BCFTools binary (see https://samtools.github.io/bcftools/).<br>Default: bcftools<br>Examples: <xmp># Path to binary in $PATH env variable
 "bcftools": "bcftools"
 # Path to binary as a dict with binary type 'bin'
