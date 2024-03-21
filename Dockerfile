@@ -66,7 +66,7 @@ ENV TOOL=/tool
 ENV DATABASES=/databases
 
 # YUM
-ENV YUM_INSTALL="gcc bc make wget perl-devel which zlib-devel zlib bzip2-devel bzip2 xz-devel xz ncurses-devel unzip curl-devel java-17 htop libgomp aria2"
+ENV YUM_INSTALL="gcc bc make wget perl-devel which zlib-devel zlib bzip2-devel bzip2 xz-devel xz ncurses-devel unzip curl-devel java-17 htop libgomp aria2 docker-ce"
 #ENV YUM_REMOVE="zlib-devel bzip2-devel xz-devel ncurses-devel gcc"
 
 
@@ -85,6 +85,8 @@ RUN echo 'alias ll="ls -lah"' >> ~/.bashrc
 
 # AlmaLinux GPG key and YUM install
 RUN rpm --import https://repo.almalinux.org/almalinux/RPM-GPG-KEY-AlmaLinux && \
+    yum install -y yum-utils && \
+    yum config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo && \
     yum install -y epel-release && \
     yum install -y $YUM_INSTALL;
 
@@ -260,7 +262,8 @@ RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
 ############
 
 ENV TOOL_NAME=exomiser
-ENV TOOL_VERSION=13.2.0
+#ENV TOOL_VERSION=13.2.0
+ENV TOOL_VERSION=14.0.0
 ENV TARBALL_LOCATION=https://data.monarchinitiative.org/exomiser/$TOOL_VERSION
 ENV TARBALL=exomiser-cli-$TOOL_VERSION-distribution.zip
 ENV TARBALL_FOLDER=exomiser-cli-$TOOL_VERSION

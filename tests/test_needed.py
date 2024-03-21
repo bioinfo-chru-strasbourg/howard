@@ -65,6 +65,7 @@ tests_config = {
         "java": "java",
         "snpeff": f"{tests_tools}/snpeff/current/bin/snpEff.jar",
         "annovar": f"{tests_tools}/annovar/current/bin/table_annovar.pl",
+        "exomiser": f"{tests_tools}/exomiser/current/bin/exomiser-cli-14.0.0.jar",
     },
     "verbosity": "debug",
 }
