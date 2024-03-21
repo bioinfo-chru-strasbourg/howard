@@ -26,13 +26,18 @@ from howard.tools.tools import *
 
 
 # Import Gooey only if exists
-import imp
+import importlib.util
+
 
 try:
-    imp.find_module("gooey")
+    importlib.util.find_spec("gooey")
     from gooey import Gooey, GooeyParser
 except ImportError:
-    found = False
+    log.error("""HOWARD GUI disabled""")
+    log.error("""ModuleNotFoundError: No module named 'gooey'""")
+    log.error("""Install module 'gooey': pip install gooey""")
+    log.error("""Or install requirements: pip install -r requirements-gui.txt""")
+    raise ValueError("""HOWARD GUI disabled""")
 
 # Images folder
 main_folder = os.path.dirname(__file__)

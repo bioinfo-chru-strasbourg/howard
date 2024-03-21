@@ -21,8 +21,23 @@ from configparser import ConfigParser
 
 from howard.objects.variants import Variants
 from howard.objects.database import Database
+from howard.tools.tools import (
+    set_log_level,
+    help_generation,
+    full_path,
+    arguments,
+    commands_arguments,
+    shared_arguments,
+    tool_gui_enable,
+    DEFAULT_CHUNK_SIZE,
+)
 
-from howard.tools.tools import *
+# Load command submodule
+for c in commands_arguments:
+    try:
+        exec("from {m} import {s}".format(m="howard.tools.tools", s=c))
+    except Exception as e:
+        print(e)
 
 
 # Usage
@@ -78,9 +93,8 @@ def main() -> None:
     # log
     if "log" not in args:
         args.log = None
-    elif args.log:
-        if not isinstance(args.log, str):
-            args.log = args.log.name
+    elif args.log and not isinstance(args.log, str):
+        args.log = args.log.name
 
     # Config infos
     args.arguments_dict = arguments_dict
@@ -184,7 +198,6 @@ def main() -> None:
         parser.print_help()
     else:
         if args.command == "gui" and not tool_gui_enable:
-            # from gooey import Gooey, GooeyParser
             log.error("""HOWARD GUI disabled""")
             log.error("""ModuleNotFoundError: No module named 'gooey'""")
             log.error("""Install module 'gooey': pip install gooey""")
