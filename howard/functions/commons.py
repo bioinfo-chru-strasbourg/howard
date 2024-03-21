@@ -1556,7 +1556,7 @@ def get_tmp(config: dict = {}, param: dict = None, default_tmp: str = "/tmp") ->
     return tmp_param
 
 
-def get_threads(config: dict = {}, param: dict = None) -> int:
+def get_threads(config: dict = {}, param: dict = {}) -> int:
     """
     This Python function retrieves the number of threads to use based on input parameters and system
     configuration.
@@ -1572,6 +1572,14 @@ def get_threads(config: dict = {}, param: dict = None) -> int:
     :return: The function `get_threads` returns the number of threads to be used based on the input
     parameters.
     """
+
+    # Config
+    if not config:
+        config = {}
+
+    # Param
+    if not param:
+        param = {}
 
     # Threads system
     nb_threads = os.cpu_count()

@@ -720,7 +720,7 @@ def test_database_dbnsfp():
             assert len(downloaded_assembly_files) == nb_files
 
 
-def test_database():
+def test_databases():
     """
     This function tests the "databases" function with a set of arguments.
     """
