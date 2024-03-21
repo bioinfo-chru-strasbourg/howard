@@ -243,7 +243,9 @@ def test_name_to_variant_long():
     )
 
     # Read transcripts.
-    with open(tests_databases_folder + "/refseq/hg19/ncbiRefSeq.txt", "r") as infile:
+    with open(
+        tests_databases_folder + "/refseq/current/hg19/ncbiRefSeq.txt", "r"
+    ) as infile:
         transcripts = read_transcripts(infile)
 
     class NoTranscriptError(Exception):
