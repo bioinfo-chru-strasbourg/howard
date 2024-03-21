@@ -1340,7 +1340,6 @@ def get_bin(
                 if bin_type in conf:
                     bin_file_new = conf.get(bin_type)
                     # If bin is a env binary or a existing file (see whereis function)
-                    log.debug(f"bin_file_new={bin_file_new} - bin_type={bin_type}")
                     if whereis_bin(bin_file_new):
                         bin_file = whereis_bin(bin_file_new)
                     # If specific bin type is asked (e.g. docker, which is a dict not a string)
@@ -1447,7 +1446,7 @@ def get_bin_command(
 
         # Threads
         if threads:
-            java_options += f" -Dmaximum.threads={threads} "
+            java_options += f" -XX:+UseParallelGC -XX:ParallelGCThreads={threads} "
 
         # Memory
         if memory:

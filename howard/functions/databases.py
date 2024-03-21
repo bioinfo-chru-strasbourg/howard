@@ -2919,47 +2919,73 @@ def databases_download_exomiser(
 
     # Variables
     transcript_source_default = "refseq"
-    exomiser_release_default = "2109"
+    exomiser_release_default = "2402"
 
     # Full Path
     exomiser_folder = full_path(exomiser_folder)
     exomiser_application_properties = full_path(exomiser_application_properties)
 
+    log.debug(f"exomiser_folder={exomiser_folder}")
+    log.debug(f"exomiser_application_properties={exomiser_application_properties}")
+
     # Create folder if not exists
     if not os.path.exists(exomiser_folder):
         Path(exomiser_folder).mkdir(parents=True, exist_ok=True)
 
-    # application.properties as dict
-    exomiser_application_properties_dict = {}
-
-    # Find exomiser_application_properties
-    if not exomiser_application_properties:
-        exomiser_jar = get_bin(
-            bin="exomiser-cli*.jar",
-            tool="exomiser",
-            bin_type="jar",
-            default_folder=f"{DEFAULT_TOOLS_FOLDER}/exomiser",
-        )
-        if exomiser_jar and os.path.exists(exomiser_jar):
-            exomiser_jar_dirname = os.path.dirname(exomiser_jar)
-            exomiser_application_properties = os.path.join(
-                exomiser_jar_dirname, "application.properties"
-            )
-
-    if exomiser_application_properties and os.path.exists(
-        exomiser_application_properties
-    ):
-        configs = Properties()
-        with open(exomiser_application_properties, "rb") as read_prop:
-            configs.load(read_prop)
-        for item in configs.items():
-            exomiser_application_properties_dict[item[0]] = item[1][0]
-
-    log.debug(exomiser_application_properties_dict)
-
     for assembly in assemblies:
 
         log.info(f"Download Exomiser ['{assembly}']")
+
+        # application.properties as dict
+        exomiser_application_properties_assembly = exomiser_application_properties
+        exomiser_application_properties_dict = {}
+
+        # Find exomiser_application_properties
+        if not exomiser_application_properties_assembly:
+            # Find application.properties on assembly folder
+            if os.path.exists(
+                os.path.join(exomiser_folder, assembly, "application.properties")
+            ):
+                exomiser_application_properties_assembly = os.path.join(
+                    exomiser_folder, assembly, "application.properties"
+                )
+            # Find application.properties with exomizer Jar
+            else:
+                exomiser_jar = get_bin(
+                    bin="exomiser-cli*.jar",
+                    tool="exomiser",
+                    bin_type="jar",
+                    default_folder=f"{DEFAULT_TOOLS_FOLDER}/exomiser/current",
+                )
+                if not exomiser_jar:
+                    exomiser_jar = get_bin(
+                        bin="exomiser-cli*.jar",
+                        tool="exomiser",
+                        bin_type="jar",
+                        default_folder=f"{DEFAULT_TOOLS_FOLDER}/exomiser",
+                    )
+                log.debug(f"exomiser_jar={exomiser_jar}")
+                if exomiser_jar and os.path.exists(exomiser_jar):
+                    exomiser_jar_dirname = os.path.dirname(exomiser_jar)
+                    exomiser_application_properties_assembly = os.path.join(
+                        exomiser_jar_dirname, "application.properties"
+                    )
+        log.debug(
+            f"exomiser_application_properties_assembly={exomiser_application_properties_assembly}"
+        )
+
+        if exomiser_application_properties_assembly and os.path.exists(
+            exomiser_application_properties_assembly
+        ):
+            configs = Properties()
+            with open(exomiser_application_properties_assembly, "rb") as read_prop:
+                configs.load(read_prop)
+            for item in configs.items():
+                exomiser_application_properties_dict[item[0]] = item[1][0]
+
+        log.debug(
+            f"exomiser_application_properties_dict={exomiser_application_properties_dict}"
+        )
 
         if not exomiser_release or exomiser_release.lower() in [
             "default",
@@ -3035,7 +3061,6 @@ def databases_download_exomiser(
         exomiser_assembly_file = os.path.join(
             exomiser_folder, exomiser_assembly_filename
         )
-        # exomiser_assembly_file_base = os.path.join(exomiser_folder, exomiser_assembly_filename_base)
         exomiser_assembly_folder = os.path.join(exomiser_folder, assembly)
         exomiser_download_assembly_url = os.path.join(
             exomiser_url, "data", exomiser_assembly_filename
@@ -3057,7 +3082,6 @@ def databases_download_exomiser(
             )
 
         # Extract Zip file
-        # if not os.path.exists(exomiser_assembly_folder):
         if not os.path.exists(
             os.path.join(exomiser_assembly_folder, exomiser_assembly_filename_base)
         ):
@@ -3095,18 +3119,34 @@ def databases_download_exomiser(
             exomiser_assembly_folder, "application.properties"
         )
         exomiser_application_properties_assembly = Properties()
+
+        # data directory
         exomiser_application_properties_assembly["exomiser.data-directory"] = (
             exomiser_assembly_folder
         )
+
+        # data version
         exomiser_application_properties_assembly[
             f"exomiser.{assembly}.data-version"
         ] = exomiser_release_found
-        exomiser_application_properties_assembly[
-            f"exomiser.{assembly}.variant-white-list-path"
-        ] = f"{exomiser_release_found}_{assembly}_clinvar_whitelist.tsv.gz"
+
+        # phenotype data version
         exomiser_application_properties_assembly[f"exomiser.phenotype.data-version"] = (
             exomiser_phenotype_release_found
         )
+
+        # variant-white-list-path
+        variant_white_list_file = (
+            f"{exomiser_release_found}_{assembly}_clinvar_whitelist.tsv.gz"
+        )
+        if os.path.exists(
+            os.path.join(exomiser_assembly_folder, variant_white_list_file)
+        ):
+            exomiser_application_properties_assembly[
+                f"exomiser.{assembly}.variant-white-list-path"
+            ] = f"{exomiser_release_found}_{assembly}_clinvar_whitelist.tsv.gz"
+
+        # transcript source
         exomiser_application_properties_assembly[
             f"exomiser.{assembly}.transcript-source"
         ] = transcript_source_default
@@ -3368,8 +3408,11 @@ def databases_download_exomiser(
             )
 
         # Create application.properties
-        with open(exomiser_application_properties_assembly_file, "wb") as f:
-            exomiser_application_properties_assembly.store(f, encoding="utf-8")
+        if not os.path.exists(exomiser_application_properties_assembly_file):
+            if exomiser_assembly_folder:
+                Path(exomiser_assembly_folder).mkdir(parents=True, exist_ok=True)
+            with open(exomiser_application_properties_assembly_file, "wb") as f:
+                exomiser_application_properties_assembly.store(f, encoding="utf-8")
 
     return True
 

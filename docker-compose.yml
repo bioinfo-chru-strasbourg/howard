@@ -25,6 +25,8 @@ services:
         entrypoint: /bin/bash
         command: ${DOCKER_HOWARD_SETUP_CONTAINER_COMMAND}
         volumes:
+            # Docker sock
+            - /var/run/docker.sock:/var/run/docker.sock
             # Databases
             - ${DOCKER_HOWARD_CLI_FOLDER_HOST_DATABASES}:${DOCKER_HOWARD_CLI_FOLDER_INNER_DATABASES}
         env_file:
@@ -39,6 +41,8 @@ services:
         entrypoint: /bin/bash
         command: -c "echo '# Welcome to HOWARD Command Line Interface' && while true; do sleep ${DOCKER_HOWARD_CLI_SLEEP}; done"
         volumes:
+            # Docker sock
+            - /var/run/docker.sock:/var/run/docker.sock
             # Databases
             - ${DOCKER_HOWARD_CLI_FOLDER_HOST_DATABASES}:${DOCKER_HOWARD_CLI_FOLDER_INNER_DATABASES}:rw
             # Data
