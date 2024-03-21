@@ -49,15 +49,11 @@
     - [Exomiser](#exomiser)
     - [dbSNP](#dbsnp)
     - [HGMD](#hgmd)
-    - [Parameters file](#parameters-file)
-  - [FROM_ANNOVAR tool](#from_annovar-tool)
-    - [Main options](#main-options-9)
-    - [Annovar](#annovar-1)
-    - [Parquet](#parquet)
-    - [Modes](#modes)
+    - [from_Annovar](#from_annovar)
+    - [Parameters](#parameters)
   - [GUI tool](#gui-tool)
   - [HELP tool](#help-tool)
-    - [Main options](#main-options-10)
+    - [Main options](#main-options-9)
   - [Shared arguments](#shared-arguments)
 
 <!--TOC-->
@@ -1127,6 +1123,10 @@ Usage examples:
 
 > howard databases --generate-param=/tmp/param.json --generate-param-description=/tmp/test.description.json --generate-param-formats=parquet 
 
+> howard databases --input_annovar=tests/databases/others/hg19_nci60.txt --output_annovar=/tmp/nci60.from_annovar.vcf.gz --annovar_to_parquet=/tmp/nci60.from_annovar.parquet --annovar_code=nci60 --genome=~/howard/databases/genomes/current/hg19.fa 
+
+
+
 Notes:
 
 > - Downloading databases can take a while, depending on network, threads and memory
@@ -1152,6 +1152,13 @@ Genome Assembly (e.g. 'hg19', 'hg38').
 
 Folder containing genomes.
 (e.g. '/Users/lebechea/howard/databases/genomes/current'
+```
+
+```
+--genome=<genome> (default: ~/howard/databases/genomes/current/hg19/hg19.fa)
+
+Genome file in fasta format (e.g. 'hg19.fa', 'hg38.fa').
+
 ```
 
 ### Genomes
@@ -1597,7 +1604,55 @@ By default (None), input file name without '.vcf.gz'.
 
 ```
 
-### Parameters file
+### from_Annovar
+```
+--input_annovar=<input annovar>
+
+Input Annovar file path.
+Format file must be a Annovar TXT file, associated with '.idx'.
+
+```
+
+```
+--output_annovar=<output annovar>
+
+Output Annovar file path.
+Format file must be either VCF compressesd file '.vcf.gz'.
+
+```
+
+```
+--annovar_code=<Annovar code>
+
+Annovar code, or database name.
+Usefull to name databases columns.
+
+```
+
+```
+--annovar_to_parquet=<to parquet>
+
+Parquet file conversion.
+
+```
+
+```
+--annovar_reduce_memory=<reduce memory> ['auto', 'enable', 'disable'] (default: auto)
+
+Reduce memory option for Annovar convert,
+either 'auto' (auto-detection), 'enable' or 'disable'.
+
+```
+
+```
+--annovar_multi_variant=<Annovar multi variant> ['auto', 'enable', 'disable'] (default: auto)
+
+Variant with multiple annotation lines on Annovar file.
+Either 'auto' (auto-detection), 'enable' or 'disable'.
+
+```
+
+### Parameters
 ```
 --generate-param=<param>
 
@@ -1637,79 +1692,6 @@ List of database formats to check
 
 Generate parameter JSON file with BCFTools annotation for allowed formats
 (i.e. 'vcf', 'bed').
-
-```
-
-
-
-## FROM_ANNOVAR tool
-(beta) Formatting Annovar database file to other format (VCF and Parquet). Exported Parquet file includes INFO/tags columns as VCF INFO columns had been exploded
-
-Usage examples:
-
-> howard from_annovar --input=tests/databases/others/hg19_nci60.txt --output=/tmp/nci60.from_annovar.vcf.gz --to_parquet=/tmp/nci60.from_annovar.parquet --annovar-code=nci60 --genome=~/howard/databases/genomes/current/hg19.fa --threads=8 
-
->  
-
-
-
-### Main options
-```
---input=<input> | required
-
-Input file path.
-Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
-Files can be compressesd (e.g. vcf.gz, tsv.gz).
-
-```
-
-```
---output=<output> | required
-
-Output file path.
-Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
-Files can be compressesd (e.g. vcf.gz, tsv.gz).
-
-```
-
-```
---genome=<genome> (default: ~/howard/databases/genomes/current/hg19/hg19.fa) | required
-
-Genome file in fasta format (e.g. 'hg19.fa', 'hg38.fa').
-
-```
-
-### Annovar
-```
---annovar-code=<Annovar code>
-
-Annovar code, or database name.
-Usefull to name databases columns.
-
-```
-
-### Parquet
-```
---to_parquet=<to parquet>
-
-Parquet file conversion.
-
-```
-
-### Modes
-```
---reduce_memory=<reduce memory> ['auto', 'enable', 'disable'] (default: auto)
-
-Reduce memory option,
-either 'auto' (auto-detection), 'enable' or 'disable'.
-
-```
-
-```
---multi_variant=<multi variant> ['auto', 'enable', 'disable'] (default: auto)
-
-Variant with multiple annotation lines.
-Either 'auto' (auto-detection), 'enable' or 'disable'.
 
 ```
 
