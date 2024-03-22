@@ -238,14 +238,14 @@ def get_chosen_transcript(
     gene = match["name"].unique()[0]
     if df_transcript.empty:
         return get_longest_transcript(match, extra_col)
-    assert "genes" in df_transcript.columns, "Gene column is missing (genes) exit"
+    assert "gene" in df_transcript.columns, "Gene column is missing (genes) exit"
     assert (
-        "transcripts" in df_transcript.columns
-    ), "Transcript column is missing (transcripts) exit"
-    if len(df_transcript.loc[df_transcript["genes"] == gene].index) != 0:
+        "transcript" in df_transcript.columns
+    ), "Transcript column is missing (transcript) exit"
+    if len(df_transcript.loc[df_transcript["gene"] == gene].index) != 0:
         try:
-            chosen = df_transcript.loc[df_transcript["genes"] == gene].iloc[0][
-                "transcripts"
+            chosen = df_transcript.loc[df_transcript["gene"] == gene].iloc[0][
+                "transcript"
             ]
             df_chosen_transcript = match.loc[match["transcript"] == chosen]
             tmp = [
@@ -338,9 +338,11 @@ def from_extann(args: argparse) -> None:
 
     # Transcript
     if args.transcript_extann:
-        df_transcript = pd.read_csv(args.transcript_extann, header=0, sep="\t")
+        # df_transcript = pd.read_csv(args.transcript_extann, header=0, sep="\t")
+        df_transcript = commons.transcripts_file_to_df(args.transcript_extann)
     elif param.get("transcript_extann"):
-        df_transcript = pd.read_csv(param.get("transcript_extann"), header=0, sep="\t")
+        # df_transcript = pd.read_csv(param.get("transcript_extann"), header=0, sep="\t")
+        df_transcript = commons.transcripts_file_to_df(param.get("transcript_extann"))
     else:
         if param.get("mode_extann") == "chosen":
             log.error(
