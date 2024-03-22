@@ -27,6 +27,39 @@ from howard.functions.commons import *
 from test_needed import *
 
 
+def test_transcripts_file_to_df():
+    """ """
+
+    # Input transcript file
+    transcripts_file = tests_data_folder + "/transcripts.tsv"
+    transcripts_file_empty = tests_data_folder + "/transcripts.empty.tsv"
+    transcripts_file_with_header = tests_data_folder + "/transcripts.with_header.tsv"
+    transcripts_file_with_comments = (
+        tests_data_folder + "/transcripts.with_comments.tsv"
+    )
+
+    df = transcripts_file_to_df(transcripts_file=transcripts_file)
+    assert list(df.columns) == ["transcript", "gene"]
+    assert len(df) == 4
+
+    df = transcripts_file_to_df(transcripts_file=transcripts_file_empty)
+    assert list(df.columns) == ["transcript", "gene"]
+    assert len(df) == 0
+
+    df = transcripts_file_to_df(transcripts_file="file_not_exist")
+    log.debug(f"df={df}")
+    assert list(df.columns) == ["transcript", "gene"]
+    assert len(df) == 0
+
+    df = transcripts_file_to_df(transcripts_file=transcripts_file_with_header)
+    assert list(df.columns) == ["transcript", "gene"]
+    assert len(df) == 4
+
+    df = transcripts_file_to_df(transcripts_file=transcripts_file_with_comments)
+    assert list(df.columns) == ["transcript", "gene"]
+    assert len(df) == 4
+
+
 def test_get_bin():
     """
     The `test_get_bin` function tests the `get_bin` function with different configurations and
