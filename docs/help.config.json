@@ -3,47 +3,45 @@
     "HOWARD Configuration JSON file defined default configuration regarding resources (e.g. threads, memory), settings (e.g. verbosity, temporary files), default folders (e.g. for databases) and paths to external tools."
   ],
   "__examples": {
-      "Example of a configuration JSON file": [
-        "{",
-        "  \"threads\": 8,",
-        "  \"memory\": null,",
-        "  \"verbosity\": \"WARNING\",",
-        "  \"folders\": {",
-        "    \"databases\": {",
-        "      \"genomes\": \"~/howard/databases/genomes/current\",",
-        "      \"annotations\": [",
-        "        \"~/howard/databases/annotations/current\",",
-        "        \"~/howard/databases/dbnsfp/current\",",
-        "        \"~/howard/databases/dbsnp/current\"",
-        "      ],",
-        "      \"parquet\": [",
-        "        \"~/howard/databases/annotations/current\"",
-        "      ],",
-        "      \"bcftools\": [",
-        "        \"~/howard/databases/annotations/current\"",
-        "      ],",
-        "      \"annovar\": [",
-        "        \"~/howard/databases/annovar/current\"",
-        "      ],",
-        "      \"snpeff\": \"~/howard/databases/snpeff/current\",",
-        "      \"varank\": \"~/howard/databases/varank/current\"",
-        "    }",
-        "  },",
-        "  \"tools\": {",
-        "    \"bcftools\": \"bcftools\",",
-        "    \"bgzip\": \"bgzip\",",
-        "    \"java\": \"java\",",
-        "    \"snpeff\": \"~/howard/tools/snpeff/current/bin/snpEff.jar\",",
-        "    \"annovar\": \"~/howard/tools/annovar/current/bin/table_annovar.pl\",",
-        "    \"exomiser\": \"~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar\"",
-        "  }",
-        "}"
-      ]
-    },
+    "Example of a configuration JSON file": [
+      "{",
+      "  \"threads\": 8,",
+      "  \"memory\": null,",
+      "  \"verbosity\": \"WARNING\",",
+      "  \"folders\": {",
+      "    \"databases\": {",
+      "      \"genomes\": \"~/howard/databases/genomes/current\",",
+      "      \"annotations\": [",
+      "        \"~/howard/databases/annotations/current\",",
+      "        \"~/howard/databases/dbnsfp/current\",",
+      "        \"~/howard/databases/dbsnp/current\"",
+      "      ],",
+      "      \"parquet\": [",
+      "        \"~/howard/databases/annotations/current\"",
+      "      ],",
+      "      \"bcftools\": [",
+      "        \"~/howard/databases/annotations/current\"",
+      "      ],",
+      "      \"annovar\": [",
+      "        \"~/howard/databases/annovar/current\"",
+      "      ],",
+      "      \"snpeff\": \"~/howard/databases/snpeff/current\",",
+      "      \"varank\": \"~/howard/databases/varank/current\"",
+      "    }",
+      "  },",
+      "  \"tools\": {",
+      "    \"bcftools\": \"bcftools\",",
+      "    \"bgzip\": \"bgzip\",",
+      "    \"java\": \"java\",",
+      "    \"snpeff\": \"~/howard/tools/snpeff/current/bin/snpEff.jar\",",
+      "    \"annovar\": \"~/howard/tools/annovar/current/bin/table_annovar.pl\",",
+      "    \"exomiser\": \"~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar\"",
+      "  }",
+      "}"
+    ]
+  },
   "folders": {
-    "__help": [
-      "Folders configuration such as for databases."
-    ],
+    "__help": ["Folders configuration such as for databases."],
     "databases": {
       "__help": [
         "Default folders for databases that follows the specific database HOWARD format. These folders will be used in HOWARD tools to autodetect databases by their name and using assembly. Within database folders, multiple releases can be provides (e.g. 'b152' and 'b156' for dbSNP and 'hg19' assembly within folder '~/howard/databases/dbsnp/current/hg19', in 2 subfolders resp.)"
@@ -102,7 +100,9 @@
         ]
       },
       "parquet": {
-        "__help": ["Annotation databases folders that contains databases in Parquet format."],
+        "__help": [
+          "Annotation databases folders that contains databases in Parquet format."
+        ],
         "__format": "a list of folder path (without assembly)",
         "__default": "[\"~/howard/databases/annotations/current\"]",
         "__examples_code": [
@@ -119,9 +119,7 @@
         ]
       },
       "bcftools": {
-        "__help": [
-          "Annotation databases folders for BCFTools annotation."
-        ],
+        "__help": ["Annotation databases folders for BCFTools annotation."],
         "__format": "a list of folder path (without assembly)",
         "__default": "[\"~/howard/databases/bcftools/current\"]",
         "__examples_code": [
@@ -137,9 +135,7 @@
         ]
       },
       "annovar": {
-        "__help": [
-          "Annotation databases folders for Annovar annotation."
-        ],
+        "__help": ["Annotation databases folders for Annovar annotation."],
         "__format": "a list of folder path (without assembly)",
         "__default": "[\"~/howard/databases/annovar/current\"]",
         "__examples_code": [
@@ -155,9 +151,7 @@
         ]
       },
       "snpeff": {
-        "__help": [
-          "Annotation databases folders for snpEff annotation."
-        ],
+        "__help": ["Annotation databases folders for snpEff annotation."],
         "__format": "A folder path (without assembly)",
         "__default": "~/howard/databases/snpeff/current",
         "__examples_code": [
@@ -166,9 +160,7 @@
         ]
       },
       "exomiser": {
-        "__help": [
-          "Annotation databases folders for Exomiser annotation."
-        ],
+        "__help": ["Annotation databases folders for Exomiser annotation."],
         "__format": "A folder path (without assembly)",
         "__default": "~/howard/databases/exomiser/current",
         "__examples_code": [
@@ -177,9 +169,7 @@
         ]
       },
       "refseq": {
-        "__help": [
-          "Annotation databases folders for refSeq annotation."
-        ],
+        "__help": ["Annotation databases folders for refSeq annotation."],
         "__format": "A folder path (without assembly)",
         "__default": "~/howard/databases/refseq/current",
         "__examples_code": [
@@ -191,7 +181,7 @@
   },
   "tools": {
     "__help": [
-      "External tools paths that can be defined as path to a binary or a dict including the binary type (such as \"bin\", \"jar\", \"perl\")."
+      "External tools paths that can be defined as path to a binary or a dict including the binary type (such as \"bin\", \"jar\", \"perl\"). External tools can be configured with docker, using 'docker' as binary type and options to define docker 'image' (mandatory), to specify 'entrypoint', 'command' and docker 'options' (e.g. folder mount '-v /path/to/folder:/path/to/folder')."
     ],
     "__examples_code": [
       "# Example of a configuration for tools, with env $PATH, full path and path with type",
@@ -201,13 +191,22 @@
       "   \"java\": \"/usr/bin/java\",",
       "   \"snpeff\": \"~/howard/tools/snpeff/current/bin/snpEff.jar\",",
       "   \"annovar\": {\"jar\": \"~/howard/tools/annovar/current/bin/table_annovar.pl\"},",
-      "   \"exomiser\": {\"jar\": \"~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar}\"",
+      "   \"exomiser\": {\"jar\": \"~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar\"}",
+      "}",
+      "# Example of a configuration for bcftools with a docker image (example with howard docker image)",
+      "\"tools\": {",
+      "   \"bcftools\": {",
+      "      \"docker\": {",
+      "        \"image\": \"howard:1.0.0\",",
+      "        \"entrypoint\": \"bcftools\",",
+      "        \"options\": null,",
+      "        \"command\": null",
+      "      }",
+      "   }",
       "}"
     ],
     "bcftools": {
-      "__help": [
-        "BCFTools binary (see https://samtools.github.io/bcftools/)."
-      ],
+      "__help": ["BCFTools binary (see https://samtools.github.io/bcftools/)."],
       "__default": "bcftools",
       "__examples_code": [
         "# Path to binary in $PATH env variable",
@@ -217,9 +216,7 @@
       ]
     },
     "bgzip": {
-      "__help": [
-        "BGZip binary (see https://samtools.github.io/bcftools/)."
-      ],
+      "__help": ["BGZip binary (see https://samtools.github.io/bcftools/)."],
       "__default": "bgzip",
       "__examples_code": [
         "# Path to binary in $PATH env variable",
@@ -229,9 +226,7 @@
       ]
     },
     "java": {
-      "__help": [
-        "Java binary (see https://www.java.com)."
-      ],
+      "__help": ["Java binary (see https://www.java.com)."],
       "__default": "java",
       "__examples_code": [
         "# Path to binary in $PATH env variable",
@@ -241,9 +236,7 @@
       ]
     },
     "snpeff": {
-      "__help": [
-        "snpEff binary (see https://pcingola.github.io/SnpEff/)."
-      ],
+      "__help": ["snpEff binary (see https://pcingola.github.io/SnpEff/)."],
       "__default": "~/howard/tools/snpeff/current/bin/snpEff.jar",
       "__examples_code": [
         "# Path to binary as a dict without binary type",

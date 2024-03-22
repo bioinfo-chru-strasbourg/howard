@@ -247,12 +247,12 @@ Examples:
 ```json
 "codon_type": "1"
 ```
-> Amino Acide Codon format with 1 character# Amino Acide Codon format with 3 character
+> Amino Acide Codon format with 3 character
 
 ```json
 "codon_type": "3"
 ```
-> Amino Acide Codon format with 1 character# Amino Acide Codon format with 3 character# Amino Acide Codon format with full name
+> Amino Acide Codon format with full name
 
 ```json
 "codon_type": "FULL"
@@ -492,7 +492,7 @@ Examples:
    }
 }
 ```
-> Annotation with dbSNP database  with all fields# Annotation with dbNSFP (only PolyPhen, ClinVar and REVEL score), and rename fields
+> Annotation with dbNSFP (only PolyPhen, ClinVar and REVEL score), and rename fields
 
 ```json
 "annotations": {
@@ -503,7 +503,7 @@ Examples:
    }
 }
 ```
-> Annotation with dbSNP database  with all fields# Annotation with dbNSFP (only PolyPhen, ClinVar and REVEL score), and rename fields# Annotation with refSeq as a BED file
+> Annotation with refSeq as a BED file
 
 ```json
 "annotations": {
@@ -512,7 +512,7 @@ Examples:
    }
 }
 ```
-> Annotation with dbSNP database  with all fields# Annotation with dbNSFP (only PolyPhen, ClinVar and REVEL score), and rename fields# Annotation with refSeq as a BED file# Annotation with dbNSFP REVEL annotation (as a VCF file) within configured annotation databases folders (default: '~/howard/databases/annotations/current') and assembly (default: 'hg19')
+> Annotation with dbNSFP REVEL annotation (as a VCF file) within configured annotation databases folders (default: '~/howard/databases/annotations/current') and assembly (default: 'hg19')
 
 ```json
 "annotations": {
@@ -626,7 +626,7 @@ Examples:
 ```json
 "stats": "/path/to/stats.html"
 ```
-> Annotation with snpEff databases, and generate a specific stats in HTML format.# Annotation with snpEff databases, and generate stats in HTML format associated with output file.
+> Annotation with snpEff databases, and generate stats in HTML format associated with output file.
 
 ```json
 "stats": "OUTPUT.html"
@@ -643,7 +643,7 @@ Examples:
 ```json
 "csvStats": "/path/to/stats.csv"
 ```
-> Annotation with snpEff databases, and generate a specific stats in CSV format.# Annotation with snpEff databases, and generate stats in CSV format associated with output file.
+> Annotation with snpEff databases, and generate stats in CSV format associated with output file.
 
 ```json
 "csvStats": "OUTPUT.csv"
@@ -828,7 +828,7 @@ Examples:
 ```json
 "profiles": ["GERMLINE"]
 ```
-> Prioritization with 'GERMLINE' profile only# Prioritization with 'GENOME' and 'GERMLINE' profiles
+> Prioritization with 'GENOME' and 'GERMLINE' profiles
 
 ```json
 "profiles": ["GENOME", "GERMLINE"]
@@ -895,7 +895,7 @@ Examples:
 ```json
 "prioritization_score_mode": "HOWARD"
 ```
-> Prioritization score calculation mode 'HOWARD'# Prioritization score calculation mode 'VaRank'
+> Prioritization score calculation mode 'VaRank'
 
 ```json
 "prioritization_score_mode": "VaRank"

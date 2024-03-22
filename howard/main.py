@@ -32,10 +32,16 @@ from howard.tools.tools import (
     DEFAULT_CHUNK_SIZE,
 )
 
+msg_gui_disable = "HOWARD GUI disabled"
+
 # Load command submodule
-for c in commands_arguments:
+for command in list(commands_arguments.keys()):
     try:
-        exec("from {m} import {s}".format(m="howard.tools.tools", s=c))
+        exec(
+            "from {module} import {submodule}".format(
+                module="howard.tools.tools", submodule=command
+            )
+        )
     except Exception as e:
         print(e)
 
@@ -44,9 +50,9 @@ for c in commands_arguments:
 # python -m pip install -e .
 # howard --help
 # howard query --help
-# howard analysis --input=my.vcf.gz --output=my.output.vcf --annotations=my.annotations.vcf.gz --stats --overview_footer
+# howard analysis --input=my.vcf.gz --output=my.output.vcf --annotations=my.annotations.vcf.gz
 # howard gui
-# python -m howard.main --input=my.vcf.gz --output=my.output.vcf --annotations=my.annotations.vcf.gz --stats --overview_footer
+# python -m howard.main --input=my.vcf.gz --output=my.output.vcf --annotations=my.annotations.vcf.gz
 
 
 main_folder = os.path.dirname(__file__)
@@ -198,13 +204,13 @@ def main() -> None:
         parser.print_help()
     else:
         if args.command == "gui" and not tool_gui_enable:
-            log.error("""HOWARD GUI disabled""")
+            log.error(msg_gui_disable)
             log.error("""ModuleNotFoundError: No module named 'gooey'""")
             log.error("""Install module 'gooey': pip install gooey""")
             log.error(
                 """Or install requirements: pip install -r requirements-gui.txt"""
             )
-            raise ValueError("""HOWARD GUI disabled""")
+            raise ValueError(msg_gui_disable)
         command_function = commands_arguments[args.command]["function"]
         log.debug(f"Command/Tool: {command_function}")
         eval(f"{command_function}(args)")

@@ -52,7 +52,7 @@ def test_annotation_exomiser():
                 "exomiser": {
                     "hpo": ["HP:0001156", "0001363", "0011304", "0010055"],
                     "transcript_source": "refseq",
-                    "release": "2109",
+                    "release": "2402",
                 }
             },
         }
@@ -80,6 +80,7 @@ def test_annotation_exomiser():
         result = variants.get_query_to_df(""" SELECT * FROM variants """)
         log.debug(result["INFO"])
         assert len(result) == 7
+        # assert False
 
         # query annotated variant - check number of annotated variants
         result = variants.get_query_to_df(

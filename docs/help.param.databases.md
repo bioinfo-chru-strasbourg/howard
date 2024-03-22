@@ -1,10 +1,10 @@
-# HOWARD Parameters
+# HOWARD Parameters Databases
 
-HOWARD Parameters JSON file defines parameters to process annotations, calculations, prioritizations, convertions and queries.
+HOWARD Parameters JSON file defines parameters for databases' downloads.
 
 ## Table of contents
 
-- [HOWARD Parameters](#howard-parameters)
+- [HOWARD Parameters Databases](#howard-parameters-databases)
    - [databases](#databases)
       - [assembly](#databasesassembly)
       - [genomes_folder](#databasesgenomes_folder)
@@ -86,6 +86,125 @@ HOWARD Parameters JSON file defines parameters to process annotations, calculati
          - [generate_param_bcftools](#databasesparametersgenerate_param_bcftools)
 
 
+Examples: 
+> Example of simple databases parameters JSON file for downloads
+
+```json
+"databases": {
+      "genomes": {
+          "download_genomes": "~/howard/databases/genomes/current",
+          "download_genomes_contig_regex": "chr[0-9XYM]+$"
+      },
+      "snpeff": {
+          "download_snpeff": "~/howard/databases/snpeff/current"
+      },
+      "annovar": {
+          "download_annovar": "~/howard/databases/annovar/current",
+          "download_annovar_files": "refGene,cosmic70,nci60"
+      },
+      "refseq": {
+          "download_refseq": "~/howard/databases/refseq/current"
+      },
+      "dbnsfp": {
+          "download_dbnsfp": "~/howard/databases/dbnsfp/current",
+          "download_dbnsfp_release": "4.4a"
+      },
+      "alphamissense": {
+          "download_alphamissense": "~/howard/databases/alphamissense/current"
+      },
+      "exomiser": {
+          "download_exomiser": "~/howard/databases/exomiser/current"
+      },
+      "dbsnp": {
+          "download_dbsnp": "~/howard/databases/dbsnp/current",
+          "download_dbsnp_releases": "b156",
+          "download_dbsnp_vcf": true,
+          "download_dbsnp_parquet": true
+      },
+      "assemblies": [
+          "hg19"
+      ]
+}
+```
+> Example of a full Databases parameters JSON file for downloads
+
+```json
+"databases": {
+      "genomes_folder": "~/howard/databases/genomes/current",
+      "genome": "~/howard/databases/genomes/current/hg19/hg19.fa",
+      "genomes": {
+          "download_genomes": "~/howard/databases/genomes/current",
+          "download_genomes_provider": "UCSC",
+          "download_genomes_contig_regex": "chr[0-9XYM]+$"
+      },
+      "snpeff": {
+          "download_snpeff": "~/howard/databases/snpeff/current"
+      },
+      "annovar": {
+          "download_annovar": "~/howard/databases/annovar/current",
+          "download_annovar_files": "refGene,cosmic70,nci60",
+          "download_annovar_url": "http://www.openbioinformatics.org/annovar/download"
+      },
+      "refseq": {
+          "download_refseq": "~/howard/databases/refseq/current",
+          "download_refseq_url": "http://hgdownload.soe.ucsc.edu/goldenPath",
+          "download_refseq_prefix": "ncbiRefSeq",
+          "download_refseq_files": "ncbiRefSeq.txt,ncbiRefSeqLink.txt",
+          "download_refseq_format_file": "ncbiRefSeq.txt",
+          "download_refseq_include_utr5": false,
+          "download_refseq_include_utr3": false,
+          "download_refseq_include_chrM": false,
+          "download_refseq_include_non_canonical_chr": false,
+          "download_refseq_include_non_coding_transcripts": false,
+          "download_refseq_include_transcript_version": false
+      },
+      "dbnsfp": {
+          "download_dbnsfp": "~/howard/databases/dbnsfp/current",
+          "download_dbnsfp_url": "https://dbnsfp.s3.amazonaws.com",
+          "download_dbnsfp_release": "4.4a",
+          "download_dbnsfp_parquet_size": 100,
+          "download_dbnsfp_subdatabases": true,
+          "download_dbnsfp_parquet": false,
+          "download_dbnsfp_vcf": false,
+          "download_dbnsfp_no_files_all": false,
+          "download_dbnsfp_add_info": false,
+          "download_dbnsfp_row_group_size": 100000
+      },
+      "alphamissense": {
+          "download_alphamissense": "~/howard/databases/alphamissense/current",
+          "download_alphamissense_url": "https://storage.googleapis.com/dm_alphamissense"
+      },
+      "exomiser": {
+          "download_exomiser": "~/howard/databases/exomiser/current",
+          "download_exomiser_url": "http://data.monarchinitiative.org/exomiser",
+          "download_exomiser_remm_url": "https://kircherlab.bihealth.org/download/ReMM",
+          "download_exomiser_cadd_url": "https://kircherlab.bihealth.org/download/CADD",
+          "download_exomiser_cadd_url_snv_file": "whole_genome_SNVs.tsv.gz",
+          "download_exomiser_cadd_url_indel_file": "InDels.tsv.gz"
+      },
+      "dbsnp": {
+          "download_dbsnp": "~/howard/databases/dbsnp/current",
+          "download_dbsnp_releases": "b156",
+          "download_dbsnp_url": "https://ftp.ncbi.nih.gov/snp/archive",
+          "download_dbsnp_url_files_prefix": "GCF_000001405",
+          "download_dbsnp_assemblies_map": {
+              "hg19": "25",
+              "hg38": "40"
+          },
+          "download_dbsnp_vcf": true,
+          "download_dbsnp_parquet": false
+      },
+      "parameters": {
+          "generate_param_releases": "current",
+          "generate_param_formats": "parquet",
+          "generate_param_bcftools": false
+      },
+      "assemblies": [
+          "hg19"
+      ]
+}
+```
+
 ## databases
 
 Databases download options
@@ -112,11 +231,11 @@ Examples:
 
 ### databases::genomes_folder
 
-Folder containing genomes. (e.g. '~/howard/databases/genomes/current'
+Folder containing genomes. (e.g. '/Users/lebechea/howard/databases/genomes/current'
 
 Type: ```Path```
 
-Default: ```~/howard/databases/genomes/current```
+Default: ```/Users/lebechea/howard/databases/genomes/current```
 
 ### databases::genome
 
@@ -132,7 +251,7 @@ Genomes download.
 
 #### databases::genomes::download_genomes
 
-Path to genomes folder with Fasta files, indexes, and all files generated by pygenome module. (e.g. '~/howard/databases/genomes/current'). 
+Path to genomes folder with Fasta files, indexes, and all files generated by pygenome module. (e.g. '/Users/lebechea/howard/databases/genomes/current'). 
 
 Type: ```Path```
 
@@ -174,7 +293,7 @@ Annovar download.
 
 #### databases::annovar::download_annovar
 
-Path to Annovar databases (e.g. '~/howard/databases/annovar/current'). 
+Path to Annovar databases (e.g. '/Users/lebechea/howard/databases/annovar/current'). 
 
 Type: ```Path```
 
@@ -202,7 +321,7 @@ refSeq download.
 
 #### databases::refseq::download_refseq
 
-Path to refSeq databases (e.g. '~/howard/databases/refseq/current'). 
+Path to refSeq databases (e.g. '/Users/lebechea/howard/databases/refseq/current'). 
 
 Type: ```Path```
 
@@ -282,7 +401,7 @@ dbNSFP download.
 
 #### databases::dbnsfp::download_dbnsfp
 
-Download dbNSFP databases within dbNSFP folder(e.g. '~/howard/databases'). 
+Download dbNSFP databases within dbNSFP folder(e.g. '/Users/lebechea/howard/databases'). 
 
 Type: ```Path```
 
@@ -374,7 +493,7 @@ Exomiser download.
 
 #### databases::exomiser::download_exomiser
 
-Path to Exomiser databases (e.g. ~/howard/databases/exomiser/current). 
+Path to Exomiser databases (e.g. /Users/lebechea/howard/databases/exomiser/current). 
 
 Type: ```Path```
 
@@ -466,7 +585,7 @@ dbSNP download.
 
 #### databases::dbsnp::download_dbsnp
 
-Path to dbSNP databases (e.g. '~/howard/databases/exomiser/dbsnp'). 
+Path to dbSNP databases (e.g. '/Users/lebechea/howard/databases/exomiser/dbsnp'). 
 
 Type: ```Path```
 

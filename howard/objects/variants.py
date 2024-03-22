@@ -3540,14 +3540,14 @@ class Variants:
         log.debug("Java bin: " + str(java_bin))
 
         # Config - Exomiser
-        exomiser_jar = get_bin(
+        exomiser_bin_command = get_bin_command(
             bin="exomiser-cli*.jar",
             tool="exomiser",
             bin_type="jar",
             config=config,
             default_folder=f"{DEFAULT_TOOLS_FOLDER}/exomiser",
         )
-        log.debug("Exomiser bin: " + str(exomiser_jar))
+        log.debug("Exomiser bin command: " + str(exomiser_bin_command))
 
         # Param
         param = self.get_param()
@@ -3585,10 +3585,6 @@ class Variants:
         log.debug(f"Samples: {samples}")
 
         # Memory limit
-        # if config.get("memory", None):
-        #     memory_limit = config.get("memory", "8G")
-        # else:
-        #     memory_limit = "8G"
         memory_limit = self.get_memory("8G")
         log.debug(f"memory_limit: {memory_limit}")
 
@@ -4013,13 +4009,24 @@ class Variants:
                 # Release
                 exomiser_release = param_exomiser.get("release", None)
                 if exomiser_release:
+                    # phenotype data version
                     exomiser_options += (
                         f" --exomiser.phenotype.data-version={exomiser_release} "
                     )
+                    # data version
                     exomiser_options += (
                         f" --exomiser.{assembly}.data-version={exomiser_release} "
                     )
-                    exomiser_options += f" --exomiser.{assembly}.variant-white-list-path={exomiser_release}_{assembly}_clinvar_whitelist.tsv.gz "
+                    # variant white list
+                    variant_white_list_file = (
+                        f"{exomiser_release}_{assembly}_clinvar_whitelist.tsv.gz"
+                    )
+                    if os.path.exists(
+                        os.path.join(
+                            databases_folders, assembly, variant_white_list_file
+                        )
+                    ):
+                        exomiser_options += f" --exomiser.{assembly}.variant-white-list-path={variant_white_list_file} "
 
                 # transcript_source
                 transcript_source = param_exomiser.get(
@@ -4034,18 +4041,18 @@ class Variants:
                 if param_exomiser_analysis_dict.get("phenopacket", {}).get(
                     "proband", {}
                 ):
-                    exomiser_command = f" {exomiser_java_options} -jar {exomiser_jar} --analysis={exomiser_analysis_analysis} --sample={exomiser_analysis_phenopacket} {exomiser_options} "
+                    exomiser_command_analysis = f" {exomiser_bin_command} --analysis={exomiser_analysis_analysis} --sample={exomiser_analysis_phenopacket} {exomiser_options} "
 
                 # If no proband (usually uniq sample)
                 else:
-                    exomiser_command = f" {exomiser_java_options} -jar {exomiser_jar} --analysis={exomiser_analysis} {exomiser_options}"
+                    exomiser_command_analysis = f" {exomiser_bin_command} --analysis={exomiser_analysis} {exomiser_options}"
 
                 # Log
-                log.debug(f"{java_bin} {exomiser_command}")
+                log.debug(f"exomiser_command_analysis={exomiser_command_analysis}")
 
                 # Run command
                 result = subprocess.call(
-                    [java_bin] + exomiser_command.split(), stdout=subprocess.PIPE
+                    exomiser_command_analysis.split(), stdout=subprocess.PIPE
                 )
                 if result:
                     log.error("Exomiser command failed")

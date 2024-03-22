@@ -10,15 +10,9 @@
         "~/howard/databases/dbnsfp/current",
         "~/howard/databases/dbsnp/current"
       ],
-      "parquet": [
-        "~/howard/databases/annotations/current"
-      ],
-      "bcftools": [
-        "~/howard/databases/annotations/current"
-      ],
-      "annovar": [
-        "~/howard/databases/annovar/current"
-      ],
+      "parquet": ["~/howard/databases/annotations/current"],
+      "bcftools": ["~/howard/databases/annotations/current"],
+      "annovar": ["~/howard/databases/annovar/current"],
       "snpeff": "~/howard/databases/snpeff/current",
       "varank": "~/howard/databases/varank/current"
     }
@@ -29,6 +23,6 @@
     "java": "java",
     "snpeff": "~/howard/tools/snpeff/current/bin/snpEff.jar",
     "annovar": "~/howard/tools/annovar/current/bin/table_annovar.pl",
-    "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar"
+    "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-14.0.0.jar"
   }
 }

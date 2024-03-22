@@ -58,20 +58,25 @@ def databases(args: argparse) -> None:
 
     # Load args into param
     param = load_args(
-        param={},
+        param=param,
         args=args,
         arguments_dict=arguments_dict,
         command="databases",
         strict=False,
         section_prefix=["databases"],
     )
-    # log.debug(f"param={param}")
 
     # Assembly
-    assemblies = [value for value in args.assembly.split(",")]
-    param = add_value_into_dict(
-        dict_tree=param, sections=["databases", "assemblies"], value=assemblies
+    assemblies = param.get("databases", {}).get(
+        "assemblies", param.get("databases", {}).get("assembly", args.assembly)
     )
+
+    if assemblies:
+        if isinstance(assemblies, str):
+            assemblies = [value for value in assemblies.split(",")]
+        param = add_value_into_dict(
+            dict_tree=param, sections=["databases", "assemblies"], value=assemblies
+        )
 
     # Genome folder
     genomes_folder = param.get("databases", {}).get("genomes_folder", None)
@@ -93,16 +98,85 @@ def databases(args: argparse) -> None:
         dict_tree=param, sections=["databases", "genomes_folder"], value=genomes_folder
     )
 
+    # Annovar files
+    annovar_files = (
+        param.get("databases", {})
+        .get("annovar", {})
+        .get("download_annovar_files", None)
+    )
+    if annovar_files and isinstance(annovar_files, str):
+        annovar_files = [value for value in annovar_files.split(",")]
+        param = add_value_into_dict(
+            dict_tree=param,
+            sections=["databases", "annovar", "download_annovar_files"],
+            value=annovar_files,
+        )
+
+    # refSeq files
+    refseq_files = (
+        param.get("databases", {}).get("refseq", {}).get("download_refseq_files", None)
+    )
+    if refseq_files and isinstance(refseq_files, str):
+        refseq_files = [value for value in refseq_files.split(",")]
+        param = add_value_into_dict(
+            dict_tree=param,
+            sections=["databases", "refseq", "download_refseq_files"],
+            value=refseq_files,
+        )
+
+    # Exomise Application Properties
+    exomiser_application_properties = (
+        param.get("databases", {})
+        .get("exomiser", {})
+        .get("download_exomiser_application_properties", None)
+    )
+    if exomiser_application_properties and not isinstance(
+        exomiser_application_properties, str
+    ):
+        exomiser_application_properties = exomiser_application_properties.name
+        param = add_value_into_dict(
+            dict_tree=param,
+            sections=[
+                "databases",
+                "exomiser",
+                "download_exomiser_application_properties",
+            ],
+            value=exomiser_application_properties,
+        )
+
+    # dbSNP releases
+    download_dbsnp_releases = (
+        param.get("databases", {}).get("dbsnp", {}).get("download_dbsnp_releases", None)
+    )
+
+    if download_dbsnp_releases and isinstance(download_dbsnp_releases, str):
+        download_dbsnp_releases = [
+            value for value in download_dbsnp_releases.split(",")
+        ]
+        param = add_value_into_dict(
+            dict_tree=param,
+            sections=["databases", "dbsnp", "download_dbsnp_releases"],
+            value=download_dbsnp_releases,
+        )
+
+    # Convert HGMD file
+    convert_hgmd_file = (
+        param.get("databases", {}).get("hgmd", {}).get("convert_hgmd_file", None)
+    )
+    if convert_hgmd_file and not isinstance(convert_hgmd_file, str):
+        convert_hgmd_file = convert_hgmd_file.name
+        param = add_value_into_dict(
+            dict_tree=param,
+            sections=[
+                "databases",
+                "hgmd",
+                "convert_hgmd_file",
+            ],
+            value=convert_hgmd_file,
+        )
+
     # Threads
-    nb_threads = os.cpu_count()
-    if "threads" in args:
-        input_thread = args.threads
-    else:
-        input_thread = None
-    if not input_thread or int(input_thread) <= 0:
-        threads = nb_threads
-    else:
-        threads = int(input_thread)
+    threads = get_threads(config=config, param=param)
 
     # Param
     if "generate_param" in args and args.generate_param:
@@ -112,172 +186,202 @@ def databases(args: argparse) -> None:
     # Param database
     param_databases = param.get("databases", {})
 
-    log.debug(f"param={param}")
+    if not param_databases.get("assemblies", None):
+        msg_error = "Not assemblies defined"
+        log.error(msg_error)
+        raise ValueError(msg_error)
+    else:
+        assemblies = param_databases.get("assemblies", [])
+
+    # Log
+    log.debug(f"param_databases={param_databases}")
+
     # Genomes
-    if param_databases.get("genomes", {}).get("download_genomes"):
+    if param_databases.get("genomes", {}).get("download_genomes", None):
         log.debug(f"Download Genomes")
-        if assemblies:
-            databases_download_genomes(
-                assemblies=param_databases.get("assemblies", []),
-                genomes_folder=param_databases.get("genomes", {}).get(
-                    "download_genomes"
-                ),
-                provider=param_databases.get("genomes", {}).get(
-                    "download_genomes_provider"
-                ),
-                contig_regex=param_databases.get("genomes", {}).get(
-                    "download_genomes_contig_regex"
-                ),
-                threads=threads,
-            )
+        param_databases_genomes = param_databases.get("genomes", {})
+        databases_download_genomes(
+            assemblies=assemblies,
+            genomes_folder=param_databases_genomes.get("download_genomes"),
+            provider=param_databases_genomes.get("download_genomes_provider"),
+            contig_regex=param_databases_genomes.get("download_genomes_contig_regex"),
+            threads=threads,
+        )
 
     # Annovar
-    if args.download_annovar:
+    if param_databases.get("annovar", {}).get("download_annovar", None):
         log.debug(f"Download Annovar databases")
-        if args.download_annovar_files:
-            files = [value for value in args.download_annovar_files.split(",")]
-        else:
-            files = []
+        param_databases_annovar = param_databases.get("annovar", {})
         databases_download_annovar(
-            folder=args.download_annovar,
-            files=files,
+            folder=param_databases_annovar.get("download_annovar"),
+            files=param_databases_annovar.get("download_annovar_files"),
             assemblies=assemblies,
-            annovar_url=args.download_annovar_url,
+            annovar_url=param_databases_annovar.get("download_annovar_url"),
             threads=threads,
         )
 
     # snpEff
-    if args.download_snpeff:
+    if param_databases.get("snpeff", {}).get("download_snpeff", None):
         log.debug(f"Download snpEff databases")
+        param_databases_snpeff = param_databases.get("snpeff", {})
         databases_download_snpeff(
-            folder=args.download_snpeff,
+            folder=param_databases_snpeff.get("download_snpeff"),
             assemblies=assemblies,
-            config=args.config,
+            config=config,
             threads=threads,
         )
 
     # refSeq
-    if args.download_refseq:
+    if param_databases.get("refseq", {}).get("download_refseq", None):
         log.debug(f"Download refSeq databases")
-        if args.download_refseq_files:
-            files = [value for value in args.download_refseq_files.split(",")]
-        else:
-            files = []
+        param_databases_refseq = param_databases.get("refseq", {})
         databases_download_refseq(
             assemblies=assemblies,
-            refseq_folder=args.download_refseq,
-            refseq_url=args.download_refseq_url,
-            refseq_prefix=args.download_refseq_prefix,
-            refseq_files=files,
-            refseq_format_file=args.download_refseq_format_file,
-            include_utr_5=args.download_refseq_include_utr5,
-            include_utr_3=args.download_refseq_include_utr3,
-            include_chrM=args.download_refseq_include_chrM,
-            include_non_canonical_chr=args.download_refseq_include_non_canonical_chr,
-            include_non_coding_transcripts=args.download_refseq_include_non_coding_transcripts,
-            include_transcript_ver=args.download_refseq_include_transcript_version,
+            refseq_folder=param_databases_refseq.get("download_refseq", None),
+            refseq_url=param_databases_refseq.get("download_refseq_url", None),
+            refseq_prefix=param_databases_refseq.get("download_refseq_prefix", None),
+            refseq_files=param_databases_refseq.get("download_refseq_files", None),
+            refseq_format_file=param_databases_refseq.get(
+                "download_refseq_format_file", None
+            ),
+            include_utr_5=param_databases_refseq.get(
+                "download_refseq_include_utr5", None
+            ),
+            include_utr_3=param_databases_refseq.get(
+                "download_refseq_include_utr3", None
+            ),
+            include_chrM=param_databases_refseq.get(
+                "download_refseq_include_chrM", None
+            ),
+            include_non_canonical_chr=param_databases_refseq.get(
+                "download_refseq_include_non_canonical_chr", None
+            ),
+            include_non_coding_transcripts=param_databases_refseq.get(
+                "download_refseq_include_non_coding_transcripts", None
+            ),
+            include_transcript_ver=param_databases_refseq.get(
+                "download_refseq_include_transcript_version", None
+            ),
             threads=threads,
         )
 
     # dbNSFP
-    if args.download_dbnsfp:
+    if param_databases.get("dbnsfp", {}).get("download_dbnsfp", None):
         log.debug(f"Download dbNSFP")
+        param_databases_dbnsfp = param_databases.get("dbnsfp", {})
         databases_download_dbnsfp(
             assemblies=assemblies,
-            dbnsfp_folder=args.download_dbnsfp,
-            dbnsfp_url=args.download_dbnsfp_url,
-            dbnsfp_release=args.download_dbnsfp_release,
-            threads=threads,
-            parquet_size=args.download_dbnsfp_parquet_size,
-            generate_sub_databases=args.download_dbnsfp_subdatabases,
-            generate_parquet_file=args.download_dbnsfp_parquet,
-            generate_vcf_file=args.download_dbnsfp_vcf,
-            not_generate_files_all=args.download_dbnsfp_no_files_all,
-            add_info=args.download_dbnsfp_add_info,
-            row_group_size=args.download_dbnsfp_row_group_size,
+            dbnsfp_folder=param_databases_dbnsfp.get("download_dbnsfp", None),
+            dbnsfp_url=param_databases_dbnsfp.get("download_dbnsfp_url", None),
+            dbnsfp_release=param_databases_dbnsfp.get("download_dbnsfp_release", None),
+            parquet_size=param_databases_dbnsfp.get(
+                "download_dbnsfp_parquet_size", None
+            ),
+            generate_sub_databases=param_databases_dbnsfp.get(
+                "download_dbnsfp_subdatabases", None
+            ),
+            generate_parquet_file=param_databases_dbnsfp.get(
+                "download_dbnsfp_parquet", None
+            ),
+            generate_vcf_file=param_databases_dbnsfp.get("download_dbnsfp_vcf", None),
+            not_generate_files_all=param_databases_dbnsfp.get(
+                "download_dbnsfp_no_files_all", None
+            ),
+            add_info=param_databases_dbnsfp.get("download_dbnsfp_add_info", None),
+            row_group_size=param_databases_dbnsfp.get(
+                "download_dbnsfp_row_group_size", None
+            ),
             genomes_folder=param.get("databases", {}).get("genomes_folder", None),
+            threads=threads,
         )
 
     # AlphaMissense
-    if args.download_alphamissense:
+    if param_databases.get("alphamissense", {}).get("download_alphamissense", None):
         log.debug(f"Download AlphaMissense")
+        param_databases_alphamissense = param_databases.get("alphamissense", {})
         databases_download_alphamissense(
             assemblies=assemblies,
-            alphamissense_folder=args.download_alphamissense,
-            alphamissense_url=args.download_alphamissense_url,
+            alphamissense_folder=param_databases_alphamissense.get(
+                "download_alphamissense", None
+            ),
+            alphamissense_url=param_databases_alphamissense.get(
+                "download_alphamissense_url", None
+            ),
             threads=threads,
         )
 
     # Exomiser
-    if args.download_exomiser:
+    if param_databases.get("exomiser", {}).get("download_exomiser", None):
         log.debug(f"Download Exomiser")
-        if (
-            "download_exomiser_application_properties" in args
-            and args.download_exomiser_application_properties
-        ):
-            if isinstance(args.download_exomiser_application_properties, str):
-                download_exomiser_application_properties = (
-                    args.download_exomiser_application_properties
-                )
-            else:
-                download_exomiser_application_properties = (
-                    args.download_exomiser_application_properties.name
-                )
-        else:
-            download_exomiser_application_properties = None
+        param_databases_exomiser = param_databases.get("exomiser", {})
         databases_download_exomiser(
             assemblies=assemblies,
-            exomiser_folder=args.download_exomiser,
-            exomiser_application_properties=download_exomiser_application_properties,
-            exomiser_url=args.download_exomiser_url,
-            exomiser_release=args.download_exomiser_release,
-            exomiser_phenotype_release=args.download_exomiser_phenotype_release,
-            exomiser_remm_release=args.download_exomiser_remm_release,
-            exomiser_remm_url=args.download_exomiser_remm_url,
-            exomiser_cadd_release=args.download_exomiser_cadd_release,
-            exomiser_cadd_url=args.download_exomiser_cadd_url,
-            exomiser_cadd_url_snv_file=args.download_exomiser_cadd_url_snv_file,
-            exomiser_cadd_url_indel_file=args.download_exomiser_cadd_url_indel_file,
+            exomiser_folder=param_databases_exomiser.get("download_exomiser", None),
+            exomiser_application_properties=param_databases_exomiser.get(
+                "download_exomiser_application_properties", None
+            ),
+            exomiser_url=param_databases_exomiser.get("download_exomiser_url", None),
+            exomiser_release=param_databases_exomiser.get(
+                "download_exomiser_release", None
+            ),
+            exomiser_phenotype_release=param_databases_exomiser.get(
+                "download_exomiser_phenotype_release", None
+            ),
+            exomiser_remm_release=param_databases_exomiser.get(
+                "download_exomiser_remm_release", None
+            ),
+            exomiser_remm_url=param_databases_exomiser.get(
+                "download_exomiser_remm_url", None
+            ),
+            exomiser_cadd_release=param_databases_exomiser.get(
+                "download_exomiser_cadd_release", None
+            ),
+            exomiser_cadd_url=param_databases_exomiser.get(
+                "download_exomiser_cadd_url", None
+            ),
+            exomiser_cadd_url_snv_file=param_databases_exomiser.get(
+                "download_exomiser_cadd_url_snv_file", None
+            ),
+            exomiser_cadd_url_indel_file=param_databases_exomiser.get(
+                "download_exomiser_cadd_url_indel_file", None
+            ),
             threads=threads,
         )
 
     # dbSNP
-    if args.download_dbsnp:
+    if param_databases.get("dbsnp", {}).get("download_dbsnp", None):
         log.debug(f"Download dbSNP")
-        if args.download_dbsnp_releases:
-            dbsnp_releases = [
-                value for value in args.download_dbsnp_releases.split(",")
-            ]
-        else:
-            dbsnp_releases = []
+        param_databases_dbsnp = param_databases.get("dbsnp", {})
         databases_download_dbsnp(
             assemblies=assemblies,
-            dbsnp_folder=args.download_dbsnp,
-            dbsnp_releases=dbsnp_releases,
-            dbsnp_release_default=args.download_dbsnp_release_default,
-            dbsnp_url=args.download_dbsnp_url,
-            dbsnp_url_files=args.download_dbsnp_url_files,
-            dbsnp_url_files_prefix=args.download_dbsnp_url_files_prefix,
-            dbsnp_assemblies_map=args.download_dbsnp_assemblies_map,
+            dbsnp_folder=param_databases_dbsnp.get("download_dbsnp", None),
+            dbsnp_releases=param_databases_dbsnp.get("download_dbsnp_releases", None),
+            dbsnp_release_default=param_databases_dbsnp.get(
+                "download_dbsnp_release_default", None
+            ),
+            dbsnp_url=param_databases_dbsnp.get("download_dbsnp_url", None),
+            dbsnp_url_files=param_databases_dbsnp.get("download_dbsnp_url_files", None),
+            dbsnp_url_files_prefix=param_databases_dbsnp.get(
+                "download_dbsnp_url_files_prefix", None
+            ),
+            dbsnp_assemblies_map=param_databases_dbsnp.get(
+                "download_dbsnp_assemblies_map", None
+            ),
+            dbsnp_vcf=param_databases_dbsnp.get("download_dbsnp_vcf", None),
+            dbsnp_parquet=param_databases_dbsnp.get("download_dbsnp_parquet", None),
             genomes_folder=param.get("databases", {}).get("genomes_folder", None),
             threads=threads,
-            dbsnp_vcf=args.download_dbsnp_vcf,
-            dbsnp_parquet=args.download_dbsnp_parquet,
         )
 
     # HGMD
-    if args.convert_hgmd:
+    if param_databases.get("hgmd", {}).get("convert_hgmd", None):
         log.debug(f"Convert HGMD")
-        if "convert_hgmd_file" in args and args.convert_hgmd_file:
-            if isinstance(args.convert_hgmd_file, str):
-                convert_hgmd_file = args.convert_hgmd_file
-            else:
-                convert_hgmd_file = args.convert_hgmd_file.name
+        param_databases_hgmd = param_databases.get("hgmd", {})
         databases_download_hgmd(
             assemblies=assemblies,
-            hgmd_folder=args.convert_hgmd,
-            hgmd_file=convert_hgmd_file,
-            output_basename=args.convert_hgmd_basename,
+            hgmd_folder=param_databases_hgmd.get("convert_hgmd", None),
+            hgmd_file=param_databases_hgmd.get("convert_hgmd_file", None),
+            output_basename=param_databases_hgmd.get("convert_hgmd_basename", None),
             genomes_folder=param.get("databases", {}).get("genomes_folder", None),
             threads=threads,
         )

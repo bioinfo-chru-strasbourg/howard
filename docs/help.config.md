@@ -144,7 +144,7 @@ Examples:
    "~/howard/databases/annotations/current"
 ]
 ```
-> Uniq folder with multiple annotations for Parquet annotation method, or other External tools# Combinason of 2 folders with multiple annotations for Parquet annotation method, or other External tools
+> Combinason of 2 folders with multiple annotations for Parquet annotation method, or other External tools
 
 ```json
 "annotations": [
@@ -171,7 +171,7 @@ Examples:
    "~/howard/databases/annotations/current"
 ]
 ```
-> Uniq folder with multiple annotations for Parquet annotation method# Combinason of 2 folders with multiple annotations for Parquet annotation method
+> Combinason of 2 folders with multiple annotations for Parquet annotation method
 
 ```json
 "annotations": [
@@ -198,7 +198,7 @@ Examples:
    "~/howard/databases/bcftools/current"
 ]
 ```
-> Uniq folder with multiple VCF and BED files for BCFTools annotation# Combinason of 2 folders with multiple VCF and BED files for BCFTools annotation
+> Combinason of 2 folders with multiple VCF and BED files for BCFTools annotation
 
 ```json
 "bcftools": [
@@ -224,7 +224,7 @@ Examples:
    "~/howard/databases/annovar/current/"
 ]
 ```
-> Uniq folder with multiple Annovar TXT files for Annovar annotation# Combinason of 2 folders with multiple Annovar TXT files for Annovar annotation
+> Combinason of 2 folders with multiple Annovar TXT files for Annovar annotation
 
 ```json
 "annovar": [
@@ -283,7 +283,7 @@ Examples:
 
 ## tools
 
-External tools paths that can be defined as path to a binary or a dict including the binary type (such as "bin", "jar", "perl").
+External tools paths that can be defined as path to a binary or a dict including the binary type (such as "bin", "jar", "perl"). External tools can be configured with docker, using 'docker' as binary type and options to define docker 'image' (mandatory), to specify 'entrypoint', 'command' and docker 'options' (e.g. folder mount '-v /path/to/folder:/path/to/folder').
 
 Examples: 
 
@@ -296,7 +296,21 @@ Examples:
    "java": "/usr/bin/java",
    "snpeff": "~/howard/tools/snpeff/current/bin/snpEff.jar",
    "annovar": {"jar": "~/howard/tools/annovar/current/bin/table_annovar.pl"},
-   "exomiser": {"jar": "~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar}"
+   "exomiser": {"jar": "~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar"}
+}
+```
+> Example of a configuration for bcftools with a docker image (example with howard docker image)
+
+```json
+"tools": {
+   "bcftools": {
+      "docker": {
+        "image": "howard:1.0.0",
+        "entrypoint": "bcftools",
+        "options": null,
+        "command": null
+      }
+   }
 }
 ```
 
@@ -313,7 +327,7 @@ Examples:
 ```json
 "bcftools": "bcftools"
 ```
-> Path to binary in $PATH env variable# Path to binary as a dict with binary type 'bin'
+> Path to binary as a dict with binary type 'bin'
 
 ```json
 "bcftools": {"bin": "~/howard/tools/bcftools/current/bin/bcftools"}
@@ -332,7 +346,7 @@ Examples:
 ```json
 "bgzip": "bgzip"
 ```
-> Path to binary in $PATH env variable# Path to binary as a dict with binary type 'bin'
+> Path to binary as a dict with binary type 'bin'
 
 ```json
 "bgzip": {"bin": "~/howard/tools/htslib/current/bin/bgzip"}
@@ -351,7 +365,7 @@ Examples:
 ```json
 "java": "java"
 ```
-> Path to binary in $PATH env variable# Path to binary as a dict with binary type 'bin'
+> Path to binary as a dict with binary type 'bin'
 
 ```json
 "java": {"bin": "/usr/bin/java"}
@@ -370,7 +384,7 @@ Examples:
 ```json
 "snpeff": "~/howard/tools/snpeff/current/bin/snpEff.jar"
 ```
-> Path to binary as a dict without binary type# Path to binary as a dict with binary type 'jar'
+> Path to binary as a dict with binary type 'jar'
 
 ```json
 "snpeff": {"jar": "~/howard/tools/snpeff/current/bin/snpEff.jar"}
@@ -389,7 +403,7 @@ Examples:
 ```json
 "annovar": "~/howard/tools/annovar/current/bin/table_annovar.pl"
 ```
-> Path to binary as a dict without binary type# Path to binary as a dict with binary type 'perl'
+> Path to binary as a dict with binary type 'perl'
 
 ```json
 "annovar": {"jar": "~/howard/tools/annovar/current/bin/table_annovar.pl"}
@@ -408,7 +422,7 @@ Examples:
 ```json
 "snpeff": "~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar"
 ```
-> Path to binary as a dict without binary type# Path to binary as a dict with binary type 'jar'
+> Path to binary as a dict with binary type 'jar'
 
 ```json
 "snpeff": {"jar": "~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar"}

@@ -1840,7 +1840,12 @@ commands_arguments = {
         """   - dbNSFP download: More threads, more memory usage (8 threads ~ 16Gb, 24 threads ~ 32Gb)\n"""
         """    \n""",
         "groups": {
-            "main": {"assembly": False, "genomes-folder": False, "genome": False},
+            "main": {
+                "assembly": False,
+                "genomes-folder": False,
+                "genome": False,
+                "param": False,
+            },
             "Genomes": {
                 "download-genomes": False,
                 "download-genomes-provider": False,

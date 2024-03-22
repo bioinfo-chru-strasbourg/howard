@@ -1,0 +1,38 @@
+{
+  "databases": {
+    "genomes": {
+      "download_genomes": "~/howard/databases/genomes/current",
+      "download_genomes_provider": "UCSC",
+      "download_genomes_contig_regex": "chr[0-9XYM]+$"
+    },
+    "snpeff": {
+      "download_snpeff": "~/howard/databases/snpeff/current"
+    },
+    "annovar": {
+      "download_annovar": "~/howard/databases/annovar/current",
+      "download_annovar_files": "refGene,cosmic70,nci60"
+    },
+    "refseq": {
+      "download_refseq": "~/howard/databases/refseq/current",
+      "download_refseq_format_file": "ncbiRefSeq.txt"
+    },
+    "dbnsfp": {
+      "download_dbnsfp": "~/howard/databases/dbnsfp/current",
+      "download_dbnsfp_release": "4.4a",
+      "download_dbnsfp_subdatabases": true
+    },
+    "alphamissense": {
+      "download_alphamissense": "~/howard/databases/alphamissense/current"
+    },
+    "exomiser": {
+      "download_exomiser": "~/howard/databases/exomiser/current"
+    },
+    "dbsnp": {
+      "download_dbsnp": "~/howard/databases/dbsnp/current",
+      "download_dbsnp_releases": "b156",
+      "download_dbsnp_vcf": true,
+      "download_dbsnp_parquet": true
+    },
+    "assemblies": ["hg19"]
+  }
+}
