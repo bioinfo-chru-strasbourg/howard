@@ -509,10 +509,10 @@ arguments = {
     "output_extann": {
         "metavar": "output extann",
         "help": """Output Extann file path.\n"""
-        """Output extann file, should be bed or bed.gz.\n""",
+        """Output extann file, should be BED or BED.gz.\n""",
         "required": False,
         "default": None,
-        "type": PathType(exists=True, type=None),
+        "type": PathType(exists=None, type=None),
     },
     "refgene_extann": {
         "metavar": "refgene extann",
