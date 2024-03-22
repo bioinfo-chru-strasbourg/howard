@@ -496,6 +496,62 @@ arguments = {
         "choices": ["auto", "enable", "disable"],
         "gooey": {"widget": "Dropdown", "options": {}},
     },
+    # From Extann
+    "input_extann": {
+        "metavar": "input extann",
+        "help": """Input Extann file path.\n"""
+        """Format file must be a Extann TXT file or TSV file.\n"""
+        """File need to have at least the genes column\n""",
+        "required": False,
+        "default": None,
+        "type": PathType(exists=True, type=None),
+    },
+    "output_extann": {
+        "metavar": "output extann",
+        "help": """Output Extann file path.\n"""
+        """Output extann file, should be bed or bed.gz.\n""",
+        "required": False,
+        "default": None,
+        "type": PathType(exists=True, type=None),
+    },
+    "refgene_extann": {
+        "metavar": "refgene extann",
+        "help": """Refgene extann file path.\n"""
+        """Refgene extann file comming from ncbi, be carefull with UTR.\n"""
+        """See RefGene option for more informations\n""",
+        "required": False,
+        "default": None,
+        "type": PathType(exists=True, type=None),
+    },
+    "transcript_extann": {
+        "metavar": "transcript extann",
+        "help": """Transcript extann file path.\n"""
+        """Transcript preferences file containing gene/transcript\n"""
+        """columns: 'genes'   'transcripts'. See tests folder\n"""
+        """if gene/transcript not found in user file, keep longest\n""",
+        "required": False,
+        "default": None,
+        "type": PathType(exists=True, type=None),
+    },
+    "mode_extann": {
+        "metavar": "mode extann",
+        "help": """Mode extann selection.\n"""
+        """How to pick transcript from ncbi, keep all,\n"""
+        """keep the longest, or keep the chosen one (transcript_extann).\n""",
+        "required": False,
+        "default": "longest",
+        "choices": ["all", "longest", "chosen"],
+        "type": str,
+    },
+    "param_extann": {
+        "metavar": "param extann",
+        "help": """Param extann file path.\n"""
+        """Param containing configuration, options to replace chars and\n"""
+        """bedlike header description, conf vcf specs\n""",
+        "required": False,
+        "default": "~/howard/config/param.extann.json",
+        "type": PathType(exists=True, type=None),
+    },
     # Calculation
     "calculation_config": {
         "metavar": "calculation config",
