@@ -1,22 +1,4 @@
 {
-    "RP_Design_v9_19052020_v4": {
-        "reference": "hg19",
-        "genes": {
-            "Number": "1",
-            "Type": "String",
-            "Description": "Gene symbol"
-        },
-        "Disease_Acronym": {
-            "Number": ".",
-            "Type": "String",
-            "Description": "Acronym disease"
-        },
-        "Disease_Name_RetNet": {
-            "Number": ".",
-            "Type": "String",
-            "Description": "Disease name from RetNet"
-        }
-    },
     "OMIMannotations": {
         "reference": "hg19",
         "genes": {
@@ -53,6 +35,6 @@
         "transcript"
     ],
     "transcript_extann": "",
-    "mode_extann": "all",
+    "mode_extann": "",
     "refgene_extann": ""
 }
