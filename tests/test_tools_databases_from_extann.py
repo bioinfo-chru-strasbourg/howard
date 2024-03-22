@@ -35,29 +35,23 @@ def edit_config(configfile, key, new, tmp_dir):
 
 
 @pytest.mark.parametrize("mode", ["all", "longest", "chosen"])
-def test_from_extann_all(mode):
+def test_from_extann(mode):
     """
-    Test from extann func while keeping all transcript information
+    Test from extann func while switching on each mode
     """
     with TemporaryDirectory(dir="/tmp") as tmp_dir:
-        input_ex = osj(tests_folder, "data", "OMIMsplit.tsv")
+        input_ex = osj(tests_folder, "databases", "extann", "extann.tsv")
         output_ex = osj(tmp_dir, f"OMIM.output.{mode}.bed")
         param = osj(tests_folder, "data", "example.param.extann.json")
         param_ex = edit_config(param, "mode_extann", mode, tmp_dir)
+        expected_ex = osj(
+            tests_folder, "databases", "extann", f"extann.expected.{mode}.bed"
+        )
 
-        if mode == "longest":
-            expected_ex = osj(tests_folder, "data", "OMIMsplit.expected.longest.bed")
-        elif mode == "chosen":
-            expected_ex = osj(tests_folder, "data", "OMIMsplit.expected.chosen.bed")
-        elif mode == "all":
-            expected_ex = osj(tests_folder, "data", "OMIMsplit.expected.all.bed")
-        else:
-            exit()
         # remove
         remove_if_exists([output_ex])
         remove_if_exists([output_ex + ".hdr"])
 
-        print(read_json(param_ex))
         args = argparse.Namespace(
             input_extann=input_ex,
             output_extann=output_ex,
@@ -65,9 +59,7 @@ def test_from_extann_all(mode):
             refgene_extann=osj(
                 tests_folder,
                 "databases",
-                "annotations",
-                "current",
-                "hg19",
+                "extann",
                 "ncbiRefSeq.chunk.bed.gz",
             ),
             transcript_extann=osj(tests_folder, "data", "transcripts.from_extann.tsv"),
