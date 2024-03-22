@@ -144,7 +144,7 @@ def write_extann(
     mandatory = ["#CHROM", "START", "END"]
     # Variants and write to file
     headerfile = output + ".hdr"
-    with open(output, "w+") as o, open(headerfile, "w+") as h:
+    with open(f"{output}.tmp", "w+") as o, open(headerfile, "w+") as h:
         if extra_cols:
             mandatory.extend(extra_cols)
         mandatory.extend([col for col in df_extann.columns])
@@ -235,13 +235,21 @@ def get_chosen_transcript(
     """
     From a txt / tsv file with gene and transcript, it will keep only provided transcript for this gene, if gene does not match it will take the longest
     """
-    gene = match["name"].unique()
+    gene = match["name"].unique()[0]
     if df_transcript.empty:
         return get_longest_transcript(match, extra_col)
+    assert "genes" in df_transcript.columns, "Gene column is missing (genes) exit"
+    assert (
+        "transcripts" in df_transcript.columns
+    ), "Transcript column is missing (transcripts) exit"
+    # print(df_transcript)
+    # print(gene)
+    # print(df_transcript.loc[df_transcript["genes"] == gene])
+    # exit()
     if len(df_transcript.loc[df_transcript["genes"] == gene].index) != 0:
         try:
             chosen = df_transcript.loc[df_transcript["genes"] == gene].iloc[0][
-                "transcript"
+                "transcripts"
             ]
             df_chosen_transcript = match.loc[match["transcript"] == chosen]
             tmp = [
@@ -331,6 +339,12 @@ def from_extann(args: argparse) -> None:
     else:
         df_extann = pd.read_csv(args.input_extann, header=0, sep="\t")
 
+    # Mode
+    if not args.mode_extann:
+        assert param.get(
+            "mode_extann"
+        ), "No mode_extann was provided either in cli or as parameter EXIT"
+
     # Transcript
     if args.transcript_extann:
         df_transcript = pd.read_csv(args.transcript_extann, header=0, sep="\t")
@@ -363,3 +377,14 @@ def from_extann(args: argparse) -> None:
         param["mode_extann"],
         df_transcript,
     )
+    commons.command(
+        f"grep '^#' {args.output_extann}.tmp > {args.output_extann} && grep -v '^#' {args.output_extann}.tmp | sort -k1,1V -k2,2n >> {args.output_extann}"
+    )
+    log.debug("Removing tmp output")
+    os.remove(f"{args.output_extann}.tmp")
+
+    if args.output_extann.endswith(".gz"):
+        log.debug("Compressing output")
+        commons.command(
+            f"mv {args.output_extann} {args.output_extann.replace('.gz', '')} && bgzip {args.output_extann.replace('.gz', '')}"
+        )
