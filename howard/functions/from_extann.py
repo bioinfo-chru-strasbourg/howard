@@ -242,10 +242,6 @@ def get_chosen_transcript(
     assert (
         "transcripts" in df_transcript.columns
     ), "Transcript column is missing (transcripts) exit"
-    # print(df_transcript)
-    # print(gene)
-    # print(df_transcript.loc[df_transcript["genes"] == gene])
-    # exit()
     if len(df_transcript.loc[df_transcript["genes"] == gene].index) != 0:
         try:
             chosen = df_transcript.loc[df_transcript["genes"] == gene].iloc[0][
