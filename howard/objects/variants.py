@@ -7214,12 +7214,7 @@ class Variants:
         transcripts = []
         if transcripts_file:
             if os.path.exists(transcripts_file):
-                transcripts_dataframe = pd.read_csv(
-                    transcripts_file,
-                    sep="\t",
-                    header=None,
-                    names=["transcript", "gene"],
-                )
+                transcripts_dataframe = transcripts_file_to_df(transcripts_file)
                 transcripts = transcripts_dataframe.iloc[:, 0].tolist()
             else:
                 log.error(f"Transcript file '{transcripts_file}' does NOT exist")
