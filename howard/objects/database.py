@@ -57,10 +57,23 @@ DATABASE_TYPE_NEEDED_COLUMNS = {
 
 DEFAULT_VCF_HEADER = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO"]
 
+DEFAULT_VCF_HEADER_DUCKDB_TYPES = {
+    "#CHROM": "STRING",
+    "POS": "INT",
+    "START": "INT",
+    "END": "INT",
+    "ID": "VARCHAR",
+    "REF": "VARCHAR",
+    "ALT": "VARCHAR",
+    # "QUAL": "INT",
+    "FILTER": "VARCHAR",
+    "INFO": "VARCHAR",
+}
+
+
 DEFAULT_HEADER_LIST = ["##fileformat=VCFv4.2", "#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO"]
 
 FILE_FORMAT_DELIMITERS = {"vcf": "\t", "tsv": "\t", "csv": ",", "tbl": "|", "bed": "\t"}
-
 
 DUCKDB_EXTENSION_TO_LOAD = ["sqlite_scanner"]
 
@@ -1241,11 +1254,11 @@ class Database:
 
         database_format = self.get_format(database=database)
 
-        sql_form = None
+        sql_from = None
 
         # Connexion
         if type(database) == duckdb.DuckDBPyConnection:
-            sql_form = self.get_database_table(database=database)
+            sql_from = self.get_database_table(database=database)
 
         # Parquet
         elif database_format in ["parquet"]:
@@ -1259,7 +1272,7 @@ class Database:
                     list_of_parquet_level_path = "*/" * (
                         list_of_parquet[0].replace(database, "").count("/") - 1
                     )
-                    sql_form = f"read_parquet('{database}/{list_of_parquet_level_path}*parquet', hive_partitioning=1)"
+                    sql_from = f"read_parquet('{database}/{list_of_parquet_level_path}*parquet', hive_partitioning=1)"
                 else:
                     log.error(
                         f"Input file '{database}' not a compatible partitionned parquet folder"
@@ -1270,7 +1283,7 @@ class Database:
 
             # No partition
             else:
-                sql_form = f"read_parquet('{database}')"
+                sql_from = f"read_parquet('{database}')"
 
         # CSV
         elif database_format in ["vcf", "tsv", "csv", "tbl", "bed"]:
@@ -1318,7 +1331,6 @@ class Database:
                     LIMIT 0
                 """
             try:
-                # nb_columns_detected_by_duckdb = len(self.conn.query(query_nb_columns_detected_by_duckdb).df().columns)
                 nb_columns_detected_by_duckdb = len(
                     self.conn.query(query_nb_columns_detected_by_duckdb).columns
                 )
@@ -1334,26 +1346,45 @@ class Database:
 
             # If table columns
             if table_columns:
-                sql_form = f"""read_csv('{database_ref}', names={table_columns}, auto_detect=True, compression='{database_compression}', skip={header_length}, delim='{delimiter}', hive_partitioning={hive_partitioning}, sample_size={sample_size})"""
+
+                # Detect and force column type
+                table_columns_types_list = []
+                for table_column in table_columns:
+                    if table_column in DEFAULT_VCF_HEADER_DUCKDB_TYPES:
+                        table_columns_types_list.append(
+                            f"'{table_column}': {DEFAULT_VCF_HEADER_DUCKDB_TYPES.get(table_column)}"
+                        )
+
+                # Create duckdb read_csv types option
+                if table_columns_types_list:
+                    table_columns_types_list_join_option = (
+                        ", types={" + ", ".join(table_columns_types_list) + "}"
+                    )
+                else:
+                    table_columns_types_list_join_option = ""
+
+                # SQL form
+                sql_from = f"""read_csv('{database_ref}', names={table_columns}{table_columns_types_list_join_option}, auto_detect=True, compression='{database_compression}', skip={header_length}, delim='{delimiter}', hive_partitioning={hive_partitioning}, sample_size={sample_size})"""
+
             else:
-                sql_form = f"read_csv('{database_ref}', auto_detect=True, compression='{database_compression}', skip={header_length}, delim='{delimiter}', hive_partitioning={hive_partitioning}, sample_size={sample_size})"
+                sql_from = f"read_csv('{database_ref}', auto_detect=True, compression='{database_compression}', skip={header_length}, delim='{delimiter}', hive_partitioning={hive_partitioning}, sample_size={sample_size})"
 
         # JSON
         elif database_format in ["json"]:
-            sql_form = (
+            sql_from = (
                 f"read_json('{database}', auto_detect=True, sample_size={sample_size})"
             )
 
         # DuckDB
         elif database_format in ["duckdb"]:
-            sql_form = f"'{database}'"
+            sql_from = f"'{database}'"
 
         # SQLite
         elif database_format in ["sqlite"]:
             database_table = self.get_database_table(database=database)
-            sql_form = f"(SELECT * FROM sqlite_scan('{database}', '{database_table}'))"
+            sql_from = f"(SELECT * FROM sqlite_scan('{database}', '{database_table}'))"
 
-        return sql_form
+        return sql_from
 
     def get_sql_database_attach(
         self,
