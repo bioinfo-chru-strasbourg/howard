@@ -303,11 +303,6 @@ def from_extann(args: argparse) -> None:
     :type args: argparse
     """
     param = read_json(args.param_extann)
-
-    log.debug(f"Replace {str(param.get('replace'))}")
-    log.debug(f"Config mode_extann {param['mode_extann']}")
-    log.debug(f"Config extra_col_list {' '.join(param['extra_col_list'])}")
-    log.debug(f"Config transcript_extann {param['transcript_extann']}")
     # Inputs
     if isinstance(args.input_extann, str):
         input_file = args.input_extann
@@ -355,6 +350,12 @@ def from_extann(args: argparse) -> None:
         else:
             log.debug("No transcript provided for extann")
             df_transcript = None
+    # Param
+    log.debug(f"Replace {str(param.get('replace'))}")
+    log.debug(f"Config mode_extann {args.mode_extann}")
+    log.debug(f"Config extra_col_list {' '.join(param['extra_col_list'])}")
+    log.debug(f"Config transcript_extann {args.transcript_extann}")
+    log.debug(f"Config refgene_extann {args.refgene_extann}")
 
     # Header
     log.info("Create metaheader")
@@ -370,7 +371,7 @@ def from_extann(args: argparse) -> None:
         df_extann,
         df_refgene,
         param["extra_col_list"],
-        param["mode_extann"],
+        args.mode_extann,
         df_transcript,
     )
     commons.command(
