@@ -30,6 +30,42 @@ from howard.tools.databases import *
 from test_needed import *
 
 
+def test_databases():
+    """
+    This function tests the "databases" function with a set of arguments.
+    """
+
+    # Prepare arguments for the query function
+    args = argparse.Namespace(
+        assembly="hg19",
+        download_genomes=None,
+        download_annovar_files=None,
+        download_annovar=None,
+        download_annovar_url=None,
+        download_snpeff=None,
+        download_refseq=None,
+        download_dbnsfp=None,
+        download_alphamissense=None,
+        download_exomiser=None,
+        download_dbsnp=None,
+        convert_hgmd=None,
+        input_annovar=None,
+        output_annovar=None,
+        input_extann=None,
+        output_extann=None,
+        genome=None,
+        generate_param=None,
+        config=None,
+        arguments_dict=arguments_dict,
+    )
+
+    try:
+        databases(args)
+        assert True
+    except:
+        assert False
+
+
 def test_databases_infos():
     """
     The function `test_databases_infos` retrieves information about databases based on specified
@@ -720,40 +756,6 @@ def test_database_dbnsfp():
             assert len(downloaded_assembly_files) == nb_files
 
 
-def test_databases():
-    """
-    This function tests the "databases" function with a set of arguments.
-    """
-
-    # Prepare arguments for the query function
-    args = argparse.Namespace(
-        assembly="hg19",
-        download_genomes=None,
-        download_annovar_files=None,
-        download_annovar=None,
-        download_annovar_url=None,
-        download_snpeff=None,
-        download_refseq=None,
-        download_dbnsfp=None,
-        download_alphamissense=None,
-        download_exomiser=None,
-        download_dbsnp=None,
-        convert_hgmd=None,
-        input_annovar=None,
-        output_annovar=None,
-        genome=None,
-        generate_param=None,
-        config=None,
-        arguments_dict=arguments_dict,
-    )
-
-    try:
-        databases(args)
-        assert True
-    except:
-        assert False
-
-
 def test_databases_download():
     """
     This function tests the download of databases for Annovar and snpEff tools.
@@ -821,6 +823,8 @@ def test_databases_download():
             convert_hgmd=None,
             input_annovar=None,
             output_annovar=None,
+            input_extann=None,
+            output_extann=None,
             genome=None,
             generate_param=None,
             config=config,
@@ -905,6 +909,8 @@ def test_databases_download_genomes_only():
             convert_hgmd=None,
             input_annovar=None,
             output_annovar=None,
+            input_extann=None,
+            output_extann=None,
             genome=None,
             generate_param=None,
             threads=threads,
