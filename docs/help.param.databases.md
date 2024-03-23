@@ -78,6 +78,13 @@ HOWARD Parameters JSON file defines parameters for databases' downloads.
          - [annovar_to_parquet](#databasesfrom_annovarannovar_to_parquet)
          - [annovar_reduce_memory](#databasesfrom_annovarannovar_reduce_memory)
          - [annovar_multi_variant](#databasesfrom_annovarannovar_multi_variant)
+      - [from_extann](#databasesfrom_extann)
+         - [input_extann](#databasesfrom_extanninput_extann)
+         - [output_extann](#databasesfrom_extannoutput_extann)
+         - [refgene](#databasesfrom_extannrefgene)
+         - [transcripts](#databasesfrom_extanntranscripts)
+         - [param_extann](#databasesfrom_extannparam_extann)
+         - [mode_extann](#databasesfrom_extannmode_extann)
       - [Parameters](#databasesparameters)
          - [generate_param](#databasesparametersgenerate_param)
          - [generate_param_description](#databasesparametersgenerate_param_description)
@@ -740,6 +747,60 @@ Type: ```str```
 Choices: ```['auto', 'enable', 'disable']```
 
 Default: ```auto```
+
+### databases::from_extann
+
+Extann convert (gene annotation).
+
+#### databases::from_extann::input_extann
+
+Input Extann file path. Format file must be a Extann TXT file or TSV file. File need to have at least the genes column. 
+
+Type: ```Path```
+
+Default: ```None```
+
+#### databases::from_extann::output_extann
+
+Output Extann file path. Output extann file, should be BED or BED.gz. 
+
+Type: ```Path```
+
+Default: ```None```
+
+#### databases::from_extann::refgene
+
+Path to refGene annotation file. 
+
+Type: ```Path```
+
+Default: ```None```
+
+#### databases::from_extann::transcripts
+
+Transcripts TSV file, with Transcript in first column, optional Gene in second column. 
+
+Type: ```Path```
+
+Default: ```None```
+
+#### databases::from_extann::param_extann
+
+Param extann file path. Param containing configuration, options to replace chars and bedlike header description, conf vcf specs. 
+
+Type: ```Path```
+
+Default: ```~/howard/config/param.extann.json```
+
+#### databases::from_extann::mode_extann
+
+Mode extann selection. How to pick transcript from ncbi, keep all, keep the longest, or keep the chosen one (transcript_extann). 
+
+Type: ```str```
+
+Choices: ```['all', 'longest', 'chosen']```
+
+Default: ```longest```
 
 ### databases::Parameters
 

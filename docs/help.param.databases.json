@@ -211,6 +211,15 @@
       "annovar_reduce_memory": {},
       "annovar_multi_variant": {}
     },
+    "from_extann": {
+      "__help": ["Extann convert (gene annotation)."],
+      "input_extann": {},
+      "output_extann": {},
+      "refgene": {},
+      "transcripts": {},
+      "param_extann": {},
+      "mode_extann": {}
+    },
     "Parameters": {
       "__help": ["Parameters generation."],
       "generate_param": {},

@@ -50,6 +50,7 @@
     - [dbSNP](#dbsnp)
     - [HGMD](#hgmd)
     - [from_Annovar](#from_annovar)
+    - [from_extann](#from_extann)
     - [Parameters](#parameters)
   - [GUI tool](#gui-tool)
   - [HELP tool](#help-tool)
@@ -1161,6 +1162,14 @@ Genome file in fasta format (e.g. 'hg19.fa', 'hg38.fa').
 
 ```
 
+```
+--param=<param> (default: {})
+
+Parameters JSON file (or string) defines parameters to process 
+annotations, calculations, prioritizations, convertions and queries.
+
+```
+
 ### Genomes
 ```
 --download-genomes=<genomes>
@@ -1652,6 +1661,57 @@ Either 'auto' (auto-detection), 'enable' or 'disable'.
 
 ```
 
+### from_extann
+```
+--input_extann=<input extann>
+
+Input Extann file path.
+Format file must be a Extann TXT file or TSV file.
+File need to have at least the genes column.
+
+```
+
+```
+--output_extann=<output extann>
+
+Output Extann file path.
+Output extann file, should be BED or BED.gz.
+
+```
+
+```
+--refgene=<refGene>
+
+Path to refGene annotation file.
+
+```
+
+```
+--transcripts=<transcripts>
+
+Transcripts TSV file,
+with Transcript in first column, optional Gene in second column.
+
+```
+
+```
+--param_extann=<param extann> (default: ~/howard/config/param.extann.json)
+
+Param extann file path.
+Param containing configuration, options to replace chars and
+bedlike header description, conf vcf specs.
+
+```
+
+```
+--mode_extann=<mode extann> ['all', 'longest', 'chosen'] (default: longest)
+
+Mode extann selection.
+How to pick transcript from ncbi, keep all,
+keep the longest, or keep the chosen one (transcript_extann).
+
+```
+
 ### Parameters
 ```
 --generate-param=<param>
@@ -1716,6 +1776,8 @@ Usage examples:
 > howard help --help_json_input=docs/help.config.json --help_json_input_title='HOWARD Configuration' --help_md=docs/help.config.md --help_html=docs/help.config.html --code_type='json'
 
 > howard help --help_json_input=docs/help.param.json --help_json_input_title='HOWARD Parameters' --help_md=docs/help.param.md --help_html=docs/help.param.html --code_type='json' 
+
+> howard help --help_json_input=docs/help.param.databases.json --help_json_input_title='HOWARD Parameters Databases' --help_md=docs/help.param.databases.md --help_html=docs/help.param.databases.html --code_type='json' 
 
 >  
 
