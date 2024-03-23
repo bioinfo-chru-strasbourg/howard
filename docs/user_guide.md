@@ -33,7 +33,7 @@ HOWARD is multithreaded through the number of variants and by database (data-sca
 - [Databases](#databases)
     - [Databases tool](#databases-tool)
     - [Home-made databases](#home-made-databases)
-    - [VCF and Parquet from Annovar](#vcf-and-parquet-from-annovar)
+    - [Databases from Annovar and Extann](#databases-from-annovar-and-extann)
 - [Tools](#tools)
   - [Parameters](#parameters)
   - [Stats](#stats)
@@ -298,9 +298,9 @@ Note that a VCF can be directly used as a database (annotation field information
 
 See [HOWARD Help Convert tool](help.md#convert-tool) for more information.
 
-## VCF and Parquet from Annovar
+## Databases from Annovar and Extann
 
-See [HOWARD Help From ANNOVAR tool](help.md#from_annovar-tool) tool for more information (under development).
+See [HOWARD Help Databases tool](help.md#databases) tool for more information aboout the tool, and [HOWARD Parameters Databases](help.param.databases.md) help for generate databases annotation file from Annovar databases ([from Annovar](help.param.databases.md#databasesfrom_annovar), under development) and from Gene annotation file ([from Extann](help.param.databases.md#databasesfrom_extann)).
 
 # Tools
 

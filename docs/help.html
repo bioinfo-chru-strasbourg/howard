@@ -596,6 +596,11 @@ Folder containing genomes.
 Genome file in fasta format (e.g. &#x27;hg19.fa&#x27;, &#x27;hg38.fa&#x27;).
 
 
+</pre><pre>--param=&lt;param&gt; (default: {})
+Parameters JSON file (or string) defines parameters to process 
+annotations, calculations, prioritizations, convertions and queries.
+
+
 </pre><H3>Genomes</H3>
 <pre>--download-genomes=&lt;genomes&gt;
 Path to genomes folder
@@ -910,6 +915,39 @@ Variant with multiple annotation lines on Annovar file.
 Either &#x27;auto&#x27; (auto-detection), &#x27;enable&#x27; or &#x27;disable&#x27;.
 
 
+</pre><H3>from_extann</H3>
+<pre>--input_extann=&lt;input extann&gt;
+Input Extann file path.
+Format file must be a Extann TXT file or TSV file.
+File need to have at least the genes column.
+
+
+</pre><pre>--output_extann=&lt;output extann&gt;
+Output Extann file path.
+Output extann file, should be BED or BED.gz.
+
+
+</pre><pre>--refgene=&lt;refGene&gt;
+Path to refGene annotation file.
+
+
+</pre><pre>--transcripts=&lt;transcripts&gt;
+Transcripts TSV file,
+with Transcript in first column, optional Gene in second column.
+
+
+</pre><pre>--param_extann=&lt;param extann&gt; (default: ~/howard/config/param.extann.json)
+Param extann file path.
+Param containing configuration, options to replace chars and
+bedlike header description, conf vcf specs.
+
+
+</pre><pre>--mode_extann=&lt;mode extann&gt; [&#x27;all&#x27;, &#x27;longest&#x27;, &#x27;chosen&#x27;] (default: longest)
+Mode extann selection.
+How to pick transcript from ncbi, keep all,
+keep the longest, or keep the chosen one (transcript_extann).
+
+
 </pre><H3>Parameters</H3>
 <pre>--generate-param=&lt;param&gt;
 Parameter file (JSON) with all databases found.
@@ -940,7 +978,7 @@ Generate parameter JSON file with BCFTools annotation for allowed formats
 
 </pre><H2>GUI</H2>
 <p>Graphical User Interface tools</p>Usage examples:<br>&nbsp;&nbsp;&nbsp;howard gui <H2>HELP</H2>
-<p>Help tools</p>Usage examples:<br>&nbsp;&nbsp;&nbsp;howard help --help_md=docs/help.md --help_html=docs/help.html<br>&nbsp;&nbsp;&nbsp;howard help --help_json_input=docs/help.config.json --help_json_input_title='HOWARD Configuration' --help_md=docs/help.config.md --help_html=docs/help.config.html --code_type='json'<br>&nbsp;&nbsp;&nbsp;howard help --help_json_input=docs/help.param.json --help_json_input_title='HOWARD Parameters' --help_md=docs/help.param.md --help_html=docs/help.param.html --code_type='json' <br>&nbsp;&nbsp;&nbsp; <br><H3>Main options</H3>
+<p>Help tools</p>Usage examples:<br>&nbsp;&nbsp;&nbsp;howard help --help_md=docs/help.md --help_html=docs/help.html<br>&nbsp;&nbsp;&nbsp;howard help --help_json_input=docs/help.config.json --help_json_input_title='HOWARD Configuration' --help_md=docs/help.config.md --help_html=docs/help.config.html --code_type='json'<br>&nbsp;&nbsp;&nbsp;howard help --help_json_input=docs/help.param.json --help_json_input_title='HOWARD Parameters' --help_md=docs/help.param.md --help_html=docs/help.param.html --code_type='json' <br>&nbsp;&nbsp;&nbsp;howard help --help_json_input=docs/help.param.databases.json --help_json_input_title='HOWARD Parameters Databases' --help_md=docs/help.param.databases.md --help_html=docs/help.param.databases.html --code_type='json' <br>&nbsp;&nbsp;&nbsp; <br><H3>Main options</H3>
 <pre>--help_md=&lt;help markdown&gt;
 Help Output file in MarkDown format.
 

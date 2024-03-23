@@ -2000,6 +2000,7 @@ commands_arguments = {
         """   howard help --help_md=docs/help.md --help_html=docs/help.html\n"""
         """   howard help --help_json_input=docs/help.config.json --help_json_input_title='HOWARD Configuration' --help_md=docs/help.config.md --help_html=docs/help.config.html --code_type='json'\n"""
         """   howard help --help_json_input=docs/help.param.json --help_json_input_title='HOWARD Parameters' --help_md=docs/help.param.md --help_html=docs/help.param.html --code_type='json' \n"""
+        """   howard help --help_json_input=docs/help.param.databases.json --help_json_input_title='HOWARD Parameters Databases' --help_md=docs/help.param.databases.md --help_html=docs/help.param.databases.html --code_type='json' \n"""
         """    \n""",
         "groups": {
             "main": {
