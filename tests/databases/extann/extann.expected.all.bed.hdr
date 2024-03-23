@@ -1,0 +1,9 @@
+##fileformat=VCFv4.4
+##fileDate=22/03/2024
+##INFO=<ID=genes,Number=1,Type=String,Description="Gene symbol">
+##INFO=<ID=OMIM_phenotype,Number=.,Type=String,Description="List of OMIM phenotype">
+##INFO=<ID=OMIM_inheritance,Number=.,Type=String,Description="List of OMIM inheritance">
+##INFO=<ID=OMIM_ID,Number=.,Type=Integer,Description="List of OMIM ID">
+##INFO=<ID=transcript,Number=1,Type=String,Description="Refgene transcript">
+##reference=hg19
+#CHROM	START	END	transcript	genes	OMIM_phenotype	OMIM_inheritance	OMIM_ID
