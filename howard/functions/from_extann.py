@@ -318,10 +318,10 @@ def from_extann(args: argparse) -> None:
     output_file = commons.full_path(output_file)
 
     # Refgene
-    if args.refgene_extann:
-        df_refgene = read_refgene(args.refgene_extann)
+    if args.refgene:
+        df_refgene = read_refgene(args.refgene)
     else:
-        df_refgene = read_refgene(param.get("refgene_extann"))
+        df_refgene = read_refgene(param.get("refgene"))
 
     if args.input_extann.endswith(".gz"):
         df_extann = pd.read_csv(
@@ -337,12 +337,12 @@ def from_extann(args: argparse) -> None:
         ), "No mode_extann was provided either in cli or as parameter EXIT"
 
     # Transcript
-    if args.transcript_extann:
+    if args.transcripts:
         # df_transcript = pd.read_csv(args.transcript_extann, header=0, sep="\t")
-        df_transcript = commons.transcripts_file_to_df(args.transcript_extann)
-    elif param.get("transcript_extann"):
+        df_transcript = commons.transcripts_file_to_df(args.transcripts)
+    elif param.get("transcripts"):
         # df_transcript = pd.read_csv(param.get("transcript_extann"), header=0, sep="\t")
-        df_transcript = commons.transcripts_file_to_df(param.get("transcript_extann"))
+        df_transcript = commons.transcripts_file_to_df(param.get("transcripts"))
     else:
         if param.get("mode_extann") == "chosen":
             log.error(
@@ -356,8 +356,8 @@ def from_extann(args: argparse) -> None:
     log.debug(f"Replace {str(param.get('replace'))}")
     log.debug(f"Config mode_extann {args.mode_extann}")
     log.debug(f"Config extra_col_list {' '.join(param['extra_col_list'])}")
-    log.debug(f"Config transcript_extann {args.transcript_extann}")
-    log.debug(f"Config refgene_extann {args.refgene_extann}")
+    log.debug(f"Config transcripts {args.transcripts}")
+    log.debug(f"Config refgene {args.refgene}")
 
     # Header
     log.info("Create metaheader")

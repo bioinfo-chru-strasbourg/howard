@@ -7,8 +7,7 @@ from os.path import join as osj
 from tempfile import TemporaryDirectory
 from howard.functions.commons import remove_if_exists
 from howard.functions.from_extann import from_extann, read_json
-
-tests_folder = os.path.dirname(__file__)
+from test_needed import tests_folder
 
 
 def identical(vcf_list: typing.List[str], begin: str):
@@ -56,13 +55,13 @@ def test_from_extann(mode):
             input_extann=input_ex,
             output_extann=output_ex,
             param_extann=param_ex,
-            refgene_extann=osj(
+            refgene=osj(
                 tests_folder,
                 "databases",
                 "extann",
                 "ncbiRefSeq.chunk.bed.gz",
             ),
-            transcript_extann=osj(tests_folder, "data", "transcripts.from_extann.tsv"),
+            transcripts=osj(tests_folder, "data", "transcripts.from_extann.tsv"),
             mode_extann=mode,
         )
         from_extann(args)

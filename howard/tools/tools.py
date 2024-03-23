@@ -501,10 +501,17 @@ arguments = {
         "metavar": "input extann",
         "help": """Input Extann file path.\n"""
         """Format file must be a Extann TXT file or TSV file.\n"""
-        """File need to have at least the genes column\n""",
+        """File need to have at least the genes column.\n""",
         "required": False,
         "default": None,
         "type": PathType(exists=True, type=None),
+        "gooey": {
+            "widget": "FileChooser",
+            "options": {
+                "wildcard": "VCF, Parquet, TSV, CSV, PSV or duckDB|*.*|"
+                "All files (*)|*"
+            },
+        },
     },
     "output_extann": {
         "metavar": "output extann",
@@ -513,26 +520,35 @@ arguments = {
         "required": False,
         "default": None,
         "type": PathType(exists=None, type=None),
+        "gooey": {"widget": "FileSaver"},
     },
-    "refgene_extann": {
-        "metavar": "refgene extann",
-        "help": """Refgene extann file path.\n"""
-        """Refgene extann file comming from ncbi, be carefull with UTR.\n"""
-        """See RefGene option for more informations\n""",
-        "required": False,
-        "default": None,
-        "type": PathType(exists=True, type=None),
-    },
-    "transcript_extann": {
-        "metavar": "transcript extann",
-        "help": """Transcript extann file path.\n"""
-        """Transcript preferences file containing gene/transcript\n"""
-        """columns: 'genes'   'transcripts'. See tests folder\n"""
-        """if gene/transcript not found in user file, keep longest\n""",
-        "required": False,
-        "default": None,
-        "type": PathType(exists=True, type=None),
-    },
+    # "refgene_extann": {
+    #     "metavar": "refgene extann",
+    #     "help": """Refgene extann file path.\n"""
+    #     """Refgene extann file comming from ncbi, be carefull with UTR.\n"""
+    #     """See RefGene option for more informations.\n""",
+    #     "required": False,
+    #     "default": None,
+    #     "type": PathType(exists=True, type=None),
+    #     "gooey": {
+    #         "widget": "FileChooser",
+    #         "options": {"wildcard": "BED file format|*.bed*|"},
+    #     },
+    # },
+    # "transcript_extann": {
+    #     "metavar": "transcript extann",
+    #     "help": """Transcript extann file path.\n"""
+    #     """Transcript preferences file containing transcript/gene.\n"""
+    #     """columns: 'trancript'   'gene'. See tests folder\n"""
+    #     """if gene/transcript not found in user file, keep longest\n""",
+    #     "required": False,
+    #     "default": None,
+    #     "type": PathType(exists=True, type=None),
+    #     "gooey": {
+    #         "widget": "FileChooser",
+    #         "options": {"wildcard": "TSV file format|*.tsv|"},
+    #     },
+    # },
     "mode_extann": {
         "metavar": "mode extann",
         "help": """Mode extann selection.\n"""
@@ -547,10 +563,14 @@ arguments = {
         "metavar": "param extann",
         "help": """Param extann file path.\n"""
         """Param containing configuration, options to replace chars and\n"""
-        """bedlike header description, conf vcf specs\n""",
+        """bedlike header description, conf vcf specs.\n""",
         "required": False,
         "default": "~/howard/config/param.extann.json",
         "type": PathType(exists=True, type=None),
+        "gooey": {
+            "widget": "FileChooser",
+            "options": {"wildcard": "TSV file format|*.tsv|"},
+        },
     },
     # Calculation
     "calculation_config": {
@@ -1926,8 +1946,8 @@ commands_arguments = {
             "from_extann": {
                 "input_extann": False,
                 "output_extann": False,
-                "refgene_extann": False,
-                "transcript_extann": False,
+                "refgene": False,
+                "transcripts": False,
                 "param_extann": False,
                 "mode_extann": False,
             },
