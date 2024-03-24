@@ -1,1 +1,1 @@
-__all__ = ["commons", "utils", "databases", "from_annovar"]
+__all__ = ["commons", "utils", "databases", "from_annovar", "plugins"]

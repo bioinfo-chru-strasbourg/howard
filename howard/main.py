@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import importlib
 import io
 import multiprocessing
 import os
@@ -44,6 +45,54 @@ for command in list(commands_arguments.keys()):
         )
     except Exception as e:
         print(e)
+
+
+# DEVEL
+
+from howard.functions.plugins import load_plugins, list_plugins, plugins_to_load
+from howard.functions.commons import folder_main
+
+# print("DEVEL plugins")
+
+subfolder_plugins = "plugins"  # to commons?
+folder_plugins = os.path.join(folder_main, "plugins")  # to commons?
+
+# Load plugins infos
+plugins = load_plugins(plugins_dir=folder_plugins)
+list_plugins_dict = list_plugins(plugins, plugins_dir=folder_plugins)
+plugins_to_load_dict = plugins_to_load(list_plugins_dict=list_plugins_dict)
+# print("Plugins disponibles :")
+# print(list(plugins_to_load_dict.keys()))
+
+# Import plugins
+for plugin_name in plugins_to_load_dict:
+    plugin_infos = plugins_to_load_dict[plugin_name]
+    plugin_main_file = plugin_infos.get("__main_file__", "__main__")
+    plugin_main_function = plugin_infos.get("__main_function__", "main")
+    plugin_arguments = plugin_infos.get("__arguments__", "arguments")
+    plugins_commands_arguments = plugin_infos.get(
+        "__commands_arguments__", "commands_arguments"
+    )
+    try:
+        # if True:
+        exec(
+            "from {module}.{plugin_name}.{main_file} import {main_function} as {plugin_name}, {plugin_arguments} as plugin_arguments, {plugins_commands_arguments} as plugins_commands_arguments".format(
+                module=subfolder_plugins,
+                main_function=plugin_main_function,
+                plugin_name=plugin_name,
+                main_file=plugin_main_file,
+                plugin_arguments=plugin_arguments,
+                plugins_commands_arguments=plugins_commands_arguments,
+            )
+        )
+        for plugin_command_arguments in plugins_commands_arguments:
+            commands_arguments[plugin_command_arguments] = plugins_commands_arguments[
+                plugin_command_arguments
+            ]
+
+    except:
+        msg_warning = f"WARNING: plugin '{plugin_name}' NOT loaded"
+        log.warning(msg_warning)
 
 
 # Usage
