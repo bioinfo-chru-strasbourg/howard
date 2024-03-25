@@ -3,11 +3,32 @@ import logging as log
 import vcf
 import pandas as pd
 
-from howard.functions.commons import load_args, load_config_args, code_type_map
+from howard.functions.commons import (
+    load_args,
+    load_config_args,
+    code_type_map,
+    DEFAULT_ASSEMBLY,
+)
 from howard.objects.variants import Variants
 
 # # Arguments
-arguments = {}
+arguments = {
+    "genebe_use_refseq": {
+        "help": """Use refSeq to annotate (default).\n""",
+        "action": "store_true",
+        "default": False,
+    },
+    "genebe_use_ensembl": {
+        "help": """Use Ensembl to annotate.\n""",
+        "action": "store_true",
+        "default": False,
+    },
+    "not_flatten_consequences": {
+        "help": """Use exploded annotation informations.\n""",
+        "action": "store_true",
+        "default": False,
+    },
+}
 
 
 # Command
@@ -17,10 +38,15 @@ commands_arguments = {
         "description": """GeneBe annotation using REST API (see https://genebe.net/).\n""",
         "help": """GeneBe annotation using REST API""",
         "epilog": """Usage examples:\n"""
-        """   howard genebe --input=tests/data/example.vcf.gz --output=/tmp/example.geenbe.vcf.gz\n"""
+        """   howard genebe --input=tests/data/example.vcf.gz --output=/tmp/example.genebe.vcf.gz --genebe_use_refseq\n"""
         """    \n""",
         "groups": {
             "main": {"input": True, "output": True, "param": False, "assembly": False},
+            "GeneBe": {
+                "genebe_use_refseq": False,
+                "genebe_use_ensembl": False,
+                "not_flatten_consequences": False,
+            },
             "Explode": {
                 "explode_infos": False,
                 "explode_infos_prefix": False,
@@ -50,8 +76,6 @@ def main(args: argparse) -> None:
 
     log.info("START")
 
-    log.debug(f"Input file: {args.input}")
-
     # Load config args
     arguments_dict, _, config, param = load_config_args(args)
 
@@ -69,7 +93,7 @@ def main(args: argparse) -> None:
         param=param,
         args=args,
         arguments_dict=arguments_dict,
-        command="minimalize",
+        command="genebe",
         strict=False,
     )
 
@@ -80,9 +104,6 @@ def main(args: argparse) -> None:
     # Load data
     vcfdata_obj.load_data()
 
-    # GeneBe
-    import genebe as gnb
-
     # Create dataframe for GeneBe
     df = vcfdata_obj.get_query_to_df(
         'SELECT "#CHROM" as chr, POS as pos, REF as ref, ALT as alt FROM variants'
@@ -90,12 +111,23 @@ def main(args: argparse) -> None:
 
     # Annotate with GeneBe
     log.info("GeneBe annotation...")
+    import genebe as gnb
+
+    # Options
+    assembly = param.get("assembly", DEFAULT_ASSEMBLY)
+    param_genebe = param.get("genebe", {})
+    use_refseq = param_genebe.get("genebe_use_refseq", False)
+    use_ensembl = param_genebe.get("genebe_use_ensembl", False)
+    not_flatten_consequences = not param_genebe.get("not_flatten_consequences", False)
+    if not use_refseq and not use_ensembl:
+        use_refseq = True
+
     annotated = gnb.annotate_dataframe_variants(
         df,
-        use_ensembl=False,
-        use_refseq=True,
-        genome=args.assembly,
-        flatten_consequences=True,
+        use_refseq=use_refseq,
+        use_ensembl=use_ensembl,
+        genome=assembly,
+        flatten_consequences=not_flatten_consequences,
     )
 
     # Header pointer
@@ -147,9 +179,6 @@ def main(args: argparse) -> None:
         """
     log.debug(query_update)
     vcfdata_obj.execute_query(query_update)
-
-    ff = vcfdata_obj.get_query_to_df("SELECT * FROM variants")
-    log.debug(ff)
 
     # Export
     vcfdata_obj.export_output()

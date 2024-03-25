@@ -12,6 +12,14 @@ ACMG score
 See [GeneBe website](https://genebe.net/) and [GeneBe GitHub](https://github.com/pstawinski/pygenebe) for more information
 
 
+## Installation
+
+GeneBe needs Python packages. Use Pip to install requirements
+
+```bash
+python -m pip install -r plugins/genebe/requirements.txt
+```
+
 ## Examples
 
 > Annotate with GeneBe
