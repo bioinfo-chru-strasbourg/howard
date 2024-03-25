@@ -18,6 +18,8 @@ HOWARD generates statistics files with a specific algorithm, snpEff and BCFTOOLS
 
 HOWARD is multithreaded through the number of variants and by database (data-scaling).
 
+HOWARD is able to add plugins for further analyses.
+
 ## Table of contents
 
 - [Installation](#installation)
@@ -478,6 +480,9 @@ See [HOWARD Help Process tool](docs/help.md#process-tool) tool for more informat
 [HOWARD Parameters JSON](docs/help.param.md) describes parameters JSON file structure and options.
 
 [HOWARD Parameters Databases JSON](docs/help.param.databases.md) describes configuration JSON file for databases download and convert.
+
+[HOWARD Plugins](plugins/README.md) describes how to create HOWARD plugins.
+
 
 # Contact
 
