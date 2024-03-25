@@ -318,7 +318,7 @@ See [HOWARD Parameters JSON](help.param.md) for more information.
 >    --input=tests/data/example.vcf.gz \
 >    --param=config/param.json
 > ```
-> ```
+> ```ts
 >   #CHROM       POS REF ALT                   INFO
 > 0   chr1     28736   A   C      CLNSIG=pathogenic
 > 1   chr1     35144   A   C  CLNSIG=non-pathogenic
@@ -336,7 +336,7 @@ See [HOWARD Parameters JSON](help.param.md) for more information.
 >    --param=config/param.json \
 >    --query="SELECT distinct(\"#CHROM\") as 'chromosomes' FROM variants"
 > ```
-> ```
+> ```ts
 >   chromosomes
 > 0        chr7
 > 1        chr1
@@ -431,7 +431,7 @@ See [HOWARD Parameters JSON](help.param.md) for more information.
 Moreover, a transcripts file can be defined, especially to select NOMEN from a list of HGVS annotation (see [Calculation](#calculation) and [HGVS and NOMEN from snpEff](#hgvs-and-nomen-from-snpeff)). This file is a tab-delimited with 'transcript' as first column and 'gene' a second column. For a gene, transcripts of reference are ordered (first is priority, e.g. 'NM_001346897' has prior over 'NM_005228').
 
 > Example: Transcripts file in tab-delimited format with column 'transcript' and column 'gene'
-> ```
+> ```ts
 > NR_024540	    WASH7P
 > NR_036266	    MIR1302-9
 > NM_001346897	EGFR
@@ -658,7 +658,7 @@ Use `--explode_infos` parameter to extract all INFO tags (i.e. annotations) into
 > 
 > cut /tmp/example.tsv -f1-4,7,15
 > ```
-> ```
+> ```cs
 > #CHROM  POS       REF  ALT  FILTER  CLNSIG
 > chr1    28736     A    C    PASS    pathogenic
 > chr1    35144     A    C    PASS    non-pathogenic
@@ -792,7 +792,7 @@ In order to read a BED file, create a query (using appropiate columns), and expo
 > 
 > cat /tmp/example.bed
 > ```
-> ```
+> ```cs
 > #CHROM	START	END
 > chr1	28735	69101
 > chr1	768250	768253
@@ -814,7 +814,7 @@ A BED file can be filtered using positions or other columns such as gene names, 
 >                   (\"START\">760000 and \"END\"<770000) \
 >                )"
 > ```
-> ```
+> ```cs
 >   #CHROM   START     END
 > 0   chr1   28735   69101
 > 1   chr1  768250  768253
@@ -1184,7 +1184,7 @@ Prioritization fields can be selected from:
 >               AND \"PZFlag\" == 'PASS' \
 >             ORDER BY \"PZScore\" DESC"
 > ```
-> ```
+> ```ts
 >   #CHROM       POS ALT REF    PZFlag  PZScore                                             PZTags     DP          CLNSIG
 > 0   chr1     28736   C   A      PASS       15  PZFlag#PASS|PZScore#15|PZComment#Described on ...    NaN      pathogenic
 > 1   chr1     35144   C   A  FILTERED     -100  PZFlag#FILTERED|PZScore#-100|PZComment#Describ...    NaN  non-pathogenic
@@ -1210,7 +1210,7 @@ Prioritization fields can be then easily querying, by filtering on fields and or
 >               AND \"PZFlag\" == 'PASS' \
 >             ORDER BY \"PZScore\" DESC"
 > ```
-> ```
+> ```ts
 >   #CHROM       POS ALT REF PZFlag  PZScore                                             PZTags     DP      CLNSIG
 > 0   chr1     28736   C   A   PASS       15  PZFlag#PASS|PZScore#15|PZComment#Described on ...    NaN  pathogenic
 > 1   chr1     69101   G   A   PASS        5  PZFlag#PASS|PZScore#5|PZComment#DP higher than 50   50.0        None
@@ -1227,7 +1227,7 @@ Prioritization fields can be then easily querying, by filtering on fields and or
 >             WHERE \"PZFlag_default\" != \"PZFlag_GERMLINE\" \
 >             ORDER BY \"PZScore\" DESC"
 > ```
-> ```
+> ```ts
 >   #CHROM    POS ALT REF PZFlag_default PZFlag_GERMLINE
 > 0   chr1  35144   C   A       FILTERED            PASS
 > ```
@@ -1241,7 +1241,7 @@ Prioritization fields can be then easily querying, by filtering on fields and or
 >             FROM variants WHERE \"PZComment\" IS NOT NULL \
 >             ORDER BY \"PZScore\" DESC"
 > ```
-> ```
+> ```ts
 >   #CHROM       POS ALT REF                                        PZComment    PZFlag  PZScore
 > 0   chr1     28736   C   A      Described on CLINVAR database as pathogenic      PASS       15
 > 1   chr1     69101   G   A                                DP higher than 50      PASS        5
@@ -1478,7 +1478,7 @@ In order to fine tune process, all tools can be defined in a [HOWARD Parameters 
 >             FROM variants \
 >             ORDER BY PZScore DESC"
 > ```
-> ```
+> ```ts
 >   #CHROM       POS ALT REF                                           NOMEN                                        PZComment    PZFlag  PZScore
 > 0   chr1     28736   C   A              WASH7P:NR_024540:exon1:n.50+585T>G      Described on CLINVAR database as pathogenic      PASS     15.0
 > 1   chr1     69101   G   A      OR4F5:NM_001005484:exon1:c.11A>G:p.Glu4Gly                                DP higher than 50      PASS      5.0

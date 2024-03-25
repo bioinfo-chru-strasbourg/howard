@@ -32,6 +32,8 @@ from howard.tools.tools import (
     tool_gui_enable,
     DEFAULT_CHUNK_SIZE,
 )
+from howard.functions.plugins import plugins_infos, plugins_list, plugins_to_load
+from howard.functions.commons import folder_main, folder_plugins, subfolder_plugins
 
 msg_gui_disable = "HOWARD GUI disabled"
 
@@ -49,50 +51,61 @@ for command in list(commands_arguments.keys()):
 
 # DEVEL
 
-from howard.functions.plugins import load_plugins, list_plugins, plugins_to_load
-from howard.functions.commons import folder_main
 
 # print("DEVEL plugins")
 
-subfolder_plugins = "plugins"  # to commons?
-folder_plugins = os.path.join(folder_main, "plugins")  # to commons?
 
-# Load plugins infos
-plugins = load_plugins(plugins_dir=folder_plugins)
-list_plugins_dict = list_plugins(plugins, plugins_dir=folder_plugins)
-plugins_to_load_dict = plugins_to_load(list_plugins_dict=list_plugins_dict)
-# print("Plugins disponibles :")
-# print(list(plugins_to_load_dict.keys()))
+if os.path.exists(folder_plugins):
 
-# Import plugins
-for plugin_name in plugins_to_load_dict:
-    plugin_infos = plugins_to_load_dict[plugin_name]
-    plugin_main_file = plugin_infos.get("__main_file__", "__main__")
-    plugin_main_function = plugin_infos.get("__main_function__", "main")
-    plugin_arguments = plugin_infos.get("__arguments__", "arguments")
-    plugins_commands_arguments = plugin_infos.get(
-        "__commands_arguments__", "commands_arguments"
+    # Load plugins infos
+    plugins = plugins_infos(
+        plugins_dir=folder_plugins, subfolder_plugins=subfolder_plugins
     )
-    try:
-        # if True:
-        exec(
-            "from {module}.{plugin_name}.{main_file} import {main_function} as {plugin_name}, {plugin_arguments} as plugin_arguments, {plugins_commands_arguments} as plugins_commands_arguments".format(
-                module=subfolder_plugins,
-                main_function=plugin_main_function,
-                plugin_name=plugin_name,
-                main_file=plugin_main_file,
-                plugin_arguments=plugin_arguments,
-                plugins_commands_arguments=plugins_commands_arguments,
-            )
-        )
-        for plugin_command_arguments in plugins_commands_arguments:
-            commands_arguments[plugin_command_arguments] = plugins_commands_arguments[
-                plugin_command_arguments
-            ]
+    list_plugins_dict = plugins_list(
+        plugins, plugins_dir=folder_plugins, subfolder_plugins=subfolder_plugins
+    )
+    plugins_to_load_dict = plugins_to_load(plugins_list_dict=list_plugins_dict)
 
-    except:
-        msg_warning = f"WARNING: plugin '{plugin_name}' NOT loaded"
-        log.warning(msg_warning)
+    # Import plugins
+    for plugin_name in plugins_to_load_dict:
+
+        # Plugin infos
+        plugin_infos = plugins_to_load_dict[plugin_name]
+        plugin_main_file = plugin_infos.get("__main_file__", "__main__")
+        plugin_main_function = plugin_infos.get("__main_function__", "main")
+        plugin_arguments = plugin_infos.get("__arguments__", "arguments")
+        plugins_commands_arguments = plugin_infos.get(
+            "__commands_arguments__", "commands_arguments"
+        )
+
+        try:
+            # Load plugin as module
+            exec(
+                "from {module}.{plugin_name}.{main_file} import {main_function} as {plugin_name}, {plugin_arguments} as plugin_arguments, {plugins_commands_arguments} as plugins_commands_arguments".format(
+                    module=subfolder_plugins,
+                    main_function=plugin_main_function,
+                    plugin_name=plugin_name,
+                    main_file=plugin_main_file,
+                    plugin_arguments=plugin_arguments,
+                    plugins_commands_arguments=plugins_commands_arguments,
+                )
+            )
+            # Add command arguments on argparse and help
+            for plugin_command_arguments in plugins_commands_arguments:
+                if plugin_command_arguments not in commands_arguments:
+                    commands_arguments[plugin_command_arguments] = (
+                        plugins_commands_arguments[plugin_command_arguments]
+                    )
+            # Add arguments need for plugin
+            for plugin_argument in plugin_arguments:
+                if plugin_argument not in arguments:
+                    arguments[plugin_argument] = plugin_arguments[plugin_argument]
+
+        # Warning if plugon not loaded
+        except Exception as inst:
+            log.warning(f"{inst}")
+            msg_warning = f"Plugin '{plugin_name}' NOT loaded"
+            log.warning(msg_warning)
 
 
 # Usage

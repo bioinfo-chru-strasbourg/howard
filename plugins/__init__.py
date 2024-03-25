@@ -1,3 +1,2 @@
-__all__ = ["plugin1", "plugin2"]
-
+__all__ = ["minimalize", "show_plugin"]
 __version__ = "1.0.0"

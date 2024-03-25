@@ -42,11 +42,15 @@ from shutil import which
 
 file_folder = os.path.dirname(__file__)
 
+# plugin subfolder
+subfolder_plugins = "plugins"
+
 # Main folder
 folder_main = os.path.abspath(os.path.join(file_folder, "../.."))
 folder_config = os.path.abspath(os.path.join(folder_main, "config"))
 folder_user_home = os.path.abspath(os.path.expanduser("~"))
 folder_howard_home = os.path.join(folder_user_home, "howard")
+folder_plugins = os.path.join(folder_main, "plugins")
 
 comparison_map = {
     "gt": ">",
