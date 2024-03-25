@@ -49,7 +49,7 @@ commands_arguments = {
         """   howard minimalize --input=tests/data/example.vcf.gz --output=/tmp/example.minimal.tsv --remove_samples --explode_infos --minimalize_info\n"""
         """    \n""",
         "groups": {
-            "main": {"input": True, "output": False, "param": False},
+            "main": {"input": True, "output": True, "param": False},
             "Minimalize": {
                 "minimalize_info": False,
                 "minimalize_id": False,
