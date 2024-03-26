@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>README.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/*
+
+github.com style (c) Vasily Polovnyov <vast@whiteants.net>
+
+*/
+
+.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 0.5em;
+  color: #333;
+  background: #f8f8f8;
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: #998;
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-subst {
+  color: #333;
+  font-weight: bold;
+}
+
+.hljs-number,
+.hljs-literal,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag .hljs-attr {
+  color: #008080;
+}
+
+.hljs-string,
+.hljs-doctag {
+  color: #d14;
+}
+
+.hljs-title,
+.hljs-section,
+.hljs-selector-id {
+  color: #900;
+  font-weight: bold;
+}
+
+.hljs-subst {
+  font-weight: normal;
+}
+
+.hljs-type,
+.hljs-class .hljs-title {
+  color: #458;
+  font-weight: bold;
+}
+
+.hljs-tag,
+.hljs-name,
+.hljs-attribute {
+  color: #000080;
+  font-weight: normal;
+}
+
+.hljs-regexp,
+.hljs-link {
+  color: #009926;
+}
+
+.hljs-symbol,
+.hljs-bullet {
+  color: #990073;
+}
+
+.hljs-built_in,
+.hljs-builtin-name {
+  color: #0086b3;
+}
+
+.hljs-meta {
+  color: #999;
+  font-weight: bold;
+}
+
+.hljs-deletion {
+  background: #fdd;
+}
+
+.hljs-addition {
+  background: #dfd;
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: bold;
+}
+
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="howard">HOWARD</h1>
+<p><img src="images/icon.png" alt="HOWARD Graphical User Interface" title="HOWARD Graphical User Interface"></p>
+<p>Highly Open and Valuable tool for Variant Annotation &amp; Ranking toward genetic Discovery</p>
+<p>HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations, translates files in multiple formats (e.g. vcf, tsv, parquet) and generates variants statistics.</p>
+<p>HOWARD annotation is mainly based on a build-in Parquet annotation method, and external tools such as BCFTOOLS, ANNOVAR, snpEff and Exomiser (see docs, automatically downloaded if needed). Parquet annotation uses annotation database in VCF or BED format, in mutliple file format: Parquet/duckdb, VCF, BED, TSV, CSV, TBL, JSON.</p>
+<p>HOWARD calculation processes variants information to calculate new information, such as: harmonizes allele frequency (VAF), extracts Nomen (transcript, cNomen, pNomen...) from HGVS fields with an optional list of personalized transcripts, generates VaRank format barcode.</p>
+<p>HOWARD prioritization algorithm uses profiles to flag variants (as passed or filtered), calculate a prioritization score, and automatically generate a comment for each variants (example: 'polymorphism identified in dbSNP. associated to Lung Cancer. Found in ClinVar database').Prioritization profiles are defined in a configuration file. A profile is defined as a list of annotation/value, using wildcards and comparison options (contains, lower than, greater than, equal...). Annotations fields may be quality values (usually from callers, such as 'GQ', 'DP') or other annotations fields provided by annotations tools, such as HOWARD itself (example: COSMIC, Clinvar, 1000genomes, PolyPhen, SIFT). Multiple profiles can be used simultaneously, which is useful to define multiple validation/prioritization levels (example: 'standard', 'stringent', 'rare variants', 'low allele frequency').</p>
+<p>HOWARD translates VCF format into multiple formats (e.g. VCF, TSV, Parquet), by sorting variants using specific fields (example : 'prioritization score', 'allele frequency', 'gene symbol'), including/excluding annotations/fields, including/excluding variants, adding fixed columns.</p>
+<p>HOWARD generates statistics files with a specific algorithm, snpEff and BCFTOOLS.</p>
+<p>HOWARD is multithreaded through the number of variants and by database (data-scaling).</p>
+<p>HOWARD is able to add plugins for further analyses.</p>
+<h2 id="table-of-contents">Table of contents</h2>
+<ul>
+<li><a href="#installation">Installation</a>
+<ul>
+<li><a href="#python">Python</a></li>
+<li><a href="#docker">Docker</a></li>
+<li><a href="#databases">Databases</a></li>
+<li><a href="#configuration">Configuration</a></li>
+</ul>
+</li>
+<li><a href="#tools">Tools</a>
+<ul>
+<li><a href="#parameters">Parameters</a></li>
+<li><a href="#stats">Stats</a></li>
+<li><a href="#convert">Convert</a></li>
+<li><a href="#query">Query</a></li>
+<li><a href="#annotation">Annotation</a></li>
+<li><a href="#calculation">Calculation</a></li>
+<li><a href="#prioritization">Prioritization</a></li>
+<li><a href="#hgvs-annotation">HGVS annotation</a></li>
+<li><a href="#process">Process</a></li>
+</ul>
+</li>
+<li><a href="#documentation">Documentation</a></li>
+<li><a href="#contact">Contact</a></li>
+</ul>
+<h1 id="installation">Installation</h1>
+<p>HOWARD can be installed using <a href="#python">Python</a>, and a <a href="#docker">Docker</a> installation provides a CLI (Command Line Interface) with all external tools and useful databases. <a href="#databases">Databases</a> can be automatically downloaded, or home-made generated (created or downloaded).</p>
+<h2 id="python">Python</h2>
+<p>Install HOWARD using Python Pip tool, and run HOWARD for help options:</p>
+<pre class="hljs"><code><div>python -m pip install -e .
+howard --help
+</div></code></pre>
+<pre class="hljs"><code><div>usage: howard [-h] {query,stats,convert,annotation,calculation,prioritization,process,hgvs,databases,from_annovar,gui,help} ...
+
+HOWARD:1.0.0
+Highly Open and Valuable tool for Variant Annotation &amp; Ranking toward genetic Discovery
+HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations, convert on multiple formats, query variations and generates statistics
+
+Shared arguments:
+  -h, --help            show this help message and exit
+
+Tools:
+  {query,stats,convert,annotation,calculation,prioritization,process,hgvs,databases,from_annovar,gui,help}
+    query               Query genetic variations file in SQL format.
+    stats               Statistics on genetic variations file.
+    convert             Convert genetic variations file to another format.
+    annotation          Annotation of genetic variations file using databases/files and tools.
+    calculation         Calculation operations on genetic variations file and genotype information.
+    prioritization      Prioritization of genetic variations based on annotations criteria (profiles).
+    process             Full genetic variations process: annotation, calculation, prioritization, format, query, filter...
+    hgvs                HGVS annotation (HUGO internation nomenclature) using refGene, genome and transcripts list.
+    databases           Download databases and needed files for howard and associated tools
+    from_annovar        (beta) Formatting Annovar database file to other format (VCF and Parquet)
+    gui                 Graphical User Interface tools
+    help                Help tools
+
+Usage examples:
+   howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json
+   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet'
+   howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations='vartype'
+   howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations=config/prioritization_profiles.json --profiles='default,GERMLINE'
+   howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT &quot;#CHROM&quot;, POS, REF, ALT, &quot;DP&quot;, &quot;CLNSIG&quot;, sample2, sample3 FROM variants WHERE &quot;DP&quot; &gt;= 50 OR &quot;CLNSIG&quot; NOT NULL ORDER BY &quot;CLNSIG&quot; DESC, &quot;DP&quot; DESC'
+   howard stats --input=tests/data/example.vcf.gz
+   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos &amp;&amp; cat /tmp/example.tsv
+</div></code></pre>
+<p>Install HOWARD Graphical User Interface using Python Pip tool with supplementary packages, and run as a tool:</p>
+<pre class="hljs"><code><div>python -m pip install -r requirements-gui.txt
+howard gui
+</div></code></pre>
+<p><img src="images/howard-gui.png" alt="HOWARD Graphical User Interface" title="HOWARD Graphical User Interface"></p>
+<h2 id="docker">Docker</h2>
+<p>In order to build, setup and create a persitent CLI (running container with all useful external tools such as <a href="https://samtools.github.io/bcftools/">BCFTools</a>, <a href="https://pcingola.github.io/SnpEff/">snpEff</a>, <a href="https://annovar.openbioinformatics.org/">Annovar</a>, <a href="https://www.sanger.ac.uk/tool/exomiser/">Exomiser</a>), docker-compose command build images and launch services as containers.</p>
+<pre class="hljs"><code><div>docker-compose up -d
+</div></code></pre>
+<p>A setup container (HOWARD-setup) will download useful databases (take a while). To avoid databases download (see <a href="#databases">Databases section</a> to download manually), just start:</p>
+<pre class="hljs"><code><div>docker-compose up -d HOWARD-CLI
+</div></code></pre>
+<p>A Command Line Interface container (HOWARD-CLI) is started with host data and databases folders mounted (by default in ~/howard folder, i.e. <code>~/howard/data:/data</code> and <code>~/howard/databases:/databases</code>). Let's play within Docker HOWARD-CLI service!</p>
+<pre class="hljs"><code><div>docker exec -ti HOWARD-CLI bash
+howard --help
+</div></code></pre>
+<details >
+<summary>More details</summary>
+<p>Docker HOWARD-CLI container (Command Line Interface) can be used to execute commands.</p>
+<blockquote>
+<p>Example: Query of an existing VCF</p>
+<pre class="hljs"><code><div>docker exec HOWARD-CLI \
+   howard query \
+      --input=/tool/tests/data/example.vcf.gz \
+      --query='SELECT * FROM variants'
+</div></code></pre>
+</blockquote>
+<blockquote>
+<p>Example: VCF annotation using HOWARD-CLI (snpEff and ANNOVAR databases will be automatically downloaded), and query list of genes with HGVS</p>
+<pre class="hljs"><code><div>docker exec --workdir=/tool HOWARD-CLI \
+   howard process \
+      --config=config/config.json \
+      --param=config/param.json \
+      --input=tests/data/example.vcf.gz \
+      --output=/tmp/example.process.tsv \
+      --explode_infos \
+      --query='SELECT &quot;NOMEN&quot;, &quot;PZFlag&quot;, &quot;PZScore&quot;, &quot;PZComment&quot; FROM variants ORDER BY &quot;PZScore&quot; DESC'
+</div></code></pre>
+</blockquote>
+</details>
+<h2 id="databases">Databases</h2>
+<p>Multiple databases can be automatically downloaded with databases tool, such as:</p>
+<table>
+<thead>
+<tr>
+<th>database</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://genome.ucsc.edu/cgi-bin/hgGateway">Genome</a></td>
+<td>Genome Reference Consortium Human</td>
+</tr>
+<tr>
+<td><a href="https://annovar.openbioinformatics.org/en/latest/">Annovar</a></td>
+<td>ANNOVAR is an efficient software tool to utilize update-to-date information to functionally annotate genetic variants detected from diverse genomes</td>
+</tr>
+<tr>
+<td><a href="https://pcingola.github.io/SnpEff/">snpEff</a></td>
+<td>Genetic variant annotation, and functional effect prediction toolbox</td>
+</tr>
+<tr>
+<td><a href="https://www.ncbi.nlm.nih.gov/refseq/">refSeq</a></td>
+<td>A comprehensive, integrated, non-redundant, well-annotated set of reference sequences including genomic, transcript, and protein</td>
+</tr>
+<tr>
+<td><a href="https://www.ncbi.nlm.nih.gov/snp/">dbSNP</a></td>
+<td>dbSNP contains human single nucleotide variations, microsatellites, and small-scale insertions and deletions along with publication, population frequency, molecular consequence, and genomic and RefSeq mapping information for both common variations and clinical mutations</td>
+</tr>
+<tr>
+<td><a href="https://sites.google.com/site/jpopgen/dbNSFP">dbNSFP</a></td>
+<td>dbNSFP is a database developed for functional prediction and annotation of all potential non-synonymous single-nucleotide variants (nsSNVs) in the human genome</td>
+</tr>
+<tr>
+<td><a href="https://github.com/google-deepmind/alphamissense">AlphaMissense</a></td>
+<td>AlphaMissense model implementation</td>
+</tr>
+<tr>
+<td><a href="https://www.sanger.ac.uk/tool/exomiser/">Exomiser</a></td>
+<td>The Exomiser is a Java program that finds potential disease-causing variants from whole-exome or whole-genome sequencing data</td>
+</tr>
+</tbody>
+</table>
+<details >
+<summary>More details</summary>
+<blockquote>
+<p>Example: Download Multiple databases in the same time for assembly 'hg19' (can take a while)</p>
+<pre class="hljs"><code><div>howard databases \
+   --assembly=hg19 \
+   --download-genomes=~/howard/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' \
+   --download-annovar=~/howard/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' \
+   --download-snpeff=~/howard/databases/snpeff/current \
+   --download-refseq=~/howard/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' \
+   --download-dbnsfp=~/howard/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases \
+   --download-alphamissense=~/howard/databases/alphamissense/current \
+   --download-exomiser=~/howard/databases/exomiser/current \
+   --download-dbsnp=~/howard/databases/dbsnp/current --download-dbsnp-vcf \
+   --threads=8
+</div></code></pre>
+</blockquote>
+<p>See <a href="docs/help.md#databases-tool">HOWARD Help Databases tool</a> for more information.</p>
+<p>Databases can be home-made generated, starting with a existing annotation file, especially using <a href="#convert">HOWARD convert</a> tool. These files need to contain specific fields (depending on the annotation type):</p>
+<ul>
+<li>variant annotation: '#CHROM', 'POS', 'ALT', 'REF'</li>
+<li>region annotation: '#CHROM', 'START', 'STOP'</li>
+</ul>
+<p>Each database annotation file is associated with a 'header' file ('.hdr'), in VCF header format, to describe annotations within the database.</p>
+</details>
+<h2 id="configuration">Configuration</h2>
+<p>HOWARD Configuration JSON file defined default configuration regarding resources (e.g. threads, memory), settings (e.g. verbosity, temporary files), default folders (e.g. for databases) and paths to external tools.</p>
+<p>See <a href="docs/help.config.md">HOWARD Configuration JSON</a> for more information.</p>
+<h1 id="tools">Tools</h1>
+<p>HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations, convert on multiple formats, query variations and generates statistics. These tools require options or a <a href="help.param.md"> Parameters JSON</a> file.</p>
+<h2 id="parameters">Parameters</h2>
+<p>HOWARD Parameters JSON file defined parameters to process annotations, prioritization, calculations, convertions and queries. Use this parameters file to configure tools, instead of options or as a main configuration (options will replace parameters in JSON file).</p>
+<p>See <a href="docs/help.param.md">HOWARD Parameters JSON</a> for more information.</p>
+<h2 id="stats">Stats</h2>
+<p>Statistics on genetic variations, such as: number of variants, number of samples, statistics by chromosome, genotypes by samples, annotations. Theses statsitics can be applied to VCF files and all database annotation files.</p>
+<details >
+<summary>More details</summary>
+<blockquote>
+<p>Example: Show example VCF statistics and brief overview</p>
+<pre class="hljs"><code><div>howard stats \
+   --input=tests/data/example.vcf.gz
+</div></code></pre>
+</blockquote>
+<p>See <a href="docs/help.md#stats-tool">HOWARD Help Stats tool</a> for more information.</p>
+</details>
+<h2 id="convert">Convert</h2>
+<p>Convert genetic variations file to another format. Multiple format are available, such as usual and official VCF format, but also other formats such as TSV, CSV, TBL, JSON and Parquet/duckDB. These formats need a header '.hdr' file to take advantage of the power of howard (especially through INFO/tag definition), and using howard convert tool automatically generate header file fo futher use (otherwise, an default '.hdr' file is generated).</p>
+<details >
+<summary>More details</summary>
+<blockquote>
+<p>Example: Translate VCF into TSV, export INFO/tags into columns, and show output file</p>
+<pre class="hljs"><code><div>howard convert \
+   --input=tests/data/example.vcf.gz \
+   --explode_infos \
+   --output=/tmp/example.tsv
+cat /tmp/example.tsv
+</div></code></pre>
+</blockquote>
+<p>See <a href="docs/help.md#convert-tool">HOWARD Help Convert tool</a> for more options.</p>
+</details>
+<h2 id="query">Query</h2>
+<p>Query genetic variations in SQL format. Data can be loaded into 'variants' table from various formats (e.g. VCF, TSV, Parquet...). Using 'explode' option allows querying on INFO/tag annotations. SQL query can also use external data within the request, such as a Parquet file(s).</p>
+<details >
+<summary>More details</summary>
+<blockquote>
+<p>Example: Select variants in VCF with INFO Tags criterions</p>
+<pre class="hljs"><code><div>howard query \
+   --input=tests/data/example.vcf.gz \
+   --explode_infos \
+   --query='SELECT &quot;#CHROM&quot;, POS, REF, ALT, DP, CLNSIG, sample2, sample3 
+            FROM variants 
+            WHERE DP &gt;= 50 OR CLNSIG NOT NULL 
+            ORDER BY CLNSIG DESC, DP DESC'
+</div></code></pre>
+</blockquote>
+<p>See <a href="docs/help.md#query-tool">HOWARD Help Query tool</a> for more options.</p>
+</details>
+<h2 id="annotation">Annotation</h2>
+<p>Annotation is mainly based on a build-in Parquet annotation method, using database format such as Parquet, duckdb, VCF, BED, TSV, JSON. External annotation tools are also available, such as BCFTOOLS, Annovar, snpEff and Exomiser. It uses available databases and homemade databases. Annovar and snpEff databases are automatically downloaded (see <a href="docs/help.md#databases-tool">HOWARD Help Databases tool</a>). All annotation parameters are defined in <a href="docs/help.param.md">HOWARD Parameters JSON</a> file.</p>
+<p>Quick annotation allows to annotates by simply listing annotation databases, or defining external tools keywords. These annotations can be combined.</p>
+<details >
+<summary>More details</summary>
+<blockquote>
+<p>Example: VCF annotation with Parquet and VCF databases, output as VCF format</p>
+<pre class="hljs"><code><div>howard annotation \
+   --input=tests/data/example.vcf.gz \
+   --annotations='tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/cosmic70.vcf.gz' \
+   --output=/tmp/example.howard.vcf.gz
+</div></code></pre>
+</blockquote>
+<blockquote>
+<p>Example: VCF annotation with external tools (Annovar refGene and snpEff databases), output as TSV format</p>
+<pre class="hljs"><code><div>howard annotation \
+   --input=tests/data/example.vcf.gz \
+   --annotations='annovar:refGene,snpeff' \
+   --output=/tmp/example.howard.tsv
+</div></code></pre>
+</blockquote>
+<p>See <a href="docs/help.md#annotation-tool">HOWARD Help Annotation tool</a> for more options.</p>
+</details>
+<h2 id="calculation">Calculation</h2>
+<p>Calculation processes variants information to generate new information, such as: identify variation type (VarType), harmonizes allele frequency (VAF) and calculate sttistics (VAF_stats), extracts Nomen (transcript, cNomen, pNomen...) from an HGVS field (e.g. snpEff, Annovar) with an optional list of personalized transcripts, generates VaRank format barcode, identify trio inheritance.</p>
+<details >
+<summary>More details</summary>
+<blockquote>
+<p>Example: Identify variant types and generate a table of variant type count</p>
+<pre class="hljs"><code><div>howard calculation \
+   --input=tests/data/example.full.vcf \
+   --calculations='vartype' \
+   --output=/tmp/example.calculation.tsv
+
+howard query \
+   --input=/tmp/example.calculation.tsv \
+   --explode_infos \
+   --query='SELECT
+               &quot;VARTYPE&quot; AS 'VariantType',
+               count(*) AS 'Count'
+            FROM variants
+            GROUP BY &quot;VARTYPE&quot;
+            ORDER BY count DESC'
+</div></code></pre>
+<pre class="hljs"><code><div>  VariantType  Count
+0         BND      7
+1         DUP      6
+2         INS      5
+3         SNV      4
+4         CNV      3
+5         DEL      3
+6         INV      3
+7      MOSAIC      2
+8       INDEL      2
+9         MNV      1
+</div></code></pre>
+</blockquote>
+<p>See <a href="docs/help.md#calculation-tool">HOWARD Help Calculation tool</a> for more options.</p>
+</details>
+<h2 id="prioritization">Prioritization</h2>
+<p>Prioritization algorithm uses profiles to flag variants (as passed or filtered), calculate a prioritization score, and automatically generate a comment for each variants (example: 'polymorphism identified in dbSNP. associated to Lung Cancer. Found in ClinVar database'). Prioritization profiles are defined in a configuration file in JSON format. A profile is defined as a list of annotation/value, using wildcards and comparison options (contains, lower than, greater than, equal...). Annotations fields may be quality values (usually from callers, such as 'DP') or other annotations fields provided by annotations tools, such as HOWARD itself (example: COSMIC, Clinvar, 1000genomes, PolyPhen, SIFT).</p>
+<p>Multiple profiles can be used simultaneously, which is useful to define multiple validation/prioritization levels (e.g. 'standard', 'stringent', 'rare variants'). Prioritization score can be calculated following multiple mode, either 'HOWARD' (incremental) or 'VaRank' (maximum). Prioritization fields can be selected (PZScore, PZFlag, PZComment, PZTags, PZInfos).</p>
+<details >
+<summary>More details</summary>
+<blockquote>
+<p>Example: Prioritize variants from criteria on INFO annotations for profiles 'default' and 'GERMLINE' (from 'prioritization_profiles.json' profiles configuration), export prioritization tags, and query variants passing filters</p>
+<pre class="hljs"><code><div>howard prioritization \
+   --input=tests/data/example.vcf.gz \
+   --prioritizations=config/prioritization_profiles.json \
+   --profiles='default,GERMLINE' \
+   --default_profile='default' \
+   --pzfields='PZFlag,PZScore,PZComment,PZTags,PZInfos' \
+   --prioritization_score_mode='HOWARD' \
+   --output=/tmp/example.prioritized.vcf.gz
+
+howard query \
+   --input=/tmp/example.prioritized.vcf.gz \
+   --explode_infos \
+   --query=&quot;SELECT \&quot;#CHROM\&quot;, POS, ALT, REF, \&quot;PZFlag\&quot;, \&quot;PZScore\&quot;, \&quot;PZTags\&quot;, \&quot;DP\&quot;, \&quot;CLNSIG\&quot; \
+            FROM variants \
+            WHERE \&quot;PZScore\&quot; &gt; 0 \
+              AND \&quot;PZFlag\&quot; == 'PASS' \
+            ORDER BY \&quot;PZScore\&quot; DESC&quot;
+</div></code></pre>
+<pre class="hljs"><code><div>  #CHROM       POS ALT REF PZFlag  PZScore                                             PZTags     DP      CLNSIG
+0   chr1     28736   C   A   PASS       15  PZFlag#PASS|PZScore#15|PZComment#Described on ...    NaN  pathogenic
+1   chr1     69101   G   A   PASS        5  PZFlag#PASS|PZScore#5|PZComment#DP higher than 50   50.0        None
+2   chr7  55249063   A   G   PASS        5  PZFlag#PASS|PZScore#5|PZComment#DP higher than 50  125.0        None
+</div></code></pre>
+</blockquote>
+<p>See <a href="docs/help.md#prioritization-tool">HOWARD Help Prioritization tool</a> for more options.</p>
+</details>
+<h2 id="hgvs-annotation">HGVS Annotation</h2>
+<p>HOWARD annotates variants with HGVS annotation using HUGO HGVS internation Sequence Variant Nomenclature (http://varnomen.hgvs.org/). Annotation refere to refGene and genome to generate HGVS nomenclature for all available transcripts. This annotation add 'hgvs' field into VCF INFO column of a VCF file. Several options are available, to add gene, exon and protein information, to generate a &quot;full format&quot; detailed annotation, to choose codon format.</p>
+<p>See <a href="docs/help.md#hgvs-tool">HOWARD Help HGVS tool</a> for more options.</p>
+<details>
+<summary>More details</summary>
+<blockquote>
+<p>Example: HGVS annotation with quick options</p>
+<pre class="hljs"><code><div>howard hgvs \
+   --input=tests/data/example.vcf.gz \
+   --output=/tmp/example.process.tsv \
+   --hgvs=full_format,use_exon
+
+howard query \
+   --input=/tmp/example.process.tsv \
+   --explode_infos \
+   --query=&quot;SELECT hgvs \
+            FROM variants &quot;
+</div></code></pre>
+<pre class="hljs"><code><div>                                                hgvs
+0                     WASH7P:NR_024540.1:n.50+585T&gt;G
+1     FAM138A:NR_026818.1:exon3:n.597T&gt;G:p.Tyr199Asp
+2  OR4F5:NM_001005484.2:NP_001005484.2:exon3:c.74...
+3  LINC01128:NR_047526.1:n.287+3767A&gt;G,LINC01128:...
+4  LINC01128:NR_047526.1:n.287+3768A&gt;G,LINC01128:...
+5  LINC01128:NR_047526.1:n.287+3769A&gt;G,LINC01128:...
+6  EGFR:NM_001346897.2:NP_001333826.1:exon19:c.22...
+</div></code></pre>
+</blockquote>
+</details>
+<h2 id="process">Process</h2>
+<p>HOWARD process tool manage genetic variations to:</p>
+<ul>
+<li>annotates genetic variants with multiple annotation databases/files and tools</li>
+<li>calculates and normalizes annotations</li>
+<li>prioritizes variants with profiles (list of citeria) to calculate scores and flags</li>
+<li>annotates genetic variants with HGVS nomenclature</li>
+<li>translates into various formats</li>
+<li>query genetic variants and annotations</li>
+<li>generates variants statistics</li>
+</ul>
+<p>This process tool combines all other tools to pipe them in a uniq command, through available options or a parameters file in JSON format (see <a href="docs/help.param.md">HOWARD Parameters JSON</a> file).</p>
+<p>See <a href="docs/help.md#process-tool">HOWARD Help Process tool</a> tool for more information.</p>
+<details >
+<summary>More details</summary>
+<blockquote>
+<p>Example: Full process command with options (HGVS, annotation, calculation and prioritization)</p>
+<pre class="hljs"><code><div>howard process \
+   --input=tests/data/example.vcf.gz \
+   --output=/tmp/example.process.tsv \
+   --hgvs=full_format,use_exon \
+   --annotations=&quot;tests/databases/annotations/current/hg19/avsnp150.parquet,tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet,bcftools:tests/databases/annotations/current/hg19/cosmic70.vcf.gz,snpeff,annovar:refGene&quot; \
+   --calculations=&quot;vartype,snpeff_hgvs,VAF,NOMEN&quot; \
+   --prioritizations=&quot;config/prioritization_profiles.json&quot; \
+   --explode_infos \
+   --query=&quot;SELECT NOMEN, PZFlag, PZScore, snpeff_hgvs \
+            FROM variants \
+            ORDER BY PZScore DESC&quot;
+</div></code></pre>
+<pre class="hljs"><code><div>                                            NOMEN    PZFlag  PZScore                                        snpeff_hgvs
+0                    WASH7P:NR_024540:n.50+585T&gt;G      PASS       15  MIR1302-2:NR_036051.1:n.-1630A&gt;C,MIR1302-9:NR_...
+1     OR4F5:NP_001005484:exon3:c.74A&gt;G:p.Glu25Gly      PASS        5       OR4F5:NM_001005484.1:exon1:c.11A&gt;G:p.Glu4Gly
+2  EGFR:NM_001346897:exon19:c.2226G&gt;A:p.Gln742Gln      PASS        5  EGFR:NM_005228.5:exon20:c.2361G&gt;A:p.Gln787Gln,...
+3               LINC01128:NR_047526:n.287+3767A&gt;G      PASS        0  LINC01128:NR_047519.1:exon2:n.287+3767A&gt;G,LINC...
+4               LINC01128:NR_047526:n.287+3768A&gt;G      PASS        0  LINC01128:NR_047519.1:exon2:n.287+3768A&gt;G,LINC...
+5               LINC01128:NR_047526:n.287+3769A&gt;G      PASS        0  LINC01128:NR_047519.1:exon2:n.287+3769A&gt;G,LINC...
+6    FAM138A:NR_026818:exon3:n.597T&gt;G:p.Tyr199Asp  FILTERED     -100  MIR1302-2:NR_036051.1:n.*4641A&gt;C,MIR1302-9:NR_...
+</div></code></pre>
+</blockquote>
+</details>
+<h1 id="documentation">Documentation</h1>
+<p><a href="docs/user_guide.md">HOWARD User Guide</a> is available to assist users for particular commands, such as software installation, databases download, annotation command, and so on.</p>
+<p><a href="docs/tips.md">HOWARD Tips</a> proposes some additional advices to handle HOWARD for particular use cases.</p>
+<p><a href="docs/options.md">HOWARD Help</a> describes options of all HOWARD tools. All information are also available for each tool using <code>--help</code> option.</p>
+<p><a href="docs/help.config.md">HOWARD Configuration JSON</a> describes configuration JSON file structure and options.</p>
+<p><a href="docs/help.param.md">HOWARD Parameters JSON</a> describes parameters JSON file structure and options.</p>
+<p><a href="docs/help.param.databases.md">HOWARD Parameters Databases JSON</a> describes configuration JSON file for databases download and convert.</p>
+<p><a href="plugins/README.md">HOWARD Plugins</a> describes how to create HOWARD plugins.</p>
+<h1 id="contact">Contact</h1>
+<p><a href="https://www.chru-strasbourg.fr/service/bioinformatique-medicale-appliquee-au-diagnostic-unite-de/">Medical Bioinformatics applied to Diagnosis Lab</a> @ Strasbourg Univerty Hospital</p>
+<p><a href="bioinfo@chru-strasbourg.fr">bioinfo@chru-strasbourg.fr</a></p>
+<p><a href="https://github.com/bioinfo-chru-strasbourg">GitHub</a></p>
+
+</body>
+</html>

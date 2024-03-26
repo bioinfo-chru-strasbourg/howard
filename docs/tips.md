@@ -1,4 +1,4 @@
-# :bulb: HOWARD Tips
+# HOWARD Tips
 
 
 <details><summary>How to hive partitioning into Parquet a VCF format file?</summary>

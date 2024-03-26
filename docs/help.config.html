@@ -1,134 +1,921 @@
-<H1 id='HOWARD Configuration'>HOWARD Configuration</H1>HOWARD Configuration JSON file defined default configuration regarding resources (e.g. threads, memory), settings (e.g. verbosity, temporary files), default folders (e.g. for databases) and paths to external tools.<br>
-                    <H2>Table of contents</H1>
-                    - <a href='#HOWARD Configuration'>HOWARD Configuration</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#folders'>folders</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#folders::databases'>databases</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#folders::databases::genomes'>genomes</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#folders::databases::annotations'>annotations</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#folders::databases::parquet'>parquet</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#folders::databases::bcftools'>bcftools</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#folders::databases::annovar'>annovar</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#folders::databases::snpeff'>snpeff</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#folders::databases::exomiser'>exomiser</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#folders::databases::refseq'>refseq</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#tools'>tools</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#tools::bcftools'>bcftools</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#tools::bgzip'>bgzip</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#tools::java'>java</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#tools::snpeff'>snpeff</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#tools::annovar'>annovar</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#tools::exomiser'>exomiser</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#threads'>threads</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#memory'>memory</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#assembly'>assembly</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#verbosity'>verbosity</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#tmp'>tmp</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#access'>access</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#duckdb_settings'>duckdb_settings</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#chunk_size'>chunk_size</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#log'>log</a><BR>
-                    <br>
-                    Examples: <xmp>Example of a configuration JSON file{
-  "threads": 8,
-  "memory": null,
-  "verbosity": "WARNING",
-  "folders": {
-    "databases": {
-      "genomes": "~/howard/databases/genomes/current",
-      "annotations": [
-        "~/howard/databases/annotations/current",
-        "~/howard/databases/dbnsfp/current",
-        "~/howard/databases/dbsnp/current"
+<!DOCTYPE html>
+<html>
+<head>
+<title>help.config.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/*
+
+github.com style (c) Vasily Polovnyov <vast@whiteants.net>
+
+*/
+
+.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 0.5em;
+  color: #333;
+  background: #f8f8f8;
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: #998;
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-subst {
+  color: #333;
+  font-weight: bold;
+}
+
+.hljs-number,
+.hljs-literal,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag .hljs-attr {
+  color: #008080;
+}
+
+.hljs-string,
+.hljs-doctag {
+  color: #d14;
+}
+
+.hljs-title,
+.hljs-section,
+.hljs-selector-id {
+  color: #900;
+  font-weight: bold;
+}
+
+.hljs-subst {
+  font-weight: normal;
+}
+
+.hljs-type,
+.hljs-class .hljs-title {
+  color: #458;
+  font-weight: bold;
+}
+
+.hljs-tag,
+.hljs-name,
+.hljs-attribute {
+  color: #000080;
+  font-weight: normal;
+}
+
+.hljs-regexp,
+.hljs-link {
+  color: #009926;
+}
+
+.hljs-symbol,
+.hljs-bullet {
+  color: #990073;
+}
+
+.hljs-built_in,
+.hljs-builtin-name {
+  color: #0086b3;
+}
+
+.hljs-meta {
+  color: #999;
+  font-weight: bold;
+}
+
+.hljs-deletion {
+  background: #fdd;
+}
+
+.hljs-addition {
+  background: #dfd;
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: bold;
+}
+
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="howard-configuration">HOWARD Configuration</h1>
+<p>HOWARD Configuration JSON file defined default configuration regarding resources (e.g. threads, memory), settings (e.g. verbosity, temporary files), default folders (e.g. for databases) and paths to external tools.</p>
+<h2 id="table-of-contents">Table of contents</h2>
+<ul>
+<li><a href="#howard-configuration">HOWARD Configuration</a>
+<ul>
+<li><a href="#folders">folders</a>
+<ul>
+<li><a href="#foldersdatabases">databases</a>
+<ul>
+<li><a href="#foldersdatabasesgenomes">genomes</a></li>
+<li><a href="#foldersdatabasesannotations">annotations</a></li>
+<li><a href="#foldersdatabasesparquet">parquet</a></li>
+<li><a href="#foldersdatabasesbcftools">bcftools</a></li>
+<li><a href="#foldersdatabasesannovar">annovar</a></li>
+<li><a href="#foldersdatabasessnpeff">snpeff</a></li>
+<li><a href="#foldersdatabasesexomiser">exomiser</a></li>
+<li><a href="#foldersdatabasesrefseq">refseq</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#tools">tools</a>
+<ul>
+<li><a href="#toolsbcftools">bcftools</a></li>
+<li><a href="#toolsbgzip">bgzip</a></li>
+<li><a href="#toolsjava">java</a></li>
+<li><a href="#toolssnpeff">snpeff</a></li>
+<li><a href="#toolsannovar">annovar</a></li>
+<li><a href="#toolsexomiser">exomiser</a></li>
+</ul>
+</li>
+<li><a href="#threads">threads</a></li>
+<li><a href="#memory">memory</a></li>
+<li><a href="#assembly">assembly</a></li>
+<li><a href="#verbosity">verbosity</a></li>
+<li><a href="#tmp">tmp</a></li>
+<li><a href="#access">access</a></li>
+<li><a href="#duckdb_settings">duckdb_settings</a></li>
+<li><a href="#chunk_size">chunk_size</a></li>
+<li><a href="#log">log</a></li>
+</ul>
+</li>
+</ul>
+<p>Examples:</p>
+<blockquote>
+<p>Example of a configuration JSON file</p>
+</blockquote>
+<pre class="hljs"><code><div>{
+  <span class="hljs-attr">"threads"</span>: <span class="hljs-number">8</span>,
+  <span class="hljs-attr">"memory"</span>: <span class="hljs-literal">null</span>,
+  <span class="hljs-attr">"verbosity"</span>: <span class="hljs-string">"WARNING"</span>,
+  <span class="hljs-attr">"folders"</span>: {
+    <span class="hljs-attr">"databases"</span>: {
+      <span class="hljs-attr">"genomes"</span>: <span class="hljs-string">"~/howard/databases/genomes/current"</span>,
+      <span class="hljs-attr">"annotations"</span>: [
+        <span class="hljs-string">"~/howard/databases/annotations/current"</span>,
+        <span class="hljs-string">"~/howard/databases/dbnsfp/current"</span>,
+        <span class="hljs-string">"~/howard/databases/dbsnp/current"</span>
       ],
-      "parquet": [
-        "~/howard/databases/annotations/current"
+      <span class="hljs-attr">"parquet"</span>: [
+        <span class="hljs-string">"~/howard/databases/annotations/current"</span>
       ],
-      "bcftools": [
-        "~/howard/databases/annotations/current"
+      <span class="hljs-attr">"bcftools"</span>: [
+        <span class="hljs-string">"~/howard/databases/annotations/current"</span>
       ],
-      "annovar": [
-        "~/howard/databases/annovar/current"
+      <span class="hljs-attr">"annovar"</span>: [
+        <span class="hljs-string">"~/howard/databases/annovar/current"</span>
       ],
-      "snpeff": "~/howard/databases/snpeff/current",
-      "varank": "~/howard/databases/varank/current"
+      <span class="hljs-attr">"snpeff"</span>: <span class="hljs-string">"~/howard/databases/snpeff/current"</span>,
+      <span class="hljs-attr">"varank"</span>: <span class="hljs-string">"~/howard/databases/varank/current"</span>
     }
   },
-  "tools": {
-    "bcftools": "bcftools",
-    "bgzip": "bgzip",
-    "java": "java",
-    "snpeff": "~/howard/tools/snpeff/current/bin/snpEff.jar",
-    "annovar": "~/howard/tools/annovar/current/bin/table_annovar.pl",
-    "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar"
+  <span class="hljs-attr">"tools"</span>: {
+    <span class="hljs-attr">"bcftools"</span>: <span class="hljs-string">"bcftools"</span>,
+    <span class="hljs-attr">"bgzip"</span>: <span class="hljs-string">"bgzip"</span>,
+    <span class="hljs-attr">"java"</span>: <span class="hljs-string">"java"</span>,
+    <span class="hljs-attr">"snpeff"</span>: <span class="hljs-string">"~/howard/tools/snpeff/current/bin/snpEff.jar"</span>,
+    <span class="hljs-attr">"annovar"</span>: <span class="hljs-string">"~/howard/tools/annovar/current/bin/table_annovar.pl"</span>,
+    <span class="hljs-attr">"exomiser"</span>: <span class="hljs-string">"~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar"</span>
   }
-}</xmp><br><H2 id='folders'>folders</H2>Folders configuration such as for databases.<br><H3 id='folders::databases'>folders::databases</H3>Default folders for databases that follows the specific database HOWARD format. These folders will be used in HOWARD tools to autodetect databases by their name and using assembly. Within database folders, multiple releases can be provides (e.g. 'b152' and 'b156' for dbSNP and 'hg19' assembly within folder '~/howard/databases/dbsnp/current/hg19', in 2 subfolders resp.)<br>Format: /path/to/databases/<db_name>/<db_release>/<assembly>/<database_files><br>Examples: <xmp># Example of a configuration for databases folders
-"databases": {
-   "genomes": "~/howard/databases/genomes/current",
-   "annotations": [
-      "~/howard/databases/annotations/current",
-      "~/howard/databases/dbnsfp/current",
-      "~/howard/databases/dbsnp/current"
-   ],
-   "parquet": [
-      "~/howard/databases/annotations/current"
-   ],
-   "bcftools": [
-      "~/howard/databases/bcftools/current"
-   ],
-   "annovar": "~/howard/databases/annovar/current",
-   "snpeff": "~/howard/databases/snpeff/current",
-   "exomiser": "~/howard/databases/exomiser/current"
-}</xmp><br><H4 id='folders::databases::genomes'>folders::databases::genomes</H4>Genome folder with, for each assembly, FASTA files, indexes, and all files generated by pygenome module.<br>Type: Path<br>Format: A folder path (without assembly)<br>Default: ~/howard/databases/genomes/current<br>Examples: <xmp># Path to genomes folder
-"genomes": "~/howard/databases/genomes/current"</xmp><br><H4 id='folders::databases::annotations'>folders::databases::annotations</H4>Annotation databases folders that contains databases in various format such as Parquet, VCF, duckDB and TSV.<br>Type: Path<br>Format: a list of folder path (without assembly)<br>Default: ["~/howard/databases/annotations/current"]<br>Examples: <xmp># Uniq folder with multiple annotations for Parquet annotation method, or other External tools
-"annotations": [
-   "~/howard/databases/annotations/current"
-]
-# Combinason of 2 folders with multiple annotations for Parquet annotation method, or other External tools
-"annotations": [
-   "~/howard/databases/annotations/current",
-   "~/howard/databases/dejavu/current",
-   "~/howard/databases/dbnsfp/current"
-]</xmp><br><H4 id='folders::databases::parquet'>folders::databases::parquet</H4>Annotation databases folders that contains databases in Parquet format.<br>Format: a list of folder path (without assembly)<br>Default: ["~/howard/databases/annotations/current"]<br>Examples: <xmp># Uniq folder with multiple annotations for Parquet annotation method
-"annotations": [
-   "~/howard/databases/annotations/current"
-]
-# Combinason of 2 folders with multiple annotations for Parquet annotation method
-"annotations": [
-   "~/howard/databases/annotations/current",
-   "~/howard/databases/dejavu/current",
-   "~/howard/databases/dbnsfp/current"
-]</xmp><br><H4 id='folders::databases::bcftools'>folders::databases::bcftools</H4>Annotation databases folders for BCFTools annotation.<br>Format: a list of folder path (without assembly)<br>Default: ["~/howard/databases/bcftools/current"]<br>Examples: <xmp># Uniq folder with multiple VCF and BED files for BCFTools annotation
-"bcftools": [
-   "~/howard/databases/bcftools/current"
-]
-# Combinason of 2 folders with multiple VCF and BED files for BCFTools annotation
-"bcftools": [
-   "~/howard/databases/bcftools/current",
-   "~/howard/databases/dejavu/current"
-]</xmp><br><H4 id='folders::databases::annovar'>folders::databases::annovar</H4>Annotation databases folders for Annovar annotation.<br>Format: a list of folder path (without assembly)<br>Default: ["~/howard/databases/annovar/current"]<br>Examples: <xmp># Uniq folder with multiple Annovar TXT files for Annovar annotation
-"annovar": [
-   "~/howard/databases/annovar/current/"
-]
-# Combinason of 2 folders with multiple Annovar TXT files for Annovar annotation
-"annovar": [
-   "~/howard/databases/annovar/current/",
-   "~/howard/databases/annovar/homemade/"
-]</xmp><br><H4 id='folders::databases::snpeff'>folders::databases::snpeff</H4>Annotation databases folders for snpEff annotation.<br>Format: A folder path (without assembly)<br>Default: ~/howard/databases/snpeff/current<br>Examples: <xmp># Path to snpEff database folder
-"snpeff": "~/howard/databases/snpeff/current/"</xmp><br><H4 id='folders::databases::exomiser'>folders::databases::exomiser</H4>Annotation databases folders for Exomiser annotation.<br>Format: A folder path (without assembly)<br>Default: ~/howard/databases/exomiser/current<br>Examples: <xmp># Path to Exomiser database folder
-"exomiser": "~/howard/databases/exomiser/current/"</xmp><br><H4 id='folders::databases::refseq'>folders::databases::refseq</H4>Annotation databases folders for refSeq annotation.<br>Format: A folder path (without assembly)<br>Default: ~/howard/databases/refseq/current<br>Examples: <xmp># Path to refSeq files folder
-"refseq": "~/howard/databases/refseq/current/"</xmp><br><H2 id='tools'>tools</H2>External tools paths that can be defined as path to a binary or a dict including the binary type (such as "bin", "jar", "perl"). External tools can be configured with docker, using 'docker' as binary type and options to define docker 'image' (mandatory), to specify 'entrypoint', 'command' and docker 'options' (e.g. folder mount '-v /path/to/folder:/path/to/folder').<br>Examples: <xmp># Example of a configuration for tools, with env $PATH, full path and path with type
-"tools": {
-   "bcftools": "bcftools",
-   "bgzip": "bgzip",
-   "java": "/usr/bin/java",
-   "snpeff": "~/howard/tools/snpeff/current/bin/snpEff.jar",
-   "annovar": {"jar": "~/howard/tools/annovar/current/bin/table_annovar.pl"},
-   "exomiser": {"jar": "~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar"}
 }
-# Example of a configuration for bcftools with a docker image (example with howard docker image)
-"tools": {
-   "bcftools": {
-      "docker": {
-        "image": "howard:1.0.0",
-        "entrypoint": "bcftools",
-        "options": null,
-        "command": null
+</div></code></pre>
+<h2 id="folders">folders</h2>
+<p>Folders configuration such as for databases.</p>
+<h3 id="foldersdatabases">folders::databases</h3>
+<p>Default folders for databases that follows the specific database HOWARD format. These folders will be used in HOWARD tools to autodetect databases by their name and using assembly. Within database folders, multiple releases can be provides (e.g. 'b152' and 'b156' for dbSNP and 'hg19' assembly within folder '~/howard/databases/dbsnp/current/hg19', in 2 subfolders resp.)</p>
+<p>Format: <code>/path/to/databases/&lt;db_name&gt;/&lt;db_release&gt;/&lt;assembly&gt;/&lt;database_files&gt;</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Example of a configuration for databases folders</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"databases"</span>: {
+   <span class="hljs-attr">"genomes"</span>: <span class="hljs-string">"~/howard/databases/genomes/current"</span>,
+   <span class="hljs-attr">"annotations"</span>: [
+      <span class="hljs-string">"~/howard/databases/annotations/current"</span>,
+      <span class="hljs-string">"~/howard/databases/dbnsfp/current"</span>,
+      <span class="hljs-string">"~/howard/databases/dbsnp/current"</span>
+   ],
+   <span class="hljs-attr">"parquet"</span>: [
+      <span class="hljs-string">"~/howard/databases/annotations/current"</span>
+   ],
+   <span class="hljs-attr">"bcftools"</span>: [
+      <span class="hljs-string">"~/howard/databases/bcftools/current"</span>
+   ],
+   <span class="hljs-attr">"annovar"</span>: <span class="hljs-string">"~/howard/databases/annovar/current"</span>,
+   <span class="hljs-attr">"snpeff"</span>: <span class="hljs-string">"~/howard/databases/snpeff/current"</span>,
+   <span class="hljs-attr">"exomiser"</span>: <span class="hljs-string">"~/howard/databases/exomiser/current"</span>
+}
+</div></code></pre>
+<h4 id="foldersdatabasesgenomes">folders::databases::genomes</h4>
+<p>Genome folder with, for each assembly, FASTA files, indexes, and all files generated by pygenome module.</p>
+<p>Type: <code>Path</code></p>
+<p>Format: <code>A folder path (without assembly)</code></p>
+<p>Default: <code>~/howard/databases/genomes/current</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Path to genomes folder</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"genomes"</span>: <span class="hljs-string">"~/howard/databases/genomes/current"</span>
+</div></code></pre>
+<h4 id="foldersdatabasesannotations">folders::databases::annotations</h4>
+<p>Annotation databases folders that contains databases in various format such as Parquet, VCF, duckDB and TSV.</p>
+<p>Type: <code>Path</code></p>
+<p>Format: <code>a list of folder path (without assembly)</code></p>
+<p>Default: <code>[&quot;~/howard/databases/annotations/current&quot;]</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Uniq folder with multiple annotations for Parquet annotation method, or other External tools</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"annotations"</span>: [
+   <span class="hljs-string">"~/howard/databases/annotations/current"</span>
+]
+</div></code></pre>
+<blockquote>
+<p>Combinason of 2 folders with multiple annotations for Parquet annotation method, or other External tools</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"annotations"</span>: [
+   <span class="hljs-string">"~/howard/databases/annotations/current"</span>,
+   <span class="hljs-string">"~/howard/databases/dejavu/current"</span>,
+   <span class="hljs-string">"~/howard/databases/dbnsfp/current"</span>
+]
+</div></code></pre>
+<h4 id="foldersdatabasesparquet">folders::databases::parquet</h4>
+<p>Annotation databases folders that contains databases in Parquet format.</p>
+<p>Format: <code>a list of folder path (without assembly)</code></p>
+<p>Default: <code>[&quot;~/howard/databases/annotations/current&quot;]</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Uniq folder with multiple annotations for Parquet annotation method</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"annotations"</span>: [
+   <span class="hljs-string">"~/howard/databases/annotations/current"</span>
+]
+</div></code></pre>
+<blockquote>
+<p>Combinason of 2 folders with multiple annotations for Parquet annotation method</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"annotations"</span>: [
+   <span class="hljs-string">"~/howard/databases/annotations/current"</span>,
+   <span class="hljs-string">"~/howard/databases/dejavu/current"</span>,
+   <span class="hljs-string">"~/howard/databases/dbnsfp/current"</span>
+]
+</div></code></pre>
+<h4 id="foldersdatabasesbcftools">folders::databases::bcftools</h4>
+<p>Annotation databases folders for BCFTools annotation.</p>
+<p>Format: <code>a list of folder path (without assembly)</code></p>
+<p>Default: <code>[&quot;~/howard/databases/bcftools/current&quot;]</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Uniq folder with multiple VCF and BED files for BCFTools annotation</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"bcftools"</span>: [
+   <span class="hljs-string">"~/howard/databases/bcftools/current"</span>
+]
+</div></code></pre>
+<blockquote>
+<p>Combinason of 2 folders with multiple VCF and BED files for BCFTools annotation</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"bcftools"</span>: [
+   <span class="hljs-string">"~/howard/databases/bcftools/current"</span>,
+   <span class="hljs-string">"~/howard/databases/dejavu/current"</span>
+]
+</div></code></pre>
+<h4 id="foldersdatabasesannovar">folders::databases::annovar</h4>
+<p>Annotation databases folders for Annovar annotation.</p>
+<p>Format: <code>a list of folder path (without assembly)</code></p>
+<p>Default: <code>[&quot;~/howard/databases/annovar/current&quot;]</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Uniq folder with multiple Annovar TXT files for Annovar annotation</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"annovar"</span>: [
+   <span class="hljs-string">"~/howard/databases/annovar/current/"</span>
+]
+</div></code></pre>
+<blockquote>
+<p>Combinason of 2 folders with multiple Annovar TXT files for Annovar annotation</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"annovar"</span>: [
+   <span class="hljs-string">"~/howard/databases/annovar/current/"</span>,
+   <span class="hljs-string">"~/howard/databases/annovar/homemade/"</span>
+]
+</div></code></pre>
+<h4 id="foldersdatabasessnpeff">folders::databases::snpeff</h4>
+<p>Annotation databases folders for snpEff annotation.</p>
+<p>Format: <code>A folder path (without assembly)</code></p>
+<p>Default: <code>~/howard/databases/snpeff/current</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Path to snpEff database folder</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"snpeff"</span>: <span class="hljs-string">"~/howard/databases/snpeff/current/"</span>
+</div></code></pre>
+<h4 id="foldersdatabasesexomiser">folders::databases::exomiser</h4>
+<p>Annotation databases folders for Exomiser annotation.</p>
+<p>Format: <code>A folder path (without assembly)</code></p>
+<p>Default: <code>~/howard/databases/exomiser/current</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Path to Exomiser database folder</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"exomiser"</span>: <span class="hljs-string">"~/howard/databases/exomiser/current/"</span>
+</div></code></pre>
+<h4 id="foldersdatabasesrefseq">folders::databases::refseq</h4>
+<p>Annotation databases folders for refSeq annotation.</p>
+<p>Format: <code>A folder path (without assembly)</code></p>
+<p>Default: <code>~/howard/databases/refseq/current</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Path to refSeq files folder</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"refseq"</span>: <span class="hljs-string">"~/howard/databases/refseq/current/"</span>
+</div></code></pre>
+<h2 id="tools">tools</h2>
+<p>External tools paths that can be defined as path to a binary or a dict including the binary type (such as &quot;bin&quot;, &quot;jar&quot;, &quot;perl&quot;). External tools can be configured with docker, using 'docker' as binary type and options to define docker 'image' (mandatory), to specify 'entrypoint', 'command' and docker 'options' (e.g. folder mount '-v /path/to/folder:/path/to/folder').</p>
+<p>Examples:</p>
+<blockquote>
+<p>Example of a configuration for tools, with env $PATH, full path and path with type</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"tools"</span>: {
+   <span class="hljs-attr">"bcftools"</span>: <span class="hljs-string">"bcftools"</span>,
+   <span class="hljs-attr">"bgzip"</span>: <span class="hljs-string">"bgzip"</span>,
+   <span class="hljs-attr">"java"</span>: <span class="hljs-string">"/usr/bin/java"</span>,
+   <span class="hljs-attr">"snpeff"</span>: <span class="hljs-string">"~/howard/tools/snpeff/current/bin/snpEff.jar"</span>,
+   <span class="hljs-attr">"annovar"</span>: {<span class="hljs-attr">"jar"</span>: <span class="hljs-string">"~/howard/tools/annovar/current/bin/table_annovar.pl"</span>},
+   <span class="hljs-attr">"exomiser"</span>: {<span class="hljs-attr">"jar"</span>: <span class="hljs-string">"~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar"</span>}
+}
+</div></code></pre>
+<blockquote>
+<p>Example of a configuration for bcftools with a docker image (example with howard docker image)</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"tools"</span>: {
+   <span class="hljs-attr">"bcftools"</span>: {
+      <span class="hljs-attr">"docker"</span>: {
+        <span class="hljs-attr">"image"</span>: <span class="hljs-string">"howard:1.0.0"</span>,
+        <span class="hljs-attr">"entrypoint"</span>: <span class="hljs-string">"bcftools"</span>,
+        <span class="hljs-attr">"options"</span>: <span class="hljs-literal">null</span>,
+        <span class="hljs-attr">"command"</span>: <span class="hljs-literal">null</span>
       }
    }
-}</xmp><br><H3 id='tools::bcftools'>tools::bcftools</H3>BCFTools binary (see https://samtools.github.io/bcftools/).<br>Default: bcftools<br>Examples: <xmp># Path to binary in $PATH env variable
-"bcftools": "bcftools"
-# Path to binary as a dict with binary type 'bin'
-"bcftools": {"bin": "~/howard/tools/bcftools/current/bin/bcftools"}</xmp><br><H3 id='tools::bgzip'>tools::bgzip</H3>BGZip binary (see https://samtools.github.io/bcftools/).<br>Default: bgzip<br>Examples: <xmp># Path to binary in $PATH env variable
-"bgzip": "bgzip"
-# Path to binary as a dict with binary type 'bin'
-"bgzip": {"bin": "~/howard/tools/htslib/current/bin/bgzip"}</xmp><br><H3 id='tools::java'>tools::java</H3>Java binary (see https://www.java.com).<br>Default: java<br>Examples: <xmp># Path to binary in $PATH env variable
-"java": "java"
-# Path to binary as a dict with binary type 'bin'
-"java": {"bin": "/usr/bin/java"}</xmp><br><H3 id='tools::snpeff'>tools::snpeff</H3>snpEff binary (see https://pcingola.github.io/SnpEff/).<br>Default: ~/howard/tools/snpeff/current/bin/snpEff.jar<br>Examples: <xmp># Path to binary as a dict without binary type
-"snpeff": "~/howard/tools/snpeff/current/bin/snpEff.jar"
-# Path to binary as a dict with binary type 'jar'
-"snpeff": {"jar": "~/howard/tools/snpeff/current/bin/snpEff.jar"}</xmp><br><H3 id='tools::annovar'>tools::annovar</H3>ANNOVAR perl script (see https://annovar.openbioinformatics.org/).<br>Default: ~/howard/tools/annovar/current/bin/table_annovar.pl<br>Examples: <xmp># Path to binary as a dict without binary type
-"annovar": "~/howard/tools/annovar/current/bin/table_annovar.pl"
-# Path to binary as a dict with binary type 'perl'
-"annovar": {"jar": "~/howard/tools/annovar/current/bin/table_annovar.pl"}</xmp><br><H3 id='tools::exomiser'>tools::exomiser</H3>Exomiser binary (see https://www.sanger.ac.uk/tool/exomiser/).<br>Default: ~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar<br>Examples: <xmp># Path to binary as a dict without binary type
-"snpeff": "~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar"
-# Path to binary as a dict with binary type 'jar'
-"snpeff": {"jar": "~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar"}</xmp><br><H2 id='threads'>threads</H2>Specify the number of threads to use for processing HOWARD. It determines the level of parallelism, either on python scripts, duckdb engine and external tools. It and can help speed up the process/tool. Use -1 to use all available CPU/cores. Either non valid value is 1 CPU/core. <br>Type: int<br>Default: -1<br>Examples: <xmp># Define 8 CPU/cores"threads": 8</xmp><br><H2 id='memory'>memory</H2>Specify the memory to use in format FLOAT[kMG] (e.g. '8G', '12.42G', '1024M'). It determines the amount of memory for duckDB engine and external tools (especially for JAR programs). It can help to prevent 'out of memory' failures. By default (None) is 80%% of RAM (for duckDB). <br>Type: str<br>Format: FLOAT[kMG]<br>Default: None<br>Examples: <xmp># Define 8 CPU/cores"threads": 8</xmp><br><H2 id='assembly'>assembly</H2>Genome Assembly (e.g. 'hg19', 'hg38'). <br>Type: str<br>Default: hg19<br>Examples: <xmp>List of assemblies for databases download tool"assembly": "hg19,hg38" </xmp><br><H2 id='verbosity'>verbosity</H2>Verbosity level Available: CRITICAL, ERROR, WARNING, INFO, DEBUG or NOTSET<br>- DEBUG: Detailed information, typically of interest only when diagnosing problems.<br>- INFO: Confirmation that things are working as expected.<br>- WARNING: An indication that something unexpected happened.<br>- ERROR: Due to a more serious problem.<br>- CRITICAL: A serious error.<br>- NOTSET: All messages. <br>Type: str<br>Choices: <br>CRITICAL<br>ERROR<br>WARNING<br>INFO<br>DEBUG<br>NOTSET<br>Default: INFO<br>Examples: <xmp>For debug"verbosity": "DEBUG"</xmp><br><H2 id='tmp'>tmp</H2>Temporary folder (e.g. '/tmp'). By default, '.tmp' for duckDB (see doc),external tools and python scripts. <br>Type: Path<br>Default: None<br>Examples: <xmp># Current work directory"tmp": ".tmp"</xmp><br><H2 id='access'>access</H2>Access mode to variants file or database. Either 'RW' for Read and Write, or 'RO' for Read Only. <br>Type: str<br>Choices: <br>RW<br>RO<br>Default: RW<br>Examples: <xmp>Read only mode"access": "RO"</xmp><br><H2 id='duckdb_settings'>duckdb_settings</H2>DuckDB settings (see duckDB doc) as JSON (string or file). These settings have priority (see options 'threads', 'tmp'...). Examples: '{"TimeZone": "GMT", "temp_directory": "/tmp/duckdb", "threads": 8}'. <br>Type: Path<br>Default: None<br>Examples: <xmp>JSON string for Time zone, temporary directory and threads for duckDB"duckdb_settings": {
-   "TimeZone": "GMT",
-   "temp_directory": "/tmp/duckdb",
-   "threads": 8
-}</xmp><br><H2 id='chunk_size'>chunk_size</H2>Number of records in batch to export output file. The lower the chunk size, the less memory consumption. For Parquet partitioning, files size will depend on the chunk size. <br>Type: int<br>Default: 1000000<br>Examples: <xmp>Smaller chunk size to reduce Parquet file size and memory usage"chunk_size": 100000</xmp><br><H2 id='log'>log</H2>Logs file (e.g. 'my.log'). <br>Type: Path<br>Default: None<br>Examples: <xmp>Full path to log file"log": "/tmp/my.log"</xmp><br>
+}
+</div></code></pre>
+<h3 id="toolsbcftools">tools::bcftools</h3>
+<p>BCFTools binary (see https://samtools.github.io/bcftools/).</p>
+<p>Default: <code>bcftools</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Path to binary in $PATH env variable</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"bcftools"</span>: <span class="hljs-string">"bcftools"</span>
+</div></code></pre>
+<blockquote>
+<p>Path to binary as a dict with binary type 'bin'</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"bcftools"</span>: {<span class="hljs-attr">"bin"</span>: <span class="hljs-string">"~/howard/tools/bcftools/current/bin/bcftools"</span>}
+</div></code></pre>
+<h3 id="toolsbgzip">tools::bgzip</h3>
+<p>BGZip binary (see https://samtools.github.io/bcftools/).</p>
+<p>Default: <code>bgzip</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Path to binary in $PATH env variable</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"bgzip"</span>: <span class="hljs-string">"bgzip"</span>
+</div></code></pre>
+<blockquote>
+<p>Path to binary as a dict with binary type 'bin'</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"bgzip"</span>: {<span class="hljs-attr">"bin"</span>: <span class="hljs-string">"~/howard/tools/htslib/current/bin/bgzip"</span>}
+</div></code></pre>
+<h3 id="toolsjava">tools::java</h3>
+<p>Java binary (see https://www.java.com).</p>
+<p>Default: <code>java</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Path to binary in $PATH env variable</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"java"</span>: <span class="hljs-string">"java"</span>
+</div></code></pre>
+<blockquote>
+<p>Path to binary as a dict with binary type 'bin'</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"java"</span>: {<span class="hljs-attr">"bin"</span>: <span class="hljs-string">"/usr/bin/java"</span>}
+</div></code></pre>
+<h3 id="toolssnpeff">tools::snpeff</h3>
+<p>snpEff binary (see https://pcingola.github.io/SnpEff/).</p>
+<p>Default: <code>~/howard/tools/snpeff/current/bin/snpEff.jar</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Path to binary as a dict without binary type</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"snpeff"</span>: <span class="hljs-string">"~/howard/tools/snpeff/current/bin/snpEff.jar"</span>
+</div></code></pre>
+<blockquote>
+<p>Path to binary as a dict with binary type 'jar'</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"snpeff"</span>: {<span class="hljs-attr">"jar"</span>: <span class="hljs-string">"~/howard/tools/snpeff/current/bin/snpEff.jar"</span>}
+</div></code></pre>
+<h3 id="toolsannovar">tools::annovar</h3>
+<p>ANNOVAR perl script (see https://annovar.openbioinformatics.org/).</p>
+<p>Default: <code>~/howard/tools/annovar/current/bin/table_annovar.pl</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Path to binary as a dict without binary type</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"annovar"</span>: <span class="hljs-string">"~/howard/tools/annovar/current/bin/table_annovar.pl"</span>
+</div></code></pre>
+<blockquote>
+<p>Path to binary as a dict with binary type 'perl'</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"annovar"</span>: {<span class="hljs-attr">"jar"</span>: <span class="hljs-string">"~/howard/tools/annovar/current/bin/table_annovar.pl"</span>}
+</div></code></pre>
+<h3 id="toolsexomiser">tools::exomiser</h3>
+<p>Exomiser binary (see https://www.sanger.ac.uk/tool/exomiser/).</p>
+<p>Default: <code>~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Path to binary as a dict without binary type</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"snpeff"</span>: <span class="hljs-string">"~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar"</span>
+</div></code></pre>
+<blockquote>
+<p>Path to binary as a dict with binary type 'jar'</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"snpeff"</span>: {<span class="hljs-attr">"jar"</span>: <span class="hljs-string">"~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar"</span>}
+</div></code></pre>
+<h2 id="threads">threads</h2>
+<p>Specify the number of threads to use for processing HOWARD. It determines the level of parallelism, either on python scripts, duckdb engine and external tools. It and can help speed up the process/tool. Use -1 to use all available CPU/cores. Either non valid value is 1 CPU/core.</p>
+<p>Type: <code>int</code></p>
+<p>Default: <code>-1</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Automatically detect all available CPU/cores</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"threads"</span>: <span class="hljs-number">-1</span>
+</div></code></pre>
+<blockquote>
+<p>Define 8 CPU/cores</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"threads"</span>: <span class="hljs-number">8</span>
+</div></code></pre>
+<h2 id="memory">memory</h2>
+<p>Specify the memory to use in format FLOAT[kMG] (e.g. '8G', '12.42G', '1024M'). It determines the amount of memory for duckDB engine and external tools (especially for JAR programs). It can help to prevent 'out of memory' failures. By default (None) is 80%% of RAM (for duckDB).</p>
+<p>Type: <code>str</code></p>
+<p>Format: <code>FLOAT[kMG]</code></p>
+<p>Default: <code>None</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Automatically detect all available CPU/cores</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"threads"</span>: <span class="hljs-number">-1</span>
+</div></code></pre>
+<blockquote>
+<p>Define 8 CPU/cores</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"threads"</span>: <span class="hljs-number">8</span>
+</div></code></pre>
+<h2 id="assembly">assembly</h2>
+<p>Genome Assembly (e.g. 'hg19', 'hg38').</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>hg19</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Default assembly for all analysis tools</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"assembly"</span>: <span class="hljs-string">"hg19"</span> 
+</div></code></pre>
+<blockquote>
+<p>List of assemblies for databases download tool</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"assembly"</span>: <span class="hljs-string">"hg19,hg38"</span> 
+</div></code></pre>
+<h2 id="verbosity">verbosity</h2>
+<p>Verbosity level Available: CRITICAL, ERROR, WARNING, INFO, DEBUG or NOTSET</p>
+<ul>
+<li>
+<p>DEBUG: Detailed information, typically of interest only when diagnosing problems.</p>
+</li>
+<li>
+<p>INFO: Confirmation that things are working as expected.</p>
+</li>
+<li>
+<p>WARNING: An indication that something unexpected happened.</p>
+</li>
+<li>
+<p>ERROR: Due to a more serious problem.</p>
+</li>
+<li>
+<p>CRITICAL: A serious error.</p>
+</li>
+<li>
+<p>NOTSET: All messages.</p>
+</li>
+</ul>
+<p>Type: <code>str</code></p>
+<p>Choices: <code>['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET']</code></p>
+<p>Default: <code>INFO</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Default verbosity</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"verbosity"</span>: <span class="hljs-string">"INFO"</span>
+</div></code></pre>
+<blockquote>
+<p>ERROR level (quiet mode)</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"verbosity"</span>: <span class="hljs-string">"ERROR"</span>
+</div></code></pre>
+<blockquote>
+<p>For debug</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"verbosity"</span>: <span class="hljs-string">"DEBUG"</span>
+</div></code></pre>
+<h2 id="tmp">tmp</h2>
+<p>Temporary folder (e.g. '/tmp'). By default, '.tmp' for duckDB (see doc),external tools and python scripts.</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>System temporary folder</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"tmp"</span>: <span class="hljs-string">"/tmp"</span>
+</div></code></pre>
+<blockquote>
+<p>HOWARD work directory</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"tmp"</span>: <span class="hljs-string">"~/howard/tmp"</span>
+</div></code></pre>
+<blockquote>
+<p>Current work directory</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"tmp"</span>: <span class="hljs-string">".tmp"</span>
+</div></code></pre>
+<h2 id="access">access</h2>
+<p>Access mode to variants file or database. Either 'RW' for Read and Write, or 'RO' for Read Only.</p>
+<p>Type: <code>str</code></p>
+<p>Choices: <code>['RW', 'RO']</code></p>
+<p>Default: <code>RW</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Read and Write mode</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"access"</span>: <span class="hljs-string">"RW"</span>
+</div></code></pre>
+<blockquote>
+<p>Read only mode</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"access"</span>: <span class="hljs-string">"RO"</span>
+</div></code></pre>
+<h2 id="duckdbsettings">duckdb_settings</h2>
+<p>DuckDB settings (see duckDB doc) as JSON (string or file). These settings have priority (see options 'threads', 'tmp'...). Examples: '{&quot;TimeZone&quot;: &quot;GMT&quot;, &quot;temp_directory&quot;: &quot;/tmp/duckdb&quot;, &quot;threads&quot;: 8}'.</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>DuckDB settings JSON file</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"duckdb_settings"</span>: <span class="hljs-string">"/path/to/duckdb_config.json"</span>
+</div></code></pre>
+<blockquote>
+<p>JSON string for Time zone, temporary directory and threads for duckDB</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"duckdb_settings"</span>: {
+   <span class="hljs-attr">"TimeZone"</span>: <span class="hljs-string">"GMT"</span>,
+   <span class="hljs-attr">"temp_directory"</span>: <span class="hljs-string">"/tmp/duckdb"</span>,
+   <span class="hljs-attr">"threads"</span>: <span class="hljs-number">8</span>
+}
+</div></code></pre>
+<h2 id="chunksize">chunk_size</h2>
+<p>Number of records in batch to export output file. The lower the chunk size, the less memory consumption. For Parquet partitioning, files size will depend on the chunk size.</p>
+<p>Type: <code>int</code></p>
+<p>Default: <code>1000000</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Chunk size of 1.000.000 by default</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"chunk_size"</span>: <span class="hljs-number">1000000</span>
+</div></code></pre>
+<blockquote>
+<p>Smaller chunk size to reduce Parquet file size and memory usage</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"chunk_size"</span>: <span class="hljs-number">100000</span>
+</div></code></pre>
+<h2 id="log">log</h2>
+<p>Logs file (e.g. 'my.log').</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Relative path to log file</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"log"</span>: <span class="hljs-string">"my.log"</span>
+</div></code></pre>
+<blockquote>
+<p>HOWARD work directory</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"log"</span>: <span class="hljs-string">"~/howard/log"</span>
+</div></code></pre>
+<blockquote>
+<p>Full path to log file</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"log"</span>: <span class="hljs-string">"/tmp/my.log"</span>
+</div></code></pre>
+
+</body>
+</html>
