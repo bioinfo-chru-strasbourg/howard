@@ -2756,6 +2756,24 @@ class Variants:
                                 annotation_file_annotation
                             ] = annotations
 
+                    # Annotation Splice
+                    elif annotation_file.startswith("splice"):
+
+                        log.debug("Quick Annotation Splice")
+
+                        if "splice" not in param["annotation"]:
+                            param["annotation"]["splice"] = {}
+
+                        if "annotations" not in param["annotation"]["splice"]:
+                            param["annotation"]["splice"]["annotations"] = {}
+
+                        # Options
+                        annotation_file_split = annotation_file.split(":")
+                        for annotation_file_annotation in annotation_file_split[1:]:
+                            param["annotation"]["splice"]["annotations"][
+                                annotation_file_annotation
+                            ] = annotations
+
                     # Annotation Exomiser
                     elif annotation_file.startswith("exomiser"):
 
@@ -2931,6 +2949,9 @@ class Variants:
             if param.get("annotation", {}).get("exomiser", None):
                 log.info("Annotations 'exomiser'...")
                 self.annotation_exomiser()
+            if param.get("annotation", {}).get("splice", None):
+                log.info("Annotations 'splice' ...")
+                self.annotation_splice()
 
         # Explode INFOS fields into table fields
         if self.get_explode_infos():
@@ -5488,6 +5509,129 @@ class Variants:
         # Remove added columns
         for added_column in added_columns:
             self.drop_column(column=added_column)
+
+    def annotation_splice(self, threads: int = None) -> None:
+        """
+        This function annotate with snpEff
+
+        :param threads: The number of threads to use
+        :return: the value of the variable "return_value".
+        """
+
+        # DEBUG
+        log.debug("Start annotation with splice tools")
+
+        # Threads
+        if not threads:
+            threads = self.get_threads()
+        log.debug("Threads: " + str(threads))
+
+        # DEBUG
+        delete_tmp = True
+        if self.get_config().get("verbosity", "warning") in ["debug"]:
+            delete_tmp = False
+            log.debug("Delete tmp files/folders: " + str(delete_tmp))
+
+        # Config
+        config = self.get_config()
+        log.debug("Config: " + str(config))
+
+        # Config - Folders - Databases
+        databases_folders = (
+            config.get("folders", {}).get("databases", {}).get("splice", ["."])
+        )
+        log.debug("Databases annotations: " + str(databases_folders))
+        test = command("docker images | grep splice")
+        splice_list = [
+            splice
+            for v in test.split("\n")
+            for splice in v.split()
+            if splice == "splice"
+        ]
+        if not splice_list:
+            log.error("Annotation failed: splice docker image not found")
+            raise ValueError("Annotation failed: splice docker image not found")
+
+        # Config - splice databases
+        splice_databases = (
+            config.get("folders", {})
+            .get("databases", {})
+            .get("splice", DEFAULT_SPLICE_FOLDER)
+        )
+        splice_databases = full_path(splice_databases)
+
+        # Param
+        param = self.get_param()
+        log.debug("Param: " + str(param))
+
+        # Param
+        options = param.get("annotation", {}).get("splice", {}).get("options", None)
+        log.debug("Options: " + str(options))
+
+        exit()
+        # Data
+        table_variants = self.get_table_variants()
+
+        # Check if not empty
+        log.debug("Check if not empty")
+        sql_query_chromosomes = (
+            f"""SELECT count(*) as count FROM {table_variants} as table_variants"""
+        )
+        # if not self.conn.execute(f"{sql_query_chromosomes}").df()["count"][0]:
+        if not self.get_query_to_df(f"{sql_query_chromosomes}")["count"][0]:
+            log.info("VCF empty")
+            return
+
+        # Export in VCF
+        log.debug("Create initial file to annotate")
+        tmp_vcf = NamedTemporaryFile(
+            prefix=self.get_prefix(),
+            dir=self.get_tmp_dir(),
+            suffix=".vcf.gz",
+            delete=True,
+        )
+        tmp_vcf_name = tmp_vcf.name
+
+        # VCF header
+        vcf_reader = self.get_header()
+        log.debug("Initial header: " + str(vcf_reader.infos))
+
+        # Existing annotations
+        for vcf_annotation in self.get_header().infos:
+
+            vcf_annotation_line = self.get_header().infos.get(vcf_annotation)
+            log.debug(
+                f"Existing annotations in VCF: {vcf_annotation} [{vcf_annotation_line}]"
+            )
+
+        # Memory limit
+        if config.get("memory", None):
+            memory_limit = config.get("memory", "8G")
+        else:
+            memory_limit = "8G"
+        log.debug(f"memory_limit: {memory_limit}")
+
+        # Export VCF file
+        self.export_variant_vcf(
+            vcf_file=tmp_vcf_name,
+            file_type="gz",
+            remove_info=True,
+            add_samples=False,
+            compression=1,
+            index=True,
+        )
+        # Tmp file
+        err_files = []
+        tmp_annotate_vcf = NamedTemporaryFile(
+            prefix=self.get_prefix(),
+            dir=self.get_tmp_dir(),
+            suffix=".vcf",
+            delete=False,
+        )
+
+        # Update variants
+        log.info("Annotation - Updating...")
+        self.update_from_vcf(tmp_annotate_vcf_name)
 
     ###
     # Prioritization

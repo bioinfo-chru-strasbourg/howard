@@ -1,28 +1,45 @@
 {
-  "threads": 8,
-  "memory": null,
-  "verbosity": "WARNING",
-  "folders": {
-    "databases": {
-      "genomes": "~/howard/databases/genomes/current",
-      "annotations": [
-        "~/howard/databases/annotations/current",
-        "~/howard/databases/dbnsfp/current",
-        "~/howard/databases/dbsnp/current"
-      ],
-      "parquet": ["~/howard/databases/annotations/current"],
-      "bcftools": ["~/howard/databases/annotations/current"],
-      "annovar": ["~/howard/databases/annovar/current"],
-      "snpeff": "~/howard/databases/snpeff/current",
-      "varank": "~/howard/databases/varank/current"
+    "threads": 8,
+    "memory": null,
+    "verbosity": "WARNING",
+    "folders": {
+        "databases": {
+            "genomes": "~/howard/databases/genomes/current",
+            "annotations": [
+                "~/howard/databases/annotations/current",
+                "~/howard/databases/dbnsfp/current",
+                "~/howard/databases/dbsnp/current"
+            ],
+            "parquet": [
+                "~/howard/databases/annotations/current"
+            ],
+            "bcftools": [
+                "~/howard/databases/annotations/current"
+            ],
+            "annovar": [
+                "~/howard/databases/annovar/current"
+            ],
+            "snpeff": "~/howard/databases/snpeff/current",
+            "varank": "~/howard/databases/varank/current",
+            "splice": "~/howard/databases/splice"
+        }
+    },
+    "tools": {
+        "bcftools": "bcftools",
+        "bgzip": "bgzip",
+        "java": "java",
+        "snpeff": "~/howard/tools/snpeff/current/bin/snpEff.jar",
+        "annovar": "~/howard/tools/annovar/current/bin/table_annovar.pl",
+        "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-14.0.0.jar",
+        "splice": {
+            "mount": {
+                "/home1/data/STARK/databases": "ro",
+                "/home1/BAS/lamouchj": "rw"
+            },
+            "output_folder": "/home1/BAS/lamouchj/test-howard-splice2",
+            "splice_config": "/home1/BAS/lamouchj/test/SpliceToolBox/src/splicetoolbox/nextflow/nextflow.docker.config",
+            "main": "/app/src/splicetoolbox/nextflow/main.nf",
+            "image": "splice:0.1"
+        }
     }
-  },
-  "tools": {
-    "bcftools": "bcftools",
-    "bgzip": "bgzip",
-    "java": "java",
-    "snpeff": "~/howard/tools/snpeff/current/bin/snpEff.jar",
-    "annovar": "~/howard/tools/annovar/current/bin/table_annovar.pl",
-    "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-14.0.0.jar"
-  }
 }
