@@ -65,9 +65,6 @@
     - [Minimalize](#minimalize)
     - [Explode](#explode-4)
     - [Export](#export-4)
-  - [SHOW_PLUGIN tool](#show_plugin-tool)
-    - [Main options](#main-options-12)
-    - [Options](#options)
   - [Shared arguments](#shared-arguments)
 
 <!--TOC-->
@@ -1708,11 +1705,12 @@ with Transcript in first column, optional Gene in second column.
 ```
 
 ```
---param_extann=<param extann> (default: ~/howard/config/param.extann.json)
+--param_extann=<param extann>
 
 Param extann file path.
 Param containing configuration, options to replace chars and
 bedlike header description, conf vcf specs.
+(e.g. '~/howard/config/param.extann.json')
 
 ```
 
@@ -2115,66 +2113,6 @@ Parquet partitioning using hive (available for any format).
 This option is faster parallel writing, but memory consuming.
 Use 'None' (string) for NO partition but split parquet files into a folder.
 Examples: '#CHROM', '#CHROM,REF', 'None'.
-
-```
-
-
-
-## SHOW_PLUGIN tool
-Show variants in an input file.
-
-
-
-Usage examples:
-
-> howard show_plugin --input=tests/data/example.vcf.gz --output=/tmp/example.minimal.vcf.gz  --show --limit=5 
-
-> howard show_plugin --input=tests/data/example.vcf.gz --output=/tmp/example.minimal.tsv  --show 
-
->  
-
-
-
-### Main options
-```
---input=<input> | required
-
-Input file path.
-Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
-Files can be compressesd (e.g. vcf.gz, tsv.gz).
-
-```
-
-```
---output=<output>
-
-Output file path.
-Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
-Files can be compressesd (e.g. vcf.gz, tsv.gz).
-
-```
-
-```
---param=<param> (default: {})
-
-Parameters JSON file (or string) defines parameters to process 
-annotations, calculations, prioritizations, convertions and queries.
-
-```
-
-### Options
-```
---show
-
-show variants in input file.
-
-```
-
-```
---limit=<limit> [2, 5] (default: 2)
-
-Limit of output variants.
-Either '2' or '5' lines.
 
 ```
 

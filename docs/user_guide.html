@@ -1362,7 +1362,7 @@ howard annotation \
 <h3 id="annotation-parameters">Annotation parameters</h3>
 <p>All annotation parameters can be defined in <a href="help.param.md">HOWARD Parameters JSON</a> file. All annotations can be combined (bild-in parquet method and external tools annotation), and options can be detailed in a full JSON file format, including selection of annotation database columns (and rename them) and specific options for external tools.</p>
 <h2 id="calculation">Calculation</h2>
-<p>Calculation processes variants annotations to generate new annotation, such as: identify variation type (VarType), harmonizes allele frequency (VAF) and calculate sttistics (VAF_stats), extracts Nomen (transcript, cNomen, pNomen...) from an HGVS field (e.g. snpEff, Annovar) with an optional list of personalized transcripts, generates VaRank format barcode, identify trio inheritance. These calculations are based on existing annotations of variants (and genotypes).</p>
+<p>Calculation processes variants annotations to generate new annotation, such as: identify variation type (VarType), harmonizes allele frequency (VAF) and calculate statistics (VAF_stats), extracts Nomen (transcript, cNomen, pNomen...) from an HGVS field (e.g. snpEff, Annovar) with an optional list of personalized transcripts, generates VaRank format barcode, identify trio inheritance. These calculations are based on existing annotations of variants (and genotypes).</p>
 <p>Calculations are either provided by HOWARD within code, or configured into a JSON file. Calculations are either an inner HOWARD Python code, or a SQL query.</p>
 <p>See <a href="help.md#calculation-tool">HOWARD Help Calculation tool</a> tool for more information.</p>
 <p>To process a calculation, use is keyword with the <code>--calculations</code> parameter.</p>
@@ -1637,13 +1637,13 @@ howard query \
                 <span class="hljs-attr">"comment"</span>: [
                     <span class="hljs-string">"Described on CLINVAR database as non-pathogenic"</span>
                 ]
-            },
+            }
         ]
     }
 }
 </div></code></pre>
 </blockquote>
-<p>See <a href="help.prioritization.md">HOWARD Help Prioritization Profiles</a> for more options.</p>
+<p>See <a href="help.config.prioritization.md">HOWARD Help Prioritization Profiles</a> for more options.</p>
 <h2 id="hgvs-annotation">HGVS annotation</h2>
 <p>HOWARD annotates variants with HGVS annotation using HUGO HGVS internation Sequence Variant Nomenclature (http://varnomen.hgvs.org/). Annotation refere to refGene and genome to generate HGVS nomenclature for all available transcripts. This annotation add 'hgvs' field into VCF INFO column of a VCF file.</p>
 <p>To enhance the functionality of HGVS tool, several options available. The <code>--use_gene</code> option enables the utilization of gene information for the generation of HGVS annotation, providing a concise representation such as 'NM_152232(TAS1R2):c.231T&gt;C'. Alternatively, the <code>--use_exon</code> option incorporates exon details into the annotation, as seen in the example 'NM_152232(exon2):c.231T&gt;C', but this is only applicable if 'use_gene' is not enabled. For a more detailed HGVS annotation, activate the <code>--full_format</code> option, which generates a comprehensive HGVS annotation, including all available information, such as 'TAS1R2:NM_152232:NP_689418:c.231T&gt;C:p.Cys77Arg'. This is non-standard format that ensures exhaustive data representation. Furthermore, specify the format of amino acid codons with the <code>--codon_type</code> option, choosing between single-character ('1'), three-character ('3'), or full-name formats ('FULL'). Additionally, protein-level information can be integrated using the <code>--use_protein</code> option, enabling annotations like 'NP_689418:p.Cys77Arg', which can be combined with DNA-level annotations using the <code>--add_protein</code> option (e.g. 'NM_152232:c.231T&gt;C,NP_689418:p.Cys77Arg').</p>

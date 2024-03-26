@@ -721,7 +721,7 @@ Examples:
 
 ## calculation
 
-Calculation process operations that are defiend in a Calculation Configuration JSON file. List available calculation operations with possible options (see [Calculation JSON file](help.calculation.md) help).
+Calculation process operations that are defiend in a Calculation Configuration JSON file. List available calculation operations with possible options (see [Calculation JSON file](help.config.calculation.md) help).
 
 Examples: 
 
@@ -744,7 +744,7 @@ Examples:
 
 ### calculation::calculations
 
-List of operations to process with possible options (see [Calculation JSON file](help.calculation.md) help).
+List of operations to process with possible options (see [Calculation JSON file](help.config.calculation.md) help).
 
 Examples: 
 

@@ -495,12 +495,6 @@ code {
 <li><a href="#export-4">Export</a></li>
 </ul>
 </li>
-<li><a href="#show_plugin-tool">SHOW_PLUGIN tool</a>
-<ul>
-<li><a href="#main-options-12">Main options</a></li>
-<li><a href="#options">Options</a></li>
-</ul>
-</li>
 <li><a href="#shared-arguments">Shared arguments</a></li>
 </ul>
 </li>
@@ -1816,11 +1810,12 @@ Transcripts TSV file,
 with Transcript in first column, optional Gene in second column.
 
 </div></code></pre>
-<pre class="hljs"><code><div>--param_extann=&lt;param extann&gt; (default: ~/howard/config/param.extann.json)
+<pre class="hljs"><code><div>--param_extann=&lt;param extann&gt;
 
 Param extann file path.
 Param containing configuration, options to replace chars and
 bedlike header description, conf vcf specs.
+(e.g. '~/howard/config/param.extann.json')
 
 </div></code></pre>
 <pre class="hljs"><code><div>--mode_extann=&lt;mode extann&gt; ['all', 'longest', 'chosen'] (default: longest)
@@ -2122,49 +2117,6 @@ Parquet partitioning using hive (available for any format).
 This option is faster parallel writing, but memory consuming.
 Use 'None' (string) for NO partition but split parquet files into a folder.
 Examples: '#CHROM', '#CHROM,REF', 'None'.
-
-</div></code></pre>
-<h2 id="showplugin-tool">SHOW_PLUGIN tool</h2>
-<p>Show variants in an input file.</p>
-<p>Usage examples:</p>
-<blockquote>
-<p>howard show_plugin --input=tests/data/example.vcf.gz --output=/tmp/example.minimal.vcf.gz  --show --limit=5</p>
-</blockquote>
-<blockquote>
-<p>howard show_plugin --input=tests/data/example.vcf.gz --output=/tmp/example.minimal.tsv  --show</p>
-</blockquote>
-<blockquote></blockquote>
-<h3 id="main-options">Main options</h3>
-<pre class="hljs"><code><div>--input=&lt;input&gt; | required
-
-Input file path.
-Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
-Files can be compressesd (e.g. vcf.gz, tsv.gz).
-
-</div></code></pre>
-<pre class="hljs"><code><div>--output=&lt;output&gt;
-
-Output file path.
-Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
-Files can be compressesd (e.g. vcf.gz, tsv.gz).
-
-</div></code></pre>
-<pre class="hljs"><code><div>--param=&lt;param&gt; (default: {})
-
-Parameters JSON file (or string) defines parameters to process 
-annotations, calculations, prioritizations, convertions and queries.
-
-</div></code></pre>
-<h3 id="options">Options</h3>
-<pre class="hljs"><code><div>--show
-
-show variants in input file.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--limit=&lt;limit&gt; [2, 5] (default: 2)
-
-Limit of output variants.
-Either '2' or '5' lines.
 
 </div></code></pre>
 <h2 id="shared-arguments">Shared arguments</h2>
