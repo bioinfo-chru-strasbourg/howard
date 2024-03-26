@@ -55,6 +55,19 @@
   - [GUI tool](#gui-tool)
   - [HELP tool](#help-tool)
     - [Main options](#main-options-9)
+  - [GENEBE tool](#genebe-tool)
+    - [Main options](#main-options-10)
+    - [GeneBe](#genebe)
+    - [Explode](#explode-3)
+    - [Export](#export-3)
+  - [MINIMALIZE tool](#minimalize-tool)
+    - [Main options](#main-options-11)
+    - [Minimalize](#minimalize)
+    - [Explode](#explode-4)
+    - [Export](#export-4)
+  - [SHOW_PLUGIN tool](#show_plugin-tool)
+    - [Main options](#main-options-12)
+    - [Options](#options)
   - [Shared arguments](#shared-arguments)
 
 <!--TOC-->
@@ -1771,13 +1784,13 @@ Help tools
 
 Usage examples:
 
-> howard help --help_md=docs/help.md --help_html=docs/help.html
+> howard help --help_md=docs/help.md --help_html=docs/html/help.html --help_pdf=docs/pdf/help.pdf
 
-> howard help --help_json_input=docs/help.config.json --help_json_input_title='HOWARD Configuration' --help_md=docs/help.config.md --help_html=docs/help.config.html --code_type='json'
+> howard help --help_json_input=docs/json/help.config.json --help_json_input_title='HOWARD Configuration' --help_md=docs/help.config.md --help_html=docs/html/help.config.html --help_pdf=docs/pdf/help.config.pdf --code_type='json'
 
-> howard help --help_json_input=docs/help.param.json --help_json_input_title='HOWARD Parameters' --help_md=docs/help.param.md --help_html=docs/help.param.html --code_type='json' 
+> howard help --help_json_input=docs/json/help.param.json --help_json_input_title='HOWARD Parameters' --help_md=docs/help.param.md --help_html=docs/html/help.param.html --help_pdf=docs/pdf/help.param.pdf --code_type='json' 
 
-> howard help --help_json_input=docs/help.param.databases.json --help_json_input_title='HOWARD Parameters Databases' --help_md=docs/help.param.databases.md --help_html=docs/help.param.databases.html --code_type='json' 
+> howard help --help_json_input=docs/json/help.param.databases.json --help_json_input_title='HOWARD Parameters Databases' --help_md=docs/help.param.databases.md --help_html=docs/html/help.param.databases.html --help_pdf=docs/pdf/help.param.databases.pdf --code_type='json' 
 
 >  
 
@@ -1795,6 +1808,13 @@ Help Output file in MarkDown format.
 --help_html=<help html>
 
 Help Output file in HTML format.
+
+```
+
+```
+--help_pdf=<help pdf>
+
+Help Output file in PDF format.
 
 ```
 
@@ -1817,6 +1837,344 @@ Help JSON input title.
 
 Help example code type for input JSON format
 (e.g. 'json', 'bash').
+
+```
+
+
+
+## GENEBE tool
+GeneBe annotation using REST API (see https://genebe.net/).
+
+
+
+Usage examples:
+
+> howard genebe --input=tests/data/example.vcf.gz --output=/tmp/example.genebe.vcf.gz --genebe_use_refseq
+
+>  
+
+
+
+### Main options
+```
+--input=<input> | required
+
+Input file path.
+Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
+Files can be compressesd (e.g. vcf.gz, tsv.gz).
+
+```
+
+```
+--output=<output> | required
+
+Output file path.
+Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
+Files can be compressesd (e.g. vcf.gz, tsv.gz).
+
+```
+
+```
+--param=<param> (default: {})
+
+Parameters JSON file (or string) defines parameters to process 
+annotations, calculations, prioritizations, convertions and queries.
+
+```
+
+```
+--assembly=<assembly> (default: hg19)
+
+Genome Assembly (e.g. 'hg19', 'hg38').
+
+```
+
+### GeneBe
+```
+--genebe_use_refseq
+
+Use refSeq to annotate (default).
+
+```
+
+```
+--genebe_use_ensembl
+
+Use Ensembl to annotate.
+
+```
+
+```
+--not_flatten_consequences
+
+Use exploded annotation informations.
+
+```
+
+### Explode
+```
+--explode_infos
+
+Explode VCF INFO/Tag into 'variants' table columns.
+
+```
+
+```
+--explode_infos_prefix=<explode infos prefix>
+
+Explode VCF INFO/Tag with a specific prefix.
+
+```
+
+```
+--explode_infos_fields=<explode infos list> (default: *)
+
+Explode VCF INFO/Tag specific fields/tags.
+Keyword `*` specify all available fields, except those already specified.
+Pattern (regex) can be used, such as `.*_score` for fields named with '_score' at the end.
+Examples:
+- 'HGVS,SIFT,Clinvar' (list of fields)
+- 'HGVS,*,Clinvar' (list of fields with all other fields at the end)
+- 'HGVS,.*_score,Clinvar' (list of 2 fields with all scores in the middle)
+- 'HGVS,.*_score,*' (1 field, scores, all other fields)
+- 'HGVS,*,.*_score' (1 field, all other fields, all scores)
+
+```
+
+### Export
+```
+--include_header
+
+Include header (in VCF format) in output file.
+Only for compatible formats (tab-delimiter format as TSV or BED).
+
+```
+
+```
+--order_by=<order by>
+
+List of columns to sort the result-set in ascending or descending order.
+Use SQL format, and keywords ASC (ascending) and DESC (descending).
+If a column is not available, order will not be considered.
+Order is enable only for compatible format (e.g. TSV, CSV, JSON).
+Examples: 'ACMG_score DESC', 'PZFlag DESC, PZScore DESC'.
+
+```
+
+```
+--parquet_partitions=<parquet partitions>
+
+Parquet partitioning using hive (available for any format).
+This option is faster parallel writing, but memory consuming.
+Use 'None' (string) for NO partition but split parquet files into a folder.
+Examples: '#CHROM', '#CHROM,REF', 'None'.
+
+```
+
+
+
+## MINIMALIZE tool
+Minimalize a VCF file consists in put missing value ('.') on INFO/Tags, ID, QUAL or FILTER fields. Options can also minimalize samples (keep only GT) or remove all samples. INFO/tags can by exploded before minimalize to keep tags into separated columns (useful for Parquet or TSV format to constitute a database).
+
+
+
+Usage examples:
+
+> howard minimalize --input=tests/data/example.vcf.gz --output=/tmp/example.minimal.vcf.gz --minimalize_info --minimalize_filter --minimalize_qual --minimalize_id --minimalize_samples
+
+> howard minimalize --input=tests/data/example.vcf.gz --output=/tmp/example.minimal.tsv --remove_samples --explode_infos --minimalize_info
+
+>  
+
+
+
+### Main options
+```
+--input=<input> | required
+
+Input file path.
+Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
+Files can be compressesd (e.g. vcf.gz, tsv.gz).
+
+```
+
+```
+--output=<output> | required
+
+Output file path.
+Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
+Files can be compressesd (e.g. vcf.gz, tsv.gz).
+
+```
+
+```
+--param=<param> (default: {})
+
+Parameters JSON file (or string) defines parameters to process 
+annotations, calculations, prioritizations, convertions and queries.
+
+```
+
+### Minimalize
+```
+--minimalize_info
+
+Minimalize INFO field (e.g. '.' value).
+
+```
+
+```
+--minimalize_id
+
+Minimalize ID field (e.g. '.' value).
+
+```
+
+```
+--minimalize_qual
+
+Minimalize QUAL field (e.g. '.' value).
+
+```
+
+```
+--minimalize_filter
+
+Minimalize FILTER field (e.g. '.' value).
+
+```
+
+```
+--minimalize_samples
+
+Minimalize samples to keep only genotypes (i.e. 'GT').
+
+```
+
+```
+--remove_samples
+
+Remove all samples to keep only variants.
+
+```
+
+### Explode
+```
+--explode_infos
+
+Explode VCF INFO/Tag into 'variants' table columns.
+
+```
+
+```
+--explode_infos_prefix=<explode infos prefix>
+
+Explode VCF INFO/Tag with a specific prefix.
+
+```
+
+```
+--explode_infos_fields=<explode infos list> (default: *)
+
+Explode VCF INFO/Tag specific fields/tags.
+Keyword `*` specify all available fields, except those already specified.
+Pattern (regex) can be used, such as `.*_score` for fields named with '_score' at the end.
+Examples:
+- 'HGVS,SIFT,Clinvar' (list of fields)
+- 'HGVS,*,Clinvar' (list of fields with all other fields at the end)
+- 'HGVS,.*_score,Clinvar' (list of 2 fields with all scores in the middle)
+- 'HGVS,.*_score,*' (1 field, scores, all other fields)
+- 'HGVS,*,.*_score' (1 field, all other fields, all scores)
+
+```
+
+### Export
+```
+--include_header
+
+Include header (in VCF format) in output file.
+Only for compatible formats (tab-delimiter format as TSV or BED).
+
+```
+
+```
+--order_by=<order by>
+
+List of columns to sort the result-set in ascending or descending order.
+Use SQL format, and keywords ASC (ascending) and DESC (descending).
+If a column is not available, order will not be considered.
+Order is enable only for compatible format (e.g. TSV, CSV, JSON).
+Examples: 'ACMG_score DESC', 'PZFlag DESC, PZScore DESC'.
+
+```
+
+```
+--parquet_partitions=<parquet partitions>
+
+Parquet partitioning using hive (available for any format).
+This option is faster parallel writing, but memory consuming.
+Use 'None' (string) for NO partition but split parquet files into a folder.
+Examples: '#CHROM', '#CHROM,REF', 'None'.
+
+```
+
+
+
+## SHOW_PLUGIN tool
+Show variants in an input file.
+
+
+
+Usage examples:
+
+> howard show_plugin --input=tests/data/example.vcf.gz --output=/tmp/example.minimal.vcf.gz  --show --limit=5 
+
+> howard show_plugin --input=tests/data/example.vcf.gz --output=/tmp/example.minimal.tsv  --show 
+
+>  
+
+
+
+### Main options
+```
+--input=<input> | required
+
+Input file path.
+Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
+Files can be compressesd (e.g. vcf.gz, tsv.gz).
+
+```
+
+```
+--output=<output>
+
+Output file path.
+Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
+Files can be compressesd (e.g. vcf.gz, tsv.gz).
+
+```
+
+```
+--param=<param> (default: {})
+
+Parameters JSON file (or string) defines parameters to process 
+annotations, calculations, prioritizations, convertions and queries.
+
+```
+
+### Options
+```
+--show
+
+show variants in input file.
+
+```
+
+```
+--limit=<limit> [2, 5] (default: 2)
+
+Limit of output variants.
+Either '2' or '5' lines.
 
 ```
 

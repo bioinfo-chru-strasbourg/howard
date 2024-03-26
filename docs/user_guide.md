@@ -1,6 +1,6 @@
-# :information_source: HOWARD User Guide
+# HOWARD User Guide
 
-![HOWARD Graphical User Interface](../images/icon.ico "HOWARD Graphical User Interface")
+![HOWARD Graphical User Interface](../images/icon.png "HOWARD Graphical User Interface")
 
 Highly Open and Valuable tool for Variant Annotation & Ranking toward genetic Discovery
 
@@ -24,7 +24,6 @@ HOWARD is multithreaded through the number of variants and by database (data-sca
     - [Quick install](#quick-install)
     - [GUI install](#quick-install)
     - [Configuration](#configuration)
-    <!-- - [External tools](#external-tools) TODO -->
   - [Docker](#docker)
     - [Quick start](#quick-start)
     - [Setup container](#setup-container)

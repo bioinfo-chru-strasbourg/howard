@@ -1,296 +1,1299 @@
-<H1 id='HOWARD Parameters'>HOWARD Parameters</H1>HOWARD Parameters JSON file defines parameters to process annotations, calculations, prioritizations, convertions and queries.<br>
-                    <H2>Table of contents</H1>
-                    - <a href='#HOWARD Parameters'>HOWARD Parameters</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#hgvs'>hgvs</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#hgvs::use_gene'>use_gene</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#hgvs::use_exon'>use_exon</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#hgvs::use_protein'>use_protein</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#hgvs::add_protein'>add_protein</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#hgvs::full_format'>full_format</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#hgvs::codon_type'>codon_type</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#hgvs::refgene'>refgene</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#hgvs::refseqlink'>refseqlink</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#annotation'>annotation</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#annotation::parquet'>parquet</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#annotation::parquet::annotations'>annotations</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#annotation::bcftools'>bcftools</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#annotation::bcftools::annotations'>annotations</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#annotation::annovar'>annovar</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#annotation::annovar::annotations'>annotations</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#annotation::annovar::options'>options</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#annotation::snpeff'>snpeff</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#annotation::snpeff::options'>options</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#annotation::snpeff::stats'>stats</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#annotation::snpeff::csvStats'>csvStats</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#annotation::exomiser'>exomiser</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#annotation::exomiser::release'>release</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#annotation::options'>options</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#annotation::options::annotations_update'>annotations_update</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#annotation::options::annotations_append'>annotations_append</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#calculation'>calculation</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#calculation::calculations'>calculations</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#calculation::calculation_config'>calculation_config</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#prioritization'>prioritization</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#prioritization::prioritizations'>prioritizations</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#prioritization::profiles'>profiles</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#prioritization::default_profile'>default_profile</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#prioritization::pzfields'>pzfields</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#prioritization::prioritization_score_mode'>prioritization_score_mode</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#stats'>stats</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#stats::stats_md'>stats_md</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#stats::stats_json'>stats_json</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#query'>query</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#query::query'>query</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#query::query_limit'>query_limit</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#query::query_print_mode'>query_print_mode</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#export'>export</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#export::order_by'>order_by</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#export::include_header'>include_header</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#export::parquet_partitions'>parquet_partitions</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#explode'>explode</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#explode::explode_infos'>explode_infos</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#explode::explode_infos_prefix'>explode_infos_prefix</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#explode::explode_infos_fields'>explode_infos_fields</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#threads'>threads</a><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <a href='#databases'>databases</a><BR>
-                    <br>
-                    Examples: <xmp># Parameters for annotation, calculation, prioritization, HGVS annotation and export{
-   "hgvs": {
-      "full_format": true,
-      "use_exon": true
+<!DOCTYPE html>
+<html>
+<head>
+<title>help.param.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/*
+
+github.com style (c) Vasily Polovnyov <vast@whiteants.net>
+
+*/
+
+.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 0.5em;
+  color: #333;
+  background: #f8f8f8;
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: #998;
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-subst {
+  color: #333;
+  font-weight: bold;
+}
+
+.hljs-number,
+.hljs-literal,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag .hljs-attr {
+  color: #008080;
+}
+
+.hljs-string,
+.hljs-doctag {
+  color: #d14;
+}
+
+.hljs-title,
+.hljs-section,
+.hljs-selector-id {
+  color: #900;
+  font-weight: bold;
+}
+
+.hljs-subst {
+  font-weight: normal;
+}
+
+.hljs-type,
+.hljs-class .hljs-title {
+  color: #458;
+  font-weight: bold;
+}
+
+.hljs-tag,
+.hljs-name,
+.hljs-attribute {
+  color: #000080;
+  font-weight: normal;
+}
+
+.hljs-regexp,
+.hljs-link {
+  color: #009926;
+}
+
+.hljs-symbol,
+.hljs-bullet {
+  color: #990073;
+}
+
+.hljs-built_in,
+.hljs-builtin-name {
+  color: #0086b3;
+}
+
+.hljs-meta {
+  color: #999;
+  font-weight: bold;
+}
+
+.hljs-deletion {
+  background: #fdd;
+}
+
+.hljs-addition {
+  background: #dfd;
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: bold;
+}
+
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="howard-parameters">HOWARD Parameters</h1>
+<p>HOWARD Parameters JSON file defines parameters to process annotations, calculations, prioritizations, convertions and queries.</p>
+<h2 id="table-of-contents">Table of contents</h2>
+<ul>
+<li><a href="#howard-parameters">HOWARD Parameters</a>
+<ul>
+<li><a href="#hgvs">hgvs</a>
+<ul>
+<li><a href="#hgvsuse_gene">use_gene</a></li>
+<li><a href="#hgvsuse_exon">use_exon</a></li>
+<li><a href="#hgvsuse_protein">use_protein</a></li>
+<li><a href="#hgvsadd_protein">add_protein</a></li>
+<li><a href="#hgvsfull_format">full_format</a></li>
+<li><a href="#hgvscodon_type">codon_type</a></li>
+<li><a href="#hgvsrefgene">refgene</a></li>
+<li><a href="#hgvsrefseqlink">refseqlink</a></li>
+</ul>
+</li>
+<li><a href="#annotation">annotation</a>
+<ul>
+<li><a href="#annotationparquet">parquet</a>
+<ul>
+<li><a href="#annotationparquetannotations">annotations</a></li>
+</ul>
+</li>
+<li><a href="#annotationbcftools">bcftools</a>
+<ul>
+<li><a href="#annotationbcftoolsannotations">annotations</a></li>
+</ul>
+</li>
+<li><a href="#annotationannovar">annovar</a>
+<ul>
+<li><a href="#annotationannovarannotations">annotations</a></li>
+<li><a href="#annotationannovaroptions">options</a></li>
+</ul>
+</li>
+<li><a href="#annotationsnpeff">snpeff</a>
+<ul>
+<li><a href="#annotationsnpeffoptions">options</a></li>
+<li><a href="#annotationsnpeffstats">stats</a></li>
+<li><a href="#annotationsnpeffcsvstats">csvStats</a></li>
+</ul>
+</li>
+<li><a href="#annotationexomiser">exomiser</a>
+<ul>
+<li><a href="#annotationexomiserrelease">release</a></li>
+</ul>
+</li>
+<li><a href="#annotationoptions">options</a>
+<ul>
+<li><a href="#annotationoptionsannotations_update">annotations_update</a></li>
+<li><a href="#annotationoptionsannotations_append">annotations_append</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#calculation">calculation</a>
+<ul>
+<li><a href="#calculationcalculations">calculations</a></li>
+<li><a href="#calculationcalculation_config">calculation_config</a></li>
+</ul>
+</li>
+<li><a href="#prioritization">prioritization</a>
+<ul>
+<li><a href="#prioritizationprioritizations">prioritizations</a></li>
+<li><a href="#prioritizationprofiles">profiles</a></li>
+<li><a href="#prioritizationdefault_profile">default_profile</a></li>
+<li><a href="#prioritizationpzfields">pzfields</a></li>
+<li><a href="#prioritizationprioritization_score_mode">prioritization_score_mode</a></li>
+</ul>
+</li>
+<li><a href="#stats">stats</a>
+<ul>
+<li><a href="#statsstats_md">stats_md</a></li>
+<li><a href="#statsstats_json">stats_json</a></li>
+</ul>
+</li>
+<li><a href="#query">query</a>
+<ul>
+<li><a href="#queryquery">query</a></li>
+<li><a href="#queryquery_limit">query_limit</a></li>
+<li><a href="#queryquery_print_mode">query_print_mode</a></li>
+</ul>
+</li>
+<li><a href="#export">export</a>
+<ul>
+<li><a href="#exportorder_by">order_by</a></li>
+<li><a href="#exportinclude_header">include_header</a></li>
+<li><a href="#exportparquet_partitions">parquet_partitions</a></li>
+</ul>
+</li>
+<li><a href="#explode">explode</a>
+<ul>
+<li><a href="#explodeexplode_infos">explode_infos</a></li>
+<li><a href="#explodeexplode_infos_prefix">explode_infos_prefix</a></li>
+<li><a href="#explodeexplode_infos_fields">explode_infos_fields</a></li>
+</ul>
+</li>
+<li><a href="#threads">threads</a></li>
+<li><a href="#databases">databases</a></li>
+</ul>
+</li>
+</ul>
+<p>Examples:</p>
+<blockquote>
+<p>Parameters for annotation, calculation, prioritization, HGVS annotation and export</p>
+</blockquote>
+<pre class="hljs"><code><div>{
+   <span class="hljs-attr">"hgvs"</span>: {
+      <span class="hljs-attr">"full_format"</span>: <span class="hljs-literal">true</span>,
+      <span class="hljs-attr">"use_exon"</span>: <span class="hljs-literal">true</span>
    }
-   "annotation": {
-      "parquet": {
-         "annotations": {
-            "/path/to/database3.parquet": {
-               "field1": null,
-               "field2": "field2_renamed"
+   <span class="hljs-string">"annotation"</span>: {
+      <span class="hljs-attr">"parquet"</span>: {
+         <span class="hljs-attr">"annotations"</span>: {
+            <span class="hljs-attr">"/path/to/database3.parquet"</span>: {
+               <span class="hljs-attr">"field1"</span>: <span class="hljs-literal">null</span>,
+               <span class="hljs-attr">"field2"</span>: <span class="hljs-string">"field2_renamed"</span>
             },
-            "/path/to/database4.vcf.gz": {
-               "INFO": null
+            <span class="hljs-attr">"/path/to/database4.vcf.gz"</span>: {
+               <span class="hljs-attr">"INFO"</span>: <span class="hljs-literal">null</span>
             },
-            "/path/to/database5.bed.gz": {
-               "INFO": null
+            <span class="hljs-attr">"/path/to/database5.bed.gz"</span>: {
+               <span class="hljs-attr">"INFO"</span>: <span class="hljs-literal">null</span>
             }
          }
       },
-      "bcftools": {
-         "annotations": {
-            "/path/to/database6.vcf.gz": {
-               "field1": null,
-               "field2": "field2_renamed"
+      <span class="hljs-attr">"bcftools"</span>: {
+         <span class="hljs-attr">"annotations"</span>: {
+            <span class="hljs-attr">"/path/to/database6.vcf.gz"</span>: {
+               <span class="hljs-attr">"field1"</span>: <span class="hljs-literal">null</span>,
+               <span class="hljs-attr">"field2"</span>: <span class="hljs-string">"field2_renamed"</span>
             },
-            "/path/to/database7.bed": {
-               "INFO": null
+            <span class="hljs-attr">"/path/to/database7.bed"</span>: {
+               <span class="hljs-attr">"INFO"</span>: <span class="hljs-literal">null</span>
             }
          }
       },
-      "annovar": {
-         "annotations": {
-            "annovar_keyword2": {
-               "field1": null,
-               "field2": "field2_renamed"
+      <span class="hljs-attr">"annovar"</span>: {
+         <span class="hljs-attr">"annotations"</span>: {
+            <span class="hljs-attr">"annovar_keyword2"</span>: {
+               <span class="hljs-attr">"field1"</span>: <span class="hljs-literal">null</span>,
+               <span class="hljs-attr">"field2"</span>: <span class="hljs-string">"field2_renamed"</span>
             },
-            "annovar_keyword3": {
-               "INFO": null
+            <span class="hljs-attr">"annovar_keyword3"</span>: {
+               <span class="hljs-attr">"INFO"</span>: <span class="hljs-literal">null</span>
             }
          }
       },
-      "snpeff": {
-         "options": " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "
+      <span class="hljs-attr">"snpeff"</span>: {
+         <span class="hljs-attr">"options"</span>: <span class="hljs-string">" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "</span>
       },
-      "exomiser": {
-         "release": "2109",
-         "transcript_source": "refseq",
-         "hpo": ["HP:0001156", "HP:0001363", "HP:0011304", "HP:0010055"]
+      <span class="hljs-attr">"exomiser"</span>: {
+         <span class="hljs-attr">"release"</span>: <span class="hljs-string">"2109"</span>,
+         <span class="hljs-attr">"transcript_source"</span>: <span class="hljs-string">"refseq"</span>,
+         <span class="hljs-attr">"hpo"</span>: [<span class="hljs-string">"HP:0001156"</span>, <span class="hljs-string">"HP:0001363"</span>, <span class="hljs-string">"HP:0011304"</span>, <span class="hljs-string">"HP:0010055"</span>]
       },
-      "options": {
-         "append": true
+      <span class="hljs-attr">"options"</span>: {
+         <span class="hljs-attr">"append"</span>: <span class="hljs-literal">true</span>
       }
    },
-   "calculation": {
-      "operation1": null,
-      "operation2": {
-        "options": {
-          "option1": "value1",
-          "option2": "value2"
+   <span class="hljs-attr">"calculation"</span>: {
+      <span class="hljs-attr">"operation1"</span>: <span class="hljs-literal">null</span>,
+      <span class="hljs-attr">"operation2"</span>: {
+        <span class="hljs-attr">"options"</span>: {
+          <span class="hljs-attr">"option1"</span>: <span class="hljs-string">"value1"</span>,
+          <span class="hljs-attr">"option2"</span>: <span class="hljs-string">"value2"</span>
         }
       }
    },
-   "prioritization": {
-      "prioritizations": "config/prioritization_profiles.json",
-      "profiles": ["GENOME", "GERMLINE"],
-      "default_profile": "GERMLINE",
-      "pzfields": ["PZScore", "PZFlag", "PZComment"],
-      "prioritization_score_mode": "VaRank"
+   <span class="hljs-attr">"prioritization"</span>: {
+      <span class="hljs-attr">"prioritizations"</span>: <span class="hljs-string">"config/prioritization_profiles.json"</span>,
+      <span class="hljs-attr">"profiles"</span>: [<span class="hljs-string">"GENOME"</span>, <span class="hljs-string">"GERMLINE"</span>],
+      <span class="hljs-attr">"default_profile"</span>: <span class="hljs-string">"GERMLINE"</span>,
+      <span class="hljs-attr">"pzfields"</span>: [<span class="hljs-string">"PZScore"</span>, <span class="hljs-string">"PZFlag"</span>, <span class="hljs-string">"PZComment"</span>],
+      <span class="hljs-attr">"prioritization_score_mode"</span>: <span class="hljs-string">"VaRank"</span>
    },
-   "export": {
-      "include_header": true
-   }
-}</xmp><br><H2 id='hgvs'>hgvs</H2>HOWARD annotates variants with HGVS annotation using HUGO HGVS internation Sequence Variant Nomenclature (http://varnomen.hgvs.org/). Annotation refere to refGene and genome to generate HGVS nomenclature for all available transcripts. This annotation add 'hgvs' field into VCF INFO column of a VCF file. Several options are available, to add gene, exon and protein information, to generate a 'full format' detailed annotation, to choose codon format.<br>Examples: <xmp># HGVS annotation  with operations for generate variant_id and variant type, extract HGVS from snpEff annotation, select NOMEN from snpEff HGVS with a list of transcripts of preference
-"hgvs": {
-  "full_format": true,
-  "use_exon": true
-}</xmp><br><H3 id='hgvs::use_gene'>hgvs::use_gene</H3>Add Gene information to generate HGVS annotation (e.g. 'NM_152232**(TAS1R2)**:c.231T>C').<br>Default: False<br>Examples: <xmp># Use Gene in HGVS annotation
-"use_gene": true</xmp><br><H3 id='hgvs::use_exon'>hgvs::use_exon</H3>Add Exon information to generate HGVS annotation (e.g. 'NM_152232(exon2):c.231T>C'). Only if 'use_gene' is not enabled.<br>Default: False<br>Examples: <xmp># Use Exon in HGVS annotation
-"use_exon": true</xmp><br><H3 id='hgvs::use_protein'>hgvs::use_protein</H3>Use Protein level to generate HGVS annotation (e.g. 'NP_689418:p.Cys77Arg'). Can be used with 'use_exon' or 'use_gene'.<br>Default: False<br>Examples: <xmp># Use Protein in HGVS annotation
-"use_protein": true</xmp><br><H3 id='hgvs::add_protein'>hgvs::add_protein</H3>Add Protein level to DNA HGVS annotation (e.g. 'NM_152232:c.231T>C,NP_689418:p.Cys77Arg').<br>Default: False<br>Examples: <xmp># Add Protein level to DNA HGVS annotation
-"add_protein": true</xmp><br><H3 id='hgvs::full_format'>hgvs::full_format</H3>Generates HGVS annotation in a full format (non-standard, e.g. 'TAS1R2:NM_152232:NP_689418:c.231T>C:p.Cys77Arg', 'TAS1R2:NM_152232:NP_689418:exon2:c.231T>C:p.Cys77Arg'). Full format use all information to generates an exhaustive annotation. Use specifically 'use_exon' to add exon information.<br>Default: False<br>Examples: <xmp># Use full format for HGVS annotation
-"full_format": true</xmp><br><H3 id='hgvs::codon_type'>hgvs::codon_type</H3>Amino Acide Codon format type to use to generate HGVS annotation (default '3'):<br>- '1': codon in 1 character (e.g. 'C', 'R')<br>- '3': codon in 3 character (e.g. 'Cys', 'Arg')<br>- 'FULL': codon in full name (e.g. 'Cysteine', 'Arginine')<br>Type: str<br>Choices: <br>1<br>3<br>FULL<br>Default: 3<br>Examples: <xmp># Amino Acide Codon format with 1 character
-"codon_type": "1"
-# Amino Acide Codon format with 3 character
-"codon_type": "3"
-# Amino Acide Codon format with full name
-"codon_type": "FULL"</xmp><br><H3 id='hgvs::refgene'>hgvs::refgene</H3>Path to refGene annotation file (see [HOWARD User Guide](user_guide.md#databases-tool)).<br>Type: Path<br>Default: None<br>Examples: <xmp># Path to refSeq file
-"refgene": "~/howard/databases/refseq/current/hg19/ncbiRefSeq.txt"</xmp><br><H3 id='hgvs::refseqlink'>hgvs::refseqlink</H3>Path to refGeneLink annotation file (see [HOWARD User Guide](user_guide.md#databases-tool)).<br>Type: Path<br>Default: None<br>Examples: <xmp># Path to refSeq file
-"refseqlink": "~/howard/databases/refseq/current/hg19/ncbiRefSeqLink.txt"</xmp><br><H2 id='annotation'>annotation</H2>Annotation process using HOWARD algorithms or external tools.
-<br>For HOWARD Parquet algorithm, provide the list of database files available (formats such as Parquet, VCF, TSV, duckDB, JSON) and select fields (rename possible, 'INFO' keyword for all fields), or use 'ALL' keyword to detect available databases.
-<br>For external tools, such as Annovar, snpEff and Exomiser, specify parameters such as annotation keywords (Annovar) and options (depending on the tool), and select fields (BCFtools and Annovar, field rename available).<br>Examples: <xmp># Annotation with multiple tools in multiple formats with multiple options
-"annotation": {
-   "parquet": {
-      "annotations": {
-         "/path/to/database3.parquet": {
-            "field1": null,
-            "field2": "field2_renamed"
-         },
-         "/path/to/database4.vcf.gz": {
-            "INFO": null
-         }
-         "/path/to/database5.bed.gz": {
-            "INFO": null
-         }
-      }
-   }
-   "bcftools": {
-      "annotations": {
-         "/path/to/database6.vcf.gz": {
-            "field1": null,
-            "field2": "field2_renamed"
-         },
-         "/path/to/database7.bed": {
-            "INFO": null
-         }
-      }
-   }
-   "annovar": {
-      "annotations": {
-         "annovar_keyword2": {
-            "field1": null,
-            "field2": "field2_renamed"
-         },
-         "annovar_keyword3": {
-            "INFO": null
-         }
-      }
-   }
-   "snpeff": {
-      "options": {
-         " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "}
-      }
-   }
-   "exomiser": {
-      "release": "2109",
-      "transcript_source": "refseq",
-      "hpo": ["HP:0001156", "HP:0001363", "HP:0011304", "HP:0010055"]
-   }
-   "options": {
-      "append": true
-   }
-}</xmp><br><H3 id='annotation::parquet'>annotation::parquet</H3>Annotation process using HOWARD Parquet algorithm, for the list of databases available (formats such as Parquet, VCF, TSV, duckDB, JSON).<br>Examples: <xmp>Annotation with multiple databases in multiple formats"parquet": {
-   "annotations": {
-      "/path/to/database3.parquet": {
-         "field1": null,
-         "field2": "field2_renamed",
-      },
-      "/path/to/database4.vcf.gz": {
-         "INFO": null
-      }
-      "/path/to/database5.bed.gz": {
-         "INFO": null
-      }
-   }
-}</xmp><br><H4 id='annotation::parquet::annotations'>annotation::parquet::annotations</H4>Specify a list of databases files available (formats such as Parquet, VCF, TSV, duckDB, JSON). This parameter enables users to select specific database fields and optionally rename them (e.g. '"field": null' to keep field name, '"field": "new_name"' to rename field). Use 'INFO' keyword to select all fields within the database INFO/Tags header (e.g. '"INFO": null'). Use 'ALL' keyword to select all fields within the database regardless INFO/Tags header (e.g. '"ALL": null').
-<br>For add all availalbe databases files, use 'ALL' keyword, with filters on type and release (e.g. 'ALL', 'ALL:parquet:current', 'ALL:parquet,vcf:current,devel').
-<br>If a full path is not provided, the system will automatically detect files within database folders (see Configuration doc) and assembly (see Parameter option).<br>Examples: <xmp>Annotation with all available databases in Parquet for ''current release"parquet": {
-   "annotations": {
-      "ALL": {
-         "formats": ["parquet"],
-         "releases": ["current"]
-      }
-   }
-}</xmp><br><H3 id='annotation::bcftools'>annotation::bcftools</H3>Annotation process using BCFTools. Provide a list of database files and annotation fields.<br>Examples: <xmp># Annotation with multiple databases in multiple formats
-"parquet": {
-   "bcftools": {
-      "/path/to/database1.vcf.gz": {
-         "field1": null
-         "field2": "field2_renamed",
-      },
-      "database2.bed.gz": {
-         "INFO": null
-      }
-   }
-}</xmp><br><H4 id='annotation::bcftools::annotations'>annotation::bcftools::annotations</H4>Specify the list of database files in formats VCF or BED. Files need to be compressed and indexed.<br>This parameter enables users to select specific database fields and optionally rename them (e.g. '"field": null' to keep field name, '"field": "new_name"' to rename field). Use 'INFO' or 'ALL' keyword to select all fields within the database INFO/Tags header (e.g. '"INFO": null', '"ALL": null').
-<br>If a full path is not provided, the system will automatically detect files within database folders (see Configuration doc) and assembly (see Parameter option).<br>Examples: <xmp># Annotation with dbSNP database  with all fields
-"annotations": {
-   "tests/databases/annotations/current/hg19/avsnp150.vcf.gz": {
-      "INFO": null
+   <span class="hljs-attr">"export"</span>: {
+      <span class="hljs-attr">"include_header"</span>: <span class="hljs-literal">true</span>
    }
 }
-# Annotation with dbNSFP (only PolyPhen, ClinVar and REVEL score), and rename fields
-"annotations": {
-   "tests/databases/annotations/current/hg19/dbnsfp42a.vcf.gz": {
-      "Polyphen2_HDIV_pred": "PolyPhen",
-      "ClinPred_pred": "ClinVar",
-      "REVEL_score": null
-   }
+</div></code></pre>
+<h2 id="hgvs">hgvs</h2>
+<p>HOWARD annotates variants with HGVS annotation using HUGO HGVS internation Sequence Variant Nomenclature (http://varnomen.hgvs.org/). Annotation refere to refGene and genome to generate HGVS nomenclature for all available transcripts. This annotation add 'hgvs' field into VCF INFO column of a VCF file. Several options are available, to add gene, exon and protein information, to generate a 'full format' detailed annotation, to choose codon format.</p>
+<p>Examples:</p>
+<blockquote>
+<p>HGVS annotation  with operations for generate variant_id and variant type, extract HGVS from snpEff annotation, select NOMEN from snpEff HGVS with a list of transcripts of preference</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"hgvs"</span>: {
+  <span class="hljs-attr">"full_format"</span>: <span class="hljs-literal">true</span>,
+  <span class="hljs-attr">"use_exon"</span>: <span class="hljs-literal">true</span>
 }
-# Annotation with refSeq as a BED file
-"annotations": {
-   "tests/databases/annotations/current/hg19/refGene.bed": {
-      "INFO": null
-   }
-}
-# Annotation with dbNSFP REVEL annotation (as a VCF file) within configured annotation databases folders (default: '~/howard/databases/annotations/current') and assembly (default: 'hg19')
-"annotations": {
-   "dbnsfp42a.REVEL.vcf.gz": {
-      "REVEL_score": null,
-      "REVEL_rankscore": null
-   }
-}</xmp><br><H3 id='annotation::annovar'>annotation::annovar</H3>Annotation process using Annovar tool. Provides a list of keywords to select Annovar databases, and defines Annovar options (see [Annovar documentation](https://annovar.openbioinformatics.org)).<br>Examples: <xmp># Annotation with multiple Annovar databases, with fields selection, and Annovar options
-"annovar": {
-   "annotations": {
-      "annovar_keyword2": {
-         "field1": null,
-         "field2": "field2_renamed",
-      },
-      "annovar_keyword3": {
-         "INFO": null
+</div></code></pre>
+<h3 id="hgvsusegene">hgvs::use_gene</h3>
+<p>Add Gene information to generate HGVS annotation (e.g. 'NM_152232**(TAS1R2)**:c.231T&gt;C').</p>
+<p>Default: <code>False</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Use Gene in HGVS annotation</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"use_gene"</span>: <span class="hljs-literal">true</span>
+</div></code></pre>
+<h3 id="hgvsuseexon">hgvs::use_exon</h3>
+<p>Add Exon information to generate HGVS annotation (e.g. 'NM_152232(exon2):c.231T&gt;C'). Only if 'use_gene' is not enabled.</p>
+<p>Default: <code>False</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Use Exon in HGVS annotation</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"use_exon"</span>: <span class="hljs-literal">true</span>
+</div></code></pre>
+<h3 id="hgvsuseprotein">hgvs::use_protein</h3>
+<p>Use Protein level to generate HGVS annotation (e.g. 'NP_689418:p.Cys77Arg'). Can be used with 'use_exon' or 'use_gene'.</p>
+<p>Default: <code>False</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Use Protein in HGVS annotation</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"use_protein"</span>: <span class="hljs-literal">true</span>
+</div></code></pre>
+<h3 id="hgvsaddprotein">hgvs::add_protein</h3>
+<p>Add Protein level to DNA HGVS annotation (e.g. 'NM_152232:c.231T&gt;C,NP_689418:p.Cys77Arg').</p>
+<p>Default: <code>False</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Add Protein level to DNA HGVS annotation</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"add_protein"</span>: <span class="hljs-literal">true</span>
+</div></code></pre>
+<h3 id="hgvsfullformat">hgvs::full_format</h3>
+<p>Generates HGVS annotation in a full format (non-standard, e.g. 'TAS1R2:NM_152232:NP_689418:c.231T&gt;C:p.Cys77Arg', 'TAS1R2:NM_152232:NP_689418:exon2:c.231T&gt;C:p.Cys77Arg'). Full format use all information to generates an exhaustive annotation. Use specifically 'use_exon' to add exon information.</p>
+<p>Default: <code>False</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Use full format for HGVS annotation</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"full_format"</span>: <span class="hljs-literal">true</span>
+</div></code></pre>
+<h3 id="hgvscodontype">hgvs::codon_type</h3>
+<p>Amino Acide Codon format type to use to generate HGVS annotation (default '3'):</p>
+<ul>
+<li>
+<p>'1': codon in 1 character (e.g. 'C', 'R')</p>
+</li>
+<li>
+<p>'3': codon in 3 character (e.g. 'Cys', 'Arg')</p>
+</li>
+<li>
+<p>'FULL': codon in full name (e.g. 'Cysteine', 'Arginine')</p>
+</li>
+</ul>
+<p>Type: <code>str</code></p>
+<p>Choices: <code>['1', '3', 'FULL']</code></p>
+<p>Default: <code>3</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Amino Acide Codon format with 1 character</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"codon_type"</span>: <span class="hljs-string">"1"</span>
+</div></code></pre>
+<blockquote>
+<p>Amino Acide Codon format with 3 character</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"codon_type"</span>: <span class="hljs-string">"3"</span>
+</div></code></pre>
+<blockquote>
+<p>Amino Acide Codon format with full name</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"codon_type"</span>: <span class="hljs-string">"FULL"</span>
+</div></code></pre>
+<h3 id="hgvsrefgene">hgvs::refgene</h3>
+<p>Path to refGene annotation file (see <a href="user_guide.md#databases-tool">HOWARD User Guide</a>).</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Path to refSeq file</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"refgene"</span>: <span class="hljs-string">"~/howard/databases/refseq/current/hg19/ncbiRefSeq.txt"</span>
+</div></code></pre>
+<h3 id="hgvsrefseqlink">hgvs::refseqlink</h3>
+<p>Path to refGeneLink annotation file (see <a href="user_guide.md#databases-tool">HOWARD User Guide</a>).</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Path to refSeq file</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"refseqlink"</span>: <span class="hljs-string">"~/howard/databases/refseq/current/hg19/ncbiRefSeqLink.txt"</span>
+</div></code></pre>
+<h2 id="annotation">annotation</h2>
+<p>Annotation process using HOWARD algorithms or external tools.</p>
+<p>For HOWARD Parquet algorithm, provide the list of database files available (formats such as Parquet, VCF, TSV, duckDB, JSON) and select fields (rename possible, 'INFO' keyword for all fields), or use 'ALL' keyword to detect available databases.</p>
+<p>For external tools, such as Annovar, snpEff and Exomiser, specify parameters such as annotation keywords (Annovar) and options (depending on the tool), and select fields (BCFtools and Annovar, field rename available).</p>
+<p>Examples:</p>
+<blockquote>
+<p>Annotation with multiple tools in multiple formats with multiple options</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"annotation"</span>: {
+   <span class="hljs-attr">"parquet"</span>: {
+      <span class="hljs-attr">"annotations"</span>: {
+         <span class="hljs-attr">"/path/to/database3.parquet"</span>: {
+            <span class="hljs-attr">"field1"</span>: <span class="hljs-literal">null</span>,
+            <span class="hljs-attr">"field2"</span>: <span class="hljs-string">"field2_renamed"</span>
+         },
+         <span class="hljs-attr">"/path/to/database4.vcf.gz"</span>: {
+            <span class="hljs-attr">"INFO"</span>: <span class="hljs-literal">null</span>
+         }
+         <span class="hljs-string">"/path/to/database5.bed.gz"</span>: {
+            <span class="hljs-attr">"INFO"</span>: <span class="hljs-literal">null</span>
+         }
       }
    }
-}</xmp><br><H4 id='annotation::annovar::annotations'>annotation::annovar::annotations</H4>List of keywords refering to Annovar databases (see [Annovar Databases documentation](https://annovar.openbioinformatics.org/en/latest/user-guide/download/)), with a list of selected fields for each of them (rename available)<br>Examples: <xmp># Annotation with ClinVar (fields CLNSIG and CLNDN renamed) and Cosmic (all fields)
-"annotations": {
-   "clinvar_20221231": {
-      "CLNSIG": "ClinVar_class"
-      "CLNDN": "ClinVar_desease",
-   },
-   "cosmic70": {
-      "INFO": null
-   },
-}</xmp><br><H4 id='annotation::annovar::options'>annotation::annovar::options</H4>List of options available with Annovar tool (see Annovar documentation). As example, these options allows to define splicing threshold or HGVS annotation with refGene database<br>Examples: <xmp># HGVS Annotation with refGene (add 'refGene' to 'annotations') and a splicing threshold as 3
-"options": {
-   "splicing_threshold": 3,
-   "argument": "'-hgvs'"
+   <span class="hljs-string">"bcftools"</span>: {
+      <span class="hljs-attr">"annotations"</span>: {
+         <span class="hljs-attr">"/path/to/database6.vcf.gz"</span>: {
+            <span class="hljs-attr">"field1"</span>: <span class="hljs-literal">null</span>,
+            <span class="hljs-attr">"field2"</span>: <span class="hljs-string">"field2_renamed"</span>
+         },
+         <span class="hljs-attr">"/path/to/database7.bed"</span>: {
+            <span class="hljs-attr">"INFO"</span>: <span class="hljs-literal">null</span>
+         }
+      }
    }
-}</xmp><br><H3 id='annotation::snpeff'>annotation::snpeff</H3>Annotation process using snpEff tool and options (see [snpEff documentation](https://pcingola.github.io/SnpEff/snpeff/commandline/)).<br>Examples: <xmp># Annotation with snpEff databases, with options for HGVS annotation and additional tags.
-"snpeff": {
-   "options": {
-      " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "
+   <span class="hljs-string">"annovar"</span>: {
+      <span class="hljs-attr">"annotations"</span>: {
+         <span class="hljs-attr">"annovar_keyword2"</span>: {
+            <span class="hljs-attr">"field1"</span>: <span class="hljs-literal">null</span>,
+            <span class="hljs-attr">"field2"</span>: <span class="hljs-string">"field2_renamed"</span>
+         },
+         <span class="hljs-attr">"annovar_keyword3"</span>: {
+            <span class="hljs-attr">"INFO"</span>: <span class="hljs-literal">null</span>
+         }
+      }
    }
-}</xmp><br><H4 id='annotation::snpeff::options'>annotation::snpeff::options</H4>String (as command line) of options available such as:<br> - filters on variants (regions filter, specific changes as intronic or downstream)<br> - annotation (e.g. HGVS, loss of function) <br> - database (e.g. only protein coding transcripts, splice sites size)<br>Examples: <xmp># Annotation with snpEff databases, with options to generate HGVS annotation, specify to not shift variants according to HGVS notation, define splice sites size to 3, add loss of function (LOF), Nonsense mediated decay and OICR tags.
-"options": " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "</xmp><br><H4 id='annotation::snpeff::stats'>annotation::snpeff::stats</H4>HTML file for snpEff stats. Use keyword 'OUTPUT' to generate file according to output file.<br>Examples: <xmp># Annotation with snpEff databases, and generate a specific stats in HTML format.
-"stats": "/path/to/stats.html"
-# Annotation with snpEff databases, and generate stats in HTML format associated with output file.
-"stats": "OUTPUT.html"</xmp><br><H4 id='annotation::snpeff::csvStats'>annotation::snpeff::csvStats</H4>CSV file for snpEff stats. Use keyword 'OUTPUT' to generate file according to output file.<br>Examples: <xmp># Annotation with snpEff databases, and generate a specific stats in CSV format.
-"csvStats": "/path/to/stats.csv"
-# Annotation with snpEff databases, and generate stats in CSV format associated with output file.
-"csvStats": "OUTPUT.csv"</xmp><br><H3 id='annotation::exomiser'>annotation::exomiser</H3>Annotation process using Exomiser tool and options (see [Exomiser website documentation](https://www.sanger.ac.uk/tool/exomiser/)).<br>Examples: <xmp># Annotation with Exomiser, using database relse '2109', transcripts source as UCSC and a list of HPO terms.
-"exomiser": {
-   "release": "2109"
-   "transcript_source": "refseq"
-   "hpo": ["HP:0001156", "HP:0001363", "HP:0011304", "HP:0010055"]
-}</xmp><br><H4 id='annotation::exomiser::release'>annotation::exomiser::release</H4>Release of Exomiser database. This option replace the release variable in 'application.properties' file (see 'exomiser_application_properties' option). The release will be downloaded if it is not available locally. <br>Examples: <xmp># Annotation with release '2109' of Exomiser database.
-"release": "2109"</xmp><br><H3 id='annotation::options'>annotation::options</H3>Options for annotations, such as annotation strategy (skip if exists, update, append)<br>Examples: <xmp># Annotation with Parquet databases, with update annotation strategy.
-"options": {
-   "update": true
-}</xmp><br><H4 id='annotation::options::annotations_update'>annotation::options::annotations_update</H4>Update option for annotation (only for Parquet annotation). If True, annotation fields will be removed and re-annotated. These options will be applied to all annotation databases.<br>Default: False<br>Examples: <xmp># Apply update on all annotation fields for all databases.
-"update": true</xmp><br><H4 id='annotation::options::annotations_append'>annotation::options::annotations_append</H4>Append option for annotation (only for Parquet annotation). If True, annotation fields will be annotated only if not annotation exists for the variant. These options will be applied to all annotation databases.<br>Default: False<br>Examples: <xmp># Apply append on all annotation fields for all databases.
-"append": true</xmp><br><H2 id='calculation'>calculation</H2>Calculation process operations that are defiend in a Calculation Configuration JSON file. List available calculation operations with possible options (see [Calculation JSON file](help.calculation.md) help).<br>Examples: <xmp># Calculation of operations 'operation1' and 'operation2' (with options) defined in 'calculation_config.json' file
-"calculation": {
-  "calculations": {
-    "operation1": null,
-    "operation2": {
-      "options": {
-        "option1": "value1",
-        "option2": "value2"
+   <span class="hljs-string">"snpeff"</span>: {
+      <span class="hljs-attr">"options"</span>: {
+         <span class="hljs-attr">" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "</span>}
+      }
+   }
+   <span class="hljs-string">"exomiser"</span>: {
+      <span class="hljs-attr">"release"</span>: <span class="hljs-string">"2109"</span>,
+      <span class="hljs-attr">"transcript_source"</span>: <span class="hljs-string">"refseq"</span>,
+      <span class="hljs-attr">"hpo"</span>: [<span class="hljs-string">"HP:0001156"</span>, <span class="hljs-string">"HP:0001363"</span>, <span class="hljs-string">"HP:0011304"</span>, <span class="hljs-string">"HP:0010055"</span>]
+   }
+   <span class="hljs-string">"options"</span>: {
+      <span class="hljs-attr">"append"</span>: <span class="hljs-literal">true</span>
+   }
+}
+</div></code></pre>
+<h3 id="annotationparquet">annotation::parquet</h3>
+<p>Annotation process using HOWARD Parquet algorithm, for the list of databases available (formats such as Parquet, VCF, TSV, duckDB, JSON).</p>
+<p>Examples:</p>
+<blockquote>
+<p>Annotation with multiple databases in multiple formats</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"parquet"</span>: {
+   <span class="hljs-attr">"annotations"</span>: {
+      <span class="hljs-attr">"/path/to/database3.parquet"</span>: {
+         <span class="hljs-attr">"field1"</span>: <span class="hljs-literal">null</span>,
+         <span class="hljs-attr">"field2"</span>: <span class="hljs-string">"field2_renamed"</span>,
+      },
+      <span class="hljs-attr">"/path/to/database4.vcf.gz"</span>: {
+         <span class="hljs-attr">"INFO"</span>: <span class="hljs-literal">null</span>
+      }
+      <span class="hljs-string">"/path/to/database5.bed.gz"</span>: {
+         <span class="hljs-attr">"INFO"</span>: <span class="hljs-literal">null</span>
+      }
+   }
+}
+</div></code></pre>
+<h4 id="annotationparquetannotations">annotation::parquet::annotations</h4>
+<p>Specify a list of databases files available (formats such as Parquet, VCF, TSV, duckDB, JSON). This parameter enables users to select specific database fields and optionally rename them (e.g. '&quot;field&quot;: null' to keep field name, '&quot;field&quot;: &quot;new_name&quot;' to rename field). Use 'INFO' keyword to select all fields within the database INFO/Tags header (e.g. '&quot;INFO&quot;: null'). Use 'ALL' keyword to select all fields within the database regardless INFO/Tags header (e.g. '&quot;ALL&quot;: null').</p>
+<p>For add all availalbe databases files, use 'ALL' keyword, with filters on type and release (e.g. 'ALL', 'ALL:parquet:current', 'ALL:parquet,vcf:current,devel').</p>
+<p>If a full path is not provided, the system will automatically detect files within database folders (see Configuration doc) and assembly (see Parameter option).</p>
+<p>Examples:</p>
+<blockquote>
+<p>Annotation with dbSNP database with INFO/tags fields, and dbNSFP databases with all fields</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"annotations"</span>: {
+   <span class="hljs-attr">"tests/databases/annotations/current/hg19/avsnp150.parquet"</span>: {
+      <span class="hljs-attr">"INFO"</span>: <span class="hljs-literal">null</span>
+   }
+   <span class="hljs-string">"tests/databases/annotations/current/hg19/dbnsfp42a.parquet"</span>: {
+      <span class="hljs-attr">"ALL"</span>: <span class="hljs-literal">null</span>
+   }
+}
+</div></code></pre>
+<blockquote>
+<p>Annotation with dbNSFP (only PolyPhen, ClinVar and REVEL score), and rename fields</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"annotations"</span>: {
+   <span class="hljs-attr">"tests/databases/annotations/current/hg19/dbnsfp42a.parquet"</span>: {
+      <span class="hljs-attr">"Polyphen2_HDIV_pred"</span>: <span class="hljs-string">"PolyPhen"</span>,
+      <span class="hljs-attr">"ClinPred_pred"</span>: <span class="hljs-string">"ClinVar"</span>,
+      <span class="hljs-attr">"REVEL_score"</span>: <span class="hljs-literal">null</span>
+   }
+}
+
+</div></code></pre>
+<blockquote>
+<p>Annotation with refSeq as a BED file</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"annotations"</span>: {
+   <span class="hljs-attr">"tests/databases/annotations/current/hg19/refGene.bed"</span>: {
+      <span class="hljs-attr">"INFO"</span>: <span class="hljs-literal">null</span>
+   }
+}
+</div></code></pre>
+<blockquote>
+<p>Annotation with dbNSFP REVEL annotation (as a VCF file) within configured annotation databases folders (default: '~/howard/databases/annotations/current') and assembly (default: 'hg19')</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"annotations"</span>: {
+   <span class="hljs-attr">"dbnsfp42a.REVEL.vcf.gz"</span>: {
+      <span class="hljs-attr">"REVEL_score"</span>: <span class="hljs-literal">null</span>,
+      <span class="hljs-attr">"REVEL_rankscore"</span>: <span class="hljs-literal">null</span>
+   }
+}
+
+</div></code></pre>
+<blockquote>
+<p>Annotation with all available databases in Parquet for ''current release</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"parquet"</span>: {
+   <span class="hljs-attr">"annotations"</span>: {
+      <span class="hljs-attr">"ALL"</span>: {
+         <span class="hljs-attr">"formats"</span>: [<span class="hljs-string">"parquet"</span>],
+         <span class="hljs-attr">"releases"</span>: [<span class="hljs-string">"current"</span>]
+      }
+   }
+}
+</div></code></pre>
+<h3 id="annotationbcftools">annotation::bcftools</h3>
+<p>Annotation process using BCFTools. Provide a list of database files and annotation fields.</p>
+<p>Examples:</p>
+<blockquote>
+<p>Annotation with multiple databases in multiple formats</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"parquet"</span>: {
+   <span class="hljs-attr">"bcftools"</span>: {
+      <span class="hljs-attr">"/path/to/database1.vcf.gz"</span>: {
+         <span class="hljs-attr">"field1"</span>: <span class="hljs-literal">null</span>
+         <span class="hljs-string">"field2"</span>: <span class="hljs-string">"field2_renamed"</span>,
+      },
+      <span class="hljs-attr">"database2.bed.gz"</span>: {
+         <span class="hljs-attr">"INFO"</span>: <span class="hljs-literal">null</span>
+      }
+   }
+}
+</div></code></pre>
+<h4 id="annotationbcftoolsannotations">annotation::bcftools::annotations</h4>
+<p>Specify the list of database files in formats VCF or BED. Files need to be compressed and indexed.</p>
+<p>This parameter enables users to select specific database fields and optionally rename them (e.g. '&quot;field&quot;: null' to keep field name, '&quot;field&quot;: &quot;new_name&quot;' to rename field). Use 'INFO' or 'ALL' keyword to select all fields within the database INFO/Tags header (e.g. '&quot;INFO&quot;: null', '&quot;ALL&quot;: null').</p>
+<p>If a full path is not provided, the system will automatically detect files within database folders (see Configuration doc) and assembly (see Parameter option).</p>
+<p>Examples:</p>
+<blockquote>
+<p>Annotation with dbSNP database  with all fields</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"annotations"</span>: {
+   <span class="hljs-attr">"tests/databases/annotations/current/hg19/avsnp150.vcf.gz"</span>: {
+      <span class="hljs-attr">"INFO"</span>: <span class="hljs-literal">null</span>
+   }
+}
+</div></code></pre>
+<blockquote>
+<p>Annotation with dbNSFP (only PolyPhen, ClinVar and REVEL score), and rename fields</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"annotations"</span>: {
+   <span class="hljs-attr">"tests/databases/annotations/current/hg19/dbnsfp42a.vcf.gz"</span>: {
+      <span class="hljs-attr">"Polyphen2_HDIV_pred"</span>: <span class="hljs-string">"PolyPhen"</span>,
+      <span class="hljs-attr">"ClinPred_pred"</span>: <span class="hljs-string">"ClinVar"</span>,
+      <span class="hljs-attr">"REVEL_score"</span>: <span class="hljs-literal">null</span>
+   }
+}
+</div></code></pre>
+<blockquote>
+<p>Annotation with refSeq as a BED file</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"annotations"</span>: {
+   <span class="hljs-attr">"tests/databases/annotations/current/hg19/refGene.bed"</span>: {
+      <span class="hljs-attr">"INFO"</span>: <span class="hljs-literal">null</span>
+   }
+}
+</div></code></pre>
+<blockquote>
+<p>Annotation with dbNSFP REVEL annotation (as a VCF file) within configured annotation databases folders (default: '~/howard/databases/annotations/current') and assembly (default: 'hg19')</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"annotations"</span>: {
+   <span class="hljs-attr">"dbnsfp42a.REVEL.vcf.gz"</span>: {
+      <span class="hljs-attr">"REVEL_score"</span>: <span class="hljs-literal">null</span>,
+      <span class="hljs-attr">"REVEL_rankscore"</span>: <span class="hljs-literal">null</span>
+   }
+}
+</div></code></pre>
+<h3 id="annotationannovar">annotation::annovar</h3>
+<p>Annotation process using Annovar tool. Provides a list of keywords to select Annovar databases, and defines Annovar options (see <a href="https://annovar.openbioinformatics.org">Annovar documentation</a>).</p>
+<p>Examples:</p>
+<blockquote>
+<p>Annotation with multiple Annovar databases, with fields selection, and Annovar options</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"annovar"</span>: {
+   <span class="hljs-attr">"annotations"</span>: {
+      <span class="hljs-attr">"annovar_keyword2"</span>: {
+         <span class="hljs-attr">"field1"</span>: <span class="hljs-literal">null</span>,
+         <span class="hljs-attr">"field2"</span>: <span class="hljs-string">"field2_renamed"</span>,
+      },
+      <span class="hljs-attr">"annovar_keyword3"</span>: {
+         <span class="hljs-attr">"INFO"</span>: <span class="hljs-literal">null</span>
+      }
+   }
+}
+</div></code></pre>
+<h4 id="annotationannovarannotations">annotation::annovar::annotations</h4>
+<p>List of keywords refering to Annovar databases (see <a href="https://annovar.openbioinformatics.org/en/latest/user-guide/download/">Annovar Databases documentation</a>), with a list of selected fields for each of them (rename available)</p>
+<p>Examples:</p>
+<blockquote>
+<p>Annotation with ClinVar (fields CLNSIG and CLNDN renamed) and Cosmic (all fields)</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"annotations"</span>: {
+   <span class="hljs-attr">"clinvar_20221231"</span>: {
+      <span class="hljs-attr">"CLNSIG"</span>: <span class="hljs-string">"ClinVar_class"</span>
+      <span class="hljs-string">"CLNDN"</span>: <span class="hljs-string">"ClinVar_desease"</span>,
+   },
+   <span class="hljs-attr">"cosmic70"</span>: {
+      <span class="hljs-attr">"INFO"</span>: <span class="hljs-literal">null</span>
+   },
+}
+</div></code></pre>
+<h4 id="annotationannovaroptions">annotation::annovar::options</h4>
+<p>List of options available with Annovar tool (see Annovar documentation). As example, these options allows to define splicing threshold or HGVS annotation with refGene database</p>
+<p>Examples:</p>
+<blockquote>
+<p>HGVS Annotation with refGene (add 'refGene' to 'annotations') and a splicing threshold as 3</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"options"</span>: {
+   <span class="hljs-attr">"splicing_threshold"</span>: <span class="hljs-number">3</span>,
+   <span class="hljs-attr">"argument"</span>: <span class="hljs-string">"'-hgvs'"</span>
+   }
+}
+</div></code></pre>
+<h3 id="annotationsnpeff">annotation::snpeff</h3>
+<p>Annotation process using snpEff tool and options (see <a href="https://pcingola.github.io/SnpEff/snpeff/commandline/">snpEff documentation</a>).</p>
+<p>Examples:</p>
+<blockquote>
+<p>Annotation with snpEff databases, with options for HGVS annotation and additional tags.</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"snpeff"</span>: {
+   <span class="hljs-attr">"options"</span>: {
+      <span class="hljs-attr">" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "</span>
+   }
+}
+</div></code></pre>
+<h4 id="annotationsnpeffoptions">annotation::snpeff::options</h4>
+<p>String (as command line) of options available such as:</p>
+<ul>
+<li>
+<p>filters on variants (regions filter, specific changes as intronic or downstream)</p>
+</li>
+<li>
+<p>annotation (e.g. HGVS, loss of function)</p>
+</li>
+<li>
+<p>database (e.g. only protein coding transcripts, splice sites size)</p>
+</li>
+</ul>
+<p>Examples:</p>
+<blockquote>
+<p>Annotation with snpEff databases, with options to generate HGVS annotation, specify to not shift variants according to HGVS notation, define splice sites size to 3, add loss of function (LOF), Nonsense mediated decay and OICR tags.</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"options"</span>: <span class="hljs-string">" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "</span>
+</div></code></pre>
+<h4 id="annotationsnpeffstats">annotation::snpeff::stats</h4>
+<p>HTML file for snpEff stats. Use keyword 'OUTPUT' to generate file according to output file.</p>
+<p>Examples:</p>
+<blockquote>
+<p>Annotation with snpEff databases, and generate a specific stats in HTML format.</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"stats"</span>: <span class="hljs-string">"/path/to/stats.html"</span>
+</div></code></pre>
+<blockquote>
+<p>Annotation with snpEff databases, and generate stats in HTML format associated with output file.</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"stats"</span>: <span class="hljs-string">"OUTPUT.html"</span>
+</div></code></pre>
+<h4 id="annotationsnpeffcsvstats">annotation::snpeff::csvStats</h4>
+<p>CSV file for snpEff stats. Use keyword 'OUTPUT' to generate file according to output file.</p>
+<p>Examples:</p>
+<blockquote>
+<p>Annotation with snpEff databases, and generate a specific stats in CSV format.</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"csvStats"</span>: <span class="hljs-string">"/path/to/stats.csv"</span>
+</div></code></pre>
+<blockquote>
+<p>Annotation with snpEff databases, and generate stats in CSV format associated with output file.</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"csvStats"</span>: <span class="hljs-string">"OUTPUT.csv"</span>
+</div></code></pre>
+<h3 id="annotationexomiser">annotation::exomiser</h3>
+<p>Annotation process using Exomiser tool and options (see <a href="https://www.sanger.ac.uk/tool/exomiser/">Exomiser website documentation</a>).</p>
+<p>Examples:</p>
+<blockquote>
+<p>Annotation with Exomiser, using database relse '2109', transcripts source as UCSC and a list of HPO terms.</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"exomiser"</span>: {
+   <span class="hljs-attr">"release"</span>: <span class="hljs-string">"2109"</span>
+   <span class="hljs-string">"transcript_source"</span>: <span class="hljs-string">"refseq"</span>
+   <span class="hljs-string">"hpo"</span>: [<span class="hljs-string">"HP:0001156"</span>, <span class="hljs-string">"HP:0001363"</span>, <span class="hljs-string">"HP:0011304"</span>, <span class="hljs-string">"HP:0010055"</span>]
+}
+</div></code></pre>
+<h4 id="annotationexomiserrelease">annotation::exomiser::release</h4>
+<p>Release of Exomiser database. This option replace the release variable in 'application.properties' file (see 'exomiser_application_properties' option). The release will be downloaded if it is not available locally.</p>
+<p>Examples:</p>
+<blockquote>
+<p>Annotation with release '2109' of Exomiser database.</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"release"</span>: <span class="hljs-string">"2109"</span>
+</div></code></pre>
+<h3 id="annotationoptions">annotation::options</h3>
+<p>Options for annotations, such as annotation strategy (skip if exists, update, append)</p>
+<p>Examples:</p>
+<blockquote>
+<p>Annotation with Parquet databases, with update annotation strategy.</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"options"</span>: {
+   <span class="hljs-attr">"update"</span>: <span class="hljs-literal">true</span>
+}
+</div></code></pre>
+<h4 id="annotationoptionsannotationsupdate">annotation::options::annotations_update</h4>
+<p>Update option for annotation (only for Parquet annotation). If True, annotation fields will be removed and re-annotated. These options will be applied to all annotation databases.</p>
+<p>Default: <code>False</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Apply update on all annotation fields for all databases.</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"update"</span>: <span class="hljs-literal">true</span>
+</div></code></pre>
+<h4 id="annotationoptionsannotationsappend">annotation::options::annotations_append</h4>
+<p>Append option for annotation (only for Parquet annotation). If True, annotation fields will be annotated only if not annotation exists for the variant. These options will be applied to all annotation databases.</p>
+<p>Default: <code>False</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Apply append on all annotation fields for all databases.</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"append"</span>: <span class="hljs-literal">true</span>
+</div></code></pre>
+<h2 id="calculation">calculation</h2>
+<p>Calculation process operations that are defiend in a Calculation Configuration JSON file. List available calculation operations with possible options (see <a href="help.calculation.md">Calculation JSON file</a> help).</p>
+<p>Examples:</p>
+<blockquote>
+<p>Calculation of operations 'operation1' and 'operation2' (with options) defined in 'calculation_config.json' file</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"calculation"</span>: {
+  <span class="hljs-attr">"calculations"</span>: {
+    <span class="hljs-attr">"operation1"</span>: <span class="hljs-literal">null</span>,
+    <span class="hljs-attr">"operation2"</span>: {
+      <span class="hljs-attr">"options"</span>: {
+        <span class="hljs-attr">"option1"</span>: <span class="hljs-string">"value1"</span>,
+        <span class="hljs-attr">"option2"</span>: <span class="hljs-string">"value2"</span>
       }
     }
   },
-  "calculation_config": "calculation_config.json"
-}</xmp><br><H3 id='calculation::calculations'>calculation::calculations</H3>List of operations to process with possible options (see [Calculation JSON file](help.calculation.md) help).<br>Examples: <xmp># Calculation with operations for generate variant_id and variant type, extract HGVS from snpEff annotation, select NOMEN from snpEff HGVS with a list of transcripts of preference
-"calculations": {
-  "variant_id": null,
-  "vartype": null,
-  "snpeff_hgvs": null,
-  "NOMEN": {
-    "options": {
-      "hgvs_field": "snpeff_hgvs",
-      "transcripts": "tests/data/transcripts.tsv"
+  <span class="hljs-attr">"calculation_config"</span>: <span class="hljs-string">"calculation_config.json"</span>
+}
+</div></code></pre>
+<h3 id="calculationcalculations">calculation::calculations</h3>
+<p>List of operations to process with possible options (see <a href="help.calculation.md">Calculation JSON file</a> help).</p>
+<p>Examples:</p>
+<blockquote>
+<p>Calculation with operations for generate variant_id and variant type, extract HGVS from snpEff annotation, select NOMEN from snpEff HGVS with a list of transcripts of preference</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"calculations"</span>: {
+  <span class="hljs-attr">"variant_id"</span>: <span class="hljs-literal">null</span>,
+  <span class="hljs-attr">"vartype"</span>: <span class="hljs-literal">null</span>,
+  <span class="hljs-attr">"snpeff_hgvs"</span>: <span class="hljs-literal">null</span>,
+  <span class="hljs-attr">"NOMEN"</span>: {
+    <span class="hljs-attr">"options"</span>: {
+      <span class="hljs-attr">"hgvs_field"</span>: <span class="hljs-string">"snpeff_hgvs"</span>,
+      <span class="hljs-attr">"transcripts"</span>: <span class="hljs-string">"tests/data/transcripts.tsv"</span>
     }
   }
-}</xmp><br><H3 id='calculation::calculation_config'>calculation::calculation_config</H3>Calculation configuration JSON file. <br>Type: Path<br>Default: None<br>Examples: <xmp>Calculation configuration JSON file as an option"calculation_config": "calculation_config.json" </xmp><br><H2 id='prioritization'>prioritization</H2>Prioritization process use a JSON configuration file that defines all profiles that can be used. By default, all profiles will be calculated from the JSON configuration file, and the first profile will be considered as default. Proritization annotations (INFO/tags) will be generated depending of a input list (default 'PZScore' and 'PZFlag'), for all profiles (e.g. 'PZScore_GERMLINE' for 'GERMLINE' profile) and for default profile (e.g. 'PZScore' for default). Prioritization score mode is 'HOWARD' by default.<br>Examples: <xmp># Prioritization with 'GENOME' and 'GERMLINE' (default) profiles, from a list of configured profiles, only 3 prioritization fields returned, and score calculated in 'VaRank' mode
-"prioritization": {
-  "prioritizations": "config/prioritization_profiles.json",
-  "profiles": ["GENOME", "GERMLINE"],
-  "default_profile": "GERMLINE",
-  "pzfields": ["PZScore", "PZFlag", "PZComment"],
-  "prioritization_score_mode": "VaRank"
-}</xmp><br><H3 id='prioritization::prioritizations'>prioritization::prioritizations</H3>Prioritization configuration profiles JSON file defining profiles to calculate. All configured profiles will be calculated by default (see 'profiles' parameter). First profile will be considered as 'default' if none are provided (see 'default_profile' parameter). Default score calculation mode is 'HOWARD'. This option refers to the quick prioritization command line parameter `--prioritizations`.<br>Type: str<br>Default: None<br>Examples: <xmp># Prioritization configuration profile JSON file
-"prioritizations": "config/prioritization_profiles.json"</xmp><br><H3 id='prioritization::profiles'>prioritization::profiles</H3>Prioritization profiles to consider, from the list of configured profiles. If empty, all configured profiles will be calculated. First profile will be considered as 'default' if none are provided (see 'default_profile' parameter). Prioritization annotations (INFO/tags) will be generated for all these profiles (e.g. 'PZScore_GERMLINE' for 'GERMLINE' profile).<br>Type: str<br>Default: None<br>Examples: <xmp># Prioritization with 'GERMLINE' profile only
-"profiles": ["GERMLINE"]
-# Prioritization with 'GENOME' and 'GERMLINE' profiles
-"profiles": ["GENOME", "GERMLINE"]</xmp><br><H3 id='prioritization::default_profile'>prioritization::default_profile</H3>Prioritization default profile from the list of processed profiles. Prioritization annotations (INFO/tags) will be generated for this default profile (e.g. 'PZScore', 'PZFlags').<br>Type: str<br>Default: None<br>Examples: <xmp># Prioritization default profile 'GERMLINE'
-"default_profile": "GERMLINE"</xmp><br><H3 id='prioritization::pzfields'>prioritization::pzfields</H3>Prioritization annotations (INFO/tags) to generate. By default 'PZScore', 'PZFlags'.<br>Prioritization fields can be selected from:<br>- PZScore: calculated score from all passing filters, depending of the mode<br>- PZFlag: final flag ('PASS' or 'FILTERED'), with strategy that consider a variant is filtered as soon as at least one filter do not pass. By default, the variant is considered as 'PASS' (no filter pass)<br>- PZComment: concatenation of all passing filter comments<br>- PZTags: combinason of score, flags and comments in a tags format (e.g. 'PZFlag#PASS|PZScore#15|PZComment#Described on ...')<br>- PZInfos: information about passing filter criteria<br>Type: str<br>Default: PZScore,PZFlag<br>Examples: <xmp># Prioritization annotations (INFO/tags) list
-"pzfields": ["PZScore", "PZFlag", "PZComment"]</xmp><br><H3 id='prioritization::prioritization_score_mode'>prioritization::prioritization_score_mode</H3>Prioritization score can be calculated following multiple mode. The HOWARD mode will increment scores of all passing filters (default). The VaRank mode will select the maximum score from all passing filters.<br>Type: str<br>Choices: <br>HOWARD<br>VaRank<br>Default: HOWARD<br>Examples: <xmp># Prioritization score calculation mode 'HOWARD'
-"prioritization_score_mode": "HOWARD"
-# Prioritization score calculation mode 'VaRank'
-"prioritization_score_mode": "VaRank"</xmp><br><H2 id='stats'>stats</H2>Statistics on loaded variants.<br><H3 id='stats::stats_md'>stats::stats_md</H3>Stats Output file in MarkDown format. <br>Type: Path<br>Default: None<br>Examples: <xmp>Export statistics in Markdown format"stats_md": "/tmp/stats.md" </xmp><br><H3 id='stats::stats_json'>stats::stats_json</H3>Stats Output file in JSON format. <br>Type: Path<br>Default: None<br>Examples: <xmp>Export statistics in JSON format"stats_json": "/tmp/stats.json" </xmp><br><H2 id='query'>query</H2>Query options tools. Mainly a SQL query, based on 'variants' table corresponding on input file data, or a independant query. Print options for 'query' tool allow limiting number of lines and choose printing mode.<br>Type: str<br>Default: None<br><H3 id='query::query'>query::query</H3>Query in SQL format (e.g. 'SELECT * FROM variants LIMIT 50'). <br>Type: str<br>Default: None<br>Examples: <xmp># Simple query to show all variants file
-SELECT "#CHROM", POS, REF, ALT, INFO 
-FROM variants</xmp><br><H3 id='query::query_limit'>query::query_limit</H3>Limit of number of row for query (only for print result, not output). <br>Type: int<br>Default: 10<br><H3 id='query::query_print_mode'>query::query_print_mode</H3>Print mode of query result (only for print result, not output). Either None (native), 'markdown' or 'tabulate'. <br>Type: str<br>Choices: <br>None<br>markdown<br>tabulate<br>Default: None<br><H2 id='export'>export</H2>Export options for output files, such as data order, include header in output and hive partitioning.<br><H3 id='export::order_by'>export::order_by</H3>List of columns to sort the result-set in ascending or descending order. Use SQL format, and keywords ASC (ascending) and DESC (descending). If a column is not available, order will not be considered. Order is enable only for compatible format (e.g. TSV, CSV, JSON). Examples: 'ACMG_score DESC', 'PZFlag DESC, PZScore DESC'. <br>Type: str<br>Default: <br>Examples: <xmp>Order by PZFlag and PZScore in descending order"order_by": PZFlag DESC, PZScore DESC" </xmp><br><H3 id='export::include_header'>export::include_header</H3>Include header (in VCF format) in output file. Only for compatible formats (tab-delimiter format as TSV or BED). <br>Default: False<br><H3 id='export::parquet_partitions'>export::parquet_partitions</H3>Parquet partitioning using hive (available for any format). This option is faster parallel writing, but memory consuming. Use 'None' (string) for NO partition but split parquet files into a folder. Examples: '#CHROM', '#CHROM,REF', 'None'. <br>Type: str<br>Default: None<br><H2 id='explode'>explode</H2>Explode options for INFO/tags annotations within VCF files.<br><H3 id='explode::explode_infos'>explode::explode_infos</H3>Explode VCF INFO/Tag into 'variants' table columns. <br>Default: False<br><H3 id='explode::explode_infos_prefix'>explode::explode_infos_prefix</H3>Explode VCF INFO/Tag with a specific prefix. <br>Type: str<br>Default: <br><H3 id='explode::explode_infos_fields'>explode::explode_infos_fields</H3>Explode VCF INFO/Tag specific fields/tags. Keyword `*` specify all available fields, except those already specified. Pattern (regex) can be used, such as `.*_score` for fields named with '_score' at the end. Examples:<br>- 'HGVS,SIFT,Clinvar' (list of fields)<br>- 'HGVS,*,Clinvar' (list of fields with all other fields at the end)<br>- 'HGVS,.*_score,Clinvar' (list of 2 fields with all scores in the middle)<br>- 'HGVS,.*_score,*' (1 field, scores, all other fields)<br>- 'HGVS,*,.*_score' (1 field, all other fields, all scores) <br>Type: str<br>Default: *<br><H2 id='threads'>threads</H2>Specify the number of threads to use for processing HOWARD. It determines the level of parallelism, either on python scripts, duckdb engine and external tools. It and can help speed up the process/tool. Use -1 to use all available CPU/cores. Either non valid value is 1 CPU/core. <br>Type: int<br>Default: -1<br>Examples: <xmp># Define 8 CPU/cores"threads": 8</xmp><br><H2 id='databases'>databases</H2>[HOWARD Parameters Databases JSON](help.param.databases.md) describes configuration JSON file for databases download and convert.<br>
+}
+</div></code></pre>
+<h3 id="calculationcalculationconfig">calculation::calculation_config</h3>
+<p>Calculation configuration JSON file.</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Calculation configuration JSON file as an option</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"calculation_config"</span>: <span class="hljs-string">"calculation_config.json"</span> 
+</div></code></pre>
+<h2 id="prioritization">prioritization</h2>
+<p>Prioritization process use a JSON configuration file that defines all profiles that can be used. By default, all profiles will be calculated from the JSON configuration file, and the first profile will be considered as default. Proritization annotations (INFO/tags) will be generated depending of a input list (default 'PZScore' and 'PZFlag'), for all profiles (e.g. 'PZScore_GERMLINE' for 'GERMLINE' profile) and for default profile (e.g. 'PZScore' for default). Prioritization score mode is 'HOWARD' by default.</p>
+<p>Examples:</p>
+<blockquote>
+<p>Prioritization with 'GENOME' and 'GERMLINE' (default) profiles, from a list of configured profiles, only 3 prioritization fields returned, and score calculated in 'VaRank' mode</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"prioritization"</span>: {
+  <span class="hljs-attr">"prioritizations"</span>: <span class="hljs-string">"config/prioritization_profiles.json"</span>,
+  <span class="hljs-attr">"profiles"</span>: [<span class="hljs-string">"GENOME"</span>, <span class="hljs-string">"GERMLINE"</span>],
+  <span class="hljs-attr">"default_profile"</span>: <span class="hljs-string">"GERMLINE"</span>,
+  <span class="hljs-attr">"pzfields"</span>: [<span class="hljs-string">"PZScore"</span>, <span class="hljs-string">"PZFlag"</span>, <span class="hljs-string">"PZComment"</span>],
+  <span class="hljs-attr">"prioritization_score_mode"</span>: <span class="hljs-string">"VaRank"</span>
+}
+</div></code></pre>
+<h3 id="prioritizationprioritizations">prioritization::prioritizations</h3>
+<p>Prioritization configuration profiles JSON file defining profiles to calculate. All configured profiles will be calculated by default (see 'profiles' parameter). First profile will be considered as 'default' if none are provided (see 'default_profile' parameter). Default score calculation mode is 'HOWARD'. This option refers to the quick prioritization command line parameter <code>--prioritizations</code>.</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>None</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Prioritization configuration profile JSON file</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"prioritizations"</span>: <span class="hljs-string">"config/prioritization_profiles.json"</span>
+</div></code></pre>
+<h3 id="prioritizationprofiles">prioritization::profiles</h3>
+<p>Prioritization profiles to consider, from the list of configured profiles. If empty, all configured profiles will be calculated. First profile will be considered as 'default' if none are provided (see 'default_profile' parameter). Prioritization annotations (INFO/tags) will be generated for all these profiles (e.g. 'PZScore_GERMLINE' for 'GERMLINE' profile).</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>None</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Prioritization with 'GERMLINE' profile only</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"profiles"</span>: [<span class="hljs-string">"GERMLINE"</span>]
+</div></code></pre>
+<blockquote>
+<p>Prioritization with 'GENOME' and 'GERMLINE' profiles</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"profiles"</span>: [<span class="hljs-string">"GENOME"</span>, <span class="hljs-string">"GERMLINE"</span>]
+</div></code></pre>
+<h3 id="prioritizationdefaultprofile">prioritization::default_profile</h3>
+<p>Prioritization default profile from the list of processed profiles. Prioritization annotations (INFO/tags) will be generated for this default profile (e.g. 'PZScore', 'PZFlags').</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>None</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Prioritization default profile 'GERMLINE'</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"default_profile"</span>: <span class="hljs-string">"GERMLINE"</span>
+</div></code></pre>
+<h3 id="prioritizationpzfields">prioritization::pzfields</h3>
+<p>Prioritization annotations (INFO/tags) to generate. By default 'PZScore', 'PZFlags'.</p>
+<p>Prioritization fields can be selected from:</p>
+<ul>
+<li>
+<p>PZScore: calculated score from all passing filters, depending of the mode</p>
+</li>
+<li>
+<p>PZFlag: final flag ('PASS' or 'FILTERED'), with strategy that consider a variant is filtered as soon as at least one filter do not pass. By default, the variant is considered as 'PASS' (no filter pass)</p>
+</li>
+<li>
+<p>PZComment: concatenation of all passing filter comments</p>
+</li>
+<li>
+<p>PZTags: combinason of score, flags and comments in a tags format (e.g. 'PZFlag#PASS|PZScore#15|PZComment#Described on ...')</p>
+</li>
+<li>
+<p>PZInfos: information about passing filter criteria</p>
+</li>
+</ul>
+<p>Type: <code>str</code></p>
+<p>Default: <code>PZScore,PZFlag</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Prioritization annotations (INFO/tags) list</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"pzfields"</span>: [<span class="hljs-string">"PZScore"</span>, <span class="hljs-string">"PZFlag"</span>, <span class="hljs-string">"PZComment"</span>]
+</div></code></pre>
+<h3 id="prioritizationprioritizationscoremode">prioritization::prioritization_score_mode</h3>
+<p>Prioritization score can be calculated following multiple mode. The HOWARD mode will increment scores of all passing filters (default). The VaRank mode will select the maximum score from all passing filters.</p>
+<p>Type: <code>str</code></p>
+<p>Choices: <code>['HOWARD', 'VaRank']</code></p>
+<p>Default: <code>HOWARD</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Prioritization score calculation mode 'HOWARD'</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"prioritization_score_mode"</span>: <span class="hljs-string">"HOWARD"</span>
+</div></code></pre>
+<blockquote>
+<p>Prioritization score calculation mode 'VaRank'</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"prioritization_score_mode"</span>: <span class="hljs-string">"VaRank"</span>
+</div></code></pre>
+<h2 id="stats">stats</h2>
+<p>Statistics on loaded variants.</p>
+<h3 id="statsstatsmd">stats::stats_md</h3>
+<p>Stats Output file in MarkDown format.</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Export statistics in Markdown format</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"stats_md"</span>: <span class="hljs-string">"/tmp/stats.md"</span> 
+</div></code></pre>
+<h3 id="statsstatsjson">stats::stats_json</h3>
+<p>Stats Output file in JSON format.</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Export statistics in JSON format</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"stats_json"</span>: <span class="hljs-string">"/tmp/stats.json"</span> 
+</div></code></pre>
+<h2 id="query">query</h2>
+<p>Query options tools. Mainly a SQL query, based on 'variants' table corresponding on input file data, or a independant query. Print options for 'query' tool allow limiting number of lines and choose printing mode.</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>None</code></p>
+<h3 id="queryquery">query::query</h3>
+<p>Query in SQL format (e.g. 'SELECT * FROM variants LIMIT 50').</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>None</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Simple query to show all variants file</p>
+</blockquote>
+<pre class="hljs"><code><div>SELECT &quot;#CHROM&quot;, POS, REF, ALT, INFO 
+FROM variants
+</div></code></pre>
+<h3 id="queryquerylimit">query::query_limit</h3>
+<p>Limit of number of row for query (only for print result, not output).</p>
+<p>Type: <code>int</code></p>
+<p>Default: <code>10</code></p>
+<h3 id="queryqueryprintmode">query::query_print_mode</h3>
+<p>Print mode of query result (only for print result, not output). Either None (native), 'markdown' or 'tabulate'.</p>
+<p>Type: <code>str</code></p>
+<p>Choices: <code>[None, 'markdown', 'tabulate']</code></p>
+<p>Default: <code>None</code></p>
+<h2 id="export">export</h2>
+<p>Export options for output files, such as data order, include header in output and hive partitioning.</p>
+<h3 id="exportorderby">export::order_by</h3>
+<p>List of columns to sort the result-set in ascending or descending order. Use SQL format, and keywords ASC (ascending) and DESC (descending). If a column is not available, order will not be considered. Order is enable only for compatible format (e.g. TSV, CSV, JSON). Examples: 'ACMG_score DESC', 'PZFlag DESC, PZScore DESC'.</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code> </code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Order by ACMG score in descending order</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"order_by"</span>: <span class="hljs-string">"ACMG_score DESC"</span> 
+</div></code></pre>
+<blockquote>
+<p>Order by PZFlag and PZScore in descending order</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"order_by"</span>: PZFlag DESC, PZScore DESC<span class="hljs-string">" 
+</span></div></code></pre>
+<h3 id="exportincludeheader">export::include_header</h3>
+<p>Include header (in VCF format) in output file. Only for compatible formats (tab-delimiter format as TSV or BED).</p>
+<p>Default: <code>False</code></p>
+<h3 id="exportparquetpartitions">export::parquet_partitions</h3>
+<p>Parquet partitioning using hive (available for any format). This option is faster parallel writing, but memory consuming. Use 'None' (string) for NO partition but split parquet files into a folder. Examples: '#CHROM', '#CHROM,REF', 'None'.</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>None</code></p>
+<h2 id="explode">explode</h2>
+<p>Explode options for INFO/tags annotations within VCF files.</p>
+<h3 id="explodeexplodeinfos">explode::explode_infos</h3>
+<p>Explode VCF INFO/Tag into 'variants' table columns.</p>
+<p>Default: <code>False</code></p>
+<h3 id="explodeexplodeinfosprefix">explode::explode_infos_prefix</h3>
+<p>Explode VCF INFO/Tag with a specific prefix.</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code> </code></p>
+<h3 id="explodeexplodeinfosfields">explode::explode_infos_fields</h3>
+<p>Explode VCF INFO/Tag specific fields/tags. Keyword <code>*</code> specify all available fields, except those already specified. Pattern (regex) can be used, such as <code>.*_score</code> for fields named with '_score' at the end. Examples:</p>
+<ul>
+<li>
+<p>'HGVS,SIFT,Clinvar' (list of fields)</p>
+</li>
+<li>
+<p>'HGVS,*,Clinvar' (list of fields with all other fields at the end)</p>
+</li>
+<li>
+<p>'HGVS,.*_score,Clinvar' (list of 2 fields with all scores in the middle)</p>
+</li>
+<li>
+<p>'HGVS,.<em>_score,</em>' (1 field, scores, all other fields)</p>
+</li>
+<li>
+<p>'HGVS,<em>,.</em>_score' (1 field, all other fields, all scores)</p>
+</li>
+</ul>
+<p>Type: <code>str</code></p>
+<p>Default: <code>*</code></p>
+<h2 id="threads">threads</h2>
+<p>Specify the number of threads to use for processing HOWARD. It determines the level of parallelism, either on python scripts, duckdb engine and external tools. It and can help speed up the process/tool. Use -1 to use all available CPU/cores. Either non valid value is 1 CPU/core.</p>
+<p>Type: <code>int</code></p>
+<p>Default: <code>-1</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Automatically detect all available CPU/cores</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"threads"</span>: <span class="hljs-number">-1</span>
+</div></code></pre>
+<blockquote>
+<p>Define 8 CPU/cores</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"threads"</span>: <span class="hljs-number">8</span>
+</div></code></pre>
+<h2 id="databases">databases</h2>
+<p><a href="help.param.databases.md">HOWARD Parameters Databases JSON</a> describes configuration JSON file for databases download and convert.</p>
+
+</body>
+</html>

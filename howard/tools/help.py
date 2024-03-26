@@ -111,31 +111,49 @@ def help(args: argparse) -> None:
         toc = md_toc.build_toc(help_file)
         md_toc.write_string_on_file_between_markers(help_file, toc, "<!--TOC-->")
 
-    # HTML file
-    if "help_html" in args and args.help_html:
+        if "help_html" in args and args.help_html:
+            help_file_html = args.help_html
+            log.info(f"Help - generate Markdown help file ['{help_file_html}']")
+            command = f"pandoc -s --from=markdown --to=html --metadata title='{help_json_input_title}' -o {help_file_html} {help_file}"
+            try:
+                run_parallel_commands([command])
+            except Exception as inst:
+                log.error(inst)
 
-        # Help file
-        help_file = args.help_html
-        log.info(f"Help - generate HTML help file ['{help_file}']")
+        if "help_pdf" in args and args.help_pdf:
+            help_file_pdf = args.help_pdf
+            log.info(f"Help - generate Markdown help file ['{help_file_pdf}']")
+            command = f"pandoc -s --from=markdown --to=pdf --metadata title='{help_json_input_title}' -o {help_file_pdf} {help_file}"
+            try:
+                run_parallel_commands([command])
+            except Exception as inst:
+                log.error(inst)
 
-        # If Help input JSON file
-        if help_json_file:
-            log.info(f"Help -     from JSON help file ['{help_json_file}']")
-            help_content = help_generation_from_json(
-                help_json_file=help_json_file,
-                output_type="html",
-                title=help_json_input_title,
-            )
+    # # HTML file
+    # if "help_html" in args and args.help_html:
 
-        # Help from options
-        else:
-            help_content = help_generation(
-                arguments_dict=arguments_dict, setup=setup_cfg, output_type="html"
-            )
+    #     # Help file
+    #     help_file = args.help_html
+    #     log.info(f"Help - generate HTML help file ['{help_file}']")
 
-        # Write file
-        f = open(help_file, "w")
-        f.write(help_content)
-        f.close()
+    #     # If Help input JSON file
+    #     if help_json_file:
+    #         log.info(f"Help -     from JSON help file ['{help_json_file}']")
+    #         help_content = help_generation_from_json(
+    #             help_json_file=help_json_file,
+    #             output_type="html",
+    #             title=help_json_input_title,
+    #         )
+
+    #     # Help from options
+    #     else:
+    #         help_content = help_generation(
+    #             arguments_dict=arguments_dict, setup=setup_cfg, output_type="html"
+    #         )
+
+    #     # Write file
+    #     f = open(help_file, "w")
+    #     f.write(help_content)
+    #     f.close()
 
     log.info("End")

@@ -1370,6 +1370,19 @@ arguments = {
             },
         },
     },
+    "help_pdf": {
+        "metavar": "help pdf",
+        "help": """Help Output file in PDF format.\n""",
+        "required": False,
+        "default": None,
+        "type": PathType(exists=None, type=None),
+        "gooey": {
+            "widget": "FileSaver",
+            "options": {
+                "wildcard": "PDF file (*.pdf)|*.pdf",
+            },
+        },
+    },
     "help_json_input": {
         "metavar": "help JSON input",
         "help": """Help input file in JSON format.\n""",
@@ -1960,31 +1973,6 @@ commands_arguments = {
             },
         },
     },
-    # "from_annovar": {
-    #     "function" : "from_annovar",
-    #     "description": """(beta) Formatting Annovar database file to other format (VCF and Parquet). Exported Parquet file includes INFO/tags columns as VCF INFO columns had been exploded""",
-    #     "help": """(beta) Formatting Annovar database file to other format (VCF and Parquet)""",
-    #     "epilog": """Usage examples:\n"""
-    #                 """   howard from_annovar --input=tests/databases/others/hg19_nci60.txt --output=/tmp/nci60.from_annovar.vcf.gz --to_parquet=/tmp/nci60.from_annovar.parquet --annovar-code=nci60 --genome=~/howard/databases/genomes/current/hg19.fa --threads=8 \n"""
-    #                 """    \n""",
-    #     "groups": {
-    #         "main": {
-    #             "input": True,
-    #             "output": True,
-    #             "genome": True,
-    #         },
-    #         "Annovar": {
-    #             "annovar-code": False,
-    #         },
-    #         "Parquet": {
-    #             "to_parquet": False,
-    #         },
-    #         "Modes": {
-    #             "reduce_memory": False,
-    #             "multi_variant": False
-    #         }
-    #     }
-    # },
     "gui": {
         "function": "gui",
         "description": """Graphical User Interface tools""",
@@ -1997,15 +1985,16 @@ commands_arguments = {
         "description": """Help tools""",
         "help": """Help tools""",
         "epilog": """Usage examples:\n"""
-        """   howard help --help_md=docs/help.md --help_html=docs/help.html\n"""
-        """   howard help --help_json_input=docs/help.config.json --help_json_input_title='HOWARD Configuration' --help_md=docs/help.config.md --help_html=docs/help.config.html --code_type='json'\n"""
-        """   howard help --help_json_input=docs/help.param.json --help_json_input_title='HOWARD Parameters' --help_md=docs/help.param.md --help_html=docs/help.param.html --code_type='json' \n"""
-        """   howard help --help_json_input=docs/help.param.databases.json --help_json_input_title='HOWARD Parameters Databases' --help_md=docs/help.param.databases.md --help_html=docs/help.param.databases.html --code_type='json' \n"""
+        """   howard help --help_md=docs/help.md --help_html=docs/html/help.html --help_pdf=docs/pdf/help.pdf\n"""
+        """   howard help --help_json_input=docs/json/help.config.json --help_json_input_title='HOWARD Configuration' --help_md=docs/help.config.md --help_html=docs/html/help.config.html --help_pdf=docs/pdf/help.config.pdf --code_type='json'\n"""
+        """   howard help --help_json_input=docs/json/help.param.json --help_json_input_title='HOWARD Parameters' --help_md=docs/help.param.md --help_html=docs/html/help.param.html --help_pdf=docs/pdf/help.param.pdf --code_type='json' \n"""
+        """   howard help --help_json_input=docs/json/help.param.databases.json --help_json_input_title='HOWARD Parameters Databases' --help_md=docs/help.param.databases.md --help_html=docs/html/help.param.databases.html --help_pdf=docs/pdf/help.param.databases.pdf --code_type='json' \n"""
         """    \n""",
         "groups": {
             "main": {
                 "help_md": False,
                 "help_html": False,
+                "help_pdf": False,
                 "help_json_input": False,
                 "help_json_input_title": False,
                 "code_type": False,

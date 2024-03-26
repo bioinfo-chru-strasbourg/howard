@@ -1,6 +1,6 @@
 # HOWARD
 
-![HOWARD Graphical User Interface](images/icon.ico "HOWARD Graphical User Interface")
+![HOWARD Graphical User Interface](images/icon.png "HOWARD Graphical User Interface")
 
 Highly Open and Valuable tool for Variant Annotation & Ranking toward genetic Discovery
 

@@ -35,6 +35,16 @@ from howard.tools.tools import (
 from howard.functions.plugins import plugins_infos, plugins_list, plugins_to_load
 from howard.functions.commons import folder_main, folder_plugins, subfolder_plugins
 
+
+# Usage
+# python -m pip install -e .
+# howard --help
+# howard query --help
+# howard analysis --input=my.vcf.gz --output=my.output.vcf --annotations=my.annotations.vcf.gz
+# howard gui
+# python -m howard.main --input=my.vcf.gz --output=my.output.vcf --annotations=my.annotations.vcf.gz
+
+
 msg_gui_disable = "HOWARD GUI disabled"
 
 # Load command submodule
@@ -49,12 +59,7 @@ for command in list(commands_arguments.keys()):
         print(e)
 
 
-# DEVEL
-
-
-# print("DEVEL plugins")
-
-
+# Load plugns
 if os.path.exists(folder_plugins):
 
     # Load plugins infos
@@ -106,16 +111,6 @@ if os.path.exists(folder_plugins):
             log.warning(f"{inst}")
             msg_warning = f"Plugin '{plugin_name}' NOT loaded"
             log.warning(msg_warning)
-
-
-# Usage
-# python -m pip install -e .
-# howard --help
-# howard query --help
-# howard analysis --input=my.vcf.gz --output=my.output.vcf --annotations=my.annotations.vcf.gz
-# howard gui
-# python -m howard.main --input=my.vcf.gz --output=my.output.vcf --annotations=my.annotations.vcf.gz
-
 
 main_folder = os.path.dirname(__file__)
 
