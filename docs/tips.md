@@ -112,7 +112,6 @@ tree -h $PARQUET
 
 </details>
 
-
 <details><summary>How to aggregate all INFO annotations from multiple Parquet databases into one INFO field?</summary>
 
 In order to merge all annotations in INFO column of multiple databases, use a SQL query on the list of Parquet databases, and use `STRING_AGG` duckDB function to aggretate values.
@@ -135,3 +134,19 @@ chr1    69093   G       T       MCAP13=0.001453;REVEL=0.117;SIFT_score=0.082;SIF
 ```
 
 </details>
+
+<details><summary>How to explore genetics variations from VCF files?</summary>
+
+[CuteVariant: A standalone and free application to explore genetics variations from VCF files](https://cutevariant.labsquare.org/)
+
+Cutevariant is a cross-plateform application dedicated to maniupulate and filter variation from annotated VCF file. When you create a project, data are imported into an sqlite database that cutevariant queries according your needs. Presently, SnpEff and VEP annotations are supported. Once your project is created, you can query variant using different gui controller or directly using the VQL language. This Domain Specific Language is specially designed for cutevariant and try to keep the same syntax than SQL for an easy use.
+
+Published in [Bioinformatics Advanced - Cutevariant: a standalone GUI-based desktop application to explore genetic variations from an annotated VCF file](https://academic.oup.com/bioinformaticsadvances/article/2/1/vbab028/6440032?login=true)
+
+Documentation available on [cutevariant.labsquare.org](https://cutevariant.labsquare.org/) and [GitHub]((https://github.com/labsquare/cutevariant))
+
+![CuteVariant](https://raw.githubusercontent.com/labsquare/cutevariant/master/screencast.gif "HOWARD Graphical User Interface")
+
+</details>
+
+

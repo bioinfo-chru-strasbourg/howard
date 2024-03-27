@@ -987,7 +987,7 @@ All annotation parameters can be defined in [HOWARD Parameters JSON](help.param.
 
 ## Calculation
 
-Calculation processes variants annotations to generate new annotation, such as: identify variation type (VarType), harmonizes allele frequency (VAF) and calculate sttistics (VAF_stats), extracts Nomen (transcript, cNomen, pNomen...) from an HGVS field (e.g. snpEff, Annovar) with an optional list of personalized transcripts, generates VaRank format barcode, identify trio inheritance. These calculations are based on existing annotations of variants (and genotypes).
+Calculation processes variants annotations to generate new annotation, such as: identify variation type (VarType), harmonizes allele frequency (VAF) and calculate statistics (VAF_stats), extracts Nomen (transcript, cNomen, pNomen...) from an HGVS field (e.g. snpEff, Annovar) with an optional list of personalized transcripts, generates VaRank format barcode, identify trio inheritance. These calculations are based on existing annotations of variants (and genotypes).
 
 Calculations are either provided by HOWARD within code, or configured into a JSON file. Calculations are either an inner HOWARD Python code, or a SQL query.
 
@@ -1292,13 +1292,13 @@ Prioritization profiles are defined in a JSON configuration file. Each profiles 
 >                 "comment": [
 >                     "Described on CLINVAR database as non-pathogenic"
 >                 ]
->             },
+>             }
 >         ]
 >     }
 > }
 > ```
         
-See [HOWARD Help Prioritization Profiles](help.prioritization.md) for more options.
+See [HOWARD Help Prioritization Profiles](help.config.prioritization.md) for more options.
 
 ## HGVS annotation
 
