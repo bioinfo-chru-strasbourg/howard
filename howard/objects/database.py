@@ -357,10 +357,19 @@ class Database:
         if not header_list:
             header_list = DEFAULT_HEADER_LIST
 
+        # Clean lines
+        header_list = [line.replace("\n", "") for line in header_list]
+
         try:
             return vcf.Reader(io.StringIO("\n".join(header_list)))
-        except:
-            return None
+        except Exception as inst:
+            if str(inst).strip():
+                log.error(inst)
+                raise ValueError(inst)
+            else:
+                log.warning(f"Warning in VCF header")
+                log.debug(f"header_list={header_list}")
+                return None
 
     def get_header_from_file(self, header_file: str) -> vcf:
         """
@@ -2008,6 +2017,80 @@ class Database:
 
         return self.conn
 
+    def is_genotype_column(
+        self,
+        column: str,
+        database: str = None,
+        downsampling: int = 1000,
+        check_format: bool = True,
+    ) -> bool:
+        """
+        The `is_genotype_column` function in Python checks if a specified column in a database contains
+        genotype data based on a regular expression pattern.
+
+        :param column: The `column` parameter is a string that represents the name of a column in a
+        database table. It is used to specify the column for which you want to check if it contains
+        genotype information based on a regular expression pattern
+        :type column: str
+        :param database: The `database` parameter in the `is_genotype_column` method is used to specify
+        the name of the database from which the data will be queried. If a database is provided, the
+        method will query the specified database to check if the given column contains genotype
+        information. If no database is provided,
+        :type database: str
+        :param downsampling: The `downsampling` parameter in the `is_genotype_column` method is an
+        integer value that determines the number of rows to be sampled from the database table when
+        checking for genotype information in the specified column. This parameter is used to limit the
+        number of rows to be processed in order to improve performance, defaults to 1000
+        :type downsampling: int (optional)
+        :param check_format: The `check_format` parameter in the `is_genotype_column` method is a
+        boolean flag that determines whether the function should check the format of the data before
+        proceeding with the genotype column analysis. If `check_format` is set to `True`, the function
+        will verify if the specified column exists in, defaults to True
+        :type check_format: bool (optional)
+        :return: The `is_genotype_column` method returns a boolean value. If the specified column in a
+        database table contains genotype information, it returns `True`; otherwise, it returns `False`.
+        """
+
+        # Table variants
+        table_variants_from = self.get_sql_database_link(database=database)
+
+        # Check if format column is present
+        if check_format:
+            query = f"""
+                SELECT * FROM {table_variants_from}
+                LIMIT 0
+            """
+            df = self.query(query=query)
+            if "FORMAT" not in df.columns or column not in df.columns:
+                return False
+            query_format = f"""
+                AND len(string_split(FORMAT, ':')) = len(string_split("{column}", ':'))
+            """
+        else:
+            query_format = ""
+
+        # Query number of samples
+        query_downsampling = f"""
+            SELECT "{column}", FORMAT
+            FROM {table_variants_from}
+            LIMIT {downsampling}
+        """
+        df_downsampling = self.query(query=query_downsampling)
+
+        # Query to check genotype
+        query_genotype = f"""
+            SELECT  *
+            FROM df_downsampling
+            WHERE (
+                regexp_matches("{column}", '^[0-9\.]([/|][0-9\.])+')
+                {query_format}
+                )
+        """
+        df_genotype = self.query(query=query_genotype)
+
+        # return
+        return len(df_genotype) == len(df_downsampling)
+
     def export(
         self,
         output_database: str,
@@ -2211,6 +2294,22 @@ class Database:
                     extra_columns = []
                 else:
                     extra_columns = existing_columns_header
+
+                # Check VCF format with extra columns
+                extra_columns_clean = []
+                for extra_column in extra_columns:
+                    if extra_column not in needed_columns and (
+                        extra_column == "FORMAT"
+                        or (
+                            "FORMAT" in extra_columns_clean
+                            and self.is_genotype_column(
+                                database=database, column=extra_column
+                            )
+                        )
+                    ):
+                        extra_columns_clean.append(extra_column)
+                extra_columns = extra_columns_clean
+
                 default_empty_value = "."
                 query_export_format = f"FORMAT CSV, DELIMITER '{delimiter}', HEADER, QUOTE '', COMPRESSION 'gzip'"
                 include_header = True
