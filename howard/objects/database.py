@@ -2064,7 +2064,7 @@ class Database:
             if "FORMAT" not in df.columns or column not in df.columns:
                 return False
             query_format = f"""
-                AND len(string_split(FORMAT, ':')) = len(string_split("{column}", ':'))
+                AND (len(string_split(FORMAT, ':')) = len(string_split("{column}", ':')) OR "{column}" == './.')
             """
         else:
             query_format = ""
