@@ -36,10 +36,11 @@
                 "/home1/data/STARK/databases": "ro",
                 "/home1/BAS/lamouchj": "rw"
             },
-            "output_folder": "/home1/BAS/lamouchj/test-howard-splice2",
             "splice_config": "/home1/BAS/lamouchj/test/SpliceToolBox/src/splicetoolbox/nextflow/nextflow.docker.config",
-            "main": "/app/src/splicetoolbox/nextflow/main.nf",
-            "image": "splice:0.1"
+            "main": "/app/SpliceToolBox/src/splicetoolbox/nextflow",
+            "image": "splice:0.1",
+            "rm_container": false,
+            "tmp": "/home1/BAS/lamouchj/test/tmp"
         }
     }
 }
