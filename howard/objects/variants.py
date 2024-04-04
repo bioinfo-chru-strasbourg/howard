@@ -5568,7 +5568,6 @@ class Variants:
         options = param.get("annotation", {}).get("splice", {}).get("options", None)
         log.debug("Options: " + str(options))
 
-        exit()
         # Data
         table_variants = self.get_table_variants()
 
@@ -5586,12 +5585,11 @@ class Variants:
         log.debug("Create initial file to annotate")
         tmp_vcf = NamedTemporaryFile(
             prefix=self.get_prefix(),
-            dir=self.get_tmp_dir(),
-            suffix=".vcf.gz",
+            dir=os.path.join(config.get("tools").get("splice").get("tmp")),
+            suffix=".vcf",
             delete=True,
         )
         tmp_vcf_name = tmp_vcf.name
-
         # VCF header
         vcf_reader = self.get_header()
         log.debug("Initial header: " + str(vcf_reader.infos))
@@ -5614,24 +5612,79 @@ class Variants:
         # Export VCF file
         self.export_variant_vcf(
             vcf_file=tmp_vcf_name,
-            file_type="gz",
+            file_type="vcf",
             remove_info=True,
-            add_samples=False,
+            add_samples=True,
             compression=1,
-            index=True,
+            index=False,
         )
-        # Tmp file
-        err_files = []
-        tmp_annotate_vcf = NamedTemporaryFile(
-            prefix=self.get_prefix(),
-            dir=self.get_tmp_dir(),
-            suffix=".vcf",
-            delete=False,
-        )
+
+        # Create docker container and launch splice analysis
+        splice_config = config.get("tools").get("splice")
+        if splice_config:
+            mount = [
+                f"-v {path}:{path}:{mode}"
+                for path, mode in splice_config.get("mount").items()
+            ]
+            if any(value for value in splice_config.values() if value is None):
+                log.warning("At least one splice config parameters is empty")
+                return None
+
+            # Params in splice nf
+            def check_values(dico: dict):
+                """
+                Ensure parameters for NF splice pipeline
+                """
+                for key, val in dico.items():
+                    if (
+                        (isinstance(val, str) and val)
+                        or isinstance(val, int)
+                        or isinstance(val, bool)
+                    ):
+                        yield f"--{key} {val}"
+
+            if options:
+                nf_params = list(check_values(options))
+                log.debug(f"Splice NF params: {' '.join(nf_params)}")
+            else:
+                nf_params = ""
+                log.debug("No NF params provided")
+
+            cmd = f"nextflow -log {os.path.join(options.get('output_folder'), 'splice.log')} -c {splice_config.get('splice_config')} run {splice_config.get('main')} -entry SPLICE --vcf {tmp_vcf_name} {' '.join(nf_params)} -profile standard,conda,singularity,report,timeline"
+            log.debug(cmd)
+
+            import uuid
+
+            random_uuid = f"HOWARD-SPLICE-{uuid.uuid4()}"
+
+            if splice_config.get("rm_container"):
+                rm_container = "--rm"
+            else:
+                rm_container = ""
+
+            docker_cmd = f"docker run {rm_container} -it --entrypoint '/bin/bash' --name {random_uuid} {' '.join(mount)} {splice_config.get('image')} {cmd}"
+            log.info("Launch splice analysis in docker container")
+            log.debug(docker_cmd)
+            command(docker_cmd)
+        else:
+            log.warning(f"Splice tool configuration not found: {config}")
 
         # Update variants
         log.info("Annotation - Updating...")
-        self.update_from_vcf(tmp_annotate_vcf_name)
+        # Test find output vcf
+        output_vcf = []
+        for files in os.listdir(options.get("output_folder")):
+            if files.startswith(
+                os.path.basename(tmp_vcf_name).replace(".vcf", "")
+            ) and files.endswith(".spip.spliceai.sorted.vcf.gz"):
+                output_vcf.append(os.path.join(options.get("output_folder"), files))
+        if not output_vcf:
+            log.debug(
+                f"Splice output was not generated {os.path.basename(tmp_vcf_name)}*.spip.spliceai.sorted.vcf.gz"
+            )
+        else:
+            log.debug(f"Splice tmp output: {output_vcf[0]}")
+            self.update_from_vcf(output_vcf[0])
 
     ###
     # Prioritization
