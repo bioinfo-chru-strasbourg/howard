@@ -5587,9 +5587,10 @@ class Variants:
             prefix=self.get_prefix(),
             dir=os.path.join(config.get("tools").get("splice").get("tmp")),
             suffix=".vcf",
-            delete=True,
+            delete=False,
         )
         tmp_vcf_name = tmp_vcf.name
+        log.debug(f"Tmp vcf: {tmp_vcf_name}")
         # VCF header
         vcf_reader = self.get_header()
         log.debug("Initial header: " + str(vcf_reader.infos))
@@ -5643,19 +5644,63 @@ class Variants:
                     ):
                         yield f"--{key} {val}"
 
+            def handle_ressources(threads: int, memory: str) -> list:
+                """
+                Configure ressources for both SPiP and SpliceAI
+                """
+                list_ressources = []
+                for tool in ["spip", "spliceai"]:
+                    mem = re.findall("\d+", memory)[0]
+                    list_ressources.append(f"--memory_{tool} {round(0.5*int(mem))}GB")
+                    list_ressources.append(f"--cpus_{tool} {round(0.5*threads)}")
+                list_ressources.extend([f"--cpus {threads}", f"--memory {memory}"])
+                return list_ressources
+
             if options:
                 nf_params = list(check_values(options))
+                genome_path = find_genome(
+                    config.get("folders", {}).get("databases", {}).get("genomes", {}),
+                    file=f"{options.get('genome', None)}.fa",
+                )
+                log.debug(f"Genome: {genome_path}")
+                nf_params.append(f"--genome_path {genome_path}")
+                nf_params.extend(handle_ressources(threads, memory_limit))
+
                 log.debug(f"Splice NF params: {' '.join(nf_params)}")
             else:
                 nf_params = ""
                 log.debug("No NF params provided")
 
-            cmd = f"nextflow -log {os.path.join(options.get('output_folder'), 'splice.log')} -c {splice_config.get('splice_config')} run {splice_config.get('main')} -entry SPLICE --vcf {tmp_vcf_name} {' '.join(nf_params)} -profile standard,conda,singularity,report,timeline"
+            output_folder = os.path.join(config.get("tools").get("splice").get("tmp"))
+
+            def splice_annotations(options, config):
+                if options.get("genome", {}) == "hg19":
+                    spliceai_assembly = "grch37.txt"
+                elif options.get("genome", {}) == "hg38":
+                    spliceai_assembly = "grch38.txt"
+                spip = find(
+                    f"transcriptome_{options.get('genome', {})}.RData",
+                    config.get("folders", {}).get("databases", {}).get("spip", {}),
+                )
+                spliceai = find(
+                    spliceai_assembly,
+                    config.get("folders", {}).get("databases", {}).get("spliceai", {}),
+                )
+                if spip and spliceai:
+                    return [
+                        f"--spip_transcriptome {spip}",
+                        f"--spliceai_annotations {spliceai}",
+                    ]
+                else:
+                    return None
+
+            # Add options
+            nf_params.extend(splice_annotations(options, config))
+            nf_params.append(f"--output_folder {output_folder}")
+
+            random_uuid = f"HOWARD-SPLICE-{get_random()}"
+            cmd = f"nextflow -log {os.path.join(output_folder, f'{random_uuid}.log')} -c {splice_config.get('splice_config')} run {splice_config.get('main')} -entry SPLICE --vcf {tmp_vcf_name} {' '.join(nf_params)} -profile standard,conda,singularity,report,timeline"
             log.debug(cmd)
-
-            import uuid
-
-            random_uuid = f"HOWARD-SPLICE-{uuid.uuid4()}"
 
             if splice_config.get("rm_container"):
                 rm_container = "--rm"
@@ -5683,6 +5728,10 @@ class Variants:
                 f"Splice output was not generated {os.path.basename(tmp_vcf_name)}*.spip.spliceai.sorted.vcf.gz"
             )
         else:
+            # Get new header from annotated vcf
+            # TODO need to update header with header form splice vcf
+
+            log.debug("Initial header: " + str(vcf_reader.infos))
             log.debug(f"Splice tmp output: {output_vcf[0]}")
             self.update_from_vcf(output_vcf[0])
 
