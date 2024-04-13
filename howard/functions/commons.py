@@ -1909,6 +1909,7 @@ def concat_and_compress_files(
     output_file: str,
     compression_type: str = "bgzip",
     threads: int = 1,
+    memory: int = 1,
     block: int = 10**6,
     compression_level: int = 6,
     sort: bool = False,
@@ -1932,6 +1933,9 @@ def concat_and_compress_files(
     decompression. It determines the level of parallelism in the compression process, allowing for
     faster execution when multiple threads are used, defaults to 1
     :type threads: int (optional)
+    :param memory: The `memory` parameter specifies the amount of max memory (in Gb) to use for sorting.
+    defaults to 1
+    :type memory: int (optional)
     :param block: The `block` parameter specifies the size of the block used for reading and writing
     data during compression. It is set to a default value of 10^6 (1 million) bytes
     :type block: int
@@ -2017,6 +2021,8 @@ def concat_and_compress_files(
                 "-T",
                 output_file_tmp,
                 output_file_tmp,
+                "-m",
+                f"{memory}G",
                 threads=threads,
                 catch_stdout=False,
             )

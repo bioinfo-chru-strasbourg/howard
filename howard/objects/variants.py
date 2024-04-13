@@ -1976,6 +1976,8 @@ class Variants:
         # Parquet partition
         if not parquet_partitions:
             parquet_partitions = param.get("export", {}).get("parquet_partitions", None)
+        if parquet_partitions and isinstance(parquet_partitions, str):
+            parquet_partitions = parquet_partitions.split(",")
 
         # Order by
         if not order_by:

@@ -904,6 +904,7 @@ def databases_download_refseq(
     include_non_coding_transcripts: bool = True,
     include_transcript_ver: bool = True,
     threads: int = 1,
+    memory: int = 1,
 ) -> dict:
     """
     The `databases_download_refseq` function downloads RefSeq files for a list of assemblies and returns
@@ -969,6 +970,9 @@ def databases_download_refseq(
     process. By default, it is set to 1, which means that the download and extraction will be performed
     sequentially. If you want, defaults to 1
     :type threads: int (optional)
+    :param memory: The `memory` parameter specifies the amount of max memory (in Gb) to use for sorting.
+    defaults to 1
+    :type memory: int (optional)
     :return: The function `databases_download_refseq` returns a dictionary `installed_refseq` which
     contains information about the downloaded RefSeq files for each assembly. The keys of the dictionary
     are the assembly names, and the values are lists of the installed RefSeq files for each assembly.
@@ -1085,6 +1089,7 @@ def databases_download_refseq(
                         input_files=[file_path_bed],
                         output_file=file_path_bed_compressed,
                         threads=threads,
+                        memory=memory,
                         compression_type="bgzip",
                         sort=False,
                         index=False,
@@ -1377,6 +1382,7 @@ def databases_download_dbnsfp(
     dbnsfp_url: str = None,
     dbnsfp_release: str = "4.4a",
     threads: int = None,
+    memory: int = 1,
     parquet_size: int = 100,
     generate_parquet_file: bool = False,
     generate_sub_databases: bool = False,
@@ -1407,6 +1413,9 @@ def databases_download_dbnsfp(
     threads can potentially speed up the execution time of the function, especially if there are
     multiple cores available on the machine
     :type threads: int (optional)
+    :param memory: The `memory` parameter specifies the amount of max memory (in Gb) to use for sorting.
+    defaults to 1
+    :type memory: int (optional)
     :param parquet_size: The parameter "parquet_size" is used to specify the maximum size (Mb) of data files in parquet folder. It is an optional parameter and its value should be an integer
     :type parquet_size: int (optional)
     :param generate_parquet_file: A boolean flag indicating whether to generate a parquet file or not,
@@ -2686,6 +2695,8 @@ def databases_download_dbnsfp(
                                     concat_and_compress_files(
                                         input_files=list_for_vcf,
                                         output_file=output_vcf,
+                                        threads=threads,
+                                        memory=memory,
                                         sort=True,
                                         index=True,
                                     )
@@ -3428,6 +3439,7 @@ def databases_download_dbsnp(
     dbsnp_assemblies_map: dict = {"hg19": "25", "hg38": "40"},
     genomes_folder: str = DEFAULT_GENOME_FOLDER,
     threads: int = 1,
+    memory: int = 1,
     dbsnp_vcf: bool = False,
     dbsnp_parquet: bool = False,
     dbsnp_parquet_explode_infos: bool = True,
@@ -3466,6 +3478,9 @@ def databases_download_dbsnp(
     :param threads: The `threads` parameter specifies the number of threads to use for downloading and
     processing the dbSNP files, defaults to 1
     :type threads: int (optional)
+    :param memory: The `memory` parameter specifies the amount of max memory (in Gb) to use for sorting.
+    defaults to 1
+    :type memory: int (optional)
     :param dbsnp_vcf: A boolean flag indicating whether to generate a VCF file from the downloaded
     dbSNP data. If set to True, the function will generate a VCF file. If set to False, the function
     will not generate a VCF file, defaults to False
@@ -3823,6 +3838,7 @@ def databases_download_dbsnp(
                         input_files=[header_file_tmp, dbsnp_vcf_file_buffer],
                         output_file=dbsnp_vcf_file,
                         threads=threads,
+                        memory=memory,
                         compression_type="bgzip",
                         sort=False,
                         index=False,
@@ -3893,6 +3909,7 @@ def databases_download_hgmd(
     hgmd_folder: str = DEFAULT_ANNOTATIONS_FOLDER,
     output_basename: str = None,
     threads: int = None,
+    memory: int = 1,
     genomes_folder: str = None,
     to_parquet: bool = True,
     to_tsv: bool = True,
@@ -3918,6 +3935,9 @@ def databases_download_hgmd(
     :param threads: The `threads` parameter specifies the number of threads to use for processing the
     HGMD database. It determines the level of parallelism and can help speed up the conversion process
     :type threads: int
+    :param memory: The `memory` parameter specifies the amount of max memory (in Gb) to use for sorting.
+    defaults to 1
+    :type memory: int (optional)
     :param genomes_folder: The `genomes_folder` parameter is a string that specifies the folder where
     the genome files are located. If this parameter is not provided, it will default to a constant value
     `DEFAULT_GENOME_FOLDER`
@@ -3937,6 +3957,11 @@ def databases_download_hgmd(
     if not assemblies or len(assemblies) > 1 or len(assemblies) == 0:
         log.error("Uniq assembly is mandatory")
         raise ValueError("Uniq assembly is mandatory")
+
+    # Threads
+    if not threads or int(threads) <= 0:
+        threads = os.cpu_count()
+    threads = int(threads)
 
     # Full path
     hgmd_file = full_path(hgmd_file)
@@ -4109,6 +4134,8 @@ def databases_download_hgmd(
                 input_files=[header_file, variants_file],
                 output_file=output_vcf,
                 sort=True,
+                threads=threads,
+                memory=memory,
                 index=True,
                 compression_type="bgzip",
             )
