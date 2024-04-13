@@ -178,6 +178,9 @@ def databases(args: argparse) -> None:
     # Threads
     threads = get_threads(config=config, param=param)
 
+    # Memory
+    memory = extract_memory_in_go(get_memory(config=config, param=param))
+
     # Param
     if "generate_param" in args and args.generate_param:
         generate_databases_param(args=args, assemblies=assemblies)
@@ -263,6 +266,7 @@ def databases(args: argparse) -> None:
                 "download_refseq_include_transcript_version", None
             ),
             threads=threads,
+            memory=memory,
         )
 
     # dbNSFP
@@ -293,6 +297,7 @@ def databases(args: argparse) -> None:
             ),
             genomes_folder=param.get("databases", {}).get("genomes_folder", None),
             threads=threads,
+            memory=memory,
         )
 
     # AlphaMissense
@@ -371,6 +376,7 @@ def databases(args: argparse) -> None:
             dbsnp_parquet=param_databases_dbsnp.get("download_dbsnp_parquet", None),
             genomes_folder=param.get("databases", {}).get("genomes_folder", None),
             threads=threads,
+            memory=memory,
         )
 
     # HGMD
@@ -384,6 +390,7 @@ def databases(args: argparse) -> None:
             output_basename=param_databases_hgmd.get("convert_hgmd_basename", None),
             genomes_folder=param.get("databases", {}).get("genomes_folder", None),
             threads=threads,
+            memory=memory,
         )
 
     # from Annovar
