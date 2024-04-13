@@ -158,7 +158,7 @@ In order to use dbNSFP with HOWARD, databases need to be downloaded and formatte
 
 ```bash
 # Download dbNSFP for ALL annotation, in VCF, Parquet and Partition Parquet, with INFO column
-howard databases --assembly=hg19 --download-dbsnp=~/howard/databases/dbsnp/current --download-dbnsfp-release=4.4a --download-dbsnp-vcf --download-dbsnp-parquet --download-dbnsfp-add-info
+howard databases --assembly=hg19 --download-dbnsfp=~/howard/databases/dbnsfp/4.4a --download-dbnsfp-release='4.4a' --download-dbnsfp-parquet --download-dbnsfp-vcf --download-dbnsfp-add-info
 ```
 
 To generate dbNSFP database in Annovar TXT format, because it can not be provided by [Annovar](https://annovar.openbioinformatics.org/en/latest/user-guide/download/) tool, this following script is useful. Itcan be adapted dependgin on the dbNSFP release and needed assembly. For example, for release 4.4a of dbSNFP, and assembly 'hg19', the positional columns are '$8' for chromosome and '$9' for position (see dbNSFP doc).
