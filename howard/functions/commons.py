@@ -1633,7 +1633,14 @@ def get_memory(config: dict = {}, param: dict = None) -> str:
     mem_default = int(mem_total * 0.8)
 
     # Threads in param or config
-    memory_param = param.get("memory", config.get("memory", "0"))
+    if config:
+        memory_config = config.get("memory", None)
+    else:
+        memory_config = None
+    if param:
+        memory_param = param.get("memory", memory_config)
+    else:
+        memory_param = memory_config
 
     # Check memory value
     if mem_default < 1:
