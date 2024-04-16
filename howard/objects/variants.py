@@ -1905,7 +1905,7 @@ class Variants:
         :param export_header: The `export_header` parameter is a boolean flag that determines whether
         the header of a VCF file should be exported to a separate file or not. If `export_header` is
         True, the header will be exported to a file. If `export_header` is False, the header will not
-        be, defaults to True
+        be, defaults to True, if output format is not VCF
         :type export_header: bool (optional)
         :param query: The `query` parameter is an optional SQL query that can be used to filter and
         select specific data from the VCF file before exporting it. If provided, only the data that
@@ -1962,6 +1962,11 @@ class Variants:
         if not threads:
             threads = self.get_threads()
 
+        # Switch off export header if VCF output
+        output_file_type = get_file_format(output_file)
+        if output_file_type in ["vcf"]:
+            export_header = False
+
         # Auto header name with extension
         if export_header or output_header:
             if not output_header:
@@ -2017,11 +2022,6 @@ class Variants:
             table_variants = self.get_table_variants()
 
             # Create export query
-            # if query:
-            #     sql_query_export_subquery = f"""
-            #         SELECT * FROM ({query})
-            #         """
-            # if connexion_format in ["sqlite"]:
             sql_query_export_subquery = f"""
                 SELECT * FROM {table_variants}
                 """

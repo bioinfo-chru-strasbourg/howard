@@ -163,7 +163,6 @@ howard databases --assembly=hg19 --download-dbnsfp=~/howard/databases/dbnsfp/4.4
 
 To generate dbNSFP database in Annovar TXT format, because it can not be provided by [Annovar](https://annovar.openbioinformatics.org/en/latest/user-guide/download/) tool, this following script is useful. Itcan be adapted dependgin on the dbNSFP release and needed assembly. For example, for release 4.4a of dbSNFP, and assembly 'hg19', the positional columns are '$8' for chromosome and '$9' for position (see dbNSFP doc).
 
-
 ```bash
 # dbNSFP GZ to Annovar
 # Script index annovar downloaded from https://github.com/WGLab/doc-ANNOVAR/issues/15. Official script does not work with some grep releases (https://gist.githubusercontent.com/suqingdong/447ee784582200309c17b3a844566bac/raw/d227a42ca29caece90bb437a9a10732282d2c35f/index_annovar.pl)
@@ -181,13 +180,13 @@ annovar_file_gz=$annovar_file.gz;
 # Header
 first_file=$(ls $dbSNFP_folder/dbNSFP4.4a_variant.chr*.gz | head -n 1)
 nb_column=$(zcat $first_file | head -n1 | awk -F"\t" '{print NF}')
-zcat $first_file | head -n1 | awk -v nb_column="$nb_column" -F"\t" '{printf "#Chr\tStart\tEnd\tRef\tAlt\t"; for (i = 12; i <= nb_column; i++) {printf "%s\t", $i}; printf "\n"}' > $annovar_file;
+zcat $first_file | head -n1 | awk -v nb_column="$nb_column" -F"\t" '{gsub(/\r/,""); printf "#Chr\tStart\tEnd\tRef\tAlt\t"; for (i = 12; i <= nb_column; i++) {printf "%s\t", $i}; printf "\n"}' > $annovar_file;
 echo "Number of column: $nb_column"
 
 # Format each variant file (by chromosome)
 for file in $dbSNFP_folder/dbNSFP4.4a_variant.chr*.gz; do
     echo $file;
-    zcat $file | grep "^#" -v | awk -v nb_column="$nb_column" -F"\t" '$8!="."{printf $8"\t"$9"\t"$9"\t"$3"\t"$4"\t"; for (i = 12; i <= nb_column; i++) {if($i==""){$i="."}; printf "%s\t", $i}; printf "\n"}' >> $annovar_file;
+    zcat $file | grep "^#" -v | awk -v nb_column="$nb_column" -F"\t" '$8!="."{gsub(/\r/,""); printf $8"\t"$9"\t"$9"\t"$3"\t"$4"\t"; for (i = 12; i <= nb_column; i++) {if($i==""){$i="."}; printf "%s\t", $i}; printf "\n"}' >> $annovar_file;
 done;
 
 # Compress
@@ -199,6 +198,7 @@ perl $index_annovar $annovar_file 10000 > $annovar_file.idx
 # Annovation test
 $table_annovar $vcf . -protocol dbNSFP44a_annovar -buildver hg19 -out /tmp/myanno.vcf.gz -remove -operation f -nastring . -vcfinput
 ```
+> Note: This script is not parallelized, not optimized
 
 </details>
 
