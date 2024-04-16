@@ -163,19 +163,21 @@ def remove_if_exists(filepaths: list) -> None:
 
     for filepath in filepaths:
 
-        # full path
-        filepath = full_path(filepath)
+        if filepath:
 
-        # If path exists
-        if os.path.exists(filepath):
+            # full path
+            filepath = full_path(filepath)
 
-            # Folder
-            if os.path.isdir(filepath):
-                shutil.rmtree(filepath)
+            # If path exists
+            if os.path.exists(filepath):
 
-            # File
-            else:
-                os.remove(filepath)
+                # Folder
+                if os.path.isdir(filepath):
+                    shutil.rmtree(filepath)
+
+                # File
+                else:
+                    os.remove(filepath)
 
 
 def set_log_level(verbosity: str, log_file: str = None) -> str:

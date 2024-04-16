@@ -2109,6 +2109,7 @@ class Database:
         chunk_size: int = 1000000,
         export_mode: str = "pyarrow",
         compresslevel: int = 6,
+        export_header: bool = True,
     ) -> bool:
         """
         The `export` function exports data from a database to a specified output format, compresses it
@@ -2171,6 +2172,11 @@ class Database:
         :type export_mode: str (optional)
         :param compresslevel: Level of compression for gzip (default 6)
         :type compresslevel: int (optional)
+        :param export_header: The `export_header` parameter is a boolean flag that determines whether
+        the header of a VCF file should be exported to a separate file or not. If `export_header` is
+        True, the header will be exported to a file. If `export_header` is False, the header will not
+        be, defaults to True, if output format is not VCF
+        :type export_header: bool (optional)
         :return: a boolean value indicating whether the export was successful or not.
         """
 
@@ -2814,9 +2820,9 @@ class Database:
                         shutil.move(query_output_database_tmp, output_database)
 
                 # Generate associated header file
-                if output_header:
+                if output_header and export_header:
 
-                    # Log - number of records
+                    # Log - Generate header
                     log.debug(f"Generate header...")
 
                     # Create database
@@ -2844,6 +2850,6 @@ class Database:
 
             # Clean tmp files (deprecated)
             remove_if_exists(tmp_files)
-
+            
             # Return if file exists
             return os.path.exists(output_database) and self.get_type(output_database)
