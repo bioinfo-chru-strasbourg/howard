@@ -1954,6 +1954,9 @@ class Variants:
         # Param
         param = self.get_param()
 
+        # Tmp files to remove
+        tmp_to_remove = []
+
         # If no output, get it
         if not output_file:
             output_file = self.get_output()
@@ -1962,17 +1965,18 @@ class Variants:
         if not threads:
             threads = self.get_threads()
 
-        # Switch off export header if VCF output
-        output_file_type = get_file_format(output_file)
-        if output_file_type in ["vcf"]:
-            export_header = False
-
         # Auto header name with extension
         if export_header or output_header:
             if not output_header:
                 output_header = f"{output_file}.hdr"
             # Export header
             self.export_header(output_file=output_file)
+
+        # Switch off export header if VCF output
+        output_file_type = get_file_format(output_file)
+        if output_file_type in ["vcf"]:
+            export_header = False
+            tmp_to_remove.append(output_header)
 
         # Chunk size
         if not chunk_size:
@@ -2004,9 +2008,6 @@ class Variants:
                 fields=self.get_explode_infos_fields(),
                 force=False,
             )
-
-        # Tmp files to remove
-        tmp_to_remove = []
 
         # if connexion_format in ["sqlite"] or query:
         if connexion_format in ["sqlite"]:
@@ -2054,6 +2055,7 @@ class Variants:
             header_in_output=header_in_output,
             order_by=order_by,
             query=query,
+            export_header=export_header
         )
 
         # Remove

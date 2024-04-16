@@ -81,6 +81,22 @@ def test_export_header():
     """
 
     input_vcf = tests_folder + "/data/example.vcf.gz"
+    output_vcf = "/tmp/output.tsv.gz"
+    output_vcf_header = "/tmp/output.tsv.gz.hdr"
+    conn = duckdb.connect(":memory:")
+    vcf = Variants(conn=conn, input=input_vcf, output=output_vcf)
+    vcf.load_data()
+    remove_if_exists([output_vcf])
+    vcf.export_output()
+    assert os.path.exists(output_vcf_header)
+
+
+def test_export_header_vcf():
+    """
+    It loads a VCF file into a DuckDB database, and then exports it back to a VCF file and check header file
+    """
+
+    input_vcf = tests_folder + "/data/example.vcf.gz"
     output_vcf = "/tmp/output.vcf.gz"
     output_vcf_header = "/tmp/output.vcf.gz.hdr"
     conn = duckdb.connect(":memory:")
@@ -88,7 +104,7 @@ def test_export_header():
     vcf.load_data()
     remove_if_exists([output_vcf])
     vcf.export_output()
-    assert os.path.exists(output_vcf_header)
+    assert not os.path.exists(output_vcf_header)
 
 
 def test_query():
