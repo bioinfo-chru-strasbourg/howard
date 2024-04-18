@@ -11,6 +11,7 @@ coverage report --include=howard/* -m
 """
 
 import os
+from tempfile import TemporaryDirectory
 import pytest
 
 from howard.functions.commons import *
