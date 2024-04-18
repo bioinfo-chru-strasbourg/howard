@@ -307,6 +307,7 @@ def annovar_to_vcf(
     else:
 
         with open(input_file, "r") as f:
+
             for line in f:
                 if str(line).startswith("##"):
                     continue
@@ -314,6 +315,7 @@ def annovar_to_vcf(
                     header_ok = False
                 elif str(line).startswith("#"):
                     log.debug("Found header")
+                    header_ok = True
                     header = line.strip().split("\t")
                     if "#CHROM" not in header:
                         chrom_list_for_header = [
@@ -388,7 +390,10 @@ def annovar_to_vcf(
                     break
         f.close()
 
-    if not header_ok:
+    if not header_ok and (
+        set(["#CHROM", "POS", "REF", "ALT"]).issubset(set(header))
+        or set(["#CHROM", "START", "END"]).issubset(set(header))
+    ):
         raise ValueError("Error in header")
 
     # protect info tag from unauthorized characters
@@ -413,7 +418,6 @@ def annovar_to_vcf(
 
     # Clean nb header and skip line
     nb_skip_line = nb_header_line
-    nb_header_line -= 1
     if nb_header_line <= 0:
         nb_header_line = None
 
@@ -429,9 +433,10 @@ def annovar_to_vcf(
             dtype[h] = column_type
 
     # Check format VCF readable
-    # nrows = 100000
     log.debug("Check input file struct...")
     nrows_sampling = 1000000
+    log.debug(f"nrows_sampling={nrows_sampling}")
+    log.debug(f"nb_header_line={nb_header_line}")
     try:
         df = pd.read_csv(
             input_file,

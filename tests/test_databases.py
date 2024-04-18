@@ -27,6 +27,8 @@ from howard.objects.variants import Variants
 from howard.objects.database import Database
 from howard.functions.commons import *
 from howard.tools.databases import *
+from howard.tools.tools import arguments_dict
+
 from test_needed import *
 
 

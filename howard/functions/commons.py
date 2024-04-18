@@ -10,6 +10,7 @@ import subprocess
 import sys
 from tempfile import NamedTemporaryFile
 import tempfile
+import typing
 import duckdb
 import json
 import argparse
@@ -3467,3 +3468,46 @@ def transcripts_file_to_df(transcripts_file: str) -> pd.DataFrame:
 
     # Return
     return transcripts_dataframe
+
+
+def identical(
+    vcf_list: typing.List[str], begin: str = "##", line_strip: bool = True
+) -> bool:
+    """
+    The `identical` function compares the contents of multiple VCF files to determine if they are
+    identical.
+
+    :param vcf_list: The `vcf_list` parameter is a list of file paths to VCF (Variant Call Format) files
+    that you want to compare for identity. The function reads the contents of these files and checks if
+    they are identical based on the specified conditions
+    :type vcf_list: typing.List[str]
+    :param begin: The `begin` parameter in the `identical` function is used to specify a string that
+    indicates the beginning of a line in the input files. If a line in the input file starts with the
+    specified `begin` string, it will be skipped and not included in the comparison process. By default,
+    defaults to ##
+    :type begin: str (optional)
+    :param line_strip: The `line_strip` parameter in the `identical` function is a boolean flag that
+    determines whether each line read from the input files should be stripped of leading and trailing
+    whitespaces before being compared. If `line_strip` is set to `True`, each line will be stripped
+    using the `strip, defaults to True
+    :type line_strip: bool (optional)
+    :return: The function `identical` is returning a boolean value. It returns `True` if all the lines
+    in the VCF files provided in the `vcf_list` are identical, and `False` otherwise.
+    """
+
+    vcfs_lines = []
+    k = 0
+    for vcf in vcf_list:
+        vcfs_lines.append([])
+        with open(vcf, "r") as f:
+            for l in f:
+                if not l.startswith(begin) or begin == "":
+                    if line_strip:
+                        l = l.strip()
+                    vcfs_lines[k].append(l)
+        k += 1
+
+    for i in range(len(vcf_list) - 1):
+        if vcfs_lines[i] != vcfs_lines[i + 1]:
+            return False
+    return True
