@@ -13,6 +13,7 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 import tempfile
 import duckdb
 import json
+from sklearn.cluster import DBSCAN
 import yaml
 import argparse
 import Bio.bgzf as bgzf
@@ -2055,7 +2056,7 @@ class Variants:
             header_in_output=header_in_output,
             order_by=order_by,
             query=query,
-            export_header=export_header
+            export_header=export_header,
         )
 
         # Remove
@@ -4922,9 +4923,6 @@ class Variants:
                 f"Existing annotations in VCF: {vcf_annotation} [{vcf_annotation_line}]"
             )
 
-        # prefix
-        prefix = self.get_explode_infos_prefix()
-
         # Added columns
         added_columns = []
 
@@ -4976,7 +4974,6 @@ class Variants:
                 # Find files
                 parquet_file = database.get_database()
                 parquet_hdr_file = database.get_header_file()
-                parquet_format = database.get_format()
                 parquet_type = database.get_type()
 
                 # Check if files exists
@@ -5045,9 +5042,9 @@ class Variants:
                                 )
 
                     # For all fields in database
-                    annotation_fields_ALL = False
+                    annotation_fields_all = False
                     if "ALL" in annotation_fields or "INFO" in annotation_fields:
-                        annotation_fields_ALL = True
+                        annotation_fields_all = True
                         annotation_fields = {
                             key: key for key in parquet_hdr_vcf_header_infos
                         }
@@ -5242,7 +5239,7 @@ class Variants:
                     if (
                         allow_annotation_full_info
                         and nb_annotation_field == len(annotation_fields)
-                        and annotation_fields_ALL
+                        and annotation_fields_all
                         and (
                             "INFO" in parquet_hdr_vcf_header_columns
                             and "INFO" in database.get_extra_columns()
@@ -5264,199 +5261,112 @@ class Variants:
                             sql_query_annotation_update_info_sets
                         )
 
-                        # Check chromosomes list (and variant max position)
-                        sql_query_chromosomes_max_pos = f""" SELECT table_variants."#CHROM" as CHROM, MAX(table_variants."POS") as MAX_POS, MIN(table_variants."POS")-1 as MIN_POS FROM {table_variants} as table_variants GROUP BY table_variants."#CHROM" """
-                        sql_query_chromosomes_max_pos_df = self.conn.execute(
-                            sql_query_chromosomes_max_pos
+                        # Check chromosomes list (and variants infos)
+                        sql_query_chromosomes = f"""
+                            SELECT table_variants."#CHROM" as CHROM, count(*) AS count_variants, min(POS) AS min_variants, MAX(POS) AS max_variants
+                            FROM {table_variants} as table_variants
+                            GROUP BY table_variants."#CHROM"
+                            ORDER BY table_variants."#CHROM"
+                            """
+                        sql_query_chromosomes_df = self.conn.execute(
+                            sql_query_chromosomes
                         ).df()
+                        sql_query_chromosomes_dict = {
+                            entry["CHROM"]: {
+                                "count": entry["count_variants"],
+                                "min": entry["min_variants"],
+                                "max": entry["max_variants"],
+                            }
+                            for index, entry in sql_query_chromosomes_df.iterrows()
+                        }
 
-                        # Create dictionnary with chromosomes (and max position)
-                        sql_query_chromosomes_max_pos_dictionary = (
-                            sql_query_chromosomes_max_pos_df.groupby("CHROM")
-                            .apply(
-                                lambda x: {
-                                    "max_pos": x["MAX_POS"].max(),
-                                    "min_pos": x["MIN_POS"].min(),
-                                }
-                            )
-                            .to_dict()
-                        )
-
-                        # Affichage du dictionnaire
-                        log.debug(
-                            "Chromosomes max pos found: "
-                            + str(sql_query_chromosomes_max_pos_dictionary)
-                        )
-
-                        # nb_of_variant_annotated
+                        # Init
                         nb_of_query = 0
                         nb_of_variant_annotated = 0
-                        # query_dict = {}
                         query_dict = query_dict_remove
 
-                        for chrom in sql_query_chromosomes_max_pos_dictionary:
+                        # for chrom in sql_query_chromosomes_df["CHROM"]:
+                        for chrom in sql_query_chromosomes_dict:
 
-                            # nb_of_variant_annotated_by_chrom
-                            nb_of_variant_annotated_by_chrom = 0
-
-                            # Get position of the farthest variant (max position) in the chromosome
-                            sql_query_chromosomes_max_pos_dictionary_max_pos = (
-                                sql_query_chromosomes_max_pos_dictionary.get(
-                                    chrom, {}
-                                ).get("max_pos")
-                            )
-                            sql_query_chromosomes_max_pos_dictionary_min_pos = (
-                                sql_query_chromosomes_max_pos_dictionary.get(
-                                    chrom, {}
-                                ).get("min_pos")
-                            )
-
-                            # Autodetect range of bases to split/chunk
-                            log.debug(
-                                f"Annotation '{annotation_name}' - Chromosome '{chrom}' - Start Autodetection Intervals..."
-                            )
-
-                            batch_annotation_databases_step = None
-                            batch_annotation_databases_ncuts = 1
-
-                            # Create intervals from 0 to max position variant, with the batch window previously defined
-                            sql_query_intervals = split_interval(
-                                sql_query_chromosomes_max_pos_dictionary_min_pos,
-                                sql_query_chromosomes_max_pos_dictionary_max_pos,
-                                step=batch_annotation_databases_step,
-                                ncuts=batch_annotation_databases_ncuts,
-                            )
+                            # Number of variant by chromosome
+                            nb_of_variant_by_chrom = sql_query_chromosomes_dict.get(
+                                chrom, {}
+                            ).get("count", 0)
 
                             log.debug(
-                                f"Annotation '{annotation_name}' - Chromosome '{chrom}' - Stop Autodetection Intervals"
+                                f"Annotation '{annotation_name}' - Chromosome '{chrom}' [{nb_of_variant_by_chrom} variants]..."
                             )
 
-                            # Interval Start/Stop
-                            sql_query_interval_start = sql_query_intervals[0]
+                            # Annotation with regions database
+                            if parquet_type in ["regions"]:
+                                sql_query_annotation_from_clause = f"""
+                                    FROM (
+                                        SELECT 
+                                            '{chrom}' AS \"#CHROM\",
+                                            table_variants_from.\"POS\" AS \"POS\",
+                                            {",".join(sql_query_annotation_to_agregate)}
+                                        FROM {table_variants} as table_variants_from
+                                        LEFT JOIN {parquet_file_link} as table_parquet_from ON (
+                                            table_parquet_from."#CHROM" = '{chrom}'
+                                            AND table_variants_from.\"POS\" <= table_parquet_from.\"END\"
+                                            AND (table_variants_from.\"POS\" >= (table_parquet_from.\"START\"+1)
+                                                OR table_variants_from.\"POS\" + (len(table_variants_from.\"REF\")-1) >= (table_parquet_from.\"START\"+1)
+                                                )
+                                        )
+                                        WHERE table_variants_from.\"#CHROM\" in ('{chrom}')
+                                        GROUP BY table_variants_from.\"POS\"
+                                        )
+                                        as table_parquet
+                                """
 
-                            # For each interval
-                            for i in sql_query_intervals[1:]:
+                                sql_query_annotation_where_clause = """
+                                    table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
+                                    AND table_parquet.\"POS\" = table_variants.\"POS\"
+                                """
 
-                                # Interval Start/Stop
-                                sql_query_interval_stop = i
+                            # Annotation with variants database
+                            else:
+                                sql_query_annotation_from_clause = f"""
+                                    FROM {parquet_file_link} as table_parquet
+                                """
+                                sql_query_annotation_where_clause = f"""
+                                    table_variants."#CHROM" = '{chrom}'
+                                    AND table_parquet.\"#CHROM\" = table_variants.\"#CHROM\" 
+                                    AND table_parquet.\"POS\" = table_variants.\"POS\"
+                                    AND table_parquet.\"ALT\" = table_variants.\"ALT\"
+                                    AND table_parquet.\"REF\" = table_variants.\"REF\"
+                                """
 
-                                log.debug(
-                                    f"Annotation '{annotation_name}' - Chromosome '{chrom}' - Interval [{sql_query_interval_start}-{sql_query_interval_stop}] ..."
-                                )
-
-                                log.debug(
-                                    f"Annotation '{annotation_name}' - Chromosome '{chrom}' - Interval [{sql_query_interval_start}-{sql_query_interval_stop}] - Start detecting regions..."
-                                )
-
-                                regions = [
-                                    (
-                                        chrom,
-                                        sql_query_interval_start,
-                                        sql_query_interval_stop,
-                                    )
-                                ]
-
-                                log.debug(
-                                    f"Annotation '{annotation_name}' - Chromosome '{chrom}' - Interval [{sql_query_interval_start}-{sql_query_interval_stop}] - Stop detecting regions"
-                                )
-
-                                # Fusion des régions chevauchantes
-                                if regions:
-
-                                    # Number of regions
-                                    nb_regions = len(regions)
-
-                                    # create where caluse on regions
-                                    clause_where_regions_variants = create_where_clause(
-                                        regions, table="table_variants"
-                                    )
-
-                                    log.debug(
-                                        f"Annotation '{annotation_name}' - Chromosome '{chrom}' - Interval [{sql_query_interval_start}-{sql_query_interval_stop}] - {nb_regions} regions..."
-                                    )
-
-                                    # Annotation with regions database
-                                    if parquet_type in ["regions"]:
-                                        sql_query_annotation_from_clause = f"""
-                                            FROM (
-                                                SELECT 
-                                                    '{chrom}' AS \"#CHROM\",
-                                                    table_variants_from.\"POS\" AS \"POS\",
-                                                    {",".join(sql_query_annotation_to_agregate)}
-                                                FROM {table_variants} as table_variants_from
-                                                LEFT JOIN {parquet_file_link} as table_parquet_from ON (
-                                                    table_parquet_from.\"#CHROM\" in ('{chrom}')
-                                                    AND table_variants_from.\"POS\" <= table_parquet_from.\"END\"
-                                                    AND (table_variants_from.\"POS\" >= (table_parquet_from.\"START\"+1)
-                                                        OR table_variants_from.\"POS\" + (len(table_variants_from.\"REF\")-1) >= (table_parquet_from.\"START\"+1)
+                            # Create update query
+                            sql_query_annotation_chrom_interval_pos = f"""
+                                UPDATE {table_variants} as table_variants
+                                    SET INFO = 
+                                        concat(
+                                            CASE WHEN table_variants.INFO NOT IN ('','.')
+                                                THEN table_variants.INFO
+                                                ELSE ''
+                                            END
+                                            ,
+                                            CASE WHEN table_variants.INFO NOT IN ('','.')
+                                                        AND (
+                                                        concat({sql_query_annotation_update_info_sets_sql})
                                                         )
-                                                )
-                                                WHERE table_variants_from.\"#CHROM\" in ('{chrom}')
-                                                GROUP BY table_variants_from.\"POS\"
-                                                )
-                                                as table_parquet
-                                        """
+                                                        NOT IN ('','.') 
+                                                    THEN ';'
+                                                    ELSE ''
+                                            END
+                                            ,
+                                            {sql_query_annotation_update_info_sets_sql}
+                                            )
+                                    {sql_query_annotation_from_clause}
+                                    WHERE {sql_query_annotation_where_clause}
+                                    ;
+                                """
 
-                                        sql_query_annotation_where_clause = """
-                                            table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
-                                            AND table_parquet.\"POS\" = table_variants.\"POS\"
-                                        """
-
-                                    # Annotation with variants database
-                                    else:
-                                        sql_query_annotation_from_clause = f"""
-                                            FROM {parquet_file_link} as table_parquet 
-                                        """
-                                        sql_query_annotation_where_clause = f"""
-                                            table_parquet.\"#CHROM\" in ('{chrom}')
-                                            AND ( {clause_where_regions_variants} )
-                                            AND table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
-                                            AND table_parquet.\"POS\" = table_variants.\"POS\"
-                                            AND table_parquet.\"ALT\" = table_variants.\"ALT\"
-                                            AND table_parquet.\"REF\" = table_variants.\"REF\"
-                                        """
-
-                                    # Create update query
-                                    sql_query_annotation_chrom_interval_pos = f"""
-                                        UPDATE {table_variants} as table_variants
-                                            SET INFO = 
-                                                concat(
-                                                    CASE WHEN table_variants.INFO NOT IN ('','.')
-                                                        THEN table_variants.INFO
-                                                        ELSE ''
-                                                    END
-                                                    ,
-                                                    CASE WHEN table_variants.INFO NOT IN ('','.')
-                                                              AND (
-                                                                concat({sql_query_annotation_update_info_sets_sql})
-                                                                )
-                                                                NOT IN ('','.') 
-                                                         THEN ';'
-                                                         ELSE ''
-                                                    END
-                                                    ,
-                                                    {sql_query_annotation_update_info_sets_sql}
-                                                    )
-                                            {sql_query_annotation_from_clause}
-                                            WHERE {sql_query_annotation_where_clause}
-                                            ;
-                                        """
-
-                                    # Add update query to dict
-                                    query_dict[
-                                        f"{chrom}:{sql_query_interval_start}-{sql_query_interval_stop}"
-                                    ] = sql_query_annotation_chrom_interval_pos
-
-                                    log.debug(
-                                        "Create SQL query: "
-                                        + str(sql_query_annotation_chrom_interval_pos)
-                                    )
-
-                                    # Interval Start/Stop
-                                    sql_query_interval_start = sql_query_interval_stop
-
-                            # nb_of_variant_annotated
-                            nb_of_variant_annotated += nb_of_variant_annotated_by_chrom
+                            # Add update query to dict
+                            query_dict[
+                                f"{chrom} [{nb_of_variant_by_chrom} variants]"
+                            ] = sql_query_annotation_chrom_interval_pos
 
                         nb_of_query = len(query_dict)
                         num_query = 0
