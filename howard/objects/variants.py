@@ -5717,19 +5717,26 @@ class Variants:
         # Update variants
         log.info("Annotation - Updating...")
         # Test find output vcf
+        log.debug(
+            f"TMP splice output: {os.path.basename(tmp_vcf_name).replace('.vcf', '')}.spip.spliceai.sorted.vcf.gz"
+        )
         output_vcf = []
-        for files in os.listdir(options.get("output_folder")):
-            if files.startswith(
-                os.path.basename(tmp_vcf_name).replace(".vcf", "")
-            ) and files.endswith(".spip.spliceai.sorted.vcf.gz"):
-                output_vcf.append(os.path.join(options.get("output_folder"), files))
+        # Wrong folder to look in
+        for files in os.listdir(os.path.dirname(tmp_vcf_name)):
+            if (
+                files
+                == f"{os.path.basename(tmp_vcf_name).replace('.vcf', '')}.spip.spliceai.sorted.vcf.gz"
+            ):
+                output_vcf.append(os.path.join(os.path.dirname(tmp_vcf_name), files))
+        log.debug(*os.listdir(options.get("output_folder")))
+        log.debug(output_vcf)
         if not output_vcf:
             log.debug(
                 f"Splice output was not generated {os.path.basename(tmp_vcf_name)}*.spip.spliceai.sorted.vcf.gz"
             )
         else:
             # Get new header from annotated vcf
-            # TODO need to update header with header form splice vcf
+            # TODO need to update header with header from splice vcf
 
             log.debug("Initial header: " + str(vcf_reader.infos))
             log.debug(f"Splice tmp output: {output_vcf[0]}")
