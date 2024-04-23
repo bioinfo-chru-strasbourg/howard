@@ -79,6 +79,14 @@
     "function_name": "calculation_barcode",
     "function_params": []
   },
+  "BARCODEFAMILY": {
+    "type": "python",
+    "name": "BARCODEFAMILY",
+    "description": "BARCODEFAMILY as VaRank tool",
+    "available": true,
+    "function_name": "calculation_barcode_family",
+    "function_params": ["BCF"]
+  },
   "TRIO": {
     "type": "python",
     "name": "TRIO",

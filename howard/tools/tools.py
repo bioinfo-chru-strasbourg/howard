@@ -590,15 +590,28 @@ arguments = {
     "trio_pedigree": {
         "metavar": "trio pedigree",
         "help": """Pedigree Trio for trio inheritance calculation.\n"""
-        """either a JSON file or JSON string"""
-        """(e.g. '{"father": "sample1", "mother": "sample2", "child": "sample3"}').\n""",
+        """Either a JSON file or JSON string or a list of samples\n"""
+        """(e.g. 'sample1,sample2,sample3' for father, mother and child,\n"""
+        """ '{"father": "sample1", "mother": "sample2", "child": "sample3"}').\n""",
         "default": None,
-        # "type": PathType(exists=True, type='file'),
         "gooey": {
             "widget": "FileChooser",
             "options": {"wildcard": "JSON file (*.json)|*.json|" "All files (*)|*"},
         },
         "extra": {"param_section": "calculation:calculations:TRIO"},
+    },
+    "family_pedigree": {
+        "metavar": "family pedigree",
+        "help": """Pedigree family for barcode calculation on genotype.\n"""
+        """Either a JSON file or JSON string or a list of samples\n"""
+        """(e.g. 'sample1,sample2,sample3,sample4',\n"""
+        """ '{"father": "sample1", "mother": "sample2", "child1": "sample3", "child2": "sample3"}').\n""",
+        "default": None,
+        "gooey": {
+            "widget": "FileChooser",
+            "options": {"wildcard": "JSON file (*.json)|*.json|" "All files (*)|*"},
+        },
+        "extra": {"param_section": "calculation:calculations:BARCODEFAMILY"},
     },
     # Stats
     "stats_md": {
@@ -1718,6 +1731,8 @@ commands_arguments = {
         "epilog": """Usage examples:\n"""
         """   howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations='vartype' \n"""
         """   howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.calculated.tsv --calculations='snpeff_hgvs,NOMEN' --hgvs_field=snpeff_hgvs --transcripts=tests/data/transcripts.tsv \n"""
+        """   howard calculation --input=tests/data/example.vcf.gz --output=/tmp/example.calculated.tsv --calculations='TRIO' --trio_pedigree='sample1,sample2,sample4' \n"""
+        """   howard calculation --input=tests/data/example.vcf.gz --output=/tmp/example.calculated.tsv --calculations='BARCODEFAMILY' --family_pedigree='sample1,sample2,sample4' \n"""
         """   howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.ann.tsv --param=config/param.json \n"""
         """   howard calculation --show_calculations \n"""
         """    \n""",
@@ -1731,6 +1746,7 @@ commands_arguments = {
             "Calculation": {"calculation_config": False, "show_calculations": False},
             "NOMEN": {"hgvs_field": False, "transcripts": False},
             "TRIO": {"trio_pedigree": False},
+            "BARCODEFAMILY": {"family_pedigree": False},
         },
     },
     "prioritization": {

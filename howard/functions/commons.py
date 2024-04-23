@@ -3393,8 +3393,8 @@ def load_args(
                 if section in [param_section_not_found]:
                     section = arguments_list_to_load.get(argument, None)
                 # section str to list
-                if section:
-                    section = [section]
+                if isinstance(section, str):
+                    section = section.split(":")
                 else:
                     section = []
                 if section_prefix:
