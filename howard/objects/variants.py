@@ -5505,6 +5505,14 @@ class Variants:
                     "function_name": "calculation_barcode",
                     "function_params": [],
                 },
+                "BARCODEFAMILY": {
+                    "type": "python",
+                    "name": "BARCODEFAMILY",
+                    "description": "BARCODEFAMILY as VaRank tool",
+                    "available": True,
+                    "function_name": "calculation_barcode_family",
+                    "function_params": ["BCF"],
+                },
                 "TRIO": {
                     "type": "python",
                     "name": "TRIO",
@@ -7425,7 +7433,7 @@ class Variants:
             del dataframe_genotypeconcordance
             gc.collect()
 
-    def calculation_barcode(self) -> None:
+    def calculation_barcode(self, tag: str = "barcode") -> None:
         """
         The `calculation_barcode` function calculates barcode values for variants in a VCF file and
         updates the INFO field in the file with the calculated barcode values.
@@ -7438,18 +7446,19 @@ class Variants:
         ):
 
             # barcode annotation field
-            barcode_tag = "barcode"
+            if not tag:
+                tag = "barcode"
 
             # VCF infos tags
             vcf_infos_tags = {
-                "barcode": "barcode calculation (VaRank)",
+                tag: "barcode calculation (VaRank)",
             }
 
             # Prefix
             prefix = self.get_explode_infos_prefix()
 
             # Field
-            barcode_infos = prefix + barcode_tag
+            barcode_infos = prefix + tag
 
             # Variants table
             table_variants = self.get_table_variants()
@@ -7477,11 +7486,11 @@ class Variants:
             )
 
             # Add barcode to header
-            vcf_reader.infos[barcode_tag] = vcf.parser._Info(
-                barcode_tag,
+            vcf_reader.infos[tag] = vcf.parser._Info(
+                tag,
                 ".",
                 "String",
-                vcf_infos_tags.get(barcode_tag, "snpEff hgvs annotations"),
+                vcf_infos_tags.get(tag, vcf_infos_tags.get(tag)),
                 "howard calculation",
                 "0",
                 self.code_type_map.get("String"),
@@ -7501,12 +7510,201 @@ class Variants:
                             WHEN dataframe_barcode."{barcode_infos}" NOT IN ('','.')
                             AND dataframe_barcode."{barcode_infos}" NOT NULL
                             THEN concat(
-                                    '{barcode_tag}=',
+                                    '{tag}=',
                                     dataframe_barcode."{barcode_infos}"
                                 )
                             ELSE ''
                         END
                     )
+                FROM dataframe_barcode
+                WHERE {table_variants}."{variant_id_column}" = dataframe_barcode."{variant_id_column}"
+            """
+            self.conn.execute(sql_update)
+
+            # Remove added columns
+            for added_column in added_columns:
+                self.drop_column(column=added_column)
+
+            # Delete dataframe
+            del dataframe_barcode
+            gc.collect()
+
+    def calculation_barcode_family(self, tag: str = "BCF") -> None:
+        """
+        The `calculation_barcode_family` function calculates barcode values for variants in a VCF file
+        and updates the INFO field in the file with the calculated barcode values.
+
+        :param tag: The `tag` parameter in the `calculation_barcode_family` function is used to specify
+        the barcode tag that will be added to the VCF file during the calculation process. If no value
+        is provided for the `tag` parameter, the default value used is "BCF", defaults to BCF
+        :type tag: str (optional)
+        """
+
+        # if FORMAT and samples
+        if (
+            "FORMAT" in self.get_header_columns_as_list()
+            and self.get_header_sample_list()
+        ):
+
+            # barcode annotation field
+            if not tag:
+                tag = "BCF"
+
+            # VCF infos tags
+            vcf_infos_tags = {
+                tag: "barcode family calculation",
+                f"{tag}S": "barcode family samples",
+            }
+
+            # Param
+            param = self.get_param()
+            log.debug(f"param={param}")
+
+            # Prefix
+            prefix = self.get_explode_infos_prefix()
+
+            # PED param
+            ped = (
+                param.get("calculation", {})
+                .get("calculations", {})
+                .get("BARCODEFAMILY", {})
+                .get("family_pedigree", None)
+            )
+            log.debug(f"ped={ped}")
+
+            # Load PED
+            if ped:
+
+                # Pedigree is a file
+                if isinstance(ped, str) and os.path.exists(full_path(ped)):
+                    log.debug("Pedigree is file")
+                    with open(full_path(ped)) as ped:
+                        ped = json.load(ped)
+
+                # Pedigree is a string
+                elif isinstance(ped, str):
+                    log.debug("Pedigree is str")
+                    try:
+                        ped = json.loads(ped)
+                        log.debug("Pedigree is json str")
+                    except ValueError as e:
+                        ped_samples = ped.split(",")
+                        ped = {}
+                        for ped_sample in ped_samples:
+                            ped[ped_sample] = ped_sample
+
+                # Pedigree is a dict
+                elif isinstance(ped, dict):
+                    log.debug("Pedigree is dict")
+
+                # Pedigree is not well formatted
+                else:
+                    msg_error = "Pedigree not well formatted"
+                    log.error(msg_error)
+                    raise ValueError(msg_error)
+
+                # Construct list
+                ped_samples = list(ped.values())
+
+            else:
+                log.debug("Pedigree not defined. Take all samples")
+                ped_samples = self.get_header_sample_list()
+                ped = {}
+                for ped_sample in ped_samples:
+                    ped[ped_sample] = ped_sample
+
+            # Check pedigree
+            if not ped or len(ped) == 0:
+                msg_error = f"Error in pedigree: samples {ped_samples}"
+                log.error(msg_error)
+                raise ValueError(msg_error)
+
+            # Log
+            log.info(
+                "Calculation 'BARCODEFAMILY' - Samples: "
+                + ", ".join([f"{member}='{ped[member]}'" for member in ped])
+            )
+            log.debug(f"ped_samples={ped_samples}")
+
+            # Field
+            barcode_infos = prefix + tag
+
+            # Variants table
+            table_variants = self.get_table_variants()
+
+            # Header
+            vcf_reader = self.get_header()
+
+            # Create variant id
+            variant_id_column = self.get_variant_id_column()
+            added_columns = [variant_id_column]
+
+            # variant_id, FORMAT and samples
+            samples_fields = f" {variant_id_column}, FORMAT , " + " , ".join(
+                ped_samples
+            )
+
+            # Create dataframe
+            dataframe_barcode = self.get_query_to_df(
+                f""" SELECT {samples_fields} FROM {table_variants} """
+            )
+
+            # Create barcode column
+            dataframe_barcode[barcode_infos] = dataframe_barcode.apply(
+                lambda row: barcode(row, samples=ped_samples), axis=1
+            )
+
+            # Add barcode family to header
+            # Add vaf_normalization to header
+            vcf_reader.formats[tag] = vcf.parser._Format(
+                id=tag,
+                num=".",
+                type="String",
+                desc=vcf_infos_tags.get(tag, "barcode family calculation"),
+                type_code=self.code_type_map.get("String"),
+            )
+            vcf_reader.formats[f"{tag}S"] = vcf.parser._Format(
+                id=f"{tag}S",
+                num=".",
+                type="String",
+                desc=vcf_infos_tags.get(f"{tag}S", "barcode family samples"),
+                type_code=self.code_type_map.get("String"),
+            )
+
+            # Update
+            # for sample in ped_samples:
+            sql_update_set = []
+            for sample in self.get_header_sample_list() + ["FORMAT"]:
+                if sample in ped_samples:
+                    value = f'dataframe_barcode."{barcode_infos}"'
+                    value_samples = "'" + ",".join(ped_samples) + "'"
+                elif sample == "FORMAT":
+                    value = f"'{tag}'"
+                    value_samples = f"'{tag}S'"
+                else:
+                    value = "'.'"
+                    value_samples = "'.'"
+                sql_update_set.append(
+                    f"""
+                        "{sample}" = 
+                        concat(
+                            CASE
+                                WHEN {table_variants}."{sample}" = './.'
+                                THEN concat('./.',regexp_replace(regexp_replace({table_variants}.FORMAT, '[a-zA-Z0-9\s]', '', 'g'), ':', ':.', 'g'))
+                                ELSE {table_variants}."{sample}"
+                            END,
+                            ':',
+                            {value},
+                            ':',
+                            {value_samples}
+                        )
+                    """
+                )
+
+            sql_update_set_join = ", ".join(sql_update_set)
+            sql_update = f"""
+                UPDATE {table_variants}
+                SET {sql_update_set_join}
                 FROM dataframe_barcode
                 WHERE {table_variants}."{variant_id_column}" = dataframe_barcode."{variant_id_column}"
             """
@@ -7553,14 +7751,45 @@ class Variants:
                 .get("TRIO", {})
                 .get("trio_pedigree", None)
             )
+
+            # Load trio
             if trio_ped:
 
-                # Load trio
+                # Trio pedigree is a file
                 if isinstance(trio_ped, str) and os.path.exists(full_path(trio_ped)):
+                    log.debug("TRIO pedigree is file")
                     with open(full_path(trio_ped)) as trio_ped:
                         trio_ped = json.load(trio_ped)
+
+                # Trio pedigree is a string
+                elif isinstance(trio_ped, str):
+                    log.debug("TRIO pedigree is str")
+                    try:
+                        trio_ped = json.loads(trio_ped)
+                        log.debug("TRIO pedigree is json str")
+                    except ValueError as e:
+                        trio_samples = trio_ped.split(",")
+                        if len(trio_samples) == 3:
+                            trio_ped = {
+                                "father": trio_samples[0],
+                                "mother": trio_samples[1],
+                                "child": trio_samples[2],
+                            }
+                            log.debug("TRIO pedigree is list str")
+                        else:
+                            msg_error = "TRIO pedigree not well formatted"
+                            log.error(msg_error)
+                            raise ValueError(msg_error)
+
+                # Trio pedigree is a dict
+                elif isinstance(trio_ped, dict):
+                    log.debug("TRIO pedigree is dict")
+
+                # Trio pedigree is not well formatted
                 else:
-                    trio_ped = json.loads(trio_ped)
+                    msg_error = "TRIO pedigree not well formatted"
+                    log.error(msg_error)
+                    raise ValueError(msg_error)
 
                 # Construct trio list
                 trio_samples = [
@@ -7570,12 +7799,19 @@ class Variants:
                 ]
 
             else:
-                trio_samples = self.get_header_sample_list()[0:3]
-                trio_ped = {
-                    "father": trio_samples[0],
-                    "mother": trio_samples[1],
-                    "child": trio_samples[2],
-                }
+                log.debug("TRIO pedigree not defined. Take the first 3 samples")
+                samples_list = self.get_header_sample_list()
+                if len(samples_list) >= 3:
+                    trio_samples = self.get_header_sample_list()[0:3]
+                    trio_ped = {
+                        "father": trio_samples[0],
+                        "mother": trio_samples[1],
+                        "child": trio_samples[2],
+                    }
+                else:
+                    msg_error = f"Error in TRIO pedigree: only {len(samples_list)} samples {samples_list}"
+                    log.error(msg_error)
+                    raise ValueError(msg_error)
 
             # Check trio pedigree
             if not trio_ped or len(trio_ped) != 3:

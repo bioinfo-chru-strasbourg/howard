@@ -3127,13 +3127,15 @@ def test_calculation_barcode():
             assert False
 
 
-def test_calculation_trio():
+def test_calculation_barcode_genotype():
     """
-    This is a test function for the calculation of trio variants in a VCF file using specific
-    parameters.
+    The function `test_calculation_barcode_genotype` is a test function in Python that calculates
+    barcode information from a VCF file and checks if the output is correct.
     """
 
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        tmp_dir = "/tmp"
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
@@ -3141,16 +3143,146 @@ def test_calculation_trio():
 
         # Construct param dict
         param = {
+            "calculation": {"calculations": {"BARCODEFAMILY": {"family_pedigree": ""}}}
+        }
+
+        # Create object
+        variants = Variants(
+            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+        )
+
+        # Calculation
+        variants.calculation()
+
+        # DEBUG
+        result = variants.get_query_to_df(""" SELECT * FROM variants """)
+        log.debug(result)
+
+        # Construct param dict
+        params = {
+            "param_str_list": {
+                "calculation": {
+                    "calculations": {
+                        "BARCODEFAMILY": {"family_pedigree": "sample1,sample2,sample4"}
+                    }
+                }
+            },
+            "param_str_json": {
+                "calculation": {
+                    "calculations": {
+                        "BARCODEFAMILY": {
+                            "family_pedigree": """{
+                                "father": "sample1", "mother": "sample2", "child": "sample4"}"""
+                        }
+                    }
+                }
+            },
+            "param_dict": {
+                "calculation": {
+                    "calculations": {
+                        "BARCODEFAMILY": {
+                            "family_pedigree": {
+                                "father": "sample1",
+                                "mother": "sample2",
+                                "child": "sample4",
+                            }
+                        }
+                    }
+                }
+            },
+            "param_file": {
+                "calculation": {
+                    "calculations": {
+                        "BARCODEFAMILY": {
+                            "family_pedigree": os.path.join(
+                                tests_data_folder, "trio.json"
+                            )
+                        }
+                    }
+                }
+            },
+        }
+
+        for param in params:
+            param = params[param]
+
+            # Create object
+            variants = Variants(
+                conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+            )
+
+            # Calculation
+            variants.calculation()
+
+            # Check if BCF and BCFS are in FORMAT
+            result = variants.get_query_to_df(
+                """ SELECT FORMAT FROM variants WHERE FORMAT LIKE '%:BCF:BCFS' """
+            )
+            assert len(result) == 7
+
+            # Check if VCF is in correct format with pyVCF
+            remove_if_exists([output_vcf])
+            variants.export_output()
+            try:
+                vcf.Reader(filename=output_vcf)
+            except:
+                assert False
+
+
+def test_calculation_trio():
+    """
+    This is a test function for the calculation of trio variants in a VCF file using specific
+    parameters.
+    """
+
+    params = {
+        "param_str_list": {
+            "calculation": {
+                "calculations": {"TRIO": {"trio_pedigree": "sample1,sample2,sample4"}}
+            }
+        },
+        "param_str_json": {
             "calculation": {
                 "calculations": {
-                    "trio": {
-                        "father": "sample1",
-                        "mother": "sample2",
-                        "child": "sample3",
+                    "TRIO": {
+                        "trio_pedigree": """{
+                            "father": "sample1", "mother": "sample2", "child": "sample4"}"""
                     }
                 }
             }
-        }
+        },
+        "param_dict": {
+            "calculation": {
+                "calculations": {
+                    "TRIO": {
+                        "trio_pedigree": {
+                            "father": "sample1",
+                            "mother": "sample2",
+                            "child": "sample4",
+                        }
+                    }
+                }
+            }
+        },
+        "param_file": {
+            "calculation": {
+                "calculations": {
+                    "TRIO": {
+                        "trio_pedigree": os.path.join(tests_data_folder, "trio.json")
+                    }
+                }
+            }
+        },
+    }
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Param NO
+        param = {"calculation": {"calculations": {"TRIO": {"trio_pedigree": None}}}}
 
         # Create object
         variants = Variants(
@@ -3182,6 +3314,43 @@ def test_calculation_trio():
             vcf.Reader(filename=output_vcf)
         except:
             assert False
+
+        # Construct param dict
+        for param_id in params:
+
+            # Param
+            param = params.get(param_id)
+
+            # Create object
+            variants = Variants(
+                conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+            )
+
+            # Calculation
+            variants.calculation()
+
+            result = variants.get_query_to_df(
+                """ SELECT INFO FROM variants WHERE INFO LIKE '%trio=recessive%' """
+            )
+            assert len(result) == 1
+
+            result = variants.get_query_to_df(
+                """ SELECT * FROM variants WHERE INFO LIKE '%trio=dominant%' """
+            )
+            assert len(result) == 6
+
+            result = variants.get_query_to_df(
+                """ SELECT * FROM variants WHERE INFO LIKE '%trio=unknown%' """
+            )
+            assert len(result) == 0
+
+            # Check if VCF is in correct format with pyVCF
+            remove_if_exists([output_vcf])
+            variants.export_output()
+            try:
+                vcf.Reader(filename=output_vcf)
+            except:
+                assert False
 
 
 def test_calculation_vaf_normalization():
