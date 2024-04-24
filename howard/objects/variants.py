@@ -5546,7 +5546,7 @@ class Variants:
             splice
             for v in test.split("\n")
             for splice in v.split()
-            if splice == "splice"
+            if splice == "jblamouche/splice"
         ]
         if not splice_list:
             log.error("Annotation failed: splice docker image not found")
@@ -5592,8 +5592,8 @@ class Variants:
         tmp_vcf_name = tmp_vcf.name
         log.debug(f"Tmp vcf: {tmp_vcf_name}")
         # VCF header
-        vcf_reader = self.get_header()
-        log.debug("Initial header: " + str(vcf_reader.infos))
+        header = self.get_header()
+        log.debug("Initial header: " + str(header.infos))
 
         # Existing annotations
         for vcf_annotation in self.get_header().infos:
@@ -5728,17 +5728,22 @@ class Variants:
                 == f"{os.path.basename(tmp_vcf_name).replace('.vcf', '')}.spip.spliceai.sorted.vcf.gz"
             ):
                 output_vcf.append(os.path.join(os.path.dirname(tmp_vcf_name), files))
-        log.debug(*os.listdir(options.get("output_folder")))
-        log.debug(output_vcf)
+        # log.debug(os.listdir(options.get("output_folder")))
+        log.debug(f"Splice annotated vcf: {output_vcf[0]}")
         if not output_vcf:
             log.debug(
                 f"Splice output was not generated {os.path.basename(tmp_vcf_name)}*.spip.spliceai.sorted.vcf.gz"
             )
         else:
             # Get new header from annotated vcf
-            # TODO need to update header with header from splice vcf
-
-            log.debug("Initial header: " + str(vcf_reader.infos))
+            log.debug("Initial header: " + str(header.infos))
+            # Create new header with splice infos
+            new_vcf = Variants(input=output_vcf[0])
+            new_vcf_header = new_vcf.get_header().infos
+            for keys, infos in new_vcf_header.items():
+                if keys not in header.infos.keys():
+                    header.infos[keys] = infos
+            log.debug("New header: " + str(header.infos))
             log.debug(f"Splice tmp output: {output_vcf[0]}")
             self.update_from_vcf(output_vcf[0])
 
