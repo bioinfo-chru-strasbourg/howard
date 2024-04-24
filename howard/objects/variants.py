@@ -13,7 +13,6 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 import tempfile
 import duckdb
 import json
-from sklearn.cluster import DBSCAN
 import yaml
 import argparse
 import Bio.bgzf as bgzf
