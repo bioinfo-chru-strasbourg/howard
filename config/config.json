@@ -4,7 +4,7 @@
     "verbosity": "WARNING",
     "folders": {
         "databases": {
-            "genomes": "~/howard/databases/genomes/current",
+            "genomes": "/home1/data/STARK/databases/genomes/current",
             "annotations": [
                 "~/howard/databases/annotations/current",
                 "~/howard/databases/dbnsfp/current",
@@ -21,7 +21,8 @@
             ],
             "snpeff": "~/howard/databases/snpeff/current",
             "varank": "~/howard/databases/varank/current",
-            "splice": "~/howard/databases/splice"
+            "spip": "/home1/data/STARK/databases/SPiP/current",
+            "spliceai": "/home1/data/STARK/databases/SpliceAI/current"
         }
     },
     "tools": {
@@ -34,13 +35,13 @@
         "splice": {
             "mount": {
                 "/home1/data/STARK/databases": "ro",
-                "/home1/BAS/lamouchj": "rw"
+                "/home1/data/STARK/output/tmp": "rw"
             },
-            "splice_config": "/home1/BAS/lamouchj/test/SpliceToolBox/src/splicetoolbox/nextflow/nextflow.docker.config",
-            "main": "/app/SpliceToolBox/src/splicetoolbox/nextflow",
-            "image": "splice:0.1",
+            "splice_config": "/app/SpliceToolBox/src/splicetoolbox/nextflow/nextflow.docker.config",
+            "main": "/app/SpliceToolBox/src/splicetoolbox/nextflow/main.nf",
+            "image": "jblamouche/splice:0.2",
             "rm_container": false,
-            "tmp": "/home1/BAS/lamouchj/test/tmp"
+            "tmp": "/home1/data/STARK/output/tmp"
         }
     }
 }
