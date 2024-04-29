@@ -5547,11 +5547,16 @@ class Variants:
             splice
             for v in test.split("\n")
             for splice in v.split()
-            if splice == splice_config.get('image')[0]
+            if splice == splice_config.get("image")[0]
         ]
         if not splice_list:
-            log.error("Annotation failed: splice docker image not found")
-            raise ValueError("Annotation failed: splice docker image not found")
+            log.warning(
+                f"Annotation: splice docker image {':'.join(splice_config.get('image'))} not found locally, trying to pull from dockerhub"
+            )
+            try:
+                command(f"docker pull {':'.join(splice_config.get('image'))}")
+            except subprocess.CalledProcessError:
+                return
 
         # Config - splice databases
         splice_databases = (
@@ -5622,7 +5627,7 @@ class Variants:
         )
 
         # Create docker container and launch splice analysis
-        #splice_config = config.get("tools").get("splice")
+        # splice_config = config.get("tools").get("splice")
         if splice_config:
             mount = [
                 f"-v {path}:{path}:{mode}"
@@ -5708,7 +5713,7 @@ class Variants:
             else:
                 rm_container = ""
 
-            docker_cmd = f"docker run {rm_container} -it --entrypoint '/bin/bash' --name {random_uuid} {' '.join(mount)} {":".join(splice_config.get('image'))} {cmd}"
+            docker_cmd = f"docker run {rm_container} -it --entrypoint '/bin/bash' --name {random_uuid} {' '.join(mount)} {':'.join(splice_config.get('image'))} {cmd}"
             log.info("Launch splice analysis in docker container")
             log.debug(docker_cmd)
             command(docker_cmd)
