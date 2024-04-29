@@ -5541,12 +5541,13 @@ class Variants:
             config.get("folders", {}).get("databases", {}).get("splice", ["."])
         )
         log.debug("Databases annotations: " + str(databases_folders))
+        splice_config = config.get("tools").get("splice")
         test = command("docker images | grep splice")
         splice_list = [
             splice
             for v in test.split("\n")
             for splice in v.split()
-            if splice == "jblamouche/splice"
+            if splice == splice_config.get('image')[0]
         ]
         if not splice_list:
             log.error("Annotation failed: splice docker image not found")
@@ -5621,7 +5622,7 @@ class Variants:
         )
 
         # Create docker container and launch splice analysis
-        splice_config = config.get("tools").get("splice")
+        #splice_config = config.get("tools").get("splice")
         if splice_config:
             mount = [
                 f"-v {path}:{path}:{mode}"
@@ -5707,7 +5708,7 @@ class Variants:
             else:
                 rm_container = ""
 
-            docker_cmd = f"docker run {rm_container} -it --entrypoint '/bin/bash' --name {random_uuid} {' '.join(mount)} {splice_config.get('image')} {cmd}"
+            docker_cmd = f"docker run {rm_container} -it --entrypoint '/bin/bash' --name {random_uuid} {' '.join(mount)} {":".join(splice_config.get('image'))} {cmd}"
             log.info("Launch splice analysis in docker container")
             log.debug(docker_cmd)
             command(docker_cmd)
