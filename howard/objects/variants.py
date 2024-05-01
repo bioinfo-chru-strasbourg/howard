@@ -2114,13 +2114,42 @@ class Variants:
             ['"' + str(elem) + '"' for elem in self.get_extra_infos(table=table)]
         )
 
-    def export_header(self, header_name: str = None, output_file: str = None) -> str:
+    def export_header(
+        self,
+        header_name: str = None,
+        output_file: str = None,
+        output_file_ext: str = ".hdr",
+        clean_header: bool = True,
+        remove_chrom_line: bool = False,
+    ) -> str:
         """
-        It takes a VCF file, and writes the header to a new file
+        The `export_header` function takes a VCF file, extracts the header, modifies it according to
+        specified options, and writes it to a new file.
 
-        :param header_name: the name of the header file to be created. If not specified, the header will
-        be written to the output file
-        :return: The name of the temporary header file.
+        :param header_name: The `header_name` parameter is the name of the header file to be created. If
+        this parameter is not specified, the header will be written to the output file
+        :type header_name: str
+        :param output_file: The `output_file` parameter in the `export_header` function is used to
+        specify the name of the output file where the header will be written. If this parameter is not
+        provided, the header will be written to a temporary file
+        :type output_file: str
+        :param output_file_ext: The `output_file_ext` parameter in the `export_header` function is a
+        string that represents the extension of the output header file. By default, it is set to ".hdr"
+        if not specified by the user. This extension will be appended to the `output_file` name to
+        create the final, defaults to .hdr
+        :type output_file_ext: str (optional)
+        :param clean_header: The `clean_header` parameter in the `export_header` function is a boolean
+        flag that determines whether the header should be cleaned or not. When `clean_header` is set to
+        `True`, the function will clean the header by modifying certain lines based on a specific
+        pattern. If `clean_header`, defaults to True
+        :type clean_header: bool (optional)
+        :param remove_chrom_line: The `remove_chrom_line` parameter in the `export_header` function is a
+        boolean flag that determines whether the #CHROM line should be removed from the header before
+        writing it to the output file. If set to `True`, the #CHROM line will be removed; if set to `,
+        defaults to False
+        :type remove_chrom_line: bool (optional)
+        :return: The function `export_header` returns the name of the temporary header file that is
+        created.
         """
 
         if not header_name and not output_file:
@@ -2129,7 +2158,7 @@ class Variants:
         if self.get_header():
 
             # Get header object
-            haeder_obj = self.get_header()
+            header_obj = self.get_header()
 
             # Create database
             db_for_header = Database(database=self.get_input())
@@ -2142,7 +2171,7 @@ class Variants:
                 # Write header file
                 header_file_tmp = os.path.join(tmpdir, "header")
                 f = open(header_file_tmp, "w")
-                vcf.Writer(f, haeder_obj)
+                vcf.Writer(f, header_obj)
                 f.close()
 
                 # Replace #CHROM line with rel columns
@@ -2151,7 +2180,27 @@ class Variants:
                 )
                 header_list[-1] = "\t".join(db_header_columns)
 
-            tmp_header_name = output_file + ".hdr"
+                # Remove CHROM line
+                if remove_chrom_line:
+                    header_list.pop()
+
+                # Clean header
+                if clean_header:
+                    header_list_clean = []
+                    for head in header_list:
+                        # Clean head for malformed header
+                        head_clean = head
+                        head_clean = re.subn(
+                            "##FORMAT=<ID=(.*),Number=(.*),Type=Flag",
+                            r"##FORMAT=<ID=\1,Number=\2,Type=String",
+                            head_clean,
+                            2,
+                        )[0]
+                        # Write header
+                        header_list_clean.append(head_clean)
+                    header_list = header_list_clean
+
+            tmp_header_name = output_file + output_file_ext
 
             f = open(tmp_header_name, "w")
             for line in header_list:
@@ -2167,130 +2216,134 @@ class Variants:
         remove_info: bool = False,
         add_samples: bool = True,
         list_samples: list = [],
+        clean_header: bool = True,
         compression: int = 1,
         index: bool = False,
         threads: int = None,
     ) -> None:
         """
-        The `export_variant_vcf` function takes a VCF file and a list of samples, and returns a VCF file
-        with only the samples in the list.
+        The `export_variant_vcf` function exports a VCF file with specified samples, allowing options to
+        remove INFO field, add samples, and control compression and indexing.
 
-        :param vcf_file: The name of the file to write the VCF data to
+        :param vcf_file: The `vcf_file` parameter is the name of the file where the VCF data will be
+        written to. It is the output file that will contain the filtered VCF data based on the specified
+        parameters
         :param file_type: The `file_type` parameter specifies the type of the output file. It can be
-        either "vcf" or "gz" (compressed VCF file). By default, it is set to "vcf", defaults to gz
+        either "vcf" or "gz" (compressed VCF file). By default, it is set to "vcf", but you can change
+        it to "gz" if you want the output file to be, defaults to gz
         :type file_type: str (optional)
         :param remove_info: The `remove_info` parameter is a boolean flag that determines whether to
         remove the INFO field from the output VCF file. If set to `True`, the INFO field will be
-        removed. If set to `False`, the INFO field will be included in the output file. If you want to
-        remove, defaults to False
+        removed. If set to `False`, the INFO field will be included in the output file. By default, it
+        is, defaults to False
         :type remove_info: bool (optional)
-        :param add_samples: A boolean parameter that determines whether the samples should be added to
-        the VCF file or not. If set to True, the samples will be added. If set to False, the samples
-        will be removed. The default value is True, defaults to True
+        :param add_samples: The `add_samples` parameter is a boolean parameter that determines whether
+        the samples should be added to the VCF file or not. If set to True, the samples will be added.
+        If set to False, the samples will be removed. The default value is True, defaults to True
         :type add_samples: bool (optional)
         :param list_samples: The `list_samples` parameter is a list of samples that you want to include
         in the output VCF file. By default, all samples will be included. If you provide a list of
         samples, only those samples will be included in the output file
         :type list_samples: list
-        :param compression: The `compression` parameter determines the level of compression for the
-        output VCF file. It ranges from 1 to 9, with 1 being the fastest and 9 being the most
-        compressed. The default value is 1, defaults to 1
+        :param clean_header: The `clean_header` parameter in the `export_variant_vcf` function is a
+        boolean flag that determines whether to clean the header of the VCF file. If set to `True`, the
+        header will be cleaned, which may involve removing certain lines or sections from the header. If
+        set to `, defaults to True
+        :type clean_header: bool (optional)
+        :param compression: The `compression` parameter in the `export_variant_vcf` function determines
+        the level of compression for the output VCF file. It ranges from 1 to 9, with 1 being the
+        fastest and 9 being the most compressed. The default value is 1. You can adjust this, defaults
+        to 1
         :type compression: int (optional)
-        :param index: The `index` parameter is a boolean flag that determines whether or not to create
-        an index for the output VCF file. If `index` is set to `True`, the output VCF file will be
-        indexed using tabix. If `index` is set to `False`, no index will, defaults to False
+        :param index: The `index` parameter in the `export_variant_vcf` function is a boolean flag that
+        determines whether or not to create an index for the output VCF file. If `index` is set to
+        `True`, the output VCF file will be indexed using tabix. If `index`, defaults to False
         :type index: bool (optional)
         :param threads: The `threads` parameter specifies the number of threads to use for exporting the
-        VCF file. It is an optional parameter, so if it is not provided, the code will use the value
-        returned by the `get_threads()` method
+        VCF file. It determines how many parallel threads will be used during the export process. More
+        threads can potentially speed up the export process by utilizing multiple cores of the
+        processor. If this parameter is not provided, the code will
         :type threads: int
         """
 
-        # Extract VCF
-        log.debug("Export VCF...")
+        with TemporaryDirectory(dir=self.get_tmp_dir()) as tmp_dir:
 
-        connexion_format = self.get_connexion_format()
+            # Extract VCF
+            log.debug("Export VCF...")
 
-        table_variants = self.get_table_variants()
-        sql_query_hard = ""
-        sql_query_sort = ""
-        sql_query_limit = ""
+            connexion_format = self.get_connexion_format()
 
-        # Info fields
-        if remove_info:
-            if type(remove_info) != str:
-                remove_info = "."
-            info_field = f"""'{remove_info}' as INFO"""
-        else:
-            info_field = "INFO"
-        # samples fields
-        if add_samples or list_samples:
-            if not list_samples:
-                samples_fields = " , FORMAT , " + " , ".join(
-                    self.get_header_sample_list()
-                )
+            table_variants = self.get_table_variants()
+            sql_query_hard = ""
+            sql_query_sort = ""
+            sql_query_limit = ""
+
+            # Info fields
+            if remove_info:
+                if type(remove_info) != str:
+                    remove_info = "."
+                info_field = f"""'{remove_info}' as INFO"""
             else:
-                samples_fields = " , FORMAT , " + " , ".join(list_samples)
-            log.debug(f"samples_fields: {samples_fields}")
-        else:
-            samples_fields = ""
+                info_field = "INFO"
+            # samples fields
+            if add_samples:
+                if not list_samples:
+                    list_samples = self.get_header_sample_list()
+                if list_samples:
+                    samples_fields = " , FORMAT , " + " , ".join(list_samples)
+                else:
+                    samples_fields = ""
+                log.debug(f"samples_fields: {samples_fields}")
+            else:
+                samples_fields = ""
 
-        # Header (without "#CHROM")
-        tmp_header = NamedTemporaryFile(
-            prefix=self.get_prefix(), dir=self.get_tmp_dir(), delete=False
-        )
-        tmp_header_name = tmp_header.name
-        with open(tmp_header_name, "w") as header_f:
-            for head in self.get_header("list"):
-                if not head.startswith("#CHROM"):
-                    # Clean head for malformed header
-                    head_clean = head
-                    head_clean = re.subn(
-                        "##FORMAT=<ID=(.*),Number=(.*),Type=Flag",
-                        r"##FORMAT=<ID=\1,Number=\2,Type=String",
-                        head_clean,
-                        2,
-                    )[0]
-                    # Write header
-                    header_f.write(head_clean)
-
-        # Variants
-        tmp_variants = NamedTemporaryFile(
-            prefix=self.get_prefix(), dir=self.get_tmp_dir(), suffix="", delete=False
-        )
-        tmp_variants_name = tmp_variants.name
-        select_fields = """ "#CHROM", POS, ID, REF, ALT, QUAL, FILTER """
-
-        sql_query_select = f""" SELECT {select_fields}, {info_field} {samples_fields} FROM {table_variants} WHERE 1 {sql_query_hard} {sql_query_sort} {sql_query_limit} """
-
-        if connexion_format in ["duckdb"]:
-            sql_query_export = f"COPY ({sql_query_select}) TO '{tmp_variants_name}' WITH (FORMAT CSV, DELIMITER '\t', HEADER, QUOTE '', COMPRESSION 'gzip')"
-            self.conn.execute(sql_query_export)
-        elif connexion_format in ["sqlite"]:
-            cursor = pd.read_sql(sql_query_select, self.conn)
-            cursor.to_csv(
-                tmp_variants_name, sep="\t", compression="gzip", quoting="", index=False
+            # Header (without "#CHROM")
+            tmp_header_name = os.path.join(tmp_dir, "tmp_header.vcf")
+            self.export_header(
+                output_file=tmp_header_name,
+                clean_header=clean_header,
+                remove_chrom_line=True,
+                output_file_ext="",
             )
 
-        # Threads
-        if not threads:
-            threads = self.get_threads()
+            # Variants
+            tmp_variants_name = os.path.join(tmp_dir, "tmp_variants")
+            select_fields = """ "#CHROM", POS, ID, REF, ALT, QUAL, FILTER """
 
-        # export format
-        if file_type in ["vcf"]:
-            compression_type = "none"
-        else:
-            compression_type = "bgzip"
+            sql_query_select = f""" SELECT {select_fields}, {info_field} {samples_fields} FROM {table_variants} WHERE 1 {sql_query_hard} {sql_query_sort} {sql_query_limit} """
 
-        concat_and_compress_files(
-            input_files=[tmp_header_name, tmp_variants_name],
-            output_file=vcf_file,
-            compression_type=compression_type,
-            threads=threads,
-            sort=True,
-            index=index,
-            compression_level=compression,
-        )
+            if connexion_format in ["duckdb"]:
+                sql_query_export = f"COPY ({sql_query_select}) TO '{tmp_variants_name}' WITH (FORMAT CSV, DELIMITER '\t', HEADER, QUOTE '', COMPRESSION 'gzip')"
+                self.conn.execute(sql_query_export)
+            elif connexion_format in ["sqlite"]:
+                cursor = pd.read_sql(sql_query_select, self.conn)
+                cursor.to_csv(
+                    tmp_variants_name,
+                    sep="\t",
+                    compression="gzip",
+                    quoting="",
+                    index=False,
+                )
+
+            # Threads
+            if not threads:
+                threads = self.get_threads()
+
+            # export format
+            if file_type in ["vcf"]:
+                compression_type = "none"
+            else:
+                compression_type = "bgzip"
+
+            concat_and_compress_files(
+                input_files=[tmp_header_name, tmp_variants_name],
+                output_file=vcf_file,
+                compression_type=compression_type,
+                threads=threads,
+                sort=True,
+                index=index,
+                compression_level=compression,
+            )
 
     def run_commands(self, commands: list = [], threads: int = 1) -> None:
         """
