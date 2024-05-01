@@ -57,11 +57,9 @@ def test_export_variant_vcf(input_vcf, remove_info, add_samples):
             # Export varaint VCF
             variants.export_variant_vcf(
                 vcf_file=output_vcf,
-                file_type="gz",
                 remove_info=remove_info,
                 add_samples=add_samples,
                 list_samples=[],
-                compression=1,
                 index=False,
                 threads=1,
             )
@@ -739,6 +737,8 @@ def test_get_connexion_db_tmpfile():
     connexion_db = variants.get_connexion_db()
 
     assert os.path.exists(connexion_db)
+
+    remove_if_exists(connexion_db)
 
 
 def test_get_connexion_db_file():

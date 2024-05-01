@@ -1879,16 +1879,16 @@ class Variants:
 
     def export_output(
         self,
-        output_file: str = None,
-        output_header: str = None,
+        output_file: str | None = None,
+        output_header: str | None = None,
         export_header: bool = True,
-        query: str = None,
-        parquet_partitions: list = None,
-        chunk_size: int = None,
-        threads: int = None,
+        query: str | None = None,
+        parquet_partitions: list | None = None,
+        chunk_size: int | None = None,
+        threads: int | None = None,
         sort: bool = False,
         index: bool = False,
-        order_by: str = None,
+        order_by: str | None = None,
     ) -> bool:
         """
         The `export_output` function exports data from a VCF file to a specified output file in various
@@ -2212,15 +2212,12 @@ class Variants:
     def export_variant_vcf(
         self,
         vcf_file,
-        file_type: str = "gz",
         remove_info: bool = False,
         add_samples: bool = True,
         list_samples: list = [],
-        clean_header: bool = True,
-        compression: int = 1,
         index: bool = False,
-        threads: int = None,
-    ) -> None:
+        threads: int | None = None,
+    ) -> bool | None:
         """
         The `export_variant_vcf` function exports a VCF file with specified samples, allowing options to
         remove INFO field, add samples, and control compression and indexing.
@@ -2228,14 +2225,10 @@ class Variants:
         :param vcf_file: The `vcf_file` parameter is the name of the file where the VCF data will be
         written to. It is the output file that will contain the filtered VCF data based on the specified
         parameters
-        :param file_type: The `file_type` parameter specifies the type of the output file. It can be
-        either "vcf" or "gz" (compressed VCF file). By default, it is set to "vcf", but you can change
-        it to "gz" if you want the output file to be, defaults to gz
-        :type file_type: str (optional)
-        :param remove_info: The `remove_info` parameter is a boolean flag that determines whether to
-        remove the INFO field from the output VCF file. If set to `True`, the INFO field will be
-        removed. If set to `False`, the INFO field will be included in the output file. By default, it
-        is, defaults to False
+        :param remove_info: The `remove_info` parameter in the `export_variant_vcf` function is a
+        boolean flag that determines whether to remove the INFO field from the output VCF file. If set
+        to `True`, the INFO field will be removed. If set to `False`, the INFO field will be included
+        in, defaults to False
         :type remove_info: bool (optional)
         :param add_samples: The `add_samples` parameter is a boolean parameter that determines whether
         the samples should be added to the VCF file or not. If set to True, the samples will be added.
@@ -2245,105 +2238,70 @@ class Variants:
         in the output VCF file. By default, all samples will be included. If you provide a list of
         samples, only those samples will be included in the output file
         :type list_samples: list
-        :param clean_header: The `clean_header` parameter in the `export_variant_vcf` function is a
-        boolean flag that determines whether to clean the header of the VCF file. If set to `True`, the
-        header will be cleaned, which may involve removing certain lines or sections from the header. If
-        set to `, defaults to True
-        :type clean_header: bool (optional)
-        :param compression: The `compression` parameter in the `export_variant_vcf` function determines
-        the level of compression for the output VCF file. It ranges from 1 to 9, with 1 being the
-        fastest and 9 being the most compressed. The default value is 1. You can adjust this, defaults
-        to 1
-        :type compression: int (optional)
         :param index: The `index` parameter in the `export_variant_vcf` function is a boolean flag that
         determines whether or not to create an index for the output VCF file. If `index` is set to
         `True`, the output VCF file will be indexed using tabix. If `index`, defaults to False
         :type index: bool (optional)
-        :param threads: The `threads` parameter specifies the number of threads to use for exporting the
-        VCF file. It determines how many parallel threads will be used during the export process. More
-        threads can potentially speed up the export process by utilizing multiple cores of the
-        processor. If this parameter is not provided, the code will
-        :type threads: int
+        :param threads: The `threads` parameter in the `export_variant_vcf` function specifies the
+        number of threads to use for exporting the VCF file. It determines how many parallel threads
+        will be used during the export process. More threads can potentially speed up the export process
+        by utilizing multiple cores of the processor. If
+        :type threads: int | None
+        :return: The `export_variant_vcf` function returns the result of calling the `export_output`
+        method with various parameters including the output file, query, threads, sort flag, and index
+        flag. The `export_output` method is responsible for exporting the VCF data based on the
+        specified parameters and configurations provided in the `export_variant_vcf` function.
         """
 
-        with TemporaryDirectory(dir=self.get_tmp_dir()) as tmp_dir:
+        # Config
+        config = self.get_config()
 
-            # Extract VCF
-            log.debug("Export VCF...")
+        # Extract VCF
+        log.debug("Export VCF...")
 
-            connexion_format = self.get_connexion_format()
+        # Table variants
+        table_variants = self.get_table_variants()
 
-            table_variants = self.get_table_variants()
-            sql_query_hard = ""
-            sql_query_sort = ""
-            sql_query_limit = ""
+        # Threads
+        if not threads:
+            threads = self.get_threads()
 
-            # Info fields
-            if remove_info:
-                if type(remove_info) != str:
-                    remove_info = "."
-                info_field = f"""'{remove_info}' as INFO"""
-            else:
-                info_field = "INFO"
-            # samples fields
-            if add_samples:
-                if not list_samples:
-                    list_samples = self.get_header_sample_list()
-                if list_samples:
-                    samples_fields = " , FORMAT , " + " , ".join(list_samples)
-                else:
-                    samples_fields = ""
-                log.debug(f"samples_fields: {samples_fields}")
+        # Info fields
+        if remove_info:
+            if not isinstance(remove_info, str):
+                remove_info = "."
+            info_field = f"""'{remove_info}' as INFO"""
+        else:
+            info_field = "INFO"
+
+        # Samples fields
+        if add_samples:
+            if not list_samples:
+                list_samples = self.get_header_sample_list()
+            if list_samples:
+                samples_fields = " , FORMAT , " + " , ".join(list_samples)
             else:
                 samples_fields = ""
+            log.debug(f"samples_fields: {samples_fields}")
+        else:
+            samples_fields = ""
 
-            # Header (without "#CHROM")
-            tmp_header_name = os.path.join(tmp_dir, "tmp_header.vcf")
-            self.export_header(
-                output_file=tmp_header_name,
-                clean_header=clean_header,
-                remove_chrom_line=True,
-                output_file_ext="",
-            )
+        # Variants
+        select_fields = """ "#CHROM", POS, ID, REF, ALT, QUAL, FILTER """
+        sql_query_select = f""" SELECT {select_fields}, {info_field} {samples_fields} FROM {table_variants} """
 
-            # Variants
-            tmp_variants_name = os.path.join(tmp_dir, "tmp_variants")
-            select_fields = """ "#CHROM", POS, ID, REF, ALT, QUAL, FILTER """
-
-            sql_query_select = f""" SELECT {select_fields}, {info_field} {samples_fields} FROM {table_variants} WHERE 1 {sql_query_hard} {sql_query_sort} {sql_query_limit} """
-
-            if connexion_format in ["duckdb"]:
-                sql_query_export = f"COPY ({sql_query_select}) TO '{tmp_variants_name}' WITH (FORMAT CSV, DELIMITER '\t', HEADER, QUOTE '', COMPRESSION 'gzip')"
-                self.conn.execute(sql_query_export)
-            elif connexion_format in ["sqlite"]:
-                cursor = pd.read_sql(sql_query_select, self.conn)
-                cursor.to_csv(
-                    tmp_variants_name,
-                    sep="\t",
-                    compression="gzip",
-                    quoting="",
-                    index=False,
-                )
-
-            # Threads
-            if not threads:
-                threads = self.get_threads()
-
-            # export format
-            if file_type in ["vcf"]:
-                compression_type = "none"
-            else:
-                compression_type = "bgzip"
-
-            concat_and_compress_files(
-                input_files=[tmp_header_name, tmp_variants_name],
-                output_file=vcf_file,
-                compression_type=compression_type,
-                threads=threads,
-                sort=True,
-                index=index,
-                compression_level=compression,
-            )
+        return self.export_output(
+            output_file=vcf_file,
+            output_header=None,
+            export_header=True,
+            query=sql_query_select,
+            parquet_partitions=None,
+            chunk_size=config.get("chunk_size", None),
+            threads=threads,
+            sort=True,
+            index=index,
+            order_by=None,
+        )
 
     def run_commands(self, commands: list = [], threads: int = 1) -> None:
         """
@@ -3381,10 +3339,8 @@ class Variants:
                 # Export VCF file
                 self.export_variant_vcf(
                     vcf_file=tmp_vcf_name,
-                    file_type="gz",
                     remove_info=True,
                     add_samples=False,
-                    compression=1,
                     index=True,
                 )
 
@@ -4046,11 +4002,9 @@ class Variants:
                 # Export VCF file
                 self.export_variant_vcf(
                     vcf_file=tmp_vcf_name,
-                    file_type="gz",
                     remove_info=True,
                     add_samples=True,
                     list_samples=samples,
-                    compression=1,
                     index=False,
                 )
 
@@ -4429,10 +4383,8 @@ class Variants:
             # Export VCF file
             self.export_variant_vcf(
                 vcf_file=tmp_vcf_name,
-                file_type="gz",
                 remove_info=True,
                 add_samples=False,
-                compression=1,
                 index=True,
             )
 
@@ -4639,10 +4591,8 @@ class Variants:
             # Export VCF file
             self.export_variant_vcf(
                 vcf_file=tmp_vcf_name,
-                file_type="gz",
                 remove_info=".",
                 add_samples=False,
-                compression=1,
                 index=True,
             )
 
