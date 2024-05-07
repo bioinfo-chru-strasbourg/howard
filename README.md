@@ -2,7 +2,7 @@
 
 ![HOWARD Graphical User Interface](images/icon.png "HOWARD Graphical User Interface")
 
-Highly Open and Valuable tool for Variant Annotation & Ranking toward genetic Discovery
+Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery
 
 HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations, translates files in multiple formats (e.g. vcf, tsv, parquet) and generates variants statistics.
 
@@ -54,8 +54,8 @@ howard --help
 ```
 usage: howard [-h] {query,stats,convert,annotation,calculation,prioritization,process,hgvs,databases,from_annovar,gui,help} ...
 
-HOWARD:1.0.0
-Highly Open and Valuable tool for Variant Annotation & Ranking toward genetic Discovery
+HOWARD:0.10.0
+Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery
 HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations, convert on multiple formats, query variations and generates statistics
 
 Shared arguments:

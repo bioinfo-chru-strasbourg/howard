@@ -196,7 +196,7 @@ def test_get_bin_command():
             "bcftools": {
                 "bin": "bcftools",
                 "docker": {
-                    "image": "howard:1.0.0",
+                    "image": "howard:0.10.0",
                     "entrypoint": "bcftools",
                     "options": None,
                     "command": None,
@@ -222,7 +222,7 @@ def test_get_bin_command():
         tool="bcftools", bin_type="docker", config=config, param=param
     )
     assert (
-        "run  --rm  -v /tmp/howard:/tmp/howard  --cpus=2  --memory=16g  --entrypoint='bcftools'  howard:1.0.0 "
+        "run  --rm  -v /tmp/howard:/tmp/howard  --cpus=2  --memory=16g  --entrypoint='bcftools'  howard:0.10.0 "
         in tool_command
     )
 
@@ -235,7 +235,7 @@ def test_get_bin_command():
         add_options="-v /host/path/to/mount:/inner/path_to/mount",
     )
     assert (
-        "run  --rm  -v /tmp/howard:/tmp/howard  --cpus=2  --memory=16g  --entrypoint='bcftools'  -v /host/path/to/mount:/inner/path_to/mount  howard:1.0.0 "
+        "run  --rm  -v /tmp/howard:/tmp/howard  --cpus=2  --memory=16g  --entrypoint='bcftools'  -v /host/path/to/mount:/inner/path_to/mount  howard:0.10.0 "
         in tool_command
     )
 

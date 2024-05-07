@@ -5,6 +5,8 @@ howard.egg-info/
 .vscode
 .coverage
 .tmp
+.obsidian
+.benchmarks
 tests/databases/annovar/
 tests/databases/snpeff/
 tests/databases/genomes/
@@ -13,6 +15,7 @@ tests/databases/hg19.fa
 tests/databases/hg19.fa.fai
 tests/databases/.DS_Store
 tests/data/TEM*
+benchmark
 misc/
 *.DS_Store
 snpEff_*

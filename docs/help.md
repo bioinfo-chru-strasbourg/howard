@@ -70,9 +70,9 @@
 
 <!--TOC-->
 
-HOWARD:1.0.0
+HOWARD:0.10.0
 
-Highly Open and Valuable tool for Variant Annotation & Ranking toward genetic Discovery
+Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery
 
 HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations, convert on multiple formats, query variations and generates statisticsUsage examples:
 
