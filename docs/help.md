@@ -70,9 +70,9 @@
 
 <!--TOC-->
 
-HOWARD:1.0.0
+HOWARD:0.10.0
 
-Highly Open and Valuable tool for Variant Annotation & Ranking toward genetic Discovery
+Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery
 
 HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations, convert on multiple formats, query variations and generates statisticsUsage examples:
 
@@ -512,6 +512,18 @@ Usage examples:
 
 > howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotations='annovar:refGene,annovar:cosmic70,snpeff,tests/databases/annotations/current/hg19/clinvar_20210123.parquet' 
 
+> howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotation_parquet='tests/databases/annotations/current/hg19/avsnp150.parquet,tests/databases/annotations/current/hg19/dbnsfp42a.parquet' 
+
+> howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotation_bcftools='tests/databases/annotations/current/hg19/nci60.vcf.gz,tests/databases/annotations/current/hg19/dbnsfp42a.vcf.gz' 
+
+> howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotation_snpsift='tests/databases/annotations/current/hg19/nci60.vcf.gz,tests/databases/annotations/current/hg19/dbnsfp42a.vcf.gz' 
+
+> howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotation_annovar='nci60:cosmic70' 
+
+> howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotation_snpeff='-hgvs' 
+
+> howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotation_exomiser='preset=exome:transcript_source=refseq' 
+
 > howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotations='ALL:parquet' 
 
 > howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --param=config/param.json 
@@ -558,13 +570,67 @@ as a list of files in Parquet, VCF, BED, or keywords
 - For BCFTools annotation, use keyword 'bcftools' with file paths
  (e.g. 'bcftools:file.vcf.gz:file.bed.gz').
 - For Annovar annotation, use keyword 'annovar' with annovar code
- (e.g. 'annovar:refGene', 'annovar:cosmic70').
-- For snpeff annotation, use keyword 'snpeff'.
+ (e.g. 'annovar:refGene', 'annovar:refGene:cosmic70').
+- For snpeff annotation, use keyword 'snpeff' with options
+ (e.g. 'snpeff', 'snpeff:-hgvs -noShiftHgvs -spliceSiteSize 3').
+- For snpSift annotation, use keyword 'snpsift' with file paths
+ (e.g. 'snpsift:file.vcf.gz:file.bed.gz').
 - For Exomiser annotation, use keyword 'exomiser' with options as key=value
  (e.g. 'exomiser:preset=exome:transcript_source=refseq').
 - For add all availalbe databases files, use 'ALL' keyword,
  with filters on type and release
  (e.g. 'ALL', 'ALL:parquet:current', 'ALL:parquet,vcf:current,devel').
+
+```
+
+```
+--annotation_parquet=<annotation parquet>
+
+Annotation with Parquet method, as a list of files in Parquet, VCF or BED
+ (e.g. 'file1.parquet,file2.vcf.gz').
+For add all availalbe databases files, use 'ALL' keyword,
+ with filters on type and release
+ (e.g. 'ALL', 'ALL:parquet:current', 'ALL:parquet,vcf:current,devel').
+
+```
+
+```
+--annotation_bcftools=<annotation BCFTools>
+
+Annotation with BCFTools, as a list of files VCF or BED
+ (e.g. 'file.vcf.gz,file.bed.gz').
+
+```
+
+```
+--annotation_annovar=<annotation Annovar>
+
+Annotation with Annovar, as a list of database keywords
+ (e.g. 'refGene', 'refGene:cosmic70').
+
+```
+
+```
+--annotation_snpeff=<annotation snpEff>
+
+Annotation with snpEff, with options
+ (e.g. '', '-hgvs -noShiftHgvs -spliceSiteSize 3').
+
+```
+
+```
+--annotation_snpsift=<annotation snpSift>
+
+Annotation with snpSift, as a list of files VCF
+ (e.g. 'file.vcf.gz,file.bed.gz').
+
+```
+
+```
+--annotation_exomiser=<annotation Exomiser>
+
+Annotation with Exomiser, as a list of options
+ (e.g. 'preset=exome:transcript_source=refseq').
 
 ```
 
@@ -876,8 +942,11 @@ as a list of files in Parquet, VCF, BED, or keywords
 - For BCFTools annotation, use keyword 'bcftools' with file paths
  (e.g. 'bcftools:file.vcf.gz:file.bed.gz').
 - For Annovar annotation, use keyword 'annovar' with annovar code
- (e.g. 'annovar:refGene', 'annovar:cosmic70').
-- For snpeff annotation, use keyword 'snpeff'.
+ (e.g. 'annovar:refGene', 'annovar:refGene:cosmic70').
+- For snpeff annotation, use keyword 'snpeff' with options
+ (e.g. 'snpeff', 'snpeff:-hgvs -noShiftHgvs -spliceSiteSize 3').
+- For snpSift annotation, use keyword 'snpsift' with file paths
+ (e.g. 'snpsift:file.vcf.gz:file.bed.gz').
 - For Exomiser annotation, use keyword 'exomiser' with options as key=value
  (e.g. 'exomiser:preset=exome:transcript_source=refseq').
 - For add all availalbe databases files, use 'ALL' keyword,

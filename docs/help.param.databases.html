@@ -227,79 +227,106 @@ pre code {
 </style>
 
 <style>
-/* Tomorrow Theme */
-/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
-/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+/*
 
-/* Tomorrow Comment */
-.hljs-comment,
-.hljs-quote {
-	color: #8e908c;
-}
+github.com style (c) Vasily Polovnyov <vast@whiteants.net>
 
-/* Tomorrow Red */
-.hljs-variable,
-.hljs-template-variable,
-.hljs-tag,
-.hljs-name,
-.hljs-selector-id,
-.hljs-selector-class,
-.hljs-regexp,
-.hljs-deletion {
-	color: #c82829;
-}
-
-/* Tomorrow Orange */
-.hljs-number,
-.hljs-built_in,
-.hljs-builtin-name,
-.hljs-literal,
-.hljs-type,
-.hljs-params,
-.hljs-meta,
-.hljs-link {
-	color: #f5871f;
-}
-
-/* Tomorrow Yellow */
-.hljs-attribute {
-	color: #eab700;
-}
-
-/* Tomorrow Green */
-.hljs-string,
-.hljs-symbol,
-.hljs-bullet,
-.hljs-addition {
-	color: #718c00;
-}
-
-/* Tomorrow Blue */
-.hljs-title,
-.hljs-section {
-	color: #4271ae;
-}
-
-/* Tomorrow Purple */
-.hljs-keyword,
-.hljs-selector-tag {
-	color: #8959a8;
-}
+*/
 
 .hljs {
-	display: block;
-	overflow-x: auto;
-	color: #4d4d4c;
-	padding: 0.5em;
+  display: block;
+  overflow-x: auto;
+  padding: 0.5em;
+  color: #333;
+  background: #f8f8f8;
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: #998;
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-subst {
+  color: #333;
+  font-weight: bold;
+}
+
+.hljs-number,
+.hljs-literal,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag .hljs-attr {
+  color: #008080;
+}
+
+.hljs-string,
+.hljs-doctag {
+  color: #d14;
+}
+
+.hljs-title,
+.hljs-section,
+.hljs-selector-id {
+  color: #900;
+  font-weight: bold;
+}
+
+.hljs-subst {
+  font-weight: normal;
+}
+
+.hljs-type,
+.hljs-class .hljs-title {
+  color: #458;
+  font-weight: bold;
+}
+
+.hljs-tag,
+.hljs-name,
+.hljs-attribute {
+  color: #000080;
+  font-weight: normal;
+}
+
+.hljs-regexp,
+.hljs-link {
+  color: #009926;
+}
+
+.hljs-symbol,
+.hljs-bullet {
+  color: #990073;
+}
+
+.hljs-built_in,
+.hljs-builtin-name {
+  color: #0086b3;
+}
+
+.hljs-meta {
+  color: #999;
+  font-weight: bold;
+}
+
+.hljs-deletion {
+  background: #fdd;
+}
+
+.hljs-addition {
+  background: #dfd;
 }
 
 .hljs-emphasis {
-	font-style: italic;
+  font-style: italic;
 }
 
 .hljs-strong {
-	font-weight: bold;
+  font-weight: bold;
 }
+
 </style>
 
 <style>
@@ -503,117 +530,117 @@ code {
 <blockquote>
 <p>Example of simple databases parameters JSON file for downloads</p>
 </blockquote>
-<pre class="hljs"><code><div><span class="hljs-string">"databases"</span>: {
-      <span class="hljs-attr">"genomes"</span>: {
-          <span class="hljs-attr">"download_genomes"</span>: <span class="hljs-string">"~/howard/databases/genomes/current"</span>,
-          <span class="hljs-attr">"download_genomes_contig_regex"</span>: <span class="hljs-string">"chr[0-9XYM]+$"</span>
+<pre class="hljs"><code><div>&quot;databases&quot;: {
+      &quot;genomes&quot;: {
+          &quot;download_genomes&quot;: &quot;~/howard/databases/genomes/current&quot;,
+          &quot;download_genomes_contig_regex&quot;: &quot;chr[0-9XYM]+$&quot;
       },
-      <span class="hljs-attr">"snpeff"</span>: {
-          <span class="hljs-attr">"download_snpeff"</span>: <span class="hljs-string">"~/howard/databases/snpeff/current"</span>
+      &quot;snpeff&quot;: {
+          &quot;download_snpeff&quot;: &quot;~/howard/databases/snpeff/current&quot;
       },
-      <span class="hljs-attr">"annovar"</span>: {
-          <span class="hljs-attr">"download_annovar"</span>: <span class="hljs-string">"~/howard/databases/annovar/current"</span>,
-          <span class="hljs-attr">"download_annovar_files"</span>: <span class="hljs-string">"refGene,cosmic70,nci60"</span>
+      &quot;annovar&quot;: {
+          &quot;download_annovar&quot;: &quot;~/howard/databases/annovar/current&quot;,
+          &quot;download_annovar_files&quot;: &quot;refGene,cosmic70,nci60&quot;
       },
-      <span class="hljs-attr">"refseq"</span>: {
-          <span class="hljs-attr">"download_refseq"</span>: <span class="hljs-string">"~/howard/databases/refseq/current"</span>
+      &quot;refseq&quot;: {
+          &quot;download_refseq&quot;: &quot;~/howard/databases/refseq/current&quot;
       },
-      <span class="hljs-attr">"dbnsfp"</span>: {
-          <span class="hljs-attr">"download_dbnsfp"</span>: <span class="hljs-string">"~/howard/databases/dbnsfp/current"</span>,
-          <span class="hljs-attr">"download_dbnsfp_release"</span>: <span class="hljs-string">"4.4a"</span>
+      &quot;dbnsfp&quot;: {
+          &quot;download_dbnsfp&quot;: &quot;~/howard/databases/dbnsfp/current&quot;,
+          &quot;download_dbnsfp_release&quot;: &quot;4.4a&quot;
       },
-      <span class="hljs-attr">"alphamissense"</span>: {
-          <span class="hljs-attr">"download_alphamissense"</span>: <span class="hljs-string">"~/howard/databases/alphamissense/current"</span>
+      &quot;alphamissense&quot;: {
+          &quot;download_alphamissense&quot;: &quot;~/howard/databases/alphamissense/current&quot;
       },
-      <span class="hljs-attr">"exomiser"</span>: {
-          <span class="hljs-attr">"download_exomiser"</span>: <span class="hljs-string">"~/howard/databases/exomiser/current"</span>
+      &quot;exomiser&quot;: {
+          &quot;download_exomiser&quot;: &quot;~/howard/databases/exomiser/current&quot;
       },
-      <span class="hljs-attr">"dbsnp"</span>: {
-          <span class="hljs-attr">"download_dbsnp"</span>: <span class="hljs-string">"~/howard/databases/dbsnp/current"</span>,
-          <span class="hljs-attr">"download_dbsnp_releases"</span>: <span class="hljs-string">"b156"</span>,
-          <span class="hljs-attr">"download_dbsnp_vcf"</span>: <span class="hljs-literal">true</span>,
-          <span class="hljs-attr">"download_dbsnp_parquet"</span>: <span class="hljs-literal">true</span>
+      &quot;dbsnp&quot;: {
+          &quot;download_dbsnp&quot;: &quot;~/howard/databases/dbsnp/current&quot;,
+          &quot;download_dbsnp_releases&quot;: &quot;b156&quot;,
+          &quot;download_dbsnp_vcf&quot;: true,
+          &quot;download_dbsnp_parquet&quot;: true
       },
-      <span class="hljs-attr">"assemblies"</span>: [
-          <span class="hljs-string">"hg19"</span>
+      &quot;assemblies&quot;: [
+          &quot;hg19&quot;
       ]
 }
 </div></code></pre>
 <blockquote>
 <p>Example of a full Databases parameters JSON file for downloads</p>
 </blockquote>
-<pre class="hljs"><code><div><span class="hljs-string">"databases"</span>: {
-      <span class="hljs-attr">"genomes_folder"</span>: <span class="hljs-string">"~/howard/databases/genomes/current"</span>,
-      <span class="hljs-attr">"genome"</span>: <span class="hljs-string">"~/howard/databases/genomes/current/hg19/hg19.fa"</span>,
-      <span class="hljs-attr">"genomes"</span>: {
-          <span class="hljs-attr">"download_genomes"</span>: <span class="hljs-string">"~/howard/databases/genomes/current"</span>,
-          <span class="hljs-attr">"download_genomes_provider"</span>: <span class="hljs-string">"UCSC"</span>,
-          <span class="hljs-attr">"download_genomes_contig_regex"</span>: <span class="hljs-string">"chr[0-9XYM]+$"</span>
+<pre class="hljs"><code><div>&quot;databases&quot;: {
+      &quot;genomes_folder&quot;: &quot;~/howard/databases/genomes/current&quot;,
+      &quot;genome&quot;: &quot;~/howard/databases/genomes/current/hg19/hg19.fa&quot;,
+      &quot;genomes&quot;: {
+          &quot;download_genomes&quot;: &quot;~/howard/databases/genomes/current&quot;,
+          &quot;download_genomes_provider&quot;: &quot;UCSC&quot;,
+          &quot;download_genomes_contig_regex&quot;: &quot;chr[0-9XYM]+$&quot;
       },
-      <span class="hljs-attr">"snpeff"</span>: {
-          <span class="hljs-attr">"download_snpeff"</span>: <span class="hljs-string">"~/howard/databases/snpeff/current"</span>
+      &quot;snpeff&quot;: {
+          &quot;download_snpeff&quot;: &quot;~/howard/databases/snpeff/current&quot;
       },
-      <span class="hljs-attr">"annovar"</span>: {
-          <span class="hljs-attr">"download_annovar"</span>: <span class="hljs-string">"~/howard/databases/annovar/current"</span>,
-          <span class="hljs-attr">"download_annovar_files"</span>: <span class="hljs-string">"refGene,cosmic70,nci60"</span>,
-          <span class="hljs-attr">"download_annovar_url"</span>: <span class="hljs-string">"http://www.openbioinformatics.org/annovar/download"</span>
+      &quot;annovar&quot;: {
+          &quot;download_annovar&quot;: &quot;~/howard/databases/annovar/current&quot;,
+          &quot;download_annovar_files&quot;: &quot;refGene,cosmic70,nci60&quot;,
+          &quot;download_annovar_url&quot;: &quot;http://www.openbioinformatics.org/annovar/download&quot;
       },
-      <span class="hljs-attr">"refseq"</span>: {
-          <span class="hljs-attr">"download_refseq"</span>: <span class="hljs-string">"~/howard/databases/refseq/current"</span>,
-          <span class="hljs-attr">"download_refseq_url"</span>: <span class="hljs-string">"http://hgdownload.soe.ucsc.edu/goldenPath"</span>,
-          <span class="hljs-attr">"download_refseq_prefix"</span>: <span class="hljs-string">"ncbiRefSeq"</span>,
-          <span class="hljs-attr">"download_refseq_files"</span>: <span class="hljs-string">"ncbiRefSeq.txt,ncbiRefSeqLink.txt"</span>,
-          <span class="hljs-attr">"download_refseq_format_file"</span>: <span class="hljs-string">"ncbiRefSeq.txt"</span>,
-          <span class="hljs-attr">"download_refseq_include_utr5"</span>: <span class="hljs-literal">false</span>,
-          <span class="hljs-attr">"download_refseq_include_utr3"</span>: <span class="hljs-literal">false</span>,
-          <span class="hljs-attr">"download_refseq_include_chrM"</span>: <span class="hljs-literal">false</span>,
-          <span class="hljs-attr">"download_refseq_include_non_canonical_chr"</span>: <span class="hljs-literal">false</span>,
-          <span class="hljs-attr">"download_refseq_include_non_coding_transcripts"</span>: <span class="hljs-literal">false</span>,
-          <span class="hljs-attr">"download_refseq_include_transcript_version"</span>: <span class="hljs-literal">false</span>
+      &quot;refseq&quot;: {
+          &quot;download_refseq&quot;: &quot;~/howard/databases/refseq/current&quot;,
+          &quot;download_refseq_url&quot;: &quot;http://hgdownload.soe.ucsc.edu/goldenPath&quot;,
+          &quot;download_refseq_prefix&quot;: &quot;ncbiRefSeq&quot;,
+          &quot;download_refseq_files&quot;: &quot;ncbiRefSeq.txt,ncbiRefSeqLink.txt&quot;,
+          &quot;download_refseq_format_file&quot;: &quot;ncbiRefSeq.txt&quot;,
+          &quot;download_refseq_include_utr5&quot;: false,
+          &quot;download_refseq_include_utr3&quot;: false,
+          &quot;download_refseq_include_chrM&quot;: false,
+          &quot;download_refseq_include_non_canonical_chr&quot;: false,
+          &quot;download_refseq_include_non_coding_transcripts&quot;: false,
+          &quot;download_refseq_include_transcript_version&quot;: false
       },
-      <span class="hljs-attr">"dbnsfp"</span>: {
-          <span class="hljs-attr">"download_dbnsfp"</span>: <span class="hljs-string">"~/howard/databases/dbnsfp/current"</span>,
-          <span class="hljs-attr">"download_dbnsfp_url"</span>: <span class="hljs-string">"https://dbnsfp.s3.amazonaws.com"</span>,
-          <span class="hljs-attr">"download_dbnsfp_release"</span>: <span class="hljs-string">"4.4a"</span>,
-          <span class="hljs-attr">"download_dbnsfp_parquet_size"</span>: <span class="hljs-number">100</span>,
-          <span class="hljs-attr">"download_dbnsfp_subdatabases"</span>: <span class="hljs-literal">true</span>,
-          <span class="hljs-attr">"download_dbnsfp_parquet"</span>: <span class="hljs-literal">false</span>,
-          <span class="hljs-attr">"download_dbnsfp_vcf"</span>: <span class="hljs-literal">false</span>,
-          <span class="hljs-attr">"download_dbnsfp_no_files_all"</span>: <span class="hljs-literal">false</span>,
-          <span class="hljs-attr">"download_dbnsfp_add_info"</span>: <span class="hljs-literal">false</span>,
-          <span class="hljs-attr">"download_dbnsfp_row_group_size"</span>: <span class="hljs-number">100000</span>
+      &quot;dbnsfp&quot;: {
+          &quot;download_dbnsfp&quot;: &quot;~/howard/databases/dbnsfp/current&quot;,
+          &quot;download_dbnsfp_url&quot;: &quot;https://dbnsfp.s3.amazonaws.com&quot;,
+          &quot;download_dbnsfp_release&quot;: &quot;4.4a&quot;,
+          &quot;download_dbnsfp_parquet_size&quot;: 100,
+          &quot;download_dbnsfp_subdatabases&quot;: true,
+          &quot;download_dbnsfp_parquet&quot;: false,
+          &quot;download_dbnsfp_vcf&quot;: false,
+          &quot;download_dbnsfp_no_files_all&quot;: false,
+          &quot;download_dbnsfp_add_info&quot;: false,
+          &quot;download_dbnsfp_row_group_size&quot;: 100000
       },
-      <span class="hljs-attr">"alphamissense"</span>: {
-          <span class="hljs-attr">"download_alphamissense"</span>: <span class="hljs-string">"~/howard/databases/alphamissense/current"</span>,
-          <span class="hljs-attr">"download_alphamissense_url"</span>: <span class="hljs-string">"https://storage.googleapis.com/dm_alphamissense"</span>
+      &quot;alphamissense&quot;: {
+          &quot;download_alphamissense&quot;: &quot;~/howard/databases/alphamissense/current&quot;,
+          &quot;download_alphamissense_url&quot;: &quot;https://storage.googleapis.com/dm_alphamissense&quot;
       },
-      <span class="hljs-attr">"exomiser"</span>: {
-          <span class="hljs-attr">"download_exomiser"</span>: <span class="hljs-string">"~/howard/databases/exomiser/current"</span>,
-          <span class="hljs-attr">"download_exomiser_url"</span>: <span class="hljs-string">"http://data.monarchinitiative.org/exomiser"</span>,
-          <span class="hljs-attr">"download_exomiser_remm_url"</span>: <span class="hljs-string">"https://kircherlab.bihealth.org/download/ReMM"</span>,
-          <span class="hljs-attr">"download_exomiser_cadd_url"</span>: <span class="hljs-string">"https://kircherlab.bihealth.org/download/CADD"</span>,
-          <span class="hljs-attr">"download_exomiser_cadd_url_snv_file"</span>: <span class="hljs-string">"whole_genome_SNVs.tsv.gz"</span>,
-          <span class="hljs-attr">"download_exomiser_cadd_url_indel_file"</span>: <span class="hljs-string">"InDels.tsv.gz"</span>
+      &quot;exomiser&quot;: {
+          &quot;download_exomiser&quot;: &quot;~/howard/databases/exomiser/current&quot;,
+          &quot;download_exomiser_url&quot;: &quot;http://data.monarchinitiative.org/exomiser&quot;,
+          &quot;download_exomiser_remm_url&quot;: &quot;https://kircherlab.bihealth.org/download/ReMM&quot;,
+          &quot;download_exomiser_cadd_url&quot;: &quot;https://kircherlab.bihealth.org/download/CADD&quot;,
+          &quot;download_exomiser_cadd_url_snv_file&quot;: &quot;whole_genome_SNVs.tsv.gz&quot;,
+          &quot;download_exomiser_cadd_url_indel_file&quot;: &quot;InDels.tsv.gz&quot;
       },
-      <span class="hljs-attr">"dbsnp"</span>: {
-          <span class="hljs-attr">"download_dbsnp"</span>: <span class="hljs-string">"~/howard/databases/dbsnp/current"</span>,
-          <span class="hljs-attr">"download_dbsnp_releases"</span>: <span class="hljs-string">"b156"</span>,
-          <span class="hljs-attr">"download_dbsnp_url"</span>: <span class="hljs-string">"https://ftp.ncbi.nih.gov/snp/archive"</span>,
-          <span class="hljs-attr">"download_dbsnp_url_files_prefix"</span>: <span class="hljs-string">"GCF_000001405"</span>,
-          <span class="hljs-attr">"download_dbsnp_assemblies_map"</span>: {
-              <span class="hljs-attr">"hg19"</span>: <span class="hljs-string">"25"</span>,
-              <span class="hljs-attr">"hg38"</span>: <span class="hljs-string">"40"</span>
+      &quot;dbsnp&quot;: {
+          &quot;download_dbsnp&quot;: &quot;~/howard/databases/dbsnp/current&quot;,
+          &quot;download_dbsnp_releases&quot;: &quot;b156&quot;,
+          &quot;download_dbsnp_url&quot;: &quot;https://ftp.ncbi.nih.gov/snp/archive&quot;,
+          &quot;download_dbsnp_url_files_prefix&quot;: &quot;GCF_000001405&quot;,
+          &quot;download_dbsnp_assemblies_map&quot;: {
+              &quot;hg19&quot;: &quot;25&quot;,
+              &quot;hg38&quot;: &quot;40&quot;
           },
-          <span class="hljs-attr">"download_dbsnp_vcf"</span>: <span class="hljs-literal">true</span>,
-          <span class="hljs-attr">"download_dbsnp_parquet"</span>: <span class="hljs-literal">false</span>
+          &quot;download_dbsnp_vcf&quot;: true,
+          &quot;download_dbsnp_parquet&quot;: false
       },
-      <span class="hljs-attr">"parameters"</span>: {
-          <span class="hljs-attr">"generate_param_releases"</span>: <span class="hljs-string">"current"</span>,
-          <span class="hljs-attr">"generate_param_formats"</span>: <span class="hljs-string">"parquet"</span>,
-          <span class="hljs-attr">"generate_param_bcftools"</span>: <span class="hljs-literal">false</span>
+      &quot;parameters&quot;: {
+          &quot;generate_param_releases&quot;: &quot;current&quot;,
+          &quot;generate_param_formats&quot;: &quot;parquet&quot;,
+          &quot;generate_param_bcftools&quot;: false
       },
-      <span class="hljs-attr">"assemblies"</span>: [
-          <span class="hljs-string">"hg19"</span>
+      &quot;assemblies&quot;: [
+          &quot;hg19&quot;
       ]
 }
 </div></code></pre>
@@ -627,12 +654,12 @@ code {
 <blockquote>
 <p>Default assembly for all analysis tools</p>
 </blockquote>
-<pre class="hljs"><code><div><span class="hljs-string">"assembly"</span>: <span class="hljs-string">"hg19"</span> 
+<pre class="hljs"><code><div>&quot;assembly&quot;: &quot;hg19&quot; 
 </div></code></pre>
 <blockquote>
 <p>List of assemblies for databases download tool</p>
 </blockquote>
-<pre class="hljs"><code><div><span class="hljs-string">"assembly"</span>: <span class="hljs-string">"hg19,hg38"</span> 
+<pre class="hljs"><code><div>&quot;assembly&quot;: &quot;hg19,hg38&quot; 
 </div></code></pre>
 <h3 id="databasesgenomesfolder">databases::genomes_folder</h3>
 <p>Folder containing genomes. (e.g. '/Users/lebechea/howard/databases/genomes/current'</p>
@@ -917,9 +944,9 @@ code {
 <p>Type: <code>Path</code></p>
 <p>Default: <code>None</code></p>
 <h4 id="databasesfromextannparamextann">databases::from_extann::param_extann</h4>
-<p>Param extann file path. Param containing configuration, options to replace chars and bedlike header description, conf vcf specs.</p>
+<p>Param extann file path. Param containing configuration, options to replace chars and bedlike header description, conf vcf specs. (e.g. '~/howard/config/param.extann.json')</p>
 <p>Type: <code>Path</code></p>
-<p>Default: <code>~/howard/config/param.extann.json</code></p>
+<p>Default: <code>None</code></p>
 <h4 id="databasesfromextannmodeextann">databases::from_extann::mode_extann</h4>
 <p>Mode extann selection. How to pick transcript from ncbi, keep all, keep the longest, or keep the chosen one (transcript_extann).</p>
 <p>Type: <code>str</code></p>

@@ -22,6 +22,7 @@
     "bgzip": "bgzip",
     "java": "java",
     "snpeff": "~/howard/tools/snpeff/current/bin/snpEff.jar",
+    "snpsift": "~/howard/tools/snpeff/current/bin/SnpSift.jar",
     "annovar": "~/howard/tools/annovar/current/bin/table_annovar.pl",
     "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-14.0.0.jar"
   }
