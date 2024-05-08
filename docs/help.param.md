@@ -653,7 +653,7 @@ Examples:
 
 ### annotation::snpsift
 
-Annotation process using snpSift. Provide a list of database files and annotation fields (can nnot be renamed).
+Annotation process using snpSift. Provide a list of database files and annotation fields.
 
 Examples: 
 
@@ -678,7 +678,7 @@ Examples:
 
 Specify the list of database files in formats VCF. Files need to be compressed and indexed.
 
-This parameter enables users to select specific database fields (e.g. '"field": null'). Use 'INFO' or 'ALL' keyword to select all fields within the database INFO/Tags header (e.g. '"INFO": null', '"ALL": null').
+This parameter enables users to select specific database fields and optionally rename them (e.g. '"field": null' to keep field name, '"field": "new_name"' to rename field). Use 'INFO' or 'ALL' keyword to select all fields within the database INFO/Tags header (e.g. '"INFO": null', '"ALL": null').
 
 
 If a full path is not provided, the system will automatically detect files within database folders (see Configuration doc) and assembly (see Parameter option).
@@ -699,8 +699,8 @@ Examples:
 ```json
 "annotations": {
    "tests/databases/annotations/current/hg19/dbnsfp42a.vcf.gz": {
-      "Polyphen2_HDIV_pred": null,
-      "ClinPred_pred": null,
+      "Polyphen2_HDIV_pred": "PolyPhen",
+      "ClinPred_pred": "ClinVar",
       "REVEL_score": null
    }
 }

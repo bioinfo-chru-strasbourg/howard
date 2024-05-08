@@ -2439,6 +2439,7 @@ class Variants:
                                         AND table_parquet.\"POS\" = table_variants.\"POS\"
                                         AND table_parquet.\"ALT\" = table_variants.\"ALT\"
                                         AND table_parquet.\"REF\" = table_variants.\"REF\"
+                                        AND table_parquet.INFO NOT IN ('','.')
                             )
                         )
             ;
@@ -3059,6 +3060,19 @@ class Variants:
             log.error(msg_err)
             raise ValueError(msg_err)
 
+        # Config - bcftools
+        bcftools_bin_command = get_bin_command(
+            bin="bcftools",
+            tool="bcftools",
+            bin_type="bin",
+            config=config,
+            default_folder=f"{DEFAULT_TOOLS_FOLDER}/bcftools",
+        )
+        if not bcftools_bin_command:
+            msg_err = f"Annotation failed: no bcftools bin '{bcftools_bin_command}'"
+            log.error(msg_err)
+            raise ValueError(msg_err)
+
         # Config - BCFTools databases folders
         databases_folders = set(
             self.get_config()
@@ -3221,6 +3235,7 @@ class Variants:
                         # Number of fields
                         nb_annotation_field = 0
                         annotation_list = []
+                        annotation_infos_rename_list = []
 
                         for annotation_field in annotation_fields:
 
@@ -3241,6 +3256,12 @@ class Variants:
                                 log.info(
                                     f"Annotation '{annotation_name}' - '{annotation_field}' -> '{annotation_fields_new_name}'"
                                 )
+
+                                # BCFTools annotate param to rename fields
+                                if annotation_field != annotation_fields_new_name:
+                                    annotation_infos_rename_list.append(
+                                        f"{annotation_fields_new_name}:=INFO/{annotation_field}"
+                                    )
 
                                 # Add INFO field to header
                                 db_hdr_vcf_header_infos_number = (
@@ -3306,22 +3327,9 @@ class Variants:
 
                         if annotation_infos != "":
 
-                            # tmp_annotation_vcf = NamedTemporaryFile(
-                            #     prefix=self.get_prefix(),
-                            #     dir=self.get_tmp_dir(),
-                            #     suffix=".vcf",
-                            #     delete=False,
-                            # )
-                            # tmp_annotation_vcf_name = tmp_annotation_vcf.name
-                            # tmp_files.append(tmp_annotation_vcf_name)
-                            # tmp_annotation_vcf_name_err = (
-                            #     tmp_annotation_vcf_name + ".err"
-                            # )
-                            # err_files.append(tmp_annotation_vcf_name_err)
-
                             # Annotated VCF (and error file)
                             tmp_annotation_vcf_name = os.path.join(
-                                tmp_dir, os.path.basename(annotation) + ".vcf"
+                                tmp_dir, os.path.basename(annotation) + ".vcf.gz"
                             )
                             tmp_annotation_vcf_name_err = (
                                 tmp_annotation_vcf_name + ".err"
@@ -3333,8 +3341,16 @@ class Variants:
                             else:
                                 annotation_infos_option = ""
 
+                            # Info fields rename
+                            if annotation_infos_rename_list:
+                                annotation_infos_rename = " -c " + ",".join(
+                                    annotation_infos_rename_list
+                                )
+                            else:
+                                annotation_infos_rename = ""
+
                             # Annotate command
-                            command_annotate = f"{snpsift_bin_command} annotate {annotation_infos_option} {db_file} {tmp_vcf_name} 1>{tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} "
+                            command_annotate = f"{snpsift_bin_command} annotate {annotation_infos_option} {db_file} {tmp_vcf_name} | {bcftools_bin_command} annotate --threads={threads} {annotation_infos_rename} -Oz1 -o {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} "
 
                             # Add command
                             commands[command_annotate] = tmp_annotation_vcf_name
@@ -3348,6 +3364,7 @@ class Variants:
                         add_samples=False,
                         index=True,
                     )
+                    shutil.copyfile(tmp_vcf_name, "/tmp/input.vcf")
 
                     # Num command
                     nb_command = 0
@@ -3358,7 +3375,11 @@ class Variants:
                         log.info(
                             f"Annotation - Annotate [{nb_command}/{len(commands)}]..."
                         )
+                        log.debug(f"command_annotate={command_annotate}")
                         run_parallel_commands([command_annotate], threads)
+
+                        # Debug
+                        shutil.copyfile(commands[command_annotate], "/tmp/snpsift.vcf")
 
                         # Update variants
                         log.info(
@@ -3555,17 +3576,6 @@ class Variants:
                             + str(annotation_fields)
                         )
 
-                    # Create file for field rename
-                    log.debug("Create file for field rename")
-                    tmp_rename = NamedTemporaryFile(
-                        prefix=self.get_prefix(),
-                        dir=self.get_tmp_dir(),
-                        suffix=".rename",
-                        delete=False,
-                    )
-                    tmp_rename_name = tmp_rename.name
-                    tmp_files.append(tmp_rename_name)
-
                     # Number of fields
                     nb_annotation_field = 0
                     annotation_list = []
@@ -3623,7 +3633,13 @@ class Variants:
                                 )
                             )
 
-                            annotation_list.append(annotation_field)
+                            # annotation_list.append(annotation_field)
+                            if annotation_field != annotation_fields_new_name:
+                                annotation_list.append(
+                                    f"{annotation_fields_new_name}:=INFO/{annotation_field}"
+                                )
+                            else:
+                                annotation_list.append(annotation_field)
 
                             nb_annotation_field += 1
 
@@ -3673,14 +3689,6 @@ class Variants:
                         chomosomes_list = list(sql_query_chromosomes_df["CHROM"])
 
                         log.debug("Chromosomes found: " + str(list(chomosomes_list)))
-
-                        # Add rename info
-                        run_parallel_commands(
-                            [
-                                f"echo 'INFO/{annotation_field} {annotation_fields_new_name}' >> {tmp_rename_name}"
-                            ],
-                            1,
-                        )
 
                         # BED columns in the annotation file
                         if db_file_type in ["bed"]:
@@ -3748,7 +3756,7 @@ class Variants:
                             )
 
                             # Command
-                            command_annotate = f"{bcftools_bin_command} annotate --pair-logic exact --regions-file={tmp_bed_name} -a {db_file} -h {tmp_header_vcf_name} -c {annotation_infos} --rename-annots={tmp_rename_name} {tmp_vcf_name} -o {tmp_annotation_vcf_name} -Oz 2>>{tmp_annotation_vcf_name_err} && tabix {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} "
+                            command_annotate = f"{bcftools_bin_command} annotate --pair-logic exact --regions-file={tmp_bed_name} -a {db_file} -h {tmp_header_vcf_name} -c {annotation_infos} {tmp_vcf_name} -o {tmp_annotation_vcf_name} -Oz1 2>>{tmp_annotation_vcf_name_err} && tabix {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} "
 
                             # Add command
                             commands.append(command_annotate)
