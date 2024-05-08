@@ -995,7 +995,7 @@ code {
 <pre class="hljs"><code><div><span class="hljs-string">"csvStats"</span>: <span class="hljs-string">"OUTPUT.csv"</span>
 </div></code></pre>
 <h3 id="annotationsnpsift">annotation::snpsift</h3>
-<p>Annotation process using snpSift. Provide a list of database files and annotation fields (can nnot be renamed).</p>
+<p>Annotation process using snpSift. Provide a list of database files and annotation fields.</p>
 <p>Examples:</p>
 <blockquote>
 <p>Annotation with multiple databases in multiple formats</p>
@@ -1015,7 +1015,7 @@ code {
 </div></code></pre>
 <h4 id="annotationsnpsiftannotations">annotation::snpsift::annotations</h4>
 <p>Specify the list of database files in formats VCF. Files need to be compressed and indexed.</p>
-<p>This parameter enables users to select specific database fields (e.g. '&quot;field&quot;: null'). Use 'INFO' or 'ALL' keyword to select all fields within the database INFO/Tags header (e.g. '&quot;INFO&quot;: null', '&quot;ALL&quot;: null').</p>
+<p>This parameter enables users to select specific database fields and optionally rename them (e.g. '&quot;field&quot;: null' to keep field name, '&quot;field&quot;: &quot;new_name&quot;' to rename field). Use 'INFO' or 'ALL' keyword to select all fields within the database INFO/Tags header (e.g. '&quot;INFO&quot;: null', '&quot;ALL&quot;: null').</p>
 <p>If a full path is not provided, the system will automatically detect files within database folders (see Configuration doc) and assembly (see Parameter option).</p>
 <p>Examples:</p>
 <blockquote>
@@ -1032,8 +1032,8 @@ code {
 </blockquote>
 <pre class="hljs"><code><div><span class="hljs-string">"annotations"</span>: {
    <span class="hljs-attr">"tests/databases/annotations/current/hg19/dbnsfp42a.vcf.gz"</span>: {
-      <span class="hljs-attr">"Polyphen2_HDIV_pred"</span>: <span class="hljs-literal">null</span>,
-      <span class="hljs-attr">"ClinPred_pred"</span>: <span class="hljs-literal">null</span>,
+      <span class="hljs-attr">"Polyphen2_HDIV_pred"</span>: <span class="hljs-string">"PolyPhen"</span>,
+      <span class="hljs-attr">"ClinPred_pred"</span>: <span class="hljs-string">"ClinVar"</span>,
       <span class="hljs-attr">"REVEL_score"</span>: <span class="hljs-literal">null</span>
    }
 }
