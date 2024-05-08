@@ -189,8 +189,11 @@ arguments = {
         """- For BCFTools annotation, use keyword 'bcftools' with file paths\n"""
         """ (e.g. 'bcftools:file.vcf.gz:file.bed.gz').\n"""
         """- For Annovar annotation, use keyword 'annovar' with annovar code\n"""
-        """ (e.g. 'annovar:refGene', 'annovar:cosmic70').\n"""
-        """- For snpeff annotation, use keyword 'snpeff'.\n"""
+        """ (e.g. 'annovar:refGene', 'annovar:refGene:cosmic70').\n"""
+        """- For snpeff annotation, use keyword 'snpeff' with options\n"""
+        """ (e.g. 'snpeff', 'snpeff:-hgvs -noShiftHgvs -spliceSiteSize 3').\n"""
+        """- For snpSift annotation, use keyword 'snpsift' with file paths\n"""
+        """ (e.g. 'snpsift:file.vcf.gz:file.bed.gz').\n"""
         """- For Exomiser annotation, use keyword 'exomiser' with options as key=value\n"""
         """ (e.g. 'exomiser:preset=exome:transcript_source=refseq').\n"""
         """- For add all availalbe databases files, use 'ALL' keyword,\n"""
@@ -198,6 +201,34 @@ arguments = {
         """ (e.g. 'ALL', 'ALL:parquet:current', 'ALL:parquet,vcf:current,devel').\n""",
         "default": None,
         "type": str,
+        "extra": {
+            "format": "DB[,DB]*[,bcftools:DB[:DB]*][,annovar:KEY[:KEY]*][,snpeff][,exomiser[:var=val]*]",
+            "examples": {
+                "Parquet method annotation with 2 Parquet files": '"annotations": "/path/to/database1.parquet,/path/to/database2.parquet"',
+                "Parquet method annotation with multiple file formats": '"annotations": "/path/to/database1.parquet,/path/to/database2.vcf.gz,/path/to/database2.bed.gz"',
+                "Parquet method annotation with available Parquet databases in current release (check databases in production)": '"annotations": "ALL:parquet:current"',
+                "Parquet method annotation with available Parquet databases in latest release (check databases before production)": '"annotations": "ALL:parquet:latest"',
+                "Annotation with BCFTools": '"annotations": "bcftools:/path/to/database2.vcf.gz:/path/to/database2.bed.gz"',
+                "Annotation with Annovar (refGene with hgvs and Cosmic)": '"annotations": "annovar:refGene:cosmic70"',
+                "Annotation with snpEff (default options)": '"annotations": "snpeff"',
+                "Annotation with snpEff (with options)": '"annotations": "snpeff:-hgvs -noShiftHgvs -spliceSiteSize 3"',
+                "Annotation with snpSift": '"annotations": "snpsift:/path/to/database2.vcf.gz:/path/to/database2.bed.gz"',
+                "Annotation with Exomiser with options": '"annotations": "exomiser:preset=exome:hpo=0001156+0001363+0011304+0010055:transcript_source=refseq:release=2109"',
+                "Multiple tools annotations (Parquet method, BCFTools, Annovar, snpEff and Exomiser)": '"annotations": "/path/to/database1.parquet,bcftools:/path/to/database2.vcf.gz,annovar:refGene:cosmic70,snpeff,exomiser:preset=exome:transcript_source=refseq"',
+            },
+        },
+    },
+    # Annotations Parquet
+    "annotation_parquet": {
+        "metavar": "annotation parquet",
+        "help": """Annotation with Parquet method, as a list of files in Parquet, VCF or BED\n"""
+        """ (e.g. 'file1.parquet,file2.vcf.gz').\n"""
+        """For add all availalbe databases files, use 'ALL' keyword,\n"""
+        """ with filters on type and release\n"""
+        """ (e.g. 'ALL', 'ALL:parquet:current', 'ALL:parquet,vcf:current,devel').\n""",
+        "default": None,
+        "type": str,
+        "nargs": "+",
         "gooey": {
             "widget": "MultiFileChooser",
             "options": {
@@ -206,20 +237,103 @@ arguments = {
             },
         },
         "extra": {
-            "format": "DB[,DB]*[,bcftools:DB[:DB]*][,annovar:KEY[:KEY]*][,snpeff][,exomiser[:var=val]*]",
+            "format": "DB[,DB]*",
             "examples": {
-                "Parquet method annotation with 2 Parquet files": '"annotations": "/path/to/database1.parquet,/path/to/database2.parquet"',
-                "Parquet method annotation with multiple file formats": '"annotations": "/path/to/database1.parquet,/path/to/database2.vcf.gz,/path/to/database2.bed.gz"',
-                "Parquet method annotation with available Parquet databases in current release (check databases in production)": '"annotations": "ALL:parquet:current"',
-                "Parquet method annotation with available Parquet databases in latest release (check databases before production)": '"annotations": "ALL:parquet:latest"',
-                "Annovation with BCFTools": '"annotations": "bcftools:/path/to/database2.vcf.gz:/path/to/database2.bed.gz"',
-                "Annovation with Annovar (refGene with hgvs and Cosmic)": '"annotations": "annovar:refGene:cosmic70"',
-                "Annovation with snpEff (default options)": '"annotations": "snpeff"',
-                "Annovation with Exomiser with options": '"annotations": "exomiser:preset=exome:hpo=0001156+0001363+0011304+0010055:transcript_source=refseq:release=2109"',
-                "Multiple tools annotations (Parquet method, BCFTools, Annovar, snpEff and Exomiser)": '"annotations": "/path/to/database1.parquet,bcftools:/path/to/database2.vcf.gz,annovar:refGene:cosmic70,snpeff,exomiser:preset=exome:transcript_source=refseq"',
+                "Parquet method annotation with 2 Parquet files": '"annotation_parquet": "/path/to/database1.parquet,/path/to/database2.parquet"',
+                "Parquet method annotation with multiple file formats": '"annotation_parquet": "/path/to/database1.parquet,/path/to/database2.vcf.gz,/path/to/database2.bed.gz"',
+                "Parquet method annotation with available Parquet databases in current release (check databases in production)": '"annotation_parquet": "ALL:parquet:current"',
+                "Parquet method annotation with available Parquet databases in latest release (check databases before production)": '"annotation_parquet": "ALL:parquet:latest"',
             },
         },
     },
+    # Annotations BCFTools
+    "annotation_bcftools": {
+        "metavar": "annotation BCFTools",
+        "help": """Annotation with BCFTools, as a list of files VCF or BED\n"""
+        """ (e.g. 'file.vcf.gz,file.bed.gz').\n""",
+        "default": None,
+        "type": str,
+        "nargs": "+",
+        "gooey": {
+            "widget": "MultiFileChooser",
+            "options": {
+                "default_dir": DEFAULT_ANNOTATIONS_FOLDER,
+                "message": "Database files",
+            },
+        },
+        "extra": {
+            "format": "DB[,DB]*",
+            "examples": {
+                "Annovation with BCFTools": '"annotation_bcftools": "/path/to/database2.vcf.gz,/path/to/database2.bed.gz"',
+            },
+        },
+    },
+    # Annotations snpeff
+    "annotation_snpeff": {
+        "metavar": "annotation snpEff",
+        "help": """Annotation with snpEff, with options\n"""
+        """ (e.g. '', '-hgvs -noShiftHgvs -spliceSiteSize 3').\n""",
+        "default": None,
+        "type": str,
+        "extra": {
+            "format": "options",
+            "examples": {
+                "Annotation with snpEff (default options)": '"annotation_snpeff": ""',
+                "Annotation with snpEff (with options)": '"annotation_snpeff": "-hgvs -noShiftHgvs -spliceSiteSize 3"',
+            },
+        },
+    },
+    # Annotations snpSift
+    "annotation_snpsift": {
+        "metavar": "annotation snpSift",
+        "help": """Annotation with snpSift, as a list of files VCF\n"""
+        """ (e.g. 'file.vcf.gz,file.bed.gz').\n""",
+        "default": None,
+        "type": str,
+        "nargs": "+",
+        "gooey": {
+            "widget": "MultiFileChooser",
+            "options": {
+                "default_dir": DEFAULT_ANNOTATIONS_FOLDER,
+                "message": "Database files",
+            },
+        },
+        "extra": {
+            "format": "DB[,DB]*",
+            "examples": {
+                "Annovation with snpSift": '"annotation_snpsift": "/path/to/database2.vcf.gz,/path/to/database2.bed.gz"',
+            },
+        },
+    },
+    # Annotations Annovar
+    "annotation_annovar": {
+        "metavar": "annotation Annovar",
+        "help": """Annotation with Annovar, as a list of database keywords\n"""
+        """ (e.g. 'refGene', 'refGene:cosmic70').\n""",
+        "default": None,
+        "type": str,
+        "extra": {
+            "format": "keyword[:keyword]*",
+            "examples": {
+                "Annotation with Annovar (refGene with hgvs and Cosmic)": '"annotation_annovar": "refGene:cosmic70"',
+            },
+        },
+    },
+    # Annotations Exomiser
+    "annotation_exomiser": {
+        "metavar": "annotation Exomiser",
+        "help": """Annotation with Exomiser, as a list of options\n"""
+        """ (e.g. 'preset=exome:transcript_source=refseq').\n""",
+        "default": None,
+        "type": str,
+        "extra": {
+            "format": "option=value[:option=value]",
+            "examples": {
+                "Annotation with Exomiser with options": '"annotation_exomiser": "preset=exome:hpo=0001156+0001363+0011304+0010055:transcript_source=refseq:release=2109"',
+            },
+        },
+    },
+    # Update annotation
     "annotations_update": {
         "help": """Update option for annotation (Only for Parquet annotation).\n"""
         """If True, annotation fields will be removed and re-annotated.\n"""
@@ -232,6 +346,7 @@ arguments = {
         },
         "extra": {"param_section": "annotation:options"},
     },
+    # Append annotation
     "annotations_append": {
         "help": """Append option for annotation (Only for Parquet annotation).\n"""
         """If True, annotation fields will be annotated only if not annotation exists for the variant.\n"""
@@ -1707,6 +1822,12 @@ commands_arguments = {
         "epilog": """Usage examples:\n"""
         """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/current/hg19/avsnp150.parquet,tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet' \n"""
         """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotations='annovar:refGene,annovar:cosmic70,snpeff,tests/databases/annotations/current/hg19/clinvar_20210123.parquet' \n"""
+        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotation_parquet='tests/databases/annotations/current/hg19/avsnp150.parquet,tests/databases/annotations/current/hg19/dbnsfp42a.parquet' \n"""
+        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotation_bcftools='tests/databases/annotations/current/hg19/nci60.vcf.gz,tests/databases/annotations/current/hg19/dbnsfp42a.vcf.gz' \n"""
+        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotation_snpsift='tests/databases/annotations/current/hg19/nci60.vcf.gz,tests/databases/annotations/current/hg19/dbnsfp42a.vcf.gz' \n"""
+        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotation_annovar='nci60:cosmic70' \n"""
+        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotation_snpeff='-hgvs' \n"""
+        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotation_exomiser='preset=exome:transcript_source=refseq' \n"""
         """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotations='ALL:parquet' \n"""
         """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --param=config/param.json \n"""
         """    \n""",
@@ -1716,6 +1837,12 @@ commands_arguments = {
                 "output": True,
                 "param": False,
                 "annotations": False,
+                "annotation_parquet": False,
+                "annotation_bcftools": False,
+                "annotation_annovar": False,
+                "annotation_snpeff": False,
+                "annotation_snpsift": False,
+                "annotation_exomiser": False,
                 "assembly": False,
             },
             "Annotation": {

@@ -2670,6 +2670,57 @@ class Variants:
             .get("bcftools", ["~/howard/databases/bcftools/current"])
         )
 
+        # Get param annotations
+        if param.get("annotations", None) and isinstance(
+            param.get("annotations", None), str
+        ):
+            log.debug(param.get("annotations", None))
+            param_annotation_list = param.get("annotations").split(",")
+        else:
+            param_annotation_list = []
+
+        # Each tools param
+        if param.get("annotation_parquet", None) != None:
+            log.debug(
+                f"""param.get("annotation_parquet", None)={param.get("annotation_parquet", None)}"""
+            )
+            if isinstance(param.get("annotation_parquet", None), list):
+                param_annotation_list.append(",".join(param.get("annotation_parquet")))
+            else:
+                param_annotation_list.append(param.get("annotation_parquet"))
+        if param.get("annotation_snpsift", None) != None:
+            if isinstance(param.get("annotation_snpsift", None), list):
+                param_annotation_list.append(
+                    "snpsift:"
+                    + "+".join(param.get("annotation_snpsift")).replace(",", "+")
+                )
+            else:
+                param_annotation_list.append(
+                    "snpsift:" + param.get("annotation_snpsift").replace(",", "+")
+                )
+        if param.get("annotation_snpeff", None) != None:
+            param_annotation_list.append("snpeff:" + param.get("annotation_snpeff"))
+        if param.get("annotation_bcftools", None) != None:
+            if isinstance(param.get("annotation_bcftools", None), list):
+                param_annotation_list.append(
+                    "bcftools:"
+                    + "+".join(param.get("annotation_bcftools")).replace(",", "+")
+                )
+            else:
+                param_annotation_list.append(
+                    "bcftools:" + param.get("annotation_bcftools").replace(",", "+")
+                )
+        if param.get("annotation_annovar", None) != None:
+            param_annotation_list.append("annovar:" + param.get("annotation_annovar"))
+        if param.get("annotation_exomiser", None) != None:
+            param_annotation_list.append("exomiser:" + param.get("annotation_exomiser"))
+
+        # Merge param annotations list
+        param["annotations"] = ",".join(param_annotation_list)
+
+        # debug
+        log.debug(f"param_annotations={param['annotations']}")
+
         if param.get("annotations"):
 
             # Log
@@ -2743,7 +2794,7 @@ class Variants:
                     annotations = annotations_list.get(annotation_file, None)
 
                     # Annotation snpEff
-                    if annotation_file == "snpeff":
+                    if annotation_file.startswith("snpeff"):
 
                         log.debug(f"Quick Annotation snpEff")
 
@@ -2752,6 +2803,11 @@ class Variants:
 
                         if "options" not in param["annotation"]["snpeff"]:
                             param["annotation"]["snpeff"]["options"] = ""
+
+                        # snpEff options in annotations
+                        param["annotation"]["snpeff"]["options"] = "".join(
+                            annotation_file.split(":")[1:]
+                        )
 
                     # Annotation Annovar
                     elif annotation_file.startswith("annovar"):
@@ -2767,9 +2823,10 @@ class Variants:
                         # Options
                         annotation_file_split = annotation_file.split(":")
                         for annotation_file_annotation in annotation_file_split[1:]:
-                            param["annotation"]["annovar"]["annotations"][
-                                annotation_file_annotation
-                            ] = annotations
+                            if annotation_file_annotation:
+                                param["annotation"]["annovar"]["annotations"][
+                                    annotation_file_annotation
+                                ] = annotations
 
                     # Annotation Exomiser
                     elif annotation_file.startswith("exomiser"):
@@ -2782,37 +2839,41 @@ class Variants:
                         annotation_file_split = annotation_file.split(":")
                         log.debug(f"{annotation_file_split}")
                         for annotation_file_option in annotation_file_split[1:]:
-                            annotation_file_option_var_val = (
-                                annotation_file_option.split("=")
-                            )
-                            annotation_file_option_var = annotation_file_option_var_val[
-                                0
-                            ].strip()
-                            annotation_file_option_val = annotation_file_option_var_val[
-                                1
-                            ].strip()
-                            log.debug(
-                                f"{annotation_file_option_var}={annotation_file_option_val}"
-                            )
-                            if annotation_file_option_val:
-                                if not annotation_file_option_val:
-                                    annotation_file_option_val = None
-                                else:
-                                    annotation_file_option_val = (
-                                        annotation_file_option_val.replace(
-                                            "+", ","
-                                        ).replace(" ", "")
-                                    )
-                                param["annotation"]["exomiser"][
-                                    annotation_file_option_var
-                                ] = annotation_file_option_val
+                            if annotation_file_option != "":
+                                annotation_file_option_var_val = (
+                                    annotation_file_option.split("=")
+                                )
+                                annotation_file_option_var = (
+                                    annotation_file_option_var_val[0].strip()
+                                )
+                                annotation_file_option_val = (
+                                    annotation_file_option_var_val[1].strip()
+                                )
+                                log.debug(
+                                    f"{annotation_file_option_var}={annotation_file_option_val}"
+                                )
+                                if annotation_file_option_val:
+                                    if not annotation_file_option_val:
+                                        annotation_file_option_val = None
+                                    else:
+                                        annotation_file_option_val = (
+                                            annotation_file_option_val.replace(
+                                                "+", ","
+                                            ).replace(" ", "")
+                                        )
+                                    param["annotation"]["exomiser"][
+                                        annotation_file_option_var
+                                    ] = annotation_file_option_val
 
                     # Annotation Parquet or BCFTOOLS
                     else:
 
-                        # BCFTools detection
+                        # Tools detection
                         if annotation_file.startswith("bcftools:"):
                             annotation_tool_initial = "bcftools"
+                            annotation_file = ":".join(annotation_file.split(":")[1:])
+                        elif annotation_file.startswith("snpsift:"):
+                            annotation_tool_initial = "snpsift"
                             annotation_file = ":".join(annotation_file.split(":")[1:])
                         else:
                             annotation_tool_initial = None
@@ -2824,108 +2885,115 @@ class Variants:
 
                         for annotation_file in annotation_file_list:
 
-                            # Annotation tool initial
-                            annotation_tool = annotation_tool_initial
+                            if annotation_file:
 
-                            # Find file
-                            annotation_file_found = None
+                                # Annotation tool initial
+                                annotation_tool = annotation_tool_initial
 
-                            # Expand user
-                            annotation_file = full_path(annotation_file)
+                                # Find file
+                                annotation_file_found = None
 
-                            if os.path.exists(annotation_file):
-                                annotation_file_found = annotation_file
+                                # Expand user
+                                annotation_file = full_path(annotation_file)
 
-                            else:
-                                # Find within assembly folders
-                                for annotations_database in annotations_databases:
-                                    found_files = find_all(
-                                        annotation_file,
-                                        os.path.join(annotations_database, assembly),
-                                    )
-                                    if len(found_files) > 0:
-                                        annotation_file_found = found_files[0]
-                                        break
-                                if not annotation_file_found and not assembly:
-                                    # Find within folders
+                                if os.path.exists(annotation_file):
+                                    annotation_file_found = annotation_file
+
+                                else:
+                                    # Find within assembly folders
                                     for annotations_database in annotations_databases:
                                         found_files = find_all(
-                                            annotation_file, annotations_database
+                                            annotation_file,
+                                            os.path.join(
+                                                annotations_database, assembly
+                                            ),
                                         )
                                         if len(found_files) > 0:
                                             annotation_file_found = found_files[0]
                                             break
-                            log.debug(
-                                f"for {annotation_file} annotation_file_found={annotation_file_found}"
-                            )
-
-                            # Full path
-                            annotation_file_found = full_path(annotation_file_found)
-
-                            if annotation_file_found:
-
-                                database = Database(database=annotation_file_found)
-                                quick_annotation_format = database.get_format()
-                                quick_annotation_is_compressed = (
-                                    database.is_compressed()
-                                )
-                                quick_annotation_is_indexed = os.path.exists(
-                                    f"{annotation_file_found}.tbi"
-                                )
-                                bcftools_preference = False
-
-                                # Check Annotation Tool
-                                if not annotation_tool:
-                                    if (
-                                        bcftools_preference
-                                        and quick_annotation_format in ["vcf", "bed"]
-                                        and quick_annotation_is_compressed
-                                        and quick_annotation_is_indexed
-                                    ):
-                                        annotation_tool = "bcftools"
-                                    elif quick_annotation_format in [
-                                        "vcf",
-                                        "bed",
-                                        "tsv",
-                                        "tsv",
-                                        "csv",
-                                        "json",
-                                        "tbl",
-                                        "parquet",
-                                        "duckdb",
-                                    ]:
-                                        annotation_tool = "parquet"
-                                    else:
-                                        log.error(
-                                            f"Quick Annotation File {annotation_file_found} - Format {quick_annotation_format} not supported yet"
-                                        )
-                                        raise ValueError(
-                                            f"Quick Annotation File {annotation_file_found} - Format {quick_annotation_format} not supported yet"
-                                        )
-
+                                    if not annotation_file_found and not assembly:
+                                        # Find within folders
+                                        for (
+                                            annotations_database
+                                        ) in annotations_databases:
+                                            found_files = find_all(
+                                                annotation_file, annotations_database
+                                            )
+                                            if len(found_files) > 0:
+                                                annotation_file_found = found_files[0]
+                                                break
                                 log.debug(
-                                    f"Quick Annotation File {annotation_file} - Annotation tool: {annotation_tool}"
+                                    f"for {annotation_file} annotation_file_found={annotation_file_found}"
                                 )
 
-                                # Annotation Tool dispatch
-                                if annotation_tool:
-                                    if annotation_tool not in param["annotation"]:
-                                        param["annotation"][annotation_tool] = {}
-                                    if (
-                                        "annotations"
-                                        not in param["annotation"][annotation_tool]
-                                    ):
+                                # Full path
+                                annotation_file_found = full_path(annotation_file_found)
+
+                                if annotation_file_found:
+
+                                    database = Database(database=annotation_file_found)
+                                    quick_annotation_format = database.get_format()
+                                    quick_annotation_is_compressed = (
+                                        database.is_compressed()
+                                    )
+                                    quick_annotation_is_indexed = os.path.exists(
+                                        f"{annotation_file_found}.tbi"
+                                    )
+                                    bcftools_preference = False
+
+                                    # Check Annotation Tool
+                                    if not annotation_tool:
+                                        if (
+                                            bcftools_preference
+                                            and quick_annotation_format
+                                            in ["vcf", "bed"]
+                                            and quick_annotation_is_compressed
+                                            and quick_annotation_is_indexed
+                                        ):
+                                            annotation_tool = "bcftools"
+                                        elif quick_annotation_format in [
+                                            "vcf",
+                                            "bed",
+                                            "tsv",
+                                            "tsv",
+                                            "csv",
+                                            "json",
+                                            "tbl",
+                                            "parquet",
+                                            "duckdb",
+                                        ]:
+                                            annotation_tool = "parquet"
+                                        else:
+                                            log.error(
+                                                f"Quick Annotation File {annotation_file_found} - Format {quick_annotation_format} not supported yet"
+                                            )
+                                            raise ValueError(
+                                                f"Quick Annotation File {annotation_file_found} - Format {quick_annotation_format} not supported yet"
+                                            )
+
+                                    log.debug(
+                                        f"Quick Annotation File {annotation_file} - Annotation tool: {annotation_tool}"
+                                    )
+
+                                    # Annotation Tool dispatch
+                                    if annotation_tool:
+                                        if annotation_tool not in param["annotation"]:
+                                            param["annotation"][annotation_tool] = {}
+                                        if (
+                                            "annotations"
+                                            not in param["annotation"][annotation_tool]
+                                        ):
+                                            param["annotation"][annotation_tool][
+                                                "annotations"
+                                            ] = {}
                                         param["annotation"][annotation_tool][
                                             "annotations"
-                                        ] = {}
-                                    param["annotation"][annotation_tool]["annotations"][
-                                        annotation_file_found
-                                    ] = annotations
+                                        ][annotation_file_found] = annotations
 
-                            else:
-                                log.error(
-                                    f"Quick Annotation File {annotation_file} does NOT exist"
-                                )
+                                else:
+                                    log.error(
+                                        f"Quick Annotation File {annotation_file} does NOT exist"
+                                    )
 
                 self.set_param(param)
 
@@ -2937,6 +3005,9 @@ class Variants:
             if param.get("annotation", {}).get("bcftools", None):
                 log.info("Annotations 'bcftools'...")
                 self.annotation_bcftools()
+            if param.get("annotation", {}).get("snpsift", None):
+                log.info("Annotations 'snpsift'...")
+                self.annotation_snpsift()
             if param.get("annotation", {}).get("annovar", None):
                 log.info("Annotations 'annovar'...")
                 self.annotation_annovar()
@@ -2954,6 +3025,346 @@ class Variants:
                 fields=self.get_explode_infos_fields(),
                 force=True,
             )
+
+    def annotation_snpsift(self, threads: int = None) -> None:
+        """
+        This function annotate with bcftools
+
+        :param threads: Number of threads to use
+        :return: the value of the variable "return_value".
+        """
+
+        # DEBUG
+        log.debug("Start annotation with bcftools databases")
+
+        # Threads
+        if not threads:
+            threads = self.get_threads()
+        log.debug("Threads: " + str(threads))
+
+        # Config
+        config = self.get_config()
+        log.debug("Config: " + str(config))
+
+        # Config - snpSift
+        snpsift_bin_command = get_bin_command(
+            bin="SnpSift.jar",
+            tool="snpsift",
+            bin_type="jar",
+            config=config,
+            default_folder=f"{DEFAULT_TOOLS_FOLDER}/snpeff",
+        )
+        if not snpsift_bin_command:
+            msg_err = f"Annotation failed: no snpsift bin '{snpsift_bin_command}'"
+            log.error(msg_err)
+            raise ValueError(msg_err)
+
+        # Config - BCFTools databases folders
+        databases_folders = set(
+            self.get_config()
+            .get("folders", {})
+            .get("databases", {})
+            .get("annotations", ["."])
+            + self.get_config()
+            .get("folders", {})
+            .get("databases", {})
+            .get("bcftools", ["."])
+        )
+        log.debug("Databases annotations: " + str(databases_folders))
+
+        # Param
+        annotations = (
+            self.get_param()
+            .get("annotation", {})
+            .get("snpsift", {})
+            .get("annotations", None)
+        )
+        log.debug("Annotations: " + str(annotations))
+
+        # Assembly
+        assembly = self.get_param().get(
+            "assembly", self.get_config().get("assembly", DEFAULT_ASSEMBLY)
+        )
+
+        # Data
+        table_variants = self.get_table_variants()
+
+        # Check if not empty
+        log.debug("Check if not empty")
+        sql_query_chromosomes = (
+            f"""SELECT count(*) as count FROM {table_variants} as table_variants"""
+        )
+        sql_query_chromosomes_df = self.get_query_to_df(sql_query_chromosomes)
+        if not sql_query_chromosomes_df["count"][0]:
+            log.info(f"VCF empty")
+            return
+
+        # VCF header
+        vcf_reader = self.get_header()
+        log.debug("Initial header: " + str(vcf_reader.infos))
+
+        # Existing annotations
+        for vcf_annotation in self.get_header().infos:
+
+            vcf_annotation_line = self.get_header().infos.get(vcf_annotation)
+            log.debug(
+                f"Existing annotations in VCF: {vcf_annotation} [{vcf_annotation_line}]"
+            )
+
+        if annotations:
+
+            with TemporaryDirectory(dir=self.get_tmp_dir()) as tmp_dir:
+
+                # Export VCF file
+                tmp_vcf_name = os.path.join(tmp_dir, "input.vcf.gz")
+
+                # Init
+                commands = {}
+
+                for annotation in annotations:
+                    annotation_fields = annotations[annotation]
+
+                    # Annotation Name
+                    annotation_name = os.path.basename(annotation)
+
+                    if not annotation_fields:
+                        annotation_fields = {"INFO": None}
+
+                    log.debug(f"Annotation '{annotation_name}'")
+                    log.debug(
+                        f"Annotation '{annotation_name}' - fields: {annotation_fields}"
+                    )
+
+                    # Create Database
+                    database = Database(
+                        database=annotation,
+                        databases_folders=databases_folders,
+                        assembly=assembly,
+                    )
+
+                    # Find files
+                    db_file = database.get_database()
+                    db_file = full_path(db_file)
+                    db_hdr_file = database.get_header_file()
+                    db_hdr_file = full_path(db_hdr_file)
+                    db_file_type = database.get_format()
+                    db_tbi_file = f"{db_file}.tbi"
+                    db_file_compressed = database.is_compressed()
+
+                    # Check if compressed
+                    if not db_file_compressed:
+                        log.error(
+                            f"Annotation '{annotation}' - {db_file} NOT compressed file"
+                        )
+                        raise ValueError(
+                            f"Annotation '{annotation}' - {db_file} NOT compressed file"
+                        )
+
+                    # Check if indexed
+                    if not os.path.exists(db_tbi_file):
+                        log.error(
+                            f"Annotation '{annotation}' - {db_file} NOT indexed file"
+                        )
+                        raise ValueError(
+                            f"Annotation '{annotation}' - {db_file} NOT indexed file"
+                        )
+
+                    # Check index - try to create if not exists
+                    if not os.path.exists(db_file) or not os.path.exists(db_hdr_file):
+                        log.error("Annotation failed: database not valid")
+                        log.error(f"Annotation annotation file: {db_file}")
+                        log.error(f"Annotation annotation header: {db_hdr_file}")
+                        log.error(f"Annotation annotation index: {db_tbi_file}")
+                        raise ValueError(
+                            f"Annotation failed: database not valid - annotation file {db_file} / annotation header {db_hdr_file} / annotation index {db_tbi_file} / annotation compression {db_file_compressed}"
+                        )
+                    else:
+
+                        log.debug(
+                            f"Annotation '{annotation}' - file: "
+                            + str(db_file)
+                            + " and "
+                            + str(db_hdr_file)
+                        )
+
+                        # Load header as VCF object
+                        db_hdr_vcf = Variants(input=db_hdr_file)
+                        db_hdr_vcf_header_infos = db_hdr_vcf.get_header().infos
+                        log.debug(
+                            "Annotation database header: "
+                            + str(db_hdr_vcf_header_infos)
+                        )
+
+                        # For all fields in database
+                        annotation_fields_full = False
+                        if "ALL" in annotation_fields or "INFO" in annotation_fields:
+                            annotation_fields = {
+                                key: key for key in db_hdr_vcf_header_infos
+                            }
+                            log.debug(
+                                "Annotation database header - All annotations added: "
+                                + str(annotation_fields)
+                            )
+                            annotation_fields_full = True
+
+                        # # Create file for field rename
+                        # log.debug("Create file for field rename")
+                        # tmp_rename = NamedTemporaryFile(
+                        #     prefix=self.get_prefix(),
+                        #     dir=self.get_tmp_dir(),
+                        #     suffix=".rename",
+                        #     delete=False,
+                        # )
+                        # tmp_rename_name = tmp_rename.name
+                        # tmp_files.append(tmp_rename_name)
+
+                        # Number of fields
+                        nb_annotation_field = 0
+                        annotation_list = []
+
+                        for annotation_field in annotation_fields:
+
+                            # field new name, if parametered SKIPPED !!!!!! not managed actually TODO
+                            annotation_fields_new_name = annotation_fields.get(
+                                annotation_field, annotation_field
+                            )
+                            if not annotation_fields_new_name:
+                                annotation_fields_new_name = annotation_field
+
+                            # Check if field is in DB and if field is not elready in input data
+                            if (
+                                annotation_field in db_hdr_vcf.get_header().infos
+                                and annotation_fields_new_name
+                                not in self.get_header().infos
+                            ):
+
+                                log.info(
+                                    f"Annotation '{annotation_name}' - '{annotation_field}' -> '{annotation_fields_new_name}'"
+                                )
+
+                                # Add INFO field to header
+                                db_hdr_vcf_header_infos_number = (
+                                    db_hdr_vcf_header_infos[annotation_field].num or "."
+                                )
+                                db_hdr_vcf_header_infos_type = (
+                                    db_hdr_vcf_header_infos[annotation_field].type
+                                    or "String"
+                                )
+                                db_hdr_vcf_header_infos_description = (
+                                    db_hdr_vcf_header_infos[annotation_field].desc
+                                    or f"{annotation_field} description"
+                                )
+                                db_hdr_vcf_header_infos_source = (
+                                    db_hdr_vcf_header_infos[annotation_field].source
+                                    or "unknown"
+                                )
+                                db_hdr_vcf_header_infos_version = (
+                                    db_hdr_vcf_header_infos[annotation_field].version
+                                    or "unknown"
+                                )
+
+                                vcf_reader.infos[annotation_fields_new_name] = (
+                                    vcf.parser._Info(
+                                        annotation_fields_new_name,
+                                        db_hdr_vcf_header_infos_number,
+                                        db_hdr_vcf_header_infos_type,
+                                        db_hdr_vcf_header_infos_description,
+                                        db_hdr_vcf_header_infos_source,
+                                        db_hdr_vcf_header_infos_version,
+                                        self.code_type_map[
+                                            db_hdr_vcf_header_infos_type
+                                        ],
+                                    )
+                                )
+
+                                annotation_list.append(annotation_field)
+
+                                nb_annotation_field += 1
+
+                            else:
+
+                                if (
+                                    annotation_field
+                                    not in db_hdr_vcf.get_header().infos
+                                ):
+                                    log.warning(
+                                        f"Annotation '{annotation_name}' - '{annotation_field}' - not available in vcf/bed file"
+                                    )
+                                if (
+                                    annotation_fields_new_name
+                                    in self.get_header().infos
+                                ):
+                                    log.warning(
+                                        f"Annotation '{annotation_name}' - '{annotation_fields_new_name}' - already exists (skipped)"
+                                    )
+
+                        log.info(
+                            f"Annotation '{annotation_name}' - {nb_annotation_field} annotations available in vcf/bed file"
+                        )
+
+                        annotation_infos = ",".join(annotation_list)
+
+                        if annotation_infos != "":
+
+                            # tmp_annotation_vcf = NamedTemporaryFile(
+                            #     prefix=self.get_prefix(),
+                            #     dir=self.get_tmp_dir(),
+                            #     suffix=".vcf",
+                            #     delete=False,
+                            # )
+                            # tmp_annotation_vcf_name = tmp_annotation_vcf.name
+                            # tmp_files.append(tmp_annotation_vcf_name)
+                            # tmp_annotation_vcf_name_err = (
+                            #     tmp_annotation_vcf_name + ".err"
+                            # )
+                            # err_files.append(tmp_annotation_vcf_name_err)
+
+                            # Annotated VCF (and error file)
+                            tmp_annotation_vcf_name = os.path.join(
+                                tmp_dir, os.path.basename(annotation) + ".vcf"
+                            )
+                            tmp_annotation_vcf_name_err = (
+                                tmp_annotation_vcf_name + ".err"
+                            )
+
+                            # Add fields to annotate
+                            if not annotation_fields_full:
+                                annotation_infos_option = f"-info {annotation_infos}"
+                            else:
+                                annotation_infos_option = ""
+
+                            # Annotate command
+                            command_annotate = f"{snpsift_bin_command} annotate {annotation_infos_option} {db_file} {tmp_vcf_name} 1>{tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} "
+
+                            # Add command
+                            commands[command_annotate] = tmp_annotation_vcf_name
+
+                if commands:
+
+                    # Export VCF file
+                    self.export_variant_vcf(
+                        vcf_file=tmp_vcf_name,
+                        remove_info=True,
+                        add_samples=False,
+                        index=True,
+                    )
+
+                    # Num command
+                    nb_command = 0
+
+                    # Annotate
+                    for command_annotate in commands:
+                        nb_command += 1
+                        log.info(
+                            f"Annotation - Annotate [{nb_command}/{len(commands)}]..."
+                        )
+                        run_parallel_commands([command_annotate], threads)
+
+                        # Update variants
+                        log.info(
+                            f"Annotation - Updating [{nb_command}/{len(commands)}]..."
+                        )
+                        self.update_from_vcf(commands[command_annotate])
 
     def annotation_bcftools(self, threads: int = None) -> None:
         """
@@ -2981,14 +3392,18 @@ class Variants:
             delete_tmp = False
             log.debug("Delete tmp files/folders: " + str(delete_tmp))
 
-        # Config - BCFTools bin
-        bcftools_bin = get_bin(
+        # Config - BCFTools bin command
+        bcftools_bin_command = get_bin_command(
             bin="bcftools",
             tool="bcftools",
             bin_type="bin",
             config=config,
             default_folder=f"{DEFAULT_TOOLS_FOLDER}/bcftools",
         )
+        if not bcftools_bin_command:
+            msg_err = f"Annotation failed: no bcftools bin '{bcftools_bin_command}'"
+            log.error(msg_err)
+            raise ValueError(msg_err)
 
         # Config - BCFTools databases folders
         databases_folders = set(
@@ -3062,11 +3477,16 @@ class Variants:
             for annotation in annotations:
                 annotation_fields = annotations[annotation]
 
+                # Annotation Name
+                annotation_name = os.path.basename(annotation)
+
                 if not annotation_fields:
                     annotation_fields = {"INFO": None}
 
-                log.debug(f"Annotation '{annotation}'")
-                log.debug(f"Annotation '{annotation}' - fields: {annotation_fields}")
+                log.debug(f"Annotation '{annotation_name}'")
+                log.debug(
+                    f"Annotation '{annotation_name}' - fields: {annotation_fields}"
+                )
 
                 # Create Database
                 database = Database(
@@ -3167,7 +3587,7 @@ class Variants:
                         ):
 
                             log.info(
-                                f"Annotation '{annotation}' - '{annotation_field}' -> '{annotation_fields_new_name}'"
+                                f"Annotation '{annotation_name}' - '{annotation_field}' -> '{annotation_fields_new_name}'"
                             )
 
                             # Add INFO field to header
@@ -3219,7 +3639,7 @@ class Variants:
                                 )
 
                     log.info(
-                        f"Annotation '{annotation}' - {nb_annotation_field} annotations available in vcf/bed file"
+                        f"Annotation '{annotation_name}' - {nb_annotation_field} annotations available in vcf/bed file"
                     )
 
                     annotation_infos = ",".join(annotation_list)
@@ -3328,7 +3748,7 @@ class Variants:
                             )
 
                             # Command
-                            command_annotate = f"{bcftools_bin} annotate --pair-logic exact --regions-file={tmp_bed_name} -a {db_file} -h {tmp_header_vcf_name} -c {annotation_infos} --rename-annots={tmp_rename_name} {tmp_vcf_name} -o {tmp_annotation_vcf_name} -Oz 2>>{tmp_annotation_vcf_name_err} && tabix {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} "
+                            command_annotate = f"{bcftools_bin_command} annotate --pair-logic exact --regions-file={tmp_bed_name} -a {db_file} -h {tmp_header_vcf_name} -c {annotation_infos} --rename-annots={tmp_rename_name} {tmp_vcf_name} -o {tmp_annotation_vcf_name} -Oz 2>>{tmp_annotation_vcf_name_err} && tabix {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} "
 
                             # Add command
                             commands.append(command_annotate)
@@ -3360,8 +3780,8 @@ class Variants:
                     for command in commands:
                         commands_threaded.append(
                             command.replace(
-                                f"{bcftools_bin} annotate ",
-                                f"{bcftools_bin} annotate --threads={threads_bcftools_annotate} ",
+                                f"{bcftools_bin_command} annotate ",
+                                f"{bcftools_bin_command} annotate --threads={threads_bcftools_annotate} ",
                             )
                         )
                     commands = commands_threaded
@@ -3398,7 +3818,7 @@ class Variants:
                         tmp_files_remove_command = " && rm -f " + " ".join(tmp_files)
 
                     # Command merge
-                    merge_command = f"{bcftools_bin} merge --force-samples --threads={threads} {tmp_vcf_name} {tmp_ann_vcf_list_cmd} -o {tmp_annotate_vcf_name} -Oz 2>>{tmp_annotate_vcf_name_err} {tmp_files_remove_command}"
+                    merge_command = f"{bcftools_bin_command} merge --force-samples --threads={threads} {tmp_vcf_name} {tmp_ann_vcf_list_cmd} -o {tmp_annotate_vcf_name} -Oz 2>>{tmp_annotate_vcf_name_err} {tmp_files_remove_command}"
                     log.info(
                         f"Annotation - Annotation merging "
                         + str(len(commands))
@@ -3542,16 +3962,6 @@ class Variants:
             log.error(f"Databases annotations: {databases_folders} NOT found")
         log.debug("Databases annotations: " + str(databases_folders))
 
-        # Config - Java
-        java_bin = get_bin(
-            tool="java",
-            bin="java",
-            bin_type="bin",
-            config=config,
-            default_folder="/usr/bin",
-        )
-        log.debug("Java bin: " + str(java_bin))
-
         # Config - Exomiser
         exomiser_bin_command = get_bin_command(
             bin="exomiser-cli*.jar",
@@ -3561,6 +3971,10 @@ class Variants:
             default_folder=f"{DEFAULT_TOOLS_FOLDER}/exomiser",
         )
         log.debug("Exomiser bin command: " + str(exomiser_bin_command))
+        if not exomiser_bin_command:
+            msg_err = f"Annotation failed: no exomiser bin '{exomiser_bin_command}'"
+            log.error(msg_err)
+            raise ValueError(msg_err)
 
         # Param
         param = self.get_param()
@@ -4257,29 +4671,42 @@ class Variants:
         )
         log.debug("Databases annotations: " + str(databases_folders))
 
-        # Config - Java
-        java_bin = get_bin(
-            tool="java",
-            bin="java",
-            bin_type="bin",
-            config=config,
-            default_folder="/usr/bin",
-        )
-        if not (os.path.exists(java_bin) or (java_bin and which(java_bin))):
-            log.error(f"Annotation failed: no java bin '{java_bin}'")
-            raise ValueError(f"Annotation failed: no java bin '{java_bin}'")
+        # # Config - Java
+        # java_bin = get_bin(
+        #     tool="java",
+        #     bin="java",
+        #     bin_type="bin",
+        #     config=config,
+        #     default_folder="/usr/bin",
+        # )
+        # if not (os.path.exists(java_bin) or (java_bin and which(java_bin))):
+        #     log.error(f"Annotation failed: no java bin '{java_bin}'")
+        #     raise ValueError(f"Annotation failed: no java bin '{java_bin}'")
 
-        # Config - snpEff bin
-        snpeff_jar = get_bin(
-            tool="snpeff",
+        # # Config - snpEff bin
+        # snpeff_jar = get_bin(
+        #     tool="snpeff",
+        #     bin="snpEff.jar",
+        #     bin_type="jar",
+        #     config=config,
+        #     default_folder=f"{DEFAULT_TOOLS_FOLDER}/snpeff",
+        # )
+        # if not (os.path.exists(snpeff_jar) or (snpeff_jar and which(snpeff_jar))):
+        #     log.error(f"Annotation failed: no snpEff jar '{snpeff_jar}'")
+        #     raise ValueError(f"Annotation failed: no snpEff jar '{snpeff_jar}'")
+
+        # Config - snpEff bin command
+        snpeff_bin_command = get_bin_command(
             bin="snpEff.jar",
+            tool="snpeff",
             bin_type="jar",
             config=config,
             default_folder=f"{DEFAULT_TOOLS_FOLDER}/snpeff",
         )
-        if not (os.path.exists(snpeff_jar) or (snpeff_jar and which(snpeff_jar))):
-            log.error(f"Annotation failed: no snpEff jar '{snpeff_jar}'")
-            raise ValueError(f"Annotation failed: no snpEff jar '{snpeff_jar}'")
+        if not snpeff_bin_command:
+            msg_err = f"Annotation failed: no snpeff bin '{snpeff_bin_command}'"
+            log.error(msg_err)
+            raise ValueError(msg_err)
 
         # Config - snpEff databases
         snpeff_databases = (
@@ -4401,7 +4828,7 @@ class Variants:
             err_files.append(tmp_annotate_vcf_name_err)
 
             # Command
-            snpeff_command = f"{java_bin} {snpeff_java_options} -jar {snpeff_jar} {assembly} -dataDir {snpeff_databases} {snpeff_options} {tmp_vcf_name} 1>{tmp_annotate_vcf_name} 2>>{tmp_annotate_vcf_name_err}"
+            snpeff_command = f"{snpeff_bin_command} {assembly} -dataDir {snpeff_databases} {snpeff_options} {tmp_vcf_name} 1>{tmp_annotate_vcf_name} 2>>{tmp_annotate_vcf_name_err}"
             log.debug(f"Annotation - snpEff command: {snpeff_command}")
             run_parallel_commands([snpeff_command], 1)
 
@@ -4488,27 +4915,31 @@ class Variants:
         )
         log.debug("Databases annotations: " + str(databases_folders))
 
-        # Config - annovar bin
-        annovar_bin = get_bin(
-            tool="annovar",
+        # Config - annovar bin command
+        annovar_bin_command = get_bin_command(
             bin="table_annovar.pl",
+            tool="annovar",
             bin_type="perl",
             config=config,
             default_folder=f"{DEFAULT_TOOLS_FOLDER}/annovar",
         )
-        # log.debug(f"annovar_bin={annovar_bin}")
-        if not os.path.exists(annovar_bin):
-            log.error(f"Annotation failed: no annovar bin '{annovar_bin}'")
-            raise ValueError(f"Annotation failed: no annovar bin '{annovar_bin}'")
+        if not annovar_bin_command:
+            msg_err = f"Annotation failed: no annovar bin '{annovar_bin_command}'"
+            log.error(msg_err)
+            raise ValueError(msg_err)
 
-        # Config - BCFTools bin
-        bcftools_bin = get_bin(
+        # Config - BCFTools bin command
+        bcftools_bin_command = get_bin_command(
             bin="bcftools",
             tool="bcftools",
             bin_type="bin",
             config=config,
             default_folder=f"{DEFAULT_TOOLS_FOLDER}/bcftools",
         )
+        if not bcftools_bin_command:
+            msg_err = f"Annotation failed: no bcftools bin '{bcftools_bin_command}'"
+            log.error(msg_err)
+            raise ValueError(msg_err)
 
         # Config - annovar databases
         annovar_databases = (
@@ -4717,11 +5148,11 @@ class Variants:
                 # Command
 
                 # Command - Annovar
-                command_annovar = f"""{annovar_bin} {tmp_vcf_name} {annovar_databases_assembly} --buildver {assembly} --outfile {tmp_annotate_vcf_prefix} --remove --protocol {protocol} --operation {operation} {argument_option} {command_options} 2>>{tmp_annotate_vcf_name_err} && mv {tmp_annotate_vcf_name_annovar} {tmp_annotate_vcf_name}.tmp.vcf """
+                command_annovar = f"""{annovar_bin_command} {tmp_vcf_name} {annovar_databases_assembly} --buildver {assembly} --outfile {tmp_annotate_vcf_prefix} --remove --protocol {protocol} --operation {operation} {argument_option} {command_options} 2>>{tmp_annotate_vcf_name_err} && mv {tmp_annotate_vcf_name_annovar} {tmp_annotate_vcf_name}.tmp.vcf """
                 tmp_files.append(f"{tmp_annotate_vcf_name}.tmp.vcf")
 
                 # Command - start pipe
-                command_annovar += f""" && {bcftools_bin} view --threads={threads} {tmp_annotate_vcf_name}.tmp.vcf 2>>{tmp_annotate_vcf_name_err} """
+                command_annovar += f""" && {bcftools_bin_command} view --threads={threads} {tmp_annotate_vcf_name}.tmp.vcf 2>>{tmp_annotate_vcf_name_err} """
 
                 # Command - Clean INFO/ANNOVAR_DATE (due to Annovar issue with multiple TAGS!)
                 command_annovar += """ | sed "s/ANNOVAR_DATE=[^;\t]*;//gi" """
@@ -4739,7 +5170,7 @@ class Variants:
                     for ann in annotation_list:
                         annovar_fields_to_keep.append(f"^INFO/{ann}")
 
-                command_annovar += f""" | {bcftools_bin} annotate --pair-logic exact --threads={threads} -x {",".join(annovar_fields_to_keep)} --rename-annots={tmp_rename_name} -o {tmp_annotate_vcf_name} -Oz 2>>{tmp_annotate_vcf_name_err} """
+                command_annovar += f""" | {bcftools_bin_command} annotate --pair-logic exact --threads={threads} -x {",".join(annovar_fields_to_keep)} --rename-annots={tmp_rename_name} -o {tmp_annotate_vcf_name} -Oz 2>>{tmp_annotate_vcf_name_err} """
 
                 # Command - indexing
                 command_annovar += f"""  && tabix {tmp_annotate_vcf_name} """
@@ -4795,7 +5226,7 @@ class Variants:
                 tmp_files.append(tmp_annotate_vcf_name_err)
 
                 # Command merge
-                merge_command = f"{bcftools_bin} merge --force-samples --threads={threads} {tmp_vcf_name} {tmp_annotates_vcf_name_to_merge} -o {tmp_annotate_vcf_name} -Oz 2>>{tmp_annotate_vcf_name_err} "
+                merge_command = f"{bcftools_bin_command} merge --force-samples --threads={threads} {tmp_vcf_name} {tmp_annotates_vcf_name_to_merge} -o {tmp_annotate_vcf_name} -Oz 2>>{tmp_annotate_vcf_name_err} "
                 log.info(
                     f"Annotation Annovar - Annotation merging "
                     + str(len(tmp_annotates_vcf_name_list))
@@ -5141,7 +5572,7 @@ class Variants:
                                 annotation_field_sep = ""
 
                             log.info(
-                                f"Annotation '{annotation_name}' - '{annotation_field}' -> 'INFO/{annotation_fields_new_name}'{annotation_fields_new_name_info_msg}"
+                                f"Annotation '{annotation_name}' - '{annotation_field}' -> '{annotation_fields_new_name}'{annotation_fields_new_name_info_msg}"
                             )
 
                             # Add INFO field to header

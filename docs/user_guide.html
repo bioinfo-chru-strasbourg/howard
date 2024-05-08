@@ -557,6 +557,7 @@ code {
     <span class="hljs-attr">"bgzip"</span>: <span class="hljs-string">"bgzip"</span>,
     <span class="hljs-attr">"java"</span>: <span class="hljs-string">"java"</span>,
     <span class="hljs-attr">"snpeff"</span>: <span class="hljs-string">"~/howard/tools/snpeff/current/bin/snpEff.jar"</span>,
+    <span class="hljs-attr">"snpsift"</span>: <span class="hljs-string">"~/howard/tools/snpeff/current/bin/SnpSift.jar"</span>,
     <span class="hljs-attr">"annovar"</span>: <span class="hljs-string">"~/howard/tools/annovar/current/bin/table_annovar.pl"</span>,
     <span class="hljs-attr">"exomiser"</span>: <span class="hljs-string">"~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar"</span>
   }
@@ -784,6 +785,13 @@ coverage run -m pytest . -x -v --log-cli-level=DEBUG --capture=tee-sys
     },
     <span class="hljs-attr">"snpeff"</span>: {
       <span class="hljs-attr">"options"</span>: <span class="hljs-string">"-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "</span>
+    },
+    <span class="hljs-attr">"snpsift"</span>: {
+      <span class="hljs-attr">"annotations"</span>: {
+        <span class="hljs-attr">"tests/databases/annotations/current/hg19/cosmic70.vcf.gz"</span>: {
+          <span class="hljs-attr">"INFO"</span>: <span class="hljs-literal">null</span>
+        }
+      }
     },
     <span class="hljs-attr">"annovar"</span>: {
       <span class="hljs-attr">"annotations"</span>: {
@@ -1329,7 +1337,7 @@ howard annotation \
 </div></code></pre>
 </blockquote>
 <h5 id="snpeff-annotation">snpEff annotation</h5>
-<p>For snpEff tool, use HOWARD keyword <code>snpeff</code>. No options are available for quick annotation with snpEff, see <a href="help.param.md#snpeff">HOWARD Parameters JSON - snpEff</a> for more options.</p>
+<p>For snpEff tool, use HOWARD keyword <code>snpeff</code>. Options are available for quick annotation with snpEff, see <a href="help.param.md#snpeff">HOWARD Parameters JSON - snpEff</a> for more options.</p>
 <blockquote>
 <p>Example: VCF annotation with snpEff</p>
 <pre class="hljs"><code><div>howard annotation \

@@ -142,6 +142,7 @@ Configuration file example:
     "bgzip": "bgzip",
     "java": "java",
     "snpeff": "~/howard/tools/snpeff/current/bin/snpEff.jar",
+    "snpsift": "~/howard/tools/snpeff/current/bin/SnpSift.jar",
     "annovar": "~/howard/tools/annovar/current/bin/table_annovar.pl",
     "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar"
   }
@@ -367,6 +368,13 @@ See [HOWARD Parameters JSON](help.param.md) for more information.
 >     },
 >     "snpeff": {
 >       "options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "
+>     },
+>     "snpsift": {
+>       "annotations": {
+>         "tests/databases/annotations/current/hg19/cosmic70.vcf.gz": {
+>           "INFO": null
+>         }
+>       }
 >     },
 >     "annovar": {
 >       "annotations": {
@@ -945,7 +953,7 @@ For Annovar tool, use HOWARD keyword `annovar` and mention specific Annovar data
 
 ##### snpEff annotation
 
-For snpEff tool, use HOWARD keyword `snpeff`. No options are available for quick annotation with snpEff, see [HOWARD Parameters JSON - snpEff](help.param.md#snpeff) for more options.
+For snpEff tool, use HOWARD keyword `snpeff`. Options are available for quick annotation with snpEff, see [HOWARD Parameters JSON - snpEff](help.param.md#snpeff) for more options.
 
 > Example: VCF annotation with snpEff 
 > ```
