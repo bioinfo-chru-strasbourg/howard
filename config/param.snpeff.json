@@ -1,0 +1,9 @@
+{
+  "annotation": {
+    "snpeff": {
+      "options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 ",
+      "stats": "OUTPUT.html",
+      "csvStats": "OUTPUT.csv"
+    }
+  }
+}

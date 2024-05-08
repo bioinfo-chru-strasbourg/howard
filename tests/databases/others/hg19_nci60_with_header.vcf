@@ -1,0 +1,18 @@
+##fileformat=VCFv4.3
+##FILTER=<ID=PASS,Description="All filters passed">
+##INFO=<ID=End,Number=.,Type=Integer,Description="End annotation">
+##INFO=<ID=nci60,Number=.,Type=Float,Description="nci60 annotation">
+##contig=<ID=chr1,length=249250621>
+##bcftools_normVersion=1.19+htslib-1.19.1
+##bcftools_normCommand=norm --threads=1 --check-ref s -f /Users/lebechea/BIOINFO/git/HOWARD/tests/databases/genomes/current/hg19/hg19.fa -Oz -o /tmp/hg19_nci60_with_header.vcf.gz; Date=Thu Apr 18 15:00:41 2024
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+chr1	69270	.	A	G	0	PASS	End=69270;nci60=0.3
+chr1	69428	.	T	G	0	PASS	End=69428;nci60=0.016
+chr1	69511	.	A	G	0	PASS	End=69511;nci60=0.51
+chr1	69552	.	G	C	0	PASS	End=69552;nci60=0.016
+chr1	69761	.	A	T	0	PASS	End=69761;nci60=0.033
+chr1	69897	.	T	C	0	PASS	End=69897;nci60=0.066
+chr1	865628	.	G	A	0	PASS	End=865628;nci60=0.0082
+chr1	871199	.	G	A	0	PASS	End=871199;nci60=0.0082
+chr1	874788	.	C	G	0	PASS	End=874788;nci60=0.0082
+chr1	874814	.	A	AT	0	PASS	End=874816;nci60=0.016

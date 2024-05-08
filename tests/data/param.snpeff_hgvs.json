@@ -1,0 +1,16 @@
+{
+  "calculation": {
+    "calculations": {
+      "snpeff_hgvs": null,
+      "NOMEN": {
+          "options": {
+              "hgvs_field": "snpeff_hgvs",
+              "transcripts": "tests/data/transcripts.tsv"
+          }
+      }
+    }
+  },
+  "explode": {
+    "explode_infos": "INFO/"
+  }
+}

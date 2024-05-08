@@ -1,0 +1,130 @@
+{
+  "variant_chr_pos_alt_ref": {
+    "type": "sql",
+    "name": "variant_chr_pos_alt_ref",
+    "description": "Create a variant ID with chromosome, position, alt and ref",
+    "available": true,
+    "output_column_name": "variant_chr_pos_alt_ref",
+    "output_column_type": "String",
+    "output_column_description": "variant ID with chromosome, position, alt and ref",
+    "operation_query": " concat(\"#CHROM\", '_', POS, '_', REF, '_', ALT) ",
+    "operation_info": true
+  },
+  "VARTYPE": {
+    "type": "sql",
+    "name": "VARTYPE",
+    "description": "Variant type (e.g. SNV, INDEL, MNV, BND...)",
+    "available": true,
+    "output_column_name": "VARTYPE",
+    "output_column_type": "String",
+    "output_column_description": "Variant type: SNV if X>Y, MOSAIC if X>Y,Z or X,Y>Z, INDEL if XY>Z or X>YZ",
+    "operation_query": [
+      "CASE",
+      "WHEN \"SVTYPE\" NOT NULL THEN \"SVTYPE\"",
+      "WHEN LENGTH(REF) = 1 AND LENGTH(ALT) = 1 THEN 'SNV'",
+      "WHEN REF LIKE '%,%' OR ALT LIKE '%,%' THEN 'MOSAIC'",
+      "WHEN LENGTH(REF) == LENGTH(ALT) AND LENGTH(REF) > 1 THEN 'MNV'",
+      "WHEN LENGTH(REF) <> LENGTH(ALT) THEN 'INDEL'",
+      "ELSE 'UNDEFINED'",
+      "END"
+    ],
+    "info_fields": ["SVTYPE"],
+    "operation_info": true
+  },
+  "snpeff_hgvs": {
+    "type": "python",
+    "name": "snpeff_hgvs",
+    "description": "HGVS nomenclatures from snpEff annotation",
+    "available": true,
+    "function_name": "calculation_extract_snpeff_hgvs",
+    "function_params": []
+  },
+  "NOMEN": {
+    "type": "python",
+    "name": "NOMEN",
+    "description": "NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature field",
+    "available": true,
+    "function_name": "calculation_extract_nomen",
+    "function_params": []
+  },
+  "FINDBYPIPELINE": {
+    "type": "python",
+    "name": "FINDBYPIPELINE",
+    "description": "Number of pipeline that identify the variant (for multi pipeline VCF)",
+    "available": true,
+    "function_name": "calculation_find_by_pipeline",
+    "function_params": ["findbypipeline"]
+  },
+  "FINDBYSAMPLE": {
+    "type": "python",
+    "name": "FINDBYSAMPLE",
+    "description": "Number of sample that have a genotype for the variant (for multi sample VCF)",
+    "available": true,
+    "function_name": "calculation_find_by_pipeline",
+    "function_params": ["findbysample"]
+  },
+  "GENOTYPECONCORDANCE": {
+    "type": "python",
+    "name": "GENOTYPECONCORDANCE",
+    "description": "Concordance of genotype for multi caller VCF",
+    "available": true,
+    "function_name": "calculation_genotype_concordance",
+    "function_params": []
+  },
+  "BARCODE": {
+    "type": "python",
+    "name": "BARCODE",
+    "description": "BARCODE as VaRank tool",
+    "available": true,
+    "function_name": "calculation_barcode",
+    "function_params": []
+  },
+  "BARCODEFAMILY": {
+    "type": "python",
+    "name": "BARCODEFAMILY",
+    "description": "BARCODEFAMILY as VaRank tool",
+    "available": true,
+    "function_name": "calculation_barcode_family",
+    "function_params": ["BCF"]
+  },
+  "TRIO": {
+    "type": "python",
+    "name": "TRIO",
+    "description": "Inheritance for a trio family",
+    "available": true,
+    "function_name": "calculation_trio",
+    "function_params": []
+  },
+  "VAF": {
+    "type": "python",
+    "name": "VAF",
+    "description": "Variant Allele Frequency (VAF) harmonization",
+    "available": true,
+    "function_name": "calculation_vaf_normalization",
+    "function_params": []
+  },
+  "VAF_stats": {
+    "type": "python",
+    "name": "VAF_stats",
+    "description": "Variant Allele Frequency (VAF) statistics",
+    "available": true,
+    "function_name": "calculation_genotype_stats",
+    "function_params": ["VAF"]
+  },
+  "DP_stats": {
+    "type": "python",
+    "name": "DP_stats",
+    "description": "Depth (DP) statistics",
+    "available": true,
+    "function_name": "calculation_genotype_stats",
+    "function_params": ["DP"]
+  },
+  "variant_id": {
+    "type": "python",
+    "name": "variant_id",
+    "description": "Variant ID generated from variant position and type",
+    "available": true,
+    "function_name": "calculation_variant_id",
+    "function_params": []
+  }
+}

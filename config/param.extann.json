@@ -1,0 +1,40 @@
+{
+    "OMIMannotations": {
+        "reference": "hg19",
+        "genes": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Gene symbol"
+        },
+        "transcript": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Refgene transcript"
+        },
+        "OMIM_phenotype": {
+            "Number": ".",
+            "Type": "String",
+            "Description": "List of OMIM phenotype"
+        },
+        "OMIM_inheritance": {
+            "Number": ".",
+            "Type": "String",
+            "Description": "List of OMIM inheritance"
+        },
+        "OMIM_ID": {
+            "Number": ".",
+            "Type": "Integer",
+            "Description": "List of OMIM ID"
+        }
+    },
+    "replace": {
+        ",": "|",
+        ";": ","
+    },
+    "extra_col_list": [
+        "transcript"
+    ],
+    "transcript_extann": "",
+    "mode_extann": "",
+    "refgene_extann": ""
+}
