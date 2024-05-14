@@ -99,6 +99,7 @@ DEFAULT_TOOLS_BIN = {
     "snpeff": {"jar": "~/howard/tools/snpeff/current/bin/snpEff.jar"},
     "annovar": {"perl": "~/howard/tools/annovar/current/bin/table_annovar.pl"},
     "exomiser": {"jar": "~/howard/tools/exomiser/current/bin/exomiser.jar"},
+    "splice": {"bin": "docker"},
 }
 
 # URL
