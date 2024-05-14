@@ -1,0 +1,123 @@
+##fileformat=VCFv4.3
+##FILTER=<ID=PASS,Description="All filters passed">
+##INFO=<ID=End,Number=.,Type=Integer,Description="End annotation">
+##INFO=<ID=SIFT_score,Number=.,Type=Float,Description="SIFT_score annotation">
+##INFO=<ID=SIFT_converted_rankscore,Number=.,Type=Float,Description="SIFT_converted_rankscore annotation">
+##INFO=<ID=SIFT_pred,Number=.,Type=Float,Description="SIFT_pred annotation">
+##INFO=<ID=SIFT4G_score,Number=.,Type=Float,Description="SIFT4G_score annotation">
+##INFO=<ID=SIFT4G_converted_rankscore,Number=.,Type=Float,Description="SIFT4G_converted_rankscore annotation">
+##INFO=<ID=SIFT4G_pred,Number=.,Type=Float,Description="SIFT4G_pred annotation">
+##INFO=<ID=Polyphen2_HDIV_score,Number=.,Type=Float,Description="Polyphen2_HDIV_score annotation">
+##INFO=<ID=Polyphen2_HDIV_rankscore,Number=.,Type=Float,Description="Polyphen2_HDIV_rankscore annotation">
+##INFO=<ID=Polyphen2_HDIV_pred,Number=.,Type=Float,Description="Polyphen2_HDIV_pred annotation">
+##INFO=<ID=Polyphen2_HVAR_score,Number=.,Type=Float,Description="Polyphen2_HVAR_score annotation">
+##INFO=<ID=Polyphen2_HVAR_rankscore,Number=.,Type=Float,Description="Polyphen2_HVAR_rankscore annotation">
+##INFO=<ID=Polyphen2_HVAR_pred,Number=.,Type=Float,Description="Polyphen2_HVAR_pred annotation">
+##INFO=<ID=LRT_score,Number=.,Type=Float,Description="LRT_score annotation">
+##INFO=<ID=LRT_converted_rankscore,Number=.,Type=Float,Description="LRT_converted_rankscore annotation">
+##INFO=<ID=LRT_pred,Number=.,Type=Float,Description="LRT_pred annotation">
+##INFO=<ID=MutationTaster_score,Number=.,Type=Float,Description="MutationTaster_score annotation">
+##INFO=<ID=MutationTaster_converted_rankscore,Number=.,Type=Float,Description="MutationTaster_converted_rankscore annotation">
+##INFO=<ID=MutationTaster_pred,Number=.,Type=Float,Description="MutationTaster_pred annotation">
+##INFO=<ID=MutationAssessor_score,Number=.,Type=Float,Description="MutationAssessor_score annotation">
+##INFO=<ID=MutationAssessor_rankscore,Number=.,Type=Float,Description="MutationAssessor_rankscore annotation">
+##INFO=<ID=MutationAssessor_pred,Number=.,Type=Float,Description="MutationAssessor_pred annotation">
+##INFO=<ID=FATHMM_score,Number=.,Type=Float,Description="FATHMM_score annotation">
+##INFO=<ID=FATHMM_converted_rankscore,Number=.,Type=Float,Description="FATHMM_converted_rankscore annotation">
+##INFO=<ID=FATHMM_pred,Number=.,Type=Float,Description="FATHMM_pred annotation">
+##INFO=<ID=PROVEAN_score,Number=.,Type=Float,Description="PROVEAN_score annotation">
+##INFO=<ID=PROVEAN_converted_rankscore,Number=.,Type=Float,Description="PROVEAN_converted_rankscore annotation">
+##INFO=<ID=PROVEAN_pred,Number=.,Type=Float,Description="PROVEAN_pred annotation">
+##INFO=<ID=VEST4_score,Number=.,Type=Float,Description="VEST4_score annotation">
+##INFO=<ID=VEST4_rankscore,Number=.,Type=Float,Description="VEST4_rankscore annotation">
+##INFO=<ID=MetaSVM_score,Number=.,Type=Float,Description="MetaSVM_score annotation">
+##INFO=<ID=MetaSVM_rankscore,Number=.,Type=Float,Description="MetaSVM_rankscore annotation">
+##INFO=<ID=MetaSVM_pred,Number=.,Type=Float,Description="MetaSVM_pred annotation">
+##INFO=<ID=MetaLR_score,Number=.,Type=Float,Description="MetaLR_score annotation">
+##INFO=<ID=MetaLR_rankscore,Number=.,Type=Float,Description="MetaLR_rankscore annotation">
+##INFO=<ID=MetaLR_pred,Number=.,Type=Float,Description="MetaLR_pred annotation">
+##INFO=<ID=MetaRNN_score,Number=.,Type=Float,Description="MetaRNN_score annotation">
+##INFO=<ID=MetaRNN_rankscore,Number=.,Type=Float,Description="MetaRNN_rankscore annotation">
+##INFO=<ID=MetaRNN_pred,Number=.,Type=String,Description="MetaRNN_pred annotation">
+##INFO=<ID=M_CAP_score,Number=.,Type=Float,Description="M_CAP_score annotation">
+##INFO=<ID=M_CAP_rankscore,Number=.,Type=Float,Description="M_CAP_rankscore annotation">
+##INFO=<ID=M_CAP_pred,Number=.,Type=Float,Description="M_CAP_pred annotation">
+##INFO=<ID=REVEL_score,Number=.,Type=Float,Description="REVEL_score annotation">
+##INFO=<ID=REVEL_rankscore,Number=.,Type=Float,Description="REVEL_rankscore annotation">
+##INFO=<ID=MutPred_score,Number=.,Type=Float,Description="MutPred_score annotation">
+##INFO=<ID=MutPred_rankscore,Number=.,Type=Float,Description="MutPred_rankscore annotation">
+##INFO=<ID=MVP_score,Number=.,Type=Float,Description="MVP_score annotation">
+##INFO=<ID=MVP_rankscore,Number=.,Type=Float,Description="MVP_rankscore annotation">
+##INFO=<ID=MPC_score,Number=.,Type=Float,Description="MPC_score annotation">
+##INFO=<ID=MPC_rankscore,Number=.,Type=Float,Description="MPC_rankscore annotation">
+##INFO=<ID=PrimateAI_score,Number=.,Type=Float,Description="PrimateAI_score annotation">
+##INFO=<ID=PrimateAI_rankscore,Number=.,Type=Float,Description="PrimateAI_rankscore annotation">
+##INFO=<ID=PrimateAI_pred,Number=.,Type=Float,Description="PrimateAI_pred annotation">
+##INFO=<ID=DEOGEN2_score,Number=.,Type=Float,Description="DEOGEN2_score annotation">
+##INFO=<ID=DEOGEN2_rankscore,Number=.,Type=Float,Description="DEOGEN2_rankscore annotation">
+##INFO=<ID=DEOGEN2_pred,Number=.,Type=Float,Description="DEOGEN2_pred annotation">
+##INFO=<ID=BayesDel_addAF_score,Number=.,Type=Float,Description="BayesDel_addAF_score annotation">
+##INFO=<ID=BayesDel_addAF_rankscore,Number=.,Type=Float,Description="BayesDel_addAF_rankscore annotation">
+##INFO=<ID=BayesDel_addAF_pred,Number=.,Type=Float,Description="BayesDel_addAF_pred annotation">
+##INFO=<ID=BayesDel_noAF_score,Number=.,Type=Float,Description="BayesDel_noAF_score annotation">
+##INFO=<ID=BayesDel_noAF_rankscore,Number=.,Type=Float,Description="BayesDel_noAF_rankscore annotation">
+##INFO=<ID=BayesDel_noAF_pred,Number=.,Type=Float,Description="BayesDel_noAF_pred annotation">
+##INFO=<ID=ClinPred_score,Number=.,Type=Float,Description="ClinPred_score annotation">
+##INFO=<ID=ClinPred_rankscore,Number=.,Type=Float,Description="ClinPred_rankscore annotation">
+##INFO=<ID=ClinPred_pred,Number=.,Type=Float,Description="ClinPred_pred annotation">
+##INFO=<ID=LIST_S2_score,Number=.,Type=Float,Description="LIST_S2_score annotation">
+##INFO=<ID=LIST_S2_rankscore,Number=.,Type=Float,Description="LIST_S2_rankscore annotation">
+##INFO=<ID=LIST_S2_pred,Number=.,Type=String,Description="LIST_S2_pred annotation">
+##INFO=<ID=Aloft_pred,Number=.,Type=String,Description="Aloft_pred annotation">
+##INFO=<ID=Aloft_Confidence,Number=.,Type=String,Description="Aloft_Confidence annotation">
+##INFO=<ID=CADD_raw,Number=.,Type=Float,Description="CADD_raw annotation">
+##INFO=<ID=CADD_raw_rankscore,Number=.,Type=Float,Description="CADD_raw_rankscore annotation">
+##INFO=<ID=CADD_phred,Number=.,Type=Float,Description="CADD_phred annotation">
+##INFO=<ID=DANN_score,Number=.,Type=Float,Description="DANN_score annotation">
+##INFO=<ID=DANN_rankscore,Number=.,Type=Float,Description="DANN_rankscore annotation">
+##INFO=<ID=fathmm_MKL_coding_score,Number=.,Type=Float,Description="fathmm_MKL_coding_score annotation">
+##INFO=<ID=fathmm_MKL_coding_rankscore,Number=.,Type=Float,Description="fathmm_MKL_coding_rankscore annotation">
+##INFO=<ID=fathmm_MKL_coding_pred,Number=.,Type=String,Description="fathmm_MKL_coding_pred annotation">
+##INFO=<ID=fathmm_XF_coding_score,Number=.,Type=Float,Description="fathmm_XF_coding_score annotation">
+##INFO=<ID=fathmm_XF_coding_rankscore,Number=.,Type=Float,Description="fathmm_XF_coding_rankscore annotation">
+##INFO=<ID=fathmm_XF_coding_pred,Number=.,Type=Float,Description="fathmm_XF_coding_pred annotation">
+##INFO=<ID=Eigen_raw_coding,Number=.,Type=Float,Description="Eigen_raw_coding annotation">
+##INFO=<ID=Eigen_raw_coding_rankscore,Number=.,Type=Float,Description="Eigen_raw_coding_rankscore annotation">
+##INFO=<ID=Eigen_PC_raw_coding,Number=.,Type=Float,Description="Eigen_PC_raw_coding annotation">
+##INFO=<ID=Eigen_PC_raw_coding_rankscore,Number=.,Type=Float,Description="Eigen_PC_raw_coding_rankscore annotation">
+##INFO=<ID=GenoCanyon_score,Number=.,Type=Float,Description="GenoCanyon_score annotation">
+##INFO=<ID=GenoCanyon_rankscore,Number=.,Type=Float,Description="GenoCanyon_rankscore annotation">
+##INFO=<ID=integrated_fitCons_score,Number=.,Type=Float,Description="integrated_fitCons_score annotation">
+##INFO=<ID=integrated_fitCons_rankscore,Number=.,Type=Float,Description="integrated_fitCons_rankscore annotation">
+##INFO=<ID=integrated_confidence_value,Number=.,Type=Integer,Description="integrated_confidence_value annotation">
+##INFO=<ID=LINSIGHT,Number=.,Type=Float,Description="LINSIGHT annotation">
+##INFO=<ID=LINSIGHT_rankscore,Number=.,Type=Float,Description="LINSIGHT_rankscore annotation">
+##INFO=<ID=GERP_NR,Number=.,Type=Float,Description="GERP_NR annotation">
+##INFO=<ID=GERP_RS,Number=.,Type=Float,Description="GERP_RS annotation">
+##INFO=<ID=GERP_RS_rankscore,Number=.,Type=Float,Description="GERP_RS_rankscore annotation">
+##INFO=<ID=phyloP100way_vertebrate,Number=.,Type=Float,Description="phyloP100way_vertebrate annotation">
+##INFO=<ID=phyloP100way_vertebrate_rankscore,Number=.,Type=Float,Description="phyloP100way_vertebrate_rankscore annotation">
+##INFO=<ID=phyloP30way_mammalian,Number=.,Type=Float,Description="phyloP30way_mammalian annotation">
+##INFO=<ID=phyloP30way_mammalian_rankscore,Number=.,Type=Float,Description="phyloP30way_mammalian_rankscore annotation">
+##INFO=<ID=phastCons100way_vertebrate,Number=.,Type=Float,Description="phastCons100way_vertebrate annotation">
+##INFO=<ID=phastCons100way_vertebrate_rankscore,Number=.,Type=Float,Description="phastCons100way_vertebrate_rankscore annotation">
+##INFO=<ID=phastCons30way_mammalian,Number=.,Type=Float,Description="phastCons30way_mammalian annotation">
+##INFO=<ID=phastCons30way_mammalian_rankscore,Number=.,Type=Float,Description="phastCons30way_mammalian_rankscore annotation">
+##INFO=<ID=SiPhy_29way_logOdds,Number=.,Type=Float,Description="SiPhy_29way_logOdds annotation">
+##INFO=<ID=SiPhy_29way_logOdds_rankscore,Number=.,Type=Float,Description="SiPhy_29way_logOdds_rankscore annotation">
+##INFO=<ID=Interpro_domain,Number=.,Type=Float,Description="Interpro_domain annotation">
+##INFO=<ID=GTEx_V8_gene,Number=.,Type=Float,Description="GTEx_V8_gene annotation">
+##INFO=<ID=GTEx_V8_tissue,Number=.,Type=Float,Description="GTEx_V8_tissue annotation">
+##contig=<ID=chr1,length=249250621>
+##bcftools_normVersion=1.19+htslib-1.19.1
+##bcftools_normCommand=norm --threads=1 --check-ref s -f /Users/lebechea/BIOINFO/git/HOWARD/tests/databases/genomes/current/hg19/hg19.fa -Oz -o /tmp/hg19_dbnsfp42a.vcf.gz; Date=Thu Apr 18 15:00:40 2024
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+chr1	65565	.	A	C	0	PASS	End=65565;MetaRNN_score=0.317;MetaRNN_rankscore=0.491;MetaRNN_pred=T;LIST_S2_score=0.9;LIST_S2_rankscore=0.651;LIST_S2_pred=D;Aloft_pred=.,;Aloft_Confidence=.,;CADD_raw=1.166;CADD_raw_rankscore=0.191;CADD_phred=14.46;DANN_score=0.703;DANN_rankscore=0.092;fathmm_MKL_coding_score=0.567;fathmm_MKL_coding_rankscore=0.302;fathmm_MKL_coding_pred=D;GenoCanyon_score=0;GenoCanyon_rankscore=0.029;integrated_fitCons_score=0.061;integrated_fitCons_rankscore=0.011;integrated_confidence_value=0;LINSIGHT=0.207;LINSIGHT_rankscore=0.308;GERP_NR=2.73;GERP_RS=2.73;GERP_RS_rankscore=0.313;phyloP100way_vertebrate=2.589;phyloP100way_vertebrate_rankscore=0.458;phyloP30way_mammalian=1.152;phyloP30way_mammalian_rankscore=0.705;phastCons100way_vertebrate=0.993;phastCons100way_vertebrate_rankscore=0.379;phastCons30way_mammalian=1;phastCons30way_mammalian_rankscore=0.863;SiPhy_29way_logOdds=4.611;SiPhy_29way_logOdds_rankscore=0.118
+chr1	65565	.	A	G	0	PASS	End=65565;MetaRNN_score=0.318;MetaRNN_rankscore=0.492;MetaRNN_pred=T;LIST_S2_score=0.9;LIST_S2_rankscore=0.651;LIST_S2_pred=D;Aloft_pred=.,;Aloft_Confidence=.,;CADD_raw=1.189;CADD_raw_rankscore=0.194;CADD_phred=14.59;DANN_score=0.739;DANN_rankscore=0.105;fathmm_MKL_coding_score=0.286;fathmm_MKL_coding_rankscore=0.236;fathmm_MKL_coding_pred=N;GenoCanyon_score=0;GenoCanyon_rankscore=0.029;integrated_fitCons_score=0.061;integrated_fitCons_rankscore=0.011;integrated_confidence_value=0;LINSIGHT=0.207;LINSIGHT_rankscore=0.308;GERP_NR=2.73;GERP_RS=2.73;GERP_RS_rankscore=0.313;phyloP100way_vertebrate=2.589;phyloP100way_vertebrate_rankscore=0.458;phyloP30way_mammalian=1.152;phyloP30way_mammalian_rankscore=0.705;phastCons100way_vertebrate=0.993;phastCons100way_vertebrate_rankscore=0.379;phastCons30way_mammalian=1;phastCons30way_mammalian_rankscore=0.863;SiPhy_29way_logOdds=4.611;SiPhy_29way_logOdds_rankscore=0.118
+chr1	65565	.	A	T	0	PASS	End=65565;MetaRNN_score=0.316;MetaRNN_rankscore=0.491;MetaRNN_pred=T;LIST_S2_score=0.9;LIST_S2_rankscore=0.651;LIST_S2_pred=D;Aloft_pred=.,;Aloft_Confidence=.,;CADD_raw=1.173;CADD_raw_rankscore=0.192;CADD_phred=14.5;DANN_score=0.689;DANN_rankscore=0.088;fathmm_MKL_coding_score=0.551;fathmm_MKL_coding_rankscore=0.298;fathmm_MKL_coding_pred=D;GenoCanyon_score=0;GenoCanyon_rankscore=0.029;integrated_fitCons_score=0.061;integrated_fitCons_rankscore=0.011;integrated_confidence_value=0;LINSIGHT=0.207;LINSIGHT_rankscore=0.308;GERP_NR=2.73;GERP_RS=2.73;GERP_RS_rankscore=0.313;phyloP100way_vertebrate=2.589;phyloP100way_vertebrate_rankscore=0.458;phyloP30way_mammalian=1.152;phyloP30way_mammalian_rankscore=0.705;phastCons100way_vertebrate=0.993;phastCons100way_vertebrate_rankscore=0.379;phastCons30way_mammalian=1;phastCons30way_mammalian_rankscore=0.863;SiPhy_29way_logOdds=4.611;SiPhy_29way_logOdds_rankscore=0.118
+chr1	65566	.	T	A	0	PASS	End=65566;MetaRNN_score=0.343;MetaRNN_rankscore=0.514;MetaRNN_pred=T;LIST_S2_score=0.9;LIST_S2_rankscore=0.651;LIST_S2_pred=D;Aloft_pred=.,;Aloft_Confidence=.,;CADD_raw=1.257;CADD_raw_rankscore=0.203;CADD_phred=14.96;DANN_score=0.71;DANN_rankscore=0.095;fathmm_MKL_coding_score=0.441;fathmm_MKL_coding_rankscore=0.272;fathmm_MKL_coding_pred=N;GenoCanyon_score=0;GenoCanyon_rankscore=0.058;integrated_fitCons_score=0.061;integrated_fitCons_rankscore=0.011;integrated_confidence_value=0;LINSIGHT=0.692;LINSIGHT_rankscore=0.427;GERP_NR=2.73;GERP_RS=2.73;GERP_RS_rankscore=0.313;phyloP100way_vertebrate=2.158;phyloP100way_vertebrate_rankscore=0.42;phyloP30way_mammalian=1.002;phyloP30way_mammalian_rankscore=0.37;phastCons100way_vertebrate=1;phastCons100way_vertebrate_rankscore=0.716;phastCons30way_mammalian=1;phastCons30way_mammalian_rankscore=0.863;SiPhy_29way_logOdds=9.273;SiPhy_29way_logOdds_rankscore=0.368
+chr1	65566	.	T	C	0	PASS	End=65566;MetaRNN_score=0.346;MetaRNN_rankscore=0.516;MetaRNN_pred=T;LIST_S2_score=0.9;LIST_S2_rankscore=0.651;LIST_S2_pred=D;Aloft_pred=.,;Aloft_Confidence=.,;CADD_raw=1.273;CADD_raw_rankscore=0.206;CADD_phred=15.05;DANN_score=0.782;DANN_rankscore=0.122;fathmm_MKL_coding_score=0.594;fathmm_MKL_coding_rankscore=0.309;fathmm_MKL_coding_pred=D;GenoCanyon_score=0;GenoCanyon_rankscore=0.058;integrated_fitCons_score=0.061;integrated_fitCons_rankscore=0.011;integrated_confidence_value=0;LINSIGHT=0.692;LINSIGHT_rankscore=0.427;GERP_NR=2.73;GERP_RS=2.73;GERP_RS_rankscore=0.313;phyloP100way_vertebrate=2.158;phyloP100way_vertebrate_rankscore=0.42;phyloP30way_mammalian=1.002;phyloP30way_mammalian_rankscore=0.37;phastCons100way_vertebrate=1;phastCons100way_vertebrate_rankscore=0.716;phastCons30way_mammalian=1;phastCons30way_mammalian_rankscore=0.863;SiPhy_29way_logOdds=9.273;SiPhy_29way_logOdds_rankscore=0.368
+chr1	65566	.	T	G	0	PASS	End=65566;MetaRNN_score=0.344;MetaRNN_rankscore=0.514;MetaRNN_pred=T;LIST_S2_score=0.9;LIST_S2_rankscore=0.651;LIST_S2_pred=D;Aloft_pred=.,;Aloft_Confidence=.,;CADD_raw=1.249;CADD_raw_rankscore=0.202;CADD_phred=14.92;DANN_score=0.753;DANN_rankscore=0.11;fathmm_MKL_coding_score=0.62;fathmm_MKL_coding_rankscore=0.316;fathmm_MKL_coding_pred=D;GenoCanyon_score=0;GenoCanyon_rankscore=0.058;integrated_fitCons_score=0.061;integrated_fitCons_rankscore=0.011;integrated_confidence_value=0;LINSIGHT=0.692;LINSIGHT_rankscore=0.427;GERP_NR=2.73;GERP_RS=2.73;GERP_RS_rankscore=0.313;phyloP100way_vertebrate=2.158;phyloP100way_vertebrate_rankscore=0.42;phyloP30way_mammalian=1.002;phyloP30way_mammalian_rankscore=0.37;phastCons100way_vertebrate=1;phastCons100way_vertebrate_rankscore=0.716;phastCons30way_mammalian=1;phastCons30way_mammalian_rankscore=0.863;SiPhy_29way_logOdds=9.273;SiPhy_29way_logOdds_rankscore=0.368
+chr1	65567	.	G	A	0	PASS	End=65567;MetaRNN_score=0.35;MetaRNN_rankscore=0.519;MetaRNN_pred=T;LIST_S2_score=0.9;LIST_S2_rankscore=0.651;LIST_S2_pred=D;Aloft_pred=.,;Aloft_Confidence=.,;CADD_raw=1.142;CADD_raw_rankscore=0.188;CADD_phred=14.32;DANN_score=0.541;DANN_rankscore=0.051;fathmm_MKL_coding_score=0.575;fathmm_MKL_coding_rankscore=0.304;fathmm_MKL_coding_pred=D;GenoCanyon_score=0;GenoCanyon_rankscore=0.029;integrated_fitCons_score=0.061;integrated_fitCons_rankscore=0.011;integrated_confidence_value=0;LINSIGHT=0.207;LINSIGHT_rankscore=0.308;GERP_NR=2.73;GERP_RS=2.73;GERP_RS_rankscore=0.313;phyloP100way_vertebrate=2.639;phyloP100way_vertebrate_rankscore=0.462;phyloP30way_mammalian=1.034;phyloP30way_mammalian_rankscore=0.512;phastCons100way_vertebrate=1;phastCons100way_vertebrate_rankscore=0.716;phastCons30way_mammalian=0.999;phastCons30way_mammalian_rankscore=0.704;SiPhy_29way_logOdds=7.79;SiPhy_29way_logOdds_rankscore=0.283
+chr1	65567	.	G	C	0	PASS	End=65567;MetaRNN_score=0.348;MetaRNN_rankscore=0.517;MetaRNN_pred=T;LIST_S2_score=0.9;LIST_S2_rankscore=0.651;LIST_S2_pred=D;Aloft_pred=.,;Aloft_Confidence=.,;CADD_raw=1.082;CADD_raw_rankscore=0.18;CADD_phred=13.96;DANN_score=0.609;DANN_rankscore=0.066;fathmm_MKL_coding_score=0.564;fathmm_MKL_coding_rankscore=0.301;fathmm_MKL_coding_pred=D;GenoCanyon_score=0;GenoCanyon_rankscore=0.029;integrated_fitCons_score=0.061;integrated_fitCons_rankscore=0.011;integrated_confidence_value=0;LINSIGHT=0.207;LINSIGHT_rankscore=0.308;GERP_NR=2.73;GERP_RS=2.73;GERP_RS_rankscore=0.313;phyloP100way_vertebrate=2.639;phyloP100way_vertebrate_rankscore=0.462;phyloP30way_mammalian=1.034;phyloP30way_mammalian_rankscore=0.512;phastCons100way_vertebrate=1;phastCons100way_vertebrate_rankscore=0.716;phastCons30way_mammalian=0.999;phastCons30way_mammalian_rankscore=0.704;SiPhy_29way_logOdds=7.79;SiPhy_29way_logOdds_rankscore=0.283
+chr1	65567	.	G	T	0	PASS	End=65567;MetaRNN_score=0.347;MetaRNN_rankscore=0.516;MetaRNN_pred=T;LIST_S2_score=0.9;LIST_S2_rankscore=0.651;LIST_S2_pred=D;Aloft_pred=.,;Aloft_Confidence=.,;CADD_raw=1.092;CADD_raw_rankscore=0.181;CADD_phred=14.03;DANN_score=0.54;DANN_rankscore=0.051;fathmm_MKL_coding_score=0.462;fathmm_MKL_coding_rankscore=0.277;fathmm_MKL_coding_pred=N;GenoCanyon_score=0;GenoCanyon_rankscore=0.029;integrated_fitCons_score=0.061;integrated_fitCons_rankscore=0.011;integrated_confidence_value=0;LINSIGHT=0.207;LINSIGHT_rankscore=0.308;GERP_NR=2.73;GERP_RS=2.73;GERP_RS_rankscore=0.313;phyloP100way_vertebrate=2.639;phyloP100way_vertebrate_rankscore=0.462;phyloP30way_mammalian=1.034;phyloP30way_mammalian_rankscore=0.512;phastCons100way_vertebrate=1;phastCons100way_vertebrate_rankscore=0.716;phastCons30way_mammalian=0.999;phastCons30way_mammalian_rankscore=0.704;SiPhy_29way_logOdds=7.79;SiPhy_29way_logOdds_rankscore=0.283

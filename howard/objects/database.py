@@ -1,22 +1,34 @@
-# import pyarrow as pa
-# import pyarrow.csv as csv
-import fileinput
 import hashlib
-import random
-from shutil import copyfileobj
-import string
-import polars as pl
-import pandas as pd
 import duckdb
 import sqlite3
 import vcf
+import glob
+import os
+import io
+import pgzip
+import shutil
 
-# from Bio import bgzf
+import polars as pl
+import pandas as pd
 import Bio.bgzf as bgzf
+import pyarrow.parquet as pq
+import pyarrow as pa
+import logging as log
 
-from howard.functions.commons import *
-from howard.functions.databases import *
+from tempfile import TemporaryDirectory
+from typing import Optional, Union
 
+from howard.functions.commons import (
+    load_duckdb_extension,
+    get_file_format,
+    full_path,
+    get_file_compressed,
+    get_compression_type,
+    remove_if_exists,
+    concat_and_compress_files,
+    DTYPE_LIMIT_AUTO,
+    CODE_TYPE_MAP,
+)
 
 SEP_TYPE = {
     "vcf": "\t",
@@ -208,17 +220,17 @@ class Database:
         elif self.find_database(
             database=database,
             databases_folders=databases_folders,
-            format=format,
+            database_format=format,
             assembly=assembly,
         ):
             self.database = self.find_database(
                 database=database,
                 databases_folders=databases_folders,
-                format=format,
+                database_format=format,
                 assembly=assembly,
             )
 
-    def set_databases_folders(self, databases_folders: list = ["."]) -> None:
+    def set_databases_folders(self, databases_folders: list = None) -> None:
         """
         This function sets the list of folders where databases are located as an attribute of an object.
 
@@ -227,6 +239,9 @@ class Database:
         single element, which is the current directory (".")
         :type databases_folders: list
         """
+
+        if databases_folders is None:
+            databases_folders = ["."]
 
         self.databases_folders = databases_folders
 
@@ -357,10 +372,19 @@ class Database:
         if not header_list:
             header_list = DEFAULT_HEADER_LIST
 
+        # Clean lines
+        header_list = [line.replace("\n", "") for line in header_list]
+
         try:
             return vcf.Reader(io.StringIO("\n".join(header_list)))
-        except:
-            return None
+        except Exception as inst:
+            if str(inst).strip():
+                log.error(inst)
+                raise ValueError(inst)
+            else:
+                log.warning("Warning in VCF header")
+                log.debug(f"header_list={header_list}")
+                return None
 
     def get_header_from_file(self, header_file: str) -> vcf:
         """
@@ -381,7 +405,7 @@ class Database:
 
         return self.get_header_from_list(header_list)
 
-    def find_header_file(self, database: str = None) -> str:
+    def find_header_file(self, database: str = None) -> Optional[str]:
         """
         This function finds the header file for a given database in various formats.
 
@@ -524,19 +548,16 @@ class Database:
         # Attach if need
         if self.get_sql_database_attach(database=database, output="attach"):
             self.query(
-                database=database,
                 query=self.get_sql_database_attach(database=database, output="attach"),
             )
 
         # database columns
         database_query_columns = None
         if sql_query:
-            database_query_columns = self.query(sql_query)
+            database_query_columns = self.query(query=sql_query)
         if not database_query_columns:
             database_query_columns_sql = f""" SELECT * FROM {self.get_sql_database_link(database=database)} LIMIT {DTYPE_LIMIT_AUTO} """
-            database_query_columns = self.query(
-                database=database, query=database_query_columns_sql
-            )
+            database_query_columns = self.query(query=database_query_columns_sql)
 
         # Remove specific VCF column if is a VCF type
         if (
@@ -582,20 +603,16 @@ class Database:
         # Detach if need
         if self.get_sql_database_attach(database=database, output="detach"):
             self.query(
-                database=database,
                 query=self.get_sql_database_attach(database=database, output="detach"),
             )
 
         return database_header
 
-    def query(self, database: str = None, query: str = None) -> object:
+    def query(self, query: str = None) -> object:
         """
         This is a Python function that takes in a database and query string as parameters and returns
         the result of the query on the database.
 
-        :param database: A string representing the name of the database to query. If no database is
-        provided, the method will attempt to retrieve the default database from the connection object
-        :type database: str
         :param query: The query parameter is a string that represents the SQL query that needs to be
         executed on the database. It can be any valid SQL statement such as SELECT, INSERT, UPDATE,
         DELETE, etc
@@ -604,11 +621,8 @@ class Database:
         database. If no query is provided, the method returns None.
         """
 
-        if not database:
-            database = self.get_database()
-
         if query:
-            return self.conn.query(query)
+            return self.get_conn().query(query)
         else:
             return None
 
@@ -695,7 +709,7 @@ class Database:
 
         self.header_file = header_file
 
-    def get_header_columns_from_database(self, database: str = None) -> list:
+    def get_header_columns_from_database(self, database: str = None) -> Optional[list]:
         """
         The function `get_header_columns_from_database` retrieves the column names from a specified
         database table.
@@ -714,9 +728,8 @@ class Database:
         if sql_from:
             sql_query = f"SELECT * FROM {sql_from} LIMIT 0"
             try:
-                # columns_list = list(self.conn.query(sql_query).df().columns)
                 columns_list = list(self.conn.query(sql_query).columns)
-            except:
+            except ValueError:
                 columns_list = None
             return columns_list
         else:
@@ -836,9 +849,9 @@ class Database:
         self,
         database: str = None,
         databases_folders: list = None,
-        format: str = None,
+        database_format: str = None,
         assembly: str = None,
-    ) -> str:
+    ) -> Optional[str]:
         """
         This function finds a database file in a specified folder or the current directory.
 
@@ -864,8 +877,8 @@ class Database:
         if not database:
             database = self.get_database()
 
-        if not format:
-            format = self.get_format()
+        if not database_format:
+            database_format = self.get_format()
 
         if not assembly:
             assembly = self.get_assembly()
@@ -883,7 +896,11 @@ class Database:
 
             database_file = None
 
-            for format_extension in ["", f".{format}", f".{format}.gz"]:
+            for format_extension in [
+                "",
+                f".{database_format}",
+                f".{database_format}.gz",
+            ]:
 
                 # find in subfolder assemby
                 if assembly:
@@ -941,7 +958,7 @@ class Database:
 
         return self.database
 
-    def get_database_basename(self, database: str = None) -> str:
+    def get_database_basename(self, database: str = None) -> Optional[str]:
         """
         This function returns the basename of a database file.
 
@@ -965,7 +982,7 @@ class Database:
         else:
             return None
 
-    def get_database_dirname(self, database: str = None) -> str:
+    def get_database_dirname(self, database: str = None) -> Optional[str]:
         """
         This function returns the directory name of a given database or the current database if none is
         specified.
@@ -1055,7 +1072,7 @@ class Database:
         else:
             return get_file_format(database)
 
-    def get_type(self, database: str = None, sql_query: str = None) -> str:
+    def get_type(self, database: str = None, sql_query: str = None) -> Optional[str]:
         """
         The `get_type` function determines the type of a database (variants VCF-like or regions
         BED-like) based on its columns and format.
@@ -1096,7 +1113,7 @@ class Database:
         else:
             return None
 
-    def get_database_tables(self, database: str = None) -> str:
+    def get_database_tables(self, database: str = None) -> Union[str, list, None]:
         """
         This function retrieves a list of tables in a specified database using the DuckDB format.
 
@@ -1110,19 +1127,19 @@ class Database:
         if not database:
             database = self.get_database()
         if database and self.exists(database):
-            format = self.get_format(database)
-            if format in ["conn"]:
+            database_format = self.get_format(database)
+            if database_format in ["conn"]:
                 database_conn = database
                 database_tables = list(database_conn.query("SHOW TABLES;").df()["name"])
                 return database_tables
-            elif format in ["duckdb"]:
+            elif database_format in ["duckdb"]:
                 database_conn = duckdb.connect(database)
                 database_tables = list(database_conn.query("SHOW TABLES;").df()["name"])
                 database_conn.close()
                 return database_tables
-            elif format in ["sqlite"]:
+            elif database_format in ["sqlite"]:
                 database_conn = sqlite3.connect(database)
-                sql_query = f"SELECT name FROM sqlite_master WHERE type='table'"
+                sql_query = "SELECT name FROM sqlite_master WHERE type='table'"
                 database_tables = list(
                     pd.read_sql_query(sql_query, database_conn)["name"]
                 )
@@ -1132,7 +1149,7 @@ class Database:
         else:
             return None
 
-    def get_database_table(self, database: str = None) -> str:
+    def get_database_table(self, database: str = None) -> Optional[str]:
         """
         This function returns the name of a table in a specified database if it exists and is in a
         supported format.
@@ -1168,7 +1185,7 @@ class Database:
 
     def get_type_from_columns(
         self, database_columns: list = [], check_database_type: str = None
-    ) -> str:
+    ) -> Optional[str]:
         """
         This function returns the type of a database based on the provided list of columns.
 
@@ -1334,7 +1351,7 @@ class Database:
                 nb_columns_detected_by_duckdb = len(
                     self.conn.query(query_nb_columns_detected_by_duckdb).columns
                 )
-            except:
+            except ValueError:
                 nb_columns_detected_by_duckdb = 0
 
             # Check table columns
@@ -1390,7 +1407,7 @@ class Database:
         self,
         database: str = None,
         output: str = "query",
-    ) -> str:
+    ) -> Optional[str]:
         """
         This function returns a SQL query to attach or detach a database based on the specified format
         and output.
@@ -1471,7 +1488,9 @@ class Database:
 
         return sql_database_link
 
-    def create_view(self, database: str = None, view_name: str = "variants") -> str:
+    def create_view(
+        self, database: str = None, view_name: str = "variants"
+    ) -> Optional[str]:
         """
         The `create_view` function creates a view in a specified database or the default database, using
         a SQL database link.
@@ -1502,13 +1521,13 @@ class Database:
                 )
                 self.view_name = view_name
                 return view_name
-            except:
+            except ValueError:
                 return None
         else:
             self.view_name = None
             return None
 
-    def get_view(self, database: str = None, create_view: str = None) -> str:
+    def get_view(self, database: str = None, create_view: str = None) -> Optional[str]:
         """
         The `get_view` function returns the name of a view in a database, or creates a new view if
         specified.
@@ -1740,7 +1759,6 @@ class Database:
             table = self.get_database_table(database=database)
 
         if sql_query:
-            # columns_list = list(database.query(sql_query).df().columns)
             columns_list = list(database.query(sql_query).columns)
             return columns_list
 
@@ -1751,14 +1769,12 @@ class Database:
                     if table:
                         database_conn = database
                         sql_query = f"SELECT * FROM {table} LIMIT 0"
-                        # columns_list = list(database_conn.query(sql_query).df().columns)
                         columns_list = list(database_conn.query(sql_query).columns)
                         return columns_list
                 elif database_format in ["duckdb"]:
                     if table:
                         database_conn = duckdb.connect(database)
                         sql_query = f"SELECT * FROM {table} LIMIT 0"
-                        # columns_list = list(database_conn.query(sql_query).df().columns)
                         columns_list = list(database_conn.query(sql_query).columns)
                         database_conn.close()
                         return columns_list
@@ -1783,9 +1799,8 @@ class Database:
                         database=database, header_file=header_file
                     )
                     sql_query = f"SELECT * FROM {sql_from} LIMIT 0"
-                    # return list(self.conn.query(sql_query).df().columns)
                     return list(self.conn.query(sql_query).columns)
-        except:
+        except ValueError:
             return []
 
         return []
@@ -1858,7 +1873,7 @@ class Database:
         # Try from database file
         try:
             table_header = self.read_header_file(database)
-        except:
+        except ValueError:
             table_header = None
 
         if table_header:
@@ -1868,7 +1883,7 @@ class Database:
                     .strip()
                     .split(delimiter)
                 )
-            except:
+            except IndexError:
                 table_columns = None
         else:
             table_columns = None
@@ -1877,7 +1892,7 @@ class Database:
             # Try from header file
             try:
                 table_header = self.read_header_file(header_file)
-            except:
+            except ValueError:
                 table_header = None
 
             if table_header:
@@ -1887,7 +1902,7 @@ class Database:
                         .strip()
                         .split(delimiter)
                     )
-                except:
+                except IndexError:
                     table_columns = None
             else:
                 table_columns = None
@@ -2008,6 +2023,80 @@ class Database:
 
         return self.conn
 
+    def is_genotype_column(
+        self,
+        column: str,
+        database: str = None,
+        downsampling: int = 1000,
+        check_format: bool = True,
+    ) -> bool:
+        """
+        The `is_genotype_column` function in Python checks if a specified column in a database contains
+        genotype data based on a regular expression pattern.
+
+        :param column: The `column` parameter is a string that represents the name of a column in a
+        database table. It is used to specify the column for which you want to check if it contains
+        genotype information based on a regular expression pattern
+        :type column: str
+        :param database: The `database` parameter in the `is_genotype_column` method is used to specify
+        the name of the database from which the data will be queried. If a database is provided, the
+        method will query the specified database to check if the given column contains genotype
+        information. If no database is provided,
+        :type database: str
+        :param downsampling: The `downsampling` parameter in the `is_genotype_column` method is an
+        integer value that determines the number of rows to be sampled from the database table when
+        checking for genotype information in the specified column. This parameter is used to limit the
+        number of rows to be processed in order to improve performance, defaults to 1000
+        :type downsampling: int (optional)
+        :param check_format: The `check_format` parameter in the `is_genotype_column` method is a
+        boolean flag that determines whether the function should check the format of the data before
+        proceeding with the genotype column analysis. If `check_format` is set to `True`, the function
+        will verify if the specified column exists in, defaults to True
+        :type check_format: bool (optional)
+        :return: The `is_genotype_column` method returns a boolean value. If the specified column in a
+        database table contains genotype information, it returns `True`; otherwise, it returns `False`.
+        """
+
+        # Table variants
+        table_variants_from = self.get_sql_database_link(database=database)
+
+        # Check if format column is present
+        if check_format:
+            query = f"""
+                SELECT * FROM {table_variants_from}
+                LIMIT 0
+            """
+            df = self.query(query=query)
+            if "FORMAT" not in df.columns or column not in df.columns:
+                return False
+            query_format = f"""
+                AND (len(string_split(FORMAT, ':')) = len(string_split("{column}", ':')) OR "{column}" == './.')
+            """
+        else:
+            query_format = ""
+
+        # Query number of samples
+        query_downsampling = f"""
+            SELECT "{column}", FORMAT
+            FROM {table_variants_from}
+            LIMIT {downsampling}
+        """
+        df_downsampling = self.query(query=query_downsampling)
+
+        # Query to check genotype
+        query_genotype = f"""
+            SELECT  *
+            FROM df_downsampling
+            WHERE (
+                regexp_matches("{column}", '^[0-9.]([/|][0-9.])+')
+                {query_format}
+                )
+        """
+        df_genotype = self.query(query=query_genotype)
+
+        # return
+        return len(df_genotype) == len(df_downsampling)
+
     def export(
         self,
         output_database: str,
@@ -2026,6 +2115,7 @@ class Database:
         chunk_size: int = 1000000,
         export_mode: str = "pyarrow",
         compresslevel: int = 6,
+        export_header: bool = True,
     ) -> bool:
         """
         The `export` function exports data from a database to a specified output format, compresses it
@@ -2088,6 +2178,11 @@ class Database:
         :type export_mode: str (optional)
         :param compresslevel: Level of compression for gzip (default 6)
         :type compresslevel: int (optional)
+        :param export_header: The `export_header` parameter is a boolean flag that determines whether
+        the header of a VCF file should be exported to a separate file or not. If `export_header` is
+        True, the header will be exported to a file. If `export_header` is False, the header will not
+        be, defaults to True, if output format is not VCF
+        :type export_header: bool (optional)
         :return: a boolean value indicating whether the export was successful or not.
         """
 
@@ -2211,6 +2306,22 @@ class Database:
                     extra_columns = []
                 else:
                     extra_columns = existing_columns_header
+
+                # Check VCF format with extra columns
+                extra_columns_clean = []
+                for extra_column in extra_columns:
+                    if extra_column not in needed_columns and (
+                        extra_column == "FORMAT"
+                        or (
+                            "FORMAT" in extra_columns_clean
+                            and self.is_genotype_column(
+                                database=database, column=extra_column
+                            )
+                        )
+                    ):
+                        extra_columns_clean.append(extra_column)
+                extra_columns = extra_columns_clean
+
                 default_empty_value = "."
                 query_export_format = f"FORMAT CSV, DELIMITER '{delimiter}', HEADER, QUOTE '', COMPRESSION 'gzip'"
                 include_header = True
@@ -2252,7 +2363,7 @@ class Database:
 
             # JSON
             elif output_type in ["json"]:
-                query_export_format = f"FORMAT JSON, ARRAY TRUE"
+                query_export_format = "FORMAT JSON, ARRAY TRUE"
                 include_header = False
                 post_process = True
                 if order_by_clean:
@@ -2268,7 +2379,7 @@ class Database:
 
             # Parquet
             elif output_type in ["parquet"]:
-                query_export_format = f"FORMAT PARQUET"
+                query_export_format = "FORMAT PARQUET"
                 # Export options
                 export_options = {
                     "format": "PARQUET",
@@ -2647,7 +2758,7 @@ class Database:
                         """
 
                     # Export with duckdb
-                    self.query(database=database, query=query_copy)
+                    self.query(query=query_copy)
 
                 # Export mode unknown
                 else:
@@ -2658,7 +2769,7 @@ class Database:
                 if post_process:
 
                     # Log - number of records
-                    log.debug(f"Post processing...")
+                    log.debug("Post processing...")
 
                     # Input files
                     input_files = []
@@ -2715,10 +2826,10 @@ class Database:
                         shutil.move(query_output_database_tmp, output_database)
 
                 # Generate associated header file
-                if output_header:
+                if output_header and export_header:
 
-                    # Log - number of records
-                    log.debug(f"Generate header...")
+                    # Log - Generate header
+                    log.debug("Generate header...")
 
                     # Create database
                     database_for_header = Database(database=output_database)

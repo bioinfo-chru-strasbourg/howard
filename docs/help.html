@@ -436,6 +436,7 @@ code {
 <li><a href="#calculation">Calculation</a></li>
 <li><a href="#nomen">NOMEN</a></li>
 <li><a href="#trio">TRIO</a></li>
+<li><a href="#barcodefamily">BARCODEFAMILY</a></li>
 </ul>
 </li>
 <li><a href="#prioritization-tool">PRIORITIZATION tool</a>
@@ -935,6 +936,12 @@ These options will be applied to all annotation databases.
 <p>howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.calculated.tsv --calculations='snpeff_hgvs,NOMEN' --hgvs_field=snpeff_hgvs --transcripts=tests/data/transcripts.tsv</p>
 </blockquote>
 <blockquote>
+<p>howard calculation --input=tests/data/example.vcf.gz --output=/tmp/example.calculated.tsv --calculations='TRIO' --trio_pedigree='sample1,sample2,sample4'</p>
+</blockquote>
+<blockquote>
+<p>howard calculation --input=tests/data/example.vcf.gz --output=/tmp/example.calculated.tsv --calculations='BARCODEFAMILY' --family_pedigree='sample1,sample2,sample4'</p>
+</blockquote>
+<blockquote>
 <p>howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.ann.tsv --param=config/param.json</p>
 </blockquote>
 <blockquote>
@@ -998,7 +1005,18 @@ with Transcript in first column, optional Gene in second column.
 <pre class="hljs"><code><div>--trio_pedigree=&lt;trio pedigree&gt;
 
 Pedigree Trio for trio inheritance calculation.
-either a JSON file or JSON string(e.g. '{&quot;father&quot;: &quot;sample1&quot;, &quot;mother&quot;: &quot;sample2&quot;, &quot;child&quot;: &quot;sample3&quot;}').
+Either a JSON file or JSON string or a list of samples
+(e.g. 'sample1,sample2,sample3' for father, mother and child,
+ '{&quot;father&quot;: &quot;sample1&quot;, &quot;mother&quot;: &quot;sample2&quot;, &quot;child&quot;: &quot;sample3&quot;}').
+
+</div></code></pre>
+<h3 id="barcodefamily">BARCODEFAMILY</h3>
+<pre class="hljs"><code><div>--family_pedigree=&lt;family pedigree&gt;
+
+Pedigree family for barcode calculation on genotype.
+Either a JSON file or JSON string or a list of samples
+(e.g. 'sample1,sample2,sample3,sample4',
+ '{&quot;father&quot;: &quot;sample1&quot;, &quot;mother&quot;: &quot;sample2&quot;, &quot;child1&quot;: &quot;sample3&quot;, &quot;child2&quot;: &quot;sample3&quot;}').
 
 </div></code></pre>
 <h2 id="prioritization-tool">PRIORITIZATION tool</h2>

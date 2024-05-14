@@ -1905,7 +1905,7 @@ class Variants:
         :param export_header: The `export_header` parameter is a boolean flag that determines whether
         the header of a VCF file should be exported to a separate file or not. If `export_header` is
         True, the header will be exported to a file. If `export_header` is False, the header will not
-        be, defaults to True
+        be, defaults to True, if output format is not VCF
         :type export_header: bool (optional)
         :param query: The `query` parameter is an optional SQL query that can be used to filter and
         select specific data from the VCF file before exporting it. If provided, only the data that
@@ -1954,6 +1954,9 @@ class Variants:
         # Param
         param = self.get_param()
 
+        # Tmp files to remove
+        tmp_to_remove = []
+
         # If no output, get it
         if not output_file:
             output_file = self.get_output()
@@ -1969,6 +1972,12 @@ class Variants:
             # Export header
             self.export_header(output_file=output_file)
 
+        # Switch off export header if VCF output
+        output_file_type = get_file_format(output_file)
+        if output_file_type in ["vcf"]:
+            export_header = False
+            tmp_to_remove.append(output_header)
+
         # Chunk size
         if not chunk_size:
             chunk_size = config.get("chunk_size", None)
@@ -1976,6 +1985,8 @@ class Variants:
         # Parquet partition
         if not parquet_partitions:
             parquet_partitions = param.get("export", {}).get("parquet_partitions", None)
+        if parquet_partitions and isinstance(parquet_partitions, str):
+            parquet_partitions = parquet_partitions.split(",")
 
         # Order by
         if not order_by:
@@ -1998,9 +2009,6 @@ class Variants:
                 force=False,
             )
 
-        # Tmp files to remove
-        tmp_to_remove = []
-
         # if connexion_format in ["sqlite"] or query:
         if connexion_format in ["sqlite"]:
 
@@ -2015,11 +2023,6 @@ class Variants:
             table_variants = self.get_table_variants()
 
             # Create export query
-            # if query:
-            #     sql_query_export_subquery = f"""
-            #         SELECT * FROM ({query})
-            #         """
-            # if connexion_format in ["sqlite"]:
             sql_query_export_subquery = f"""
                 SELECT * FROM {table_variants}
                 """
@@ -2052,6 +2055,7 @@ class Variants:
             header_in_output=header_in_output,
             order_by=order_by,
             query=query,
+            export_header=export_header,
         )
 
         # Remove
@@ -4939,9 +4943,6 @@ class Variants:
                 f"Existing annotations in VCF: {vcf_annotation} [{vcf_annotation_line}]"
             )
 
-        # prefix
-        prefix = self.get_explode_infos_prefix()
-
         # Added columns
         added_columns = []
 
@@ -4993,7 +4994,6 @@ class Variants:
                 # Find files
                 parquet_file = database.get_database()
                 parquet_hdr_file = database.get_header_file()
-                parquet_format = database.get_format()
                 parquet_type = database.get_type()
 
                 # Check if files exists
@@ -5062,9 +5062,9 @@ class Variants:
                                 )
 
                     # For all fields in database
-                    annotation_fields_ALL = False
+                    annotation_fields_all = False
                     if "ALL" in annotation_fields or "INFO" in annotation_fields:
-                        annotation_fields_ALL = True
+                        annotation_fields_all = True
                         annotation_fields = {
                             key: key for key in parquet_hdr_vcf_header_infos
                         }
@@ -5259,7 +5259,7 @@ class Variants:
                     if (
                         allow_annotation_full_info
                         and nb_annotation_field == len(annotation_fields)
-                        and annotation_fields_ALL
+                        and annotation_fields_all
                         and (
                             "INFO" in parquet_hdr_vcf_header_columns
                             and "INFO" in database.get_extra_columns()
@@ -5281,199 +5281,112 @@ class Variants:
                             sql_query_annotation_update_info_sets
                         )
 
-                        # Check chromosomes list (and variant max position)
-                        sql_query_chromosomes_max_pos = f""" SELECT table_variants."#CHROM" as CHROM, MAX(table_variants."POS") as MAX_POS, MIN(table_variants."POS")-1 as MIN_POS FROM {table_variants} as table_variants GROUP BY table_variants."#CHROM" """
-                        sql_query_chromosomes_max_pos_df = self.conn.execute(
-                            sql_query_chromosomes_max_pos
+                        # Check chromosomes list (and variants infos)
+                        sql_query_chromosomes = f"""
+                            SELECT table_variants."#CHROM" as CHROM, count(*) AS count_variants, min(POS) AS min_variants, MAX(POS) AS max_variants
+                            FROM {table_variants} as table_variants
+                            GROUP BY table_variants."#CHROM"
+                            ORDER BY table_variants."#CHROM"
+                            """
+                        sql_query_chromosomes_df = self.conn.execute(
+                            sql_query_chromosomes
                         ).df()
+                        sql_query_chromosomes_dict = {
+                            entry["CHROM"]: {
+                                "count": entry["count_variants"],
+                                "min": entry["min_variants"],
+                                "max": entry["max_variants"],
+                            }
+                            for index, entry in sql_query_chromosomes_df.iterrows()
+                        }
 
-                        # Create dictionnary with chromosomes (and max position)
-                        sql_query_chromosomes_max_pos_dictionary = (
-                            sql_query_chromosomes_max_pos_df.groupby("CHROM")
-                            .apply(
-                                lambda x: {
-                                    "max_pos": x["MAX_POS"].max(),
-                                    "min_pos": x["MIN_POS"].min(),
-                                }
-                            )
-                            .to_dict()
-                        )
-
-                        # Affichage du dictionnaire
-                        log.debug(
-                            "Chromosomes max pos found: "
-                            + str(sql_query_chromosomes_max_pos_dictionary)
-                        )
-
-                        # nb_of_variant_annotated
+                        # Init
                         nb_of_query = 0
                         nb_of_variant_annotated = 0
-                        # query_dict = {}
                         query_dict = query_dict_remove
 
-                        for chrom in sql_query_chromosomes_max_pos_dictionary:
+                        # for chrom in sql_query_chromosomes_df["CHROM"]:
+                        for chrom in sql_query_chromosomes_dict:
 
-                            # nb_of_variant_annotated_by_chrom
-                            nb_of_variant_annotated_by_chrom = 0
-
-                            # Get position of the farthest variant (max position) in the chromosome
-                            sql_query_chromosomes_max_pos_dictionary_max_pos = (
-                                sql_query_chromosomes_max_pos_dictionary.get(
-                                    chrom, {}
-                                ).get("max_pos")
-                            )
-                            sql_query_chromosomes_max_pos_dictionary_min_pos = (
-                                sql_query_chromosomes_max_pos_dictionary.get(
-                                    chrom, {}
-                                ).get("min_pos")
-                            )
-
-                            # Autodetect range of bases to split/chunk
-                            log.debug(
-                                f"Annotation '{annotation_name}' - Chromosome '{chrom}' - Start Autodetection Intervals..."
-                            )
-
-                            batch_annotation_databases_step = None
-                            batch_annotation_databases_ncuts = 1
-
-                            # Create intervals from 0 to max position variant, with the batch window previously defined
-                            sql_query_intervals = split_interval(
-                                sql_query_chromosomes_max_pos_dictionary_min_pos,
-                                sql_query_chromosomes_max_pos_dictionary_max_pos,
-                                step=batch_annotation_databases_step,
-                                ncuts=batch_annotation_databases_ncuts,
-                            )
+                            # Number of variant by chromosome
+                            nb_of_variant_by_chrom = sql_query_chromosomes_dict.get(
+                                chrom, {}
+                            ).get("count", 0)
 
                             log.debug(
-                                f"Annotation '{annotation_name}' - Chromosome '{chrom}' - Stop Autodetection Intervals"
+                                f"Annotation '{annotation_name}' - Chromosome '{chrom}' [{nb_of_variant_by_chrom} variants]..."
                             )
 
-                            # Interval Start/Stop
-                            sql_query_interval_start = sql_query_intervals[0]
+                            # Annotation with regions database
+                            if parquet_type in ["regions"]:
+                                sql_query_annotation_from_clause = f"""
+                                    FROM (
+                                        SELECT 
+                                            '{chrom}' AS \"#CHROM\",
+                                            table_variants_from.\"POS\" AS \"POS\",
+                                            {",".join(sql_query_annotation_to_agregate)}
+                                        FROM {table_variants} as table_variants_from
+                                        LEFT JOIN {parquet_file_link} as table_parquet_from ON (
+                                            table_parquet_from."#CHROM" = '{chrom}'
+                                            AND table_variants_from.\"POS\" <= table_parquet_from.\"END\"
+                                            AND (table_variants_from.\"POS\" >= (table_parquet_from.\"START\"+1)
+                                                OR table_variants_from.\"POS\" + (len(table_variants_from.\"REF\")-1) >= (table_parquet_from.\"START\"+1)
+                                                )
+                                        )
+                                        WHERE table_variants_from.\"#CHROM\" in ('{chrom}')
+                                        GROUP BY table_variants_from.\"POS\"
+                                        )
+                                        as table_parquet
+                                """
 
-                            # For each interval
-                            for i in sql_query_intervals[1:]:
+                                sql_query_annotation_where_clause = """
+                                    table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
+                                    AND table_parquet.\"POS\" = table_variants.\"POS\"
+                                """
 
-                                # Interval Start/Stop
-                                sql_query_interval_stop = i
+                            # Annotation with variants database
+                            else:
+                                sql_query_annotation_from_clause = f"""
+                                    FROM {parquet_file_link} as table_parquet
+                                """
+                                sql_query_annotation_where_clause = f"""
+                                    table_variants."#CHROM" = '{chrom}'
+                                    AND table_parquet.\"#CHROM\" = table_variants.\"#CHROM\" 
+                                    AND table_parquet.\"POS\" = table_variants.\"POS\"
+                                    AND table_parquet.\"ALT\" = table_variants.\"ALT\"
+                                    AND table_parquet.\"REF\" = table_variants.\"REF\"
+                                """
 
-                                log.debug(
-                                    f"Annotation '{annotation_name}' - Chromosome '{chrom}' - Interval [{sql_query_interval_start}-{sql_query_interval_stop}] ..."
-                                )
-
-                                log.debug(
-                                    f"Annotation '{annotation_name}' - Chromosome '{chrom}' - Interval [{sql_query_interval_start}-{sql_query_interval_stop}] - Start detecting regions..."
-                                )
-
-                                regions = [
-                                    (
-                                        chrom,
-                                        sql_query_interval_start,
-                                        sql_query_interval_stop,
-                                    )
-                                ]
-
-                                log.debug(
-                                    f"Annotation '{annotation_name}' - Chromosome '{chrom}' - Interval [{sql_query_interval_start}-{sql_query_interval_stop}] - Stop detecting regions"
-                                )
-
-                                # Fusion des régions chevauchantes
-                                if regions:
-
-                                    # Number of regions
-                                    nb_regions = len(regions)
-
-                                    # create where caluse on regions
-                                    clause_where_regions_variants = create_where_clause(
-                                        regions, table="table_variants"
-                                    )
-
-                                    log.debug(
-                                        f"Annotation '{annotation_name}' - Chromosome '{chrom}' - Interval [{sql_query_interval_start}-{sql_query_interval_stop}] - {nb_regions} regions..."
-                                    )
-
-                                    # Annotation with regions database
-                                    if parquet_type in ["regions"]:
-                                        sql_query_annotation_from_clause = f"""
-                                            FROM (
-                                                SELECT 
-                                                    '{chrom}' AS \"#CHROM\",
-                                                    table_variants_from.\"POS\" AS \"POS\",
-                                                    {",".join(sql_query_annotation_to_agregate)}
-                                                FROM {table_variants} as table_variants_from
-                                                LEFT JOIN {parquet_file_link} as table_parquet_from ON (
-                                                    table_parquet_from.\"#CHROM\" in ('{chrom}')
-                                                    AND table_variants_from.\"POS\" <= table_parquet_from.\"END\"
-                                                    AND (table_variants_from.\"POS\" >= (table_parquet_from.\"START\"+1)
-                                                        OR table_variants_from.\"POS\" + (len(table_variants_from.\"REF\")-1) >= (table_parquet_from.\"START\"+1)
+                            # Create update query
+                            sql_query_annotation_chrom_interval_pos = f"""
+                                UPDATE {table_variants} as table_variants
+                                    SET INFO = 
+                                        concat(
+                                            CASE WHEN table_variants.INFO NOT IN ('','.')
+                                                THEN table_variants.INFO
+                                                ELSE ''
+                                            END
+                                            ,
+                                            CASE WHEN table_variants.INFO NOT IN ('','.')
+                                                        AND (
+                                                        concat({sql_query_annotation_update_info_sets_sql})
                                                         )
-                                                )
-                                                WHERE table_variants_from.\"#CHROM\" in ('{chrom}')
-                                                GROUP BY table_variants_from.\"POS\"
-                                                )
-                                                as table_parquet
-                                        """
+                                                        NOT IN ('','.') 
+                                                    THEN ';'
+                                                    ELSE ''
+                                            END
+                                            ,
+                                            {sql_query_annotation_update_info_sets_sql}
+                                            )
+                                    {sql_query_annotation_from_clause}
+                                    WHERE {sql_query_annotation_where_clause}
+                                    ;
+                                """
 
-                                        sql_query_annotation_where_clause = """
-                                            table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
-                                            AND table_parquet.\"POS\" = table_variants.\"POS\"
-                                        """
-
-                                    # Annotation with variants database
-                                    else:
-                                        sql_query_annotation_from_clause = f"""
-                                            FROM {parquet_file_link} as table_parquet 
-                                        """
-                                        sql_query_annotation_where_clause = f"""
-                                            table_parquet.\"#CHROM\" in ('{chrom}')
-                                            AND ( {clause_where_regions_variants} )
-                                            AND table_parquet.\"#CHROM\" = table_variants.\"#CHROM\"
-                                            AND table_parquet.\"POS\" = table_variants.\"POS\"
-                                            AND table_parquet.\"ALT\" = table_variants.\"ALT\"
-                                            AND table_parquet.\"REF\" = table_variants.\"REF\"
-                                        """
-
-                                    # Create update query
-                                    sql_query_annotation_chrom_interval_pos = f"""
-                                        UPDATE {table_variants} as table_variants
-                                            SET INFO = 
-                                                concat(
-                                                    CASE WHEN table_variants.INFO NOT IN ('','.')
-                                                        THEN table_variants.INFO
-                                                        ELSE ''
-                                                    END
-                                                    ,
-                                                    CASE WHEN table_variants.INFO NOT IN ('','.')
-                                                              AND (
-                                                                concat({sql_query_annotation_update_info_sets_sql})
-                                                                )
-                                                                NOT IN ('','.') 
-                                                         THEN ';'
-                                                         ELSE ''
-                                                    END
-                                                    ,
-                                                    {sql_query_annotation_update_info_sets_sql}
-                                                    )
-                                            {sql_query_annotation_from_clause}
-                                            WHERE {sql_query_annotation_where_clause}
-                                            ;
-                                        """
-
-                                    # Add update query to dict
-                                    query_dict[
-                                        f"{chrom}:{sql_query_interval_start}-{sql_query_interval_stop}"
-                                    ] = sql_query_annotation_chrom_interval_pos
-
-                                    log.debug(
-                                        "Create SQL query: "
-                                        + str(sql_query_annotation_chrom_interval_pos)
-                                    )
-
-                                    # Interval Start/Stop
-                                    sql_query_interval_start = sql_query_interval_stop
-
-                            # nb_of_variant_annotated
-                            nb_of_variant_annotated += nb_of_variant_annotated_by_chrom
+                            # Add update query to dict
+                            query_dict[
+                                f"{chrom} [{nb_of_variant_by_chrom} variants]"
+                            ] = sql_query_annotation_chrom_interval_pos
 
                         nb_of_query = len(query_dict)
                         num_query = 0
@@ -5870,6 +5783,14 @@ class Variants:
                     "available": True,
                     "function_name": "calculation_barcode",
                     "function_params": [],
+                },
+                "BARCODEFAMILY": {
+                    "type": "python",
+                    "name": "BARCODEFAMILY",
+                    "description": "BARCODEFAMILY as VaRank tool",
+                    "available": True,
+                    "function_name": "calculation_barcode_family",
+                    "function_params": ["BCF"],
                 },
                 "TRIO": {
                     "type": "python",
@@ -7791,7 +7712,7 @@ class Variants:
             del dataframe_genotypeconcordance
             gc.collect()
 
-    def calculation_barcode(self) -> None:
+    def calculation_barcode(self, tag: str = "barcode") -> None:
         """
         The `calculation_barcode` function calculates barcode values for variants in a VCF file and
         updates the INFO field in the file with the calculated barcode values.
@@ -7804,18 +7725,19 @@ class Variants:
         ):
 
             # barcode annotation field
-            barcode_tag = "barcode"
+            if not tag:
+                tag = "barcode"
 
             # VCF infos tags
             vcf_infos_tags = {
-                "barcode": "barcode calculation (VaRank)",
+                tag: "barcode calculation (VaRank)",
             }
 
             # Prefix
             prefix = self.get_explode_infos_prefix()
 
             # Field
-            barcode_infos = prefix + barcode_tag
+            barcode_infos = prefix + tag
 
             # Variants table
             table_variants = self.get_table_variants()
@@ -7843,11 +7765,11 @@ class Variants:
             )
 
             # Add barcode to header
-            vcf_reader.infos[barcode_tag] = vcf.parser._Info(
-                barcode_tag,
+            vcf_reader.infos[tag] = vcf.parser._Info(
+                tag,
                 ".",
                 "String",
-                vcf_infos_tags.get(barcode_tag, "snpEff hgvs annotations"),
+                vcf_infos_tags.get(tag, vcf_infos_tags.get(tag)),
                 "howard calculation",
                 "0",
                 self.code_type_map.get("String"),
@@ -7867,12 +7789,201 @@ class Variants:
                             WHEN dataframe_barcode."{barcode_infos}" NOT IN ('','.')
                             AND dataframe_barcode."{barcode_infos}" NOT NULL
                             THEN concat(
-                                    '{barcode_tag}=',
+                                    '{tag}=',
                                     dataframe_barcode."{barcode_infos}"
                                 )
                             ELSE ''
                         END
                     )
+                FROM dataframe_barcode
+                WHERE {table_variants}."{variant_id_column}" = dataframe_barcode."{variant_id_column}"
+            """
+            self.conn.execute(sql_update)
+
+            # Remove added columns
+            for added_column in added_columns:
+                self.drop_column(column=added_column)
+
+            # Delete dataframe
+            del dataframe_barcode
+            gc.collect()
+
+    def calculation_barcode_family(self, tag: str = "BCF") -> None:
+        """
+        The `calculation_barcode_family` function calculates barcode values for variants in a VCF file
+        and updates the INFO field in the file with the calculated barcode values.
+
+        :param tag: The `tag` parameter in the `calculation_barcode_family` function is used to specify
+        the barcode tag that will be added to the VCF file during the calculation process. If no value
+        is provided for the `tag` parameter, the default value used is "BCF", defaults to BCF
+        :type tag: str (optional)
+        """
+
+        # if FORMAT and samples
+        if (
+            "FORMAT" in self.get_header_columns_as_list()
+            and self.get_header_sample_list()
+        ):
+
+            # barcode annotation field
+            if not tag:
+                tag = "BCF"
+
+            # VCF infos tags
+            vcf_infos_tags = {
+                tag: "barcode family calculation",
+                f"{tag}S": "barcode family samples",
+            }
+
+            # Param
+            param = self.get_param()
+            log.debug(f"param={param}")
+
+            # Prefix
+            prefix = self.get_explode_infos_prefix()
+
+            # PED param
+            ped = (
+                param.get("calculation", {})
+                .get("calculations", {})
+                .get("BARCODEFAMILY", {})
+                .get("family_pedigree", None)
+            )
+            log.debug(f"ped={ped}")
+
+            # Load PED
+            if ped:
+
+                # Pedigree is a file
+                if isinstance(ped, str) and os.path.exists(full_path(ped)):
+                    log.debug("Pedigree is file")
+                    with open(full_path(ped)) as ped:
+                        ped = json.load(ped)
+
+                # Pedigree is a string
+                elif isinstance(ped, str):
+                    log.debug("Pedigree is str")
+                    try:
+                        ped = json.loads(ped)
+                        log.debug("Pedigree is json str")
+                    except ValueError as e:
+                        ped_samples = ped.split(",")
+                        ped = {}
+                        for ped_sample in ped_samples:
+                            ped[ped_sample] = ped_sample
+
+                # Pedigree is a dict
+                elif isinstance(ped, dict):
+                    log.debug("Pedigree is dict")
+
+                # Pedigree is not well formatted
+                else:
+                    msg_error = "Pedigree not well formatted"
+                    log.error(msg_error)
+                    raise ValueError(msg_error)
+
+                # Construct list
+                ped_samples = list(ped.values())
+
+            else:
+                log.debug("Pedigree not defined. Take all samples")
+                ped_samples = self.get_header_sample_list()
+                ped = {}
+                for ped_sample in ped_samples:
+                    ped[ped_sample] = ped_sample
+
+            # Check pedigree
+            if not ped or len(ped) == 0:
+                msg_error = f"Error in pedigree: samples {ped_samples}"
+                log.error(msg_error)
+                raise ValueError(msg_error)
+
+            # Log
+            log.info(
+                "Calculation 'BARCODEFAMILY' - Samples: "
+                + ", ".join([f"{member}='{ped[member]}'" for member in ped])
+            )
+            log.debug(f"ped_samples={ped_samples}")
+
+            # Field
+            barcode_infos = prefix + tag
+
+            # Variants table
+            table_variants = self.get_table_variants()
+
+            # Header
+            vcf_reader = self.get_header()
+
+            # Create variant id
+            variant_id_column = self.get_variant_id_column()
+            added_columns = [variant_id_column]
+
+            # variant_id, FORMAT and samples
+            samples_fields = f" {variant_id_column}, FORMAT , " + " , ".join(
+                ped_samples
+            )
+
+            # Create dataframe
+            dataframe_barcode = self.get_query_to_df(
+                f""" SELECT {samples_fields} FROM {table_variants} """
+            )
+
+            # Create barcode column
+            dataframe_barcode[barcode_infos] = dataframe_barcode.apply(
+                lambda row: barcode(row, samples=ped_samples), axis=1
+            )
+
+            # Add barcode family to header
+            # Add vaf_normalization to header
+            vcf_reader.formats[tag] = vcf.parser._Format(
+                id=tag,
+                num=".",
+                type="String",
+                desc=vcf_infos_tags.get(tag, "barcode family calculation"),
+                type_code=self.code_type_map.get("String"),
+            )
+            vcf_reader.formats[f"{tag}S"] = vcf.parser._Format(
+                id=f"{tag}S",
+                num=".",
+                type="String",
+                desc=vcf_infos_tags.get(f"{tag}S", "barcode family samples"),
+                type_code=self.code_type_map.get("String"),
+            )
+
+            # Update
+            # for sample in ped_samples:
+            sql_update_set = []
+            for sample in self.get_header_sample_list() + ["FORMAT"]:
+                if sample in ped_samples:
+                    value = f'dataframe_barcode."{barcode_infos}"'
+                    value_samples = "'" + ",".join(ped_samples) + "'"
+                elif sample == "FORMAT":
+                    value = f"'{tag}'"
+                    value_samples = f"'{tag}S'"
+                else:
+                    value = "'.'"
+                    value_samples = "'.'"
+                sql_update_set.append(
+                    f"""
+                        "{sample}" = 
+                        concat(
+                            CASE
+                                WHEN {table_variants}."{sample}" = './.'
+                                THEN concat('./.',regexp_replace(regexp_replace({table_variants}.FORMAT, '[a-zA-Z0-9\s]', '', 'g'), ':', ':.', 'g'))
+                                ELSE {table_variants}."{sample}"
+                            END,
+                            ':',
+                            {value},
+                            ':',
+                            {value_samples}
+                        )
+                    """
+                )
+
+            sql_update_set_join = ", ".join(sql_update_set)
+            sql_update = f"""
+                UPDATE {table_variants}
+                SET {sql_update_set_join}
                 FROM dataframe_barcode
                 WHERE {table_variants}."{variant_id_column}" = dataframe_barcode."{variant_id_column}"
             """
@@ -7919,14 +8030,45 @@ class Variants:
                 .get("TRIO", {})
                 .get("trio_pedigree", None)
             )
+
+            # Load trio
             if trio_ped:
 
-                # Load trio
+                # Trio pedigree is a file
                 if isinstance(trio_ped, str) and os.path.exists(full_path(trio_ped)):
+                    log.debug("TRIO pedigree is file")
                     with open(full_path(trio_ped)) as trio_ped:
                         trio_ped = json.load(trio_ped)
+
+                # Trio pedigree is a string
+                elif isinstance(trio_ped, str):
+                    log.debug("TRIO pedigree is str")
+                    try:
+                        trio_ped = json.loads(trio_ped)
+                        log.debug("TRIO pedigree is json str")
+                    except ValueError as e:
+                        trio_samples = trio_ped.split(",")
+                        if len(trio_samples) == 3:
+                            trio_ped = {
+                                "father": trio_samples[0],
+                                "mother": trio_samples[1],
+                                "child": trio_samples[2],
+                            }
+                            log.debug("TRIO pedigree is list str")
+                        else:
+                            msg_error = "TRIO pedigree not well formatted"
+                            log.error(msg_error)
+                            raise ValueError(msg_error)
+
+                # Trio pedigree is a dict
+                elif isinstance(trio_ped, dict):
+                    log.debug("TRIO pedigree is dict")
+
+                # Trio pedigree is not well formatted
                 else:
-                    trio_ped = json.loads(trio_ped)
+                    msg_error = "TRIO pedigree not well formatted"
+                    log.error(msg_error)
+                    raise ValueError(msg_error)
 
                 # Construct trio list
                 trio_samples = [
@@ -7936,12 +8078,19 @@ class Variants:
                 ]
 
             else:
-                trio_samples = self.get_header_sample_list()[0:3]
-                trio_ped = {
-                    "father": trio_samples[0],
-                    "mother": trio_samples[1],
-                    "child": trio_samples[2],
-                }
+                log.debug("TRIO pedigree not defined. Take the first 3 samples")
+                samples_list = self.get_header_sample_list()
+                if len(samples_list) >= 3:
+                    trio_samples = self.get_header_sample_list()[0:3]
+                    trio_ped = {
+                        "father": trio_samples[0],
+                        "mother": trio_samples[1],
+                        "child": trio_samples[2],
+                    }
+                else:
+                    msg_error = f"Error in TRIO pedigree: only {len(samples_list)} samples {samples_list}"
+                    log.error(msg_error)
+                    raise ValueError(msg_error)
 
             # Check trio pedigree
             if not trio_ped or len(trio_ped) != 3:

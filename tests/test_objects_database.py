@@ -6,11 +6,12 @@ Usage:
 pytest tests/
 
 Coverage:
-coverage run -m pytest . -x -v
+coverage run -m pytest tests/test_objects_database.py -x -vv --log-cli-level=INFO --capture=tee-sys
 coverage report --include=howard/* -m
 """
 
 import os
+from tempfile import TemporaryDirectory
 import pytest
 
 from howard.functions.commons import *
@@ -37,9 +38,7 @@ def test_export_order_by():
         database = Database(database=input_database)
         database.export(output_database, order_by="")
         database = Database(database=output_database)
-        results = database.query(
-            database=output_database, query=f"""SELECT POS, QUAL, ALT FROM variants"""
-        )
+        results = database.query(query=f"""SELECT POS, QUAL, ALT FROM variants""")
         df_first_pos = results.df()["POS"][0]
         df_first_qual = results.df()["QUAL"][0]
         df_first_alt = results.df()["ALT"][0]
@@ -49,9 +48,7 @@ def test_export_order_by():
         database = Database(database=input_database)
         database.export(output_database, order_by="QUAL DESC")
         database = Database(database=output_database)
-        results = database.query(
-            database=output_database, query=f"""SELECT POS, QUAL, ALT FROM variants"""
-        )
+        results = database.query(query=f"""SELECT POS, QUAL, ALT FROM variants""")
         df_first_pos = results.df()["POS"][0]
         df_first_qual = results.df()["QUAL"][0]
         df_first_alt = results.df()["ALT"][0]
@@ -61,9 +58,7 @@ def test_export_order_by():
         database = Database(database=input_database)
         database.export(output_database, order_by="ALT DESC, POS ASC")
         database = Database(database=output_database)
-        results = database.query(
-            database=output_database, query=f"""SELECT POS, QUAL, ALT FROM variants"""
-        )
+        results = database.query(query=f"""SELECT POS, QUAL, ALT FROM variants""")
         df_first_pos = results.df()["POS"][0]
         df_first_qual = results.df()["QUAL"][0]
         df_first_alt = results.df()["ALT"][0]
@@ -73,9 +68,7 @@ def test_export_order_by():
         database = Database(database=input_database)
         database.export(output_database, order_by="ALT DESC, POS")
         database = Database(database=output_database)
-        results = database.query(
-            database=output_database, query=f"""SELECT POS, QUAL, ALT FROM variants"""
-        )
+        results = database.query(query=f"""SELECT POS, QUAL, ALT FROM variants""")
         df_first_pos = results.df()["POS"][0]
         df_first_qual = results.df()["QUAL"][0]
         df_first_alt = results.df()["ALT"][0]
@@ -85,9 +78,7 @@ def test_export_order_by():
         database = Database(database=input_database)
         database.export(output_database, order_by="ALT DESC, POS ASC, BEDCOLUMN")
         database = Database(database=output_database)
-        results = database.query(
-            database=output_database, query=f"""SELECT POS, QUAL, ALT FROM variants"""
-        )
+        results = database.query(query=f"""SELECT POS, QUAL, ALT FROM variants""")
         df_first_pos = results.df()["POS"][0]
         df_first_qual = results.df()["QUAL"][0]
         df_first_alt = results.df()["ALT"][0]
@@ -144,7 +135,6 @@ def test_database_as_conn():
         try:
             assert database.export(output_database=output_database)
             assert database.query(
-                database=output_database,
                 query=f"""{database.get_sql_database_link(database=output_database)}""",
             )
         except:
@@ -660,7 +650,7 @@ def test_find_database():
         database.find_database(
             database=database_file_basename_without_extention_format,
             databases_folders=databases_folders,
-            format=database_format,
+            database_format=database_format,
         )
         == database_file
     )
@@ -2097,11 +2087,9 @@ def test_export():
                     )
                     if database.get_sql_database_attach(database=output_database):
                         database.query(
-                            database=output_database,
                             query=f"""{database.get_sql_database_attach(database=output_database)}""",
                         )
                     assert database.query(
-                        database=output_database,
                         query=f"""{database.get_sql_database_link(database=output_database)}""",
                     )
                 except:

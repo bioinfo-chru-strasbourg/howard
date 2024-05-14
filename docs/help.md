@@ -26,6 +26,7 @@
     - [Calculation](#calculation)
     - [NOMEN](#nomen)
     - [TRIO](#trio)
+    - [BARCODEFAMILY](#barcodefamily)
   - [PRIORITIZATION tool](#prioritization-tool)
     - [Main options](#main-options-6)
     - [Prioritization](#prioritization)
@@ -604,6 +605,10 @@ Usage examples:
 
 > howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.calculated.tsv --calculations='snpeff_hgvs,NOMEN' --hgvs_field=snpeff_hgvs --transcripts=tests/data/transcripts.tsv 
 
+> howard calculation --input=tests/data/example.vcf.gz --output=/tmp/example.calculated.tsv --calculations='TRIO' --trio_pedigree='sample1,sample2,sample4' 
+
+> howard calculation --input=tests/data/example.vcf.gz --output=/tmp/example.calculated.tsv --calculations='BARCODEFAMILY' --family_pedigree='sample1,sample2,sample4' 
+
 > howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.ann.tsv --param=config/param.json 
 
 > howard calculation --show_calculations 
@@ -686,7 +691,20 @@ with Transcript in first column, optional Gene in second column.
 --trio_pedigree=<trio pedigree>
 
 Pedigree Trio for trio inheritance calculation.
-either a JSON file or JSON string(e.g. '{"father": "sample1", "mother": "sample2", "child": "sample3"}').
+Either a JSON file or JSON string or a list of samples
+(e.g. 'sample1,sample2,sample3' for father, mother and child,
+ '{"father": "sample1", "mother": "sample2", "child": "sample3"}').
+
+```
+
+### BARCODEFAMILY
+```
+--family_pedigree=<family pedigree>
+
+Pedigree family for barcode calculation on genotype.
+Either a JSON file or JSON string or a list of samples
+(e.g. 'sample1,sample2,sample3,sample4',
+ '{"father": "sample1", "mother": "sample2", "child1": "sample3", "child2": "sample3"}').
 
 ```
 

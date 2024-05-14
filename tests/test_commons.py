@@ -6,13 +6,14 @@ Usage:
 pytest tests/
 
 Coverage:
-coverage run -m pytest tests/test_commons.py -x -v --log-cli-level=INFO --capture=tee-sys
+coverage run -m pytest tests/test_commons.py -x -vv --log-cli-level=INFO --capture=tee-sys
 coverage report --include=howard/* -m
 """
 
 import logging as log
 import os
 import sys
+from tempfile import TemporaryDirectory
 import duckdb
 import re
 import Bio.bgzf as bgzf
@@ -27,8 +28,68 @@ from howard.functions.commons import *
 from test_needed import *
 
 
+def test_identical_with_identical_files():
+    with tempfile.NamedTemporaryFile(
+        mode="w", delete=False
+    ) as f1, tempfile.NamedTemporaryFile(mode="w", delete=False) as f2:
+        f1.write("## Header\n")
+        f1.write("Data Line 1\n")
+        f1.write("Data Line 2\n")
+        f2.write("## Header\n")
+        f2.write("Data Line 1\n")
+        f2.write("Data Line 2\n")
+        f1.close()
+        f2.close()
+
+        assert identical([f1.name, f2.name])
+
+        os.unlink(f1.name)
+        os.unlink(f2.name)
+
+
+def test_identical_with_different_header():
+    with tempfile.NamedTemporaryFile(
+        mode="w", delete=False
+    ) as f1, tempfile.NamedTemporaryFile(mode="w", delete=False) as f2:
+        f1.write("## Header\n")
+        f1.write("Data Line 1\n")
+        f1.write("Data Line 2\n")
+        f2.write("## Another Header\n")  # Different
+        f2.write("Data Line 1\n")
+        f2.write("Data Line 2\n")
+        f1.close()
+        f2.close()
+
+        assert identical([f1.name, f2.name])
+
+        os.unlink(f1.name)
+        os.unlink(f2.name)
+
+
+def test_identical_with_different_content():
+    with tempfile.NamedTemporaryFile(
+        mode="w", delete=False
+    ) as f1, tempfile.NamedTemporaryFile(mode="w", delete=False) as f2:
+        f1.write("## Header\n")
+        f1.write("Data Line 1\n")
+        f1.write("Data Line 2\n")
+        f2.write("## Header\n")
+        f2.write("Data Line 1\n")
+        f2.write("Data Line 3\n")  # Different
+        f1.close()
+        f2.close()
+
+        assert not identical([f1.name, f2.name])
+
+        os.unlink(f1.name)
+        os.unlink(f2.name)
+
+
 def test_transcripts_file_to_df():
-    """ """
+    """
+    The `test_transcripts_file_to_df` function tests the functionality of the `transcripts_file_to_df`
+    function with different input files.
+    """
 
     # Input transcript file
     transcripts_file = tests_data_folder + "/transcripts.tsv"

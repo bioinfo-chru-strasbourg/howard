@@ -10,6 +10,7 @@ import subprocess
 import sys
 from tempfile import NamedTemporaryFile
 import tempfile
+import typing
 import duckdb
 import json
 import argparse
@@ -165,19 +166,21 @@ def remove_if_exists(filepaths: list) -> None:
 
     for filepath in filepaths:
 
-        # full path
-        filepath = full_path(filepath)
+        if filepath:
 
-        # If path exists
-        if os.path.exists(filepath):
+            # full path
+            filepath = full_path(filepath)
 
-            # Folder
-            if os.path.isdir(filepath):
-                shutil.rmtree(filepath)
+            # If path exists
+            if os.path.exists(filepath):
 
-            # File
-            else:
-                os.remove(filepath)
+                # Folder
+                if os.path.isdir(filepath):
+                    shutil.rmtree(filepath)
+
+                # File
+                else:
+                    os.remove(filepath)
 
 
 def set_log_level(verbosity: str, log_file: str = None) -> str:
@@ -1635,7 +1638,14 @@ def get_memory(config: dict = {}, param: dict = None) -> str:
     mem_default = int(mem_total * 0.8)
 
     # Threads in param or config
-    memory_param = param.get("memory", config.get("memory", "0"))
+    if config:
+        memory_config = config.get("memory", None)
+    else:
+        memory_config = None
+    if param:
+        memory_param = param.get("memory", memory_config)
+    else:
+        memory_param = memory_config
 
     # Check memory value
     if mem_default < 1:
@@ -1911,6 +1921,7 @@ def concat_and_compress_files(
     output_file: str,
     compression_type: str = "bgzip",
     threads: int = 1,
+    memory: int = 1,
     block: int = 10**6,
     compression_level: int = 6,
     sort: bool = False,
@@ -1934,6 +1945,9 @@ def concat_and_compress_files(
     decompression. It determines the level of parallelism in the compression process, allowing for
     faster execution when multiple threads are used, defaults to 1
     :type threads: int (optional)
+    :param memory: The `memory` parameter specifies the amount of max memory (in Gb) to use for sorting.
+    defaults to 1
+    :type memory: int (optional)
     :param block: The `block` parameter specifies the size of the block used for reading and writing
     data during compression. It is set to a default value of 10^6 (1 million) bytes
     :type block: int
@@ -2019,6 +2033,8 @@ def concat_and_compress_files(
                 "-T",
                 output_file_tmp,
                 output_file_tmp,
+                "-m",
+                f"{memory}G",
                 threads=threads,
                 catch_stdout=False,
             )
@@ -3379,8 +3395,8 @@ def load_args(
                 if section in [param_section_not_found]:
                     section = arguments_list_to_load.get(argument, None)
                 # section str to list
-                if section:
-                    section = [section]
+                if isinstance(section, str):
+                    section = section.split(":")
                 else:
                     section = []
                 if section_prefix:
@@ -3454,3 +3470,46 @@ def transcripts_file_to_df(transcripts_file: str) -> pd.DataFrame:
 
     # Return
     return transcripts_dataframe
+
+
+def identical(
+    vcf_list: typing.List[str], begin: str = "##", line_strip: bool = True
+) -> bool:
+    """
+    The `identical` function compares the contents of multiple VCF files to determine if they are
+    identical.
+
+    :param vcf_list: The `vcf_list` parameter is a list of file paths to VCF (Variant Call Format) files
+    that you want to compare for identity. The function reads the contents of these files and checks if
+    they are identical based on the specified conditions
+    :type vcf_list: typing.List[str]
+    :param begin: The `begin` parameter in the `identical` function is used to specify a string that
+    indicates the beginning of a line in the input files. If a line in the input file starts with the
+    specified `begin` string, it will be skipped and not included in the comparison process. By default,
+    defaults to ##
+    :type begin: str (optional)
+    :param line_strip: The `line_strip` parameter in the `identical` function is a boolean flag that
+    determines whether each line read from the input files should be stripped of leading and trailing
+    whitespaces before being compared. If `line_strip` is set to `True`, each line will be stripped
+    using the `strip, defaults to True
+    :type line_strip: bool (optional)
+    :return: The function `identical` is returning a boolean value. It returns `True` if all the lines
+    in the VCF files provided in the `vcf_list` are identical, and `False` otherwise.
+    """
+
+    vcfs_lines = []
+    k = 0
+    for vcf in vcf_list:
+        vcfs_lines.append([])
+        with open(vcf, "r") as f:
+            for l in f:
+                if not l.startswith(begin) or begin == "":
+                    if line_strip:
+                        l = l.strip()
+                    vcfs_lines[k].append(l)
+        k += 1
+
+    for i in range(len(vcf_list) - 1):
+        if vcfs_lines[i] != vcfs_lines[i + 1]:
+            return False
+    return True

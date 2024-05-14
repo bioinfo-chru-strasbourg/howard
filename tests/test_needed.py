@@ -10,20 +10,18 @@ coverage run -m pytest . -x -v
 coverage report --include=howard/* -m
 """
 
-import logging as log
 import os
-import sys
-from tempfile import TemporaryDirectory
-import duckdb
-import re
-import Bio.bgzf as bgzf
-import gzip
-import pytest
 
-from howard.functions.commons import *
-from howard.objects.variants import Variants
-from howard.functions.databases import *
-from howard.tools.tools import main_folder, arguments_dict
+# from howard.functions.commons import *
+# from howard.objects.variants import Variants
+# from howard.functions.databases import *
+from howard.functions.commons import full_path
+from howard.functions.databases import (
+    databases_download_annovar,
+    databases_download_genomes,
+    databases_download_refseq,
+)
+from howard.tools.tools import main_folder  # , arguments_dict
 
 
 # Main tests folder
