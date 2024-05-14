@@ -1,5 +1,5 @@
 {
-    "threads": 8,
+    "threads": 24,
     "memory": null,
     "verbosity": "WARNING",
     "folders": {
@@ -20,28 +20,15 @@
                 "~/howard/databases/annovar/current"
             ],
             "snpeff": "~/howard/databases/snpeff/current",
-            "varank": "~/howard/databases/varank/current",
-            "spip": "/home1/data/STARK/databases/SPiP/current",
-            "spliceai": "/home1/data/STARK/databases/SpliceAI/current"
-        }
-    },
-    "tools": {
-        "bcftools": "bcftools",
-        "bgzip": "bgzip",
-        "java": "java",
-        "snpeff": "~/howard/tools/snpeff/current/bin/snpEff.jar",
-        "annovar": "~/howard/tools/annovar/current/bin/table_annovar.pl",
-        "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-14.0.0.jar",
-        "splice": {
-            "mount": {
-                "/home1/data/STARK/databases": "ro",
-                "/home1/data/STARK/output/tmp": "rw"
-            },
-            "splice_config": "/app/SpliceToolBox/src/splicetoolbox/nextflow/nextflow.docker.config",
-            "main": "/app/SpliceToolBox/src/splicetoolbox/nextflow/main.nf",
-            "image": "jblamouche/splice:0.2",
-            "rm_container": false,
-            "tmp": "/home1/data/STARK/output/tmp"
+            "varank": "~/howard/databases/varank/current"
+        },
+        "tools": {
+            "bcftools": "bcftools",
+            "bgzip": "bgzip",
+            "java": "java",
+            "snpeff": "~/howard/tools/snpeff/current/bin/snpEff.jar",
+            "annovar": "~/howard/tools/annovar/current/bin/table_annovar.pl",
+            "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-14.0.0.jar"
         }
     }
 }
