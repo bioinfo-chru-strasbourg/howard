@@ -5543,18 +5543,18 @@ class Variants:
         log.debug("Databases annotations: " + str(databases_folders))
         splice_config = config.get("tools").get("splice")
         test = command("docker images | grep splice")
-        splice_list = [
+        docker_image_list = [
             splice
             for v in test.split("\n")
             for splice in v.split()
-            if splice == splice_config.get("image")[0]
+            if splice == splice_config.get("docker").get("image").split(":")[0]
         ]
-        if not splice_list:
+        if not docker_image_list:
             log.warning(
-                f"Annotation: splice docker image {':'.join(splice_config.get('image'))} not found locally, trying to pull from dockerhub"
+                f"Annotation: splice docker image {splice_config.get('docker').get('image')} not found locally, trying to pull from dockerhub"
             )
             try:
-                command(f"docker pull {':'.join(splice_config.get('image'))}")
+                command(f"docker pull {docker_image_list[0]}")
             except subprocess.CalledProcessError:
                 return
 
@@ -5611,7 +5611,8 @@ class Variants:
 
         # Memory limit
         if config.get("memory", None):
-            memory_limit = config.get("memory", "8G")
+            memory_limit = config.get("memory", "8G").upper()
+            # upper()
         else:
             memory_limit = "8G"
         log.debug(f"memory_limit: {memory_limit}")
@@ -5708,15 +5709,30 @@ class Variants:
             cmd = f"nextflow -log {os.path.join(output_folder, f'{random_uuid}.log')} -c {splice_config.get('splice_config')} run {splice_config.get('main')} -entry SPLICE --vcf {tmp_vcf_name} {' '.join(nf_params)} -profile standard,conda,singularity,report,timeline"
             log.debug(cmd)
 
-            if splice_config.get("rm_container"):
-                rm_container = "--rm"
-            else:
-                rm_container = ""
+            splice_config["docker"]["command"] = cmd
 
-            docker_cmd = f"docker run {rm_container} -it --entrypoint '/bin/bash' --name {random_uuid} {' '.join(mount)} {':'.join(splice_config.get('image'))} {cmd}"
+            docker_cmd = get_bin_command(
+                tool="splice",
+                bin_type="docker",
+                config=config,
+                default_folder=f"{DEFAULT_TOOLS_FOLDER}/docker",
+                add_options=f"--name {random_uuid} {' '.join(mount)}",
+            )
+            
+            #Docker debug
+            # if splice_config.get("rm_container"):
+            #     rm_container = "--rm"
+            # else:
+            #     rm_container = ""
+            # docker_cmd = f"docker run {rm_container} --entrypoint '/bin/bash' --name {random_uuid} {' '.join(mount)} {':'.join(splice_config.get('image'))} {cmd}"
+
             log.info("Launch splice analysis in docker container")
             log.debug(docker_cmd)
-            command(docker_cmd)
+            res = subprocess.run(docker_cmd, shell=True, capture_output=True, text=True)
+            log.debug(res.stdout)
+            if res.stderr:
+                log.error(res.stderr)
+            res.check_returncode()
         else:
             log.warning(f"Splice tool configuration not found: {config}")
 
