@@ -5584,7 +5584,7 @@ class Variants:
                 )
                 log.debug(f"Genome: {genome_path}")
                 nf_params.append(f"--genome_path {genome_path}")
-                nf_params.extend(handle_ressources(threads, memory_limit))
+                # nf_params.extend(handle_ressources(threads, memory_limit))
 
                 log.debug(f"Splice NF params: {' '.join(nf_params)}")
             else:
@@ -5598,28 +5598,36 @@ class Variants:
                     spliceai_assembly = "grch37.txt"
                 elif options.get("genome", {}) == "hg38":
                     spliceai_assembly = "grch38.txt"
-                spip = find(
-                    f"transcriptome_{options.get('genome', {})}.RData",
-                    config.get("folders", {}).get("databases", {}).get("spip", {}),
-                )
-                spliceai = find(
-                    spliceai_assembly,
-                    config.get("folders", {}).get("databases", {}).get("spliceai", {}),
-                )
-                if spip and spliceai:
+
+                try:
+                    spip = find(
+                        f"transcriptome_{options.get('genome', {})}.RData",
+                        config.get("folders", {}).get("databases", {}).get("spip", {}),
+                    )
+                    spliceai = find(
+                        spliceai_assembly,
+                        config.get("folders", {})
+                        .get("databases", {})
+                        .get("spliceai", {}),
+                    )
                     return [
                         f"--spip_transcriptome {spip}",
                         f"--spliceai_annotations {spliceai}",
                     ]
-                else:
+                except TypeError:
+                    log.debug(
+                        "Can't find splice databases in configuration, use default hg19"
+                    )
                     return None
 
             # Add options
-            nf_params.extend(splice_annotations(options, config))
+            splice_reference = splice_annotations(options, config)
+            if splice_reference:
+                nf_params.extend(splice_reference)
             nf_params.append(f"--output_folder {output_folder}")
 
             random_uuid = f"HOWARD-SPLICE-{get_random()}"
-            cmd = f"nextflow -log {os.path.join(output_folder, f'{random_uuid}.log')} -c {splice_config.get('splice_config')} run {splice_config.get('main')} -entry SPLICE --vcf {tmp_vcf_name} {' '.join(nf_params)} -profile standard,conda,singularity,report,timeline"
+            cmd = f"nextflow -log {os.path.join(output_folder, f'{random_uuid}.log')} -c /app/SpliceToolBox/src/splicetoolbox/nextflow/nextflow.docker.config run /app/SpliceToolBox/src/splicetoolbox/nextflow/main.nf -entry SPLICE --vcf {tmp_vcf_name} {' '.join(nf_params)} -profile standard,conda,singularity,report,timeline"
             log.debug(cmd)
 
             splice_config["docker"]["command"] = cmd
@@ -5631,15 +5639,14 @@ class Variants:
                 default_folder=f"{DEFAULT_TOOLS_FOLDER}/docker",
                 add_options=f"--name {random_uuid} {' '.join(mount)}",
             )
-            
-            #Docker debug
+
+            # Docker debug
             # if splice_config.get("rm_container"):
             #     rm_container = "--rm"
             # else:
             #     rm_container = ""
             # docker_cmd = f"docker run {rm_container} --entrypoint '/bin/bash' --name {random_uuid} {' '.join(mount)} {':'.join(splice_config.get('image'))} {cmd}"
 
-            log.info("Launch splice analysis in docker container")
             log.debug(docker_cmd)
             res = subprocess.run(docker_cmd, shell=True, capture_output=True, text=True)
             log.debug(res.stdout)
@@ -5671,14 +5678,14 @@ class Variants:
             )
         else:
             # Get new header from annotated vcf
-            log.debug("Initial header: " + str(header.infos))
+            log.debug(f"Initial header: {len(header.infos)} fields")
             # Create new header with splice infos
             new_vcf = Variants(input=output_vcf[0])
             new_vcf_header = new_vcf.get_header().infos
             for keys, infos in new_vcf_header.items():
                 if keys not in header.infos.keys():
                     header.infos[keys] = infos
-            log.debug("New header: " + str(header.infos))
+            log.debug(f"New header: {len(header.infos)} fields")
             log.debug(f"Splice tmp output: {output_vcf[0]}")
             self.update_from_vcf(output_vcf[0])
 
