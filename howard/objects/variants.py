@@ -5467,7 +5467,7 @@ class Variants:
                 f"Annotation: splice docker image {splice_config.get('docker').get('image')} not found locally, trying to pull from dockerhub"
             )
             try:
-                command(f"docker pull {docker_image_list[0]}")
+                command(f"docker pull {splice_config.get('docker').get('image')}")
             except subprocess.CalledProcessError:
                 return
 
@@ -5641,6 +5641,8 @@ class Variants:
                     config.get("folders", {}).get("databases", {}).get("spip", {}),
                 )
                 spliceai = find("spliceai.refseq.txt", spliceai_assembly)
+                log.debug(f"SPiP annotations: {spip}")
+                log.debug(f"SpliceAI annotations: {spliceai}")
                 if spip and spliceai:
                     return [
                         f"--spip_transcriptome {spip}",
@@ -5659,7 +5661,7 @@ class Variants:
 
             # /app/SpliceToolBox/src/splicetoolbox/nextflow/nextflow.docker.config
             random_uuid = f"HOWARD-SPLICE-{get_random()}"
-            cmd = f"nextflow -log {os.path.join(output_folder, f'{random_uuid}.log')} -c /home1/L_PROD/NGS/BAS/lamouchj/test/SpliceToolBox/src/splicetoolbox/nextflow/nextflow.docker.config run /app/SpliceToolBox/src/splicetoolbox/nextflow/main.nf -entry SPLICE --vcf {tmp_vcf_name} {' '.join(nf_params)} -profile standard,conda,singularity,report,timeline"
+            cmd = f"nextflow -log {os.path.join(output_folder, f'{random_uuid}.log')} -c /app/SpliceToolBox/src/splicetoolbox/nextflow/nextflow.docker.config run /app/SpliceToolBox/src/splicetoolbox/nextflow/main.nf -entry SPLICE --vcf {tmp_vcf_name} {' '.join(nf_params)} -profile standard,conda,singularity,report,timeline"
             log.debug(cmd)
 
             splice_config["docker"]["command"] = cmd
