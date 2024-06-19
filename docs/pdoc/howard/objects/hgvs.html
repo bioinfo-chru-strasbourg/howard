@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>howard.objects.hgvs API documentation</title>
+<meta name="description" content="HGVS language currently implemented …" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>howard.objects.hgvs</code></h1>
+</header>
+<section id="section-intro">
+<p>HGVS language currently implemented.</p>
+<p>HGVS = ALLELE
+| PREFIX_NAME : ALLELE</p>
+<p>PREFIX_NAME = TRANSCRIPT
+| TRANSCRIPT '(' GENE ')'</p>
+<p>TRANSCRIPT = TRANSCRIPT_NAME
+| TRANSCRIPT_NAME '.' TRANSCRIPT_VERSION</p>
+<p>TRANSCRIPT_VERSION = NUMBER</p>
+<p>ALLELE = 'c.' CDNA_ALLELE
+# cDNA
+| 'g.' GENOMIC_ALLELE # genomic
+| 'm.' MIT_ALLELE
+# mitochondrial sequence
+| 'n.' NC_ALLELE
+# non-coding RNA reference sequence
+| 'r.' RNA_ALLELE
+# RNA sequence (like r.76a&gt;u)
+| 'p.' PROTEIN_ALLELE # protein sequence (like
+p.Lys76Asn)</p>
+<p>NC_ALLELE =
+RNA_ALLELE =
+CDNA_ALLELE = CDNA_COORD SINGLE_BASE_CHANGE
+| CDNA_COORD_RANGE MULTI_BASE_CHANGE</p>
+<p>GENOMIC_ALLELE =
+MIT_ALLELE = COORD SINGLE_BASE_CHANGE
+| COORD_RANGE MULTI_BASE_CHANGE</p>
+<p>SINGLE_BASE_CHANGE = CDNA_ALLELE = CDNA_COORD BASE '='
+# no change
+| CDNA_COORD BASE '&gt;' BASE
+# substitution
+| CDNA_COORD 'ins' BASE
+# 1bp insertion
+| CDNA_COORD 'del' BASE
+# 1bp deletion
+| CDNA_COORD 'dup' BASE
+# 1bp duplication
+| CDNA_COORD 'ins'
+# 1bp insertion
+| CDNA_COORD 'del'
+# 1bp deletion
+| CDNA_COORD 'dup'
+# 1bp duplication
+| CDNA_COORD 'del' BASE 'ins' BASE
+# 1bp indel
+| CDNA_COORD 'delins' BASE
+# 1bp indel</p>
+<p>MULTI_BASE_CHANGE = COORD_RANGE 'del' BASES
+# deletion
+| COORD_RANGE 'ins' BASES
+# insertion
+| COORD_RANGE 'dup' BASES
+# duplication
+| COORD_RANGE 'del'
+# deletion
+| COORD_RANGE 'dup'
+# duplication
+| COORD_RANGE 'del' BASES 'ins' BASES # indel
+| COORD_RANGE 'delins' BASES
+# indel</p>
+<p>AMINO1 = [GAVLIMFWPSTCYNQDEKRH]</p>
+<p>AMINO3 = 'Gly' | 'Ala' | 'Val' | 'Leu' | 'Ile' | 'Met' | 'Phe' | 'Trp' | 'Pro'
+| 'Ser' | 'Thr' | 'Cys' | 'Tyr' | 'Asn' | 'Gln' | 'Asp' | 'Glu' | 'Lys'
+| 'Arg' | 'His'</p>
+<p>PROTEIN_ALLELE = AMINO3 COORD '='
+# no peptide change
+| AMINO1 COORD '='
+# no peptide change
+| AMINO3 COORD AMINO3 PEP_EXTRA
+# peptide change
+| AMINO1 COORD AMINO1 PEP_EXTRA
+# peptide change
+| AMINO3 COORD '<em>' AMINO3 COORD PEP_EXTRA
+# indel
+| AMINO1 COORD '</em>' AMINO1 COORD PEP_EXTRA
+# indel
+| AMINO3 COORD '<em>' AMINO3 COORD PEP_EXTRA AMINO3 # indel
+| AMINO1 COORD '</em>' AMINO1 COORD PEP_EXTRA AMINO1 # indel</p>
+<h1 id="a-genomic-range">A genomic range:</h1>
+<p>COORD_RANGE = COORD '_' COORD</p>
+<h1 id="a-cdna-range">A cDNA range:</h1>
+<p>CDNA_COORD_RANGE = CDNA_COORD '_' CDNA_COORD</p>
+<h1 id="a-cdna-coordinate">A cDNA coordinate:</h1>
+<p>CDNA_COORD = COORD_PREFIX COORD
+| COORD_PREFIX COORD OFFSET_PREFIX OFFSET
+COORD_PREFIX = '' | '-' | '*'
+COORD = NUMBER
+OFFSET_PREFIX = '-' | '+'
+OFFSET = NUMBER</p>
+<h1 id="primatives">Primatives:</h1>
+<p>NUMBER = "\d+"
+BASE = [ACGT]
+BASES = BASE+</p>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="howard.objects.hgvs.get_refseq_type"><code class="name flex">
+<span>def <span class="ident">get_refseq_type</span></span>(<span>name: str) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code><a title="howard.objects.hgvs.get_refseq_type" href="#howard.objects.hgvs.get_refseq_type">get_refseq_type()</a></code> function returns the RefSeq type for a given RefSeq name.</p>
+<p>:param name: The <code>name</code> parameter is a string representing a RefSeq name
+:type name: str
+:return: The function <code><a title="howard.objects.hgvs.get_refseq_type" href="#howard.objects.hgvs.get_refseq_type">get_refseq_type()</a></code> returns the RefSeq type for a given RefSeq name.</p></div>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="howard.objects.hgvs.HGVSName"><code class="flex name class">
+<span>class <span class="ident">HGVSName</span></span>
+<span>(</span><span>name: str = '', prefix: str = '', chrom: str = '', transcript: str = '', transcript_protein: str = None, gene: str = '', exon: str = None, kind: str = '', mutation_type: str = None, start: int = 0, end: int = 0, ref_allele: str = '', ref2_allele: str = '', alt_allele: str = '', cdna_start: int = None, cdna_end: int = None, pep_extra: str = '')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Represents a HGVS variant name.</p>
+<p>The function is a constructor that initializes various attributes of an object and parses a
+given name to populate those attributes.</p>
+<p>:param name: The full HGVS name of the variant
+:type name: str
+:param prefix: The <code>prefix</code> parameter is a string that is used as a prefix for the HGVS name. It
+can be used to indicate additional information or context about the variant
+:type prefix: str
+:param chrom: The <code>chrom</code> parameter represents the chromosome where the mutation occurs. It is a
+string that specifies the chromosome number or identifier
+:type chrom: str
+:param transcript: The <code>transcript</code> parameter represents the transcript ID or name associated
+with the mutation. It is used to specify the specific transcript in which the mutation occurs
+:type transcript: str
+:param transcript_protein: The <code>transcript_protein</code> parameter is used to store information about
+the protein associated with the transcript. It can be used to specify the protein variant or
+isoform that is affected by the mutation
+:type transcript_protein: str
+:param gene: The "gene" parameter represents the gene associated with the variant. It is a
+string that specifies the gene name or identifier
+:type gene: str
+:param exon: The <code>exon</code> parameter represents the exon number or range in which the mutation
+occurs. It is used to specify the location of the mutation within the transcript
+:type exon: str
+:param kind: The "kind" parameter is used to specify the type of variant or mutation. It can be
+a string that represents the kind of mutation, such as "substitution", "deletion", "insertion",
+etc. This parameter helps to categorize and describe the type of mutation being represented by
+the
+:type kind: str
+:param mutation_type: The <code>mutation_type</code> parameter is used to specify the type of mutation. It
+can be a string that represents the type of mutation, such as "SNP" (single nucleotide
+polymorphism), "DEL" (deletion), "INS" (insertion), etc
+:type mutation_type: str
+:param start: The <code>start</code> parameter represents the starting position of the mutation or variant
+in the genomic sequence. It is an integer value that indicates the position of the mutation or
+variant on the genomic sequence. If not provided, it defaults to 0, defaults to 0
+:type start: int (optional)
+:param end: The "end" parameter represents the end position of the mutation or variant. It is an
+integer value that indicates the position of the mutation or variant on the genomic sequence,
+defaults to 0
+:type end: int (optional)
+:param ref_allele: The <code>ref_allele</code> parameter represents the reference allele in a genetic
+mutation. It is the allele that is present in the reference genome at a specific position
+:type ref_allele: str
+:param ref2_allele: The <code>ref2_allele</code> parameter represents the reference allele at the end of a
+peptide indel. In the context of genetic mutations, an indel refers to the insertion or deletion
+of nucleotides in a DNA sequence. The <code>ref2_allele</code> specifically represents the reference allele
+that is
+:type ref2_allele: str
+:param alt_allele: The <code>alt_allele</code> parameter represents the alternate allele in a genetic
+mutation. In genetics, an allele is one of the possible forms of a gene. In the context of this
+code, <code>alt_allele</code> is used to store the alternate allele that is present in a mutation
+:type alt_allele: str
+:param cdna_start: The <code>cdna_start</code> parameter is used to specify the start position of the
+mutation in the cDNA sequence. It is an optional parameter and if not provided, it will be set
+to a default value of <code>CDNACoord()</code>
+:type cdna_start: int
+:param cdna_end: The <code>cdna_end</code> parameter is used to store the end coordinate of the cDNA
+(complementary DNA) sequence. It is an optional parameter and if not provided, it will be
+initialized as a <code>CDNACoord</code> object. The <code>CDNACoord</code> object is likely a
+:type cdna_end: int
+:param pep_extra: The <code>pep_extra</code> parameter is a string that represents any additional
+information related to the protein. It is used in the context of protein-specific fields
+:type pep_extra: str</p></div>
+<h3>Methods</h3>
+<dl>
+<dt id="howard.objects.hgvs.HGVSName.format"><code class="name flex">
+<span>def <span class="ident">format</span></span>(<span>self, use_prefix: bool = True, use_gene: bool = True, use_exon: bool = False, use_protein: bool = False, full_format=False, use_version: bool = False) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>format</code> function generates a HGVS name as a string based on various formatting options.</p>
+<p>:param use_prefix: A boolean indicating whether to include the prefix in the HGVS name. If set
+to True, the prefix will be included in the HGVS name. If set to False, the prefix will be
+excluded. The default value is True, defaults to True
+:type use_prefix: bool (optional)
+:param use_gene: A boolean indicating whether to include the gene name in the HGVS name. If set
+to True, the gene name will be included in the HGVS name. If set to False, the gene name will
+not be included. The default value is True, defaults to True
+:type use_gene: bool (optional)
+:param use_exon: A boolean indicating whether to include exon information in the HGVS name. If
+set to True, exon information will be included in the HGVS name. If set to False, exon
+information will not be included, defaults to False
+:type use_exon: bool (optional)
+:param use_protein: A boolean indicating whether to include the protein change in the HGVS name.
+If set to True, the protein change will be included in the HGVS name. If set to False, the
+protein change will not be included, defaults to False
+:type use_protein: bool (optional)
+:param full_format: A boolean parameter that determines whether the full format of the allele
+should be included in the output. If set to True, and if the allele is not a protein variant,
+the allele will be appended with ':p.' followed by the formatted protein variant, defaults to
+False (optional)
+:param use_version: A boolean parameter that determines whether to include the version number in
+the formatted HGVS name. If set to True, the version number will be included in the output. If
+set to False, the version number will not be included, defaults to False
+:type use_version: bool (optional)
+:return: a HGVS name as a string.</p></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSName.format_cdna"><code class="name flex">
+<span>def <span class="ident">format_cdna</span></span>(<span>self) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function "format_cdna" generates an HGVS cDNA allele by combining the cDNA coordinates and
+the DNA allele.</p>
+<p>Some examples include:
+Substitution: 101A&gt;C,
+Indel: 3428delCinsTA, 1000_1003delATG, 1000_1001insATG</p>
+<p>:return: a string that represents the HGVS cDNA allele.</p></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSName.format_cdna_coords"><code class="name flex">
+<span>def <span class="ident">format_cdna_coords</span></span>(<span>self) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>format_cdna_coords</code> generates a string representing HGVS cDNA coordinates,
+returning either the start coordinate or a string in the format "start_end" depending on whether
+the start and end coordinates are the same or not.
+:return: a string representing the cDNA coordinates. If the start and end coordinates are the
+same, it returns just the start coordinate. Otherwise, it returns a string in the format
+"start_end".</p></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSName.format_coords"><code class="name flex">
+<span>def <span class="ident">format_coords</span></span>(<span>self) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>format_coords</code> generates a string representation of HGVS cDNA coordinates.
+:return: a string that represents the HGVS cDNA coordinates. If the start and end coordinates
+are the same, it returns just the start coordinate. Otherwise, it returns a string in the format
+"start_end".</p></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSName.format_dna_allele"><code class="name flex">
+<span>def <span class="ident">format_dna_allele</span></span>(<span>self) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>format_dna_allele</code> generates an HGVS DNA allele based on the mutation type and
+alleles provided.
+:return: The function <code>format_dna_allele</code> returns a string representing the HGVS DNA allele. The
+specific format of the returned string depends on the value of the <code>mutation_type</code> attribute of
+the object. The possible return values are:</p></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSName.format_genome"><code class="name flex">
+<span>def <span class="ident">format_genome</span></span>(<span>self) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function "format_genome" generates an HGVS genomic allele by combining the formatted
+coordinates and DNA allele.</p>
+<p>Some examples include:
+Substitution: 1000100A&gt;T
+Indel: 1000100_1000102delATG</p>
+<p>:return: a string that represents the HGVS genomic allele.</p></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSName.format_prefix"><code class="name flex">
+<span>def <span class="ident">format_prefix</span></span>(<span>self, use_gene: bool = True, use_exon: bool = False, use_protein: bool = False, full_format: bool = False, use_version: bool = False) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>format_prefix</code> function generates an HGVS transcript/gene prefix based on various
+parameters.</p>
+<p>:param use_gene: A boolean parameter that determines whether to include the gene name in the
+prefix. If set to True, the gene name will be included in the prefix. If set to False, the gene
+name will not be included in the prefix. The default value is True, defaults to True
+:type use_gene: bool (optional)
+:param use_exon: A boolean parameter that determines whether to include the exon information in
+the prefix. If set to True, the exon information will be included in the prefix. If set to
+False, the exon information will not be included, defaults to False
+:type use_exon: bool (optional)
+:param use_protein: A boolean indicating whether to use the protein transcript instead of the
+nucleotide transcript if available. If set to True, the protein transcript will be used. If set
+to False, the nucleotide transcript will be used. The default value is False, defaults to False
+:type use_protein: bool (optional)
+:param full_format: A boolean parameter that determines whether to generate the full HGVS name
+with transcript/gene prefix or not. If set to True, the full format will be generated. If set to
+False, only the transcript/gene prefix will be generated, defaults to False
+:type full_format: bool (optional)
+:param use_version: A boolean parameter that determines whether to include the version number in
+the transcript prefix. If set to True, the version number will be included in the prefix (e.g.,
+NM_007294.3). If set to False, only the transcript ID without the version number will be
+included in the prefix, defaults to False
+:type use_version: bool (optional)
+:return: The function <code>format_prefix</code> returns a formatted HGVS transcript/gene prefix as a
+string.</p></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSName.format_protein"><code class="name flex">
+<span>def <span class="ident">format_protein</span></span>(<span>self) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>format_protein</code> function generates an HGVS protein name based on different scenarios such
+as no change, change, frameshift, and range change.</p>
+<p>Some examples include:
+No change: Glu1161=
+Change: Glu1161Ser
+Frameshift: Glu1161_Ser1164?fs</p>
+<p>:return: The method <code>format_protein</code> returns a string representing the HGVS protein name.</p></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSName.get_raw_coords"><code class="name flex">
+<span>def <span class="ident">get_raw_coords</span></span>(<span>self, transcript: object = None) ‑> tuple</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>get_raw_coords</code> returns the genomic coordinates based on the given transcript or
+the provided chromosomal coordinates.</p>
+<p>:param transcript: The <code>transcript</code> parameter is an object that represents a transcript. It is
+used to retrieve genomic coordinates based on the type of HGVS name (<code>self.kind</code>). The
+<code>transcript</code> object should have the following attributes and methods:
+:type transcript: object
+:return: a tuple containing the genomic coordinates. The tuple consists of three elements: the
+chromosome, the start position, and the end position.</p></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSName.get_ref_alt"><code class="name flex">
+<span>def <span class="ident">get_ref_alt</span></span>(<span>self, is_forward_strand: bool = True, raw_dup_alleles: bool = False) ‑> tuple</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>get_ref_alt</code> returns the reference and alternate alleles, with an option to modify
+duplications to look like inserts.</p>
+<p>:param is_forward_strand: The parameter <code>is_forward_strand</code> is a boolean flag that indicates
+whether the alleles should be returned for the forward strand or the reverse complement strand.
+If <code>is_forward_strand</code> is <code>True</code>, the alleles will be returned as is. If <code>is_forward_strand</code> is
+<code>False</code>,, defaults to True
+:type is_forward_strand: bool (optional)
+:param raw_dup_alleles: The <code>raw_dup_alleles</code> parameter is a boolean flag that determines
+whether the raw values of duplicated alleles should be returned. By default, it is set to
+<code>False</code>, which means that if the mutation type is a duplication (<code>dup</code>), the reference allele
+will be represented as an empty string, defaults to False
+:type raw_dup_alleles: bool (optional)
+:return: The function <code>get_ref_alt</code> returns a tuple containing the reference and alternate
+alleles.</p></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSName.get_ref_coords"><code class="name flex">
+<span>def <span class="ident">get_ref_coords</span></span>(<span>self, transcript: object = None) ‑> tuple</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function "get_ref_coords" returns the genomic coordinates of the reference allele, taking
+into account different mutation types.</p>
+<p>:param transcript: The <code>transcript</code> parameter is an optional object that represents a transcript
+or gene. It is used to retrieve the genomic coordinates of the reference allele
+:type transcript: object
+:return: a tuple containing the genomic coordinates of the reference allele. The tuple consists
+of three elements: the chromosome, the start position, and the end position.</p></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSName.get_vcf_coords"><code class="name flex">
+<span>def <span class="ident">get_vcf_coords</span></span>(<span>self, transcript: object = None) ‑> tuple</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function "get_vcf_coords" returns the genomic coordinates of the reference allele in
+VCF-style, with left-padding for indels.</p>
+<p>:param transcript: The <code>transcript</code> parameter is an object that represents a transcript or gene.
+It is used to retrieve the genomic coordinates of the reference allele
+:type transcript: object
+:return: a tuple containing the genomic coordinates of the reference allele in VCF-style. The
+tuple consists of three elements: the chromosome, the start position, and the end position.</p></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSName.parse"><code class="name flex">
+<span>def <span class="ident">parse</span></span>(<span>self, name: str) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>parse</code> function is used to split an HGVS name into a prefix and allele, and then validate
+the parsed components.</p>
+<p>:param name: The <code>name</code> parameter is a string that represents an HGVS name. It is the input to
+the <code>parse</code> function and is used to parse the HGVS name by splitting it into a prefix and allele
+:type name: str</p></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSName.parse_allele"><code class="name flex">
+<span>def <span class="ident">parse_allele</span></span>(<span>self, allele: str) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>parse_allele</code> parses a HGVS allele description and determines the kind of HGVS
+name (c., p., g., etc.) and the mutation type.</p>
+<p>Some examples include:
+cDNA substitution: c.101A&gt;C,
+cDNA indel: c.3428delCinsTA, c.1000_1003delATG, c.1000_1001insATG
+No protein change: p.Glu1161=
+Protein change: p.Glu1161Ser
+Protein frameshift: p.Glu1161_Ser1164?fs
+Genomic substitution: g.1000100A&gt;T
+Genomic indel: g.1000100_1000102delATG</p>
+<p>:param allele: The <code>allele</code> parameter is a string that represents a HGVS allele description. It
+can contain various types of mutations, such as cDNA substitutions, cDNA indels, protein
+changes, protein frameshifts, genomic substitutions, and genomic indels. The purpose of the
+<code>parse_allele</code>
+:type allele: str</p></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSName.parse_cdna"><code class="name flex">
+<span>def <span class="ident">parse_cdna</span></span>(<span>self, details: str) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>parse_cdna</code> is used to parse a HGVS cDNA name and extract information such as
+mutation type, coordinates, and alleles.</p>
+<p>Some examples include:
+Substitution: 101A&gt;C,
+Indel: 3428delCinsTA, 1000_1003delATG, 1000_1001insATG</p>
+<p>:param details: The <code>details</code> parameter is a string that represents a HGVS cDNA name. It
+contains information about a genetic mutation, such as a substitution or an indel, along with
+the specific coordinates and alleles involved in the mutation
+:type details: str
+:return: None.</p></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSName.parse_genome"><code class="name flex">
+<span>def <span class="ident">parse_genome</span></span>(<span>self, details: str) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>parse_genome</code> is used to parse a HGVS genomic name and extract information such as
+mutation type, coordinates, and alleles.</p>
+<p>Some examples include:
+Substitution: 1000100A&gt;T
+Indel: 1000100_1000102delATG</p>
+<p>:param details: The <code>details</code> parameter is a string that represents a HGVS genomic name. It
+contains information about a genomic mutation, such as a substitution or an indel
+:type details: str
+:return: None.</p></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSName.parse_prefix"><code class="name flex">
+<span>def <span class="ident">parse_prefix</span></span>(<span>self, prefix: str)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>parse_prefix</code> function is used to parse a HGVS prefix (gene/transcript/chromosome) and
+assign the parsed values to the corresponding attributes of the object.</p>
+<p>:param prefix: The <code>prefix</code> parameter is a string that represents a HGVS prefix, which can be a
+gene, transcript, or chromosome identifier. It is used to determine the type of prefix and
+assign the parsed values to the corresponding attributes of the object
+:type prefix: str
+:return: The function <code>parse_prefix</code> returns the parsed values for the transcript and gene
+attributes, or sets the chrom or gene attributes based on the given prefix.</p></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSName.parse_protein"><code class="name flex">
+<span>def <span class="ident">parse_protein</span></span>(<span>self, details: str) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>parse_protein</code> is used to parse a HGVS protein name and extract information such
+as mutation type, coordinates, alleles, and additional details.</p>
+<p>Some examples include:
+No change: Glu1161=
+Change: Glu1161Ser
+Frameshift: Glu1161_Ser1164?fs</p>
+<p>:param details: The <code>details</code> parameter is a string that represents a HGVS protein name. It
+contains information about a protein mutation, such as the amino acid change and the position of
+the mutation
+:type details: str
+:return: The method <code>parse_protein</code> does not return anything. It updates the instance variables
+of the object it is called on.</p></div>
+</dd>
+</dl>
+</dd>
+<dt id="howard.objects.hgvs.HGVSRegex"><code class="flex name class">
+<span>class <span class="ident">HGVSRegex</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>All regular expression for HGVS names.</p></div>
+<h3>Class variables</h3>
+<dl>
+<dt id="howard.objects.hgvs.HGVSRegex.BASE"><code class="name">var <span class="ident">BASE</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSRegex.BASES"><code class="name">var <span class="ident">BASES</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSRegex.CDNA_ALLELE"><code class="name">var <span class="ident">CDNA_ALLELE</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSRegex.CDNA_ALLELE_REGEXES"><code class="name">var <span class="ident">CDNA_ALLELE_REGEXES</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSRegex.CDNA_COORD"><code class="name">var <span class="ident">CDNA_COORD</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSRegex.CDNA_END"><code class="name">var <span class="ident">CDNA_END</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSRegex.CDNA_RANGE"><code class="name">var <span class="ident">CDNA_RANGE</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSRegex.CDNA_START"><code class="name">var <span class="ident">CDNA_START</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSRegex.COORD_END"><code class="name">var <span class="ident">COORD_END</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSRegex.COORD_RANGE"><code class="name">var <span class="ident">COORD_RANGE</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSRegex.COORD_START"><code class="name">var <span class="ident">COORD_START</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSRegex.DEL"><code class="name">var <span class="ident">DEL</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSRegex.DNA_ALT"><code class="name">var <span class="ident">DNA_ALT</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSRegex.DNA_REF"><code class="name">var <span class="ident">DNA_REF</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSRegex.DUP"><code class="name">var <span class="ident">DUP</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSRegex.EQUAL"><code class="name">var <span class="ident">EQUAL</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSRegex.GENOMIC_ALLELE"><code class="name">var <span class="ident">GENOMIC_ALLELE</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSRegex.GENOMIC_ALLELE_REGEXES"><code class="name">var <span class="ident">GENOMIC_ALLELE_REGEXES</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSRegex.INS"><code class="name">var <span class="ident">INS</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSRegex.PEP"><code class="name">var <span class="ident">PEP</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSRegex.PEP_ALLELE"><code class="name">var <span class="ident">PEP_ALLELE</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSRegex.PEP_ALLELE_REGEXES"><code class="name">var <span class="ident">PEP_ALLELE_REGEXES</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSRegex.PEP_ALT"><code class="name">var <span class="ident">PEP_ALT</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSRegex.PEP_EXTRA"><code class="name">var <span class="ident">PEP_EXTRA</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSRegex.PEP_REF"><code class="name">var <span class="ident">PEP_REF</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSRegex.PEP_REF2"><code class="name">var <span class="ident">PEP_REF2</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="howard.objects.hgvs.HGVSRegex.SUB"><code class="name">var <span class="ident">SUB</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="howard.objects.hgvs.InvalidHGVSName"><code class="flex name class">
+<span>class <span class="ident">InvalidHGVSName</span></span>
+<span>(</span><span>name: str = '', part: str = 'name', reason: str = '')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Inappropriate argument value (of correct type).</p>
+<p>The function initializes an InvalidHGVSName object with a message, name, part, and reason.</p>
+<p>:param name: The name parameter is a string that represents the invalid HGVS name. It is the
+name that is considered invalid and does not meet the required criteria
+:type name: str
+:param part: The "part" parameter represents the part of the HGVS (Human Genome Variation
+Society) name that is invalid. It is used to provide more specific information about the error
+that occurred, defaults to name
+:type part: str (optional)
+:param reason: The "reason" parameter is an optional argument that provides additional
+information or context for why the HGVS name is considered invalid. It can be used to provide
+specific details about the error or to explain why the name does not meet the required criteria
+:type reason: str</p></div>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.ValueError</li>
+<li>builtins.Exception</li>
+<li>builtins.BaseException</li>
+</ul>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul>
+<li><a href="#a-genomic-range">A genomic range:</a></li>
+<li><a href="#a-cdna-range">A cDNA range:</a></li>
+<li><a href="#a-cdna-coordinate">A cDNA coordinate:</a></li>
+<li><a href="#primatives">Primatives:</a></li>
+</ul>
+</div>
+<ul id="index">
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="howard.objects.hgvs.get_refseq_type" href="#howard.objects.hgvs.get_refseq_type">get_refseq_type</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="howard.objects.hgvs.HGVSName" href="#howard.objects.hgvs.HGVSName">HGVSName</a></code></h4>
+<ul class="two-column">
+<li><code><a title="howard.objects.hgvs.HGVSName.format" href="#howard.objects.hgvs.HGVSName.format">format</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSName.format_cdna" href="#howard.objects.hgvs.HGVSName.format_cdna">format_cdna</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSName.format_cdna_coords" href="#howard.objects.hgvs.HGVSName.format_cdna_coords">format_cdna_coords</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSName.format_coords" href="#howard.objects.hgvs.HGVSName.format_coords">format_coords</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSName.format_dna_allele" href="#howard.objects.hgvs.HGVSName.format_dna_allele">format_dna_allele</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSName.format_genome" href="#howard.objects.hgvs.HGVSName.format_genome">format_genome</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSName.format_prefix" href="#howard.objects.hgvs.HGVSName.format_prefix">format_prefix</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSName.format_protein" href="#howard.objects.hgvs.HGVSName.format_protein">format_protein</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSName.get_raw_coords" href="#howard.objects.hgvs.HGVSName.get_raw_coords">get_raw_coords</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSName.get_ref_alt" href="#howard.objects.hgvs.HGVSName.get_ref_alt">get_ref_alt</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSName.get_ref_coords" href="#howard.objects.hgvs.HGVSName.get_ref_coords">get_ref_coords</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSName.get_vcf_coords" href="#howard.objects.hgvs.HGVSName.get_vcf_coords">get_vcf_coords</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSName.parse" href="#howard.objects.hgvs.HGVSName.parse">parse</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSName.parse_allele" href="#howard.objects.hgvs.HGVSName.parse_allele">parse_allele</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSName.parse_cdna" href="#howard.objects.hgvs.HGVSName.parse_cdna">parse_cdna</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSName.parse_genome" href="#howard.objects.hgvs.HGVSName.parse_genome">parse_genome</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSName.parse_prefix" href="#howard.objects.hgvs.HGVSName.parse_prefix">parse_prefix</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSName.parse_protein" href="#howard.objects.hgvs.HGVSName.parse_protein">parse_protein</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="howard.objects.hgvs.HGVSRegex" href="#howard.objects.hgvs.HGVSRegex">HGVSRegex</a></code></h4>
+<ul class="">
+<li><code><a title="howard.objects.hgvs.HGVSRegex.BASE" href="#howard.objects.hgvs.HGVSRegex.BASE">BASE</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSRegex.BASES" href="#howard.objects.hgvs.HGVSRegex.BASES">BASES</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSRegex.CDNA_ALLELE" href="#howard.objects.hgvs.HGVSRegex.CDNA_ALLELE">CDNA_ALLELE</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSRegex.CDNA_ALLELE_REGEXES" href="#howard.objects.hgvs.HGVSRegex.CDNA_ALLELE_REGEXES">CDNA_ALLELE_REGEXES</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSRegex.CDNA_COORD" href="#howard.objects.hgvs.HGVSRegex.CDNA_COORD">CDNA_COORD</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSRegex.CDNA_END" href="#howard.objects.hgvs.HGVSRegex.CDNA_END">CDNA_END</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSRegex.CDNA_RANGE" href="#howard.objects.hgvs.HGVSRegex.CDNA_RANGE">CDNA_RANGE</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSRegex.CDNA_START" href="#howard.objects.hgvs.HGVSRegex.CDNA_START">CDNA_START</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSRegex.COORD_END" href="#howard.objects.hgvs.HGVSRegex.COORD_END">COORD_END</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSRegex.COORD_RANGE" href="#howard.objects.hgvs.HGVSRegex.COORD_RANGE">COORD_RANGE</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSRegex.COORD_START" href="#howard.objects.hgvs.HGVSRegex.COORD_START">COORD_START</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSRegex.DEL" href="#howard.objects.hgvs.HGVSRegex.DEL">DEL</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSRegex.DNA_ALT" href="#howard.objects.hgvs.HGVSRegex.DNA_ALT">DNA_ALT</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSRegex.DNA_REF" href="#howard.objects.hgvs.HGVSRegex.DNA_REF">DNA_REF</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSRegex.DUP" href="#howard.objects.hgvs.HGVSRegex.DUP">DUP</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSRegex.EQUAL" href="#howard.objects.hgvs.HGVSRegex.EQUAL">EQUAL</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSRegex.GENOMIC_ALLELE" href="#howard.objects.hgvs.HGVSRegex.GENOMIC_ALLELE">GENOMIC_ALLELE</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSRegex.GENOMIC_ALLELE_REGEXES" href="#howard.objects.hgvs.HGVSRegex.GENOMIC_ALLELE_REGEXES">GENOMIC_ALLELE_REGEXES</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSRegex.INS" href="#howard.objects.hgvs.HGVSRegex.INS">INS</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSRegex.PEP" href="#howard.objects.hgvs.HGVSRegex.PEP">PEP</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSRegex.PEP_ALLELE" href="#howard.objects.hgvs.HGVSRegex.PEP_ALLELE">PEP_ALLELE</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSRegex.PEP_ALLELE_REGEXES" href="#howard.objects.hgvs.HGVSRegex.PEP_ALLELE_REGEXES">PEP_ALLELE_REGEXES</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSRegex.PEP_ALT" href="#howard.objects.hgvs.HGVSRegex.PEP_ALT">PEP_ALT</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSRegex.PEP_EXTRA" href="#howard.objects.hgvs.HGVSRegex.PEP_EXTRA">PEP_EXTRA</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSRegex.PEP_REF" href="#howard.objects.hgvs.HGVSRegex.PEP_REF">PEP_REF</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSRegex.PEP_REF2" href="#howard.objects.hgvs.HGVSRegex.PEP_REF2">PEP_REF2</a></code></li>
+<li><code><a title="howard.objects.hgvs.HGVSRegex.SUB" href="#howard.objects.hgvs.HGVSRegex.SUB">SUB</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="howard.objects.hgvs.InvalidHGVSName" href="#howard.objects.hgvs.InvalidHGVSName">InvalidHGVSName</a></code></h4>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>

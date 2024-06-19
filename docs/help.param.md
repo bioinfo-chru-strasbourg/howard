@@ -345,9 +345,7 @@ Examples:
       }
    }
    "snpeff": {
-      "options": {
-         " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "}
-      }
+      "options": " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "
    }
    "exomiser": {
       "release": "2109",
@@ -593,9 +591,7 @@ Examples:
 
 ```json
 "snpeff": {
-   "options": {
-      " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "
-   }
+   "options": " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "
 }
 ```
 

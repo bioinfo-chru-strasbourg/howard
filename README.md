@@ -48,6 +48,8 @@ HOWARD can be installed using [Python](#python), and a [Docker](#docker) install
 
 Install HOWARD using Python Pip tool, and run HOWARD for help options:
 ```
+conda create --name=howard python=3.10
+conda activate howard
 python -m pip install -e .
 howard --help
 ```
@@ -483,6 +485,7 @@ See [HOWARD Help Process tool](docs/help.md#process-tool) tool for more informat
 
 [HOWARD Plugins](plugins/README.md) describes how to create HOWARD plugins.
 
+[HOWARD Package](docs/pdoc/index.html) describes HOWARD Package, Classes and Functions.
 
 # Contact
 

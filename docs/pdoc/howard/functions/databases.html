@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>howard.functions.databases API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>howard.functions.databases</code></h1>
+</header>
+<section id="section-intro">
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="howard.functions.databases.databases_download_alphamissense"><code class="name flex">
+<span>def <span class="ident">databases_download_alphamissense</span></span>(<span>assemblies: list, alphamissense_folder: str = '/Users/lebechea/howard/databases/annotations/current', alphamissense_url: str = 'https://storage.googleapis.com/dm_alphamissense', threads: int = None) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code><a title="howard.functions.databases.databases_download_alphamissense" href="#howard.functions.databases.databases_download_alphamissense">databases_download_alphamissense()</a></code> function downloads and converts AlphaMissense databases for a
+list of assemblies.</p>
+<p>:param assemblies: <code>assemblies</code> is a list of assemblies for which the AlphaMissense database needs
+to be downloaded. Each assembly represents a specific genome or genetic sequence
+:type assemblies: list
+:param alphamissense_folder: The <code>alphamissense_folder</code> parameter is a string that specifies the
+folder where the AlphaMissense files will be downloaded and stored. It is set to
+<code>DEFAULT_ANNOTATIONS_FOLDER</code> by default, which is likely a predefined constant or variable in your
+code
+:type alphamissense_folder: str
+:param alphamissense_url: The <code>alphamissense_url</code> parameter is a string that specifies the URL where
+the AlphaMissense files are located. It is used to construct the download URL for each assembly's
+AlphaMissense file
+:type alphamissense_url: str
+:param threads: The <code>threads</code> parameter is an optional parameter that specifies the number of
+threads to use for the conversion process. It determines the level of parallelism when converting
+the AlphaMissense TSV file to the Parquet format. If not specified, the default value will be used
+:type threads: int
+:return: The function <code><a title="howard.functions.databases.databases_download_alphamissense" href="#howard.functions.databases.databases_download_alphamissense">databases_download_alphamissense()</a></code> returns a boolean value <code>True</code>.</p></div>
+</dd>
+<dt id="howard.functions.databases.databases_download_annovar"><code class="name flex">
+<span>def <span class="ident">databases_download_annovar</span></span>(<span>folder: str = None, files: list = None, assemblies: list = ['hg19'], annovar_url: str = 'http://www.openbioinformatics.org/annovar/download', threads: int = 1) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function downloads and extracts Annovar databases for specified assemblies and files.</p>
+<p>:param folder: The folder where the Annovar databases will be downloaded to
+:type folder: str
+:param files: The <code>files</code> parameter is a list of specific Annovar database files to download. If not
+provided, only the mandatory files will be downloaded. If set to "ALL", all available files will be
+downloaded
+:type files: list
+:param assemblies: A list of genome assemblies for which Annovar databases will be downloaded.
+Default is ["hg19"]
+:type assemblies: list
+:param annovar_url: The URL where Annovar databases can be downloaded from, defaults to
+<a href="http://www.openbioinformatics.org/annovar/download">http://www.openbioinformatics.org/annovar/download</a>
+:type annovar_url: str (optional)
+:param threads: The "threads" parameter specifies the number of threads (parallel processes) to use
+for download and extract/uncompress files. Default: 1
+:type threads: int (optional)</p></div>
+</dd>
+<dt id="howard.functions.databases.databases_download_dbnsfp"><code class="name flex">
+<span>def <span class="ident">databases_download_dbnsfp</span></span>(<span>assemblies: list, dbnsfp_folder: str = None, dbnsfp_url: str = None, dbnsfp_release: str = '4.4a', threads: int = None, memory: int = 1, parquet_size: int = 100, generate_parquet_file: bool = False, generate_sub_databases: bool = False, generate_vcf_file: bool = False, not_generate_files_all: bool = False, genomes_folder: str = None, add_info: bool = False, row_group_size: int = 100000) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code><a title="howard.functions.databases.databases_download_dbnsfp" href="#howard.functions.databases.databases_download_dbnsfp">databases_download_dbnsfp()</a></code> is used to download and process dbNSFP databases for specified
+genome assemblies.</p>
+<p>:param assemblies: A list of genome assemblies for which to download and process dbNSFP data. Each
+assembly should be specified as a string
+:type assemblies: list
+:param dbnsfp_folder: The <code>dbnsfp_folder</code> parameter is a string that specifies the folder where the
+dbNSFP database files are located. If this parameter is not provided, the function will attempt to
+download the dbNSFP database files from the <code>dbnsfp_url</code> parameter
+:type dbnsfp_folder: str
+:param dbnsfp_url: The URL where the dbNSFP database files can be downloaded from
+:type dbnsfp_url: str
+:param dbnsfp_release: The version of the dbNSFP database to be used. The default value is "4.4a",
+defaults to 4.4a
+:type dbnsfp_release: str (optional)
+:param threads: The <code>threads</code> parameter specifies the number of threads to use for parallel
+processing. It determines how many tasks can be executed simultaneously. Increasing the number of
+threads can potentially speed up the execution time of the function, especially if there are
+multiple cores available on the machine
+:type threads: int (optional)
+:param memory: The <code>memory</code> parameter specifies the amount of max memory (in Gb) to use for sorting.
+defaults to 1
+:type memory: int (optional)
+:param parquet_size: The parameter "parquet_size" is used to specify the maximum size (Mb) of data files in parquet folder. It is an optional parameter and its value should be an integer
+:type parquet_size: int (optional)
+:param generate_parquet_file: A boolean flag indicating whether to generate a parquet file or not,
+defaults to False
+:type generate_parquet_file: bool (optional)
+:param generate_sub_databases: A boolean parameter that determines whether to generate sub-databases
+or not. If set to True, the function will generate sub-databases based on the assemblies provided.
+If set to False, the function will not generate sub-databases, defaults to False
+:type generate_sub_databases: bool (optional)
+:param generate_vcf_file: A boolean flag indicating whether to generate a VCF file or not,
+defaults to False
+:type generate_vcf_file: bool (optional)
+:param not_generate_files_all: A boolean flag indicating to not generate database Parquet/VCF file for the entire database,
+defaults to False
+:type not_generate_files_all: bool (optional)
+:param genomes_folder: A string that specifies where are genomes
+:type genomes_folder: str (optional)
+:param add_info: Add INFO column in Parquet folder/file
+:type add_info: bool (optional)
+:param row_group_size: Row group size to generate parquet folder and file (see duckDB doc)
+:type row_group_size: int (optional)
+:return: bool as success or not</p></div>
+</dd>
+<dt id="howard.functions.databases.databases_download_dbsnp"><code class="name flex">
+<span>def <span class="ident">databases_download_dbsnp</span></span>(<span>assemblies: list, dbsnp_folder: str = '/Users/lebechea/howard/databases/exomiser/dbsnp', dbsnp_releases: list = ['b156'], dbsnp_release_default: str = None, dbsnp_url: str = 'https://ftp.ncbi.nih.gov/snp/archive', dbsnp_url_files: dict = None, dbsnp_url_files_prefix: str = 'GCF_000001405', dbsnp_assemblies_map: dict = {'hg19': '25', 'hg38': '40'}, genomes_folder: str = '/Users/lebechea/howard/databases/genomes/current', threads: int = 1, memory: int = 1, dbsnp_vcf: bool = False, dbsnp_parquet: bool = False, dbsnp_parquet_explode_infos: bool = True) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code><a title="howard.functions.databases.databases_download_dbsnp" href="#howard.functions.databases.databases_download_dbsnp">databases_download_dbsnp()</a></code> downloads dbSNP files, generates VCF files, and converts
+them to Parquet format.</p>
+<p>:param assemblies: A list of genome assemblies for which to download dbSNP data
+:type assemblies: list
+:param dbsnp_folder: The folder where the dbSNP files will be downloaded and stored
+:type dbsnp_folder: str
+:param dbsnp_releases: List of releases to download. Default:["b156"]
+:type dbsnp_releases: list
+:param dbsnp_release_default: Default release to link in default folder. Default: first release in dbsnp_releases
+:type dbsnp_release_default: str
+:param dbsnp_url: The <code>dbsnp_url</code> parameter is a string that represents the base URL where the dbSNP
+files are located. This URL is used to construct the full URL for downloading the dbSNP files
+:type dbsnp_url: str
+:param dbsnp_url_files: The <code>dbsnp_url_files</code> parameter is a dictionary that maps assembly names to
+specific dbSNP URL files. It allows you to provide custom dbSNP URL files for specific assemblies
+instead of using the default file naming convention
+:type dbsnp_url_files: dict
+:param dbsnp_url_files_prefix: The <code>dbsnp_url_files_prefix</code> parameter is a string that represents the
+prefix of the dbSNP file name for a specific assembly. It is used to construct the full URL of the
+dbSNP file to be downloaded. By default, the value is set to "GCF_000001405"
+:type dbsnp_url_files_prefix: str (optional)
+:param dbsnp_assemblies_map: The <code>dbsnp_assemblies_map</code> parameter is a dictionary that maps assembly
+names to their corresponding dbSNP versions. It is used to construct the dbSNP file name based on
+the assembly name. For example, if the assembly is "hg19", the corresponding dbSNP version is "
+:type dbsnp_assemblies_map: dict
+:param genomes_folder: The <code>genomes_folder</code> parameter is a string that specifies the folder where the
+genome index files are located. These index files are used for generating the VCF file from the
+downloaded dbSNP file
+:type genomes_folder: str
+:param threads: The <code>threads</code> parameter specifies the number of threads to use for downloading and
+processing the dbSNP files, defaults to 1
+:type threads: int (optional)
+:param memory: The <code>memory</code> parameter specifies the amount of max memory (in Gb) to use for sorting.
+defaults to 1
+:type memory: int (optional)
+:param dbsnp_vcf: A boolean flag indicating whether to generate a VCF file from the downloaded
+dbSNP data. If set to True, the function will generate a VCF file. If set to False, the function
+will not generate a VCF file, defaults to False
+:type dbsnp_vcf: bool (optional)
+:param dbsnpparquet: A boolean flag indicating whether to generate a Parquet file from the
+downloaded dbSNP data. If set to True, a Parquet file will be generated; if set to False, no Parquet
+file will be generated, defaults to False
+:type dbsnp_parquet: bool (optional)</p></div>
+</dd>
+<dt id="howard.functions.databases.databases_download_exomiser"><code class="name flex">
+<span>def <span class="ident">databases_download_exomiser</span></span>(<span>assemblies: list, exomiser_folder: str = '/Users/lebechea/howard/databases/exomiser/current', exomiser_application_properties: str = None, exomiser_url: str = 'http://data.monarchinitiative.org/exomiser', exomiser_release: str = None, exomiser_phenotype_release: str = None, exomiser_remm_release: str = None, exomiser_remm_url: str = 'https://kircherlab.bihealth.org/download/ReMM', exomiser_cadd_release: str = None, exomiser_cadd_url: str = 'https://kircherlab.bihealth.org/download/CADD', exomiser_cadd_url_snv_file: str = 'whole_genome_SNVs.tsv.gz', exomiser_cadd_url_indel_file: str = 'InDels.tsv.gz', threads: int = 1) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code><a title="howard.functions.databases.databases_download_exomiser" href="#howard.functions.databases.databases_download_exomiser">databases_download_exomiser()</a></code> function downloads and sets up the Exomiser database for the
+specified assemblies.</p>
+<p>:param assemblies: A list of assemblies for which to download Exomiser databases. Each assembly is a
+string representing a genome build, such as "GRCh37" or "GRCh38"
+:type assemblies: list
+:param exomiser_folder: The <code>exomiser_folder</code> parameter is a string that specifies the folder where
+the Exomiser databases will be downloaded and stored. If the folder does not exist, it will be
+created
+:type exomiser_folder: str
+:param exomiser_application_properties: The <code>exomiser_application_properties</code> parameter is a string
+representing the path to the Exomiser application properties file. This file contains configuration
+settings for the Exomiser tool. If this parameter is not provided, the function will attempt to
+locate the application properties file automatically based on the Exomiser
+:type exomiser_application_properties: str
+:param exomiser_url: The <code>exomiser_url</code> parameter is the URL where the Exomiser database files can
+be downloaded from. It is used to construct the download URLs for the phenotype and assembly files
+:type exomiser_url: str
+:param exomiser_release: The <code>exomiser_release</code> parameter is used to specify the version of the
+Exomiser data to download. If it is set to "default", "auto", or "config", the function will attempt
+to retrieve the version from the <code>exomiser.application.properties</code> file. If it is
+:type exomiser_release: str
+:param exomiser_phenotype_release: The <code>exomiser_phenotype_release</code> parameter is used to specify the
+release version of the Exomiser phenotype database. If not provided, it will default to the value
+specified in the <code>application.properties</code> file or the latest available release
+:type exomiser_phenotype_release: str
+:param exomiser_remm_release: The <code>exomiser_remm_release</code> parameter is used to specify the version
+of the ReMM (Regulatory Mendelian Mutation) database to download. If the value is set to "default",
+"auto", or "config", it will try to retrieve the version from the <code>application.properties</code>
+:type exomiser_remm_release: str
+:param exomiser_remm_url: The <code>exomiser_remm_url</code> parameter is the URL where the ReMM (Regulatory
+Mendelian Mutation) database can be downloaded from. It is used in the function to construct the
+download URL for the ReMM database files, defaults to <a href="https://kircherlab.bihealth.org/download/ReMM">https://kircherlab.bihealth.org/download/ReMM</a>
+:type exomiser_remm_url: str (optional)
+:param exomiser_cadd_release: The <code>exomiser_cadd_release</code> parameter is used to specify the version
+of the CADD (Combined Annotation Dependent Depletion) database to download. If the value is set to
+"default", "auto", or "config", it will try to retrieve the version from the `exom
+:type exomiser_cadd_release: str
+:param exomiser_cadd_url: The <code>exomiser_cadd_url</code> parameter is the URL where the CADD (Combined
+Annotation Dependent Depletion) database files can be downloaded from. It is used to construct the
+download URLs for the CADD database files, defaults to <a href="https://kircherlab.bihealth.org/download/CADD">https://kircherlab.bihealth.org/download/CADD</a>
+:type exomiser_cadd_url: str (optional)
+:param exomiser_cadd_url_snv_file: The parameter <code>exomiser_cadd_url_snv_file</code> is the name of the
+file containing the SNV (Single Nucleotide Variant) data for the CADD (Combined Annotation Dependent
+Depletion) database, defaults to whole_genome_SNVs.tsv.gz
+:type exomiser_cadd_url_snv_file: str (optional)
+:param exomiser_cadd_url_indel_file: The parameter <code>exomiser_cadd_url_indel_file</code> is the name of the
+INDEL file that will be downloaded from the CADD database, defaults to InDels.tsv.gz
+:type exomiser_cadd_url_indel_file: str (optional)
+:param threads: The <code>threads</code> parameter specifies the number of threads to use for parallel
+processing. It determines how many tasks can be executed simultaneously. Increasing the number of
+threads can potentially speed up the execution time of the function, especially if there are
+multiple cores available on the machine
+:type threads: int (optional)</p></div>
+</dd>
+<dt id="howard.functions.databases.databases_download_genomes"><code class="name flex">
+<span>def <span class="ident">databases_download_genomes</span></span>(<span>assemblies: list, genomes_folder: str = '/Users/lebechea/howard/databases/genomes/current', provider: str = 'UCSC', contig_regex: str = None, threads: int = 1) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function downloads genome assemblies using genomepy package with options to specify genome
+folder, provider, contig regex, and number of threads.</p>
+<p>:param assemblies: a list of genome assembly names to download
+:type assemblies: list
+:param genomes_folder: The folder where the downloaded genome files will be saved. If no folder is
+specified, the default folder will be used
+:type genomes_folder: str
+:param provider: The provider parameter specifies the source of the genome data. In this case, the
+default provider is set to "UCSC", which refers to the University of California, Santa Cruz Genome
+Browser. Other possible providers could include NCBI or Ensembl, defaults to UCSC
+:type provider: str (optional)
+:param contig_regex: The contig_regex parameter is a regular expression used to filter the contigs
+(chromosomes or scaffolds) to be downloaded for a given genome assembly. It allows users to download
+only a subset of the available contigs, based on their names or other characteristics. If
+contig_regex is not specified
+:type contig_regex: str
+:param threads: The "threads" parameter specifies the number of threads (parallel processes) to use
+for downloading the genomes. This can speed up the process if the computer has multiple cores or
+processors. The default value is 1, meaning that the download will be done using a single thread,
+defaults to 1
+:type threads: int (optional)
+:return: None is being returned.</p></div>
+</dd>
+<dt id="howard.functions.databases.databases_download_hgmd"><code class="name flex">
+<span>def <span class="ident">databases_download_hgmd</span></span>(<span>assemblies: list, hgmd_file: str, hgmd_folder: str = '/Users/lebechea/howard/databases/annotations/current', output_basename: str = None, threads: int = None, memory: int = 1, genomes_folder: str = None, to_parquet: bool = True, to_tsv: bool = True) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code><a title="howard.functions.databases.databases_download_hgmd" href="#howard.functions.databases.databases_download_hgmd">databases_download_hgmd()</a></code> function converts an HGMD database file into VCF, Parquet, and TSV
+formats.</p>
+<p>:param assemblies: A list of assemblies for which the HGMD database should be downloaded and
+converted. Only one assembly can be specified
+:type assemblies: list
+:param hgmd_file: The <code>hgmd_file</code> parameter is a string that represents the path to the HGMD
+database file in VCF format. This file contains the variants and their associated information
+:type hgmd_file: str
+:param hgmd_folder: The <code>hgmd_folder</code> parameter is a string that represents the path to the folder
+where the HGMD database files will be stored. If no value is provided, it will use the
+<code>DEFAULT_ANNOTATIONS_FOLDER</code> constant as the default value
+:type hgmd_folder: str
+:param output_basename: The <code>output_basename</code> parameter is a string that specifies the base name for
+the output files. If not provided, it will be set as the base name of the input HGMD file without
+the assembly information
+:type output_basename: str
+:param threads: The <code>threads</code> parameter specifies the number of threads to use for processing the
+HGMD database. It determines the level of parallelism and can help speed up the conversion process
+:type threads: int
+:param memory: The <code>memory</code> parameter specifies the amount of max memory (in Gb) to use for sorting.
+defaults to 1
+:type memory: int (optional)
+:param genomes_folder: The <code>genomes_folder</code> parameter is a string that specifies the folder where
+the genome files are located. If this parameter is not provided, it will default to a constant value
+<code>DEFAULT_GENOME_FOLDER</code>
+:type genomes_folder: str
+:param to_parquet: The <code>to_parquet</code> parameter is a boolean value that specifies whether the HGMD
+database should be converted to the Parquet format or not. If set to <code>True</code>, the database will be
+converted to Parquet format. If set to <code>False</code>, the conversion will be skipped, defaults to True
+:type to_parquet: bool (optional)
+:param to_tsv: The <code>to_tsv</code> parameter is a boolean value that specifies whether the HGMD database
+should be converted to TSV format or not. If set to <code>True</code>, the function will generate a TSV file
+from the HGMD database. If set to <code>False</code>, the TSV conversion will be, defaults to True
+:type to_tsv: bool (optional)
+:return: a boolean value indicating whether the HGMD database conversion was successful or not.</p></div>
+</dd>
+<dt id="howard.functions.databases.databases_download_refseq"><code class="name flex">
+<span>def <span class="ident">databases_download_refseq</span></span>(<span>assemblies: list, refseq_folder: str = None, refseq_url: str = None, refseq_prefix: str = 'ncbiRefSeq', refseq_files: List = ['ncbiRefSeq.txt', 'ncbiRefSeqLink.txt'], refseq_format_file: str = 'ncbiRefSeq.txt', refseq_format_file_output: str = None, include_utr_5: bool = True, include_utr_3: bool = True, include_chrM: bool = True, include_non_canonical_chr: bool = True, include_non_coding_transcripts: bool = True, include_transcript_ver: bool = True, threads: int = 1, memory: int = 1) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code><a title="howard.functions.databases.databases_download_refseq" href="#howard.functions.databases.databases_download_refseq">databases_download_refseq()</a></code> function downloads RefSeq files for a list of assemblies and returns
+a dictionary of installed RefSeq files for each assembly.</p>
+<p>:param assemblies: A list of assemblies for which the RefSeq files need to be downloaded. Each
+assembly is represented as a string
+:type assemblies: list
+:param refseq_folder: The <code>refseq_folder</code> parameter is a string that specifies the folder where the
+RefSeq files will be downloaded and stored. If this parameter is not provided, a default folder will
+be used
+:type refseq_folder: str
+:param refseq_url: The <code>refseq_url</code> parameter is a string that represents the URL where the RefSeq
+files can be downloaded from
+:type refseq_url: str
+:param refseq_prefix: The <code>refseq_prefix</code> parameter is a string that specifies the prefix for the
+downloaded RefSeq files. By default, it is set to "ncbiRefSeq". This prefix is used to identify the
+RefSeq files for each assembly. For example, if the prefix is set to "ncbi, defaults to ncbiRefSeq
+:type refseq_prefix: str (optional)
+:param refseq_files: The <code>refseq_files</code> parameter is a list of filenames that need to be downloaded
+for each assembly. The default value is <code>["ncbiRefSeq.txt", "ncbiRefSeqLink.txt"]</code>, but you can
+provide your own list of filenames if needed
+:type refseq_files: List
+:param refseq_format_file: The <code>refseq_format_file</code> parameter is a string that specifies the
+filename of the RefSeq file that needs to be formatted. This file will be used as input for the
+<code><a title="howard.functions.databases.databases_format_refseq" href="#howard.functions.databases.databases_format_refseq">databases_format_refseq()</a></code> function. By default, the value is set to "ncbiRefSeq.txt", defaults to
+ncbiRefSeq.txt
+:type refseq_format_file: str (optional)
+:param refseq_format_file_output: The <code>refseq_format_file_output</code> parameter is a string that
+specifies the output file path for the formatted RefSeq file. This file will be generated by the
+<code><a title="howard.functions.databases.databases_format_refseq" href="#howard.functions.databases.databases_format_refseq">databases_format_refseq()</a></code> function and will contain the formatted RefSeq data. If this parameter is
+not provided, the formatted RefSeq
+:type refseq_format_file_output: str
+:param include_utr_5: A boolean parameter that specifies whether to include the 5' untranslated
+region (UTR) in the downloaded RefSeq files. If set to True, the 5' UTR will be included. If set to
+False, the 5' UTR will be excluded, defaults to True
+:type include_utr_5: bool (optional)
+:param include_utr_3: The <code>include_utr_3</code> parameter is a boolean value that specifies whether to
+include the 3' untranslated region (UTR) in the downloaded RefSeq files. If set to <code>True</code>, the 3'
+UTR will be included. If set to <code>False</code>, the 3, defaults to True
+:type include_utr_3: bool (optional)
+:param include_chrM: The <code>include_chrM</code> parameter is a boolean value that determines whether to
+include the mitochondrial chromosome (chrM) in the downloaded RefSeq files. If set to True, the chrM
+will be included; if set to False, it will be excluded, defaults to True
+:type include_chrM: bool (optional)
+:param include_non_canonical_chr: The <code>include_non_canonical_chr</code> parameter is a boolean value that
+determines whether or not to include non-canonical chromosomes in the downloaded RefSeq files. If
+set to <code>True</code>, non-canonical chromosomes will be included. If set to <code>False</code>, non-canonical
+chromosomes will be excluded, defaults to True
+:type include_non_canonical_chr: bool (optional)
+:param include_non_coding_transcripts: The <code>include_non_coding_transcripts</code> parameter is a boolean
+flag that determines whether non-coding transcripts should be included in the downloaded RefSeq
+files. If set to <code>True</code>, non-coding transcripts will be included. If set to <code>False</code>, non-coding
+transcripts will be excluded, defaults to True
+:type include_non_coding_transcripts: bool (optional)
+:param include_transcript_ver: The <code>include_transcript_ver</code> parameter is a boolean value that
+determines whether to include the transcript version in the downloaded RefSeq files. If set to
+<code>True</code>, the transcript version will be included. If set to <code>False</code>, the transcript version will be
+excluded, defaults to True
+:type include_transcript_ver: bool (optional)
+:param threads: The <code>threads</code> parameter specifies the number of threads to use for downloading and
+extracting the RefSeq files. It determines the level of parallelism in the download and extraction
+process. By default, it is set to 1, which means that the download and extraction will be performed
+sequentially. If you want, defaults to 1
+:type threads: int (optional)
+:param memory: The <code>memory</code> parameter specifies the amount of max memory (in Gb) to use for sorting.
+defaults to 1
+:type memory: int (optional)
+:return: The function <code><a title="howard.functions.databases.databases_download_refseq" href="#howard.functions.databases.databases_download_refseq">databases_download_refseq()</a></code> returns a dictionary <code>installed_refseq</code> which
+contains information about the downloaded RefSeq files for each assembly. The keys of the dictionary
+are the assembly names, and the values are lists of the installed RefSeq files for each assembly.</p></div>
+</dd>
+<dt id="howard.functions.databases.databases_download_snpeff"><code class="name flex">
+<span>def <span class="ident">databases_download_snpeff</span></span>(<span>folder: str = None, assemblies: list = ['hg19'], config: dict = {}, threads: int = 1) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code><a title="howard.functions.databases.databases_download_snpeff" href="#howard.functions.databases.databases_download_snpeff">databases_download_snpeff()</a></code> function downloads and extracts snpEff databases for specified
+genome assemblies.</p>
+<p>:param folder: The <code>folder</code> parameter is a string that specifies the folder where the snpEff
+databases will be downloaded and stored. If the folder does not exist, it will be created
+:type folder: str
+:param assemblies: The <code>assemblies</code> parameter is a list of genome assemblies for which the snpEff
+databases need to be downloaded. It specifies the genome assemblies for which you want to download
+the snpEff databases. For example, if you want to download the snpEff databases for the human genome
+assembly hg
+:type assemblies: list
+:param config: The <code>config</code> parameter is a dictionary that contains information about the tools and
+their configurations. It is used to retrieve the path to the Java binary and the path to the snpEff
+binary
+:type config: dict
+:param threads: The <code>threads</code> parameter specifies the number of threads to be used for downloading
+the snpEff databases. It determines the parallelism of the download process, allowing multiple files
+to be downloaded simultaneously, defaults to 1
+:type threads: int (optional)</p></div>
+</dd>
+<dt id="howard.functions.databases.databases_format_refseq"><code class="name flex">
+<span>def <span class="ident">databases_format_refseq</span></span>(<span>refseq_file: str, output_file: str, include_utr_5: bool = True, include_utr_3: bool = True, include_chrM: bool = True, include_non_canonical_chr: bool = True, include_non_coding_transcripts: bool = True, include_transcript_ver: bool = True, sort: bool = False, header: bool = False, header_first_line: bool = True) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code><a title="howard.functions.databases.databases_format_refseq" href="#howard.functions.databases.databases_format_refseq">databases_format_refseq()</a></code> function takes a RefSeq file as input, formats it according to
+specified criteria, and outputs the formatted file.</p>
+<p>:param refseq_file: The <code>refseq_file</code> parameter is a string that represents the path to the input
+RefSeq file. This file contains information about gene annotations, including chromosome, start and
+end positions, strand, and other details
+:type refseq_file: str
+:param output_file: The <code>output_file</code> parameter is a string that represents the name of the file
+where the formatted data will be written
+:type output_file: str
+:param include_utr_5: The <code>include_utr_5</code> parameter is a boolean that determines whether to include
+the 5' UTR (untranslated region) in the output file. If set to <code>True</code>, the 5' UTR will be included.
+If set to <code>False</code>, the 5' U, defaults to True
+:type include_utr_5: bool (optional)
+:param include_utr_3: A boolean parameter that determines whether to include the 3' UTR
+(untranslated region) in the output. If set to True, the 3' UTR will be included. If set to False,
+the 3' UTR will be excluded, defaults to True
+:type include_utr_3: bool (optional)
+:param include_chrM: The <code>include_chrM</code> parameter is a boolean that determines whether to include
+transcripts from the mitochondrial chromosome (chrM or chrMT) in the output file. If set to True,
+transcripts from the mitochondrial chromosome will be included. If set to False, transcripts from
+the mitochondrial chromosome will be excluded, defaults to True
+:type include_chrM: bool (optional)
+:param include_non_canonical_chr: The parameter <code>include_non_canonical_chr</code> determines whether or
+not to include non-canonical chromosomes in the output. If set to <code>True</code>, non-canonical chromosomes
+will be included. If set to <code>False</code>, non-canonical chromosomes will be excluded, defaults to True
+:type include_non_canonical_chr: bool (optional)
+:param include_non_coding_transcripts: The parameter <code>include_non_coding_transcripts</code> determines
+whether non-coding transcripts should be included in the output file. If set to <code>True</code>, non-coding
+transcripts will be included. If set to <code>False</code>, non-coding transcripts will be excluded, defaults
+to True
+:type include_non_coding_transcripts: bool (optional)
+:param include_transcript_ver: The <code>include_transcript_ver</code> parameter determines whether to include
+the transcript version in the output file. If set to <code>True</code>, the transcript version will be included
+in the output file. If set to <code>False</code>, the transcript version will be removed from the output file.
+The default value is `True, defaults to True
+:type include_transcript_ver: bool (optional)
+:param sort: The <code>sort</code> parameter determines whether to sort the output file in ascending order
+based on the chromosome and start position. If set to <code>True</code>, the file will be sorted. If set to
+<code>False</code>, the file will not be sorted. The default value is <code>False</code>, defaults to False
+:type sort: bool (optional)
+:param header: The <code>header</code> parameter is a boolean that determines whether to include a header line
+in the output file. If set to <code>True</code>, a header line will be included. If set to <code>False</code>, no header
+line will be included. The default value is <code>False</code>, defaults to False
+:type header: bool (optional)
+:param header_first_line: The <code>header_first_line</code> parameter is a boolean that determines whether to
+include the header line as the first line in the output file. If set to <code>True</code>, the header line will
+be included as the first line. If set to <code>False</code>, the header line will not be included as the first,
+defaults to True
+:type header_first_line: bool (optional)
+:return: The function <code><a title="howard.functions.databases.databases_format_refseq" href="#howard.functions.databases.databases_format_refseq">databases_format_refseq()</a></code> returns the path of the output file.</p></div>
+</dd>
+<dt id="howard.functions.databases.databases_infos"><code class="name flex">
+<span>def <span class="ident">databases_infos</span></span>(<span>database_folders: list = [], database_folder_releases: list = ['current'], assembly: str = 'hg19', database_formats: list = None, config: dict = {}) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code><a title="howard.functions.databases.databases_infos" href="#howard.functions.databases.databases_infos">databases_infos()</a></code> function scans database folders and retrieves information about the databases
+found, including their folder, release, assembly, subdatabase, format, header, and parameters.</p>
+<p>:param database_folders: A list of folders where the databases are located
+:type database_folders: list
+:param database_folder_releases: A list of specific releases of the database folders to include in
+the search. If None, all releases will be included
+:type database_folder_releases: list
+:param assembly: The <code>assembly</code> parameter is a string that specifies the assembly version of the
+databases to be searched. It is used to filter the databases based on their assembly version. The
+default value is "hg19", defaults to hg19
+:type assembly: str (optional)
+:param database_formats: The <code>database_formats</code> parameter is a list that specifies the formats of
+the databases to include in the results. If this parameter is not provided or is set to <code>None</code>, all
+database formats will be included
+:type database_formats: list
+:param config: The <code>config</code> parameter is a dictionary that contains configuration settings for the
+function. It has the following structure:
+:type config: dict
+:return: The <code><a title="howard.functions.databases.databases_infos" href="#howard.functions.databases.databases_infos">databases_infos()</a></code> function returns a dictionary containing information about the
+databases found in the specified database folders. The keys of the dictionary are the paths to the
+database files, and the values are dictionaries containing the following information: folder,
+release, assembly, subdatabase, format, header, and parameters.</p></div>
+</dd>
+<dt id="howard.functions.databases.databases_param"><code class="name flex">
+<span>def <span class="ident">databases_param</span></span>(<span>databases_infos_dict: dict, output: str = None, output_description: str = None, bcftools_preference: bool = False) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code><a title="howard.functions.databases.databases_param" href="#howard.functions.databases.databases_param">databases_param()</a></code> function takes in a dictionary of database information, an optional output
+file path, and a boolean flag for bcftools preference, and returns a dictionary containing the
+parameters for parquet and bcftools annotations.</p>
+<p>:param databases_infos_dict: A dictionary containing information about databases. Each key in the
+dictionary represents the name of a database, and the corresponding value is another dictionary
+containing information about the database, such as its format and parameters
+:type databases_infos_dict: dict
+:param output: The <code>output</code> parameter is a string that specifies the path and filename of the output
+file where the generated JSON object will be written. If this parameter is not provided or is set to
+<code>None</code>, the JSON object will not be written to a file
+:type output: str
+:param output_description: The <code>output_description</code> parameter is a string that specifies the path
+and filename of the output file where the description of the databases will be written. If this
+parameter is not provided or is set to <code>None</code>, the description will not be written to a file
+:type output_description: str
+:param bcftools_preference: The <code>bcftools_preference</code> parameter is a boolean flag that determines
+whether to prioritize databases in the BCFTOOLS format. If <code>bcftools_preference</code> is set to <code>True</code>,
+databases in the BCFTOOLS format will be given priority over other formats. If `bcftools, defaults
+to False
+:type bcftools_preference: bool (optional)
+:return: The function <code><a title="howard.functions.databases.databases_param" href="#howard.functions.databases.databases_param">databases_param()</a></code> returns a dictionary object named "param_stats_show".</p></div>
+</dd>
+<dt id="howard.functions.databases.generate_databases_param"><code class="name flex">
+<span>def <span class="ident">generate_databases_param</span></span>(<span>args: <module 'argparse' from '/usr/local/Caskroom/miniconda/base/envs/howard_devel/lib/python3.10/argparse.py'>, assemblies: list = [])</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function generates database parameters based on specified arguments and assemblies.</p>
+<p>:param args: The <code>args</code> parameter in the <code><a title="howard.functions.databases.generate_databases_param" href="#howard.functions.databases.generate_databases_param">generate_databases_param()</a></code> function is expected to be an
+instance of the <code>argparse</code> module, which is commonly used for parsing command-line arguments. This
+parameter is used to retrieve various arguments and options provided by the user when running the
+script or program
+:type args: argparse
+:param assemblies: The <code>assemblies</code> parameter is a list containing the assemblies for which
+databases will be generated. The function <code><a title="howard.functions.databases.generate_databases_param" href="#howard.functions.databases.generate_databases_param">generate_databases_param()</a></code> takes various arguments using
+the <code>argparse</code> module and generates database parameters based on these inputs. If the
+<code>generate_param</code> argument is provided and set to True,
+:type assemblies: list
+:return: None</p></div>
+</dd>
+<dt id="howard.functions.databases.query_and_concatenate_columns"><code class="name flex">
+<span>def <span class="ident">query_and_concatenate_columns</span></span>(<span>parquet_file: str, output_file: str, columns: list)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function performs an SQL query on a large Parquet file and concatenates multiple columns (if not empty),
+including the column name in the concatenation.</p>
+<p>:param parquet_file: The path to the Parquet file
+:type parquet_file: str
+:param output_file: The path to the output file where the concatenated data will be written
+:type output_file: str
+:param columns: The list of columns to concatenate
+:type columns: list</p></div>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="howard.functions.databases.databases_download_alphamissense" href="#howard.functions.databases.databases_download_alphamissense">databases_download_alphamissense</a></code></li>
+<li><code><a title="howard.functions.databases.databases_download_annovar" href="#howard.functions.databases.databases_download_annovar">databases_download_annovar</a></code></li>
+<li><code><a title="howard.functions.databases.databases_download_dbnsfp" href="#howard.functions.databases.databases_download_dbnsfp">databases_download_dbnsfp</a></code></li>
+<li><code><a title="howard.functions.databases.databases_download_dbsnp" href="#howard.functions.databases.databases_download_dbsnp">databases_download_dbsnp</a></code></li>
+<li><code><a title="howard.functions.databases.databases_download_exomiser" href="#howard.functions.databases.databases_download_exomiser">databases_download_exomiser</a></code></li>
+<li><code><a title="howard.functions.databases.databases_download_genomes" href="#howard.functions.databases.databases_download_genomes">databases_download_genomes</a></code></li>
+<li><code><a title="howard.functions.databases.databases_download_hgmd" href="#howard.functions.databases.databases_download_hgmd">databases_download_hgmd</a></code></li>
+<li><code><a title="howard.functions.databases.databases_download_refseq" href="#howard.functions.databases.databases_download_refseq">databases_download_refseq</a></code></li>
+<li><code><a title="howard.functions.databases.databases_download_snpeff" href="#howard.functions.databases.databases_download_snpeff">databases_download_snpeff</a></code></li>
+<li><code><a title="howard.functions.databases.databases_format_refseq" href="#howard.functions.databases.databases_format_refseq">databases_format_refseq</a></code></li>
+<li><code><a title="howard.functions.databases.databases_infos" href="#howard.functions.databases.databases_infos">databases_infos</a></code></li>
+<li><code><a title="howard.functions.databases.databases_param" href="#howard.functions.databases.databases_param">databases_param</a></code></li>
+<li><code><a title="howard.functions.databases.generate_databases_param" href="#howard.functions.databases.generate_databases_param">generate_databases_param</a></code></li>
+<li><code><a title="howard.functions.databases.query_and_concatenate_columns" href="#howard.functions.databases.query_and_concatenate_columns">query_and_concatenate_columns</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>
