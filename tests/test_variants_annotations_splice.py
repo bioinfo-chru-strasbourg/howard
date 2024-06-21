@@ -1,9 +1,18 @@
 import logging as log
 from tempfile import TemporaryDirectory
-from howard.functions.commons import *
+from howard.functions.commons import remove_if_exists
 from howard.objects.variants import Variants
-from howard.functions.databases import *
-from test_needed import *
+from test_needed import (
+    tests_folder,
+    tests_data_folder,
+    tests_config,
+    tests_databases_folder,
+    tests_databases_release,
+)
+
+"""
+Aim: test splice annotation
+"""
 
 
 def test_annotation_splice():
@@ -14,10 +23,32 @@ def test_annotation_splice():
         # Construct param dict
         param = {
             "annotation": {
-                "splice": {"options": {"genome": "hg19", "threads": 2}},
+                "splice": {
+                    "options": {
+                        "genome": "hg19",
+                        "threads": 2,
+                        "split_mode": "one",
+                        "spliceai_distance": 500,
+                        "spliceai_mask": 1,
+                    }
+                },
             }
         }
         config = tests_config.copy()
+        config["tools"] = {
+            "splice": {
+                "docker": {
+                    "image": "jblamouche/splice:0.2.1",
+                    "entrypoint": "/bin/bash",
+                },
+                "mount": {
+                    f"{tests_databases_folder}/genomes/{tests_databases_release}": "ro"
+                },
+                "tmp": "/tmp",
+            },
+            "docker": "docker",
+        }
+
         # Create object
         variants = Variants(
             conn=None,
