@@ -5448,23 +5448,21 @@ class Variants:
         # Config
         config = self.get_config()
         log.debug("Config: " + str(config))
+        splice_config = config.get("tools").get("splice")
 
         # Config - Folders - Databases
         databases_folders = (
             config.get("folders", {}).get("databases", {}).get("splice", ["."])
         )
         log.debug("Databases annotations: " + str(databases_folders))
-        splice_config = config.get("tools").get("splice")
-        test = command("docker images | grep splice")
-        docker_image_list = [
-            splice
-            for v in test.split("\n")
-            for splice in v.split()
-            if splice == splice_config.get("docker").get("image").split(":")[0]
-        ]
-        if not docker_image_list:
+
+        # Splice docker image
+        splice_docker_image = splice_config.get("docker").get("image")
+
+        # Pull splice image if it's not already there
+        if not check_docker_image_exists(splice_docker_image):
             log.warning(
-                f"Annotation: splice docker image {splice_config.get('docker').get('image')} not found locally, trying to pull from dockerhub"
+                f"Annotation: splice docker image {splice_docker_image} not found   locally, trying to pull from dockerhub"
             )
             try:
                 command(f"docker pull {splice_config.get('docker').get('image')}")
@@ -5548,7 +5546,7 @@ class Variants:
                 for path, mode in splice_config.get("mount").items()
             ]
             if any(value for value in splice_config.values() if value is None):
-                log.warning("At least one splice config parameters is empty")
+                log.warning("At least one splice config parameter is empty")
                 return None
 
             # Params in splice nf
@@ -5575,26 +5573,20 @@ class Variants:
                     ):
                         yield f"--{key} {val}"
 
-            def handle_ressources(threads: int, memory: str) -> list:
-                """
-                Configure ressources for both SPiP and SpliceAI
-                """
-                list_ressources = []
-                for tool in ["spip", "spliceai"]:
-                    mem = re.findall("\d+", memory)[0]
-                    list_ressources.append(f"--memory_{tool} {round(0.5*int(mem))}GB")
-                    list_ressources.append(f"--cpus_{tool} {round(0.5*threads)}")
-                list_ressources.extend([f"--cpus {threads}", f"--memory {memory}"])
-                return list_ressources
-
             if options:
                 nf_params = list(check_values(options))
                 genome_path = find_genome(
                     config.get("folders", {}).get("databases", {}).get("genomes", {}),
                     file=f"{options.get('genome', None)}.fa",
                 )
-                log.debug(f"Genome: {genome_path}")
-                nf_params.append(f"--genome_path {genome_path}")
+                # Add genome path
+                if not genome_path:
+                    raise ValueError(
+                        f"Can't find genome assembly {options.get('genome', None)}.fa in {config.get('folders', {}).get('databases', {}).get('genomes', {})}"
+                    )
+                else:
+                    log.debug(f"Genome: {genome_path}")
+                    nf_params.append(f"--genome_path {genome_path}")
                 # nf_params.extend(handle_ressources(threads, memory_limit))
 
                 log.debug(f"Splice NF params: {' '.join(nf_params)}")
@@ -5604,54 +5596,67 @@ class Variants:
 
             output_folder = os.path.join(config.get("tools").get("splice").get("tmp"))
 
-            def splice_annotations(options, config):
-                if any(
-                    assemb in options.get("genome", {})
-                    for assemb in ["hg19", "GRCh37", "grch37", "GRCH37"]
-                ):
-                    spliceai_assembly = os.path.join(
-                        config.get("folders", {})
-                        .get("databases", {})
-                        .get("spliceai", {}),
-                        "current",
-                        "hg19",
-                        "transcriptome",
-                    )
-                    spip_assembly = "hg19"
-                elif any(
-                    assemb in options.get("genome", {})
-                    for assemb in ["hg38", "GRCh38", "grch38", "GRCH38"]
-                ):
-                    spliceai_assembly = os.path.join(
-                        config.get("folders", {})
-                        .get("databases", {})
-                        .get("spliceai", {}),
-                        "current",
-                        "hg38",
-                        "transcriptome",
-                    )
-                    spip_assembly = "hg38"
-                else:
-                    raise ValueError(
-                        f"Splice db not available for {options.get('genome', {})} EXIT"
-                    )
+            def splice_annotations(options: dict, config: dict) -> list:
+                """
+                Setting up updated databases for SPiP and SpliceAI
+                """
+                try:
+                    if any(
+                        assemb in options.get("genome", {})
+                        for assemb in ["hg19", "GRCh37", "grch37", "GRCH37"]
+                    ):
+                        spliceai_assembly = os.path.join(
+                            config.get("folders", {})
+                            .get("databases", {})
+                            .get("spliceai", {}),
+                            "current",
+                            "hg19",
+                            "transcriptome",
+                        )
+                        spip_assembly = "hg19"
+                    elif any(
+                        assemb in options.get("genome", {})
+                        for assemb in ["hg38", "GRCh38", "grch38", "GRCH38"]
+                    ):
+                        spliceai_assembly = os.path.join(
+                            config.get("folders", {})
+                            .get("databases", {})
+                            .get("spliceai", {}),
+                            "current",
+                            "hg38",
+                            "transcriptome",
+                        )
+                        spip_assembly = "hg38"
+                    else:
+                        raise ValueError(
+                            f"Splice db not available for {options.get('genome', {})} EXIT"
+                        )
 
-                spip = find(
-                    f"transcriptome_{spip_assembly}.RData",
-                    config.get("folders", {}).get("databases", {}).get("spip", {}),
-                )
-                spliceai = find("spliceai.refseq.txt", spliceai_assembly)
-                log.debug(f"SPiP annotations: {spip}")
-                log.debug(f"SpliceAI annotations: {spliceai}")
-                if spip and spliceai:
-                    return [
-                        f"--spip_transcriptome {spip}",
-                        f"--spliceai_annotations {spliceai}",
-                    ]
-                else:
-                    raise ValueError(
-                        "Can't find splice databases in configuration EXIT"
+                    spip = find(
+                        f"transcriptome_{spip_assembly}.RData",
+                        config.get("folders", {}).get("databases", {}).get("spip", {}),
                     )
+                    spliceai = find("spliceai.refseq.txt", spliceai_assembly)
+                    log.debug(f"SPiP annotations: {spip}")
+                    log.debug(f"SpliceAI annotations: {spliceai}")
+                    if spip and spliceai:
+                        return [
+                            f"--spip_transcriptome {spip}",
+                            f"--spliceai_annotations {spliceai}",
+                        ]
+                    else:
+                        # TODO crash and go on with basic annotations ?
+                        # raise ValueError(
+                        #     "Can't find splice databases in configuration EXIT"
+                        # )
+                        log.critical(
+                            "Can't find splice databases in configuration, use annotations file from image"
+                        )
+                except TypeError:
+                    log.critical(
+                        "Can't find splice databases in configuration, use annotations file from image"
+                    )
+                    return []
 
             # Add options
             splice_reference = splice_annotations(options, config)
