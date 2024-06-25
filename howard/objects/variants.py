@@ -6729,7 +6729,7 @@ class Variants:
                 SELECT transcript
                 FROM refseq_df
                 WHERE CHROM='{chr}'
-                AND POS={pos} 
+                AND POS={pos}
             """
                 )["transcript"]
             )
