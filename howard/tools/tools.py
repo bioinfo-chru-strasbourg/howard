@@ -1520,7 +1520,7 @@ arguments = {
         f"""(e.g. '{DEFAULT_GENOME_FOLDER}'""",
         "required": False,
         "default": DEFAULT_GENOME_FOLDER,
-        "type": PathType(exists=True, type="dir"),
+        "type": PathType(exists=False, type="dir"),
         "gooey": {
             "widget": "DirChooser",
             "options": {
