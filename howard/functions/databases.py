@@ -1689,16 +1689,16 @@ def databases_download_dbnsfp(
                         else:
                             # columns for each annotation
                             column_key = f"""
-                                list_aggregate(list_distinct(array_filter(string_split("{column}", ';'), x -> x != '.')), 'string_agg', ',') AS "{column_alias}"
+                                list_aggregate(list_distinct(array_filter(string_split(CAST("{column}" AS VARCHAR), ';'), x -> x != '.')), 'string_agg', ',') AS "{column_alias}"
                             """
                             # columns for INFO clumn
                             column_info_key = f"""
                                 CASE
-                                    WHEN len(list_distinct(array_filter(string_split("{column}", ';'), x -> x != '.'))) > 0
+                                    WHEN len(list_distinct(array_filter(string_split(CAST("{column}" AS VARCHAR), ';'), x -> x != '.'))) > 0
                                     THEN 
                                         concat(
                                             '{column_alias}=',
-                                            list_aggregate(list_distinct(array_filter(string_split("{column}", ';'), x -> x != '.')), 'string_agg', ','),
+                                            list_aggregate(list_distinct(array_filter(string_split(CAST("{column}" AS VARCHAR), ';'), x -> x != '.')), 'string_agg', ','),
                                             ';'
                                         )
                                     ELSE ''
@@ -3788,7 +3788,7 @@ def databases_download_dbsnp(
                                             replace(replace(replace(regexp_extract("CHROM_OLD", 'NC_[0]*([0-9]*)_?', 1), '23', 'X'), '24', 'Y'), '25', 'M')
                                         ) AS '#CHROM',
                                         "POS", "ID", "REF",
-                                        UNNEST(string_split("ALT", ',')) AS 'ALT',
+                                        UNNEST(string_split(CAST("ALT" AS VARCHAR), ',')) AS 'ALT',
                                         "QUAL", "FILTER", "INFO"
                                 FROM df_chunk
                                 WHERE list_contains({db_header_list_chrs}, "#CHROM")
@@ -3807,7 +3807,7 @@ def databases_download_dbsnp(
                                             replace(replace(replace(regexp_extract("CHROM_OLD", 'NC_[0]*([0-9]*)_?', 1), '23', 'X'), '24', 'Y'), '25', 'M')
                                         ) AS '#CHROM',
                                         "POS", "ID", "REF",
-                                        UNNEST(string_split("ALT", ',')) AS 'ALT',
+                                        UNNEST(string_split(CAST("ALT" AS VARCHAR), ',')) AS 'ALT',
                                         "QUAL", "FILTER", "INFO",
                                         {query_select_info_fields}
                                 FROM df_chunk

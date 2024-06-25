@@ -93,7 +93,9 @@ def minimalize(vcfdata_obj: Variants, field: str):
             update_query_set.append("FORMAT='GT' ")
         for sample in header_columns:
             if sample not in vcf_required_columns + ["FORMAT"]:
-                update_query_set.append(f"\"{sample}\"=string_split({sample}, ':')[1] ")
+                update_query_set.append(
+                    f""" "{sample}"=string_split(CAST("{sample}" AS VARCHAR), ':')[1] """
+                )
         update_query = "UPDATE variants SET " + ", ".join(update_query_set)
     else:
         update_query = f"UPDATE variants SET {field.upper()}={missing_value.get(field.upper(), None)}"

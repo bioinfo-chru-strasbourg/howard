@@ -568,7 +568,7 @@ class Variants:
                     WHERE (
                         regexp_matches("{sample}", '^[0-9]([/|][0-9])+')
                         AND
-                        len(string_split(FORMAT, ':')) = len(string_split("{sample}", ':'))
+                        len(string_split(CAST("FORMAT" AS VARCHAR), ':')) = len(string_split(CAST("{sample}" AS VARCHAR), ':'))
                       )
                     GROUP BY genotype
                     """
@@ -651,7 +651,7 @@ class Variants:
                         median(CAST(QUAL AS INTEGER)) AS Median,
                         variance(CAST(QUAL AS INTEGER)) AS Variance
                     FROM {table_variants_from}
-                    WHERE QUAL NOT IN ('.')
+                    WHERE CAST(QUAL AS VARCHAR) NOT IN ('.')
                     """
 
             qual = self.conn.execute(sql_query_qual).df().to_dict(orient="index")
@@ -6574,7 +6574,7 @@ class Variants:
                                     sql_update = f"""
                                         UPDATE {table_variants}
                                         SET {sql_set_option}
-                                        WHERE "{explode_infos_prefix}{annotation}" NOT IN ('','.')
+                                        WHERE CAST("{explode_infos_prefix}{annotation}" AS VARCHAR) NOT IN ('','.')
                                         AND "{explode_infos_prefix}{annotation}"{comparison_map[criterion_type]}{criterion_value}
                                         """
                                 except:
@@ -6805,7 +6805,7 @@ class Variants:
             return hgvs_full
 
         # Polars connexion
-        polars_conn = pl.SQLContext(register_globals=True, eager_execution=True)
+        polars_conn = pl.SQLContext(register_globals=True, eager=True)
 
         # Config
         config = self.get_config()
@@ -6987,7 +6987,7 @@ class Variants:
                 transcripts = read_transcripts(infile)
 
         # Polars connexion
-        polars_conn = pl.SQLContext(register_globals=True, eager_execution=True)
+        polars_conn = pl.SQLContext(register_globals=True, eager=True)
 
         log.debug("Genome loading...")
         # Read genome sequence using pyfaidx.
@@ -8125,13 +8125,14 @@ class Variants:
                 else:
                     value = "'.'"
                     value_samples = "'.'"
+                format_regex = r"[a-zA-Z0-9\s]"
                 sql_update_set.append(
                     f"""
                         "{sample}" = 
                         concat(
                             CASE
                                 WHEN {table_variants}."{sample}" = './.'
-                                THEN concat('./.',regexp_replace(regexp_replace({table_variants}.FORMAT, '[a-zA-Z0-9\s]', '', 'g'), ':', ':.', 'g'))
+                                THEN concat('./.',regexp_replace(regexp_replace({table_variants}.FORMAT, '{format_regex}', '', 'g'), ':', ':.', 'g'))
                                 ELSE {table_variants}."{sample}"
                             END,
                             ':',
