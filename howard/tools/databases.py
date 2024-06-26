@@ -200,44 +200,16 @@ def databases(args: argparse) -> None:
     log.debug(f"param_databases={param_databases}")
 
     # Genomes
-    if param_databases.get("genomes", {}).get("download_genomes", None) or param.get(
-        "databases", {}
-    ).get("genomes_folder", None):
-
+    if param_databases.get("genomes", {}).get("download_genomes", None):
         log.debug(f"Download Genomes")
-
-        # Genomes
         param_databases_genomes = param_databases.get("genomes", {})
-
-        # List genomes folders from params
-        genomes_folders = []
-
-        # Add genomes folder to download
-        if param_databases.get("genomes", {}).get("download_genomes", None):
-            genomes_folders.append(
-                param_databases.get("genomes", {}).get("download_genomes", None)
-            )
-
-        # Add genome folders for other databases to download
-        if param.get("databases", {}).get("genomes_folder", None):
-            genomes_folders.append(
-                param.get("databases", {}).get("genomes_folder", None)
-            )
-
-        # Uniquify genomes folders
-        genomes_folders = list(dict.fromkeys(genomes_folders))
-
-        # Download genome
-        for genomes_folder_to_download in genomes_folders:
-            databases_download_genomes(
-                assemblies=assemblies,
-                genomes_folder=genomes_folder_to_download,
-                provider=param_databases_genomes.get("download_genomes_provider"),
-                contig_regex=param_databases_genomes.get(
-                    "download_genomes_contig_regex"
-                ),
-                threads=threads,
-            )
+        databases_download_genomes(
+            assemblies=assemblies,
+            genomes_folder=param_databases_genomes.get("download_genomes"),
+            provider=param_databases_genomes.get("download_genomes_provider"),
+            contig_regex=param_databases_genomes.get("download_genomes_contig_regex"),
+            threads=threads,
+        )
 
     # Annovar
     if param_databases.get("annovar", {}).get("download_annovar", None):
