@@ -1,0 +1,1232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>howard.objects.variants API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>howard.objects.variants</code></h1>
+</header>
+<section id="section-intro">
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="howard.objects.variants.Variants"><code class="flex name class">
+<span>class <span class="ident">Variants</span></span>
+<span>(</span><span>conn=None, input: str = None, output: str = None, config: dict = {}, param: dict = {}, load: bool = False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>__init__</code> initializes the variables, sets the input, output, config, param, connexion and
+header</p>
+<p>:param conn: the connection to the database
+:param input: the input file
+:param output: the output file
+:param config: a dictionary containing the configuration of the model
+:param param: a dictionary containing the parameters of the model</p></div>
+<h3>Methods</h3>
+<dl>
+<dt id="howard.objects.variants.Variants.add_column"><code class="name flex">
+<span>def <span class="ident">add_column</span></span>(<span>self, table_name, column_name, column_type, default_value=None, drop: bool = False) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>add_column</code> function adds a column to a SQLite or DuckDB table with a default value if it
+doesn't already exist.</p>
+<p>:param table_name: The name of the table to which you want to add a column
+:param column_name: The parameter "column_name" is the name of the column that you want to add
+to the table
+:param column_type: The <code>column_type</code> parameter specifies the data type of the column that you
+want to add to the table. It should be a string that represents the desired data type, such as
+"INTEGER", "TEXT", "REAL", etc
+:param default_value: The <code>default_value</code> parameter is an optional parameter that specifies the
+default value for the newly added column. If a default value is provided, it will be assigned to
+the column for any existing rows that do not have a value for that column
+:param drop: The <code>drop</code> parameter is a boolean flag that determines whether to drop the column
+if it already exists in the table. If <code>drop</code> is set to <code>True</code>, the function will drop the
+existing column before adding the new column. If <code>drop</code> is set to <code>False</code> (default),, defaults
+to False
+:type drop: bool (optional)
+:return: a boolean value indicating whether the column was successfully added to the table.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.annotation"><code class="name flex">
+<span>def <span class="ident">annotation</span></span>(<span>self) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It annotates the VCF file with the annotations specified in the config file.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.annotation_annovar"><code class="name flex">
+<span>def <span class="ident">annotation_annovar</span></span>(<span>self, threads: int = None) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It takes a VCF file, annotates it with Annovar, and then updates the database with the new
+annotations</p>
+<p>:param threads: number of threads to use
+:return: the value of the variable "return_value".</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.annotation_bcftools"><code class="name flex">
+<span>def <span class="ident">annotation_bcftools</span></span>(<span>self, threads: int = None) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function annotate with bcftools</p>
+<p>:param threads: Number of threads to use
+:return: the value of the variable "return_value".</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.annotation_exomiser"><code class="name flex">
+<span>def <span class="ident">annotation_exomiser</span></span>(<span>self, threads: int = None) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function annotate with Exomiser</p>
+<p>This function uses args as parameters, in section "annotation" -&gt; "exomiser", with sections:
+- "analysis" (dict/file):
+Full analysis dictionnary parameters (see Exomiser docs).
+Either a dict, or a file in JSON or YAML format.
+These parameters may change depending on other parameters (e.g. phenotipicFeatures/HPO)
+Default : None
+- "preset" (string):
+Analysis preset (available in config folder).
+Used if no full "analysis" is provided.
+Default: "exome"
+- "phenopacket" (dict/file):
+Samples and phenotipic features parameters (see Exomiser docs).
+Either a dict, or a file in JSON or YAML format.
+Default: None
+- "subject" (dict):
+Sample parameters (see Exomiser docs).
+Example:
+"subject":
+{
+"id": "ISDBM322017",
+"sex": "FEMALE"
+}
+Default: None
+- "sample" (string):
+Sample name to construct "subject" section:
+"subject":
+{
+"id": "<sample>",
+"sex": "UNKNOWN_SEX"
+}
+Default: None
+- "phenotypicFeatures" (dict)
+Phenotypic features to construct "subject" section.
+Example:
+"phenotypicFeatures":
+[
+{ "type": { "id": "HP:0001159", "label": "Syndactyly" } },
+{ "type": { "id": "HP:0000486", "label": "Strabismus" } }
+]
+- "hpo" (list)
+List of HPO ids as phenotypic features.
+Example:
+"hpo": ['0001156', '0001363', '0011304', '0010055']
+Default: []
+- "outputOptions" (dict):
+Output options (see Exomiser docs).
+Default:
+"output_options" =
+{
+"outputContributingVariantsOnly": False,
+"numGenes": 0,
+"outputFormats": ["TSV_VARIANT", "VCF"]
+}
+- "transcript_source" (string):
+Transcript source (either "refseq", "ucsc", "ensembl")
+Default: "refseq"
+- "exomiser_to_info" (boolean):
+Add exomiser TSV file columns as INFO fields in VCF.
+Default: False
+- "release" (string):
+Exomise database release.
+If not exists, database release will be downloaded (take a while).
+Default: None (provided by application.properties configuration file)
+- "exomiser_application_properties" (file):
+Exomiser configuration file (see Exomiser docs).
+Useful to automatically download databases (especially for specific genome databases).</p>
+<p>Notes:
+- If no sample in parameters, first sample in VCF will be chosen
+- If no HPO found, "hiPhivePrioritiser" analysis step will be switch off</p>
+<p>:param threads: The number of threads to use
+:return: None.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.annotation_hgvs"><code class="name flex">
+<span>def <span class="ident">annotation_hgvs</span></span>(<span>self, threads: int = None) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>annotation_hgvs</code> function performs HGVS annotation on a set of variants using genomic
+coordinates and alleles.</p>
+<p>:param threads: The <code>threads</code> parameter is an optional integer that specifies the number of
+threads to use for parallel processing. If no value is provided, it will default to the number
+of threads obtained from the <code>get_threads()</code> method
+:type threads: int</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.annotation_parquet"><code class="name flex">
+<span>def <span class="ident">annotation_parquet</span></span>(<span>self, threads: int = None) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It takes a VCF file, and annotates it with a parquet file</p>
+<p>:param threads: number of threads to use for the annotation
+:return: the value of the variable "result".</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.annotation_snpeff"><code class="name flex">
+<span>def <span class="ident">annotation_snpeff</span></span>(<span>self, threads: int = None) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function annotate with snpEff</p>
+<p>:param threads: The number of threads to use
+:return: the value of the variable "return_value".</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.annotation_snpsift"><code class="name flex">
+<span>def <span class="ident">annotation_snpsift</span></span>(<span>self, threads: int = None) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function annotate with bcftools</p>
+<p>:param threads: Number of threads to use
+:return: the value of the variable "return_value".</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.calculation"><code class="name flex">
+<span>def <span class="ident">calculation</span></span>(<span>self, operations: dict = {}, operations_config_dict: dict = {}, operations_config_file: str = None) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It takes a list of operations, and for each operation, it checks if it's a python or sql
+operation, and then calls the appropriate function</p>
+<p>param json example:
+"calculation": {
+"NOMEN": {
+"options": {
+"hgvs_field": "hgvs"
+},
+"middle" : null
+}</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.calculation_barcode"><code class="name flex">
+<span>def <span class="ident">calculation_barcode</span></span>(<span>self, tag: str = 'barcode') ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>calculation_barcode</code> function calculates barcode values for variants in a VCF file and
+updates the INFO field in the file with the calculated barcode values.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.calculation_barcode_family"><code class="name flex">
+<span>def <span class="ident">calculation_barcode_family</span></span>(<span>self, tag: str = 'BCF') ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>calculation_barcode_family</code> function calculates barcode values for variants in a VCF file
+and updates the INFO field in the file with the calculated barcode values.</p>
+<p>:param tag: The <code>tag</code> parameter in the <code>calculation_barcode_family</code> function is used to specify
+the barcode tag that will be added to the VCF file during the calculation process. If no value
+is provided for the <code>tag</code> parameter, the default value used is "BCF", defaults to BCF
+:type tag: str (optional)</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.calculation_extract_nomen"><code class="name flex">
+<span>def <span class="ident">calculation_extract_nomen</span></span>(<span>self) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function extracts the HGVS nomenclature from the calculation/identification of NOMEN.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.calculation_extract_snpeff_hgvs"><code class="name flex">
+<span>def <span class="ident">calculation_extract_snpeff_hgvs</span></span>(<span>self) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>calculation_extract_snpeff_hgvs</code> extracts HGVS nomenclatures from the SnpEff
+annotation field in a VCF file and adds them as a new column in the variants table.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.calculation_find_by_pipeline"><code class="name flex">
+<span>def <span class="ident">calculation_find_by_pipeline</span></span>(<span>self, tag: str = 'findbypipeline') ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>calculation_find_by_pipeline</code> performs a calculation to find the number of
+pipeline/sample for a variant and updates the variant information in a VCF file.</p>
+<p>:param tag: The <code>tag</code> parameter is a string that represents the annotation field for the
+"findbypipeline" information in the VCF file. It is used to create the annotation field in the
+VCF header and to update the corresponding field in the variants table, defaults to
+findbypipeline
+:type tag: str (optional)</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.calculation_genotype_concordance"><code class="name flex">
+<span>def <span class="ident">calculation_genotype_concordance</span></span>(<span>self) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>calculation_genotype_concordance</code> calculates the genotype concordance for
+multi-caller VCF files and updates the variant information in the database.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.calculation_genotype_stats"><code class="name flex">
+<span>def <span class="ident">calculation_genotype_stats</span></span>(<span>self, info: str = 'VAF') ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>calculation_genotype_stats</code> function calculates genotype statistics for a given information
+field in a VCF file and updates the INFO column of the variants table with the calculated
+statistics.</p>
+<p>:param info: The <code>info</code> parameter is a string that represents the type of information for which
+genotype statistics are calculated. It is used to generate various VCF info tags for the
+statistics, such as the number of occurrences, the list of values, the minimum value, the
+maximum value, the mean, the median, defaults to VAF
+:type info: str (optional)</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.calculation_process_function"><code class="name flex">
+<span>def <span class="ident">calculation_process_function</span></span>(<span>self, operation: dict, operation_name: str = 'unknown') ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>calculation_process_function</code> takes in an operation dictionary and performs the specified
+function with the given parameters.</p>
+<p>:param operation: The <code>operation</code> parameter is a dictionary that contains information about the
+operation to be performed. It has the following keys:
+:type operation: dict
+:param operation_name: The <code>operation_name</code> parameter is a string that represents the name of
+the operation being performed. It is used for logging purposes, defaults to unknown
+:type operation_name: str (optional)</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.calculation_process_sql"><code class="name flex">
+<span>def <span class="ident">calculation_process_sql</span></span>(<span>self, operation: dict, operation_name: str = 'unknown') ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>calculation_process_sql</code> function takes in a mathematical operation as a string and
+performs the operation, updating the specified table with the result.</p>
+<p>:param operation: The <code>operation</code> parameter is a dictionary that contains information about the
+mathematical operation to be performed. It includes the following keys:
+:type operation: dict
+:param operation_name: The <code>operation_name</code> parameter is a string that represents the name of
+the mathematical operation being performed. It is used for logging and error handling purposes,
+defaults to unknown
+:type operation_name: str (optional)</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.calculation_trio"><code class="name flex">
+<span>def <span class="ident">calculation_trio</span></span>(<span>self) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>calculation_trio</code> function performs trio calculations on a VCF file by adding trio
+information to the INFO field of each variant.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.calculation_vaf_normalization"><code class="name flex">
+<span>def <span class="ident">calculation_vaf_normalization</span></span>(<span>self) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>calculation_vaf_normalization</code> function calculates the VAF (Variant Allele Frequency)
+normalization for each sample in a VCF file and updates the FORMAT and INFO fields accordingly.
+:return: The function does not return anything.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.calculation_variant_id"><code class="name flex">
+<span>def <span class="ident">calculation_variant_id</span></span>(<span>self) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>calculation_variant_id</code> adds a variant ID annotation to a VCF file header and
+updates the INFO field of a variants table with the variant ID.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.close_connexion"><code class="name flex">
+<span>def <span class="ident">close_connexion</span></span>(<span>self) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function closes the connection to the database.
+:return: The connection is being closed.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.create_indexes"><code class="name flex">
+<span>def <span class="ident">create_indexes</span></span>(<span>self) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create indexes on the table after insertion</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.drop_column"><code class="name flex">
+<span>def <span class="ident">drop_column</span></span>(<span>self, column: dict = None, table_name: str = None, column_name: str = None) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>drop_column</code> function drops a specified column from a given table in a database and returns
+True if the column was successfully dropped, and False if the column does not exist in the
+table.</p>
+<p>:param column: The <code>column</code> parameter is a dictionary that contains information about the column
+you want to drop. It has two keys:
+:type column: dict
+:param table_name: The <code>table_name</code> parameter is the name of the table from which you want to
+drop a column
+:type table_name: str
+:param column_name: The <code>column_name</code> parameter is the name of the column that you want to drop
+from the table
+:type column_name: str
+:return: a boolean value. It returns True if the column was successfully dropped from the table,
+and False if the column does not exist in the table.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.drop_indexes"><code class="name flex">
+<span>def <span class="ident">drop_indexes</span></span>(<span>self) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create indexes on the table after insertion</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.drop_variants_table"><code class="name flex">
+<span>def <span class="ident">drop_variants_table</span></span>(<span>self) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><blockquote>
+<p>This function drops the variants table</p>
+</blockquote></div>
+</dd>
+<dt id="howard.objects.variants.Variants.execute_query"><code class="name flex">
+<span>def <span class="ident">execute_query</span></span>(<span>self, query: str)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It takes a query as an argument, executes it, and returns the results</p>
+<p>:param query: The query to be executed
+:return: The result of the query is being returned.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.explode_infos"><code class="name flex">
+<span>def <span class="ident">explode_infos</span></span>(<span>self, prefix: str = None, create_index: bool = False, fields: list = None, force: bool = False, proccess_all_fields_together: bool = False) ‑> list</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>explode_infos</code> function takes a VCF file and explodes the INFO fields into individual
+columns, returning a list of added columns.</p>
+<p>:param prefix: The <code>prefix</code> parameter is a string that is used as a prefix for the exploded INFO
+fields. If the <code>prefix</code> is not provided or is set to <code>None</code>, the function will use the value of
+<code>self.get_explode_infos_prefix()</code> as the prefix
+:type prefix: str
+:param create_index: The <code>create_index</code> parameter is a boolean flag that specifies whether to
+create indexes on the exploded INFO fields. If set to <code>True</code>, indexes will be created; if set to
+<code>False</code>, indexes will not be created. The default value is <code>False</code>, defaults to False
+:type create_index: bool (optional)
+:param fields: The <code>fields</code> parameter is a list of INFO fields that you want to explode into
+individual columns. If this parameter is not provided, all INFO fields will be exploded
+:type fields: list
+:param force: The <code>force</code> parameter is a boolean flag that determines whether to drop and
+recreate the column if it already exists in the table. If <code>force</code> is set to <code>True</code>, the column
+will be dropped and recreated. If <code>force</code> is set to <code>False</code>, the column will not be dropped,
+defaults to False
+:type force: bool (optional)
+:param proccess_all_fields_together: The <code>proccess_all_fields_together</code> parameter is a boolean
+flag that determines whether to process all the INFO fields together or individually. If set to
+<code>True</code>, all the INFO fields will be processed together. If set to <code>False</code>, each INFO field will
+be processed individually, defaults to False
+:type proccess_all_fields_together: bool (optional)
+:return: The function <code>explode_infos</code> returns a list of added columns.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.export_header"><code class="name flex">
+<span>def <span class="ident">export_header</span></span>(<span>self, header_name: str = None, output_file: str = None, output_file_ext: str = '.hdr', clean_header: bool = True, remove_chrom_line: bool = False) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>export_header</code> function takes a VCF file, extracts the header, modifies it according to
+specified options, and writes it to a new file.</p>
+<p>:param header_name: The <code>header_name</code> parameter is the name of the header file to be created. If
+this parameter is not specified, the header will be written to the output file
+:type header_name: str
+:param output_file: The <code>output_file</code> parameter in the <code>export_header</code> function is used to
+specify the name of the output file where the header will be written. If this parameter is not
+provided, the header will be written to a temporary file
+:type output_file: str
+:param output_file_ext: The <code>output_file_ext</code> parameter in the <code>export_header</code> function is a
+string that represents the extension of the output header file. By default, it is set to ".hdr"
+if not specified by the user. This extension will be appended to the <code>output_file</code> name to
+create the final, defaults to .hdr
+:type output_file_ext: str (optional)
+:param clean_header: The <code>clean_header</code> parameter in the <code>export_header</code> function is a boolean
+flag that determines whether the header should be cleaned or not. When <code>clean_header</code> is set to
+<code>True</code>, the function will clean the header by modifying certain lines based on a specific
+pattern. If <code>clean_header</code>, defaults to True
+:type clean_header: bool (optional)
+:param remove_chrom_line: The <code>remove_chrom_line</code> parameter in the <code>export_header</code> function is a
+boolean flag that determines whether the #CHROM line should be removed from the header before
+writing it to the output file. If set to <code>True</code>, the #CHROM line will be removed; if set to `,
+defaults to False
+:type remove_chrom_line: bool (optional)
+:return: The function <code>export_header</code> returns the name of the temporary header file that is
+created.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.export_output"><code class="name flex">
+<span>def <span class="ident">export_output</span></span>(<span>self, output_file: str | None = None, output_header: str | None = None, export_header: bool = True, query: str | None = None, parquet_partitions: list | None = None, chunk_size: int | None = None, threads: int | None = None, sort: bool = False, index: bool = False, order_by: str | None = None) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>export_output</code> function exports data from a VCF file to a specified output file in various
+formats, including VCF, CSV, TSV, PSV, and Parquet.</p>
+<p>:param output_file: The <code>output_file</code> parameter is a string that specifies the name of the
+output file to be generated by the function. This is where the exported data will be saved
+:type output_file: str
+:param output_header: The <code>output_header</code> parameter is a string that specifies the name of the
+file where the header of the VCF file will be exported. If this parameter is not provided, the
+header will be exported to a file with the same name as the <code>output_file</code> parameter, but with
+the extension "
+:type output_header: str
+:param export_header: The <code>export_header</code> parameter is a boolean flag that determines whether
+the header of a VCF file should be exported to a separate file or not. If <code>export_header</code> is
+True, the header will be exported to a file. If <code>export_header</code> is False, the header will not
+be, defaults to True, if output format is not VCF
+:type export_header: bool (optional)
+:param query: The <code>query</code> parameter is an optional SQL query that can be used to filter and
+select specific data from the VCF file before exporting it. If provided, only the data that
+matches the query will be exported
+:type query: str
+:param parquet_partitions: The <code>parquet_partitions</code> parameter is a list that specifies the
+columns to be used for partitioning the Parquet file during export. Partitioning is a way to
+organize data in a hierarchical directory structure based on the values of one or more columns.
+This can improve query performance when working with large datasets
+:type parquet_partitions: list
+:param chunk_size: The <code>chunk_size</code> parameter specifies the number of
+records in batch when exporting data in Parquet format. This parameter is used for
+partitioning the Parquet file into multiple files.
+:type chunk_size: int
+:param threads: The <code>threads</code> parameter is an optional parameter that specifies the number of
+threads to be used during the export process. It determines the level of parallelism and can
+improve the performance of the export operation. If not provided, the function will use the
+default number of threads
+:type threads: int
+:param sort: The <code>sort</code> parameter is a boolean flag that determines whether the output file
+should be sorted or not. If <code>sort</code> is set to <code>True</code>, the output file will be sorted based on the
+genomic coordinates of the variants. By default, the value of <code>sort</code> is <code>False</code>, defaults to
+False
+:type sort: bool (optional)
+:param index: The <code>index</code> parameter is a boolean flag that determines whether an index should be
+created on the output file. If <code>index</code> is True, an index will be created. If <code>index</code> is False,
+no index will be created. The default value is False, defaults to False
+:type index: bool (optional)
+:param order_by: The <code>order_by</code> parameter is a string that specifies the column(s) to use for
+sorting the output file. This parameter is only applicable when exporting data in VCF format
+:type order_by: str
+:return: a boolean value. It checks if the output file exists and returns True if it does, or
+None if it doesn't.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.export_variant_vcf"><code class="name flex">
+<span>def <span class="ident">export_variant_vcf</span></span>(<span>self, vcf_file, remove_info: bool = False, add_samples: bool = True, list_samples: list = [], index: bool = False, threads: int | None = None) ‑> bool | None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>export_variant_vcf</code> function exports a VCF file with specified samples, allowing options to
+remove INFO field, add samples, and control compression and indexing.</p>
+<p>:param vcf_file: The <code>vcf_file</code> parameter is the name of the file where the VCF data will be
+written to. It is the output file that will contain the filtered VCF data based on the specified
+parameters
+:param remove_info: The <code>remove_info</code> parameter in the <code>export_variant_vcf</code> function is a
+boolean flag that determines whether to remove the INFO field from the output VCF file. If set
+to <code>True</code>, the INFO field will be removed. If set to <code>False</code>, the INFO field will be included
+in, defaults to False
+:type remove_info: bool (optional)
+:param add_samples: The <code>add_samples</code> parameter is a boolean parameter that determines whether
+the samples should be added to the VCF file or not. If set to True, the samples will be added.
+If set to False, the samples will be removed. The default value is True, defaults to True
+:type add_samples: bool (optional)
+:param list_samples: The <code>list_samples</code> parameter is a list of samples that you want to include
+in the output VCF file. By default, all samples will be included. If you provide a list of
+samples, only those samples will be included in the output file
+:type list_samples: list
+:param index: The <code>index</code> parameter in the <code>export_variant_vcf</code> function is a boolean flag that
+determines whether or not to create an index for the output VCF file. If <code>index</code> is set to
+<code>True</code>, the output VCF file will be indexed using tabix. If <code>index</code>, defaults to False
+:type index: bool (optional)
+:param threads: The <code>threads</code> parameter in the <code>export_variant_vcf</code> function specifies the
+number of threads to use for exporting the VCF file. It determines how many parallel threads
+will be used during the export process. More threads can potentially speed up the export process
+by utilizing multiple cores of the processor. If
+:type threads: int | None
+:return: The <code>export_variant_vcf</code> function returns the result of calling the <code>export_output</code>
+method with various parameters including the output file, query, threads, sort flag, and index
+flag. The <code>export_output</code> method is responsible for exporting the VCF data based on the
+specified parameters and configurations provided in the <code>export_variant_vcf</code> function.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_config"><code class="name flex">
+<span>def <span class="ident">get_config</span></span>(<span>self) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It returns the config
+:return: The config variable is being returned.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_config_default"><code class="name flex">
+<span>def <span class="ident">get_config_default</span></span>(<span>self, name: str) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>get_config_default</code> returns a dictionary containing default configurations for
+various calculations and prioritizations.</p>
+<p>:param name: The <code>get_config_default</code> function returns a dictionary containing default
+configurations for different calculations and prioritizations. The <code>name</code> parameter is used to
+specify which specific configuration to retrieve from the dictionary
+:type name: str
+:return: The function <code>get_config_default</code> returns a dictionary containing default configuration
+settings for different calculations and prioritizations. The specific configuration settings are
+retrieved based on the input <code>name</code> parameter provided to the function. If the <code>name</code> parameter
+matches a key in the <code>config_default</code> dictionary, the corresponding configuration settings are
+returned. If there is no match, an empty dictionary is returned.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_config_json"><code class="name flex">
+<span>def <span class="ident">get_config_json</span></span>(<span>self, name: str, config_dict: dict = {}, config_file: str = None) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>get_config_json</code> retrieves a configuration JSON object with prioritizations from
+default values, a dictionary, and a file.</p>
+<p>:param name: The <code>name</code> parameter in the <code>get_config_json</code> function is a string that represents
+the name of the configuration. It is used to identify and retrieve the configuration settings
+for a specific component or module
+:type name: str
+:param config_dict: The <code>config_dict</code> parameter in the <code>get_config_json</code> function is a
+dictionary that allows you to provide additional configuration settings or overrides. When you
+call the <code>get_config_json</code> function, you can pass a dictionary containing key-value pairs where
+the key is the configuration setting you want to override or
+:type config_dict: dict
+:param config_file: The <code>config_file</code> parameter in the <code>get_config_json</code> function is used to
+specify the path to a configuration file that contains additional settings. If provided, the
+function will read the contents of this file and update the configuration dictionary with the
+values found in the file, overriding any existing values with the
+:type config_file: str
+:return: The function <code>get_config_json</code> returns a dictionary containing the configuration
+settings.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_connexion"><code class="name flex">
+<span>def <span class="ident">get_connexion</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It returns the connection object</p>
+<p>:return: The connection object.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_connexion_config"><code class="name flex">
+<span>def <span class="ident">get_connexion_config</span></span>(<span>self) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>get_connexion_config</code> returns a dictionary containing the configuration for a
+connection, including the number of threads and memory limit.
+:return: a dictionary containing the configuration for the Connexion library.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_connexion_db"><code class="name flex">
+<span>def <span class="ident">get_connexion_db</span></span>(<span>self) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It returns the connexion_db attribute of the object
+:return: The connexion_db is being returned.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_connexion_format"><code class="name flex">
+<span>def <span class="ident">get_connexion_format</span></span>(<span>self) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It returns the connexion format of the object.
+:return: The connexion_format is being returned.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_connexion_type"><code class="name flex">
+<span>def <span class="ident">get_connexion_type</span></span>(<span>self) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>If the connexion type is not in the list of allowed connexion types, raise a ValueError</p>
+<p>:return: The connexion type is being returned.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_duckdb_settings"><code class="name flex">
+<span>def <span class="ident">get_duckdb_settings</span></span>(<span>self) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>get_duckdb_settings</code> retrieves DuckDB settings from a configuration file or a
+string.
+:return: The function <code>get_duckdb_settings</code> returns a dictionary object <code>duckdb_settings_dict</code>.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_explode_infos"><code class="name flex">
+<span>def <span class="ident">get_explode_infos</span></span>(<span>self) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>get_explode_infos</code> returns the value of the "explode_infos" parameter, defaulting
+to False if it is not set.
+:return: The method is returning the value of the "explode_infos" parameter, which is a boolean
+value. If the parameter is not present, it will return False.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_explode_infos_fields"><code class="name flex">
+<span>def <span class="ident">get_explode_infos_fields</span></span>(<span>self, explode_infos_fields: str = None, remove_fields_not_in_header: bool = False) ‑> list</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>get_explode_infos_fields</code> function returns a list of exploded information fields based on
+the input parameter <code>explode_infos_fields</code>.</p>
+<p>:param explode_infos_fields: The <code>explode_infos_fields</code> parameter is a string that specifies the
+fields to be exploded. It can be set to "ALL" to explode all fields, or it can be a
+comma-separated list of field names to explode
+:type explode_infos_fields: str
+:param remove_fields_not_in_header: The parameter <code>remove_fields_not_in_header</code> is a boolean
+flag that determines whether to remove fields that are not present in the header. If it is set
+to <code>True</code>, any field that is not in the header will be excluded from the list of exploded
+information fields. If it is set to `, defaults to False
+:type remove_fields_not_in_header: bool (optional)
+:return: The function <code>get_explode_infos_fields</code> returns a list of exploded information fields.
+If the <code>explode_infos_fields</code> parameter is not provided or is set to None, it returns an empty
+list. If the parameter is provided and its value is "ALL", it also returns an empty list.
+Otherwise, it returns a list of exploded information fields after removing any spaces and
+splitting the string by commas.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_explode_infos_prefix"><code class="name flex">
+<span>def <span class="ident">get_explode_infos_prefix</span></span>(<span>self, explode_infos_prefix: str = None) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>get_explode_infos_prefix</code> returns the value of the <code>explode_infos_prefix</code> parameter, or
+the value of <code>self.get_param().get("explode_infos_prefix", None)</code> if <code>explode_infos_prefix</code> is
+not provided.</p>
+<p>:param explode_infos_prefix: The parameter <code>explode_infos_prefix</code> is a string that specifies a
+prefix to be used for exploding or expanding information
+:type explode_infos_prefix: str
+:return: the value of the variable <code>explode_infos_prefix</code>.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_extra_infos"><code class="name flex">
+<span>def <span class="ident">get_extra_infos</span></span>(<span>self, table: str = None) ‑> list</span>
+</code></dt>
+<dd>
+<div class="desc"><blockquote>
+<p>This function returns a list of columns that are in the table but not in the header</p>
+</blockquote>
+<p>The function is called <code>get_extra_infos</code> and it takes two arguments: <code>self</code> and <code>table</code>. The
+<code>self</code> argument is a reference to the object that called the function. The <code>table</code> argument is
+the name of the table that we want to get the extra columns from</p>
+<p>:param table: The table to get the extra columns from. If not specified, it will use the
+variants table
+:param format: The format of the output. If it's "sql", it will return a string of the extra
+columns separated by commas. If it's "list", it will return a list of the extra columns
+:return: A list of columns that are in the table but not in the header</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_extra_infos_sql"><code class="name flex">
+<span>def <span class="ident">get_extra_infos_sql</span></span>(<span>self, table: str = None) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It returns a string of the extra infos, separated by commas, and each extra info is surrounded
+by double quotes</p>
+<p>:param table: The name of the table to get the extra infos from. If None, the default table is
+used
+:type table: str
+:return: A string of the extra infos</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_header"><code class="name flex">
+<span>def <span class="ident">get_header</span></span>(<span>self, type: str = 'vcf')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function returns the header of the VCF file as a list of strings</p>
+<p>:param type: the type of header you want to get, defaults to vcf (optional)
+:return: The header of the vcf file.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_header_columns"><code class="name flex">
+<span>def <span class="ident">get_header_columns</span></span>(<span>self) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function returns the header list of a VCF</p>
+<p>:return: The length of the header list.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_header_columns_as_list"><code class="name flex">
+<span>def <span class="ident">get_header_columns_as_list</span></span>(<span>self) ‑> list</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function returns the header list of a VCF</p>
+<p>:return: The length of the header list.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_header_columns_as_sql"><code class="name flex">
+<span>def <span class="ident">get_header_columns_as_sql</span></span>(<span>self) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function retruns header length (without #CHROM line)</p>
+<p>:return: The length of the header list.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_header_length"><code class="name flex">
+<span>def <span class="ident">get_header_length</span></span>(<span>self, file: str = None) ‑> int</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>get_header_length</code> returns the length of the header list, excluding the #CHROM
+line.</p>
+<p>:param file: The <code>file</code> parameter is an optional argument that specifies the path to a VCF
+header file. If this argument is provided, the function will read the header from the specified
+file and return the length of the header list minus 1 (to exclude the #CHROM line)
+:type file: str
+:return: the length of the header list, excluding the #CHROM line.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_header_sample_list"><code class="name flex">
+<span>def <span class="ident">get_header_sample_list</span></span>(<span>self) ‑> list</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function retruns header length (without #CHROM line)</p>
+<p>:return: The length of the header list.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_indexing"><code class="name flex">
+<span>def <span class="ident">get_indexing</span></span>(<span>self) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It returns the value of the key "indexing" in the dictionary. If the key is not present, it
+returns False.
+:return: The value of the indexing parameter.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_input"><code class="name flex">
+<span>def <span class="ident">get_input</span></span>(<span>self) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It returns the value of the input variable.
+:return: The input is being returned.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_input_compressed"><code class="name flex">
+<span>def <span class="ident">get_input_compressed</span></span>(<span>self, input_file: str = None) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It returns the format of the input variable.
+:return: The format is being returned.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_input_format"><code class="name flex">
+<span>def <span class="ident">get_input_format</span></span>(<span>self, input_file: str = None) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It returns the format of the input variable.
+:return: The format is being returned.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_memory"><code class="name flex">
+<span>def <span class="ident">get_memory</span></span>(<span>self, default: str = None) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function retrieves the memory value from parameters or configuration with a default value
+if not found.</p>
+<p>:param default: The <code>get_memory</code> function takes in a default value as a string parameter. This
+default value is used as a fallback in case the <code>memory</code> parameter is not provided in the
+<code>param</code> dictionary or the <code>config</code> dictionary. If <code>memory</code> is not found in either dictionary,
+the function
+:type default: str
+:return: The <code>get_memory</code> function returns a string value representing the memory parameter. If
+the <code>input_memory</code> is provided in the parameters, it will return that value. Otherwise, it will
+return the default value provided as an argument to the function.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_operations_help"><code class="name flex">
+<span>def <span class="ident">get_operations_help</span></span>(<span>self, operations_config_dict: dict = {}, operations_config_file: str = None) ‑> list</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_output"><code class="name flex">
+<span>def <span class="ident">get_output</span></span>(<span>self) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It returns the output of the neuron.
+:return: The output of the neural network.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_output_format"><code class="name flex">
+<span>def <span class="ident">get_output_format</span></span>(<span>self, output_file: str = None) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It returns the format of the input variable.
+:return: The format is being returned.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_overview"><code class="name flex">
+<span>def <span class="ident">get_overview</span></span>(<span>self) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function prints the input, output, config, and dataframe of the current object</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_param"><code class="name flex">
+<span>def <span class="ident">get_param</span></span>(<span>self) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It returns the param
+:return: The param variable is being returned.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_prefix"><code class="name flex">
+<span>def <span class="ident">get_prefix</span></span>(<span>self) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It returns the prefix of the object.
+:return: The prefix is being returned.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_query_to_df"><code class="name flex">
+<span>def <span class="ident">get_query_to_df</span></span>(<span>self, query: str = '', limit: int = None) ‑> pandas.core.frame.DataFrame</span>
+</code></dt>
+<dd>
+<div class="desc"><blockquote>
+<p>The function <code>get_query_to_df</code> takes a query as a string and returns a pandas dataframe</p>
+</blockquote>
+<p>:param query: str = ""
+:type query: str
+:return: A dataframe</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_stats"><code class="name flex">
+<span>def <span class="ident">get_stats</span></span>(<span>self) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>get_stats</code> function calculates and returns various statistics of the current object,
+including information about the input file, variants, samples, header fields, quality, and
+SNVs/InDels.
+:return: a dictionary containing various statistics of the current object. The dictionary has
+the following structure:</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_table_variants"><code class="name flex">
+<span>def <span class="ident">get_table_variants</span></span>(<span>self, clause: str = 'select') ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function returns the table_variants attribute of the object</p>
+<p>:param clause: the type of clause the table will be used. Either "select" or "from" (optional),
+defaults to select (optional)
+:return: The table_variants attribute of the object.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_threads"><code class="name flex">
+<span>def <span class="ident">get_threads</span></span>(<span>self, default: int = 1) ‑> int</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function returns the number of threads to use for a job, with a default value of 1 if not
+specified.</p>
+<p>:param default: The <code>default</code> parameter in the <code>get_threads</code> method is used to specify the
+default number of threads to use if no specific value is provided. If no value is provided for
+the <code>threads</code> parameter in the configuration or input parameters, the <code>default</code> value will be
+used, defaults to 1
+:type default: int (optional)
+:return: the number of threads to use for the current job.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_tmp_dir"><code class="name flex">
+<span>def <span class="ident">get_tmp_dir</span></span>(<span>self) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It returns the value of the tmp_dir key in the config dictionary, or /tmp if the key doesn't
+exist</p>
+<p>:return: The value of the key "tmp_dir" in the config file.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_variant_id_column"><code class="name flex">
+<span>def <span class="ident">get_variant_id_column</span></span>(<span>self, variant_id_column: str = 'variant_id', force: bool = None) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function returns the variant_id column name</p>
+<p>:param variant_id_column: The name of the column in the dataframe that contains the variant IDs,
+defaults to variant_id
+:type variant_id_column: str (optional)
+:param force: If True, will force the variant_id to be set to the value of variant_id_column. If
+False, will only set the variant_id if it is not already set. If None, will set the variant_id
+if it is not already set, or if it is set
+:type force: bool
+:return: The variant_id column name.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.get_verbose"><code class="name flex">
+<span>def <span class="ident">get_verbose</span></span>(<span>self) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It returns the value of the "verbose" key in the config dictionary, or False if the key doesn't
+exist</p>
+<p>:return: The value of the key "verbose" in the config dictionary.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.init_variables"><code class="name flex">
+<span>def <span class="ident">init_variables</span></span>(<span>self) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function initializes the variables that will be used in the rest of the class</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.insert_file_to_table"><code class="name flex">
+<span>def <span class="ident">insert_file_to_table</span></span>(<span>self, file, columns: str, header_len: int = 0, sep: str = '\t', chunksize: int = 1000000) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function reads a file in chunks, and inserts each chunk into a table</p>
+<p>:param file: the file to be loaded
+:param columns: a string of the column names separated by commas
+:param header_len: the number of lines to skip at the beginning of the file, defaults to 0
+(optional)
+:param sep: the separator used in the file, defaults to
+(optional)
+:param chunksize: The number of rows to read in at a time, defaults to 1000000 (optional)</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.load_data"><code class="name flex">
+<span>def <span class="ident">load_data</span></span>(<span>self, input_file: str = None, drop_variants_table: bool = False, sample_size: int = 20480) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>load_data</code> function reads a VCF file and inserts it into a table, with options to drop the
+table before loading the data and specify a sample size.</p>
+<p>:param input_file: The path to the input file. This is the VCF file that will be loaded into the
+table
+:type input_file: str
+:param drop_variants_table: The <code>drop_variants_table</code> parameter is a boolean flag that
+determines whether the variants table should be dropped before loading the data. If set to
+<code>True</code>, the variants table will be dropped. If set to <code>False</code> (default), the variants table will
+not be dropped, defaults to False
+:type drop_variants_table: bool (optional)
+:param sample_size: The <code>sample_size</code> parameter determines the number of rows to be sampled from
+the input file. If it is set to <code>None</code>, the default value of 20480 will be used, defaults to
+20480
+:type sample_size: int (optional)</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.print_stats"><code class="name flex">
+<span>def <span class="ident">print_stats</span></span>(<span>self, output_file: str = None, json_file: str = None) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>print_stats</code> function generates a markdown file and prints the statistics contained in a
+JSON file in a formatted manner.</p>
+<p>:param output_file: The <code>output_file</code> parameter is a string that specifies the path and filename
+of the output file where the stats will be printed in Markdown format. If no <code>output_file</code> is
+provided, a temporary directory will be created and the stats will be saved in a file named
+"stats.md" within that
+:type output_file: str
+:param json_file: The <code>json_file</code> parameter is a string that represents the path to the JSON
+file where the statistics will be saved. If no value is provided, a temporary directory will be
+created and a default file name "stats.json" will be used
+:type json_file: str
+:return: The function <code>print_stats</code> does not return any value. It has a return type annotation
+of <code>None</code>.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.prioritization"><code class="name flex">
+<span>def <span class="ident">prioritization</span></span>(<span>self) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It takes a VCF file, and adds a bunch of new INFO fields to it, based on the values of other
+INFO fields</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.read_vcf_header"><code class="name flex">
+<span>def <span class="ident">read_vcf_header</span></span>(<span>self, f) ‑> list</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It reads the header of a VCF file and returns a list of the header lines</p>
+<p>:param f: the file object
+:return: The header lines of the VCF file.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.read_vcf_header_file"><code class="name flex">
+<span>def <span class="ident">read_vcf_header_file</span></span>(<span>self, file: str = None) ‑> list</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>read_vcf_header_file</code> reads the header of a VCF file, either from a compressed or
+uncompressed file.</p>
+<p>:param file: The <code>file</code> parameter is a string that represents the path to the VCF header file
+that you want to read. It is an optional parameter, so if you don't provide a value, it will
+default to <code>None</code>
+:type file: str
+:param compressed: The <code>compressed</code> parameter is a boolean flag that indicates whether the VCF
+file is compressed or not. If <code>compressed</code> is set to <code>True</code>, it means that the VCF file is
+compressed using the BGZF compression format. If <code>compressed</code> is set to <code>False</code>, it means that,
+defaults to False
+:type compressed: bool (optional)
+:return: a list.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.run_commands"><code class="name flex">
+<span>def <span class="ident">run_commands</span></span>(<span>self, commands: list = [], threads: int = 1) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It takes a list of commands and runs them in parallel using the number of threads specified</p>
+<p>:param commands: A list of commands to run
+:param threads: The number of threads to use, defaults to 1 (optional)</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.scan_databases"><code class="name flex">
+<span>def <span class="ident">scan_databases</span></span>(<span>self, database_formats: list['parquet'], database_releases: list = ['current']) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>scan_databases</code> scans for available databases based on specified formats and
+releases.</p>
+<p>:param database_formats: The <code>database_formats</code> parameter is a list that specifies the formats
+of the databases to be scanned. In this case, the accepted format is "parquet"
+:type database_formats: list ["parquet"]
+:param database_releases: The <code>database_releases</code> parameter is a list that specifies the
+releases of the databases to be scanned. In the provided function, the default value for
+<code>database_releases</code> is set to <code>["current"]</code>, meaning that by default, the function will scan
+databases that are in the "current"
+:type database_releases: list
+:return: The function <code>scan_databases</code> returns a dictionary containing information about
+databases that match the specified formats and releases.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.set_config"><code class="name flex">
+<span>def <span class="ident">set_config</span></span>(<span>self, config: dict) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function takes in a config object and sets it as the config object for the class</p>
+<p>:param config: The configuration object</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.set_connexion"><code class="name flex">
+<span>def <span class="ident">set_connexion</span></span>(<span>self, conn) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It creates a connection to the database</p>
+<p>:param conn: The connection to the database. If not provided, a new connection to an in-memory
+database is created</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.set_connexion_db"><code class="name flex">
+<span>def <span class="ident">set_connexion_db</span></span>(<span>self) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>set_connexion_db</code> returns the appropriate database connection string based on the
+input format and connection type.
+:return: the value of the variable <code>connexion_db</code>.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.set_header"><code class="name flex">
+<span>def <span class="ident">set_header</span></span>(<span>self) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It reads the header of a VCF file and stores it as a list of strings and as a VCF object</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.set_input"><code class="name flex">
+<span>def <span class="ident">set_input</span></span>(<span>self, input: str = None) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function takes a file name as input, splits the file name into a name and an extension, and
+then sets the input_name, input_extension, and input_format attributes of the class</p>
+<p>:param input: The input file</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.set_output"><code class="name flex">
+<span>def <span class="ident">set_output</span></span>(<span>self, output: str = None) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>If the config file has an output key, set the output to the value of that key. Otherwise, set
+the output to the input</p>
+<p>:param output: The name of the output file</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.set_param"><code class="name flex">
+<span>def <span class="ident">set_param</span></span>(<span>self, param: dict) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function takes in a param object and sets it as the param object for the class</p>
+<p>:param param: The paramters object</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.set_variant_id"><code class="name flex">
+<span>def <span class="ident">set_variant_id</span></span>(<span>self, variant_id_column: str = 'variant_id', force: bool = None) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It adds a column to the variants table called <code>variant_id</code> and populates it with a hash of the
+<code>#CHROM</code>, <code>POS</code>, <code>REF</code>, and <code>ALT</code> columns</p>
+<p>:param variant_id_column: The name of the column to be created in the variants table, defaults
+to variant_id
+:type variant_id_column: str (optional)
+:param force: If True, the variant_id column will be created even if it already exists
+:type force: bool
+:return: The name of the column that contains the variant_id</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.stats_to_file"><code class="name flex">
+<span>def <span class="ident">stats_to_file</span></span>(<span>self, file: str = None) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>stats_to_file</code> takes a file name as input, retrieves statistics, serializes them
+into a JSON object, and writes the JSON object to the specified file.</p>
+<p>:param file: The <code>file</code> parameter is a string that represents the file path where the JSON data
+will be written
+:type file: str
+:return: the name of the file that was written to.</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.update_from_vcf"><code class="name flex">
+<span>def <span class="ident">update_from_vcf</span></span>(<span>self, vcf_file: str) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><blockquote>
+<p>If the database is duckdb, then use the parquet method, otherwise use the sqlite method</p>
+</blockquote>
+<p>:param vcf_file: the path to the VCF file</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.update_from_vcf_duckdb"><code class="name flex">
+<span>def <span class="ident">update_from_vcf_duckdb</span></span>(<span>self, vcf_file: str) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It takes a VCF file and updates the INFO column of the variants table in the database with the
+INFO column of the VCF file</p>
+<p>:param vcf_file: the path to the VCF file</p></div>
+</dd>
+<dt id="howard.objects.variants.Variants.update_from_vcf_sqlite"><code class="name flex">
+<span>def <span class="ident">update_from_vcf_sqlite</span></span>(<span>self, vcf_file: str) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It creates a temporary table in the SQLite database, loads the VCF file into the temporary
+table, then updates the INFO column of the variants table with the INFO column of the temporary
+table</p>
+<p>:param vcf_file: The path to the VCF file you want to update the database with</p></div>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="howard.objects.variants.Variants" href="#howard.objects.variants.Variants">Variants</a></code></h4>
+<ul class="">
+<li><code><a title="howard.objects.variants.Variants.add_column" href="#howard.objects.variants.Variants.add_column">add_column</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.annotation" href="#howard.objects.variants.Variants.annotation">annotation</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.annotation_annovar" href="#howard.objects.variants.Variants.annotation_annovar">annotation_annovar</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.annotation_bcftools" href="#howard.objects.variants.Variants.annotation_bcftools">annotation_bcftools</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.annotation_exomiser" href="#howard.objects.variants.Variants.annotation_exomiser">annotation_exomiser</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.annotation_hgvs" href="#howard.objects.variants.Variants.annotation_hgvs">annotation_hgvs</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.annotation_parquet" href="#howard.objects.variants.Variants.annotation_parquet">annotation_parquet</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.annotation_snpeff" href="#howard.objects.variants.Variants.annotation_snpeff">annotation_snpeff</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.annotation_snpsift" href="#howard.objects.variants.Variants.annotation_snpsift">annotation_snpsift</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.calculation" href="#howard.objects.variants.Variants.calculation">calculation</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.calculation_barcode" href="#howard.objects.variants.Variants.calculation_barcode">calculation_barcode</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.calculation_barcode_family" href="#howard.objects.variants.Variants.calculation_barcode_family">calculation_barcode_family</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.calculation_extract_nomen" href="#howard.objects.variants.Variants.calculation_extract_nomen">calculation_extract_nomen</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.calculation_extract_snpeff_hgvs" href="#howard.objects.variants.Variants.calculation_extract_snpeff_hgvs">calculation_extract_snpeff_hgvs</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.calculation_find_by_pipeline" href="#howard.objects.variants.Variants.calculation_find_by_pipeline">calculation_find_by_pipeline</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.calculation_genotype_concordance" href="#howard.objects.variants.Variants.calculation_genotype_concordance">calculation_genotype_concordance</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.calculation_genotype_stats" href="#howard.objects.variants.Variants.calculation_genotype_stats">calculation_genotype_stats</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.calculation_process_function" href="#howard.objects.variants.Variants.calculation_process_function">calculation_process_function</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.calculation_process_sql" href="#howard.objects.variants.Variants.calculation_process_sql">calculation_process_sql</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.calculation_trio" href="#howard.objects.variants.Variants.calculation_trio">calculation_trio</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.calculation_vaf_normalization" href="#howard.objects.variants.Variants.calculation_vaf_normalization">calculation_vaf_normalization</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.calculation_variant_id" href="#howard.objects.variants.Variants.calculation_variant_id">calculation_variant_id</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.close_connexion" href="#howard.objects.variants.Variants.close_connexion">close_connexion</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.create_indexes" href="#howard.objects.variants.Variants.create_indexes">create_indexes</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.drop_column" href="#howard.objects.variants.Variants.drop_column">drop_column</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.drop_indexes" href="#howard.objects.variants.Variants.drop_indexes">drop_indexes</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.drop_variants_table" href="#howard.objects.variants.Variants.drop_variants_table">drop_variants_table</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.execute_query" href="#howard.objects.variants.Variants.execute_query">execute_query</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.explode_infos" href="#howard.objects.variants.Variants.explode_infos">explode_infos</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.export_header" href="#howard.objects.variants.Variants.export_header">export_header</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.export_output" href="#howard.objects.variants.Variants.export_output">export_output</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.export_variant_vcf" href="#howard.objects.variants.Variants.export_variant_vcf">export_variant_vcf</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_config" href="#howard.objects.variants.Variants.get_config">get_config</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_config_default" href="#howard.objects.variants.Variants.get_config_default">get_config_default</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_config_json" href="#howard.objects.variants.Variants.get_config_json">get_config_json</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_connexion" href="#howard.objects.variants.Variants.get_connexion">get_connexion</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_connexion_config" href="#howard.objects.variants.Variants.get_connexion_config">get_connexion_config</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_connexion_db" href="#howard.objects.variants.Variants.get_connexion_db">get_connexion_db</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_connexion_format" href="#howard.objects.variants.Variants.get_connexion_format">get_connexion_format</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_connexion_type" href="#howard.objects.variants.Variants.get_connexion_type">get_connexion_type</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_duckdb_settings" href="#howard.objects.variants.Variants.get_duckdb_settings">get_duckdb_settings</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_explode_infos" href="#howard.objects.variants.Variants.get_explode_infos">get_explode_infos</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_explode_infos_fields" href="#howard.objects.variants.Variants.get_explode_infos_fields">get_explode_infos_fields</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_explode_infos_prefix" href="#howard.objects.variants.Variants.get_explode_infos_prefix">get_explode_infos_prefix</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_extra_infos" href="#howard.objects.variants.Variants.get_extra_infos">get_extra_infos</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_extra_infos_sql" href="#howard.objects.variants.Variants.get_extra_infos_sql">get_extra_infos_sql</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_header" href="#howard.objects.variants.Variants.get_header">get_header</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_header_columns" href="#howard.objects.variants.Variants.get_header_columns">get_header_columns</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_header_columns_as_list" href="#howard.objects.variants.Variants.get_header_columns_as_list">get_header_columns_as_list</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_header_columns_as_sql" href="#howard.objects.variants.Variants.get_header_columns_as_sql">get_header_columns_as_sql</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_header_length" href="#howard.objects.variants.Variants.get_header_length">get_header_length</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_header_sample_list" href="#howard.objects.variants.Variants.get_header_sample_list">get_header_sample_list</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_indexing" href="#howard.objects.variants.Variants.get_indexing">get_indexing</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_input" href="#howard.objects.variants.Variants.get_input">get_input</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_input_compressed" href="#howard.objects.variants.Variants.get_input_compressed">get_input_compressed</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_input_format" href="#howard.objects.variants.Variants.get_input_format">get_input_format</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_memory" href="#howard.objects.variants.Variants.get_memory">get_memory</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_operations_help" href="#howard.objects.variants.Variants.get_operations_help">get_operations_help</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_output" href="#howard.objects.variants.Variants.get_output">get_output</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_output_format" href="#howard.objects.variants.Variants.get_output_format">get_output_format</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_overview" href="#howard.objects.variants.Variants.get_overview">get_overview</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_param" href="#howard.objects.variants.Variants.get_param">get_param</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_prefix" href="#howard.objects.variants.Variants.get_prefix">get_prefix</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_query_to_df" href="#howard.objects.variants.Variants.get_query_to_df">get_query_to_df</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_stats" href="#howard.objects.variants.Variants.get_stats">get_stats</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_table_variants" href="#howard.objects.variants.Variants.get_table_variants">get_table_variants</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_threads" href="#howard.objects.variants.Variants.get_threads">get_threads</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_tmp_dir" href="#howard.objects.variants.Variants.get_tmp_dir">get_tmp_dir</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_variant_id_column" href="#howard.objects.variants.Variants.get_variant_id_column">get_variant_id_column</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.get_verbose" href="#howard.objects.variants.Variants.get_verbose">get_verbose</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.init_variables" href="#howard.objects.variants.Variants.init_variables">init_variables</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.insert_file_to_table" href="#howard.objects.variants.Variants.insert_file_to_table">insert_file_to_table</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.load_data" href="#howard.objects.variants.Variants.load_data">load_data</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.print_stats" href="#howard.objects.variants.Variants.print_stats">print_stats</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.prioritization" href="#howard.objects.variants.Variants.prioritization">prioritization</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.read_vcf_header" href="#howard.objects.variants.Variants.read_vcf_header">read_vcf_header</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.read_vcf_header_file" href="#howard.objects.variants.Variants.read_vcf_header_file">read_vcf_header_file</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.run_commands" href="#howard.objects.variants.Variants.run_commands">run_commands</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.scan_databases" href="#howard.objects.variants.Variants.scan_databases">scan_databases</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.set_config" href="#howard.objects.variants.Variants.set_config">set_config</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.set_connexion" href="#howard.objects.variants.Variants.set_connexion">set_connexion</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.set_connexion_db" href="#howard.objects.variants.Variants.set_connexion_db">set_connexion_db</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.set_header" href="#howard.objects.variants.Variants.set_header">set_header</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.set_input" href="#howard.objects.variants.Variants.set_input">set_input</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.set_output" href="#howard.objects.variants.Variants.set_output">set_output</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.set_param" href="#howard.objects.variants.Variants.set_param">set_param</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.set_variant_id" href="#howard.objects.variants.Variants.set_variant_id">set_variant_id</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.stats_to_file" href="#howard.objects.variants.Variants.stats_to_file">stats_to_file</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.update_from_vcf" href="#howard.objects.variants.Variants.update_from_vcf">update_from_vcf</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.update_from_vcf_duckdb" href="#howard.objects.variants.Variants.update_from_vcf_duckdb">update_from_vcf_duckdb</a></code></li>
+<li><code><a title="howard.objects.variants.Variants.update_from_vcf_sqlite" href="#howard.objects.variants.Variants.update_from_vcf_sqlite">update_from_vcf_sqlite</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>

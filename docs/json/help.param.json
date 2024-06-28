@@ -221,9 +221,7 @@
       "      }",
       "   }",
       "   \"snpeff\": {",
-      "      \"options\": {",
-      "         \" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr \"}",
-      "      }",
+      "      \"options\": \" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr \"",
       "   }",
       "   \"exomiser\": {",
       "      \"release\": \"2109\",",
@@ -427,9 +425,7 @@
       "__examples_code": [
         "# Annotation with snpEff databases, with options for HGVS annotation and additional tags.",
         "\"snpeff\": {",
-        "   \"options\": {",
-        "      \" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr \"",
-        "   }",
+        "   \"options\": \" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr \"",
         "}"
       ],
       "options": {

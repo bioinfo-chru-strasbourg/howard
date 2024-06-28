@@ -779,8 +779,8 @@ arguments = {
         "metavar": "genome",
         "help": """Genome file in fasta format (e.g. 'hg19.fa', 'hg38.fa').\n""",
         "required": False,
-        "default": "~/howard/databases/genomes/current/hg19/hg19.fa",
-        "type": PathType(exists=True, type="file"),
+        "default": f"{DEFAULT_GENOME_FOLDER}/{DEFAULT_ASSEMBLY}/{DEFAULT_ASSEMBLY}.fa",
+        "type": PathType(exists=None, type="file"),
         "gooey": {"widget": "FileChooser", "options": {"wildcard": "All files (*)|*"}},
     },
     # HGVS
@@ -1520,7 +1520,7 @@ arguments = {
         f"""(e.g. '{DEFAULT_GENOME_FOLDER}'""",
         "required": False,
         "default": DEFAULT_GENOME_FOLDER,
-        "type": PathType(exists=True, type="dir"),
+        "type": PathType(exists=None, type="dir"),
         "gooey": {
             "widget": "DirChooser",
             "options": {

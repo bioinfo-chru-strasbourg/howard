@@ -433,7 +433,9 @@ code {
 <p>HOWARD can be installed using <a href="#python">Python</a>, and a <a href="#docker">Docker</a> installation provides a CLI (Command Line Interface) with all external tools and useful databases. <a href="#databases">Databases</a> can be automatically downloaded, or home-made generated (created or downloaded).</p>
 <h2 id="python">Python</h2>
 <p>Install HOWARD using Python Pip tool, and run HOWARD for help options:</p>
-<pre class="hljs"><code><div>python -m pip install -e .
+<pre class="hljs"><code><div>conda create --name=howard python=3.10
+conda activate howard
+python -m pip install -e .
 howard --help
 </div></code></pre>
 <pre class="hljs"><code><div>usage: howard [-h] {query,stats,convert,annotation,calculation,prioritization,process,hgvs,databases,from_annovar,gui,help} ...
@@ -799,6 +801,7 @@ howard query \
 <p><a href="docs/help.param.md">HOWARD Parameters JSON</a> describes parameters JSON file structure and options.</p>
 <p><a href="docs/help.param.databases.md">HOWARD Parameters Databases JSON</a> describes configuration JSON file for databases download and convert.</p>
 <p><a href="plugins/README.md">HOWARD Plugins</a> describes how to create HOWARD plugins.</p>
+<p><a href="docs/pdoc/index.html">HOWARD Package</a> describes HOWARD Package, Classes and Functions.</p>
 <h1 id="contact">Contact</h1>
 <p><a href="https://www.chru-strasbourg.fr/service/bioinformatique-medicale-appliquee-au-diagnostic-unite-de/">Medical Bioinformatics applied to Diagnosis Lab</a> @ Strasbourg Univerty Hospital</p>
 <p><a href="bioinfo@chru-strasbourg.fr">bioinfo@chru-strasbourg.fr</a></p>

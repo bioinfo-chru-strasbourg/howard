@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>howard.functions.from_annovar API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>howard.functions.from_annovar</code></h1>
+</header>
+<section id="section-intro">
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="howard.functions.from_annovar.annovar_to_vcf"><code class="name flex">
+<span>def <span class="ident">annovar_to_vcf</span></span>(<span>input_file: str, output_file: str, output_file_parquet: str = None, annotations: str = None, header_file: str = None, database_name: str = None, bcftools: str = 'bcftools', genome: str = 'hg19.fa', threads: int = None, maxmem: str = None, remove_annotations: list = [], reduce_memory: bool = None, multi_variant: bool = None) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function converts an ANNOVAR file to a VCF file and optionally to a Parquet file, with various
+options for annotations, headers, databases, and memory usage.</p>
+<p>:param input_file: The path to the input file in ANNOVAR format that needs to be converted to VCF
+format
+:type input_file: str
+:param output_file: The name of the output VCF file that will be generated by the function
+:type output_file: str
+:param output_file_parquet: output_file_parquet is an optional parameter that specifies the name of
+the output file in Parquet format. If this parameter is not provided, the output will not be saved
+in Parquet format
+:type output_file_parquet: str
+:param annotations: This parameter is used to specify the location of the ANNOVAR annotation
+database files. If not provided, ANNOVAR will use the default location
+:type annotations: str
+:param header_file: The path to a file containing the header information for the VCF output. This
+can be used to customize the output format of the VCF file. If not provided, a default header will
+be used
+:type header_file: str
+:param database_name: The name of the ANNOVAR database used for annotation
+:type database_name: str
+:param bcftools: The path to the bcftools executable, defaults to bcftools
+:type bcftools: str (optional)
+:param genome: The genome parameter specifies the reference genome file to be used for the
+conversion from annovar format to VCF format, defaults to hg19.fa
+:type genome: str (optional)
+:param threads: The number of threads to use for processing. This can speed up the process if your
+computer has multiple cores
+:type threads: int
+:param maxmem: The maximum amount of memory that can be used by the program. It is usually specified
+in units of bytes, kilobytes, megabytes, or gigabytes. For example, "2G" means 2 gigabytes of memory
+:type maxmem: str
+:param remove_annotations: <code>remove_annotations</code> is a list of annotations to be removed from the
+output VCF file. These annotations will not be included in the final VCF file
+:type remove_annotations: list
+:param reduce_memory: A boolean parameter that determines whether to reduce memory usage during the
+conversion process. If set to True, the function will attempt to reduce memory usage by using a more
+memory-efficient algorithm, but this may result in slower performance. If set to False, the function
+will use a faster algorithm that may consume more, defaults to False
+:type reduce_memory: bool (optional)
+:param multivariant: A boolean parameter that determines if input file contains multiple annotations
+for each variant (position ref alt). If set to False, the function will attempt to reduce memory usage
+a specific query without 'group by', for a more memory-efficient algorithm. If set to True, the function
+will use a query using 'group by', which may consume more memory. I set to None, the function will
+auto-detemine the parameter value with a sample of variants. Defaults to None (auto)
+:type multivariant: bool (optional)</p></div>
+</dd>
+<dt id="howard.functions.from_annovar.from_annovar"><code class="name flex">
+<span>def <span class="ident">from_annovar</span></span>(<span>args: <module 'argparse' from '/usr/local/Caskroom/miniconda/base/envs/howard_devel/lib/python3.10/argparse.py'>) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function converts an Annovar database to a VCF and Parquet format.</p>
+<p>:param args: <code>args</code> is an object with several attributes representing the input parameters for the
+function. These attributes include:
+:type args: argparse</p></div>
+</dd>
+<dt id="howard.functions.from_annovar.parquet_info_explode"><code class="name flex">
+<span>def <span class="ident">parquet_info_explode</span></span>(<span>input_file: str, output_file: str, threads: int = None, memory: str = None, reduce_memory: bool = False) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function takes a parquet file, splits it by chromosome, explodes the INFO column, and then
+merges the exploded files back together.</p>
+<p>:param input_file: The path to the input file, which can be either a TSV or VCF file
+:type input_file: str
+:param output_file: The name of the output file in Parquet format after exploding the input file
+:type output_file: str
+:param threads: The number of threads to use for processing the parquet file, defaults to None (all)
+:type threads: int (optional)
+:param memory: The among of memory to use for processing the parquet file, defaults to None (all)
+:type memory: str (optional)
+:param reduce_memory: The <code>reduce_memory</code> parameter is a boolean flag that determines whether or not
+to use memory reduction techniques during the execution of the function. If set to <code>True</code>, the
+function will attempt to reduce memory usage during the execution, which may result in slower
+performance but lower memory usage. If set to `, defaults to False
+:type reduce_memory: bool (optional)</p></div>
+</dd>
+<dt id="howard.functions.from_annovar.tsv_to_parquet"><code class="name flex">
+<span>def <span class="ident">tsv_to_parquet</span></span>(<span>tsv: str, parquet: str, delim: str = None, columns: dict = None, quote: str = None, nullstr: str = None, skip: int = None) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function converts a TSV file to a Parquet file with customizable options.</p>
+<p>:param tsv: The path to the TSV file that needs to be converted to Parquet format
+:type tsv: str
+:param parquet: <code>parquet</code> is the file path and name of the output Parquet file that will be created
+by the function
+:type parquet: str
+:param delim: The delimiter used in the TSV file to separate columns. If not specified, the default
+delimiter (tab) will be used
+:type delim: str
+:param columns: The <code>columns</code> parameter is a dictionary that maps column names to their data types.
+It is used to specify the schema of the resulting Parquet file. For example, if the input TSV file
+has columns "name", "age", and "salary", and we want "name" to be
+:type columns: dict
+:param quote: The <code>quote</code> parameter is an optional parameter that specifies the character used to
+quote fields in the TSV file. If not specified, the default quote character is double quotes (")
+:type quote: str
+:param nullstr: The <code>nullstr</code> parameter is used to specify the string that represents null values in
+the input TSV file. This parameter is used to correctly interpret and convert null values in the TSV
+file to null values in the resulting Parquet file. For example, if the null value in the TSV
+:type nullstr: str
+:param skip: The <code>skip</code> parameter is an optional integer parameter that specifies the number of rows
+to skip at the beginning of the TSV file. This is useful if the TSV file has a header row that
+should not be included in the resulting Parquet file. If <code>skip</code> is not specified, no
+:type skip: int</p></div>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="howard.functions.from_annovar.annovar_to_vcf" href="#howard.functions.from_annovar.annovar_to_vcf">annovar_to_vcf</a></code></li>
+<li><code><a title="howard.functions.from_annovar.from_annovar" href="#howard.functions.from_annovar.from_annovar">from_annovar</a></code></li>
+<li><code><a title="howard.functions.from_annovar.parquet_info_explode" href="#howard.functions.from_annovar.parquet_info_explode">parquet_info_explode</a></code></li>
+<li><code><a title="howard.functions.from_annovar.tsv_to_parquet" href="#howard.functions.from_annovar.tsv_to_parquet">tsv_to_parquet</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>
