@@ -1,6 +1,6 @@
 import logging as log
 from tempfile import TemporaryDirectory
-from howard.functions.commons import remove_if_exists
+from howard.functions.commons import remove_if_exists, identical
 from howard.objects.variants import Variants
 from test_needed import (
     tests_folder,
@@ -19,6 +19,7 @@ def test_annotation_splice():
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
         input_vcf = tests_data_folder + "/example.vcf"
         output_vcf = f"{tmp_dir}/output.splice.vcf"
+        expected_vcf = tests_data_folder + "/example.splice.vcf"
 
         # Construct param dict
         param = {
@@ -42,7 +43,7 @@ def test_annotation_splice():
                     "entrypoint": "/bin/bash",
                 },
                 "mount": {
-                    f"{tests_databases_folder}/genomes/{tests_databases_release}": "ro"
+                    tests_data_folder: "ro",
                 },
                 "tmp": "/tmp",
             },
@@ -67,3 +68,6 @@ def test_annotation_splice():
 
         # Export output
         variants.export_output()
+
+        # Ensure results
+        identical([output_vcf, expected_vcf])
