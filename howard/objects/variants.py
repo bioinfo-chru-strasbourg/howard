@@ -5462,12 +5462,13 @@ class Variants:
         # Pull splice image if it's not already there
         if not check_docker_image_exists(splice_docker_image):
             log.warning(
-                f"Annotation: splice docker image {splice_docker_image} not found   locally, trying to pull from dockerhub"
+                f"Annotation: splice docker image {splice_docker_image} not found locally, trying to pull from dockerhub"
             )
             try:
                 command(f"docker pull {splice_config.get('docker').get('image')}")
             except subprocess.CalledProcessError:
-                return
+                log.error(f"Unable to find docker {splice_docker_image} on dockerhub")
+                return None
 
         # Config - splice databases
         splice_databases = (
@@ -5493,10 +5494,9 @@ class Variants:
         sql_query_chromosomes = (
             f"""SELECT count(*) as count FROM {table_variants} as table_variants"""
         )
-        # if not self.conn.execute(f"{sql_query_chromosomes}").df()["count"][0]:
         if not self.get_query_to_df(f"{sql_query_chromosomes}")["count"][0]:
             log.info("VCF empty")
-            return
+            return None
 
         # Export in VCF
         log.debug("Create initial file to annotate")
@@ -5510,7 +5510,7 @@ class Variants:
         log.debug(f"Tmp vcf: {tmp_vcf_name}")
         # VCF header
         header = self.get_header()
-        log.debug("Initial header: " + str(header.infos))
+        # log.debug("Initial header: " + str(header.infos))
 
         # Existing annotations
         for vcf_annotation in self.get_header().infos:
@@ -5539,7 +5539,6 @@ class Variants:
         )
 
         # Create docker container and launch splice analysis
-        # splice_config = config.get("tools").get("splice")
         if splice_config:
             mount = [
                 f"-v {path}:{path}:{mode}"
@@ -5587,7 +5586,6 @@ class Variants:
                 else:
                     log.debug(f"Genome: {genome_path}")
                     nf_params.append(f"--genome_path {genome_path}")
-                # nf_params.extend(handle_ressources(threads, memory_limit))
 
                 log.debug(f"Splice NF params: {' '.join(nf_params)}")
             else:
@@ -5664,7 +5662,6 @@ class Variants:
                 nf_params.extend(splice_reference)
             nf_params.append(f"--output_folder {output_folder}")
 
-            # /app/SpliceToolBox/src/splicetoolbox/nextflow/nextflow.docker.config
             random_uuid = f"HOWARD-SPLICE-{get_random()}"
             cmd = f"nextflow -log {os.path.join(output_folder, f'{random_uuid}.log')} -c /app/SpliceToolBox/src/splicetoolbox/nextflow/nextflow.docker.config run /app/SpliceToolBox/src/splicetoolbox/nextflow/main.nf -entry SPLICE --vcf {tmp_vcf_name} {' '.join(nf_params)} -profile standard,conda,singularity,report,timeline"
             log.debug(cmd)
