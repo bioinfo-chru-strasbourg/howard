@@ -22,7 +22,7 @@
       "            },",
       "            \"/path/to/database5.bed.gz\": {",
       "               \"INFO\": null",
-      "            }",    
+      "            }",
       "         }",
       "      },",
       "      \"bcftools\": {",
@@ -93,27 +93,21 @@
       "  \"use_exon\": true",
       "}"
     ],
-    "use_gene" : {
+    "use_gene": {
       "__help": [
         "Add Gene information to generate HGVS annotation (e.g. 'NM_152232**(TAS1R2)**:c.231T>C')."
       ],
       "__code_type": "json",
-      "__examples_code": [
-        "# Use Gene in HGVS annotation",
-        "\"use_gene\": true"
-      ]
+      "__examples_code": ["# Use Gene in HGVS annotation", "\"use_gene\": true"]
     },
-    "use_exon" : {
+    "use_exon": {
       "__help": [
         "Add Exon information to generate HGVS annotation (e.g. 'NM_152232(exon2):c.231T>C'). Only if 'use_gene' is not enabled."
       ],
       "__code_type": "json",
-      "__examples_code": [
-        "# Use Exon in HGVS annotation",
-        "\"use_exon\": true"
-      ]
+      "__examples_code": ["# Use Exon in HGVS annotation", "\"use_exon\": true"]
     },
-    "use_protein" : {
+    "use_protein": {
       "__help": [
         "Use Protein level to generate HGVS annotation (e.g. 'NP_689418:p.Cys77Arg'). Can be used with 'use_exon' or 'use_gene'."
       ],
@@ -123,7 +117,7 @@
         "\"use_protein\": true"
       ]
     },
-    "add_protein" : {
+    "add_protein": {
       "__help": [
         "Add Protein level to DNA HGVS annotation (e.g. 'NM_152232:c.231T>C,NP_689418:p.Cys77Arg')."
       ],
@@ -133,7 +127,7 @@
         "\"add_protein\": true"
       ]
     },
-    "full_format" : {
+    "full_format": {
       "__help": [
         "Generates HGVS annotation in a full format (non-standard, e.g. 'TAS1R2:NM_152232:NP_689418:c.231T>C:p.Cys77Arg', 'TAS1R2:NM_152232:NP_689418:exon2:c.231T>C:p.Cys77Arg'). Full format use all information to generates an exhaustive annotation. Use specifically 'use_exon' to add exon information."
       ],
@@ -143,7 +137,7 @@
         "\"full_format\": true"
       ]
     },
-    "codon_type" : {
+    "codon_type": {
       "__help": [
         "Amino Acide Codon format type to use to generate HGVS annotation (default '3'):",
         "- '1': codon in 1 character (e.g. 'C', 'R')",
@@ -160,7 +154,7 @@
         "\"codon_type\": \"FULL\""
       ]
     },
-    "refgene" : {
+    "refgene": {
       "__help": [
         "Path to refGene annotation file (see [HOWARD User Guide](user_guide.md#databases-tool))."
       ],
@@ -170,7 +164,7 @@
         "\"refgene\": \"~/howard/databases/refseq/current/hg19/ncbiRefSeq.txt\""
       ]
     },
-    "refseqlink" : {
+    "refseqlink": {
       "__help": [
         "Path to refGeneLink annotation file (see [HOWARD User Guide](user_guide.md#databases-tool))."
       ],
@@ -201,7 +195,7 @@
       "         }",
       "         \"/path/to/database5.bed.gz\": {",
       "            \"INFO\": null",
-      "         }",    
+      "         }",
       "      }",
       "   }",
       "   \"bcftools\": {",
@@ -227,9 +221,7 @@
       "      }",
       "   }",
       "   \"snpeff\": {",
-      "      \"options\": {",
-      "         \" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr \"}",
-      "      }",
+      "      \"options\": \" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr \"",
       "   }",
       "   \"exomiser\": {",
       "      \"release\": \"2109\",",
@@ -258,7 +250,7 @@
           "      }",
           "      \"/path/to/database5.bed.gz\": {",
           "         \"INFO\": null",
-          "      }",    
+          "      }",
           "   }",
           "}"
         ]
@@ -329,8 +321,8 @@
         "\"parquet\": {",
         "   \"bcftools\": {",
         "      \"/path/to/database1.vcf.gz\": {",
-        "         \"field1\": null",
-        "         \"field2\": \"field2_renamed\",",
+        "         \"field1\": null,",
+        "         \"field2\": \"field2_renamed\"",
         "      },",
         "      \"database2.bed.gz\": {",
         "         \"INFO\": null",
@@ -433,9 +425,7 @@
       "__examples_code": [
         "# Annotation with snpEff databases, with options for HGVS annotation and additional tags.",
         "\"snpeff\": {",
-        "   \"options\": {",
-        "      \" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr \"",
-        "   }",
+        "   \"options\": \" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr \"",
         "}"
       ],
       "options": {
@@ -470,6 +460,57 @@
           "\"csvStats\": \"/path/to/stats.csv\"",
           "# Annotation with snpEff databases, and generate stats in CSV format associated with output file.",
           "\"csvStats\": \"OUTPUT.csv\""
+        ]
+      }
+    },
+    "snpsift": {
+      "__help": [
+        "Annotation process using snpSift. Provide a list of database files and annotation fields."
+      ],
+      "__examples_code": [
+        "# Annotation with multiple databases in multiple formats",
+        "\"parquet\": {",
+        "   \"snpsift\": {",
+        "      \"/path/to/database1.vcf.gz\": {",
+        "         \"field1\": null,",
+        "         \"field2\": null",
+        "      },",
+        "      \"/path/to/database2.vcf.gz\": {",
+        "         \"field1\": null,",
+        "         \"field2\": null",
+        "      }",
+        "   }",
+        "}"
+      ],
+      "annotations": {
+        "__auto": false,
+        "__help": [
+          "Specify the list of database files in formats VCF. Files need to be compressed and indexed.",
+          "This parameter enables users to select specific database fields and optionally rename them (e.g. '\"field\": null' to keep field name, '\"field\": \"new_name\"' to rename field). Use 'INFO' or 'ALL' keyword to select all fields within the database INFO/Tags header (e.g. '\"INFO\": null', '\"ALL\": null').\n",
+          "If a full path is not provided, the system will automatically detect files within database folders (see Configuration doc) and assembly (see Parameter option)."
+        ],
+        "__examples_code": [
+          "# Annotation with dbSNP database  with all fields",
+          "\"annotations\": {",
+          "   \"tests/databases/annotations/current/hg19/avsnp150.vcf.gz\": {",
+          "      \"INFO\": null",
+          "   }",
+          "}",
+          "# Annotation with dbNSFP (only PolyPhen, ClinVar and REVEL score)",
+          "\"annotations\": {",
+          "   \"tests/databases/annotations/current/hg19/dbnsfp42a.vcf.gz\": {",
+          "      \"Polyphen2_HDIV_pred\": \"PolyPhen\",",
+          "      \"ClinPred_pred\": \"ClinVar\",",
+          "      \"REVEL_score\": null",
+          "   }",
+          "}",
+          "# Annotation with dbNSFP REVEL annotation (as a VCF file) within configured annotation databases folders (default: '~/howard/databases/annotations/current') and assembly (default: 'hg19')",
+          "\"annotations\": {",
+          "   \"dbnsfp42a.REVEL.vcf.gz\": {",
+          "      \"REVEL_score\": null,",
+          "      \"REVEL_rankscore\": null",
+          "   }",
+          "}"
         ]
       }
     },
@@ -674,9 +715,7 @@
     "parquet_partitions": {}
   },
   "explode": {
-    "__help": [
-      "Explode options for INFO/tags annotations within VCF files."
-    ],
+    "__help": ["Explode options for INFO/tags annotations within VCF files."],
     "explode_infos": {},
     "explode_infos_prefix": {},
     "explode_infos_fields": {}

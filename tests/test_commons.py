@@ -28,6 +28,50 @@ from howard.functions.commons import *
 from test_needed import *
 
 
+def test_help():
+
+    # Init
+    help_json_file = os.path.join(folder_main, "docs", "json", "help.param.json")
+
+    # Help JSON to MD
+    help_content_md = help_generation_from_json(
+        help_json_file=help_json_file,
+        output_type="markdown",
+        title="test",
+        code_type="json",
+    )
+    assert help_content_md != ""
+
+    # Help JSON to HTML
+    help_content_html = help_generation_from_json(
+        help_json_file=help_json_file,
+        output_type="html",
+        title="test",
+        code_type="json",
+    )
+    assert help_content_html != ""
+
+    # Help
+    from howard.tools.tools import arguments, commands_arguments, shared_arguments
+
+    setup_cfg = f"{main_folder}/../../setup.cfg"
+    arguments_dict = {
+        "arguments": arguments,
+        "commands_arguments": commands_arguments,
+        "shared_arguments": shared_arguments,
+    }
+    help_content = help_generation(
+        arguments_dict=arguments_dict, setup=setup_cfg, output_type="markdown"
+    )
+    assert help_content != ""
+
+    # Gooey argument
+    argument_gooey = get_argument_gooey(
+        arguments=arguments, arg=list(arguments.keys())[0]
+    )
+    assert argument_gooey != ""
+
+
 def test_identical_with_identical_files():
     with tempfile.NamedTemporaryFile(
         mode="w", delete=False
@@ -196,7 +240,7 @@ def test_get_bin_command():
             "bcftools": {
                 "bin": "bcftools",
                 "docker": {
-                    "image": "howard:1.0.0",
+                    "image": "howard:0.10.0",
                     "entrypoint": "bcftools",
                     "options": None,
                     "command": None,
@@ -222,7 +266,7 @@ def test_get_bin_command():
         tool="bcftools", bin_type="docker", config=config, param=param
     )
     assert (
-        "run  --rm  -v /tmp/howard:/tmp/howard  --cpus=2  --memory=16g  --entrypoint='bcftools'  howard:1.0.0 "
+        "run  --rm  -v /tmp/howard:/tmp/howard  --cpus=2  --memory=16g  --entrypoint='bcftools'  howard:0.10.0 "
         in tool_command
     )
 
@@ -235,7 +279,7 @@ def test_get_bin_command():
         add_options="-v /host/path/to/mount:/inner/path_to/mount",
     )
     assert (
-        "run  --rm  -v /tmp/howard:/tmp/howard  --cpus=2  --memory=16g  --entrypoint='bcftools'  -v /host/path/to/mount:/inner/path_to/mount  howard:1.0.0 "
+        "run  --rm  -v /tmp/howard:/tmp/howard  --cpus=2  --memory=16g  --entrypoint='bcftools'  -v /host/path/to/mount:/inner/path_to/mount  howard:0.10.0 "
         in tool_command
     )
 

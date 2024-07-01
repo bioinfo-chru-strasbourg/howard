@@ -2,7 +2,7 @@
 
 ![HOWARD Graphical User Interface](images/icon.png "HOWARD Graphical User Interface")
 
-Highly Open and Valuable tool for Variant Annotation & Ranking toward genetic Discovery
+Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery
 
 HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations, translates files in multiple formats (e.g. vcf, tsv, parquet) and generates variants statistics.
 
@@ -48,14 +48,16 @@ HOWARD can be installed using [Python](#python), and a [Docker](#docker) install
 
 Install HOWARD using Python Pip tool, and run HOWARD for help options:
 ```
+conda create --name=howard python=3.10
+conda activate howard
 python -m pip install -e .
 howard --help
 ```
 ```
 usage: howard [-h] {query,stats,convert,annotation,calculation,prioritization,process,hgvs,databases,from_annovar,gui,help} ...
 
-HOWARD:1.0.0
-Highly Open and Valuable tool for Variant Annotation & Ranking toward genetic Discovery
+HOWARD:0.10.0
+Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery
 HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations, convert on multiple formats, query variations and generates statistics
 
 Shared arguments:
@@ -483,6 +485,7 @@ See [HOWARD Help Process tool](docs/help.md#process-tool) tool for more informat
 
 [HOWARD Plugins](plugins/README.md) describes how to create HOWARD plugins.
 
+[HOWARD Package](docs/pdoc/index.html) describes HOWARD Package, Classes and Functions.
 
 # Contact
 

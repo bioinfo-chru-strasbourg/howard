@@ -1,0 +1,1230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>howard.functions.commons API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>howard.functions.commons</code></h1>
+</header>
+<section id="section-intro">
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="howard.functions.commons.add_value_into_dict"><code class="name flex">
+<span>def <span class="ident">add_value_into_dict</span></span>(<span>dict_tree: dict, sections: list = [], value=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code><a title="howard.functions.commons.add_value_into_dict" href="#howard.functions.commons.add_value_into_dict">add_value_into_dict()</a></code> adds a value into a dictionary tree based on the provided
+sections.</p>
+<p>:param dict_tree: The <code>dict_tree</code> parameter is a dictionary representing a tree structure. It serves
+as the starting point for adding a value based on the provided sections
+:type dict_tree: dict
+:param sections: The <code>sections</code> parameter in the <code><a title="howard.functions.commons.add_value_into_dict" href="#howard.functions.commons.add_value_into_dict">add_value_into_dict()</a></code> function represents a list of
+sections corresponding to successive keys in the dictionary. These sections are used to traverse the
+dictionary tree and determine the location where the value should be added. Each element in the
+<code>sections</code> list corresponds to a key in
+:type sections: list
+:param value: The <code>value</code> parameter in the <code><a title="howard.functions.commons.add_value_into_dict" href="#howard.functions.commons.add_value_into_dict">add_value_into_dict()</a></code> function represents the value that
+you want to add into the dictionary tree at the specified location determined by the <code>sections</code>
+list. This value can be of any data type (e.g., int, str, list, dict, etc.)
+:return: The function <code><a title="howard.functions.commons.add_value_into_dict" href="#howard.functions.commons.add_value_into_dict">add_value_into_dict()</a></code> returns the updated dictionary tree after adding the
+value based on the given sections.</p></div>
+</dd>
+<dt id="howard.functions.commons.barcode"><code class="name flex">
+<span>def <span class="ident">barcode</span></span>(<span>df, samples: list = [])</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Generates a barcode based on the genotype of the specified samples.</p>
+<p>:param df: A pandas DataFrame containing the genetic data.
+:type df: pandas.DataFrame</p>
+<p>:param samples: A list of sample names to use for generating the barcode.
+:type samples: list(str)</p>
+<p>:return: A barcode string based on the genotype of the specified samples.
+:rtype: str</p></div>
+</dd>
+<dt id="howard.functions.commons.bed_sort"><code class="name flex">
+<span>def <span class="ident">bed_sort</span></span>(<span>input: str, output: str) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code><a title="howard.functions.commons.bed_sort" href="#howard.functions.commons.bed_sort">bed_sort()</a></code> function reads a tab-separated input file, sorts the data based on columns 0, 1, and
+2 in ascending order, and writes the sorted data to a tab-separated output file.</p>
+<p>:param input: The <code>input</code> parameter is the path to the input file that contains the data to be
+sorted. This file should be in a tab-separated format
+:type input: str
+:param output: The <code>output</code> parameter is a string that specifies the path and filename of the output
+file where the sorted data will be saved
+:type output: str</p></div>
+</dd>
+<dt id="howard.functions.commons.command"><code class="name flex">
+<span>def <span class="ident">command</span></span>(<span>command: str) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It runs a command in the shell and waits for it to finish</p>
+<p>:param command: The command to run
+:return: The return value is the exit status of the process.</p></div>
+</dd>
+<dt id="howard.functions.commons.compress_file"><code class="name flex">
+<span>def <span class="ident">compress_file</span></span>(<span>input_file: str, output_file: str) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function compresses a file using the BGZF compression algorithm.</p>
+<p>:param input_file: The path and name of the input file that needs to be compressed
+:type input_file: str
+:param output_file: The output_file parameter is a string that represents the name and path of
+the file where the compressed data will be written
+:type output_file: str</p></div>
+</dd>
+<dt id="howard.functions.commons.concat_and_compress_files"><code class="name flex">
+<span>def <span class="ident">concat_and_compress_files</span></span>(<span>input_files: list, output_file: str, compression_type: str = 'bgzip', threads: int = 1, memory: int = 1, block: int = 1000000, compression_level: int = 6, sort: bool = False, index: bool = False) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code><a title="howard.functions.commons.concat_and_compress_files" href="#howard.functions.commons.concat_and_compress_files">concat_and_compress_files()</a></code> takes a list of input files, an output file name, and
+optional parameters for compression type, number of threads, block size, compression level, sorting,
+and indexing, and concatenates and compresses the input files into the output file.</p>
+<p>:param input_files: A list of input file paths that need to be concatenated and compressed
+:type input_files: list
+:param output_file: The <code>output_file</code> parameter is a string that specifies the path and name of the
+output file that will be created after concatenating and compressing the input files
+:type output_file: str
+:param compression_type: The <code>compression_type</code> parameter specifies the type of compression to be
+applied to the output file. It can take one of three values: "bgzip", "gzip", or "none", defaults to
+bgzip
+:type compression_type: str (optional)
+:param threads: The <code>threads</code> parameter specifies the number of threads to use for compression and
+decompression. It determines the level of parallelism in the compression process, allowing for
+faster execution when multiple threads are used, defaults to 1
+:type threads: int (optional)
+:param memory: The <code>memory</code> parameter specifies the amount of max memory (in Gb) to use for sorting.
+defaults to 1
+:type memory: int (optional)
+:param block: The <code>block</code> parameter specifies the size of the block used for reading and writing
+data during compression. It is set to a default value of 10^6 (1 million) bytes
+:type block: int
+:param compression_level: The <code>compression_level</code> parameter determines the level of compression to
+be used when compressing the output file. It is an integer value ranging from 0 to 9, where 0
+indicates no compression and 9 indicates maximum compression. The higher the compression level, the
+smaller the resulting compressed file size, defaults to 6
+:type compression_level: int (optional)
+:param sort: The <code>sort</code> parameter is a boolean flag that determines whether the output file should
+be sorted or not. If <code>sort</code> is set to <code>True</code>, the output file will be sorted using
+<code>pysam.bcftools.sort</code> before renaming it. If <code>sort</code> is set to `False, defaults to False
+:type sort: bool (optional)
+:param index: The <code>index</code> parameter is a boolean flag that determines whether or not to index the
+output file after concatenation and compression. If <code>index</code> is set to <code>True</code>, the output file will
+be indexed using the <code>pysam.tabix_index</code> function with the preset "vcf". Make sure VCF is sorted.
+Defaults to False
+:type index: bool (optional)
+:return: a boolean value indicating whether the output file exists or not.</p></div>
+</dd>
+<dt id="howard.functions.commons.concat_file"><code class="name flex">
+<span>def <span class="ident">concat_file</span></span>(<span>input_files: list, output_file: str) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function concatenates multiple input files into a single output file.</p>
+<p>:param input_files: A list of file paths to the input files that need to be concatenated
+:type input_files: list
+:param output_file: The parameter "output_file" is a string that represents the name of the file
+that will be created by the function and will contain the concatenated content of all the input
+files
+:type output_file: str
+:return: a boolean value indicating whether the output file was successfully created or not. It
+checks if the output file exists using the <code>os.path.exists()</code> function and returns <code>True</code> if it
+exists and <code>False</code> otherwise.</p></div>
+</dd>
+<dt id="howard.functions.commons.concat_into_infile"><code class="name flex">
+<span>def <span class="ident">concat_into_infile</span></span>(<span>input_files: list, compressed_file: object, compression_type: str = 'none', threads: int = 1, block: int = 1000000) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code><a title="howard.functions.commons.concat_into_infile" href="#howard.functions.commons.concat_into_infile">concat_into_infile()</a></code> concatenates multiple input files into a compressed output file,
+with support for different compression types and multi-threading.</p>
+<p>:param input_files: A list of input file paths that need to be concatenated into the compressed file
+:type input_files: list
+:param compressed_file: The <code>compressed_file</code> parameter is an object that represents the file where
+the concatenated contents of the input files will be written. It is expected to be a file object
+that has write capabilities
+:type compressed_file: object
+:param compression_type: The <code>compression_type</code> parameter specifies the type of compression to be
+used for the output file. The default value is "none", which means no compression will be applied.
+Other possible values include "bgzip" and "gzip", which indicate that the output file should be
+compressed using the bgzip and, defaults to none
+:type compression_type: str (optional)
+:param threads: The "threads" parameter specifies the number of threads to use for compression or
+decompression. It determines how many parallel processes can be executed simultaneously, which can
+help improve performance when dealing with large files or multiple files, defaults to 1
+:type threads: int (optional)
+:param block: The <code>block</code> parameter is used to specify the size of the block when reading the input
+files. It is set to <code>10 ** 6</code>, which means 1 million bytes. This parameter determines how much data
+is read from the input files at a time
+:type block: int
+:return: a boolean value, specifically <code>True</code>.</p></div>
+</dd>
+<dt id="howard.functions.commons.create_where_clause"><code class="name flex">
+<span>def <span class="ident">create_where_clause</span></span>(<span>merged_regions: list, table: str = 'variants') ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It takes a list of merged regions and returns a SQL WHERE clause that can be used to filter variants
+in a SQL table</p>
+<p>:param merged_regions: a list of tuples representing the merged regions with the values of the
+chrom, start and end columns
+:param table: The name of the table to query, defaults to variants (optional)
+:return: A dictionary with the chromosome as key and the where clause as value.</p></div>
+</dd>
+<dt id="howard.functions.commons.download_file"><code class="name flex">
+<span>def <span class="ident">download_file</span></span>(<span>url: str, dest_file_path: str, chunk_size: int = 1048576, try_aria: bool = True, aria_async_dns: bool = False, threads: int = 1, quiet: bool = True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code><a title="howard.functions.commons.download_file" href="#howard.functions.commons.download_file">download_file()</a></code> function is a Python function that downloads a file from a given URL and saves
+it to a specified destination file path in chunks.</p>
+<p>:param url: The <code>url</code> parameter is the URL of the file you want to download. It should be a string
+that represents the complete URL, including the protocol (e.g., "http://example.com/file.txt")
+:type url: str
+:param dest_file_path: The <code>dest_file_path</code> parameter is the path where the downloaded file will be
+saved. It should be a string representing the file path, including the file name and extension. For
+example, if you want to save the file as "myfile.txt" in the current directory, you can set `dest
+:type dest_file_path: str
+:param chunk_size: The <code>chunk_size</code> parameter determines the size of each chunk of data that is
+downloaded at a time. In this case, the default value is set to 1 MB, which means that the file will
+be downloaded in chunks of 1 MB at a time. This parameter can be adjusted according to
+:type chunk_size: int
+:param try_aria: The <code>try_aria</code> parameter is a boolean value that determines whether to use the
+Aria2c command-line tool for downloading the file. If set to <code>True</code>, the function will attempt to
+download the file using Aria2c. If set to <code>False</code>, the function will use the, defaults to True
+:type try_aria: bool (optional)
+:param aria_async_dns: The <code>aria_async_dns</code> parameter is a boolean value that determines whether to
+use asynchronous DNS resolution with Aria2c. If set to <code>True</code>, Aria2c will use asynchronous DNS
+resolution, which can improve download performance. If set to <code>False</code>, Aria2c will use synchronous,
+defaults to False
+:type aria_async_dns: bool (optional)
+:param threads: The <code>threads</code> parameter specifies the number of threads to be used for downloading
+the file. It determines the number of simultaneous connections that will be made to download the
+file. By default, it is set to 1, which means that only one connection will be made at a time.
+Increasing the value, defaults to 1
+:type threads: int (optional)
+:param quiet: The <code>quiet</code> parameter is a boolean value that determines whether to suppress the
+output of the download process. If set to <code>True</code>, the output will be suppressed. If set to <code>False</code>,
+the output will be displayed. By default, it is set to <code>True</code>, defaults to True
+:type quiet: bool (optional)
+:return: a boolean value indicating whether the file was successfully downloaded and saved to the
+specified destination file path.</p></div>
+</dd>
+<dt id="howard.functions.commons.duckdb_execute"><code class="name flex">
+<span>def <span class="ident">duckdb_execute</span></span>(<span>query: str, threads: int = 1) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code><a title="howard.functions.commons.duckdb_execute" href="#howard.functions.commons.duckdb_execute">duckdb_execute()</a></code> function executes a query using the DuckDB database engine and returns a
+boolean indicating whether the query was successful or not.</p>
+<p>:param query: The <code>query</code> parameter is a string that represents the SQL query you want to execute in
+DuckDB. It can be any valid SQL statement, such as SELECT, INSERT, UPDATE, DELETE, etc
+:type query: str
+:param threads: The "threads" parameter specifies the number of threads to use for executing the
+query. By default, it is set to 1, meaning that the query will be executed using a single thread,
+defaults to 1
+:type threads: int (optional)
+:return: The function <code><a title="howard.functions.commons.duckdb_execute" href="#howard.functions.commons.duckdb_execute">duckdb_execute()</a></code> returns a boolean value. It returns <code>True</code> if the query
+execution is successful, and <code>False</code> if it is not successful.</p></div>
+</dd>
+<dt id="howard.functions.commons.example_function"><code class="name flex">
+<span>def <span class="ident">example_function</span></span>(<span>num, word)</span>
+</code></dt>
+<dd>
+<div class="desc"><p><code><a title="howard.functions.commons.example_function" href="#howard.functions.commons.example_function">example_function()</a></code> takes in a number and a word and returns a list of the number and the word</p>
+<p>:param num: a number
+:param word: a string
+:return: [num, word]</p></div>
+</dd>
+<dt id="howard.functions.commons.extract_file"><code class="name flex">
+<span>def <span class="ident">extract_file</span></span>(<span>file_path: str, path: str = None, threads: int = 1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function extracts a compressed file in .zip or .gz format based on the file path provided.</p>
+<p>:param file_path: The file path parameter is a string that represents the path to a file that needs
+to be extracted. The function checks if the file has a ".zip" or ".gz" extension and extracts it
+accordingly
+:type file_path: str
+:param path: The <code>path</code> parameter is an optional string that represents the directory where the
+extracted files will be saved. If no <code>path</code> is provided, the function will use the directory of the
+<code>file_path</code> as the extraction destination
+:type path: str
+:param threads: The <code>threads</code> parameter is an optional parameter that specifies the number of
+threads to use for extraction. By default, it is set to 1, meaning the extraction will be done using
+a single thread, defaults to 1
+:type threads: int (optional)</p></div>
+</dd>
+<dt id="howard.functions.commons.extract_float_from_str"><code class="name flex">
+<span>def <span class="ident">extract_float_from_str</span></span>(<span>text: str = '') ‑> float</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code><a title="howard.functions.commons.extract_float_from_str" href="#howard.functions.commons.extract_float_from_str">extract_float_from_str()</a></code> extracts a float value from a given string input.</p>
+<p>:param text: The <code><a title="howard.functions.commons.extract_float_from_str" href="#howard.functions.commons.extract_float_from_str">extract_float_from_str()</a></code> function is designed to extract a floating-point number
+from a given string input. The function uses a regular expression to find the first occurrence of a
+floating-point number in the input string and returns it as a float
+:type text: str
+:return: The function <code><a title="howard.functions.commons.extract_float_from_str" href="#howard.functions.commons.extract_float_from_str">extract_float_from_str()</a></code> returns a float value extracted from the input text
+string. If a float value is found in the text, it is returned as a float. If no float value is
+found, it returns <code>None</code>.</p></div>
+</dd>
+<dt id="howard.functions.commons.extract_memory_in_go"><code class="name flex">
+<span>def <span class="ident">extract_memory_in_go</span></span>(<span>memory_str, default_value: int = 1, default_unit: str = 'G') ‑> int</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code><a title="howard.functions.commons.extract_memory_in_go" href="#howard.functions.commons.extract_memory_in_go">extract_memory_in_go()</a></code> function converts a memory size string in the format FLOAT[kMG] to an
+integer value in Go memory units.</p>
+<p>:param memory_str: The <code>memory_str</code> parameter should be a string representing a memory value with a
+unit suffix in the format FLOAT[kMG]. For example, it could be "1G", "512M", or "2k"
+:param default: The <code>default</code> parameter in the <code><a title="howard.functions.commons.extract_memory_in_go" href="#howard.functions.commons.extract_memory_in_go">extract_memory_in_go()</a></code> function is used to specify a
+default integer value if the conversion of the memory size string fails or if the value cannot be
+extracted from the input string. If no valid value can be extracted from the input string, the
+function will return the, defaults to 1
+:type default: int (optional)
+:return: The <code><a title="howard.functions.commons.extract_memory_in_go" href="#howard.functions.commons.extract_memory_in_go">extract_memory_in_go()</a></code> function is returning an integer value representing the memory
+size in Go units based on the input memory string provided.</p></div>
+</dd>
+<dt id="howard.functions.commons.extract_snpeff_hgvs"><code class="name flex">
+<span>def <span class="ident">extract_snpeff_hgvs</span></span>(<span>snpeff: str = '', header: str = ['Allele', 'Annotation', 'Annotation_Impact', 'Gene_Name', 'Gene_ID', 'Feature_Type', 'Feature_ID', 'Transcript_BioType', 'Rank', 'HGVS.c', 'HGVS.p', 'cDNA.pos / cDNA.length', 'CDS.pos / CDS.length', 'AA.pos / AA.length', 'Distance', 'ERRORS / WARNINGS / INFO']) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function extracts HGVS annotations from a given snpEff annotation string and returns them as a
+comma-separated string.</p>
+<p>:param snpeff: The <code>snpeff</code> parameter is a string that contains annotations for genetic variants in
+a specific format. It is used as input to extract HGVS notation for the variants
+:type snpeff: str
+:param header: The header parameter is a list of column names that will be used to create a pandas
+DataFrame from the snpeff string input. It is used to extract specific information from the snpeff
+annotations
+:type header: str
+:return: a string that contains the HGVS annotations extracted from the input SNPEff annotation
+string.</p></div>
+</dd>
+<dt id="howard.functions.commons.find"><code class="name flex">
+<span>def <span class="ident">find</span></span>(<span>name: str, path: str) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It recursively walks the directory tree starting at the given path, and returns the first file it
+finds with the given name</p>
+<p>:param name: The name of the file you're looking for
+:param path: The path to search for the file
+:return: The path to the file.</p></div>
+</dd>
+<dt id="howard.functions.commons.find_all"><code class="name flex">
+<span>def <span class="ident">find_all</span></span>(<span>name: str, path: str) ‑> list</span>
+</code></dt>
+<dd>
+<div class="desc"><p>"Walk the directory tree starting at path, and for each regular file with the name name, append its
+full path to the result list."</p>
+<p>The os.walk function is a generator that yields a 3-tuple containing the name of a directory, a list
+of its subdirectories, and a list of the files in that directory. The name of the directory is a
+string, and the lists of subdirectories and files are lists of strings</p>
+<p>:param name: The name of the file you're looking for
+:param path: The path to search in
+:return: A list of all the files in the directory that have the name "name"</p></div>
+</dd>
+<dt id="howard.functions.commons.find_file_prefix"><code class="name flex">
+<span>def <span class="ident">find_file_prefix</span></span>(<span>input_file: str = None, prefix: str = None, folder: str = None, assembly: str = None) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code><a title="howard.functions.commons.find_file_prefix" href="#howard.functions.commons.find_file_prefix">find_file_prefix()</a></code> is used to find a specific file based on input parameters such as
+input file, folder, and assembly.</p>
+<p>:param input_file: The input file is the file that you want to find the prefix for. It can be a file
+path or just the file name if it is in the current directory
+:type input_file: str
+:param folder: The <code>folder</code> parameter is a string that represents the directory where the file is
+located
+:type folder: str
+:param assembly: The "assembly" parameter is a string that represents the assembly version of the
+file you are looking for. It is used to search for files with the specific assembly version in their
+filename
+:type assembly: str
+:return: the path of the output file.</p></div>
+</dd>
+<dt id="howard.functions.commons.find_genome"><code class="name flex">
+<span>def <span class="ident">find_genome</span></span>(<span>genome_path: str, assembly: str = None, file: str = None) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code><a title="howard.functions.commons.find_genome" href="#howard.functions.commons.find_genome">find_genome()</a></code> function checks if a genome file exists at the specified path, and if not, it
+tries to find it using the provided assembly name or file name.</p>
+<p>:param genome_path: The path to the genome file
+:type genome_path: str
+:param assembly: The <code>assembly</code> parameter is a string that represents the name of the genome
+assembly. It is used to search for the genome file with the specified assembly name in the
+<code>genome_dir</code> directory. If a genome file with the assembly name is found, its path is returned
+:type assembly: str
+:param file: The <code>file</code> parameter is the name of the genome file that you want to find
+:type file: str
+:return: the path to the genome file.</p></div>
+</dd>
+<dt id="howard.functions.commons.find_nomen"><code class="name flex">
+<span>def <span class="ident">find_nomen</span></span>(<span>hgvs: str = '', pattern='GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN', transcripts: list = []) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"><blockquote>
+<p>This function takes a HGVS string and a list of transcripts and returns a dictionary with the best
+NOMEN for each HGVS string</p>
+</blockquote>
+<p>:param hgvs: The HGVS string to parse
+:type hgvs: str
+:param pattern: This is the pattern that you want to use to construct the NOMEN. The default is
+"GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN". This means that the NOMEN will be constructed by
+joining, defaults to GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN (optional)
+:param transcripts: list of transcripts to use for ranking
+:type transcripts: list
+:return: A dictionary with the following keys:
+NOMEN
+CNOMEN
+RNOMEN
+NNOMEN
+PNOMEN
+TVNOMEN
+TNOMEN
+TPVNOMEN
+TPNOMEN
+VNOMEN
+ENOMEN
+GNOMEN</p></div>
+</dd>
+<dt id="howard.functions.commons.findbypipeline"><code class="name flex">
+<span>def <span class="ident">findbypipeline</span></span>(<span>df, samples: list = [])</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function takes a dataframe and a list of samples, and returns the number of pipelines found in
+the samples that have a non-null GT value.</p>
+<p>:param df: The input dataframe containing genetic variant information
+:param samples: The <code>samples</code> parameter is a list of strings representing the names of the
+samples/pipelines to be searched for in the input dataframe <code>df</code>
+:type samples: list
+:return: a string in the format of "nb_pipeline_find/nb_pipeline", where nb_pipeline_find is the
+number of pipelines in the input list samples that have a non-null GT value in the input dataframe
+df, and nb_pipeline is the total number of pipelines in the input list samples. If the input list
+samples is empty, the function returns "0/0".</p></div>
+</dd>
+<dt id="howard.functions.commons.format_arg_help"><code class="name flex">
+<span>def <span class="ident">format_arg_help</span></span>(<span>help_message: str, default_value: object = None) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code><a title="howard.functions.commons.format_arg_help" href="#howard.functions.commons.format_arg_help">format_arg_help()</a></code> formats a help message for a function argument, including a default
+value if provided.</p>
+<p>:param help_message: The <code>help_message</code> parameter is a string that contains the description or help
+message for a function or method argument. It provides information about the purpose or usage of the
+argument
+:type help_message: str
+:param default_value: The <code>default_value</code> parameter in the <code><a title="howard.functions.commons.format_arg_help" href="#howard.functions.commons.format_arg_help">format_arg_help()</a></code> function is an optional
+parameter that specifies a default value for the argument being described in the help message. If a
+default value is provided, it will be included in the formatted help message to indicate the default
+value for that argument
+:type default_value: object
+:return: The function <code><a title="howard.functions.commons.format_arg_help" href="#howard.functions.commons.format_arg_help">format_arg_help()</a></code> returns a formatted help message with a default value
+appended at the end if provided.</p></div>
+</dd>
+<dt id="howard.functions.commons.full_path"><code class="name flex">
+<span>def <span class="ident">full_path</span></span>(<span>path: str) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code><a title="howard.functions.commons.full_path" href="#howard.functions.commons.full_path">full_path()</a></code> takes a path string as input and returns the full expanded path.</p>
+<p>:param path: The <code><a title="howard.functions.commons.full_path" href="#howard.functions.commons.full_path">full_path()</a></code> function takes a string <code>path</code> as input and returns the full path by
+expanding the user's home directory in the path if it is not None
+:type path: str
+:return: The function <code><a title="howard.functions.commons.full_path" href="#howard.functions.commons.full_path">full_path()</a></code> is returning the expanded version of the input <code>path</code> using
+<code>os.path.expanduser(path)</code>. This function expands the <code>~</code> character in the path to the user's home
+directory.</p></div>
+</dd>
+<dt id="howard.functions.commons.genome_build_switch"><code class="name flex">
+<span>def <span class="ident">genome_build_switch</span></span>(<span>assembly: str) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code><a title="howard.functions.commons.genome_build_switch" href="#howard.functions.commons.genome_build_switch">genome_build_switch()</a></code> function takes an assembly name as input and returns a new
+assembly name if a different version of the same genome is available, otherwise it returns
+None.</p>
+<p>:param assembly: The <code>assembly</code> parameter is a string that represents the name or identifier
+of a genome assembly
+:type assembly: str
+:return: The function <code><a title="howard.functions.commons.genome_build_switch" href="#howard.functions.commons.genome_build_switch">genome_build_switch()</a></code> returns a string.</p></div>
+</dd>
+<dt id="howard.functions.commons.genotype_barcode"><code class="name flex">
+<span>def <span class="ident">genotype_barcode</span></span>(<span>genotype: str = '') ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function takes a genotype string and compresses it, then returns a barcode string based on the
+length and content of the compressed genotype.</p>
+<p>:param genotype: The genotype parameter is a string that represents a genetic sequence or code
+:type genotype: str
+:return: The function <code><a title="howard.functions.commons.genotype_barcode" href="#howard.functions.commons.genotype_barcode">genotype_barcode()</a></code> returns a string representing the barcode for a given
+genotype. The barcode can be "0", "1", "2", or "?" depending on the length and content of the
+compressed genotype string.</p></div>
+</dd>
+<dt id="howard.functions.commons.genotype_compression"><code class="name flex">
+<span>def <span class="ident">genotype_compression</span></span>(<span>genotype: str = '') ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function takes a genotype string, replaces dots with zeros, removes non-digit characters, sorts
+and removes duplicates, and returns the compressed genotype string.</p>
+<p>:param genotype: The input genotype as a string. It is a DNA sequence that contains genetic
+information
+:type genotype: str
+:return: The function <code><a title="howard.functions.commons.genotype_compression" href="#howard.functions.commons.genotype_compression">genotype_compression()</a></code> returns a compressed version of the input genotype
+string. The compressed string has all dots replaced with 0s, all non-digit characters removed, and
+duplicates removed and sorted. The compressed string is returned as a string.</p></div>
+</dd>
+<dt id="howard.functions.commons.genotype_stats"><code class="name flex">
+<span>def <span class="ident">genotype_stats</span></span>(<span>df, samples: list = [], info: str = 'VAF')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function computes statistics on a specified information field (e.g. VAF) for a given set of
+samples in a pandas dataframe.</p>
+<p>:param df: The input dataframe containing variant information
+:param samples: The list of sample/pipeline names for which to compute the genotype statistics. If
+empty, the function will return an empty dictionary
+:type samples: list
+:param info: The parameter "info" is a string that represents the type of information being analyzed
+in the function. In this case, it is used to compute statistics on the Variant Allele Frequency
+(VAF) of genetic variants, defaults to VAF
+:type info: str (optional)
+:return: a dictionary containing statistics related to a specified information field (default is
+"VAF") for a given set of samples in a pandas DataFrame. The statistics include the number of
+values, a list of values, minimum value, maximum value, mean, median, and standard deviation. If no
+samples are specified, an empty dictionary is returned.</p></div>
+</dd>
+<dt id="howard.functions.commons.genotypeconcordance"><code class="name flex">
+<span>def <span class="ident">genotypeconcordance</span></span>(<span>df, samples: list = [])</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function checks the genotype concordance of a given list of samples in a dataframe.</p>
+<p>:param df: The input dataframe containing genetic variant information, including genotype
+information for each sample/pipeline
+:param samples: The parameter "samples" is a list of sample/pipeline names that are present in the
+input dataframe "df". These samples/pipelines have genotype information that will be used to
+calculate genotype concordance
+:type samples: list
+:return: a string that indicates whether the genotypes of the specified samples in the input
+dataframe are concordant or not. The string is either "TRUE" or "FALSE", depending on whether all
+the specified samples have the same genotype or not.</p></div>
+</dd>
+<dt id="howard.functions.commons.get_argument"><code class="name flex">
+<span>def <span class="ident">get_argument</span></span>(<span>arguments: dict = {}, arg: str = '', required: bool = False, remove_infos: list = ['gooey', 'extra'], add_metavar: bool = False) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code><a title="howard.functions.commons.get_argument" href="#howard.functions.commons.get_argument">get_argument()</a></code> function retrieves information about a specific argument from a dictionary, and
+can also set its "required" status.</p>
+<p>:param arguments: A dictionary containing information about the arguments passed to a function or
+method
+:type arguments: dict
+:param arg: The <code>arg</code> parameter is a string that represents the name of the argument that you want
+to retrieve information for
+:type arg: str
+:param required: The <code>required</code> parameter is a boolean value that determines whether the argument is
+required or not. If set to True, the function will return an empty dictionary if the argument is not
+found in the <code>arguments</code> dictionary. If set to False (default), the function will still return an
+empty dictionary if, defaults to False
+:type required: bool (optional)
+:param remove_infos: The <code>remove_infos</code> parameter is a list that contains the names of specific
+information that you want to remove from the argument dictionary. In the code, it is used to remove
+specific argument information such as "gooey" from the <code>arg_infos</code> dictionary
+:type remove_infos: list
+:return: a dictionary containing information about a specific argument, specified by the <code>arg</code>
+parameter. If the argument is found in the <code>arguments</code> dictionary, the function returns a dictionary
+containing the information about that argument. If the argument is not found, an empty dictionary is
+returned. The <code>required</code> parameter is used to specify whether the argument is required or not, and
+this information is added to</p></div>
+</dd>
+<dt id="howard.functions.commons.get_argument_gooey"><code class="name flex">
+<span>def <span class="ident">get_argument_gooey</span></span>(<span>arguments: dict = {}, arg: str = '')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code><a title="howard.functions.commons.get_argument_gooey" href="#howard.functions.commons.get_argument_gooey">get_argument_gooey()</a></code> takes an argument and returns the corresponding widget and options
+for the Gooey library in Python.</p>
+<p>:param arg: The <code>arg</code> parameter is a string that represents the name of the argument you want to
+retrieve information for
+:type arg: str
+:return: The function <code><a title="howard.functions.commons.get_argument_gooey" href="#howard.functions.commons.get_argument_gooey">get_argument_gooey()</a></code> returns two values: <code>widget</code> and <code>options</code>.</p></div>
+</dd>
+<dt id="howard.functions.commons.get_argument_to_mk"><code class="name flex">
+<span>def <span class="ident">get_argument_to_mk</span></span>(<span>arg: str, argument: dict = {}, mode: str = 'mk') ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code><a title="howard.functions.commons.get_argument_to_mk" href="#howard.functions.commons.get_argument_to_mk">get_argument_to_mk()</a></code> generates a formatted string containing information about a
+command line argument, which can be output in either Markdown or HTML format.</p>
+<p>:param arg: The <code>arg</code> parameter is a string that represents the name of the argument. It is used to
+generate the header and text for the argument
+:type arg: str
+:param argument: The <code>argument</code> parameter is a dictionary that contains information about the
+argument. It has the following keys:
+:type argument: dict
+:param mode: The <code>mode</code> parameter is used to specify the format of the output. It can have two
+possible values: "mk" or "html". If "mk" is specified, the output will be formatted using Markdown
+syntax. If "html" is specified, the output will be formatted using HTML syntax, defaults to mk
+:type mode: str (optional)
+:return: a formatted string that provides information about a command line argument. The format of
+the string depends on the value of the <code>mode</code> parameter. If <code>mode</code> is set to "html", the string is
+formatted as an HTML <code>&lt;pre&gt;</code> block. Otherwise, the string is formatted as a Markdown code block. The
+string includes the argument name, metavariable, help text, required</p></div>
+</dd>
+<dt id="howard.functions.commons.get_bin"><code class="name flex">
+<span>def <span class="ident">get_bin</span></span>(<span>bin: str = None, tool: str = None, bin_type: str = 'bin', config: dict = {}, default_folder: str = '/Users/lebechea/howard/tools', output_type: str = 'bin') ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code><a title="howard.functions.commons.get_bin" href="#howard.functions.commons.get_bin">get_bin()</a></code> function retrieves the path to a specified binary file from a configuration dictionary
+or searches for it in the file system if it is not specified in the configuration.</p>
+<p>:param bin: The <code>bin</code> parameter is a string or a pattern that represents the name of the binary file (e.g.,
+<code>snpEff.jar</code>, <code>exomiser-cli*.jar</code>) that you want to retrieve the path for
+:type bin: str
+:param tool: The <code>tool</code> parameter is a string that represents the name of the tool. It is used to
+retrieve the path to the tool's binary file
+:type tool: str
+:param bin_type: The <code>bin_type</code> parameter is a string that specifies the type of binary file to
+search for in the config dict (e.g., <code>jar</code>, <code>bin</code>). In this case, the default value is "bin". A value "jar" indicates that the function is searching
+for a JAR file. Defaults to bin
+:type bin_type: str (optional)
+:param config: A dictionary containing configuration information for the snpEff tool, including the
+path to the snpEff jar file. If no configuration is provided, an empty dictionary is used
+:type config: dict
+:param default_folder: The <code>default_folder</code> parameter is a string that represents the default folder
+where the tool binaries are located. If the <code>bin_file</code> is not found in the configuration dictionary
+or in the file system, the function will search for it in this default folder
+:type default_folder: str
+:return: the path to the snpEff.jar file. If the file is not found, it returns None.</p></div>
+</dd>
+<dt id="howard.functions.commons.get_bin_command"><code class="name flex">
+<span>def <span class="ident">get_bin_command</span></span>(<span>bin: str = None, tool: str = None, bin_type: str = 'bin', config: dict = {}, param: dict = {}, default_folder: str = '/Users/lebechea/howard/tools', add_options: str = None) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="howard.functions.commons.get_compression_type"><code class="name flex">
+<span>def <span class="ident">get_compression_type</span></span>(<span>filepath: str) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code><a title="howard.functions.commons.get_compression_type" href="#howard.functions.commons.get_compression_type">get_compression_type()</a></code> determines the compression type of a file based on its first few
+bytes.</p>
+<p>:param filepath: The <code>filepath</code> parameter is a string that represents the path to the file for which
+we want to determine the compression type
+:type filepath: str
+:return: The function <code><a title="howard.functions.commons.get_compression_type" href="#howard.functions.commons.get_compression_type">get_compression_type()</a></code> returns a string indicating the compression type of the
+file specified by the <code>filepath</code> parameter. The possible return values are "gzip" if the file is
+compressed using gzip, "bgzip" if the file is compressed using bgzip, "unknown" if the compression
+type is unknown, and "none" if the file is not compressed.</p></div>
+</dd>
+<dt id="howard.functions.commons.get_default_argument"><code class="name flex">
+<span>def <span class="ident">get_default_argument</span></span>(<span>arguments_dict: dict, argument: str)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code><a title="howard.functions.commons.get_default_argument" href="#howard.functions.commons.get_default_argument">get_default_argument()</a></code> retrieves the default value of a specified argument from a
+dictionary of arguments.</p>
+<p>:param arguments_dict: The <code>arguments_dict</code> parameter is a dictionary that contains information
+about arguments
+:type arguments_dict: dict
+:param argument: The <code><a title="howard.functions.commons.get_default_argument" href="#howard.functions.commons.get_default_argument">get_default_argument()</a></code> function takes in two parameters:
+:type argument: str
+:return: The function is attempting to return the default value of a specific argument from a
+dictionary of arguments. However, there is a mistake in the code. The correct key to access the
+argument's default value should be "argument" instead of "arguments". Therefore, the function will
+return the default value of the specified argument if it exists, otherwise it will return None.</p></div>
+</dd>
+<dt id="howard.functions.commons.get_duckdb_extension_file"><code class="name flex">
+<span>def <span class="ident">get_duckdb_extension_file</span></span>(<span>extension_name: str, conn: duckdb.duckdb.DuckDBPyConnection, download: bool = True) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function returns the file path of a DuckDB extension based on the extension name and platform.</p>
+<p>:param extension_name: The name of the DuckDB extension file that is being requested
+:type extension_name: str
+:return: a string that represents the file path of a DuckDB extension file. The file path is
+constructed using the constant <code>DUCKDB_EXTENSION</code>, the platform name obtained from the
+<code><a title="howard.functions.commons.get_plateform_name_from_duckdb" href="#howard.functions.commons.get_plateform_name_from_duckdb">get_plateform_name_from_duckdb()</a></code> function, and the extension name passed as an argument to the function.</p></div>
+</dd>
+<dt id="howard.functions.commons.get_file_compressed"><code class="name flex">
+<span>def <span class="ident">get_file_compressed</span></span>(<span>filename: str = None) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function takes a filename as input and returns True if the file is compressed (in bgzip) and False if it
+is not</p>
+<p>:param filename: the name of the file to be checked
+:type filename: str
+:return: A boolean value.</p></div>
+</dd>
+<dt id="howard.functions.commons.get_file_format"><code class="name flex">
+<span>def <span class="ident">get_file_format</span></span>(<span>filename: str = None) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It takes a filename and returns the file format</p>
+<p>:param filename: the name of the file you want to get the format of
+:type filename: str
+:return: The file format of the file.</p></div>
+</dd>
+<dt id="howard.functions.commons.get_index"><code class="name flex">
+<span>def <span class="ident">get_index</span></span>(<span>value, values: list = []) ‑> int</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function returns the index of a given value in a list, or -1 if the value is not in the list.</p>
+<p>:param value: The value to search for in the list
+:param values: The parameter "values" is a list of values in which we want to find the index of a
+specific value. It is an optional parameter with a default value of an empty list
+:type values: list
+:return: The function <code><a title="howard.functions.commons.get_index" href="#howard.functions.commons.get_index">get_index()</a></code> returns the index of the first occurrence of the <code>value</code> parameter
+in the <code>values</code> list. If the <code>value</code> parameter is not found in the <code>values</code> list, the function
+returns -1.</p></div>
+</dd>
+<dt id="howard.functions.commons.get_memory"><code class="name flex">
+<span>def <span class="ident">get_memory</span></span>(<span>config: dict = {}, param: dict = None) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code><a title="howard.functions.commons.get_memory" href="#howard.functions.commons.get_memory">get_memory()</a></code> function retrieves memory information using psutil and calculates a default memory
+value based on total memory, with the option to specify a custom memory value.</p>
+<p>:param config: The <code>config</code> parameter is a dictionary that may contain configuration settings for
+the function <code><a title="howard.functions.commons.get_memory" href="#howard.functions.commons.get_memory">get_memory()</a></code>. It is used to provide default values or settings for the function
+:type config: dict
+:param param: The <code>param</code> parameter is a dictionary that may contain a key "memory" which represents
+the amount of memory to be used. If the "memory" key is not present in the <code>param</code> dictionary, the
+function will try to retrieve the value from the <code>config</code> dictionary using the key "
+:type param: dict
+:return: The function <code><a title="howard.functions.commons.get_memory" href="#howard.functions.commons.get_memory">get_memory()</a></code> returns a string representing the amount of memory to be used.
+This memory value is calculated based on the total memory available on the system, with a default
+value set to 80% of the total memory. The function first checks if a specific memory value is
+provided in the <code>param</code> dictionary, and if not, it looks for a default value in the <code>config</code></p></div>
+</dd>
+<dt id="howard.functions.commons.get_plateform_name_from_duckdb"><code class="name flex">
+<span>def <span class="ident">get_plateform_name_from_duckdb</span></span>(<span>conn: duckdb.duckdb.DuckDBPyConnection) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code><a title="howard.functions.commons.get_plateform_name_from_duckdb" href="#howard.functions.commons.get_plateform_name_from_duckdb">get_plateform_name_from_duckdb()</a></code> returns the platform information from a DuckDB connection.</p>
+<p>:param conn: The <code>conn</code> parameter is an instance of the <code>DuckDBPyConnection</code> class from the <code>duckdb</code>
+module. It represents a connection to a DuckDB database
+:type conn: duckdb.DuckDBPyConnection
+:return: the platform information from the DuckDB connection.</p></div>
+</dd>
+<dt id="howard.functions.commons.get_random"><code class="name flex">
+<span>def <span class="ident">get_random</span></span>(<span>N: int = 10) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code><a title="howard.functions.commons.get_random" href="#howard.functions.commons.get_random">get_random()</a></code> generates a random string of uppercase letters and digits with a default
+length of 10.</p>
+<p>:param N: The parameter <code>N</code> in the <code><a title="howard.functions.commons.get_random" href="#howard.functions.commons.get_random">get_random()</a></code> function represents the length of the random string
+that will be generated. By default, if no value is provided for <code>N</code>, it will generate a random
+string of length 10 consisting of uppercase letters and digits, defaults to 10
+:type N: int (optional)
+:return: A random string of length N consisting of uppercase letters and digits.</p></div>
+</dd>
+<dt id="howard.functions.commons.get_threads"><code class="name flex">
+<span>def <span class="ident">get_threads</span></span>(<span>config: dict = {}, param: dict = {}) ‑> int</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This Python function retrieves the number of threads to use based on input parameters and system
+configuration.</p>
+<p>:param config: The <code>config</code> parameter is a dictionary that contains configuration settings for the
+function <code><a title="howard.functions.commons.get_threads" href="#howard.functions.commons.get_threads">get_threads()</a></code>. It can be used to provide default values for the number of threads to use in
+the function
+:type config: dict
+:param param: The <code>param</code> parameter is a dictionary that may contain the key "threads" which
+specifies the number of threads to use. If the "threads" key is not present in the <code>param</code>
+dictionary, the function will look for the "threads" key in the <code>config</code> dictionary. If neither
+:type param: dict
+:return: The function <code><a title="howard.functions.commons.get_threads" href="#howard.functions.commons.get_threads">get_threads()</a></code> returns the number of threads to be used based on the input
+parameters.</p></div>
+</dd>
+<dt id="howard.functions.commons.get_tmp"><code class="name flex">
+<span>def <span class="ident">get_tmp</span></span>(<span>config: dict = {}, param: dict = None, default_tmp: str = '/tmp') ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code><a title="howard.functions.commons.get_tmp" href="#howard.functions.commons.get_tmp">get_tmp()</a></code> function returns the value of the "tmp" parameter from either the <code>param</code> dictionary,
+<code>config</code> dictionary, or a default value "/tmp".</p>
+<p>:param config: Config is a dictionary that contains configuration settings for the function. It is
+an optional parameter with a default value of an empty dictionary. It can be used to provide
+additional configuration settings to the function <code><a title="howard.functions.commons.get_tmp" href="#howard.functions.commons.get_tmp">get_tmp()</a></code>
+:type config: dict
+:param param: The <code>param</code> parameter is a dictionary containing parameters that can be passed to the
+function <code><a title="howard.functions.commons.get_tmp" href="#howard.functions.commons.get_tmp">get_tmp()</a></code>. It can include various key-value pairs, but in this context, the function
+specifically looks for the key "tmp" within the <code>param</code> dictionary to determine the temporary path
+value. If the "
+:type param: dict
+:param default_tmp: The <code>default_tmp</code> parameter in the <code><a title="howard.functions.commons.get_tmp" href="#howard.functions.commons.get_tmp">get_tmp()</a></code> function is a string that
+represents the default path for temporary files. If the "tmp" key is not found in the <code>param</code>
+dictionary or the <code>config</code> dictionary, the function will return this <code>default_tmp</code> value, which is,
+defaults to /tmp
+:type default_tmp: str (optional)
+:return: The function <code><a title="howard.functions.commons.get_tmp" href="#howard.functions.commons.get_tmp">get_tmp()</a></code> returns the value of the "tmp" key from the <code>param</code> dictionary if it
+exists. If the "tmp" key is not found in the <code>param</code> dictionary, it returns the value of the "tmp"
+key from the <code>config</code> dictionary. If neither key is found in <code>param</code> or <code>config</code>, it returns the
+default value "/tmp".</p></div>
+</dd>
+<dt id="howard.functions.commons.help_generation"><code class="name flex">
+<span>def <span class="ident">help_generation</span></span>(<span>arguments_dict: dict = {}, parser=None, setup: str = None, output_type: str = 'parser')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code><a title="howard.functions.commons.help_generation" href="#howard.functions.commons.help_generation">help_generation()</a></code> function generates a parser object for command-line arguments, as well as
+markdown or HTML help documentation for those arguments.</p>
+<p>:param arguments_dict: A dictionary containing the arguments for the function. It has three keys:
+:type arguments_dict: dict
+:param parser: The <code>parser</code> parameter is an instance of the <code>argparse.ArgumentParser</code> class. It is
+used to define the command-line interface and parse the command-line arguments. If no <code>parser</code> is
+provided, a new instance of <code>argparse.ArgumentParser</code> will be created
+:param setup: The <code>setup</code> parameter is a string that represents the path to a configuration file.
+This file contains metadata about the program, such as its name, version, description, and long
+description content type
+:type setup: str
+:param output_type: The <code>output_type</code> parameter determines the format of the output. It can be one
+of the following values:, defaults to parser
+:type output_type: str (optional)
+:return: The function <code><a title="howard.functions.commons.help_generation" href="#howard.functions.commons.help_generation">help_generation()</a></code> returns different outputs based on the value of the
+<code>output_type</code> parameter.</p></div>
+</dd>
+<dt id="howard.functions.commons.help_generation_from_dict"><code class="name flex">
+<span>def <span class="ident">help_generation_from_dict</span></span>(<span>element: str, help_dict: dict, previous: str = '', output_type: str = 'markdown', level: int = 1, table: str = '', generate_table: bool = False, code_type: str = '', auto_default: bool = True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code><a title="howard.functions.commons.help_generation_from_dict" href="#howard.functions.commons.help_generation_from_dict">help_generation_from_dict()</a></code> function generates help documentation from a dictionary input,
+supporting markdown and HTML output formats with specific sections like "__help", "__format",
+"__default", "__examples", "__code", and "__examples_code".</p>
+<p>:param element: The <code>element</code> parameter in the <code><a title="howard.functions.commons.help_generation_from_dict" href="#howard.functions.commons.help_generation_from_dict">help_generation_from_dict()</a></code> function is a string that
+represents the current element or key in the dictionary for which help documentation is being
+generated. It is the specific key or element within the dictionary that you want to generate help
+documentation for
+:type element: str
+:param help_dict: The <code>help_dict</code> parameter in the <code><a title="howard.functions.commons.help_generation_from_dict" href="#howard.functions.commons.help_generation_from_dict">help_generation_from_dict()</a></code> function is a
+dictionary that contains the help documentation for various elements or keys. This dictionary
+structure allows for organizing and storing information related to each element, such as help text,
+formatting details, default values, and examples. The function processes
+:type help_dict: dict
+:param previous: The <code>previous</code> parameter in the <code><a title="howard.functions.commons.help_generation_from_dict" href="#howard.functions.commons.help_generation_from_dict">help_generation_from_dict()</a></code> function is used to
+keep track of the previous elements in the hierarchy. It is a string that represents the path to the
+current element being processed. This parameter helps in maintaining the correct hierarchy level
+when generating help documentation for nested elements in a
+:type previous: str
+:param output_type: The <code>output_type</code> parameter in the <code><a title="howard.functions.commons.help_generation_from_dict" href="#howard.functions.commons.help_generation_from_dict">help_generation_from_dict()</a></code> function
+specifies the type of output format that you want the generated help documentation to be in. It can
+take two possible values: "markdown" or "html", defaults to markdown
+:type output_type: str (optional)
+:param level: The <code>level</code> parameter in the <code><a title="howard.functions.commons.help_generation_from_dict" href="#howard.functions.commons.help_generation_from_dict">help_generation_from_dict()</a></code> function is used to keep
+track of the depth or level of recursion in the generation process. It starts at 1 for the initial
+call and increments by 1 for each level of recursion into sub-elements. This parameter helps in
+formatting the, defaults to 1
+:type level: int (optional)
+:param table: The <code>table</code> parameter in the <code><a title="howard.functions.commons.help_generation_from_dict" href="#howard.functions.commons.help_generation_from_dict">help_generation_from_dict()</a></code> function is used to store the
+table of contents for the generated help documentation. It is a string that contains the formatted
+table of contents with links to different sections or elements within the documentation. This table
+helps users navigate through the documentation easily and
+:type table: str
+:param generate_table: The <code>generate_table</code> parameter in the <code><a title="howard.functions.commons.help_generation_from_dict" href="#howard.functions.commons.help_generation_from_dict">help_generation_from_dict()</a></code> function is
+a boolean flag that determines whether the function should generate a table of contents for the help
+documentation. When set to <code>True</code>, the function will include a table of contents in the output based
+on the hierarchy of elements in the, defaults to False
+:type generate_table: bool (optional)
+:param code_type: The <code>code_type</code> parameter in the <code><a title="howard.functions.commons.help_generation_from_dict" href="#howard.functions.commons.help_generation_from_dict">help_generation_from_dict()</a></code>
+function specifies the type of code examples that will be included in the generated help
+documentation. It defaults to "json", meaning that the code examples provided in the
+"__examples_code" section of the dictionary will be in JSON format, defaults to json
+:type code_type: str (optional)
+:return: The function <code><a title="howard.functions.commons.help_generation_from_dict" href="#howard.functions.commons.help_generation_from_dict">help_generation_from_dict()</a></code> is returning the generated help documentation
+based on the input <code>help_dict</code> dictionary. The output is formatted based on the specified
+<code>output_type</code> (either "markdown" or "html") and includes sections such as "__help", "__format",
+"__default", and "__examples" if they are present in the <code>help_dict</code>.</p></div>
+</dd>
+<dt id="howard.functions.commons.help_generation_from_json"><code class="name flex">
+<span>def <span class="ident">help_generation_from_json</span></span>(<span>help_json_file: str, output_type: str = 'markdown', title='Help', code_type: str = '')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code><a title="howard.functions.commons.help_generation_from_json" href="#howard.functions.commons.help_generation_from_json">help_generation_from_json()</a></code> reads a JSON file containing help information, converts it
+into a specified output format (default is markdown), and returns the generated help content.</p>
+<p>:param help_json_file: The <code>help_json_file</code> parameter is a string that should contain the file path
+to the JSON file from which help information will be extracted. This JSON file likely contains
+structured data that will be used to generate the help content
+:type help_json_file: str
+:param output_type: The <code>output_type</code> parameter in the <code><a title="howard.functions.commons.help_generation_from_json" href="#howard.functions.commons.help_generation_from_json">help_generation_from_json()</a></code> function
+specifies the format in which the generated help content will be output. By default, it is set to
+"markdown", which means the help content will be formatted using Markdown syntax. However, you can
+also specify other output formats such, defaults to markdown
+:type output_type: str (optional)
+:param title: The <code>title</code> parameter in the <code><a title="howard.functions.commons.help_generation_from_json" href="#howard.functions.commons.help_generation_from_json">help_generation_from_json()</a></code> function is a string that
+represents the title of the help documentation that will be generated. It is used to provide a title
+for the help content to make it more organized and informative. By default, the title is set to
+"Help", defaults to Help (optional)
+:param code_type: The <code>code_type</code> parameter in the <code><a title="howard.functions.commons.help_generation_from_json" href="#howard.functions.commons.help_generation_from_json">help_generation_from_json()</a></code>
+function is used to specify the type of code examples that will be included in the generated help
+content. This parameter allows you to define the format or language of the code examples to be
+displayed alongside the help information extracted from the JSON
+:type code_type: str
+:return: The function <code><a title="howard.functions.commons.help_generation_from_json" href="#howard.functions.commons.help_generation_from_json">help_generation_from_json()</a></code> returns the generated help content based on the
+information stored in the JSON file provided as input.</p></div>
+</dd>
+<dt id="howard.functions.commons.identical"><code class="name flex">
+<span>def <span class="ident">identical</span></span>(<span>vcf_list: List[str], begin: str = '##', line_strip: bool = True) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code><a title="howard.functions.commons.identical" href="#howard.functions.commons.identical">identical()</a></code> function compares the contents of multiple VCF files to determine if they are
+identical.</p>
+<p>:param vcf_list: The <code>vcf_list</code> parameter is a list of file paths to VCF (Variant Call Format) files
+that you want to compare for identity. The function reads the contents of these files and checks if
+they are identical based on the specified conditions
+:type vcf_list: typing.List[str]
+:param begin: The <code>begin</code> parameter in the <code><a title="howard.functions.commons.identical" href="#howard.functions.commons.identical">identical()</a></code> function is used to specify a string that
+indicates the beginning of a line in the input files. If a line in the input file starts with the
+specified <code>begin</code> string, it will be skipped and not included in the comparison process. By default,
+defaults to ##
+:type begin: str (optional)
+:param line_strip: The <code>line_strip</code> parameter in the <code><a title="howard.functions.commons.identical" href="#howard.functions.commons.identical">identical()</a></code> function is a boolean flag that
+determines whether each line read from the input files should be stripped of leading and trailing
+whitespaces before being compared. If <code>line_strip</code> is set to <code>True</code>, each line will be stripped
+using the `strip, defaults to True
+:type line_strip: bool (optional)
+:return: The function <code><a title="howard.functions.commons.identical" href="#howard.functions.commons.identical">identical()</a></code> is returning a boolean value. It returns <code>True</code> if all the lines
+in the VCF files provided in the <code>vcf_list</code> are identical, and <code>False</code> otherwise.</p></div>
+</dd>
+<dt id="howard.functions.commons.load_args"><code class="name flex">
+<span>def <span class="ident">load_args</span></span>(<span>param: dict, args: <module 'argparse' from '/usr/local/Caskroom/miniconda/base/envs/howard_devel/lib/python3.10/argparse.py'>, arguments_dict: dict, command: str = None, arguments_list: dict = {}, strict: bool = False, section_prefix: list = []) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code><a title="howard.functions.commons.load_args" href="#howard.functions.commons.load_args">load_args()</a></code> function processes arguments based on specified parameters and conditions, raising
+an error if a specified argument is not found.</p>
+<p>:param param: The <code>param</code> parameter in the <code><a title="howard.functions.commons.load_args" href="#howard.functions.commons.load_args">load_args()</a></code> function is a dictionary that stores the
+arguments and their values. It is used to keep track of the arguments that have been loaded or
+processed during the argument parsing process
+:type param: dict
+:param args: The <code>args</code> parameter in the <code><a title="howard.functions.commons.load_args" href="#howard.functions.commons.load_args">load_args()</a></code> function is an instance of the
+<code>argparse.ArgumentParser</code> class from the <code>argparse</code> module in Python. This object is used to parse
+command-line arguments and options. It contains information about the arguments passed to the script
+when it was executed
+:type args: argparse
+:param arguments_dict: The <code>arguments_dict</code> parameter in the <code><a title="howard.functions.commons.load_args" href="#howard.functions.commons.load_args">load_args()</a></code> function is a dictionary
+that likely contains information about the arguments expected by the script. It may include details
+such as the argument names, their corresponding sections, and any additional parameters related to
+each argument. This dictionary is used within the `load_args
+:type arguments_dict: dict
+:param command: The <code><a title="howard.functions.commons.command" href="#howard.functions.commons.command">command()</a></code> parameter in the <code><a title="howard.functions.commons.load_args" href="#howard.functions.commons.load_args">load_args()</a></code> function is a string that represents a
+specific command or action for which arguments need to be loaded. This parameter is used to identify
+the command-specific arguments that should be processed during argument parsing
+:type command: str
+:param arguments_list: The <code>arguments_list</code> parameter in the <code><a title="howard.functions.commons.load_args" href="#howard.functions.commons.load_args">load_args()</a></code> function is a dictionary
+that contains the names of arguments that are expected to be present in the <code>args</code> object. This list
+is used to specify which arguments should be processed by the function <code><a title="howard.functions.commons.load_args" href="#howard.functions.commons.load_args">load_args()</a></code> during the
+argument parsing process
+:type arguments_list: dict
+:param strict: The <code>strict</code> parameter in the <code><a title="howard.functions.commons.load_args" href="#howard.functions.commons.load_args">load_args()</a></code> function is a boolean flag that determines
+whether an error should be raised if an argument specified in the <code>arguments_list</code> list is not found
+in the <code>args</code> object. If <code>strict</code> is set to <code>True</code>, an error will be raised, defaults to False
+:type strict: bool (optional)
+:return: The function <code><a title="howard.functions.commons.load_args" href="#howard.functions.commons.load_args">load_args()</a></code> is returning a dictionary named <code>param</code> after processing the
+arguments based on the input parameters and conditions specified in the function.</p></div>
+</dd>
+<dt id="howard.functions.commons.load_config_args"><code class="name flex">
+<span>def <span class="ident">load_config_args</span></span>(<span>args)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code><a title="howard.functions.commons.load_config_args" href="#howard.functions.commons.load_config_args">load_config_args()</a></code> takes in arguments, extracts specific keys from them, and loads
+parameters in JSON format.</p>
+<p>:param args: The <code><a title="howard.functions.commons.load_config_args" href="#howard.functions.commons.load_config_args">load_config_args()</a></code> function takes in an <code>args</code> object as input. This <code>args</code> object
+seems to contain various configuration parameters that the function will use to load and return
+specific values
+:return: The function <code><a title="howard.functions.commons.load_config_args" href="#howard.functions.commons.load_config_args">load_config_args()</a></code> returns the variables <code>arguments_dict</code>, <code>setup_cfg</code>,
+<code>config</code>, and <code>param</code>.</p></div>
+</dd>
+<dt id="howard.functions.commons.load_duckdb_extension"><code class="name flex">
+<span>def <span class="ident">load_duckdb_extension</span></span>(<span>conn: duckdb.duckdb.DuckDBPyConnection, duckdb_extensions: list) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function loads DuckDB extensions into a connection object and returns a boolean indicating
+whether all extensions were successfully loaded.</p>
+<p>:param conn: duckdb.DuckDBPyConnection object representing a connection to a DuckDB database
+:type conn: duckdb.DuckDBPyConnection
+:param duckdb_extensions: A list of strings representing the names of the DuckDB extensions to be
+loaded
+:type duckdb_extensions: list
+:return: a boolean value indicating whether all the specified DuckDB extensions were successfully
+loaded or not.</p></div>
+</dd>
+<dt id="howard.functions.commons.load_param"><code class="name flex">
+<span>def <span class="ident">load_param</span></span>(<span>args: <module 'argparse' from '/usr/local/Caskroom/miniconda/base/envs/howard_devel/lib/python3.10/argparse.py'>) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code><a title="howard.functions.commons.load_param" href="#howard.functions.commons.load_param">load_param()</a></code> takes command line arguments and returns a dictionary containing
+parameters loaded from a file or as JSON.</p>
+<p>:param args: It seems like the code snippet you provided is a function named <code><a title="howard.functions.commons.load_param" href="#howard.functions.commons.load_param">load_param()</a></code> that takes
+an argument <code>args</code> of type <code>argparse</code> and returns a dictionary. The function is intended to load
+parameters from a file or a string
+:type args: argparse
+:return: A dictionary containing the loaded parameters is being returned.</p></div>
+</dd>
+<dt id="howard.functions.commons.merge_regions"><code class="name flex">
+<span>def <span class="ident">merge_regions</span></span>(<span>regions: list) ‑> list</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It takes a list of genomic regions and returns a list of genomic regions where overlapping regions
+have been merged</p>
+<p>:param regions: A list of tuples representing genomic regions with the values of the chrom, start
+and end columns
+:return: A list of tuples representing the merged regions with the values of the columns chrom,
+start and end.</p></div>
+</dd>
+<dt id="howard.functions.commons.remove_if_exists"><code class="name flex">
+<span>def <span class="ident">remove_if_exists</span></span>(<span>filepaths: list) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function removes a file if it exists at the specified filepath(s).</p>
+<p>:param filepaths: A list of file paths that you want to check for existence and remove if they exist
+:type filepaths: list</p></div>
+</dd>
+<dt id="howard.functions.commons.run_parallel_commands"><code class="name flex">
+<span>def <span class="ident">run_parallel_commands</span></span>(<span>commands: list, threads: int = 1) ‑> list</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It takes a list of commands and a number of threads, and runs the commands in parallel</p>
+<p>:param commands: a list of commands to run
+:param threads: The number of threads to use
+:return: A list of results from the commands.</p></div>
+</dd>
+<dt id="howard.functions.commons.run_parallel_functions"><code class="name flex">
+<span>def <span class="ident">run_parallel_functions</span></span>(<span>functions: list, threads: int = 1) ‑> list</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It takes a list of functions and a number of threads, and runs the functions in parallel using the
+number of threads specified</p>
+<p>:param functions: a list of functions to run in parallel
+:param threads: The number of threads to use
+:return: A list of multiprocessing.pool.ApplyResult objects.</p></div>
+</dd>
+<dt id="howard.functions.commons.set_log_level"><code class="name flex">
+<span>def <span class="ident">set_log_level</span></span>(<span>verbosity: str, log_file: str = None) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It sets the log level of the Python logging module</p>
+<p>:param verbosity: The level of verbosity</p></div>
+</dd>
+<dt id="howard.functions.commons.set_param"><code class="name flex">
+<span>def <span class="ident">set_param</span></span>(<span>param: dict, args: <module 'argparse' from '/usr/local/Caskroom/miniconda/base/envs/howard_devel/lib/python3.10/argparse.py'>, arguments_dict: dict, argument: str, section: list = None) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code><a title="howard.functions.commons.set_param" href="#howard.functions.commons.set_param">set_param()</a></code> takes input arguments and adds them to a dictionary based on certain
+conditions.</p>
+<p>:param param: The <code>param</code> parameter is a dictionary that stores configuration parameters or
+settings. It is used to collect and store various arguments and their values based on the conditions
+specified in the <code><a title="howard.functions.commons.set_param" href="#howard.functions.commons.set_param">set_param()</a></code> function
+:type param: dict
+:param args: The <code>args</code> parameter in the <code><a title="howard.functions.commons.set_param" href="#howard.functions.commons.set_param">set_param()</a></code> function is likely an instance of the
+<code>argparse.Namespace</code> class, which is typically used to store the command-line arguments parsed by
+the <code>argparse</code> module in Python. It contains the values of the arguments provided by the user when
+the script
+:type args: argparse
+:param arguments_dict: The <code>arguments_dict</code> parameter seems to be a dictionary that likely contains
+information about arguments and their default values. This dictionary is used in the function
+<code><a title="howard.functions.commons.set_param" href="#howard.functions.commons.set_param">set_param()</a></code> to determine whether a specific argument should be included in the <code>param</code> dictionary
+based on certain conditions
+:type arguments_dict: dict
+:param argument: The <code>argument</code> parameter in the <code><a title="howard.functions.commons.set_param" href="#howard.functions.commons.set_param">set_param()</a></code> function represents the specific
+argument that you want to set in the <code>param</code> dictionary. It is the key that will be used to store
+the value in the dictionary
+:type argument: str
+:param section: The <code>section</code> parameter in the <code><a title="howard.functions.commons.set_param" href="#howard.functions.commons.set_param">set_param()</a></code> function is used to specify a section
+within the <code>param</code> dictionary where the argument value should be stored. If a <code>section</code> is provided,
+the argument value will be stored under that section in the <code>param</code> dictionary. If no `section
+:type section: str
+:return: the updated <code>param</code> dictionary after setting the specified argument value based on the
+conditions provided in the function.</p></div>
+</dd>
+<dt id="howard.functions.commons.split_interval"><code class="name flex">
+<span>def <span class="ident">split_interval</span></span>(<span>start: int, end: int, step: int = None, ncuts: int = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>It takes a start and end value, and either a step size or a number of cuts, and returns a list of
+values that split the interval into equal-sized pieces</p>
+<p>:param start: the start of the interval
+:param end: the end of the interval
+:param step: the step size between each cut
+:param ncuts: number of cuts to make
+:return: A list of numbers.</p></div>
+</dd>
+<dt id="howard.functions.commons.time_limit"><code class="name flex">
+<span>def <span class="ident">time_limit</span></span>(<span>seconds)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="howard.functions.commons.transcripts_file_to_df"><code class="name flex">
+<span>def <span class="ident">transcripts_file_to_df</span></span>(<span>transcripts_file: str) ‑> pandas.core.frame.DataFrame</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function reads a transcripts file into a pandas DataFrame, filtering out comment lines.</p>
+<p>:param transcripts_file: The <code>transcripts_file</code> parameter is a string that represents the file path
+to a file containing transcript information. This function is designed to read the contents of this
+file and convert it into a pandas DataFrame. The file is expected to be tab-separated with two
+columns: "transcript" and "gene
+:type transcripts_file: str
+:return: The function <code><a title="howard.functions.commons.transcripts_file_to_df" href="#howard.functions.commons.transcripts_file_to_df">transcripts_file_to_df()</a></code> returns a pandas DataFrame containing transcript and
+gene information read from a specified file. The function processes the file by filtering out
+comment lines and then returns the resulting DataFrame.</p></div>
+</dd>
+<dt id="howard.functions.commons.trio"><code class="name flex">
+<span>def <span class="ident">trio</span></span>(<span>df, samples: list = [])</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function trio(df, samples:list = []) determines the type of variant (denovo, dominant, or
+recessive) in a trio based on the barcode generated from the samples.</p>
+<p>:param df: The input dataframe containing genetic variant information
+:param samples: A list of sample IDs to be used in the analysis
+:type samples: list
+:return: The function <code><a title="howard.functions.commons.trio" href="#howard.functions.commons.trio">trio()</a></code> returns a string that represents the type of variant in a trio
+analysis, which can be "denovo", "dominant", "recessive", or "unknown".</p></div>
+</dd>
+<dt id="howard.functions.commons.vaf_normalization"><code class="name flex">
+<span>def <span class="ident">vaf_normalization</span></span>(<span>row, sample: str) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function takes in a row of data and a sample name, extracts the genotype information for that
+sample, calculates the variant allele frequency (VAF) from the genotype information, and adds the
+VAF to the genotype information before returning it.</p>
+<p>:param row: The input row of a pandas DataFrame containing information about a genetic variant
+:param sample: The parameter "sample" is a string representing the name of the sample for which we
+want to calculate the VAF (Variant Allele Frequency). It is used to extract the genotype information
+for that particular sample from the input row
+:type sample: str
+:return: a string that represents the genotype information for a given sample with an added "VAF"
+field that represents the variant allele frequency.</p></div>
+</dd>
+<dt id="howard.functions.commons.whereis_bin"><code class="name flex">
+<span>def <span class="ident">whereis_bin</span></span>(<span>bin_file: str) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="howard.functions.commons.RawTextArgumentDefaultsHelpFormatter"><code class="flex name class">
+<span>class <span class="ident">RawTextArgumentDefaultsHelpFormatter</span></span>
+<span>(</span><span>prog, indent_increment=2, max_help_position=24, width=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Help message formatter which adds default values to argument help.</p>
+<p>Only the name of this class is considered a public API. All the methods
+provided by the class are considered an implementation detail.</p></div>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>argparse.ArgumentDefaultsHelpFormatter</li>
+<li>argparse.RawTextHelpFormatter</li>
+<li>argparse.RawDescriptionHelpFormatter</li>
+<li>argparse.HelpFormatter</li>
+</ul>
+</dd>
+<dt id="howard.functions.commons.TimeoutException"><code class="flex name class">
+<span>class <span class="ident">TimeoutException</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Common base class for all non-exit exceptions.</p></div>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.Exception</li>
+<li>builtins.BaseException</li>
+</ul>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="howard.functions.commons.add_value_into_dict" href="#howard.functions.commons.add_value_into_dict">add_value_into_dict</a></code></li>
+<li><code><a title="howard.functions.commons.barcode" href="#howard.functions.commons.barcode">barcode</a></code></li>
+<li><code><a title="howard.functions.commons.bed_sort" href="#howard.functions.commons.bed_sort">bed_sort</a></code></li>
+<li><code><a title="howard.functions.commons.command" href="#howard.functions.commons.command">command</a></code></li>
+<li><code><a title="howard.functions.commons.compress_file" href="#howard.functions.commons.compress_file">compress_file</a></code></li>
+<li><code><a title="howard.functions.commons.concat_and_compress_files" href="#howard.functions.commons.concat_and_compress_files">concat_and_compress_files</a></code></li>
+<li><code><a title="howard.functions.commons.concat_file" href="#howard.functions.commons.concat_file">concat_file</a></code></li>
+<li><code><a title="howard.functions.commons.concat_into_infile" href="#howard.functions.commons.concat_into_infile">concat_into_infile</a></code></li>
+<li><code><a title="howard.functions.commons.create_where_clause" href="#howard.functions.commons.create_where_clause">create_where_clause</a></code></li>
+<li><code><a title="howard.functions.commons.download_file" href="#howard.functions.commons.download_file">download_file</a></code></li>
+<li><code><a title="howard.functions.commons.duckdb_execute" href="#howard.functions.commons.duckdb_execute">duckdb_execute</a></code></li>
+<li><code><a title="howard.functions.commons.example_function" href="#howard.functions.commons.example_function">example_function</a></code></li>
+<li><code><a title="howard.functions.commons.extract_file" href="#howard.functions.commons.extract_file">extract_file</a></code></li>
+<li><code><a title="howard.functions.commons.extract_float_from_str" href="#howard.functions.commons.extract_float_from_str">extract_float_from_str</a></code></li>
+<li><code><a title="howard.functions.commons.extract_memory_in_go" href="#howard.functions.commons.extract_memory_in_go">extract_memory_in_go</a></code></li>
+<li><code><a title="howard.functions.commons.extract_snpeff_hgvs" href="#howard.functions.commons.extract_snpeff_hgvs">extract_snpeff_hgvs</a></code></li>
+<li><code><a title="howard.functions.commons.find" href="#howard.functions.commons.find">find</a></code></li>
+<li><code><a title="howard.functions.commons.find_all" href="#howard.functions.commons.find_all">find_all</a></code></li>
+<li><code><a title="howard.functions.commons.find_file_prefix" href="#howard.functions.commons.find_file_prefix">find_file_prefix</a></code></li>
+<li><code><a title="howard.functions.commons.find_genome" href="#howard.functions.commons.find_genome">find_genome</a></code></li>
+<li><code><a title="howard.functions.commons.find_nomen" href="#howard.functions.commons.find_nomen">find_nomen</a></code></li>
+<li><code><a title="howard.functions.commons.findbypipeline" href="#howard.functions.commons.findbypipeline">findbypipeline</a></code></li>
+<li><code><a title="howard.functions.commons.format_arg_help" href="#howard.functions.commons.format_arg_help">format_arg_help</a></code></li>
+<li><code><a title="howard.functions.commons.full_path" href="#howard.functions.commons.full_path">full_path</a></code></li>
+<li><code><a title="howard.functions.commons.genome_build_switch" href="#howard.functions.commons.genome_build_switch">genome_build_switch</a></code></li>
+<li><code><a title="howard.functions.commons.genotype_barcode" href="#howard.functions.commons.genotype_barcode">genotype_barcode</a></code></li>
+<li><code><a title="howard.functions.commons.genotype_compression" href="#howard.functions.commons.genotype_compression">genotype_compression</a></code></li>
+<li><code><a title="howard.functions.commons.genotype_stats" href="#howard.functions.commons.genotype_stats">genotype_stats</a></code></li>
+<li><code><a title="howard.functions.commons.genotypeconcordance" href="#howard.functions.commons.genotypeconcordance">genotypeconcordance</a></code></li>
+<li><code><a title="howard.functions.commons.get_argument" href="#howard.functions.commons.get_argument">get_argument</a></code></li>
+<li><code><a title="howard.functions.commons.get_argument_gooey" href="#howard.functions.commons.get_argument_gooey">get_argument_gooey</a></code></li>
+<li><code><a title="howard.functions.commons.get_argument_to_mk" href="#howard.functions.commons.get_argument_to_mk">get_argument_to_mk</a></code></li>
+<li><code><a title="howard.functions.commons.get_bin" href="#howard.functions.commons.get_bin">get_bin</a></code></li>
+<li><code><a title="howard.functions.commons.get_bin_command" href="#howard.functions.commons.get_bin_command">get_bin_command</a></code></li>
+<li><code><a title="howard.functions.commons.get_compression_type" href="#howard.functions.commons.get_compression_type">get_compression_type</a></code></li>
+<li><code><a title="howard.functions.commons.get_default_argument" href="#howard.functions.commons.get_default_argument">get_default_argument</a></code></li>
+<li><code><a title="howard.functions.commons.get_duckdb_extension_file" href="#howard.functions.commons.get_duckdb_extension_file">get_duckdb_extension_file</a></code></li>
+<li><code><a title="howard.functions.commons.get_file_compressed" href="#howard.functions.commons.get_file_compressed">get_file_compressed</a></code></li>
+<li><code><a title="howard.functions.commons.get_file_format" href="#howard.functions.commons.get_file_format">get_file_format</a></code></li>
+<li><code><a title="howard.functions.commons.get_index" href="#howard.functions.commons.get_index">get_index</a></code></li>
+<li><code><a title="howard.functions.commons.get_memory" href="#howard.functions.commons.get_memory">get_memory</a></code></li>
+<li><code><a title="howard.functions.commons.get_plateform_name_from_duckdb" href="#howard.functions.commons.get_plateform_name_from_duckdb">get_plateform_name_from_duckdb</a></code></li>
+<li><code><a title="howard.functions.commons.get_random" href="#howard.functions.commons.get_random">get_random</a></code></li>
+<li><code><a title="howard.functions.commons.get_threads" href="#howard.functions.commons.get_threads">get_threads</a></code></li>
+<li><code><a title="howard.functions.commons.get_tmp" href="#howard.functions.commons.get_tmp">get_tmp</a></code></li>
+<li><code><a title="howard.functions.commons.help_generation" href="#howard.functions.commons.help_generation">help_generation</a></code></li>
+<li><code><a title="howard.functions.commons.help_generation_from_dict" href="#howard.functions.commons.help_generation_from_dict">help_generation_from_dict</a></code></li>
+<li><code><a title="howard.functions.commons.help_generation_from_json" href="#howard.functions.commons.help_generation_from_json">help_generation_from_json</a></code></li>
+<li><code><a title="howard.functions.commons.identical" href="#howard.functions.commons.identical">identical</a></code></li>
+<li><code><a title="howard.functions.commons.load_args" href="#howard.functions.commons.load_args">load_args</a></code></li>
+<li><code><a title="howard.functions.commons.load_config_args" href="#howard.functions.commons.load_config_args">load_config_args</a></code></li>
+<li><code><a title="howard.functions.commons.load_duckdb_extension" href="#howard.functions.commons.load_duckdb_extension">load_duckdb_extension</a></code></li>
+<li><code><a title="howard.functions.commons.load_param" href="#howard.functions.commons.load_param">load_param</a></code></li>
+<li><code><a title="howard.functions.commons.merge_regions" href="#howard.functions.commons.merge_regions">merge_regions</a></code></li>
+<li><code><a title="howard.functions.commons.remove_if_exists" href="#howard.functions.commons.remove_if_exists">remove_if_exists</a></code></li>
+<li><code><a title="howard.functions.commons.run_parallel_commands" href="#howard.functions.commons.run_parallel_commands">run_parallel_commands</a></code></li>
+<li><code><a title="howard.functions.commons.run_parallel_functions" href="#howard.functions.commons.run_parallel_functions">run_parallel_functions</a></code></li>
+<li><code><a title="howard.functions.commons.set_log_level" href="#howard.functions.commons.set_log_level">set_log_level</a></code></li>
+<li><code><a title="howard.functions.commons.set_param" href="#howard.functions.commons.set_param">set_param</a></code></li>
+<li><code><a title="howard.functions.commons.split_interval" href="#howard.functions.commons.split_interval">split_interval</a></code></li>
+<li><code><a title="howard.functions.commons.time_limit" href="#howard.functions.commons.time_limit">time_limit</a></code></li>
+<li><code><a title="howard.functions.commons.transcripts_file_to_df" href="#howard.functions.commons.transcripts_file_to_df">transcripts_file_to_df</a></code></li>
+<li><code><a title="howard.functions.commons.trio" href="#howard.functions.commons.trio">trio</a></code></li>
+<li><code><a title="howard.functions.commons.vaf_normalization" href="#howard.functions.commons.vaf_normalization">vaf_normalization</a></code></li>
+<li><code><a title="howard.functions.commons.whereis_bin" href="#howard.functions.commons.whereis_bin">whereis_bin</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="howard.functions.commons.RawTextArgumentDefaultsHelpFormatter" href="#howard.functions.commons.RawTextArgumentDefaultsHelpFormatter">RawTextArgumentDefaultsHelpFormatter</a></code></h4>
+</li>
+<li>
+<h4><code><a title="howard.functions.commons.TimeoutException" href="#howard.functions.commons.TimeoutException">TimeoutException</a></code></h4>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>

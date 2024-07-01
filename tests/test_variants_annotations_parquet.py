@@ -276,11 +276,15 @@ def test_annotations_parquet_no_samples():
 
         # Construct param dict
         param_annotations = {
-            annotation1: {"INFO": None},
-            annotation2: {"CLNSIG": "CLNSIG_new"},
-            annotation3: {"symbol": "gene"},
+            "parquet": {
+                "annotations": {
+                    annotation1: {"INFO": None},
+                    annotation2: {"CLNSIG": "CLNSIG_new"},
+                    annotation3: {"symbol": "gene"},
+                }
+            }
         }
-        param = {"annotations": param_annotations}
+        param = {"annotation": param_annotations}
 
         # Create object
         variants = Variants(
@@ -296,7 +300,6 @@ def test_annotations_parquet_no_samples():
         # check param
         param_input = variants.get_param()
         expected_param = {
-            "annotations": param_annotations,
             "annotation": {
                 "parquet": {
                     "annotations": {
@@ -308,7 +311,7 @@ def test_annotations_parquet_no_samples():
             },
         }
 
-        assert param_input == expected_param
+        assert param_input.get("annotation") == expected_param.get("annotation")
 
         result = variants.get_query_to_df("SELECT * FROM variants")
         assert len(result) == 10

@@ -26,6 +26,8 @@ HOWARD Parameters JSON file defines parameters to process annotations, calculati
          - [options](#annotationsnpeffoptions)
          - [stats](#annotationsnpeffstats)
          - [csvStats](#annotationsnpeffcsvstats)
+      - [snpsift](#annotationsnpsift)
+         - [annotations](#annotationsnpsiftannotations)
       - [exomiser](#annotationexomiser)
          - [release](#annotationexomiserrelease)
       - [options](#annotationoptions)
@@ -343,9 +345,7 @@ Examples:
       }
    }
    "snpeff": {
-      "options": {
-         " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "}
-      }
+      "options": " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "
    }
    "exomiser": {
       "release": "2109",
@@ -462,8 +462,8 @@ Examples:
 "parquet": {
    "bcftools": {
       "/path/to/database1.vcf.gz": {
-         "field1": null
-         "field2": "field2_renamed",
+         "field1": null,
+         "field2": "field2_renamed"
       },
       "database2.bed.gz": {
          "INFO": null
@@ -591,9 +591,7 @@ Examples:
 
 ```json
 "snpeff": {
-   "options": {
-      " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "
-   }
+   "options": " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "
 }
 ```
 
@@ -647,6 +645,71 @@ Examples:
 
 ```json
 "csvStats": "OUTPUT.csv"
+```
+
+### annotation::snpsift
+
+Annotation process using snpSift. Provide a list of database files and annotation fields.
+
+Examples: 
+
+> Annotation with multiple databases in multiple formats
+
+```json
+"parquet": {
+   "snpsift": {
+      "/path/to/database1.vcf.gz": {
+         "field1": null,
+         "field2": null
+      },
+      "/path/to/database2.vcf.gz": {
+         "field1": null,
+         "field2": null
+      }
+   }
+}
+```
+
+#### annotation::snpsift::annotations
+
+Specify the list of database files in formats VCF. Files need to be compressed and indexed.
+
+This parameter enables users to select specific database fields and optionally rename them (e.g. '"field": null' to keep field name, '"field": "new_name"' to rename field). Use 'INFO' or 'ALL' keyword to select all fields within the database INFO/Tags header (e.g. '"INFO": null', '"ALL": null').
+
+
+If a full path is not provided, the system will automatically detect files within database folders (see Configuration doc) and assembly (see Parameter option).
+
+Examples: 
+
+> Annotation with dbSNP database  with all fields
+
+```json
+"annotations": {
+   "tests/databases/annotations/current/hg19/avsnp150.vcf.gz": {
+      "INFO": null
+   }
+}
+```
+> Annotation with dbNSFP (only PolyPhen, ClinVar and REVEL score)
+
+```json
+"annotations": {
+   "tests/databases/annotations/current/hg19/dbnsfp42a.vcf.gz": {
+      "Polyphen2_HDIV_pred": "PolyPhen",
+      "ClinPred_pred": "ClinVar",
+      "REVEL_score": null
+   }
+}
+```
+> Annotation with dbNSFP REVEL annotation (as a VCF file) within configured annotation databases folders (default: '~/howard/databases/annotations/current') and assembly (default: 'hg19')
+
+```json
+"annotations": {
+   "dbnsfp42a.REVEL.vcf.gz": {
+      "REVEL_score": null,
+      "REVEL_rankscore": null
+   }
+}
 ```
 
 ### annotation::exomiser
@@ -721,7 +784,7 @@ Examples:
 
 ## calculation
 
-Calculation process operations that are defiend in a Calculation Configuration JSON file. List available calculation operations with possible options (see [Calculation JSON file](help.config.calculation.md) help).
+Calculation process operations that are defiend in a Calculation Configuration JSON file. List available calculation operations with possible options (see [Calculation JSON file](help.calculation.md) help).
 
 Examples: 
 
@@ -744,7 +807,7 @@ Examples:
 
 ### calculation::calculations
 
-List of operations to process with possible options (see [Calculation JSON file](help.config.calculation.md) help).
+List of operations to process with possible options (see [Calculation JSON file](help.calculation.md) help).
 
 Examples: 
 

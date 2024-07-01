@@ -2070,7 +2070,7 @@ class Database:
             if "FORMAT" not in df.columns or column not in df.columns:
                 return False
             query_format = f"""
-                AND (len(string_split(FORMAT, ':')) = len(string_split("{column}", ':')) OR "{column}" == './.')
+                AND (len(string_split(CAST("FORMAT" AS VARCHAR), ':')) = len(string_split(CAST("{column}" AS VARCHAR), ':')) OR "{column}" == './.')
             """
         else:
             query_format = ""
@@ -2088,7 +2088,7 @@ class Database:
             SELECT  *
             FROM df_downsampling
             WHERE (
-                regexp_matches("{column}", '^[0-9.]([/|][0-9.])+')
+                regexp_matches(CAST("{column}" AS VARCHAR), '^[0-9.]([/|][0-9.])+')
                 {query_format}
                 )
         """
@@ -2247,16 +2247,23 @@ class Database:
             else:
                 database_type = self.get_type(database=database, sql_query=query)
 
+            # database object
+            # If database is string, then create database conn
+            if isinstance(database, str):
+                database_conn = Database(database=database).get_conn()
+            else:
+                database_conn = database
+
             # Existing columns
             existing_columns = self.get_columns(
-                database=database,
-                table=self.get_database_table(database),
+                database=database_conn,
+                table=self.get_database_table(database=database),
                 sql_query=query,
             )
 
             # Extra columns
             extra_columns = self.get_extra_columns(
-                database=database, database_type=output_type, sql_query=query
+                database=database_conn, database_type=output_type, sql_query=query
             )
 
             # Needed columns
@@ -2302,7 +2309,7 @@ class Database:
 
             # VCF
             if output_type in ["vcf"]:
-                if not self.is_vcf(database=database, sql_query=query):
+                if not self.is_vcf(database=database_conn, sql_query=query):
                     extra_columns = []
                 else:
                     extra_columns = existing_columns_header

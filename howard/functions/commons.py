@@ -2151,7 +2151,14 @@ def load_duckdb_extension(
                     f"INSTALL '{duckdb_extension_file}'; LOAD {extension_name}; "
                 )
             else:
-                loaded = False
+                try:
+                    with time_limit(60):
+                        # Try loading extension by name
+                        conn.query(
+                            f"INSTALL '{extension_name}'; LOAD {extension_name}; "
+                        )
+                except:
+                    loaded = False
         except:
             try:
                 with time_limit(60):

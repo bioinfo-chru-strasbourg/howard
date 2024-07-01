@@ -394,7 +394,7 @@ code {
   </script>
 <h1 id="howard-user-guide">HOWARD User Guide</h1>
 <p><img src="../images/icon.png" alt="HOWARD Graphical User Interface" title="HOWARD Graphical User Interface"></p>
-<p>Highly Open and Valuable tool for Variant Annotation &amp; Ranking toward genetic Discovery</p>
+<p>Highly Open Workflow for Annotation &amp; Ranking toward genomic variant Discovery</p>
 <p>HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations, translates files in multiple formats (e.g. vcf, tsv, parquet) and generates variants statistics.</p>
 <p>HOWARD annotation is mainly based on a build-in Parquet annotation method, and external tools such as BCFTOOLS, ANNOVAR, snpEff and Exomiser (see docs, automatically downloaded if needed). Parquet annotation uses annotation database in VCF or BED format, in mutliple file format: Parquet/duckdb, VCF, BED, TSV, CSV, TBL, JSON.</p>
 <p>HOWARD calculation processes variants information to calculate new information, such as: harmonizes allele frequency (VAF), extracts Nomen (transcript, cNomen, pNomen...) from HGVS fields with an optional list of personalized transcripts, generates VaRank format barcode.</p>
@@ -557,6 +557,7 @@ code {
     <span class="hljs-attr">"bgzip"</span>: <span class="hljs-string">"bgzip"</span>,
     <span class="hljs-attr">"java"</span>: <span class="hljs-string">"java"</span>,
     <span class="hljs-attr">"snpeff"</span>: <span class="hljs-string">"~/howard/tools/snpeff/current/bin/snpEff.jar"</span>,
+    <span class="hljs-attr">"snpsift"</span>: <span class="hljs-string">"~/howard/tools/snpeff/current/bin/SnpSift.jar"</span>,
     <span class="hljs-attr">"annovar"</span>: <span class="hljs-string">"~/howard/tools/annovar/current/bin/table_annovar.pl"</span>,
     <span class="hljs-attr">"exomiser"</span>: <span class="hljs-string">"~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar"</span>
   }
@@ -784,6 +785,13 @@ coverage run -m pytest . -x -v --log-cli-level=DEBUG --capture=tee-sys
     },
     <span class="hljs-attr">"snpeff"</span>: {
       <span class="hljs-attr">"options"</span>: <span class="hljs-string">"-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "</span>
+    },
+    <span class="hljs-attr">"snpsift"</span>: {
+      <span class="hljs-attr">"annotations"</span>: {
+        <span class="hljs-attr">"tests/databases/annotations/current/hg19/cosmic70.vcf.gz"</span>: {
+          <span class="hljs-attr">"INFO"</span>: <span class="hljs-literal">null</span>
+        }
+      }
     },
     <span class="hljs-attr">"annovar"</span>: {
       <span class="hljs-attr">"annotations"</span>: {
@@ -1329,7 +1337,7 @@ howard annotation \
 </div></code></pre>
 </blockquote>
 <h5 id="snpeff-annotation">snpEff annotation</h5>
-<p>For snpEff tool, use HOWARD keyword <code>snpeff</code>. No options are available for quick annotation with snpEff, see <a href="help.param.md#snpeff">HOWARD Parameters JSON - snpEff</a> for more options.</p>
+<p>For snpEff tool, use HOWARD keyword <code>snpeff</code>. Options are available for quick annotation with snpEff, see <a href="help.param.md#snpeff">HOWARD Parameters JSON - snpEff</a> for more options.</p>
 <blockquote>
 <p>Example: VCF annotation with snpEff</p>
 <pre class="hljs"><code><div>howard annotation \

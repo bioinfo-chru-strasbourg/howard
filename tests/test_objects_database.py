@@ -20,7 +20,17 @@ from howard.objects.database import Database
 from test_needed import *
 
 
-def test_export_order_by():
+@pytest.mark.parametrize(
+    "order_by, first_pos, first_qual, first_alt",
+    [
+        ("", 28736, 100, "C"),
+        ("QUAL DESC", 55249063, 5777, "A"),
+        ("ALT DESC, POS ASC", 69101, 100, "G"),
+        ("ALT DESC, POS", 69101, 100, "G"),
+        ("ALT DESC, POS ASC, BEDCOLUMN", 69101, 100, "G"),
+    ],
+)
+def test_export_order_by(order_by, first_pos, first_qual, first_alt):
     """
     The function tests the export functionality of a database for various input and output formats.
     """
@@ -36,53 +46,96 @@ def test_export_order_by():
 
         # Not order by
         database = Database(database=input_database)
-        database.export(output_database, order_by="")
+        database.export(output_database, order_by=order_by)
         database = Database(database=output_database)
         results = database.query(query=f"""SELECT POS, QUAL, ALT FROM variants""")
         df_first_pos = results.df()["POS"][0]
         df_first_qual = results.df()["QUAL"][0]
         df_first_alt = results.df()["ALT"][0]
-        assert df_first_pos == 28736 and df_first_qual == 100
+        assert (
+            df_first_pos == first_pos
+            and df_first_qual == first_qual
+            and df_first_alt == first_alt
+        )
 
-        # Not order by QUAL DESC
-        database = Database(database=input_database)
-        database.export(output_database, order_by="QUAL DESC")
-        database = Database(database=output_database)
-        results = database.query(query=f"""SELECT POS, QUAL, ALT FROM variants""")
-        df_first_pos = results.df()["POS"][0]
-        df_first_qual = results.df()["QUAL"][0]
-        df_first_alt = results.df()["ALT"][0]
-        assert df_first_pos == 55249063 and df_first_qual == 5777
 
-        # Not order by ALT DESC, POS ASC
-        database = Database(database=input_database)
-        database.export(output_database, order_by="ALT DESC, POS ASC")
-        database = Database(database=output_database)
-        results = database.query(query=f"""SELECT POS, QUAL, ALT FROM variants""")
-        df_first_pos = results.df()["POS"][0]
-        df_first_qual = results.df()["QUAL"][0]
-        df_first_alt = results.df()["ALT"][0]
-        assert df_first_pos == 69101 and df_first_alt == "G"
+@pytest.mark.parametrize(
+    "database_input_index, database_output_format",
+    [
+        (database_input_index, database_output_format)
+        for database_input_index in [
+            "parquet",
+            "partition_parquet",
+            "vcf",
+            "vcf_gz",
+            "partition_vcf_gz",
+            "tsv",
+            "csv",
+            "tbl",
+            "tsv_alternative_columns",
+            "tsv_variants",
+            "json",
+            "example_vcf",
+            "bed",
+        ]
+        for database_output_format in [
+            "duckdb",
+            "parquet",
+            "partition_parquet",
+            "partition_vcf",
+            "vcf",
+            "vcf.gz",
+            "tsv",
+            "csv",
+            "tbl",
+            "json",
+            "bed",
+        ]
+    ],
+)
+def test_export(database_input_index, database_output_format):
+    """
+    The function tests the export functionality of a database for various input and output formats.
+    """
 
-        # Not order by ALT DESC, POS (without ASC)
-        database = Database(database=input_database)
-        database.export(output_database, order_by="ALT DESC, POS")
-        database = Database(database=output_database)
-        results = database.query(query=f"""SELECT POS, QUAL, ALT FROM variants""")
-        df_first_pos = results.df()["POS"][0]
-        df_first_qual = results.df()["QUAL"][0]
-        df_first_alt = results.df()["ALT"][0]
-        assert df_first_pos == 69101 and df_first_alt == "G"
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
-        # Not order by ALT DESC, POS ASC BADCOLUMN
-        database = Database(database=input_database)
-        database.export(output_database, order_by="ALT DESC, POS ASC, BEDCOLUMN")
-        database = Database(database=output_database)
-        results = database.query(query=f"""SELECT POS, QUAL, ALT FROM variants""")
-        df_first_pos = results.df()["POS"][0]
-        df_first_qual = results.df()["QUAL"][0]
-        df_first_alt = results.df()["ALT"][0]
-        assert df_first_pos == 69101 and df_first_alt == "G"
+        # No database input
+        database = Database()
+        output_database = f"{tmp_dir}/output_database.no_input.parquet"
+        assert not database.export(output_database)
+
+        # database input/format
+        parquet_partitions = None
+        # specific partition_parquet
+        if database_output_format in ["partition_parquet"]:
+            database_output_format = "parquet"
+            parquet_partitions = ["#CHROM"]
+        # specific partition_parquet
+        if database_output_format in ["partition_vcf"]:
+            database_output_format = "vcf.gz"
+            parquet_partitions = ["#CHROM"]
+        input_database = database_files.get(database_input_index)
+        database = Database(database_files.get(database_input_index))
+        output_database = f"{tmp_dir}/output_database.{database_output_format}"
+        output_header = output_database + ".hdr"
+        remove_if_exists([output_database, output_header])
+
+        try:
+            assert database.export(
+                output_database=output_database,
+                output_header=output_header,
+                parquet_partitions=parquet_partitions,
+            )
+            if database.get_sql_database_attach(database=output_database):
+                database.query(
+                    query=f"""{database.get_sql_database_attach(database=output_database)}""",
+                )
+            assert database.query(
+                query=f"""{database.get_sql_database_link(database=output_database)}""",
+            )
+        except:
+            assert False
 
 
 def test_database_as_conn():
@@ -2021,76 +2074,3 @@ def test_get_needed_columns():
         )
         == regions_needed_columns_only_ALL
     )
-
-
-def test_export():
-    """
-    The function tests the export functionality of a database for various input and output formats.
-    """
-
-    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
-
-        # No database input
-        database = Database()
-        output_database = f"{tmp_dir}/output_database.no_input.parquet"
-        assert not database.export(output_database)
-
-        # database input/format
-        for database_input_index in [
-            "parquet",
-            "partition_parquet",
-            "vcf",
-            "vcf_gz",
-            "partition_vcf_gz",
-            "tsv",
-            "csv",
-            "tbl",
-            "tsv_alternative_columns",
-            "tsv_variants",
-            "json",
-            "example_vcf",
-            "bed",
-        ]:
-            for database_output_format in [
-                "duckdb",
-                "parquet",
-                "partition_parquet",
-                "partition_vcf",
-                "vcf",
-                "vcf.gz",
-                "tsv",
-                "csv",
-                "tbl",
-                "json",
-                "bed",
-            ]:
-                parquet_partitions = None
-                # specific partition_parquet
-                if database_output_format in ["partition_parquet"]:
-                    database_output_format = "parquet"
-                    parquet_partitions = ["#CHROM"]
-                # specific partition_parquet
-                if database_output_format in ["partition_vcf"]:
-                    database_output_format = "vcf.gz"
-                    parquet_partitions = ["#CHROM"]
-                input_database = database_files.get(database_input_index)
-                database = Database(database_files.get(database_input_index))
-                output_database = f"{tmp_dir}/output_database.{database_output_format}"
-                output_header = output_database + ".hdr"
-                remove_if_exists([output_database, output_header])
-
-                try:
-                    assert database.export(
-                        output_database=output_database,
-                        output_header=output_header,
-                        parquet_partitions=parquet_partitions,
-                    )
-                    if database.get_sql_database_attach(database=output_database):
-                        database.query(
-                            query=f"""{database.get_sql_database_attach(database=output_database)}""",
-                        )
-                    assert database.query(
-                        query=f"""{database.get_sql_database_link(database=output_database)}""",
-                    )
-                except:
-                    assert False

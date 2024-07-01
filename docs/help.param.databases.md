@@ -96,7 +96,7 @@ HOWARD Parameters JSON file defines parameters for databases' downloads.
 Examples: 
 > Example of simple databases parameters JSON file for downloads
 
-```json
+```
 "databases": {
       "genomes": {
           "download_genomes": "~/howard/databases/genomes/current",
@@ -135,7 +135,7 @@ Examples:
 ```
 > Example of a full Databases parameters JSON file for downloads
 
-```json
+```
 "databases": {
       "genomes_folder": "~/howard/databases/genomes/current",
       "genome": "~/howard/databases/genomes/current/hg19/hg19.fa",
@@ -227,12 +227,12 @@ Default: ```hg19```
 Examples: 
 > Default assembly for all analysis tools
 
-```json
+```
 "assembly": "hg19" 
 ```
 > List of assemblies for databases download tool
 
-```json
+```
 "assembly": "hg19,hg38" 
 ```
 
@@ -786,11 +786,11 @@ Default: ```None```
 
 #### databases::from_extann::param_extann
 
-Param extann file path. Param containing configuration, options to replace chars and bedlike header description, conf vcf specs. 
+Param extann file path. Param containing configuration, options to replace chars and bedlike header description, conf vcf specs. (e.g. '~/howard/config/param.extann.json') 
 
 Type: ```Path```
 
-Default: ```~/howard/config/param.extann.json```
+Default: ```None```
 
 #### databases::from_extann::mode_extann
 

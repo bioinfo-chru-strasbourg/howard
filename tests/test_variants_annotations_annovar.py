@@ -243,7 +243,7 @@ def test_annotation_quick_annovar():
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Construct param dict
-        param = {"annotations": {f"annovar:{annotation_annovar}": None}}
+        param = {"annotations": f"annovar:{annotation_annovar}"}
 
         # Create object
         variants = Variants(

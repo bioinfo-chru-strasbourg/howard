@@ -36,7 +36,7 @@ HOWARD Configuration JSON file defined default configuration regarding resources
 Examples: 
 > Example of a configuration JSON file
 
-```json
+```
 {
   "threads": 8,
   "memory": null,
@@ -87,7 +87,7 @@ Examples:
 
 > Example of a configuration for databases folders
 
-```json
+```
 "databases": {
    "genomes": "~/howard/databases/genomes/current",
    "annotations": [
@@ -121,7 +121,7 @@ Examples:
 
 > Path to genomes folder
 
-```json
+```
 "genomes": "~/howard/databases/genomes/current"
 ```
 
@@ -139,14 +139,14 @@ Examples:
 
 > Uniq folder with multiple annotations for Parquet annotation method, or other External tools
 
-```json
+```
 "annotations": [
    "~/howard/databases/annotations/current"
 ]
 ```
 > Combinason of 2 folders with multiple annotations for Parquet annotation method, or other External tools
 
-```json
+```
 "annotations": [
    "~/howard/databases/annotations/current",
    "~/howard/databases/dejavu/current",
@@ -166,14 +166,14 @@ Examples:
 
 > Uniq folder with multiple annotations for Parquet annotation method
 
-```json
+```
 "annotations": [
    "~/howard/databases/annotations/current"
 ]
 ```
 > Combinason of 2 folders with multiple annotations for Parquet annotation method
 
-```json
+```
 "annotations": [
    "~/howard/databases/annotations/current",
    "~/howard/databases/dejavu/current",
@@ -193,14 +193,14 @@ Examples:
 
 > Uniq folder with multiple VCF and BED files for BCFTools annotation
 
-```json
+```
 "bcftools": [
    "~/howard/databases/bcftools/current"
 ]
 ```
 > Combinason of 2 folders with multiple VCF and BED files for BCFTools annotation
 
-```json
+```
 "bcftools": [
    "~/howard/databases/bcftools/current",
    "~/howard/databases/dejavu/current"
@@ -219,14 +219,14 @@ Examples:
 
 > Uniq folder with multiple Annovar TXT files for Annovar annotation
 
-```json
+```
 "annovar": [
    "~/howard/databases/annovar/current/"
 ]
 ```
 > Combinason of 2 folders with multiple Annovar TXT files for Annovar annotation
 
-```json
+```
 "annovar": [
    "~/howard/databases/annovar/current/",
    "~/howard/databases/annovar/homemade/"
@@ -245,7 +245,7 @@ Examples:
 
 > Path to snpEff database folder
 
-```json
+```
 "snpeff": "~/howard/databases/snpeff/current/"
 ```
 
@@ -261,7 +261,7 @@ Examples:
 
 > Path to Exomiser database folder
 
-```json
+```
 "exomiser": "~/howard/databases/exomiser/current/"
 ```
 
@@ -277,7 +277,7 @@ Examples:
 
 > Path to refSeq files folder
 
-```json
+```
 "refseq": "~/howard/databases/refseq/current/"
 ```
 
@@ -289,7 +289,7 @@ Examples:
 
 > Example of a configuration for tools, with env $PATH, full path and path with type
 
-```json
+```
 "tools": {
    "bcftools": "bcftools",
    "bgzip": "bgzip",
@@ -301,11 +301,11 @@ Examples:
 ```
 > Example of a configuration for bcftools with a docker image (example with howard docker image)
 
-```json
+```
 "tools": {
    "bcftools": {
       "docker": {
-        "image": "howard:1.0.0",
+        "image": "howard:0.10.0",
         "entrypoint": "bcftools",
         "options": null,
         "command": null
@@ -324,12 +324,12 @@ Examples:
 
 > Path to binary in $PATH env variable
 
-```json
+```
 "bcftools": "bcftools"
 ```
 > Path to binary as a dict with binary type 'bin'
 
-```json
+```
 "bcftools": {"bin": "~/howard/tools/bcftools/current/bin/bcftools"}
 ```
 
@@ -343,12 +343,12 @@ Examples:
 
 > Path to binary in $PATH env variable
 
-```json
+```
 "bgzip": "bgzip"
 ```
 > Path to binary as a dict with binary type 'bin'
 
-```json
+```
 "bgzip": {"bin": "~/howard/tools/htslib/current/bin/bgzip"}
 ```
 
@@ -362,12 +362,12 @@ Examples:
 
 > Path to binary in $PATH env variable
 
-```json
+```
 "java": "java"
 ```
 > Path to binary as a dict with binary type 'bin'
 
-```json
+```
 "java": {"bin": "/usr/bin/java"}
 ```
 
@@ -381,12 +381,12 @@ Examples:
 
 > Path to binary as a dict without binary type
 
-```json
+```
 "snpeff": "~/howard/tools/snpeff/current/bin/snpEff.jar"
 ```
 > Path to binary as a dict with binary type 'jar'
 
-```json
+```
 "snpeff": {"jar": "~/howard/tools/snpeff/current/bin/snpEff.jar"}
 ```
 
@@ -400,12 +400,12 @@ Examples:
 
 > Path to binary as a dict without binary type
 
-```json
+```
 "annovar": "~/howard/tools/annovar/current/bin/table_annovar.pl"
 ```
 > Path to binary as a dict with binary type 'perl'
 
-```json
+```
 "annovar": {"jar": "~/howard/tools/annovar/current/bin/table_annovar.pl"}
 ```
 
@@ -419,12 +419,12 @@ Examples:
 
 > Path to binary as a dict without binary type
 
-```json
+```
 "snpeff": "~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar"
 ```
 > Path to binary as a dict with binary type 'jar'
 
-```json
+```
 "snpeff": {"jar": "~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar"}
 ```
 
@@ -439,12 +439,12 @@ Default: ```-1```
 Examples: 
 > Automatically detect all available CPU/cores
 
-```json
+```
 "threads": -1
 ```
 > Define 8 CPU/cores
 
-```json
+```
 "threads": 8
 ```
 
@@ -461,12 +461,12 @@ Default: ```None```
 Examples: 
 > Automatically detect all available CPU/cores
 
-```json
+```
 "threads": -1
 ```
 > Define 8 CPU/cores
 
-```json
+```
 "threads": 8
 ```
 
@@ -481,12 +481,12 @@ Default: ```hg19```
 Examples: 
 > Default assembly for all analysis tools
 
-```json
+```
 "assembly": "hg19" 
 ```
 > List of assemblies for databases download tool
 
-```json
+```
 "assembly": "hg19,hg38" 
 ```
 
@@ -515,17 +515,17 @@ Default: ```INFO```
 Examples: 
 > Default verbosity
 
-```json
+```
 "verbosity": "INFO"
 ```
 > ERROR level (quiet mode)
 
-```json
+```
 "verbosity": "ERROR"
 ```
 > For debug
 
-```json
+```
 "verbosity": "DEBUG"
 ```
 
@@ -540,17 +540,17 @@ Default: ```None```
 Examples: 
 > System temporary folder
 
-```json
+```
 "tmp": "/tmp"
 ```
 > HOWARD work directory
 
-```json
+```
 "tmp": "~/howard/tmp"
 ```
 > Current work directory
 
-```json
+```
 "tmp": ".tmp"
 ```
 
@@ -567,12 +567,12 @@ Default: ```RW```
 Examples: 
 > Read and Write mode
 
-```json
+```
 "access": "RW"
 ```
 > Read only mode
 
-```json
+```
 "access": "RO"
 ```
 
@@ -587,12 +587,12 @@ Default: ```None```
 Examples: 
 > DuckDB settings JSON file
 
-```json
+```
 "duckdb_settings": "/path/to/duckdb_config.json"
 ```
 > JSON string for Time zone, temporary directory and threads for duckDB
 
-```json
+```
 "duckdb_settings": {
    "TimeZone": "GMT",
    "temp_directory": "/tmp/duckdb",
@@ -611,12 +611,12 @@ Default: ```1000000```
 Examples: 
 > Chunk size of 1.000.000 by default
 
-```json
+```
 "chunk_size": 1000000
 ```
 > Smaller chunk size to reduce Parquet file size and memory usage
 
-```json
+```
 "chunk_size": 100000
 ```
 
@@ -631,17 +631,17 @@ Default: ```None```
 Examples: 
 > Relative path to log file
 
-```json
+```
 "log": "my.log"
 ```
 > HOWARD work directory
 
-```json
+```
 "log": "~/howard/log"
 ```
 > Full path to log file
 
-```json
+```
 "log": "/tmp/my.log"
 ```
 

@@ -1,0 +1,969 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>howard.objects.database API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>howard.objects.database</code></h1>
+</header>
+<section id="section-intro">
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="howard.objects.database.Database"><code class="flex name class">
+<span>class <span class="ident">Database</span></span>
+<span>(</span><span>database: str = None, format: str = None, header: str = None, header_file: str = None, databases_folders: list = None, assembly: str = None, conn=None, conn_config: dict = {}, table: str = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This is an initialization function for a class that sets up a database and header file for use
+in a DuckDB connection.</p>
+<p>:param database: A string representing the name of the database to be used. If None, the default
+database will be used
+:type database: str
+:param format: The <code>format</code> parameter is not described in the docstring, so it is unclear what
+it represents
+:type format: str
+:param header: The <code>header</code> parameter is a string that represents the name of the header file
+that contains the column names for the database. It is used in conjunction with the <code>database</code>
+parameter to set the header for the database. If the <code>header</code> parameter is not provided, the
+header will be set to
+:type header: str
+:param header_file: The <code>header_file</code> parameter is a string that represents the file path to the
+header file that contains the column names for the database. It is used in the <code>set_header()</code>
+method to set the header attribute of the class
+:type header_file: str
+:param databases_folders: A list of folders where the database files are located. This parameter
+is used in the <code>set_database()</code> method to search for the database file in the specified folders.
+If the database file is not found in any of the folders, an error is raised
+:type databases_folders: list
+:param assembly: A string representing the name of the assembly to be used. It is used in
+conjunction with the <code>set_assembly()</code> method to set the assembly for the DuckDB connection. If
+the <code>assembly</code> parameter is not provided, the default assembly will be used
+:type assembly: str
+:param conn: An optional parameter that represents an existing DuckDBPyConnection object. If
+provided, the class will use this connection instead of creating a new one. If not provided, a
+new connection will be created
+:param conn_config: An optional parameter for DuckDBPyConnection object config (see duckdb.connect)
+:param table: The <code>table</code> parameter is a string representing the name of the table in the
+database that will be used in the DuckDB connection. It is used in the <code>set_table()</code> method to
+set the table attribute of the class. If the <code>table</code> parameter is not provided, the default
+table will
+:type table: str</p></div>
+<h3>Methods</h3>
+<dl>
+<dt id="howard.objects.database.Database.create_view"><code class="name flex">
+<span>def <span class="ident">create_view</span></span>(<span>self, database: str = None, view_name: str = 'variants') ‑> Optional[str]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>create_view</code> function creates a view in a specified database or the default database, using
+a SQL database link.</p>
+<p>:param database: The <code>database</code> parameter is a string that represents the name of the database.
+If no value is provided, it will use the value returned by the <code>get_database()</code> method
+:type database: str
+:param view_name: The <code>view_name</code> parameter is a string that specifies the name of the view that
+will be created in the database, defaults to variants
+:type view_name: str (optional)
+:return: the name of the created view.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.exists"><code class="name flex">
+<span>def <span class="ident">exists</span></span>(<span>self, database: str = None) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function checks if a database exists in the specified path or in the default path.</p>
+<p>:param database: The <code>database</code> parameter is a string that represents the name or path of a
+database file. If it is not provided, the method will call the <code>get_database()</code> method to
+retrieve the default database name/path
+:type database: str
+:return: a boolean value indicating whether the specified database exists or not. If the
+<code>database</code> parameter is not provided, it gets the current database using the <code>get_database()</code>
+method and checks if it exists using the <code>os.path.exists()</code> function.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.export"><code class="name flex">
+<span>def <span class="ident">export</span></span>(<span>self, output_database: str, output_header: str = None, header_in_output: bool = True, database: str = None, table: str = 'variants', parquet_partitions: list = None, threads: int = 1, sort: bool = False, index: bool = False, existing_columns_header: list = [], order_by: str = '', query: str = None, compression_type: str = None, chunk_size: int = 1000000, export_mode: str = 'pyarrow', compresslevel: int = 6, export_header: bool = True) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>export</code> function exports data from a database to a specified output format, compresses it
+if necessary, and returns a boolean value indicating whether the export was successful or not.</p>
+<p>:param output_database: The <code>output_database</code> parameter is a string that represents the path and
+filename of the output file to be exported. It specifies where the exported data will be saved
+:type output_database: str
+:param output_header: The <code>output_header</code> parameter is an optional string that represents the
+header of the output file. If it is not provided, the header will be automatically detected
+based on the output file format
+:type output_header: str
+:param header_in_output: The <code>header_in_output</code> parameter is a boolean value that determines
+whether the header should be included in the output file. If set to <code>True</code>, the header will be
+included in the output file. If set to <code>False</code>, the header will not be included in the output
+file. By default,, defaults to True
+:type header_in_output: bool (optional)
+:param database: The <code>database</code> parameter is the name of the database from which you want to
+export data. If this parameter is not provided, the function will use the <code>get_database()</code>
+method to retrieve the current database
+:type database: str
+:param table: The <code>table</code> parameter specifies the name of the table in the database from which
+the data will be exported. By default, it is set to "variants", defaults to variants
+:type table: str (optional)
+:param parquet_partitions: The <code>parquet_partitions</code> parameter is a list that specifies the
+partition columns for the Parquet output format. Each element in the list represents a partition
+column. The partitions are used to organize the data in the Parquet file based on the values of
+the specified columns
+:type parquet_partitions: list
+:param threads: The <code>threads</code> parameter is an optional integer that specifies the number of
+threads to use for exporting the data. It determines the level of parallelism during the export
+process. By default, it is set to 1, defaults to 1
+:type threads: int (optional)
+:param sort: The <code>sort</code> parameter is a boolean value that specifies whether the output file
+should be sorted or not. If set to <code>True</code>, the output file will be sorted based on the genomic
+coordinates of the variants. If set to <code>False</code>, the output file will not be sorted. By default,
+it, defaults to False
+:type sort: bool (optional)
+:param index: The <code>index</code> parameter is a boolean value that specifies whether to index the
+output file. If <code>index</code> is set to <code>True</code>, the output file will be indexed. If <code>index</code> is set to
+<code>False</code> or not provided, the output file will not be indexed, defaults to False
+:type index: bool (optional)
+:param existing_columns_header: The <code>existing_columns_header</code> parameter is a list that
+represents the existing columns in the header of the output file. It is used to determine the
+columns that should be included in the output file. If this parameter is not provided, the
+function will automatically detect the header columns based on the output file format
+:type existing_columns_header: list
+:param order_by: The <code>order_by</code> parameter is a string that specifies the columns by which the
+output file should be ordered. It allows you to specify multiple columns separated by commas.
+Each column can be followed by the keyword "ASC" (ascending) or "DESC" (descending) to specify
+the sort order
+:type order_by: str
+:param query: Query in SQL to export
+:type query: str (optional)
+:param compression_type: Type of compression of output file (default "bgzip")
+:type compression_type: str (optional)
+:param chunk_size: Size of chunk (number of line) as batch group
+:type chunk_size: int (optional)
+:param export_mode: Export mode, either "pyarrow" (default) or "duckdb"
+:type export_mode: str (optional)
+:param compresslevel: Level of compression for gzip (default 6)
+:type compresslevel: int (optional)
+:param export_header: The <code>export_header</code> parameter is a boolean flag that determines whether
+the header of a VCF file should be exported to a separate file or not. If <code>export_header</code> is
+True, the header will be exported to a file. If <code>export_header</code> is False, the header will not
+be, defaults to True, if output format is not VCF
+:type export_header: bool (optional)
+:return: a boolean value indicating whether the export was successful or not.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.find_column"><code class="name flex">
+<span>def <span class="ident">find_column</span></span>(<span>self, database: str = None, table: str = None, column: str = 'INFO', prefixes: list = ['INFO/'], database_columns: list = None) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>find_column</code> function searches for a specific column in a database table, with the option
+to search for a column with a specific prefix or within the INFO column header.</p>
+<p>:param database: The name of the database to search for the column in. If not provided, it will
+use the current database that the code is connected to
+:type database: str
+:param table: The "table" parameter is the name of the table in the database where the column is
+located
+:type table: str
+:param column: The "column" parameter is a string that represents the name of the column to
+search for in the database table. By default, it is set to "INFO", but you can change it to
+search for a specific column name, defaults to INFO
+:type column: str (optional)
+:param prefixes: The <code>prefixes</code> parameter is a list of strings that are used to search for a
+column with a specific prefix in the database. For example, if the prefixes list contains "DP/",
+the function will search for a column named "DP/INFO" in addition to the default "INFO" column
+:type prefixes: list
+:param database_columns: The <code>database_columns</code> parameter is a list that contains the names of
+all the columns in a specific database table. It is used to check if a specific column exists in
+the database. If the <code>database_columns</code> parameter is not provided, the function will call the
+<code>get_columns</code> method to retrieve
+:type database_columns: list
+:return: a string that represents the name of the column found in the database, based on the
+input parameters. If the column is found, it returns the column name. If the column is not
+found, it returns None.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.find_database"><code class="name flex">
+<span>def <span class="ident">find_database</span></span>(<span>self, database: str = None, databases_folders: list = None, database_format: str = None, assembly: str = None) ‑> Optional[str]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function finds a database file in a specified folder or the current directory.</p>
+<p>:param database: The name of the database to be searched for. If not provided, it will call the
+<code>get_database()</code> method to get the name of the database. It is a string type parameter
+:type database: str
+:param databases_folders: A list of folders where the function should look for the database
+file. If this parameter is not provided, the function will look for the database file in the
+current directory
+:type databases_folders: list
+:param format: The file format of the database file. It is an optional parameter and if not
+provided, the function will call the <code>get_format()</code> method to get the format
+:type format: str
+:param assembly: <code>assembly</code> is an optional parameter that represents the name of a subfolder
+where the function should look for the database file. If provided, the function will search for
+the database file in the specified subfolder within each of the <code>databases_folders</code>. If not
+provided, the function will only search for
+:type assembly: str
+:return: a string that represents the path to the database file. If the database is not found or
+if no database is specified, it returns None.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.find_header_file"><code class="name flex">
+<span>def <span class="ident">find_header_file</span></span>(<span>self, database: str = None) ‑> Optional[str]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function finds the header file for a given database in various formats.</p>
+<p>:param database: The <code>database</code> parameter is a string that represents the path to a database
+file. If this parameter is not provided, the <code>get_database()</code> method is called to retrieve the
+path to the database file
+:type database: str
+:return: the path to the header file for a given database. If the header is in a separate file,
+it returns the path to that file. If the header is within the database file itself, it returns
+the path to the database file. If the database or its format cannot be determined, it returns
+None.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.get_annotations"><code class="name flex">
+<span>def <span class="ident">get_annotations</span></span>(<span>self, database: str = None) ‑> object</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function returns the annotations of a database or the default database if none is
+specified.</p>
+<p>:param database: The parameter <code>database</code> is a string that represents the name of the database
+to retrieve annotations from. If no database name is provided, the method will use the default
+database name obtained from the <code>get_database()</code> method
+:type database: str
+:return: The function <code>get_annotations</code> returns the <code>infos</code> attribute of the header of a
+database. If the <code>database</code> parameter is not provided, it gets the current database using the
+<code>get_database</code> method. If there is no header, it returns <code>None</code>.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.get_assembly"><code class="name flex">
+<span>def <span class="ident">get_assembly</span></span>(<span>self) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function returns the assembly attribute of an object if it exists, otherwise it returns
+None.
+:return: If <code>self.assembly</code> is not <code>None</code>, then it returns the value of <code>self.assembly</code>.
+Otherwise, it returns <code>None</code>.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.get_columns"><code class="name flex">
+<span>def <span class="ident">get_columns</span></span>(<span>self, database: str = None, table: str = None, header_file: str = None, sql_query: str = None) ‑> list</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>get_columns</code> retrieves a list of column names from a specified database and table
+using SQL queries.</p>
+<p>:param database: The <code>database</code> parameter in the <code>get_columns</code> function is used to specify the
+name of the database from which you want to retrieve the column names. If this parameter is not
+provided, the function will default to using the current database
+:type database: str
+:param table: The <code>table</code> parameter in the <code>get_columns</code> function represents the name of the
+table in the database for which you want to retrieve the column names. If this parameter is not
+provided, the function will attempt to get the table name from the specified database. If the
+table parameter is not specified and
+:type table: str
+:param header_file: The <code>header_file</code> parameter in the <code>get_columns</code> function is used to specify
+the file containing the header information for the data source. This information is often used
+in cases where the column names are not explicitly defined in the database schema or where the
+data is stored in a file format that requires additional
+:type header_file: str
+:param sql_query: The <code>sql_query</code> parameter in the <code>get_columns</code> function is used to specify a
+custom SQL query to retrieve column names from the database table. If a <code>sql_query</code> is provided,
+the function will execute that query to get the column names and return them as a list
+:type sql_query: str
+:return: The function <code>get_columns</code> returns a list of column names for a given database and
+table. If a SQL query is provided, it executes the query and returns the column names from the
+result. If no database is specified, it uses the current database. It then checks the database
+format and connects to the database accordingly to retrieve the column names using a SQL query.
+If the table parameter is not provided</p></div>
+</dd>
+<dt id="howard.objects.database.Database.get_conn"><code class="name flex">
+<span>def <span class="ident">get_conn</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function returns the connection object.
+:return: The method is returning the value of the instance variable <code>self.conn</code>.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.get_database"><code class="name flex">
+<span>def <span class="ident">get_database</span></span>(<span>self) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function returns the database name as a string.
+:return: The <code>get_database</code> method is returning the <code>database</code> attribute of the object. The
+return type is a string.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.get_database_basename"><code class="name flex">
+<span>def <span class="ident">get_database_basename</span></span>(<span>self, database: str = None) ‑> Optional[str]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function returns the basename of a database file.</p>
+<p>:param database: The parameter <code>database</code> is a string that represents the name of a database. If
+it is not provided, the method will use the <code>get_database()</code> method to retrieve the current
+database
+:type database: str
+:return: a string which is the basename of the database file. If the database parameter is not
+provided, it gets the current database using the <code>get_database()</code> method. If the database
+exists, it returns the basename of the database file using the <code>os.path.basename()</code> method. If
+the database does not exist, it returns <code>None</code>.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.get_database_dirname"><code class="name flex">
+<span>def <span class="ident">get_database_dirname</span></span>(<span>self, database: str = None) ‑> Optional[str]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function returns the directory name of a given database or the current database if none is
+specified.</p>
+<p>:param database: The parameter <code>database</code> is a string that represents the path to a database
+file. If it is not provided, the method will call <code>self.get_database()</code> to retrieve the path to
+the default database
+:type database: str
+:return: a string that represents the directory name of the specified database file. If no
+database file is specified, it will use the default database file and return its directory name.
+If there is no database file, it will return None.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.get_database_folders"><code class="name flex">
+<span>def <span class="ident">get_database_folders</span></span>(<span>self) ‑> list</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function returns a list of database folders.
+:return: The method <code>get_database_folders</code> is returning a list of database folders. The specific
+list being returned is stored in the instance variable <code>databases_folders</code>.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.get_database_table"><code class="name flex">
+<span>def <span class="ident">get_database_table</span></span>(<span>self, database: str = None) ‑> Optional[str]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function returns the name of a table in a specified database if it exists and is in a
+supported format.</p>
+<p>:param database: The name of the database to retrieve the table from. If None, it will use the
+default database
+:type database: str
+:return: a string that represents the name of a table in a database, or None if no suitable
+table is found.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.get_database_tables"><code class="name flex">
+<span>def <span class="ident">get_database_tables</span></span>(<span>self, database: str = None) ‑> Union[str, list, ForwardRef(None)]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function retrieves a list of tables in a specified database using the DuckDB format.</p>
+<p>:param database: The name of the database for which you want to retrieve the list of tables. If
+no database name is provided, it will use the default database
+:type database: str
+:return: a list of tables in the specified database, or None if the database does not exist or
+the format is not supported.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.get_extra_columns"><code class="name flex">
+<span>def <span class="ident">get_extra_columns</span></span>(<span>self, database: str = None, database_type: str = None, sql_query: str = None) ‑> list</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This Python function returns a list of extra columns in a database table that are not needed
+based on the database type and existing columns.</p>
+<p>:param database: A string representing the name of the database to retrieve columns from. If
+None is provided, the default database will be used
+:type database: str
+:param database_type: The <code>database_type</code> parameter in the <code>get_extra_columns</code> function
+represents the type of the database for which you want to retrieve the list of extra columns. It
+is used to determine which columns are needed based on the database type and the existing
+columns in the specified database table
+:type database_type: str
+:param sql_query: The <code>sql_query</code> parameter in the <code>get_extra_columns</code> function is used to pass
+an SQL query that can be used to retrieve specific columns from the database. This query can be
+customized to filter columns based on certain conditions or criteria before analyzing them to
+determine the extra columns that are not needed
+:type sql_query: str
+:return: A list of extra columns in a database table that are not needed based on the database
+type and existing columns.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.get_format"><code class="name flex">
+<span>def <span class="ident">get_format</span></span>(<span>self, database: str = None) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This Python function returns the file format of a given database or the current database if none
+is provided.
+Format database:
+- parquet
+- duckdb
+- sqlite
+- vcf
+- csv</p>
+<p>:param database: The <code>database</code> parameter is a string that represents the type of database. It
+is an optional parameter and if not provided, the function will call the <code>get_database()</code> method
+to retrieve the database type
+:type database: str
+:return: a string that represents the type of database. The type of database can be one of the
+following: "parquet", "duckdb", "sqlite", "vcf", or "csv". The specific type of database is determined by
+the input parameter <code>database</code>, which is either passed as an argument to the function or
+obtained by calling the <code>get_database()</code> method. The `get_file_format</p></div>
+</dd>
+<dt id="howard.objects.database.Database.get_header"><code class="name flex">
+<span>def <span class="ident">get_header</span></span>(<span>self, database: str = None, header_file: str = None, header_list: list = None, sql_query: str = None) ‑> <module 'vcf' from '/usr/local/Caskroom/miniconda/base/envs/howard_devel/lib/python3.10/site-packages/vcf/__init__.py'></span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>get_header</code> function in Python returns the header of a VCF file from a file, a list, or the
+object itself based on specified conditions.</p>
+<p>:param database: The <code>database</code> parameter in the <code>get_header</code> function represents a string that
+specifies the database from which the header information should be retrieved or used. It is used
+in various parts of the function to determine how to construct the header of the VCF file
+:type database: str
+:param header_file: The <code>header_file</code> parameter in the <code>get_header</code> function is a string
+representing the path to a file containing the header information for a VCF file. This parameter
+allows you to specify a file from which the function will read the header information
+:type header_file: str
+:param header_list: The <code>header_list</code> parameter in the <code>get_header</code> function is a list
+containing the header lines of a VCF file. If provided, the function will construct the header
+from this list using the <code>get_header_from_list</code> method. If <code>header_list</code> is not provided, the
+function will
+:type header_list: list
+:param sql_query: The <code>sql_query</code> parameter in the <code>get_header</code> function is a string
+representing an SQL query that can be used to retrieve data from a database. This parameter is
+used in the function to help construct the header of a VCF file based on the query results or
+other conditions specified in the function
+:type sql_query: str
+:return: The <code>get_header</code> function returns the header of a VCF file based on different
+conditions:</p></div>
+</dd>
+<dt id="howard.objects.database.Database.get_header_columns_from_database"><code class="name flex">
+<span>def <span class="ident">get_header_columns_from_database</span></span>(<span>self, database: str = None) ‑> Optional[list]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>get_header_columns_from_database</code> retrieves the column names from a specified
+database table.</p>
+<p>:param database: The <code>database</code> parameter is a string that represents the name of the database
+from which you want to retrieve the header columns. If no database is provided, the method will
+use the <code>get_database()</code> method to retrieve the default database
+:type database: str
+:return: a list of column names from the specified database.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.get_header_file"><code class="name flex">
+<span>def <span class="ident">get_header_file</span></span>(<span>self, header_file: str = None, remove_header_line: bool = False, replace_header_line: list = None, force: bool = False, sql_query: str = None) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>get_header_file</code> generates a VCF header file based on specified parameters or a
+default header if needed.</p>
+<p>:param header_file: The <code>header_file</code> parameter is a string representing the file path and name
+of the header file. If set to <code>None</code>, the default header file path and name will be used
+:type header_file: str
+:param remove_header_line: The <code>remove_header_line</code> parameter is a boolean parameter that
+determines whether to remove the <code>#CHROM</code> line from the header file. If set to True, the line
+will be removed; otherwise, it will remain in the header file. By default, this parameter is set
+to False, meaning, defaults to False
+:type remove_header_line: bool (optional)
+:param replace_header_line: The <code>replace_header_line</code> parameter is a list of columns that can be
+used to replace the header line in the generated header file. For example, if you provide
+<code>['#CHROM', 'POS', 'ID']</code>, these columns will be used as the header line in the generated file
+instead
+:type replace_header_line: list
+:param force: The <code>force</code> parameter in the <code>get_header_file</code> function is a boolean parameter
+that determines whether to force the generation of a header file even if a header file already
+exists. If <code>force</code> is set to <code>True</code>, the function will replace the existing header file with a
+new one. If, defaults to False
+:type force: bool (optional)
+:param sql_query: The <code>sql_query</code> parameter in the <code>get_header_file</code> function is used to specify
+a SQL query that can be used to retrieve header information from a database. This query can be
+passed to the function to customize the header generation process based on the query results
+:type sql_query: str
+:return: The function <code>get_header_file</code> returns a string which is the name of the header file
+that was generated or None if no header file was generated.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.get_header_file_columns"><code class="name flex">
+<span>def <span class="ident">get_header_file_columns</span></span>(<span>self, header_file: str = None) ‑> list</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>get_header_columns</code> returns the header list of a VCF file.</p>
+<p>:param header_file: The <code>header_file</code> parameter is a string that represents the file path of the
+header file. It is an optional parameter and its default value is <code>None</code>
+:type header_file: str
+:return: a list of header columns.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.get_header_from_columns"><code class="name flex">
+<span>def <span class="ident">get_header_from_columns</span></span>(<span>self, database: str = None, header_columns: list = [], sql_query: str = None) ‑> object</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>get_header_from_columns</code> generates a VCF header based on database columns and adds
+custom annotations to it.</p>
+<p>:param database: The <code>database</code> parameter is a string that represents the name of a database. It
+is an optional parameter, and if not provided, the <code>get_database()</code> method is called to retrieve
+the default database. This parameter specifies the database from which the columns will be used
+to generate the VCF header
+:type database: str
+:param header_columns: The <code>header_columns</code> parameter is a list of column names that will be
+used to generate header information for a VCF file. If no <code>header_columns</code> are provided, the
+function will attempt to automatically detect the columns to use based on the database being
+used
+:type header_columns: list
+:param sql_query: The <code>sql_query</code> parameter in the <code>get_header_from_columns</code> function is used to
+specify a SQL query that will be executed to retrieve column information from the database. This
+query can be customized to fetch specific columns or data based on the requirements of the VCF
+header generation process. If provided,
+:type sql_query: str
+:return: The function <code>get_header_from_columns</code> returns a VCF header object that includes
+information about the columns in a database and their data types. The header object is created
+based on the input parameters, including the database name and a list of header columns.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.get_header_from_file"><code class="name flex">
+<span>def <span class="ident">get_header_from_file</span></span>(<span>self, header_file: str) ‑> <module 'vcf' from '/usr/local/Caskroom/miniconda/base/envs/howard_devel/lib/python3.10/site-packages/vcf/__init__.py'></span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function returns a VCF header either from a default list or from a file.</p>
+<p>:param header_file: A string representing the file path of a VCF header file. If this parameter
+is not provided or is an empty string, the function will use a default header list
+:type header_file: str
+:return: a VCF object, which is obtained by calling the <code>get_header_from_list</code> method with the
+<code>header_list</code> as an argument. The <code>header_list</code> is either the default header list or the list
+obtained by reading a header file using the <code>read_header_file</code> method.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.get_header_from_list"><code class="name flex">
+<span>def <span class="ident">get_header_from_list</span></span>(<span>self, header_list: list = None) ‑> <module 'vcf' from '/usr/local/Caskroom/miniconda/base/envs/howard_devel/lib/python3.10/site-packages/vcf/__init__.py'></span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>get_header_from_list</code> returns a <code>vcf.Reader</code> object with a header generated from a
+given list or a default list.</p>
+<p>:param header_list: The <code>header_list</code> parameter is a list of strings representing the header
+lines of a VCF (Variant Call Format) file. It is an optional parameter, meaning it can be
+provided as an argument to the function, but if no argument is provided, a default list of
+header lines will be used
+:type header_list: list
+:return: a <code>vcf.Reader</code> object.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.get_header_infos_list"><code class="name flex">
+<span>def <span class="ident">get_header_infos_list</span></span>(<span>self, database: str = None) ‑> list</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function returns a list of header information for a given database or the current database
+if none is specified.</p>
+<p>:param database: The <code>database</code> parameter is a string that represents the name of the database
+from which the header information is to be retrieved. If no database name is provided, the
+method will use the default database name obtained from the <code>get_database()</code> method
+:type database: str
+:return: A list of header information from a database, or an empty list if the database header
+is not available.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.get_header_length"><code class="name flex">
+<span>def <span class="ident">get_header_length</span></span>(<span>self, header_file: str = None) ‑> int</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>get_header_length</code> function returns the length of a header file, excluding the first line.</p>
+<p>:param header_file: The <code>header_file</code> parameter is a string that represents the file path or
+name of the header file. It is an optional parameter, which means it can be omitted when calling
+the <code>get_header_length</code> method
+:type header_file: str
+:return: an integer, which represents the length of the header file.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.get_needed_columns"><code class="name flex">
+<span>def <span class="ident">get_needed_columns</span></span>(<span>self, database_columns: list = [], database_type: str = None) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function takes a list of database columns and a type, and returns a dictionary of needed
+columns and their corresponding values found in the database columns.</p>
+<p>:param database_columns: A list of column names in a database table
+:type database_columns: list
+:param type: The type of database being used. It is used to determine which columns are needed
+for the specific database type
+:type type: str
+:return: a dictionary containing the columns that are needed for a specific database type, along
+with their corresponding column names in the actual database. The function takes in a list of
+database columns and a database type as input, and uses the <code>DATABASE_TYPE_NEEDED_COLUMNS</code>
+dictionary to determine which columns are needed for the specified database type. It then
+searches through the list of database columns to find the</p></div>
+</dd>
+<dt id="howard.objects.database.Database.get_sql_database_attach"><code class="name flex">
+<span>def <span class="ident">get_sql_database_attach</span></span>(<span>self, database: str = None, output: str = 'query') ‑> Optional[str]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function returns a SQL query to attach or detach a database based on the specified format
+and output.</p>
+<p>:param database: The name of the database to attach. If not provided, it will try to get the
+default database from the connection
+:type database: str
+:param output: The "output" parameter is a string that specifies the desired output of the
+function. It can take on the following values:, defaults to query
+:type output: str (optional)
+:return: a string that represents a SQL query to attach a database to a DuckDB or SQLite
+database engine. The specific output depends on the value of the <code>output</code> parameter, which can
+be "query" (default), "attach", "detach", or "name". If <code>output</code> is "query" or "attach", the
+function returns a SQL query to attach the specified database.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.get_sql_database_link"><code class="name flex">
+<span>def <span class="ident">get_sql_database_link</span></span>(<span>self, database: str = None) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function returns a SQL database link based on the provided database name or the default
+database.</p>
+<p>:param database: The <code>database</code> parameter is a string that represents the name of the database.
+If it is not provided, the method will call the <code>get_database()</code> method to retrieve the default
+database
+:type database: str
+:return: a SQL database link as a string. If a database name is provided as an argument, it will
+use that database to construct the link. Otherwise, it will use the default database obtained
+from <code>self.get_database()</code>. The link is constructed using the <code>sql_from</code> and <code>sql_table</code>
+obtained from other methods, and the final link is returned as a string. If the</p></div>
+</dd>
+<dt id="howard.objects.database.Database.get_sql_from"><code class="name flex">
+<span>def <span class="ident">get_sql_from</span></span>(<span>self, database: str = None, header_file: str = None, sample_size: int = 20480) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function returns a SQL query string based on the input database format.</p>
+<p>:param database: The parameter "database" is a string that represents the name or path of the
+database that the function will read from. If no value is provided for this parameter, the
+function will call the "get_database()" method to retrieve the default database
+:type database: str
+:return: a string that represents a SQL query to read data from a database file. The specific
+SQL query returned depends on the format of the database file, which is determined by the
+<code>get_format()</code> method. The SQL query returned will be in the form of a function call to one of
+the following functions: <code>read_parquet()</code>, <code>read_csv()</code>, <code>read_json()</code>,</p></div>
+</dd>
+<dt id="howard.objects.database.Database.get_table_columns_from_file"><code class="name flex">
+<span>def <span class="ident">get_table_columns_from_file</span></span>(<span>self, database: str = None, header_file: str = None, header_file_find: bool = True) ‑> list</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>get_table_columns_from_file</code> retrieves the column names from a database or header
+file.</p>
+<p>:param database: The <code>database</code> parameter is a string that represents the name or path of the
+database file. If this parameter is not provided, the <code>get_database()</code> method is called to
+retrieve the database name or path
+:type database: str
+:param header_file: The <code>header_file</code> parameter is a string that represents the file path or
+name of the header file. This file contains the header information for a table, which typically
+includes the names of the columns in the table
+:type header_file: str
+:param header_file_find: Allow header file find if not provided
+:type header_file_find: bool
+:return: a list of table columns.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.get_table_columns_from_format"><code class="name flex">
+<span>def <span class="ident">get_table_columns_from_format</span></span>(<span>self, database: str = None) ‑> list</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The function <code>get_table_columns_from_format</code> returns a list of table columns based on the
+specified database format.</p>
+<p>:param database: The <code>database</code> parameter is a string that represents the name of the database.
+It is an optional parameter, which means it has a default value of <code>None</code>. If no value is
+provided for the <code>database</code> parameter, the <code>get_database()</code> method is called to retrieve the
+current database name
+:type database: str
+:return: a list of table columns.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.get_type"><code class="name flex">
+<span>def <span class="ident">get_type</span></span>(<span>self, database: str = None, sql_query: str = None) ‑> Optional[str]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>get_type</code> function determines the type of a database (variants VCF-like or regions
+BED-like) based on its columns and format.</p>
+<p>:param database: The <code>database</code> parameter in the <code>get_type</code> function is a string representing
+the name of a database. If this parameter is not provided when calling the function, it will
+attempt to retrieve the database name using the <code>get_database()</code> method. This parameter is used
+to specify the database for which you
+:type database: str
+:param sql_query: The <code>sql_query</code> parameter in the <code>get_type</code> function is used to pass an SQL
+query as a string. This query can be used to filter or manipulate the data before determining
+the type of the database based on its columns. If provided, the function will use this SQL query
+to fetch the
+:type sql_query: str
+:return: The <code>get_type</code> function returns a string that represents the type of the database,
+which can be either "variants" (VCF-like) or "regions" (BED-like). If the database is not found
+or does not exist, the function returns None.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.get_type_from_columns"><code class="name flex">
+<span>def <span class="ident">get_type_from_columns</span></span>(<span>self, database_columns: list = [], check_database_type: str = None) ‑> Optional[str]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function returns the type of a database based on the provided list of columns.</p>
+<p>:param database_columns: a list of column names in a database table
+:type database_columns: list
+:param check_database_type: A database type to check for. If not provided, it defaults
+to all database types defined in the constant <code>DATABASE_TYPE_NEEDED_COLUMNS</code>
+:type check_database_type: str
+:return: a string that represents the type of database based on the provided list of columns. If
+the needed columns for a specific database type are not found in the provided list, the function
+returns None.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.get_view"><code class="name flex">
+<span>def <span class="ident">get_view</span></span>(<span>self, database: str = None, create_view: str = None) ‑> Optional[str]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>get_view</code> function returns the name of a view in a database, or creates a new view if
+specified.</p>
+<p>:param database: The <code>database</code> parameter is a string that represents the name of the database.
+It is an optional parameter and if not provided, the method <code>get_database()</code> is called to
+retrieve the database name
+:type database: str
+:param create_view: The <code>create_view</code> parameter is a string that represents the name of the view
+that you want to create. If this parameter is provided, the <code>get_view</code> method will call the
+<code>create_view</code> method and pass the <code>database</code> and <code>view_name</code> parameters to it
+:type create_view: str
+:return: The method <code>get_view</code> returns a string.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.is_compressed"><code class="name flex">
+<span>def <span class="ident">is_compressed</span></span>(<span>self, database: str = None) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This Python function checks if a given file is compressed and returns the format of the
+compression.</p>
+<p>:param database: The <code>database</code> parameter is a string that represents the path or name of the
+input file that needs to be checked for compression. If no value is provided for <code>database</code>, the
+method calls <code>get_database()</code> to retrieve the default database file
+:type database: str
+:return: The function <code>is_compressed</code> returns a boolean value indicating whether the input file
+is compressed or not. The function calls another function <code>get_file_compressed</code> to determine the
+compression format of the file.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.is_genotype_column"><code class="name flex">
+<span>def <span class="ident">is_genotype_column</span></span>(<span>self, column: str, database: str = None, downsampling: int = 1000, check_format: bool = True) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>is_genotype_column</code> function in Python checks if a specified column in a database contains
+genotype data based on a regular expression pattern.</p>
+<p>:param column: The <code>column</code> parameter is a string that represents the name of a column in a
+database table. It is used to specify the column for which you want to check if it contains
+genotype information based on a regular expression pattern
+:type column: str
+:param database: The <code>database</code> parameter in the <code>is_genotype_column</code> method is used to specify
+the name of the database from which the data will be queried. If a database is provided, the
+method will query the specified database to check if the given column contains genotype
+information. If no database is provided,
+:type database: str
+:param downsampling: The <code>downsampling</code> parameter in the <code>is_genotype_column</code> method is an
+integer value that determines the number of rows to be sampled from the database table when
+checking for genotype information in the specified column. This parameter is used to limit the
+number of rows to be processed in order to improve performance, defaults to 1000
+:type downsampling: int (optional)
+:param check_format: The <code>check_format</code> parameter in the <code>is_genotype_column</code> method is a
+boolean flag that determines whether the function should check the format of the data before
+proceeding with the genotype column analysis. If <code>check_format</code> is set to <code>True</code>, the function
+will verify if the specified column exists in, defaults to True
+:type check_format: bool (optional)
+:return: The <code>is_genotype_column</code> method returns a boolean value. If the specified column in a
+database table contains genotype information, it returns <code>True</code>; otherwise, it returns <code>False</code>.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.is_vcf"><code class="name flex">
+<span>def <span class="ident">is_vcf</span></span>(<span>self, database: str = None, sql_query: str = None) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>is_vcf</code> function checks if a given database is of type "vcf" by examining its columns and
+their types.</p>
+<p>:param database: The <code>database</code> parameter in the <code>is_vcf</code> function is a string that represents
+the name of the database that the function will use to check if the file is a VCF (Variant Call
+Format) file. If the <code>database</code> parameter is not provided when calling the function, it will
+:type database: str
+:param sql_query: The <code>sql_query</code> parameter in the <code>is_vcf</code> function is used to pass an SQL
+query string that can be used to filter the columns retrieved from the database. This query can
+be used to narrow down the columns that are considered when checking if the database is of type
+"vcf"
+:type sql_query: str
+:return: The function <code>is_vcf</code> returns a boolean value indicating whether the database type is
+"vcf" or not.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.map_columns"><code class="name flex">
+<span>def <span class="ident">map_columns</span></span>(<span>self, database: str = None, table: str = None, columns: list = [], prefixes: list = ['INFO/']) ‑> dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The <code>map_columns</code> function maps input columns to their corresponding columns in a specified
+database table, using specified prefixes to filter the columns.</p>
+<p>:param database: The name of the database to search for columns in. If no database is specified,
+the method will use the default database set in the connection
+:type database: str
+:param table: The <code>table</code> parameter is the name of the table in the database that you want to
+map the columns for
+:type table: str
+:param columns: A list of column names that you want to map to their corresponding column names
+in the database
+:type columns: list
+:param prefixes: The <code>prefixes</code> parameter is a list of strings that are used to filter the
+columns that are searched for. Only columns that start with one of the prefixes in the list will
+be considered. In the code above, the default value for <code>prefixes</code> is <code>["INFO/"]</code>
+:type prefixes: list
+:return: a dictionary that maps the input columns to their corresponding columns found in the
+specified database and table, with the specified prefixes.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.query"><code class="name flex">
+<span>def <span class="ident">query</span></span>(<span>self, query: str = None) ‑> object</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This is a Python function that takes in a database and query string as parameters and returns
+the result of the query on the database.</p>
+<p>:param query: The query parameter is a string that represents the SQL query that needs to be
+executed on the database. It can be any valid SQL statement such as SELECT, INSERT, UPDATE,
+DELETE, etc
+:type query: str
+:return: If a query is provided, the method returns the result of the query executed on the
+database. If no query is provided, the method returns None.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.read_header_file"><code class="name flex">
+<span>def <span class="ident">read_header_file</span></span>(<span>self, header_file: str = None) ‑> list</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function reads the header of a VCF file and returns a list of the header lines.</p>
+<p>:param header_file: The path to the VCF file header that needs to be read
+:type header_file: str
+:return: a list of header lines of a VCF file.</p></div>
+</dd>
+<dt id="howard.objects.database.Database.set_assembly"><code class="name flex">
+<span>def <span class="ident">set_assembly</span></span>(<span>self, assembly: str = None) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This is a function that sets the assembly attribute of an object to a given string value.</p>
+<p>:param assembly: The assembly parameter is a string that represents the name or type of assembly
+that the object belongs to. This method sets the assembly attribute of the object to the value
+passed in as the assembly parameter. If no value is passed in, the assembly attribute remains
+unchanged. The method returns the updated value of the
+:type assembly: str</p></div>
+</dd>
+<dt id="howard.objects.database.Database.set_database"><code class="name flex">
+<span>def <span class="ident">set_database</span></span>(<span>self, database: str, databases_folders: list = None, format: str = None, assembly: str = None) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function sets the database attribute of an object to a specified database if it exists or
+can be found in a list of folders.</p>
+<p>:param database: A string representing the name of the database to be set
+:type database: str
+:param databases_folders: The <code>databases_folders</code> parameter is a list of folders/directories
+where the <code>find_database</code> method will search for the specified database. If the database is
+found in any of these folders, it will be set as the current database. If <code>databases_folders</code> is
+not provided, the
+:type databases_folders: list
+:param format: The <code>format</code> parameter is an optional string representing the format of the
+database to be searched for. If provided, the <code>find_database</code> method will search for the
+database only in the specified format. If not provided, the method will search for the database
+in all formats
+:type format: str
+:param assembly: The <code>assembly</code> parameter is an optional string representing the name of the
+assembly to which the database belongs. If provided, the <code>find_database</code> method will search for
+the database only in the specified assembly. If not provided, the method will search for the
+database in all assemblies
+:type assembly: str</p></div>
+</dd>
+<dt id="howard.objects.database.Database.set_databases_folders"><code class="name flex">
+<span>def <span class="ident">set_databases_folders</span></span>(<span>self, databases_folders: list = None) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function sets the list of folders where databases are located as an attribute of an object.</p>
+<p>:param databases_folders: databases_folders is a list parameter that contains the paths to the
+folders where the databases are stored. The default value of the parameter is a list with a
+single element, which is the current directory (".")
+:type databases_folders: list</p></div>
+</dd>
+<dt id="howard.objects.database.Database.set_format"><code class="name flex">
+<span>def <span class="ident">set_format</span></span>(<span>self, format: str = None) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This is a method in a Python class that sets a format attribute to a specified string.</p>
+<p>:param format: The format parameter is a string that specifies the desired format for the data.
+It is an optional parameter, meaning that if it is not provided, the format attribute of the
+object will not be changed. The function returns a string indicating the current format of the
+object
+:type format: str</p></div>
+</dd>
+<dt id="howard.objects.database.Database.set_header"><code class="name flex">
+<span>def <span class="ident">set_header</span></span>(<span>self, database: str = None, header: <module 'vcf' from '/usr/local/Caskroom/miniconda/base/envs/howard_devel/lib/python3.10/site-packages/vcf/__init__.py'> = None, header_file: str = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function sets the header of a database based on a provided header file or the database
+format.</p>
+<p>:param database: A string representing the name or path of a database file. If not provided, the
+method will attempt to get the database name from the object's attributes
+:type database: str
+:param header: <code>header</code> is a variable of type <code>vcf</code> (presumably representing a VCF header) that
+can be provided as an argument to the <code>set_header</code> method to set the header attribute of the
+object. If <code>header</code> is provided, the <code>header_file</code> parameter is ignored
+:type header: vcf
+:param header_file: A string representing the file path of a header file. If provided, the
+function will use this header file to set the header attribute of the object
+:type header_file: str</p></div>
+</dd>
+<dt id="howard.objects.database.Database.set_header_file"><code class="name flex">
+<span>def <span class="ident">set_header_file</span></span>(<span>self, header_file: str = None) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function sets the header file attribute of an object to the value passed as an argument.</p>
+<p>:param header_file: The parameter <code>header_file</code> is a string that represents the name or path of
+a header file. This method sets the <code>header_file</code> attribute of an object to the value passed as
+an argument. If no argument is passed, the <code>header_file</code> attribute remains unchanged
+:type header_file: str</p></div>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="howard.objects.database.Database" href="#howard.objects.database.Database">Database</a></code></h4>
+<ul class="">
+<li><code><a title="howard.objects.database.Database.create_view" href="#howard.objects.database.Database.create_view">create_view</a></code></li>
+<li><code><a title="howard.objects.database.Database.exists" href="#howard.objects.database.Database.exists">exists</a></code></li>
+<li><code><a title="howard.objects.database.Database.export" href="#howard.objects.database.Database.export">export</a></code></li>
+<li><code><a title="howard.objects.database.Database.find_column" href="#howard.objects.database.Database.find_column">find_column</a></code></li>
+<li><code><a title="howard.objects.database.Database.find_database" href="#howard.objects.database.Database.find_database">find_database</a></code></li>
+<li><code><a title="howard.objects.database.Database.find_header_file" href="#howard.objects.database.Database.find_header_file">find_header_file</a></code></li>
+<li><code><a title="howard.objects.database.Database.get_annotations" href="#howard.objects.database.Database.get_annotations">get_annotations</a></code></li>
+<li><code><a title="howard.objects.database.Database.get_assembly" href="#howard.objects.database.Database.get_assembly">get_assembly</a></code></li>
+<li><code><a title="howard.objects.database.Database.get_columns" href="#howard.objects.database.Database.get_columns">get_columns</a></code></li>
+<li><code><a title="howard.objects.database.Database.get_conn" href="#howard.objects.database.Database.get_conn">get_conn</a></code></li>
+<li><code><a title="howard.objects.database.Database.get_database" href="#howard.objects.database.Database.get_database">get_database</a></code></li>
+<li><code><a title="howard.objects.database.Database.get_database_basename" href="#howard.objects.database.Database.get_database_basename">get_database_basename</a></code></li>
+<li><code><a title="howard.objects.database.Database.get_database_dirname" href="#howard.objects.database.Database.get_database_dirname">get_database_dirname</a></code></li>
+<li><code><a title="howard.objects.database.Database.get_database_folders" href="#howard.objects.database.Database.get_database_folders">get_database_folders</a></code></li>
+<li><code><a title="howard.objects.database.Database.get_database_table" href="#howard.objects.database.Database.get_database_table">get_database_table</a></code></li>
+<li><code><a title="howard.objects.database.Database.get_database_tables" href="#howard.objects.database.Database.get_database_tables">get_database_tables</a></code></li>
+<li><code><a title="howard.objects.database.Database.get_extra_columns" href="#howard.objects.database.Database.get_extra_columns">get_extra_columns</a></code></li>
+<li><code><a title="howard.objects.database.Database.get_format" href="#howard.objects.database.Database.get_format">get_format</a></code></li>
+<li><code><a title="howard.objects.database.Database.get_header" href="#howard.objects.database.Database.get_header">get_header</a></code></li>
+<li><code><a title="howard.objects.database.Database.get_header_columns_from_database" href="#howard.objects.database.Database.get_header_columns_from_database">get_header_columns_from_database</a></code></li>
+<li><code><a title="howard.objects.database.Database.get_header_file" href="#howard.objects.database.Database.get_header_file">get_header_file</a></code></li>
+<li><code><a title="howard.objects.database.Database.get_header_file_columns" href="#howard.objects.database.Database.get_header_file_columns">get_header_file_columns</a></code></li>
+<li><code><a title="howard.objects.database.Database.get_header_from_columns" href="#howard.objects.database.Database.get_header_from_columns">get_header_from_columns</a></code></li>
+<li><code><a title="howard.objects.database.Database.get_header_from_file" href="#howard.objects.database.Database.get_header_from_file">get_header_from_file</a></code></li>
+<li><code><a title="howard.objects.database.Database.get_header_from_list" href="#howard.objects.database.Database.get_header_from_list">get_header_from_list</a></code></li>
+<li><code><a title="howard.objects.database.Database.get_header_infos_list" href="#howard.objects.database.Database.get_header_infos_list">get_header_infos_list</a></code></li>
+<li><code><a title="howard.objects.database.Database.get_header_length" href="#howard.objects.database.Database.get_header_length">get_header_length</a></code></li>
+<li><code><a title="howard.objects.database.Database.get_needed_columns" href="#howard.objects.database.Database.get_needed_columns">get_needed_columns</a></code></li>
+<li><code><a title="howard.objects.database.Database.get_sql_database_attach" href="#howard.objects.database.Database.get_sql_database_attach">get_sql_database_attach</a></code></li>
+<li><code><a title="howard.objects.database.Database.get_sql_database_link" href="#howard.objects.database.Database.get_sql_database_link">get_sql_database_link</a></code></li>
+<li><code><a title="howard.objects.database.Database.get_sql_from" href="#howard.objects.database.Database.get_sql_from">get_sql_from</a></code></li>
+<li><code><a title="howard.objects.database.Database.get_table_columns_from_file" href="#howard.objects.database.Database.get_table_columns_from_file">get_table_columns_from_file</a></code></li>
+<li><code><a title="howard.objects.database.Database.get_table_columns_from_format" href="#howard.objects.database.Database.get_table_columns_from_format">get_table_columns_from_format</a></code></li>
+<li><code><a title="howard.objects.database.Database.get_type" href="#howard.objects.database.Database.get_type">get_type</a></code></li>
+<li><code><a title="howard.objects.database.Database.get_type_from_columns" href="#howard.objects.database.Database.get_type_from_columns">get_type_from_columns</a></code></li>
+<li><code><a title="howard.objects.database.Database.get_view" href="#howard.objects.database.Database.get_view">get_view</a></code></li>
+<li><code><a title="howard.objects.database.Database.is_compressed" href="#howard.objects.database.Database.is_compressed">is_compressed</a></code></li>
+<li><code><a title="howard.objects.database.Database.is_genotype_column" href="#howard.objects.database.Database.is_genotype_column">is_genotype_column</a></code></li>
+<li><code><a title="howard.objects.database.Database.is_vcf" href="#howard.objects.database.Database.is_vcf">is_vcf</a></code></li>
+<li><code><a title="howard.objects.database.Database.map_columns" href="#howard.objects.database.Database.map_columns">map_columns</a></code></li>
+<li><code><a title="howard.objects.database.Database.query" href="#howard.objects.database.Database.query">query</a></code></li>
+<li><code><a title="howard.objects.database.Database.read_header_file" href="#howard.objects.database.Database.read_header_file">read_header_file</a></code></li>
+<li><code><a title="howard.objects.database.Database.set_assembly" href="#howard.objects.database.Database.set_assembly">set_assembly</a></code></li>
+<li><code><a title="howard.objects.database.Database.set_database" href="#howard.objects.database.Database.set_database">set_database</a></code></li>
+<li><code><a title="howard.objects.database.Database.set_databases_folders" href="#howard.objects.database.Database.set_databases_folders">set_databases_folders</a></code></li>
+<li><code><a title="howard.objects.database.Database.set_format" href="#howard.objects.database.Database.set_format">set_format</a></code></li>
+<li><code><a title="howard.objects.database.Database.set_header" href="#howard.objects.database.Database.set_header">set_header</a></code></li>
+<li><code><a title="howard.objects.database.Database.set_header_file" href="#howard.objects.database.Database.set_header_file">set_header_file</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>

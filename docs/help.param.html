@@ -435,6 +435,11 @@ code {
 <li><a href="#annotationsnpeffcsvstats">csvStats</a></li>
 </ul>
 </li>
+<li><a href="#annotationsnpsift">snpsift</a>
+<ul>
+<li><a href="#annotationsnpsiftannotations">annotations</a></li>
+</ul>
+</li>
 <li><a href="#annotationexomiser">exomiser</a>
 <ul>
 <li><a href="#annotationexomiserrelease">release</a></li>
@@ -728,9 +733,7 @@ code {
       }
    }
    <span class="hljs-string">"snpeff"</span>: {
-      <span class="hljs-attr">"options"</span>: {
-         <span class="hljs-attr">" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "</span>}
-      }
+      <span class="hljs-attr">"options"</span>: <span class="hljs-string">" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "</span>
    }
    <span class="hljs-string">"exomiser"</span>: {
       <span class="hljs-attr">"release"</span>: <span class="hljs-string">"2109"</span>,
@@ -833,8 +836,8 @@ code {
 <pre class="hljs"><code><div><span class="hljs-string">"parquet"</span>: {
    <span class="hljs-attr">"bcftools"</span>: {
       <span class="hljs-attr">"/path/to/database1.vcf.gz"</span>: {
-         <span class="hljs-attr">"field1"</span>: <span class="hljs-literal">null</span>
-         <span class="hljs-string">"field2"</span>: <span class="hljs-string">"field2_renamed"</span>,
+         <span class="hljs-attr">"field1"</span>: <span class="hljs-literal">null</span>,
+         <span class="hljs-attr">"field2"</span>: <span class="hljs-string">"field2_renamed"</span>
       },
       <span class="hljs-attr">"database2.bed.gz"</span>: {
          <span class="hljs-attr">"INFO"</span>: <span class="hljs-literal">null</span>
@@ -939,9 +942,7 @@ code {
 <p>Annotation with snpEff databases, with options for HGVS annotation and additional tags.</p>
 </blockquote>
 <pre class="hljs"><code><div><span class="hljs-string">"snpeff"</span>: {
-   <span class="hljs-attr">"options"</span>: {
-      <span class="hljs-attr">" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "</span>
-   }
+   <span class="hljs-attr">"options"</span>: <span class="hljs-string">" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "</span>
 }
 </div></code></pre>
 <h4 id="annotationsnpeffoptions">annotation::snpeff::options</h4>
@@ -988,6 +989,60 @@ code {
 <p>Annotation with snpEff databases, and generate stats in CSV format associated with output file.</p>
 </blockquote>
 <pre class="hljs"><code><div><span class="hljs-string">"csvStats"</span>: <span class="hljs-string">"OUTPUT.csv"</span>
+</div></code></pre>
+<h3 id="annotationsnpsift">annotation::snpsift</h3>
+<p>Annotation process using snpSift. Provide a list of database files and annotation fields.</p>
+<p>Examples:</p>
+<blockquote>
+<p>Annotation with multiple databases in multiple formats</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"parquet"</span>: {
+   <span class="hljs-attr">"snpsift"</span>: {
+      <span class="hljs-attr">"/path/to/database1.vcf.gz"</span>: {
+         <span class="hljs-attr">"field1"</span>: <span class="hljs-literal">null</span>,
+         <span class="hljs-attr">"field2"</span>: <span class="hljs-literal">null</span>
+      },
+      <span class="hljs-attr">"/path/to/database2.vcf.gz"</span>: {
+         <span class="hljs-attr">"field1"</span>: <span class="hljs-literal">null</span>,
+         <span class="hljs-attr">"field2"</span>: <span class="hljs-literal">null</span>
+      }
+   }
+}
+</div></code></pre>
+<h4 id="annotationsnpsiftannotations">annotation::snpsift::annotations</h4>
+<p>Specify the list of database files in formats VCF. Files need to be compressed and indexed.</p>
+<p>This parameter enables users to select specific database fields and optionally rename them (e.g. '&quot;field&quot;: null' to keep field name, '&quot;field&quot;: &quot;new_name&quot;' to rename field). Use 'INFO' or 'ALL' keyword to select all fields within the database INFO/Tags header (e.g. '&quot;INFO&quot;: null', '&quot;ALL&quot;: null').</p>
+<p>If a full path is not provided, the system will automatically detect files within database folders (see Configuration doc) and assembly (see Parameter option).</p>
+<p>Examples:</p>
+<blockquote>
+<p>Annotation with dbSNP database  with all fields</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"annotations"</span>: {
+   <span class="hljs-attr">"tests/databases/annotations/current/hg19/avsnp150.vcf.gz"</span>: {
+      <span class="hljs-attr">"INFO"</span>: <span class="hljs-literal">null</span>
+   }
+}
+</div></code></pre>
+<blockquote>
+<p>Annotation with dbNSFP (only PolyPhen, ClinVar and REVEL score)</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"annotations"</span>: {
+   <span class="hljs-attr">"tests/databases/annotations/current/hg19/dbnsfp42a.vcf.gz"</span>: {
+      <span class="hljs-attr">"Polyphen2_HDIV_pred"</span>: <span class="hljs-string">"PolyPhen"</span>,
+      <span class="hljs-attr">"ClinPred_pred"</span>: <span class="hljs-string">"ClinVar"</span>,
+      <span class="hljs-attr">"REVEL_score"</span>: <span class="hljs-literal">null</span>
+   }
+}
+</div></code></pre>
+<blockquote>
+<p>Annotation with dbNSFP REVEL annotation (as a VCF file) within configured annotation databases folders (default: '~/howard/databases/annotations/current') and assembly (default: 'hg19')</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"annotations"</span>: {
+   <span class="hljs-attr">"dbnsfp42a.REVEL.vcf.gz"</span>: {
+      <span class="hljs-attr">"REVEL_score"</span>: <span class="hljs-literal">null</span>,
+      <span class="hljs-attr">"REVEL_rankscore"</span>: <span class="hljs-literal">null</span>
+   }
+}
 </div></code></pre>
 <h3 id="annotationexomiser">annotation::exomiser</h3>
 <p>Annotation process using Exomiser tool and options (see <a href="https://www.sanger.ac.uk/tool/exomiser/">Exomiser website documentation</a>).</p>

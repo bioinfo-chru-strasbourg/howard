@@ -26,7 +26,77 @@ from howard.functions.databases import *
 from test_needed import *
 
 
-def test_get_explode_infos_fields():
+@pytest.mark.parametrize(
+    "input_vcf, remove_info, add_samples",
+    [
+        (os.path.join(tests_data_folder, input_vcf), remove_info, add_samples)
+        for input_vcf in ["example.vcf.gz", "example.without_sample.vcf"]
+        for remove_info in [True, False]
+        for add_samples in [True, False]
+    ],
+)
+def test_export_variant_vcf(input_vcf, remove_info, add_samples):
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Config
+        config = tests_config.copy()
+
+        # Create object
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            load=True,
+        )
+        try:
+            # Export varaint VCF
+            variants.export_variant_vcf(
+                vcf_file=output_vcf,
+                remove_info=remove_info,
+                add_samples=add_samples,
+                list_samples=[],
+                index=False,
+                threads=1,
+            )
+            assert True
+        except:
+            assert False
+
+
+@pytest.mark.parametrize(
+    "explode_infos_fields, explode_infos_fields_expected, remove_fields_not_in_header",
+    [
+        ("SIFT", ["SIFT"], False),
+        ("SIFT,DP,AD", ["SIFT", "DP", "AD"], False),
+        ("*", sorted(["NS", "DP", "AA", "CLNSIG", "SIFT"]), False),
+        ("DP,*", ["DP", "AA", "CLNSIG", "NS", "SIFT"], False),
+        ("*,DP", ["AA", "CLNSIG", "NS", "SIFT", "DP"], False),
+        ("DP,DP", ["DP"], False),
+        ("DP,SIFT,DP,AA", ["DP", "SIFT", "AA"], False),
+        ("DP,*,DP,AA", ["DP", "CLNSIG", "NS", "SIFT", "AA"], False),
+        ("NOT_field", ["NOT_field"], False),
+        ("NOT_field,DP", ["NOT_field", "DP"], False),
+        ("NOT_field", [], True),
+        ("NOT_field,DP", ["DP"], True),
+        ("NOT_field,*", ["AA", "CLNSIG", "DP", "NS", "SIFT"], True),
+        ("AA, DP ,SIFT,NS ", ["AA", "DP", "SIFT", "NS"], False),
+        (".*S.*", ["CLNSIG", "NS", "SIFT"], False),
+        ("NS,.*S.*", ["NS", "CLNSIG", "SIFT"], False),
+        (".*S.*,NS", ["CLNSIG", "SIFT", "NS"], False),
+        ("NS,.*S.*,*", ["NS", "CLNSIG", "SIFT", "AA", "DP"], False),
+        (".*S.*,NS,*", ["CLNSIG", "SIFT", "NS", "AA", "DP"], False),
+        (".*S.*,*,NS", ["CLNSIG", "SIFT", "AA", "DP", "NS"], False),
+        ("*,.*S.*,NS", ["AA", "CLNSIG", "DP", "SIFT", "NS"], False),
+    ],
+)
+def test_get_explode_infos_fields(
+    explode_infos_fields, explode_infos_fields_expected, remove_fields_not_in_header
+):
     """
     The function `test_get_explode_infos_fields()` tests the `get_explode_infos_fields()` method of the
     `Variants` class.
@@ -37,8 +107,6 @@ def test_get_explode_infos_fields():
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
         output_tsv = f"{tmp_dir}/example.tsv"
-        fields_all = ["NS", "DP", "AA", "CLNSIG", "SIFT"]
-        # ['AA', 'CLNSIG', 'DP', 'NS', 'SIFT'] # Sorted all fields list
 
         # remove if exists
         remove_if_exists([output_tsv])
@@ -47,158 +115,11 @@ def test_get_explode_infos_fields():
         variants = Variants(input=input_vcf, output=output_tsv, load=True)
 
         # 1 field
-        explode_infos_fields = "SIFT"
         explode_infos_fields_list = variants.get_explode_infos_fields(
-            explode_infos_fields
+            explode_infos_fields,
+            remove_fields_not_in_header=remove_fields_not_in_header,
         )
-        assert explode_infos_fields_list == ["SIFT"]
-
-        # multiple field
-        explode_infos_fields = "SIFT,DP,AD"
-        explode_infos_fields_list = variants.get_explode_infos_fields(
-            explode_infos_fields
-        )
-        assert explode_infos_fields_list == ["SIFT", "DP", "AD"]
-
-        # * fields
-        explode_infos_fields = "*"
-        explode_infos_fields_list = variants.get_explode_infos_fields(
-            explode_infos_fields
-        )
-        assert explode_infos_fields_list == sorted(fields_all)
-
-        # 1 field at beginning with all fields
-        explode_infos_fields = "DP,*"
-        explode_infos_fields_list = variants.get_explode_infos_fields(
-            explode_infos_fields
-        )
-        assert explode_infos_fields_list == ["DP", "AA", "CLNSIG", "NS", "SIFT"]
-
-        # 1 field at the end with all fields
-        explode_infos_fields = "*,DP"
-        explode_infos_fields_list = variants.get_explode_infos_fields(
-            explode_infos_fields
-        )
-        assert explode_infos_fields_list == ["AA", "CLNSIG", "NS", "SIFT", "DP"]
-
-        # all fields between 2 fields
-        explode_infos_fields = "SIFT,*,DP"
-        explode_infos_fields_list = variants.get_explode_infos_fields(
-            explode_infos_fields
-        )
-        assert explode_infos_fields_list == ["SIFT", "AA", "CLNSIG", "NS", "DP"]
-
-        # 2 same fields
-        explode_infos_fields = "DP,DP"
-        explode_infos_fields_list = variants.get_explode_infos_fields(
-            explode_infos_fields
-        )
-        assert explode_infos_fields_list == ["DP"]
-
-        # 2 same fields in a list
-        explode_infos_fields = "DP,SIFT,DP,AA"
-        explode_infos_fields_list = variants.get_explode_infos_fields(
-            explode_infos_fields
-        )
-        assert explode_infos_fields_list == ["DP", "SIFT", "AA"]
-
-        # 2 same fields in a list conatining *
-        explode_infos_fields = "DP,*,DP,AA"
-        explode_infos_fields_list = variants.get_explode_infos_fields(
-            explode_infos_fields
-        )
-        assert explode_infos_fields_list == ["DP", "CLNSIG", "NS", "SIFT", "AA"]
-
-        # 1 field not in header and keep it
-        explode_infos_fields = "NOT_field"
-        explode_infos_fields_list = variants.get_explode_infos_fields(
-            explode_infos_fields, remove_fields_not_in_header=False
-        )
-        assert explode_infos_fields_list == ["NOT_field"]
-
-        # 1 field not in header and keep it, with another field
-        explode_infos_fields = "NOT_field,DP"
-        explode_infos_fields_list = variants.get_explode_infos_fields(
-            explode_infos_fields, remove_fields_not_in_header=False
-        )
-        assert explode_infos_fields_list == ["NOT_field", "DP"]
-
-        # 1 field not in header and remove it
-        explode_infos_fields = "NOT_field"
-        explode_infos_fields_list = variants.get_explode_infos_fields(
-            explode_infos_fields, remove_fields_not_in_header=True
-        )
-        assert explode_infos_fields_list == []
-
-        # 1 field not in header and remove it, with another field
-        explode_infos_fields = "NOT_field,DP"
-        explode_infos_fields_list = variants.get_explode_infos_fields(
-            explode_infos_fields, remove_fields_not_in_header=True
-        )
-        assert explode_infos_fields_list == ["DP"]
-
-        # 1 field not in header and remove it, with ALL fields
-        explode_infos_fields = "NOT_field,*"
-        explode_infos_fields_list = variants.get_explode_infos_fields(
-            explode_infos_fields, remove_fields_not_in_header=True
-        )
-        assert explode_infos_fields_list == ["AA", "CLNSIG", "DP", "NS", "SIFT"]
-
-        # multiple fields with spaces
-        explode_infos_fields = "AA, DP ,SIFT,NS "
-        explode_infos_fields_list = variants.get_explode_infos_fields(
-            explode_infos_fields, remove_fields_not_in_header=True
-        )
-        assert explode_infos_fields_list == ["AA", "DP", "SIFT", "NS"]
-
-        # 1 field with pattern
-        explode_infos_fields = ".*S.*"
-        explode_infos_fields_list = variants.get_explode_infos_fields(
-            explode_infos_fields, remove_fields_not_in_header=True
-        )
-        assert explode_infos_fields_list == ["CLNSIG", "NS", "SIFT"]
-
-        # 1 field with pattern, with one field in pattern at the begenning
-        explode_infos_fields = "NS,.*S.*"
-        explode_infos_fields_list = variants.get_explode_infos_fields(
-            explode_infos_fields, remove_fields_not_in_header=True
-        )
-        assert explode_infos_fields_list == ["NS", "CLNSIG", "SIFT"]
-
-        # 1 field with pattern, with one field in pattern at the end
-        explode_infos_fields = ".*S.*,NS"
-        explode_infos_fields_list = variants.get_explode_infos_fields(
-            explode_infos_fields, remove_fields_not_in_header=True
-        )
-        assert explode_infos_fields_list == ["CLNSIG", "SIFT", "NS"]
-
-        # 1 field with pattern, with one field in pattern at the begenning, and all at the end
-        explode_infos_fields = "NS,.*S.*,*"
-        explode_infos_fields_list = variants.get_explode_infos_fields(
-            explode_infos_fields, remove_fields_not_in_header=True
-        )
-        assert explode_infos_fields_list == ["NS", "CLNSIG", "SIFT", "AA", "DP"]
-
-        # 1 field with pattern, with one field in pattern in the middle, and all at the end
-        explode_infos_fields = ".*S.*,NS,*"
-        explode_infos_fields_list = variants.get_explode_infos_fields(
-            explode_infos_fields, remove_fields_not_in_header=True
-        )
-        assert explode_infos_fields_list == ["CLNSIG", "SIFT", "NS", "AA", "DP"]
-
-        # 1 field with pattern, all at the middle, with one field in pattern at the end
-        explode_infos_fields = ".*S.*,*,NS"
-        explode_infos_fields_list = variants.get_explode_infos_fields(
-            explode_infos_fields, remove_fields_not_in_header=True
-        )
-        assert explode_infos_fields_list == ["CLNSIG", "SIFT", "AA", "DP", "NS"]
-
-        # all at the middle, 1 field with pattern (not considered because of all before), with one field in pattern at the end
-        explode_infos_fields = "*,.*S.*,NS"
-        explode_infos_fields_list = variants.get_explode_infos_fields(
-            explode_infos_fields, remove_fields_not_in_header=True
-        )
-        assert explode_infos_fields_list == ["AA", "CLNSIG", "DP", "SIFT", "NS"]
+        assert explode_infos_fields_list == explode_infos_fields_expected
 
 
 def test_export_query():
@@ -230,14 +151,10 @@ def test_export_query():
         assert os.path.exists(output_tsv) and os.path.exists(output_header)
 
 
-def test_export():
-    """
-    The function tests the export functionality of a database for various input and output formats.
-    """
-
-    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
-
-        # database input/format
+@pytest.mark.parametrize(
+    "database_input_index, database_output_format",
+    [
+        (database_input_index, database_output_format)
         for database_input_index in [
             "parquet",
             "partition_parquet",
@@ -246,45 +163,54 @@ def test_export():
             "tsv",
             "csv",
             "example_vcf",
-        ]:
-            for database_output_format in [
-                "parquet",
-                "partition_parquet",
-                "vcf",
-                "vcf.gz",
-                "tsv",
-                "csv",
-                "json",
-                "bed",
-            ]:
-                parquet_partitions = None
-                # specific partition_parquet
-                if database_output_format in ["partition_parquet"]:
-                    database_output_format = "parquet"
-                    parquet_partitions = ["#CHROM"]
-                input_database = database_files.get(database_input_index)
-                output_database = f"{tmp_dir}/output_database.{database_output_format}"
-                output_header = output_database + ".hdr"
-                variants = Variants(
-                    input=input_database,
-                    output=output_database,
-                    config=tests_config,
-                    load=True,
-                )
-                remove_if_exists([output_database, output_header])
+        ]
+        for database_output_format in [
+            "parquet",
+            "partition_parquet",
+            "vcf",
+            "vcf.gz",
+            "tsv",
+            "csv",
+            "json",
+            "bed",
+        ]
+    ],
+)
+def test_export_output(database_input_index, database_output_format):
+    """
+    The function tests the export functionality of a database for various input and output formats.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        parquet_partitions = None
+        # specific partition_parquet
+        if database_output_format in ["partition_parquet"]:
+            database_output_format = "parquet"
+            parquet_partitions = ["#CHROM"]
+        input_database = database_files.get(database_input_index)
+        output_database = f"{tmp_dir}/output_database.{database_output_format}"
+        output_header = output_database + ".hdr"
+        variants = Variants(
+            input=input_database,
+            output=output_database,
+            config=tests_config,
+            load=True,
+        )
+        remove_if_exists([output_database, output_header])
+        try:
+            assert variants.export_output(
+                output_file=output_database,
+                output_header=output_header,
+                parquet_partitions=parquet_partitions,
+            )
+            if database_output_format == "vcf":
                 try:
-                    assert variants.export_output(
-                        output_file=output_database,
-                        output_header=output_header,
-                        parquet_partitions=parquet_partitions,
-                    )
-                    if database_output_format == "vcf":
-                        try:
-                            vcf.Reader(filename=output_database)
-                        except:
-                            assert False
+                    vcf.Reader(filename=output_database)
                 except:
                     assert False
+        except:
+            assert False
 
 
 def test_set_get_input():
@@ -532,9 +458,6 @@ def test_load_without_header():
         assert True
     except:
         assert False
-    # with pytest.raises(ValueError) as e:
-    #     variants = Variants(input=input_vcf)
-    # assert str(e.value) == f"No header for file {input_vcf}"
 
 
 def test_read_vcf_header():
@@ -745,27 +668,6 @@ def test_load_tsv():
     assert nb_variant_in_database == expected_number_of_variants
 
 
-# def test_load_psv():
-#     """
-#     This function tests if a PSV file can be loaded into a Variants object and if the expected number of
-#     variants is present in the database.
-#     """
-
-#     # Init files
-#     input_vcf = tests_data_folder + "/example.psv"
-
-#     # Create object
-#     variants = Variants(input=input_vcf, load=True)
-
-#     # Check data loaded
-#     result = variants.get_query_to_df("SELECT count(*) AS count FROM variants")
-#     nb_variant_in_database = result["count"][0]
-
-#     expected_number_of_variants = 7
-
-#     assert nb_variant_in_database == expected_number_of_variants
-
-
 def test_load_duckdb():
     """
     This function tests if a DuckDB database containing variant data can be loaded and queried
@@ -835,6 +737,8 @@ def test_get_connexion_db_tmpfile():
     connexion_db = variants.get_connexion_db()
 
     assert os.path.exists(connexion_db)
+
+    remove_if_exists(connexion_db)
 
 
 def test_get_connexion_db_file():

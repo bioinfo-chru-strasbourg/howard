@@ -197,7 +197,7 @@
       "\"tools\": {",
       "   \"bcftools\": {",
       "      \"docker\": {",
-      "        \"image\": \"howard:1.0.0\",",
+      "        \"image\": \"howard:0.10.0\",",
       "        \"entrypoint\": \"bcftools\",",
       "        \"options\": null,",
       "        \"command\": null",
