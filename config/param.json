@@ -38,21 +38,7 @@
         },
         "splice": {
             "options": {
-                "genome": "hg19",
-                "genome_path": "/home1/data/STARK/databases/genomes/current/hg19.fa",
-                "spip_transcriptome": "/home1/data/STARK/databases/splice/SPiP/current/transcriptome_hg19.RData",
-                "spip_mode": "longest",
-                "spliceai_annotations": "/home1/BAS/lamouchj/test/SpliceAI/spliceai/annotations/grch37.txt",
-                "spliceai_distance": 500,
-                "spliceai_mask": 1,
-                "spliceconfig": "",
-                "rm_snps": true,
-                "rm_annot": true,
-                "condacachedir": "",
-                "workdir": "",
-                "bgzip": "bgzip",
-                "bcftools": "bcftools",
-                "tabix": "tabix"
+                "genome": "hg19"
             }
         }
     },
