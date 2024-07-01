@@ -5973,10 +5973,8 @@ class Variants:
         # Export VCF file
         self.export_variant_vcf(
             vcf_file=tmp_vcf_name,
-            file_type="vcf",
             remove_info=True,
             add_samples=True,
-            compression=1,
             index=False,
         )
 
