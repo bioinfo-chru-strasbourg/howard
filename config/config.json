@@ -4,7 +4,7 @@
     "verbosity": "WARNING",
     "folders": {
         "databases": {
-            "genomes": "/home1/data/STARK/databases/genomes/current",
+            "genomes": "~/howard/databases/genomes/current",
             "annotations": [
                 "~/howard/databases/annotations/current",
                 "~/howard/databases/dbnsfp/current",
@@ -28,7 +28,21 @@
             "java": "java",
             "snpeff": "~/howard/tools/snpeff/current/bin/snpEff.jar",
             "annovar": "~/howard/tools/annovar/current/bin/table_annovar.pl",
-            "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-14.0.0.jar"
+            "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-14.0.0.jar",
+            "docker": "docker",
+            "splice": {
+                "docker": {
+                    "image": "jblamouche/splice:0.2.1",
+                    "entrypoint": "/bin/bash",
+                    "options": null,
+                    "command": null
+                },
+                "mount": {
+                    "~/howard/databases": "ro",
+                    "/tmp": "rw"
+                },
+                "tmp": "/tmp"
+            }
         }
     }
 }
