@@ -23,6 +23,7 @@ import zipfile
 import gzip
 import requests
 import fnmatch
+import ast
 
 import random
 
@@ -100,6 +101,7 @@ DEFAULT_TOOLS_BIN = {
     "snpeff": {"jar": "~/howard/tools/snpeff/current/bin/snpEff.jar"},
     "annovar": {"perl": "~/howard/tools/annovar/current/bin/table_annovar.pl"},
     "exomiser": {"jar": "~/howard/tools/exomiser/current/bin/exomiser.jar"},
+    "splice": {"bin": "docker"},
 }
 
 # URL
@@ -123,6 +125,7 @@ DEFAULT_REFSEQ_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/refseq/current"
 DEFAULT_DBNSFP_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/dbnsfp/current"
 DEFAULT_EXOMISER_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/exomiser/current"
 DEFAULT_DBSNP_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/exomiser/dbsnp"
+DEFAULT_SPLICE_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/splice"
 
 # Data default folder
 DEFAULT_DATA_FOLDER = os.path.join(folder_howard_home, "data")
@@ -3518,3 +3521,40 @@ def identical(
         if vcfs_lines[i] != vcfs_lines[i + 1]:
             return False
     return True
+
+
+def check_docker_image_exists(image_with_tag: str) -> bool:
+    """
+    Checks if a Docker image with a specific tag exists in the local repository.
+
+    :param image_with_tag: Image name with tag (e.g., "image:version")
+    :return: True if the image exists, False otherwise
+    """
+    image_name, image_tag = image_with_tag.split(":")
+    try:
+        # Run the `docker images` command and capture the output
+        result = subprocess.run(
+            ["docker", "images", "--format", "json"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        # Check for errors
+        if result.returncode != 0:
+            log.warning(f"Error running Docker command: {result.stderr}")
+            return False
+
+        # Search for the image with the specified tag in the command output
+        for image in result.stdout.split("\n"):
+            if image:
+                image_dict = ast.literal_eval(image)
+                if (
+                    image_dict.get("Repository") == image_name
+                    and image_dict.get("Tag") == image_tag
+                ):
+                    log.debug(f"Find locally {image_with_tag}")
+                    return True
+        return False
+    except Exception as e:
+        log.warning(f"Docker image check: {e}")
+        return False

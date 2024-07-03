@@ -1,29 +1,48 @@
 {
-  "threads": 8,
-  "memory": null,
-  "verbosity": "WARNING",
-  "folders": {
-    "databases": {
-      "genomes": "~/howard/databases/genomes/current",
-      "annotations": [
-        "~/howard/databases/annotations/current",
-        "~/howard/databases/dbnsfp/current",
-        "~/howard/databases/dbsnp/current"
-      ],
-      "parquet": ["~/howard/databases/annotations/current"],
-      "bcftools": ["~/howard/databases/annotations/current"],
-      "annovar": ["~/howard/databases/annovar/current"],
-      "snpeff": "~/howard/databases/snpeff/current",
-      "varank": "~/howard/databases/varank/current"
+    "threads": 24,
+    "memory": null,
+    "verbosity": "WARNING",
+    "folders": {
+        "databases": {
+            "genomes": "~/howard/databases/genomes/current",
+            "annotations": [
+                "~/howard/databases/annotations/current",
+                "~/howard/databases/dbnsfp/current",
+                "~/howard/databases/dbsnp/current"
+            ],
+            "parquet": [
+                "~/howard/databases/annotations/current"
+            ],
+            "bcftools": [
+                "~/howard/databases/annotations/current"
+            ],
+            "annovar": [
+                "~/howard/databases/annovar/current"
+            ],
+            "snpeff": "~/howard/databases/snpeff/current",
+            "varank": "~/howard/databases/varank/current"
+        },
+        "tools": {
+            "bcftools": "bcftools",
+            "bgzip": "bgzip",
+            "java": "java",
+            "snpeff": "~/howard/tools/snpeff/current/bin/snpEff.jar",
+            "annovar": "~/howard/tools/annovar/current/bin/table_annovar.pl",
+            "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-14.0.0.jar",
+            "docker": "docker",
+            "splice": {
+                "docker": {
+                    "image": "jblamouche/splice:0.2.1",
+                    "entrypoint": "/bin/bash",
+                    "options": null,
+                    "command": null
+                },
+                "mount": {
+                    "~/howard/databases": "ro",
+                    "/tmp": "rw"
+                },
+                "tmp": "/tmp"
+            }
+        }
     }
-  },
-  "tools": {
-    "bcftools": "bcftools",
-    "bgzip": "bgzip",
-    "java": "java",
-    "snpeff": "~/howard/tools/snpeff/current/bin/snpEff.jar",
-    "snpsift": "~/howard/tools/snpeff/current/bin/SnpSift.jar",
-    "annovar": "~/howard/tools/annovar/current/bin/table_annovar.pl",
-    "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-14.0.0.jar"
-  }
 }
