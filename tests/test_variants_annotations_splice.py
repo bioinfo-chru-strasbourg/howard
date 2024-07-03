@@ -43,6 +43,7 @@ def test_annotation_splice():
                     "entrypoint": "/bin/bash",
                 },
                 "mount": {
+                    f"{tests_databases_folder}/genomes/{tests_databases_release}": "ro",
                     tests_data_folder: "ro",
                 },
                 "tmp": "/tmp",
