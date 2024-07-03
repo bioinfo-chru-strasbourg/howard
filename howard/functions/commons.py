@@ -101,7 +101,15 @@ DEFAULT_TOOLS_BIN = {
     "snpeff": {"jar": "~/howard/tools/snpeff/current/bin/snpEff.jar"},
     "annovar": {"perl": "~/howard/tools/annovar/current/bin/table_annovar.pl"},
     "exomiser": {"jar": "~/howard/tools/exomiser/current/bin/exomiser.jar"},
-    "splice": {"bin": "docker"},
+    "docker": {"bin": "docker"},
+    "splice": {
+        "docker": {
+            "image": "jblamouche/splice:0.2.1",
+            "entrypoint": "/bin/bash",
+            "options": None,
+            "command": None,
+        }
+    },
 }
 
 # URL
@@ -126,6 +134,8 @@ DEFAULT_DBNSFP_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/dbnsfp/current"
 DEFAULT_EXOMISER_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/exomiser/current"
 DEFAULT_DBSNP_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/exomiser/dbsnp"
 DEFAULT_SPLICE_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/splice"
+DEFAULT_SPLICEAI_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/spliceai"
+DEFAULT_SPIP_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/spip"
 
 # Data default folder
 DEFAULT_DATA_FOLDER = os.path.join(folder_howard_home, "data")
@@ -1561,6 +1571,8 @@ def get_tmp(config: dict = {}, param: dict = None, default_tmp: str = "/tmp") ->
 
     # Tmp in param or config
     tmp_param = param.get("tmp", config.get("tmp", default_tmp))
+    if not tmp_param:
+        tmp_param = default_tmp
 
     # Return tmp
     return tmp_param
