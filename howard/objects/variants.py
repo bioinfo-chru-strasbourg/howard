@@ -6087,19 +6087,24 @@ class Variants:
                         # raise ValueError(
                         #     "Can't find splice databases in configuration EXIT"
                         # )
-                        log.critical(
+                        log.warning(
                             "Can't find splice databases in configuration, use annotations file from image"
                         )
                 except TypeError:
-                    log.critical(
+                    log.warning(
                         "Can't find splice databases in configuration, use annotations file from image"
                     )
                     return []
 
-            # Add options
-            splice_reference = splice_annotations(options, config)
-            if splice_reference:
-                nf_params.extend(splice_reference)
+            # Add options, check if transcriptome option have already beend provided
+            if (
+                "spip_transcriptome" not in nf_params
+                and "spliceai_transcriptome" not in nf_params
+            ):
+                splice_reference = splice_annotations(options, config)
+                if splice_reference:
+                    nf_params.extend(splice_reference)
+
             nf_params.append(f"--output_folder {output_folder}")
 
             random_uuid = f"HOWARD-SPLICE-{get_random()}"
