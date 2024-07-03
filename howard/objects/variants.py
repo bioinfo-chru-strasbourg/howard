@@ -946,12 +946,15 @@ class Variants:
 
     def get_tmp_dir(self) -> str:
         """
-        It returns the value of the tmp_dir key in the config dictionary, or /tmp if the key doesn't
-        exist
-
-        :return: The value of the key "tmp_dir" in the config file.
+        The function `get_tmp_dir` returns the temporary directory path based on configuration
+        parameters or a default path.
+        :return: The `get_tmp_dir` method is returning the temporary directory path based on the
+        configuration, parameters, and a default value of "/tmp".
         """
-        return self.get_config().get("tmp_dir", "/tmp")
+
+        return get_tmp(
+            config=self.get_config(), param=self.get_param(), default_tmp="/tmp"
+        )
 
     def get_connexion_type(self) -> str:
         """
@@ -5952,9 +5955,7 @@ class Variants:
         log.debug("Create initial file to annotate")
 
         # Create output folder
-        output_folder = os.path.join(
-            get_tmp(config=config, param=param), f"splice-{get_random()}"
-        )
+        output_folder = os.path.join(self.get_tmp_dir(), f"splice-{get_random()}")
         if not os.path.exists(output_folder):
             Path(output_folder).mkdir(parents=True, exist_ok=True)
 

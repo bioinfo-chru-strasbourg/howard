@@ -1,95 +1,83 @@
 {
-    "annotation": {
-        "parquet": {
-            "annotations": {
-                "tests/databases/annotations/current/hg19/avsnp150.parquet": {
-                    "INFO": null
-                },
-                "tests/databases/annotations/current/hg19/dbnsfp42a.parquet": {
-                    "INFO": null
-                },
-                "tests/databases/annotations/current/hg19/gnomad211_genome.parquet": {
-                    "INFO": null
-                }
-            }
+  "annotation": {
+    "parquet": {
+      "annotations": {
+        "tests/databases/annotations/current/hg19/avsnp150.parquet": {
+          "INFO": null
         },
-        "bcftools": {
-            "annotations": {
-                "tests/databases/annotations/current/hg19/cosmic70.vcf.gz": {
-                    "INFO": null
-                }
-            }
+        "tests/databases/annotations/current/hg19/dbnsfp42a.parquet": {
+          "INFO": null
         },
-        "snpeff": {
-            "options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 ",
-            "stats": "OUTPUT.html",
-            "csvStats": "OUTPUT.csv"
-        },
-        "annovar": {
-            "annotations": {
-                "refGene": {
-                    "INFO": null
-                }
-            },
-            "options": {
-                "genebase": "-hgvs -splicing_threshold 3 ",
-                "intronhgvs": 10
-            }
-        },
-        "splice": {
-            "options": {
-                "genome": "hg19"
-            }
+        "tests/databases/annotations/current/hg19/gnomad211_genome.parquet": {
+          "INFO": null
         }
+      }
     },
-    "calculation": {
-        "calculations": {
-            "vartype": null,
-            "snpeff_hgvs": null,
-            "NOMEN": {
-                "options": {
-                    "hgvs_field": "snpeff_hgvs",
-                    "transcripts": "tests/data/transcripts.tsv"
-                }
-            },
-            "VAF": ""
-        },
-        "calculation_config": "config/calculations_config.json"
+    "bcftools": {
+      "annotations": {
+        "tests/databases/annotations/current/hg19/cosmic70.vcf.gz": {
+          "INFO": null
+        }
+      }
     },
-    "prioritization": {
-        "profiles": [
-            "default",
-            "GERMLINE"
-        ],
-        "prioritization_config": "config/prioritization_profiles.json",
-        "pzfields": [
-            "PZScore",
-            "PZFlag",
-            "PZComment"
-        ],
-        "prioritization_score_mode": "VaRank"
+    "snpeff": {
+      "options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 ",
+      "stats": "OUTPUT.html",
+      "csvStats": "OUTPUT.csv"
     },
-    "hgvs": {
-        "full_format": true,
-        "use_exon": true
+    "annovar": {
+      "annotations": {
+        "refGene": {
+          "INFO": null
+        }
+      },
+      "options": {
+        "genebase": "-hgvs -splicing_threshold 3 ",
+        "intronhgvs": 10
+      }
+    }
+  },
+  "calculation": {
+    "calculations": {
+      "vartype": null,
+      "snpeff_hgvs": null,
+      "NOMEN": {
+        "options": {
+          "hgvs_field": "snpeff_hgvs",
+          "transcripts": "tests/data/transcripts.tsv"
+        }
+      },
+      "VAF": ""
     },
-    "stats": {
-        "stats_md": null,
-        "stats_json": null
-    },
-    "query": {
-        "query": "SELECT \"#CHROM\", POS, REF, ALT, INFO FROM variants",
-        "query_limit": 10,
-        "query_print_mode": "default"
-    },
-    "explode_infos": {
-        "explode_infos": false,
-        "explode_infos_prefix": ""
-    },
-    "export": {
-        "header_in_output": false,
-        "parquet_partitions": null,
-        "order_by": null
-    },
-    "threads": 8
+    "calculation_config": "config/calculations_config.json"
+  },
+  "prioritization": {
+    "profiles": ["default", "GERMLINE"],
+    "prioritization_config": "config/prioritization_profiles.json",
+    "pzfields": ["PZScore", "PZFlag", "PZComment"],
+    "prioritization_score_mode": "VaRank"
+  },
+  "hgvs": {
+    "full_format": true,
+    "use_exon": true
+  },
+  "stats": {
+    "stats_md": null,
+    "stats_json": null
+  },
+  "query": {
+    "query": "SELECT \"#CHROM\", POS, REF, ALT, INFO FROM variants",
+    "query_limit": 10,
+    "query_print_mode": "default"
+  },
+  "explode_infos": {
+    "explode_infos": false,
+    "explode_infos_prefix": ""
+  },
+  "export": {
+    "header_in_output": false,
+    "parquet_partitions": null,
+    "order_by": null
+  },
+  "threads": 8
 }
