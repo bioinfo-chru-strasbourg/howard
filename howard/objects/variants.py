@@ -2718,6 +2718,8 @@ class Variants:
             param_annotation_list.append("annovar:" + param.get("annotation_annovar"))
         if param.get("annotation_exomiser", None) != None:
             param_annotation_list.append("exomiser:" + param.get("annotation_exomiser"))
+        if param.get("annotation_splice", None) != None:
+            param_annotation_list.append("splice:" + param.get("annotation_splice"))
 
         # Merge param annotations list
         param["annotations"] = ",".join(param_annotation_list)
@@ -2832,60 +2834,23 @@ class Variants:
                                     annotation_file_annotation
                                 ] = annotations
 
-                    # Annotation Splice
-                    elif annotation_file.startswith("splice"):
-
-                        log.debug("Quick Annotation Splice")
-
-                        if "splice" not in param["annotation"]:
-                            param["annotation"]["splice"] = {}
-
-                        if "annotations" not in param["annotation"]["splice"]:
-                            param["annotation"]["splice"]["annotations"] = {}
-
-                        # Options
-                        annotation_file_split = annotation_file.split(":")
-                        for annotation_file_annotation in annotation_file_split[1:]:
-                            param["annotation"]["splice"]["annotations"][
-                                annotation_file_annotation
-                            ] = annotations
-
                     # Annotation Exomiser
                     elif annotation_file.startswith("exomiser"):
 
                         log.debug(f"Quick Annotation Exomiser")
-                        if "exomiser" not in param["annotation"]:
-                            param["annotation"]["exomiser"] = {}
 
-                        # Options
-                        annotation_file_split = annotation_file.split(":")
-                        log.debug(f"{annotation_file_split}")
-                        for annotation_file_option in annotation_file_split[1:]:
-                            if annotation_file_option != "":
-                                annotation_file_option_var_val = (
-                                    annotation_file_option.split("=")
-                                )
-                                annotation_file_option_var = (
-                                    annotation_file_option_var_val[0].strip()
-                                )
-                                annotation_file_option_val = (
-                                    annotation_file_option_var_val[1].strip()
-                                )
-                                log.debug(
-                                    f"{annotation_file_option_var}={annotation_file_option_val}"
-                                )
-                                if annotation_file_option_val:
-                                    if not annotation_file_option_val:
-                                        annotation_file_option_val = None
-                                    else:
-                                        annotation_file_option_val = (
-                                            annotation_file_option_val.replace(
-                                                "+", ","
-                                            ).replace(" ", "")
-                                        )
-                                    param["annotation"]["exomiser"][
-                                        annotation_file_option_var
-                                    ] = annotation_file_option_val
+                        param["annotation"]["exomiser"] = params_string_to_dict(
+                            annotation_file
+                        )
+
+                    # Annotation Splice
+                    elif annotation_file.startswith("splice"):
+
+                        log.debug(f"Quick Annotation Splice")
+
+                        param["annotation"]["splice"] = params_string_to_dict(
+                            annotation_file
+                        )
 
                     # Annotation Parquet or BCFTOOLS
                     else:
@@ -3036,10 +3001,10 @@ class Variants:
             if param.get("annotation", {}).get("snpeff", None):
                 log.info("Annotations 'snpeff'...")
                 self.annotation_snpeff()
-            if param.get("annotation", {}).get("exomiser", None):
+            if param.get("annotation", {}).get("exomiser", None) is not None:
                 log.info("Annotations 'exomiser'...")
                 self.annotation_exomiser()
-            if param.get("annotation", {}).get("splice", None):
+            if param.get("annotation", {}).get("splice", None) is not None:
                 log.info("Annotations 'splice' ...")
                 self.annotation_splice()
 
@@ -5896,7 +5861,6 @@ class Variants:
         splice_config = config.get("tools", {}).get("splice", {})
         if not splice_config:
             splice_config = DEFAULT_TOOLS_BIN.get("splice", {})
-        log.debug(f"DEFAULT_TOOLS_BIN={DEFAULT_TOOLS_BIN}")
         if not splice_config:
             msg_err = "No Splice tool config"
             log.error(msg_err)
@@ -5920,7 +5884,9 @@ class Variants:
             try:
                 command(f"docker pull {splice_config.get('docker').get('image')}")
             except subprocess.CalledProcessError:
-                log.error(f"Unable to find docker {splice_docker_image} on dockerhub")
+                msg_err = f"Unable to find docker {splice_docker_image} on dockerhub"
+                log.error(msg_err)
+                raise ValueError(msg_err)
                 return None
 
         # Config - splice databases
@@ -5936,7 +5902,7 @@ class Variants:
         log.debug("Param: " + str(param))
 
         # Param
-        options = param.get("annotation", {}).get("splice", {}).get("options", {})
+        options = param.get("annotation", {}).get("splice", {})
         log.debug("Options: " + str(options))
 
         # Data
@@ -6060,16 +6026,22 @@ class Variants:
                         yield f"--{key} {val}"
 
             # Genome
-            genome = options.get("genome", DEFAULT_ASSEMBLY)
+            genome = options.get("genome", config.get("assembly", DEFAULT_ASSEMBLY))
             options["genome"] = genome
 
             # NF params
             nf_params = []
+
+            # Add options
             if options:
                 nf_params = list(check_values(options))
                 log.debug(f"Splice NF params: {' '.join(nf_params)}")
             else:
                 log.debug("No NF params provided")
+
+            # Add threads
+            if "threads" not in options.keys():
+                nf_params.append(f"--threads {threads}")
 
             # Genome path
             genome_path = find_genome(

@@ -17,22 +17,22 @@
       "varank": "~/howard/databases/varank/current",
       "spliceai": "~/howard/databases/spliceai/current",
       "spip": "~/howard/databases/spip/current"
-    },
-    "tools": {
-      "bcftools": "bcftools",
-      "bgzip": "bgzip",
-      "java": "java",
-      "snpeff": "~/howard/tools/snpeff/current/bin/snpEff.jar",
-      "annovar": "~/howard/tools/annovar/current/bin/table_annovar.pl",
-      "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-14.0.0.jar",
-      "docker": "docker",
-      "splice": {
-        "docker": {
-          "image": "jblamouche/splice:0.2.1",
-          "entrypoint": "/bin/bash",
-          "options": null,
-          "command": null
-        }
+    }
+  },
+  "tools": {
+    "bcftools": "bcftools",
+    "bgzip": "bgzip",
+    "java": "java",
+    "snpeff": "~/howard/tools/snpeff/current/bin/snpEff.jar",
+    "annovar": "~/howard/tools/annovar/current/bin/table_annovar.pl",
+    "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-14.0.0.jar",
+    "docker": "docker",
+    "splice": {
+      "docker": {
+        "image": "bioinfochrustrasbourg/splice:0.2.1",
+        "entrypoint": "/bin/bash",
+        "options": null,
+        "command": null
       }
     }
   }

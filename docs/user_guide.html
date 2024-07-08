@@ -396,7 +396,7 @@ code {
 <p><img src="../images/icon.png" alt="HOWARD Graphical User Interface" title="HOWARD Graphical User Interface"></p>
 <p>Highly Open Workflow for Annotation &amp; Ranking toward genomic variant Discovery</p>
 <p>HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations, translates files in multiple formats (e.g. vcf, tsv, parquet) and generates variants statistics.</p>
-<p>HOWARD annotation is mainly based on a build-in Parquet annotation method, and external tools such as BCFTOOLS, ANNOVAR, snpEff and Exomiser (see docs, automatically downloaded if needed). Parquet annotation uses annotation database in VCF or BED format, in mutliple file format: Parquet/duckdb, VCF, BED, TSV, CSV, TBL, JSON.</p>
+<p>HOWARD annotation is mainly based on a build-in Parquet annotation method, and external tools such as BCFTOOLS, ANNOVAR, snpEff, Exomiser and Splice (see docs, automatically downloaded if needed). Parquet annotation uses annotation database in VCF or BED format, in mutliple file format: Parquet/duckdb, VCF, BED, TSV, CSV, TBL, JSON.</p>
 <p>HOWARD calculation processes variants information to calculate new information, such as: harmonizes allele frequency (VAF), extracts Nomen (transcript, cNomen, pNomen...) from HGVS fields with an optional list of personalized transcripts, generates VaRank format barcode.</p>
 <p>HOWARD prioritization algorithm uses profiles to flag variants (as passed or filtered), calculate a prioritization score, and automatically generate a comment for each variants (example: 'polymorphism identified in dbSNP. associated to Lung Cancer. Found in ClinVar database').Prioritization profiles are defined in a configuration file. A profile is defined as a list of annotation/value, using wildcards and comparison options (contains, lower than, greater than, equal...). Annotations fields may be quality values (usually from callers, such as 'GQ', 'DP') or other annotations fields provided by annotations tools, such as HOWARD itself (example: COSMIC, Clinvar, 1000genomes, PolyPhen, SIFT). Multiple profiles can be used simultaneously, which is useful to define multiple validation/prioritization levels (example: 'standard', 'stringent', 'rare variants', 'low allele frequency').</p>
 <p>HOWARD translates VCF format into multiple formats (e.g. VCF, TSV, Parquet), by sorting variants using specific fields (example : 'prioritization score', 'allele frequency', 'gene symbol'), including/excluding annotations/fields, including/excluding variants, adding fixed columns.</p>
@@ -469,6 +469,7 @@ code {
 <li><a href="#annovar-annotation">Annovar annotation</a></li>
 <li><a href="#snpeff-annotation">snpEff annotation</a></li>
 <li><a href="#exomiser-annotation">Exomiser annotation</a></li>
+<li><a href="#splice-annotation">Splice annotation</a></li>
 <li><a href="#bcftools-annotation">BCFTools annotation</a></li>
 </ul>
 </li>
@@ -559,13 +560,22 @@ code {
     <span class="hljs-attr">"snpeff"</span>: <span class="hljs-string">"~/howard/tools/snpeff/current/bin/snpEff.jar"</span>,
     <span class="hljs-attr">"snpsift"</span>: <span class="hljs-string">"~/howard/tools/snpeff/current/bin/SnpSift.jar"</span>,
     <span class="hljs-attr">"annovar"</span>: <span class="hljs-string">"~/howard/tools/annovar/current/bin/table_annovar.pl"</span>,
-    <span class="hljs-attr">"exomiser"</span>: <span class="hljs-string">"~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar"</span>
+    <span class="hljs-attr">"exomiser"</span>: <span class="hljs-string">"~/howard/tools/exomiser/current/bin/exomiser-cli-14.0.0.jar"</span>,
+    <span class="hljs-attr">"splice"</span>: {
+      <span class="hljs-attr">"docker"</span>: {
+        <span class="hljs-attr">"image"</span>: <span class="hljs-string">"bioinfochrustrasbourg/splice:0.2.1"</span>,
+        <span class="hljs-attr">"entrypoint"</span>: <span class="hljs-string">"/bin/bash"</span>,
+        <span class="hljs-attr">"options"</span>: <span class="hljs-literal">null</span>,
+        <span class="hljs-attr">"command"</span>: <span class="hljs-literal">null</span>
+      }
+    },
+    <span class="hljs-attr">"docker"</span>: <span class="hljs-string">"docker"</span>
   }
 }
 
 </div></code></pre>
 <h3 id="external-tools">External tools</h3>
-<p>In order to use external tools, mainly for annotation (e.g. Annovar, snpEff, Exomiser), they need to be installed.</p>
+<p>In order to use external tools, mainly for annotation (e.g. Annovar, snpEff, Exomiser, Splice), they need to be installed (see doc of each tools). For Splice tool, a Docker image is automatically downloaded using configuration file.</p>
 <h2 id="docker">Docker</h2>
 <h3 id="quick-start">Quick Start</h3>
 <p>In order to build images, launch default setup and create a persitent CLI (Command Line Inferface container), docker-compose command build images and launch services as containers.</p>
@@ -595,6 +605,10 @@ code {
 <tr>
 <td><a href="https://www.sanger.ac.uk/tool/exomiser/">Exomiser</a></td>
 <td>Program that finds potential disease-causing variants from whole-exome or whole-genome sequencing data</td>
+</tr>
+<tr>
+<td><a href="https://hub.docker.com/r/bioinfochrustrasbourg/splice">Splice</a></td>
+<td>Image to run SPiP and SpliceAI tools in an nextflow pipeline.</td>
 </tr>
 </tbody>
 </table>
@@ -1315,7 +1329,7 @@ howard annotation \
 </div></code></pre>
 </blockquote>
 <h4 id="external-tools-annotation">External tools annotation</h4>
-<p>External annotation tools are also available, such as BCFTOOLS, Annovar, snpEff and Exomiser. Annovar, snpEff and Exomiser databases are automatically downloaded (see <a href="help.md#databases-tool">HOWARD Help Databases tool</a>). Quick annotation allows to annotates by simply defining external tools keywords.</p>
+<p>External annotation tools are also available, such as BCFTOOLS, Annovar, snpEff, Exomiser and Splice. Annovar, snpEff and Exomiser databases are automatically downloaded (see <a href="help.md#databases-tool">HOWARD Help Databases tool</a>). Quick annotation allows to annotates by simply defining external tools keywords.</p>
 <h5 id="bcftools-annotation">BCFTools annotation</h5>
 <p>For BCFTools, use HOWARD keyword <code>bcftools</code> and list (separator <code>:</code> or <code>+</code>) annotation databases with format such as VCF or BED (compressed). More options are available using <a href="help.param.md">HOWARD Parameters JSON</a> file.</p>
 <blockquote>
@@ -1347,12 +1361,22 @@ howard annotation \
 </div></code></pre>
 </blockquote>
 <h5 id="exomiser-annotation">Exomiser Annotation</h5>
-<p>For Exomiser tool, use HOWARD keyword <code>exomiser</code>. A list of options can be provided as key-value format, such as exomiser release, a preset (pre-configured options), source of transcripts (e.g. 'refseq', 'ucsc'), a llist of HPO terms (do not use ':' separator, e.g. '0001156', 'HP0001156', 'hpo0001156'). More options are available using <a href="help.param.md">HOWARD Parameters JSON</a> file.</p>
+<p>For Exomiser tool, use HOWARD keyword <code>exomiser</code>. A list of options can be provided as key-value format, such as exomiser release, a preset (pre-configured options), source of transcripts (e.g. 'refseq', 'ucsc'), a list of HPO terms (do not use ':' separator, e.g. '0001156', 'HP0001156', 'hpo0001156'). More options are available using <a href="help.param.md">HOWARD Parameters JSON</a> file.</p>
 <blockquote>
 <p>Example: VCF annotation with Exomiser (exome preset, list of HPO terms, transcript as refseq and release 2109)</p>
 <pre class="hljs"><code><div>howard annotation \
    --input=tests/data/example.vcf.gz \
    --annotations='exomiser:preset=exome:hpo=0001156+0001363+0011304+0010055:transcript_source=refseq:release=2109' \
+   --output=/tmp/example.howard.tsv
+</div></code></pre>
+</blockquote>
+<h5 id="splice-annotation">Splice Annotation</h5>
+<p>For Splice tool, use HOWARD keyword <code>splice</code>. A list of options can be provided as key-value format, such as split mode, spliceAI distance, spliceAI mask. More options are available using <a href="help.param.md">HOWARD Parameters JSON</a> file.</p>
+<blockquote>
+<p>Example: VCF annotation with Splice (split mode, spliceAI distance, spliceAI mask)</p>
+<pre class="hljs"><code><div>howard annotation \
+   --input=tests/data/example.vcf.gz \
+   --annotations='splice:split_mode=one:spliceai_distance=500:spliceai_mask=1' \
    --output=/tmp/example.howard.tsv
 </div></code></pre>
 </blockquote>
