@@ -70,7 +70,7 @@
 
 <!--TOC-->
 
-HOWARD:0.10.0
+HOWARD:0.11.0
 
 Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery
 

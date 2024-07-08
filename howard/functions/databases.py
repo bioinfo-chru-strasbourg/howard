@@ -751,11 +751,14 @@ def databases_download_snpeff(
         if not os.path.exists(folder_assembly):
 
             # Download list of databases if file does not exists
-            if (
-                not os.path.exists(snpeff_databases_list_path)
-                or os.path.getsize(snpeff_databases_list_path) == 0
+            if not os.path.exists(snpeff_databases_list_path) or (
+                os.path.exists(snpeff_databases_list_path)
+                and os.path.getsize(snpeff_databases_list_path) == 0
             ):
-                if os.path.getsize(snpeff_databases_list_path) == 0:
+                if (
+                    os.path.exists(snpeff_databases_list_path)
+                    and os.path.getsize(snpeff_databases_list_path) == 0
+                ):
                     log.warning(
                         f"Download snpEff databases {[assembly]} - list of databases empty - download '{snpeff_databases_list_path}' required"
                     )

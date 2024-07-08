@@ -39,12 +39,12 @@
 
 FROM almalinux:8
 LABEL Software="HOWARD" \
-	Version="0.10.0" \
+	Version="0.11.0" \
 	Website="https://github.com/bioinfo-chru-strasbourg/howard" \
 	Description="HOWARD" \
 	License="GNU Affero General Public License (AGPL)" \
     maintener="Antony Le Bechec <antony.lebechec@gmail.com>" \
-	Usage='docker run -v $DATA FOLDER:/data -v $DATABASE_FOLDER:/databases -ti howard:0.10.0'
+	Usage='docker run -v $DATA FOLDER:/data -v $DATABASE_FOLDER:/databases -ti howard:0.11.0'
 
 
 
