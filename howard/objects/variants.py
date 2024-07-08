@@ -946,12 +946,15 @@ class Variants:
 
     def get_tmp_dir(self) -> str:
         """
-        It returns the value of the tmp_dir key in the config dictionary, or /tmp if the key doesn't
-        exist
-
-        :return: The value of the key "tmp_dir" in the config file.
+        The function `get_tmp_dir` returns the temporary directory path based on configuration
+        parameters or a default path.
+        :return: The `get_tmp_dir` method is returning the temporary directory path based on the
+        configuration, parameters, and a default value of "/tmp".
         """
-        return self.get_config().get("tmp_dir", "/tmp")
+
+        return get_tmp(
+            config=self.get_config(), param=self.get_param(), default_tmp="/tmp"
+        )
 
     def get_connexion_type(self) -> str:
         """
@@ -2715,6 +2718,8 @@ class Variants:
             param_annotation_list.append("annovar:" + param.get("annotation_annovar"))
         if param.get("annotation_exomiser", None) != None:
             param_annotation_list.append("exomiser:" + param.get("annotation_exomiser"))
+        if param.get("annotation_splice", None) != None:
+            param_annotation_list.append("splice:" + param.get("annotation_splice"))
 
         # Merge param annotations list
         param["annotations"] = ",".join(param_annotation_list)
@@ -2829,60 +2834,23 @@ class Variants:
                                     annotation_file_annotation
                                 ] = annotations
 
-                    # Annotation Splice
-                    elif annotation_file.startswith("splice"):
-
-                        log.debug("Quick Annotation Splice")
-
-                        if "splice" not in param["annotation"]:
-                            param["annotation"]["splice"] = {}
-
-                        if "annotations" not in param["annotation"]["splice"]:
-                            param["annotation"]["splice"]["annotations"] = {}
-
-                        # Options
-                        annotation_file_split = annotation_file.split(":")
-                        for annotation_file_annotation in annotation_file_split[1:]:
-                            param["annotation"]["splice"]["annotations"][
-                                annotation_file_annotation
-                            ] = annotations
-
                     # Annotation Exomiser
                     elif annotation_file.startswith("exomiser"):
 
                         log.debug(f"Quick Annotation Exomiser")
-                        if "exomiser" not in param["annotation"]:
-                            param["annotation"]["exomiser"] = {}
 
-                        # Options
-                        annotation_file_split = annotation_file.split(":")
-                        log.debug(f"{annotation_file_split}")
-                        for annotation_file_option in annotation_file_split[1:]:
-                            if annotation_file_option != "":
-                                annotation_file_option_var_val = (
-                                    annotation_file_option.split("=")
-                                )
-                                annotation_file_option_var = (
-                                    annotation_file_option_var_val[0].strip()
-                                )
-                                annotation_file_option_val = (
-                                    annotation_file_option_var_val[1].strip()
-                                )
-                                log.debug(
-                                    f"{annotation_file_option_var}={annotation_file_option_val}"
-                                )
-                                if annotation_file_option_val:
-                                    if not annotation_file_option_val:
-                                        annotation_file_option_val = None
-                                    else:
-                                        annotation_file_option_val = (
-                                            annotation_file_option_val.replace(
-                                                "+", ","
-                                            ).replace(" ", "")
-                                        )
-                                    param["annotation"]["exomiser"][
-                                        annotation_file_option_var
-                                    ] = annotation_file_option_val
+                        param["annotation"]["exomiser"] = params_string_to_dict(
+                            annotation_file
+                        )
+
+                    # Annotation Splice
+                    elif annotation_file.startswith("splice"):
+
+                        log.debug(f"Quick Annotation Splice")
+
+                        param["annotation"]["splice"] = params_string_to_dict(
+                            annotation_file
+                        )
 
                     # Annotation Parquet or BCFTOOLS
                     else:
@@ -3033,10 +3001,10 @@ class Variants:
             if param.get("annotation", {}).get("snpeff", None):
                 log.info("Annotations 'snpeff'...")
                 self.annotation_snpeff()
-            if param.get("annotation", {}).get("exomiser", None):
+            if param.get("annotation", {}).get("exomiser", None) is not None:
                 log.info("Annotations 'exomiser'...")
                 self.annotation_exomiser()
-            if param.get("annotation", {}).get("splice", None):
+            if param.get("annotation", {}).get("splice", None) is not None:
                 log.info("Annotations 'splice' ...")
                 self.annotation_splice()
 
@@ -5890,7 +5858,14 @@ class Variants:
         # Config
         config = self.get_config()
         log.debug("Config: " + str(config))
-        splice_config = config.get("tools").get("splice")
+        splice_config = config.get("tools", {}).get("splice", {})
+        if not splice_config:
+            splice_config = DEFAULT_TOOLS_BIN.get("splice", {})
+        if not splice_config:
+            msg_err = "No Splice tool config"
+            log.error(msg_err)
+            raise ValueError(msg_err)
+        log.debug(f"splice_config={splice_config}")
 
         # Config - Folders - Databases
         databases_folders = (
@@ -5909,7 +5884,9 @@ class Variants:
             try:
                 command(f"docker pull {splice_config.get('docker').get('image')}")
             except subprocess.CalledProcessError:
-                log.error(f"Unable to find docker {splice_docker_image} on dockerhub")
+                msg_err = f"Unable to find docker {splice_docker_image} on dockerhub"
+                log.error(msg_err)
+                raise ValueError(msg_err)
                 return None
 
         # Config - splice databases
@@ -5925,7 +5902,7 @@ class Variants:
         log.debug("Param: " + str(param))
 
         # Param
-        options = param.get("annotation", {}).get("splice", {}).get("options", None)
+        options = param.get("annotation", {}).get("splice", {})
         log.debug("Options: " + str(options))
 
         # Data
@@ -5942,17 +5919,23 @@ class Variants:
 
         # Export in VCF
         log.debug("Create initial file to annotate")
+
+        # Create output folder
+        output_folder = os.path.join(self.get_tmp_dir(), f"splice-{get_random()}")
+        if not os.path.exists(output_folder):
+            Path(output_folder).mkdir(parents=True, exist_ok=True)
+
+        # Create tmp VCF file
         tmp_vcf = NamedTemporaryFile(
             prefix=self.get_prefix(),
-            dir=os.path.join(config.get("tools").get("splice").get("tmp")),
+            dir=output_folder,
             suffix=".vcf",
             delete=False,
         )
         tmp_vcf_name = tmp_vcf.name
-        log.debug(f"Tmp vcf: {tmp_vcf_name}")
+
         # VCF header
         header = self.get_header()
-        # log.debug("Initial header: " + str(header.infos))
 
         # Existing annotations
         for vcf_annotation in self.get_header().infos:
@@ -5980,10 +5963,40 @@ class Variants:
 
         # Create docker container and launch splice analysis
         if splice_config:
+
+            # Splice mount folders
+            mount_folders = splice_config.get("mount", {})
+
+            # Genome mount
+            mount_folders[
+                config.get("folders", {})
+                .get("databases", {})
+                .get("genomes", DEFAULT_GENOME_FOLDER)
+            ] = "ro"
+
+            # SpliceAI mount
+            mount_folders[
+                config.get("folders", {})
+                .get("databases", {})
+                .get("spliceai", DEFAULT_SPLICEAI_FOLDER)
+            ] = "ro"
+
+            # Genome mount
+            mount_folders[
+                config.get("folders", {})
+                .get("databases", {})
+                .get("spip", DEFAULT_SPIP_FOLDER)
+            ] = "ro"
+
+            # Mount folders
+            mount = []
+
+            # Config mount
             mount = [
-                f"-v {path}:{path}:{mode}"
-                for path, mode in splice_config.get("mount").items()
+                f"-v {full_path(path)}:{full_path(path)}:{mode}"
+                for path, mode in mount_folders.items()
             ]
+
             if any(value for value in splice_config.values() if value is None):
                 log.warning("At least one splice config parameter is empty")
                 return None
@@ -6012,63 +6025,56 @@ class Variants:
                     ):
                         yield f"--{key} {val}"
 
+            # Genome
+            genome = options.get("genome", config.get("assembly", DEFAULT_ASSEMBLY))
+            options["genome"] = genome
+
+            # NF params
+            nf_params = []
+
+            # Add options
             if options:
                 nf_params = list(check_values(options))
-                genome_path = find_genome(
-                    config.get("folders", {}).get("databases", {}).get("genomes", {}),
-                    file=f"{options.get('genome', None)}.fa",
-                )
-                # Add genome path
-                if not genome_path:
-                    raise ValueError(
-                        f"Can't find genome assembly {options.get('genome', None)}.fa in {config.get('folders', {}).get('databases', {}).get('genomes', {})}"
-                    )
-                else:
-                    log.debug(f"Genome: {genome_path}")
-                    nf_params.append(f"--genome_path {genome_path}")
-
                 log.debug(f"Splice NF params: {' '.join(nf_params)}")
             else:
-                nf_params = ""
                 log.debug("No NF params provided")
 
-            output_folder = os.path.join(config.get("tools").get("splice").get("tmp"))
+            # Add threads
+            if "threads" not in options.keys():
+                nf_params.append(f"--threads {threads}")
 
-            def splice_annotations(options: dict, config: dict) -> list:
+            # Genome path
+            genome_path = find_genome(
+                config.get("folders", {})
+                .get("databases", {})
+                .get("genomes", DEFAULT_GENOME_FOLDER),
+                file=f"{genome}.fa",
+            )
+            # Add genome path
+            if not genome_path:
+                raise ValueError(
+                    f"Can't find genome assembly {genome}.fa in {config.get('folders', {}).get('databases', {}).get('genomes', DEFAULT_GENOME_FOLDER)}"
+                )
+            else:
+                log.debug(f"Genome: {genome_path}")
+                nf_params.append(f"--genome_path {genome_path}")
+
+            def splice_annotations(options: dict = {}, config: dict = {}) -> list:
                 """
                 Setting up updated databases for SPiP and SpliceAI
                 """
+
                 try:
-                    if any(
-                        assemb in options.get("genome", {})
-                        for assemb in ["hg19", "GRCh37", "grch37", "GRCH37"]
-                    ):
-                        spliceai_assembly = os.path.join(
-                            config.get("folders", {})
-                            .get("databases", {})
-                            .get("spliceai", {}),
-                            "current",
-                            "hg19",
-                            "transcriptome",
-                        )
-                        spip_assembly = "hg19"
-                    elif any(
-                        assemb in options.get("genome", {})
-                        for assemb in ["hg38", "GRCh38", "grch38", "GRCH38"]
-                    ):
-                        spliceai_assembly = os.path.join(
-                            config.get("folders", {})
-                            .get("databases", {})
-                            .get("spliceai", {}),
-                            "current",
-                            "hg38",
-                            "transcriptome",
-                        )
-                        spip_assembly = "hg38"
-                    else:
-                        raise ValueError(
-                            f"Splice db not available for {options.get('genome', {})} EXIT"
-                        )
+
+                    # SpliceAI assembly transcriptome
+                    spliceai_assembly = os.path.join(
+                        config.get("folders", {})
+                        .get("databases", {})
+                        .get("spliceai", {}),
+                        options.get("genome"),
+                        "transcriptome",
+                    )
+                    spip_assembly = options.get("genome")
 
                     spip = find(
                         f"transcriptome_{spip_assembly}.RData",
@@ -6169,6 +6175,9 @@ class Variants:
             log.debug(f"New header: {len(header.infos)} fields")
             log.debug(f"Splice tmp output: {output_vcf[0]}")
             self.update_from_vcf(output_vcf[0])
+
+        # Remove folder
+        remove_if_exists(output_folder)
 
     ###
     # Prioritization

@@ -25,13 +25,9 @@ def test_annotation_splice():
         param = {
             "annotation": {
                 "splice": {
-                    "options": {
-                        "genome": "hg19",
-                        "threads": 2,
-                        "split_mode": "one",
-                        "spliceai_distance": 500,
-                        "spliceai_mask": 1,
-                    }
+                    "split_mode": "one",
+                    "spliceai_distance": 500,
+                    "spliceai_mask": 1,
                 },
             }
         }
@@ -39,7 +35,7 @@ def test_annotation_splice():
         config["tools"] = {
             "splice": {
                 "docker": {
-                    "image": "jblamouche/splice:0.2.1",
+                    "image": "bioinfochrustrasbourg/splice:0.2.1",
                     "entrypoint": "/bin/bash",
                 },
                 "mount": {

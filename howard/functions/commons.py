@@ -101,7 +101,15 @@ DEFAULT_TOOLS_BIN = {
     "snpeff": {"jar": "~/howard/tools/snpeff/current/bin/snpEff.jar"},
     "annovar": {"perl": "~/howard/tools/annovar/current/bin/table_annovar.pl"},
     "exomiser": {"jar": "~/howard/tools/exomiser/current/bin/exomiser.jar"},
-    "splice": {"bin": "docker"},
+    "docker": {"bin": "docker"},
+    "splice": {
+        "docker": {
+            "image": "bioinfochrustrasbourg/splice:0.2.1",
+            "entrypoint": "/bin/bash",
+            "options": None,
+            "command": None,
+        }
+    },
 }
 
 # URL
@@ -126,6 +134,8 @@ DEFAULT_DBNSFP_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/dbnsfp/current"
 DEFAULT_EXOMISER_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/exomiser/current"
 DEFAULT_DBSNP_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/exomiser/dbsnp"
 DEFAULT_SPLICE_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/splice"
+DEFAULT_SPLICEAI_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/spliceai"
+DEFAULT_SPIP_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/spip"
 
 # Data default folder
 DEFAULT_DATA_FOLDER = os.path.join(folder_howard_home, "data")
@@ -1324,9 +1334,8 @@ def get_bin(
     default_folder = full_path(default_folder)
     # log.debug(f"default_folder={default_folder}")
 
-    # Config - snpEff
+    # Config
     config_tool = config.get("tools", {}).get(tool)
-    # log.debug(f"config_tool={config_tool}")
 
     # Allowed dict conf
     tool_dict_conf_type_allowed = ["jar", "java", "docker"]
@@ -1421,7 +1430,47 @@ def get_bin_command(
     default_folder: str = DEFAULT_TOOLS_FOLDER,
     add_options: str = None,
 ) -> str:
-    """ """
+    """
+    The function `get_bin_command` generates a command based on the tool type (jar, java, docker) and
+    specified parameters.
+
+    :param bin: The `bin` parameter in the `get_bin_command` function is used to specify the binary
+    executable file that you want to run. It is a string that represents the path or name of the binary
+    file. If you provide this parameter, the function will attempt to locate the binary file based on
+    the
+    :type bin: str
+    :param tool: The `tool` parameter in the `get_bin_command` function represents the name of the tool
+    for which you want to retrieve the command. It is used to identify the specific tool for which the
+    command is being generated
+    :type tool: str
+    :param bin_type: The `bin_type` parameter in the `get_bin_command` function specifies the type of
+    binary executable that the tool uses. It can have values like "bin", "jar", "java", "docker", etc.,
+    depending on the type of tool being executed. The function uses this parameter to determine,
+    defaults to bin
+    :type bin_type: str (optional)
+    :param config: The `config` parameter in the `get_bin_command` function is a dictionary that holds
+    configuration settings for the tool being used. It can include various settings such as paths,
+    environment variables, or any other configuration options needed for the tool to run properly
+    :type config: dict
+    :param param: The `param` parameter in the `get_bin_command` function is a dictionary that contains
+    additional parameters or configurations for the tool being executed. These parameters can be used to
+    customize the behavior or settings of the tool when generating the command for execution. The
+    function uses the `param` dictionary along with the
+    :type param: dict
+    :param default_folder: The `default_folder` parameter in the `get_bin_command` function is used to
+    specify the default folder where the tools are located. If a specific folder is not provided when
+    calling the function, it will default to the value of `DEFAULT_TOOLS_FOLDER`
+    :type default_folder: str
+    :param add_options: The `add_options` parameter in the `get_bin_command` function allows you to pass
+    additional options or arguments to the command being constructed based on the tool type. These
+    additional options can be specific configurations, flags, or any other parameters that you want to
+    include in the final command. When provided,
+    :type add_options: str
+    :return: The `get_bin_command` function returns a string representing the command to execute a
+    specific tool based on the provided parameters. The returned command can be either a Java command
+    for running a JAR file or a Docker command for running a Docker image/container. If the tool type is
+    not Java or Docker, it returns the default tool bin.
+    """
 
     # Tool bin and type
     tool_bin = get_bin(
@@ -1561,6 +1610,8 @@ def get_tmp(config: dict = {}, param: dict = None, default_tmp: str = "/tmp") ->
 
     # Tmp in param or config
     tmp_param = param.get("tmp", config.get("tmp", default_tmp))
+    if not tmp_param:
+        tmp_param = default_tmp
 
     # Return tmp
     return tmp_param
@@ -2893,7 +2944,7 @@ def help_generation(
         + """   howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json \n"""
         + """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet' \n"""
         + """   howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations='vartype' \n"""
-        + """   howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations=config/prioritization_profiles.json --profiles='default,GERMLINE' \n"""
+        + """   howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritization_config=config/prioritization_profiles.json --prioritizations='default,GERMLINE' \n"""
         + """   howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, "DP", "CLNSIG", sample2, sample3 FROM variants WHERE "DP" >= 50 OR "CLNSIG" NOT NULL ORDER BY "CLNSIG" DESC, "DP" DESC' \n"""
         + """   howard stats --input=tests/data/example.vcf.gz \n"""
         + """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos && cat /tmp/example.tsv \n"""
@@ -3558,3 +3609,68 @@ def check_docker_image_exists(image_with_tag: str) -> bool:
     except Exception as e:
         log.warning(f"Docker image check: {e}")
         return False
+
+
+def params_string_to_dict(
+    params: str,
+    param_sep: str = ":",
+    var_val_sep: str = "=",
+    val_clear: dict = {"+": ",", " ": ""},
+    header: bool = True,
+) -> dict:
+    """
+    The `params_string_to_dict` function in Python converts a string of parameters into a dictionary
+    using specified separators and clears certain characters from the parameter values.
+
+    :param params: The `params` parameter in the `params_string_to_dict` function is a string of
+    parameters that you want to convert into a dictionary. It contains the information you want to parse
+    and organize into key-value pairs
+    :type params: str
+    :param param_sep: The `param_sep` parameter in the `params_string_to_dict` function is used to
+    specify the separator that separates different parameters in the input string `params`. By default,
+    the `param_sep` is set to ":" in the function definition. This means that the function expects the
+    parameters in the input, defaults to :
+    :type param_sep: str (optional)
+    :param var_val_sep: The `var_val_sep` parameter in the `params_string_to_dict` function is used to
+    specify the separator between the variable and value in the input string `params`. By default, it is
+    set to `"="`, which means that the function expects the format of each parameter in the `params`,
+    defaults to =
+    :type var_val_sep: str (optional)
+    :param val_clear: The `val_clear` parameter in the `params_string_to_dict` function is a dictionary
+    that contains key-value pairs used to clear specific characters from the parameter values before
+    storing them in the resulting dictionary
+    :type val_clear: dict
+    :param header: The `header` parameter in the `params_string_to_dict` function is a boolean flag that
+    determines whether the input string `params` has a header that should be skipped when processing the
+    parameters. If `header` is set to `True`, the function will start processing parameters from the
+    second line onwards, defaults to True
+    :type header: bool (optional)
+    :return: The function `params_string_to_dict` returns a dictionary containing the parameters
+    extracted from the input string `params`.
+    """
+
+    # Params dict
+    params_dict = {}
+
+    # Header
+    if header:
+        start = 1
+    else:
+        start = 0
+
+    # Params
+    params_split = params.split(param_sep)
+    for params_option in params_split[start:]:
+        if params_option != "":
+            params_option_var_val = params_option.split(var_val_sep)
+            params_option_var = params_option_var_val[0].strip()
+            params_option_val = params_option_var_val[1].strip()
+            if params_option_val is not None:
+                if params_option_val in [""]:
+                    params_option_val = None
+                else:
+                    # clear value
+                    for c in val_clear.items():
+                        params_option_val = params_option_val.replace(c[0], c[1])
+                params_dict[params_option_var] = params_option_val
+    return params_dict

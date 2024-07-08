@@ -28,6 +28,56 @@ from howard.functions.commons import *
 from test_needed import *
 
 
+def test_basic_functionality():
+    # Test the basic functionality with default separators and clearing
+    result = params_string_to_dict("app:param1=value1:param2=value2+value3")
+    expected = {"param1": "value1", "param2": "value2,value3"}
+    assert result == expected
+
+
+def test_basic_without_header():
+    # Test the basic functionality with default separators and clearing, without header
+    result = params_string_to_dict("param1=value1:param2=value2+value3", header=False)
+    expected = {"param1": "value1", "param2": "value2,value3"}
+    assert result == expected
+
+
+def test_custom_separators():
+    # Test with custom separators
+    result = params_string_to_dict(
+        "app;param1=value1;param2=value2 value3",
+        param_sep=";",
+        val_clear={"+": ",", " ": "_"},
+    )
+    expected = {"param1": "value1", "param2": "value2_value3"}
+    assert result == expected
+
+
+def test_empty_values():
+    # Test with empty values
+    result = params_string_to_dict("app:param1=:param2=")
+    expected = {"param1": None, "param2": None}
+    log.debug(f"result={result}")
+    log.debug(f"expected={expected}")
+    assert result == expected
+
+
+def test_no_clearing():
+    # Test with no clearing of values
+    result = params_string_to_dict(
+        "app:param1=value1+value2:param2=value3 value4", val_clear={}
+    )
+    expected = {"param1": "value1+value2", "param2": "value3 value4"}
+    assert result == expected
+
+
+def test_invalid_input():
+    # Test with invalid input
+    result = params_string_to_dict("=value1:param2=value2")
+    expected = {"param2": "value2"}
+    assert result == expected
+
+
 def test_help():
 
     # Init

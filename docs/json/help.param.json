@@ -519,7 +519,7 @@
         "Annotation process using Exomiser tool and options (see [Exomiser website documentation](https://www.sanger.ac.uk/tool/exomiser/))."
       ],
       "__examples_code": [
-        "# Annotation with Exomiser, using database relse '2109', transcripts source as UCSC and a list of HPO terms.",
+        "# Annotation with Exomiser, using database release '2109', transcripts source as UCSC and a list of HPO terms.",
         "\"exomiser\": {",
         "   \"release\": \"2109\"",
         "   \"transcript_source\": \"refseq\"",
@@ -533,6 +533,66 @@
         "__examples_code": [
           "# Annotation with release '2109' of Exomiser database.",
           "\"release\": \"2109\""
+        ]
+      },
+      "transcript_source": {
+        "__help": [
+          "Transcription source of Exomiser. This option replace the release variable in 'application.properties' file (see 'exomiser_application_properties' option). The release will be downloaded if it is not available locally. "
+        ],
+        "__examples_code": [
+          "# Annotation with transcription source 'refseq' of Exomiser.",
+          "\"transcript_source\": \"refseq\""
+        ]
+      },
+      "hpo": {
+        "__help": [
+          "List of HPO for Exomiser. This option replace the release variable in 'application.properties' file (see 'exomiser_application_properties' option). The release will be downloaded if it is not available locally. "
+        ],
+        "__examples_code": [
+          "# Annotation with a list of 4 HPO for Exomiser.",
+          "\"hpo\": [\"HP:0001156\", \"HP:0001363\", \"HP:0011304\", \"HP:0010055\"]"
+        ]
+      }
+    },
+    "splice": {
+      "__help": ["Annotation process using Splice tool and options."],
+      "__examples_code": [
+        "# Annotation with Splice, using database splice mode ('one'), spliceAI distance (500) and spliceAI mask (1).",
+        "\"splice\": {",
+        "   \"split_mode\": \"one\"",
+        "   \"spliceai_distance\": 500",
+        "   \"spliceai_mask\": 1",
+        "}"
+      ],
+      "split_mode": {
+        "__help": [
+          "Split mode of Exomiser database (default 'one'): \n",
+          "- all: report all annotated transcript for one gene.\n",
+          "- one: keep only the transcript with the most pathogenic score (in case of identical score, take the first).\n",
+          "- list: keep transcript provided in transcript file, if no matching transcript in file 'one' mode is activated.\n",
+          "- mixed: 'one' mode, if identical score, list mode is activated."
+        ],
+        "__examples_code": [
+          "# Split mode to report all annotated transcript for one gene.",
+          "\"split_mode\": \"all\""
+        ]
+      },
+      "spliceai_distance": {
+        "__help": [
+          "Maximum distance between the variant and gained/lost splice site (default: 500)."
+        ],
+        "__examples_code": [
+          "# Maximum distance of '500' between variant and splice site.",
+          "\"spliceai_distance\": 500"
+        ]
+      },
+      "spliceai_mask": {
+        "__help": [
+          "Mask scores representing annotated acceptor/donor gain and unannotated acceptor/donor loss (default: 1)."
+        ],
+        "__examples_code": [
+          "# Mask score of '1' for acceptor/donor gain fain and loss.",
+          "\"spliceai_mask\": 1"
         ]
       }
     },

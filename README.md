@@ -6,7 +6,7 @@ Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery
 
 HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations, translates files in multiple formats (e.g. vcf, tsv, parquet) and generates variants statistics.
 
-HOWARD annotation is mainly based on a build-in Parquet annotation method, and external tools such as BCFTOOLS, ANNOVAR, snpEff and Exomiser (see docs, automatically downloaded if needed). Parquet annotation uses annotation database in VCF or BED format, in mutliple file format: Parquet/duckdb, VCF, BED, TSV, CSV, TBL, JSON.
+HOWARD annotation is mainly based on a build-in Parquet annotation method, and external tools such as BCFTOOLS, ANNOVAR, snpEff, Exomiser and Splice (see docs, automatically downloaded if needed). Parquet annotation uses annotation database in VCF or BED format, in mutliple file format: Parquet/duckdb, VCF, BED, TSV, CSV, TBL, JSON.
 
 HOWARD calculation processes variants information to calculate new information, such as: harmonizes allele frequency (VAF), extracts Nomen (transcript, cNomen, pNomen...) from HGVS fields with an optional list of personalized transcripts, generates VaRank format barcode.
 
@@ -272,7 +272,7 @@ See [HOWARD Help Query tool](docs/help.md#query-tool) for more options.
 
 ## Annotation
 
-Annotation is mainly based on a build-in Parquet annotation method, using database format such as Parquet, duckdb, VCF, BED, TSV, JSON. External annotation tools are also available, such as BCFTOOLS, Annovar, snpEff and Exomiser. It uses available databases and homemade databases. Annovar and snpEff databases are automatically downloaded (see [HOWARD Help Databases tool](docs/help.md#databases-tool)). All annotation parameters are defined in [HOWARD Parameters JSON](docs/help.param.md) file.
+Annotation is mainly based on a build-in Parquet annotation method, using database format such as Parquet, duckdb, VCF, BED, TSV, JSON. External annotation tools are also available, such as BCFTOOLS, Annovar, snpEff, Exomiser and Splice. It uses available databases and homemade databases. Annovar and snpEff databases are automatically downloaded (see [HOWARD Help Databases tool](docs/help.md#databases-tool)). All annotation parameters are defined in [HOWARD Parameters JSON](docs/help.param.md) file.
 
 Quick annotation allows to annotates by simply listing annotation databases, or defining external tools keywords. These annotations can be combined.
 
