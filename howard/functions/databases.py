@@ -751,7 +751,14 @@ def databases_download_snpeff(
         if not os.path.exists(folder_assembly):
 
             # Download list of databases if file does not exists
-            if not os.path.exists(snpeff_databases_list_path):
+            if (
+                not os.path.exists(snpeff_databases_list_path)
+                or os.path.getsize(snpeff_databases_list_path) == 0
+            ):
+                if os.path.getsize(snpeff_databases_list_path) == 0:
+                    log.warning(
+                        f"Download snpEff databases {[assembly]} - list of databases empty - download '{snpeff_databases_list_path}' required"
+                    )
                 snpeff_command_list_databases = f""" {java_bin} -jar {snpeff_bin} databases > {snpeff_databases_list_path} """
                 log.info(
                     f"Download snpEff databases {assemblies} - list of databases..."
@@ -776,17 +783,15 @@ def databases_download_snpeff(
                     )
 
             if not snpeff_list_databases:
-                log.error(
-                    f"Download snpEff databases {[assembly]} - list of databases empty - check file '{snpeff_databases_list_path}'"
-                )
-                raise ValueError(
-                    f"Download snpEff databases {[assembly]} - list of databases empty - check file '{snpeff_databases_list_path}'"
-                )
+                msg_err = f"Download snpEff databases {[assembly]} - list of databases empty - check file '{snpeff_databases_list_path}'"
+                log.error(msg_err)
+                raise ValueError(msg_err)
 
             # Start download
             log.info(f"Download snpEff databases {[assembly]} - downloading...")
             # Try to download files
             file_path = None
+            file_url = None
             for file_url in snpeff_list_databases.get(assembly, []):
                 # File to be downloaded
                 file_path = os.path.join(folder, os.path.basename(file_url))
@@ -807,7 +812,11 @@ def databases_download_snpeff(
                         log.error(f"Download snpEff '{file_url}' failed")
 
             # If download file exists
-            if file_path is not None and os.path.exists(file_path):
+            if (
+                file_path is not None
+                and os.path.exists(file_path)
+                and file_url is not None
+            ):
                 log.info(f"Download snpEff databases {[assembly]} - extracting...")
                 log.debug(f"Extract file {file_path} to {folder}...")
                 # Extract file
