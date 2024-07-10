@@ -618,7 +618,7 @@ def test_database_dbnsfp():
         for assembly in assemblies_list:
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
-            nb_files = 316
+            nb_files = 108
             assert len(downloaded_assembly_files) == nb_files
 
         # Try again to generate VCF
@@ -638,7 +638,7 @@ def test_database_dbnsfp():
         for assembly in assemblies_list:
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
-            nb_files = 553
+            nb_files = 189
             assert len(downloaded_assembly_files) == nb_files
 
         # Try again to generate nothing more
@@ -658,7 +658,7 @@ def test_database_dbnsfp():
         for assembly in assemblies_list:
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
-            nb_files = 553
+            nb_files = 189
             assert len(downloaded_assembly_files) == nb_files
 
     # Tmp folder
@@ -691,7 +691,7 @@ def test_database_dbnsfp():
         for assembly in assemblies_list:
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
-            nb_files = 395
+            nb_files = 135
             assert len(downloaded_assembly_files) == nb_files
 
     # Tmp folder
@@ -725,7 +725,7 @@ def test_database_dbnsfp():
         for assembly in assemblies_list:
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
-            nb_files = 553
+            nb_files = 189
             assert len(downloaded_assembly_files) == nb_files
 
     # Tmp folder
@@ -759,7 +759,7 @@ def test_database_dbnsfp():
         for assembly in assemblies_list:
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
-            nb_files = 314
+            nb_files = 106
             assert len(downloaded_assembly_files) == nb_files
 
     # Tmp folder
@@ -793,7 +793,7 @@ def test_database_dbnsfp():
         for assembly in assemblies_list:
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
-            nb_files = 553
+            nb_files = 189
             assert len(downloaded_assembly_files) == nb_files
 
 

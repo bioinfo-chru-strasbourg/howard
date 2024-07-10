@@ -27,15 +27,26 @@ from test_needed import *
 
 
 @pytest.mark.parametrize(
-    "input_vcf, remove_info, add_samples",
+    "input_vcf, remove_info, add_samples, where_clause",
     [
-        (os.path.join(tests_data_folder, input_vcf), remove_info, add_samples)
+        (
+            os.path.join(tests_data_folder, input_vcf),
+            remove_info,
+            add_samples,
+            where_clause,
+        )
         for input_vcf in ["example.vcf.gz", "example.without_sample.vcf"]
         for remove_info in [True, False]
         for add_samples in [True, False]
+        for where_clause in [
+            None,
+            "",
+            """WHERE "#CHROM" == 'chr1' """,
+            """WHERE regexp_matches("INFO",'DP=') """,
+        ]
     ],
 )
-def test_export_variant_vcf(input_vcf, remove_info, add_samples):
+def test_export_variant_vcf(input_vcf, remove_info, add_samples, where_clause):
 
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
@@ -60,9 +71,30 @@ def test_export_variant_vcf(input_vcf, remove_info, add_samples):
                 remove_info=remove_info,
                 add_samples=add_samples,
                 list_samples=[],
+                where_clause=where_clause,
                 index=False,
                 threads=1,
             )
+
+            # Check number of variants
+            variants_output = Variants(
+                conn=None,
+                input=output_vcf,
+                config=config,
+                load=True,
+            )
+
+            # Input filtered
+            if not where_clause:
+                where_clause = ""
+            query = f"SELECT * FROM variants {where_clause}"
+            df_input_filtered = variants.get_query_to_df(query=query)
+
+            # Output
+            df_output = variants_output.get_query_to_df(query="SELECT * FROM variants")
+
+            assert len(df_input_filtered) == len(df_output)
+
             assert True
         except:
             assert False

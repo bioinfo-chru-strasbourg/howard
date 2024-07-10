@@ -2218,6 +2218,7 @@ class Variants:
         remove_info: bool = False,
         add_samples: bool = True,
         list_samples: list = [],
+        where_clause: str = "",
         index: bool = False,
         threads: int | None = None,
     ) -> bool | None:
@@ -2289,9 +2290,14 @@ class Variants:
         else:
             samples_fields = ""
 
+        # Where clause
+        if where_clause is None:
+            where_clause = ""
+
         # Variants
         select_fields = """ "#CHROM", POS, ID, REF, ALT, QUAL, FILTER """
-        sql_query_select = f""" SELECT {select_fields}, {info_field} {samples_fields} FROM {table_variants} """
+        sql_query_select = f""" SELECT {select_fields}, {info_field} {samples_fields} FROM {table_variants} {where_clause} """
+        log.debug(f"sql_query_select={sql_query_select}")
 
         return self.export_output(
             output_file=vcf_file,
@@ -5953,12 +5959,28 @@ class Variants:
             memory_limit = "8G"
         log.debug(f"memory_limit: {memory_limit}")
 
+        # Check number of variants to annotate
+        where_clause_regex_spliceai = r"SpliceAI_\w+"
+        where_clause_regex_spip = r"SPiP_\w+"
+        where_clause = f""" WHERE NOT regexp_matches("INFO", '{where_clause_regex_spliceai}') AND NOT regexp_matches("INFO", '{where_clause_regex_spip}')"""
+        df_list_of_variants_to_annotate = self.get_query_to_df(
+            query=f""" SELECT * FROM variants {where_clause} """
+        )
+        if len(df_list_of_variants_to_annotate) == 0:
+            log.warning(
+                f"No variants to annotate with splice. Variants probably already annotated with splice"
+            )
+            return None
+        else:
+            log.info(f"Annotation: {len(df_list_of_variants_to_annotate)} variants")
+
         # Export VCF file
         self.export_variant_vcf(
             vcf_file=tmp_vcf_name,
             remove_info=True,
             add_samples=True,
             index=False,
+            where_clause=where_clause,
         )
 
         # Create docker container and launch splice analysis
