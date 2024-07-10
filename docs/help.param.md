@@ -776,7 +776,7 @@ Examples:
 
 ### annotation::splice
 
-Annotation process using Splice tool and options.
+Annotation process using Splice tool and options. This annotation will be proccessed only for variants that are not already annotated (i.e. without annotation like 'SpliceAI_\w+' and 'SPiP_\w+')
 
 Examples: 
 
@@ -784,8 +784,8 @@ Examples:
 
 ```json
 "splice": {
-   "split_mode": "one"
-   "spliceai_distance": 500
+   "split_mode": "one",
+   "spliceai_distance": 500,
    "spliceai_mask": 1
 }
 ```

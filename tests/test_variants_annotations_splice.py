@@ -1,3 +1,14 @@
+"""
+Tests
+
+Usage:
+pytest tests/
+
+Coverage:
+coverage run -m pytest tests/test_variants_annotations_splice.py -x -v --log-cli-level=DEBUG --capture=tee-sys
+coverage report --include=howard/* -m
+"""
+
 import logging as log
 from tempfile import TemporaryDirectory
 from howard.functions.commons import remove_if_exists, identical
@@ -16,9 +27,17 @@ Aim: test splice annotation
 
 
 def test_annotation_splice():
+    """
+    The function `test_annotation_splice` performs annotation and re-annotation of VCF files using the
+    Splice tool with specified parameters and checks the results against expected output.
+    """
+
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
         input_vcf = tests_data_folder + "/example.vcf"
         output_vcf = f"{tmp_dir}/output.splice.vcf"
+        output_reannotated_vcf = f"{tmp_dir}/output.splice.reannotated.vcf"
         expected_vcf = tests_data_folder + "/example.splice.vcf"
 
         # Construct param dict
@@ -67,4 +86,28 @@ def test_annotation_splice():
         variants.export_output()
 
         # Ensure results
-        identical([output_vcf, expected_vcf])
+        assert identical([output_vcf, expected_vcf])
+
+        # Check re-annotation
+
+        # Create object
+        variants_reannotated = Variants(
+            conn=None,
+            input=output_vcf,
+            output=output_reannotated_vcf,
+            param=param,
+            load=True,
+            config=config,
+        )
+
+        # Remove if output file exists
+        remove_if_exists([output_reannotated_vcf])
+
+        # Re-Annotation
+        variants_reannotated.annotation_splice()
+
+        # Export output
+        variants_reannotated.export_output()
+
+        # Ensure results
+        assert identical([output_reannotated_vcf, expected_vcf])

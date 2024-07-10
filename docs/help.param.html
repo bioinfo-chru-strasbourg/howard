@@ -1094,15 +1094,15 @@ code {
 <pre class="hljs"><code><div><span class="hljs-string">"hpo"</span>: [<span class="hljs-string">"HP:0001156"</span>, <span class="hljs-string">"HP:0001363"</span>, <span class="hljs-string">"HP:0011304"</span>, <span class="hljs-string">"HP:0010055"</span>]
 </div></code></pre>
 <h3 id="annotationsplice">annotation::splice</h3>
-<p>Annotation process using Splice tool and options.</p>
+<p>Annotation process using Splice tool and options. This annotation will be proccessed only for variants that are not already annotated (i.e. without annotation like 'SpliceAI_\w+' and 'SPiP_\w+')</p>
 <p>Examples:</p>
 <blockquote>
 <p>Annotation with Splice, using database splice mode ('one'), spliceAI distance (500) and spliceAI mask (1).</p>
 </blockquote>
 <pre class="hljs"><code><div><span class="hljs-string">"splice"</span>: {
-   <span class="hljs-attr">"split_mode"</span>: <span class="hljs-string">"one"</span>
-   <span class="hljs-string">"spliceai_distance"</span>: <span class="hljs-number">500</span>
-   <span class="hljs-string">"spliceai_mask"</span>: <span class="hljs-number">1</span>
+   <span class="hljs-attr">"split_mode"</span>: <span class="hljs-string">"one"</span>,
+   <span class="hljs-attr">"spliceai_distance"</span>: <span class="hljs-number">500</span>,
+   <span class="hljs-attr">"spliceai_mask"</span>: <span class="hljs-number">1</span>
 }
 </div></code></pre>
 <h4 id="annotationsplicesplitmode">annotation::splice::split_mode</h4>
