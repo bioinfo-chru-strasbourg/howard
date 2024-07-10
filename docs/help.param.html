@@ -452,6 +452,10 @@ code {
 <li><a href="#annotationsplicesplit_mode">split_mode</a></li>
 <li><a href="#annotationsplicespliceai_distance">spliceai_distance</a></li>
 <li><a href="#annotationsplicespliceai_mask">spliceai_mask</a></li>
+<li><a href="#annotationsplicetranscript">transcript</a></li>
+<li><a href="#annotationsplicerm_snps">rm_snps</a></li>
+<li><a href="#annotationsplicerm_annot">rm_annot</a></li>
+<li><a href="#annotationsplicewhitespace">whitespace</a></li>
 </ul>
 </li>
 <li><a href="#annotationoptions">options</a>
@@ -1138,6 +1142,38 @@ code {
 <p>Mask score of '1' for acceptor/donor gain fain and loss.</p>
 </blockquote>
 <pre class="hljs"><code><div><span class="hljs-string">"spliceai_mask"</span>: <span class="hljs-number">1</span>
+</div></code></pre>
+<h4 id="annotationsplicetranscript">annotation::splice::transcript</h4>
+<p>Path to a list of transcripts of preference (default '').</p>
+<p>Examples:</p>
+<blockquote>
+<p>Path to file of transcripts.</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"transcript"</span>: <span class="hljs-string">"tests/data/transcripts.tsv"</span>
+</div></code></pre>
+<h4 id="annotationsplicermsnps">annotation::splice::rm_snps</h4>
+<p>Do not consider SNV for the analysis, only Indels and MNV (default 'false').</p>
+<p>Examples:</p>
+<blockquote>
+<p>Analysing only non SNV.</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"rm_snps"</span>: <span class="hljs-string">"true"</span>
+</div></code></pre>
+<h4 id="annotationsplicermannot">annotation::splice::rm_annot</h4>
+<p>Remove existing annotation before analysing (default 'true').</p>
+<p>Examples:</p>
+<blockquote>
+<p>Remove annotation before analysing.</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"rm_annot"</span>: <span class="hljs-string">"true"</span>
+</div></code></pre>
+<h4 id="annotationsplicewhitespace">annotation::splice::whitespace</h4>
+<p>Remove spaces in INFO field, 'true' to remove (default 'true').</p>
+<p>Examples:</p>
+<blockquote>
+<p>Remove spaces in INFO field.</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"whitespace"</span>: <span class="hljs-string">"true"</span>
 </div></code></pre>
 <h3 id="annotationoptions">annotation::options</h3>
 <p>Options for annotations, such as annotation strategy (skip if exists, update, append)</p>
