@@ -36,6 +36,10 @@ HOWARD Parameters JSON file defines parameters to process annotations, calculati
          - [split_mode](#annotationsplicesplit_mode)
          - [spliceai_distance](#annotationsplicespliceai_distance)
          - [spliceai_mask](#annotationsplicespliceai_mask)
+         - [transcript](#annotationsplicetranscript)
+         - [rm_snps](#annotationsplicerm_snps)
+         - [rm_annot](#annotationsplicerm_annot)
+         - [whitespace](#annotationsplicewhitespace)
       - [options](#annotationoptions)
          - [annotations_update](#annotationoptionsannotations_update)
          - [annotations_append](#annotationoptionsannotations_append)
@@ -832,6 +836,54 @@ Examples:
 
 ```json
 "spliceai_mask": 1
+```
+
+#### annotation::splice::transcript
+
+Path to a list of transcripts of preference (default '').
+
+Examples: 
+
+> Path to file of transcripts.
+
+```json
+"transcript": "tests/data/transcripts.tsv"
+```
+
+#### annotation::splice::rm_snps
+
+Do not consider SNV for the analysis, only Indels and MNV (default 'false').
+
+Examples: 
+
+> Analysing only non SNV.
+
+```json
+"rm_snps": "true"
+```
+
+#### annotation::splice::rm_annot
+
+Remove existing annotation before analysing (default 'true').
+
+Examples: 
+
+> Remove annotation before analysing.
+
+```json
+"rm_annot": "true"
+```
+
+#### annotation::splice::whitespace
+
+Remove spaces in INFO field, 'true' to remove (default 'true').
+
+Examples: 
+
+> Remove spaces in INFO field.
+
+```json
+"whitespace": "true"
 ```
 
 ### annotation::options

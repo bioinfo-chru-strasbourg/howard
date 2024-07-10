@@ -594,6 +594,40 @@
           "# Mask score of '1' for acceptor/donor gain fain and loss.",
           "\"spliceai_mask\": 1"
         ]
+      },
+      "transcript": {
+        "__help": ["Path to a list of transcripts of preference (default '')."],
+        "__examples_code": [
+          "# Path to file of transcripts.",
+          "\"transcript\": \"tests/data/transcripts.tsv\""
+        ]
+      },
+      "rm_snps": {
+        "__help": [
+          "Do not consider SNV for the analysis, only Indels and MNV (default 'false')."
+        ],
+        "__examples_code": [
+          "# Analysing only non SNV.",
+          "\"rm_snps\": \"true\""
+        ]
+      },
+      "rm_annot": {
+        "__help": [
+          "Remove existing annotation before analysing (default 'true')."
+        ],
+        "__examples_code": [
+          "# Remove annotation before analysing.",
+          "\"rm_annot\": \"true\""
+        ]
+      },
+      "whitespace": {
+        "__help": [
+          "Remove spaces in INFO field, 'true' to remove (default 'true')."
+        ],
+        "__examples_code": [
+          "# Remove spaces in INFO field.",
+          "\"whitespace\": \"true\""
+        ]
       }
     },
     "options": {
