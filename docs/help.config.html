@@ -422,6 +422,7 @@ code {
 <li><a href="#toolssnpeff">snpeff</a></li>
 <li><a href="#toolsannovar">annovar</a></li>
 <li><a href="#toolsexomiser">exomiser</a></li>
+<li><a href="#toolssplice">splice</a></li>
 </ul>
 </li>
 <li><a href="#threads">threads</a></li>
@@ -472,6 +473,14 @@ code {
     &quot;snpeff&quot;: &quot;~/howard/tools/snpeff/current/bin/snpEff.jar&quot;,
     &quot;annovar&quot;: &quot;~/howard/tools/annovar/current/bin/table_annovar.pl&quot;,
     &quot;exomiser&quot;: &quot;~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar&quot;
+    &quot;splice&quot;: {
+       &quot;docker&quot;: {
+         &quot;image&quot;: &quot;bioinfochrustrasbourg/splice:0.2.1&quot;,
+         &quot;entrypoint&quot;: &quot;/bin/bash&quot;,
+         &quot;options&quot;: null,
+         &quot;command&quot;: null
+       }
+    }
   }
 }
 </div></code></pre>
@@ -647,8 +656,22 @@ code {
 <pre class="hljs"><code><div>&quot;tools&quot;: {
    &quot;bcftools&quot;: {
       &quot;docker&quot;: {
-        &quot;image&quot;: &quot;howard:0.10.0&quot;,
+        &quot;image&quot;: &quot;howard:0.11.0&quot;,
         &quot;entrypoint&quot;: &quot;bcftools&quot;,
+        &quot;options&quot;: null,
+        &quot;command&quot;: null
+      }
+   }
+}
+</div></code></pre>
+<blockquote>
+<p>Example of a configuration for splice with a docker image</p>
+</blockquote>
+<pre class="hljs"><code><div>&quot;tools&quot;: {
+   &quot;splice&quot;: {
+      &quot;docker&quot;: {
+        &quot;image&quot;: &quot;bioinfochrustrasbourg/splice:0.2.1&quot;,
+        &quot;entrypoint&quot;: &quot;/bin/bash&quot;,
         &quot;options&quot;: null,
         &quot;command&quot;: null
       }
@@ -738,6 +761,22 @@ code {
 <p>Path to binary as a dict with binary type 'jar'</p>
 </blockquote>
 <pre class="hljs"><code><div>&quot;snpeff&quot;: {&quot;jar&quot;: &quot;~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar&quot;}
+</div></code></pre>
+<h3 id="toolssplice">tools::splice</h3>
+<p>Splice Docker image binary (see https://hub.docker.com/r/bioinfochrustrasbourg/splice).</p>
+<p>Default: <code>None</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Configuration of Docker image</p>
+</blockquote>
+<pre class="hljs"><code><div>&quot;splice&quot;: {
+   &quot;docker&quot;: {
+     &quot;image&quot;: &quot;bioinfochrustrasbourg/splice:0.2.1&quot;,
+     &quot;entrypoint&quot;: &quot;/bin/bash&quot;,
+     &quot;options&quot;: null,
+     &quot;command&quot;: null
+   }
+}
 </div></code></pre>
 <h2 id="threads">threads</h2>
 <p>Specify the number of threads to use for processing HOWARD. It determines the level of parallelism, either on python scripts, duckdb engine and external tools. It and can help speed up the process/tool. Use -1 to use all available CPU/cores. Either non valid value is 1 CPU/core.</p>

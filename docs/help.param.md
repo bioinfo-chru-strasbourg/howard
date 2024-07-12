@@ -30,6 +30,16 @@ HOWARD Parameters JSON file defines parameters to process annotations, calculati
          - [annotations](#annotationsnpsiftannotations)
       - [exomiser](#annotationexomiser)
          - [release](#annotationexomiserrelease)
+         - [transcript_source](#annotationexomisertranscript_source)
+         - [hpo](#annotationexomiserhpo)
+      - [splice](#annotationsplice)
+         - [split_mode](#annotationsplicesplit_mode)
+         - [spliceai_distance](#annotationsplicespliceai_distance)
+         - [spliceai_mask](#annotationsplicespliceai_mask)
+         - [transcript](#annotationsplicetranscript)
+         - [rm_snps](#annotationsplicerm_snps)
+         - [rm_annot](#annotationsplicerm_annot)
+         - [whitespace](#annotationsplicewhitespace)
       - [options](#annotationoptions)
          - [annotations_update](#annotationoptionsannotations_update)
          - [annotations_append](#annotationoptionsannotations_append)
@@ -345,9 +355,7 @@ Examples:
       }
    }
    "snpeff": {
-      "options": {
-         " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "}
-      }
+      "options": " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "
    }
    "exomiser": {
       "release": "2109",
@@ -593,9 +601,7 @@ Examples:
 
 ```json
 "snpeff": {
-   "options": {
-      " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "
-   }
+   "options": " -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "
 }
 ```
 
@@ -722,7 +728,7 @@ Annotation process using Exomiser tool and options (see [Exomiser website docume
 
 Examples: 
 
-> Annotation with Exomiser, using database relse '2109', transcripts source as UCSC and a list of HPO terms.
+> Annotation with Exomiser, using database release '2109', transcripts source as UCSC and a list of HPO terms.
 
 ```json
 "exomiser": {
@@ -742,6 +748,142 @@ Examples:
 
 ```json
 "release": "2109"
+```
+
+#### annotation::exomiser::transcript_source
+
+Transcription source of Exomiser. This option replace the release variable in 'application.properties' file (see 'exomiser_application_properties' option). The release will be downloaded if it is not available locally. 
+
+Examples: 
+
+> Annotation with transcription source 'refseq' of Exomiser.
+
+```json
+"transcript_source": "refseq"
+```
+
+#### annotation::exomiser::hpo
+
+List of HPO for Exomiser. This option replace the release variable in 'application.properties' file (see 'exomiser_application_properties' option). The release will be downloaded if it is not available locally. 
+
+Examples: 
+
+> Annotation with a list of 4 HPO for Exomiser.
+
+```json
+"hpo": ["HP:0001156", "HP:0001363", "HP:0011304", "HP:0010055"]
+```
+
+### annotation::splice
+
+Annotation process using Splice tool and options. This annotation will be proccessed only for variants that are not already annotated (i.e. without annotation like 'SpliceAI_\w+' and 'SPiP_\w+')
+
+Examples: 
+
+> Annotation with Splice, using database splice mode ('one'), spliceAI distance (500) and spliceAI mask (1).
+
+```json
+"splice": {
+   "split_mode": "one",
+   "spliceai_distance": 500,
+   "spliceai_mask": 1
+}
+```
+
+#### annotation::splice::split_mode
+
+Split mode of Exomiser database (default 'one'): 
+
+
+- all: report all annotated transcript for one gene.
+
+
+- one: keep only the transcript with the most pathogenic score (in case of identical score, take the first).
+
+
+- list: keep transcript provided in transcript file, if no matching transcript in file 'one' mode is activated.
+
+
+- mixed: 'one' mode, if identical score, list mode is activated.
+
+Examples: 
+
+> Split mode to report all annotated transcript for one gene.
+
+```json
+"split_mode": "all"
+```
+
+#### annotation::splice::spliceai_distance
+
+Maximum distance between the variant and gained/lost splice site (default: 500).
+
+Examples: 
+
+> Maximum distance of '500' between variant and splice site.
+
+```json
+"spliceai_distance": 500
+```
+
+#### annotation::splice::spliceai_mask
+
+Mask scores representing annotated acceptor/donor gain and unannotated acceptor/donor loss (default: 1).
+
+Examples: 
+
+> Mask score of '1' for acceptor/donor gain fain and loss.
+
+```json
+"spliceai_mask": 1
+```
+
+#### annotation::splice::transcript
+
+Path to a list of transcripts of preference (default '').
+
+Examples: 
+
+> Path to file of transcripts.
+
+```json
+"transcript": "tests/data/transcripts.tsv"
+```
+
+#### annotation::splice::rm_snps
+
+Do not consider SNV for the analysis, only Indels and MNV (default 'false').
+
+Examples: 
+
+> Analysing only non SNV.
+
+```json
+"rm_snps": "true"
+```
+
+#### annotation::splice::rm_annot
+
+Remove existing annotation before analysing (default 'true').
+
+Examples: 
+
+> Remove annotation before analysing.
+
+```json
+"rm_annot": "true"
+```
+
+#### annotation::splice::whitespace
+
+Remove spaces in INFO field, 'true' to remove (default 'true').
+
+Examples: 
+
+> Remove spaces in INFO field.
+
+```json
+"whitespace": "true"
 ```
 
 ### annotation::options

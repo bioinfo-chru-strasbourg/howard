@@ -178,6 +178,45 @@ def test_databases_download_snpeff():
         # snpEff folder
         snpeff_folder = tmp_dir
 
+        # Create empty file
+        open(os.path.join(snpeff_folder, "snpeff_databases.list"), "w").close()
+
+        # Download and prepare database
+        databases_download_snpeff(
+            folder=snpeff_folder, assemblies=assemblies_list, config=tests_config
+        )
+
+        # Check
+        downloaded_files = os.listdir(snpeff_folder)
+        for assembly in assemblies_list:
+            assert assembly in downloaded_files
+            downloaded_assembly_files = os.listdir(f"{snpeff_folder}/{assembly}")
+            expected_files = ["sequence.bin"]
+            for expected_file in expected_files:
+                if expected_file not in downloaded_assembly_files:
+                    assert False
+            assert True
+
+
+def test_databases_download_snpeff_mouse():
+    """
+    The function `test_databases_download_snpeff` downloads and prepares the snpEff database for specified
+    assemblies.
+    """
+
+    # Full database generation, hg19 only (due to lack of hg38 assembly in tests)
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Assembly
+        assemblies = "GRCm39.105"
+        assemblies_list = [value for value in assemblies.split(",")]
+
+        # snpEff folder
+        snpeff_folder = tmp_dir
+
+        # Create empty file
+        open(os.path.join(snpeff_folder, "snpeff_databases.list"), "w").close()
+
         # Download and prepare database
         databases_download_snpeff(
             folder=snpeff_folder, assemblies=assemblies_list, config=tests_config
@@ -579,7 +618,7 @@ def test_database_dbnsfp():
         for assembly in assemblies_list:
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
-            nb_files = 316
+            nb_files = 108
             assert len(downloaded_assembly_files) == nb_files
 
         # Try again to generate VCF
@@ -599,7 +638,7 @@ def test_database_dbnsfp():
         for assembly in assemblies_list:
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
-            nb_files = 553
+            nb_files = 189
             assert len(downloaded_assembly_files) == nb_files
 
         # Try again to generate nothing more
@@ -619,7 +658,7 @@ def test_database_dbnsfp():
         for assembly in assemblies_list:
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
-            nb_files = 553
+            nb_files = 189
             assert len(downloaded_assembly_files) == nb_files
 
     # Tmp folder
@@ -652,7 +691,7 @@ def test_database_dbnsfp():
         for assembly in assemblies_list:
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
-            nb_files = 395
+            nb_files = 135
             assert len(downloaded_assembly_files) == nb_files
 
     # Tmp folder
@@ -686,7 +725,7 @@ def test_database_dbnsfp():
         for assembly in assemblies_list:
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
-            nb_files = 553
+            nb_files = 189
             assert len(downloaded_assembly_files) == nb_files
 
     # Tmp folder
@@ -720,7 +759,7 @@ def test_database_dbnsfp():
         for assembly in assemblies_list:
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
-            nb_files = 314
+            nb_files = 106
             assert len(downloaded_assembly_files) == nb_files
 
     # Tmp folder
@@ -754,7 +793,7 @@ def test_database_dbnsfp():
         for assembly in assemblies_list:
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
-            nb_files = 553
+            nb_files = 189
             assert len(downloaded_assembly_files) == nb_files
 
 

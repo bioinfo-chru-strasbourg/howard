@@ -1,0 +1,8 @@
+{
+    "database": {
+        "clinvar": "https://ftp.ncbi.nlm.nih.gov/pub/clinvar",
+        "phylop": "https://hgdownload.cse.ucsc.edu/goldenPath",
+        "phastcons": "https://hgdownload.cse.ucsc.edu/goldenPath",
+        "alphamissence": "https://zenodo.org/api/records/8208688/files-archive"
+    }
+}

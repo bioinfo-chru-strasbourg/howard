@@ -751,7 +751,17 @@ def databases_download_snpeff(
         if not os.path.exists(folder_assembly):
 
             # Download list of databases if file does not exists
-            if not os.path.exists(snpeff_databases_list_path):
+            if not os.path.exists(snpeff_databases_list_path) or (
+                os.path.exists(snpeff_databases_list_path)
+                and os.path.getsize(snpeff_databases_list_path) == 0
+            ):
+                if (
+                    os.path.exists(snpeff_databases_list_path)
+                    and os.path.getsize(snpeff_databases_list_path) == 0
+                ):
+                    log.warning(
+                        f"Download snpEff databases {[assembly]} - list of databases empty - download '{snpeff_databases_list_path}' required"
+                    )
                 snpeff_command_list_databases = f""" {java_bin} -jar {snpeff_bin} databases > {snpeff_databases_list_path} """
                 log.info(
                     f"Download snpEff databases {assemblies} - list of databases..."
@@ -776,17 +786,15 @@ def databases_download_snpeff(
                     )
 
             if not snpeff_list_databases:
-                log.error(
-                    f"Download snpEff databases {[assembly]} - list of databases empty - check file '{snpeff_databases_list_path}'"
-                )
-                raise ValueError(
-                    f"Download snpEff databases {[assembly]} - list of databases empty - check file '{snpeff_databases_list_path}'"
-                )
+                msg_err = f"Download snpEff databases {[assembly]} - list of databases empty - check file '{snpeff_databases_list_path}'"
+                log.error(msg_err)
+                raise ValueError(msg_err)
 
             # Start download
             log.info(f"Download snpEff databases {[assembly]} - downloading...")
             # Try to download files
             file_path = None
+            file_url = None
             for file_url in snpeff_list_databases.get(assembly, []):
                 # File to be downloaded
                 file_path = os.path.join(folder, os.path.basename(file_url))
@@ -807,7 +815,11 @@ def databases_download_snpeff(
                         log.error(f"Download snpEff '{file_url}' failed")
 
             # If download file exists
-            if file_path is not None and os.path.exists(file_path):
+            if (
+                file_path is not None
+                and os.path.exists(file_path)
+                and file_url is not None
+            ):
                 log.info(f"Download snpEff databases {[assembly]} - extracting...")
                 log.debug(f"Extract file {file_path} to {folder}...")
                 # Extract file
@@ -1689,16 +1701,16 @@ def databases_download_dbnsfp(
                         else:
                             # columns for each annotation
                             column_key = f"""
-                                list_aggregate(list_distinct(array_filter(string_split("{column}", ';'), x -> x != '.')), 'string_agg', ',') AS "{column_alias}"
+                                list_aggregate(list_distinct(array_filter(string_split(CAST("{column}" AS VARCHAR), ';'), x -> x != '.')), 'string_agg', ',') AS "{column_alias}"
                             """
                             # columns for INFO clumn
                             column_info_key = f"""
                                 CASE
-                                    WHEN len(list_distinct(array_filter(string_split("{column}", ';'), x -> x != '.'))) > 0
+                                    WHEN len(list_distinct(array_filter(string_split(CAST("{column}" AS VARCHAR), ';'), x -> x != '.'))) > 0
                                     THEN 
                                         concat(
                                             '{column_alias}=',
-                                            list_aggregate(list_distinct(array_filter(string_split("{column}", ';'), x -> x != '.')), 'string_agg', ','),
+                                            list_aggregate(list_distinct(array_filter(string_split(CAST("{column}" AS VARCHAR), ';'), x -> x != '.')), 'string_agg', ','),
                                             ';'
                                         )
                                     ELSE ''
@@ -3788,7 +3800,7 @@ def databases_download_dbsnp(
                                             replace(replace(replace(regexp_extract("CHROM_OLD", 'NC_[0]*([0-9]*)_?', 1), '23', 'X'), '24', 'Y'), '25', 'M')
                                         ) AS '#CHROM',
                                         "POS", "ID", "REF",
-                                        UNNEST(string_split("ALT", ',')) AS 'ALT',
+                                        UNNEST(string_split(CAST("ALT" AS VARCHAR), ',')) AS 'ALT',
                                         "QUAL", "FILTER", "INFO"
                                 FROM df_chunk
                                 WHERE list_contains({db_header_list_chrs}, "#CHROM")
@@ -3807,7 +3819,7 @@ def databases_download_dbsnp(
                                             replace(replace(replace(regexp_extract("CHROM_OLD", 'NC_[0]*([0-9]*)_?', 1), '23', 'X'), '24', 'Y'), '25', 'M')
                                         ) AS '#CHROM',
                                         "POS", "ID", "REF",
-                                        UNNEST(string_split("ALT", ',')) AS 'ALT',
+                                        UNNEST(string_split(CAST("ALT" AS VARCHAR), ',')) AS 'ALT',
                                         "QUAL", "FILTER", "INFO",
                                         {query_select_info_fields}
                                 FROM df_chunk

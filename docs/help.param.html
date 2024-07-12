@@ -443,6 +443,19 @@ code {
 <li><a href="#annotationexomiser">exomiser</a>
 <ul>
 <li><a href="#annotationexomiserrelease">release</a></li>
+<li><a href="#annotationexomisertranscript_source">transcript_source</a></li>
+<li><a href="#annotationexomiserhpo">hpo</a></li>
+</ul>
+</li>
+<li><a href="#annotationsplice">splice</a>
+<ul>
+<li><a href="#annotationsplicesplit_mode">split_mode</a></li>
+<li><a href="#annotationsplicespliceai_distance">spliceai_distance</a></li>
+<li><a href="#annotationsplicespliceai_mask">spliceai_mask</a></li>
+<li><a href="#annotationsplicetranscript">transcript</a></li>
+<li><a href="#annotationsplicerm_snps">rm_snps</a></li>
+<li><a href="#annotationsplicerm_annot">rm_annot</a></li>
+<li><a href="#annotationsplicewhitespace">whitespace</a></li>
 </ul>
 </li>
 <li><a href="#annotationoptions">options</a>
@@ -733,9 +746,7 @@ code {
       }
    }
    <span class="hljs-string">"snpeff"</span>: {
-      <span class="hljs-attr">"options"</span>: {
-         <span class="hljs-attr">" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "</span>}
-      }
+      <span class="hljs-attr">"options"</span>: <span class="hljs-string">" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "</span>
    }
    <span class="hljs-string">"exomiser"</span>: {
       <span class="hljs-attr">"release"</span>: <span class="hljs-string">"2109"</span>,
@@ -944,9 +955,7 @@ code {
 <p>Annotation with snpEff databases, with options for HGVS annotation and additional tags.</p>
 </blockquote>
 <pre class="hljs"><code><div><span class="hljs-string">"snpeff"</span>: {
-   <span class="hljs-attr">"options"</span>: {
-      <span class="hljs-attr">" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "</span>
-   }
+   <span class="hljs-attr">"options"</span>: <span class="hljs-string">" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr "</span>
 }
 </div></code></pre>
 <h4 id="annotationsnpeffoptions">annotation::snpeff::options</h4>
@@ -1052,7 +1061,7 @@ code {
 <p>Annotation process using Exomiser tool and options (see <a href="https://www.sanger.ac.uk/tool/exomiser/">Exomiser website documentation</a>).</p>
 <p>Examples:</p>
 <blockquote>
-<p>Annotation with Exomiser, using database relse '2109', transcripts source as UCSC and a list of HPO terms.</p>
+<p>Annotation with Exomiser, using database release '2109', transcripts source as UCSC and a list of HPO terms.</p>
 </blockquote>
 <pre class="hljs"><code><div><span class="hljs-string">"exomiser"</span>: {
    <span class="hljs-attr">"release"</span>: <span class="hljs-string">"2109"</span>
@@ -1067,6 +1076,104 @@ code {
 <p>Annotation with release '2109' of Exomiser database.</p>
 </blockquote>
 <pre class="hljs"><code><div><span class="hljs-string">"release"</span>: <span class="hljs-string">"2109"</span>
+</div></code></pre>
+<h4 id="annotationexomisertranscriptsource">annotation::exomiser::transcript_source</h4>
+<p>Transcription source of Exomiser. This option replace the release variable in 'application.properties' file (see 'exomiser_application_properties' option). The release will be downloaded if it is not available locally.</p>
+<p>Examples:</p>
+<blockquote>
+<p>Annotation with transcription source 'refseq' of Exomiser.</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"transcript_source"</span>: <span class="hljs-string">"refseq"</span>
+</div></code></pre>
+<h4 id="annotationexomiserhpo">annotation::exomiser::hpo</h4>
+<p>List of HPO for Exomiser. This option replace the release variable in 'application.properties' file (see 'exomiser_application_properties' option). The release will be downloaded if it is not available locally.</p>
+<p>Examples:</p>
+<blockquote>
+<p>Annotation with a list of 4 HPO for Exomiser.</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"hpo"</span>: [<span class="hljs-string">"HP:0001156"</span>, <span class="hljs-string">"HP:0001363"</span>, <span class="hljs-string">"HP:0011304"</span>, <span class="hljs-string">"HP:0010055"</span>]
+</div></code></pre>
+<h3 id="annotationsplice">annotation::splice</h3>
+<p>Annotation process using Splice tool and options. This annotation will be proccessed only for variants that are not already annotated (i.e. without annotation like 'SpliceAI_\w+' and 'SPiP_\w+')</p>
+<p>Examples:</p>
+<blockquote>
+<p>Annotation with Splice, using database splice mode ('one'), spliceAI distance (500) and spliceAI mask (1).</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"splice"</span>: {
+   <span class="hljs-attr">"split_mode"</span>: <span class="hljs-string">"one"</span>,
+   <span class="hljs-attr">"spliceai_distance"</span>: <span class="hljs-number">500</span>,
+   <span class="hljs-attr">"spliceai_mask"</span>: <span class="hljs-number">1</span>
+}
+</div></code></pre>
+<h4 id="annotationsplicesplitmode">annotation::splice::split_mode</h4>
+<p>Split mode of Exomiser database (default 'one'):</p>
+<ul>
+<li>
+<p>all: report all annotated transcript for one gene.</p>
+</li>
+<li>
+<p>one: keep only the transcript with the most pathogenic score (in case of identical score, take the first).</p>
+</li>
+<li>
+<p>list: keep transcript provided in transcript file, if no matching transcript in file 'one' mode is activated.</p>
+</li>
+<li>
+<p>mixed: 'one' mode, if identical score, list mode is activated.</p>
+</li>
+</ul>
+<p>Examples:</p>
+<blockquote>
+<p>Split mode to report all annotated transcript for one gene.</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"split_mode"</span>: <span class="hljs-string">"all"</span>
+</div></code></pre>
+<h4 id="annotationsplicespliceaidistance">annotation::splice::spliceai_distance</h4>
+<p>Maximum distance between the variant and gained/lost splice site (default: 500).</p>
+<p>Examples:</p>
+<blockquote>
+<p>Maximum distance of '500' between variant and splice site.</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"spliceai_distance"</span>: <span class="hljs-number">500</span>
+</div></code></pre>
+<h4 id="annotationsplicespliceaimask">annotation::splice::spliceai_mask</h4>
+<p>Mask scores representing annotated acceptor/donor gain and unannotated acceptor/donor loss (default: 1).</p>
+<p>Examples:</p>
+<blockquote>
+<p>Mask score of '1' for acceptor/donor gain fain and loss.</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"spliceai_mask"</span>: <span class="hljs-number">1</span>
+</div></code></pre>
+<h4 id="annotationsplicetranscript">annotation::splice::transcript</h4>
+<p>Path to a list of transcripts of preference (default '').</p>
+<p>Examples:</p>
+<blockquote>
+<p>Path to file of transcripts.</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"transcript"</span>: <span class="hljs-string">"tests/data/transcripts.tsv"</span>
+</div></code></pre>
+<h4 id="annotationsplicermsnps">annotation::splice::rm_snps</h4>
+<p>Do not consider SNV for the analysis, only Indels and MNV (default 'false').</p>
+<p>Examples:</p>
+<blockquote>
+<p>Analysing only non SNV.</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"rm_snps"</span>: <span class="hljs-string">"true"</span>
+</div></code></pre>
+<h4 id="annotationsplicermannot">annotation::splice::rm_annot</h4>
+<p>Remove existing annotation before analysing (default 'true').</p>
+<p>Examples:</p>
+<blockquote>
+<p>Remove annotation before analysing.</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"rm_annot"</span>: <span class="hljs-string">"true"</span>
+</div></code></pre>
+<h4 id="annotationsplicewhitespace">annotation::splice::whitespace</h4>
+<p>Remove spaces in INFO field, 'true' to remove (default 'true').</p>
+<p>Examples:</p>
+<blockquote>
+<p>Remove spaces in INFO field.</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"whitespace"</span>: <span class="hljs-string">"true"</span>
 </div></code></pre>
 <h3 id="annotationoptions">annotation::options</h3>
 <p>Options for annotations, such as annotation strategy (skip if exists, update, append)</p>

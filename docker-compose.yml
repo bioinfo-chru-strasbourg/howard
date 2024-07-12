@@ -3,8 +3,6 @@
 #########
 # Usage: docker-compose up
 
-version: '3'
-
 # SERVICES
 ##########
 

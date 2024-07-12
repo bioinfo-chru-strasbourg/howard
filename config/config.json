@@ -1,5 +1,5 @@
 {
-  "threads": 8,
+  "threads": 24,
   "memory": null,
   "verbosity": "WARNING",
   "folders": {
@@ -14,7 +14,9 @@
       "bcftools": ["~/howard/databases/annotations/current"],
       "annovar": ["~/howard/databases/annovar/current"],
       "snpeff": "~/howard/databases/snpeff/current",
-      "varank": "~/howard/databases/varank/current"
+      "varank": "~/howard/databases/varank/current",
+      "spliceai": "~/howard/databases/spliceai/current",
+      "spip": "~/howard/databases/spip/current"
     }
   },
   "tools": {
@@ -22,8 +24,16 @@
     "bgzip": "bgzip",
     "java": "java",
     "snpeff": "~/howard/tools/snpeff/current/bin/snpEff.jar",
-    "snpsift": "~/howard/tools/snpeff/current/bin/SnpSift.jar",
     "annovar": "~/howard/tools/annovar/current/bin/table_annovar.pl",
-    "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-14.0.0.jar"
+    "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-14.0.0.jar",
+    "docker": "docker",
+    "splice": {
+      "docker": {
+        "image": "bioinfochrustrasbourg/splice:0.2.1",
+        "entrypoint": "/bin/bash",
+        "options": null,
+        "command": null
+      }
+    }
   }
 }

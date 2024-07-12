@@ -1,28 +1,24 @@
+"""
+Tests
+
+Usage:
+pytest tests/
+
+Coverage:
+coverage run -m pytest tests/test_databases_from_extann.py -x -v --log-cli-level=DEBUG --capture=tee-sys
+coverage report --include=howard/* -m
+"""
+
 import os
-import typing
 import argparse
+import logging as log
 import pytest
 import json
 from os.path import join as osj
 from tempfile import TemporaryDirectory
-from howard.functions.commons import remove_if_exists
+from howard.functions.commons import remove_if_exists, identical
 from howard.functions.from_extann import from_extann, read_json
 from test_needed import tests_folder
-
-
-def identical(vcf_list: typing.List[str], begin: str):
-    """ """
-    vcfs_lines = []
-    k = 0
-    for vcf in vcf_list:
-        vcfs_lines.append([])
-        with open(vcf, "r") as f:
-            for l in f:
-                if not l.startswith(begin):
-                    vcfs_lines[k].append(l)
-        k += 1
-    for i in range(len(vcf_list) - 1):
-        assert vcfs_lines[i] == vcfs_lines[i + 1]
 
 
 def edit_config(configfile, key, new, tmp_dir):
@@ -68,4 +64,4 @@ def test_from_extann(mode):
 
         assert os.path.exists(output_ex)
         assert os.path.exists(output_ex + ".hdr")
-        identical([expected_ex, output_ex], "##")
+        assert identical([expected_ex, output_ex], "##")

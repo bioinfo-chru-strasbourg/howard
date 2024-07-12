@@ -6,7 +6,7 @@ Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery
 
 HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations, translates files in multiple formats (e.g. vcf, tsv, parquet) and generates variants statistics.
 
-HOWARD annotation is mainly based on a build-in Parquet annotation method, and external tools such as BCFTOOLS, ANNOVAR, snpEff and Exomiser (see docs, automatically downloaded if needed). Parquet annotation uses annotation database in VCF or BED format, in mutliple file format: Parquet/duckdb, VCF, BED, TSV, CSV, TBL, JSON.
+HOWARD annotation is mainly based on a build-in Parquet annotation method, and external tools such as BCFTOOLS, ANNOVAR, snpEff, Exomiser and Splice (see docs, automatically downloaded if needed). Parquet annotation uses annotation database in VCF or BED format, in mutliple file format: Parquet/duckdb, VCF, BED, TSV, CSV, TBL, JSON.
 
 HOWARD calculation processes variants information to calculate new information, such as: harmonizes allele frequency (VAF), extracts Nomen (transcript, cNomen, pNomen...) from HGVS fields with an optional list of personalized transcripts, generates VaRank format barcode.
 
@@ -56,6 +56,7 @@ HOWARD is multithreaded through the number of variants and by database (data-sca
         - [Annovar annotation](#annovar-annotation)
         - [snpEff annotation](#snpeff-annotation)
         - [Exomiser annotation](#exomiser-annotation)
+        - [Splice annotation](#splice-annotation)
         - [BCFTools annotation](#bcftools-annotation)
       - [Annotation combination](#annotation-combination)
     - [Annotation parameters](#annotation-parameters)
@@ -144,7 +145,16 @@ Configuration file example:
     "snpeff": "~/howard/tools/snpeff/current/bin/snpEff.jar",
     "snpsift": "~/howard/tools/snpeff/current/bin/SnpSift.jar",
     "annovar": "~/howard/tools/annovar/current/bin/table_annovar.pl",
-    "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar"
+    "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-14.0.0.jar",
+    "splice": {
+      "docker": {
+        "image": "bioinfochrustrasbourg/splice:0.2.1",
+        "entrypoint": "/bin/bash",
+        "options": null,
+        "command": null
+      }
+    },
+    "docker": "docker"
   }
 }
 
@@ -152,7 +162,7 @@ Configuration file example:
 
 ### External tools
 
-In order to use external tools, mainly for annotation (e.g. Annovar, snpEff, Exomiser), they need to be installed.
+In order to use external tools, mainly for annotation (e.g. Annovar, snpEff, Exomiser, Splice), they need to be installed (see doc of each tools). For Splice tool, a Docker image is automatically downloaded using configuration file.
 
 
 ## Docker
@@ -172,6 +182,7 @@ The persitent CLI contains external tools, such as:
 | [snpEff](https://pcingola.github.io/SnpEff/) | Genomic variant annotations, and functional effect prediction toolbox |
 | [Annovar](https://annovar.openbioinformatics.org/) | Efficient software tool to utilize update-to-date information to functionally annotate genetic variants |
 | [Exomiser](https://www.sanger.ac.uk/tool/exomiser/) | Program that finds potential disease-causing variants from whole-exome or whole-genome sequencing data |
+| [Splice](https://hub.docker.com/r/bioinfochrustrasbourg/splice) | Image to run SPiP and SpliceAI tools in an nextflow pipeline. |
 
 
 ### Setup container
@@ -925,7 +936,7 @@ In order to annotate with all available annotation databases, the keyword `ALL` 
 
 #### External tools annotation
 
-External annotation tools are also available, such as BCFTOOLS, Annovar, snpEff and Exomiser. Annovar, snpEff and Exomiser databases are automatically downloaded (see [HOWARD Help Databases tool](help.md#databases-tool)). Quick annotation allows to annotates by simply defining external tools keywords.
+External annotation tools are also available, such as BCFTOOLS, Annovar, snpEff, Exomiser and Splice. Annovar, snpEff and Exomiser databases are automatically downloaded (see [HOWARD Help Databases tool](help.md#databases-tool)). Quick annotation allows to annotates by simply defining external tools keywords.
 
 ##### BCFTools annotation
 
@@ -965,13 +976,25 @@ For snpEff tool, use HOWARD keyword `snpeff`. Options are available for quick an
 
 ##### Exomiser Annotation
 
-For Exomiser tool, use HOWARD keyword `exomiser`. A list of options can be provided as key-value format, such as exomiser release, a preset (pre-configured options), source of transcripts (e.g. 'refseq', 'ucsc'), a llist of HPO terms (do not use ':' separator, e.g. '0001156', 'HP0001156', 'hpo0001156'). More options are available using [HOWARD Parameters JSON](help.param.md) file.
+For Exomiser tool, use HOWARD keyword `exomiser`. A list of options can be provided as key-value format, such as exomiser release, a preset (pre-configured options), source of transcripts (e.g. 'refseq', 'ucsc'), a list of HPO terms (do not use ':' separator, e.g. '0001156', 'HP0001156', 'hpo0001156'). More options are available using [HOWARD Parameters JSON](help.param.md) file.
 
 > Example: VCF annotation with Exomiser (exome preset, list of HPO terms, transcript as refseq and release 2109)
 > ```
 > howard annotation \
 >    --input=tests/data/example.vcf.gz \
 >    --annotations='exomiser:preset=exome:hpo=0001156+0001363+0011304+0010055:transcript_source=refseq:release=2109' \
+>    --output=/tmp/example.howard.tsv
+> ```
+
+##### Splice Annotation
+
+For Splice tool, use HOWARD keyword `splice`. A list of options can be provided as key-value format, such as split mode, spliceAI distance, spliceAI mask. More options are available using [HOWARD Parameters JSON](help.param.md) file.
+
+> Example: VCF annotation with Splice (split mode, spliceAI distance, spliceAI mask)
+> ```
+> howard annotation \
+>    --input=tests/data/example.vcf.gz \
+>    --annotations='splice:split_mode=one:spliceai_distance=500:spliceai_mask=1' \
 >    --output=/tmp/example.howard.tsv
 > ```
 

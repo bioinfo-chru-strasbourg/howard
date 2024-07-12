@@ -22,6 +22,7 @@ HOWARD Configuration JSON file defined default configuration regarding resources
       - [snpeff](#toolssnpeff)
       - [annovar](#toolsannovar)
       - [exomiser](#toolsexomiser)
+      - [splice](#toolssplice)
    - [threads](#threads)
    - [memory](#memory)
    - [assembly](#assembly)
@@ -69,6 +70,14 @@ Examples:
     "snpeff": "~/howard/tools/snpeff/current/bin/snpEff.jar",
     "annovar": "~/howard/tools/annovar/current/bin/table_annovar.pl",
     "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar"
+    "splice": {
+       "docker": {
+         "image": "bioinfochrustrasbourg/splice:0.2.1",
+         "entrypoint": "/bin/bash",
+         "options": null,
+         "command": null
+       }
+    }
   }
 }
 ```
@@ -305,8 +314,22 @@ Examples:
 "tools": {
    "bcftools": {
       "docker": {
-        "image": "howard:0.10.0",
+        "image": "howard:0.11.0",
         "entrypoint": "bcftools",
+        "options": null,
+        "command": null
+      }
+   }
+}
+```
+> Example of a configuration for splice with a docker image
+
+```
+"tools": {
+   "splice": {
+      "docker": {
+        "image": "bioinfochrustrasbourg/splice:0.2.1",
+        "entrypoint": "/bin/bash",
         "options": null,
         "command": null
       }
@@ -426,6 +449,27 @@ Examples:
 
 ```
 "snpeff": {"jar": "~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar"}
+```
+
+### tools::splice
+
+Splice Docker image binary (see https://hub.docker.com/r/bioinfochrustrasbourg/splice).
+
+Default: ```None```
+
+Examples: 
+
+> Configuration of Docker image
+
+```
+"splice": {
+   "docker": {
+     "image": "bioinfochrustrasbourg/splice:0.2.1",
+     "entrypoint": "/bin/bash",
+     "options": null,
+     "command": null
+   }
+}
 ```
 
 ## threads

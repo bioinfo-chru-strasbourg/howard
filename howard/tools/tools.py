@@ -333,6 +333,20 @@ arguments = {
             },
         },
     },
+    # Annotations Splice
+    "annotation_splice": {
+        "metavar": "annotation Splice",
+        "help": """Annotation with Splice, as a list of options\n"""
+        """ (e.g. 'split_mode=one:spliceai_distance=500:spliceai_mask=1').\n""",
+        "default": None,
+        "type": str,
+        "extra": {
+            "format": "option=value[:option=value]",
+            "examples": {
+                "Annotation with Splice with options": '"annotation_splice": "split_mode=one:spliceai_distance=500:spliceai_mask=1"',
+            },
+        },
+    },
     # Update annotation
     "annotations_update": {
         "help": """Update option for annotation (Only for Parquet annotation).\n"""
@@ -779,8 +793,8 @@ arguments = {
         "metavar": "genome",
         "help": """Genome file in fasta format (e.g. 'hg19.fa', 'hg38.fa').\n""",
         "required": False,
-        "default": "~/howard/databases/genomes/current/hg19/hg19.fa",
-        "type": PathType(exists=True, type="file"),
+        "default": f"{DEFAULT_GENOME_FOLDER}/{DEFAULT_ASSEMBLY}/{DEFAULT_ASSEMBLY}.fa",
+        "type": PathType(exists=None, type="file"),
         "gooey": {"widget": "FileChooser", "options": {"wildcard": "All files (*)|*"}},
     },
     # HGVS
@@ -1520,7 +1534,7 @@ arguments = {
         f"""(e.g. '{DEFAULT_GENOME_FOLDER}'""",
         "required": False,
         "default": DEFAULT_GENOME_FOLDER,
-        "type": PathType(exists=True, type="dir"),
+        "type": PathType(exists=None, type="dir"),
         "gooey": {
             "widget": "DirChooser",
             "options": {
@@ -1828,6 +1842,7 @@ commands_arguments = {
         """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotation_annovar='nci60:cosmic70' \n"""
         """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotation_snpeff='-hgvs' \n"""
         """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotation_exomiser='preset=exome:transcript_source=refseq' \n"""
+        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotation_splice='split_mode=one:spliceai_distance=500:spliceai_mask=1' \n"""
         """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotations='ALL:parquet' \n"""
         """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --param=config/param.json \n"""
         """    \n""",
@@ -1843,6 +1858,7 @@ commands_arguments = {
                 "annotation_snpeff": False,
                 "annotation_snpsift": False,
                 "annotation_exomiser": False,
+                "annotation_splice": False,
                 "assembly": False,
             },
             "Annotation": {

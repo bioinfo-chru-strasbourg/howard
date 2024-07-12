@@ -100,6 +100,9 @@ def help(args: argparse) -> None:
                 arguments_dict=arguments_dict, setup=setup_cfg, output_type="markdown"
             )
 
+        # Clean MD content
+        help_content = help_content.replace(os.path.expanduser("~"), "~")
+
         # Write file
         f = open(help_file, "w")
         f.write(help_content)
@@ -108,8 +111,9 @@ def help(args: argparse) -> None:
         # Generate Table Of Content (if marker <!--TOC-->)
         import md_toc
 
-        toc = md_toc.build_toc(help_file)
-        md_toc.write_string_on_file_between_markers(help_file, toc, "<!--TOC-->")
+        toc = md_toc.api.build_toc(help_file)
+
+        md_toc.api.write_string_on_file_between_markers(help_file, toc, "<!--TOC-->")
 
         if "help_html" in args and args.help_html:
             help_file_html = args.help_html
