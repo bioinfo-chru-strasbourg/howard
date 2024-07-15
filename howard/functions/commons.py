@@ -644,7 +644,7 @@ def find_nomen(
 
 def extract_snpeff_hgvs(
     snpeff: str = "",
-    header: str = [
+    header: list = [
         "Allele",
         "Annotation",
         "Annotation_Impact",
@@ -677,8 +677,6 @@ def extract_snpeff_hgvs(
     :return: a string that contains the HGVS annotations extracted from the input SNPEff annotation
     string.
     """
-
-    log.debug(f"snpeff={snpeff}")
 
     # Split snpeff ann values
     snpeff_infos = [x.split("|") for x in snpeff.split(",")]
@@ -721,6 +719,92 @@ def extract_snpeff_hgvs(
     snpeff_hgvs = ",".join(hgvs_list)
 
     return snpeff_hgvs
+
+
+def explode_snpeff_ann(
+    snpeff: str = "",
+    uniquify: bool = False,
+    output_format: str = "fields",
+    prefix: str = "ANN_",
+    header: list = [
+        "Allele",
+        "Annotation",
+        "Annotation_Impact",
+        "Gene_Name",
+        "Gene_ID",
+        "Feature_Type",
+        "Feature_ID",
+        "Transcript_BioType",
+        "Rank",
+        "HGVS.c",
+        "HGVS.p",
+        "cDNA.pos / cDNA.length",
+        "CDS.pos / CDS.length",
+        "AA.pos / AA.length",
+        "Distance",
+        "ERRORS / WARNINGS / INFO",
+    ],
+) -> str:
+    """
+    The `explode_snpeff_ann` function takes a string of SNPEff annotations, splits and processes them
+    based on specified parameters, and returns the processed annotations in a specified output format.
+
+    :param snpeff: The `snpeff` parameter is a string containing annotations separated by commas. Each
+    annotation is further divided into different fields separated by pipes (|)
+    :type snpeff: str
+    :param uniquify: The `uniquify` parameter in the `explode_snpeff_ann` function is a boolean flag
+    that determines whether to keep only unique values for each annotation field or not. If `uniquify`
+    is set to `True`, only unique values will be kept for each annotation field. If, defaults to False
+    :type uniquify: bool (optional)
+    :param output_format: The `output_format` parameter in the `explode_snpeff_ann` function specifies
+    the format in which the output will be generated. The function supports two output formats: "fields"
+    and "JSON", defaults to fields
+    :type output_format: str (optional)
+    :param prefix: The `prefix` parameter in the `explode_snpeff_ann` function is used to specify the
+    prefix that will be added to each annotation field in the output. For example, if the prefix is set
+    to "ANN_", then the output annotations will be formatted as "ANN_Annotation=example_annotation,
+    defaults to ANN_
+    :type prefix: str (optional)
+    :param header: The `header` parameter in the `explode_snpeff_ann` function is a list of strings that
+    represent the column names or fields for the output data. These strings include information such as
+    allele, annotation, gene name, gene ID, feature type, transcript biotype, and various other details
+    related
+    :type header: list
+    :return: The function `explode_snpeff_ann` returns a string that contains the exploded and formatted
+    SNPEff annotations based on the input parameters provided. The specific format of the returned
+    string depends on the `output_format`, `uniquify`, and other parameters specified in the function.
+    """
+
+    # Split snpeff ann values
+    snpeff_infos = [x.split("|") for x in snpeff.split(",")]
+
+    # Create Dataframe
+    snpeff_dict = {}
+    for i in range(len(header)):
+        if output_format.upper() in ["JSON"]:
+            header_clean = header[i]
+        else:
+            header_clean = "".join(char for char in header[i] if char.isalnum())
+        snpeff_dict[header_clean] = [x[i] for x in snpeff_infos]
+    df = pd.DataFrame.from_dict(snpeff_dict, orient="index").transpose()
+
+    # Fetch each annotations
+    if output_format.upper() in ["JSON"]:
+        snpeff_ann_explode = df.transpose().to_json()
+    else:
+        ann_list = []
+        for annotation in df:
+            if uniquify:
+                ann_list_infos = ",".join(df[annotation].unique())
+            else:
+                ann_list_infos = ",".join(df[annotation])
+            if ann_list_infos:
+                ann_list.append(f"{prefix}{annotation}={ann_list_infos}")
+
+        # join list
+        snpeff_ann_explode = ";".join(ann_list)
+
+    return snpeff_ann_explode
 
 
 def get_index(value, values: list = []) -> int:

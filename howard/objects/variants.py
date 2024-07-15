@@ -6261,7 +6261,31 @@ class Variants:
                     "description": "HGVS nomenclatures from snpEff annotation",
                     "available": True,
                     "function_name": "calculation_extract_snpeff_hgvs",
-                    "function_params": [],
+                    "function_params": ["snpeff_hgvs", "ANN"],
+                },
+                "snpeff_ann_explode": {
+                    "type": "python",
+                    "name": "snpeff_ann_explode",
+                    "description": "Explode snpEff annotations with uniquify values",
+                    "available": True,
+                    "function_name": "calculation_snpeff_ann_explode",
+                    "function_params": [False, "fields", "ANN_"],
+                },
+                "snpeff_ann_explode_uniquify": {
+                    "type": "python",
+                    "name": "snpeff_ann_explode",
+                    "description": "Explode snpEff annotations",
+                    "available": True,
+                    "function_name": "calculation_snpeff_ann_explode",
+                    "function_params": [True, "fields", "ANN_uniquify_"],
+                },
+                "snpeff_ann_explode_json": {
+                    "type": "python",
+                    "name": "snpeff_ann_explode",
+                    "description": "Explode snpEff annotations in JSON format",
+                    "available": True,
+                    "function_name": "calculation_snpeff_ann_explode",
+                    "function_params": [False, "JSON", "ANN_json"],
                 },
                 "NOMEN": {
                     "type": "python",
@@ -7775,17 +7799,26 @@ class Variants:
         for added_column in added_columns:
             self.drop_column(column=added_column)
 
-    def calculation_extract_snpeff_hgvs(self) -> None:
+    def calculation_extract_snpeff_hgvs(
+        self,
+        snpeff_hgvs: str = "snpeff_hgvs",
+        snpeff_field: str = "ANN",
+    ) -> None:
         """
         The function `calculation_extract_snpeff_hgvs` extracts HGVS nomenclatures from the SnpEff
         annotation field in a VCF file and adds them as a new column in the variants table.
+
+        :param snpeff_hgvs: The `snpeff_hgvs` parameter in the `calculation_extract_snpeff_hgvs`
+        function is used to specify the name of the column that will store the HGVS nomenclatures
+        extracted from the SnpEff annotation field in a VCF file. This parameter allows you, defaults to
+        snpeff_hgvs
+        :type snpeff_hgvs: str (optional)
+        :param snpeff_field: The `snpeff_field` parameter in the `calculation_extract_snpeff_hgvs`
+        function represents the field in the VCF file that contains SnpEff annotations. This field is
+        used to extract HGVS nomenclatures from the SnpEff annotation field and add them as a, defaults
+        to ANN
+        :type snpeff_field: str (optional)
         """
-
-        # SnpEff annotation field
-        snpeff_ann = "ANN"
-
-        # SnpEff annotation field
-        snpeff_hgvs = "snpeff_hgvs"
 
         # Snpeff hgvs tags
         vcf_infos_tags = {
@@ -7798,7 +7831,7 @@ class Variants:
             prefix = "INFO/"
 
         # snpEff fields
-        speff_ann_infos = prefix + snpeff_ann
+        speff_ann_infos = prefix + snpeff_field
         speff_hgvs_infos = prefix + snpeff_hgvs
 
         # Variants table
@@ -7811,11 +7844,28 @@ class Variants:
         added_columns = []
 
         # Explode HGVS field in column
-        added_columns += self.explode_infos(fields=[snpeff_ann])
+        added_columns += self.explode_infos(fields=[snpeff_field])
 
-        if "ANN" in vcf_reader.infos:
+        if snpeff_field in vcf_reader.infos:
 
-            log.debug(vcf_reader.infos["ANN"])
+            log.debug(vcf_reader.infos[snpeff_field])
+
+            # Extract ANN header
+            ann_description = vcf_reader.infos[snpeff_field].desc
+            pattern = r"'(.+?)'"
+            match = re.search(pattern, ann_description)
+            if match:
+                ann_header_match = match.group(1).split(" | ")
+                ann_header_desc = {}
+                for i in range(len(ann_header_match)):
+                    ann_header_info = "".join(
+                        char for char in ann_header_match[i] if char.isalnum()
+                    )
+                    ann_header_desc[ann_header_info] = ann_header_match[i]
+                if not ann_header_desc:
+                    raise ValueError("Invalid header description format")
+            else:
+                raise ValueError("Invalid header description format")
 
             # Create variant id
             variant_id_column = self.get_variant_id_column()
@@ -7829,7 +7879,11 @@ class Variants:
             # Create main NOMEN column
             dataframe_snpeff_hgvs[speff_hgvs_infos] = dataframe_snpeff_hgvs[
                 speff_ann_infos
-            ].apply(lambda x: extract_snpeff_hgvs(str(x)))
+            ].apply(
+                lambda x: extract_snpeff_hgvs(
+                    str(x), header=list(ann_header_desc.values())
+                )
+            )
 
             # Add snpeff_hgvs to header
             vcf_reader.infos[snpeff_hgvs] = vcf.parser._Info(
@@ -7858,6 +7912,179 @@ class Variants:
                             THEN concat(
                                     '{snpeff_hgvs}=',
                                     dataframe_snpeff_hgvs."{speff_hgvs_infos}"
+                                )
+                            ELSE ''
+                        END
+                    )
+                FROM dataframe_snpeff_hgvs
+                WHERE {table_variants}."{variant_id_column}" = dataframe_snpeff_hgvs."{variant_id_column}"
+
+            """
+            self.conn.execute(sql_update)
+
+            # Delete dataframe
+            del dataframe_snpeff_hgvs
+            gc.collect()
+
+        else:
+
+            log.warning(
+                "No snpEff annotation. Please Anotate with snpEff before use this calculation option"
+            )
+
+        # Remove added columns
+        for added_column in added_columns:
+            self.drop_column(column=added_column)
+
+    def calculation_snpeff_ann_explode(
+        self,
+        uniquify: bool = True,
+        output_format: str = "fields",
+        output_prefix: str = "ANN_",
+        snpeff_field: str = "ANN",
+    ) -> None:
+        """
+        The `calculation_snpeff_ann_explode` function processes SnpEff annotations in a VCF file by
+        exploding the HGVS field and updating variant information accordingly.
+
+        :param uniquify: The `uniquify` parameter in the `calculation_snpeff_ann_explode` method is a
+        boolean flag that determines whether the output should be uniquified or not. When set to `True`,
+        it indicates that the output should be unique, meaning that duplicate entries should be removed,
+        defaults to True
+        :type uniquify: bool (optional)
+        :param output_format: The `output_format` parameter in the `calculation_snpeff_ann_explode`
+        function specifies the format in which the output annotations will be generated. It has a
+        default value of "fields". You can also set it to "JSON" to output the annotations in JSON
+        format, defaults to fields
+        :type output_format: str (optional)
+        :param output_prefix: The `output_prefix` parameter in the `calculation_snpeff_ann_explode`
+        method is used to specify the prefix that will be added to the output annotations generated
+        during the calculation process. This prefix helps to differentiate the newly added annotations
+        from existing ones in the output data. By default, the, defaults to ANN_
+        :type output_prefix: str (optional)
+        :param snpeff_field: The `snpeff_field` parameter in the `calculation_snpeff_ann_explode`
+        function is used to specify the field in the VCF file that contains SnpEff annotations. This
+        field will be processed to explode the HGVS annotations and update the variant information
+        accordingly, defaults to ANN
+        :type snpeff_field: str (optional)
+        """
+
+        # SnpEff annotation field
+        snpeff_hgvs = "snpeff_ann_explode"
+
+        # Snpeff hgvs tags
+        vcf_infos_tags = {
+            snpeff_hgvs: "Explode snpEff annotations",
+        }
+
+        # Prefix
+        prefix = self.get_explode_infos_prefix()
+        if prefix:
+            prefix = "INFO/"
+
+        # snpEff fields
+        speff_ann_infos = prefix + snpeff_field
+        speff_hgvs_infos = prefix + snpeff_hgvs
+
+        # Variants table
+        table_variants = self.get_table_variants()
+
+        # Header
+        vcf_reader = self.get_header()
+
+        # Add columns
+        added_columns = []
+
+        # Explode HGVS field in column
+        added_columns += self.explode_infos(fields=[snpeff_field])
+
+        if snpeff_field in vcf_reader.infos:
+
+            # Extract ANN header
+            ann_description = vcf_reader.infos[snpeff_field].desc
+            pattern = r"'(.+?)'"
+            match = re.search(pattern, ann_description)
+            if match:
+                ann_header_match = match.group(1).split(" | ")
+                ann_header = []
+                ann_header_desc = {}
+                for i in range(len(ann_header_match)):
+                    ann_header_info = "".join(
+                        char for char in ann_header_match[i] if char.isalnum()
+                    )
+                    ann_header.append(ann_header_info)
+                    ann_header_desc[ann_header_info] = ann_header_match[i]
+                if not ann_header_desc:
+                    raise ValueError("Invalid header description format")
+            else:
+                raise ValueError("Invalid header description format")
+
+            # Create variant id
+            variant_id_column = self.get_variant_id_column()
+            added_columns += [variant_id_column]
+
+            # Create dataframe
+            dataframe_snpeff_hgvs = self.get_query_to_df(
+                f""" SELECT "{variant_id_column}", "{speff_ann_infos}" FROM {table_variants} """
+            )
+
+            # Create snpEff columns
+            dataframe_snpeff_hgvs[speff_hgvs_infos] = dataframe_snpeff_hgvs[
+                speff_ann_infos
+            ].apply(
+                lambda x: explode_snpeff_ann(
+                    str(x),
+                    uniquify=uniquify,
+                    output_format=output_format,
+                    prefix=output_prefix,
+                    header=list(ann_header_desc.values()),
+                )
+            )
+
+            # Header
+            ann_annotations_prefix = ""
+            if output_format.upper() in ["JSON"]:
+                ann_annotations_prefix = f"{output_prefix}="
+                vcf_reader.infos[ann_annotations_prefix] = vcf.parser._Info(
+                    ann_annotations_prefix,
+                    ".",
+                    "String",
+                    vcf_infos_tags.get(snpeff_hgvs, "snpEff annotations")
+                    + " - JSON format",
+                    "howard calculation",
+                    "0",
+                    self.code_type_map.get("String"),
+                )
+            else:
+                for ann_annotation in ann_header:
+                    ann_annotation_id = f"{output_prefix}{ann_annotation}"
+                    vcf_reader.infos[ann_annotation_id] = vcf.parser._Info(
+                        ann_annotation_id,
+                        ".",
+                        "String",
+                        vcf_infos_tags.get(snpeff_hgvs, "snpEff annotations")
+                        + f" - '{ann_header_desc[ann_annotation]}' annotation",
+                        "howard calculation",
+                        "0",
+                        self.code_type_map.get("String"),
+                    )
+
+            # Update
+            sql_update = f"""
+                UPDATE variants
+                SET "INFO" = 
+                    concat(
+                        CASE
+                            WHEN "INFO" IS NULL OR "INFO" IN ('','.')
+                            THEN ''
+                            ELSE concat("INFO", ';')
+                        END,
+                        CASE 
+                            WHEN dataframe_snpeff_hgvs."{speff_hgvs_infos}" NOT IN ('','.','NaN')
+                                AND dataframe_snpeff_hgvs."{speff_hgvs_infos}" NOT NULL
+                            THEN concat(
+                                '{ann_annotations_prefix}',
+                                dataframe_snpeff_hgvs."{speff_hgvs_infos}"
                                 )
                             ELSE ''
                         END

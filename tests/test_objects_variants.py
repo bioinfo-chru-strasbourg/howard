@@ -2698,9 +2698,60 @@ def test_calculation_vartype_full():
             assert False
 
 
+@pytest.mark.parametrize(
+    "calculation",
+    ["snpeff_ann_explode", "snpeff_ann_explode_uniquify", "snpeff_ann_explode_json"],
+)
+def test_calculation_snpeff_ann_explode(calculation):
+    """
+    This function is a test for calculating snpeff_hgvs in a VCF file using the Variants class.
+
+    :param calculation: It looks like the `calculation` parameter is used to specify a particular
+    calculation method in the test function `test_calculation_snpeff_ann_explode`. This parameter is
+    then used to construct a parameter dictionary `param` with the calculation method specified
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.ann.vcf.gz"
+        output_vcf = f"{tmp_dir}/output.{calculation}.vcf"
+
+        # Construct param dict
+        param = {"calculation": {"calculations": {calculation: None}}}
+
+        # Create object
+        variants = Variants(
+            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+        )
+
+        # Check if no snpeff_hgvs
+        result = variants.get_query_to_df(
+            """ SELECT INFO FROM variants WHERE regexp_matches(INFO,'ANN[^=]') """
+        )
+        assert len(result) == 0
+
+        # Calculation
+        variants.calculation()
+
+        # query annotated variant
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE regexp_matches(INFO,'ANN[^=]') """
+        )
+        assert len(result) == 7
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
 def test_calculation_snpeff_hgvs():
     """
-    This is a test function for the calculation of snpeff_hgvs in a VCF file using the Variants class.
+    This function is a test for calculating snpeff_hgvs in a VCF file using the Variants class.
     """
 
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
