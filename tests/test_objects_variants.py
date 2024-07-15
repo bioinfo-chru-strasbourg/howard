@@ -2727,7 +2727,7 @@ def test_calculation_snpeff_ann_explode(calculation):
 
         # Check if no snpeff_hgvs
         result = variants.get_query_to_df(
-            """ SELECT INFO FROM variants WHERE regexp_matches(INFO,'ANN[^=]') """
+            """ SELECT INFO FROM variants WHERE regexp_matches(INFO,'snpeff[^=]') """
         )
         assert len(result) == 0
 
@@ -2736,7 +2736,7 @@ def test_calculation_snpeff_ann_explode(calculation):
 
         # query annotated variant
         result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE regexp_matches(INFO,'ANN[^=]') """
+            """ SELECT * FROM variants WHERE regexp_matches(INFO,'snpeff[^=]') """
         )
         assert len(result) == 7
 
