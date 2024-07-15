@@ -6269,23 +6269,23 @@ class Variants:
                     "description": "Explode snpEff annotations with uniquify values",
                     "available": True,
                     "function_name": "calculation_snpeff_ann_explode",
-                    "function_params": [False, "fields", "ANN_"],
+                    "function_params": [False, "fields", "snpeff_", "ANN"],
                 },
                 "snpeff_ann_explode_uniquify": {
                     "type": "python",
-                    "name": "snpeff_ann_explode",
+                    "name": "snpeff_ann_explode_uniquify",
                     "description": "Explode snpEff annotations",
                     "available": True,
                     "function_name": "calculation_snpeff_ann_explode",
-                    "function_params": [True, "fields", "ANN_uniquify_"],
+                    "function_params": [True, "fields", "snpeff_uniquify_", "ANN"],
                 },
                 "snpeff_ann_explode_json": {
                     "type": "python",
-                    "name": "snpeff_ann_explode",
+                    "name": "snpeff_ann_explode_json",
                     "description": "Explode snpEff annotations in JSON format",
                     "available": True,
                     "function_name": "calculation_snpeff_ann_explode",
-                    "function_params": [False, "JSON", "ANN_json"],
+                    "function_params": [False, "JSON", "snpeff_json", "ANN"],
                 },
                 "NOMEN": {
                     "type": "python",
@@ -7940,7 +7940,7 @@ class Variants:
         self,
         uniquify: bool = True,
         output_format: str = "fields",
-        output_prefix: str = "ANN_",
+        output_prefix: str = "snpeff_",
         snpeff_field: str = "ANN",
     ) -> None:
         """
@@ -7997,6 +7997,8 @@ class Variants:
 
         # Explode HGVS field in column
         added_columns += self.explode_infos(fields=[snpeff_field])
+        log.debug(f"snpeff_field={snpeff_field}")
+        log.debug(f"added_columns={added_columns}")
 
         if snpeff_field in vcf_reader.infos:
 
@@ -8045,8 +8047,8 @@ class Variants:
             ann_annotations_prefix = ""
             if output_format.upper() in ["JSON"]:
                 ann_annotations_prefix = f"{output_prefix}="
-                vcf_reader.infos[ann_annotations_prefix] = vcf.parser._Info(
-                    ann_annotations_prefix,
+                vcf_reader.infos[output_prefix] = vcf.parser._Info(
+                    output_prefix,
                     ".",
                     "String",
                     vcf_infos_tags.get(snpeff_hgvs, "snpEff annotations")
