@@ -41,6 +41,7 @@ HOWARD Parameters JSON file defines parameters for databases' downloads.
          - [download_dbnsfp_vcf](#databasesdbnsfpdownload_dbnsfp_vcf)
          - [download_dbnsfp_no_files_all](#databasesdbnsfpdownload_dbnsfp_no_files_all)
          - [download_dbnsfp_add_info](#databasesdbnsfpdownload_dbnsfp_add_info)
+         - [download_dbnsfp_uniquify](#databasesdbnsfpdownload_dbnsfp_uniquify)
          - [download_dbnsfp_row_group_size](#databasesdbnsfpdownload_dbnsfp_row_group_size)
       - [alphamissense](#databasesalphamissense)
          - [download_alphamissense](#databasesalphamissensedownload_alphamissense)
@@ -175,6 +176,7 @@ Examples:
           "download_dbnsfp_vcf": false,
           "download_dbnsfp_no_files_all": false,
           "download_dbnsfp_add_info": false,
+          "download_dbnsfp_uniquify": false,
           "download_dbnsfp_row_group_size": 100000
       },
       "alphamissense": {
@@ -463,6 +465,12 @@ Default: ```False```
 #### databases::dbnsfp::download_dbnsfp_add_info
 
 Add INFO column (VCF format) in Parquet folder and file. Useful for speed up full annotation (all available columns). Increase memory and space during generation of files. 
+
+Default: ```False```
+
+#### databases::dbnsfp::download_dbnsfp_uniquify
+
+Uniquify values within column (e.g. "D,D" to "D", "D,.,T" to "D,T"). Remove transcripts information details. Usefull to reduce size of the database. Increase memory and space during generation of files. 
 
 Default: ```False```
 

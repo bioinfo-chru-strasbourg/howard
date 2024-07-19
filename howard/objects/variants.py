@@ -79,10 +79,12 @@ class Variants:
 
     def set_input(self, input: str = None) -> None:
         """
-        The function takes a file name as input, splits the file name into a name and an extension, and
-        then sets the input_name, input_extension, and input_format attributes of the class
-
-        :param input: The input file
+        The function `set_input` takes a file name as input, extracts the name and extension, and sets
+        attributes in the class accordingly.
+        
+        :param input: The `set_input` method in the provided code snippet is used to set attributes
+        related to the input file. Here's a breakdown of the parameters and their usage in the method:
+        :type input: str
         """
 
         if input and not isinstance(input, str):
@@ -103,24 +105,34 @@ class Variants:
 
     def set_config(self, config: dict) -> None:
         """
-        This function takes in a config object and sets it as the config object for the class
-
-        :param config: The configuration object
+        The set_config function takes a config object and assigns it as the configuration object for the
+        class.
+        
+        :param config: The `config` parameter in the `set_config` function is a dictionary object that
+        contains configuration settings for the class. When you call the `set_config` function with a
+        dictionary object as the argument, it will set that dictionary as the configuration object for
+        the class
+        :type config: dict
         """
+
         self.config = config
 
     def set_param(self, param: dict) -> None:
         """
-        This function takes in a param object and sets it as the param object for the class
-
-        :param param: The paramters object
+        This function sets a parameter object for the class based on the input dictionary.
+        
+        :param param: The `set_param` method you provided takes a dictionary object as input and sets it
+        as the `param` attribute of the class instance
+        :type param: dict
         """
+
         self.param = param
 
     def init_variables(self) -> None:
         """
         This function initializes the variables that will be used in the rest of the class
         """
+
         self.prefix = "howard"
         self.table_variants = "variants"
         self.dataframe = None
@@ -151,6 +163,7 @@ class Variants:
         returns False.
         :return: The value of the indexing parameter.
         """
+
         return self.get_param().get("indexing", False)
 
     def get_connexion_config(self) -> dict:
@@ -252,10 +265,13 @@ class Variants:
 
     def set_connexion(self, conn) -> None:
         """
-        It creates a connection to the database
-
-        :param conn: The connection to the database. If not provided, a new connection to an in-memory
-        database is created
+        The function `set_connexion` creates a connection to a database, with options for different
+        database formats and settings.
+        
+        :param conn: The `conn` parameter in the `set_connexion` method is the connection to the
+        database. If a connection is not provided, a new connection to an in-memory database is created.
+        The method then proceeds to set up the connection based on the specified format (e.g., duckdb or
+        sqlite
         """
 
         # Connexion db
@@ -295,10 +311,13 @@ class Variants:
 
     def set_output(self, output: str = None) -> None:
         """
-        If the config file has an output key, set the output to the value of that key. Otherwise, set
-        the output to the input
-
-        :param output: The name of the output file
+        The `set_output` function in Python sets the output file based on the input or a specified key
+        in the config file, extracting the output name, extension, and format.
+        
+        :param output: The `output` parameter in the `set_output` method is used to specify the name of
+        the output file. If the config file has an 'output' key, the method sets the output to the value
+        of that key. If no output is provided, it sets the output to `None`
+        :type output: str
         """
 
         if output and not isinstance(output, str):
@@ -421,11 +440,19 @@ class Variants:
 
     def get_query_to_df(self, query: str = "", limit: int = None) -> pd.DataFrame:
         """
-        > The function `get_query_to_df` takes a query as a string and returns a pandas dataframe
+        The `get_query_to_df` function takes a query as a string and returns the result as a pandas
+        DataFrame based on the connection format.
 
-        :param query: str = ""
+        :param query: The `query` parameter in the `get_query_to_df` function is a string that
+        represents the SQL query you want to execute. This query will be used to fetch data from a
+        database and convert it into a pandas DataFrame
         :type query: str
-        :return: A dataframe
+        :param limit: The `limit` parameter in the `get_query_to_df` function is used to specify the
+        maximum number of rows to be returned in the resulting dataframe. If a limit is provided, the
+        function will only fetch up to that number of rows from the database query result. If no limit
+        is specified,
+        :type limit: int
+        :return: A pandas DataFrame is being returned by the `get_query_to_df` function.
         """
 
         # Connexion format
@@ -852,9 +879,16 @@ class Variants:
 
     def get_input_format(self, input_file: str = None) -> str:
         """
-        It returns the format of the input variable.
-        :return: The format is being returned.
+        This function returns the format of the input variable, either from the provided input file or
+        by prompting for input.
+
+        :param input_file: The `input_file` parameter in the `get_input_format` method is a string that
+        represents the file path of the input file. If no `input_file` is provided when calling the
+        method, it will default to `None`
+        :type input_file: str
+        :return: The format of the input variable is being returned.
         """
+
         if not input_file:
             input_file = self.get_input()
         input_format = get_file_format(input_file)
@@ -862,9 +896,17 @@ class Variants:
 
     def get_input_compressed(self, input_file: str = None) -> str:
         """
-        It returns the format of the input variable.
-        :return: The format is being returned.
+        The function `get_input_compressed` returns the format of the input variable after compressing
+        it.
+
+        :param input_file: The `input_file` parameter in the `get_input_compressed` method is a string
+        that represents the file path of the input file. If no `input_file` is provided when calling the
+        method, it will default to `None` and the method will then call `self.get_input()` to
+        :type input_file: str
+        :return: The function `get_input_compressed` returns the compressed format of the input
+        variable.
         """
+
         if not input_file:
             input_file = self.get_input()
         input_compressed = get_file_compressed(input_file)
@@ -875,13 +917,22 @@ class Variants:
         It returns the output of the neuron.
         :return: The output of the neural network.
         """
+
         return self.output
 
     def get_output_format(self, output_file: str = None) -> str:
         """
-        It returns the format of the input variable.
-        :return: The format is being returned.
+        The function `get_output_format` returns the format of the input variable or the output file if
+        provided.
+
+        :param output_file: The `output_file` parameter in the `get_output_format` method is a string
+        that represents the file path of the output file. If no `output_file` is provided when calling
+        the method, it will default to the output obtained from the `get_output` method of the class
+        instance. The
+        :type output_file: str
+        :return: The format of the input variable is being returned.
         """
+
         if not output_file:
             output_file = self.get_output()
         output_format = get_file_format(output_file)
@@ -1089,14 +1140,31 @@ class Variants:
         chunksize: int = 1000000,
     ) -> None:
         """
-        The function reads a file in chunks, and inserts each chunk into a table
+        The function reads a file in chunks and inserts each chunk into a table based on the specified
+        database format.
 
-        :param file: the file to be loaded
-        :param columns: a string of the column names separated by commas
-        :param header_len: the number of lines to skip at the beginning of the file, defaults to 0
-        (optional)
-        :param sep: the separator used in the file, defaults to \t (optional)
-        :param chunksize: The number of rows to read in at a time, defaults to 1000000 (optional)
+        :param file: The `file` parameter is the file that you want to load into a table. It should be
+        the path to the file on your system
+        :param columns: The `columns` parameter in the `insert_file_to_table` function is a string that
+        should contain the names of the columns in the table where the data will be inserted. The column
+        names should be separated by commas within the string. For example, if you have columns named
+        "id", "name
+        :type columns: str
+        :param header_len: The `header_len` parameter in the `insert_file_to_table` function specifies
+        the number of lines to skip at the beginning of the file before reading the actual data. This
+        parameter allows you to skip any header information present in the file before processing the
+        data, defaults to 0
+        :type header_len: int (optional)
+        :param sep: The `sep` parameter in the `insert_file_to_table` function is used to specify the
+        separator character that is used in the file being read. In this case, the default separator is
+        set to `\t`, which represents a tab character. You can change this parameter to a different
+        separator character if, defaults to \t
+        :type sep: str (optional)
+        :param chunksize: The `chunksize` parameter specifies the number of rows to read in at a time
+        when processing the file in chunks. In the provided code snippet, the default value for
+        `chunksize` is set to 1000000. This means that the file will be read in chunks of 1,, defaults
+        to 1000000
+        :type chunksize: int (optional)
         """
 
         # Config
@@ -1846,19 +1914,14 @@ class Variants:
 
     def read_vcf_header_file(self, file: str = None) -> list:
         """
-        The function `read_vcf_header_file` reads the header of a VCF file, either from a compressed or
-        uncompressed file.
+        The `read_vcf_header_file` function reads the header of a VCF file, handling both compressed and
+        uncompressed files.
 
         :param file: The `file` parameter is a string that represents the path to the VCF header file
         that you want to read. It is an optional parameter, so if you don't provide a value, it will
         default to `None`
         :type file: str
-        :param compressed: The `compressed` parameter is a boolean flag that indicates whether the VCF
-        file is compressed or not. If `compressed` is set to `True`, it means that the VCF file is
-        compressed using the BGZF compression format. If `compressed` is set to `False`, it means that,
-        defaults to False
-        :type compressed: bool (optional)
-        :return: a list.
+        :return: The function `read_vcf_header_file` returns a list.
         """
 
         if self.get_input_compressed(input_file=file):
@@ -2070,17 +2133,15 @@ class Variants:
 
     def get_extra_infos(self, table: str = None) -> list:
         """
-        > This function returns a list of columns that are in the table but not in the header
+        The `get_extra_infos` function returns a list of columns that are in a specified table but not
+        in the header.
 
-        The function is called `get_extra_infos` and it takes two arguments: `self` and `table`. The
-        `self` argument is a reference to the object that called the function. The `table` argument is
-        the name of the table that we want to get the extra columns from
-
-        :param table: The table to get the extra columns from. If not specified, it will use the
-        variants table
-        :param format: The format of the output. If it's "sql", it will return a string of the extra
-        columns separated by commas. If it's "list", it will return a list of the extra columns
-        :return: A list of columns that are in the table but not in the header
+        :param table: The `table` parameter in the `get_extra_infos` function is used to specify the
+        name of the table from which you want to retrieve the extra columns that are not present in the
+        header. If the `table` parameter is not provided when calling the function, it will default to
+        using the variants
+        :type table: str
+        :return: A list of columns that are in the specified table but not in the header of the table.
         """
 
         header_columns = []
@@ -2604,7 +2665,9 @@ class Variants:
     ###
 
     def scan_databases(
-        self, database_formats: list["parquet"], database_releases: list = ["current"]
+        self,
+        database_formats: list = ["parquet"],
+        database_releases: list = ["current"],
     ) -> dict:
         """
         The function `scan_databases` scans for available databases based on specified formats and
@@ -6496,29 +6559,6 @@ class Variants:
 
         return configuration
 
-    # def get_prioritizations_config(self, prioritizations_config_dict:dict = {}, prioritizations_config_file:str = None) -> dict:
-
-    #     # Create with default prioritizations
-    #     prioritizations_config = self.get_config_default("prioritization")
-
-    #     # Replace prioritizations from dict
-    #     for prioritization_config in prioritizations_config_dict:
-    #         prioritizations_config[prioritization_config] = prioritizations_config_dict[prioritization_config]
-
-    #     # Replace prioritizations from file
-    #     prioritizations_config_file = full_path(prioritizations_config_file)
-    #     if prioritizations_config_file:
-    #         if os.path.exists(prioritizations_config_file):
-    #             with open(prioritizations_config_file) as prioritizations_config_file_content:
-    #                 prioritizations_config_file_dict = json.load(prioritizations_config_file_content)
-    #             for prioritization_config in prioritizations_config_file_dict:
-    #                 prioritizations_config[prioritization_config] = prioritizations_config_file_dict[prioritization_config]
-    #         else:
-    #             log.error(f"Prioritizations config file '{prioritizations_config_file}' does NOT exist")
-    #             raise ValueError(f"Prioritizations config file '{prioritizations_config_file}' does NOT exist")
-
-    #     return prioritizations_config
-
     def prioritization(self) -> None:
         """
         It takes a VCF file, and adds a bunch of new INFO fields to it, based on the values of other
@@ -8464,6 +8504,11 @@ class Variants:
         """
         The `calculation_barcode` function calculates barcode values for variants in a VCF file and
         updates the INFO field in the file with the calculated barcode values.
+        
+        :param tag: The `tag` parameter in the `calculation_barcode` function is used to specify the tag
+        name that will be used for the barcode calculation in the VCF file. If no tag name is provided,
+        the default tag name is set to "barcode", defaults to barcode
+        :type tag: str (optional)
         """
 
         # if FORMAT and samples
