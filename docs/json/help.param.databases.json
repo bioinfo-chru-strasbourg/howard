@@ -80,6 +80,7 @@
       "          \"download_dbnsfp_vcf\": false,",
       "          \"download_dbnsfp_no_files_all\": false,",
       "          \"download_dbnsfp_add_info\": false,",
+      "          \"download_dbnsfp_uniquify\": false,",
       "          \"download_dbnsfp_row_group_size\": 100000",
       "      },",
       "      \"alphamissense\": {",
@@ -163,6 +164,7 @@
       "download_dbnsfp_vcf": {},
       "download_dbnsfp_no_files_all": {},
       "download_dbnsfp_add_info": {},
+      "download_dbnsfp_uniquify": {},
       "download_dbnsfp_row_group_size": {}
     },
     "alphamissense": {

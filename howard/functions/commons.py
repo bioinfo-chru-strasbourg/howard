@@ -3758,3 +3758,118 @@ def params_string_to_dict(
                         params_option_val = params_option_val.replace(c[0], c[1])
                 params_dict[params_option_var] = params_option_val
     return params_dict
+
+
+def determine_value_type(
+    value: str, sep: str = ";", skip_null: list = ["", "."]
+) -> str:
+    """
+    The function `determine_value_type` determines the type of a given value in a string format,
+    handling lists of values separated by a specified separator and skipping specified null-like
+    values.
+
+    :param value: The `value` parameter in the `determine_value_type` function is the input value
+    that you want to determine the type of. It can be a string containing one or more values
+    separated by a specified separator (default is ';')
+    :type value: str
+    :param sep: The `sep` parameter in the `determine_value_type` function is used to specify the
+    separator character that is used to split the input `value` string into individual values. By
+    default, the separator is set to ";", but you can change it to a different character if needed,
+    defaults to ;
+    :type sep: str (optional)
+    :param skip_null: The `skip_null` parameter in the `determine_value_type` function is a list
+    that contains values that should be skipped during the type determination process. These values
+    are considered as null-like or empty values and are not taken into account when determining the
+    type of the given value
+    :type skip_null: list
+    :return: The function `determine_value_type` returns a string indicating the type of the given
+    value. The possible return values are:
+    - "VARCHAR" if the value contains at least one non-numeric character
+    - "DOUBLE" if the value contains at least one floating-point number
+    - "BIGINT" if the value contains only integers
+    - None if the value is empty or does not match any
+    """
+
+    # Split the value by sep (dafult ';') to handle lists of values
+    values = str(value).split(sep)
+
+    has_float = False
+    has_int = False
+    has_string = False
+
+    for val in values:
+        val = val.strip()
+
+        # Skip empty or null-like values
+        if skip_null and val in skip_null:
+            continue
+
+        # Check if value is integer
+        if re.match(r"^-?\d+$", val):
+            has_int = True
+        # Check if value is float
+        elif re.match(r"^-?\d*\.\d+$", val):
+            has_float = True
+        else:
+            has_string = True
+            return "VARCHAR"  # force return VARCHAR to speed up
+
+    if has_string:
+        return "VARCHAR"
+    elif has_float:
+        return "DOUBLE"
+    elif has_int:
+        return "BIGINT"
+    else:
+        return None  # Default to None if no identifiable type is found
+
+
+def determine_column_types(values_list: list) -> str:
+    """
+    The function `determine_column_types` analyzes a list of values to determine the predominant
+    data type among VARCHAR, DOUBLE, and BIGINT.
+
+    :param values_list: It seems like you have provided the code snippet for a function that
+    determines the type of values in a list, but you have not provided the actual values_list that
+    the function will operate on. If you provide me with the values_list, I can help you test the
+    function and see how it determines the
+    :type values_list: list
+    :return: the type of the column based on the types of values present in the input list. It will
+    return "VARCHAR" if the list contains any string values, "DOUBLE" if it contains any float
+    values, "BIGINT" if it contains any integer values, and "VARCHAR" if none of the specific types
+    are found.
+    """
+
+    has_float = False
+    has_int = False
+    has_string = False
+
+    for value in values_list:
+        value_type = determine_value_type(value)
+
+        if value_type == "VARCHAR":
+            has_string = True
+            return "VARCHAR"  # force return VARCHAR to speed up
+        elif value_type == "DOUBLE":
+            has_float = True
+        elif value_type == "BIGINT":
+            has_int = True
+
+    if has_string:
+        return "VARCHAR"
+    elif has_float:
+        return "DOUBLE"
+    elif has_int:
+        return "BIGINT"
+    else:
+        return "VARCHAR"  # Default to VARCHAR if no identifiable type is found
+
+
+def determine_column_number(values_list: list) -> str:
+    """ """
+
+    for value in values_list:
+        if ";" in str(value):
+            return "."
+
+    return "1"

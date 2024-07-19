@@ -448,6 +448,7 @@ code {
 <li><a href="#databasesdbnsfpdownload_dbnsfp_vcf">download_dbnsfp_vcf</a></li>
 <li><a href="#databasesdbnsfpdownload_dbnsfp_no_files_all">download_dbnsfp_no_files_all</a></li>
 <li><a href="#databasesdbnsfpdownload_dbnsfp_add_info">download_dbnsfp_add_info</a></li>
+<li><a href="#databasesdbnsfpdownload_dbnsfp_uniquify">download_dbnsfp_uniquify</a></li>
 <li><a href="#databasesdbnsfpdownload_dbnsfp_row_group_size">download_dbnsfp_row_group_size</a></li>
 </ul>
 </li>
@@ -608,6 +609,7 @@ code {
           &quot;download_dbnsfp_vcf&quot;: false,
           &quot;download_dbnsfp_no_files_all&quot;: false,
           &quot;download_dbnsfp_add_info&quot;: false,
+          &quot;download_dbnsfp_uniquify&quot;: false,
           &quot;download_dbnsfp_row_group_size&quot;: 100000
       },
       &quot;alphamissense&quot;: {
@@ -775,6 +777,9 @@ code {
 <p>Default: <code>False</code></p>
 <h4 id="databasesdbnsfpdownloaddbnsfpaddinfo">databases::dbnsfp::download_dbnsfp_add_info</h4>
 <p>Add INFO column (VCF format) in Parquet folder and file. Useful for speed up full annotation (all available columns). Increase memory and space during generation of files.</p>
+<p>Default: <code>False</code></p>
+<h4 id="databasesdbnsfpdownloaddbnsfpuniquify">databases::dbnsfp::download_dbnsfp_uniquify</h4>
+<p>Uniquify values within column (e.g. &quot;D,D&quot; to &quot;D&quot;, &quot;D,.,T&quot; to &quot;D,T&quot;). Remove transcripts information details. Usefull to reduce size of the database. Increase memory and space during generation of files.</p>
 <p>Default: <code>False</code></p>
 <h4 id="databasesdbnsfpdownloaddbnsfprowgroupsize">databases::dbnsfp::download_dbnsfp_row_group_size</h4>
 <p>Minimum number of rows in a parquet row group (see duckDB doc). Lower can reduce memory usage and slightly increase space during generation, speed up highly selective queries, slow down whole file queries (e.g. aggregations).</p>

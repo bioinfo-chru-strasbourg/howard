@@ -6,7 +6,7 @@ Usage:
 pytest tests/
 
 Coverage:
-coverage run -m pytest tests/test_tools_databases.py -x -v --log-cli-level=DEBUG --capture=tee-sys
+coverage run -m pytest tests/test_databases.py -x -vv --log-cli-level=DEBUG --capture=tee-sys
 coverage report --include=howard/* -m
 """
 
@@ -539,7 +539,7 @@ def test_download_alphamissense():
             assert len(downloaded_assembly_files) == nb_files
 
 
-def test_database_dbnsfp():
+def test_database_dbnsfp_step_by_step():
     """
     This function tests the "databases" function with a set of arguments.
     """
@@ -601,7 +601,7 @@ def test_database_dbnsfp():
             nb_files = 4
             assert len(downloaded_assembly_files) == nb_files
 
-        # Try again to generate parquet
+        # Try again to generate sub databases parquet
         try:
             databases_download_dbnsfp(
                 assemblies=assemblies_list,
@@ -661,6 +661,16 @@ def test_database_dbnsfp():
             nb_files = 189
             assert len(downloaded_assembly_files) == nb_files
 
+
+def test_database_dbnsfp_without_first_parquet():
+    """
+    This function tests the "databases" function with a set of arguments.
+    """
+
+    # Init
+    dbnsfp_source = os.path.join(tests_databases_folder, "dbnsfp", "dbNSFP4.4a.zip")
+    genomes_folder = tests_config["folders"]["databases"]["genomes"]
+
     # Tmp folder
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
@@ -693,6 +703,16 @@ def test_database_dbnsfp():
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
             nb_files = 135
             assert len(downloaded_assembly_files) == nb_files
+
+
+def test_database_dbnsfp_without_parquet_size_1M():
+    """
+    This function tests the "databases" function with a set of arguments.
+    """
+
+    # Init
+    dbnsfp_source = os.path.join(tests_databases_folder, "dbnsfp", "dbNSFP4.4a.zip")
+    genomes_folder = tests_config["folders"]["databases"]["genomes"]
 
     # Tmp folder
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
@@ -728,6 +748,16 @@ def test_database_dbnsfp():
             nb_files = 189
             assert len(downloaded_assembly_files) == nb_files
 
+
+def test_database_dbnsfp_only_parquet_files():
+    """
+    This function tests the "databases" function with a set of arguments.
+    """
+
+    # Init
+    dbnsfp_source = os.path.join(tests_databases_folder, "dbnsfp", "dbNSFP4.4a.zip")
+    genomes_folder = tests_config["folders"]["databases"]["genomes"]
+
     # Tmp folder
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
@@ -762,6 +792,16 @@ def test_database_dbnsfp():
             nb_files = 106
             assert len(downloaded_assembly_files) == nb_files
 
+
+def test_database_dbnsfp_parquet_with_info():
+    """
+    This function tests the "databases" function with a set of arguments.
+    """
+
+    # Init
+    dbnsfp_source = os.path.join(tests_databases_folder, "dbnsfp", "dbNSFP4.4a.zip")
+    genomes_folder = tests_config["folders"]["databases"]["genomes"]
+
     # Tmp folder
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
@@ -794,6 +834,51 @@ def test_database_dbnsfp():
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
             nb_files = 189
+            assert len(downloaded_assembly_files) == nb_files
+
+
+def test_database_dbnsfp_parquet_uniquify():
+    """
+    This function tests the "databases" function with a set of arguments.
+    """
+
+    # Init
+    dbnsfp_source = os.path.join(tests_databases_folder, "dbnsfp", "dbNSFP4.4a.zip")
+    genomes_folder = tests_config["folders"]["databases"]["genomes"]
+
+    # Tmp folder
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Assembly
+        assemblies = "hg19"
+        assemblies_list = [value for value in assemblies.split(",")]
+
+        # Download dbnsfp simulation
+        dbnsfp_target = os.path.join(tmp_dir, "dbNSFP4.4a.zip")
+        shutil.copy(dbnsfp_source, dbnsfp_target)
+
+        dbnsfp_folder = tmp_dir
+
+        # Try to generate ALL and sub-database parquet folders with INFO column
+        try:
+            databases_download_dbnsfp(
+                assemblies=assemblies_list,
+                dbnsfp_folder=dbnsfp_folder,
+                generate_parquet_file=True,
+                generate_sub_databases=False,
+                generate_vcf_file=True,
+                add_info=True,
+                uniquify=True,
+                genomes_folder=genomes_folder,
+            )
+        except:
+            assert False
+
+        downloaded_files = os.listdir(dbnsfp_folder)
+        for assembly in assemblies_list:
+            assert assembly in downloaded_files
+            downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
+            nb_files = 7
             assert len(downloaded_assembly_files) == nb_files
 
 

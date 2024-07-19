@@ -1495,6 +1495,17 @@ Increase memory and space during generation of files.
 ```
 
 ```
+--download-dbnsfp-uniquify
+
+Uniquify values within column
+(e.g. "D,D" to "D", "D,.,T" to "D,T").
+Remove transcripts information details.
+Usefull to reduce size of the database.
+Increase memory and space during generation of files.
+
+```
+
+```
 --download-dbnsfp-row-group-size=<dnNSFP row grooup size> (default: 100000)
 
 Minimum number of rows in a parquet row group (see duckDB doc).

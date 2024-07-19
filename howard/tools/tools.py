@@ -1149,6 +1149,15 @@ arguments = {
         "action": "store_true",
         "default": False,
     },
+    "download-dbnsfp-uniquify": {
+        "help": """Uniquify values within column\n"""
+        """(e.g. "D,D" to "D", "D,.,T" to "D,T").\n"""
+        """Remove transcripts information details.\n"""
+        """Usefull to reduce size of the database.\n"""
+        """Increase memory and space during generation of files.\n""",
+        "action": "store_true",
+        "default": False,
+    },
     "download-dbnsfp-row-group-size": {
         "metavar": "dnNSFP row grooup size",
         "help": """Minimum number of rows in a parquet row group (see duckDB doc).\n"""
@@ -2046,6 +2055,7 @@ commands_arguments = {
                 "download-dbnsfp-vcf": False,
                 "download-dbnsfp-no-files-all": False,
                 "download-dbnsfp-add-info": False,
+                "download-dbnsfp-uniquify": False,
                 "download-dbnsfp-row-group-size": False,
             },
             "AlphaMissense": {
