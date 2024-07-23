@@ -48,6 +48,7 @@
   - [outcome](#outcome)
     - [Resume](#resume-7)
     - [Update](#update-7)
+  - [TODO](#todo)
 - [Autres](#autres)
   - [Alphamissence](#alphamissence)
     - [Resume](#resume-8)
@@ -73,13 +74,26 @@
     - [Update](#update-12)
     - [Assembly](#assembly-11)
     - [Format](#format-11)
+  - [SpliceAI](#spliceai)
+    - [Resume](#resume-12)
+    - [Update](#update-13)
+    - [Assembly](#assembly-12)
+    - [Format](#format-12)
 
 <!-- /TOC -->
 <!-- /TOC -->
 <!-- /TOC -->
 <!-- /TOC -->
+<!-- /TOC -->
+<!-- /TOC -->
+<!-- /TOC -->
+<!-- /TOC -->
+<!-- /TOC -->
+<!-- /TOC -->
+~200Go de db annexes HUS
+
 # dbNSFP
-
+<b>v4.6a Parquet: 117 Go</b></br>
 https://sites.google.com/site/jpopgen/dbNSFP
 aggregator de differents outils pour évaluer la pathogeenicité des nsSNV sur le génome. La bdd ne contient en fait que les données d'exomes (hors outil WGSA).
 
@@ -179,6 +193,7 @@ GCF_000001405.25 => GRCh37
 GCF_000001405.40 => GRCh48 
 
 # Annovar *TODO conf Antony*
+Ce qu'on a besoin: 16Go
 ## PopFreq
 <b>DEPRECIATED (bases de données beaucoup plus récente, voir faire le score nous meme avec les nouvelles db)</b>
 
@@ -218,6 +233,7 @@ hg19 et 38
 Simplement la position du variant exon, splice UTR downstream etc établis par annovar en fonction du fichier refgene
 
 ### Update
+## TODO
 
 # Autres
 
@@ -253,6 +269,8 @@ hg19: https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/
 hg38: https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/
 
 ## gnomAD
+<b>v2.1.1</b> 460Go WGS + 59Go WES  => 519Go, WES 17 209 972 var</br> 
+<b>v4.1</b> 524Go WGS+ 184Go WES => 708Go
 ### Resume
 <b>gs://gcp-public-data--gnomad/release/</b>
 Base de données comprenant le séquençage de milliers de génomes et d'exomes
@@ -273,8 +291,8 @@ LOEUF: oe_lof_upper</br>
 o/e: oe_lof
 
 <b>Statistiques</b></br>
-gnomAD Exome et Genome
-gnomadaltfreq_popmax: AF_popmax</br>
+
+meme principe pour chaque pop AC wes + AC wgs / AN wes + AN wgs = AF_differentespop
 gnomadaltfreq_asj: AF_asj</br>
 gnomadaltfreq_amr: AF_amr</br>
 gnomadaltfreq_afr: AF_afr</br>
@@ -285,6 +303,8 @@ gnomadaltfreq_oth: AF_oth</br>
 gnomadaltfreq_sas: AF_sas</br>
 gnomadhomcount_all: nhomalt</br>
 
+<b>Pour calculer AF_popmax:</b></br>
+AC_popmax genome + AC_popmax exome / AC_popmax genomes + AC_popmax exomes gnomadaltfreq_popmax: AF_popmax</br>
 <b>Pour calculer la vraie AF gnomadaltfreq_all</b> représenté sur gnomad, il faut:</br>
 requete sql: AC exome + AC genome/ AN exome + AN genome = gnomadaltfreq_all</br>
 <b>Pour les heterozygotes:</b></br>
@@ -314,6 +334,8 @@ HI format deja bed mais need parsing et ajouter le header
 hg19 pour les HI uniquement
 
 ## CADD
+<b>v1.7</b> 160 Go (GRCh38+37) | processed parquet 361 Go (GRCh38 + GRCh37)
+
 ### Resume
 Prediction sur la pathogénicité d'un variant (modèle ML), sur toutes les bases du génomes pour la version 1.7. (exon score > 20 threshold)
 
@@ -328,8 +350,19 @@ hg19 et hg38
 |:-------|:------|:----|:----|:---------|:------|
 | chr1   | 10001 | T   | A   | 0.767991 | 7.993 |
 
+## SpliceAI
+<b>1.2.1</b>  500Go (non processé, plus lourd en parquet)
+### Resume
+Illumina basespace ils ont analysé toutes les bases du génomes x4, DB disponible avec toutes les options mais distance D=50,
 
+### Update 
+Pas d'update prévu pour le moment
 
+### Assembly
+Tout les vcf sont dispo en 37 et 38
+
+### Format
+VCF, champs info doit être split comme dans le module splice + chr et transformé en parquet par la suite car grosse DB
 
 
 HUSDIAGGEN

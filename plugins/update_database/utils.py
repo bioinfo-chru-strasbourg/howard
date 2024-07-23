@@ -2,6 +2,8 @@ import gzip
 import shutil
 import os
 import hashlib
+import re
+from functools import lru_cache
 
 
 def extract_gz_file(input_path: str, output_path: str) -> str:
@@ -21,3 +23,8 @@ def get_md5(file: str):
     get md5 of a file
     """
     return hashlib.md5(open(file, "rb").read()).hexdigest()
+
+
+@lru_cache
+def get_compiled_pattern(pattern):
+    return re.compile(pattern)
