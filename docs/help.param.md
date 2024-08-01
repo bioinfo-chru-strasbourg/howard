@@ -67,6 +67,13 @@ HOWARD Parameters JSON file defines parameters to process annotations, calculati
       - [explode_infos](#explodeexplode_infos)
       - [explode_infos_prefix](#explodeexplode_infos_prefix)
       - [explode_infos_fields](#explodeexplode_infos_fields)
+   - [transcripts](#transcripts)
+      - [table](#transcriptstable)
+      - [transcripts_info_field](#transcriptstranscripts_info_field)
+      - [transcripts_info_json](#transcriptstranscripts_info_json)
+      - [struct](#transcriptsstruct)
+         - [from_column_format](#transcriptsstructfrom_column_format)
+         - [from_columns_map](#transcriptsstructfrom_columns_map)
    - [threads](#threads)
    - [databases](#databases)
 
@@ -1260,6 +1267,150 @@ Explode VCF INFO/Tag specific fields/tags. Keyword `*` specify all available fie
 Type: ```str```
 
 Default: ```*```
+
+## transcripts
+
+Transcripts information to create transcript view. Useful to add transcripts annotations in INFO field, to calculate transcripts specific scores (see [Calculation JSON file](help.config.calculation.md) help).
+
+Type: ```dict```
+
+Default: ```None```
+
+Examples: 
+
+> Trancripts information from snpEff and dbNSFP annotation
+
+```json
+"transcripts": {
+  "table": "transcripts",
+  "transcripts_info_field": "transcripts_json",
+  "transcripts_info_json": "transcripts_json",
+  "struct": {
+      "from_column_format": [
+          {
+              "transcripts_column": "ANN",
+              "transcripts_infos_column": "Feature_ID"
+          }
+      ],
+      "from_columns_map": [
+          {
+              "transcripts_column": "Ensembl_transcriptid",
+              "transcripts_infos_columns": [
+                  "genename",
+                  "Ensembl_geneid",
+                  "LIST_S2_score",
+                  "LIST_S2_pred"
+              ]
+          },
+          {
+              "transcripts_column": "Ensembl_transcriptid",
+              "transcripts_infos_columns": [
+                  "genename",
+                  "VARITY_R_score",
+                  "Aloft_pred"
+              ]
+          }
+      ]
+  }
+}
+```
+
+### transcripts::table
+
+Transcripts table name to create.
+
+Examples: 
+
+> Name of transcript table:
+
+```json
+"table": "transcripts"
+```
+
+### transcripts::transcripts_info_field
+
+Transcripts INFO field name to add in VCF INFO field.
+
+Examples: 
+
+> Transcripts INFO field name:
+
+```json
+"transcripts_info_field": "transcripts_json"
+```
+
+### transcripts::transcripts_info_json
+
+Transcripts column name to add to transcripts table.
+
+Examples: 
+
+> Transcripts column name:
+
+```json
+"transcripts_info_json": "transcripts_json"
+```
+
+### transcripts::struct
+
+Structure of transcripts information, corresponding to columns dedicated to transcripts, such as : 
+
+
+- a uniq annotation field with a specific format (from_column_format) like snpEff annotation,
+
+
+- a list of annotation fields corresponding to transcripts in another specific field (from_columns_map), like dbNSFP annotation.
+
+#### transcripts::struct::from_column_format
+
+Structure of transcripts information from a uniq annotation field with a specific format (such as snpEff annotation): 
+
+
+- 'transcripts_column' correspond to INFO field with annotations
+
+
+- 'transcripts_infos_column' correspond to transcription ID annotations field within INFO field
+
+Examples: 
+
+> Structure from snpEff annotation:
+
+```json
+"from_column_format": [
+  {
+    "transcripts_column": "ANN",
+    "transcripts_infos_column": "Feature_ID"
+  }
+]
+```
+
+#### transcripts::struct::from_columns_map
+
+list of annotation fields corresponding to transcripts in another specific field (such as dbNSFP annotation): 
+
+
+- 'transcripts_column' correspond to INFO field with transcription ID
+
+
+- 'transcripts_infos_columns' correspond to a list of INFO fields with transcript information
+
+Examples: 
+
+> Structure from snpEff annotation:
+
+```json
+"from_columns_map": [
+  {
+    "transcripts_column": "Ensembl_transcriptid",
+    "transcripts_infos_columns": [
+      "genename",
+      "Ensembl_geneid",
+      "LIST_S2_score",
+      "LIST_S2_pred"
+    ]
+  }
+]
+```
 
 ## threads
 

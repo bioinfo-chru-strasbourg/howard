@@ -642,6 +642,96 @@ def find_nomen(
     return nomen_dict
 
 
+def explode_annotation_format(
+    annotation: str = "",
+    uniquify: bool = False,
+    output_format: str = "fields",
+    prefix: str = "ANN_",
+    header: list = [
+        "Allele",
+        "Annotation",
+        "Annotation_Impact",
+        "Gene_Name",
+        "Gene_ID",
+        "Feature_Type",
+        "Feature_ID",
+        "Transcript_BioType",
+        "Rank",
+        "HGVS.c",
+        "HGVS.p",
+        "cDNA.pos / cDNA.length",
+        "CDS.pos / CDS.length",
+        "AA.pos / AA.length",
+        "Distance",
+        "ERRORS / WARNINGS / INFO",
+    ],
+) -> str:
+    """
+    The `explode_annotation_format` function takes an annotation string and formats it into a specified
+    output format with optional customization parameters.
+
+    :param annotation: The `annotation` parameter is a string containing multiple annotations separated
+    by commas and pipe symbols. Each annotation consists of different fields separated by pipe symbols.
+    For example, an annotation string could look like this: "A|B|C,D|E|F"
+    :type annotation: str
+    :param uniquify: The `uniquify` parameter in the `explode_annotation_format` function is a boolean
+    flag that determines whether to keep only unique values for each annotation field. If set to `True`,
+    only unique values will be retained for each field before joining them together. If set to `False`,
+    all values, defaults to False
+    :type uniquify: bool (optional)
+    :param output_format: The `output_format` parameter specifies the format in which you want the
+    output to be generated. The function supports two output formats: "fields" and "JSON". If you choose
+    "fields", the output will be a string with annotations separated by semicolons. If you choose
+    "JSON", the, defaults to fields
+    :type output_format: str (optional)
+    :param prefix: The `prefix` parameter in the `explode_annotation_format` function is used to specify
+    the prefix that will be added to each annotation field when generating the exploded annotation
+    string. In the provided function, the default prefix value is set to "ANN_". You can customize this
+    prefix value to suit your specific, defaults to ANN_
+    :type prefix: str (optional)
+    :param header: The `header` parameter in the `explode_annotation_format` function is a list of
+    column names that will be used to create a DataFrame from the input annotation string. Each element
+    in the `header` list corresponds to a specific field in the annotation data
+    :type header: list
+    :return: The function `explode_annotation_format` returns a string that contains the exploded and
+    formatted annotation information based on the input parameters provided. The format of the returned
+    string depends on the `output_format` parameter. If `output_format` is set to "JSON", the function
+    returns a JSON-formatted string. Otherwise, it returns a string with annotations formatted based on
+    the other parameters such as `uniquify
+    """
+
+    # Split annotation ann values
+    annotation_infos = [x.split("|") for x in annotation.split(",")]
+
+    # Create Dataframe
+    annotation_dict = {}
+    for i in range(len(header)):
+        if output_format.upper() in ["JSON"]:
+            header_clean = header[i]
+        else:
+            header_clean = "".join(char for char in header[i] if char.isalnum())
+        annotation_dict[header_clean] = [x[i] for x in annotation_infos]
+    df = pd.DataFrame.from_dict(annotation_dict, orient="index").transpose()
+
+    # Fetch each annotations
+    if output_format.upper() in ["JSON"]:
+        annotation_explode = df.transpose().to_json()
+    else:
+        ann_list = []
+        for annotation in df:
+            if uniquify:
+                ann_list_infos = ",".join(df[annotation].unique())
+            else:
+                ann_list_infos = ",".join(df[annotation])
+            if ann_list_infos:
+                ann_list.append(f"{prefix}{annotation}={ann_list_infos}")
+
+        # join list
+        annotation_explode = ";".join(ann_list)
+
+    return annotation_explode
+
+
 def extract_snpeff_hgvs(
     snpeff: str = "",
     header: list = [
@@ -3863,6 +3953,30 @@ def determine_column_types(values_list: list) -> str:
         return "BIGINT"
     else:
         return "VARCHAR"  # Default to VARCHAR if no identifiable type is found
+
+
+def detect_column_type(column) -> str:
+    """
+    The function `detect_column_type` determines the type of a given column in a DataFrame as either
+    DATETIME, BOOLEAN, DOUBLE, or VARCHAR.
+
+    :param column: The function `detect_column_type` takes a column as input and determines its data
+    type based on certain conditions. The conditions are as follows:
+    :return: The function `detect_column_type` returns a string indicating the type of data in the input
+    column. The possible return values are "DATETIME", "BOOLEAN", "DOUBLE", or "VARCHAR" based on the
+    conditions checked in the function.
+    """
+
+    from pandas.api.types import is_datetime64_any_dtype as is_datetime
+
+    if is_datetime(column):
+        return "DATETIME"
+    elif column.dropna().apply(lambda x: str(x).lower() in ["true", "false"]).all():
+        return "BOOLEAN"
+    elif pd.to_numeric(column, errors="coerce").notnull().all():
+        return "DOUBLE"
+    else:
+        return "VARCHAR"
 
 
 def determine_column_number(values_list: list) -> str:

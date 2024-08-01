@@ -816,6 +816,118 @@
     "explode_infos_prefix": {},
     "explode_infos_fields": {}
   },
+  "transcripts": {
+    "__help": [
+      "Transcripts information to create transcript view. Useful to add transcripts annotations in INFO field, to calculate transcripts specific scores (see [Calculation JSON file](help.config.calculation.md) help)."
+    ],
+    "__type": "dict",
+    "__code_type": "json",
+    "__examples_code": [
+      "# Trancripts information from snpEff and dbNSFP annotation",
+      "\"transcripts\": {",
+      "  \"table\": \"transcripts\",",
+      "  \"transcripts_info_field\": \"transcripts_json\",",
+      "  \"transcripts_info_json\": \"transcripts_json\",",
+      "  \"struct\": {",
+      "      \"from_column_format\": [",
+      "          {",
+      "              \"transcripts_column\": \"ANN\",",
+      "              \"transcripts_infos_column\": \"Feature_ID\"",
+      "          }",
+      "      ],",
+      "      \"from_columns_map\": [",
+      "          {",
+      "              \"transcripts_column\": \"Ensembl_transcriptid\",",
+      "              \"transcripts_infos_columns\": [",
+      "                  \"genename\",",
+      "                  \"Ensembl_geneid\",",
+      "                  \"LIST_S2_score\",",
+      "                  \"LIST_S2_pred\"",
+      "              ]",
+      "          },",
+      "          {",
+      "              \"transcripts_column\": \"Ensembl_transcriptid\",",
+      "              \"transcripts_infos_columns\": [",
+      "                  \"genename\",",
+      "                  \"VARITY_R_score\",",
+      "                  \"Aloft_pred\"",
+      "              ]",
+      "          }",
+      "      ]",
+      "  }",
+      "}"
+    ],
+    "table": {
+      "__help": ["Transcripts table name to create."],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Name of transcript table:",
+        "\"table\": \"transcripts\""
+      ]
+    },
+    "transcripts_info_field": {
+      "__help": ["Transcripts INFO field name to add in VCF INFO field."],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Transcripts INFO field name:",
+        "\"transcripts_info_field\": \"transcripts_json\""
+      ]
+    },
+    "transcripts_info_json": {
+      "__help": ["Transcripts column name to add to transcripts table."],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Transcripts column name:",
+        "\"transcripts_info_json\": \"transcripts_json\""
+      ]
+    },
+    "struct": {
+      "__help": [
+        "Structure of transcripts information, corresponding to columns dedicated to transcripts, such as : \n",
+        "- a uniq annotation field with a specific format (from_column_format) like snpEff annotation,\n",
+        "- a list of annotation fields corresponding to transcripts in another specific field (from_columns_map), like dbNSFP annotation."
+      ],
+      "from_column_format": {
+        "__help": [
+          "Structure of transcripts information from a uniq annotation field with a specific format (such as snpEff annotation): \n",
+          "- 'transcripts_column' correspond to INFO field with annotations\n",
+          "- 'transcripts_infos_column' correspond to transcription ID annotations field within INFO field"
+        ],
+        "__code_type": "json",
+        "__examples_code": [
+          "# Structure from snpEff annotation:",
+          "\"from_column_format\": [",
+          "  {",
+          "    \"transcripts_column\": \"ANN\",",
+          "    \"transcripts_infos_column\": \"Feature_ID\"",
+          "  }",
+          "]"
+        ]
+      },
+      "from_columns_map": {
+        "__help": [
+          "list of annotation fields corresponding to transcripts in another specific field (such as dbNSFP annotation): \n",
+          "- 'transcripts_column' correspond to INFO field with transcription ID\n",
+          "- 'transcripts_infos_columns' correspond to a list of INFO fields with transcript information"
+        ],
+        "__code_type": "json",
+        "__examples_code": [
+          "# Structure from snpEff annotation:",
+          "\"from_columns_map\": [",
+          "  {",
+          "    \"transcripts_column\": \"Ensembl_transcriptid\",",
+          "    \"transcripts_infos_columns\": [",
+          "      \"genename\",",
+          "      \"Ensembl_geneid\",",
+          "      \"LIST_S2_score\",",
+          "      \"LIST_S2_pred\"",
+          "    ]",
+          "  }",
+          "]"
+        ]
+      }
+    }
+  },
   "threads": {},
   "databases": {
     "__help": [

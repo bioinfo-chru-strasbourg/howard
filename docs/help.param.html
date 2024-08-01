@@ -508,6 +508,19 @@ code {
 <li><a href="#explodeexplode_infos_fields">explode_infos_fields</a></li>
 </ul>
 </li>
+<li><a href="#transcripts">transcripts</a>
+<ul>
+<li><a href="#transcriptstable">table</a></li>
+<li><a href="#transcriptstranscripts_info_field">transcripts_info_field</a></li>
+<li><a href="#transcriptstranscripts_info_json">transcripts_info_json</a></li>
+<li><a href="#transcriptsstruct">struct</a>
+<ul>
+<li><a href="#transcriptsstructfrom_column_format">from_column_format</a></li>
+<li><a href="#transcriptsstructfrom_columns_map">from_columns_map</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li><a href="#threads">threads</a></li>
 <li><a href="#databases">databases</a></li>
 </ul>
@@ -1443,6 +1456,128 @@ FROM variants
 </ul>
 <p>Type: <code>str</code></p>
 <p>Default: <code>*</code></p>
+<h2 id="transcripts">transcripts</h2>
+<p>Transcripts information to create transcript view. Useful to add transcripts annotations in INFO field, to calculate transcripts specific scores (see <a href="help.config.calculation.md">Calculation JSON file</a> help).</p>
+<p>Type: <code>dict</code></p>
+<p>Default: <code>None</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Trancripts information from snpEff and dbNSFP annotation</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"transcripts"</span>: {
+  <span class="hljs-attr">"table"</span>: <span class="hljs-string">"transcripts"</span>,
+  <span class="hljs-attr">"transcripts_info_field"</span>: <span class="hljs-string">"transcripts_json"</span>,
+  <span class="hljs-attr">"transcripts_info_json"</span>: <span class="hljs-string">"transcripts_json"</span>,
+  <span class="hljs-attr">"struct"</span>: {
+      <span class="hljs-attr">"from_column_format"</span>: [
+          {
+              <span class="hljs-attr">"transcripts_column"</span>: <span class="hljs-string">"ANN"</span>,
+              <span class="hljs-attr">"transcripts_infos_column"</span>: <span class="hljs-string">"Feature_ID"</span>
+          }
+      ],
+      <span class="hljs-attr">"from_columns_map"</span>: [
+          {
+              <span class="hljs-attr">"transcripts_column"</span>: <span class="hljs-string">"Ensembl_transcriptid"</span>,
+              <span class="hljs-attr">"transcripts_infos_columns"</span>: [
+                  <span class="hljs-string">"genename"</span>,
+                  <span class="hljs-string">"Ensembl_geneid"</span>,
+                  <span class="hljs-string">"LIST_S2_score"</span>,
+                  <span class="hljs-string">"LIST_S2_pred"</span>
+              ]
+          },
+          {
+              <span class="hljs-attr">"transcripts_column"</span>: <span class="hljs-string">"Ensembl_transcriptid"</span>,
+              <span class="hljs-attr">"transcripts_infos_columns"</span>: [
+                  <span class="hljs-string">"genename"</span>,
+                  <span class="hljs-string">"VARITY_R_score"</span>,
+                  <span class="hljs-string">"Aloft_pred"</span>
+              ]
+          }
+      ]
+  }
+}
+</div></code></pre>
+<h3 id="transcriptstable">transcripts::table</h3>
+<p>Transcripts table name to create.</p>
+<p>Examples:</p>
+<blockquote>
+<p>Name of transcript table:</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"table"</span>: <span class="hljs-string">"transcripts"</span>
+</div></code></pre>
+<h3 id="transcriptstranscriptsinfofield">transcripts::transcripts_info_field</h3>
+<p>Transcripts INFO field name to add in VCF INFO field.</p>
+<p>Examples:</p>
+<blockquote>
+<p>Transcripts INFO field name:</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"transcripts_info_field"</span>: <span class="hljs-string">"transcripts_json"</span>
+</div></code></pre>
+<h3 id="transcriptstranscriptsinfojson">transcripts::transcripts_info_json</h3>
+<p>Transcripts column name to add to transcripts table.</p>
+<p>Examples:</p>
+<blockquote>
+<p>Transcripts column name:</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"transcripts_info_json"</span>: <span class="hljs-string">"transcripts_json"</span>
+</div></code></pre>
+<h3 id="transcriptsstruct">transcripts::struct</h3>
+<p>Structure of transcripts information, corresponding to columns dedicated to transcripts, such as :</p>
+<ul>
+<li>
+<p>a uniq annotation field with a specific format (from_column_format) like snpEff annotation,</p>
+</li>
+<li>
+<p>a list of annotation fields corresponding to transcripts in another specific field (from_columns_map), like dbNSFP annotation.</p>
+</li>
+</ul>
+<h4 id="transcriptsstructfromcolumnformat">transcripts::struct::from_column_format</h4>
+<p>Structure of transcripts information from a uniq annotation field with a specific format (such as snpEff annotation):</p>
+<ul>
+<li>
+<p>'transcripts_column' correspond to INFO field with annotations</p>
+</li>
+<li>
+<p>'transcripts_infos_column' correspond to transcription ID annotations field within INFO field</p>
+</li>
+</ul>
+<p>Examples:</p>
+<blockquote>
+<p>Structure from snpEff annotation:</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"from_column_format"</span>: [
+  {
+    <span class="hljs-attr">"transcripts_column"</span>: <span class="hljs-string">"ANN"</span>,
+    <span class="hljs-attr">"transcripts_infos_column"</span>: <span class="hljs-string">"Feature_ID"</span>
+  }
+]
+</div></code></pre>
+<h4 id="transcriptsstructfromcolumnsmap">transcripts::struct::from_columns_map</h4>
+<p>list of annotation fields corresponding to transcripts in another specific field (such as dbNSFP annotation):</p>
+<ul>
+<li>
+<p>'transcripts_column' correspond to INFO field with transcription ID</p>
+</li>
+<li>
+<p>'transcripts_infos_columns' correspond to a list of INFO fields with transcript information</p>
+</li>
+</ul>
+<p>Examples:</p>
+<blockquote>
+<p>Structure from snpEff annotation:</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"from_columns_map"</span>: [
+  {
+    <span class="hljs-attr">"transcripts_column"</span>: <span class="hljs-string">"Ensembl_transcriptid"</span>,
+    <span class="hljs-attr">"transcripts_infos_columns"</span>: [
+      <span class="hljs-string">"genename"</span>,
+      <span class="hljs-string">"Ensembl_geneid"</span>,
+      <span class="hljs-string">"LIST_S2_score"</span>,
+      <span class="hljs-string">"LIST_S2_pred"</span>
+    ]
+  }
+]
+</div></code></pre>
 <h2 id="threads">threads</h2>
 <p>Specify the number of threads to use for processing HOWARD. It determines the level of parallelism, either on python scripts, duckdb engine and external tools. It and can help speed up the process/tool. Use -1 to use all available CPU/cores. Either non valid value is 1 CPU/core.</p>
 <p>Type: <code>int</code></p>
