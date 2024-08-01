@@ -6438,6 +6438,14 @@ class Variants:
                     "function_name": "calculation_variant_id",
                     "function_params": [],
                 },
+                "transcripts_json": {
+                    "type": "python",
+                    "name": "transcripts_json",
+                    "description": "Add transcripts info in JSON format (field 'transcripts_json')",
+                    "available": True,
+                    "function_name": "calculation_transcripts_json",
+                    "function_params": ["transcripts_json"],
+                },
             },
             "prioritizations": {
                 "default": {
@@ -9011,13 +9019,13 @@ class Variants:
 
             # variant_id, FORMAT and samples
             samples_fields = f" {variant_id_column}, FORMAT , " + " , ".join(
-                self.get_header_sample_list()
+                f""" "{sample}" """ for sample in self.get_header_sample_list()
             )
 
             # Create dataframe
-            dataframe_vaf_normalization = self.get_query_to_df(
-                f""" SELECT {variant_id_column}, FORMAT, {samples_fields} FROM {table_variants} """
-            )
+            query = f""" SELECT {variant_id_column}, FORMAT, {samples_fields} FROM {table_variants} """
+            log.debug(f"query={query}")
+            dataframe_vaf_normalization = self.get_query_to_df(query=query)
 
             vaf_normalization_set = []
 
@@ -9182,7 +9190,7 @@ class Variants:
 
             # Update
             sql_update = f"""
-                UPDATE variants
+                UPDATE {table_variants}
                 SET "INFO" = 
                     concat(
                         CASE
@@ -9193,7 +9201,7 @@ class Variants:
                         {sql_vaf_stats_fields_set}
                     )
                 FROM dataframe_vaf_stats
-                WHERE variants."{variant_id_column}" = dataframe_vaf_stats."{variant_id_column}"
+                WHERE {table_variants}."{variant_id_column}" = dataframe_vaf_stats."{variant_id_column}"
 
             """
             self.conn.execute(sql_update)
@@ -9205,6 +9213,29 @@ class Variants:
             # Delete dataframe
             del dataframe_vaf_stats
             gc.collect()
+
+    def calculation_transcripts_json(self, info: str = "transcripts_json") -> None:
+        """
+        The function `calculation_transcripts_json` creates a transcripts table and adds an info field
+        to it if transcripts are available.
+
+        :param info: The `info` parameter in the `calculation_transcripts_json` method is a string
+        parameter that specifies the information field to be used in the transcripts JSON. It has a
+        default value of "transcripts_json" if no value is provided when calling the method, defaults to
+        transcripts_json
+        :type info: str (optional)
+        """
+
+        # Create transcripts table
+        transcripts_table = self.create_transcript_view()
+
+        # Add info field
+        if transcripts_table:
+            self.transcript_view_to_variants(
+                transcripts_table=transcripts_table, transcripts_info_field=info
+            )
+        else:
+            log.info("No Transcripts to process. Check param.json file configuration")
 
     ###############
     # Transcripts #
@@ -9279,6 +9310,9 @@ class Variants:
         if annotation_fields is None:
             annotation_fields = []
 
+        # Variants table
+        table_variants = self.get_table_variants()
+
         for columns_map in columns_maps:
 
             # Transcript column
@@ -9313,7 +9347,7 @@ class Variants:
                         SELECT 
                             "#CHROM", POS, REF, ALT,
                             {", ".join(clause_select)}
-                        FROM variants
+                        FROM {table_variants}
                         )
                     WHERE "{transcripts_column}" IS NOT NULL
                 """
@@ -9428,7 +9462,7 @@ class Variants:
 
     def create_transcript_view(
         self,
-        transcripts_table: str = "transcripts",
+        transcripts_table: str = None,
         transcripts_table_drop: bool = True,
         param: dict = {},
     ) -> str:
@@ -9457,6 +9491,9 @@ class Variants:
 
         log.debug("Start transcrpts view creation...")
 
+        # Default
+        transcripts_table_default = "transcripts"
+
         # Param
         if not param:
             param = self.get_param()
@@ -9467,9 +9504,10 @@ class Variants:
         if struct:
 
             # Transcripts table
-            transcripts_table = param.get("transcripts", {}).get(
-                "table", transcripts_table
-            )
+            if transcripts_table is None:
+                transcripts_table = param.get("transcripts", {}).get(
+                    "table", transcripts_table_default
+                )
 
             # added_columns
             added_columns = []
@@ -9680,24 +9718,20 @@ class Variants:
 
                 # Type
                 query_json_type = f"""SELECT unnest(json_extract_string({annotation_format}, '$.*."{key}"')) AS '{key_clean}' FROM dataframe_annotation_format WHERE trim('{key}') NOT IN ('');"""
-                
+
                 # Get DataFrame from query
-                df_json_type = self.get_query_to_df(
-                    query=query_json_type
-                )
+                df_json_type = self.get_query_to_df(query=query_json_type)
 
                 # Fill missing values with empty strings and then replace empty strings or None with NaN and drop rows with NaN
-                with pd.option_context('future.no_silent_downcasting', True):
+                with pd.option_context("future.no_silent_downcasting", True):
                     df_json_type.fillna(value="", inplace=True)
-                    replace_dict = {None: np.nan, '': np.nan}
-                    df_json_type.replace(
-                        replace_dict, inplace=True
-                    )
+                    replace_dict = {None: np.nan, "": np.nan}
+                    df_json_type.replace(replace_dict, inplace=True)
                     df_json_type.dropna(inplace=True)
-                
+
                 # Detect column type
                 column_type = detect_column_type(df_json_type[key_clean])
-                
+
                 # Append
                 query_json_key.append(
                     f"""NULLIF(unnest(json_extract_string({annotation_format}, '$.*."{key}"')), '')::{column_type}  AS '{prefix}{key_clean}' """
@@ -9717,3 +9751,209 @@ class Variants:
             self.drop_column(column=added_column)
 
         return view_name
+
+    def transcript_view_to_variants(
+        self,
+        transcripts_table: str = None,
+        transcripts_column_id: str = None,
+        transcripts_info_json: str = None,
+        transcripts_info_field: str = None,
+        param: dict = {},
+    ) -> bool:
+        """
+        The function `transcript_view_to_variants` takes input parameters related to transcripts and updates
+        a variants table with information from the transcripts in JSON format.
+
+        :param transcripts_table: The `transcripts_table` parameter is used to specify the name of the table
+        containing the transcripts data. If this parameter is not provided, the function will attempt to
+        retrieve it from the `param` dictionary or use a default value of "transcripts"
+        :type transcripts_table: str
+        :param transcripts_column_id: The `transcripts_column_id` parameter is used to specify the column in
+        the `transcripts_table` that contains the unique identifier for each transcript. This identifier is
+        used to match transcripts with variants in the database
+        :type transcripts_column_id: str
+        :param transcripts_info_json: The `transcripts_info_json` parameter is used to specify the name of
+        the column in the variants table where the transcripts information will be stored in JSON format
+        :type transcripts_info_json: str
+        :param transcripts_info_field: The `transcripts_info_field` parameter is used to specify the field
+        in the VCF header that will contain information about transcripts in JSON format. This field will be
+        added to the VCF header as an INFO field with the specified name
+        :type transcripts_info_field: str
+        :param param: The `transcript_view_to_variants` method takes several parameters:
+        :type param: dict
+        :return: The function `transcript_view_to_variants` returns a boolean value, which is `True` if the
+        operation is successful and `False` if certain conditions are not met.
+        """
+
+        log.debug("Start transcripts view to JSON...")
+
+        # Default
+        transcripts_table_default = "transcripts"
+        transcripts_column_id_default = "transcript"
+        transcripts_info_json_default = None
+        transcripts_info_field_default = None
+
+        # Param
+        if not param:
+            param = self.get_param()
+
+        # Transcripts table
+        if transcripts_table is None:
+            transcripts_table = param.get("transcripts", {}).get(
+                "table", transcripts_table_default
+            )
+
+        # Transcripts column ID
+        if transcripts_column_id is None:
+            transcripts_column_id = param.get("transcripts", {}).get(
+                "column_id", transcripts_column_id_default
+            )
+
+        # Transcripts info field
+        if transcripts_info_json is None:
+            transcripts_info_json = param.get("transcripts", {}).get(
+                "transcripts_info_json", transcripts_info_json_default
+            )
+
+        # Transcripts info field
+        if transcripts_info_field is None:
+            transcripts_info_field = param.get("transcripts", {}).get(
+                "transcripts_info_field", transcripts_info_field_default
+            )
+
+        # Variants table
+        table_variants = self.get_table_variants()
+
+        # Check info columns param
+        if transcripts_info_json is None and transcripts_info_field is None:
+            return False
+
+        # Transcripts infos columns
+        query_transcripts_infos_columns = f"""
+            SELECT *
+            FROM (
+                DESCRIBE SELECT * FROM {transcripts_table}
+                )
+            WHERE "column_name" NOT IN ('#CHROM', 'POS', 'REF', 'ALT', '{transcripts_column_id}')
+        """
+        transcripts_infos_columns = list(
+            self.get_query_to_df(query=query_transcripts_infos_columns)["column_name"]
+        )
+
+        # View results
+        clause_select = []
+        clause_to_json = []
+        for field in transcripts_infos_columns:
+            clause_select.append(
+                f""" regexp_split_to_table("{field}", ',') AS '{field}' """
+            )
+            clause_to_json.append(f""" '{field}': "{field}" """)
+
+        # Update
+        update_set = []
+
+        # VCF header
+        vcf_reader = self.get_header()
+
+        # Transcripts to info column in JSON
+        if transcripts_info_json is not None:
+
+            # Create column on variants table
+            self.add_column(
+                table_name=table_variants,
+                column_name=transcripts_info_json,
+                column_type="JSON",
+                default_value=None,
+                drop=False,
+            )
+
+            # Add to update
+            update_set.append(
+                f""" {transcripts_info_json}=t.{transcripts_info_json} """
+            )
+
+            # Add header
+            vcf_reader.infos[transcripts_info_json] = vcf.parser._Info(
+                transcripts_info_json,
+                ".",
+                "String",
+                "Transcripts in JSON format",
+                "unknwon",
+                "unknwon",
+                self.code_type_map["String"],
+            )
+
+        # Transcripts to info field in JSON
+        if transcripts_info_field is not None:
+
+            # Add to update
+            update_set.append(
+                f""" 
+                    INFO = concat(
+                            CASE
+                                WHEN INFO NOT IN ('', '.')
+                                THEN INFO
+                                ELSE ''
+                            END,
+                            CASE
+                                WHEN CAST(t.{transcripts_info_json} AS VARCHAR) NOT IN ('', '.')
+                                THEN concat(
+                                    ';{transcripts_info_field}=',
+                                    t.{transcripts_info_json}
+                                )
+                                ELSE ''
+                            END
+                            )
+                """
+            )
+
+            # Add header
+            vcf_reader.infos[transcripts_info_field] = vcf.parser._Info(
+                transcripts_info_field,
+                ".",
+                "String",
+                "Transcripts in JSON format",
+                "unknwon",
+                "unknwon",
+                self.code_type_map["String"],
+            )
+
+        # Update query
+        query_update = f"""
+            UPDATE {table_variants}
+                SET {", ".join(update_set)}
+            FROM
+            (
+                SELECT
+                    "#CHROM", POS, REF, ALT,
+                        concat(
+                        '{{',
+                        string_agg(
+                            '"' || "{transcripts_column_id}" || '":' ||
+                            to_json(json_output)
+                        ),
+                        '}}'
+                        )::JSON AS {transcripts_info_json}
+                FROM
+                    (
+                    SELECT
+                        "#CHROM", POS, REF, ALT,
+                        "{transcripts_column_id}",
+                        to_json(
+                            {{{",".join(clause_to_json)}}}
+                        )::JSON AS json_output
+                    FROM
+                        (SELECT "#CHROM", POS, REF, ALT, "{transcripts_column_id}", {", ".join(clause_select)} FROM {transcripts_table})
+                    WHERE "{transcripts_column_id}" IS NOT NULL
+                    )
+                GROUP BY "#CHROM", POS, REF, ALT
+            ) AS t
+            WHERE {table_variants}."#CHROM" = t."#CHROM"
+                AND {table_variants}."POS" = t."POS"
+                AND {table_variants}."REF" = t."REF"
+                AND {table_variants}."ALT" = t."ALT"
+        """
+
+        self.execute_query(query=query_update)
+
+        return True
