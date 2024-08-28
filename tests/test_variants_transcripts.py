@@ -29,7 +29,7 @@ from test_needed import tests_folder, tests_config
         "tests/data/example.dbnsfp.no_transcripts.vcf.gz",
     ],
 )
-def test_devel_create_transcript_view(input_vcf):
+def test_create_transcript_view(input_vcf):
     """
     The function `test_devel_create_transcript_view` creates a transcript view from a VCF file using
     specified parameters and checks the resulting table for data.
@@ -108,7 +108,7 @@ def test_devel_create_transcript_view(input_vcf):
         "tests/data/example.dbnsfp.no_transcripts.vcf.gz",
     ],
 )
-def test_devel_create_transcript_view_to_variants(input_vcf):
+def test_create_transcript_view_to_variants(input_vcf):
     """ """
 
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
@@ -120,7 +120,8 @@ def test_devel_create_transcript_view_to_variants(input_vcf):
         param = {
             "transcripts": {
                 "table": "transcripts",
-                # "transcripts_info_field": "transcripts_json",
+                # "transcripts_info_field_json": "transcripts_json",
+                # "transcripts_info_field_format": "transcripts_ann",
                 "struct": {
                     "from_column_format": [  # format List, e.g. snpEff
                         {
@@ -168,30 +169,108 @@ def test_devel_create_transcript_view_to_variants(input_vcf):
             ORDER BY "#CHROM", POS, REF, ALT, transcript
         """
         check = variants.get_query_to_df(query=query_check)
-        log.debug(f"check={check}")
         assert len(check) > 0
 
-        # Param in function param
+        # Param in function param - generate column json
         assert variants.transcript_view_to_variants(
-            transcripts_info_json="transcripts_in_json",
-            transcripts_info_field="transcripts_in_json",
+            transcripts_info_json="transcripts_in_json_as_column",
+            transcripts_info_field_json=None,
+            transcripts_info_format=None,
+            transcripts_info_field_format=None,
         )
+        query_check = """
+            SELECT transcripts_in_json_as_column FROM variants
+        """
+        try:
+            check = variants.get_query_to_df(query=query_check)
+            assert len(check) > 0
+        except:
+            assert False
+
+        # Param in function param - generate INFO field json
+        assert variants.transcript_view_to_variants(
+            transcripts_info_json=None,
+            transcripts_info_field_json="transcripts_in_json",
+            transcripts_info_format=None,
+            transcripts_info_field_format=None,
+        )
+        query_check = """
+            SELECT * FROM variants
+            WHERE contains(INFO, 'transcripts_in_json=')
+        """
+        check = variants.get_query_to_df(query=query_check)
+        assert len(check) > 0
+
+        # Param in function param - generate column format
+        assert variants.transcript_view_to_variants(
+            transcripts_info_json=None,
+            transcripts_info_field_json=None,
+            transcripts_info_format="transcripts_in_format_as_column",
+            transcripts_info_field_format=None,
+        )
+        query_check = """
+            SELECT transcripts_in_format_as_column FROM variants
+        """
+        try:
+            check = variants.get_query_to_df(query=query_check)
+            assert len(check) > 0
+        except:
+            assert False
+
+        # Param in function param - generate INFO field format
+        assert variants.transcript_view_to_variants(
+            transcripts_info_json=None,
+            transcripts_info_field_json=None,
+            transcripts_info_format=None,
+            transcripts_info_field_format="transcripts_in_format",
+        )
+        query_check = """
+            SELECT * FROM variants
+            WHERE contains(INFO, 'transcripts_in_format=')
+        """
+        check = variants.get_query_to_df(query=query_check)
+        assert len(check) > 0
 
         # Param not available
         assert not variants.transcript_view_to_variants()
 
-        # Param in param dict
+        # Param in param dict for JSON
         param["transcripts"][
-            "transcripts_info_field"
+            "transcripts_info_field_json"
         ] = "transcripts_json_in_param_dict"
         assert variants.transcript_view_to_variants(param=param)
+        query_check = """
+            SELECT * FROM variants
+            WHERE contains(INFO, 'transcripts_json_in_param_dict=')
+        """
+        check = variants.get_query_to_df(query=query_check)
+        assert len(check) > 0
 
-        # Param in param loaded in variants
+        # Param in param dict for JSON with another field name
         param["transcripts"][
-            "transcripts_info_field"
-        ] = "transcripts_json_in_param_from_file"
+            "transcripts_info_field_json"
+        ] = "transcripts_json_in_param_dict_duplicate"
         variants.set_param(param=param)
         assert variants.transcript_view_to_variants()
+        query_check = """
+            SELECT * FROM variants
+            WHERE contains(INFO, 'transcripts_json_in_param_dict_duplicate=')
+        """
+        check = variants.get_query_to_df(query=query_check)
+        assert len(check) > 0
+
+        # Param in param dict for JSON with another field name
+        param["transcripts"][
+            "transcripts_info_field_format"
+        ] = "transcripts_format_in_param_dict"
+        variants.set_param(param=param)
+        assert variants.transcript_view_to_variants()
+        query_check = """
+            SELECT * FROM variants
+            WHERE contains(INFO, 'transcripts_format_in_param_dict=')
+        """
+        check = variants.get_query_to_df(query=query_check)
+        assert len(check) > 0
 
         # Check if VCF is in correct format with pyVCF
         remove_if_exists([output_vcf])
@@ -211,7 +290,7 @@ def test_devel_create_transcript_view_to_variants(input_vcf):
         "tests/data/example.dbnsfp.no_transcripts.vcf.gz",
     ],
 )
-def test_devel_transcripts_prioritization(input_vcf):
+def test_transcripts_prioritization(input_vcf):
     """ """
 
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:

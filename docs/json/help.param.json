@@ -826,8 +826,10 @@
       "# Trancripts information from snpEff and dbNSFP annotation",
       "\"transcripts\": {",
       "  \"table\": \"transcripts\",",
-      "  \"transcripts_info_field\": \"transcripts_json\",",
+      "  \"transcripts_info_field_json\": \"transcripts_json\",",
+      "  \"transcripts_info_field_format\": \"transcripts_ann\",",
       "  \"transcripts_info_json\": \"transcripts_json\",",
+      "  \"transcripts_info_format\": \"transcripts_format\",",
       "  \"struct\": {",
       "      \"from_column_format\": [",
       "          {",
@@ -871,20 +873,44 @@
         "\"table\": \"transcripts\""
       ]
     },
-    "transcripts_info_field": {
-      "__help": ["Transcripts INFO field name to add in VCF INFO field."],
+    "transcripts_info_field_json": {
+      "__help": [
+        "Transcripts INFO field name to add in VCF INFO field in JSON format."
+      ],
       "__code_type": "json",
       "__examples_code": [
         "# Transcripts INFO field name:",
-        "\"transcripts_info_field\": \"transcripts_json\""
+        "\"transcripts_info_field_json\": \"transcripts_json\""
+      ]
+    },
+    "transcripts_info_field_format": {
+      "__help": [
+        "Transcripts INFO field name to add in VCF INFO field in strutured format."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Transcripts INFO field name:",
+        "\"transcripts_info_field_format\": \"transcripts_ann\""
       ]
     },
     "transcripts_info_json": {
-      "__help": ["Transcripts column name to add to transcripts table."],
+      "__help": [
+        "Transcripts column name to add to transcripts table in JSON format."
+      ],
       "__code_type": "json",
       "__examples_code": [
         "# Transcripts column name:",
         "\"transcripts_info_json\": \"transcripts_json\""
+      ]
+    },
+    "transcripts_info_format": {
+      "__help": [
+        "Transcripts column name to add to transcripts table in structured format."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Transcripts column name:",
+        "\"transcripts_info_format\": \"transcripts_format\""
       ]
     },
     "struct": {

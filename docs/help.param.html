@@ -511,8 +511,10 @@ code {
 <li><a href="#transcripts">transcripts</a>
 <ul>
 <li><a href="#transcriptstable">table</a></li>
-<li><a href="#transcriptstranscripts_info_field">transcripts_info_field</a></li>
+<li><a href="#transcriptstranscripts_info_field_json">transcripts_info_field_json</a></li>
+<li><a href="#transcriptstranscripts_info_field_format">transcripts_info_field_format</a></li>
 <li><a href="#transcriptstranscripts_info_json">transcripts_info_json</a></li>
+<li><a href="#transcriptstranscripts_info_format">transcripts_info_format</a></li>
 <li><a href="#transcriptsstruct">struct</a>
 <ul>
 <li><a href="#transcriptsstructfrom_column_format">from_column_format</a></li>
@@ -1467,8 +1469,10 @@ FROM variants
 </blockquote>
 <pre class="hljs"><code><div><span class="hljs-string">"transcripts"</span>: {
   <span class="hljs-attr">"table"</span>: <span class="hljs-string">"transcripts"</span>,
-  <span class="hljs-attr">"transcripts_info_field"</span>: <span class="hljs-string">"transcripts_json"</span>,
+  <span class="hljs-attr">"transcripts_info_field_json"</span>: <span class="hljs-string">"transcripts_json"</span>,
+  <span class="hljs-attr">"transcripts_info_field_format"</span>: <span class="hljs-string">"transcripts_ann"</span>,
   <span class="hljs-attr">"transcripts_info_json"</span>: <span class="hljs-string">"transcripts_json"</span>,
+  <span class="hljs-attr">"transcripts_info_format"</span>: <span class="hljs-string">"transcripts_format"</span>,
   <span class="hljs-attr">"struct"</span>: {
       <span class="hljs-attr">"from_column_format"</span>: [
           {
@@ -1512,21 +1516,37 @@ FROM variants
 </blockquote>
 <pre class="hljs"><code><div><span class="hljs-string">"table"</span>: <span class="hljs-string">"transcripts"</span>
 </div></code></pre>
-<h3 id="transcriptstranscriptsinfofield">transcripts::transcripts_info_field</h3>
-<p>Transcripts INFO field name to add in VCF INFO field.</p>
+<h3 id="transcriptstranscriptsinfofieldjson">transcripts::transcripts_info_field_json</h3>
+<p>Transcripts INFO field name to add in VCF INFO field in JSON format.</p>
 <p>Examples:</p>
 <blockquote>
 <p>Transcripts INFO field name:</p>
 </blockquote>
-<pre class="hljs"><code><div><span class="hljs-string">"transcripts_info_field"</span>: <span class="hljs-string">"transcripts_json"</span>
+<pre class="hljs"><code><div><span class="hljs-string">"transcripts_info_field_json"</span>: <span class="hljs-string">"transcripts_json"</span>
+</div></code></pre>
+<h3 id="transcriptstranscriptsinfofieldformat">transcripts::transcripts_info_field_format</h3>
+<p>Transcripts INFO field name to add in VCF INFO field in strutured format.</p>
+<p>Examples:</p>
+<blockquote>
+<p>Transcripts INFO field name:</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"transcripts_info_field_format"</span>: <span class="hljs-string">"transcripts_ann"</span>
 </div></code></pre>
 <h3 id="transcriptstranscriptsinfojson">transcripts::transcripts_info_json</h3>
-<p>Transcripts column name to add to transcripts table.</p>
+<p>Transcripts column name to add to transcripts table in JSON format.</p>
 <p>Examples:</p>
 <blockquote>
 <p>Transcripts column name:</p>
 </blockquote>
 <pre class="hljs"><code><div><span class="hljs-string">"transcripts_info_json"</span>: <span class="hljs-string">"transcripts_json"</span>
+</div></code></pre>
+<h3 id="transcriptstranscriptsinfoformat">transcripts::transcripts_info_format</h3>
+<p>Transcripts column name to add to transcripts table in structured format.</p>
+<p>Examples:</p>
+<blockquote>
+<p>Transcripts column name:</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"transcripts_info_format"</span>: <span class="hljs-string">"transcripts_format"</span>
 </div></code></pre>
 <h3 id="transcriptsstruct">transcripts::struct</h3>
 <p>Structure of transcripts information, corresponding to columns dedicated to transcripts, such as :</p>

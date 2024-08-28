@@ -69,8 +69,10 @@ HOWARD Parameters JSON file defines parameters to process annotations, calculati
       - [explode_infos_fields](#explodeexplode_infos_fields)
    - [transcripts](#transcripts)
       - [table](#transcriptstable)
-      - [transcripts_info_field](#transcriptstranscripts_info_field)
+      - [transcripts_info_field_json](#transcriptstranscripts_info_field_json)
+      - [transcripts_info_field_format](#transcriptstranscripts_info_field_format)
       - [transcripts_info_json](#transcriptstranscripts_info_json)
+      - [transcripts_info_format](#transcriptstranscripts_info_format)
       - [struct](#transcriptsstruct)
          - [from_column_format](#transcriptsstructfrom_column_format)
          - [from_columns_map](#transcriptsstructfrom_columns_map)
@@ -1284,8 +1286,10 @@ Examples:
 ```json
 "transcripts": {
   "table": "transcripts",
-  "transcripts_info_field": "transcripts_json",
+  "transcripts_info_field_json": "transcripts_json",
+  "transcripts_info_field_format": "transcripts_ann",
   "transcripts_info_json": "transcripts_json",
+  "transcripts_info_format": "transcripts_format",
   "struct": {
       "from_column_format": [
           {
@@ -1334,21 +1338,33 @@ Examples:
 "table": "transcripts"
 ```
 
-### transcripts::transcripts_info_field
+### transcripts::transcripts_info_field_json
 
-Transcripts INFO field name to add in VCF INFO field.
+Transcripts INFO field name to add in VCF INFO field in JSON format.
 
 Examples: 
 
 > Transcripts INFO field name:
 
 ```json
-"transcripts_info_field": "transcripts_json"
+"transcripts_info_field_json": "transcripts_json"
+```
+
+### transcripts::transcripts_info_field_format
+
+Transcripts INFO field name to add in VCF INFO field in strutured format.
+
+Examples: 
+
+> Transcripts INFO field name:
+
+```json
+"transcripts_info_field_format": "transcripts_ann"
 ```
 
 ### transcripts::transcripts_info_json
 
-Transcripts column name to add to transcripts table.
+Transcripts column name to add to transcripts table in JSON format.
 
 Examples: 
 
@@ -1356,6 +1372,18 @@ Examples:
 
 ```json
 "transcripts_info_json": "transcripts_json"
+```
+
+### transcripts::transcripts_info_format
+
+Transcripts column name to add to transcripts table in structured format.
+
+Examples: 
+
+> Transcripts column name:
+
+```json
+"transcripts_info_format": "transcripts_format"
 ```
 
 ### transcripts::struct
