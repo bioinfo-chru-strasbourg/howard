@@ -519,6 +519,7 @@ code {
 <li><a href="#transcriptsstructfrom_columns_map">from_columns_map</a></li>
 </ul>
 </li>
+<li><a href="#transcriptsprioritization">prioritization</a></li>
 </ul>
 </li>
 <li><a href="#threads">threads</a></li>
@@ -1457,7 +1458,7 @@ FROM variants
 <p>Type: <code>str</code></p>
 <p>Default: <code>*</code></p>
 <h2 id="transcripts">transcripts</h2>
-<p>Transcripts information to create transcript view. Useful to add transcripts annotations in INFO field, to calculate transcripts specific scores (see <a href="help.config.calculation.md">Calculation JSON file</a> help).</p>
+<p>Transcripts information to create transcript view. Useful to add transcripts annotations in INFO field, to calculate transcripts specific scores (see <a href="help.config.calculation.md">Calculation JSON file</a> help) or prioritize transcripts (see <a href="help.config.prioritization.md">Priorization JSON file</a> help).</p>
 <p>Type: <code>dict</code></p>
 <p>Default: <code>None</code></p>
 <p>Examples:</p>
@@ -1494,6 +1495,12 @@ FROM variants
               ]
           }
       ]
+  },
+  <span class="hljs-attr">"prioritization"</span>: {
+     <span class="hljs-attr">"profiles"</span>: [<span class="hljs-string">"transcripts"</span>],
+     <span class="hljs-attr">"prioritization_config"</span>: <span class="hljs-string">"config/prioritization_transcripts_profiles.json"</span>,
+     <span class="hljs-attr">"pzprefix"</span>: <span class="hljs-string">"PZT"</span>,
+     <span class="hljs-attr">"prioritization_score_mode"</span>: <span class="hljs-string">"HOWARD"</span>
   }
 }
 </div></code></pre>
@@ -1577,6 +1584,20 @@ FROM variants
     ]
   }
 ]
+</div></code></pre>
+<h3 id="transcriptsprioritization">transcripts::prioritization</h3>
+<p>Prioritization parameters for transcripts (see <a href="help.config.prioritization.md">Priorization JSON file</a> help).</p>
+<p>Only 'Score' and 'Flag' will be return (e.g. 'PZTScore' and 'PZTFlag'), as well as the selected 'best' transcript ID.</p>
+<p>Examples:</p>
+<blockquote>
+<p>Prioritization of transcripts in 'HOWARD' mode with 'transcripts' profiles available in a configuration JSON file, with 'PZT' as prefix:</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"prioritization"</span>: {
+   <span class="hljs-attr">"profiles"</span>: [<span class="hljs-string">"transcripts"</span>],
+   <span class="hljs-attr">"prioritization_config"</span>: <span class="hljs-string">"config/prioritization_transcripts_profiles.json"</span>,
+   <span class="hljs-attr">"pzprefix"</span>: <span class="hljs-string">"PZT"</span>,
+   <span class="hljs-attr">"prioritization_score_mode"</span>: <span class="hljs-string">"HOWARD"</span>
+}
 </div></code></pre>
 <h2 id="threads">threads</h2>
 <p>Specify the number of threads to use for processing HOWARD. It determines the level of parallelism, either on python scripts, duckdb engine and external tools. It and can help speed up the process/tool. Use -1 to use all available CPU/cores. Either non valid value is 1 CPU/core.</p>

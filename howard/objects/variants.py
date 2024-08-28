@@ -1461,7 +1461,9 @@ class Variants:
                 fields_search = sorted(list(filter(r.match, fields_in_header)))
 
                 # Remove fields input from search
-                if fields_search != [field]:
+                if field in fields_search:
+                    fields_search = [field]
+                elif fields_search != [field]:
                     fields_search = sorted(
                         list(set(fields_search).difference(fields_input))
                     )
@@ -1544,7 +1546,7 @@ class Variants:
         # Check if the column already exists in the table
         query = f""" SELECT * FROM {table_name} LIMIT 0 """
         columns = self.get_query_to_df(query).columns.tolist()
-        if column_name in columns:
+        if column_name.upper() in [c.upper() for c in columns]:
             log.debug(
                 f"The {column_name} column already exists in the {table_name} table"
             )
@@ -1645,10 +1647,11 @@ class Variants:
         fields: list = None,
         force: bool = False,
         proccess_all_fields_together: bool = False,
+        table: str = None,
     ) -> list:
         """
-        The `explode_infos` function takes a VCF file and explodes the INFO fields into individual
-        columns, returning a list of added columns.
+        The `explode_infos` function in Python takes a VCF file and explodes the INFO fields into
+        individual columns, returning a list of added columns.
 
         :param prefix: The `prefix` parameter is a string that is used as a prefix for the exploded INFO
         fields. If the `prefix` is not provided or is set to `None`, the function will use the value of
@@ -1658,20 +1661,27 @@ class Variants:
         create indexes on the exploded INFO fields. If set to `True`, indexes will be created; if set to
         `False`, indexes will not be created. The default value is `False`, defaults to False
         :type create_index: bool (optional)
-        :param fields: The `fields` parameter is a list of INFO fields that you want to explode into
-        individual columns. If this parameter is not provided, all INFO fields will be exploded
+        :param fields: The `fields` parameter in the `explode_infos` function is a list of INFO fields
+        that you want to explode into individual columns. If this parameter is not provided, all INFO
+        fields will be exploded. You can specify the INFO fields you want to explode by passing them as
+        a list to the `
         :type fields: list
-        :param force: The `force` parameter is a boolean flag that determines whether to drop and
-        recreate the column if it already exists in the table. If `force` is set to `True`, the column
-        will be dropped and recreated. If `force` is set to `False`, the column will not be dropped,
+        :param force: The `force` parameter in the `explode_infos` function is a boolean flag that
+        determines whether to drop and recreate a column if it already exists in the table. If `force`
+        is set to `True`, the column will be dropped and recreated. If `force` is set to `False,
         defaults to False
         :type force: bool (optional)
         :param proccess_all_fields_together: The `proccess_all_fields_together` parameter is a boolean
         flag that determines whether to process all the INFO fields together or individually. If set to
         `True`, all the INFO fields will be processed together. If set to `False`, each INFO field will
-        be processed individually, defaults to False
+        be processed individually. The default value is, defaults to False
         :type proccess_all_fields_together: bool (optional)
-        :return: The function `explode_infos` returns a list of added columns.
+        :param table: The `table` parameter in the `explode_infos` function is used to specify the name
+        of the table where the exploded INFO fields will be added as individual columns. If you provide
+        a value for the `table` parameter, the function will use that table name. If the `table`
+        parameter is
+        :type table: str
+        :return: The `explode_infos` function returns a list of added columns.
         """
 
         # drop indexes
@@ -1696,7 +1706,10 @@ class Variants:
                     prefix = "INFO/"
 
             # table variants
-            table_variants = self.get_table_variants(clause="select")
+            if table is not None:
+                table_variants = table
+            else:
+                table_variants = self.get_table_variants(clause="select")
 
             # extra infos
             try:
@@ -6446,6 +6459,14 @@ class Variants:
                     "function_name": "calculation_transcripts_json",
                     "function_params": ["transcripts_json"],
                 },
+                "transcripts_prioritization": {
+                    "type": "python",
+                    "name": "transcripts_prioritization",
+                    "description": "Prioritize transcripts with a prioritization profile (using param.json)",
+                    "available": True,
+                    "function_name": "calculation_transcripts_prioritization",
+                    "function_params": [],
+                },
             },
             "prioritizations": {
                 "default": {
@@ -6567,10 +6588,27 @@ class Variants:
 
         return configuration
 
-    def prioritization(self) -> None:
+    def prioritization(
+        self, table: str = None, pz_prefix: str = None, pz_param: dict = None
+    ) -> bool:
         """
-        It takes a VCF file, and adds a bunch of new INFO fields to it, based on the values of other
-        INFO fields
+        The `prioritization` function in Python processes VCF files, adds new INFO fields, and
+        prioritizes variants based on configured profiles and criteria.
+
+        :param table: The `table` parameter in the `prioritization` function is used to specify the name
+        of the table (presumably a VCF file) on which the prioritization operation will be performed. If
+        a table name is provided, the method will prioritize the variants in that specific table
+        :type table: str
+        :param pz_prefix: The `pz_prefix` parameter is used to specify a prefix that will be added to
+        certain INFO fields in a VCF file during the prioritization process. If this parameter is not
+        provided, the code will use a default prefix value of "PZ"
+        :type pz_prefix: str
+        :param pz_param: The `pz_param` parameter in the `prioritization` method is used to pass
+        additional parameters specific to the prioritization process. These parameters can include
+        settings related to prioritization profiles, fields, scoring modes, flags, comments, and other
+        configurations needed for the prioritization of variants in a V
+        :type pz_param: dict
+        :return: A boolean value (True) is being returned from the `prioritization` function.
         """
 
         # Config
@@ -6579,11 +6617,14 @@ class Variants:
         # Param
         param = self.get_param()
 
-        # Quick Prioritizations
-        # prioritizations = param.get("prioritization", {}).get("prioritizations", "")
+        # Prioritization param
+        if pz_param is not None:
+            prioritization_param = pz_param
+        else:
+            prioritization_param = param.get("prioritization", {})
 
         # Configuration profiles
-        prioritization_config_file = param.get("prioritization", {}).get(
+        prioritization_config_file = prioritization_param.get(
             "prioritization_config", None
         )
         prioritization_config_file = full_path(prioritization_config_file)
@@ -6591,23 +6632,27 @@ class Variants:
             name="prioritizations", config_file=prioritization_config_file
         )
 
+        # Prioritization prefix
+        pz_prefix_default = "PZ"
+        if pz_prefix is None:
+            pz_prefix = prioritization_param.get("pzprefix", pz_prefix_default)
+
         # Prioritization options
-        profiles = param.get("prioritization", {}).get("profiles", [])
+        profiles = prioritization_param.get("profiles", [])
         if isinstance(profiles, str):
             profiles = profiles.split(",")
-        pzfields = param.get("prioritization", {}).get(
-            "pzfields", ["PZFlag", "PZScore"]
+        pzfields = prioritization_param.get(
+            "pzfields", [f"{pz_prefix}Flag", f"{pz_prefix}Score"]
         )
         if isinstance(pzfields, str):
             pzfields = pzfields.split(",")
-        default_profile = param.get("prioritization", {}).get("default_profile", None)
-        pzfields_sep = param.get("prioritization", {}).get("pzfields_sep", "_")
-        prioritization_score_mode = param.get("prioritization", {}).get(
+        default_profile = prioritization_param.get("default_profile", None)
+        pzfields_sep = prioritization_param.get("pzfields_sep", "_")
+        prioritization_score_mode = prioritization_param.get(
             "prioritization_score_mode", "HOWARD"
         )
 
         # Quick Prioritizations
-        # prioritizations = param.get("prioritization", {}).get("prioritizations", None)
         prioritizations = param.get("prioritizations", None)
         if prioritizations:
             log.info("Quick Prioritization:")
@@ -6632,7 +6677,7 @@ class Variants:
             log.info(f"Prioritization... ")
         else:
             log.debug(f"No profile defined")
-            return
+            return False
 
         if not default_profile and len(profiles):
             default_profile = profiles[0]
@@ -6641,7 +6686,11 @@ class Variants:
         log.debug("Profiles to check: " + str(list(profiles)))
 
         # Variables
-        table_variants = self.get_table_variants(clause="update")
+        if table is not None:
+            table_variants = table
+        else:
+            table_variants = self.get_table_variants(clause="update")
+        log.debug(f"Table to prioritize: {table_variants}")
 
         # Added columns
         added_columns = []
@@ -6666,39 +6715,37 @@ class Variants:
 
         if list_of_pzfields:
 
-            # Explode Infos fields
+            # Explode Infos prefix
             explode_infos_prefix = self.get_explode_infos_prefix()
-            added_columns += self.explode_infos(prefix=explode_infos_prefix)
-            extra_infos = self.get_extra_infos()
 
             # PZfields tags description
             PZfields_INFOS = {
-                "PZTags": {
-                    "ID": "PZTags",
+                f"{pz_prefix}Tags": {
+                    "ID": f"{pz_prefix}Tags",
                     "Number": ".",
                     "Type": "String",
                     "Description": "Variant tags based on annotation criteria",
                 },
-                "PZScore": {
-                    "ID": "PZScore",
+                f"{pz_prefix}Score": {
+                    "ID": f"{pz_prefix}Score",
                     "Number": 1,
                     "Type": "Integer",
                     "Description": "Variant score based on annotation criteria",
                 },
-                "PZFlag": {
-                    "ID": "PZFlag",
+                f"{pz_prefix}Flag": {
+                    "ID": f"{pz_prefix}Flag",
                     "Number": 1,
                     "Type": "String",
                     "Description": "Variant flag based on annotation criteria",
                 },
-                "PZComment": {
-                    "ID": "PZComment",
+                f"{pz_prefix}Comment": {
+                    "ID": f"{pz_prefix}Comment",
                     "Number": ".",
                     "Type": "String",
                     "Description": "Variant comment based on annotation criteria",
                 },
-                "PZInfos": {
-                    "ID": "PZInfos",
+                f"{pz_prefix}Infos": {
+                    "ID": f"{pz_prefix}Infos",
                     "Number": ".",
                     "Type": "String",
                     "Description": "Variant infos based on annotation criteria",
@@ -6749,14 +6796,14 @@ class Variants:
 
             # Header
             for pzfield in list_of_pzfields:
-                if re.match("PZScore.*", pzfield):
+                if re.match(f"{pz_prefix}Score.*", pzfield):
                     added_column = self.add_column(
                         table_name=table_variants,
                         column_name=pzfield,
                         column_type="INTEGER",
                         default_value="0",
                     )
-                elif re.match("PZFlag.*", pzfield):
+                elif re.match(f"{pz_prefix}Flag.*", pzfield):
                     added_column = self.add_column(
                         table_name=table_variants,
                         column_name=pzfield,
@@ -6789,38 +6836,44 @@ class Variants:
                         # PZ fields set
 
                         # PZScore
-                        if f"PZScore{pzfields_sep}{profile}" in list_of_pzfields:
+                        if (
+                            f"{pz_prefix}Score{pzfields_sep}{profile}"
+                            in list_of_pzfields
+                        ):
                             sql_set_info.append(
                                 f"""
                                     concat(
-                                        'PZScore{pzfields_sep}{profile}=',
-                                        PZScore{pzfields_sep}{profile}
+                                        '{pz_prefix}Score{pzfields_sep}{profile}=',
+                                        {pz_prefix}Score{pzfields_sep}{profile}
                                     ) 
                                 """
                             )
                             if (
                                 profile == default_profile
-                                and "PZScore" in list_of_pzfields
+                                and f"{pz_prefix}Score" in list_of_pzfields
                             ):
                                 sql_set_info.append(
                                     f"""
                                         concat(
-                                            'PZScore=',
-                                            PZScore{pzfields_sep}{profile}
+                                            '{pz_prefix}Score=',
+                                            {pz_prefix}Score{pzfields_sep}{profile}
                                         )
                                     """
                                 )
 
                         # PZFlag
-                        if f"PZFlag{pzfields_sep}{profile}" in list_of_pzfields:
+                        if (
+                            f"{pz_prefix}Flag{pzfields_sep}{profile}"
+                            in list_of_pzfields
+                        ):
                             sql_set_info.append(
                                 f"""
                                     concat(
-                                        'PZFlag{pzfields_sep}{profile}=',
+                                        '{pz_prefix}Flag{pzfields_sep}{profile}=',
                                         CASE 
-                                            WHEN PZFlag{pzfields_sep}{profile}==1
+                                            WHEN {pz_prefix}Flag{pzfields_sep}{profile}==1
                                             THEN 'PASS'
-                                            WHEN PZFlag{pzfields_sep}{profile}==0
+                                            WHEN {pz_prefix}Flag{pzfields_sep}{profile}==0
                                             THEN 'FILTERED'
                                         END
                                     ) 
@@ -6828,16 +6881,16 @@ class Variants:
                             )
                             if (
                                 profile == default_profile
-                                and "PZFlag" in list_of_pzfields
+                                and f"{pz_prefix}Flag" in list_of_pzfields
                             ):
                                 sql_set_info.append(
                                     f"""
                                         concat(
-                                            'PZFlag=',
+                                            '{pz_prefix}Flag=',
                                             CASE 
-                                                WHEN PZFlag{pzfields_sep}{profile}==1
+                                                WHEN {pz_prefix}Flag{pzfields_sep}{profile}==1
                                                 THEN 'PASS'
-                                                WHEN PZFlag{pzfields_sep}{profile}==0
+                                                WHEN {pz_prefix}Flag{pzfields_sep}{profile}==0
                                                 THEN 'FILTERED'
                                             END
                                         )
@@ -6845,50 +6898,56 @@ class Variants:
                                 )
 
                         # PZComment
-                        if f"PZComment{pzfields_sep}{profile}" in list_of_pzfields:
+                        if (
+                            f"{pz_prefix}Comment{pzfields_sep}{profile}"
+                            in list_of_pzfields
+                        ):
                             sql_set_info.append(
                                 f"""
                                     CASE
-                                        WHEN PZComment{pzfields_sep}{profile} NOT IN ('')
-                                        THEN concat('PZComment{pzfields_sep}{profile}=', PZComment{pzfields_sep}{profile})
+                                        WHEN {pz_prefix}Comment{pzfields_sep}{profile} NOT IN ('')
+                                        THEN concat('{pz_prefix}Comment{pzfields_sep}{profile}=', {pz_prefix}Comment{pzfields_sep}{profile})
                                         ELSE ''
                                     END
                                 """
                             )
                             if (
                                 profile == default_profile
-                                and "PZComment" in list_of_pzfields
+                                and f"{pz_prefix}Comment" in list_of_pzfields
                             ):
                                 sql_set_info.append(
                                     f"""
                                         CASE
-                                            WHEN PZComment{pzfields_sep}{profile} NOT IN ('')
-                                            THEN concat('PZComment=', PZComment{pzfields_sep}{profile})
+                                            WHEN {pz_prefix}Comment{pzfields_sep}{profile} NOT IN ('')
+                                            THEN concat('{pz_prefix}Comment=', {pz_prefix}Comment{pzfields_sep}{profile})
                                             ELSE ''
                                         END
                                     """
                                 )
 
                         # PZInfos
-                        if f"PZInfos{pzfields_sep}{profile}" in list_of_pzfields:
+                        if (
+                            f"{pz_prefix}Infos{pzfields_sep}{profile}"
+                            in list_of_pzfields
+                        ):
                             sql_set_info.append(
                                 f"""
                                     CASE
-                                        WHEN PZInfos{pzfields_sep}{profile} NOT IN ('')
-                                        THEN concat('PZInfos{pzfields_sep}{profile}=', PZInfos{pzfields_sep}{profile})
+                                        WHEN {pz_prefix}Infos{pzfields_sep}{profile} NOT IN ('')
+                                        THEN concat('{pz_prefix}Infos{pzfields_sep}{profile}=', {pz_prefix}Infos{pzfields_sep}{profile})
                                         ELSE ''
                                     END
                                 """
                             )
                             if (
                                 profile == default_profile
-                                and "PZInfos" in list_of_pzfields
+                                and f"{pz_prefix}Infos" in list_of_pzfields
                             ):
                                 sql_set_info.append(
                                     f"""
                                         CASE
-                                            WHEN PZInfos{pzfields_sep}{profile} NOT IN ('')
-                                            THEN concat('PZInfos=', PZInfos{pzfields_sep}{profile})
+                                            WHEN {pz_prefix}Infos{pzfields_sep}{profile} NOT IN ('')
+                                            THEN concat('{pz_prefix}Infos=', {pz_prefix}Infos{pzfields_sep}{profile})
                                             ELSE ''
                                         END
                                     """
@@ -6910,6 +6969,15 @@ class Variants:
 
                         sql_queries = []
                         for annotation in prioritizations_config[profile]:
+
+                            # Explode specific annotation
+                            log.debug(f"Explode annotation '{annotation}'")
+                            added_columns += self.explode_infos(
+                                prefix=explode_infos_prefix,
+                                fields=[annotation],
+                                table=table_variants,
+                            )
+                            extra_infos = self.get_extra_infos(table=table_variants)
 
                             # Check if annotation field is present
                             if not f"{explode_infos_prefix}{annotation}" in extra_infos:
@@ -6945,36 +7013,39 @@ class Variants:
 
                                 # PZ fields set
                                 if (
-                                    f"PZScore{pzfields_sep}{profile}"
+                                    f"{pz_prefix}Score{pzfields_sep}{profile}"
                                     in list_of_pzfields
                                 ):
                                     if prioritization_score_mode == "HOWARD":
                                         sql_set.append(
-                                            f"PZScore{pzfields_sep}{profile} = PZScore{pzfields_sep}{profile} + {criterion_score}"
+                                            f"{pz_prefix}Score{pzfields_sep}{profile} = {pz_prefix}Score{pzfields_sep}{profile} + {criterion_score}"
                                         )
                                     elif prioritization_score_mode == "VaRank":
                                         sql_set.append(
-                                            f"PZScore{pzfields_sep}{profile} = CASE WHEN {criterion_score}>PZScore{pzfields_sep}{profile} THEN {criterion_score} END"
+                                            f"{pz_prefix}Score{pzfields_sep}{profile} = CASE WHEN {criterion_score}>{pz_prefix}Score{pzfields_sep}{profile} THEN {criterion_score} END"
                                         )
                                     else:
                                         sql_set.append(
-                                            f"PZScore{pzfields_sep}{profile} = PZScore{pzfields_sep}{profile} + {criterion_score}"
+                                            f"{pz_prefix}Score{pzfields_sep}{profile} = {pz_prefix}Score{pzfields_sep}{profile} + {criterion_score}"
                                         )
-                                if f"PZFlag{pzfields_sep}{profile}" in list_of_pzfields:
+                                if (
+                                    f"{pz_prefix}Flag{pzfields_sep}{profile}"
+                                    in list_of_pzfields
+                                ):
                                     sql_set.append(
-                                        f"PZFlag{pzfields_sep}{profile} = PZFlag{pzfields_sep}{profile} AND {criterion_flag_bool}"
+                                        f"{pz_prefix}Flag{pzfields_sep}{profile} = {pz_prefix}Flag{pzfields_sep}{profile} AND {criterion_flag_bool}"
                                     )
                                 if (
-                                    f"PZComment{pzfields_sep}{profile}"
+                                    f"{pz_prefix}Comment{pzfields_sep}{profile}"
                                     in list_of_pzfields
                                 ):
                                     sql_set.append(
                                         f"""
-                                            PZComment{pzfields_sep}{profile} = 
+                                            {pz_prefix}Comment{pzfields_sep}{profile} = 
                                                 concat(
-                                                    PZComment{pzfields_sep}{profile},
+                                                    {pz_prefix}Comment{pzfields_sep}{profile},
                                                     CASE 
-                                                        WHEN PZComment{pzfields_sep}{profile}!=''
+                                                        WHEN {pz_prefix}Comment{pzfields_sep}{profile}!=''
                                                         THEN ', '
                                                         ELSE ''
                                                     END,
@@ -6983,14 +7054,14 @@ class Variants:
                                         """
                                     )
                                 if (
-                                    f"PZInfos{pzfields_sep}{profile}"
+                                    f"{pz_prefix}Infos{pzfields_sep}{profile}"
                                     in list_of_pzfields
                                 ):
                                     sql_set.append(
                                         f"""
-                                            PZInfos{pzfields_sep}{profile} = 
+                                            {pz_prefix}Infos{pzfields_sep}{profile} = 
                                                 concat(
-                                                    PZInfos{pzfields_sep}{profile},
+                                                    {pz_prefix}Infos{pzfields_sep}{profile},
                                                     '{criterion_infos}'
                                                 )
                                         """
@@ -6998,41 +7069,49 @@ class Variants:
                                 sql_set_option = ",".join(sql_set)
 
                                 # Criterion and comparison
-                                try:
-                                    float(criterion_value)
-                                    sql_update = f"""
-                                        UPDATE {table_variants}
-                                        SET {sql_set_option}
-                                        WHERE CAST("{explode_infos_prefix}{annotation}" AS VARCHAR) NOT IN ('','.')
-                                        AND "{explode_infos_prefix}{annotation}"{comparison_map[criterion_type]}{criterion_value}
-                                        """
-                                except:
-                                    contains_option = ""
-                                    if criterion_type == "contains":
-                                        contains_option = ".*"
-                                    sql_update = f"""
-                                        UPDATE {table_variants}
-                                        SET {sql_set_option}
-                                        WHERE "{explode_infos_prefix}{annotation}" SIMILAR TO '{contains_option}{criterion_value}{contains_option}'
-                                        """
-                                sql_queries.append(sql_update)
+                                if sql_set_option:
+                                    try:
+                                        float(criterion_value)
+                                        sql_update = f"""
+                                            UPDATE {table_variants}
+                                            SET {sql_set_option}
+                                            WHERE CAST("{explode_infos_prefix}{annotation}" AS VARCHAR) NOT IN ('','.')
+                                            AND CAST("{explode_infos_prefix}{annotation}" AS FLOAT){comparison_map[criterion_type]}{criterion_value}
+                                            """
+                                    except:
+                                        contains_option = ""
+                                        if criterion_type == "contains":
+                                            contains_option = ".*"
+                                        sql_update = f"""
+                                            UPDATE {table_variants}
+                                            SET {sql_set_option}
+                                            WHERE "{explode_infos_prefix}{annotation}" SIMILAR TO '{contains_option}{criterion_value}{contains_option}'
+                                            """
+                                    sql_queries.append(sql_update)
+                                else:
+                                    log.warning(
+                                        f"NO SQL SET option for '{annotation}' - '{criterion}'"
+                                    )
 
                         # PZTags
-                        if f"PZTags{pzfields_sep}{profile}" in list_of_pzfields:
+                        if (
+                            f"{pz_prefix}Tags{pzfields_sep}{profile}"
+                            in list_of_pzfields
+                        ):
 
                             # Create PZFalgs value
                             pztags_value = ""
                             pztags_sep_default = "|"
                             pztags_sep = ""
                             for pzfield in pzfields:
-                                if pzfield not in ["PZTags"]:
+                                if pzfield not in [f"{pz_prefix}Tags"]:
                                     if (
                                         f"{pzfield}{pzfields_sep}{profile}"
                                         in list_of_pzfields
                                     ):
-                                        if pzfield in ["PZFlag"]:
+                                        if pzfield in [f"{pz_prefix}Flag"]:
                                             pztags_value += f"""{pztags_sep}{pzfield}#', 
-                                                CASE WHEN PZFlag{pzfields_sep}{profile}
+                                                CASE WHEN {pz_prefix}Flag{pzfields_sep}{profile}
                                                     THEN 'PASS'
                                                     ELSE 'FILTERED'
                                                 END, '"""
@@ -7049,7 +7128,7 @@ class Variants:
                                                 THEN ';'
                                                 ELSE ''
                                         END,
-                                        'PZTags{pzfields_sep}{profile}={pztags_value}'
+                                        '{pz_prefix}Tags{pzfields_sep}{profile}={pztags_value}'
                                     )
                                 """
                             sql_queries.append(sql_update_pztags)
@@ -7061,7 +7140,7 @@ class Variants:
                                 SET INFO = concat(
                                         INFO,
                                         ';',
-                                        'PZTags={pztags_value}'
+                                        '{pz_prefix}Tags={pztags_value}'
                                     )
                                 """
                                 sql_queries.append(sql_update_pztags_default)
@@ -7107,7 +7186,7 @@ class Variants:
                 force=True,
             )
 
-        return
+        return True
 
     ###
     # HGVS
@@ -9237,9 +9316,161 @@ class Variants:
         else:
             log.info("No Transcripts to process. Check param.json file configuration")
 
+    def calculation_transcripts_prioritization(self) -> None:
+        """
+        The function `calculation_transcripts_prioritization` creates a transcripts table and
+        prioritizes transcripts based on certain criteria.
+        """
+
+        # Create transcripts table
+        transcripts_table = self.create_transcript_view()
+
+        # Add info field
+        if transcripts_table:
+            self.transcripts_prioritization(transcripts_table=transcripts_table)
+        else:
+            log.info("No Transcripts to process. Check param.json file configuration")
+
     ###############
     # Transcripts #
     ###############
+
+    def transcripts_prioritization(
+        self, transcripts_table: str = None, param: dict = {}
+    ) -> bool:
+        """
+        The `transcripts_prioritization` function prioritizes transcripts based on certain parameters
+        and updates the variants table with the prioritized information.
+
+        :param transcripts_table: The `transcripts_table` parameter is a string that specifies the name
+        of the table containing transcripts data. If no value is provided, it defaults to "transcripts".
+        This parameter is used to identify the table where the transcripts data is stored for the
+        prioritization process
+        :type transcripts_table: str
+        :param param: The `param` parameter in the `transcripts_prioritization` method is a dictionary
+        that contains various configuration settings for the prioritization process of transcripts. It
+        is used to customize the behavior of the prioritization algorithm and includes settings such as
+        the prefix for prioritization fields, default profiles, and other
+        :type param: dict
+        :return: The function `transcripts_prioritization` returns a boolean value `True` if the
+        transcripts prioritization process is successfully completed, and `False` if there are any
+        issues or if no profile is defined for transcripts prioritization.
+        """
+
+        log.debug("Start transcripts prioritization...")
+
+        # Param
+        if not param:
+            param = self.get_param()
+
+        # Variants table
+        table_variants = self.get_table_variants()
+        log.debug(f"transcripts_table={transcripts_table}")
+        # Transcripts table
+        if transcripts_table is None:
+            log.debug(f"transcripts_table={transcripts_table}")
+            transcripts_table = self.create_transcript_view(
+                transcripts_table="transcripts", param=param
+            )
+            log.debug(f"transcripts_table={transcripts_table}")
+        if transcripts_table is None:
+            msg_err = "No Transcripts table availalble"
+            log.error(msg_err)
+            raise ValueError(msg_err)
+
+        # Get transcripts columns
+        columns_as_list_query = f"""
+            DESCRIBE {transcripts_table}
+        """
+        columns_as_list = list(
+            self.get_query_to_df(columns_as_list_query)["column_name"]
+        )
+
+        # Create INFO if not exists
+        if "INFO" not in columns_as_list:
+            query_add_info = f"""
+                ALTER TABLE {transcripts_table} ADD COLUMN INFO STRING DEFAULT '';
+            """
+            self.execute_query(query_add_info)
+
+        # Prioritization param and Force only PZ Score and Flag
+        pz_param = param.get("transcripts", {}).get("prioritization", {})
+        pz_fields_score = pz_param.get("pzprefix", "PTZ") + "Score"
+        pz_fields_flag = pz_param.get("pzprefix", "PTZ") + "Flag"
+        pz_fields_transcripts = pz_param.get("pzprefix", "PTZ") + "Transcript"
+        pz_param["pzfields"] = [pz_fields_score, pz_fields_flag]
+        pz_profile_default = (
+            param.get("transcripts", {}).get("prioritization", {}).get("profiles", None)
+        )
+
+        # Exit if no profile
+        if pz_profile_default is None:
+            log.warning("No profile defined for transcripts prioritization")
+            return False
+
+        # Prioritization
+        prioritization_result = self.prioritization(
+            table=transcripts_table,
+            pz_param=param.get("transcripts", {}).get("prioritization", {}),
+        )
+        if not prioritization_result:
+            log.warning("Transcripts prioritization not processed")
+            return False
+
+        # Explode PZ fields
+        self.explode_infos(
+            table=transcripts_table,
+            fields=param.get("transcripts", {})
+            .get("prioritization", {})
+            .get("pzfields", []),
+        )
+
+        # Export Transcripts prioritization infos to variants table
+        query_update = f"""
+            WITH RankedTranscripts AS (
+                SELECT
+                    "#CHROM", POS, REF, ALT, transcript, {pz_fields_score}, {pz_fields_flag},
+                    ROW_NUMBER() OVER (
+                        PARTITION BY "#CHROM", POS, REF, ALT
+                        ORDER BY {pz_fields_flag} ASC, {pz_fields_score} DESC, transcript ASC
+                    ) AS rn
+                FROM
+                    {transcripts_table}
+            )
+            UPDATE {table_variants}
+                SET
+                INFO = CONCAT(CASE
+                            WHEN "INFO" IS NULL OR "INFO" IN ('','.')
+                            THEN ''
+                            ELSE concat("INFO", ';')
+                        END,
+                        concat('{pz_fields_transcripts}=', transcript, ';{pz_fields_score}=', {pz_fields_score}, ';{pz_fields_flag}=', {pz_fields_flag})
+                        )
+            FROM
+                RankedTranscripts
+            WHERE
+                rn = 1
+                AND variants."#CHROM" = RankedTranscripts."#CHROM"
+                AND variants."POS" = RankedTranscripts."POS"
+                AND variants."REF" = RankedTranscripts."REF"
+                AND variants."ALT" = RankedTranscripts."ALT"
+                
+        """
+        self.execute_query(query=query_update)
+
+        # Add PZ Transcript in header
+        self.get_header().infos[pz_fields_transcripts] = vcf.parser._Info(
+            pz_fields_transcripts,
+            ".",
+            "String",
+            f"Transcript selected from transcripts prioritization process, profile {pz_profile_default}",
+            "unknown",
+            "unknown",
+            code_type_map["String"],
+        )
+
+        # Return
+        return True
 
     def create_transcript_view_from_columns_map(
         self,
@@ -9489,7 +9720,7 @@ class Variants:
         created or modified during the execution of the function.
         """
 
-        log.debug("Start transcrpts view creation...")
+        log.debug("Start transcripts view creation...")
 
         # Default
         transcripts_table_default = "transcripts"

@@ -818,7 +818,7 @@
   },
   "transcripts": {
     "__help": [
-      "Transcripts information to create transcript view. Useful to add transcripts annotations in INFO field, to calculate transcripts specific scores (see [Calculation JSON file](help.config.calculation.md) help)."
+      "Transcripts information to create transcript view. Useful to add transcripts annotations in INFO field, to calculate transcripts specific scores (see [Calculation JSON file](help.config.calculation.md) help) or prioritize transcripts (see [Priorization JSON file](help.config.prioritization.md) help)."
     ],
     "__type": "dict",
     "__code_type": "json",
@@ -854,6 +854,12 @@
       "              ]",
       "          }",
       "      ]",
+      "  },",
+      "  \"prioritization\": {",
+      "     \"profiles\": [\"transcripts\"],",
+      "     \"prioritization_config\": \"config/prioritization_transcripts_profiles.json\",",
+      "     \"pzprefix\": \"PZT\",",
+      "     \"prioritization_score_mode\": \"HOWARD\"",
       "  }",
       "}"
     ],
@@ -926,6 +932,22 @@
           "]"
         ]
       }
+    },
+    "prioritization": {
+      "__help": [
+        "Prioritization parameters for transcripts (see [Priorization JSON file](help.config.prioritization.md) help).",
+        "Only 'Score' and 'Flag' will be return (e.g. 'PZTScore' and 'PZTFlag'), as well as the selected 'best' transcript ID."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Prioritization of transcripts in 'HOWARD' mode with 'transcripts' profiles available in a configuration JSON file, with 'PZT' as prefix:",
+        "\"prioritization\": {",
+        "   \"profiles\": [\"transcripts\"],",
+        "   \"prioritization_config\": \"config/prioritization_transcripts_profiles.json\",",
+        "   \"pzprefix\": \"PZT\",",
+        "   \"prioritization_score_mode\": \"HOWARD\"",
+        "}"
+      ]
     }
   },
   "threads": {},
