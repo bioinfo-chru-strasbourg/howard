@@ -1047,6 +1047,7 @@ To list all available calculations, from HOWARD default configuration or with a 
 > #[INFO] Start
 > #[INFO] Available calculation operations:
 > #[INFO]    BARCODE: BARCODE as VaRank tool
+> #[INFO]    BARCODEFAMILY: BARCODEFAMILY as VaRank tool
 > #[INFO]    DP_STATS: Depth (DP) statistics
 > #[INFO]    FINDBYPIPELINE: Number of pipeline that identify the variant (for multi pipeline VCF)
 > #[INFO]    FINDBYSAMPLE: Number of sample that have a genotype for the variant (for multi sample VCF)
@@ -1056,7 +1057,10 @@ To list all available calculations, from HOWARD default configuration or with a 
 > #[INFO]    SNPEFF_ANN_EXPLODE_JSON: Explode snpEff annotations in JSON format
 > #[INFO]    SNPEFF_ANN_EXPLODE_UNIQUIFY: Explode snpEff annotations with uniquify values
 > #[INFO]    SNPEFF_HGVS: HGVS nomenclatures from snpEff annotation
-> #[INFO]    TRANSCRIPTS_JSON: Add transcripts info in JSON format (field 'transcripts_json')
+> #[INFO]    TRANSCRIPTS_ANN: Add transcripts annotations in structured format (field 'transcripts_ann')
+> #[INFO]    TRANSCRIPTS_ANNOTATIONS: Add transcripts annotations in JSON and/or structured format (see param JSON file)
+> #[INFO]    TRANSCRIPTS_JSON: Add transcripts annotations in JSON format (field 'transcripts_json')
+> #[INFO]    TRANSCRIPTS_PRIORITIZATION: Prioritize transcripts with a prioritization profile (using param.json)
 > #[INFO]    TRIO: Inheritance for a trio family
 > #[INFO]    VAF: Variant Allele Frequency (VAF) harmonization
 > #[INFO]    VAF_STATS: Variant Allele Frequency (VAF) statistics

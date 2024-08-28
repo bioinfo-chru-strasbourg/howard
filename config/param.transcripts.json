@@ -1,7 +1,8 @@
 {
   "transcripts": {
     "table": "transcripts",
-    "transcripts_info_field": "transcripts_json",
+    "transcripts_info_field_json": "transcripts_json",
+    "transcripts_info_field_format": "transcripts_ann",
     "struct": {
       "from_column_format": [
         {
