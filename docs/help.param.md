@@ -74,6 +74,7 @@ HOWARD Parameters JSON file defines parameters to process annotations, calculati
       - [struct](#transcriptsstruct)
          - [from_column_format](#transcriptsstructfrom_column_format)
          - [from_columns_map](#transcriptsstructfrom_columns_map)
+      - [prioritization](#transcriptsprioritization)
    - [threads](#threads)
    - [databases](#databases)
 
@@ -1270,7 +1271,7 @@ Default: ```*```
 
 ## transcripts
 
-Transcripts information to create transcript view. Useful to add transcripts annotations in INFO field, to calculate transcripts specific scores (see [Calculation JSON file](help.config.calculation.md) help).
+Transcripts information to create transcript view. Useful to add transcripts annotations in INFO field, to calculate transcripts specific scores (see [Calculation JSON file](help.config.calculation.md) help) or prioritize transcripts (see [Priorization JSON file](help.config.prioritization.md) help).
 
 Type: ```dict```
 
@@ -1311,6 +1312,12 @@ Examples:
               ]
           }
       ]
+  },
+  "prioritization": {
+     "profiles": ["transcripts"],
+     "prioritization_config": "config/prioritization_transcripts_profiles.json",
+     "pzprefix": "PZT",
+     "prioritization_score_mode": "HOWARD"
   }
 }
 ```
@@ -1410,6 +1417,25 @@ Examples:
     ]
   }
 ]
+```
+
+### transcripts::prioritization
+
+Prioritization parameters for transcripts (see [Priorization JSON file](help.config.prioritization.md) help).
+
+Only 'Score' and 'Flag' will be return (e.g. 'PZTScore' and 'PZTFlag'), as well as the selected 'best' transcript ID.
+
+Examples: 
+
+> Prioritization of transcripts in 'HOWARD' mode with 'transcripts' profiles available in a configuration JSON file, with 'PZT' as prefix:
+
+```json
+"prioritization": {
+   "profiles": ["transcripts"],
+   "prioritization_config": "config/prioritization_transcripts_profiles.json",
+   "pzprefix": "PZT",
+   "prioritization_score_mode": "HOWARD"
+}
 ```
 
 ## threads

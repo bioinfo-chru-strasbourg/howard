@@ -200,3 +200,116 @@ def test_devel_create_transcript_view_to_variants(input_vcf):
             vcf.Reader(filename=output_vcf)
         except:
             assert False
+
+
+@pytest.mark.parametrize(
+    "input_vcf",
+    [
+        "tests/data/example.ann.transcripts.vcf.gz",
+        "tests/data/example.ann.vcf.gz",
+        "tests/data/example.dbnsfp.transcripts.vcf.gz",
+        "tests/data/example.dbnsfp.no_transcripts.vcf.gz",
+    ],
+)
+def test_devel_transcripts_prioritization(input_vcf):
+    """ """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        output_vcf = f"{tmp_dir}/output.vcf"
+
+        # Construct param dict
+        param = {}
+        param_struct = {
+            "table": "transcripts",
+            "column_id": "transcript",
+            "transcripts_info_json": "transcripts_json",
+            "transcripts_info_field": "transcripts_json",
+            "struct": {
+                "from_column_format": [
+                    {
+                        "transcripts_column": "ANN",
+                        "transcripts_infos_column": "Feature_ID",
+                    },
+                    {
+                        "transcripts_column": "ANN",
+                        "transcripts_infos_column": "Feature_ID",
+                    },
+                ],
+                "from_columns_map": [
+                    {
+                        "transcripts_column": "Ensembl_transcriptid",
+                        "transcripts_infos_columns": [
+                            "genename",
+                            "Ensembl_geneid",
+                            "LIST_S2_score",
+                            "LIST_S2_pred",
+                        ],
+                    },
+                    {
+                        "transcripts_column": "Ensembl_transcriptid",
+                        "transcripts_infos_columns": [
+                            "genename",
+                            "VARITY_R_score",
+                            "Aloft_pred",
+                        ],
+                    },
+                ],
+            },
+        }
+        param_prioritization = {
+            "profiles": ["transcripts"],
+            "prioritization_config": "config/prioritization_transcripts_profiles.json",
+            "pzprefix": "PZT",
+            "prioritization_score_mode": "HOWARD",
+        }
+
+        # Param without prioritization
+        param_without_prioritization = {"transcripts": dict(param_struct)}
+
+        # Param with prioritization
+        param_with_prioritization = {"transcripts": dict(param_struct)}
+        param_with_prioritization["transcripts"]["prioritization"] = dict(
+            param_prioritization
+        )
+
+        # Create object
+        variants = Variants(
+            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+        )
+
+        # Create transcript view
+        transcripts_table = variants.create_transcript_view(
+            param=param_without_prioritization
+        )
+
+        # Check table exists
+        assert transcripts_table is not None
+
+        # Transcripts without prioritization
+        assert not variants.transcripts_prioritization(
+            param=param_without_prioritization
+        )
+
+        # Transcripts with prioritization
+        assert variants.transcripts_prioritization(param=param_with_prioritization)
+
+        # Check transcript prioritization result
+        # Check table content
+        query_check = """
+            SELECT * FROM variants
+            WHERE "#CHROM" = 'chr1'
+              AND POS = 69101
+              AND contains(INFO, 'PZTTranscript')
+        """
+        check = variants.get_query_to_df(query=query_check)
+        assert len(check) > 0
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output(output_file=output_vcf)
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
