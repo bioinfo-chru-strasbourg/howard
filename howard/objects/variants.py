@@ -9376,7 +9376,6 @@ class Variants:
         if transcripts_table is None:
             msg_err = "No Transcripts table availalble"
             log.error(msg_err)
-            #return False
             raise ValueError(msg_err)
 
         # Get transcripts columns
