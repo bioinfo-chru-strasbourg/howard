@@ -5712,10 +5712,18 @@ class Variants:
                                 )
                             # Found in a specific column
                             else:
+                                # sql_query_annotation_update_info_sets.append(
+                                #     f"""
+                                # CASE WHEN table_parquet."{annotation_field_column}" NOT IN ('','.') {query_case_when_append}
+                                #         THEN concat('{annotation_field_sep}', '{annotation_fields_new_name}=', replace(table_parquet."{annotation_field_column}", ';', ','))
+                                #         ELSE ''
+                                #     END
+                                # """
+                                # )
                                 sql_query_annotation_update_info_sets.append(
                                     f"""
                                 CASE WHEN table_parquet."{annotation_field_column}" NOT IN ('','.') {query_case_when_append}
-                                        THEN concat('{annotation_field_sep}', '{annotation_fields_new_name}=', replace(table_parquet."{annotation_field_column}", ';', ','))
+                                        THEN concat('{annotation_field_sep}', '{annotation_fields_new_name}=', replace(CAST(table_parquet."{annotation_field_column}" AS VARCHAR), ';', ','))
                                         ELSE ''
                                     END
                                 """
@@ -9595,12 +9603,12 @@ class Variants:
                 # Querey View
                 query = f""" 
                     SELECT
-                        "#CHROM", POS, REF, ALT,
+                        "#CHROM", POS, REF, ALT, INFO,
                         "{transcripts_column}" AS 'transcript',
                         {", ".join(clause_select)}
                     FROM (
                         SELECT 
-                            "#CHROM", POS, REF, ALT,
+                            "#CHROM", POS, REF, ALT, INFO,
                             {", ".join(clause_select)}
                         FROM {table_variants}
                         )
@@ -9825,9 +9833,9 @@ class Variants:
                 )
             # Query for transcripts view
             query_merge_on_transcripts = f"""
-                SELECT "#CHROM", POS, REF, ALT, transcript, {", ".join(query_merge_on_transcripts_annotation_fields)}
+                SELECT "#CHROM", POS, REF, ALT, INFO, transcript, {", ".join(query_merge_on_transcripts_annotation_fields)}
                 FROM ({query_merge})
-                GROUP BY "#CHROM", POS, REF, ALT, transcript
+                GROUP BY "#CHROM", POS, REF, ALT, INFO, transcript
             """
 
             # Drop transcript view is necessary
@@ -9941,7 +9949,7 @@ class Variants:
 
             # Create dataframe
             dataframe_annotation_format = self.get_query_to_df(
-                f""" SELECT "#CHROM", POS, REF, ALT, "{variant_id_column}", "{annotation_infos}" FROM {table_variants} """
+                f""" SELECT "#CHROM", POS, REF, ALT, INFO, "{variant_id_column}", "{annotation_infos}" FROM {table_variants} """
             )
 
             # Create annotation columns
@@ -9993,7 +10001,16 @@ class Variants:
                 )
 
             # Create view
-            query_view = f"""CREATE TEMPORARY TABLE {view_name} AS (SELECT *, {annotation_id} AS 'transcript' FROM (SELECT "#CHROM", POS, REF, ALT, {",".join(query_json_key)} FROM dataframe_annotation_format));"""
+            query_view = f"""
+                CREATE TEMPORARY TABLE {view_name}
+                AS (
+                    SELECT *, {annotation_id} AS 'transcript'
+                    FROM (
+                        SELECT "#CHROM", POS, REF, ALT, INFO, {",".join(query_json_key)}
+                        FROM dataframe_annotation_format
+                        )
+                    );
+            """
             self.execute_query(query=query_view)
 
         else:

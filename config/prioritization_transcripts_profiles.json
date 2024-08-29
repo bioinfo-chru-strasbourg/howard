@@ -15,6 +15,15 @@
         "flag": "PASS",
         "comment": ["Good LIST Score"]
       }
+    ],
+    "CLNSIG": [
+      {
+        "type": "eq",
+        "value": "pathogenic",
+        "score": 100,
+        "flag": "PASS",
+        "comment": ["Pathogenic"]
+      }
     ]
   }
 }
