@@ -78,6 +78,9 @@ HOWARD Parameters JSON file defines parameters to process annotations, calculati
          - [from_columns_map](#transcriptsstructfrom_columns_map)
       - [prioritization](#transcriptsprioritization)
    - [threads](#threads)
+   - [samples](#samples)
+      - [list](#sampleslist)
+      - [check](#samplescheck)
    - [databases](#databases)
 
 
@@ -1484,6 +1487,65 @@ Examples:
 
 ```json
 "threads": 8
+```
+
+## samples
+
+Samples parameters to defined a list of samples or use options to check samples. Only for export in VCF format. By default, if no samples are listed, all existing samples are checked if they contain well-formed genotype annotations (based on 'FORMAT' VCF column).
+
+Type: ```dict```
+
+Examples: 
+
+> Export only a list of samples:
+
+```json
+"samples": {
+   "list": ["sample1", "sample2"]
+}
+```
+> Do not check existing samples (all VCF columns after FORMAT column):
+
+```json
+"samples": {
+   "check": false
+}
+```
+> Default configuration, with all samples are considered (null) and checked (true):
+
+```json
+"samples": {
+   "list": null,
+   "check": true
+}
+```
+
+### samples::list
+
+List of columns that correspond to samples (with well formed genotype, based on 'FORMAT' VCF column). Only for export in VCF format. Only these samples are exported in VCF format file.
+
+Type: ```dict```
+
+Examples: 
+
+> Export only a list of samples:
+
+```json
+"list": ["sample1", "sample2"]
+```
+
+### samples::check
+
+Check if samples (either provided in 'list' parameters, or all existing column after 'FORMAT' column) according to 'FORMAT' VCF column. Only for export in VCF format. By default, samples are checked (beware of format if check is disabled) and removed if they are not well-formed.
+
+Type: ```dict```
+
+Examples: 
+
+> Do not check existing samples:
+
+```json
+"check": false
 ```
 
 ## databases

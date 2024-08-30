@@ -525,6 +525,12 @@ code {
 </ul>
 </li>
 <li><a href="#threads">threads</a></li>
+<li><a href="#samples">samples</a>
+<ul>
+<li><a href="#sampleslist">list</a></li>
+<li><a href="#samplescheck">check</a></li>
+</ul>
+</li>
 <li><a href="#databases">databases</a></li>
 </ul>
 </li>
@@ -1633,6 +1639,50 @@ FROM variants
 <p>Define 8 CPU/cores</p>
 </blockquote>
 <pre class="hljs"><code><div><span class="hljs-string">"threads"</span>: <span class="hljs-number">8</span>
+</div></code></pre>
+<h2 id="samples">samples</h2>
+<p>Samples parameters to defined a list of samples or use options to check samples. Only for export in VCF format. By default, if no samples are listed, all existing samples are checked if they contain well-formed genotype annotations (based on 'FORMAT' VCF column).</p>
+<p>Type: <code>dict</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Export only a list of samples:</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"samples"</span>: {
+   <span class="hljs-attr">"list"</span>: [<span class="hljs-string">"sample1"</span>, <span class="hljs-string">"sample2"</span>]
+}
+</div></code></pre>
+<blockquote>
+<p>Do not check existing samples (all VCF columns after FORMAT column):</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"samples"</span>: {
+   <span class="hljs-attr">"check"</span>: <span class="hljs-literal">false</span>
+}
+</div></code></pre>
+<blockquote>
+<p>Default configuration, with all samples are considered (null) and checked (true):</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"samples"</span>: {
+   <span class="hljs-attr">"list"</span>: <span class="hljs-literal">null</span>,
+   <span class="hljs-attr">"check"</span>: <span class="hljs-literal">true</span>
+}
+</div></code></pre>
+<h3 id="sampleslist">samples::list</h3>
+<p>List of columns that correspond to samples (with well formed genotype, based on 'FORMAT' VCF column). Only for export in VCF format. Only these samples are exported in VCF format file.</p>
+<p>Type: <code>dict</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Export only a list of samples:</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"list"</span>: [<span class="hljs-string">"sample1"</span>, <span class="hljs-string">"sample2"</span>]
+</div></code></pre>
+<h3 id="samplescheck">samples::check</h3>
+<p>Check if samples (either provided in 'list' parameters, or all existing column after 'FORMAT' column) according to 'FORMAT' VCF column. Only for export in VCF format. By default, samples are checked (beware of format if check is disabled) and removed if they are not well-formed.</p>
+<p>Type: <code>dict</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Do not check existing samples:</p>
+</blockquote>
+<pre class="hljs"><code><div><span class="hljs-string">"check"</span>: <span class="hljs-literal">false</span>
 </div></code></pre>
 <h2 id="databases">databases</h2>
 <p><a href="help.param.databases.md">HOWARD Parameters Databases JSON</a> describes configuration JSON file for databases download and convert.</p>

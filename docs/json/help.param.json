@@ -781,7 +781,6 @@
       ]
     }
   },
-
   "stats": {
     "__help": "Statistics on loaded variants.",
     "stats_md": {},
@@ -977,6 +976,50 @@
     }
   },
   "threads": {},
+  "samples": {
+    "__help": [
+      "Samples parameters to defined a list of samples or use options to check samples. Only for export in VCF format. By default, if no samples are listed, all existing samples are checked if they contain well-formed genotype annotations (based on 'FORMAT' VCF column)."
+    ],
+    "__type": "dict",
+    "__code_type": "json",
+    "__examples_code": [
+      "# Export only a list of samples:",
+      "\"samples\": {",
+      "   \"list\": [\"sample1\", \"sample2\"]",
+      "}",
+      "# Do not check existing samples (all VCF columns after FORMAT column):",
+      "\"samples\": {",
+      "   \"check\": false",
+      "}",
+      "# Default configuration, with all samples are considered (null) and checked (true):",
+      "\"samples\": {",
+      "   \"list\": null,",
+      "   \"check\": true",
+      "}"
+    ],
+    "list": {
+      "__help": [
+        "List of columns that correspond to samples (with well formed genotype, based on 'FORMAT' VCF column). Only for export in VCF format. Only these samples are exported in VCF format file."
+      ],
+      "__type": "dict",
+      "__code_type": "json",
+      "__examples_code": [
+        "# Export only a list of samples:",
+        "\"list\": [\"sample1\", \"sample2\"]"
+      ]
+    },
+    "check": {
+      "__help": [
+        "Check if samples (either provided in 'list' parameters, or all existing column after 'FORMAT' column) according to 'FORMAT' VCF column. Only for export in VCF format. By default, samples are checked (beware of format if check is disabled) and removed if they are not well-formed."
+      ],
+      "__type": "dict",
+      "__code_type": "json",
+      "__examples_code": [
+        "# Do not check existing samples:",
+        "\"check\": false"
+      ]
+    }
+  },
   "databases": {
     "__help": [
       "[HOWARD Parameters Databases JSON](help.param.databases.md) describes configuration JSON file for databases download and convert."

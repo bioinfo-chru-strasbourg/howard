@@ -26,6 +26,247 @@ from howard.functions.databases import *
 from test_needed import *
 
 
+
+
+@pytest.mark.parametrize(
+    "check, samples, samples_force, samples_list_expected",
+    [
+        # No list of samples
+        (
+            True,
+            None,
+            False,
+            [
+                "sample1",
+                "sample2",
+                "sample3",
+                "sample4",
+            ],
+        ),
+        (
+            True,
+            None,
+            True,
+            [
+                "sample1",
+                "sample2",
+                "sample3",
+                "sample4",
+            ],
+        ),
+        (
+            False,
+            None,
+            False,
+            [
+                "sample1",
+                "sample2",
+                "sample3",
+                "sample4",
+                "ann1",
+                "ann2",
+            ],
+        ),
+        (
+            False,
+            None,
+            True,
+            [
+                "sample1",
+                "sample2",
+                "sample3",
+                "sample4",
+                "ann1",
+                "ann2",
+            ],
+        ),
+        # Add a list of samples
+        (
+            True,
+            ["sample1", "sample2"],
+            False,
+            [
+                "sample1",
+                "sample2",
+            ],
+        ),
+        (
+            True,
+            ["sample1", "sample2"],
+            True,
+            [
+                "sample1",
+                "sample2",
+            ],
+        ),
+        (
+            False,
+            ["sample1", "sample2"],
+            False,
+            [
+                "sample1",
+                "sample2",
+            ],
+        ),
+        (
+            False,
+            ["sample1", "sample2"],
+            True,
+            [
+                "sample1",
+                "sample2",
+            ],
+        ),
+        # List of samples with not sample 'ann1'
+        (
+            True,
+            ["sample1", "sample2", "ann1"],
+            False,
+            [
+                "sample1",
+                "sample2",
+            ],
+        ),
+        (
+            True,
+            ["sample1", "sample2", "ann1"],
+            True,
+            ["sample1", "sample2", "ann1"],
+        ),
+        (
+            False,
+            ["sample1", "sample2", "ann1"],
+            False,
+            ["sample1", "sample2", "ann1"],
+        ),
+        (
+            False,
+            ["sample1", "sample2", "ann1"],
+            True,
+            ["sample1", "sample2", "ann1"],
+        ),
+    ],
+)
+def test_get_header_sample_list(check, samples, samples_force, samples_list_expected):
+    """ """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = os.path.join(
+            tests_data_folder, "example.with_annotation_columns.tsv"
+        )
+        output_vcf = f"{tmp_dir}/output.vcf"
+
+        # Construct param dict
+        param = {}
+
+        # Create object
+        variants = Variants(
+            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+        )
+
+        # samples list
+        sample_list_result = variants.get_header_sample_list(
+            check=check,
+            samples=samples,
+            samples_force=samples_force,
+        )
+        assert sample_list_result == samples_list_expected
+
+
+@pytest.mark.parametrize(
+    "input_vcf, param_samples",
+    [
+        (
+            os.path.join(tests_data_folder, input_vcf),
+            param_samples,
+        )
+        for input_vcf in ["example.with_annotation_columns.tsv"]
+        for param_samples in [
+            {
+                "samples_list_expected": [
+                    "sample1",
+                    "sample2",
+                    "sample3",
+                    "sample4",
+                ]
+            },
+            {
+                "check": False,
+                "samples_list_expected": [
+                    "sample1",
+                    "sample2",
+                    "sample3",
+                    "sample4",
+                    "ann1",
+                    "ann2",
+                ],
+            },
+            {
+                "check": True,
+                "samples_list_expected": [
+                    "sample1",
+                    "sample2",
+                    "sample3",
+                    "sample4",
+                ],
+            },
+            {
+                "list": ["sample1", "sample2", "ann1"],
+                "check": True,
+                "samples_list_expected": ["sample1", "sample2", "ann1"],
+            },
+            {
+                "list": ["sample1", "sample2", "ann1"],
+                "check": False,
+                "samples_list_expected": ["sample1", "sample2", "ann1"],
+            },
+            {
+                "list": None,
+                "check": False,
+                "samples_list_expected": [
+                    "sample1",
+                    "sample2",
+                    "sample3",
+                    "sample4",
+                    "ann1",
+                    "ann2",
+                ],
+            },
+        ]
+    ],
+)
+def test_export_samples(input_vcf, param_samples):
+    """ """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        output_vcf = f"{tmp_dir}/output.vcf"
+
+        # Construct param dict
+        param = {"samples": param_samples}
+
+        # Create object
+        variants = Variants(
+            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+        )
+
+        samples_list_expected = param.get("samples", {}).get(
+            "samples_list_expected", None
+        )
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output(output_file=output_vcf)
+        try:
+            vcf_obj = vcf.Reader(filename=output_vcf)
+            assert vcf_obj.samples == samples_list_expected
+        except:
+            assert False
+
+
 @pytest.mark.parametrize(
     "input_vcf, remove_info, add_samples, where_clause",
     [
