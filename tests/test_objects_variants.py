@@ -26,6 +26,42 @@ from howard.functions.databases import *
 from test_needed import *
 
 
+def test_genotype_format():
+    """
+    The function `test_genotype_format` tests if a VCF file is in the correct format with specified
+    sample names using pyVCF library.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = os.path.join(
+            tests_data_folder, "example.with_allowed_genotypes.vcf"
+        )
+        output_vcf = f"{tmp_dir}/output.vcf"
+        expected_samples = [
+            "sample1",
+            "sample2",
+            "sample3",
+            "sample4",
+        ]
+
+        # Construct param dict
+        param = {}
+
+        # Create object
+        variants = Variants(
+            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+        )
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output(output_file=output_vcf)
+        try:
+            vcf_obj = vcf.Reader(filename=output_vcf)
+            assert vcf_obj.samples == expected_samples
+        except:
+            assert False
 
 
 @pytest.mark.parametrize(
@@ -148,7 +184,26 @@ from test_needed import *
     ],
 )
 def test_get_header_sample_list(check, samples, samples_force, samples_list_expected):
-    """ """
+    """
+    The function `test_get_header_sample_list` tests the `get_header_sample_list` method of the
+    `Variants` class.
+
+    :param check: The `check` parameter is likely a boolean flag that determines whether a certain
+    condition should be checked or not within the `get_header_sample_list` method of the `Variants`
+    class. It is used to control the behavior of the method based on the value passed to it
+    :param samples: The `samples` parameter in the `test_get_header_sample_list` function likely refers
+    to a list of sample names or identifiers that are being passed as an argument to the
+    `get_header_sample_list` method of the `Variants` class. This list is used to specify which samples
+    should be included
+    :param samples_force: The `samples_force` parameter in the `test_get_header_sample_list` function is
+    likely a list of sample names that you want to force inclusion in the header sample list. This
+    parameter is used in the `get_header_sample_list` method of the `Variants` class to ensure that
+    specific samples
+    :param samples_list_expected: The `samples_list_expected` parameter in the
+    `test_get_header_sample_list` function is the expected list of samples that should be returned by
+    the `get_header_sample_list` method of the `Variants` class. This list is compared with the actual
+    result obtained from calling the method with the provided
+    """
 
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
@@ -238,7 +293,17 @@ def test_get_header_sample_list(check, samples, samples_force, samples_list_expe
     ],
 )
 def test_export_samples(input_vcf, param_samples):
-    """ """
+    """
+    The function `test_export_samples` exports samples from a VCF file and checks if the output VCF is
+    in the correct format using pyVCF.
+
+    :param input_vcf: The `input_vcf` parameter in the `test_export_samples` function is likely a file
+    path to a VCF (Variant Call Format) file. This file contains genetic variant information such as
+    SNPs, insertions, deletions, and structural variations for a set of samples
+    :param param_samples: It seems like you haven't provided the value for the `param_samples`
+    parameter. Could you please provide the specific value or details for `param_samples` that you would
+    like to use in the `test_export_samples` function?
+    """
 
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 

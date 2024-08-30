@@ -2070,7 +2070,7 @@ class Database:
             if "FORMAT" not in df.columns or column not in df.columns:
                 return False
             query_format = f"""
-                AND (len(string_split(CAST("FORMAT" AS VARCHAR), ':')) = len(string_split(CAST("{column}" AS VARCHAR), ':')) OR "{column}" == './.')
+                AND (len(string_split(CAST("FORMAT" AS VARCHAR), ':')) = len(string_split(CAST("{column}" AS VARCHAR), ':')) OR regexp_matches(CAST("{column}" AS VARCHAR), '^[.]([/|][.])*$'))
             """
         else:
             query_format = ""
@@ -2088,7 +2088,7 @@ class Database:
             SELECT  *
             FROM df_downsampling
             WHERE (
-                regexp_matches(CAST("{column}" AS VARCHAR), '^[0-9.]([/|][0-9.])+')
+                regexp_matches(CAST("{column}" AS VARCHAR), '^[0-9.]([/|][0-9.])*')
                 {query_format}
                 )
         """
