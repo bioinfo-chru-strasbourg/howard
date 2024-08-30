@@ -73,9 +73,50 @@ class Variants:
         # Header
         self.set_header()
 
+        # Samples
+        self.set_samples()
+
         # Load data
         if load:
             self.load_data()
+
+    def set_samples(self, samples: list = None) -> list:
+        """
+        The function `set_samples` sets the samples attribute of an object to a provided list or
+        retrieves it from a parameter dictionary.
+
+        :param samples: The `set_samples` method is a method of a class that takes a list of samples as
+        input and sets the `samples` attribute of the class to the provided list. If no samples are
+        provided, it tries to get the samples from the class's parameters using the `get_param` method
+        :type samples: list
+        :return: The `samples` list is being returned.
+        """
+
+        if not samples:
+            samples = self.get_param().get("samples", {}).get("list", None)
+
+        self.samples = samples
+
+        return samples
+
+    def get_samples(self) -> list:
+        """
+        This function returns a list of samples.
+        :return: The `get_samples` method is returning the `samples` attribute of the object.
+        """
+
+        return self.samples
+
+    def get_samples_check(self) -> bool:
+        """
+        This function returns the value of the "check" key within the "samples" dictionary retrieved
+        from the parameters.
+        :return: The method `get_samples_check` is returning the value of the key "check" inside the
+        "samples" dictionary, which is nested inside the dictionary returned by the `get_param()`
+        method. If the key "check" is not found, it will return `False`.
+        """
+
+        return self.get_param().get("samples", {}).get("check", True)
 
     def set_input(self, input: str = None) -> None:
         """
@@ -1102,13 +1143,83 @@ class Variants:
             sql_column_list.append(f'"{col}"')
         return ",".join(sql_column_list)
 
-    def get_header_sample_list(self) -> list:
+    def get_header_sample_list(
+        self, check: bool = False, samples: list = None, samples_force: bool = False
+    ) -> list:
         """
-        This function retruns header length (without #CHROM line)
+        The function `get_header_sample_list` returns a list of samples from a VCF header, with optional
+        checking and filtering based on input parameters.
 
-        :return: The length of the header list.
+        :param check: The `check` parameter in the `get_header_sample_list` function is a boolean
+        parameter that determines whether to check if the samples in the list are properly defined as
+        genotype columns. If `check` is set to `True`, the function will verify if each sample in the
+        list is defined as a, defaults to False
+        :type check: bool (optional)
+        :param samples: The `samples` parameter in the `get_header_sample_list` function is a list that
+        allows you to specify a subset of samples from the header. If you provide a list of sample
+        names, the function will check if each sample is defined in the header. If a sample is not found
+        in the
+        :type samples: list
+        :param samples_force: The `samples_force` parameter in the `get_header_sample_list` function is
+        a boolean parameter that determines whether to force the function to return the sample list
+        without checking if the samples are genotype columns. If `samples_force` is set to `True`, the
+        function will return the sample list without performing, defaults to False
+        :type samples_force: bool (optional)
+        :return: The function `get_header_sample_list` returns a list of samples based on the input
+        parameters and conditions specified in the function.
         """
-        return self.header_vcf.samples
+
+        # Init
+        samples_list = []
+
+        if samples is None:
+            samples_list = self.header_vcf.samples
+        else:
+            samples_checked = []
+            for sample in samples:
+                if sample in self.header_vcf.samples:
+                    samples_checked.append(sample)
+                else:
+                    log.warning(f"Sample '{sample}' not defined in header")
+            samples_list = samples_checked
+
+            # Force sample list without checking if is_genotype_column
+            if samples_force:
+                log.warning(f"Samples {samples_list} not checked if genotypes")
+                return samples_list
+
+        if check:
+            samples_checked = []
+            for sample in samples_list:
+                if self.is_genotype_column(column=sample):
+                    samples_checked.append(sample)
+                else:
+                    log.warning(
+                        f"Sample '{sample}' not defined as a sample (genotype not well defined)"
+                    )
+            samples_list = samples_checked
+
+        # Return samples list
+        return samples_list
+
+    def is_genotype_column(self, column: str = None) -> bool:
+        """
+        This function checks if a given column is a genotype column in a database.
+
+        :param column: The `column` parameter in the `is_genotype_column` method is a string that
+        represents the column name in a database table. This method checks if the specified column is a
+        genotype column in the database. If a column name is provided, it calls the `is_genotype_column`
+        method of
+        :type column: str
+        :return: The `is_genotype_column` method is returning a boolean value. If the `column` parameter
+        is not None, it calls the `is_genotype_column` method of the `Database` class with the specified
+        column name and returns the result. If the `column` parameter is None, it returns False.
+        """
+
+        if column is not None:
+            return Database(database=self.get_input()).is_genotype_column(column=column)
+        else:
+            return False
 
     def get_verbose(self) -> bool:
         """
@@ -2118,8 +2229,15 @@ class Variants:
         )
 
         # Existing colomns header
-        # existing_columns_header = database.get_header_file_columns(output_header)
         existing_columns_header = database.get_header_columns_from_database()
+
+        # Sample list
+        get_samples = self.get_samples()
+        get_samples_check = self.get_samples_check()
+        samples_force = get_samples is not None
+        sample_list = self.get_header_sample_list(
+            check=get_samples_check, samples=get_samples, samples_force=samples_force
+        )
 
         # Export file
         database.export(
@@ -2135,6 +2253,7 @@ class Variants:
             order_by=order_by,
             query=query,
             export_header=export_header,
+            sample_list=sample_list,
         )
 
         # Remove
