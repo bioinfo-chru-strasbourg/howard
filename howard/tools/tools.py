@@ -405,7 +405,7 @@ arguments = {
             # "param_section": "prioritization",
             "examples": {
                 "Prioritization profile by default": """"prioritization": "default" """,
-                "Prioritization profile by default and GERLINE from Configuration JSON file": """"prioritization": "default,GERMLINE" """,
+                "Prioritization profile by default and GERMLINE from Configuration JSON file": """"prioritization": "default,GERMLINE" """,
             }
         },
     },
