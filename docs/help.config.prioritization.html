@@ -394,18 +394,26 @@ code {
   </script>
 <h1 id="howard-prioritization-configuration">HOWARD Prioritization configuration</h1>
 <h2 id="prioritization-configuration-guide">Prioritization Configuration Guide</h2>
-<p>Prioritization algorithm uses profiles to flag variants (as passed or filtered), calculate a prioritization score, and automatically generate a comment for each variants (example: 'polymorphism identified in dbSNP. associated to Lung Cancer. Found in ClinVar database'). Prioritization profiles are defined in a configuration file in JSON format. A profile is defined as a list of annotation/value, using wildcards and comparison options (contains, lower than, greater than, equal...). Annotations fields may be quality values (usually from callers, such as 'DP') or other annotations fields provided by annotations tools, such as HOWARD itself (example: COSMIC, Clinvar, 1000genomes, PolyPhen, SIFT).</p>
+<p>Prioritization algorithm uses profiles to flag variants (as passed or filtered), calculate a prioritization score, classify with keywords, and automatically generate a comment for each variants (example: 'polymorphism identified in dbSNP. associated to Lung Cancer. Found in ClinVar database'). Prioritization profiles are defined in a configuration file in JSON format. A profile is defined as a list of filters, using SQL syntax or wildcards and comparison options (contains, lower than, greater than, equal...). Filters uses all annotations fields within VCF INFO/Tags, provided by annotations tools, such as HOWARD itself (example: COSMIC, Clinvar, 1000genomes, PolyPhen, SIFT).</p>
 <p>See <a href="help.md#prioritization-tool">HOWARD Help Prioritization tool</a> tool for more information.</p>
 <h2 id="example">Example</h2>
 <p>This example describes the prioritization profile 'default' that uses 2 fields 'DP' ('Read Depth') and 'CLNSIG' ('ClinVar Significance') with specific criteria.</p>
-<p>For 'DP' field, 2 filters are applied: if 'DP' is greater than or equal to '50', score is '5' and flag is 'PASS', if 'DP' is lower than '50', score is '0' and flag is 'FILTERED'. It means that if 'Read depth' is lower than 50 for a variant, it will be filtered with a bad score. Otherwise, the variant will have a better score (but can be filtered because of other filters).</p>
-<p>For field 'CLNSIG', 2 filters are applied: if it is equal to 'pathogenic', score is '15' and flag is 'PASS', and if it is equal to 'non-pathogenic', score is '-100' and flag is 'FILTERED'. Thus, the variant will be well scored if it is pathogenic, but filtered with a bad score if it is non pathogenic (for Clinvar annotation).</p>
+<p>The 'DP' filter is related to 'DP' field, 2 filters are applied: if 'DP' is greater than or equal to '50', score is '5' and flag is 'PASS', if 'DP' is lower than '50', score is '0' and flag is 'FILTERED'. It means that if 'Read depth' is lower than 50 for a variant, it will be filtered with a bad score. Otherwise, the variant will have a better score (but can be filtered because of other filters).</p>
+<p>The 'CLNSIG' filter is related to field 'CLNSIG', 2 filters are applied: if it is equal to 'pathogenic', score is '15' and flag is 'PASS', and if it is equal to 'non-pathogenic', score is '-100' and flag is 'FILTERED'. Thus, the variant will be well scored if it is pathogenic, but filtered with a bad score if it is non pathogenic (for Clinvar annotation).</p>
+<p>The 'Class' filter combines 2 fields ('DP' and 'CLNSIG') in SQL syntax, within 2 different filters:</p>
+<ol>
+<li>filter 1: associated with a score of '100', a lfalg of 'PASS' and classifications as 'PM1' and 'PM2'</li>
+<li>filter 1: associated with a score of '200', a lfalg of 'PASS' and classifications as 'PM1' and 'PM3'</li>
+</ol>
 <pre class="hljs"><code><div>{
     <span class="hljs-attr">"default"</span>: {
+        <span class="hljs-attr">"_description"</span>: <span class="hljs-string">"Default prioritization profile"</span>,
+        <span class="hljs-attr">"_version"</span>: <span class="hljs-string">"1.0.0"</span>,
         <span class="hljs-attr">"DP"</span>: [
             {
                 <span class="hljs-attr">"type"</span>: <span class="hljs-string">"gte"</span>,
                 <span class="hljs-attr">"value"</span>: <span class="hljs-string">"50"</span>,
+                <span class="hljs-attr">"fields"</span>: [<span class="hljs-string">"DP"</span>],
                 <span class="hljs-attr">"score"</span>: <span class="hljs-number">5</span>,
                 <span class="hljs-attr">"flag"</span>: <span class="hljs-string">"PASS"</span>,
                 <span class="hljs-attr">"comment"</span>: [
@@ -415,6 +423,7 @@ code {
             {
                 <span class="hljs-attr">"type"</span>: <span class="hljs-string">"lt"</span>,
                 <span class="hljs-attr">"value"</span>: <span class="hljs-string">"50"</span>,
+                <span class="hljs-attr">"fields"</span>: [<span class="hljs-string">"DP"</span>],
                 <span class="hljs-attr">"score"</span>: <span class="hljs-number">0</span>,
                 <span class="hljs-attr">"flag"</span>: <span class="hljs-string">"FILTERED"</span>,
                 <span class="hljs-attr">"comment"</span>: [
@@ -426,6 +435,7 @@ code {
             {
                 <span class="hljs-attr">"type"</span>: <span class="hljs-string">"equals"</span>,
                 <span class="hljs-attr">"value"</span>: <span class="hljs-string">"pathogenic"</span>,
+                <span class="hljs-attr">"fields"</span>: [<span class="hljs-string">"CLNSIG"</span>],
                 <span class="hljs-attr">"score"</span>: <span class="hljs-number">15</span>,
                 <span class="hljs-attr">"flag"</span>: <span class="hljs-string">"PASS"</span>,
                 <span class="hljs-attr">"comment"</span>: [
@@ -435,10 +445,33 @@ code {
             {
                 <span class="hljs-attr">"type"</span>: <span class="hljs-string">"equals"</span>,
                 <span class="hljs-attr">"value"</span>: <span class="hljs-string">"non-pathogenic"</span>,
+                <span class="hljs-attr">"fields"</span>: [<span class="hljs-string">"CLNSIG"</span>],
                 <span class="hljs-attr">"score"</span>: <span class="hljs-number">-100</span>,
                 <span class="hljs-attr">"flag"</span>: <span class="hljs-string">"FILTERED"</span>,
                 <span class="hljs-attr">"comment"</span>: [
                     <span class="hljs-string">"Described on CLINVAR database as non-pathogenic"</span>
+                ]
+            }
+        ],
+        <span class="hljs-attr">"Class"</span>: [
+            {
+                <span class="hljs-attr">"sql"</span>: <span class="hljs-string">" DP &gt;= 100 OR regexp_matches(CLNSIG, 'Pathogenic') "</span>,
+                <span class="hljs-attr">"fields"</span>: [<span class="hljs-string">"DP"</span>, <span class="hljs-string">"CLNSIG"</span>],
+                <span class="hljs-attr">"score"</span>: <span class="hljs-number">100</span>,
+                <span class="hljs-attr">"flag"</span>: <span class="hljs-string">"PASS"</span>,
+                <span class="hljs-attr">"class"</span>: <span class="hljs-string">"PM1,PM2"</span>,
+                <span class="hljs-attr">"comment"</span>: [
+                    <span class="hljs-string">"Described on CLINVAR database as pathogenic, classified as PM1 and PM2"</span>
+                ]
+            },
+            {
+                <span class="hljs-attr">"sql"</span>: [<span class="hljs-string">"DP &gt;= 200"</span>, <span class="hljs-string">"OR regexp_matches(CLNSIG, 'Pathogenic')"</span>],
+                <span class="hljs-attr">"fields"</span>: [<span class="hljs-string">"DP"</span>, <span class="hljs-string">"CLNSIG"</span>],
+                <span class="hljs-attr">"score"</span>: <span class="hljs-number">200</span>,
+                <span class="hljs-attr">"flag"</span>: <span class="hljs-string">"PASS"</span>,
+                <span class="hljs-attr">"class"</span>: [<span class="hljs-string">"PM1"</span>, <span class="hljs-string">"PM2"</span>],
+                <span class="hljs-attr">"comment"</span>: [
+                    <span class="hljs-string">"Described on CLINVAR database as non-pathogenic, classified as PM1 and PM3"</span>
                 ]
             }
         ]
@@ -453,7 +486,7 @@ code {
 <h4 id="type">type</h4>
 <ul>
 <li><em>Type:</em> String</li>
-<li><em>Description:</em> Specifies the type of test to apply to the field. It can be
+<li><em>Description:</em> Specifies the type of test to apply to the field (INFO/Tags). It can be
 <ul>
 <li>'gt' for 'greater than' ('&gt;')</li>
 <li>'gte' for 'greater than or equal to' ('&gt;=')</li>
@@ -469,6 +502,16 @@ code {
 <li><em>Type:</em> String or Integer</li>
 <li><em>Description:</em> Specifies the threshold value or string/substring to match within the field, depending on the type of test specified.</li>
 </ul>
+<h4 id="sql">sql</h4>
+<ul>
+<li><em>Type:</em> String (or Array of String) with SQL syntax</li>
+<li><em>Description:</em> Specifies the filter on fields (INFO/Tags) in SQL syntax (beware of fields type and cast if necessary, and beware of null values)</li>
+</ul>
+<h4 id="fields">fields</h4>
+<ul>
+<li><em>Type:</em> Array of String</li>
+<li><em>Description:</em> Specifies the fields (INFO/Tags) used in operation or SQL syntax.</li>
+</ul>
 <h3 id="filter-result">Filter result</h3>
 <h4 id="score">score</h4>
 <ul>
@@ -477,20 +520,21 @@ code {
 </ul>
 <h4 id="flag">flag</h4>
 <ul>
-<li>
-<p><em>Type:</em> String</p>
-</li>
-<li>
-<p><em>Description:</em> Assigns a flag (either 'PASS' or 'FILTERED') to variants that pass the filter. The flag provides additional information or categorization about the variant. Flag 'FILTERED' is prior to 'PASS' to calculate the global prioritization profile flag.</p>
-</li>
-<li>
-<p><strong>comment:</strong></p>
+<li><em>Type:</em> String</li>
+<li><em>Description:</em> Assigns a flag (either 'PASS' or 'FILTERED') to variants that pass the filter. The flag provides additional information or categorization about the variant. Flag 'FILTERED' is prior to 'PASS' to calculate the global prioritization profile flag.</li>
+</ul>
+<h4 id="class">class</h4>
+<ul>
+<li><em>Type:</em> Array of String</li>
+<li><em>Description:</em> Assigns multiple classes (e.g. 'PM1', 'PM2', 'ClassA') to variants that pass the filter.</li>
+</ul>
+<h4 id="comment">comment</h4>
 <ul>
 <li><em>Type:</em> Array of Strings</li>
 <li><em>Description:</em> Provides a comment or explanation for the filter criteria. It helps users understand the rationale behind applying the filter.</li>
 </ul>
-</li>
-</ul>
+<h3 id="other-sections">Other sections</h3>
+<p>More sections can be added for information on profiles by using &quot;_&quot; as first character (such as &quot;_description&quot;, &quot;_version&quot;)</p>
 
 </body>
 </html>

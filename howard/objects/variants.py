@@ -5831,17 +5831,9 @@ class Variants:
                                 )
                             # Found in a specific column
                             else:
-                                # sql_query_annotation_update_info_sets.append(
-                                #     f"""
-                                # CASE WHEN table_parquet."{annotation_field_column}" NOT IN ('','.') {query_case_when_append}
-                                #         THEN concat('{annotation_field_sep}', '{annotation_fields_new_name}=', replace(table_parquet."{annotation_field_column}", ';', ','))
-                                #         ELSE ''
-                                #     END
-                                # """
-                                # )
                                 sql_query_annotation_update_info_sets.append(
                                     f"""
-                                CASE WHEN table_parquet."{annotation_field_column}" NOT IN ('','.') {query_case_when_append}
+                                CASE WHEN CAST(table_parquet."{annotation_field_column}" AS VARCHAR) NOT IN ('','.') {query_case_when_append}
                                         THEN concat('{annotation_field_sep}', '{annotation_fields_new_name}=', replace(CAST(table_parquet."{annotation_field_column}" AS VARCHAR), ';', ','))
                                         ELSE ''
                                     END
@@ -6613,32 +6605,7 @@ class Variants:
             },
             "prioritizations": {
                 "default": {
-                    "filter": [
-                        {
-                            "type": "notequals",
-                            "value": "!PASS|\\.",
-                            "score": 0,
-                            "flag": "FILTERED",
-                            "comment": ["Bad variant quality"],
-                        },
-                        {
-                            "type": "equals",
-                            "value": "REJECT",
-                            "score": -20,
-                            "flag": "PASS",
-                            "comment": ["Bad variant quality"],
-                        },
-                    ],
-                    "DP": [
-                        {
-                            "type": "gte",
-                            "value": "50",
-                            "score": 5,
-                            "flag": "PASS",
-                            "comment": ["DP higher than 50"],
-                        }
-                    ],
-                    "ANN": [
+                    "ANN2": [
                         {
                             "type": "contains",
                             "value": "HIGH",
@@ -6893,6 +6860,12 @@ class Variants:
                     "Type": "String",
                     "Description": "Variant infos based on annotation criteria",
                 },
+                f"{pz_prefix}Class": {
+                    "ID": f"{pz_prefix}Class",
+                    "Number": ".",
+                    "Type": "String",
+                    "Description": "Variant class based on annotation criteria",
+                },
             }
 
             # Create INFO fields if not exist
@@ -6952,6 +6925,13 @@ class Variants:
                         column_name=pzfield,
                         column_type="BOOLEAN",
                         default_value="1",
+                    )
+                elif re.match(f"{pz_prefix}Class.*", pzfield):
+                    added_column = self.add_column(
+                        table_name=table_variants,
+                        column_name=pzfield,
+                        column_type="VARCHAR[]",
+                        default_value="null",
                     )
                 else:
                     added_column = self.add_column(
@@ -7040,6 +7020,41 @@ class Variants:
                                     """
                                 )
 
+                        # PZClass
+                        if (
+                            f"{pz_prefix}Class{pzfields_sep}{profile}"
+                            in list_of_pzfields
+                        ):
+                            sql_set_info.append(
+                                f"""
+                                    concat(
+                                        '{pz_prefix}Class{pzfields_sep}{profile}=',
+                                        CASE
+                                            WHEN len({pz_prefix}Class{pzfields_sep}{profile}) > 0
+                                            THEN list_aggregate(list_distinct({pz_prefix}Class{pzfields_sep}{profile}), 'string_agg', ',')
+                                            ELSE '.'
+                                        END 
+                                    )
+                                    
+                                """
+                            )
+                            if (
+                                profile == default_profile
+                                and f"{pz_prefix}Class" in list_of_pzfields
+                            ):
+                                sql_set_info.append(
+                                    f"""
+                                        concat(
+                                            '{pz_prefix}Class=',
+                                            CASE
+                                                WHEN len({pz_prefix}Class{pzfields_sep}{profile}) > 0
+                                                THEN list_aggregate(list_distinct({pz_prefix}Class{pzfields_sep}{profile}), 'string_agg', ',')
+                                                ELSE '.'
+                                            END 
+                                        )
+                                    """
+                                )
+
                         # PZComment
                         if (
                             f"{pz_prefix}Comment{pzfields_sep}{profile}"
@@ -7113,30 +7128,35 @@ class Variants:
                         sql_queries = []
                         for annotation in prioritizations_config[profile]:
 
-                            # Explode specific annotation
-                            log.debug(f"Explode annotation '{annotation}'")
-                            added_columns += self.explode_infos(
-                                prefix=explode_infos_prefix,
-                                fields=[annotation],
-                                table=table_variants,
-                            )
-                            extra_infos = self.get_extra_infos(table=table_variants)
-
-                            # Check if annotation field is present
-                            if not f"{explode_infos_prefix}{annotation}" in extra_infos:
-                                log.debug(f"Annotation '{annotation}' not in data")
+                            # skip special sections
+                            if annotation.startswith("_"):
                                 continue
-                            else:
-                                log.debug(f"Annotation '{annotation}' in data")
 
                             # For each criterions
                             for criterion in prioritizations_config[profile][
                                 annotation
                             ]:
-                                criterion_type = criterion["type"]
-                                criterion_value = criterion["value"]
+
+                                # Criterion mode
+                                criterion_mode = None
+                                if np.any(
+                                    np.isin(list(criterion.keys()), ["type", "value"])
+                                ):
+                                    criterion_mode = "operation"
+                                elif np.any(
+                                    np.isin(list(criterion.keys()), ["sql", "fields"])
+                                ):
+                                    criterion_mode = "sql"
+                                log.debug(f"Criterion Mode: {criterion_mode}")
+
+                                # Criterion parameters
+                                criterion_type = criterion.get("type", None)
+                                criterion_value = criterion.get("value", None)
+                                criterion_sql = criterion.get("sql", None)
+                                criterion_fields = criterion.get("fields", None)
                                 criterion_score = criterion.get("score", 0)
                                 criterion_flag = criterion.get("flag", "PASS")
+                                criterion_class = criterion.get("class", None)
                                 criterion_flag_bool = criterion_flag == "PASS"
                                 criterion_comment = (
                                     ", ".join(criterion.get("comment", []))
@@ -7151,26 +7171,78 @@ class Variants:
                                     .replace("\t", " ")
                                 )
 
+                                # SQL
+                                if criterion_sql is not None and isinstance(
+                                    criterion_sql, list
+                                ):
+                                    criterion_sql = " ".join(criterion_sql)
+
+                                # Fields and explode
+                                if criterion_fields is None:
+                                    criterion_fields = [annotation]
+                                if not isinstance(criterion_fields, list):
+                                    criterion_fields = str(criterion_fields).split(",")
+
+                                # Class
+                                if criterion_class is not None and not isinstance(
+                                    criterion_class, list
+                                ):
+                                    criterion_class = str(criterion_class).split(",")
+
+                                for annotation_field in criterion_fields:
+
+                                    # Explode specific annotation
+                                    log.debug(
+                                        f"Explode annotation '{annotation_field}'"
+                                    )
+                                    added_columns += self.explode_infos(
+                                        prefix=explode_infos_prefix,
+                                        fields=[annotation_field],
+                                        table=table_variants,
+                                    )
+                                    extra_infos = self.get_extra_infos(
+                                        table=table_variants
+                                    )
+
+                                    # Check if annotation field is present
+                                    if (
+                                        f"{explode_infos_prefix}{annotation_field}"
+                                        not in extra_infos
+                                    ):
+                                        msq_err = f"Annotation '{annotation_field}' not in data"
+                                        log.error(msq_err)
+                                        raise ValueError(msq_err)
+                                    else:
+                                        log.debug(
+                                            f"Annotation '{annotation_field}' in data"
+                                        )
+
                                 sql_set = []
                                 sql_set_info = []
 
                                 # PZ fields set
+
+                                # PZScore
                                 if (
                                     f"{pz_prefix}Score{pzfields_sep}{profile}"
                                     in list_of_pzfields
                                 ):
-                                    if prioritization_score_mode == "HOWARD":
-                                        sql_set.append(
-                                            f"{pz_prefix}Score{pzfields_sep}{profile} = {pz_prefix}Score{pzfields_sep}{profile} + {criterion_score}"
-                                        )
-                                    elif prioritization_score_mode == "VaRank":
+                                    # if prioritization_score_mode == "HOWARD":
+                                    #     sql_set.append(
+                                    #         f"{pz_prefix}Score{pzfields_sep}{profile} = {pz_prefix}Score{pzfields_sep}{profile} + {criterion_score}"
+                                    #     )
+                                    # VaRank prioritization score mode
+                                    if prioritization_score_mode == "VaRank":
                                         sql_set.append(
                                             f"{pz_prefix}Score{pzfields_sep}{profile} = CASE WHEN {criterion_score}>{pz_prefix}Score{pzfields_sep}{profile} THEN {criterion_score} END"
                                         )
+                                    # default HOWARD prioritization score mode
                                     else:
                                         sql_set.append(
                                             f"{pz_prefix}Score{pzfields_sep}{profile} = {pz_prefix}Score{pzfields_sep}{profile} + {criterion_score}"
                                         )
+
+                                # PZFlag
                                 if (
                                     f"{pz_prefix}Flag{pzfields_sep}{profile}"
                                     in list_of_pzfields
@@ -7178,6 +7250,18 @@ class Variants:
                                     sql_set.append(
                                         f"{pz_prefix}Flag{pzfields_sep}{profile} = {pz_prefix}Flag{pzfields_sep}{profile} AND {criterion_flag_bool}"
                                     )
+
+                                # PZClass
+                                if (
+                                    f"{pz_prefix}Class{pzfields_sep}{profile}"
+                                    in list_of_pzfields
+                                    and criterion_class is not None
+                                ):
+                                    sql_set.append(
+                                        f" {pz_prefix}Class{pzfields_sep}{profile} = list_concat(list_distinct({pz_prefix}Class{pzfields_sep}{profile}), {criterion_class}) "
+                                    )
+
+                                # PZComment
                                 if (
                                     f"{pz_prefix}Comment{pzfields_sep}{profile}"
                                     in list_of_pzfields
@@ -7196,6 +7280,8 @@ class Variants:
                                                 )
                                         """
                                     )
+
+                                # PZInfos
                                 if (
                                     f"{pz_prefix}Infos{pzfields_sep}{profile}"
                                     in list_of_pzfields
@@ -7213,24 +7299,42 @@ class Variants:
 
                                 # Criterion and comparison
                                 if sql_set_option:
-                                    try:
-                                        float(criterion_value)
+
+                                    if criterion_mode in ["operation"]:
+
+                                        try:
+                                            float(criterion_value)
+                                            sql_update = f"""
+                                                UPDATE {table_variants}
+                                                SET {sql_set_option}
+                                                WHERE CAST("{explode_infos_prefix}{annotation}" AS VARCHAR) NOT IN ('','.')
+                                                AND CAST("{explode_infos_prefix}{annotation}" AS FLOAT){comparison_map[criterion_type]}{criterion_value}
+                                            """
+                                        except:
+                                            contains_option = ""
+                                            if criterion_type == "contains":
+                                                contains_option = ".*"
+                                            sql_update = f"""
+                                                UPDATE {table_variants}
+                                                SET {sql_set_option}
+                                                WHERE "{explode_infos_prefix}{annotation}" SIMILAR TO '{contains_option}{criterion_value}{contains_option}'
+                                            """
+                                        sql_queries.append(sql_update)
+
+                                    elif criterion_mode in ["sql"]:
+
                                         sql_update = f"""
                                             UPDATE {table_variants}
                                             SET {sql_set_option}
-                                            WHERE CAST("{explode_infos_prefix}{annotation}" AS VARCHAR) NOT IN ('','.')
-                                            AND CAST("{explode_infos_prefix}{annotation}" AS FLOAT){comparison_map[criterion_type]}{criterion_value}
-                                            """
-                                    except:
-                                        contains_option = ""
-                                        if criterion_type == "contains":
-                                            contains_option = ".*"
-                                        sql_update = f"""
-                                            UPDATE {table_variants}
-                                            SET {sql_set_option}
-                                            WHERE "{explode_infos_prefix}{annotation}" SIMILAR TO '{contains_option}{criterion_value}{contains_option}'
-                                            """
-                                    sql_queries.append(sql_update)
+                                            WHERE {criterion_sql}
+                                        """
+                                        sql_queries.append(sql_update)
+
+                                    else:
+                                        msg_err = f"Prioritization criterion mode failed (either 'operation' or 'sql')"
+                                        log.error(msg_err)
+                                        raise ValueError(msg_err)
+
                                 else:
                                     log.warning(
                                         f"NO SQL SET option for '{annotation}' - '{criterion}'"
@@ -7244,7 +7348,7 @@ class Variants:
 
                             # Create PZFalgs value
                             pztags_value = ""
-                            pztags_sep_default = "|"
+                            pztags_sep_default = ","
                             pztags_sep = ""
                             for pzfield in pzfields:
                                 if pzfield not in [f"{pz_prefix}Tags"]:
@@ -7257,6 +7361,12 @@ class Variants:
                                                 CASE WHEN {pz_prefix}Flag{pzfields_sep}{profile}
                                                     THEN 'PASS'
                                                     ELSE 'FILTERED'
+                                                END, '"""
+                                        elif pzfield in [f"{pz_prefix}Class"]:
+                                            pztags_value += f"""{pztags_sep}{pzfield}#', 
+                                                CASE WHEN len({pz_prefix}Class{pzfields_sep}{profile}) > 0
+                                                    THEN list_aggregate(list_distinct({pz_prefix}Class{pzfields_sep}{profile}), 'string_agg', ',')
+                                                    ELSE '.'
                                                 END, '"""
                                         else:
                                             pztags_value += f"{pztags_sep}{pzfield}#', {pzfield}{pzfields_sep}{profile}, '"
