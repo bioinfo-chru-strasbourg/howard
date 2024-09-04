@@ -1523,7 +1523,7 @@ def databases_download_dbnsfp(
         """
 
         # Check columns structure
-        log.info(f"Download dbNSFP {assemblies} - Check database structure")
+        log.info(f"Download dbNSFP {assemblies} - Check database structure...")
 
         # Connexion for structure
         db_structure = duckdb.connect(config={"threads": threads})
@@ -1770,7 +1770,7 @@ def databases_download_dbnsfp(
                             if uniquify:
                                 # columns for each annotation
                                 column_key = f"""
-                                    list_aggregate(list_distinct(array_filter(string_split(CAST("{column}" AS VARCHAR), ';'), x -> x != '.')), 'string_agg', ',') AS "{column_alias}"
+                                    list_aggregate(list_distinct(array_filter(string_split(CAST("{column}" AS VARCHAR), ';'), x -> x != '.')), 'string_agg', ',')::{columns_structure[column]} AS "{column_alias}"
                                 """
                                 # columns for INFO clumn
                                 column_info_key = f"""
@@ -1788,7 +1788,7 @@ def databases_download_dbnsfp(
                             else:
                                 # columns for each annotation
                                 column_key = f"""
-                                    replace(CAST("{column}" AS VARCHAR), ';', ',') AS "{column_alias}"
+                                    replace(CAST("{column}" AS VARCHAR), ';', ',')::{columns_structure[column]} AS "{column_alias}"
                                 """
                                 # columns for INFO clumn
                                 column_info_key = f"""
@@ -2155,7 +2155,7 @@ def databases_download_dbnsfp(
                             LIMIT 1
                     """
                 res = db.query(query).df()
-                chromosome = "chr" + res["#chr"][0]
+                chromosome = "chr" + str(res["#chr"][0])
                 log.debug(
                     f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Process file '{os.path.basename(database_file)}' - Found chromosome '{chromosome}'"""
                 )
@@ -2633,7 +2633,7 @@ def databases_download_dbnsfp(
                                         f"""
                                     CASE
                                         WHEN "{column_annotation}" IS NOT NULL
-                                        THEN concat('{column_annotation}=', replace("{column_annotation}", ';', ','), ';')
+                                        THEN concat('{column_annotation}=', replace(CAST("{column_annotation}" AS VARCHAR), ';', ','), ';')
                                         ELSE ''
                                     END
                                     """
