@@ -185,10 +185,10 @@ Limit of number of row for query (only for print result, not output).
 ```
 
 ```
---query_print_mode=<print mode> [None, 'markdown', 'tabulate']
+--query_print_mode=<print mode> [None, 'markdown', 'tabulate', 'disabled']
 
 Print mode of query result (only for print result, not output).
-Either None (native), 'markdown' or 'tabulate'.
+Either None (native), 'markdown', 'tabulate' or disabled.
 
 ```
 
@@ -1139,10 +1139,10 @@ Limit of number of row for query (only for print result, not output).
 ```
 
 ```
---query_print_mode=<print mode> [None, 'markdown', 'tabulate']
+--query_print_mode=<print mode> [None, 'markdown', 'tabulate', 'disabled']
 
 Print mode of query result (only for print result, not output).
-Either None (native), 'markdown' or 'tabulate'.
+Either None (native), 'markdown', 'tabulate' or disabled.
 
 ```
 

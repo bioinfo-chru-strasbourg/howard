@@ -2232,12 +2232,17 @@ class Variants:
         existing_columns_header = database.get_header_columns_from_database()
 
         # Sample list
-        get_samples = self.get_samples()
-        get_samples_check = self.get_samples_check()
-        samples_force = get_samples is not None
-        sample_list = self.get_header_sample_list(
-            check=get_samples_check, samples=get_samples, samples_force=samples_force
-        )
+        if output_file_type in ["vcf"]:
+            get_samples = self.get_samples()
+            get_samples_check = self.get_samples_check()
+            samples_force = get_samples is not None
+            sample_list = self.get_header_sample_list(
+                check=get_samples_check,
+                samples=get_samples,
+                samples_force=samples_force,
+            )
+        else:
+            sample_list = None
 
         # Export file
         database.export(

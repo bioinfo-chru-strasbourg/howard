@@ -471,8 +471,8 @@ arguments = {
     "query_print_mode": {
         "metavar": "print mode",
         "help": """Print mode of query result (only for print result, not output).\n"""
-        """Either None (native), 'markdown' or 'tabulate'.\n""",
-        "choices": [None, "markdown", "tabulate"],
+        """Either None (native), 'markdown', 'tabulate' or disabled.\n""",
+        "choices": [None, "markdown", "tabulate", "disabled"],
         "default": None,
         "type": str,
         "gooey": {"widget": "Dropdown", "options": {}},
