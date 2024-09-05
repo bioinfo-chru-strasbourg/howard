@@ -1497,6 +1497,16 @@ Increase memory and space during generation of files.
 ```
 
 ```
+--download-dbnsfp-only-info
+
+Add only INFO column (VCF format) in Parquet folder and file.
+Useful for speed up full annotation (all available columns).
+Decrease memory and space during generation of files.
+Increase time for partial annotation (some available columns).
+
+```
+
+```
 --download-dbnsfp-uniquify
 
 Uniquify values within column

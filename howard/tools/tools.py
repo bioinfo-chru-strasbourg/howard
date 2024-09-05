@@ -1149,6 +1149,14 @@ arguments = {
         "action": "store_true",
         "default": False,
     },
+    "download-dbnsfp-only-info": {
+        "help": """Add only INFO column (VCF format) in Parquet folder and file.\n"""
+        """Useful for speed up full annotation (all available columns).\n"""
+        """Decrease memory and space during generation of files.\n"""
+        """Increase time for partial annotation (some available columns).\n""",
+        "action": "store_true",
+        "default": False,
+    },
     "download-dbnsfp-uniquify": {
         "help": """Uniquify values within column\n"""
         """(e.g. "D,D" to "D", "D,.,T" to "D,T").\n"""
@@ -2056,6 +2064,7 @@ commands_arguments = {
                 "download-dbnsfp-vcf": False,
                 "download-dbnsfp-no-files-all": False,
                 "download-dbnsfp-add-info": False,
+                "download-dbnsfp-only-info": False,
                 "download-dbnsfp-uniquify": False,
                 "download-dbnsfp-row-group-size": False,
             },

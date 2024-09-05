@@ -33,24 +33,31 @@ from test_needed import *
 
 
 @pytest.mark.parametrize(
-    "generate_parquet_file, generate_sub_databases, generate_vcf_file, add_info, uniquify",
+    "generate_parquet_file, generate_sub_databases, generate_vcf_file, add_info, only_info, uniquify",
     [
         (
             generate_parquet_file,
             generate_sub_databases,
             generate_vcf_file,
             add_info,
+            only_info,
             uniquify,
         )
         for generate_parquet_file in [True, False]
         for generate_sub_databases in [True, False]
         for generate_vcf_file in [True, False]
         for add_info in [True, False]
+        for only_info in [True, False]
         for uniquify in [True, False]
     ],
 )
 def test_database_dbnsfp_options_full(
-    generate_parquet_file, generate_sub_databases, generate_vcf_file, add_info, uniquify
+    generate_parquet_file,
+    generate_sub_databases,
+    generate_vcf_file,
+    add_info,
+    only_info,
+    uniquify,
 ):
     """
     This function tests the "databases" function with a set of arguments.
@@ -83,6 +90,7 @@ def test_database_dbnsfp_options_full(
                 generate_sub_databases=generate_sub_databases,
                 generate_vcf_file=generate_vcf_file,
                 add_info=add_info,
+                only_info=only_info,
                 uniquify=uniquify,
                 threads=2,
             )

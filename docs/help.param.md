@@ -1192,11 +1192,11 @@ Default: ```10```
 
 ### query::query_print_mode
 
-Print mode of query result (only for print result, not output). Either None (native), 'markdown' or 'tabulate'. 
+Print mode of query result (only for print result, not output). Either None (native), 'markdown', 'tabulate' or disabled. 
 
 Type: ```str```
 
-Choices: ```[None, 'markdown', 'tabulate']```
+Choices: ```[None, 'markdown', 'tabulate', 'disabled']```
 
 Default: ```None```
 

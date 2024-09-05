@@ -41,6 +41,7 @@ HOWARD Parameters JSON file defines parameters for databases' downloads.
          - [download_dbnsfp_vcf](#databasesdbnsfpdownload_dbnsfp_vcf)
          - [download_dbnsfp_no_files_all](#databasesdbnsfpdownload_dbnsfp_no_files_all)
          - [download_dbnsfp_add_info](#databasesdbnsfpdownload_dbnsfp_add_info)
+         - [download_dbnsfp_only_info](#databasesdbnsfpdownload_dbnsfp_only_info)
          - [download_dbnsfp_uniquify](#databasesdbnsfpdownload_dbnsfp_uniquify)
          - [download_dbnsfp_row_group_size](#databasesdbnsfpdownload_dbnsfp_row_group_size)
       - [alphamissense](#databasesalphamissense)
@@ -465,6 +466,12 @@ Default: ```False```
 #### databases::dbnsfp::download_dbnsfp_add_info
 
 Add INFO column (VCF format) in Parquet folder and file. Useful for speed up full annotation (all available columns). Increase memory and space during generation of files. 
+
+Default: ```False```
+
+#### databases::dbnsfp::download_dbnsfp_only_info
+
+Add only INFO column (VCF format) in Parquet folder and file. Useful for speed up full annotation (all available columns). Decrease memory and space during generation of files. Increase time for partial annotation (some available columns). 
 
 Default: ```False```
 
