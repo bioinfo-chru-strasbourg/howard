@@ -292,6 +292,7 @@ def databases(args: argparse) -> None:
                 "download_dbnsfp_no_files_all", None
             ),
             add_info=param_databases_dbnsfp.get("download_dbnsfp_add_info", None),
+            only_info=param_databases_dbnsfp.get("download_dbnsfp_only_info", None),
             uniquify=param_databases_dbnsfp.get("download_dbnsfp_uniquify", False),
             row_group_size=param_databases_dbnsfp.get(
                 "download_dbnsfp_row_group_size", None
