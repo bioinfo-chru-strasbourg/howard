@@ -34,52 +34,62 @@
     - [Update](#update-4)
     - [Format](#format-4)
     - [Assembly](#assembly-4)
+  - [ALFA](#alfa)
+    - [Resume](#resume-5)
+    - [Format](#format-5)
+    - [Assembly](#assembly-5)
+    - [Update](#update-5)
 - [Annovar *TODO conf Antony*](#annovar-todo-conf-antony)
   - [PopFreq](#popfreq)
-    - [Resume](#resume-5)
-    - [Update](#update-5)
-    - [Assembly](#assembly-5)
-    - [Format](#format-5)
-  - [gme](#gme)
     - [Resume](#resume-6)
     - [Update](#update-6)
     - [Assembly](#assembly-6)
     - [Format](#format-6)
-  - [outcome](#outcome)
+  - [gme](#gme)
     - [Resume](#resume-7)
     - [Update](#update-7)
+    - [Assembly](#assembly-7)
+    - [Format](#format-7)
+  - [outcome](#outcome)
+    - [Resume](#resume-8)
+    - [Update](#update-8)
   - [TODO](#todo)
 - [Autres](#autres)
   - [Alphamissence](#alphamissence)
-    - [Resume](#resume-8)
-    - [Update](#update-8)
-    - [Format](#format-7)
-    - [Assembly](#assembly-7)
-  - [1000g](#1000g)
+    - [Resume](#resume-9)
     - [Update](#update-9)
     - [Format](#format-8)
     - [Assembly](#assembly-8)
-  - [gnomAD](#gnomad)
-    - [Resume](#resume-9)
+  - [1000g](#1000g)
     - [Update](#update-10)
     - [Format](#format-9)
     - [Assembly](#assembly-9)
-  - [Decipher](#decipher)
+  - [gnomAD](#gnomad)
     - [Resume](#resume-10)
     - [Update](#update-11)
     - [Format](#format-10)
     - [Assembly](#assembly-10)
-  - [CADD](#cadd)
+  - [Decipher](#decipher)
     - [Resume](#resume-11)
     - [Update](#update-12)
-    - [Assembly](#assembly-11)
     - [Format](#format-11)
-  - [SpliceAI](#spliceai)
+    - [Assembly](#assembly-11)
+  - [CADD](#cadd)
     - [Resume](#resume-12)
     - [Update](#update-13)
     - [Assembly](#assembly-12)
     - [Format](#format-12)
+  - [SpliceAI](#spliceai)
+    - [Resume](#resume-13)
+    - [Update](#update-14)
+    - [Assembly](#assembly-13)
+    - [Format](#format-13)
 
+<!-- /TOC -->
+<!-- /TOC -->
+<!-- /TOC -->
+<!-- /TOC -->
+<!-- /TOC -->
 <!-- /TOC -->
 <!-- /TOC -->
 <!-- /TOC -->
@@ -190,7 +200,21 @@ VCF mais comprenant les NC comme numéro de chromosome au lieu de chr, donc a pr
 ### Assembly
 Release en 37 et 38 avec les noms des assemblages originaux
 GCF_000001405.25 => GRCh37
-GCF_000001405.40 => GRCh48 
+GCF_000001405.40 => GRCh48
+
+## ALFA
+### Resume
+AF from dbGaP project almost 1millions subject, chip seq WES and WGS in 12 diverse populations
+https://ftp.ncbi.nih.gov/snp/population_frequency/TrackHub/latest
+
+### Format
+Bigbed, donc a process avec les scripts deja mis en place
+
+### Assembly
+Track en hg19 et hg38 dans chaque release
+
+### Update
+Last in 2023
 
 # Annovar *TODO conf Antony*
 Ce qu'on a besoin: 16Go
@@ -351,7 +375,7 @@ hg19 et hg38
 | chr1   | 10001 | T   | A   | 0.767991 | 7.993 |
 
 ## SpliceAI
-<b>1.2.1</b>  500Go (non processé, plus lourd en parquet)
+<b>1.2.1</b>  500Go (non processé, plus lourd en parquet), si on ne garde que le vcf d'interet 92Go avec une option
 ### Resume
 Illumina basespace ils ont analysé toutes les bases du génomes x4, DB disponible avec toutes les options mais distance D=50,
 
