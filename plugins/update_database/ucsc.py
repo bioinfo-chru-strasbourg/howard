@@ -1,4 +1,4 @@
-from howard.functions.commons import download_file, compress_file
+from howard.functions.commons import download_file, compress_file, find
 from howard.tools.convert import convert
 from howard.tools.tools import (
     arguments,
@@ -7,8 +7,8 @@ from howard.tools.tools import (
     help_generation,
     set_log_level,
 )
-from utils import get_compiled_pattern
-
+from utils import get_compiled_pattern, get_md5, metaheader_rows, find_files, now, read_md5_file
+import tempfile
 import argparse
 import logging as log
 import requests
@@ -16,14 +16,12 @@ from bs4 import BeautifulSoup
 from os.path import join as osj
 import pyBigWig
 import tqdm
-from utils import extract_gz_file, get_md5
 import os
-import sys
-import gzip
 import json
 import time
 import pathlib
 from Bio.bgzf import BgzfWriter
+import re
 
 # https://docs.bedbase.org/bedboss/tutorials/bedmaker_tutorial/
 # transform bigwig
@@ -72,11 +70,15 @@ class Databaseucsc:
         with open(configfile) as js:
             return json.load(js)
 
-    def list_databases(self):
+    def list_databases(self, linkpage=None):
+        if linkpage is not None:
+            link = linkpage
+        else:
+            link = self.link
         try:
             # Send an HTTP GET request to the directory URL
             response = requests.get(
-                self.link, timeout=10
+                link, timeout=10
             )  # Adjust timeout as         necessary
             response.raise_for_status()  # Raise an error for bad responses
 
@@ -99,42 +101,35 @@ class Databaseucsc:
                     file_links.append(href)
             log.debug("Files available for download:")
             for file in file_links:
-                log.info(file)
+                log.debug(file)
         except requests.exceptions.RequestException as e:
             log.error(f"Error accessing the FTP server: {e}")
             exit()
         return file_links
 
-    def download_folder(self, ends=None, starts=None):
-        available = self.list_databases()
-        for files in available:
-            if (
-                ends is not None
-                and files.endswith(ends)
-                or starts is not None
-                and files.startswith(starts)
-                and not self.check_exists(files)
+    def download_folder(self, link_list:list, output_folder, link, starts=None, skip=None):
+        log.info(f"Download files in '{link}', prefix: '{starts}', skip link containing: '{skip}'")
+        for files in link_list:
+            if ((starts is not None
+                and files.startswith(starts))
+                and skip not in files
             ):
-                self.download(osj(self.link, files))
+                self.download(osj(link, files), output_folder)
 
-    def check_exists(self, file):
-        if os.path.exists(osj(self.databases_folder, file)):
-            log.debug(f"{file} already exists in {self.databases_folder}, skipping")
-            return True
-        else:
-            return False
 
-    def download(self, file):
-        name = os.path.basename(file)
+    def download(self, link, output_folder=None):
+        if output_folder is None:
+            output_folder = self.databases_folder
+        name = os.path.basename(link)
         download_file(
-            url=file,
-            dest_file_path=osj(self.databases_folder, name),
+            url=link,
+            dest_file_path=osj(output_folder, name),
             threads=4,
             try_aria=True,
             quiet=False,
         )
-        os.chmod(osj(self.databases_folder, name), 0o755)
-        return osj(self.databases_folder, name)
+        os.chmod(osj(output_folder, name), 0o755)
+        return osj(output_folder, name)
 
     def create_header(self, header_dict: dict, type=str, subdatabase=None):
         header = []
@@ -143,7 +138,7 @@ class Databaseucsc:
         header.append("##InputFile=" + self.input)
         if subdatabase and header_dict.get(self.subdatabase) is not None:
             header.append(
-                self.metaheader_rows(
+                metaheader_rows(
                     "INFO",
                     self.subdatabase,
                     header_dict[self.subdatabase]["Number"],
@@ -154,7 +149,7 @@ class Databaseucsc:
         else:
             for annotations in header_dict:
                 header.append(
-                    self.metaheader_rows(
+                    metaheader_rows(
                         "INFO",
                         annotations,
                         header_dict[annotations]["Number"],
@@ -173,22 +168,6 @@ class Databaseucsc:
         else:
             raise ValueError(f"Type {type} not allowed, pick between tsv or vcf EXIT")
         return header
-
-    @staticmethod
-    def metaheader_rows(fields, id, number, type, description):
-        """
-        ##INFO=<ID=STRAND,Number=1,Type=String,Description="Gene strand">
-        """
-
-        keys = ["ID", "Number", "Type", "Description"]
-        values = list(map(str, [id, number, type, '"' + description + '"']))
-        return (
-            "##"
-            + fields
-            + "=<"
-            + ",".join(["=".join(val) for val in list(zip(keys, values))])
-            + ">"
-        )
 
     def bigwig_to_tsv_batch(self):
         """ """
@@ -346,24 +325,82 @@ class Databaseucsc:
             )
         )
 
-    # def check_databases(self, databases):
-    #     for
+    def is_clinvar_up_to_date(self, assembly:str, clinvar_folder:str, clinvar_assembly:str) -> bool:
+        """
+        """
+        with tempfile.TemporaryDirectory(dir="/tmp") as tmp_dir:
+            log.info(f"Assembly {assembly}")
+            clinvar_md5_link = osj(self.config_json["database"]["clinvar"], clinvar_assembly, "clinvar.vcf.gz.md5")
+            log.debug(clinvar_md5_link)
+            clinvar_md5_local = osj(tmp_dir, "clinvar.vcf.gz.md5")
+            clinvar_md5_current = find_files(osj(clinvar_folder, assembly), suffix=".md5")[0]
+            log.debug(f"Clinvar current: {clinvar_md5_current}")
+            self.download(clinvar_md5_link, tmp_dir)
+            if read_md5_file(clinvar_md5_local) != read_md5_file(clinvar_md5_current):
+                log.warning(f"Clinvar not up to date {assembly}")
+                return False
+            else:
+                log.info(f"Clinvar version up to date: {find('md5', osj(clinvar_folder, assembly))}")
+                return True
+    
+    def get_clinvar_date(self):
+        """
+        """
+        list_files = self.list_databases(osj(self.config_json["database"]["clinvar"], "vcf_GRCh37"))
+        for file in list_files:
+            pattern = r"(?<=clinvar_)\d+(?=\.vcf\.gz)"
+            match = re.search(pattern, file)
+            if match:
+                return match.group()
+        return None
 
     def update_clinvar(self):
-        variants_file = self.download(self.link)
-        md5_file = self.download(self.link + ".md5")
-        # compare md5
-        md5_download = open(md5_file).readline().strip().split()[0]
-        if md5_download != get_md5(variants_file):
-            raise ValueError("MD5 are different EXIT")
-        else:
-            log.info(f"Create parquet file from {variants_file}")
-            self.vcf_to_parquet(variants_file)
+        """
+        """
+        clinvar_folder = osj(self.databases_folder, self.database, "current")
+        log.info(f"Clinvar folder {clinvar_folder}")
+        
+        latest_folder = self.get_clinvar_date()
+        log.info(f"Download clinvar version: {latest_folder}")
+        if latest_folder is None:
+            latest_folder = now()
+            log.warning("Download clinvar, set version of the day")
+        for assembly in os.listdir(clinvar_folder):
+            if assembly == "hg19":
+                clinvar_assembly= "vcf_GRCh37"
+            elif assembly == "hg38":
+                clinvar_assembly = "vcf_GRCh38"
+            clinvar_assembly_folder = osj(self.databases_folder, self.database, latest_folder, assembly)
+            
+            if not os.path.exists(clinvar_assembly_folder):
+                os.makedirs(clinvar_assembly_folder)
+            else:
+                raise FileExistsError(f"Clinvar version {latest_folder} already exists")
+            if not self.is_clinvar_up_to_date(assembly, clinvar_folder, clinvar_assembly):
+                self.download_folder(
+                    self.list_databases(linkpage=osj(self.config_json["database"]["clinvar"], clinvar_assembly)),
+                    clinvar_assembly_folder, osj(self.config_json["database"]["clinvar"], clinvar_assembly), starts="clinvar_", skip="papu")
+            #CHeckMD5
+            if read_md5_file(find_files(osj(clinvar_folder, assembly), suffix=".md5")[0]) == get_md5(find_files(osj(clinvar_folder, assembly), suffix=".vcf.gz")[0]):
+                log.info(f"MD5 OK clinvar {assembly}")
+            else:
+                raise ValueError("MD5 from UCSC and local server are different")
+        try:
+            os.unlink(osj(self.databases_folder, self.database, "latest"))
+        except FileNotFoundError:
+            pass
+        os.symlink(osj(self.databases_folder, self.database, latest_folder), osj(self.databases_folder, self.database, latest_folder, "latest"))
+        
+
+        
+
+                
+    #     else:
+    #         log.info(f"Create parquet file from {variants_file}")
+    #         self.vcf_to_parquet(variants_file)
 
 
 def main():
-    assembly = "hg19"
-    database = "phyloP46way"
     # ucsc = Databaseucsc(
     #     f"https://hgdownload.cse.ucsc.edu/goldenPath/{assembly}/{database}",
     #     database,
@@ -388,13 +425,18 @@ def main():
     #     bw.replace(".bw", ".bed"),
     #     "/home1/data/WORK_DIR_JB/howard/plugins/update_database/config/update_databases.config_json",
     # )
+    # Databaseucsc(
+    #     link="https://ftp.ncbi.nih.gov/snp/population_frequency/TrackHub/latest/hg19/",
+    #     database="ALFA",
+    #     input="/home1/DB/HOWARD/ALFA/hg19/ALFA_AFA.bb",
+    #     databases_folder="/home1/DB/HOWARD/ALFA/hg19",
+    #     config_json="/home1/data/WORK_DIR_JB/howard/plugins/update_database/config/update_databases.json",
+    # ).bigbed_to_vcf_batch(type="vcf", subdatabase=True)
     Databaseucsc(
-        link="https://ftp.ncbi.nih.gov/snp/population_frequency/TrackHub/latest/hg19/",
-        database="ALFA",
-        input="/home1/DB/HOWARD/ALFA/hg19/ALFA_AFA.bb",
-        databases_folder="/home1/DB/HOWARD/ALFA/hg19",
-        config_json="/home1/data/WORK_DIR_JB/howard/plugins/update_database/config/update_databases.json",
-    ).bigbed_to_vcf_batch(type="vcf", subdatabase=True)
+        database="clinvar",
+        databases_folder="/home1/DB/HOWARD",
+        config_json="/home1/data/WORK_DIR_JB/howard/plugins/update_database/config/update_databases.json", verbosity="info").update_clinvar()
+    
 
 
 if __name__ == "__main__":
