@@ -6,6 +6,21 @@ import re
 from functools import lru_cache
 
 
+def metaheader_rows(fields, id, number, type, description):
+    """
+    ##INFO=<ID=STRAND,Number=1,Type=String,Description="Gene strand">
+    """
+    keys = ["ID", "Number", "Type", "Description"]
+    values = list(map(str, [id, number, type, '"' + description + '"']))
+    return (
+        "##"
+        + fields
+        + "=<"
+        + ",".join(["=".join(val) for val in list(zip(keys, values))])
+        + ">"
+    )
+
+
 def extract_gz_file(input_path: str, output_path: str) -> str:
     """
     unzip .gz file
