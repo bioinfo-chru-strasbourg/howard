@@ -415,6 +415,7 @@ class Ucsc:
         except FileNotFoundError:
             log.debug("First latest symlink")
         os.symlink(latest_folder, osj(self.databases_folder, self.database, "latest"))
+        log.warning("You still need to validate the latest version of clinvar before using it in production (latest -> current)")
 
 
     def formatting_clinvar(self, clinvar_vcf_raw):
