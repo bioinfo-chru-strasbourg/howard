@@ -1,4 +1,4 @@
-from howard.functions.commons import download_file, compress_file, find
+from howard.functions.commons import download_file, compress_file, find, command
 from howard.tools.convert import convert
 from howard.tools.tools import (
     arguments,
@@ -39,7 +39,7 @@ import re
 # Test https://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/hg19.gc5Base.wig.gz
 
 
-class Databaseucsc:
+class Ucsc:
     def __init__(
         self,
         link=None,
@@ -70,26 +70,25 @@ class Databaseucsc:
         with open(configfile) as js:
             return json.load(js)
 
-    def list_databases(self, linkpage=None):
+    def list_databases(self, linkpage=None) -> list:
+        """
+        List available file to download on a webpage
+        
+        :param linkpage: if link is not set in class arg, could list database on this link
+        :return: list of available data
+        """
         if linkpage is not None:
             link = linkpage
         else:
             link = self.link
         try:
-            # Send an HTTP GET request to the directory URL
             response = requests.get(
                 link, timeout=10
-            )  # Adjust timeout as         necessary
-            response.raise_for_status()  # Raise an error for bad responses
-
-            # Parse the HTML content using BeautifulSoup
+            )
+            response.raise_for_status()
             soup = BeautifulSoup(response.content, "html.parser")
 
-            # Print the parsed HTML content for debugging
             log.debug("Parsed HTML content:")
-            # print(soup.prettify())
-
-            # Find all anchor tags
             file_links = []
             for link in soup.find_all("a"):
                 href = link.get("href")
@@ -131,7 +130,14 @@ class Databaseucsc:
         os.chmod(osj(output_folder, name), 0o755)
         return osj(output_folder, name)
 
-    def create_header(self, header_dict: dict, type=str, subdatabase=None):
+    def create_header(self, header_dict: dict, type: str, subdatabase=None) -> list:
+        """
+         Create VCF or TSV header
+        :param header_dict: from configuration json dict containing metaheader informations
+        :param type: either vcf or tsv
+        :param subdatabase: optionnal process subdatabase, example ALFA, ALFA_EUR
+        :return list of header informations
+        """
         header = []
         header.append("##fileformat=VCFv4.3")
         header.append("##fileDate=%s" % time.strftime("%d/%m/%Y"))
@@ -170,7 +176,6 @@ class Databaseucsc:
         return header
 
     def bigwig_to_tsv_batch(self):
-        """ """
         for files in self.databases_folder():
             if files.endswith(".bb"):
                 self.bigwig_to_tsv(files.replace(".bb", ".tsv"))
@@ -218,17 +223,15 @@ class Databaseucsc:
                 files = osj(self.databases_folder, files)
                 self.input = files
                 self.subdatabase = os.path.basename(os.path.splitext(files)[0])
-                self.bigbed_to_vcf(type, subdatabase=subdatabase)
+                self.bigbed_to_vcf(type, output=output, subdatabase=subdatabase)
 
     def bigbed_to_vcf(self, type, output=None, subdatabase=False) -> str:
         """
         Convert a BigBed file to a bgzipped VCF file.
-        howard does not accept bed just rename to tsv after bb to vcf in case of .bed extension
+        howard does not accept bed just rename to tsv after bb to vcf in case of .bed extension.         Only for 1 based vcf bigbed file for now
 
-        Parameters:
-        output (str): The path to the output gzipped VCF file.
-
-        Only for 1 based vcf bigbed file for now
+        :param output (str): The path to the output gzipped VCF file.
+        :return: path of output vcf
         """
         log.info(f"BigBed file: {self.input}")
         bw = pyBigWig.open(self.input)
@@ -278,8 +281,7 @@ class Databaseucsc:
         howard does not accept bed just rename to tsv after bw to bsv in case of .bed extension
          howard convert --input hg19.100way.phastCons.tsv.gz --output hg19.100way.phastCons.parquet --parquet_partitions '#CHROM' &
 
-        Parameters:
-        output (str): The path to the output gzipped TSV file.
+        :param output (str): The path to the output gzipped TSV file.
         """
         log.info(f"BigWig file: {self.input}")
         bw = pyBigWig.open(self.input)
@@ -311,12 +313,12 @@ class Databaseucsc:
         return output
 
     def vcf_to_parquet(self, file):
-        output = os.path.basename(file).replace(".vcf.gz", ".parquet")
+        output = file.replace(".vcf.gz", ".parquet")
         convert(
             argparse.Namespace(
                 command="convert",
                 input=file,
-                output=osj(self.databases_folder, output),
+                output=output,
                 arguments_dict={
                     "arguments": arguments,
                     "commands_arguments": commands_arguments,
@@ -326,7 +328,14 @@ class Databaseucsc:
         )
 
     def is_clinvar_up_to_date(self, assembly:str, clinvar_folder:str, clinvar_assembly:str) -> bool:
+
         """
+        Check if clinvar in local server is up to date, it compares the md5 in current version locally with the one on ucsc current version
+
+        :param assembly: either hg19 or hg38
+        :param clinvar_folder: current clinvar folder locally
+        :param clinvar_assembly: either vcf_GRCh37 or vcf_GRCh38 on ucsc serveur
+        :return bool: True or False regarding md5 differences
         """
         with tempfile.TemporaryDirectory(dir="/tmp") as tmp_dir:
             log.info(f"Assembly {assembly}")
@@ -345,6 +354,7 @@ class Databaseucsc:
     
     def get_clinvar_date(self):
         """
+        Get date of current version of clinvar on ucsc server otherwise retunr None
         """
         list_files = self.list_databases(osj(self.config_json["database"]["clinvar"], "vcf_GRCh37"))
         for file in list_files:
@@ -356,15 +366,17 @@ class Databaseucsc:
 
     def update_clinvar(self):
         """
+        Main process to update clinvar data
         """
         clinvar_folder = osj(self.databases_folder, self.database, "current")
         log.info(f"Clinvar folder {clinvar_folder}")
         
         latest_folder = self.get_clinvar_date()
-        log.info(f"Download clinvar version: {latest_folder}")
+        log.info(f"Clinvar current version on UCSC: {latest_folder}")
         if latest_folder is None:
             latest_folder = now()
             log.warning("Download clinvar, set version of the day")
+        #Both hg19 and hg38
         for assembly in os.listdir(clinvar_folder):
             if assembly == "hg19":
                 clinvar_assembly= "vcf_GRCh37"
@@ -375,33 +387,52 @@ class Databaseucsc:
             if not os.path.exists(clinvar_assembly_folder):
                 os.makedirs(clinvar_assembly_folder)
             else:
-                raise FileExistsError(f"Clinvar version {latest_folder} already exists")
+                log.info(f"Clinvar version {latest_folder} already exists locally EXIT")
+                exit()
+            #Download folder
             if not self.is_clinvar_up_to_date(assembly, clinvar_folder, clinvar_assembly):
                 self.download_folder(
                     self.list_databases(linkpage=osj(self.config_json["database"]["clinvar"], clinvar_assembly)),
                     clinvar_assembly_folder, osj(self.config_json["database"]["clinvar"], clinvar_assembly), starts="clinvar_", skip="papu")
+            else:
+                log.info(f"Clinvar version {latest_folder} is up to date")
+                exit()
             #CHeckMD5
             if read_md5_file(find_files(osj(clinvar_folder, assembly), suffix=".md5")[0]) == get_md5(find_files(osj(clinvar_folder, assembly), suffix=".vcf.gz")[0]):
                 log.info(f"MD5 OK clinvar {assembly}")
+                #Formatting into parquet
+                self.formatting_clinvar(find_files(clinvar_assembly_folder, suffix=".vcf.gz")[0])
+                #CHMOD 755
+                for files in os.listdir(osj(clinvar_assembly_folder)):
+                    os.chmod(osj(clinvar_assembly_folder, files), 0o755)
             else:
                 raise ValueError("MD5 from UCSC and local server are different")
+
+        #Update symlink
+        log.info("Update symlink latest")
         try:
             os.unlink(osj(self.databases_folder, self.database, "latest"))
         except FileNotFoundError:
-            pass
-        os.symlink(osj(self.databases_folder, self.database, latest_folder), osj(self.databases_folder, self.database, latest_folder, "latest"))
+            log.debug("First latest symlink")
+        os.symlink(latest_folder, osj(self.databases_folder, self.database, "latest"))
+
+
+    def formatting_clinvar(self, clinvar_vcf_raw):
+        """
+        Add chr in front of contig name and transform resulting vcf into parquet, BGZIP required
         
-
-        
-
-                
-    #     else:
-    #         log.info(f"Create parquet file from {variants_file}")
-    #         self.vcf_to_parquet(variants_file)
-
+        :param clinvar_vcf_raw: path of clinvar raw file from ucsc
+        """
+        clinvar_vcf = osj(os.path.dirname(clinvar_vcf_raw), "clinvar.vcf.gz")
+        log.debug(f"Add 'chr' to {clinvar_vcf}")
+        command("zcat "+clinvar_vcf_raw+" | awk '{if ($0 !~ /^#/) $0=\"chr\"$0; print}' OFS=\"\t\" > "+clinvar_vcf.replace(".vcf.gz", ".vcf"))
+        compress_file(clinvar_vcf.replace(".vcf.gz", ".vcf"), clinvar_vcf)
+        os.remove(clinvar_vcf.replace(".vcf.gz", ".vcf"))
+        log.info(f"Formatting {clinvar_vcf} to parquet")
+        self.vcf_to_parquet(clinvar_vcf)
 
 def main():
-    # ucsc = Databaseucsc(
+    # ucsc = Ucsc(
     #     f"https://hgdownload.cse.ucsc.edu/goldenPath/{assembly}/{database}",
     #     database,
     #     assembly,
@@ -410,7 +441,7 @@ def main():
     # )
     # ucsc.download("https://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/hg19.gc5Base.wig.gz")
 
-    # ucsc = Databaseucsc(
+    # ucsc = Ucsc(
     #     "https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh37/clinvar_20240611.vcf.gz",
     #     "clinvar_20240611.vcf.gz",
     #     ["parentDirectory", "goldenPath"],
@@ -420,19 +451,19 @@ def main():
     # BIG BED TO BED WORK WELL
     # bw = sys.argv[1]
     # databases = sys.argv[2]
-    # ucsc = Databaseucsc(input=bw, databases=databases)
+    # ucsc = Ucsc(input=bw, databases=databases)
     # ucsc.bigwig_to_bed(
     #     bw.replace(".bw", ".bed"),
     #     "/home1/data/WORK_DIR_JB/howard/plugins/update_database/config/update_databases.config_json",
     # )
-    # Databaseucsc(
+    # Ucsc(
     #     link="https://ftp.ncbi.nih.gov/snp/population_frequency/TrackHub/latest/hg19/",
     #     database="ALFA",
     #     input="/home1/DB/HOWARD/ALFA/hg19/ALFA_AFA.bb",
     #     databases_folder="/home1/DB/HOWARD/ALFA/hg19",
     #     config_json="/home1/data/WORK_DIR_JB/howard/plugins/update_database/config/update_databases.json",
     # ).bigbed_to_vcf_batch(type="vcf", subdatabase=True)
-    Databaseucsc(
+    Ucsc(
         database="clinvar",
         databases_folder="/home1/DB/HOWARD",
         config_json="/home1/data/WORK_DIR_JB/howard/plugins/update_database/config/update_databases.json", verbosity="info").update_clinvar()
