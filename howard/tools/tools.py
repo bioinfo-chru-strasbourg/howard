@@ -333,6 +333,20 @@ arguments = {
             },
         },
     },
+    # Annotations Splice
+    "annotation_splice": {
+        "metavar": "annotation Splice",
+        "help": """Annotation with Splice, as a list of options\n"""
+        """ (e.g. 'split_mode=one:spliceai_distance=500:spliceai_mask=1').\n""",
+        "default": None,
+        "type": str,
+        "extra": {
+            "format": "option=value[:option=value]",
+            "examples": {
+                "Annotation with Splice with options": '"annotation_splice": "split_mode=one:spliceai_distance=500:spliceai_mask=1"',
+            },
+        },
+    },
     # Update annotation
     "annotations_update": {
         "help": """Update option for annotation (Only for Parquet annotation).\n"""
@@ -1135,6 +1149,15 @@ arguments = {
         "action": "store_true",
         "default": False,
     },
+    "download-dbnsfp-uniquify": {
+        "help": """Uniquify values within column\n"""
+        """(e.g. "D,D" to "D", "D,.,T" to "D,T").\n"""
+        """Remove transcripts information details.\n"""
+        """Usefull to reduce size of the database.\n"""
+        """Increase memory and space during generation of files.\n""",
+        "action": "store_true",
+        "default": False,
+    },
     "download-dbnsfp-row-group-size": {
         "metavar": "dnNSFP row grooup size",
         "help": """Minimum number of rows in a parquet row group (see duckDB doc).\n"""
@@ -1828,6 +1851,7 @@ commands_arguments = {
         """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotation_annovar='nci60:cosmic70' \n"""
         """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotation_snpeff='-hgvs' \n"""
         """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotation_exomiser='preset=exome:transcript_source=refseq' \n"""
+        """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotation_splice='split_mode=one:spliceai_distance=500:spliceai_mask=1' \n"""
         """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotations='ALL:parquet' \n"""
         """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --param=config/param.json \n"""
         """    \n""",
@@ -1843,6 +1867,7 @@ commands_arguments = {
                 "annotation_snpeff": False,
                 "annotation_snpsift": False,
                 "annotation_exomiser": False,
+                "annotation_splice": False,
                 "assembly": False,
             },
             "Annotation": {
@@ -1860,6 +1885,7 @@ commands_arguments = {
         """   howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.calculated.tsv --calculations='snpeff_hgvs,NOMEN' --hgvs_field=snpeff_hgvs --transcripts=tests/data/transcripts.tsv \n"""
         """   howard calculation --input=tests/data/example.vcf.gz --output=/tmp/example.calculated.tsv --calculations='TRIO' --trio_pedigree='sample1,sample2,sample4' \n"""
         """   howard calculation --input=tests/data/example.vcf.gz --output=/tmp/example.calculated.tsv --calculations='BARCODEFAMILY' --family_pedigree='sample1,sample2,sample4' \n"""
+        """   howard calculation --input=tests/data/example.dbnsfp.transcripts.vcf.gz --output=/tmp/example.calculation.transcripts.tsv --param=config/param.transcripts.json --calculations='TRANSCRIPTS_PRIORITIZATION' \n"""
         """   howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.ann.tsv --param=config/param.json \n"""
         """   howard calculation --show_calculations \n"""
         """    \n""",
@@ -2030,6 +2056,7 @@ commands_arguments = {
                 "download-dbnsfp-vcf": False,
                 "download-dbnsfp-no-files-all": False,
                 "download-dbnsfp-add-info": False,
+                "download-dbnsfp-uniquify": False,
                 "download-dbnsfp-row-group-size": False,
             },
             "AlphaMissense": {

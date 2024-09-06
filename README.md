@@ -6,7 +6,7 @@ Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery
 
 HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations, translates files in multiple formats (e.g. vcf, tsv, parquet) and generates variants statistics.
 
-HOWARD annotation is mainly based on a build-in Parquet annotation method, and external tools such as BCFTOOLS, ANNOVAR, snpEff and Exomiser (see docs, automatically downloaded if needed). Parquet annotation uses annotation database in VCF or BED format, in mutliple file format: Parquet/duckdb, VCF, BED, TSV, CSV, TBL, JSON.
+HOWARD annotation is mainly based on a build-in Parquet annotation method, and external tools such as BCFTOOLS, ANNOVAR, snpEff, Exomiser and Splice (see docs, automatically downloaded if needed). Parquet annotation uses annotation database in VCF or BED format, in mutliple file format: Parquet/duckdb, VCF, BED, TSV, CSV, TBL, JSON.
 
 HOWARD calculation processes variants information to calculate new information, such as: harmonizes allele frequency (VAF), extracts Nomen (transcript, cNomen, pNomen...) from HGVS fields with an optional list of personalized transcripts, generates VaRank format barcode.
 
@@ -54,9 +54,9 @@ python -m pip install -e .
 howard --help
 ```
 ```
-usage: howard [-h] {query,stats,convert,annotation,calculation,prioritization,process,hgvs,databases,from_annovar,gui,help} ...
+usage: howard [-h] {query,stats,convert,hgvs,annotation,calculation,prioritization,process,databases,gui,help,genebe,minimalize} ...
 
-HOWARD:0.10.0
+HOWARD:0.11.0
 Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery
 HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations, convert on multiple formats, query variations and generates statistics
 
@@ -64,28 +64,29 @@ Shared arguments:
   -h, --help            show this help message and exit
 
 Tools:
-  {query,stats,convert,annotation,calculation,prioritization,process,hgvs,databases,from_annovar,gui,help}
+  {query,stats,convert,hgvs,annotation,calculation,prioritization,process,databases,gui,help,genebe,minimalize}
     query               Query genetic variations file in SQL format.
     stats               Statistics on genetic variations file.
     convert             Convert genetic variations file to another format.
+    hgvs                HGVS annotation (HUGO internation nomenclature) using refGene, genome and transcripts list.
     annotation          Annotation of genetic variations file using databases/files and tools.
     calculation         Calculation operations on genetic variations file and genotype information.
     prioritization      Prioritization of genetic variations based on annotations criteria (profiles).
     process             Full genetic variations process: annotation, calculation, prioritization, format, query, filter...
-    hgvs                HGVS annotation (HUGO internation nomenclature) using refGene, genome and transcripts list.
     databases           Download databases and needed files for howard and associated tools
-    from_annovar        (beta) Formatting Annovar database file to other format (VCF and Parquet)
     gui                 Graphical User Interface tools
     help                Help tools
+    genebe              GeneBe annotation using REST API
+    minimalize          Minimalize a VCF file, such as removing INFO/Tags or samples
 
 Usage examples:
-   howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json
-   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet'
-   howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations='vartype'
-   howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations=config/prioritization_profiles.json --profiles='default,GERMLINE'
-   howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, "DP", "CLNSIG", sample2, sample3 FROM variants WHERE "DP" >= 50 OR "CLNSIG" NOT NULL ORDER BY "CLNSIG" DESC, "DP" DESC'
-   howard stats --input=tests/data/example.vcf.gz
-   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos && cat /tmp/example.tsv
+   howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json 
+   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet' 
+   howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations='vartype' 
+   howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritization_config=config/prioritization_profiles.json --prioritizations='default,GERMLINE' 
+   howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, "DP", "CLNSIG", sample2, sample3 FROM variants WHERE "DP" >= 50 OR "CLNSIG" NOT NULL ORDER BY "CLNSIG" DESC, "DP" DESC' 
+   howard stats --input=tests/data/example.vcf.gz 
+   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos && cat /tmp/example.tsv 
 ```
 
 
@@ -272,7 +273,7 @@ See [HOWARD Help Query tool](docs/help.md#query-tool) for more options.
 
 ## Annotation
 
-Annotation is mainly based on a build-in Parquet annotation method, using database format such as Parquet, duckdb, VCF, BED, TSV, JSON. External annotation tools are also available, such as BCFTOOLS, Annovar, snpEff and Exomiser. It uses available databases and homemade databases. Annovar and snpEff databases are automatically downloaded (see [HOWARD Help Databases tool](docs/help.md#databases-tool)). All annotation parameters are defined in [HOWARD Parameters JSON](docs/help.param.md) file.
+Annotation is mainly based on a build-in Parquet annotation method, using database format such as Parquet, duckdb, VCF, BED, TSV, JSON. External annotation tools are also available, such as BCFTOOLS, Annovar, snpEff, Exomiser and Splice. It uses available databases and homemade databases. Annovar and snpEff databases are automatically downloaded (see [HOWARD Help Databases tool](docs/help.md#databases-tool)). All annotation parameters are defined in [HOWARD Parameters JSON](docs/help.param.md) file.
 
 Quick annotation allows to annotates by simply listing annotation databases, or defining external tools keywords. These annotations can be combined.
 

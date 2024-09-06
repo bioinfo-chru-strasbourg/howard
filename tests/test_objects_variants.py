@@ -27,15 +27,26 @@ from test_needed import *
 
 
 @pytest.mark.parametrize(
-    "input_vcf, remove_info, add_samples",
+    "input_vcf, remove_info, add_samples, where_clause",
     [
-        (os.path.join(tests_data_folder, input_vcf), remove_info, add_samples)
+        (
+            os.path.join(tests_data_folder, input_vcf),
+            remove_info,
+            add_samples,
+            where_clause,
+        )
         for input_vcf in ["example.vcf.gz", "example.without_sample.vcf"]
         for remove_info in [True, False]
         for add_samples in [True, False]
+        for where_clause in [
+            None,
+            "",
+            """WHERE "#CHROM" == 'chr1' """,
+            """WHERE regexp_matches("INFO",'DP=') """,
+        ]
     ],
 )
-def test_export_variant_vcf(input_vcf, remove_info, add_samples):
+def test_export_variant_vcf(input_vcf, remove_info, add_samples, where_clause):
 
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
@@ -60,9 +71,30 @@ def test_export_variant_vcf(input_vcf, remove_info, add_samples):
                 remove_info=remove_info,
                 add_samples=add_samples,
                 list_samples=[],
+                where_clause=where_clause,
                 index=False,
                 threads=1,
             )
+
+            # Check number of variants
+            variants_output = Variants(
+                conn=None,
+                input=output_vcf,
+                config=config,
+                load=True,
+            )
+
+            # Input filtered
+            if not where_clause:
+                where_clause = ""
+            query = f"SELECT * FROM variants {where_clause}"
+            df_input_filtered = variants.get_query_to_df(query=query)
+
+            # Output
+            df_output = variants_output.get_query_to_df(query="SELECT * FROM variants")
+
+            assert len(df_input_filtered) == len(df_output)
+
             assert True
         except:
             assert False
@@ -2666,9 +2698,60 @@ def test_calculation_vartype_full():
             assert False
 
 
+@pytest.mark.parametrize(
+    "calculation",
+    ["snpeff_ann_explode", "snpeff_ann_explode_uniquify", "snpeff_ann_explode_json"],
+)
+def test_calculation_snpeff_ann_explode(calculation):
+    """
+    This function is a test for calculating snpeff_hgvs in a VCF file using the Variants class.
+
+    :param calculation: It looks like the `calculation` parameter is used to specify a particular
+    calculation method in the test function `test_calculation_snpeff_ann_explode`. This parameter is
+    then used to construct a parameter dictionary `param` with the calculation method specified
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.ann.vcf.gz"
+        output_vcf = f"{tmp_dir}/output.{calculation}.vcf"
+
+        # Construct param dict
+        param = {"calculation": {"calculations": {calculation: None}}}
+
+        # Create object
+        variants = Variants(
+            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+        )
+
+        # Check if no snpeff_hgvs
+        result = variants.get_query_to_df(
+            """ SELECT INFO FROM variants WHERE regexp_matches(INFO,'snpeff[^=]') """
+        )
+        assert len(result) == 0
+
+        # Calculation
+        variants.calculation()
+
+        # query annotated variant
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE regexp_matches(INFO,'snpeff[^=]') """
+        )
+        assert len(result) == 7
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
 def test_calculation_snpeff_hgvs():
     """
-    This is a test function for the calculation of snpeff_hgvs in a VCF file using the Variants class.
+    This function is a test for calculating snpeff_hgvs in a VCF file using the Variants class.
     """
 
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:

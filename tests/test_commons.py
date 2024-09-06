@@ -28,6 +28,110 @@ from howard.functions.commons import *
 from test_needed import *
 
 
+def test_detect_column_type():
+    """
+    The function `test_detect_column_type` contains test cases for detecting the type of data in a
+    column using the `detect_column_type` function.
+    """
+
+    # Test case 1: Numeric values
+    column = pd.Series([1, 2, 3, 4])
+    expected_output = "DOUBLE"
+    assert detect_column_type(column) == expected_output
+
+    # Test case 2: Datetime values
+    column = pd.to_datetime(["2022-01-01", "2022-01-02"])
+    expected_output = "DATETIME"
+    assert detect_column_type(column) == expected_output
+
+    # Test case 3: Boolean values
+    column = pd.Series([True, False, True])
+    expected_output = "BOOLEAN"
+    assert detect_column_type(column) == expected_output
+
+    # Test case 4: Mixed values
+    column = pd.Series([1, "2022-01-01", True, "Hello"])
+    expected_output = "VARCHAR"
+    assert detect_column_type(column) == expected_output
+
+
+def test_explode_annotation_format():
+
+    # Test case 1: Basic input
+    annotation = "A|B|C,D|E|F"
+    uniquify = False
+    output_format = "fields"
+    prefix = "ANN_"
+    header = ["Allele", "Annotation", "Annotation_Impact"]
+    expected_output = "ANN_Allele=A,D;ANN_Annotation=B,E;ANN_AnnotationImpact=C,F"
+    assert (
+        explode_annotation_format(annotation, uniquify, output_format, prefix, header)
+        == expected_output
+    )
+
+    # Test case 2: Uniquify and JSON format
+    annotation = "A|B|C,D|E|F"
+    uniquify = True
+    output_format = "JSON"
+    prefix = "ANN_"
+    header = ["Allele", "Annotation", "Annotation_Impact"]
+    expected_output = '{"0":{"Allele":"A","Annotation":"B","Annotation_Impact":"C"},"1":{"Allele":"D","Annotation":"E","Annotation_Impact":"F"}}'
+    assert (
+        explode_annotation_format(annotation, uniquify, output_format, prefix, header)
+        == expected_output
+    )
+
+
+def test_basic_functionality():
+    # Test the basic functionality with default separators and clearing
+    result = params_string_to_dict("app:param1=value1:param2=value2+value3")
+    expected = {"param1": "value1", "param2": "value2,value3"}
+    assert result == expected
+
+
+def test_basic_without_header():
+    # Test the basic functionality with default separators and clearing, without header
+    result = params_string_to_dict("param1=value1:param2=value2+value3", header=False)
+    expected = {"param1": "value1", "param2": "value2,value3"}
+    assert result == expected
+
+
+def test_custom_separators():
+    # Test with custom separators
+    result = params_string_to_dict(
+        "app;param1=value1;param2=value2 value3",
+        param_sep=";",
+        val_clear={"+": ",", " ": "_"},
+    )
+    expected = {"param1": "value1", "param2": "value2_value3"}
+    assert result == expected
+
+
+def test_empty_values():
+    # Test with empty values
+    result = params_string_to_dict("app:param1=:param2=")
+    expected = {"param1": None, "param2": None}
+    log.debug(f"result={result}")
+    log.debug(f"expected={expected}")
+    assert result == expected
+
+
+def test_no_clearing():
+    # Test with no clearing of values
+    result = params_string_to_dict(
+        "app:param1=value1+value2:param2=value3 value4", val_clear={}
+    )
+    expected = {"param1": "value1+value2", "param2": "value3 value4"}
+    assert result == expected
+
+
+def test_invalid_input():
+    # Test with invalid input
+    result = params_string_to_dict("=value1:param2=value2")
+    expected = {"param2": "value2"}
+    assert result == expected
+
+
 def test_help():
 
     # Init
@@ -240,7 +344,7 @@ def test_get_bin_command():
             "bcftools": {
                 "bin": "bcftools",
                 "docker": {
-                    "image": "howard:0.10.0",
+                    "image": "howard:0.11.0",
                     "entrypoint": "bcftools",
                     "options": None,
                     "command": None,
@@ -266,7 +370,7 @@ def test_get_bin_command():
         tool="bcftools", bin_type="docker", config=config, param=param
     )
     assert (
-        "run  --rm  -v /tmp/howard:/tmp/howard  --cpus=2  --memory=16g  --entrypoint='bcftools'  howard:0.10.0 "
+        "run  --rm  -v /tmp/howard:/tmp/howard  --cpus=2  --memory=16g  --entrypoint='bcftools'  howard:0.11.0 "
         in tool_command
     )
 
@@ -279,7 +383,7 @@ def test_get_bin_command():
         add_options="-v /host/path/to/mount:/inner/path_to/mount",
     )
     assert (
-        "run  --rm  -v /tmp/howard:/tmp/howard  --cpus=2  --memory=16g  --entrypoint='bcftools'  -v /host/path/to/mount:/inner/path_to/mount  howard:0.10.0 "
+        "run  --rm  -v /tmp/howard:/tmp/howard  --cpus=2  --memory=16g  --entrypoint='bcftools'  -v /host/path/to/mount:/inner/path_to/mount  howard:0.11.0 "
         in tool_command
     )
 

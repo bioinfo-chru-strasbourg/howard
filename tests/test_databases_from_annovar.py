@@ -83,7 +83,7 @@ def test_from_annovar_dbnsfp():
         output_vcf_uncompressed = re.sub(r"\.gz", "", output_vcf)
         extract_file(file_path=output_vcf, path=output_vcf_uncompressed)
         log.debug(f"[{output_vcf_expected}, {output_vcf_uncompressed}]")
-        identical([output_vcf_expected, output_vcf_uncompressed])
+        assert identical([output_vcf_expected, output_vcf_uncompressed])
 
 
 def test_from_annovar_with_multiheader():
@@ -143,7 +143,7 @@ def test_from_annovar_with_multiheader():
         output_vcf_uncompressed = re.sub(r"\.gz", "", output_vcf)
         extract_file(file_path=output_vcf, path=output_vcf_uncompressed)
         log.debug(f"[{output_vcf_expected}, {output_vcf_uncompressed}]")
-        identical([output_vcf_expected, output_vcf_uncompressed])
+        assert identical([output_vcf_expected, output_vcf_uncompressed])
 
 
 def test_from_annovar_with_header():
@@ -203,7 +203,7 @@ def test_from_annovar_with_header():
         output_vcf_uncompressed = re.sub(r"\.gz", "", output_vcf)
         extract_file(file_path=output_vcf, path=output_vcf_uncompressed)
         log.debug(f"[{output_vcf_expected}, {output_vcf_uncompressed}]")
-        identical([output_vcf_expected, output_vcf_uncompressed])
+        assert identical([output_vcf_expected, output_vcf_uncompressed])
 
 
 def test_from_annovar():
@@ -261,7 +261,7 @@ def test_from_annovar():
         output_vcf_uncompressed = re.sub(r"\.gz", "", output_vcf)
         extract_file(file_path=output_vcf, path=output_vcf_uncompressed)
         log.debug(f"[{output_vcf_expected}, {output_vcf_uncompressed}]")
-        identical([output_vcf_expected, output_vcf_uncompressed])
+        assert identical([output_vcf_expected, output_vcf_uncompressed])
 
 
 def test_from_annovar_reduce_memory():
@@ -319,7 +319,7 @@ def test_from_annovar_reduce_memory():
         output_vcf_uncompressed = re.sub(r"\.gz", "", output_vcf)
         extract_file(file_path=output_vcf, path=output_vcf_uncompressed)
         log.debug(f"[{output_vcf_expected}, {output_vcf_uncompressed}]")
-        identical([output_vcf_expected, output_vcf_uncompressed])
+        assert identical([output_vcf_expected, output_vcf_uncompressed])
 
 
 def test_from_annovar_multi_variant():
@@ -377,7 +377,7 @@ def test_from_annovar_multi_variant():
         output_vcf_uncompressed = re.sub(r"\.gz", "", output_vcf)
         extract_file(file_path=output_vcf, path=output_vcf_uncompressed)
         log.debug(f"[{output_vcf_expected}, {output_vcf_uncompressed}]")
-        identical([output_vcf_expected, output_vcf_uncompressed])
+        assert identical([output_vcf_expected, output_vcf_uncompressed])
 
 
 def test_from_annovar_reduce_memory_multi_variant():
@@ -435,4 +435,4 @@ def test_from_annovar_reduce_memory_multi_variant():
         output_vcf_uncompressed = re.sub(r"\.gz", "", output_vcf)
         extract_file(file_path=output_vcf, path=output_vcf_uncompressed)
         log.debug(f"[{output_vcf_expected}, {output_vcf_uncompressed}]")
-        identical([output_vcf_expected, output_vcf_uncompressed])
+        assert identical([output_vcf_expected, output_vcf_uncompressed])

@@ -23,6 +23,7 @@ import zipfile
 import gzip
 import requests
 import fnmatch
+import ast
 
 import random
 
@@ -100,6 +101,15 @@ DEFAULT_TOOLS_BIN = {
     "snpeff": {"jar": "~/howard/tools/snpeff/current/bin/snpEff.jar"},
     "annovar": {"perl": "~/howard/tools/annovar/current/bin/table_annovar.pl"},
     "exomiser": {"jar": "~/howard/tools/exomiser/current/bin/exomiser.jar"},
+    "docker": {"bin": "docker"},
+    "splice": {
+        "docker": {
+            "image": "bioinfochrustrasbourg/splice:0.2.1",
+            "entrypoint": "/bin/bash",
+            "options": None,
+            "command": None,
+        }
+    },
 }
 
 # URL
@@ -123,6 +133,9 @@ DEFAULT_REFSEQ_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/refseq/current"
 DEFAULT_DBNSFP_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/dbnsfp/current"
 DEFAULT_EXOMISER_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/exomiser/current"
 DEFAULT_DBSNP_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/exomiser/dbsnp"
+DEFAULT_SPLICE_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/splice"
+DEFAULT_SPLICEAI_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/spliceai"
+DEFAULT_SPIP_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/spip"
 
 # Data default folder
 DEFAULT_DATA_FOLDER = os.path.join(folder_howard_home, "data")
@@ -629,9 +642,99 @@ def find_nomen(
     return nomen_dict
 
 
+def explode_annotation_format(
+    annotation: str = "",
+    uniquify: bool = False,
+    output_format: str = "fields",
+    prefix: str = "ANN_",
+    header: list = [
+        "Allele",
+        "Annotation",
+        "Annotation_Impact",
+        "Gene_Name",
+        "Gene_ID",
+        "Feature_Type",
+        "Feature_ID",
+        "Transcript_BioType",
+        "Rank",
+        "HGVS.c",
+        "HGVS.p",
+        "cDNA.pos / cDNA.length",
+        "CDS.pos / CDS.length",
+        "AA.pos / AA.length",
+        "Distance",
+        "ERRORS / WARNINGS / INFO",
+    ],
+) -> str:
+    """
+    The `explode_annotation_format` function takes an annotation string and formats it into a specified
+    output format with optional customization parameters.
+
+    :param annotation: The `annotation` parameter is a string containing multiple annotations separated
+    by commas and pipe symbols. Each annotation consists of different fields separated by pipe symbols.
+    For example, an annotation string could look like this: "A|B|C,D|E|F"
+    :type annotation: str
+    :param uniquify: The `uniquify` parameter in the `explode_annotation_format` function is a boolean
+    flag that determines whether to keep only unique values for each annotation field. If set to `True`,
+    only unique values will be retained for each field before joining them together. If set to `False`,
+    all values, defaults to False
+    :type uniquify: bool (optional)
+    :param output_format: The `output_format` parameter specifies the format in which you want the
+    output to be generated. The function supports two output formats: "fields" and "JSON". If you choose
+    "fields", the output will be a string with annotations separated by semicolons. If you choose
+    "JSON", the, defaults to fields
+    :type output_format: str (optional)
+    :param prefix: The `prefix` parameter in the `explode_annotation_format` function is used to specify
+    the prefix that will be added to each annotation field when generating the exploded annotation
+    string. In the provided function, the default prefix value is set to "ANN_". You can customize this
+    prefix value to suit your specific, defaults to ANN_
+    :type prefix: str (optional)
+    :param header: The `header` parameter in the `explode_annotation_format` function is a list of
+    column names that will be used to create a DataFrame from the input annotation string. Each element
+    in the `header` list corresponds to a specific field in the annotation data
+    :type header: list
+    :return: The function `explode_annotation_format` returns a string that contains the exploded and
+    formatted annotation information based on the input parameters provided. The format of the returned
+    string depends on the `output_format` parameter. If `output_format` is set to "JSON", the function
+    returns a JSON-formatted string. Otherwise, it returns a string with annotations formatted based on
+    the other parameters such as `uniquify
+    """
+
+    # Split annotation ann values
+    annotation_infos = [x.split("|") for x in annotation.split(",")]
+
+    # Create Dataframe
+    annotation_dict = {}
+    for i in range(len(header)):
+        if output_format.upper() in ["JSON"]:
+            header_clean = header[i]
+        else:
+            header_clean = "".join(char for char in header[i] if char.isalnum())
+        annotation_dict[header_clean] = [x[i] for x in annotation_infos]
+    df = pd.DataFrame.from_dict(annotation_dict, orient="index").transpose()
+
+    # Fetch each annotations
+    if output_format.upper() in ["JSON"]:
+        annotation_explode = df.transpose().to_json()
+    else:
+        ann_list = []
+        for annotation in df:
+            if uniquify:
+                ann_list_infos = ",".join(df[annotation].unique())
+            else:
+                ann_list_infos = ",".join(df[annotation])
+            if ann_list_infos:
+                ann_list.append(f"{prefix}{annotation}={ann_list_infos}")
+
+        # join list
+        annotation_explode = ";".join(ann_list)
+
+    return annotation_explode
+
+
 def extract_snpeff_hgvs(
     snpeff: str = "",
-    header: str = [
+    header: list = [
         "Allele",
         "Annotation",
         "Annotation_Impact",
@@ -664,8 +767,6 @@ def extract_snpeff_hgvs(
     :return: a string that contains the HGVS annotations extracted from the input SNPEff annotation
     string.
     """
-
-    log.debug(f"snpeff={snpeff}")
 
     # Split snpeff ann values
     snpeff_infos = [x.split("|") for x in snpeff.split(",")]
@@ -708,6 +809,92 @@ def extract_snpeff_hgvs(
     snpeff_hgvs = ",".join(hgvs_list)
 
     return snpeff_hgvs
+
+
+def explode_snpeff_ann(
+    snpeff: str = "",
+    uniquify: bool = False,
+    output_format: str = "fields",
+    prefix: str = "ANN_",
+    header: list = [
+        "Allele",
+        "Annotation",
+        "Annotation_Impact",
+        "Gene_Name",
+        "Gene_ID",
+        "Feature_Type",
+        "Feature_ID",
+        "Transcript_BioType",
+        "Rank",
+        "HGVS.c",
+        "HGVS.p",
+        "cDNA.pos / cDNA.length",
+        "CDS.pos / CDS.length",
+        "AA.pos / AA.length",
+        "Distance",
+        "ERRORS / WARNINGS / INFO",
+    ],
+) -> str:
+    """
+    The `explode_snpeff_ann` function takes a string of SNPEff annotations, splits and processes them
+    based on specified parameters, and returns the processed annotations in a specified output format.
+
+    :param snpeff: The `snpeff` parameter is a string containing annotations separated by commas. Each
+    annotation is further divided into different fields separated by pipes (|)
+    :type snpeff: str
+    :param uniquify: The `uniquify` parameter in the `explode_snpeff_ann` function is a boolean flag
+    that determines whether to keep only unique values for each annotation field or not. If `uniquify`
+    is set to `True`, only unique values will be kept for each annotation field. If, defaults to False
+    :type uniquify: bool (optional)
+    :param output_format: The `output_format` parameter in the `explode_snpeff_ann` function specifies
+    the format in which the output will be generated. The function supports two output formats: "fields"
+    and "JSON", defaults to fields
+    :type output_format: str (optional)
+    :param prefix: The `prefix` parameter in the `explode_snpeff_ann` function is used to specify the
+    prefix that will be added to each annotation field in the output. For example, if the prefix is set
+    to "ANN_", then the output annotations will be formatted as "ANN_Annotation=example_annotation,
+    defaults to ANN_
+    :type prefix: str (optional)
+    :param header: The `header` parameter in the `explode_snpeff_ann` function is a list of strings that
+    represent the column names or fields for the output data. These strings include information such as
+    allele, annotation, gene name, gene ID, feature type, transcript biotype, and various other details
+    related
+    :type header: list
+    :return: The function `explode_snpeff_ann` returns a string that contains the exploded and formatted
+    SNPEff annotations based on the input parameters provided. The specific format of the returned
+    string depends on the `output_format`, `uniquify`, and other parameters specified in the function.
+    """
+
+    # Split snpeff ann values
+    snpeff_infos = [x.split("|") for x in snpeff.split(",")]
+
+    # Create Dataframe
+    snpeff_dict = {}
+    for i in range(len(header)):
+        if output_format.upper() in ["JSON"]:
+            header_clean = header[i]
+        else:
+            header_clean = "".join(char for char in header[i] if char.isalnum())
+        snpeff_dict[header_clean] = [x[i] for x in snpeff_infos]
+    df = pd.DataFrame.from_dict(snpeff_dict, orient="index").transpose()
+
+    # Fetch each annotations
+    if output_format.upper() in ["JSON"]:
+        snpeff_ann_explode = df.transpose().to_json()
+    else:
+        ann_list = []
+        for annotation in df:
+            if uniquify:
+                ann_list_infos = ",".join(df[annotation].unique())
+            else:
+                ann_list_infos = ",".join(df[annotation])
+            if ann_list_infos:
+                ann_list.append(f"{prefix}{annotation}={ann_list_infos}")
+
+        # join list
+        snpeff_ann_explode = ";".join(ann_list)
+
+    return snpeff_ann_explode
 
 
 def get_index(value, values: list = []) -> int:
@@ -1321,9 +1508,8 @@ def get_bin(
     default_folder = full_path(default_folder)
     # log.debug(f"default_folder={default_folder}")
 
-    # Config - snpEff
+    # Config
     config_tool = config.get("tools", {}).get(tool)
-    # log.debug(f"config_tool={config_tool}")
 
     # Allowed dict conf
     tool_dict_conf_type_allowed = ["jar", "java", "docker"]
@@ -1418,7 +1604,47 @@ def get_bin_command(
     default_folder: str = DEFAULT_TOOLS_FOLDER,
     add_options: str = None,
 ) -> str:
-    """ """
+    """
+    The function `get_bin_command` generates a command based on the tool type (jar, java, docker) and
+    specified parameters.
+
+    :param bin: The `bin` parameter in the `get_bin_command` function is used to specify the binary
+    executable file that you want to run. It is a string that represents the path or name of the binary
+    file. If you provide this parameter, the function will attempt to locate the binary file based on
+    the
+    :type bin: str
+    :param tool: The `tool` parameter in the `get_bin_command` function represents the name of the tool
+    for which you want to retrieve the command. It is used to identify the specific tool for which the
+    command is being generated
+    :type tool: str
+    :param bin_type: The `bin_type` parameter in the `get_bin_command` function specifies the type of
+    binary executable that the tool uses. It can have values like "bin", "jar", "java", "docker", etc.,
+    depending on the type of tool being executed. The function uses this parameter to determine,
+    defaults to bin
+    :type bin_type: str (optional)
+    :param config: The `config` parameter in the `get_bin_command` function is a dictionary that holds
+    configuration settings for the tool being used. It can include various settings such as paths,
+    environment variables, or any other configuration options needed for the tool to run properly
+    :type config: dict
+    :param param: The `param` parameter in the `get_bin_command` function is a dictionary that contains
+    additional parameters or configurations for the tool being executed. These parameters can be used to
+    customize the behavior or settings of the tool when generating the command for execution. The
+    function uses the `param` dictionary along with the
+    :type param: dict
+    :param default_folder: The `default_folder` parameter in the `get_bin_command` function is used to
+    specify the default folder where the tools are located. If a specific folder is not provided when
+    calling the function, it will default to the value of `DEFAULT_TOOLS_FOLDER`
+    :type default_folder: str
+    :param add_options: The `add_options` parameter in the `get_bin_command` function allows you to pass
+    additional options or arguments to the command being constructed based on the tool type. These
+    additional options can be specific configurations, flags, or any other parameters that you want to
+    include in the final command. When provided,
+    :type add_options: str
+    :return: The `get_bin_command` function returns a string representing the command to execute a
+    specific tool based on the provided parameters. The returned command can be either a Java command
+    for running a JAR file or a Docker command for running a Docker image/container. If the tool type is
+    not Java or Docker, it returns the default tool bin.
+    """
 
     # Tool bin and type
     tool_bin = get_bin(
@@ -1558,6 +1784,8 @@ def get_tmp(config: dict = {}, param: dict = None, default_tmp: str = "/tmp") ->
 
     # Tmp in param or config
     tmp_param = param.get("tmp", config.get("tmp", default_tmp))
+    if not tmp_param:
+        tmp_param = default_tmp
 
     # Return tmp
     return tmp_param
@@ -2890,7 +3118,7 @@ def help_generation(
         + """   howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json \n"""
         + """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet' \n"""
         + """   howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations='vartype' \n"""
-        + """   howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations=config/prioritization_profiles.json --profiles='default,GERMLINE' \n"""
+        + """   howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritization_config=config/prioritization_profiles.json --prioritizations='default,GERMLINE' \n"""
         + """   howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT "#CHROM", POS, REF, ALT, "DP", "CLNSIG", sample2, sample3 FROM variants WHERE "DP" >= 50 OR "CLNSIG" NOT NULL ORDER BY "CLNSIG" DESC, "DP" DESC' \n"""
         + """   howard stats --input=tests/data/example.vcf.gz \n"""
         + """   howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos && cat /tmp/example.tsv \n"""
@@ -3518,3 +3746,244 @@ def identical(
         if vcfs_lines[i] != vcfs_lines[i + 1]:
             return False
     return True
+
+
+def check_docker_image_exists(image_with_tag: str) -> bool:
+    """
+    Checks if a Docker image with a specific tag exists in the local repository.
+
+    :param image_with_tag: Image name with tag (e.g., "image:version")
+    :return: True if the image exists, False otherwise
+    """
+    image_name, image_tag = image_with_tag.split(":")
+    try:
+        # Run the `docker images` command and capture the output
+        result = subprocess.run(
+            ["docker", "images", "--format", "json"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        # Check for errors
+        if result.returncode != 0:
+            log.warning(f"Error running Docker command: {result.stderr}")
+            return False
+
+        # Search for the image with the specified tag in the command output
+        for image in result.stdout.split("\n"):
+            if image:
+                image_dict = ast.literal_eval(image)
+                if (
+                    image_dict.get("Repository") == image_name
+                    and image_dict.get("Tag") == image_tag
+                ):
+                    log.debug(f"Find locally {image_with_tag}")
+                    return True
+        return False
+    except Exception as e:
+        log.warning(f"Docker image check: {e}")
+        return False
+
+
+def params_string_to_dict(
+    params: str,
+    param_sep: str = ":",
+    var_val_sep: str = "=",
+    val_clear: dict = {"+": ",", " ": ""},
+    header: bool = True,
+) -> dict:
+    """
+    The `params_string_to_dict` function in Python converts a string of parameters into a dictionary
+    using specified separators and clears certain characters from the parameter values.
+
+    :param params: The `params` parameter in the `params_string_to_dict` function is a string of
+    parameters that you want to convert into a dictionary. It contains the information you want to parse
+    and organize into key-value pairs
+    :type params: str
+    :param param_sep: The `param_sep` parameter in the `params_string_to_dict` function is used to
+    specify the separator that separates different parameters in the input string `params`. By default,
+    the `param_sep` is set to ":" in the function definition. This means that the function expects the
+    parameters in the input, defaults to :
+    :type param_sep: str (optional)
+    :param var_val_sep: The `var_val_sep` parameter in the `params_string_to_dict` function is used to
+    specify the separator between the variable and value in the input string `params`. By default, it is
+    set to `"="`, which means that the function expects the format of each parameter in the `params`,
+    defaults to =
+    :type var_val_sep: str (optional)
+    :param val_clear: The `val_clear` parameter in the `params_string_to_dict` function is a dictionary
+    that contains key-value pairs used to clear specific characters from the parameter values before
+    storing them in the resulting dictionary
+    :type val_clear: dict
+    :param header: The `header` parameter in the `params_string_to_dict` function is a boolean flag that
+    determines whether the input string `params` has a header that should be skipped when processing the
+    parameters. If `header` is set to `True`, the function will start processing parameters from the
+    second line onwards, defaults to True
+    :type header: bool (optional)
+    :return: The function `params_string_to_dict` returns a dictionary containing the parameters
+    extracted from the input string `params`.
+    """
+
+    # Params dict
+    params_dict = {}
+
+    # Header
+    if header:
+        start = 1
+    else:
+        start = 0
+
+    # Params
+    params_split = params.split(param_sep)
+    for params_option in params_split[start:]:
+        if params_option != "":
+            params_option_var_val = params_option.split(var_val_sep)
+            params_option_var = params_option_var_val[0].strip()
+            params_option_val = params_option_var_val[1].strip()
+            if params_option_val is not None:
+                if params_option_val in [""]:
+                    params_option_val = None
+                else:
+                    # clear value
+                    for c in val_clear.items():
+                        params_option_val = params_option_val.replace(c[0], c[1])
+                params_dict[params_option_var] = params_option_val
+    return params_dict
+
+
+def determine_value_type(
+    value: str, sep: str = ";", skip_null: list = ["", "."]
+) -> str:
+    """
+    The function `determine_value_type` determines the type of a given value in a string format,
+    handling lists of values separated by a specified separator and skipping specified null-like
+    values.
+
+    :param value: The `value` parameter in the `determine_value_type` function is the input value
+    that you want to determine the type of. It can be a string containing one or more values
+    separated by a specified separator (default is ';')
+    :type value: str
+    :param sep: The `sep` parameter in the `determine_value_type` function is used to specify the
+    separator character that is used to split the input `value` string into individual values. By
+    default, the separator is set to ";", but you can change it to a different character if needed,
+    defaults to ;
+    :type sep: str (optional)
+    :param skip_null: The `skip_null` parameter in the `determine_value_type` function is a list
+    that contains values that should be skipped during the type determination process. These values
+    are considered as null-like or empty values and are not taken into account when determining the
+    type of the given value
+    :type skip_null: list
+    :return: The function `determine_value_type` returns a string indicating the type of the given
+    value. The possible return values are:
+    - "VARCHAR" if the value contains at least one non-numeric character
+    - "DOUBLE" if the value contains at least one floating-point number
+    - "BIGINT" if the value contains only integers
+    - None if the value is empty or does not match any
+    """
+
+    # Split the value by sep (dafult ';') to handle lists of values
+    values = str(value).split(sep)
+
+    has_float = False
+    has_int = False
+    has_string = False
+
+    for val in values:
+        val = val.strip()
+
+        # Skip empty or null-like values
+        if skip_null and val in skip_null:
+            continue
+
+        # Check if value is integer
+        if re.match(r"^-?\d+$", val):
+            has_int = True
+        # Check if value is float
+        elif re.match(r"^-?\d*\.\d+$", val):
+            has_float = True
+        else:
+            has_string = True
+            return "VARCHAR"  # force return VARCHAR to speed up
+
+    if has_string:
+        return "VARCHAR"
+    elif has_float:
+        return "DOUBLE"
+    elif has_int:
+        return "BIGINT"
+    else:
+        return None  # Default to None if no identifiable type is found
+
+
+def determine_column_types(values_list: list) -> str:
+    """
+    The function `determine_column_types` analyzes a list of values to determine the predominant
+    data type among VARCHAR, DOUBLE, and BIGINT.
+
+    :param values_list: It seems like you have provided the code snippet for a function that
+    determines the type of values in a list, but you have not provided the actual values_list that
+    the function will operate on. If you provide me with the values_list, I can help you test the
+    function and see how it determines the
+    :type values_list: list
+    :return: the type of the column based on the types of values present in the input list. It will
+    return "VARCHAR" if the list contains any string values, "DOUBLE" if it contains any float
+    values, "BIGINT" if it contains any integer values, and "VARCHAR" if none of the specific types
+    are found.
+    """
+
+    has_float = False
+    has_int = False
+    has_string = False
+
+    for value in values_list:
+        value_type = determine_value_type(value)
+
+        if value_type == "VARCHAR":
+            has_string = True
+            return "VARCHAR"  # force return VARCHAR to speed up
+        elif value_type == "DOUBLE":
+            has_float = True
+        elif value_type == "BIGINT":
+            has_int = True
+
+    if has_string:
+        return "VARCHAR"
+    elif has_float:
+        return "DOUBLE"
+    elif has_int:
+        return "BIGINT"
+    else:
+        return "VARCHAR"  # Default to VARCHAR if no identifiable type is found
+
+
+def detect_column_type(column) -> str:
+    """
+    The function `detect_column_type` determines the type of a given column in a DataFrame as either
+    DATETIME, BOOLEAN, DOUBLE, or VARCHAR.
+
+    :param column: The function `detect_column_type` takes a column as input and determines its data
+    type based on certain conditions. The conditions are as follows:
+    :return: The function `detect_column_type` returns a string indicating the type of data in the input
+    column. The possible return values are "DATETIME", "BOOLEAN", "DOUBLE", or "VARCHAR" based on the
+    conditions checked in the function.
+    """
+
+    from pandas.api.types import is_datetime64_any_dtype as is_datetime
+
+    if is_datetime(column):
+        return "DATETIME"
+    elif column.dropna().apply(lambda x: str(x).lower() in ["true", "false"]).all():
+        return "BOOLEAN"
+    elif pd.to_numeric(column, errors="coerce").notnull().all():
+        return "DOUBLE"
+    else:
+        return "VARCHAR"
+
+
+def determine_column_number(values_list: list) -> str:
+    """ """
+
+    for value in values_list:
+        if ";" in str(value):
+            return "."
+
+    return "1"

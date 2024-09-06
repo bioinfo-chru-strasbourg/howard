@@ -1,5 +1,24 @@
 # RELEASE NOTES
 
+## 0.11.0
+
+This release introduce splice annotation tool, and update duckDB python package for improve stability.
+
+### News
+- Add splice tool with docker image
+- Add plugins:
+   - 'genebe' (GeneBe annotation using REST API)
+   - 'minimalize' (Minimalize a VCF file, such as removing INFO/Tags or samples)
+
+### Updates
+- DuckDB 1.0.0 stable Snow Duck (Anas Nivis) release
+- Add API Documentation
+- Improve tests
+
+### Fixes
+- Paths parameters check fixed (genome and genomes-folders)
+- Fix snpEff download error with databases list
+
 ## 0.10.0
 
 This release is a refactor of HOWARD (Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery) in Python, using Parquet and duckDB. 

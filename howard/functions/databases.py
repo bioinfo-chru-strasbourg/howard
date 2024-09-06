@@ -751,7 +751,17 @@ def databases_download_snpeff(
         if not os.path.exists(folder_assembly):
 
             # Download list of databases if file does not exists
-            if not os.path.exists(snpeff_databases_list_path):
+            if not os.path.exists(snpeff_databases_list_path) or (
+                os.path.exists(snpeff_databases_list_path)
+                and os.path.getsize(snpeff_databases_list_path) == 0
+            ):
+                if (
+                    os.path.exists(snpeff_databases_list_path)
+                    and os.path.getsize(snpeff_databases_list_path) == 0
+                ):
+                    log.warning(
+                        f"Download snpEff databases {[assembly]} - list of databases empty - download '{snpeff_databases_list_path}' required"
+                    )
                 snpeff_command_list_databases = f""" {java_bin} -jar {snpeff_bin} databases > {snpeff_databases_list_path} """
                 log.info(
                     f"Download snpEff databases {assemblies} - list of databases..."
@@ -776,17 +786,15 @@ def databases_download_snpeff(
                     )
 
             if not snpeff_list_databases:
-                log.error(
-                    f"Download snpEff databases {[assembly]} - list of databases empty - check file '{snpeff_databases_list_path}'"
-                )
-                raise ValueError(
-                    f"Download snpEff databases {[assembly]} - list of databases empty - check file '{snpeff_databases_list_path}'"
-                )
+                msg_err = f"Download snpEff databases {[assembly]} - list of databases empty - check file '{snpeff_databases_list_path}'"
+                log.error(msg_err)
+                raise ValueError(msg_err)
 
             # Start download
             log.info(f"Download snpEff databases {[assembly]} - downloading...")
             # Try to download files
             file_path = None
+            file_url = None
             for file_url in snpeff_list_databases.get(assembly, []):
                 # File to be downloaded
                 file_path = os.path.join(folder, os.path.basename(file_url))
@@ -807,7 +815,11 @@ def databases_download_snpeff(
                         log.error(f"Download snpEff '{file_url}' failed")
 
             # If download file exists
-            if file_path is not None and os.path.exists(file_path):
+            if (
+                file_path is not None
+                and os.path.exists(file_path)
+                and file_url is not None
+            ):
                 log.info(f"Download snpEff databases {[assembly]} - extracting...")
                 log.debug(f"Extract file {file_path} to {folder}...")
                 # Extract file
@@ -1391,10 +1403,11 @@ def databases_download_dbnsfp(
     genomes_folder: str = None,
     add_info: bool = False,
     row_group_size: int = 100000,
+    uniquify: bool = False,
 ) -> bool:
     """
-    The function `databases_download_dbnsfp` is used to download and process dbNSFP databases for specified
-    genome assemblies.
+    The `databases_download_dbnsfp` function is used to download and process dbNSFP databases for
+    specified genome assemblies, generating Parquet and VCF files based on the provided configurations.
 
     :param assemblies: A list of genome assemblies for which to download and process dbNSFP data. Each
     assembly should be specified as a string
@@ -1403,41 +1416,68 @@ def databases_download_dbnsfp(
     dbNSFP database files are located. If this parameter is not provided, the function will attempt to
     download the dbNSFP database files from the `dbnsfp_url` parameter
     :type dbnsfp_folder: str
-    :param dbnsfp_url: The URL where the dbNSFP database files can be downloaded from
+    :param dbnsfp_url: The `dbnsfp_url` parameter represents the URL from which the dbNSFP database
+    files can be downloaded. This URL is used by the function to fetch the necessary database files for
+    processing
     :type dbnsfp_url: str
-    :param dbnsfp_release: The version of the dbNSFP database to be used. The default value is "4.4a",
-    defaults to 4.4a
+    :param dbnsfp_release: The `dbnsfp_release` parameter specifies the version of the dbNSFP database
+    to be used. The default value is "4.4a", but you can specify a different version if needed, defaults
+    to 4.4a
     :type dbnsfp_release: str (optional)
     :param threads: The `threads` parameter specifies the number of threads to use for parallel
     processing. It determines how many tasks can be executed simultaneously. Increasing the number of
     threads can potentially speed up the execution time of the function, especially if there are
     multiple cores available on the machine
-    :type threads: int (optional)
-    :param memory: The `memory` parameter specifies the amount of max memory (in Gb) to use for sorting.
-    defaults to 1
+    :type threads: int
+    :param memory: The `memory` parameter specifies the amount of maximum memory (in gigabytes) to use
+    for sorting. It is used in the context of processing and sorting data efficiently. The default value
+    for this parameter is set to 1, meaning that 1 gigabyte of memory will be allocated for sorting
+    operations, defaults to 1
     :type memory: int (optional)
-    :param parquet_size: The parameter "parquet_size" is used to specify the maximum size (Mb) of data files in parquet folder. It is an optional parameter and its value should be an integer
+    :param parquet_size: The `parquet_size` parameter is used to specify the maximum size (in megabytes)
+    of data files in the Parquet folder. It determines the size at which the Parquet files will be split
+    or generated. The value should be an integer representing the size in megabytes, defaults to 100
     :type parquet_size: int (optional)
-    :param generate_parquet_file: A boolean flag indicating whether to generate a parquet file or not,
-    defaults to False
+    :param generate_parquet_file: The `generate_parquet_file` parameter is a boolean flag indicating
+    whether to generate a Parquet file or not. If set to `True`, the function will create Parquet files
+    based on the specified parameters and data. If set to `False`, the function will not generate
+    Parquet files, defaults to False
     :type generate_parquet_file: bool (optional)
-    :param generate_sub_databases: A boolean parameter that determines whether to generate sub-databases
-    or not. If set to True, the function will generate sub-databases based on the assemblies provided.
-    If set to False, the function will not generate sub-databases, defaults to False
+    :param generate_sub_databases: The `generate_sub_databases` parameter in the
+    `databases_download_dbnsfp` function determines whether to generate sub-databases based on the
+    assemblies provided. If set to `True`, the function will create sub-databases based on the specified
+    genome assemblies. If set to `False`, the function, defaults to False
     :type generate_sub_databases: bool (optional)
-    :param generate_vcf_file: A boolean flag indicating whether to generate a VCF file or not,
+    :param generate_vcf_file: The `generate_vcf_file` parameter is a boolean flag indicating whether to
+    generate a VCF file or not. If set to `True`, the function will generate a VCF file based on the
+    specified parameters and data. If set to `False`, the function will not generate a VCF file,
     defaults to False
     :type generate_vcf_file: bool (optional)
-    :param not_generate_files_all: A boolean flag indicating to not generate database Parquet/VCF file for the entire database,
-    defaults to False
+    :param not_generate_files_all: The `not_generate_files_all` parameter is a boolean flag that
+    indicates whether to skip generating database Parquet/VCF files for the entire database. If set to
+    `True`, the function will not generate files for the entire database. If set to `False`, the
+    function will proceed with generating files for, defaults to False
     :type not_generate_files_all: bool (optional)
-    :param genomes_folder: A string that specifies where are genomes
-    :type genomes_folder: str (optional)
-    :param add_info: Add INFO column in Parquet folder/file
+    :param genomes_folder: The `genomes_folder` parameter specifies the folder where the genome files
+    are located. It is a string that represents the path to the folder containing genome assemblies
+    :type genomes_folder: str
+    :param add_info: The `add_info` parameter in the `databases_download_dbnsfp` function is a boolean
+    flag that determines whether to include an INFO column in the Parquet folder/file. If set to `True`,
+    the function will add an INFO column to the generated Parquet files. This INFO column will, defaults
+    to False
     :type add_info: bool (optional)
-    :param row_group_size: Row group size to generate parquet folder and file (see duckDB doc)
+    :param row_group_size: The `row_group_size` parameter specifies the row group size to generate the
+    Parquet folder and file. It is used to control the size of row groups in the Parquet file. This
+    parameter affects the organization of data within the Parquet file and can impact performance and
+    memory usage during processing. The, defaults to 100000
     :type row_group_size: int (optional)
-    :return: bool as success or not
+    :param uniquify: The `uniquify` parameter in the `databases_download_dbnsfp` function is a boolean
+    flag that determines whether to generate unique values for each annotation in the Parquet file,
+    defaults to False
+    :type uniquify: bool (optional)
+    :return: The function `databases_download_dbnsfp` returns a boolean value indicating whether the
+    process of downloading and processing dbNSFP databases for specified genome assemblies was
+    successful or not.
     """
 
     def get_database_files(pattern: str) -> List:
@@ -1460,47 +1500,79 @@ def databases_download_dbnsfp(
         database_file: str, sample_size: int = 1000000, threads: int = 1
     ) -> dict:
         """
-        The function `get_columns_structure` creates a view of a database file and retrieves the structure
-        of its columns.
+        The `get_columns_structure` function retrieves the column structure of a database file by
+        creating a view and analyzing a sample of rows, returning a dictionary with column names and
+        data types.
 
         :param database_file: The `database_file` parameter is a string that represents the path to the
-        database file that you want to retrieve the column structure from
+        database file from which you want to retrieve the column structure. It should be a valid file
+        path pointing to the database file you want to analyze
         :type database_file: str
-        :param sample_size: The `sample_size` parameter is an optional parameter that specifies the
-        number of rows to sample from the database file in order to determine the structure of the
-        columns. By default, it is set to 1,000,000. This means that the function will read a sample of
-        1,000, defaults to 1000000
+        :param sample_size: The `sample_size` parameter in the `get_columns_structure` function
+        specifies the number of rows to sample from the database file in order to determine the
+        structure of the columns. By default, it is set to 1,000,000. This means that the function will
+        read a sample of, defaults to 1000000
         :type sample_size: int (optional)
-        :param threads: The `threads` parameter specifies the number of threads to use for parallel
-        processing. It determines how many tasks can be executed simultaneously. Increasing the number of
-        threads can potentially speed up the execution time of the function, especially if there are
-        multiple cores available on the machine
+        :param threads: The `threads` parameter in the `get_columns_structure` function specifies the
+        number of threads to use for parallel processing. Increasing the number of threads can
+        potentially speed up the execution time of the function, especially if there are multiple cores
+        available on the machine. By default, this parameter is set to, defaults to 1
         :type threads: int (optional)
-        :return: a dictionary called `columns_structure` which contains the column names and their
-        corresponding data types from the database file.
+        :return: The `get_columns_structure` function returns a dictionary named `columns_structure`
+        which contains the column names and their corresponding data types from the database file.
         """
 
         # Check columns structure
-        log.info(f"Download dbNSFP {assemblies} - Check database structure...")
+        log.info(f"Download dbNSFP {assemblies} - Check database structure")
+
+        # Connexion for structure
+        db_structure = duckdb.connect(config={"threads": threads})
 
         # Create view and retrive structure
         query = f"""
-                    CREATE VIEW view_for_structure AS
-                    (SELECT *
+            CREATE TABLE view_for_structure AS
+                (
+                    SELECT *
                     FROM read_csv_auto('{database_file}', compression=gzip, ALL_VARCHAR=0, delim='\t', nullstr='.', sample_size={sample_size})
+                    LIMIT {sample_size}
                 )
             """
-        # log.debug(query)
-        db_structure = duckdb.connect(config={"threads": threads})
+        log.debug(
+            f"Download dbNSFP {assemblies} - Check database structure - Create view..."
+        )
         db_structure.execute(query)
+
+        # Retrieve structure
+        log.debug(
+            f"Download dbNSFP {assemblies} - Check database structure - Retrieve database structure..."
+        )
         res_structure = db_structure.query("PRAGMA table_info('view_for_structure');")
 
         # Constructure structure dict
-        columns_structure = {}
+        columns_structure = {"DB": {}, "Type": {}, "Number": {}}
+
+        # Determine type for duckDB
+        log.debug(
+            f"Download dbNSFP {assemblies} - Check database structure - Construct DB structure dict..."
+        )
         for column in res_structure.df().iterrows():
             column_name = column[1].iloc[1]
             data_type = column[1].iloc[2]
-            columns_structure[column_name] = data_type
+            columns_structure["DB"][column_name] = data_type
+
+        # Determine type for VCF
+        log.debug(
+            f"Download dbNSFP {assemblies} - Check database structure - Construct VCF structure dict (Type and Number)..."
+        )
+
+        for column in columns_structure["DB"]:
+            res = db_structure.query(f"""SELECT "{column}" FROM view_for_structure;""")
+            # Type
+            column_type = determine_column_types(list(res.df()[column]))
+            columns_structure["Type"][column] = column_type
+            # Number
+            column_number = determine_column_number(list(res.df()[column]))
+            columns_structure["Number"][column] = column_number
 
         # Log
         log.info(
@@ -1543,13 +1615,16 @@ def databases_download_dbnsfp(
         null_if_no_annotation: bool = True,
         print_log: bool = True,
         add_info: bool = False,
+        uniquify: bool = False,
     ) -> dict:
         """
-        The `get_columns_select_clause` function generates the SELECT and WHERE clauses for a SQL query
-        based on the input columns structure, assembly, sub-database, and null_if_no_annotation flag.
+        The `get_columns_select_clause` function generates SELECT and WHERE clauses for a SQL query
+        based on input columns structure, assembly, sub-database, and other optional parameters.
 
-        :param columns_structure: A dictionary that represents the structure of the columns. Each key is
-        a column name and the corresponding value is the column type
+        :param columns_structure: The `columns_structure` parameter is a dictionary that represents the
+        structure of the columns. Each key in the dictionary is a column name, and the corresponding
+        value is the column type. This parameter provides the information needed to generate the SELECT
+        and WHERE clauses for a SQL query based on the specified columns
         :type columns_structure: dict
         :param assembly: The `assembly` parameter specifies the genome assembly version. It can take
         values like "hg19", "hg38", or "hg18". By default, it is set to "hg19", defaults to hg19
@@ -1564,22 +1639,27 @@ def databases_download_dbnsfp(
         sub-database. If a sub-database is provided, only columns that belong to that sub-database or
         start with the sub-database
         :type sub_database: str
-        :param null_if_no_annotation: The `null_if_no_annotation` parameter is a boolean parameter that
-        determines whether to return null if there are no annotations found. If set to True, the
-        function will return null if there are no annotations. If set to False, the function will return
-        an empty string if there are no annotations, defaults to True
+        :param null_if_no_annotation: The `null_if_no_annotation` parameter is a boolean parameter in
+        the `get_columns_select_clause` function. When set to `True`, this parameter determines whether
+        to return null if there are no annotations found. If there are no annotations found and
+        `null_if_no_annotation` is `True`, the, defaults to True
         :type null_if_no_annotation: bool (optional)
-        :param print_log: The `log` parameter is a boolean flag that determines whether to enable logging or
-        not. If set to `True`, the function will log debug messages during execution. If set to `False`,
-        logging will be disabled, defaults to True
+        :param print_log: The `print_log` parameter in the `get_columns_select_clause` function is a
+        boolean flag that determines whether to enable logging or not. If set to `True`, the function
+        will log debug messages during execution. If set to `False`, logging will be disabled. By
+        default, this parameter is, defaults to True
         :type print_log: bool (optional)
-        :param add_info: Add INFO column in Parquet folder/file
+        :param add_info: The `add_info` parameter in the `get_columns_select_clause` function is a
+        boolean flag that determines whether to include an "INFO" column in the Parquet folder/file. If
+        `add_info` is set to `True`, the function will concatenate and format the selected annotations
+        into an "INFO, defaults to False
         :type add_info: bool (optional)
-        :return: The `get_columns_select_clause` function returns a dictionary containing the "select"
-        and "where" clauses for a SQL query. The "select" clause includes the columns to be selected in
-        the query, while the "where" clause includes the conditions for filtering the data.
-        Additionally, the dictionary also includes a "annotations" key that contains a dictionary of the
-        selected annotations and their corresponding column types.
+        :param uniquify: The `uniquify` parameter in the `get_columns_select_clause` function is a
+        boolean flag that determines whether to include unique values for each annotation column,
+        defaults to False
+        :type uniquify: bool (optional)
+        :return: The `get_columns_select_clause` function returns a dictionary containing the following
+        keys and their corresponding values:
         """
 
         columns_select_position = {}
@@ -1680,30 +1760,49 @@ def databases_download_dbnsfp(
                                     THEN 
                                         concat(
                                             '{column_alias}=',
-                                            "{column_alias}",
+                                            replace(CAST("{column_alias}" AS VARCHAR), ';', ','),
                                             ';'
                                         )
                                     ELSE ''
                                 END
                             """
                         else:
-                            # columns for each annotation
-                            column_key = f"""
-                                list_aggregate(list_distinct(array_filter(string_split(CAST("{column}" AS VARCHAR), ';'), x -> x != '.')), 'string_agg', ',') AS "{column_alias}"
-                            """
-                            # columns for INFO clumn
-                            column_info_key = f"""
-                                CASE
-                                    WHEN len(list_distinct(array_filter(string_split(CAST("{column}" AS VARCHAR), ';'), x -> x != '.'))) > 0
-                                    THEN 
-                                        concat(
-                                            '{column_alias}=',
-                                            list_aggregate(list_distinct(array_filter(string_split(CAST("{column}" AS VARCHAR), ';'), x -> x != '.')), 'string_agg', ','),
-                                            ';'
-                                        )
-                                    ELSE ''
-                                END
-                            """
+                            if uniquify:
+                                # columns for each annotation
+                                column_key = f"""
+                                    list_aggregate(list_distinct(array_filter(string_split(CAST("{column}" AS VARCHAR), ';'), x -> x != '.')), 'string_agg', ',') AS "{column_alias}"
+                                """
+                                # columns for INFO clumn
+                                column_info_key = f"""
+                                    CASE
+                                        WHEN len(list_distinct(array_filter(string_split(CAST("{column}" AS VARCHAR), ';'), x -> x != '.'))) > 0
+                                        THEN 
+                                            concat(
+                                                '{column_alias}=',
+                                                list_aggregate(list_distinct(array_filter(string_split(CAST("{column}" AS VARCHAR), ';'), x -> x != '.')), 'string_agg', ','),
+                                                ';'
+                                            )
+                                        ELSE ''
+                                    END
+                                """
+                            else:
+                                # columns for each annotation
+                                column_key = f"""
+                                    replace(CAST("{column}" AS VARCHAR), ';', ',') AS "{column_alias}"
+                                """
+                                # columns for INFO clumn
+                                column_info_key = f"""
+                                    CASE
+                                        WHEN len(list_distinct(array_filter(string_split(CAST("{column}" AS VARCHAR), ';'), x -> x != '.'))) > 0
+                                        THEN 
+                                            concat(
+                                                '{column_alias}=',
+                                                replace(CAST("{column}" AS VARCHAR), ';', ','),
+                                                ';'
+                                            )
+                                        ELSE ''
+                                    END
+                                """
                             column_where = f""" "{column}" IS NOT NULL """
                         columns_info_annotations[column_info_key] = None
                         columns_select_annotations[column_key] = columns_structure[
@@ -1721,7 +1820,7 @@ def databases_download_dbnsfp(
             columns_select_position = {'"#CHROM"': "#CHROM", '"POS"': "POS"}
             columns_select_ref_alt = {'"REF"': "REF", '"ALT"': "ALT"}
 
-        # DEVEL
+        # Add INFO
         if add_info:
             info_concat = f"""
                 regexp_replace(
@@ -1912,10 +2011,11 @@ def databases_download_dbnsfp(
             annotation_name = clean_name(annotation)
 
             if annotation_name in annotations:
-                # log.debug(f"{annotation}: {readme_annotations_description[annotation]}")
-                vcf_header_infos_number = "."
+                vcf_header_infos_number = columns_structure.get("Number", {}).get(
+                    annotation, "."
+                )
                 vcf_header_infos_type = code_type_map_from_sql.get(
-                    columns_structure.get(annotation, "VARCHAR"), "String"
+                    columns_structure.get("Type").get(annotation, "VARCHAR"), "String"
                 )
                 vcf_header_infos_description = (
                     readme_annotations_description[annotation]
@@ -2012,8 +2112,6 @@ def databases_download_dbnsfp(
                 threads=threads,
             )
 
-        # log.info(f"Download dbNSFP ['{assembly}']")
-
         # Output prefix
         output_prefix = f"{dbnsfp_folder}/{assembly}/dbNSFP{dbnsfp_release}"
 
@@ -2022,10 +2120,11 @@ def databases_download_dbnsfp(
 
         # Create clauses (select and where)
         columns_clauses = get_columns_select_clause(
-            columns_structure=columns_structure,
+            columns_structure=columns_structure["DB"],
             assembly=assembly,
             sub_database=sub_database,
             add_info=add_info,
+            uniquify=uniquify,
         )
         columns_select_clause = columns_clauses.get("select")
         columns_annotations = columns_clauses.get("annotations")
@@ -2077,8 +2176,8 @@ def databases_download_dbnsfp(
                                 delim='\t',
                                 compression=gzip,
                                 nullstr='.',
-                                columns={columns_structure},
-                                types={columns_structure}
+                                columns={columns_structure["DB"]},
+                                types={columns_structure["DB"]}
                                 )
                             WHERE \"#CHROM\" IS NOT NULL
                             )
@@ -2175,8 +2274,16 @@ def databases_download_dbnsfp(
                 )
             if not columns_structure and len(database_files):
                 columns_structure = get_columns_structure(
-                    database_file=database_files[0], sample_size=10, threads=threads
+                    database_file=database_files[0],
+                    sample_size=sample_size,
+                    threads=threads,
                 )
+                # columns_structure_vcf = get_columns_structure(
+                #     database_file=database_files[0],
+                #     sample_size=sample_size,
+                #     threads=threads,
+                #     output_type="VCF",
+                # )
 
             output_prefix = f"{dbnsfp_folder}/{assembly}/dbNSFP{dbnsfp_release}"
             parquet_all_annotation = (
@@ -2186,11 +2293,11 @@ def databases_download_dbnsfp(
             sub_databases_structure = {}
 
             # Find sub databases
-            for column in columns_structure:
+            for column in columns_structure["DB"]:
                 sub_database = clean_name(column).split("_")[0].upper()
                 if sub_database not in sub_databases_structure:
                     sub_databases_structure[sub_database] = {}
-                sub_databases_structure[sub_database][column] = columns_structure[
+                sub_databases_structure[sub_database][column] = columns_structure["DB"][
                     column
                 ]
 
@@ -2204,13 +2311,14 @@ def databases_download_dbnsfp(
 
                 # Clauses
                 columns_clauses = get_columns_select_clause(
-                    columns_structure=columns_structure,
+                    columns_structure=columns_structure["DB"],
                     assembly=assembly,
                     for_parquet=True,
                     sub_database=sub_database,
                     null_if_no_annotation=True,
                     print_log=False,
                     add_info=add_info,
+                    uniquify=uniquify,
                 )
                 columns_select_clause = columns_clauses.get("select")
                 columns_where_clause = columns_clauses.get("where")
@@ -2264,7 +2372,6 @@ def databases_download_dbnsfp(
                                     )
                                 TO '{parquet_sub_database_annotation_chromosome}' WITH (FORMAT PARQUET, PER_THREAD_OUTPUT TRUE, ROW_GROUP_SIZE {row_group_size})
                                 """
-
                             db_copy.query(query_copy)
 
                             # Split parquet to max size
@@ -2491,17 +2598,18 @@ def databases_download_dbnsfp(
                             if not columns_structure:
                                 columns_structure = get_columns_structure(
                                     database_file=database_files[0],
-                                    sample_size=10,
+                                    sample_size=sample_size,
                                     threads=threads,
                                 )
                             columns_clauses = get_columns_select_clause(
-                                columns_structure=columns_structure,
+                                columns_structure=columns_structure["DB"],
                                 assembly=assembly,
                                 for_parquet=True,
                                 sub_database=sub_database,
                                 null_if_no_annotation=True,
                                 print_log=False,
                                 add_info=add_info,
+                                uniquify=uniquify,
                             )
                             columns_annotations = columns_clauses.get("annotations")
 

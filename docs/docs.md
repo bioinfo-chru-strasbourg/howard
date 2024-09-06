@@ -14,10 +14,18 @@ howard help --help_json_input=docs/json/help.param.databases.json --help_json_in
 ## Generate HTML and PDF
 
 Use VSCode `Markdown PDF` plugin to generate HTML and PDF from MarkDown files
+All files in 'docs' and README.md
 
 ## Generate pydoc html
 
 ```bash
 ./docs/pdoc.sh
 ```
-
+or
+```bash
+folder=docs/pdoc
+mkdir -p $folder
+pip install pdoc==14.5.1
+export PDOC_DISPLAY_ENV_VARS=1
+pdoc -o $folder howard
+```

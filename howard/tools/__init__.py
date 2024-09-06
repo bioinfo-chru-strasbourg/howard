@@ -10,5 +10,4 @@ __all__ = [
     "databases",
     "gui",
     "help",
-    "from_annovar",
 ]

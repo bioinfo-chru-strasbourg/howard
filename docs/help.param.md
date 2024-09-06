@@ -30,6 +30,16 @@ HOWARD Parameters JSON file defines parameters to process annotations, calculati
          - [annotations](#annotationsnpsiftannotations)
       - [exomiser](#annotationexomiser)
          - [release](#annotationexomiserrelease)
+         - [transcript_source](#annotationexomisertranscript_source)
+         - [hpo](#annotationexomiserhpo)
+      - [splice](#annotationsplice)
+         - [split_mode](#annotationsplicesplit_mode)
+         - [spliceai_distance](#annotationsplicespliceai_distance)
+         - [spliceai_mask](#annotationsplicespliceai_mask)
+         - [transcript](#annotationsplicetranscript)
+         - [rm_snps](#annotationsplicerm_snps)
+         - [rm_annot](#annotationsplicerm_annot)
+         - [whitespace](#annotationsplicewhitespace)
       - [options](#annotationoptions)
          - [annotations_update](#annotationoptionsannotations_update)
          - [annotations_append](#annotationoptionsannotations_append)
@@ -57,6 +67,14 @@ HOWARD Parameters JSON file defines parameters to process annotations, calculati
       - [explode_infos](#explodeexplode_infos)
       - [explode_infos_prefix](#explodeexplode_infos_prefix)
       - [explode_infos_fields](#explodeexplode_infos_fields)
+   - [transcripts](#transcripts)
+      - [table](#transcriptstable)
+      - [transcripts_info_field](#transcriptstranscripts_info_field)
+      - [transcripts_info_json](#transcriptstranscripts_info_json)
+      - [struct](#transcriptsstruct)
+         - [from_column_format](#transcriptsstructfrom_column_format)
+         - [from_columns_map](#transcriptsstructfrom_columns_map)
+      - [prioritization](#transcriptsprioritization)
    - [threads](#threads)
    - [databases](#databases)
 
@@ -718,7 +736,7 @@ Annotation process using Exomiser tool and options (see [Exomiser website docume
 
 Examples: 
 
-> Annotation with Exomiser, using database relse '2109', transcripts source as UCSC and a list of HPO terms.
+> Annotation with Exomiser, using database release '2109', transcripts source as UCSC and a list of HPO terms.
 
 ```json
 "exomiser": {
@@ -738,6 +756,142 @@ Examples:
 
 ```json
 "release": "2109"
+```
+
+#### annotation::exomiser::transcript_source
+
+Transcription source of Exomiser. This option replace the release variable in 'application.properties' file (see 'exomiser_application_properties' option). The release will be downloaded if it is not available locally. 
+
+Examples: 
+
+> Annotation with transcription source 'refseq' of Exomiser.
+
+```json
+"transcript_source": "refseq"
+```
+
+#### annotation::exomiser::hpo
+
+List of HPO for Exomiser. This option replace the release variable in 'application.properties' file (see 'exomiser_application_properties' option). The release will be downloaded if it is not available locally. 
+
+Examples: 
+
+> Annotation with a list of 4 HPO for Exomiser.
+
+```json
+"hpo": ["HP:0001156", "HP:0001363", "HP:0011304", "HP:0010055"]
+```
+
+### annotation::splice
+
+Annotation process using Splice tool and options. This annotation will be proccessed only for variants that are not already annotated (i.e. without annotation like 'SpliceAI_\w+' and 'SPiP_\w+')
+
+Examples: 
+
+> Annotation with Splice, using database splice mode ('one'), spliceAI distance (500) and spliceAI mask (1).
+
+```json
+"splice": {
+   "split_mode": "one",
+   "spliceai_distance": 500,
+   "spliceai_mask": 1
+}
+```
+
+#### annotation::splice::split_mode
+
+Split mode of Exomiser database (default 'one'): 
+
+
+- all: report all annotated transcript for one gene.
+
+
+- one: keep only the transcript with the most pathogenic score (in case of identical score, take the first).
+
+
+- list: keep transcript provided in transcript file, if no matching transcript in file 'one' mode is activated.
+
+
+- mixed: 'one' mode, if identical score, list mode is activated.
+
+Examples: 
+
+> Split mode to report all annotated transcript for one gene.
+
+```json
+"split_mode": "all"
+```
+
+#### annotation::splice::spliceai_distance
+
+Maximum distance between the variant and gained/lost splice site (default: 500).
+
+Examples: 
+
+> Maximum distance of '500' between variant and splice site.
+
+```json
+"spliceai_distance": 500
+```
+
+#### annotation::splice::spliceai_mask
+
+Mask scores representing annotated acceptor/donor gain and unannotated acceptor/donor loss (default: 1).
+
+Examples: 
+
+> Mask score of '1' for acceptor/donor gain fain and loss.
+
+```json
+"spliceai_mask": 1
+```
+
+#### annotation::splice::transcript
+
+Path to a list of transcripts of preference (default '').
+
+Examples: 
+
+> Path to file of transcripts.
+
+```json
+"transcript": "tests/data/transcripts.tsv"
+```
+
+#### annotation::splice::rm_snps
+
+Do not consider SNV for the analysis, only Indels and MNV (default 'false').
+
+Examples: 
+
+> Analysing only non SNV.
+
+```json
+"rm_snps": "true"
+```
+
+#### annotation::splice::rm_annot
+
+Remove existing annotation before analysing (default 'true').
+
+Examples: 
+
+> Remove annotation before analysing.
+
+```json
+"rm_annot": "true"
+```
+
+#### annotation::splice::whitespace
+
+Remove spaces in INFO field, 'true' to remove (default 'true').
+
+Examples: 
+
+> Remove spaces in INFO field.
+
+```json
+"whitespace": "true"
 ```
 
 ### annotation::options
@@ -1114,6 +1268,175 @@ Explode VCF INFO/Tag specific fields/tags. Keyword `*` specify all available fie
 Type: ```str```
 
 Default: ```*```
+
+## transcripts
+
+Transcripts information to create transcript view. Useful to add transcripts annotations in INFO field, to calculate transcripts specific scores (see [Calculation JSON file](help.config.calculation.md) help) or prioritize transcripts (see [Priorization JSON file](help.config.prioritization.md) help).
+
+Type: ```dict```
+
+Default: ```None```
+
+Examples: 
+
+> Trancripts information from snpEff and dbNSFP annotation
+
+```json
+"transcripts": {
+  "table": "transcripts",
+  "transcripts_info_field": "transcripts_json",
+  "transcripts_info_json": "transcripts_json",
+  "struct": {
+      "from_column_format": [
+          {
+              "transcripts_column": "ANN",
+              "transcripts_infos_column": "Feature_ID"
+          }
+      ],
+      "from_columns_map": [
+          {
+              "transcripts_column": "Ensembl_transcriptid",
+              "transcripts_infos_columns": [
+                  "genename",
+                  "Ensembl_geneid",
+                  "LIST_S2_score",
+                  "LIST_S2_pred"
+              ]
+          },
+          {
+              "transcripts_column": "Ensembl_transcriptid",
+              "transcripts_infos_columns": [
+                  "genename",
+                  "VARITY_R_score",
+                  "Aloft_pred"
+              ]
+          }
+      ]
+  },
+  "prioritization": {
+     "profiles": ["transcripts"],
+     "prioritization_config": "config/prioritization_transcripts_profiles.json",
+     "pzprefix": "PZT",
+     "prioritization_score_mode": "HOWARD"
+  }
+}
+```
+
+### transcripts::table
+
+Transcripts table name to create.
+
+Examples: 
+
+> Name of transcript table:
+
+```json
+"table": "transcripts"
+```
+
+### transcripts::transcripts_info_field
+
+Transcripts INFO field name to add in VCF INFO field.
+
+Examples: 
+
+> Transcripts INFO field name:
+
+```json
+"transcripts_info_field": "transcripts_json"
+```
+
+### transcripts::transcripts_info_json
+
+Transcripts column name to add to transcripts table.
+
+Examples: 
+
+> Transcripts column name:
+
+```json
+"transcripts_info_json": "transcripts_json"
+```
+
+### transcripts::struct
+
+Structure of transcripts information, corresponding to columns dedicated to transcripts, such as : 
+
+
+- a uniq annotation field with a specific format (from_column_format) like snpEff annotation,
+
+
+- a list of annotation fields corresponding to transcripts in another specific field (from_columns_map), like dbNSFP annotation.
+
+#### transcripts::struct::from_column_format
+
+Structure of transcripts information from a uniq annotation field with a specific format (such as snpEff annotation): 
+
+
+- 'transcripts_column' correspond to INFO field with annotations
+
+
+- 'transcripts_infos_column' correspond to transcription ID annotations field within INFO field
+
+Examples: 
+
+> Structure from snpEff annotation:
+
+```json
+"from_column_format": [
+  {
+    "transcripts_column": "ANN",
+    "transcripts_infos_column": "Feature_ID"
+  }
+]
+```
+
+#### transcripts::struct::from_columns_map
+
+list of annotation fields corresponding to transcripts in another specific field (such as dbNSFP annotation): 
+
+
+- 'transcripts_column' correspond to INFO field with transcription ID
+
+
+- 'transcripts_infos_columns' correspond to a list of INFO fields with transcript information
+
+Examples: 
+
+> Structure from snpEff annotation:
+
+```json
+"from_columns_map": [
+  {
+    "transcripts_column": "Ensembl_transcriptid",
+    "transcripts_infos_columns": [
+      "genename",
+      "Ensembl_geneid",
+      "LIST_S2_score",
+      "LIST_S2_pred"
+    ]
+  }
+]
+```
+
+### transcripts::prioritization
+
+Prioritization parameters for transcripts (see [Priorization JSON file](help.config.prioritization.md) help).
+
+Only 'Score' and 'Flag' will be return (e.g. 'PZTScore' and 'PZTFlag'), as well as the selected 'best' transcript ID.
+
+Examples: 
+
+> Prioritization of transcripts in 'HOWARD' mode with 'transcripts' profiles available in a configuration JSON file, with 'PZT' as prefix:
+
+```json
+"prioritization": {
+   "profiles": ["transcripts"],
+   "prioritization_config": "config/prioritization_transcripts_profiles.json",
+   "pzprefix": "PZT",
+   "prioritization_score_mode": "HOWARD"
+}
+```
 
 ## threads
 
