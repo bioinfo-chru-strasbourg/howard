@@ -2070,7 +2070,7 @@ class Database:
             if "FORMAT" not in df.columns or column not in df.columns:
                 return False
             query_format = f"""
-                AND (len(string_split(CAST("FORMAT" AS VARCHAR), ':')) = len(string_split(CAST("{column}" AS VARCHAR), ':')) OR "{column}" == './.')
+                AND (len(string_split(CAST("FORMAT" AS VARCHAR), ':')) = len(string_split(CAST("{column}" AS VARCHAR), ':')) OR regexp_matches(CAST("{column}" AS VARCHAR), '^[.]([/|][.])*$'))
             """
         else:
             query_format = ""
@@ -2088,7 +2088,7 @@ class Database:
             SELECT  *
             FROM df_downsampling
             WHERE (
-                regexp_matches(CAST("{column}" AS VARCHAR), '^[0-9.]([/|][0-9.])+')
+                regexp_matches(CAST("{column}" AS VARCHAR), '^[0-9.]([/|][0-9.])*')
                 {query_format}
                 )
         """
@@ -2116,6 +2116,7 @@ class Database:
         export_mode: str = "pyarrow",
         compresslevel: int = 6,
         export_header: bool = True,
+        sample_list: list = None,
     ) -> bool:
         """
         The `export` function exports data from a database to a specified output format, compresses it
@@ -2125,8 +2126,9 @@ class Database:
         filename of the output file to be exported. It specifies where the exported data will be saved
         :type output_database: str
         :param output_header: The `output_header` parameter is an optional string that represents the
-        header of the output file. If it is not provided, the header will be automatically detected
-        based on the output file format
+        header of the output file. If provided, it specifies the header that will be included in the
+        output file. If not provided, the header will be automatically detected based on the output file
+        format
         :type output_header: str
         :param header_in_output: The `header_in_output` parameter is a boolean value that determines
         whether the header should be included in the output file. If set to `True`, the header will be
@@ -2138,52 +2140,72 @@ class Database:
         method to retrieve the current database
         :type database: str
         :param table: The `table` parameter specifies the name of the table in the database from which
-        the data will be exported. By default, it is set to "variants", defaults to variants
+        the data will be exported. By default, if not specified, it is set to "variants", defaults to
+        variants
         :type table: str (optional)
         :param parquet_partitions: The `parquet_partitions` parameter is a list that specifies the
         partition columns for the Parquet output format. Each element in the list represents a partition
         column. The partitions are used to organize the data in the Parquet file based on the values of
         the specified columns
         :type parquet_partitions: list
-        :param threads: The `threads` parameter is an optional integer that specifies the number of
-        threads to use for exporting the data. It determines the level of parallelism during the export
-        process. By default, it is set to 1, defaults to 1
+        :param threads: The `threads` parameter in the `export` function is an optional integer that
+        specifies the number of threads to use for exporting the data. It determines the level of
+        parallelism during the export process. By default, it is set to 1, defaults to 1
         :type threads: int (optional)
-        :param sort: The `sort` parameter is a boolean value that specifies whether the output file
-        should be sorted or not. If set to `True`, the output file will be sorted based on the genomic
-        coordinates of the variants. If set to `False`, the output file will not be sorted. By default,
-        it, defaults to False
+        :param sort: The `sort` parameter in the `export` function is a boolean value that specifies
+        whether the output file should be sorted based on the genomic coordinates of the variants. If
+        `sort` is set to `True`, the output file will be sorted. If `sort` is set to `False`,, defaults
+        to False
         :type sort: bool (optional)
         :param index: The `index` parameter is a boolean value that specifies whether to index the
         output file. If `index` is set to `True`, the output file will be indexed. If `index` is set to
-        `False` or not provided, the output file will not be indexed, defaults to False
+        `False` or not provided, the output file will not be indexed. By default,, defaults to False
         :type index: bool (optional)
         :param existing_columns_header: The `existing_columns_header` parameter is a list that
         represents the existing columns in the header of the output file. It is used to determine the
         columns that should be included in the output file. If this parameter is not provided, the
         function will automatically detect the header columns based on the output file format
         :type existing_columns_header: list
-        :param order_by: The `order_by` parameter is a string that specifies the columns by which the
-        output file should be ordered. It allows you to specify multiple columns separated by commas.
-        Each column can be followed by the keyword "ASC" (ascending) or "DESC" (descending) to specify
-        the sort order
+        :param order_by: The `order_by` parameter in the `export` function is a string that specifies
+        the columns by which the output file should be ordered. You can specify multiple columns
+        separated by commas. Each column can be followed by the keyword "ASC" (ascending) or "DESC"
+        (descending) to specify
         :type order_by: str
-        :param query: Query in SQL to export
-        :type query: str (optional)
-        :param compression_type: Type of compression of output file (default "bgzip")
-        :type compression_type: str (optional)
-        :param chunk_size: Size of chunk (number of line) as batch group
+        :param query: The `query` parameter in the `export` function represents a SQL query that
+        specifies the data to be exported from the database. If provided, the function will export the
+        result of this query. If the `query` parameter is not provided, the function will generate a
+        query to export the data from
+        :type query: str
+        :param compression_type: The `compression_type` parameter in the `export` function specifies the
+        type of compression to be applied to the output file. By default, the compression type is set to
+        "bgzip". This parameter allows you to choose the compression algorithm for the output file, such
+        as "gzip", "bgzip
+        :type compression_type: str
+        :param chunk_size: The `chunk_size` parameter in the `export` function specifies the size of
+        each chunk or batch of data that will be processed during the export operation. It determines
+        how many records or lines of data will be included in each chunk that is processed at a time,
+        defaults to 1000000
         :type chunk_size: int (optional)
-        :param export_mode: Export mode, either "pyarrow" (default) or "duckdb"
+        :param export_mode: The `export_mode` parameter in the `export` function specifies the mode of
+        export, which can be either "pyarrow" or "duckdb", defaults to pyarrow
         :type export_mode: str (optional)
-        :param compresslevel: Level of compression for gzip (default 6)
+        :param compresslevel: The `compresslevel` parameter in the `export` function represents the
+        level of compression for gzip. By default, it is set to 6. This parameter allows you to specify
+        the compression level when using gzip compression for the output file. The compression level can
+        range from 0 (no compression), defaults to 6
         :type compresslevel: int (optional)
         :param export_header: The `export_header` parameter is a boolean flag that determines whether
         the header of a VCF file should be exported to a separate file or not. If `export_header` is
         True, the header will be exported to a file. If `export_header` is False, the header will not
-        be, defaults to True, if output format is not VCF
+        be, defaults to True
         :type export_header: bool (optional)
-        :return: a boolean value indicating whether the export was successful or not.
+        :param sample_list: The `sample_list` parameter in the `export` function is a list that
+        specifies the samples to be included in the exported data. If provided, the samples listed in
+        this parameter will be included in the output file. If not provided, the function will determine
+        the samples to include based on the data
+        :type sample_list: list
+        :return: The `export` function returns a boolean value indicating whether the export was
+        successful or not.
         """
 
         # Full path
@@ -2316,18 +2338,28 @@ class Database:
 
                 # Check VCF format with extra columns
                 extra_columns_clean = []
-                for extra_column in extra_columns:
-                    if extra_column not in needed_columns and (
-                        extra_column == "FORMAT"
-                        or (
-                            "FORMAT" in extra_columns_clean
-                            and self.is_genotype_column(
-                                database=database, column=extra_column
+
+                # Force samples list in parameter
+                if sample_list:
+                    if "FORMAT" in extra_columns:
+                        extra_columns = ["FORMAT"] + sample_list
+                    else:
+                        extra_columns = sample_list
+
+                # Check columns
+                else:
+                    for extra_column in extra_columns:
+                        if extra_column not in needed_columns and (
+                            extra_column == "FORMAT"
+                            or (
+                                "FORMAT" in extra_columns_clean
+                                and self.is_genotype_column(
+                                    database=database, column=extra_column
+                                )
                             )
-                        )
-                    ):
-                        extra_columns_clean.append(extra_column)
-                extra_columns = extra_columns_clean
+                        ):
+                            extra_columns_clean.append(extra_column)
+                    extra_columns = extra_columns_clean
 
                 default_empty_value = "."
                 query_export_format = f"FORMAT CSV, DELIMITER '{delimiter}', HEADER, QUOTE '', COMPRESSION 'gzip'"

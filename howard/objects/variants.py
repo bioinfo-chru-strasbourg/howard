@@ -73,9 +73,50 @@ class Variants:
         # Header
         self.set_header()
 
+        # Samples
+        self.set_samples()
+
         # Load data
         if load:
             self.load_data()
+
+    def set_samples(self, samples: list = None) -> list:
+        """
+        The function `set_samples` sets the samples attribute of an object to a provided list or
+        retrieves it from a parameter dictionary.
+
+        :param samples: The `set_samples` method is a method of a class that takes a list of samples as
+        input and sets the `samples` attribute of the class to the provided list. If no samples are
+        provided, it tries to get the samples from the class's parameters using the `get_param` method
+        :type samples: list
+        :return: The `samples` list is being returned.
+        """
+
+        if not samples:
+            samples = self.get_param().get("samples", {}).get("list", None)
+
+        self.samples = samples
+
+        return samples
+
+    def get_samples(self) -> list:
+        """
+        This function returns a list of samples.
+        :return: The `get_samples` method is returning the `samples` attribute of the object.
+        """
+
+        return self.samples
+
+    def get_samples_check(self) -> bool:
+        """
+        This function returns the value of the "check" key within the "samples" dictionary retrieved
+        from the parameters.
+        :return: The method `get_samples_check` is returning the value of the key "check" inside the
+        "samples" dictionary, which is nested inside the dictionary returned by the `get_param()`
+        method. If the key "check" is not found, it will return `False`.
+        """
+
+        return self.get_param().get("samples", {}).get("check", True)
 
     def set_input(self, input: str = None) -> None:
         """
@@ -1102,13 +1143,83 @@ class Variants:
             sql_column_list.append(f'"{col}"')
         return ",".join(sql_column_list)
 
-    def get_header_sample_list(self) -> list:
+    def get_header_sample_list(
+        self, check: bool = False, samples: list = None, samples_force: bool = False
+    ) -> list:
         """
-        This function retruns header length (without #CHROM line)
+        The function `get_header_sample_list` returns a list of samples from a VCF header, with optional
+        checking and filtering based on input parameters.
 
-        :return: The length of the header list.
+        :param check: The `check` parameter in the `get_header_sample_list` function is a boolean
+        parameter that determines whether to check if the samples in the list are properly defined as
+        genotype columns. If `check` is set to `True`, the function will verify if each sample in the
+        list is defined as a, defaults to False
+        :type check: bool (optional)
+        :param samples: The `samples` parameter in the `get_header_sample_list` function is a list that
+        allows you to specify a subset of samples from the header. If you provide a list of sample
+        names, the function will check if each sample is defined in the header. If a sample is not found
+        in the
+        :type samples: list
+        :param samples_force: The `samples_force` parameter in the `get_header_sample_list` function is
+        a boolean parameter that determines whether to force the function to return the sample list
+        without checking if the samples are genotype columns. If `samples_force` is set to `True`, the
+        function will return the sample list without performing, defaults to False
+        :type samples_force: bool (optional)
+        :return: The function `get_header_sample_list` returns a list of samples based on the input
+        parameters and conditions specified in the function.
         """
-        return self.header_vcf.samples
+
+        # Init
+        samples_list = []
+
+        if samples is None:
+            samples_list = self.header_vcf.samples
+        else:
+            samples_checked = []
+            for sample in samples:
+                if sample in self.header_vcf.samples:
+                    samples_checked.append(sample)
+                else:
+                    log.warning(f"Sample '{sample}' not defined in header")
+            samples_list = samples_checked
+
+            # Force sample list without checking if is_genotype_column
+            if samples_force:
+                log.warning(f"Samples {samples_list} not checked if genotypes")
+                return samples_list
+
+        if check:
+            samples_checked = []
+            for sample in samples_list:
+                if self.is_genotype_column(column=sample):
+                    samples_checked.append(sample)
+                else:
+                    log.warning(
+                        f"Sample '{sample}' not defined as a sample (genotype not well defined)"
+                    )
+            samples_list = samples_checked
+
+        # Return samples list
+        return samples_list
+
+    def is_genotype_column(self, column: str = None) -> bool:
+        """
+        This function checks if a given column is a genotype column in a database.
+
+        :param column: The `column` parameter in the `is_genotype_column` method is a string that
+        represents the column name in a database table. This method checks if the specified column is a
+        genotype column in the database. If a column name is provided, it calls the `is_genotype_column`
+        method of
+        :type column: str
+        :return: The `is_genotype_column` method is returning a boolean value. If the `column` parameter
+        is not None, it calls the `is_genotype_column` method of the `Database` class with the specified
+        column name and returns the result. If the `column` parameter is None, it returns False.
+        """
+
+        if column is not None:
+            return Database(database=self.get_input()).is_genotype_column(column=column)
+        else:
+            return False
 
     def get_verbose(self) -> bool:
         """
@@ -2118,8 +2229,20 @@ class Variants:
         )
 
         # Existing colomns header
-        # existing_columns_header = database.get_header_file_columns(output_header)
         existing_columns_header = database.get_header_columns_from_database()
+
+        # Sample list
+        if output_file_type in ["vcf"]:
+            get_samples = self.get_samples()
+            get_samples_check = self.get_samples_check()
+            samples_force = get_samples is not None
+            sample_list = self.get_header_sample_list(
+                check=get_samples_check,
+                samples=get_samples,
+                samples_force=samples_force,
+            )
+        else:
+            sample_list = None
 
         # Export file
         database.export(
@@ -2135,6 +2258,7 @@ class Variants:
             order_by=order_by,
             query=query,
             export_header=export_header,
+            sample_list=sample_list,
         )
 
         # Remove
@@ -5714,8 +5838,8 @@ class Variants:
                             else:
                                 sql_query_annotation_update_info_sets.append(
                                     f"""
-                                CASE WHEN table_parquet."{annotation_field_column}" NOT IN ('','.') {query_case_when_append}
-                                        THEN concat('{annotation_field_sep}', '{annotation_fields_new_name}=', replace(table_parquet."{annotation_field_column}", ';', ','))
+                                CASE WHEN CAST(table_parquet."{annotation_field_column}" AS VARCHAR) NOT IN ('','.') {query_case_when_append}
+                                        THEN concat('{annotation_field_sep}', '{annotation_fields_new_name}=', replace(CAST(table_parquet."{annotation_field_column}" AS VARCHAR), ';', ','))
                                         ELSE ''
                                     END
                                 """
@@ -6454,10 +6578,26 @@ class Variants:
                 "transcripts_json": {
                     "type": "python",
                     "name": "transcripts_json",
-                    "description": "Add transcripts info in JSON format (field 'transcripts_json')",
+                    "description": "Add transcripts annotations in JSON format (field 'transcripts_json')",
                     "available": True,
-                    "function_name": "calculation_transcripts_json",
-                    "function_params": ["transcripts_json"],
+                    "function_name": "calculation_transcripts_annotation",
+                    "function_params": ["transcripts_json", None],
+                },
+                "transcripts_ann": {
+                    "type": "python",
+                    "name": "transcripts_ann",
+                    "description": "Add transcripts annotations in structured format (field 'transcripts_ann')",
+                    "available": True,
+                    "function_name": "calculation_transcripts_annotation",
+                    "function_params": [None, "transcripts_ann"],
+                },
+                "transcripts_annotations": {
+                    "type": "python",
+                    "name": "transcripts_annotations",
+                    "description": "Add transcripts annotations in JSON and/or structured format (see param JSON file)",
+                    "available": True,
+                    "function_name": "calculation_transcripts_annotation",
+                    "function_params": [None, None],
                 },
                 "transcripts_prioritization": {
                     "type": "python",
@@ -6470,32 +6610,7 @@ class Variants:
             },
             "prioritizations": {
                 "default": {
-                    "filter": [
-                        {
-                            "type": "notequals",
-                            "value": "!PASS|\\.",
-                            "score": 0,
-                            "flag": "FILTERED",
-                            "comment": ["Bad variant quality"],
-                        },
-                        {
-                            "type": "equals",
-                            "value": "REJECT",
-                            "score": -20,
-                            "flag": "PASS",
-                            "comment": ["Bad variant quality"],
-                        },
-                    ],
-                    "DP": [
-                        {
-                            "type": "gte",
-                            "value": "50",
-                            "score": 5,
-                            "flag": "PASS",
-                            "comment": ["DP higher than 50"],
-                        }
-                    ],
-                    "ANN": [
+                    "ANN2": [
                         {
                             "type": "contains",
                             "value": "HIGH",
@@ -6750,6 +6865,12 @@ class Variants:
                     "Type": "String",
                     "Description": "Variant infos based on annotation criteria",
                 },
+                f"{pz_prefix}Class": {
+                    "ID": f"{pz_prefix}Class",
+                    "Number": ".",
+                    "Type": "String",
+                    "Description": "Variant class based on annotation criteria",
+                },
             }
 
             # Create INFO fields if not exist
@@ -6809,6 +6930,13 @@ class Variants:
                         column_name=pzfield,
                         column_type="BOOLEAN",
                         default_value="1",
+                    )
+                elif re.match(f"{pz_prefix}Class.*", pzfield):
+                    added_column = self.add_column(
+                        table_name=table_variants,
+                        column_name=pzfield,
+                        column_type="VARCHAR[]",
+                        default_value="null",
                     )
                 else:
                     added_column = self.add_column(
@@ -6897,6 +7025,41 @@ class Variants:
                                     """
                                 )
 
+                        # PZClass
+                        if (
+                            f"{pz_prefix}Class{pzfields_sep}{profile}"
+                            in list_of_pzfields
+                        ):
+                            sql_set_info.append(
+                                f"""
+                                    concat(
+                                        '{pz_prefix}Class{pzfields_sep}{profile}=',
+                                        CASE
+                                            WHEN len({pz_prefix}Class{pzfields_sep}{profile}) > 0
+                                            THEN list_aggregate(list_distinct({pz_prefix}Class{pzfields_sep}{profile}), 'string_agg', ',')
+                                            ELSE '.'
+                                        END 
+                                    )
+                                    
+                                """
+                            )
+                            if (
+                                profile == default_profile
+                                and f"{pz_prefix}Class" in list_of_pzfields
+                            ):
+                                sql_set_info.append(
+                                    f"""
+                                        concat(
+                                            '{pz_prefix}Class=',
+                                            CASE
+                                                WHEN len({pz_prefix}Class{pzfields_sep}{profile}) > 0
+                                                THEN list_aggregate(list_distinct({pz_prefix}Class{pzfields_sep}{profile}), 'string_agg', ',')
+                                                ELSE '.'
+                                            END 
+                                        )
+                                    """
+                                )
+
                         # PZComment
                         if (
                             f"{pz_prefix}Comment{pzfields_sep}{profile}"
@@ -6970,30 +7133,35 @@ class Variants:
                         sql_queries = []
                         for annotation in prioritizations_config[profile]:
 
-                            # Explode specific annotation
-                            log.debug(f"Explode annotation '{annotation}'")
-                            added_columns += self.explode_infos(
-                                prefix=explode_infos_prefix,
-                                fields=[annotation],
-                                table=table_variants,
-                            )
-                            extra_infos = self.get_extra_infos(table=table_variants)
-
-                            # Check if annotation field is present
-                            if not f"{explode_infos_prefix}{annotation}" in extra_infos:
-                                log.debug(f"Annotation '{annotation}' not in data")
+                            # skip special sections
+                            if annotation.startswith("_"):
                                 continue
-                            else:
-                                log.debug(f"Annotation '{annotation}' in data")
 
                             # For each criterions
                             for criterion in prioritizations_config[profile][
                                 annotation
                             ]:
-                                criterion_type = criterion["type"]
-                                criterion_value = criterion["value"]
+
+                                # Criterion mode
+                                criterion_mode = None
+                                if np.any(
+                                    np.isin(list(criterion.keys()), ["type", "value"])
+                                ):
+                                    criterion_mode = "operation"
+                                elif np.any(
+                                    np.isin(list(criterion.keys()), ["sql", "fields"])
+                                ):
+                                    criterion_mode = "sql"
+                                log.debug(f"Criterion Mode: {criterion_mode}")
+
+                                # Criterion parameters
+                                criterion_type = criterion.get("type", None)
+                                criterion_value = criterion.get("value", None)
+                                criterion_sql = criterion.get("sql", None)
+                                criterion_fields = criterion.get("fields", None)
                                 criterion_score = criterion.get("score", 0)
                                 criterion_flag = criterion.get("flag", "PASS")
+                                criterion_class = criterion.get("class", None)
                                 criterion_flag_bool = criterion_flag == "PASS"
                                 criterion_comment = (
                                     ", ".join(criterion.get("comment", []))
@@ -7008,26 +7176,78 @@ class Variants:
                                     .replace("\t", " ")
                                 )
 
+                                # SQL
+                                if criterion_sql is not None and isinstance(
+                                    criterion_sql, list
+                                ):
+                                    criterion_sql = " ".join(criterion_sql)
+
+                                # Fields and explode
+                                if criterion_fields is None:
+                                    criterion_fields = [annotation]
+                                if not isinstance(criterion_fields, list):
+                                    criterion_fields = str(criterion_fields).split(",")
+
+                                # Class
+                                if criterion_class is not None and not isinstance(
+                                    criterion_class, list
+                                ):
+                                    criterion_class = str(criterion_class).split(",")
+
+                                for annotation_field in criterion_fields:
+
+                                    # Explode specific annotation
+                                    log.debug(
+                                        f"Explode annotation '{annotation_field}'"
+                                    )
+                                    added_columns += self.explode_infos(
+                                        prefix=explode_infos_prefix,
+                                        fields=[annotation_field],
+                                        table=table_variants,
+                                    )
+                                    extra_infos = self.get_extra_infos(
+                                        table=table_variants
+                                    )
+
+                                    # Check if annotation field is present
+                                    if (
+                                        f"{explode_infos_prefix}{annotation_field}"
+                                        not in extra_infos
+                                    ):
+                                        msq_err = f"Annotation '{annotation_field}' not in data"
+                                        log.error(msq_err)
+                                        raise ValueError(msq_err)
+                                    else:
+                                        log.debug(
+                                            f"Annotation '{annotation_field}' in data"
+                                        )
+
                                 sql_set = []
                                 sql_set_info = []
 
                                 # PZ fields set
+
+                                # PZScore
                                 if (
                                     f"{pz_prefix}Score{pzfields_sep}{profile}"
                                     in list_of_pzfields
                                 ):
-                                    if prioritization_score_mode == "HOWARD":
-                                        sql_set.append(
-                                            f"{pz_prefix}Score{pzfields_sep}{profile} = {pz_prefix}Score{pzfields_sep}{profile} + {criterion_score}"
-                                        )
-                                    elif prioritization_score_mode == "VaRank":
+                                    # if prioritization_score_mode == "HOWARD":
+                                    #     sql_set.append(
+                                    #         f"{pz_prefix}Score{pzfields_sep}{profile} = {pz_prefix}Score{pzfields_sep}{profile} + {criterion_score}"
+                                    #     )
+                                    # VaRank prioritization score mode
+                                    if prioritization_score_mode == "VaRank":
                                         sql_set.append(
                                             f"{pz_prefix}Score{pzfields_sep}{profile} = CASE WHEN {criterion_score}>{pz_prefix}Score{pzfields_sep}{profile} THEN {criterion_score} END"
                                         )
+                                    # default HOWARD prioritization score mode
                                     else:
                                         sql_set.append(
                                             f"{pz_prefix}Score{pzfields_sep}{profile} = {pz_prefix}Score{pzfields_sep}{profile} + {criterion_score}"
                                         )
+
+                                # PZFlag
                                 if (
                                     f"{pz_prefix}Flag{pzfields_sep}{profile}"
                                     in list_of_pzfields
@@ -7035,6 +7255,18 @@ class Variants:
                                     sql_set.append(
                                         f"{pz_prefix}Flag{pzfields_sep}{profile} = {pz_prefix}Flag{pzfields_sep}{profile} AND {criterion_flag_bool}"
                                     )
+
+                                # PZClass
+                                if (
+                                    f"{pz_prefix}Class{pzfields_sep}{profile}"
+                                    in list_of_pzfields
+                                    and criterion_class is not None
+                                ):
+                                    sql_set.append(
+                                        f" {pz_prefix}Class{pzfields_sep}{profile} = list_concat(list_distinct({pz_prefix}Class{pzfields_sep}{profile}), {criterion_class}) "
+                                    )
+
+                                # PZComment
                                 if (
                                     f"{pz_prefix}Comment{pzfields_sep}{profile}"
                                     in list_of_pzfields
@@ -7053,6 +7285,8 @@ class Variants:
                                                 )
                                         """
                                     )
+
+                                # PZInfos
                                 if (
                                     f"{pz_prefix}Infos{pzfields_sep}{profile}"
                                     in list_of_pzfields
@@ -7070,24 +7304,42 @@ class Variants:
 
                                 # Criterion and comparison
                                 if sql_set_option:
-                                    try:
-                                        float(criterion_value)
+
+                                    if criterion_mode in ["operation"]:
+
+                                        try:
+                                            float(criterion_value)
+                                            sql_update = f"""
+                                                UPDATE {table_variants}
+                                                SET {sql_set_option}
+                                                WHERE CAST("{explode_infos_prefix}{annotation}" AS VARCHAR) NOT IN ('','.')
+                                                AND CAST("{explode_infos_prefix}{annotation}" AS FLOAT){comparison_map[criterion_type]}{criterion_value}
+                                            """
+                                        except:
+                                            contains_option = ""
+                                            if criterion_type == "contains":
+                                                contains_option = ".*"
+                                            sql_update = f"""
+                                                UPDATE {table_variants}
+                                                SET {sql_set_option}
+                                                WHERE "{explode_infos_prefix}{annotation}" SIMILAR TO '{contains_option}{criterion_value}{contains_option}'
+                                            """
+                                        sql_queries.append(sql_update)
+
+                                    elif criterion_mode in ["sql"]:
+
                                         sql_update = f"""
                                             UPDATE {table_variants}
                                             SET {sql_set_option}
-                                            WHERE CAST("{explode_infos_prefix}{annotation}" AS VARCHAR) NOT IN ('','.')
-                                            AND CAST("{explode_infos_prefix}{annotation}" AS FLOAT){comparison_map[criterion_type]}{criterion_value}
-                                            """
-                                    except:
-                                        contains_option = ""
-                                        if criterion_type == "contains":
-                                            contains_option = ".*"
-                                        sql_update = f"""
-                                            UPDATE {table_variants}
-                                            SET {sql_set_option}
-                                            WHERE "{explode_infos_prefix}{annotation}" SIMILAR TO '{contains_option}{criterion_value}{contains_option}'
-                                            """
-                                    sql_queries.append(sql_update)
+                                            WHERE {criterion_sql}
+                                        """
+                                        sql_queries.append(sql_update)
+
+                                    else:
+                                        msg_err = f"Prioritization criterion mode failed (either 'operation' or 'sql')"
+                                        log.error(msg_err)
+                                        raise ValueError(msg_err)
+
                                 else:
                                     log.warning(
                                         f"NO SQL SET option for '{annotation}' - '{criterion}'"
@@ -7101,7 +7353,7 @@ class Variants:
 
                             # Create PZFalgs value
                             pztags_value = ""
-                            pztags_sep_default = "|"
+                            pztags_sep_default = ","
                             pztags_sep = ""
                             for pzfield in pzfields:
                                 if pzfield not in [f"{pz_prefix}Tags"]:
@@ -7114,6 +7366,12 @@ class Variants:
                                                 CASE WHEN {pz_prefix}Flag{pzfields_sep}{profile}
                                                     THEN 'PASS'
                                                     ELSE 'FILTERED'
+                                                END, '"""
+                                        elif pzfield in [f"{pz_prefix}Class"]:
+                                            pztags_value += f"""{pztags_sep}{pzfield}#', 
+                                                CASE WHEN len({pz_prefix}Class{pzfields_sep}{profile}) > 0
+                                                    THEN list_aggregate(list_distinct({pz_prefix}Class{pzfields_sep}{profile}), 'string_agg', ',')
+                                                    ELSE '.'
                                                 END, '"""
                                         else:
                                             pztags_value += f"{pztags_sep}{pzfield}#', {pzfield}{pzfields_sep}{profile}, '"
@@ -9293,16 +9551,22 @@ class Variants:
             del dataframe_vaf_stats
             gc.collect()
 
-    def calculation_transcripts_json(self, info: str = "transcripts_json") -> None:
+    def calculation_transcripts_annotation(
+        self, info_json: str = None, info_format: str = None
+    ) -> None:
         """
-        The function `calculation_transcripts_json` creates a transcripts table and adds an info field
-        to it if transcripts are available.
+        The `calculation_transcripts_annotation` function creates a transcripts table and adds an info
+        field to it if transcripts are available.
 
-        :param info: The `info` parameter in the `calculation_transcripts_json` method is a string
-        parameter that specifies the information field to be used in the transcripts JSON. It has a
-        default value of "transcripts_json" if no value is provided when calling the method, defaults to
-        transcripts_json
-        :type info: str (optional)
+        :param info_json: The `info_json` parameter in the `calculation_transcripts_annotation` method
+        is a string parameter that represents the information field to be used in the transcripts JSON.
+        It is used to specify the JSON format for the transcripts information. If no value is provided
+        when calling the method, it defaults to "
+        :type info_json: str
+        :param info_format: The `info_format` parameter in the `calculation_transcripts_annotation`
+        method is a string parameter that specifies the format of the information field to be used in
+        the transcripts JSON. It is used to define the format of the information field
+        :type info_format: str
         """
 
         # Create transcripts table
@@ -9311,7 +9575,9 @@ class Variants:
         # Add info field
         if transcripts_table:
             self.transcript_view_to_variants(
-                transcripts_table=transcripts_table, transcripts_info_field=info
+                transcripts_table=transcripts_table,
+                transcripts_info_field_json=info_json,
+                transcripts_info_field_format=info_format,
             )
         else:
             log.info("No Transcripts to process. Check param.json file configuration")
@@ -9571,12 +9837,12 @@ class Variants:
                 # Querey View
                 query = f""" 
                     SELECT
-                        "#CHROM", POS, REF, ALT,
+                        "#CHROM", POS, REF, ALT, INFO,
                         "{transcripts_column}" AS 'transcript',
                         {", ".join(clause_select)}
                     FROM (
                         SELECT 
-                            "#CHROM", POS, REF, ALT,
+                            "#CHROM", POS, REF, ALT, INFO,
                             {", ".join(clause_select)}
                         FROM {table_variants}
                         )
@@ -9801,9 +10067,9 @@ class Variants:
                 )
             # Query for transcripts view
             query_merge_on_transcripts = f"""
-                SELECT "#CHROM", POS, REF, ALT, transcript, {", ".join(query_merge_on_transcripts_annotation_fields)}
+                SELECT "#CHROM", POS, REF, ALT, INFO, transcript, {", ".join(query_merge_on_transcripts_annotation_fields)}
                 FROM ({query_merge})
-                GROUP BY "#CHROM", POS, REF, ALT, transcript
+                GROUP BY "#CHROM", POS, REF, ALT, INFO, transcript
             """
 
             # Drop transcript view is necessary
@@ -9917,7 +10183,7 @@ class Variants:
 
             # Create dataframe
             dataframe_annotation_format = self.get_query_to_df(
-                f""" SELECT "#CHROM", POS, REF, ALT, "{variant_id_column}", "{annotation_infos}" FROM {table_variants} """
+                f""" SELECT "#CHROM", POS, REF, ALT, INFO, "{variant_id_column}", "{annotation_infos}" FROM {table_variants} """
             )
 
             # Create annotation columns
@@ -9969,7 +10235,16 @@ class Variants:
                 )
 
             # Create view
-            query_view = f"""CREATE TEMPORARY TABLE {view_name} AS (SELECT *, {annotation_id} AS 'transcript' FROM (SELECT "#CHROM", POS, REF, ALT, {",".join(query_json_key)} FROM dataframe_annotation_format));"""
+            query_view = f"""
+                CREATE TEMPORARY TABLE {view_name}
+                AS (
+                    SELECT *, {annotation_id} AS 'transcript'
+                    FROM (
+                        SELECT "#CHROM", POS, REF, ALT, INFO, {",".join(query_json_key)}
+                        FROM dataframe_annotation_format
+                        )
+                    );
+            """
             self.execute_query(query=query_view)
 
         else:
@@ -9988,41 +10263,62 @@ class Variants:
         transcripts_table: str = None,
         transcripts_column_id: str = None,
         transcripts_info_json: str = None,
-        transcripts_info_field: str = None,
+        transcripts_info_field_json: str = None,
+        transcripts_info_format: str = None,
+        transcripts_info_field_format: str = None,
         param: dict = {},
     ) -> bool:
         """
-        The function `transcript_view_to_variants` takes input parameters related to transcripts and updates
-        a variants table with information from the transcripts in JSON format.
+        The `transcript_view_to_variants` function updates a variants table with information from
+        transcripts in JSON format.
 
-        :param transcripts_table: The `transcripts_table` parameter is used to specify the name of the table
-        containing the transcripts data. If this parameter is not provided, the function will attempt to
-        retrieve it from the `param` dictionary or use a default value of "transcripts"
+        :param transcripts_table: The `transcripts_table` parameter is used to specify the name of the
+        table containing the transcripts data. If this parameter is not provided, the function will
+        attempt to retrieve it from the `param` dictionary or use a default value of "transcripts"
         :type transcripts_table: str
-        :param transcripts_column_id: The `transcripts_column_id` parameter is used to specify the column in
-        the `transcripts_table` that contains the unique identifier for each transcript. This identifier is
-        used to match transcripts with variants in the database
+        :param transcripts_column_id: The `transcripts_column_id` parameter is used to specify the
+        column in the `transcripts_table` that contains the unique identifier for each transcript. This
+        identifier is used to match transcripts with variants in the database
         :type transcripts_column_id: str
-        :param transcripts_info_json: The `transcripts_info_json` parameter is used to specify the name of
-        the column in the variants table where the transcripts information will be stored in JSON format
+        :param transcripts_info_json: The `transcripts_info_json` parameter is used to specify the name
+        of the column in the variants table where the transcripts information will be stored in JSON
+        format. This parameter allows you to define the column in the variants table that will hold the
+        JSON-formatted information about transcripts
         :type transcripts_info_json: str
-        :param transcripts_info_field: The `transcripts_info_field` parameter is used to specify the field
-        in the VCF header that will contain information about transcripts in JSON format. This field will be
-        added to the VCF header as an INFO field with the specified name
-        :type transcripts_info_field: str
-        :param param: The `transcript_view_to_variants` method takes several parameters:
+        :param transcripts_info_field_json: The `transcripts_info_field_json` parameter is used to
+        specify the field in the VCF header that will contain information about transcripts in JSON
+        format. This field will be added to the VCF header as an INFO field with the specified name
+        :type transcripts_info_field_json: str
+        :param transcripts_info_format: The `transcripts_info_format` parameter is used to specify the
+        format of the information about transcripts that will be stored in the variants table. This
+        format can be used to define how the transcript information will be structured or displayed
+        within the variants table
+        :type transcripts_info_format: str
+        :param transcripts_info_field_format: The `transcripts_info_field_format` parameter is used to
+        specify the field in the VCF header that will contain information about transcripts in a
+        specific format. This field will be added to the VCF header as an INFO field with the specified
+        name
+        :type transcripts_info_field_format: str
+        :param param: The `param` parameter in the `transcript_view_to_variants` method is a dictionary
+        that contains various configuration settings related to transcripts. It is used to provide
+        default values for certain parameters if they are not explicitly provided when calling the
+        method. The `param` dictionary can be passed as an argument
         :type param: dict
-        :return: The function `transcript_view_to_variants` returns a boolean value, which is `True` if the
-        operation is successful and `False` if certain conditions are not met.
+        :return: The function `transcript_view_to_variants` returns a boolean value. It returns `True`
+        if the operation is successful and `False` if certain conditions are not met.
         """
 
-        log.debug("Start transcripts view to JSON...")
+        msg_info_prefix = "Start transcripts view to variants annotations"
+
+        log.debug(f"{msg_info_prefix}...")
 
         # Default
         transcripts_table_default = "transcripts"
         transcripts_column_id_default = "transcript"
         transcripts_info_json_default = None
-        transcripts_info_field_default = None
+        transcripts_info_format_default = None
+        transcripts_info_field_json_default = None
+        transcripts_info_field_format_default = None
 
         # Param
         if not param:
@@ -10040,23 +10336,47 @@ class Variants:
                 "column_id", transcripts_column_id_default
             )
 
-        # Transcripts info field
+        # Transcripts info json
         if transcripts_info_json is None:
             transcripts_info_json = param.get("transcripts", {}).get(
                 "transcripts_info_json", transcripts_info_json_default
             )
 
-        # Transcripts info field
-        if transcripts_info_field is None:
-            transcripts_info_field = param.get("transcripts", {}).get(
-                "transcripts_info_field", transcripts_info_field_default
+        # Transcripts info field JSON
+        if transcripts_info_field_json is None:
+            transcripts_info_field_json = param.get("transcripts", {}).get(
+                "transcripts_info_field_json", transcripts_info_field_json_default
             )
+        # if transcripts_info_field_json is not None and transcripts_info_json is None:
+        #     transcripts_info_json = transcripts_info_field_json
+
+        # Transcripts info format
+        if transcripts_info_format is None:
+            transcripts_info_format = param.get("transcripts", {}).get(
+                "transcripts_info_format", transcripts_info_format_default
+            )
+
+        # Transcripts info field FORMAT
+        if transcripts_info_field_format is None:
+            transcripts_info_field_format = param.get("transcripts", {}).get(
+                "transcripts_info_field_format", transcripts_info_field_format_default
+            )
+        # if (
+        #     transcripts_info_field_format is not None
+        #     and transcripts_info_format is None
+        # ):
+        #     transcripts_info_format = transcripts_info_field_format
 
         # Variants table
         table_variants = self.get_table_variants()
 
         # Check info columns param
-        if transcripts_info_json is None and transcripts_info_field is None:
+        if (
+            transcripts_info_json is None
+            and transcripts_info_field_json is None
+            and transcripts_info_format is None
+            and transcripts_info_field_format is None
+        ):
             return False
 
         # Transcripts infos columns
@@ -10074,14 +10394,17 @@ class Variants:
         # View results
         clause_select = []
         clause_to_json = []
+        clause_to_format = []
         for field in transcripts_infos_columns:
             clause_select.append(
                 f""" regexp_split_to_table("{field}", ',') AS '{field}' """
             )
             clause_to_json.append(f""" '{field}': "{field}" """)
+            clause_to_format.append(f""" "{field}" """)
 
         # Update
-        update_set = []
+        update_set_json = []
+        update_set_format = []
 
         # VCF header
         vcf_reader = self.get_header()
@@ -10098,11 +10421,6 @@ class Variants:
                 drop=False,
             )
 
-            # Add to update
-            update_set.append(
-                f""" {transcripts_info_json}=t.{transcripts_info_json} """
-            )
-
             # Add header
             vcf_reader.infos[transcripts_info_json] = vcf.parser._Info(
                 transcripts_info_json,
@@ -10114,11 +10432,18 @@ class Variants:
                 self.code_type_map["String"],
             )
 
+            # Add to update
+            update_set_json.append(
+                f""" {transcripts_info_json}=t.{transcripts_info_json} """
+            )
+
         # Transcripts to info field in JSON
-        if transcripts_info_field is not None:
+        if transcripts_info_field_json is not None:
+
+            log.debug(f"{msg_info_prefix} - Annotation in JSON format...")
 
             # Add to update
-            update_set.append(
+            update_set_json.append(
                 f""" 
                     INFO = concat(
                             CASE
@@ -10129,7 +10454,7 @@ class Variants:
                             CASE
                                 WHEN CAST(t.{transcripts_info_json} AS VARCHAR) NOT IN ('', '.')
                                 THEN concat(
-                                    ';{transcripts_info_field}=',
+                                    ';{transcripts_info_field_json}=',
                                     t.{transcripts_info_json}
                                 )
                                 ELSE ''
@@ -10139,8 +10464,8 @@ class Variants:
             )
 
             # Add header
-            vcf_reader.infos[transcripts_info_field] = vcf.parser._Info(
-                transcripts_info_field,
+            vcf_reader.infos[transcripts_info_field_json] = vcf.parser._Info(
+                transcripts_info_field_json,
                 ".",
                 "String",
                 "Transcripts in JSON format",
@@ -10149,42 +10474,143 @@ class Variants:
                 self.code_type_map["String"],
             )
 
-        # Update query
-        query_update = f"""
-            UPDATE {table_variants}
-                SET {", ".join(update_set)}
-            FROM
-            (
-                SELECT
-                    "#CHROM", POS, REF, ALT,
-                        concat(
-                        '{{',
-                        string_agg(
-                            '"' || "{transcripts_column_id}" || '":' ||
-                            to_json(json_output)
-                        ),
-                        '}}'
-                        )::JSON AS {transcripts_info_json}
+        if update_set_json:
+
+            # Update query
+            query_update = f"""
+                UPDATE {table_variants}
+                    SET {", ".join(update_set_json)}
                 FROM
-                    (
+                (
                     SELECT
                         "#CHROM", POS, REF, ALT,
-                        "{transcripts_column_id}",
-                        to_json(
-                            {{{",".join(clause_to_json)}}}
-                        )::JSON AS json_output
+                            concat(
+                            '{{',
+                            string_agg(
+                                '"' || "{transcripts_column_id}" || '":' ||
+                                to_json(json_output)
+                            ),
+                            '}}'
+                            )::JSON AS {transcripts_info_json}
                     FROM
-                        (SELECT "#CHROM", POS, REF, ALT, "{transcripts_column_id}", {", ".join(clause_select)} FROM {transcripts_table})
-                    WHERE "{transcripts_column_id}" IS NOT NULL
-                    )
-                GROUP BY "#CHROM", POS, REF, ALT
-            ) AS t
-            WHERE {table_variants}."#CHROM" = t."#CHROM"
-                AND {table_variants}."POS" = t."POS"
-                AND {table_variants}."REF" = t."REF"
-                AND {table_variants}."ALT" = t."ALT"
-        """
+                        (
+                        SELECT
+                            "#CHROM", POS, REF, ALT,
+                            "{transcripts_column_id}",
+                            to_json(
+                                {{{",".join(clause_to_json)}}}
+                            )::JSON AS json_output
+                        FROM
+                            (SELECT "#CHROM", POS, REF, ALT, "{transcripts_column_id}", {", ".join(clause_select)} FROM {transcripts_table})
+                        WHERE "{transcripts_column_id}" IS NOT NULL
+                        )
+                    GROUP BY "#CHROM", POS, REF, ALT
+                ) AS t
+                WHERE {table_variants}."#CHROM" = t."#CHROM"
+                    AND {table_variants}."POS" = t."POS"
+                    AND {table_variants}."REF" = t."REF"
+                    AND {table_variants}."ALT" = t."ALT"
+            """
 
-        self.execute_query(query=query_update)
+            self.execute_query(query=query_update)
+
+        # Transcripts to info column in FORMAT
+        if transcripts_info_format is not None:
+
+            # Create column on variants table
+            self.add_column(
+                table_name=table_variants,
+                column_name=transcripts_info_format,
+                column_type="VARCHAR",
+                default_value=None,
+                drop=False,
+            )
+
+            # Add header
+            vcf_reader.infos[transcripts_info_format] = vcf.parser._Info(
+                transcripts_info_format,
+                ".",
+                "String",
+                f"Transcripts annotations: 'transcript | {' | '.join(transcripts_infos_columns)}'",
+                "unknwon",
+                "unknwon",
+                self.code_type_map["String"],
+            )
+
+            # Add to update
+            update_set_format.append(
+                f""" {transcripts_info_format}=t.{transcripts_info_format} """
+            )
+
+        # Transcripts to info field in JSON
+        if transcripts_info_field_format is not None:
+
+            log.debug(f"{msg_info_prefix} - Annotation in structured format...")
+
+            # Add to update
+            update_set_format.append(
+                f""" 
+                    INFO = concat(
+                            CASE
+                                WHEN INFO NOT IN ('', '.')
+                                THEN INFO
+                                ELSE ''
+                            END,
+                            CASE
+                                WHEN CAST(t.{transcripts_info_format} AS VARCHAR) NOT IN ('', '.')
+                                THEN concat(
+                                    ';{transcripts_info_field_format}=',
+                                    t.{transcripts_info_format}
+                                )
+                                ELSE ''
+                            END
+                            )
+                """
+            )
+
+            # Add header
+            vcf_reader.infos[transcripts_info_field_format] = vcf.parser._Info(
+                transcripts_info_field_format,
+                ".",
+                "String",
+                f"Transcripts annotations: 'transcript | {' | '.join(transcripts_infos_columns)}'",
+                "unknwon",
+                "unknwon",
+                self.code_type_map["String"],
+            )
+
+        if update_set_format:
+
+            # Update query
+            query_update = f"""
+                UPDATE {table_variants}
+                    SET {", ".join(update_set_format)}
+                FROM
+                (
+                    SELECT
+                        "#CHROM", POS, REF, ALT,
+                            string_agg({transcripts_info_format}) AS {transcripts_info_format}
+                    FROM 
+                        (
+                        SELECT
+                            "#CHROM", POS, REF, ALT,
+                            "{transcripts_column_id}",
+                            concat(
+                                "{transcripts_column_id}",
+                                '|',
+                                {", '|', ".join(clause_to_format)}
+                            ) AS {transcripts_info_format}
+                        FROM
+                            (SELECT "#CHROM", POS, REF, ALT, "{transcripts_column_id}", {", ".join(clause_select)} FROM {transcripts_table})
+                        )
+                    GROUP BY "#CHROM", POS, REF, ALT
+                ) AS t
+                WHERE {table_variants}."#CHROM" = t."#CHROM"
+                    AND {table_variants}."POS" = t."POS"
+                    AND {table_variants}."REF" = t."REF"
+                    AND {table_variants}."ALT" = t."ALT"
+            """
+
+            self.execute_query(query=query_update)
 
         return True

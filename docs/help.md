@@ -185,10 +185,10 @@ Limit of number of row for query (only for print result, not output).
 ```
 
 ```
---query_print_mode=<print mode> [None, 'markdown', 'tabulate']
+--query_print_mode=<print mode> [None, 'markdown', 'tabulate', 'disabled']
 
 Print mode of query result (only for print result, not output).
-Either None (native), 'markdown' or 'tabulate'.
+Either None (native), 'markdown', 'tabulate' or disabled.
 
 ```
 
@@ -685,7 +685,7 @@ Usage examples:
 
 > howard calculation --input=tests/data/example.vcf.gz --output=/tmp/example.calculated.tsv --calculations='BARCODEFAMILY' --family_pedigree='sample1,sample2,sample4' 
 
-> howard calculation --input=tests/data/example.dbnsfp.transcripts.vcf.gz --output=/tmp/example.calculation.transcripts.tsv --param=config/param.transcripts.json --calculations='TRANSCRIPTS_PRIORITIZATION' 
+> howard calculation --input=tests/data/example.ann.transcripts.vcf.gz --output=/tmp/example.calculation.transcripts.tsv --param=config/param.transcripts.json --calculations='TRANSCRIPTS_ANNOTATIONS,TRANSCRIPTS_PRIORITIZATION' 
 
 > howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.ann.tsv --param=config/param.json 
 
@@ -1139,10 +1139,10 @@ Limit of number of row for query (only for print result, not output).
 ```
 
 ```
---query_print_mode=<print mode> [None, 'markdown', 'tabulate']
+--query_print_mode=<print mode> [None, 'markdown', 'tabulate', 'disabled']
 
 Print mode of query result (only for print result, not output).
-Either None (native), 'markdown' or 'tabulate'.
+Either None (native), 'markdown', 'tabulate' or disabled.
 
 ```
 
@@ -1493,6 +1493,16 @@ Only sub-databases files will be generated.
 Add INFO column (VCF format) in Parquet folder and file.
 Useful for speed up full annotation (all available columns).
 Increase memory and space during generation of files.
+
+```
+
+```
+--download-dbnsfp-only-info
+
+Add only INFO column (VCF format) in Parquet folder and file.
+Useful for speed up full annotation (all available columns).
+Decrease memory and space during generation of files.
+Increase time for partial annotation (some available columns).
 
 ```
 

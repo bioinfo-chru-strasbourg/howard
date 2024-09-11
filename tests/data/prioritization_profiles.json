@@ -1,66 +1,92 @@
 {
-    "default": {
-        "CLNSIG": [
-            {
-                "type": "equals",
-                "value": ".*pathogenic",
-                "score": 15,
-                "flag": "PASS",
-                "comment": [
-                    "Described on CLINVAR database"
-                ]
-            },
-            {
-                "type": "contains",
-                "value": "Pathogenic",
-                "score": 15,
-                "flag": "PASS",
-                "comment": [
-                    "Described on CLINVAR database"
-                ]
-            },
-            {
-                "type": "equals",
-                "value": "non-pathogenic",
-                "score": -100,
-                "flag": "FILTERED",
-                "comment": [
-                    "Described on CLINVAR database"
-                ]
-            },
-            {
-                "type": "equals",
-                "value": "Benign",
-                "score": -100,
-                "flag": "FILTERED",
-                "comment": [
-                    "Described on CLINVAR database"
-                ]
-            }
-        ],
-        "DP": [
-            {
-                "type": "gte",
-                "value": "50",
-                "score": 5,
-                "flag": "PASS",
-                "comment": [
-                    "DP"
-                ]
-            }
-        ]
-    },
-    "GERMLINE": {
-        "DP": [
-            {
-                "type": "gte",
-                "value": "30",
-                "score": 5,
-                "flag": "PASS",
-                "comment": [
-                    "DP"
-                ]
-            }
-        ]
-    }
+  "default": {
+    "CLNSIG": [
+      {
+        "type": "equals",
+        "value": ".*pathogenic",
+        "score": 15,
+        "flag": "PASS",
+        "comment": ["Described on CLINVAR database"]
+      },
+      {
+        "type": "contains",
+        "value": "Pathogenic",
+        "score": 15,
+        "flag": "PASS",
+        "comment": ["Described on CLINVAR database"]
+      },
+      {
+        "type": "equals",
+        "value": "non-pathogenic",
+        "score": -100,
+        "flag": "FILTERED",
+        "comment": ["Described on CLINVAR database"]
+      },
+      {
+        "type": "equals",
+        "value": "Benign",
+        "score": -100,
+        "flag": "FILTERED",
+        "comment": ["Described on CLINVAR database"]
+      }
+    ],
+    "DP": [
+      {
+        "type": "gte",
+        "value": "50",
+        "score": 5,
+        "flag": "PASS",
+        "comment": ["DP"]
+      }
+    ],
+    "CLNSIG and DP filter": [
+      {
+        "sql": " DP >= 50 OR regexp_matches(CLNSIG, 'Pathogenic') ",
+        "fields": ["DP"],
+        "score": 100,
+        "flag": "PASS",
+        "comment": ["Variant probably pathogenic"]
+      }
+    ]
+  },
+  "sql_class": {
+    "_description": "Profile with SQL filters and Classification",
+    "CLNSIG and DP filter": [
+      {
+        "sql": " DP >= 50 OR regexp_matches(CLNSIG, 'Pathogenic') ",
+        "fields": ["DP", "CLNSIG"],
+        "score": 10,
+        "flag": "PASS",
+        "class": "PM1",
+        "comment": ["Variant probably pathogenic"]
+      },
+      {
+        "sql": [" DP >= 50", "OR regexp_matches(CLNSIG, 'Pathogenic') "],
+        "fields": ["DP", "CLNSIG"],
+        "score": 20,
+        "flag": "PASS",
+        "class": "PM1,PM2",
+        "comment": ["Variant probably pathogenic or not"]
+      },
+      {
+        "sql": [" DP >= 50", "OR regexp_matches(CLNSIG, 'Pathogenic') "],
+        "fields": ["DP", "CLNSIG"],
+        "score": 30,
+        "flag": "PASS",
+        "class": ["PM1", "PM3"],
+        "comment": ["Variant probably pathogenic, but seem to not be"]
+      }
+    ]
+  },
+  "GERMLINE": {
+    "DP": [
+      {
+        "type": "gte",
+        "value": "30",
+        "score": 5,
+        "flag": "PASS",
+        "comment": ["DP"]
+      }
+    ]
+  }
 }

@@ -405,7 +405,7 @@ arguments = {
             # "param_section": "prioritization",
             "examples": {
                 "Prioritization profile by default": """"prioritization": "default" """,
-                "Prioritization profile by default and GERLINE from Configuration JSON file": """"prioritization": "default,GERMLINE" """,
+                "Prioritization profile by default and GERMLINE from Configuration JSON file": """"prioritization": "default,GERMLINE" """,
             }
         },
     },
@@ -471,8 +471,8 @@ arguments = {
     "query_print_mode": {
         "metavar": "print mode",
         "help": """Print mode of query result (only for print result, not output).\n"""
-        """Either None (native), 'markdown' or 'tabulate'.\n""",
-        "choices": [None, "markdown", "tabulate"],
+        """Either None (native), 'markdown', 'tabulate' or disabled.\n""",
+        "choices": [None, "markdown", "tabulate", "disabled"],
         "default": None,
         "type": str,
         "gooey": {"widget": "Dropdown", "options": {}},
@@ -1146,6 +1146,14 @@ arguments = {
         "help": """Add INFO column (VCF format) in Parquet folder and file.\n"""
         """Useful for speed up full annotation (all available columns).\n"""
         """Increase memory and space during generation of files.\n""",
+        "action": "store_true",
+        "default": False,
+    },
+    "download-dbnsfp-only-info": {
+        "help": """Add only INFO column (VCF format) in Parquet folder and file.\n"""
+        """Useful for speed up full annotation (all available columns).\n"""
+        """Decrease memory and space during generation of files.\n"""
+        """Increase time for partial annotation (some available columns).\n""",
         "action": "store_true",
         "default": False,
     },
@@ -1885,7 +1893,7 @@ commands_arguments = {
         """   howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.calculated.tsv --calculations='snpeff_hgvs,NOMEN' --hgvs_field=snpeff_hgvs --transcripts=tests/data/transcripts.tsv \n"""
         """   howard calculation --input=tests/data/example.vcf.gz --output=/tmp/example.calculated.tsv --calculations='TRIO' --trio_pedigree='sample1,sample2,sample4' \n"""
         """   howard calculation --input=tests/data/example.vcf.gz --output=/tmp/example.calculated.tsv --calculations='BARCODEFAMILY' --family_pedigree='sample1,sample2,sample4' \n"""
-        """   howard calculation --input=tests/data/example.dbnsfp.transcripts.vcf.gz --output=/tmp/example.calculation.transcripts.tsv --param=config/param.transcripts.json --calculations='TRANSCRIPTS_PRIORITIZATION' \n"""
+        """   howard calculation --input=tests/data/example.ann.transcripts.vcf.gz --output=/tmp/example.calculation.transcripts.tsv --param=config/param.transcripts.json --calculations='TRANSCRIPTS_ANNOTATIONS,TRANSCRIPTS_PRIORITIZATION' \n"""
         """   howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.ann.tsv --param=config/param.json \n"""
         """   howard calculation --show_calculations \n"""
         """    \n""",
@@ -2056,6 +2064,7 @@ commands_arguments = {
                 "download-dbnsfp-vcf": False,
                 "download-dbnsfp-no-files-all": False,
                 "download-dbnsfp-add-info": False,
+                "download-dbnsfp-only-info": False,
                 "download-dbnsfp-uniquify": False,
                 "download-dbnsfp-row-group-size": False,
             },

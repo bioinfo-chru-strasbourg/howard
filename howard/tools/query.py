@@ -79,7 +79,9 @@ def query(args: argparse) -> None:
         query_print_mode = param.get("query", {}).get("query_print_mode", None)
 
         # Print query
-        if query_print_mode in ["markdown"]:
+        if query_print_mode is None:
+            print(vcfdata_obj.get_query_to_df(query, limit=query_limit))
+        elif query_print_mode in ["markdown"]:
             print(vcfdata_obj.get_query_to_df(query, limit=query_limit).to_markdown())
         elif query_print_mode in ["tabulate"]:
             print(
@@ -89,6 +91,8 @@ def query(args: argparse) -> None:
                     tablefmt="psql",
                 )
             )
+        elif query_print_mode.lower() in ["no", "none", "null", "disabled"]:
+            log.info("Query print mode disabled")
         else:
             print(vcfdata_obj.get_query_to_df(query, limit=query_limit))
 

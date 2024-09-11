@@ -2,7 +2,7 @@
 
 ## Prioritization Configuration Guide
 
-Prioritization algorithm uses profiles to flag variants (as passed or filtered), calculate a prioritization score, and automatically generate a comment for each variants (example: 'polymorphism identified in dbSNP. associated to Lung Cancer. Found in ClinVar database'). Prioritization profiles are defined in a configuration file in JSON format. A profile is defined as a list of annotation/value, using wildcards and comparison options (contains, lower than, greater than, equal...). Annotations fields may be quality values (usually from callers, such as 'DP') or other annotations fields provided by annotations tools, such as HOWARD itself (example: COSMIC, Clinvar, 1000genomes, PolyPhen, SIFT). 
+Prioritization algorithm uses profiles to flag variants (as passed or filtered), calculate a prioritization score, classify with keywords, and automatically generate a comment for each variants (example: 'polymorphism identified in dbSNP. associated to Lung Cancer. Found in ClinVar database'). Prioritization profiles are defined in a configuration file in JSON format. A profile is defined as a list of filters, using SQL syntax or wildcards and comparison options (contains, lower than, greater than, equal...). Filters uses all annotations fields within VCF INFO/Tags, provided by annotations tools, such as HOWARD itself (example: COSMIC, Clinvar, 1000genomes, PolyPhen, SIFT). 
 
 See [HOWARD Help Prioritization tool](help.md#prioritization-tool) tool for more information.
 
@@ -10,17 +10,25 @@ See [HOWARD Help Prioritization tool](help.md#prioritization-tool) tool for more
 
 This example describes the prioritization profile 'default' that uses 2 fields 'DP' ('Read Depth') and 'CLNSIG' ('ClinVar Significance') with specific criteria.
 
-For 'DP' field, 2 filters are applied: if 'DP' is greater than or equal to '50', score is '5' and flag is 'PASS', if 'DP' is lower than '50', score is '0' and flag is 'FILTERED'. It means that if 'Read depth' is lower than 50 for a variant, it will be filtered with a bad score. Otherwise, the variant will have a better score (but can be filtered because of other filters).
+The 'DP' filter is related to 'DP' field, 2 filters are applied: if 'DP' is greater than or equal to '50', score is '5' and flag is 'PASS', if 'DP' is lower than '50', score is '0' and flag is 'FILTERED'. It means that if 'Read depth' is lower than 50 for a variant, it will be filtered with a bad score. Otherwise, the variant will have a better score (but can be filtered because of other filters).
 
-For field 'CLNSIG', 2 filters are applied: if it is equal to 'pathogenic', score is '15' and flag is 'PASS', and if it is equal to 'non-pathogenic', score is '-100' and flag is 'FILTERED'. Thus, the variant will be well scored if it is pathogenic, but filtered with a bad score if it is non pathogenic (for Clinvar annotation).
+The 'CLNSIG' filter is related to field 'CLNSIG', 2 filters are applied: if it is equal to 'pathogenic', score is '15' and flag is 'PASS', and if it is equal to 'non-pathogenic', score is '-100' and flag is 'FILTERED'. Thus, the variant will be well scored if it is pathogenic, but filtered with a bad score if it is non pathogenic (for Clinvar annotation).
+
+The 'Class' filter combines 2 fields ('DP' and 'CLNSIG') in SQL syntax, within 2 different filters:
+1. filter 1: associated with a score of '100', a lfalg of 'PASS' and classifications as 'PM1' and 'PM2'
+2. filter 1: associated with a score of '200', a lfalg of 'PASS' and classifications as 'PM1' and 'PM3'
+
 
 ```json
 {
     "default": {
+        "_description": "Default prioritization profile",
+        "_version": "1.0.0",
         "DP": [
             {
                 "type": "gte",
                 "value": "50",
+                "fields": ["DP"],
                 "score": 5,
                 "flag": "PASS",
                 "comment": [
@@ -30,6 +38,7 @@ For field 'CLNSIG', 2 filters are applied: if it is equal to 'pathogenic', score
             {
                 "type": "lt",
                 "value": "50",
+                "fields": ["DP"],
                 "score": 0,
                 "flag": "FILTERED",
                 "comment": [
@@ -41,6 +50,7 @@ For field 'CLNSIG', 2 filters are applied: if it is equal to 'pathogenic', score
             {
                 "type": "equals",
                 "value": "pathogenic",
+                "fields": ["CLNSIG"],
                 "score": 15,
                 "flag": "PASS",
                 "comment": [
@@ -50,10 +60,33 @@ For field 'CLNSIG', 2 filters are applied: if it is equal to 'pathogenic', score
             {
                 "type": "equals",
                 "value": "non-pathogenic",
+                "fields": ["CLNSIG"],
                 "score": -100,
                 "flag": "FILTERED",
                 "comment": [
                     "Described on CLINVAR database as non-pathogenic"
+                ]
+            }
+        ],
+        "Class": [
+            {
+                "sql": " DP >= 100 OR regexp_matches(CLNSIG, 'Pathogenic') ",
+                "fields": ["DP", "CLNSIG"],
+                "score": 100,
+                "flag": "PASS",
+                "class": "PM1,PM2",
+                "comment": [
+                    "Described on CLINVAR database as pathogenic, classified as PM1 and PM2"
+                ]
+            },
+            {
+                "sql": ["DP >= 200", "OR regexp_matches(CLNSIG, 'Pathogenic')"],
+                "fields": ["DP", "CLNSIG"],
+                "score": 200,
+                "flag": "PASS",
+                "class": ["PM1", "PM2"],
+                "comment": [
+                    "Described on CLINVAR database as non-pathogenic, classified as PM1 and PM3"
                 ]
             }
         ]
@@ -72,7 +105,7 @@ A prioritization profile contains filters applied to specific fields to prioriti
 
 #### type
   - *Type:* String
-  - *Description:* Specifies the type of test to apply to the field. It can be 
+  - *Description:* Specifies the type of test to apply to the field (INFO/Tags). It can be 
      - 'gt' for 'greater than' ('>')
      - 'gte' for 'greater than or equal to' ('>=')
      - 'lt' for 'lower than' ('<')
@@ -84,6 +117,14 @@ A prioritization profile contains filters applied to specific fields to prioriti
   - *Type:* String or Integer
   - *Description:* Specifies the threshold value or string/substring to match within the field, depending on the type of test specified.
 
+#### sql
+  - *Type:* String (or Array of String) with SQL syntax
+  - *Description:* Specifies the filter on fields (INFO/Tags) in SQL syntax (beware of fields type and cast if necessary, and beware of null values)
+
+#### fields
+  - *Type:* Array of String
+  - *Description:* Specifies the fields (INFO/Tags) used in operation or SQL syntax.
+
 ### Filter result
 
 #### score
@@ -94,7 +135,13 @@ A prioritization profile contains filters applied to specific fields to prioriti
   - *Type:* String
   - *Description:* Assigns a flag (either 'PASS' or 'FILTERED') to variants that pass the filter. The flag provides additional information or categorization about the variant. Flag 'FILTERED' is prior to 'PASS' to calculate the global prioritization profile flag. 
 
-- **comment:**
+#### class
+  - *Type:* Array of String
+  - *Description:* Assigns multiple classes (e.g. 'PM1', 'PM2', 'ClassA') to variants that pass the filter. 
+
+#### comment
   - *Type:* Array of Strings
   - *Description:* Provides a comment or explanation for the filter criteria. It helps users understand the rationale behind applying the filter.
 
+### Other sections
+More sections can be added for information on profiles by using "_" as first character (such as "_description", "_version")

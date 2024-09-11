@@ -69,13 +69,18 @@ HOWARD Parameters JSON file defines parameters to process annotations, calculati
       - [explode_infos_fields](#explodeexplode_infos_fields)
    - [transcripts](#transcripts)
       - [table](#transcriptstable)
-      - [transcripts_info_field](#transcriptstranscripts_info_field)
+      - [transcripts_info_field_json](#transcriptstranscripts_info_field_json)
+      - [transcripts_info_field_format](#transcriptstranscripts_info_field_format)
       - [transcripts_info_json](#transcriptstranscripts_info_json)
+      - [transcripts_info_format](#transcriptstranscripts_info_format)
       - [struct](#transcriptsstruct)
          - [from_column_format](#transcriptsstructfrom_column_format)
          - [from_columns_map](#transcriptsstructfrom_columns_map)
       - [prioritization](#transcriptsprioritization)
    - [threads](#threads)
+   - [samples](#samples)
+      - [list](#sampleslist)
+      - [check](#samplescheck)
    - [databases](#databases)
 
 
@@ -1187,11 +1192,11 @@ Default: ```10```
 
 ### query::query_print_mode
 
-Print mode of query result (only for print result, not output). Either None (native), 'markdown' or 'tabulate'. 
+Print mode of query result (only for print result, not output). Either None (native), 'markdown', 'tabulate' or disabled. 
 
 Type: ```str```
 
-Choices: ```[None, 'markdown', 'tabulate']```
+Choices: ```[None, 'markdown', 'tabulate', 'disabled']```
 
 Default: ```None```
 
@@ -1284,8 +1289,10 @@ Examples:
 ```json
 "transcripts": {
   "table": "transcripts",
-  "transcripts_info_field": "transcripts_json",
+  "transcripts_info_field_json": "transcripts_json",
+  "transcripts_info_field_format": "transcripts_ann",
   "transcripts_info_json": "transcripts_json",
+  "transcripts_info_format": "transcripts_format",
   "struct": {
       "from_column_format": [
           {
@@ -1334,21 +1341,33 @@ Examples:
 "table": "transcripts"
 ```
 
-### transcripts::transcripts_info_field
+### transcripts::transcripts_info_field_json
 
-Transcripts INFO field name to add in VCF INFO field.
+Transcripts INFO field name to add in VCF INFO field in JSON format.
 
 Examples: 
 
 > Transcripts INFO field name:
 
 ```json
-"transcripts_info_field": "transcripts_json"
+"transcripts_info_field_json": "transcripts_json"
+```
+
+### transcripts::transcripts_info_field_format
+
+Transcripts INFO field name to add in VCF INFO field in strutured format.
+
+Examples: 
+
+> Transcripts INFO field name:
+
+```json
+"transcripts_info_field_format": "transcripts_ann"
 ```
 
 ### transcripts::transcripts_info_json
 
-Transcripts column name to add to transcripts table.
+Transcripts column name to add to transcripts table in JSON format.
 
 Examples: 
 
@@ -1356,6 +1375,18 @@ Examples:
 
 ```json
 "transcripts_info_json": "transcripts_json"
+```
+
+### transcripts::transcripts_info_format
+
+Transcripts column name to add to transcripts table in structured format.
+
+Examples: 
+
+> Transcripts column name:
+
+```json
+"transcripts_info_format": "transcripts_format"
 ```
 
 ### transcripts::struct
@@ -1456,6 +1487,65 @@ Examples:
 
 ```json
 "threads": 8
+```
+
+## samples
+
+Samples parameters to defined a list of samples or use options to check samples. Only for export in VCF format. By default, if no samples are listed, all existing samples are checked if they contain well-formed genotype annotations (based on 'FORMAT' VCF column).
+
+Type: ```dict```
+
+Examples: 
+
+> Export only a list of samples:
+
+```json
+"samples": {
+   "list": ["sample1", "sample2"]
+}
+```
+> Do not check existing samples (all VCF columns after FORMAT column):
+
+```json
+"samples": {
+   "check": false
+}
+```
+> Default configuration, with all samples are considered (null) and checked (true):
+
+```json
+"samples": {
+   "list": null,
+   "check": true
+}
+```
+
+### samples::list
+
+List of columns that correspond to samples (with well formed genotype, based on 'FORMAT' VCF column). Only for export in VCF format. Only these samples are exported in VCF format file.
+
+Type: ```dict```
+
+Examples: 
+
+> Export only a list of samples:
+
+```json
+"list": ["sample1", "sample2"]
+```
+
+### samples::check
+
+Check if samples (either provided in 'list' parameters, or all existing column after 'FORMAT' column) according to 'FORMAT' VCF column. Only for export in VCF format. By default, samples are checked (beware of format if check is disabled) and removed if they are not well-formed.
+
+Type: ```dict```
+
+Examples: 
+
+> Do not check existing samples:
+
+```json
+"check": false
 ```
 
 ## databases

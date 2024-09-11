@@ -1402,6 +1402,7 @@ def databases_download_dbnsfp(
     not_generate_files_all: bool = False,
     genomes_folder: str = None,
     add_info: bool = False,
+    only_info: bool = False,
     row_group_size: int = 100000,
     uniquify: bool = False,
 ) -> bool:
@@ -1425,55 +1426,61 @@ def databases_download_dbnsfp(
     to 4.4a
     :type dbnsfp_release: str (optional)
     :param threads: The `threads` parameter specifies the number of threads to use for parallel
-    processing. It determines how many tasks can be executed simultaneously. Increasing the number of
-    threads can potentially speed up the execution time of the function, especially if there are
-    multiple cores available on the machine
+    processing. Increasing the number of threads can potentially speed up the execution time of the
+    function, especially if there are multiple cores available on the machine. It determines how many
+    tasks can be executed simultaneously
     :type threads: int
     :param memory: The `memory` parameter specifies the amount of maximum memory (in gigabytes) to use
     for sorting. It is used in the context of processing and sorting data efficiently. The default value
     for this parameter is set to 1, meaning that 1 gigabyte of memory will be allocated for sorting
     operations, defaults to 1
     :type memory: int (optional)
-    :param parquet_size: The `parquet_size` parameter is used to specify the maximum size (in megabytes)
-    of data files in the Parquet folder. It determines the size at which the Parquet files will be split
-    or generated. The value should be an integer representing the size in megabytes, defaults to 100
+    :param parquet_size: The `parquet_size` parameter specifies the maximum size (in megabytes) of data
+    files in the Parquet folder. It determines the size at which the Parquet files will be split or
+    generated. The value should be an integer representing the size in megabytes, defaults to 100
     :type parquet_size: int (optional)
-    :param generate_parquet_file: The `generate_parquet_file` parameter is a boolean flag indicating
-    whether to generate a Parquet file or not. If set to `True`, the function will create Parquet files
-    based on the specified parameters and data. If set to `False`, the function will not generate
-    Parquet files, defaults to False
+    :param generate_parquet_file: The `generate_parquet_file` parameter in the
+    `databases_download_dbnsfp` function is a boolean flag that indicates whether to generate a Parquet
+    file or not. If set to `True`, the function will create Parquet files based on the specified
+    parameters and data. If set to `, defaults to False
     :type generate_parquet_file: bool (optional)
     :param generate_sub_databases: The `generate_sub_databases` parameter in the
     `databases_download_dbnsfp` function determines whether to generate sub-databases based on the
     assemblies provided. If set to `True`, the function will create sub-databases based on the specified
     genome assemblies. If set to `False`, the function, defaults to False
     :type generate_sub_databases: bool (optional)
-    :param generate_vcf_file: The `generate_vcf_file` parameter is a boolean flag indicating whether to
-    generate a VCF file or not. If set to `True`, the function will generate a VCF file based on the
-    specified parameters and data. If set to `False`, the function will not generate a VCF file,
+    :param generate_vcf_file: The `generate_vcf_file` parameter in the `databases_download_dbnsfp`
+    function is a boolean flag that indicates whether to generate a VCF file based on the specified
+    parameters and data. If set to `True`, the function will generate a VCF file. If set to `False,
     defaults to False
     :type generate_vcf_file: bool (optional)
-    :param not_generate_files_all: The `not_generate_files_all` parameter is a boolean flag that
-    indicates whether to skip generating database Parquet/VCF files for the entire database. If set to
-    `True`, the function will not generate files for the entire database. If set to `False`, the
-    function will proceed with generating files for, defaults to False
+    :param not_generate_files_all: The `not_generate_files_all` parameter in the
+    `databases_download_dbnsfp` function is a boolean flag that indicates whether to skip generating
+    database Parquet/VCF files for the entire database. If set to `True`, the function will not generate
+    files for the entire database. If set to, defaults to False
     :type not_generate_files_all: bool (optional)
     :param genomes_folder: The `genomes_folder` parameter specifies the folder where the genome files
     are located. It is a string that represents the path to the folder containing genome assemblies
     :type genomes_folder: str
     :param add_info: The `add_info` parameter in the `databases_download_dbnsfp` function is a boolean
-    flag that determines whether to include an INFO column in the Parquet folder/file. If set to `True`,
-    the function will add an INFO column to the generated Parquet files. This INFO column will, defaults
-    to False
+    flag that determines whether to include an "INFO" column in the Parquet folder/file. If set to
+    `True`, the function will add an INFO column to the generated Parquet files. This INFO, defaults to
+    False
     :type add_info: bool (optional)
+    :param only_info: The `only_info` parameter in the `databases_download_dbnsfp` function is a boolean
+    flag that, when set to `True`, indicates that only the "INFO" column should be included in the
+    output. This parameter is used to control whether to include only the "INFO" column in, defaults to
+    False
+    :type only_info: bool (optional)
     :param row_group_size: The `row_group_size` parameter specifies the row group size to generate the
     Parquet folder and file. It is used to control the size of row groups in the Parquet file. This
     parameter affects the organization of data within the Parquet file and can impact performance and
     memory usage during processing. The, defaults to 100000
     :type row_group_size: int (optional)
     :param uniquify: The `uniquify` parameter in the `databases_download_dbnsfp` function is a boolean
-    flag that determines whether to generate unique values for each annotation in the Parquet file,
-    defaults to False
+    flag that determines whether to generate unique values for each annotation in the Parquet file. When
+    set to `True`, the function will ensure that each annotation column contains only unique values.
+    This can be, defaults to False
     :type uniquify: bool (optional)
     :return: The function `databases_download_dbnsfp` returns a boolean value indicating whether the
     process of downloading and processing dbNSFP databases for specified genome assemblies was
@@ -1523,7 +1530,7 @@ def databases_download_dbnsfp(
         """
 
         # Check columns structure
-        log.info(f"Download dbNSFP {assemblies} - Check database structure")
+        log.info(f"Download dbNSFP {assemblies} - Check database structure...")
 
         # Connexion for structure
         db_structure = duckdb.connect(config={"threads": threads})
@@ -1615,6 +1622,7 @@ def databases_download_dbnsfp(
         null_if_no_annotation: bool = True,
         print_log: bool = True,
         add_info: bool = False,
+        only_info: bool = False,
         uniquify: bool = False,
     ) -> dict:
         """
@@ -1639,10 +1647,11 @@ def databases_download_dbnsfp(
         sub-database. If a sub-database is provided, only columns that belong to that sub-database or
         start with the sub-database
         :type sub_database: str
-        :param null_if_no_annotation: The `null_if_no_annotation` parameter is a boolean parameter in
-        the `get_columns_select_clause` function. When set to `True`, this parameter determines whether
-        to return null if there are no annotations found. If there are no annotations found and
-        `null_if_no_annotation` is `True`, the, defaults to True
+        :param null_if_no_annotation: The `null_if_no_annotation` parameter in the
+        `get_columns_select_clause` function is a boolean parameter that determines whether to return
+        null if there are no annotations found. If this parameter is set to `True`, the function will
+        return null if there are no annotations found. This parameter helps handle cases, defaults to
+        True
         :type null_if_no_annotation: bool (optional)
         :param print_log: The `print_log` parameter in the `get_columns_select_clause` function is a
         boolean flag that determines whether to enable logging or not. If set to `True`, the function
@@ -1654,14 +1663,30 @@ def databases_download_dbnsfp(
         `add_info` is set to `True`, the function will concatenate and format the selected annotations
         into an "INFO, defaults to False
         :type add_info: bool (optional)
+        :param only_info: The `only_info` parameter in the `get_columns_select_clause` function is a
+        boolean flag that, when set to `True`, indicates that only the "INFO" column should be included
+        in the output. This parameter is used to control whether to include only the "INFO" column in
+        the SELECT, defaults to False
+        :type only_info: bool (optional)
         :param uniquify: The `uniquify` parameter in the `get_columns_select_clause` function is a
-        boolean flag that determines whether to include unique values for each annotation column,
-        defaults to False
+        boolean flag that determines whether to include unique values for each annotation column. When
+        set to `True`, the function will ensure that each annotation column contains only unique values.
+        This can be useful when you want to avoid, defaults to False
         :type uniquify: bool (optional)
         :return: The `get_columns_select_clause` function returns a dictionary containing the following
         keys and their corresponding values:
+        - "select": A string representing the SELECT clause for a SQL query based on the input columns
+        structure, assembly, and other parameters.
+        - "where": A string representing the WHERE clause for a SQL query based on the input columns
+        structure, assembly, and other parameters.
+        - "annotations": A dictionary
         """
 
+        # Only INFO
+        if only_info:
+            add_info = True
+
+        # Init
         columns_select_position = {}
         columns_select_ref_alt = {}
         columns_select_info = {}
@@ -1770,7 +1795,7 @@ def databases_download_dbnsfp(
                             if uniquify:
                                 # columns for each annotation
                                 column_key = f"""
-                                    list_aggregate(list_distinct(array_filter(string_split(CAST("{column}" AS VARCHAR), ';'), x -> x != '.')), 'string_agg', ',') AS "{column_alias}"
+                                    list_aggregate(list_distinct(array_filter(string_split(CAST("{column}" AS VARCHAR), ';'), x -> x != '.')), 'string_agg', ',')::{columns_structure[column]} AS "{column_alias}"
                                 """
                                 # columns for INFO clumn
                                 column_info_key = f"""
@@ -1788,7 +1813,7 @@ def databases_download_dbnsfp(
                             else:
                                 # columns for each annotation
                                 column_key = f"""
-                                    replace(CAST("{column}" AS VARCHAR), ';', ',') AS "{column_alias}"
+                                    replace(CAST("{column}" AS VARCHAR), ';', ',')::{columns_structure[column]} AS "{column_alias}"
                                 """
                                 # columns for INFO clumn
                                 column_info_key = f"""
@@ -1832,6 +1857,9 @@ def databases_download_dbnsfp(
             """
             columns_select_info[info_concat] = "INFO"
             columns_list_annotations["INFO"] = "VARCHAR"
+
+            if only_info:
+                columns_select_info = {info_concat: "INFO"}
 
         # Create select clause
         columns_select = (
@@ -2124,6 +2152,7 @@ def databases_download_dbnsfp(
             assembly=assembly,
             sub_database=sub_database,
             add_info=add_info,
+            only_info=only_info,
             uniquify=uniquify,
         )
         columns_select_clause = columns_clauses.get("select")
@@ -2155,7 +2184,7 @@ def databases_download_dbnsfp(
                             LIMIT 1
                     """
                 res = db.query(query).df()
-                chromosome = "chr" + res["#chr"][0]
+                chromosome = "chr" + str(res["#chr"][0])
                 log.debug(
                     f"""Download dbNSFP ['{assembly}'] - Database '{sub_database}' - Process file '{os.path.basename(database_file)}' - Found chromosome '{chromosome}'"""
                 )
@@ -2318,6 +2347,7 @@ def databases_download_dbnsfp(
                     null_if_no_annotation=True,
                     print_log=False,
                     add_info=add_info,
+                    only_info=only_info,
                     uniquify=uniquify,
                 )
                 columns_select_clause = columns_clauses.get("select")
@@ -2609,6 +2639,7 @@ def databases_download_dbnsfp(
                                 null_if_no_annotation=True,
                                 print_log=False,
                                 add_info=add_info,
+                                only_info=only_info,
                                 uniquify=uniquify,
                             )
                             columns_annotations = columns_clauses.get("annotations")
@@ -2633,7 +2664,7 @@ def databases_download_dbnsfp(
                                         f"""
                                     CASE
                                         WHEN "{column_annotation}" IS NOT NULL
-                                        THEN concat('{column_annotation}=', replace("{column_annotation}", ';', ','), ';')
+                                        THEN concat('{column_annotation}=', replace(CAST("{column_annotation}" AS VARCHAR), ';', ','), ';')
                                         ELSE ''
                                     END
                                     """
