@@ -3759,7 +3759,7 @@ def check_docker_image_exists(image_with_tag: str) -> bool:
     try:
         # Run the `docker images` command and capture the output
         result = subprocess.run(
-            ["docker", "images", "--format", "json"],
+            ["docker", "images", "--format", "{{json . }}"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,

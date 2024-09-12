@@ -6108,7 +6108,7 @@ class Variants:
         log.debug("Param: " + str(param))
 
         # Param
-        options = param.get("annotation", {}).get("splice", {})
+        options = param.get("annotation", {}).get("splice", {}).get("options", {})
         log.debug("Options: " + str(options))
 
         # Data
@@ -6256,6 +6256,7 @@ class Variants:
 
             # Add options
             if options:
+                log.debug(options)
                 nf_params = list(check_values(options))
                 log.debug(f"Splice NF params: {' '.join(nf_params)}")
             else:
@@ -6308,7 +6309,7 @@ class Variants:
                     if spip and spliceai:
                         return [
                             f"--spip_transcriptome {spip}",
-                            f"--spliceai_annotations {spliceai}",
+                            f"--spliceai_transcriptome {spliceai}",
                         ]
                     else:
                         # TODO crash and go on with basic annotations ?
