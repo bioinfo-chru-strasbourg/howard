@@ -15,18 +15,23 @@ arguments = {
     "databases_folder": {
         "help": """Path of HOWARD database folder.\n""",
         "type": str,
-        "default": "/home1/DB/HOWARD"
+        "default": "/home1/DB/HOWARD",
     },
     "database": {
         "help": """Which database to update.\n""",
         "type": str,
         "default": "/home1/DB/HOWARD",
-        "choices": ["clinvar"]
+        "choices": ["clinvar"],
     },
     "update_config": {
         "help": """Path of json configuration file.\n""",
         "type": str,
-    }
+    },
+    "current_folder": {
+        "help": """Path of json configuration file.\n""",
+        "type": str,
+        "default": "current",
+    },
 }
 
 # Command
@@ -43,7 +48,8 @@ commands_arguments = {
             "Update_database": {
                 "databases_folder": False,
                 "database": False,
-                "update_config": False
+                "update_config": False,
+                "current_folder": False,
             },
             "Options": {"show": False, "limit": False},
         },
@@ -51,6 +57,7 @@ commands_arguments = {
 }
 
 # from plugins.update_database.ucsc import Ucsc
+
 
 # Main function
 def main(args: argparse) -> None:
@@ -62,8 +69,11 @@ def main(args: argparse) -> None:
     log.info("START")
     if args.database == "clinvar":
         ucsc.Ucsc(
-        database=args.database,
-        databases_folder=args.databases_folder,
-        config_json=args.update_config, verbosity="info").update_clinvar()
+            database=args.database,
+            databases_folder=args.databases_folder,
+            config_json=args.update_config,
+            current_folder=args.current_folder,
+            verbosity="info",
+        ).update_clinvar()
     # Debug
     log.info("END")
