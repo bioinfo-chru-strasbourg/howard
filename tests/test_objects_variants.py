@@ -648,7 +648,7 @@ def test_set_get_param():
     assert new_input_param == variants.get_param()
 
 
-def test_set_get_header():
+def test_get_header():
     """
     This function tests various methods related to getting and setting the header of a VCF file using
     the Variants class in Python.
@@ -693,7 +693,33 @@ def test_set_get_header():
     assert header_columns_sample_list == header_columns_sample_list_expected
 
 
-def test_set_get_header_no_samples():
+def test_get_header_infos_list():
+    """
+    The function `test_get_header_infos_list` tests the retrieval of information headers from a VCF file
+    using the `Variants` class.
+    """
+
+    # Init files
+    input_vcf = tests_data_folder + "/example.vcf.gz"
+
+    # Create connection
+    conn = duckdb.connect(":memory:")
+
+    # Create object
+    variants = Variants(conn=conn, input=input_vcf)
+
+    # set_header done when vcf object creation
+
+    # Check header VCF
+    header_vcf = variants.get_header()
+    assert header_vcf.infos != None
+
+    # Check header List and nb
+    header_list = variants.get_header_infos_list()
+    assert header_list == ["NS", "DP", "AA", "CLNSIG", "SIFT"]
+
+
+def test_get_header_no_samples():
     """
     This function tests various methods related to getting and setting the header of a VCF file when
     there are no samples present.
@@ -740,7 +766,7 @@ def test_set_get_header_no_samples():
     assert header_columns_sample_list == header_columns_sample_list_expected
 
 
-def test_set_get_header_in_config():
+def test_get_header_in_config():
     """
     This function tests various methods related to getting the header information from a Variants object
     in Python.

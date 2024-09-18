@@ -1091,6 +1091,22 @@ class Variants:
             elif type == "list":
                 return vcf_required
 
+
+    def get_header_infos_list(self) -> list:
+        """
+        This function retrieves a list of information fields from the header.
+        :return: A list of information fields from the header.
+        """
+
+        # Init
+        infos_list = []
+
+        for field in self.get_header().infos:
+            infos_list.append(field)
+
+        return infos_list
+
+
     def get_header_length(self, file: str = None) -> int:
         """
         The function `get_header_length` returns the length of the header list, excluding the #CHROM
@@ -9632,18 +9648,17 @@ class Variants:
 
         # Variants table
         table_variants = self.get_table_variants()
-        log.debug(f"transcripts_table={transcripts_table}")
+
         # Transcripts table
         if transcripts_table is None:
-            log.debug(f"transcripts_table={transcripts_table}")
             transcripts_table = self.create_transcript_view(
                 transcripts_table="transcripts", param=param
             )
-            log.debug(f"transcripts_table={transcripts_table}")
         if transcripts_table is None:
             msg_err = "No Transcripts table availalble"
             log.error(msg_err)
             raise ValueError(msg_err)
+        log.debug(f"transcripts_table={transcripts_table}")
 
         # Get transcripts columns
         columns_as_list_query = f"""
@@ -9662,10 +9677,8 @@ class Variants:
 
         # Prioritization param and Force only PZ Score and Flag
         pz_param = param.get("transcripts", {}).get("prioritization", {})
-        pz_fields_score = pz_param.get("pzprefix", "PTZ") + "Score"
-        pz_fields_flag = pz_param.get("pzprefix", "PTZ") + "Flag"
-        pz_fields_transcripts = pz_param.get("pzprefix", "PTZ") + "Transcript"
-        pz_param["pzfields"] = [pz_fields_score, pz_fields_flag]
+
+        # PZ profile by default
         pz_profile_default = (
             param.get("transcripts", {}).get("prioritization", {}).get("profiles", None)
         )
@@ -9675,31 +9688,174 @@ class Variants:
             log.warning("No profile defined for transcripts prioritization")
             return False
 
+        # PZ fields
+        pz_param_pzfields = {}
+
+        # PZ field transcripts
+        pz_fields_transcripts = pz_param.get("pzprefix", "PTZ") + "Transcript"
+
+        # Add PZ Transcript in header
+        self.get_header().infos[pz_fields_transcripts] = vcf.parser._Info(
+            pz_fields_transcripts,
+            ".",
+            "String",
+            f"Transcript selected from prioritization process, profile {pz_profile_default}",
+            "unknown",
+            "unknown",
+            code_type_map["String"],
+        )
+
+        # Mandatory fields
+        pz_mandatory_fields_list = [
+            "Score",
+            "Flag",
+            "Tags",
+            "Comment",
+            "Infos",
+            "Class",
+        ]
+        pz_mandatory_fields = []
+        for pz_mandatory_field in pz_mandatory_fields_list:
+            pz_mandatory_fields.append(
+                pz_param.get("pzprefix", "PTZ") + pz_mandatory_field
+            )
+
+        # PZ fields in param
+        for pz_field in pz_param.get("pzfields", []):
+            if pz_field in pz_mandatory_fields_list:
+                pz_param_pzfields[pz_param.get("pzprefix", "PTZ") + pz_field] = (
+                    pz_param.get("pzprefix", "PTZ") + pz_field
+                )
+            else:
+                # pz_param_pzfields.append(pz_field)
+                pz_field_new = pz_param.get("pzprefix", "PTZ") + pz_field
+                pz_param_pzfields[pz_field] = pz_field_new
+
+                # Add PZ Transcript in header
+                self.get_header().infos[pz_field_new] = vcf.parser._Info(
+                    pz_field_new,
+                    ".",
+                    "String",
+                    f"Annotation '{pz_field}' from transcript selected from prioritization process, profile {pz_profile_default}",
+                    "unknown",
+                    "unknown",
+                    code_type_map["String"],
+                )
+
+        # PZ fields param
+        pz_param["pzfields"] = pz_mandatory_fields
+
         # Prioritization
         prioritization_result = self.prioritization(
             table=transcripts_table,
             pz_param=param.get("transcripts", {}).get("prioritization", {}),
         )
+
+        # # DEVEL
+        # query_devel = f"""
+        #     SELECT * FROM transcripts LIMIT 1
+        # """
+        # res_devel = self.get_query_to_df(query=query_devel)
+        # log.debug(f""" res_devel transcripts ={res_devel.to_string()} """)
+        # query_devel = f"""
+        #     SELECT INFO FROM variants LIMIT 1
+        # """
+        # res_devel = self.get_query_to_df(query=query_devel)
+        # log.debug(f""" res_devel variants ={res_devel.to_string()} """)
+
         if not prioritization_result:
             log.warning("Transcripts prioritization not processed")
             return False
 
-        # Explode PZ fields
-        self.explode_infos(
-            table=transcripts_table,
-            fields=param.get("transcripts", {})
-            .get("prioritization", {})
-            .get("pzfields", []),
+        # # Explode PZ fields
+        # self.explode_infos(
+        #     table=transcripts_table,
+        #     fields=list(pz_param_pzfields.keys()) + pz_mandatory_fields,
+        # )
+
+        # PZ fields sql query
+        query_update_select_list = []
+        query_update_concat_list = []
+        query_update_order_list = []
+        for pz_param_pzfield in set(
+            list(pz_param_pzfields.keys()) + pz_mandatory_fields
+        ):
+            query_update_select_list.append(f" {pz_param_pzfield}, ")
+
+        for pz_param_pzfield in pz_param_pzfields:
+            query_update_concat_list.append(
+                f"""
+                    , CASE 
+                        WHEN {pz_param_pzfield} IS NOT NULL
+                        THEN concat(';{pz_param_pzfields.get(pz_param_pzfield)}=', {pz_param_pzfield})
+                        ELSE ''
+                    END
+                """
+            )
+
+        # Order by
+        pz_orders = (
+            param.get("transcripts", {}).get("prioritization", {}).get("pzorder", {})
         )
+        if not pz_orders:
+            pz_orders = {
+                pz_param.get("pzprefix", "PTZ") + "Flag": "ASC",
+                pz_param.get("pzprefix", "PTZ") + "Score": "DESC",
+                "transcript": "ASC",
+            }
+        for pz_order in pz_orders:
+            query_update_order_list.append(
+                f""" {pz_order} {pz_orders.get(pz_order, "DESC")} """
+            )
+
+        # Fields to explode
+        fields_to_explode = list(pz_param_pzfields.keys()) + pz_mandatory_fields + list(pz_orders.keys())
+        fields_to_explode.remove("transcript")
+
+        # Check fields to explode
+        for field_to_explode in fields_to_explode:
+            if field_to_explode not in self.get_header_infos_list():
+                msg_err = f"INFO/{field_to_explode} NOT IN header"
+                log.error(msg_err)
+                raise ValueError(msg_err)
+            
+        # eExplode fields to explode
+        exploded_fields = self.explode_infos(
+            table=transcripts_table,
+            fields=fields_to_explode,
+        )
+        
+        # # DEVEL
+        # query_devel = f"""
+        #         DESCRIBE 
+                  
+        #             {transcripts_table}
+        # """
+        # log.debug(f""" query_devel={query_devel} """)
+        # df_devel = self.get_query_to_df(query=query_devel)
+        # log.debug(df_devel)
+        # query_devel = f"""
+        #         SELECT
+        #             "#CHROM", POS, REF, ALT, transcript, {" ".join(query_update_select_list)}
+        #             ROW_NUMBER() OVER (
+        #                 PARTITION BY "#CHROM", POS, REF, ALT
+        #                 ORDER BY {" , ".join(query_update_order_list)}
+        #             ) AS rn
+        #         FROM
+        #             {transcripts_table}
+        # """
+        # log.debug(f""" query_devel={query_devel} """)
+        # df_devel = self.get_query_to_df(query=query_devel)
+        # log.debug(df_devel)
 
         # Export Transcripts prioritization infos to variants table
         query_update = f"""
             WITH RankedTranscripts AS (
                 SELECT
-                    "#CHROM", POS, REF, ALT, transcript, {pz_fields_score}, {pz_fields_flag},
+                    "#CHROM", POS, REF, ALT, transcript, {" ".join(query_update_select_list)}
                     ROW_NUMBER() OVER (
                         PARTITION BY "#CHROM", POS, REF, ALT
-                        ORDER BY {pz_fields_flag} ASC, {pz_fields_score} DESC, transcript ASC
+                        ORDER BY {" , ".join(query_update_order_list)}
                     ) AS rn
                 FROM
                     {transcripts_table}
@@ -9711,7 +9867,7 @@ class Variants:
                             THEN ''
                             ELSE concat("INFO", ';')
                         END,
-                        concat('{pz_fields_transcripts}=', transcript, ';{pz_fields_score}=', {pz_fields_score}, ';{pz_fields_flag}=', {pz_fields_flag})
+                        concat('{pz_fields_transcripts}=', transcript {" ".join(query_update_concat_list)})
                         )
             FROM
                 RankedTranscripts
@@ -9723,18 +9879,8 @@ class Variants:
                 AND variants."ALT" = RankedTranscripts."ALT"
                 
         """
+        # log.debug(f"query_update={query_update}")
         self.execute_query(query=query_update)
-
-        # Add PZ Transcript in header
-        self.get_header().infos[pz_fields_transcripts] = vcf.parser._Info(
-            pz_fields_transcripts,
-            ".",
-            "String",
-            f"Transcript selected from transcripts prioritization process, profile {pz_profile_default}",
-            "unknown",
-            "unknown",
-            code_type_map["String"],
-        )
 
         # Return
         return True
