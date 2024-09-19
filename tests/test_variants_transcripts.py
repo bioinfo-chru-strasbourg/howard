@@ -17,7 +17,7 @@ import vcf
 
 from howard.functions.commons import remove_if_exists
 from howard.objects.variants import Variants
-from test_needed import tests_folder, tests_config
+from test_needed import tests_folder, tests_config, tests_data_folder
 
 
 @pytest.mark.parametrize(
@@ -95,7 +95,6 @@ def test_create_transcript_view(input_vcf):
             ORDER BY "#CHROM", POS, REF, ALT, transcript
         """
         check = variants.get_query_to_df(query=query_check)
-        log.debug(f"check={check}")
         assert len(check) > 0
 
 
@@ -392,3 +391,345 @@ def test_transcripts_prioritization(input_vcf):
             vcf.Reader(filename=output_vcf)
         except:
             assert False
+
+
+@pytest.mark.parametrize(
+    "input_vcf, param_prioritization, where_clause, raise_value_error",
+    [
+        (  # Without transcripts of preference (selected after ordering) and without forcing transcript preference order
+            f"{tests_data_folder}/example.ann.transcripts.vcf.gz",
+            {
+                "profiles": ["transcripts"],
+                "prioritization_config": f"{tests_data_folder}/prioritization_transcripts_profiles.json",
+                "pzprefix": "PZT",
+                "pzfields": ["Score", "Flag"],
+                "prioritization_transcripts_order": {
+                    "PZTFlag": "ASC",
+                    "PZTScore": "DESC",
+                },
+                "prioritization_score_mode": "HOWARD",
+                "prioritization_transcripts": None,
+                "prioritization_transcripts_force": False,
+                "prioritization_transcripts_version_force": False,
+            },
+            """
+                "#CHROM" = 'chr7'
+                AND POS = 55249063
+                AND contains(INFO, 'PZTTranscript=NM_005228.5')
+            """,
+            None,
+        ),
+        (  # With transcripts of preference selected after ordering
+            f"{tests_data_folder}/example.ann.transcripts.vcf.gz",
+            {
+                "profiles": ["transcripts"],
+                "prioritization_config": f"{tests_data_folder}/prioritization_transcripts_profiles.json",
+                "pzprefix": "PZT",
+                "pzfields": ["Score", "Flag"],
+                "prioritization_score_mode": "HOWARD",
+                "prioritization_transcripts_order": {
+                    "PZTFlag": "ASC",
+                    "PZTScore": "DESC",
+                },
+                "prioritization_transcripts": f"{tests_data_folder}/transcripts.for_prioritization.tsv",
+                "prioritization_transcripts_force": False,
+                "prioritization_transcripts_version_force": False,
+            },
+            """
+                "#CHROM" = 'chr7'
+                AND POS = 55249063
+                AND contains(INFO, 'PZTTranscript=NR_047551.1')
+            """,
+            None,
+        ),
+        (  # With transcripts of preference forced
+            f"{tests_data_folder}/example.ann.transcripts.vcf.gz",
+            {
+                "profiles": ["transcripts"],
+                "prioritization_config": f"{tests_data_folder}/prioritization_transcripts_profiles.json",
+                "pzprefix": "PZT",
+                "pzfields": ["Score", "Flag"],
+                "prioritization_score_mode": "HOWARD",
+                "prioritization_transcripts": f"{tests_data_folder}/transcripts.for_prioritization.tsv",
+                "prioritization_transcripts_force": True,
+                "prioritization_transcripts_version_force": False,
+            },
+            """
+                "#CHROM" = 'chr7'
+                AND POS = 55249063
+                AND contains(INFO, 'PZTTranscript=NM_001346900.2')
+            """,
+            None,
+        ),
+        (  # With transcripts of preference and forcing version
+            f"{tests_data_folder}/example.ann.transcripts.vcf.gz",
+            {
+                "profiles": ["transcripts"],
+                "prioritization_config": f"{tests_data_folder}/prioritization_transcripts_profiles.json",
+                "pzprefix": "PZT",
+                "pzfields": ["Score", "Flag"],
+                "prioritization_score_mode": "HOWARD",
+                "prioritization_transcripts": f"{tests_data_folder}/transcripts.for_prioritization.tsv",
+                "prioritization_transcripts_force": False,
+                "prioritization_transcripts_version_force": True,
+            },
+            """
+                "#CHROM" = 'chr7'
+                AND POS = 55249063
+                AND contains(INFO, 'PZTTranscript=NM_001346941.2')
+            """,
+            None,
+        ),
+        (  # No PZfields
+            f"{tests_data_folder}/example.ann.transcripts.vcf.gz",
+            {
+                "profiles": ["transcripts"],
+                "prioritization_config": "config/prioritization_transcripts_profiles.json",
+                "pzprefix": "PZT",
+                "prioritization_score_mode": "HOWARD",
+            },
+            """
+                "#CHROM" = 'chr1'
+                AND POS = 69101
+                AND contains(INFO, 'PZTTranscript=ENST00000641515')
+                AND NOT contains(INFO, 'PZTScore')
+            """,
+            None,
+        ),
+        (  # Add PZfields
+            f"{tests_data_folder}/example.ann.transcripts.vcf.gz",
+            {
+                "profiles": ["transcripts"],
+                "prioritization_config": "config/prioritization_transcripts_profiles.json",
+                "pzprefix": "PZT",
+                "pzfields": ["Score", "Flag"],
+                "prioritization_score_mode": "HOWARD",
+            },
+            """
+                "#CHROM" = 'chr1'
+                AND POS = 69101
+                AND contains(INFO, 'PZTTranscript=ENST00000641515')
+                AND contains(INFO, 'PZTScore')
+                AND contains(INFO, 'PZTFlag')
+            """,
+            None,
+        ),
+        (  # Add PZfields plus
+            f"{tests_data_folder}/example.ann.transcripts.vcf.gz",
+            {
+                "profiles": ["transcripts"],
+                "prioritization_config": "config/prioritization_transcripts_profiles.json",
+                "pzprefix": "PZT",
+                "pzfields": ["Score", "Flag", "LIST_S2_score", "LIST_S2_pred"],
+                "prioritization_score_mode": "HOWARD",
+            },
+            """
+                "#CHROM" = 'chr1'
+                AND POS = 69101
+                AND contains(INFO, 'PZTTranscript=ENST00000641515')
+                AND contains(INFO, 'PZTScore')
+                AND contains(INFO, 'PZTFlag')
+                AND contains(INFO, 'LIST_S2_score')
+                AND contains(INFO, 'LIST_S2_pred')
+            """,
+            None,
+        ),
+        (  # Add PZfields plus with field not present
+            f"{tests_data_folder}/example.ann.transcripts.vcf.gz",
+            {
+                "profiles": ["transcripts"],
+                "prioritization_config": "config/prioritization_transcripts_profiles.json",
+                "pzprefix": "PZT",
+                "pzfields": [
+                    "Score",
+                    "Flag",
+                    "LIST_S2_score",
+                    "field_not_present_in_header",
+                ],
+                "prioritization_score_mode": "HOWARD",
+            },
+            None,
+            "INFO/field_not_present_in_header NOT IN header",
+        ),
+        (  # Order
+            f"{tests_data_folder}/example.ann.transcripts.vcf.gz",
+            {
+                "profiles": ["transcripts"],
+                "prioritization_config": "config/prioritization_transcripts_profiles.json",
+                "pzprefix": "PZT",
+                "prioritization_transcripts_order": {
+                    "LIST_S2_score": "ASC",
+                    "transcript": "ASC",
+                },
+                "prioritization_score_mode": "HOWARD",
+            },
+            """
+                "#CHROM" = 'chr1'
+                AND POS = 69101
+                AND contains(INFO, 'PZTTranscript=ENST00000335137')
+            """,
+            None,
+        ),
+        (  # Order with explode field
+            f"{tests_data_folder}/example.ann.transcripts.vcf.gz",
+            {
+                "profiles": ["transcripts"],
+                "prioritization_config": "config/prioritization_transcripts_profiles.json",
+                "pzprefix": "PZT",
+                "prioritization_transcripts_order": {
+                    "CADD_raw": "ASC",
+                    "transcript": "ASC",
+                },
+                "prioritization_score_mode": "HOWARD",
+            },
+            """
+                "#CHROM" = 'chr1'
+                AND POS = 69101
+                AND contains(INFO, 'PZTTranscript=ENST00000335137')
+            """,
+            None,
+        ),
+        (  # Order with explode field not present
+            f"{tests_data_folder}/example.ann.transcripts.vcf.gz",
+            {
+                "profiles": ["transcripts"],
+                "prioritization_config": "config/prioritization_transcripts_profiles.json",
+                "pzprefix": "PZT",
+                "prioritization_transcripts_order": {
+                    "field_not_present_in_header": "ASC",
+                    "transcript": "ASC",
+                },
+                "prioritization_score_mode": "HOWARD",
+            },
+            None,
+            "INFO/field_not_present_in_header NOT IN header",
+        ),
+    ],
+)
+def test_transcripts_prioritization_multiple_param(
+    input_vcf, param_prioritization, where_clause, raise_value_error
+):
+    """
+    The `test_transcripts_prioritization_multiple_param` function tests transcript prioritization
+    functionality in a genetic variant analysis pipeline with configurable parameters.
+
+    :param input_vcf: It seems like the `input_vcf` parameter is the path or reference to the VCF
+    (Variant Call Format) file that contains genetic variant data. This file is likely used as input for
+    the genetic variant analysis pipeline where the transcript prioritization functionality is being
+    tested
+    :param param_prioritization: The `param_prioritization` parameter is a dictionary that contains
+    information about the prioritization configuration for transcripts in a genetic variant analysis
+    pipeline. It includes details such as profiles, prioritization configuration file path, prefix, and
+    score mode. This parameter is used to customize how transcripts are prioritized during the
+    :param where_clause: The `where_clause` parameter in the `test_transcripts_prioritization` function
+    is a SQL WHERE clause that is used to filter the results of a query. It specifies a condition that
+    must be met for a row to be included in the result set
+    :param raise_value_error: The `raise_value_error` parameter in the `test_transcripts_prioritization`
+    function is a boolean flag that determines whether the test should raise a `ValueError` and check if
+    the raised error message matches a specific value. If `raise_value_error` is `True`, the test will
+    raise
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        output_vcf = f"{tmp_dir}/output.vcf"
+
+        # Construct param dict
+        param = {}
+        param_struct = {
+            "table": "transcripts",
+            "column_id": "transcript",
+            "transcripts_info_json": "transcripts_json",
+            "transcripts_info_field": "transcripts_json",
+            "struct": {
+                "from_column_format": [
+                    {
+                        "transcripts_column": "ANN",
+                        "transcripts_infos_column": "Feature_ID",
+                    },
+                    {
+                        "transcripts_column": "ANN",
+                        "transcripts_infos_column": "Feature_ID",
+                    },
+                ],
+                "from_columns_map": [
+                    {
+                        "transcripts_column": "Ensembl_transcriptid",
+                        "transcripts_infos_columns": [
+                            "genename",
+                            "Ensembl_geneid",
+                            "LIST_S2_score",
+                            "LIST_S2_pred",
+                        ],
+                    },
+                    {
+                        "transcripts_column": "Ensembl_transcriptid",
+                        "transcripts_infos_columns": [
+                            "genename",
+                            "VARITY_R_score",
+                            "Aloft_pred",
+                        ],
+                    },
+                ],
+            },
+        }
+
+        # Param without prioritization
+        param_without_prioritization = {"transcripts": dict(param_struct)}
+
+        # Param with prioritization
+        param_with_prioritization = {"transcripts": dict(param_struct)}
+        param_with_prioritization["transcripts"]["prioritization"] = dict(
+            param_prioritization
+        )
+
+        # Create object
+        variants = Variants(
+            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+        )
+
+        # Create transcript view
+        transcripts_table = variants.create_transcript_view(
+            param=param_without_prioritization
+        )
+
+        # Check table exists
+        assert transcripts_table is not None
+
+        # If Raise with Value Error
+        if raise_value_error:
+
+            # Catch ValueError
+            with pytest.raises(ValueError) as excinfo:
+
+                # Prioritization
+                variants.transcripts_prioritization(param=param_with_prioritization)
+
+            assert str(excinfo.value) == raise_value_error
+
+        # If expected results
+        if where_clause:
+
+            # Prioritization
+            assert variants.transcripts_prioritization(param=param_with_prioritization)
+
+            # Check transcript prioritization result
+            # Check table content
+            query_check = f"""
+                SELECT * FROM variants
+                WHERE {where_clause}
+            """
+            check = variants.get_query_to_df(query=query_check)
+            assert len(check) > 0
+
+            # Export
+            ########
+
+            # Check if VCF is in correct format with pyVCF
+            remove_if_exists([output_vcf])
+            variants.export_output(output_file=output_vcf)
+            try:
+                vcf.Reader(filename=output_vcf)
+            except:
+                assert False
