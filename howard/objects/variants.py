@@ -1091,7 +1091,6 @@ class Variants:
             elif type == "list":
                 return vcf_required
 
-
     def get_header_infos_list(self) -> list:
         """
         This function retrieves a list of information fields from the header.
@@ -1105,7 +1104,6 @@ class Variants:
             infos_list.append(field)
 
         return infos_list
-
 
     def get_header_length(self, file: str = None) -> int:
         """
@@ -9750,28 +9748,9 @@ class Variants:
             table=transcripts_table,
             pz_param=param.get("transcripts", {}).get("prioritization", {}),
         )
-
-        # # DEVEL
-        # query_devel = f"""
-        #     SELECT * FROM transcripts LIMIT 1
-        # """
-        # res_devel = self.get_query_to_df(query=query_devel)
-        # log.debug(f""" res_devel transcripts ={res_devel.to_string()} """)
-        # query_devel = f"""
-        #     SELECT INFO FROM variants LIMIT 1
-        # """
-        # res_devel = self.get_query_to_df(query=query_devel)
-        # log.debug(f""" res_devel variants ={res_devel.to_string()} """)
-
         if not prioritization_result:
             log.warning("Transcripts prioritization not processed")
             return False
-
-        # # Explode PZ fields
-        # self.explode_infos(
-        #     table=transcripts_table,
-        #     fields=list(pz_param_pzfields.keys()) + pz_mandatory_fields,
-        # )
 
         # PZ fields sql query
         query_update_select_list = []
@@ -9795,13 +9774,14 @@ class Variants:
 
         # Order by
         pz_orders = (
-            param.get("transcripts", {}).get("prioritization", {}).get("pzorder", {})
+            param.get("transcripts", {})
+            .get("prioritization", {})
+            .get("prioritization_transcripts_order", {})
         )
         if not pz_orders:
             pz_orders = {
                 pz_param.get("pzprefix", "PTZ") + "Flag": "ASC",
                 pz_param.get("pzprefix", "PTZ") + "Score": "DESC",
-                "transcript": "ASC",
             }
         for pz_order in pz_orders:
             query_update_order_list.append(
@@ -9809,8 +9789,14 @@ class Variants:
             )
 
         # Fields to explode
-        fields_to_explode = list(pz_param_pzfields.keys()) + pz_mandatory_fields + list(pz_orders.keys())
-        fields_to_explode.remove("transcript")
+        fields_to_explode = (
+            list(pz_param_pzfields.keys())
+            + pz_mandatory_fields
+            + list(pz_orders.keys())
+        )
+        # Remove transcript column as a specific transcript column
+        if "transcript" in fields_to_explode:
+            fields_to_explode.remove("transcript")
 
         # Check fields to explode
         for field_to_explode in fields_to_explode:
@@ -9818,47 +9804,101 @@ class Variants:
                 msg_err = f"INFO/{field_to_explode} NOT IN header"
                 log.error(msg_err)
                 raise ValueError(msg_err)
-            
-        # eExplode fields to explode
-        exploded_fields = self.explode_infos(
+
+        # Explode fields to explode
+        self.explode_infos(
             table=transcripts_table,
             fields=fields_to_explode,
         )
-        
-        # # DEVEL
-        # query_devel = f"""
-        #         DESCRIBE 
-                  
-        #             {transcripts_table}
-        # """
-        # log.debug(f""" query_devel={query_devel} """)
-        # df_devel = self.get_query_to_df(query=query_devel)
-        # log.debug(df_devel)
-        # query_devel = f"""
-        #         SELECT
-        #             "#CHROM", POS, REF, ALT, transcript, {" ".join(query_update_select_list)}
-        #             ROW_NUMBER() OVER (
-        #                 PARTITION BY "#CHROM", POS, REF, ALT
-        #                 ORDER BY {" , ".join(query_update_order_list)}
-        #             ) AS rn
-        #         FROM
-        #             {transcripts_table}
-        # """
-        # log.debug(f""" query_devel={query_devel} """)
-        # df_devel = self.get_query_to_df(query=query_devel)
-        # log.debug(df_devel)
 
-        # Export Transcripts prioritization infos to variants table
-        query_update = f"""
-            WITH RankedTranscripts AS (
+        # Transcript preference file
+        transcripts_preference_file = (
+            param.get("transcripts", {})
+            .get("prioritization", {})
+            .get("prioritization_transcripts", {})
+        )
+        transcripts_preference_file = full_path(transcripts_preference_file)
+
+        # Transcript preference forced
+        transcript_preference_force = (
+            param.get("transcripts", {})
+            .get("prioritization", {})
+            .get("prioritization_transcripts_force", False)
+        )
+        # Transcript version forced
+        transcript_version_force = (
+            param.get("transcripts", {})
+            .get("prioritization", {})
+            .get("prioritization_transcripts_version_force", False)
+        )
+
+        # Transcripts Ranking
+        if transcripts_preference_file:
+
+            # Transcripts file to dataframe
+            if os.path.exists(transcripts_preference_file):
+                transcripts_preference_dataframe = transcripts_file_to_df(
+                    transcripts_preference_file
+                )
+            else:
+                log.error(
+                    f"Transcript file '{transcripts_preference_file}' does NOT exist"
+                )
+                raise ValueError(
+                    f"Transcript file '{transcripts_preference_file}' does NOT exist"
+                )
+
+            # Order by depending to transcript preference forcing
+            if transcript_preference_force:
+                order_by = f""" transcripts_preference.transcripts_preference_order ASC, {" , ".join(query_update_order_list)} """
+            else:
+                order_by = f""" {" , ".join(query_update_order_list)}, transcripts_preference.transcripts_preference_order ASC """
+
+            # Transcript columns joined depend on version consideration
+            if transcript_version_force:
+                transcripts_version_join = f""" {transcripts_table}.transcript = transcripts_preference.transcripts_preference """
+            else:
+                transcripts_version_join = f""" split_part({transcripts_table}.transcript, '.', 1) = split_part(transcripts_preference.transcripts_preference, '.', 1) """
+
+            # Query ranking for update
+            query_update_ranking = f"""
+                SELECT
+                    "#CHROM", POS, REF, ALT, {transcripts_table}.transcript, {" ".join(query_update_select_list)}
+                    ROW_NUMBER() OVER (
+                        PARTITION BY "#CHROM", POS, REF, ALT
+                        ORDER BY {order_by}
+                    ) AS rn
+                FROM {transcripts_table}
+                LEFT JOIN 
+                    (
+                        SELECT transcript AS 'transcripts_preference', row_number() OVER () AS transcripts_preference_order
+                        FROM transcripts_preference_dataframe
+                    ) AS transcripts_preference
+                ON {transcripts_version_join}
+            """
+
+        else:
+
+            # Query ranking for update
+            query_update_ranking = f"""
                 SELECT
                     "#CHROM", POS, REF, ALT, transcript, {" ".join(query_update_select_list)}
                     ROW_NUMBER() OVER (
                         PARTITION BY "#CHROM", POS, REF, ALT
                         ORDER BY {" , ".join(query_update_order_list)}
                     ) AS rn
-                FROM
-                    {transcripts_table}
+                FROM {transcripts_table}
+            """
+
+        # DEBUG
+        # log.debug(f""" query_update_ranking={query_update_ranking} """)
+        # df_devel = self.get_query_to_df(query=query_update_ranking)
+        # log.debug(df_devel)
+
+        # Export Transcripts prioritization infos to variants table
+        query_update = f"""
+            WITH RankedTranscripts AS (
+                {query_update_ranking}
             )
             UPDATE {table_variants}
                 SET
@@ -9876,9 +9916,9 @@ class Variants:
                 AND variants."#CHROM" = RankedTranscripts."#CHROM"
                 AND variants."POS" = RankedTranscripts."POS"
                 AND variants."REF" = RankedTranscripts."REF"
-                AND variants."ALT" = RankedTranscripts."ALT"
-                
+                AND variants."ALT" = RankedTranscripts."ALT"     
         """
+
         # log.debug(f"query_update={query_update}")
         self.execute_query(query=query_update)
 
