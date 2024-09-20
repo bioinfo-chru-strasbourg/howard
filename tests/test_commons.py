@@ -1531,3 +1531,31 @@ def test_get_duckdb_extension_file():
     conn = duckdb.connect()
 
     assert get_duckdb_extension_file("sqlite_scanner", conn=conn)
+
+
+def test_clean_annotation_field_basic_alphanumeric():
+    assert clean_annotation_field("HelloWorld") == "HelloWorld"
+
+
+def test_clean_annotation_field_with_special_characters():
+    assert clean_annotation_field("Hello, World!") == "HelloWorld"
+
+
+def test_clean_annotation_field_with_allowed_characters():
+    assert clean_annotation_field("Hello-World", char_allowed=["-"]) == "Hello-World"
+
+
+def test_clean_annotation_field_empty_string():
+    assert clean_annotation_field("") == ""
+
+
+def test_clean_annotation_field_no_allowed_characters():
+    assert clean_annotation_field("Hello@World#2023") == "HelloWorld2023"
+
+
+def test_clean_annotation_field_all_characters_removed():
+    assert clean_annotation_field("!!!") == ""
+
+
+def test_clean_annotation_field_non_alphanumeric_with_allowed_chars():
+    assert clean_annotation_field("Test123!@#", char_allowed=["!"]) == "Test123!"

@@ -3987,3 +3987,31 @@ def determine_column_number(values_list: list) -> str:
             return "."
 
     return "1"
+
+
+def clean_annotation_field(name: str = "", char_allowed: list = None) -> str:
+    """
+    The `clean_annotation_field` function removes characters from a string that are not alphanumeric or
+    in a specified list.
+
+    :param name: The `name` parameter is a string that represents the input text that you want to clean.
+    It typically contains annotations or other text that you want to process
+    :type name: str
+    :param char_allowed: The `char_allowed` parameter is a list that contains characters that are
+    allowed to remain in the `name` string after cleaning. Any character in the `name` string that is
+    not alphanumeric and not in the `char_allowed` list will be removed during the cleaning process
+    :type char_allowed: list
+    :return: The function `clean_annotation_field` returns a cleaned version of the `name` string, where
+    only alphanumeric characters and characters from the `char_allowed` list are kept.
+    """
+
+    # Init
+    if char_allowed is None:
+        char_allowed = []
+
+    # Convert char_allowed to a set for faster membership testing
+    char_allowed_set = set(char_allowed)
+
+    return "".join(
+        char for char in name if (char.isalnum() or char in char_allowed_set)
+    )
