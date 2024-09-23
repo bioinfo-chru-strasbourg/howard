@@ -10281,6 +10281,21 @@ class Variants:
         # Struct
         struct = param.get("transcripts", {}).get("struct", None)
 
+        # Transcript veresion
+        transcript_id_remove_version = param.get("transcripts", {}).get(
+            "transcript_id_remove_version", False
+        )
+
+        # Transcripts mapping
+        transcript_id_mapping_file = param.get("transcripts", {}).get(
+            "transcript_id_mapping_file", None
+        )
+
+        # Transcripts mapping
+        transcript_id_mapping_force = param.get("transcripts", {}).get(
+            "transcript_id_mapping_force", None
+        )
+
         if struct:
 
             # Transcripts table
@@ -10347,19 +10362,143 @@ class Variants:
                         UNION BY NAME SELECT * FROM {temporary_table}
                     """
 
+            # transcript table tmp
+            transcript_table_tmp = "transcripts_tmp"
+            transcript_table_tmp2 = "transcripts_tmp2"
+            transcript_table_tmp3 = "transcripts_tmp3"
+
             # Merge on transcript
             query_merge_on_transcripts_annotation_fields = []
+
+            # Add transcript list
+            query_merge_on_transcripts_annotation_fields.append(
+                f""" list_aggregate(list_distinct(array_agg({transcript_table_tmp}.transcript)), 'string_agg', ',') AS transcript_list """
+            )
+
             # Aggregate all annotations fields
             for annotation_field in set(annotation_fields):
                 query_merge_on_transcripts_annotation_fields.append(
-                    f""" list_aggregate(list_distinct(array_agg({annotation_field})), 'string_agg', ',') AS {annotation_field} """
+                    f""" list_aggregate(list_distinct(array_agg({transcript_table_tmp}.{annotation_field})), 'string_agg', ',') AS {annotation_field} """
                 )
-            # Query for transcripts view
-            query_merge_on_transcripts = f"""
-                SELECT "#CHROM", POS, REF, ALT, INFO, transcript, {", ".join(query_merge_on_transcripts_annotation_fields)}
-                FROM ({query_merge})
-                GROUP BY "#CHROM", POS, REF, ALT, INFO, transcript
-            """
+
+            # Transcripts mapping
+            if transcript_id_mapping_file:
+
+                # Transcript dataframe
+                transcript_id_mapping_dataframe_name = "transcript_id_mapping_dataframe"
+                transcript_id_mapping_dataframe = transcripts_file_to_df(
+                    transcript_id_mapping_file, column_names=["transcript", "alias"]
+                )
+
+                # Transcript version remove
+                if transcript_id_remove_version:
+                    query_transcript_column_select = f"split_part({transcript_table_tmp}.transcript, '.', 1) AS transcript_original, split_part({transcript_id_mapping_dataframe_name}.transcript, '.', 1) AS transcript_mapped"
+                    query_transcript_column_group_by = f"split_part({transcript_table_tmp}.transcript, '.', 1), split_part({transcript_id_mapping_dataframe_name}.transcript, '.', 1)"
+                    query_left_join = f"""
+                        LEFT JOIN {transcript_id_mapping_dataframe_name} ON (split_part({transcript_id_mapping_dataframe_name}.alias, '.', 1)=split_part({transcript_table_tmp}.transcript, '.', 1))
+                    """
+                else:
+                    query_transcript_column_select = f"{transcript_table_tmp}.transcript AS transcript_original, {transcript_id_mapping_dataframe_name}.transcript AS transcript_mapped"
+                    query_transcript_column_group_by = f"{transcript_table_tmp}.transcript, {transcript_id_mapping_dataframe_name}.transcript"
+                    query_left_join = f"""
+                        LEFT JOIN {transcript_id_mapping_dataframe_name} ON (split_part({transcript_id_mapping_dataframe_name}.alias, '.', 1)=split_part({transcript_table_tmp}.transcript, '.', 1))
+                    """
+
+                # Transcript column for group by merge
+                query_transcript_merge_group_by = """
+                        CASE
+                            WHEN transcript_mapped NOT IN ('')
+                            THEN split_part(transcript_mapped, '.', 1)
+                            ELSE split_part(transcript_original, '.', 1)
+                        END
+                    """
+
+                # Merge query
+                transcripts_tmp2_query = f"""
+                    SELECT "#CHROM", POS, REF, ALT, INFO, {query_transcript_column_select}, {", ".join(query_merge_on_transcripts_annotation_fields)}
+                    FROM ({query_merge}) AS {transcript_table_tmp}
+                    {query_left_join}
+                    GROUP BY "#CHROM", POS, REF, ALT, INFO, {query_transcript_column_group_by}
+                """
+
+                # Retrive columns after mege
+                transcripts_tmp2_describe_query = f"""
+                    DESCRIBE {transcripts_tmp2_query}
+                """
+                transcripts_tmp2_describe_list = list(
+                    self.get_query_to_df(query=transcripts_tmp2_describe_query)[
+                        "column_name"
+                    ]
+                )
+
+                # Create list of columns for select clause
+                transcripts_tmp2_describe_select_clause = []
+                for field in transcripts_tmp2_describe_list:
+                    if field not in [
+                        "#CHROM",
+                        "POS",
+                        "REF",
+                        "ALT",
+                        "INFO",
+                        "transcript_mapped",
+                    ]:
+                        as_field = field
+                        if field in ["transcript_original"]:
+                            as_field = "transcripts_mapped"
+                        transcripts_tmp2_describe_select_clause.append(
+                            f""" list_aggregate(list_distinct(array_agg({transcript_table_tmp2}.{field})), 'string_agg', ',') AS {as_field} """
+                        )
+
+                # Merge with mapping
+                query_merge_on_transcripts = f"""
+                    SELECT
+                        "#CHROM", POS, REF, ALT, INFO,
+                        CASE
+                            WHEN ANY_VALUE(transcript_mapped) NOT IN ('')
+                            THEN ANY_VALUE(transcript_mapped)
+                            ELSE ANY_VALUE(transcript_original)
+                        END AS transcript,
+                        {", ".join(transcripts_tmp2_describe_select_clause)}
+                    FROM ({transcripts_tmp2_query}) AS {transcript_table_tmp2}
+                    GROUP BY "#CHROM", POS, REF, ALT, INFO,
+                        {query_transcript_merge_group_by}
+                """
+
+                # Add transcript filter from mapping file
+                if transcript_id_mapping_force:
+                    query_merge_on_transcripts = f"""
+                        SELECT *
+                        FROM ({query_merge_on_transcripts}) AS {transcript_table_tmp3}
+                        WHERE split_part({transcript_table_tmp3}.transcript, '.', 1) in (SELECT split_part(transcript, '.', 1) FROM transcript_id_mapping_dataframe)
+                    """
+
+            # No transcript mapping
+            else:
+
+                # Remove transcript version
+                if transcript_id_remove_version:
+                    query_transcript_column = f"""
+                        split_part({transcript_table_tmp}.transcript, '.', 1)
+                    """
+                else:
+                    query_transcript_column = """
+                        transcript
+                    """
+
+                # Query sections
+                query_transcript_column_select = (
+                    f"{query_transcript_column} AS transcript"
+                )
+                query_transcript_column_group_by = query_transcript_column
+
+                # Query for transcripts view
+                query_merge_on_transcripts = f"""
+                    SELECT "#CHROM", POS, REF, ALT, INFO, {query_transcript_column} AS transcript, NULL AS transcript_mapped, {", ".join(query_merge_on_transcripts_annotation_fields)}
+                    FROM ({query_merge}) AS {transcript_table_tmp}
+                    GROUP BY "#CHROM", POS, REF, ALT, INFO, {query_transcript_column}
+                """
+
+            log.debug(f"query_merge_on_transcripts={query_merge_on_transcripts}")
 
             # Drop transcript view is necessary
             if transcripts_table_drop:
@@ -10724,7 +10863,7 @@ class Variants:
         clause_to_format = []
         for field in transcripts_infos_columns:
             clause_select.append(
-                f""" regexp_split_to_table("{field}", ',') AS '{field}' """
+                f""" regexp_split_to_table(CAST("{field}" AS STRING), ',') AS '{field}' """
             )
             clause_to_json.append(f""" '{field}': "{field}" """)
             clause_to_format.append(f""" "{field}" """)
