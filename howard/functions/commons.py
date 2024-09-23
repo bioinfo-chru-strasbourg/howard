@@ -3665,25 +3665,28 @@ def get_random(N: int = 10) -> str:
     return "".join(random.choices(string.ascii_uppercase + string.digits, k=N))
 
 
-def transcripts_file_to_df(transcripts_file: str) -> pd.DataFrame:
+def transcripts_file_to_df(transcripts_file: str, column_names: list = ["transcript", "gene"]) -> pd.DataFrame:
     """
-    This function reads a transcripts file into a pandas DataFrame, filtering out comment lines.
-
+    This Python function reads a transcripts file into a pandas DataFrame, filtering out comment lines.
+    
     :param transcripts_file: The `transcripts_file` parameter is a string that represents the file path
     to a file containing transcript information. This function is designed to read the contents of this
     file and convert it into a pandas DataFrame. The file is expected to be tab-separated with two
     columns: "transcript" and "gene
     :type transcripts_file: str
-    :return: The function `transcripts_file_to_df` returns a pandas DataFrame containing transcript and
-    gene information read from a specified file. The function processes the file by filtering out
-    comment lines and then returns the resulting DataFrame.
+    :param column_names: The `column_names` parameter is a list that specifies the column names expected
+    in the transcripts file. By default, it is set to `["transcript", "gene"]`, indicating that the file
+    should have two columns named "transcript" and "gene". If the actual column names in the
+    :type column_names: list
+    :return: A pandas DataFrame containing transcript and gene information read from the specified file
+    after filtering out comment lines is being returned.
     """
 
     # Full path
     transcripts_file = full_path(transcripts_file)
 
     # Transcript dataframe
-    transcripts_dataframe = pd.DataFrame(columns=["transcript", "gene"])
+    transcripts_dataframe = pd.DataFrame(columns=column_names)
 
     # If file exists
     if transcripts_file and os.path.exists(transcripts_file):
@@ -3693,12 +3696,15 @@ def transcripts_file_to_df(transcripts_file: str) -> pd.DataFrame:
             transcripts_file,
             sep="\t",
             header=None,
-            names=["transcript", "gene"],
+            names=column_names,
         )
+
+        # First column
+        first_column = column_names[0]
 
         # Filter comment on lines
         transcripts_dataframe = transcripts_dataframe[
-            transcripts_dataframe["transcript"].str.contains("^[^#]+")
+            transcripts_dataframe[first_column].str.contains("^[^#]+")
         ]
 
     # Return

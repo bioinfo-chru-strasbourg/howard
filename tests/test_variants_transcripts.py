@@ -1250,3 +1250,463 @@ def test_transcripts_prioritization_multiple_param_fields_renamed(
                 vcf.Reader(filename=output_vcf)
             except:
                 assert False
+
+
+@pytest.mark.parametrize(
+    "transcript_id_remove_version, transcript_id_mapping_file, transcript_id_mapping_force, expected_transcript_list",
+    [
+        (
+            False,
+            None,
+            False,
+            [
+                "NR_036051.1",
+                "NR_036266.1",
+                "NR_036267.1",
+                "NR_036268.1",
+                "NR_024540.1",
+                "NR_036051.1",
+                "NR_036266.1",
+                "NR_036267.1",
+                "NR_036268.1",
+                "NR_026818.1",
+                "NR_026820.1",
+                "NR_026822.1",
+                "NM_001005484.1",
+                "NR_047519.1",
+                "NR_047526.1",
+                "NR_047521.1",
+                "NR_047523.1",
+                "NR_047524.1",
+                "NR_047525.1",
+                "NR_047519.1",
+                "NR_047526.1",
+                "NR_047521.1",
+                "NR_047523.1",
+                "NR_047524.1",
+                "NR_047525.1",
+                "NR_047519.1",
+                "NR_047526.1",
+                "NR_047521.1",
+                "NR_047523.1",
+                "NR_047524.1",
+                "NR_047525.1",
+                "NM_005228.5",
+                "NM_001346897.2",
+                "NM_001346898.2",
+                "NM_001346941.2",
+                "NM_001346899.1",
+                "NM_001346900.2",
+                "NR_047551.1",
+                "ENST00000641515",
+                "ENST00000335137",
+            ],
+        ),
+        (
+            True,
+            None,
+            False,
+            [
+                "NR_036051",
+                "NR_036266",
+                "NR_036267",
+                "NR_036268",
+                "NR_024540",
+                "NR_036051",
+                "NR_036266",
+                "NR_036267",
+                "NR_036268",
+                "NR_026818",
+                "NR_026820",
+                "NR_026822",
+                "NM_001005484",
+                "NR_047519",
+                "NR_047526",
+                "NR_047521",
+                "NR_047523",
+                "NR_047524",
+                "NR_047525",
+                "NR_047519",
+                "NR_047526",
+                "NR_047521",
+                "NR_047523",
+                "NR_047524",
+                "NR_047525",
+                "NR_047519",
+                "NR_047526",
+                "NR_047521",
+                "NR_047523",
+                "NR_047524",
+                "NR_047525",
+                "NM_005228",
+                "NM_001346897",
+                "NM_001346898",
+                "NM_001346941",
+                "NM_001346899",
+                "NM_001346900",
+                "NR_047551",
+                "ENST00000641515",
+                "ENST00000335137",
+            ],
+        ),
+        (
+            False,
+            f"{tests_data_folder}/transcripts.for_mapping.tsv",
+            False,
+            [
+                "NM_001005484",
+                "ENST00000335137",
+                "NR_036051.1",
+                "NR_036266.1",
+                "NR_036267.1",
+                "NR_036268.1",
+                "NR_024540.1",
+                "NR_036051.1",
+                "NR_036266.1",
+                "NR_036267.1",
+                "NR_036268.1",
+                "NR_026818.1",
+                "NR_026820.1",
+                "NR_026822.1",
+                "NR_047519.1",
+                "NR_047526.1",
+                "NR_047521.1",
+                "NR_047523.1",
+                "NR_047524.1",
+                "NR_047525.1",
+                "NR_047519.1",
+                "NR_047526.1",
+                "NR_047521.1",
+                "NR_047523.1",
+                "NR_047524.1",
+                "NR_047525.1",
+                "NR_047519.1",
+                "NR_047526.1",
+                "NR_047521.1",
+                "NR_047523.1",
+                "NR_047524.1",
+                "NR_047525.1",
+                "NM_005228.5",
+                "NM_001346897.2",
+                "NM_001346898.2",
+                "NM_001346941.2",
+                "NM_001346899.1",
+                "NM_001346900.2",
+                "NR_047551.1",
+            ],
+        ),
+        (
+            True,
+            f"{tests_data_folder}/transcripts.for_mapping.tsv",
+            False,
+            [
+                "NM_001005484",
+                "ENST00000335137",
+                "NR_036051",
+                "NR_036266",
+                "NR_036267",
+                "NR_036268",
+                "NR_024540",
+                "NR_036051",
+                "NR_036266",
+                "NR_036267",
+                "NR_036268",
+                "NR_026818",
+                "NR_026820",
+                "NR_026822",
+                "NR_047519",
+                "NR_047526",
+                "NR_047521",
+                "NR_047523",
+                "NR_047524",
+                "NR_047525",
+                "NR_047519",
+                "NR_047526",
+                "NR_047521",
+                "NR_047523",
+                "NR_047524",
+                "NR_047525",
+                "NR_047519",
+                "NR_047526",
+                "NR_047521",
+                "NR_047523",
+                "NR_047524",
+                "NR_047525",
+                "NM_005228",
+                "NM_001346897",
+                "NM_001346898",
+                "NM_001346941",
+                "NM_001346899",
+                "NM_001346900",
+                "NR_047551",
+            ],
+        ),
+        (
+            False,
+            f"{tests_data_folder}/transcripts.for_mapping.tsv",
+            True,
+            [
+                "NM_001346897.2",
+                "NR_024540.1",
+                "NM_005228.5",
+                "NM_001346900.2",
+                "NR_036266.1",
+                "NR_036266.1",
+                "NM_001346941.2",
+                "NR_047551.1",
+                "NM_001005484",
+            ],
+        ),
+        (
+            True,
+            f"{tests_data_folder}/transcripts.for_mapping.tsv",
+            True,
+            [
+                "NM_001346897",
+                "NR_024540",
+                "NM_005228",
+                "NM_001346900",
+                "NR_036266",
+                "NR_036266",
+                "NM_001346941",
+                "NR_047551",
+                "NM_001005484",
+            ],
+        ),
+        (
+            False,
+            None,
+            True,
+            [
+                "NR_036051.1",
+                "NR_036266.1",
+                "NR_036267.1",
+                "NR_036268.1",
+                "NR_024540.1",
+                "NR_036051.1",
+                "NR_036266.1",
+                "NR_036267.1",
+                "NR_036268.1",
+                "NR_026818.1",
+                "NR_026820.1",
+                "NR_026822.1",
+                "NM_001005484.1",
+                "NR_047519.1",
+                "NR_047526.1",
+                "NR_047521.1",
+                "NR_047523.1",
+                "NR_047524.1",
+                "NR_047525.1",
+                "NR_047519.1",
+                "NR_047526.1",
+                "NR_047521.1",
+                "NR_047523.1",
+                "NR_047524.1",
+                "NR_047525.1",
+                "NR_047519.1",
+                "NR_047526.1",
+                "NR_047521.1",
+                "NR_047523.1",
+                "NR_047524.1",
+                "NR_047525.1",
+                "NM_005228.5",
+                "NM_001346897.2",
+                "NM_001346898.2",
+                "NM_001346941.2",
+                "NM_001346899.1",
+                "NM_001346900.2",
+                "NR_047551.1",
+                "ENST00000641515",
+                "ENST00000335137",
+            ],
+        ),
+        (
+            True,
+            None,
+            True,
+            [
+                "ENST00000641515",
+                "ENST00000335137",
+                "NR_036051",
+                "NR_036266",
+                "NR_036267",
+                "NR_036268",
+                "NR_024540",
+                "NR_036051",
+                "NR_036266",
+                "NR_036267",
+                "NR_036268",
+                "NR_026818",
+                "NR_026820",
+                "NR_026822",
+                "NM_001005484",
+                "NR_047519",
+                "NR_047526",
+                "NR_047521",
+                "NR_047523",
+                "NR_047524",
+                "NR_047525",
+                "NR_047519",
+                "NR_047526",
+                "NR_047521",
+                "NR_047523",
+                "NR_047524",
+                "NR_047525",
+                "NR_047519",
+                "NR_047526",
+                "NR_047521",
+                "NR_047523",
+                "NR_047524",
+                "NR_047525",
+                "NM_005228",
+                "NM_001346897",
+                "NM_001346898",
+                "NM_001346941",
+                "NM_001346899",
+                "NM_001346900",
+                "NR_047551",
+            ],
+        ),
+    ],
+)
+def test_transcripts_create_view_param_mapping(
+    transcript_id_remove_version,
+    transcript_id_mapping_file,
+    transcript_id_mapping_force,
+    expected_transcript_list,
+):
+    """
+    This function creates a transcript view from a VCF file and performs various checks on the generated
+    data.
+
+    :param transcript_id_remove_version: Transcript_id_remove_version is a parameter used in the
+    function to specify whether to remove the version part from the transcript IDs. It is a boolean flag
+    that determines whether to remove the version suffix from the transcript IDs before processing them
+    further in the function
+    :param transcript_id_mapping_file: The `transcript_id_mapping_file` parameter is used to specify the
+    file containing the mapping of transcript IDs. This mapping file is used in the process of creating
+    a transcript view in the code snippet you provided. It allows for mapping between different
+    identifiers associated with transcripts, which can be useful for data processing
+    :param transcript_id_mapping_force: The `transcript_id_mapping_force` parameter is used to indicate
+    whether the transcript ID mapping should be forced or not. If set to `True`, it means that the
+    mapping will be enforced, regardless of any existing mappings or conflicts. If set to `False`, the
+    mapping will only be applied if
+    :param expected_transcript_list: The `expected_transcript_list` parameter in the
+    `test_transcripts_create_view_param_mapping` function is a list of expected transcript IDs that are
+    used for comparison in the test assertions. This list is compared with the actual transcript IDs
+    retrieved from the database query to ensure that the transcript view creation and mapping
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = f"{tests_data_folder}/example.ann.transcripts.vcf.gz"
+        output_vcf = f"{tmp_dir}/output.vcf"
+
+        # Construct param dict
+        param = {}
+        param_struct = {
+            "table": "transcripts",
+            "column_id": "transcript",
+            "transcripts_info_json": "transcripts_json",
+            "transcripts_info_field": "transcripts_json",
+            "transcript_id_remove_version": transcript_id_remove_version,
+            "transcript_id_mapping_file": transcript_id_mapping_file,
+            "transcript_id_mapping_force": transcript_id_mapping_force,
+            "struct": {
+                "from_column_format": [
+                    {
+                        "transcripts_column": "ANN",
+                        "transcripts_infos_column": "Feature_ID",
+                        "column_clean": True,
+                    },
+                ],
+                "from_columns_map": [
+                    {
+                        "transcripts_column": "Ensembl_transcriptid",
+                        "transcripts_infos_columns": [
+                            "genename",
+                            "Ensembl_geneid",
+                            "LIST_S2_score",
+                            "LIST_S2_pred",
+                        ],
+                        "column_clean": False,
+                    },
+                    {
+                        "transcripts_column": "Ensembl_transcriptid",
+                        "transcripts_infos_columns": [
+                            "genename",
+                            "VARITY_R_score",
+                            "Aloft_pred",
+                        ],
+                        "column_clean": False,
+                    },
+                ],
+            },
+        }
+        param_prioritization = {
+            "profiles": ["transcripts"],
+            "prioritization_config": "config/prioritization_transcripts_profiles.json",
+            "pzprefix": "PZT",
+            "prioritization_score_mode": "HOWARD",
+        }
+
+        # Param without prioritization
+        param_without_prioritization = {"transcripts": dict(param_struct)}
+
+        # Param with prioritization
+        param_with_prioritization = {"transcripts": dict(param_struct)}
+        param_with_prioritization["transcripts"]["prioritization"] = dict(
+            param_prioritization
+        )
+
+        # Create object
+        variants = Variants(
+            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+        )
+
+        # Create transcript view
+        transcripts_table = variants.create_transcript_view(
+            param=param_without_prioritization
+        )
+
+        # Check
+        query_check = f"""
+            SELECT * FROM {transcripts_table}
+        """
+        check = variants.get_query_to_df(query=query_check)
+
+        assert sorted(list(set(expected_transcript_list))) == sorted(
+            list(set(check["transcript"]))
+        )
+        assert len(expected_transcript_list) == len(check["transcript"])
+
+        # Check table exists
+        assert transcripts_table is not None
+
+        # Transcripts without prioritization
+        assert not variants.transcripts_prioritization(
+            param=param_without_prioritization
+        )
+
+        # Transcripts with prioritization
+        assert variants.transcripts_prioritization(param=param_with_prioritization)
+
+        # Check transcript prioritization result
+        # Check table content
+        query_check = """
+            SELECT * FROM variants
+            WHERE "#CHROM" = 'chr1'
+              AND POS = 69101
+              AND contains(INFO, 'PZTTranscript')
+        """
+        check = variants.get_query_to_df(query=query_check)
+        assert len(check) > 0
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output(output_file=output_vcf)
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
