@@ -1713,7 +1713,6 @@ def test_transcripts_create_view_param_mapping(
             assert False
 
 
-
 @pytest.mark.parametrize(
     "output",
     [
@@ -1729,8 +1728,6 @@ def test_transcripts_create_view_export(output):
     """ """
 
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
-
-        tmp_dir = "/tmp"
 
         # Init files
         input_vcf = f"{tests_data_folder}/example.ann.transcripts.vcf.gz"
@@ -1805,3 +1802,177 @@ def test_transcripts_create_view_export(output):
                 vcf.Reader(filename=f"{tmp_dir}/{output}")
             except:
                 assert False
+
+
+@pytest.mark.parametrize(
+    "nomen_options, tnomen_expected",
+    [
+        (
+            {
+                "hgvs_field": "snpeff_hgvs",
+                # "transcripts": f"{tests_data_folder}/transcripts.tsv",
+                # "transcripts_table": "variants",
+                # "transcripts_column": "PZTTranscript",
+                # "transcripts_order": ["column", "file"],
+            },
+            ["NM_001005484", "NM_005228", "NR_026818", "NR_024540", "NR_047519"],
+        ),
+        (
+            {
+                "hgvs_field": "snpeff_hgvs",
+                "transcripts": f"{tests_data_folder}/transcripts.tsv",
+                # "transcripts_table": "variants",
+                # "transcripts_column": "PZTTranscript",
+                # "transcripts_order": ["column", "file"],
+            },
+            ["NR_047519", "NR_036266", "NM_001346897", "NM_001005484", "NR_024540"],
+        ),
+        (
+            {
+                "hgvs_field": "snpeff_hgvs",
+                # "transcripts": f"{tests_data_folder}/transcripts.tsv",
+                "transcripts_table": "variants",
+                "transcripts_column": "PZTTranscript",
+                # "transcripts_order": ["column", "file"],
+            },
+            ["NR_047519", "NR_036051", "NR_047551", "NM_001005484"],
+        ),
+        (
+            {
+                "hgvs_field": "snpeff_hgvs",
+                "transcripts": f"{tests_data_folder}/transcripts.tsv",
+                "transcripts_table": "variants",
+                "transcripts_column": "PZTTranscript",
+                # "transcripts_order": ["column", "file"],
+            },
+            ["NR_047519", "NR_036051", "NR_047551", "NM_001005484"],
+        ),
+        (
+            {
+                "hgvs_field": "snpeff_hgvs",
+                "transcripts": f"{tests_data_folder}/transcripts.tsv",
+                "transcripts_table": "variants",
+                "transcripts_column": "PZTTranscript",
+                "transcripts_order": ["column", "file"],
+            },
+            ["NR_047519", "NR_036051", "NR_047551", "NM_001005484"],
+        ),
+        (
+            {
+                "hgvs_field": "snpeff_hgvs",
+                "transcripts": f"{tests_data_folder}/transcripts.tsv",
+                "transcripts_table": "variants",
+                "transcripts_column": "PZTTranscript",
+                "transcripts_order": ["file", "column"],
+            },
+            ["NR_047519", "NR_036266", "NM_001346897", "NM_001005484", "NR_024540"],
+        ),
+    ],
+)
+def test_transcripts_create_view_prioritize_nomen(nomen_options, tnomen_expected):
+    """ """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = f"{tests_data_folder}/example.ann.transcripts.vcf.gz"
+
+        # Construct param dict
+        param_struct = {
+            "table": "transcripts",
+            "column_id": "transcript",
+            "transcripts_info_json": "transcripts_json",
+            "transcripts_info_field": "transcripts_json",
+            "transcript_id_remove_version": True,
+            "transcript_id_mapping_file": f"{tests_data_folder}/transcripts.for_mapping.tsv",
+            "transcript_id_mapping_force": False,
+            "struct": {
+                "from_column_format": [
+                    {
+                        "transcripts_column": "ANN",
+                        "transcripts_infos_column": "Feature_ID",
+                        "column_clean": True,
+                    },
+                ],
+                "from_columns_map": [
+                    {
+                        "transcripts_column": "Ensembl_transcriptid",
+                        "transcripts_infos_columns": [
+                            "genename",
+                            "Ensembl_geneid",
+                            "LIST_S2_score",
+                            "LIST_S2_pred",
+                        ],
+                        "column_clean": False,
+                    },
+                    {
+                        "transcripts_column": "Ensembl_transcriptid",
+                        "transcripts_infos_columns": [
+                            "genename",
+                            "VARITY_R_score",
+                            "Aloft_pred",
+                        ],
+                        "column_clean": False,
+                    },
+                ],
+            },
+            "prioritization": {
+                "profiles": ["transcripts"],
+                "prioritization_config": f"{tests_data_folder}/prioritization_transcripts_profiles_fields_renamed.json",
+                "pzprefix": "PZT",
+                "pzfields": ["Score", "Flag", "LIST_S2_score", "LIST_S2_pred"],
+                "prioritization_score_mode": "HOWARD",
+            },
+        }
+
+        # Param without prioritization
+        param = {
+            "transcripts": dict(param_struct),
+            "calculation": {"calculations": {"NOMEN": {"options": nomen_options}}},
+        }
+
+        # Create object
+        variants = Variants(conn=None, input=input_vcf, param=param, load=True)
+
+        # Create transcript view
+        transcripts_table = variants.create_transcript_view(param=param)
+
+        # Transcripts prioritization
+        variants.transcripts_prioritization(param=param)
+
+        # SNPEFF HGVS
+        variants.calculation_extract_snpeff_hgvs()
+
+        # NOMEN
+        variants.calculation_extract_nomen()
+
+        # Explode
+        variants.explode_infos(fields=["TNOMEN", "TVNOMEN", "GNOMEN", "PZTTranscript"])
+
+        # DEVEL
+        query_check = f"""
+        SELECT "#CHROM", POS, REF, ALT, GNOMEN, TNOMEN, TVNOMEN, PZTTranscript, INFO FROM variants
+        """
+        check = variants.get_query_to_df(query=query_check)
+
+        # Check list of expected transcripts
+        assert len(check) == 7
+        assert sorted(list(set(check["TNOMEN"]))) == sorted(list(set(tnomen_expected)))
+
+        # Check if PZTTranscript anre wwithin TNOMEN if transcript dynamic
+        if param.get("calculation", {}).get("calculations", {}).get("NOMEN", {}).get(
+            "options", {}
+        ).get("transcripts_order", ["column"])[0] == "column" and param.get(
+            "calculation", {}
+        ).get(
+            "calculations", {}
+        ).get(
+            "NOMEN", {}
+        ).get(
+            "options", {}
+        ).get(
+            "transcripts_table", None
+        ):
+            assert sorted(list(set(check["TNOMEN"]))) == sorted(
+                list(set(check["PZTTranscript"]))
+            )

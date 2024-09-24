@@ -8550,6 +8550,9 @@ class Variants:
         # Header
         vcf_reader = self.get_header()
 
+        # Added columns
+        added_columns = []
+
         # Get HGVS field
         hgvs_field = (
             param.get("calculation", {})
@@ -8558,6 +8561,9 @@ class Variants:
             .get("options", {})
             .get("hgvs_field", "hgvs")
         )
+
+        # transcripts list of preference sources
+        transcripts_sources = {}
 
         # Get transcripts
         transcripts_file = (
@@ -8568,17 +8574,60 @@ class Variants:
             .get("transcripts", None)
         )
         transcripts_file = full_path(transcripts_file)
-        transcripts = []
         if transcripts_file:
             if os.path.exists(transcripts_file):
                 transcripts_dataframe = transcripts_file_to_df(transcripts_file)
-                transcripts = transcripts_dataframe.iloc[:, 0].tolist()
+                transcripts_from_file = transcripts_dataframe.iloc[:, 0].tolist()
+                transcripts_sources["file"] = transcripts_from_file
             else:
-                log.error(f"Transcript file '{transcripts_file}' does NOT exist")
-                raise ValueError(f"Transcript file '{transcripts_file}' does NOT exist")
+                msg_err = f"Transcript file '{transcripts_file}' does NOT exist"
+                log.error(msg_err)
+                raise ValueError(msg_err)
 
-        # Added columns
-        added_columns = []
+        # Get transcripts table
+        transcripts_table = (
+            param.get("calculation", {})
+            .get("calculations", {})
+            .get("NOMEN", {})
+            .get("options", {})
+            .get("transcripts_table", None)
+        )
+        # Get transcripts column
+        transcripts_column = (
+            param.get("calculation", {})
+            .get("calculations", {})
+            .get("NOMEN", {})
+            .get("options", {})
+            .get("transcripts_column", None)
+        )
+
+        if transcripts_table and transcripts_column:
+            transcripts_dynamic = []
+            added_columns +=self.explode_infos(fields=[transcripts_column], table=transcripts_table)
+            query_transcripts_list_dynamic = f"""
+                SELECT {transcripts_table}.{transcripts_column} FROM {transcripts_table}
+            """
+            try:
+                transcripts_dynamic = list(self.get_query_to_df(query=query_transcripts_list_dynamic)[transcripts_column])
+            except:
+                msg_err = f"Transcriptfrom table.column '{transcripts_table}.{transcripts_column}' not found!"
+                log.error(msg_err)
+                raise ValueError(msg_err)
+            transcripts_sources["column"] = transcripts_dynamic
+
+        # Transcripts of preference source order
+        transcripts_order= (
+            param.get("calculation", {})
+            .get("calculations", {})
+            .get("NOMEN", {})
+            .get("options", {})
+            .get("transcripts_order", ["column", "file"])
+        )
+
+        # Transcripts of preference from file and dynamic 'table.column'
+        transcripts = []
+        for order in transcripts_order:
+            transcripts += transcripts_sources.get(order, [])
 
         # Explode HGVS field in column
         added_columns += self.explode_infos(fields=[hgvs_field])
