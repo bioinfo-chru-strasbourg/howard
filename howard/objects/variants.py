@@ -2273,7 +2273,6 @@ class Variants:
             query=query,
             export_header=export_header,
             sample_list=sample_list,
-            table="transcripts",
         )
 
         # Remove
