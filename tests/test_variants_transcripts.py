@@ -14,8 +14,9 @@ import logging as log
 from tempfile import TemporaryDirectory
 import pytest
 import vcf
+import os
 
-from howard.functions.commons import remove_if_exists
+from howard.functions.commons import remove_if_exists, get_file_format
 from howard.objects.variants import Variants
 from test_needed import tests_folder, tests_config, tests_data_folder
 
@@ -1710,3 +1711,97 @@ def test_transcripts_create_view_param_mapping(
             vcf.Reader(filename=output_vcf)
         except:
             assert False
+
+
+
+@pytest.mark.parametrize(
+    "output",
+    [
+        "output.vcf",
+        "output.vcf.gz",
+        "output.tsv",
+        "output.tsv.gz",
+        "output.parquet",
+        "output.json",
+    ],
+)
+def test_transcripts_create_view_export(output):
+    """ """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        tmp_dir = "/tmp"
+
+        # Init files
+        input_vcf = f"{tests_data_folder}/example.ann.transcripts.vcf.gz"
+
+        # Construct param dict
+        param_struct = {
+            "table": "transcripts",
+            "column_id": "transcript",
+            "transcripts_info_json": "transcripts_json",
+            "transcripts_info_field": "transcripts_json",
+            "transcript_id_remove_version": True,
+            "transcript_id_mapping_file": None,
+            "transcript_id_mapping_force": False,
+            "struct": {
+                "from_column_format": [
+                    {
+                        "transcripts_column": "ANN",
+                        "transcripts_infos_column": "Feature_ID",
+                        "column_clean": True,
+                    },
+                ],
+                "from_columns_map": [
+                    {
+                        "transcripts_column": "Ensembl_transcriptid",
+                        "transcripts_infos_columns": [
+                            "genename",
+                            "Ensembl_geneid",
+                            "LIST_S2_score",
+                            "LIST_S2_pred",
+                        ],
+                        "column_clean": False,
+                    },
+                    {
+                        "transcripts_column": "Ensembl_transcriptid",
+                        "transcripts_infos_columns": [
+                            "genename",
+                            "VARITY_R_score",
+                            "Aloft_pred",
+                        ],
+                        "column_clean": False,
+                    },
+                ],
+            },
+            "export": {"output": f"{tmp_dir}/{output}"},
+        }
+
+        # Param without prioritization
+        param_with_transcripts = {"transcripts": dict(param_struct)}
+
+        # Create object
+        variants = Variants(
+            conn=None, input=input_vcf, param=param_with_transcripts, load=True
+        )
+
+        # Create transcript view
+        transcripts_table = variants.create_transcript_view(
+            param=param_with_transcripts
+        )
+
+        # Export
+        try:
+            variants.transcripts_export(
+                transcripts_table=transcripts_table, param=param_with_transcripts
+            )
+        except:
+            assert False
+
+        assert os.path.isfile(f"{tmp_dir}/{output}")
+
+        if get_file_format(output) in ["vcf"]:
+            try:
+                vcf.Reader(filename=f"{tmp_dir}/{output}")
+            except:
+                assert False

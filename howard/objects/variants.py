@@ -2273,6 +2273,7 @@ class Variants:
             query=query,
             export_header=export_header,
             sample_list=sample_list,
+            table="transcripts",
         )
 
         # Remove
@@ -6622,6 +6623,14 @@ class Variants:
                     "function_name": "calculation_transcripts_prioritization",
                     "function_params": [],
                 },
+                "transcripts_export": {
+                    "type": "python",
+                    "name": "transcripts_export",
+                    "description": "Export transcripts table/view as a file (using param.json)",
+                    "available": True,
+                    "function_name": "calculation_transcripts_export",
+                    "function_params": [],
+                },
             },
             "prioritizations": {
                 "default": {
@@ -9612,9 +9621,134 @@ class Variants:
         else:
             log.info("No Transcripts to process. Check param.json file configuration")
 
+    def calculation_transcripts_export(self) -> None:
+        """ """
+
+        # Create transcripts table
+        transcripts_table = self.create_transcript_view()
+
+        # Add info field
+        if transcripts_table:
+            self.transcripts_export(transcripts_table=transcripts_table)
+        else:
+            log.info("No Transcripts to process. Check param.json file configuration")
+
+
     ###############
     # Transcripts #
     ###############
+
+    def transcripts_export(
+        self, transcripts_table: str = None, param: dict = {}
+    ) -> bool:
+        """ """
+
+        log.debug("Start transcripts export...")
+
+        # Param
+        if not param:
+            param = self.get_param()
+
+        # Param export
+        param_transcript_export = param.get("transcripts", {}).get("export", {})
+
+        # Output file
+        transcripts_export_output = param_transcript_export.get("output", None)
+
+        if not param_transcript_export or not transcripts_export_output:
+            log.warning(f"No transcriipts export parameters defined!")
+            return False
+
+        # List of transcripts annotations
+        query_describe = f"""
+            SELECT column_name
+            FROM (
+                    DESCRIBE SELECT * FROM {transcripts_table}
+                )
+            WHERE column_name NOT IN ('#CHROM', 'POS', 'REF', 'ALT', 'INFO')
+        """
+        transcripts_annotations_list = list(
+            self.get_query_to_df(query=query_describe)["column_name"]
+        )
+
+        # Create transcripts table for export
+        transcripts_table_export = f"{transcripts_table}_export_" + "".join(
+            random.choices(string.ascii_uppercase + string.digits, k=10)
+        )
+        query_create_transcripts_table_export = f"""
+            CREATE TABLE {transcripts_table_export} AS (SELECT "#CHROM", "POS", "REF", "ALT", '' AS 'INFO', {', '.join(transcripts_annotations_list)} FROM {transcripts_table})
+        """
+        self.execute_query(query=query_create_transcripts_table_export)
+
+        # Output file format
+        transcripts_export_output_format = get_file_format(
+            filename=transcripts_export_output
+        )
+
+        # Format VCF - construct INFO
+        if transcripts_export_output_format in ["vcf"]:
+
+            # Construct query update INFO and header
+            query_update_info = []
+            for field in transcripts_annotations_list:
+
+                # If field not in header
+                if field not in self.get_header_infos_list():
+
+                    # Add PZ Transcript in header
+                    self.get_header().infos[field] = vcf.parser._Info(
+                        field,
+                        ".",
+                        "String",
+                        f"Annotation '{field}' from transcript view",
+                        "unknown",
+                        "unknown",
+                        0,
+                    )
+
+                # Add field as INFO/tag
+                query_update_info.append(
+                    f"""
+                        CASE
+                            WHEN "{field}" IS NOT NULL
+                            THEN concat('{field}=', "{field}", ';')    
+                            ELSE ''     
+                        END
+                        """
+                )
+
+            # Query param
+            query_update_info_value = (
+                f""" concat('',  {", ".join(query_update_info)}) """
+            )
+            query_export_columns = f""" "#CHROM", "POS", '.' AS 'ID', "REF", "ALT", '.' AS 'QUAL', '.' AS 'FILTER', "INFO" """
+
+        else:
+
+            # Query param
+            query_update_info_value = f""" NULL """
+            query_export_columns = f""" "#CHROM", "POS", "REF", "ALT", {', '.join(transcripts_annotations_list)} """
+
+        # Update query INFO column
+        query_update = f"""
+            UPDATE {transcripts_table_export}
+            SET INFO = {query_update_info_value}
+
+        """
+        self.execute_query(query=query_update)
+
+        # Export
+        self.export_output(
+            output_file=transcripts_export_output,
+            query=f""" SELECT {query_export_columns} FROM {transcripts_table_export} """,
+        )
+
+        # Drop transcripts export table
+        query_drop_transcripts_table_export = f"""
+            DROP TABLE {transcripts_table_export}
+        """
+        self.execute_query(query=query_drop_transcripts_table_export)
+
 
     def transcripts_prioritization(
         self, transcripts_table: str = None, param: dict = {}
