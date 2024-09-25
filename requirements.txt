@@ -1,5 +1,5 @@
 pandas~=2.2
-duckdb~=1.0
+duckdb==1.0.0
 pyarrow~=16.1
 bio~=1.7
 pyvcf3~=1.0
@@ -24,3 +24,5 @@ markdown~=3.6
 tabulate~=0.9
 md_toc~=9.0
 numpy~=1.26
+beautifulsoup4~=4.12.3
+pyBigWig~=0.3.23
