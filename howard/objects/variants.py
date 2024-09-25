@@ -3201,6 +3201,9 @@ class Variants:
                                     log.error(
                                         f"Quick Annotation File {annotation_file} does NOT exist"
                                     )
+                                    raise ValueError(
+                                        f"Quick Annotation File {annotation_file} does NOT exist"
+                                    )
 
                 self.set_param(param)
 
@@ -5628,8 +5631,18 @@ class Variants:
 
                 # Check if files exists
                 if not parquet_file or not parquet_hdr_file:
-                    log.error("Annotation failed: file not found")
-                    raise ValueError("Annotation failed: file not found")
+                    msg_err_list = []
+                    if not parquet_file:
+                        msg_err_list.append(
+                            f"Annotation failed: Annotation file not found"
+                        )
+                    if parquet_file and not parquet_hdr_file:
+                        msg_err_list.append(
+                            f"Annotation failed: Annotation file '{parquet_file}' header not found. Check for file '{parquet_file}.hdr'"
+                        )
+
+                    log.error(". ".join(msg_err_list))
+                    raise ValueError(". ".join(msg_err_list))
                 else:
                     # Get parquet connexion
                     parquet_sql_attach = database.get_sql_database_attach(
@@ -6107,7 +6120,6 @@ class Variants:
                 msg_err = f"Unable to find docker {splice_docker_image} on dockerhub"
                 log.error(msg_err)
                 raise ValueError(msg_err)
-                return None
 
         # Config - splice databases
         splice_databases = (
@@ -8603,12 +8615,18 @@ class Variants:
 
         if transcripts_table and transcripts_column:
             transcripts_dynamic = []
-            added_columns +=self.explode_infos(fields=[transcripts_column], table=transcripts_table)
+            added_columns += self.explode_infos(
+                fields=[transcripts_column], table=transcripts_table
+            )
             query_transcripts_list_dynamic = f"""
                 SELECT {transcripts_table}.{transcripts_column} FROM {transcripts_table}
             """
             try:
-                transcripts_dynamic = list(self.get_query_to_df(query=query_transcripts_list_dynamic)[transcripts_column])
+                transcripts_dynamic = list(
+                    self.get_query_to_df(query=query_transcripts_list_dynamic)[
+                        transcripts_column
+                    ]
+                )
             except:
                 msg_err = f"Transcriptfrom table.column '{transcripts_table}.{transcripts_column}' not found!"
                 log.error(msg_err)
@@ -8616,7 +8634,7 @@ class Variants:
             transcripts_sources["column"] = transcripts_dynamic
 
         # Transcripts of preference source order
-        transcripts_order= (
+        transcripts_order = (
             param.get("calculation", {})
             .get("calculations", {})
             .get("NOMEN", {})
@@ -9681,7 +9699,6 @@ class Variants:
         else:
             log.info("No Transcripts to process. Check param.json file configuration")
 
-
     ###############
     # Transcripts #
     ###############
@@ -9796,7 +9813,6 @@ class Variants:
             DROP TABLE {transcripts_table_export}
         """
         self.execute_query(query=query_drop_transcripts_table_export)
-
 
     def transcripts_prioritization(
         self, transcripts_table: str = None, param: dict = {}
