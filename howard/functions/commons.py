@@ -3273,7 +3273,7 @@ def help_generation(
                     if argument.get("help", "") in ["==SUPPRESS=="]:
                         argument["help"] = arg
                     argument["help"] = format_arg_help(
-                        argument["help"], str(argument.get("default", None))
+                        argument.get("help", ""), str(argument.get("default", None))
                     )
                 command_parser.add_argument(f"--{arg}", **argument)
                 options_md += get_argument_to_mk(arg, argument)
@@ -3322,7 +3322,7 @@ def help_generation(
                 if argument.get("help", "") in ["==SUPPRESS=="]:
                     argument["help"] = arg
                 argument["help"] = format_arg_help(
-                    argument["help"], str(argument.get("default", None))
+                    argument.get("help", ""), str(argument.get("default", None))
                 )
             shared_group.add_argument(f"--{arg}", **argument)
 

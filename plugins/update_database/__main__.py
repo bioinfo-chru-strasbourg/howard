@@ -3,6 +3,7 @@ import logging as log
 import sys
 import os
 from howard.objects.variants import Variants
+from howard.functions.commons import DEFAULT_DATABASE_FOLDER
 
 sys.path.append(os.path.join(os.path.dirname(__file__)))
 from plugins.update_database import ucsc
@@ -15,12 +16,12 @@ arguments = {
     "databases_folder": {
         "help": """Path of HOWARD database folder.\n""",
         "type": str,
-        "default": "/home1/DB/HOWARD",
+        "default": DEFAULT_DATABASE_FOLDER,
     },
     "database": {
         "help": """Which database to update.\n""",
         "type": str,
-        "default": "/home1/DB/HOWARD",
+        "default": "clinvar",
         "choices": ["clinvar"],
     },
     "update_config": {

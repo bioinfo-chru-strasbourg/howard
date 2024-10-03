@@ -9,14 +9,10 @@ script_path=`dirname $script`
 
 # Init
 docs_folder=$script_path
-# html_folder=$docs_folder/html
-# pdf_folder=$docs_folder/pdf
-# html_folder=$docs_folder
-# pdf_folder=$docs_folder
 list=""
 
 # Folders
-# mkdir -p $docs_folder $html_folder $pdf_folder
+mkdir -p $docs_folder
 
 # Generate HOWARD Main Help
 howard help --help_md=$docs_folder/help.md --help_html=$docs_folder/help.html --help_pdf=$docs_folder/help.pdf --code_type="json"
