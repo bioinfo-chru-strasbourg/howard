@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>HOWARD Help Configuration</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 1000px;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">HOWARD Help Configuration</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<h2 id="toc-title">Contents</h2>
+<ul>
+<li><a href="#introduction" id="toc-introduction"><span
+class="toc-section-number">1</span> Introduction</a></li>
+<li><a href="#folders" id="toc-folders"><span
+class="toc-section-number">2</span> folders</a>
+<ul>
+<li><a href="#databases" id="toc-databases"><span
+class="toc-section-number">2.1</span> databases</a>
+<ul>
+<li><a href="#genomes" id="toc-genomes"><span
+class="toc-section-number">2.1.1</span> genomes</a></li>
+<li><a href="#annotations" id="toc-annotations"><span
+class="toc-section-number">2.1.2</span> annotations</a></li>
+<li><a href="#parquet" id="toc-parquet"><span
+class="toc-section-number">2.1.3</span> parquet</a></li>
+<li><a href="#bcftools" id="toc-bcftools"><span
+class="toc-section-number">2.1.4</span> bcftools</a></li>
+<li><a href="#annovar" id="toc-annovar"><span
+class="toc-section-number">2.1.5</span> annovar</a></li>
+<li><a href="#snpeff" id="toc-snpeff"><span
+class="toc-section-number">2.1.6</span> snpeff</a></li>
+<li><a href="#exomiser" id="toc-exomiser"><span
+class="toc-section-number">2.1.7</span> exomiser</a></li>
+<li><a href="#refseq" id="toc-refseq"><span
+class="toc-section-number">2.1.8</span> refseq</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#tools" id="toc-tools"><span
+class="toc-section-number">3</span> tools</a>
+<ul>
+<li><a href="#bcftools-1" id="toc-bcftools-1"><span
+class="toc-section-number">3.1</span> bcftools</a></li>
+<li><a href="#bgzip" id="toc-bgzip"><span
+class="toc-section-number">3.2</span> bgzip</a></li>
+<li><a href="#java" id="toc-java"><span
+class="toc-section-number">3.3</span> java</a></li>
+<li><a href="#snpeff-1" id="toc-snpeff-1"><span
+class="toc-section-number">3.4</span> snpeff</a></li>
+<li><a href="#annovar-1" id="toc-annovar-1"><span
+class="toc-section-number">3.5</span> annovar</a></li>
+<li><a href="#exomiser-1" id="toc-exomiser-1"><span
+class="toc-section-number">3.6</span> exomiser</a></li>
+<li><a href="#splice" id="toc-splice"><span
+class="toc-section-number">3.7</span> splice</a></li>
+</ul></li>
+<li><a href="#threads" id="toc-threads"><span
+class="toc-section-number">4</span> threads</a></li>
+<li><a href="#memory" id="toc-memory"><span
+class="toc-section-number">5</span> memory</a></li>
+<li><a href="#assembly" id="toc-assembly"><span
+class="toc-section-number">6</span> assembly</a></li>
+<li><a href="#verbosity" id="toc-verbosity"><span
+class="toc-section-number">7</span> verbosity</a></li>
+<li><a href="#tmp" id="toc-tmp"><span
+class="toc-section-number">8</span> tmp</a></li>
+<li><a href="#access" id="toc-access"><span
+class="toc-section-number">9</span> access</a></li>
+<li><a href="#duckdb_settings" id="toc-duckdb_settings"><span
+class="toc-section-number">10</span> duckdb_settings</a></li>
+<li><a href="#chunk_size" id="toc-chunk_size"><span
+class="toc-section-number">11</span> chunk_size</a></li>
+<li><a href="#log" id="toc-log"><span
+class="toc-section-number">12</span> log</a></li>
+</ul>
+</nav>
+<h1 data-number="1" id="introduction"><span
+class="header-section-number">1</span> Introduction</h1>
+<p>HOWARD Configuration JSON file defined default configuration
+regarding resources (e.g.&#xA0;threads, memory), settings (e.g.&#xA0;verbosity,
+temporary files), default folders (e.g.&#xA0;for databases) and paths to
+external tools.</p>
+<p>Examples:</p>
+<blockquote>
+<p>Example of a configuration JSON file</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;threads&quot;</span><span class="fu">:</span> <span class="dv">8</span><span class="fu">,</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;memory&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;verbosity&quot;</span><span class="fu">:</span> <span class="st">&quot;WARNING&quot;</span><span class="fu">,</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;folders&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;databases&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;genomes&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/databases/genomes/current&quot;</span><span class="fu">,</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;annotations&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;~/howard/databases/annotations/current&quot;</span><span class="ot">,</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;~/howard/databases/dbnsfp/current&quot;</span><span class="ot">,</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;~/howard/databases/dbsnp/current&quot;</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>      <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;parquet&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;~/howard/databases/annotations/current&quot;</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>      <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;bcftools&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;~/howard/databases/annotations/current&quot;</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>      <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;annovar&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;~/howard/databases/annovar/current&quot;</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>      <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;snpeff&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/databases/snpeff/current&quot;</span><span class="fu">,</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;varank&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/databases/varank/current&quot;</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">},</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;tools&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;bcftools&quot;</span><span class="fu">:</span> <span class="st">&quot;bcftools&quot;</span><span class="fu">,</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;bgzip&quot;</span><span class="fu">:</span> <span class="st">&quot;bgzip&quot;</span><span class="fu">,</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;java&quot;</span><span class="fu">:</span> <span class="st">&quot;java&quot;</span><span class="fu">,</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;snpeff&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/tools/snpeff/current/bin/snpEff.jar&quot;</span><span class="fu">,</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;annovar&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/tools/annovar/current/bin/table_annovar.pl&quot;</span><span class="fu">,</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;exomiser&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar&quot;</span><span class="fu">,</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;splice&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>       <span class="dt">&quot;docker&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;image&quot;</span><span class="fu">:</span> <span class="st">&quot;bioinfochrustrasbourg/splice:0.2.1&quot;</span><span class="fu">,</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;entrypoint&quot;</span><span class="fu">:</span> <span class="st">&quot;/bin/bash&quot;</span><span class="fu">,</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;command&quot;</span><span class="fu">:</span> <span class="kw">null</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>       <span class="fu">}</span></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h1 data-number="2" id="folders"><span
+class="header-section-number">2</span> folders</h1>
+<p>Folders configuration such as for databases.</p>
+<h2 data-number="2.1" id="databases"><span
+class="header-section-number">2.1</span> databases</h2>
+<p>Default folders for databases that follows the specific database
+HOWARD format. These folders will be used in HOWARD tools to autodetect
+databases by their name and using assembly. Within database folders,
+multiple releases can be provides (e.g.&#xA0;&#x2018;b152&#x2019; and &#x2018;b156&#x2019; for dbSNP and
+&#x2018;hg19&#x2019; assembly within folder &#x2018;~/howard/databases/dbsnp/current/hg19&#x2019;,
+in 2 subfolders resp.)</p>
+<p>Format:
+<code>/path/to/databases/&lt;db_name&gt;/&lt;db_release&gt;/&lt;assembly&gt;/&lt;database_files&gt;</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Example of a configuration for databases folders</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;databases&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;genomes&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/databases/genomes/current&quot;</span><span class="fu">,</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;annotations&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;~/howard/databases/annotations/current&quot;</span><span class="ot">,</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;~/howard/databases/dbnsfp/current&quot;</span><span class="ot">,</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;~/howard/databases/dbsnp/current&quot;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>      <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;parquet&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;~/howard/databases/annotations/current&quot;</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>      <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;bcftools&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;~/howard/databases/bcftools/current&quot;</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>      <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;annovar&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/databases/annovar/current&quot;</span><span class="fu">,</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;snpeff&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/databases/snpeff/current&quot;</span><span class="fu">,</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;exomiser&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/databases/exomiser/current&quot;</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h3 data-number="2.1.1" id="genomes"><span
+class="header-section-number">2.1.1</span> genomes</h3>
+<p>Genome folder with, for each assembly, FASTA files, indexes, and all
+files generated by pygenome module.</p>
+<p>Type: <code>Path</code></p>
+<p>Format: <code>A folder path (without assembly)</code></p>
+<p>Default: <code>~/howard/databases/genomes/current</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Path to genomes folder</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;genomes&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/databases/genomes/current&quot;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h3 data-number="2.1.2" id="annotations"><span
+class="header-section-number">2.1.2</span> annotations</h3>
+<p>Annotation databases folders that contains databases in various
+format such as Parquet, VCF, duckDB and TSV.</p>
+<p>Type: <code>Path</code></p>
+<p>Format: <code>a list of folder path (without assembly)</code></p>
+<p>Default: <code>["~/howard/databases/annotations/current"]</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Uniq folder with multiple annotations for Parquet annotation method,
+or other External tools</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;annotations&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;~/howard/databases/annotations/current&quot;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>   <span class="ot">]</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>Combinason of 2 folders with multiple annotations for Parquet
+annotation method, or other External tools</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;annotations&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;~/howard/databases/annotations/current&quot;</span><span class="ot">,</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;~/howard/databases/dejavu/current&quot;</span><span class="ot">,</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;~/howard/databases/dbnsfp/current&quot;</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>   <span class="ot">]</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h3 data-number="2.1.3" id="parquet"><span
+class="header-section-number">2.1.3</span> parquet</h3>
+<p>Annotation databases folders that contains databases in Parquet
+format.</p>
+<p>Format: <code>a list of folder path (without assembly)</code></p>
+<p>Default: <code>["~/howard/databases/annotations/current"]</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Uniq folder with multiple annotations for Parquet annotation
+method</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;annotations&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;~/howard/databases/annotations/current&quot;</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>   <span class="ot">]</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>Combinason of 2 folders with multiple annotations for Parquet
+annotation method</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;annotations&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;~/howard/databases/annotations/current&quot;</span><span class="ot">,</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;~/howard/databases/dejavu/current&quot;</span><span class="ot">,</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;~/howard/databases/dbnsfp/current&quot;</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>   <span class="ot">]</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h3 data-number="2.1.4" id="bcftools"><span
+class="header-section-number">2.1.4</span> bcftools</h3>
+<p>Annotation databases folders for BCFTools annotation.</p>
+<p>Format: <code>a list of folder path (without assembly)</code></p>
+<p>Default: <code>["~/howard/databases/bcftools/current"]</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Uniq folder with multiple VCF and BED files for BCFTools
+annotation</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;bcftools&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;~/howard/databases/bcftools/current&quot;</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>   <span class="ot">]</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>Combinason of 2 folders with multiple VCF and BED files for BCFTools
+annotation</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;bcftools&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;~/howard/databases/bcftools/current&quot;</span><span class="ot">,</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;~/howard/databases/dejavu/current&quot;</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>   <span class="ot">]</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h3 data-number="2.1.5" id="annovar"><span
+class="header-section-number">2.1.5</span> annovar</h3>
+<p>Annotation databases folders for Annovar annotation.</p>
+<p>Format: <code>a list of folder path (without assembly)</code></p>
+<p>Default: <code>["~/howard/databases/annovar/current"]</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Uniq folder with multiple Annovar TXT files for Annovar
+annotation</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;annovar&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;~/howard/databases/annovar/current/&quot;</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>   <span class="ot">]</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>Combinason of 2 folders with multiple Annovar TXT files for Annovar
+annotation</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;annovar&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;~/howard/databases/annovar/current/&quot;</span><span class="ot">,</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;~/howard/databases/annovar/homemade/&quot;</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>   <span class="ot">]</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h3 data-number="2.1.6" id="snpeff"><span
+class="header-section-number">2.1.6</span> snpeff</h3>
+<p>Annotation databases folders for snpEff annotation.</p>
+<p>Format: <code>A folder path (without assembly)</code></p>
+<p>Default: <code>~/howard/databases/snpeff/current</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Path to snpEff database folder</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;snpeff&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/databases/snpeff/current/&quot;</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h3 data-number="2.1.7" id="exomiser"><span
+class="header-section-number">2.1.7</span> exomiser</h3>
+<p>Annotation databases folders for Exomiser annotation.</p>
+<p>Format: <code>A folder path (without assembly)</code></p>
+<p>Default: <code>~/howard/databases/exomiser/current</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Path to Exomiser database folder</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;exomiser&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/databases/exomiser/current/&quot;</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h3 data-number="2.1.8" id="refseq"><span
+class="header-section-number">2.1.8</span> refseq</h3>
+<p>Annotation databases folders for refSeq annotation.</p>
+<p>Format: <code>A folder path (without assembly)</code></p>
+<p>Default: <code>~/howard/databases/refseq/current</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Path to refSeq files folder</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;refseq&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/databases/refseq/current/&quot;</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h1 data-number="3" id="tools"><span
+class="header-section-number">3</span> tools</h1>
+<p>External tools paths that can be defined as path to a binary or a
+dict including the binary type (such as &#x201C;bin&#x201D;, &#x201C;jar&#x201D;, &#x201C;perl&#x201D;). External
+tools can be configured with docker, using &#x2018;docker&#x2019; as binary type and
+options to define docker &#x2018;image&#x2019; (mandatory), to specify &#x2018;entrypoint&#x2019;,
+&#x2018;command&#x2019; and docker &#x2018;options&#x2019; (e.g.&#xA0;folder mount &#x2018;-v
+/path/to/folder:/path/to/folder&#x2019;).</p>
+<p>Examples:</p>
+<blockquote>
+<p>Example of a configuration for tools, with env $PATH, full path and
+path with type</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb15"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;tools&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;bcftools&quot;</span><span class="fu">:</span> <span class="st">&quot;bcftools&quot;</span><span class="fu">,</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;bgzip&quot;</span><span class="fu">:</span> <span class="st">&quot;bgzip&quot;</span><span class="fu">,</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;java&quot;</span><span class="fu">:</span> <span class="st">&quot;/usr/bin/java&quot;</span><span class="fu">,</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;snpeff&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/tools/snpeff/current/bin/snpEff.jar&quot;</span><span class="fu">,</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;annovar&quot;</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">&quot;jar&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/tools/annovar/current/bin/table_annovar.pl&quot;</span><span class="fu">},</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;exomiser&quot;</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">&quot;jar&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar&quot;</span><span class="fu">}</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>Example of a configuration for bcftools with a docker image (example
+with howard docker image)</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;tools&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;bcftools&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;docker&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>           <span class="dt">&quot;image&quot;</span><span class="fu">:</span> <span class="st">&quot;howard:0.11.0&quot;</span><span class="fu">,</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>           <span class="dt">&quot;entrypoint&quot;</span><span class="fu">:</span> <span class="st">&quot;bcftools&quot;</span><span class="fu">,</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>           <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>           <span class="dt">&quot;command&quot;</span><span class="fu">:</span> <span class="kw">null</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>         <span class="fu">}</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>      <span class="fu">}</span></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>Example of a configuration for splice with a docker image</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb17"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;tools&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;splice&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;docker&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>           <span class="dt">&quot;image&quot;</span><span class="fu">:</span> <span class="st">&quot;bioinfochrustrasbourg/splice:0.2.1&quot;</span><span class="fu">,</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>           <span class="dt">&quot;entrypoint&quot;</span><span class="fu">:</span> <span class="st">&quot;/bin/bash&quot;</span><span class="fu">,</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>           <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>           <span class="dt">&quot;command&quot;</span><span class="fu">:</span> <span class="kw">null</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>         <span class="fu">}</span></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>      <span class="fu">}</span></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h2 data-number="3.1" id="bcftools-1"><span
+class="header-section-number">3.1</span> bcftools</h2>
+<p>BCFTools binary (see https://samtools.github.io/bcftools/).</p>
+<p>Default: <code>bcftools</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Path to binary in $PATH env variable</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb18"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;bcftools&quot;</span><span class="fu">:</span> <span class="st">&quot;bcftools&quot;</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>Path to binary as a dict with binary type &#x2018;bin&#x2019;</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb19"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;bcftools&quot;</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">&quot;bin&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/tools/bcftools/current/bin/bcftools&quot;</span><span class="fu">}</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h2 data-number="3.2" id="bgzip"><span
+class="header-section-number">3.2</span> bgzip</h2>
+<p>BGZip binary (see https://samtools.github.io/bcftools/).</p>
+<p>Default: <code>bgzip</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Path to binary in $PATH env variable</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb20"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;bgzip&quot;</span><span class="fu">:</span> <span class="st">&quot;bgzip&quot;</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>Path to binary as a dict with binary type &#x2018;bin&#x2019;</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb21"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;bgzip&quot;</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">&quot;bin&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/tools/htslib/current/bin/bgzip&quot;</span><span class="fu">}</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h2 data-number="3.3" id="java"><span
+class="header-section-number">3.3</span> java</h2>
+<p>Java binary (see https://www.java.com).</p>
+<p>Default: <code>java</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Path to binary in $PATH env variable</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb22"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;java&quot;</span><span class="fu">:</span> <span class="st">&quot;java&quot;</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>Path to binary as a dict with binary type &#x2018;bin&#x2019;</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb23"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;java&quot;</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">&quot;bin&quot;</span><span class="fu">:</span> <span class="st">&quot;/usr/bin/java&quot;</span><span class="fu">}</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h2 data-number="3.4" id="snpeff-1"><span
+class="header-section-number">3.4</span> snpeff</h2>
+<p>snpEff binary (see https://pcingola.github.io/SnpEff/).</p>
+<p>Default:
+<code>~/howard/tools/snpeff/current/bin/snpEff.jar</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Path to binary as a dict without binary type</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb24"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;snpeff&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/tools/snpeff/current/bin/snpEff.jar&quot;</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>Path to binary as a dict with binary type &#x2018;jar&#x2019;</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb25"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;snpeff&quot;</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">&quot;jar&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/tools/snpeff/current/bin/snpEff.jar&quot;</span><span class="fu">}</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h2 data-number="3.5" id="annovar-1"><span
+class="header-section-number">3.5</span> annovar</h2>
+<p>ANNOVAR perl script (see
+https://annovar.openbioinformatics.org/).</p>
+<p>Default:
+<code>~/howard/tools/annovar/current/bin/table_annovar.pl</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Path to binary as a dict without binary type</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb26"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;annovar&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/tools/annovar/current/bin/table_annovar.pl&quot;</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>Path to binary as a dict with binary type &#x2018;perl&#x2019;</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb27"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;annovar&quot;</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">&quot;jar&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/tools/annovar/current/bin/table_annovar.pl&quot;</span><span class="fu">}</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h2 data-number="3.6" id="exomiser-1"><span
+class="header-section-number">3.6</span> exomiser</h2>
+<p>Exomiser binary (see https://www.sanger.ac.uk/tool/exomiser/).</p>
+<p>Default:
+<code>~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Path to binary as a dict without binary type</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb28"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;snpeff&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar&quot;</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>Path to binary as a dict with binary type &#x2018;jar&#x2019;</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb29"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;snpeff&quot;</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">&quot;jar&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar&quot;</span><span class="fu">}</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h2 data-number="3.7" id="splice"><span
+class="header-section-number">3.7</span> splice</h2>
+<p>Splice Docker image binary (see
+https://hub.docker.com/r/bioinfochrustrasbourg/splice).</p>
+<p>Default: <code>None</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Configuration of Docker image</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb30"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;splice&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;docker&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;image&quot;</span><span class="fu">:</span> <span class="st">&quot;bioinfochrustrasbourg/splice:0.2.1&quot;</span><span class="fu">,</span></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;entrypoint&quot;</span><span class="fu">:</span> <span class="st">&quot;/bin/bash&quot;</span><span class="fu">,</span></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;command&quot;</span><span class="fu">:</span> <span class="kw">null</span></span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>      <span class="fu">}</span></span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h1 data-number="4" id="threads"><span
+class="header-section-number">4</span> threads</h1>
+<p>Specify the number of threads to use for processing HOWARD. It
+determines the level of parallelism, either on python scripts, duckdb
+engine and external tools. It and can help speed up the process/tool.
+Use -1 to use all available CPU/cores. Either non valid value is 1
+CPU/core.</p>
+<p>Type: <code>int</code></p>
+<p>Default: <code>-1</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Automatically detect all available CPU/cores</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb31"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;threads&quot;</span><span class="fu">:</span> <span class="dv">-1</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>Define 8 CPU/cores</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb32"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;threads&quot;</span><span class="fu">:</span> <span class="dv">8</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h1 data-number="5" id="memory"><span
+class="header-section-number">5</span> memory</h1>
+<p>Specify the memory to use in format FLOAT[kMG] (e.g.&#xA0;&#x2018;8G&#x2019;, &#x2018;12.42G&#x2019;,
+&#x2018;1024M&#x2019;). It determines the amount of memory for duckDB engine and
+external tools (especially for JAR programs). It can help to prevent
+&#x2018;out of memory&#x2019; failures. By default (None) is 80%% of RAM (for
+duckDB).</p>
+<p>Type: <code>str</code></p>
+<p>Format: <code>FLOAT[kMG]</code></p>
+<p>Default: <code>None</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Automatically detect all available CPU/cores</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb33"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;threads&quot;</span><span class="fu">:</span> <span class="dv">-1</span></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>Define 8 CPU/cores</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb34"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;threads&quot;</span><span class="fu">:</span> <span class="dv">8</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h1 data-number="6" id="assembly"><span
+class="header-section-number">6</span> assembly</h1>
+<p>Genome Assembly (e.g.&#xA0;&#x2018;hg19&#x2019;, &#x2018;hg38&#x2019;).</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>hg19</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Default assembly for all analysis tools</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb35"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;assembly&quot;</span><span class="fu">:</span> <span class="st">&quot;hg19&quot;</span> </span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>List of assemblies for databases download tool</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb36"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;assembly&quot;</span><span class="fu">:</span> <span class="st">&quot;hg19,hg38&quot;</span> </span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h1 data-number="7" id="verbosity"><span
+class="header-section-number">7</span> verbosity</h1>
+<p>Verbosity level Available: CRITICAL, ERROR, WARNING, INFO, DEBUG or
+NOTSET</p>
+<ul>
+<li><p>DEBUG: Detailed information, typically of interest only when
+diagnosing problems.</p></li>
+<li><p>INFO: Confirmation that things are working as expected.</p></li>
+<li><p>WARNING: An indication that something unexpected
+happened.</p></li>
+<li><p>ERROR: Due to a more serious problem.</p></li>
+<li><p>CRITICAL: A serious error.</p></li>
+<li><p>NOTSET: All messages.</p></li>
+</ul>
+<p>Type: <code>str</code></p>
+<p>Choices:
+<code>['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET']</code></p>
+<p>Default: <code>INFO</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Default verbosity</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb37"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;verbosity&quot;</span><span class="fu">:</span> <span class="st">&quot;INFO&quot;</span></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>ERROR level (quiet mode)</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb38"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;verbosity&quot;</span><span class="fu">:</span> <span class="st">&quot;ERROR&quot;</span></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>For debug</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb39"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;verbosity&quot;</span><span class="fu">:</span> <span class="st">&quot;DEBUG&quot;</span></span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h1 data-number="8" id="tmp"><span
+class="header-section-number">8</span> tmp</h1>
+<p>Temporary folder (e.g.&#xA0;&#x2018;/tmp&#x2019;). By default, &#x2018;.tmp&#x2019; for duckDB (see
+doc),external tools and python scripts.</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>System temporary folder</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb40"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;tmp&quot;</span><span class="fu">:</span> <span class="st">&quot;/tmp&quot;</span></span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>HOWARD work directory</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb41"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;tmp&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/tmp&quot;</span></span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>Current work directory</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb42"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;tmp&quot;</span><span class="fu">:</span> <span class="st">&quot;.tmp&quot;</span></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h1 data-number="9" id="access"><span
+class="header-section-number">9</span> access</h1>
+<p>Access mode to variants file or database. Either &#x2018;RW&#x2019; for Read and
+Write, or &#x2018;RO&#x2019; for Read Only.</p>
+<p>Type: <code>str</code></p>
+<p>Choices: <code>['RW', 'RO']</code></p>
+<p>Default: <code>RW</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Read and Write mode</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb43"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;access&quot;</span><span class="fu">:</span> <span class="st">&quot;RW&quot;</span></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>Read only mode</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb44"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;access&quot;</span><span class="fu">:</span> <span class="st">&quot;RO&quot;</span></span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h1 data-number="10" id="duckdb_settings"><span
+class="header-section-number">10</span> duckdb_settings</h1>
+<p>DuckDB settings (see duckDB doc) as JSON (string or file). These
+settings have priority (see options &#x2018;threads&#x2019;, &#x2018;tmp&#x2019;&#x2026;). Examples:
+&#x2018;{&#x201C;TimeZone&#x201D;: &#x201C;GMT&#x201D;, &#x201C;temp_directory&#x201D;: &#x201C;/tmp/duckdb&#x201D;, &#x201C;threads&#x201D;:
+8}&#x2019;.</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>DuckDB settings JSON file</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb45"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;duckdb_settings&quot;</span><span class="fu">:</span> <span class="st">&quot;/path/to/duckdb_config.json&quot;</span></span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>JSON string for Time zone, temporary directory and threads for
+duckDB</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb46"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;duckdb_settings&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;TimeZone&quot;</span><span class="fu">:</span> <span class="st">&quot;GMT&quot;</span><span class="fu">,</span></span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;temp_directory&quot;</span><span class="fu">:</span> <span class="st">&quot;/tmp/duckdb&quot;</span><span class="fu">,</span></span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;threads&quot;</span><span class="fu">:</span> <span class="dv">8</span></span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h1 data-number="11" id="chunk_size"><span
+class="header-section-number">11</span> chunk_size</h1>
+<p>Number of records in batch to export output file. The lower the chunk
+size, the less memory consumption. For Parquet partitioning, files size
+will depend on the chunk size.</p>
+<p>Type: <code>int</code></p>
+<p>Default: <code>1000000</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Chunk size of 1.000.000 by default</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb47"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;chunk_size&quot;</span><span class="fu">:</span> <span class="dv">1000000</span></span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>Smaller chunk size to reduce Parquet file size and memory usage</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb48"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;chunk_size&quot;</span><span class="fu">:</span> <span class="dv">100000</span></span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h1 data-number="12" id="log"><span
+class="header-section-number">12</span> log</h1>
+<p>Logs file (e.g.&#xA0;&#x2018;my.log&#x2019;).</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Relative path to log file</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb49"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;log&quot;</span><span class="fu">:</span> <span class="st">&quot;my.log&quot;</span></span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>HOWARD work directory</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb50"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;log&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/log&quot;</span></span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>Full path to log file</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb51"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;log&quot;</span><span class="fu">:</span> <span class="st">&quot;/tmp/my.log&quot;</span></span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+</body>
+</html>

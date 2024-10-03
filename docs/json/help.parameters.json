@@ -1,85 +1,88 @@
 {
-  "__help": [
-    "HOWARD Parameters JSON file defines parameters to process annotations, calculations, prioritizations, convertions and queries."
-  ],
-  "__code_type": "json",
-  "__examples_code": {
-    "# Parameters for annotation, calculation, prioritization, HGVS annotation and export": [
-      "{",
-      "   \"hgvs\": {",
-      "      \"full_format\": true,",
-      "      \"use_exon\": true",
-      "   }",
-      "   \"annotation\": {",
-      "      \"parquet\": {",
-      "         \"annotations\": {",
-      "            \"/path/to/database3.parquet\": {",
-      "               \"field1\": null,",
-      "               \"field2\": \"field2_renamed\"",
-      "            },",
-      "            \"/path/to/database4.vcf.gz\": {",
-      "               \"INFO\": null",
-      "            },",
-      "            \"/path/to/database5.bed.gz\": {",
-      "               \"INFO\": null",
-      "            }",
-      "         }",
-      "      },",
-      "      \"bcftools\": {",
-      "         \"annotations\": {",
-      "            \"/path/to/database6.vcf.gz\": {",
-      "               \"field1\": null,",
-      "               \"field2\": \"field2_renamed\"",
-      "            },",
-      "            \"/path/to/database7.bed\": {",
-      "               \"INFO\": null",
-      "            }",
-      "         }",
-      "      },",
-      "      \"annovar\": {",
-      "         \"annotations\": {",
-      "            \"annovar_keyword2\": {",
-      "               \"field1\": null,",
-      "               \"field2\": \"field2_renamed\"",
-      "            },",
-      "            \"annovar_keyword3\": {",
-      "               \"INFO\": null",
-      "            }",
-      "         }",
-      "      },",
-      "      \"snpeff\": {",
-      "         \"options\": \" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr \"",
-      "      },",
-      "      \"exomiser\": {",
-      "         \"release\": \"2109\",",
-      "         \"transcript_source\": \"refseq\",",
-      "         \"hpo\": [\"HP:0001156\", \"HP:0001363\", \"HP:0011304\", \"HP:0010055\"]",
-      "      },",
-      "      \"options\": {",
-      "         \"append\": true",
-      "      }",
-      "   },",
-      "   \"calculation\": {",
-      "      \"operation1\": null,",
-      "      \"operation2\": {",
-      "        \"options\": {",
-      "          \"option1\": \"value1\",",
-      "          \"option2\": \"value2\"",
-      "        }",
-      "      }",
-      "   },",
-      "   \"prioritization\": {",
-      "      \"prioritizations\": \"config/prioritization_profiles.json\",",
-      "      \"profiles\": [\"GENOME\", \"GERMLINE\"],",
-      "      \"default_profile\": \"GERMLINE\",",
-      "      \"pzfields\": [\"PZScore\", \"PZFlag\", \"PZComment\"],",
-      "      \"prioritization_score_mode\": \"VaRank\"",
-      "   },",
-      "   \"export\": {",
-      "      \"include_header\": true",
-      "   }",
-      "}"
-    ]
+  "__help": [],
+  "Introduction": {
+    "__help": [
+      "HOWARD Parameters JSON file defines parameters to process annotations, calculations, prioritizations, convertions and queries."
+    ],
+    "__code_type": "json",
+    "__examples_code": {
+      "# Parameters for annotation, calculation, prioritization, HGVS annotation and export": [
+        "{",
+        "   \"hgvs\": {",
+        "      \"full_format\": true,",
+        "      \"use_exon\": true",
+        "   }",
+        "   \"annotation\": {",
+        "      \"parquet\": {",
+        "         \"annotations\": {",
+        "            \"/path/to/database3.parquet\": {",
+        "               \"field1\": null,",
+        "               \"field2\": \"field2_renamed\"",
+        "            },",
+        "            \"/path/to/database4.vcf.gz\": {",
+        "               \"INFO\": null",
+        "            },",
+        "            \"/path/to/database5.bed.gz\": {",
+        "               \"INFO\": null",
+        "            }",
+        "         }",
+        "      },",
+        "      \"bcftools\": {",
+        "         \"annotations\": {",
+        "            \"/path/to/database6.vcf.gz\": {",
+        "               \"field1\": null,",
+        "               \"field2\": \"field2_renamed\"",
+        "            },",
+        "            \"/path/to/database7.bed\": {",
+        "               \"INFO\": null",
+        "            }",
+        "         }",
+        "      },",
+        "      \"annovar\": {",
+        "         \"annotations\": {",
+        "            \"annovar_keyword2\": {",
+        "               \"field1\": null,",
+        "               \"field2\": \"field2_renamed\"",
+        "            },",
+        "            \"annovar_keyword3\": {",
+        "               \"INFO\": null",
+        "            }",
+        "         }",
+        "      },",
+        "      \"snpeff\": {",
+        "         \"options\": \" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr \"",
+        "      },",
+        "      \"exomiser\": {",
+        "         \"release\": \"2109\",",
+        "         \"transcript_source\": \"refseq\",",
+        "         \"hpo\": [\"HP:0001156\", \"HP:0001363\", \"HP:0011304\", \"HP:0010055\"]",
+        "      },",
+        "      \"options\": {",
+        "         \"append\": true",
+        "      }",
+        "   },",
+        "   \"calculation\": {",
+        "      \"operation1\": null,",
+        "      \"operation2\": {",
+        "        \"options\": {",
+        "          \"option1\": \"value1\",",
+        "          \"option2\": \"value2\"",
+        "        }",
+        "      }",
+        "   },",
+        "   \"prioritization\": {",
+        "      \"prioritizations\": \"config/prioritization_profiles.json\",",
+        "      \"profiles\": [\"GENOME\", \"GERMLINE\"],",
+        "      \"default_profile\": \"GERMLINE\",",
+        "      \"pzfields\": [\"PZScore\", \"PZFlag\", \"PZComment\"],",
+        "      \"prioritization_score_mode\": \"VaRank\"",
+        "   },",
+        "   \"export\": {",
+        "      \"include_header\": true",
+        "   }",
+        "}"
+      ]
+    }
   },
   "hgvs": {
     "__help": [
@@ -556,7 +559,7 @@
     },
     "splice": {
       "__help": [
-        "Annotation process using Splice tool and options. This annotation will be proccessed only for variants that are not already annotated (i.e. without annotation like 'SpliceAI_\\w+' and 'SPiP_\\w+')"
+        "Annotation process using Splice tool and options. This annotation will be proccessed only for variants that are not already annotated (i.e. without annotation like 'SpliceAI_\\*' and 'SPiP_\\*')"
       ],
       "__examples_code": [
         "# Annotation with Splice, using database splice mode ('one'), spliceAI distance (500) and spliceAI mask (1).",
@@ -817,7 +820,7 @@
   },
   "transcripts": {
     "__help": [
-      "Transcripts information to create transcript view. Useful to add transcripts annotations in INFO field, to calculate transcripts specific scores (see [Calculation JSON file](help.config.calculation.md) help) or prioritize transcripts (see [Priorization JSON file](help.config.prioritization.md) help)."
+      "Transcripts information to create transcript view. Useful to add transcripts annotations in INFO field, to calculate transcripts specific scores (see [Calculation JSON file](help.configuration.calculation.md) help) or prioritize transcripts (see [Priorization JSON file](help.configuration.prioritization.md) help)."
     ],
     "__type": "dict",
     "__code_type": "json",
@@ -960,7 +963,7 @@
     },
     "prioritization": {
       "__help": [
-        "Prioritization parameters for transcripts (see [Priorization JSON file](help.config.prioritization.md) help).",
+        "Prioritization parameters for transcripts (see [Priorization JSON file](help.configuration.prioritization.md) help).",
         "Only 'Score' and 'Flag' will be return (e.g. 'PZTScore' and 'PZTFlag'), as well as the selected 'best' transcript ID."
       ],
       "__code_type": "json",
@@ -1022,7 +1025,7 @@
   },
   "databases": {
     "__help": [
-      "[HOWARD Parameters Databases JSON](help.param.databases.md) describes configuration JSON file for databases download and convert."
+      "[HOWARD Parameters Databases JSON](help.parameters.databases.md) describes configuration JSON file for databases download and convert."
     ]
   }
 }

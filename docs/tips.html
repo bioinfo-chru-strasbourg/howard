@@ -1,519 +1,478 @@
 <!DOCTYPE html>
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
 <head>
-<title>tips.md</title>
-<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
-
-<style>
-/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See License.txt in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
-
-body {
-	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
-	font-size: var(--vscode-markdown-font-size, 14px);
-	padding: 0 26px;
-	line-height: var(--vscode-markdown-line-height, 22px);
-	word-wrap: break-word;
-}
-
-#code-csp-warning {
-	position: fixed;
-	top: 0;
-	right: 0;
-	color: white;
-	margin: 16px;
-	text-align: center;
-	font-size: 12px;
-	font-family: sans-serif;
-	background-color:#444444;
-	cursor: pointer;
-	padding: 6px;
-	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
-}
-
-#code-csp-warning:hover {
-	text-decoration: none;
-	background-color:#007acc;
-	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
-}
-
-body.scrollBeyondLastLine {
-	margin-bottom: calc(100vh - 22px);
-}
-
-body.showEditorSelection .code-line {
-	position: relative;
-}
-
-body.showEditorSelection .code-active-line:before,
-body.showEditorSelection .code-line:hover:before {
-	content: "";
-	display: block;
-	position: absolute;
-	top: 0;
-	left: -12px;
-	height: 100%;
-}
-
-body.showEditorSelection li.code-active-line:before,
-body.showEditorSelection li.code-line:hover:before {
-	left: -30px;
-}
-
-.vscode-light.showEditorSelection .code-active-line:before {
-	border-left: 3px solid rgba(0, 0, 0, 0.15);
-}
-
-.vscode-light.showEditorSelection .code-line:hover:before {
-	border-left: 3px solid rgba(0, 0, 0, 0.40);
-}
-
-.vscode-light.showEditorSelection .code-line .code-line:hover:before {
-	border-left: none;
-}
-
-.vscode-dark.showEditorSelection .code-active-line:before {
-	border-left: 3px solid rgba(255, 255, 255, 0.4);
-}
-
-.vscode-dark.showEditorSelection .code-line:hover:before {
-	border-left: 3px solid rgba(255, 255, 255, 0.60);
-}
-
-.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
-	border-left: none;
-}
-
-.vscode-high-contrast.showEditorSelection .code-active-line:before {
-	border-left: 3px solid rgba(255, 160, 0, 0.7);
-}
-
-.vscode-high-contrast.showEditorSelection .code-line:hover:before {
-	border-left: 3px solid rgba(255, 160, 0, 1);
-}
-
-.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
-	border-left: none;
-}
-
-img {
-	max-width: 100%;
-	max-height: 100%;
-}
-
-a {
-	text-decoration: none;
-}
-
-a:hover {
-	text-decoration: underline;
-}
-
-a:focus,
-input:focus,
-select:focus,
-textarea:focus {
-	outline: 1px solid -webkit-focus-ring-color;
-	outline-offset: -1px;
-}
-
-hr {
-	border: 0;
-	height: 2px;
-	border-bottom: 2px solid;
-}
-
-h1 {
-	padding-bottom: 0.3em;
-	line-height: 1.2;
-	border-bottom-width: 1px;
-	border-bottom-style: solid;
-}
-
-h1, h2, h3 {
-	font-weight: normal;
-}
-
-table {
-	border-collapse: collapse;
-}
-
-table > thead > tr > th {
-	text-align: left;
-	border-bottom: 1px solid;
-}
-
-table > thead > tr > th,
-table > thead > tr > td,
-table > tbody > tr > th,
-table > tbody > tr > td {
-	padding: 5px 10px;
-}
-
-table > tbody > tr + tr > td {
-	border-top: 1px solid;
-}
-
-blockquote {
-	margin: 0 7px 0 5px;
-	padding: 0 16px 0 10px;
-	border-left-width: 5px;
-	border-left-style: solid;
-}
-
-code {
-	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
-	font-size: 1em;
-	line-height: 1.357em;
-}
-
-body.wordWrap pre {
-	white-space: pre-wrap;
-}
-
-pre:not(.hljs),
-pre.hljs code > div {
-	padding: 16px;
-	border-radius: 3px;
-	overflow: auto;
-}
-
-pre code {
-	color: var(--vscode-editor-foreground);
-	tab-size: 4;
-}
-
-/** Theming */
-
-.vscode-light pre {
-	background-color: rgba(220, 220, 220, 0.4);
-}
-
-.vscode-dark pre {
-	background-color: rgba(10, 10, 10, 0.4);
-}
-
-.vscode-high-contrast pre {
-	background-color: rgb(0, 0, 0);
-}
-
-.vscode-high-contrast h1 {
-	border-color: rgb(0, 0, 0);
-}
-
-.vscode-light table > thead > tr > th {
-	border-color: rgba(0, 0, 0, 0.69);
-}
-
-.vscode-dark table > thead > tr > th {
-	border-color: rgba(255, 255, 255, 0.69);
-}
-
-.vscode-light h1,
-.vscode-light hr,
-.vscode-light table > tbody > tr + tr > td {
-	border-color: rgba(0, 0, 0, 0.18);
-}
-
-.vscode-dark h1,
-.vscode-dark hr,
-.vscode-dark table > tbody > tr + tr > td {
-	border-color: rgba(255, 255, 255, 0.18);
-}
-
-</style>
-
-<style>
-/*
-
-github.com style (c) Vasily Polovnyov <vast@whiteants.net>
-
-*/
-
-.hljs {
-  display: block;
-  overflow-x: auto;
-  padding: 0.5em;
-  color: #333;
-  background: #f8f8f8;
-}
-
-.hljs-comment,
-.hljs-quote {
-  color: #998;
-  font-style: italic;
-}
-
-.hljs-keyword,
-.hljs-selector-tag,
-.hljs-subst {
-  color: #333;
-  font-weight: bold;
-}
-
-.hljs-number,
-.hljs-literal,
-.hljs-variable,
-.hljs-template-variable,
-.hljs-tag .hljs-attr {
-  color: #008080;
-}
-
-.hljs-string,
-.hljs-doctag {
-  color: #d14;
-}
-
-.hljs-title,
-.hljs-section,
-.hljs-selector-id {
-  color: #900;
-  font-weight: bold;
-}
-
-.hljs-subst {
-  font-weight: normal;
-}
-
-.hljs-type,
-.hljs-class .hljs-title {
-  color: #458;
-  font-weight: bold;
-}
-
-.hljs-tag,
-.hljs-name,
-.hljs-attribute {
-  color: #000080;
-  font-weight: normal;
-}
-
-.hljs-regexp,
-.hljs-link {
-  color: #009926;
-}
-
-.hljs-symbol,
-.hljs-bullet {
-  color: #990073;
-}
-
-.hljs-built_in,
-.hljs-builtin-name {
-  color: #0086b3;
-}
-
-.hljs-meta {
-  color: #999;
-  font-weight: bold;
-}
-
-.hljs-deletion {
-  background: #fdd;
-}
-
-.hljs-addition {
-  background: #dfd;
-}
-
-.hljs-emphasis {
-  font-style: italic;
-}
-
-.hljs-strong {
-  font-weight: bold;
-}
-
-</style>
-
-<style>
-/*
- * Markdown PDF CSS
- */
-
- body {
-	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
-	padding: 0 12px;
-}
-
-pre {
-	background-color: #f8f8f8;
-	border: 1px solid #cccccc;
-	border-radius: 3px;
-	overflow-x: auto;
-	white-space: pre-wrap;
-	overflow-wrap: break-word;
-}
-
-pre:not(.hljs) {
-	padding: 23px;
-	line-height: 19px;
-}
-
-blockquote {
-	background: rgba(127, 127, 127, 0.1);
-	border-color: rgba(0, 122, 204, 0.5);
-}
-
-.emoji {
-	height: 1.4em;
-}
-
-code {
-	font-size: 14px;
-	line-height: 19px;
-}
-
-/* for inline code */
-:not(pre):not(.hljs) > code {
-	color: #C9AE75; /* Change the old color so it seems less like an error */
-	font-size: inherit;
-}
-
-/* Page Break : use <div class="page"/> to insert page break
--------------------------------------------------------- */
-.page {
-	page-break-after: always;
-}
-
-</style>
-
-<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>HOWARD Tips</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 1000px;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
 </head>
 <body>
-  <script>
-    mermaid.initialize({
-      startOnLoad: true,
-      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
-          ? 'dark'
-          : 'default'
-    });
-  </script>
-<h1 id="howard-tips">HOWARD Tips</h1>
-<details><summary>How to hive partitioning into Parquet a VCF format file?</summary>
-<p>In order to create a database from a VCF file, process partitioning highly speed up futher annotation process. Simply use HOWARD Convert tool with <code>--parquet_partitions</code> option. Format of input and output files can be any avaialbe format (e.g. Parquet, VCF, TSV).</p>
-<p>This process is not ressource intensive, but can take a while for huge databases. However, using <code>--explode_infos</code> option require much more memory for huge databases.</p>
-<pre class="hljs"><code><div>INPUT=~/howard/databases/dbsnp/current/hg19/b156/dbsnp.parquet
-OUTPUT=~/howard/databases/dbsnp/current/hg19/b156/dbsnp.partition.parquet
-PARTITIONS=<span class="hljs-string">"#CHROM"</span> <span class="hljs-comment"># "#CHROM", "#CHROM,REF,ALT" (for SNV file only) </span>
-howard convert \
-   --input=<span class="hljs-variable">$INPUT</span> \
-   --output=<span class="hljs-variable">$OUTPUT</span> \
-   --parquet_partitions=<span class="hljs-string">"#CHROM"</span> \
-   --threads=8
-</div></code></pre>
+<header id="title-block-header">
+<h1 class="title">HOWARD Tips</h1>
+</header>
+<h1 data-number="1" id="howard-tips"><span
+class="header-section-number">1</span> HOWARD Tips</h1>
+<details>
+<summary>
+How to hive partitioning into Parquet a VCF format file?
+</summary>
+<p>In order to create a database from a VCF file, process partitioning
+highly speed up futher annotation process. Simply use HOWARD Convert
+tool with <code>--parquet_partitions</code> option. Format of input and
+output files can be any avaialbe format (e.g.&#xA0;Parquet, VCF, TSV).</p>
+<p>This process is not ressource intensive, but can take a while for
+huge databases. However, using <code>--explode_infos</code> option
+require much more memory for huge databases.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="va">INPUT</span><span class="op">=</span>~/howard/databases/dbsnp/current/hg19/b156/dbsnp.parquet</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="va">OUTPUT</span><span class="op">=</span>~/howard/databases/dbsnp/current/hg19/b156/dbsnp.partition.parquet</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="va">PARTITIONS</span><span class="op">=</span><span class="st">&quot;#CHROM&quot;</span> <span class="co"># &quot;#CHROM&quot;, &quot;#CHROM,REF,ALT&quot; (for SNV file only) </span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="ex">howard</span> convert <span class="dt">\</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>   <span class="at">--input</span><span class="op">=</span><span class="va">$INPUT</span> <span class="dt">\</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>   <span class="at">--output</span><span class="op">=</span><span class="va">$OUTPUT</span> <span class="dt">\</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>   <span class="at">--parquet_partitions</span><span class="op">=</span><span class="st">&quot;#CHROM&quot;</span> <span class="dt">\</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>   <span class="at">--threads</span><span class="op">=</span>8</span></code></pre></div>
 </details>
-<details><summary>How to hive partitioning into Parquet a huge VCF format file with all annotations exploded into columns?</summary>
-<p>Due to memory usage with duckDB, huge VCF file convertion can fail. This tip describe hive partitioning of huge VCF files into Parquet, to prevent memory resource crash.</p>
-<p>The following bash script is spliting VCF by &quot;#CHROM&quot; and chunk VCF files with a defined size (&quot;CHUNK_SIZE&quot;). Depending on input VCF file, the number of chunk VCF files will be determined by the content (usually number of annotation within the VCF file). Moreover, Parquet files can also be chunked (&quot;CHUNK_SIZE_PARQUET&quot;). Default options This will ensure a memory usage around 4-5Gb.</p>
-<p>Moreover, an additional partitioning can be applied, on one or more specific VCF column or INFO annotation: &quot;None&quot; for no partitioning; &quot;REF,ALT&quot; for VCF only with SNV (e.g. dbSNP); &quot;CLINSIG&quot; for ClinVar database (values such as &quot;Pathogenic, Moslty-Pathogenic&quot;...). Note that partitioning only works for small values (a value lenght will create a too long partition folder), and for not too many values for a column (partition fragments is maximum of 1024). This additional partition can take a while.</p>
-<p>In order to create a high-performance database for HOWARD, INFO annotations can be exploded in columns. This option is slower, but generate a Parquet database that will be used by picking needed columns for annotation. Annotations to explode can be chosen with more options.</p>
-<pre class="hljs"><code><div><span class="hljs-comment"># Files</span>
-VCF=/tmp/my.vcf.gz                  <span class="hljs-comment"># Input VCF file</span>
-PARQUET=/tmp/my.partition.parquet   <span class="hljs-comment"># Output Partitioned Parquet folder</span>
-
-<span class="hljs-comment"># Tools</span>
-BCFTOOLS=bcftools   <span class="hljs-comment"># BCFTools</span>
-BGZIP=bgzip         <span class="hljs-comment"># BGZip</span>
-HOWARD=howard       <span class="hljs-comment"># HOWARD</span>
-TABIX=tabix         <span class="hljs-comment"># Tabix</span>
-
-<span class="hljs-comment"># Threads</span>
-THREADS=12          <span class="hljs-comment"># Number of threads</span>
-
-<span class="hljs-comment"># Param</span>
-CHUNK_SIZE=1000000000               <span class="hljs-comment"># 1000000000 for VCF chunk size around 200Mb</span>
-CHUNK_SIZE_PARQUET=10000000         <span class="hljs-comment"># 10000000 for parquet chunk size around 200Mb</span>
-PARQUET_PARTITIONS=<span class="hljs-string">"None"</span>           <span class="hljs-comment"># "None" for no more partition, "REF,ALT" (SNV VCF) or "REF" or "CLNSIG"...</span>
-CONVERT_OPTIONS=<span class="hljs-string">" --explode_infos "</span> <span class="hljs-comment"># Explode INFO annotations into columns</span>
-
-<span class="hljs-comment"># Create output folder</span>
-rm -r <span class="hljs-variable">$PARQUET</span>
-mkdir -p <span class="hljs-variable">$PARQUET</span>
-
-<span class="hljs-comment"># Extract header</span>
-<span class="hljs-variable">$BCFTOOLS</span> view -h <span class="hljs-variable">$VCF</span> --threads <span class="hljs-variable">$THREADS</span> &gt; <span class="hljs-variable">$PARQUET</span>/header.vcf
-
-<span class="hljs-comment"># VCF indexing (if necessary)</span>
-<span class="hljs-keyword">if</span> [ ! -e <span class="hljs-variable">$VCF</span>.tbi ]; <span class="hljs-keyword">then</span>
-    <span class="hljs-variable">$TABIX</span> <span class="hljs-variable">$VCF</span>
-<span class="hljs-keyword">fi</span>;
-
-<span class="hljs-comment"># For each chromosome</span>
-<span class="hljs-keyword">for</span> chr <span class="hljs-keyword">in</span> $(<span class="hljs-variable">$TABIX</span> -l <span class="hljs-variable">$VCF</span> | cut -f1); <span class="hljs-keyword">do</span>
-
-    <span class="hljs-keyword">if</span> [ <span class="hljs-string">"<span class="hljs-variable">$chr</span>"</span> != <span class="hljs-string">"None"</span> ]; <span class="hljs-keyword">then</span>
-        <span class="hljs-built_in">echo</span> <span class="hljs-string">"# Chromosome '<span class="hljs-variable">$chr</span>'"</span>
-
-        <span class="hljs-comment"># Create chromosome folder</span>
-        mkdir -p <span class="hljs-variable">$PARQUET</span>/<span class="hljs-comment">#CHROM=$chr;</span>
-
-        <span class="hljs-built_in">echo</span> <span class="hljs-string">"# Chromosome '<span class="hljs-variable">$chr</span>' - BCFTools filter and split file..."</span>
-        <span class="hljs-variable">$BCFTOOLS</span> filter <span class="hljs-variable">$VCF</span> -r <span class="hljs-variable">$chr</span> --threads <span class="hljs-variable">$THREADS</span> | <span class="hljs-variable">$BCFTOOLS</span> view -H --threads <span class="hljs-variable">$THREADS</span> | split -a 10 -C <span class="hljs-variable">$CHUNK_SIZE</span> - <span class="hljs-variable">$PARQUET</span>/<span class="hljs-comment">#CHROM=$chr/ --filter="$BGZIP -l1 --threads=$THREADS &gt; \$FILE.gz";</span>
-        nb_chunk_files=$(ls <span class="hljs-variable">$PARQUET</span>/<span class="hljs-comment">#CHROM=$chr/*.gz | wc -l)</span>
-
-        <span class="hljs-comment"># Convert chunk VCF to Parquet</span>
-        i_chunk_files=0
-        <span class="hljs-keyword">for</span> file <span class="hljs-keyword">in</span> <span class="hljs-variable">$PARQUET</span>/<span class="hljs-comment">#CHROM=$chr/*.gz; do</span>
-            
-            <span class="hljs-comment"># Chunk file to TSV and header</span>
-            ((i_chunk_files++))
-            chunk=$(basename <span class="hljs-variable">$file</span> | sed s/.gz$//gi)
-            <span class="hljs-built_in">echo</span> <span class="hljs-string">"# Chromosome '<span class="hljs-variable">$chr</span>' - Convert VCF to Parquet '<span class="hljs-variable">$chunk</span>' (<span class="hljs-variable">$PARQUET_PARTITIONS</span>) [<span class="hljs-variable">$i_chunk_files</span>/<span class="hljs-variable">$nb_chunk_files</span>]..."</span>
-            mv <span class="hljs-variable">$file</span> <span class="hljs-variable">$file</span>.tsv.gz;
-            cp <span class="hljs-variable">$PARQUET</span>/header.vcf <span class="hljs-variable">$file</span>.tsv.gz.hdr;
-
-            <span class="hljs-comment"># Convert with partitioning or not</span>
-            <span class="hljs-variable">$HOWARD</span> convert --input=<span class="hljs-variable">$file</span>.tsv.gz --output=<span class="hljs-variable">$file</span>.parquet <span class="hljs-variable">$CONVERT_OPTIONS</span> --threads=<span class="hljs-variable">$THREADS</span> --parquet_partitions=<span class="hljs-string">"<span class="hljs-variable">$PARQUET_PARTITIONS</span>"</span> --verbosity=ERROR --chunk_size=<span class="hljs-variable">$CHUNK_SIZE_PARQUET</span>
-
-            <span class="hljs-comment"># Redirect partitioninf folder if any</span>
-            <span class="hljs-keyword">if</span> [ <span class="hljs-string">"<span class="hljs-variable">$PARQUET_PARTITIONS</span>"</span> != <span class="hljs-string">""</span> ]; <span class="hljs-keyword">then</span>
-                rsync -a <span class="hljs-variable">$file</span>.parquet/ $(dirname <span class="hljs-variable">$file</span>)/
-                rm -r <span class="hljs-variable">$file</span>.parquet*
-            <span class="hljs-keyword">fi</span>;
-
-            <span class="hljs-comment"># Clean</span>
-            rm -f <span class="hljs-variable">$file</span>.tsv*
-
-        <span class="hljs-keyword">done</span>;
-    <span class="hljs-keyword">fi</span>;
-<span class="hljs-keyword">done</span>;
-
-<span class="hljs-comment"># Create header</span>
-cp <span class="hljs-variable">$PARQUET</span>/header.vcf <span class="hljs-variable">$PARQUET</span>.hdr
-
-<span class="hljs-comment"># Show partitioned Parquet folder</span>
-tree -h <span class="hljs-variable">$PARQUET</span>
-
-</div></code></pre>
+<details>
+<summary>
+How to hive partitioning into Parquet a huge VCF format file with all
+annotations exploded into columns?
+</summary>
+<p>Due to memory usage with duckDB, huge VCF file convertion can fail.
+This tip describe hive partitioning of huge VCF files into Parquet, to
+prevent memory resource crash.</p>
+<p>The following bash script is spliting VCF by &#x201C;#CHROM&#x201D; and chunk VCF
+files with a defined size (&#x201C;CHUNK_SIZE&#x201D;). Depending on input VCF file,
+the number of chunk VCF files will be determined by the content (usually
+number of annotation within the VCF file). Moreover, Parquet files can
+also be chunked (&#x201C;CHUNK_SIZE_PARQUET&#x201D;). Default options This will ensure
+a memory usage around 4-5Gb.</p>
+<p>Moreover, an additional partitioning can be applied, on one or more
+specific VCF column or INFO annotation: &#x201C;None&#x201D; for no partitioning;
+&#x201C;REF,ALT&#x201D; for VCF only with SNV (e.g.&#xA0;dbSNP); &#x201C;CLINSIG&#x201D; for ClinVar
+database (values such as &#x201C;Pathogenic, Moslty-Pathogenic&#x201D;&#x2026;). Note that
+partitioning only works for small values (a value lenght will create a
+too long partition folder), and for not too many values for a column
+(partition fragments is maximum of 1024). This additional partition can
+take a while.</p>
+<p>In order to create a high-performance database for HOWARD, INFO
+annotations can be exploded in columns. This option is slower, but
+generate a Parquet database that will be used by picking needed columns
+for annotation. Annotations to explode can be chosen with more
+options.</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Files</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="va">VCF</span><span class="op">=</span>/tmp/my.vcf.gz                  <span class="co"># Input VCF file</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="va">PARQUET</span><span class="op">=</span>/tmp/my.partition.parquet   <span class="co"># Output Partitioned Parquet folder</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Tools</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="va">BCFTOOLS</span><span class="op">=</span>bcftools   <span class="co"># BCFTools</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="va">BGZIP</span><span class="op">=</span>bgzip         <span class="co"># BGZip</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="va">HOWARD</span><span class="op">=</span>howard       <span class="co"># HOWARD</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="va">TABIX</span><span class="op">=</span>tabix         <span class="co"># Tabix</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Threads</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="va">THREADS</span><span class="op">=</span>12          <span class="co"># Number of threads</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Param</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="va">CHUNK_SIZE</span><span class="op">=</span>1000000000               <span class="co"># 1000000000 for VCF chunk size around 200Mb</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="va">CHUNK_SIZE_PARQUET</span><span class="op">=</span>10000000         <span class="co"># 10000000 for parquet chunk size around 200Mb</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="va">PARQUET_PARTITIONS</span><span class="op">=</span><span class="st">&quot;None&quot;</span>           <span class="co"># &quot;None&quot; for no more partition, &quot;REF,ALT&quot; (SNV VCF) or &quot;REF&quot; or &quot;CLNSIG&quot;...</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="va">CONVERT_OPTIONS</span><span class="op">=</span><span class="st">&quot; --explode_infos &quot;</span> <span class="co"># Explode INFO annotations into columns</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Create output folder</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> <span class="at">-r</span> <span class="va">$PARQUET</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> <span class="va">$PARQUET</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract header</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="va">$BCFTOOLS</span> view <span class="at">-h</span> <span class="va">$VCF</span> <span class="at">--threads</span> <span class="va">$THREADS</span> <span class="op">&gt;</span> <span class="va">$PARQUET</span>/header.vcf</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="co"># VCF indexing (if necessary)</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="bu">[</span> <span class="ot">!</span> <span class="ot">-e</span> <span class="va">$VCF</span>.tbi <span class="bu">]</span><span class="kw">;</span> <span class="cf">then</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>    <span class="va">$TABIX</span> <span class="va">$VCF</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="cf">fi</span><span class="kw">;</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="co"># For each chromosome</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> chr <span class="kw">in</span> <span class="va">$($TABIX</span> <span class="at">-l</span> <span class="va">$VCF</span> <span class="kw">|</span> <span class="fu">cut</span> <span class="at">-f1</span><span class="va">)</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">[</span> <span class="st">&quot;</span><span class="va">$chr</span><span class="st">&quot;</span> <span class="ot">!=</span> <span class="st">&quot;None&quot;</span> <span class="bu">]</span><span class="kw">;</span> <span class="cf">then</span></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>        <span class="bu">echo</span> <span class="st">&quot;# Chromosome &#39;</span><span class="va">$chr</span><span class="st">&#39;&quot;</span></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Create chromosome folder</span></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>        <span class="fu">mkdir</span> <span class="at">-p</span> <span class="va">$PARQUET</span>/#CHROM=<span class="va">$chr</span><span class="kw">;</span></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>        <span class="bu">echo</span> <span class="st">&quot;# Chromosome &#39;</span><span class="va">$chr</span><span class="st">&#39; - BCFTools filter and split file...&quot;</span></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>        <span class="va">$BCFTOOLS</span> filter <span class="va">$VCF</span> <span class="at">-r</span> <span class="va">$chr</span> <span class="at">--threads</span> <span class="va">$THREADS</span> <span class="kw">|</span> <span class="va">$BCFTOOLS</span> view <span class="at">-H</span> <span class="at">--threads</span> <span class="va">$THREADS</span> <span class="kw">|</span> <span class="fu">split</span> <span class="at">-a</span> 10 <span class="at">-C</span> <span class="va">$CHUNK_SIZE</span> <span class="at">-</span> <span class="va">$PARQUET</span>/#CHROM=<span class="va">$chr</span>/ <span class="at">--filter</span><span class="op">=</span><span class="st">&quot;</span><span class="va">$BGZIP</span><span class="st"> -l1 --threads=</span><span class="va">$THREADS</span><span class="st"> &gt; </span><span class="dt">\$</span><span class="st">FILE.gz&quot;</span><span class="kw">;</span></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>        <span class="va">nb_chunk_files</span><span class="op">=</span><span class="va">$(</span><span class="fu">ls</span> <span class="va">$PARQUET</span>/#CHROM=<span class="va">$chr</span>/<span class="pp">*</span>.gz <span class="kw">|</span> <span class="fu">wc</span> <span class="at">-l</span><span class="va">)</span></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Convert chunk VCF to Parquet</span></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>        <span class="va">i_chunk_files</span><span class="op">=</span>0</span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> file <span class="kw">in</span> <span class="va">$PARQUET</span>/#CHROM=<span class="va">$chr</span>/<span class="pp">*</span>.gz<span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>            <span class="co"># Chunk file to TSV and header</span></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>            <span class="kw">((</span><span class="va">i_chunk_files</span><span class="op">++</span><span class="kw">))</span></span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>            <span class="va">chunk</span><span class="op">=</span><span class="va">$(</span><span class="fu">basename</span> <span class="va">$file</span> <span class="kw">|</span> <span class="fu">sed</span> s/.gz$//gi<span class="va">)</span></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>            <span class="bu">echo</span> <span class="st">&quot;# Chromosome &#39;</span><span class="va">$chr</span><span class="st">&#39; - Convert VCF to Parquet &#39;</span><span class="va">$chunk</span><span class="st">&#39; (</span><span class="va">$PARQUET_PARTITIONS</span><span class="st">) [</span><span class="va">$i_chunk_files</span><span class="st">/</span><span class="va">$nb_chunk_files</span><span class="st">]...&quot;</span></span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>            <span class="fu">mv</span> <span class="va">$file</span> <span class="va">$file</span>.tsv.gz<span class="kw">;</span></span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>            <span class="fu">cp</span> <span class="va">$PARQUET</span>/header.vcf <span class="va">$file</span>.tsv.gz.hdr<span class="kw">;</span></span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>            <span class="co"># Convert with partitioning or not</span></span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>            <span class="va">$HOWARD</span> convert <span class="at">--input</span><span class="op">=</span><span class="va">$file</span>.tsv.gz <span class="at">--output</span><span class="op">=</span><span class="va">$file</span>.parquet <span class="va">$CONVERT_OPTIONS</span> <span class="at">--threads</span><span class="op">=</span><span class="va">$THREADS</span> <span class="at">--parquet_partitions</span><span class="op">=</span><span class="st">&quot;</span><span class="va">$PARQUET_PARTITIONS</span><span class="st">&quot;</span> <span class="at">--verbosity</span><span class="op">=</span>ERROR <span class="at">--chunk_size</span><span class="op">=</span><span class="va">$CHUNK_SIZE_PARQUET</span></span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>            <span class="co"># Redirect partitioninf folder if any</span></span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="bu">[</span> <span class="st">&quot;</span><span class="va">$PARQUET_PARTITIONS</span><span class="st">&quot;</span> <span class="ot">!=</span> <span class="st">&quot;&quot;</span> <span class="bu">]</span><span class="kw">;</span> <span class="cf">then</span></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>                <span class="fu">rsync</span> <span class="at">-a</span> <span class="va">$file</span>.parquet/ <span class="va">$(</span><span class="fu">dirname</span> <span class="va">$file)</span>/</span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>                <span class="fu">rm</span> <span class="at">-r</span> <span class="va">$file</span>.parquet<span class="pp">*</span></span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>            <span class="cf">fi</span><span class="kw">;</span></span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>            <span class="co"># Clean</span></span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>            <span class="fu">rm</span> <span class="at">-f</span> <span class="va">$file</span>.tsv<span class="pp">*</span></span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a>        <span class="cf">done</span><span class="kw">;</span></span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a>    <span class="cf">fi</span><span class="kw">;</span></span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span><span class="kw">;</span></span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a><span class="co"># Create header</span></span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> <span class="va">$PARQUET</span>/header.vcf <span class="va">$PARQUET</span>.hdr</span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a><span class="co"># Show partitioned Parquet folder</span></span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a><span class="ex">tree</span> <span class="at">-h</span> <span class="va">$PARQUET</span></span></code></pre></div>
 </details>
-<details><summary>How to aggregate all INFO annotations from multiple Parquet databases into one INFO field?</summary>
-<p>In order to merge all annotations in INFO column of multiple databases, use a SQL query on the list of Parquet databases, and use <code>STRING_AGG</code> duckDB function to aggretate values.
-This will probably work only for small databases.</p>
-<pre class="hljs"><code><div>howard query \
-   --explode_infos \
-   --explode_infos_prefix=<span class="hljs-string">'INFO/'</span> \
-   --query=<span class="hljs-string">"SELECT \"#CHROM\", POS, REF, ALT, STRING_AGG(INFO, ';') AS INFO \
-            FROM parquet_scan('tests/databases/annotations/current/hg19/*.parquet', union_by_name = true) \
-            GROUP BY \"#CHROM\", POS, REF, ALT"</span> \
-   --output=/tmp/full_annotation.tsv
-   
-head -n2 /tmp/full_annotation.tsv
-</div></code></pre>
-<pre class="hljs"><code><div>#CHROM  POS     REF     ALT     INFO
-chr1    69093   G       T       MCAP13=0.001453;REVEL=0.117;SIFT_score=0.082;SIFT_converted_rankscore=0.333;SIFT_pred=T;SIFT4G_score=0.097;SIFT4G_converted_rankscore=0.392;SIFT4G_pred=T;Polyphen2_HDIV_score=0.0;Polyphen2_HDIV_rankscore=0.029;Polyphen2_HDIV_pred=B;Polyphen2_HVAR_score=0.0;Polyphen2_HVAR_rankscore=0.014;Polyphen2_HVAR_pred=B;LRT_score=0.589;LRT_converted_rankscore=0.056;LRT_pred=N;MutationTaster_score=0.635;MutationTaster_converted_rankscore=0.328;MutationTaster_pred=D;MutationAssessor_score=.;MutationAssessor_rankscore=.;MutationAssessor_pred=.;FATHMM_score=6.74;FATHMM_converted_rankscore=0.005;FATHMM_pred=T;PROVEAN_score=0.27;PROVEAN_converted_rankscore=0.043;PROVEAN_pred=N;VEST4_score=0.12;VEST4_rankscore=0.111;MetaSVM_score=-1.003;MetaSVM_rankscore=0.291;MetaSVM_pred=T;MetaLR_score=0.002;MetaLR_rankscore=0.005;MetaLR_pred=T;MetaRNN_score=0.452;MetaRNN_rankscore=0.666;MetaRNN_pred=T;M_CAP_score=0.001;M_CAP_rankscore=0.022;M_CAP_pred=T;REVEL_score=0.117;REVEL_rankscore=0.332;MutPred_score=0.835;MutPred_rankscore=0.943;MVP_score=0.240;MVP_rankscore=0.236;MPC_score=.;MPC_rankscore=.;PrimateAI_score=.;PrimateAI_rankscore=.;PrimateAI_pred=.;DEOGEN2_score=0.008;DEOGEN2_rankscore=0.072;DEOGEN2_pred=T;BayesDel_addAF_score=-0.359;BayesDel_addAF_rankscore=0.042;BayesDel_addAF_pred=T;BayesDel_noAF_score=-0.754;BayesDel_noAF_rankscore=0.033;BayesDel_noAF_pred=T;ClinPred_score=0.090;ClinPred_rankscore=0.112;ClinPred_pred=T;LIST_S2_score=0.065;LIST_S2_rankscore=0.651;LIST_S2_pred=T;Aloft_pred=.,.,;Aloft_Confidence=.,.,;CADD_raw=0.013;CADD_raw_rankscore=0.049;CADD_phred=2.83;DANN_score=0.602;DANN_rankscore=0.064;fathmm_MKL_coding_score=0.505;fathmm_MKL_coding_rankscore=0.287;fathmm_MKL_coding_pred=D;fathmm_XF_coding_score=0.012;fathmm_XF_coding_rankscore=0.001;fathmm_XF_coding_pred=N;Eigen_raw_coding=-0.958;Eigen_raw_coding_rankscore=0.095;Eigen_PC_raw_coding=-0.968;Eigen_PC_raw_coding_rankscore=0.105;GenoCanyon_score=0;GenoCanyon_rankscore=0.012;integrated_fitCons_score=0.487;integrated_fitCons_rankscore=0.14;integrated_confidence_value=0;LINSIGHT=.;LINSIGHT_rankscore=.;GERP___NR=2.31;GERP___RS=1.36;GERP___RS_rankscore=0.211;phyloP100way_vertebrate=1.139;phyloP100way_vertebrate_rankscore=0.311;phyloP30way_mammalian=0.113;phyloP30way_mammalian_rankscore=0.17;phastCons100way_vertebrate=0.841;phastCons100way_vertebrate_rankscore=0.303;phastCons30way_mammalian=0.552;phastCons30way_mammalian_rankscore=0.281;SiPhy_29way_logOdds=6.575;SiPhy_29way_logOdds_rankscore=0.218;Interpro_domain=.,.;GTEx_V8_gene=.;GTEx_V8_tissue=.;InterVar_automated=Uncertain_significance;PVS1=0;PS1=0;PS2=0;PS3=0;PS4=0;PM1=0;PM2=1;PM3=0;PM4=0;PM5=0;PM6=0;PP1=0;PP2=0;PP3=0;PP4=0;PP5=0;BA1=0;BS1=0;BS2=0;BS3=0;BS4=0;BP1=0;BP2=0;BP3=0;BP4=1;BP5=0;BP6=0;BP7=0
-</div></code></pre>
+<details>
+<summary>
+How to aggregate all INFO annotations from multiple Parquet databases
+into one INFO field?
+</summary>
+<p>In order to merge all annotations in INFO column of multiple
+databases, use a SQL query on the list of Parquet databases, and use
+<code>STRING_AGG</code> duckDB function to aggretate values. This will
+probably work only for small databases.</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">howard</span> query <span class="dt">\</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>   <span class="at">--explode_infos</span> <span class="dt">\</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>   <span class="at">--explode_infos_prefix</span><span class="op">=</span><span class="st">&#39;INFO/&#39;</span> <span class="dt">\</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>   <span class="at">--query</span><span class="op">=</span><span class="st">&quot;SELECT </span><span class="dt">\&quot;</span><span class="st">#CHROM</span><span class="dt">\&quot;</span><span class="st">, POS, REF, ALT, STRING_AGG(INFO, &#39;;&#39;) AS INFO </span><span class="dt">\</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="st">            FROM parquet_scan(&#39;tests/databases/annotations/current/hg19/*.parquet&#39;, union_by_name = true) </span><span class="dt">\</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="st">            GROUP BY </span><span class="dt">\&quot;</span><span class="st">#CHROM</span><span class="dt">\&quot;</span><span class="st">, POS, REF, ALT&quot;</span> <span class="dt">\</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>   <span class="at">--output</span><span class="op">=</span>/tmp/full_annotation.tsv</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span> <span class="at">-n2</span> /tmp/full_annotation.tsv</span></code></pre></div>
+<pre><code>#CHROM  POS     REF     ALT     INFO
+chr1    69093   G       T       MCAP13=0.001453;REVEL=0.117;SIFT_score=0.082;SIFT_converted_rankscore=0.333;SIFT_pred=T;SIFT4G_score=0.097;SIFT4G_converted_rankscore=0.392;SIFT4G_pred=T;Polyphen2_HDIV_score=0.0;Polyphen2_HDIV_rankscore=0.029;Polyphen2_HDIV_pred=B;Polyphen2_HVAR_score=0.0;Polyphen2_HVAR_rankscore=0.014;Polyphen2_HVAR_pred=B;LRT_score=0.589;LRT_converted_rankscore=0.056;LRT_pred=N;MutationTaster_score=0.635;MutationTaster_converted_rankscore=0.328;MutationTaster_pred=D;MutationAssessor_score=.;MutationAssessor_rankscore=.;MutationAssessor_pred=.;FATHMM_score=6.74;FATHMM_converted_rankscore=0.005;FATHMM_pred=T;PROVEAN_score=0.27;PROVEAN_converted_rankscore=0.043;PROVEAN_pred=N;VEST4_score=0.12;VEST4_rankscore=0.111;MetaSVM_score=-1.003;MetaSVM_rankscore=0.291;MetaSVM_pred=T;MetaLR_score=0.002;MetaLR_rankscore=0.005;MetaLR_pred=T;MetaRNN_score=0.452;MetaRNN_rankscore=0.666;MetaRNN_pred=T;M_CAP_score=0.001;M_CAP_rankscore=0.022;M_CAP_pred=T;REVEL_score=0.117;REVEL_rankscore=0.332;MutPred_score=0.835;MutPred_rankscore=0.943;MVP_score=0.240;MVP_rankscore=0.236;MPC_score=.;MPC_rankscore=.;PrimateAI_score=.;PrimateAI_rankscore=.;PrimateAI_pred=.;DEOGEN2_score=0.008;DEOGEN2_rankscore=0.072;DEOGEN2_pred=T;BayesDel_addAF_score=-0.359;BayesDel_addAF_rankscore=0.042;BayesDel_addAF_pred=T;BayesDel_noAF_score=-0.754;BayesDel_noAF_rankscore=0.033;BayesDel_noAF_pred=T;ClinPred_score=0.090;ClinPred_rankscore=0.112;ClinPred_pred=T;LIST_S2_score=0.065;LIST_S2_rankscore=0.651;LIST_S2_pred=T;Aloft_pred=.,.,;Aloft_Confidence=.,.,;CADD_raw=0.013;CADD_raw_rankscore=0.049;CADD_phred=2.83;DANN_score=0.602;DANN_rankscore=0.064;fathmm_MKL_coding_score=0.505;fathmm_MKL_coding_rankscore=0.287;fathmm_MKL_coding_pred=D;fathmm_XF_coding_score=0.012;fathmm_XF_coding_rankscore=0.001;fathmm_XF_coding_pred=N;Eigen_raw_coding=-0.958;Eigen_raw_coding_rankscore=0.095;Eigen_PC_raw_coding=-0.968;Eigen_PC_raw_coding_rankscore=0.105;GenoCanyon_score=0;GenoCanyon_rankscore=0.012;integrated_fitCons_score=0.487;integrated_fitCons_rankscore=0.14;integrated_confidence_value=0;LINSIGHT=.;LINSIGHT_rankscore=.;GERP___NR=2.31;GERP___RS=1.36;GERP___RS_rankscore=0.211;phyloP100way_vertebrate=1.139;phyloP100way_vertebrate_rankscore=0.311;phyloP30way_mammalian=0.113;phyloP30way_mammalian_rankscore=0.17;phastCons100way_vertebrate=0.841;phastCons100way_vertebrate_rankscore=0.303;phastCons30way_mammalian=0.552;phastCons30way_mammalian_rankscore=0.281;SiPhy_29way_logOdds=6.575;SiPhy_29way_logOdds_rankscore=0.218;Interpro_domain=.,.;GTEx_V8_gene=.;GTEx_V8_tissue=.;InterVar_automated=Uncertain_significance;PVS1=0;PS1=0;PS2=0;PS3=0;PS4=0;PM1=0;PM2=1;PM3=0;PM4=0;PM5=0;PM6=0;PP1=0;PP2=0;PP3=0;PP4=0;PP5=0;BA1=0;BS1=0;BS2=0;BS3=0;BS4=0;BP1=0;BP2=0;BP3=0;BP4=1;BP5=0;BP6=0;BP7=0</code></pre>
 </details>
-<details><summary>How to explore genetics variations from VCF files?</summary>
-<p><a href="https://cutevariant.labsquare.org/">CuteVariant: A standalone and free application to explore genetics variations from VCF files</a></p>
-<p>Cutevariant is a cross-plateform application dedicated to maniupulate and filter variation from annotated VCF file. When you create a project, data are imported into an sqlite database that cutevariant queries according your needs. Presently, SnpEff and VEP annotations are supported. Once your project is created, you can query variant using different gui controller or directly using the VQL language. This Domain Specific Language is specially designed for cutevariant and try to keep the same syntax than SQL for an easy use.</p>
-<p>Published in <a href="https://academic.oup.com/bioinformaticsadvances/article/2/1/vbab028/6440032?login=true">Bioinformatics Advanced - Cutevariant: a standalone GUI-based desktop application to explore genetic variations from an annotated VCF file</a></p>
-<p>Documentation available on <a href="https://cutevariant.labsquare.org/">cutevariant.labsquare.org</a> and <a href="(https://github.com/labsquare/cutevariant)">GitHub</a></p>
-<p><img src="https://raw.githubusercontent.com/labsquare/cutevariant/master/screencast.gif" alt="CuteVariant" title="HOWARD Graphical User Interface"></p>
+<details>
+<summary>
+How to explore genetics variations from VCF files?
+</summary>
+<p><a href="https://cutevariant.labsquare.org/">CuteVariant: A
+standalone and free application to explore genetics variations from VCF
+files</a></p>
+<p>Cutevariant is a cross-plateform application dedicated to maniupulate
+and filter variation from annotated VCF file. When you create a project,
+data are imported into an sqlite database that cutevariant queries
+according your needs. Presently, SnpEff and VEP annotations are
+supported. Once your project is created, you can query variant using
+different gui controller or directly using the VQL language. This Domain
+Specific Language is specially designed for cutevariant and try to keep
+the same syntax than SQL for an easy use.</p>
+<p>Published in&#xA0;<a
+href="https://academic.oup.com/bioinformaticsadvances/article/2/1/vbab028/6440032?login=true">Bioinformatics
+Advanced - Cutevariant: a standalone GUI-based desktop application to
+explore genetic variations from an annotated VCF file</a></p>
+<p>Documentation available on&#xA0;<a
+href="https://cutevariant.labsquare.org/">cutevariant.labsquare.org</a>
+and <a href="(https://github.com/labsquare/cutevariant)">GitHub</a></p>
+<figure>
+<img
+src="https://raw.githubusercontent.com/labsquare/cutevariant/master/screencast.gif"
+title="HOWARD Graphical User Interface" alt="CuteVariant" />
+<figcaption aria-hidden="true">CuteVariant</figcaption>
+</figure>
 </details>
-
+<details>
+<summary>
+How to generate dbNSFP databases?
+</summary>
+<p><a href="https://sites.google.com/site/jpopgen/dbNSFP">dbNSFP</a> is
+a database developed for functional prediction and annotation of all
+potential non-synonymous single-nucleotide variants (nsSNVs) in the
+human genome.</p>
+<p>In order to use dbNSFP with HOWARD, databases need to be downloaded
+and formatted. The <code>databases</code> tool is able to download and
+generate VCF, Parquet and Partition Parquet format file.</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Download dbNSFP for ALL annotation, in VCF, Parquet and Partition Parquet, with INFO column</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="ex">howard</span> databases <span class="at">--assembly</span><span class="op">=</span>hg19 <span class="at">--download-dbnsfp</span><span class="op">=</span>~/howard/databases/dbnsfp/4.4a <span class="at">--download-dbnsfp-release</span><span class="op">=</span><span class="st">&#39;4.4a&#39;</span> <span class="at">--download-dbnsfp-parquet</span> <span class="at">--download-dbnsfp-vcf</span> <span class="at">--download-dbnsfp-add-info</span></span></code></pre></div>
+<p>To generate dbNSFP database in Annovar TXT format, because it can not
+be provided by <a
+href="https://annovar.openbioinformatics.org/en/latest/user-guide/download/">Annovar</a>
+tool, this following script is useful. Itcan be adapted dependgin on the
+dbNSFP release and needed assembly. For example, for release 4.4a of
+dbSNFP, and assembly &#x2018;hg19&#x2019;, the positional columns are &#x2018;$8&#x2019; for
+chromosome and &#x2018;$9&#x2019; for position (see dbNSFP doc).</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># dbNSFP GZ to Annovar</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Script index annovar downloaded from https://github.com/WGLab/doc-ANNOVAR/issues/15. Official script does not work with some grep releases (https://gist.githubusercontent.com/suqingdong/447ee784582200309c17b3a844566bac/raw/d227a42ca29caece90bb437a9a10732282d2c35f/index_annovar.pl)</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Usage: perl annovar_idx.pl dbFile binSize</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Example: perl annovar_idx.pl hg19_clinvar_20160302.txt 1000 &gt; hg19_clinvar_20160302.txt.idx</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Init</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="va">index_annovar</span><span class="op">=</span>/path/to/annovar_idx.pl</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="va">table_annovar</span><span class="op">=</span>/path/to/table_annovar.pl</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="va">dbSNFP_folder</span><span class="op">=</span>/path/to/dbnsfp/4.4a/</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="va">vcf</span><span class="op">=</span>/path/to/example.vcf.gz</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="va">annovar_file</span><span class="op">=</span>hg19_dbNSFP44a.txt<span class="kw">;</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="va">annovar_file_gz</span><span class="op">=</span><span class="va">$annovar_file</span>.gz<span class="kw">;</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Header</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="va">first_file</span><span class="op">=</span><span class="va">$(</span><span class="fu">ls</span> <span class="va">$dbSNFP_folder</span>/dbNSFP4.4a_variant.chr<span class="pp">*</span>.gz <span class="kw">|</span> <span class="fu">head</span> <span class="at">-n</span> 1<span class="va">)</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="va">nb_column</span><span class="op">=</span><span class="va">$(</span><span class="fu">zcat</span> <span class="va">$first_file</span> <span class="kw">|</span> <span class="fu">head</span> <span class="at">-n1</span> <span class="kw">|</span> <span class="fu">awk</span> <span class="at">-F</span><span class="st">&quot;\t&quot;</span> <span class="st">&#39;{print NF}&#39;</span><span class="va">)</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="fu">zcat</span> <span class="va">$first_file</span> <span class="kw">|</span> <span class="fu">head</span> <span class="at">-n1</span> <span class="kw">|</span> <span class="fu">awk</span> <span class="at">-v</span> nb_column=<span class="st">&quot;</span><span class="va">$nb_column</span><span class="st">&quot;</span> <span class="at">-F</span><span class="st">&quot;\t&quot;</span> <span class="st">&#39;{gsub(/\r/,&quot;&quot;); printf &quot;#Chr\tStart\tEnd\tRef\tAlt\t&quot;; for (i = 12; i &lt;= nb_column; i++) {printf &quot;%s\t&quot;, $i}; printf &quot;\n&quot;}&#39;</span> <span class="op">&gt;</span> <span class="va">$annovar_file</span><span class="kw">;</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;Number of column: </span><span class="va">$nb_column</span><span class="st">&quot;</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Format each variant file (by chromosome)</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> file <span class="kw">in</span> <span class="va">$dbSNFP_folder</span>/dbNSFP4.4a_variant.chr<span class="pp">*</span>.gz<span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>    <span class="bu">echo</span> <span class="va">$file</span><span class="kw">;</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">zcat</span> <span class="va">$file</span> <span class="kw">|</span> <span class="fu">grep</span> <span class="st">&quot;^#&quot;</span> <span class="at">-v</span> <span class="kw">|</span> <span class="fu">awk</span> <span class="at">-v</span> nb_column=<span class="st">&quot;</span><span class="va">$nb_column</span><span class="st">&quot;</span> <span class="at">-F</span><span class="st">&quot;\t&quot;</span> <span class="st">&#39;$8!=&quot;.&quot;{gsub(/\r/,&quot;&quot;); printf $8&quot;\t&quot;$9&quot;\t&quot;$9&quot;\t&quot;$3&quot;\t&quot;$4&quot;\t&quot;; for (i = 12; i &lt;= nb_column; i++) {if($i==&quot;&quot;){$i=&quot;.&quot;}; printf &quot;%s\t&quot;, $i}; printf &quot;\n&quot;}&#39;</span> <span class="op">&gt;&gt;</span> <span class="va">$annovar_file</span><span class="kw">;</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span><span class="kw">;</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Compress</span></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a><span class="fu">gzip</span> <span class="at">-9</span> <span class="at">-c</span> <span class="va">$annovar_file</span> <span class="op">&gt;</span> <span class="va">$annovar_file_gz</span> <span class="kw">&amp;</span></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Index</span></span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a><span class="fu">perl</span> <span class="va">$index_annovar</span> <span class="va">$annovar_file</span> 10000 <span class="op">&gt;</span> <span class="va">$annovar_file</span>.idx</span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Annovation test</span></span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a><span class="va">$table_annovar</span> <span class="va">$vcf</span> . <span class="at">-protocol</span> dbNSFP44a_annovar <span class="at">-buildver</span> hg19 <span class="at">-out</span> /tmp/myanno.vcf.gz <span class="at">-remove</span> <span class="at">-operation</span> f <span class="at">-nastring</span> . <span class="at">-vcfinput</span></span></code></pre></div>
+<blockquote>
+<p>Note: This script is not parallelized, not optimized</p>
+</blockquote>
+</details>
 </body>
 </html>

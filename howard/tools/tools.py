@@ -1529,6 +1529,19 @@ arguments = {
             },
         },
     },
+    "help_md_input": {
+        "metavar": "help MarkDown input",
+        "help": """Help input file in MarkDown format.\n""",
+        "required": False,
+        "default": None,
+        "type": PathType(exists=True, type="file"),
+        "gooey": {
+            "widget": "FileChooser",
+            "options": {
+                "wildcard": "MarkDown file (*.md)|*.md|" "All files (*)|*",
+            },
+        },
+    },
     "code_type": {
         "metavar": "example code type",
         "help": """Help example code type for input JSON format\n"""
@@ -2139,15 +2152,16 @@ commands_arguments = {
         "help": """Help tools""",
         "epilog": """Usage examples:\n"""
         """   howard help --help_md=docs/help.md --help_html=docs/html/help.html --help_pdf=docs/pdf/help.pdf\n"""
-        """   howard help --help_json_input=docs/json/help.config.json --help_json_input_title='HOWARD Configuration' --help_md=docs/help.config.md --help_html=docs/html/help.config.html --help_pdf=docs/pdf/help.config.pdf --code_type='json'\n"""
-        """   howard help --help_json_input=docs/json/help.param.json --help_json_input_title='HOWARD Parameters' --help_md=docs/help.param.md --help_html=docs/html/help.param.html --help_pdf=docs/pdf/help.param.pdf --code_type='json' \n"""
-        """   howard help --help_json_input=docs/json/help.param.databases.json --help_json_input_title='HOWARD Parameters Databases' --help_md=docs/help.param.databases.md --help_html=docs/html/help.param.databases.html --help_pdf=docs/pdf/help.param.databases.pdf --code_type='json' \n"""
+        """   howard help --help_json_input=docs/json/help.configuration.json --help_json_input_title='HOWARD Configuration' --help_md=docs/help.configuration.md --help_html=docs/html/help.configuration.html --help_pdf=docs/pdf/help.configuration.pdf --code_type='json'\n"""
+        """   howard help --help_json_input=docs/json/help.parameteres.json --help_json_input_title='HOWARD Parameters' --help_md=docs/help.parameteres.md --help_html=docs/html/help.parameteres.html --help_pdf=docs/pdf/help.parameteres.pdf --code_type='json' \n"""
+        """   howard help --help_json_input=docs/json/help.parameteres.databases.json --help_json_input_title='HOWARD Parameters Databases' --help_md=docs/help.parameteres.databases.md --help_html=docs/html/help.parameteres.databases.html --help_pdf=docs/pdf/help.parameteres.databases.pdf --code_type='json' \n"""
         """    \n""",
         "groups": {
             "main": {
                 "help_md": False,
                 "help_html": False,
                 "help_pdf": False,
+                "help_md_input": False,
                 "help_json_input": False,
                 "help_json_input_title": False,
                 "code_type": False,

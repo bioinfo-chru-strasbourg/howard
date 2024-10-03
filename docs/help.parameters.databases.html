@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>HOWARD Help Parameters Databases</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 1000px;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">HOWARD Help Parameters Databases</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<h2 id="toc-title">Contents</h2>
+<ul>
+<li><a href="#introduction" id="toc-introduction"><span
+class="toc-section-number">1</span> Introduction</a></li>
+<li><a href="#assembly" id="toc-assembly"><span
+class="toc-section-number">2</span> assembly</a></li>
+<li><a href="#genomes_folder" id="toc-genomes_folder"><span
+class="toc-section-number">3</span> genomes_folder</a></li>
+<li><a href="#genome" id="toc-genome"><span
+class="toc-section-number">4</span> genome</a></li>
+<li><a href="#genomes" id="toc-genomes"><span
+class="toc-section-number">5</span> genomes</a>
+<ul>
+<li><a href="#download_genomes" id="toc-download_genomes"><span
+class="toc-section-number">5.1</span> download_genomes</a></li>
+<li><a href="#download_genomes_provider"
+id="toc-download_genomes_provider"><span
+class="toc-section-number">5.2</span> download_genomes_provider</a></li>
+<li><a href="#download_genomes_contig_regex"
+id="toc-download_genomes_contig_regex"><span
+class="toc-section-number">5.3</span>
+download_genomes_contig_regex</a></li>
+</ul></li>
+<li><a href="#snpeff" id="toc-snpeff"><span
+class="toc-section-number">6</span> snpeff</a>
+<ul>
+<li><a href="#download_snpeff" id="toc-download_snpeff"><span
+class="toc-section-number">6.1</span> download_snpeff</a></li>
+</ul></li>
+<li><a href="#annovar" id="toc-annovar"><span
+class="toc-section-number">7</span> annovar</a>
+<ul>
+<li><a href="#download_annovar" id="toc-download_annovar"><span
+class="toc-section-number">7.1</span> download_annovar</a></li>
+<li><a href="#download_annovar_files"
+id="toc-download_annovar_files"><span
+class="toc-section-number">7.2</span> download_annovar_files</a></li>
+<li><a href="#download_annovar_url" id="toc-download_annovar_url"><span
+class="toc-section-number">7.3</span> download_annovar_url</a></li>
+</ul></li>
+<li><a href="#refseq" id="toc-refseq"><span
+class="toc-section-number">8</span> refseq</a>
+<ul>
+<li><a href="#download_refseq" id="toc-download_refseq"><span
+class="toc-section-number">8.1</span> download_refseq</a></li>
+<li><a href="#download_refseq_url" id="toc-download_refseq_url"><span
+class="toc-section-number">8.2</span> download_refseq_url</a></li>
+<li><a href="#download_refseq_prefix"
+id="toc-download_refseq_prefix"><span
+class="toc-section-number">8.3</span> download_refseq_prefix</a></li>
+<li><a href="#download_refseq_files"
+id="toc-download_refseq_files"><span
+class="toc-section-number">8.4</span> download_refseq_files</a></li>
+<li><a href="#download_refseq_format_file"
+id="toc-download_refseq_format_file"><span
+class="toc-section-number">8.5</span>
+download_refseq_format_file</a></li>
+<li><a href="#download_refseq_include_utr5"
+id="toc-download_refseq_include_utr5"><span
+class="toc-section-number">8.6</span>
+download_refseq_include_utr5</a></li>
+<li><a href="#download_refseq_include_utr3"
+id="toc-download_refseq_include_utr3"><span
+class="toc-section-number">8.7</span>
+download_refseq_include_utr3</a></li>
+<li><a href="#download_refseq_include_chrm"
+id="toc-download_refseq_include_chrm"><span
+class="toc-section-number">8.8</span>
+download_refseq_include_chrM</a></li>
+<li><a href="#download_refseq_include_non_canonical_chr"
+id="toc-download_refseq_include_non_canonical_chr"><span
+class="toc-section-number">8.9</span>
+download_refseq_include_non_canonical_chr</a></li>
+<li><a href="#download_refseq_include_non_coding_transcripts"
+id="toc-download_refseq_include_non_coding_transcripts"><span
+class="toc-section-number">8.10</span>
+download_refseq_include_non_coding_transcripts</a></li>
+<li><a href="#download_refseq_include_transcript_version"
+id="toc-download_refseq_include_transcript_version"><span
+class="toc-section-number">8.11</span>
+download_refseq_include_transcript_version</a></li>
+</ul></li>
+<li><a href="#dbnsfp" id="toc-dbnsfp"><span
+class="toc-section-number">9</span> dbnsfp</a>
+<ul>
+<li><a href="#download_dbnsfp" id="toc-download_dbnsfp"><span
+class="toc-section-number">9.1</span> download_dbnsfp</a></li>
+<li><a href="#download_dbnsfp_url" id="toc-download_dbnsfp_url"><span
+class="toc-section-number">9.2</span> download_dbnsfp_url</a></li>
+<li><a href="#download_dbnsfp_release"
+id="toc-download_dbnsfp_release"><span
+class="toc-section-number">9.3</span> download_dbnsfp_release</a></li>
+<li><a href="#download_dbnsfp_parquet_size"
+id="toc-download_dbnsfp_parquet_size"><span
+class="toc-section-number">9.4</span>
+download_dbnsfp_parquet_size</a></li>
+<li><a href="#download_dbnsfp_subdatabases"
+id="toc-download_dbnsfp_subdatabases"><span
+class="toc-section-number">9.5</span>
+download_dbnsfp_subdatabases</a></li>
+<li><a href="#download_dbnsfp_parquet"
+id="toc-download_dbnsfp_parquet"><span
+class="toc-section-number">9.6</span> download_dbnsfp_parquet</a></li>
+<li><a href="#download_dbnsfp_vcf" id="toc-download_dbnsfp_vcf"><span
+class="toc-section-number">9.7</span> download_dbnsfp_vcf</a></li>
+<li><a href="#download_dbnsfp_no_files_all"
+id="toc-download_dbnsfp_no_files_all"><span
+class="toc-section-number">9.8</span>
+download_dbnsfp_no_files_all</a></li>
+<li><a href="#download_dbnsfp_add_info"
+id="toc-download_dbnsfp_add_info"><span
+class="toc-section-number">9.9</span> download_dbnsfp_add_info</a></li>
+<li><a href="#download_dbnsfp_only_info"
+id="toc-download_dbnsfp_only_info"><span
+class="toc-section-number">9.10</span>
+download_dbnsfp_only_info</a></li>
+<li><a href="#download_dbnsfp_uniquify"
+id="toc-download_dbnsfp_uniquify"><span
+class="toc-section-number">9.11</span> download_dbnsfp_uniquify</a></li>
+<li><a href="#download_dbnsfp_row_group_size"
+id="toc-download_dbnsfp_row_group_size"><span
+class="toc-section-number">9.12</span>
+download_dbnsfp_row_group_size</a></li>
+</ul></li>
+<li><a href="#alphamissense" id="toc-alphamissense"><span
+class="toc-section-number">10</span> alphamissense</a>
+<ul>
+<li><a href="#download_alphamissense"
+id="toc-download_alphamissense"><span
+class="toc-section-number">10.1</span> download_alphamissense</a></li>
+<li><a href="#download_alphamissense_url"
+id="toc-download_alphamissense_url"><span
+class="toc-section-number">10.2</span>
+download_alphamissense_url</a></li>
+</ul></li>
+<li><a href="#exomiser" id="toc-exomiser"><span
+class="toc-section-number">11</span> exomiser</a>
+<ul>
+<li><a href="#download_exomiser" id="toc-download_exomiser"><span
+class="toc-section-number">11.1</span> download_exomiser</a></li>
+<li><a href="#download_exomiser_application_properties"
+id="toc-download_exomiser_application_properties"><span
+class="toc-section-number">11.2</span>
+download_exomiser_application_properties</a></li>
+<li><a href="#download_exomiser_url"
+id="toc-download_exomiser_url"><span
+class="toc-section-number">11.3</span> download_exomiser_url</a></li>
+<li><a href="#download_exomiser_release"
+id="toc-download_exomiser_release"><span
+class="toc-section-number">11.4</span>
+download_exomiser_release</a></li>
+<li><a href="#download_exomiser_phenotype_release"
+id="toc-download_exomiser_phenotype_release"><span
+class="toc-section-number">11.5</span>
+download_exomiser_phenotype_release</a></li>
+<li><a href="#download_exomiser_remm_release"
+id="toc-download_exomiser_remm_release"><span
+class="toc-section-number">11.6</span>
+download_exomiser_remm_release</a></li>
+<li><a href="#download_exomiser_remm_url"
+id="toc-download_exomiser_remm_url"><span
+class="toc-section-number">11.7</span>
+download_exomiser_remm_url</a></li>
+<li><a href="#download_exomiser_cadd_release"
+id="toc-download_exomiser_cadd_release"><span
+class="toc-section-number">11.8</span>
+download_exomiser_cadd_release</a></li>
+<li><a href="#download_exomiser_cadd_url"
+id="toc-download_exomiser_cadd_url"><span
+class="toc-section-number">11.9</span>
+download_exomiser_cadd_url</a></li>
+<li><a href="#download_exomiser_cadd_url_snv_file"
+id="toc-download_exomiser_cadd_url_snv_file"><span
+class="toc-section-number">11.10</span>
+download_exomiser_cadd_url_snv_file</a></li>
+<li><a href="#download_exomiser_cadd_url_indel_file"
+id="toc-download_exomiser_cadd_url_indel_file"><span
+class="toc-section-number">11.11</span>
+download_exomiser_cadd_url_indel_file</a></li>
+</ul></li>
+<li><a href="#dbsnp" id="toc-dbsnp"><span
+class="toc-section-number">12</span> dbsnp</a>
+<ul>
+<li><a href="#download_dbsnp" id="toc-download_dbsnp"><span
+class="toc-section-number">12.1</span> download_dbsnp</a></li>
+<li><a href="#download_dbsnp_releases"
+id="toc-download_dbsnp_releases"><span
+class="toc-section-number">12.2</span> download_dbsnp_releases</a></li>
+<li><a href="#download_dbsnp_release_default"
+id="toc-download_dbsnp_release_default"><span
+class="toc-section-number">12.3</span>
+download_dbsnp_release_default</a></li>
+<li><a href="#download_dbsnp_url" id="toc-download_dbsnp_url"><span
+class="toc-section-number">12.4</span> download_dbsnp_url</a></li>
+<li><a href="#download_dbsnp_url_files"
+id="toc-download_dbsnp_url_files"><span
+class="toc-section-number">12.5</span> download_dbsnp_url_files</a></li>
+<li><a href="#download_dbsnp_url_files_prefix"
+id="toc-download_dbsnp_url_files_prefix"><span
+class="toc-section-number">12.6</span>
+download_dbsnp_url_files_prefix</a></li>
+<li><a href="#download_dbsnp_assemblies_map"
+id="toc-download_dbsnp_assemblies_map"><span
+class="toc-section-number">12.7</span>
+download_dbsnp_assemblies_map</a></li>
+<li><a href="#download_dbsnp_vcf" id="toc-download_dbsnp_vcf"><span
+class="toc-section-number">12.8</span> download_dbsnp_vcf</a></li>
+<li><a href="#download_dbsnp_parquet"
+id="toc-download_dbsnp_parquet"><span
+class="toc-section-number">12.9</span> download_dbsnp_parquet</a></li>
+</ul></li>
+<li><a href="#hgmd" id="toc-hgmd"><span
+class="toc-section-number">13</span> hgmd</a>
+<ul>
+<li><a href="#convert_hgmd" id="toc-convert_hgmd"><span
+class="toc-section-number">13.1</span> convert_hgmd</a></li>
+<li><a href="#convert_hgmd_file" id="toc-convert_hgmd_file"><span
+class="toc-section-number">13.2</span> convert_hgmd_file</a></li>
+<li><a href="#convert_hgmd_basename"
+id="toc-convert_hgmd_basename"><span
+class="toc-section-number">13.3</span> convert_hgmd_basename</a></li>
+</ul></li>
+<li><a href="#from_annovar" id="toc-from_annovar"><span
+class="toc-section-number">14</span> from_Annovar</a>
+<ul>
+<li><a href="#input_annovar" id="toc-input_annovar"><span
+class="toc-section-number">14.1</span> input_annovar</a></li>
+<li><a href="#output_annovar" id="toc-output_annovar"><span
+class="toc-section-number">14.2</span> output_annovar</a></li>
+<li><a href="#annovar_code" id="toc-annovar_code"><span
+class="toc-section-number">14.3</span> annovar_code</a></li>
+<li><a href="#annovar_to_parquet" id="toc-annovar_to_parquet"><span
+class="toc-section-number">14.4</span> annovar_to_parquet</a></li>
+<li><a href="#annovar_reduce_memory"
+id="toc-annovar_reduce_memory"><span
+class="toc-section-number">14.5</span> annovar_reduce_memory</a></li>
+<li><a href="#annovar_multi_variant"
+id="toc-annovar_multi_variant"><span
+class="toc-section-number">14.6</span> annovar_multi_variant</a></li>
+</ul></li>
+<li><a href="#from_extann" id="toc-from_extann"><span
+class="toc-section-number">15</span> from_extann</a>
+<ul>
+<li><a href="#input_extann" id="toc-input_extann"><span
+class="toc-section-number">15.1</span> input_extann</a></li>
+<li><a href="#output_extann" id="toc-output_extann"><span
+class="toc-section-number">15.2</span> output_extann</a></li>
+<li><a href="#refgene" id="toc-refgene"><span
+class="toc-section-number">15.3</span> refgene</a></li>
+<li><a href="#transcripts" id="toc-transcripts"><span
+class="toc-section-number">15.4</span> transcripts</a></li>
+<li><a href="#param_extann" id="toc-param_extann"><span
+class="toc-section-number">15.5</span> param_extann</a></li>
+<li><a href="#mode_extann" id="toc-mode_extann"><span
+class="toc-section-number">15.6</span> mode_extann</a></li>
+</ul></li>
+<li><a href="#parameters" id="toc-parameters"><span
+class="toc-section-number">16</span> Parameters</a>
+<ul>
+<li><a href="#generate_param" id="toc-generate_param"><span
+class="toc-section-number">16.1</span> generate_param</a></li>
+<li><a href="#generate_param_description"
+id="toc-generate_param_description"><span
+class="toc-section-number">16.2</span>
+generate_param_description</a></li>
+<li><a href="#generate_param_releases"
+id="toc-generate_param_releases"><span
+class="toc-section-number">16.3</span> generate_param_releases</a></li>
+<li><a href="#generate_param_formats"
+id="toc-generate_param_formats"><span
+class="toc-section-number">16.4</span> generate_param_formats</a></li>
+<li><a href="#generate_param_bcftools"
+id="toc-generate_param_bcftools"><span
+class="toc-section-number">16.5</span> generate_param_bcftools</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 data-number="1" id="introduction"><span
+class="header-section-number">1</span> Introduction</h1>
+<p>HOWARD Parameters JSON file defines parameters for databases&#x2019;
+downloads.</p>
+<p>Examples:</p>
+<blockquote>
+<p>Example of simple databases parameters JSON file for downloads</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;databases&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;genomes&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_genomes&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/databases/genomes/current&quot;</span><span class="fu">,</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_genomes_contig_regex&quot;</span><span class="fu">:</span> <span class="st">&quot;chr[0-9XYM]+$&quot;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>         <span class="fu">},</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;snpeff&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_snpeff&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/databases/snpeff/current&quot;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>         <span class="fu">},</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;annovar&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_annovar&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/databases/annovar/current&quot;</span><span class="fu">,</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_annovar_files&quot;</span><span class="fu">:</span> <span class="st">&quot;refGene,cosmic70,nci60&quot;</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>         <span class="fu">},</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;refseq&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_refseq&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/databases/refseq/current&quot;</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>         <span class="fu">},</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;dbnsfp&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_dbnsfp&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/databases/dbnsfp/current&quot;</span><span class="fu">,</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_dbnsfp_release&quot;</span><span class="fu">:</span> <span class="st">&quot;4.4a&quot;</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>         <span class="fu">},</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;alphamissense&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_alphamissense&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/databases/alphamissense/current&quot;</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>         <span class="fu">},</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;exomiser&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_exomiser&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/databases/exomiser/current&quot;</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>         <span class="fu">},</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;dbsnp&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_dbsnp&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/databases/dbsnp/current&quot;</span><span class="fu">,</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_dbsnp_releases&quot;</span><span class="fu">:</span> <span class="st">&quot;b156&quot;</span><span class="fu">,</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_dbsnp_vcf&quot;</span><span class="fu">:</span> <span class="kw">true</span><span class="fu">,</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_dbsnp_parquet&quot;</span><span class="fu">:</span> <span class="kw">true</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>         <span class="fu">},</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;assemblies&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>             <span class="st">&quot;hg19&quot;</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>         <span class="ot">]</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>Example of a full Databases parameters JSON file for downloads</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;databases&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;genomes_folder&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/databases/genomes/current&quot;</span><span class="fu">,</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;genome&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/databases/genomes/current/hg19/hg19.fa&quot;</span><span class="fu">,</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;genomes&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_genomes&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/databases/genomes/current&quot;</span><span class="fu">,</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_genomes_provider&quot;</span><span class="fu">:</span> <span class="st">&quot;UCSC&quot;</span><span class="fu">,</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_genomes_contig_regex&quot;</span><span class="fu">:</span> <span class="st">&quot;chr[0-9XYM]+$&quot;</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>         <span class="fu">},</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;snpeff&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_snpeff&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/databases/snpeff/current&quot;</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>         <span class="fu">},</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;annovar&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_annovar&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/databases/annovar/current&quot;</span><span class="fu">,</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_annovar_files&quot;</span><span class="fu">:</span> <span class="st">&quot;refGene,cosmic70,nci60&quot;</span><span class="fu">,</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_annovar_url&quot;</span><span class="fu">:</span> <span class="st">&quot;http://www.openbioinformatics.org/annovar/download&quot;</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>         <span class="fu">},</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;refseq&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_refseq&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/databases/refseq/current&quot;</span><span class="fu">,</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_refseq_url&quot;</span><span class="fu">:</span> <span class="st">&quot;http://hgdownload.soe.ucsc.edu/goldenPath&quot;</span><span class="fu">,</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_refseq_prefix&quot;</span><span class="fu">:</span> <span class="st">&quot;ncbiRefSeq&quot;</span><span class="fu">,</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_refseq_files&quot;</span><span class="fu">:</span> <span class="st">&quot;ncbiRefSeq.txt,ncbiRefSeqLink.txt&quot;</span><span class="fu">,</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_refseq_format_file&quot;</span><span class="fu">:</span> <span class="st">&quot;ncbiRefSeq.txt&quot;</span><span class="fu">,</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_refseq_include_utr5&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_refseq_include_utr3&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_refseq_include_chrM&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_refseq_include_non_canonical_chr&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_refseq_include_non_coding_transcripts&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_refseq_include_transcript_version&quot;</span><span class="fu">:</span> <span class="kw">false</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>         <span class="fu">},</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;dbnsfp&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_dbnsfp&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/databases/dbnsfp/current&quot;</span><span class="fu">,</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_dbnsfp_url&quot;</span><span class="fu">:</span> <span class="st">&quot;https://dbnsfp.s3.amazonaws.com&quot;</span><span class="fu">,</span></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_dbnsfp_release&quot;</span><span class="fu">:</span> <span class="st">&quot;4.4a&quot;</span><span class="fu">,</span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_dbnsfp_parquet_size&quot;</span><span class="fu">:</span> <span class="dv">100</span><span class="fu">,</span></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_dbnsfp_subdatabases&quot;</span><span class="fu">:</span> <span class="kw">true</span><span class="fu">,</span></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_dbnsfp_parquet&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_dbnsfp_vcf&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_dbnsfp_no_files_all&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_dbnsfp_add_info&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_dbnsfp_uniquify&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_dbnsfp_row_group_size&quot;</span><span class="fu">:</span> <span class="dv">100000</span></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>         <span class="fu">},</span></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;alphamissense&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_alphamissense&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/databases/alphamissense/current&quot;</span><span class="fu">,</span></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_alphamissense_url&quot;</span><span class="fu">:</span> <span class="st">&quot;https://storage.googleapis.com/dm_alphamissense&quot;</span></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>         <span class="fu">},</span></span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;exomiser&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_exomiser&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/databases/exomiser/current&quot;</span><span class="fu">,</span></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_exomiser_url&quot;</span><span class="fu">:</span> <span class="st">&quot;http://data.monarchinitiative.org/exomiser&quot;</span><span class="fu">,</span></span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_exomiser_remm_url&quot;</span><span class="fu">:</span> <span class="st">&quot;https://kircherlab.bihealth.org/download/ReMM&quot;</span><span class="fu">,</span></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_exomiser_cadd_url&quot;</span><span class="fu">:</span> <span class="st">&quot;https://kircherlab.bihealth.org/download/CADD&quot;</span><span class="fu">,</span></span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_exomiser_cadd_url_snv_file&quot;</span><span class="fu">:</span> <span class="st">&quot;whole_genome_SNVs.tsv.gz&quot;</span><span class="fu">,</span></span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_exomiser_cadd_url_indel_file&quot;</span><span class="fu">:</span> <span class="st">&quot;InDels.tsv.gz&quot;</span></span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>         <span class="fu">},</span></span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;dbsnp&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_dbsnp&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/databases/dbsnp/current&quot;</span><span class="fu">,</span></span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_dbsnp_releases&quot;</span><span class="fu">:</span> <span class="st">&quot;b156&quot;</span><span class="fu">,</span></span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_dbsnp_url&quot;</span><span class="fu">:</span> <span class="st">&quot;https://ftp.ncbi.nih.gov/snp/archive&quot;</span><span class="fu">,</span></span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_dbsnp_url_files_prefix&quot;</span><span class="fu">:</span> <span class="st">&quot;GCF_000001405&quot;</span><span class="fu">,</span></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_dbsnp_assemblies_map&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>                 <span class="dt">&quot;hg19&quot;</span><span class="fu">:</span> <span class="st">&quot;25&quot;</span><span class="fu">,</span></span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>                 <span class="dt">&quot;hg38&quot;</span><span class="fu">:</span> <span class="st">&quot;40&quot;</span></span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a>             <span class="fu">},</span></span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_dbsnp_vcf&quot;</span><span class="fu">:</span> <span class="kw">true</span><span class="fu">,</span></span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;download_dbsnp_parquet&quot;</span><span class="fu">:</span> <span class="kw">false</span></span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a>         <span class="fu">},</span></span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;parameters&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;generate_param_releases&quot;</span><span class="fu">:</span> <span class="st">&quot;current&quot;</span><span class="fu">,</span></span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;generate_param_formats&quot;</span><span class="fu">:</span> <span class="st">&quot;parquet&quot;</span><span class="fu">,</span></span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;generate_param_bcftools&quot;</span><span class="fu">:</span> <span class="kw">false</span></span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a>         <span class="fu">},</span></span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;assemblies&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a>             <span class="st">&quot;hg19&quot;</span></span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a>         <span class="ot">]</span></span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h1 data-number="2" id="assembly"><span
+class="header-section-number">2</span> assembly</h1>
+<p>Genome Assembly (e.g.&#xA0;&#x2018;hg19&#x2019;, &#x2018;hg38&#x2019;).</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>hg19</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Default assembly for all analysis tools</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;assembly&quot;</span><span class="fu">:</span> <span class="st">&quot;hg19&quot;</span> </span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>List of assemblies for databases download tool</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;assembly&quot;</span><span class="fu">:</span> <span class="st">&quot;hg19,hg38&quot;</span> </span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h1 data-number="3" id="genomes_folder"><span
+class="header-section-number">3</span> genomes_folder</h1>
+<p>Folder containing genomes.
+(e.g.&#xA0;&#x2018;~/howard/databases/genomes/current&#x2019;</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>~/howard/databases/genomes/current</code></p>
+<h1 data-number="4" id="genome"><span
+class="header-section-number">4</span> genome</h1>
+<p>Genome file in fasta format (e.g.&#xA0;&#x2018;hg19.fa&#x2019;, &#x2018;hg38.fa&#x2019;).</p>
+<p>Type: <code>Path</code></p>
+<p>Default:
+<code>~/howard/databases/genomes/current/hg19/hg19.fa</code></p>
+<h1 data-number="5" id="genomes"><span
+class="header-section-number">5</span> genomes</h1>
+<p>Genomes download.</p>
+<h2 data-number="5.1" id="download_genomes"><span
+class="header-section-number">5.1</span> download_genomes</h2>
+<p>Path to genomes folder with Fasta files, indexes, and all files
+generated by pygenome module.
+(e.g.&#xA0;&#x2018;~/howard/databases/genomes/current&#x2019;).</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<h2 data-number="5.2" id="download_genomes_provider"><span
+class="header-section-number">5.2</span> download_genomes_provider</h2>
+<p>Download Genome from an external provider. Available: GENCODE,
+Ensembl, UCSC, NCBI.</p>
+<p>Type: <code>str</code></p>
+<p>Choices: <code>['GENCODE', 'Ensembl', 'UCSC', 'NCBI']</code></p>
+<p>Default: <code>UCSC</code></p>
+<h2 data-number="5.3" id="download_genomes_contig_regex"><span
+class="header-section-number">5.3</span>
+download_genomes_contig_regex</h2>
+<p>Regular expression to select specific chromosome (e.g
+&#x2018;chr[0-9XYM]+$&#x2019;).</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>None</code></p>
+<h1 data-number="6" id="snpeff"><span
+class="header-section-number">6</span> snpeff</h1>
+<p>snpEff download.</p>
+<h2 data-number="6.1" id="download_snpeff"><span
+class="header-section-number">6.1</span> download_snpeff</h2>
+<p>Download snpEff databases within snpEff folder</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<h1 data-number="7" id="annovar"><span
+class="header-section-number">7</span> annovar</h1>
+<p>Annovar download.</p>
+<h2 data-number="7.1" id="download_annovar"><span
+class="header-section-number">7.1</span> download_annovar</h2>
+<p>Path to Annovar databases
+(e.g.&#xA0;&#x2018;~/howard/databases/annovar/current&#x2019;).</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<h2 data-number="7.2" id="download_annovar_files"><span
+class="header-section-number">7.2</span> download_annovar_files</h2>
+<p>Download Annovar databases for a list of Annovar file code (see
+Annovar Doc). Use None to donwload all available files, or Annovar
+keyword (e.g.&#xA0;&#x2018;refGene&#x2019;, &#x2018;cosmic70&#x2019;, &#x2019;clinvar_202*&#x2019;). Note that refGene
+will at least be downloaded, and only files that not already exist or
+changed will be downloaded.</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>None</code></p>
+<h2 data-number="7.3" id="download_annovar_url"><span
+class="header-section-number">7.3</span> download_annovar_url</h2>
+<p>Annovar databases URL (see Annovar Doc).</p>
+<p>Type: <code>str</code></p>
+<p>Default:
+<code>http://www.openbioinformatics.org/annovar/download</code></p>
+<h1 data-number="8" id="refseq"><span
+class="header-section-number">8</span> refseq</h1>
+<p>refSeq download.</p>
+<h2 data-number="8.1" id="download_refseq"><span
+class="header-section-number">8.1</span> download_refseq</h2>
+<p>Path to refSeq databases
+(e.g.&#xA0;&#x2018;~/howard/databases/refseq/current&#x2019;).</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<h2 data-number="8.2" id="download_refseq_url"><span
+class="header-section-number">8.2</span> download_refseq_url</h2>
+<p>refSeq databases URL (see refSeq WebSite)
+(e.g.&#xA0;&#x2018;http://hgdownload.soe.ucsc.edu/goldenPath&#x2019;)&#x2022;/n</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>http://hgdownload.soe.ucsc.edu/goldenPath</code></p>
+<h2 data-number="8.3" id="download_refseq_prefix"><span
+class="header-section-number">8.3</span> download_refseq_prefix</h2>
+<p>Check existing refSeq files in refSeq folder.</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>ncbiRefSeq</code></p>
+<h2 data-number="8.4" id="download_refseq_files"><span
+class="header-section-number">8.4</span> download_refseq_files</h2>
+<p>List of refSeq files to download.</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>ncbiRefSeq.txt,ncbiRefSeqLink.txt</code></p>
+<h2 data-number="8.5" id="download_refseq_format_file"><span
+class="header-section-number">8.5</span>
+download_refseq_format_file</h2>
+<p>Name of refSeq file to convert in BED format (e.g.&#xA0;&#x2018;ncbiRefSeq.txt&#x2019;).
+Process only if not None.</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>None</code></p>
+<h2 data-number="8.6" id="download_refseq_include_utr5"><span
+class="header-section-number">8.6</span>
+download_refseq_include_utr5</h2>
+<p>Formating BED refSeq file including 5&#x2019;UTR.</p>
+<p>Default: <code>False</code></p>
+<h2 data-number="8.7" id="download_refseq_include_utr3"><span
+class="header-section-number">8.7</span>
+download_refseq_include_utr3</h2>
+<p>Formating BED refSeq file including 3&#x2019;UTR.</p>
+<p>Default: <code>False</code></p>
+<h2 data-number="8.8" id="download_refseq_include_chrm"><span
+class="header-section-number">8.8</span>
+download_refseq_include_chrM</h2>
+<p>Formating BED refSeq file including Mitochondiral chromosome &#x2018;chrM&#x2019;
+or &#x2018;chrMT&#x2019;.</p>
+<p>Default: <code>False</code></p>
+<h2 data-number="8.9"
+id="download_refseq_include_non_canonical_chr"><span
+class="header-section-number">8.9</span>
+download_refseq_include_non_canonical_chr</h2>
+<p>Formating BED refSeq file including non canonical chromosomes.</p>
+<p>Default: <code>False</code></p>
+<h2 data-number="8.10"
+id="download_refseq_include_non_coding_transcripts"><span
+class="header-section-number">8.10</span>
+download_refseq_include_non_coding_transcripts</h2>
+<p>Formating BED refSeq file including non coding transcripts.</p>
+<p>Default: <code>False</code></p>
+<h2 data-number="8.11"
+id="download_refseq_include_transcript_version"><span
+class="header-section-number">8.11</span>
+download_refseq_include_transcript_version</h2>
+<p>Formating BED refSeq file including transcript version.</p>
+<p>Default: <code>False</code></p>
+<h1 data-number="9" id="dbnsfp"><span
+class="header-section-number">9</span> dbnsfp</h1>
+<p>dbNSFP download.</p>
+<h2 data-number="9.1" id="download_dbnsfp"><span
+class="header-section-number">9.1</span> download_dbnsfp</h2>
+<p>Download dbNSFP databases within dbNSFP
+folder(e.g.&#xA0;&#x2018;~/howard/databases&#x2019;).</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<h2 data-number="9.2" id="download_dbnsfp_url"><span
+class="header-section-number">9.2</span> download_dbnsfp_url</h2>
+<p>Download dbNSFP databases URL (see dbNSFP website)
+(e.g.&#xA0;https://dbnsfp.s3.amazonaws.com&#x2019;).</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>https://dbnsfp.s3.amazonaws.com</code></p>
+<h2 data-number="9.3" id="download_dbnsfp_release"><span
+class="header-section-number">9.3</span> download_dbnsfp_release</h2>
+<p>Release of dbNSFP to download (see dbNSFP website) (e.g.&#xA0;&#x2018;4.4a&#x2019;).</p>
+<p>Default: <code>4.4a</code></p>
+<h2 data-number="9.4" id="download_dbnsfp_parquet_size"><span
+class="header-section-number">9.4</span>
+download_dbnsfp_parquet_size</h2>
+<p>Maximum size (Mb) of data files in Parquet folder. Parquet folder are
+partitioned (hive) by chromosome (sub-folder), which contain N data
+files.</p>
+<p>Type: <code>int</code></p>
+<p>Default: <code>100</code></p>
+<h2 data-number="9.5" id="download_dbnsfp_subdatabases"><span
+class="header-section-number">9.5</span>
+download_dbnsfp_subdatabases</h2>
+<p>Generate dbNSFP sub-databases. dbNSFP provides multiple databases
+which are split onto multiple columns. This option create a Parquet
+folder for each sub-database (based on columns names).</p>
+<p>Default: <code>False</code></p>
+<h2 data-number="9.6" id="download_dbnsfp_parquet"><span
+class="header-section-number">9.6</span> download_dbnsfp_parquet</h2>
+<p>Generate a Parquet file for each Parquet folder.</p>
+<p>Default: <code>False</code></p>
+<h2 data-number="9.7" id="download_dbnsfp_vcf"><span
+class="header-section-number">9.7</span> download_dbnsfp_vcf</h2>
+<p>Generate a VCF file for each Parquet folder. Need genome FASTA file
+(see &#x2013;download-genome).</p>
+<p>Default: <code>False</code></p>
+<h2 data-number="9.8" id="download_dbnsfp_no_files_all"><span
+class="header-section-number">9.8</span>
+download_dbnsfp_no_files_all</h2>
+<p>Not generate database Parquet/VCF file for the entire database
+(&#x2018;ALL&#x2019;). Only sub-databases files will be generated. (see
+&#x2018;&#x2013;download-dbnsfp-subdatabases&#x2019;).</p>
+<p>Default: <code>False</code></p>
+<h2 data-number="9.9" id="download_dbnsfp_add_info"><span
+class="header-section-number">9.9</span> download_dbnsfp_add_info</h2>
+<p>Add INFO column (VCF format) in Parquet folder and file. Useful for
+speed up full annotation (all available columns). Increase memory and
+space during generation of files.</p>
+<p>Default: <code>False</code></p>
+<h2 data-number="9.10" id="download_dbnsfp_only_info"><span
+class="header-section-number">9.10</span> download_dbnsfp_only_info</h2>
+<p>Add only INFO column (VCF format) in Parquet folder and file. Useful
+for speed up full annotation (all available columns). Decrease memory
+and space during generation of files. Increase time for partial
+annotation (some available columns).</p>
+<p>Default: <code>False</code></p>
+<h2 data-number="9.11" id="download_dbnsfp_uniquify"><span
+class="header-section-number">9.11</span> download_dbnsfp_uniquify</h2>
+<p>Uniquify values within column (e.g.&#xA0;&#x201C;D,D&#x201D; to &#x201C;D&#x201D;, &#x201C;D,.,T&#x201D; to &#x201C;D,T&#x201D;).
+Remove transcripts information details. Usefull to reduce size of the
+database. Increase memory and space during generation of files.</p>
+<p>Default: <code>False</code></p>
+<h2 data-number="9.12" id="download_dbnsfp_row_group_size"><span
+class="header-section-number">9.12</span>
+download_dbnsfp_row_group_size</h2>
+<p>Minimum number of rows in a parquet row group (see duckDB doc). Lower
+can reduce memory usage and slightly increase space during generation,
+speed up highly selective queries, slow down whole file queries
+(e.g.&#xA0;aggregations).</p>
+<p>Type: <code>int</code></p>
+<p>Default: <code>100000</code></p>
+<h1 data-number="10" id="alphamissense"><span
+class="header-section-number">10</span> alphamissense</h1>
+<p>AlphaMissense download.</p>
+<h2 data-number="10.1" id="download_alphamissense"><span
+class="header-section-number">10.1</span> download_alphamissense</h2>
+<p>Path to AlphaMissense databases</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<h2 data-number="10.2" id="download_alphamissense_url"><span
+class="header-section-number">10.2</span>
+download_alphamissense_url</h2>
+<p>Download AlphaMissense databases URL (see AlphaMissense website)
+(e.g.&#xA0;&#x2018;https://storage.googleapis.com/dm_alphamissense&#x2019;).</p>
+<p>Type: <code>str</code></p>
+<p>Default:
+<code>https://storage.googleapis.com/dm_alphamissense</code></p>
+<h1 data-number="11" id="exomiser"><span
+class="header-section-number">11</span> exomiser</h1>
+<p>Exomiser download.</p>
+<h2 data-number="11.1" id="download_exomiser"><span
+class="header-section-number">11.1</span> download_exomiser</h2>
+<p>Path to Exomiser databases
+(e.g.&#xA0;~/howard/databases/exomiser/current).</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<h2 data-number="11.2"
+id="download_exomiser_application_properties"><span
+class="header-section-number">11.2</span>
+download_exomiser_application_properties</h2>
+<p>Exomiser Application Properties configuration file (see Exomiser
+website). This file contains configuration settings for the Exomiser
+tool. If this parameter is not provided, the function will attempt to
+locate the application properties file automatically based on the
+Exomiser. Configuration information will be used to download expected
+releases (if no other parameters). CADD and REMM will be downloaded only
+if &#x2018;path&#x2019; are provided.</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<h2 data-number="11.3" id="download_exomiser_url"><span
+class="header-section-number">11.3</span> download_exomiser_url</h2>
+<p>URL where Exomiser database files can be downloaded from
+(e.g.&#xA0;&#x2018;http://data.monarchinitiative.org/exomiser&#x2019;).</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>http://data.monarchinitiative.org/exomiser</code></p>
+<h2 data-number="11.4" id="download_exomiser_release"><span
+class="header-section-number">11.4</span> download_exomiser_release</h2>
+<p>Release of Exomiser data to download. If &#x201C;default&#x201D;, &#x201C;auto&#x201D;, or
+&#x201C;config&#x201D;, retrieve from Application Properties file. If not provided
+(None), from Application Properties file (Exomiser data-version) or
+default &#x2018;2109&#x2019;.</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>None</code></p>
+<h2 data-number="11.5" id="download_exomiser_phenotype_release"><span
+class="header-section-number">11.5</span>
+download_exomiser_phenotype_release</h2>
+<p>Release of Exomiser phenotype to download. If not provided (None),
+from Application Properties file (Exomiser Phenotype data-version) or
+Exomiser release.</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>None</code></p>
+<h2 data-number="11.6" id="download_exomiser_remm_release"><span
+class="header-section-number">11.6</span>
+download_exomiser_remm_release</h2>
+<p>Release of ReMM (Regulatory Mendelian Mutation) database to download.
+If &#x201C;default&#x201D;, &#x201C;auto&#x201D;, or &#x201C;config&#x201D;, retrieve from Application Properties
+file.</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>None</code></p>
+<h2 data-number="11.7" id="download_exomiser_remm_url"><span
+class="header-section-number">11.7</span>
+download_exomiser_remm_url</h2>
+<p>URL where ReMM (Regulatory Mendelian Mutation) database files can be
+downloaded from
+(e.g.&#xA0;&#x2018;https://kircherlab.bihealth.org/download/ReMM&#x2019;).</p>
+<p>Type: <code>str</code></p>
+<p>Default:
+<code>https://kircherlab.bihealth.org/download/ReMM</code></p>
+<h2 data-number="11.8" id="download_exomiser_cadd_release"><span
+class="header-section-number">11.8</span>
+download_exomiser_cadd_release</h2>
+<p>Release of CADD (Combined Annotation Dependent Depletion) database to
+download. If &#x201C;default&#x201D;, &#x201C;auto&#x201D;, or &#x201C;config&#x201D;, retrieve from Application
+Properties file.</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>None</code></p>
+<h2 data-number="11.9" id="download_exomiser_cadd_url"><span
+class="header-section-number">11.9</span>
+download_exomiser_cadd_url</h2>
+<p>URL where CADD (Combined Annotation Dependent Depletion) database
+files can be downloaded from
+(e.g.&#xA0;&#x2018;https://kircherlab.bihealth.org/download/CADD&#x2019;).</p>
+<p>Type: <code>str</code></p>
+<p>Default:
+<code>https://kircherlab.bihealth.org/download/CADD</code></p>
+<h2 data-number="11.10" id="download_exomiser_cadd_url_snv_file"><span
+class="header-section-number">11.10</span>
+download_exomiser_cadd_url_snv_file</h2>
+<p>Name of the file containing the SNV (Single Nucleotide Variant) data
+for the CADD (Combined Annotation Dependent Depletion) database.</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>whole_genome_SNVs.tsv.gz</code></p>
+<h2 data-number="11.11" id="download_exomiser_cadd_url_indel_file"><span
+class="header-section-number">11.11</span>
+download_exomiser_cadd_url_indel_file</h2>
+<p>Name of the file containing the INDEL (Insertion-Deletion) data for
+the CADD (Combined Annotation Dependent Depletion) database.</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>InDels.tsv.gz</code></p>
+<h1 data-number="12" id="dbsnp"><span
+class="header-section-number">12</span> dbsnp</h1>
+<p>dbSNP download.</p>
+<h2 data-number="12.1" id="download_dbsnp"><span
+class="header-section-number">12.1</span> download_dbsnp</h2>
+<p>Path to dbSNP databases
+(e.g.&#xA0;&#x2018;~/howard/databases/exomiser/dbsnp&#x2019;).</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<h2 data-number="12.2" id="download_dbsnp_releases"><span
+class="header-section-number">12.2</span> download_dbsnp_releases</h2>
+<p>Release of dbSNP to download (e.g.&#xA0;&#x2018;b152&#x2019;, &#x2018;b152,b156&#x2019;).</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>b156</code></p>
+<h2 data-number="12.3" id="download_dbsnp_release_default"><span
+class="header-section-number">12.3</span>
+download_dbsnp_release_default</h2>
+<p>Default Release of dbSNP (&#x2018;default&#x2019; symlink) (e.g.&#xA0;&#x2018;b156&#x2019;). If None,
+first release to download will be assigned as default only if it does
+not exists.</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>None</code></p>
+<h2 data-number="12.4" id="download_dbsnp_url"><span
+class="header-section-number">12.4</span> download_dbsnp_url</h2>
+<p>URL where dbSNP database files can be downloaded from.
+(e.g.&#xA0;&#x2018;https://ftp.ncbi.nih.gov/snp/archive&#x2019;).</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>https://ftp.ncbi.nih.gov/snp/archive</code></p>
+<h2 data-number="12.5" id="download_dbsnp_url_files"><span
+class="header-section-number">12.5</span> download_dbsnp_url_files</h2>
+<p>Dictionary that maps assembly names to specific dbSNP URL files. It
+allows you to provide custom dbSNP URL files for specific assemblies
+instead of using the default file naming convention.</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>None</code></p>
+<h2 data-number="12.6" id="download_dbsnp_url_files_prefix"><span
+class="header-section-number">12.6</span>
+download_dbsnp_url_files_prefix</h2>
+<p>String that represents the prefix of the dbSNP file name for a
+specific assembly. It is used to construct the full URL of the dbSNP
+file to be downloaded.</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>GCF_000001405</code></p>
+<h2 data-number="12.7" id="download_dbsnp_assemblies_map"><span
+class="header-section-number">12.7</span>
+download_dbsnp_assemblies_map</h2>
+<p>dictionary that maps assembly names to their corresponding dbSNP
+versions. It is used to construct the dbSNP file name based on the
+assembly name.</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>{'hg19': '25', 'hg38': '40'}</code></p>
+<h2 data-number="12.8" id="download_dbsnp_vcf"><span
+class="header-section-number">12.8</span> download_dbsnp_vcf</h2>
+<p>Generate well-formatted VCF from downloaded file:</p>
+<ul>
+<li><p>Add and filter contigs associated to assembly</p></li>
+<li><p>Normalize by splitting multiallelics</p></li>
+<li><p>Need genome (see &#x2013;download-genome)</p></li>
+</ul>
+<p>Default: <code>False</code></p>
+<h2 data-number="12.9" id="download_dbsnp_parquet"><span
+class="header-section-number">12.9</span> download_dbsnp_parquet</h2>
+<p>Generate Parquet file from VCF.</p>
+<p>Default: <code>False</code></p>
+<h1 data-number="13" id="hgmd"><span
+class="header-section-number">13</span> hgmd</h1>
+<p>HGMD convert.</p>
+<h2 data-number="13.1" id="convert_hgmd"><span
+class="header-section-number">13.1</span> convert_hgmd</h2>
+<p>Convert HGMD databases. Folder where the HGMD databases will be
+stored. Fields in VCF, Parquet and TSV will be generated. If the folder
+does not exist, it will be created.</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<h2 data-number="13.2" id="convert_hgmd_file"><span
+class="header-section-number">13.2</span> convert_hgmd_file</h2>
+<p>File from HGMD. Name format
+&#x2019;HGMD_Pro_<release>_<assembly>.vcf.gz&#x2019;.</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<h2 data-number="13.3" id="convert_hgmd_basename"><span
+class="header-section-number">13.3</span> convert_hgmd_basename</h2>
+<p>File output basename. Generated files will be prefixed by basename
+(e.g.&#xA0;&#x2018;HGMD_Pro_MY_RELEASE&#x2019;) By default (None), input file name without
+&#x2018;.vcf.gz&#x2019;.</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>None</code></p>
+<h1 data-number="14" id="from_annovar"><span
+class="header-section-number">14</span> from_Annovar</h1>
+<p>Annovar convert.</p>
+<h2 data-number="14.1" id="input_annovar"><span
+class="header-section-number">14.1</span> input_annovar</h2>
+<p>Input Annovar file path. Format file must be a Annovar TXT file,
+associated with &#x2018;.idx&#x2019;.</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<h2 data-number="14.2" id="output_annovar"><span
+class="header-section-number">14.2</span> output_annovar</h2>
+<p>Output Annovar file path. Format file must be either VCF compressesd
+file &#x2018;.vcf.gz&#x2019;.</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<h2 data-number="14.3" id="annovar_code"><span
+class="header-section-number">14.3</span> annovar_code</h2>
+<p>Annovar code, or database name. Usefull to name databases
+columns.</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>None</code></p>
+<h2 data-number="14.4" id="annovar_to_parquet"><span
+class="header-section-number">14.4</span> annovar_to_parquet</h2>
+<p>Parquet file conversion.</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<h2 data-number="14.5" id="annovar_reduce_memory"><span
+class="header-section-number">14.5</span> annovar_reduce_memory</h2>
+<p>Reduce memory option for Annovar convert, either &#x2018;auto&#x2019;
+(auto-detection), &#x2018;enable&#x2019; or &#x2018;disable&#x2019;.</p>
+<p>Type: <code>str</code></p>
+<p>Choices: <code>['auto', 'enable', 'disable']</code></p>
+<p>Default: <code>auto</code></p>
+<h2 data-number="14.6" id="annovar_multi_variant"><span
+class="header-section-number">14.6</span> annovar_multi_variant</h2>
+<p>Variant with multiple annotation lines on Annovar file. Either &#x2018;auto&#x2019;
+(auto-detection), &#x2018;enable&#x2019; or &#x2018;disable&#x2019;.</p>
+<p>Type: <code>str</code></p>
+<p>Choices: <code>['auto', 'enable', 'disable']</code></p>
+<p>Default: <code>auto</code></p>
+<h1 data-number="15" id="from_extann"><span
+class="header-section-number">15</span> from_extann</h1>
+<p>Extann convert (gene annotation).</p>
+<h2 data-number="15.1" id="input_extann"><span
+class="header-section-number">15.1</span> input_extann</h2>
+<p>Input Extann file path. Format file must be a Extann TXT file or TSV
+file. File need to have at least the genes column.</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<h2 data-number="15.2" id="output_extann"><span
+class="header-section-number">15.2</span> output_extann</h2>
+<p>Output Extann file path. Output extann file, should be BED or
+BED.gz.</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<h2 data-number="15.3" id="refgene"><span
+class="header-section-number">15.3</span> refgene</h2>
+<p>Path to refGene annotation file.</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<h2 data-number="15.4" id="transcripts"><span
+class="header-section-number">15.4</span> transcripts</h2>
+<p>Transcripts TSV file, with Transcript in first column, optional Gene
+in second column.</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<h2 data-number="15.5" id="param_extann"><span
+class="header-section-number">15.5</span> param_extann</h2>
+<p>Param extann file path. Param containing configuration, options to
+replace chars and bedlike header description, conf vcf specs.
+(e.g.&#xA0;&#x2018;~/howard/config/param.extann.json&#x2019;)</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<h2 data-number="15.6" id="mode_extann"><span
+class="header-section-number">15.6</span> mode_extann</h2>
+<p>Mode extann selection. How to pick transcript from ncbi, keep all,
+keep the longest, or keep the chosen one (transcript_extann).</p>
+<p>Type: <code>str</code></p>
+<p>Choices: <code>['all', 'longest', 'chosen']</code></p>
+<p>Default: <code>longest</code></p>
+<h1 data-number="16" id="parameters"><span
+class="header-section-number">16</span> Parameters</h1>
+<p>Parameters generation.</p>
+<h2 data-number="16.1" id="generate_param"><span
+class="header-section-number">16.1</span> generate_param</h2>
+<p>Parameter file (JSON) with all databases found. Databases folders
+scanned are defined in config file. Structure of databases follow this
+structure (see doc):
+&#x2026;/<database>/<release>/<assembly>/*.[parquet|vcf.gz|&#x2026;]</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<h2 data-number="16.2" id="generate_param_description"><span
+class="header-section-number">16.2</span>
+generate_param_description</h2>
+<p>Description file (JSON) with all databases found. Contains all
+databases with description of format, assembly, fields&#x2026;</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<h2 data-number="16.3" id="generate_param_releases"><span
+class="header-section-number">16.3</span> generate_param_releases</h2>
+<p>List of database folder releases to check (e.g.&#xA0;&#x2018;current&#x2019;,
+&#x2018;latest&#x2019;).</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>current</code></p>
+<h2 data-number="16.4" id="generate_param_formats"><span
+class="header-section-number">16.4</span> generate_param_formats</h2>
+<p>List of database formats to check (e.g.&#xA0;&#x2018;parquet&#x2019;,
+&#x2018;parquet,vcf,bed,tsv&#x2019;).</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code>parquet</code></p>
+<h2 data-number="16.5" id="generate_param_bcftools"><span
+class="header-section-number">16.5</span> generate_param_bcftools</h2>
+<p>Generate parameter JSON file with BCFTools annotation for allowed
+formats (i.e.&#xA0;&#x2018;vcf&#x2019;, &#x2018;bed&#x2019;).</p>
+<p>Default: <code>False</code></p>
+</body>
+</html>
