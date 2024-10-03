@@ -2606,11 +2606,15 @@ def get_argument_to_mk(arg: str, argument: dict = {}, mode: str = "mk") -> str:
         text += "\n\n"
         text += f"</pre>"
     else:
-        text += f"```\n"
-        text += text_header
-        text += "\n\n"
-        text += str(help)
-        text += "\n```\n\n"
+        text += "\n<small>\n"
+        text += "\n> ```\n"
+        text += f"> {text_header}"
+        text += "\n> \n> "
+        text += str(help).strip().replace("\n", "\n> ")
+        text += "\n> ```\n"
+        text += "</small>\n"
+        text += "\n"
+        text += ""
 
     return text
 
@@ -2625,6 +2629,7 @@ def help_generation_from_dict(
     generate_table: bool = False,
     code_type: str = "",
     auto_default: bool = True,
+    previous_sections: bool = False,
 ):
     """
     The `help_generation_from_dict` function generates help documentation from a dictionary input,
@@ -2648,7 +2653,8 @@ def help_generation_from_dict(
     :type previous: str
     :param output_type: The `output_type` parameter in the `help_generation_from_dict` function
     specifies the type of output format that you want the generated help documentation to be in. It can
-    take two possible values: "markdown" or "html", defaults to markdown
+    take two possible values: "markdown" or "html". By default, the output type is set to markdown,
+    defaults to markdown
     :type output_type: str (optional)
     :param level: The `level` parameter in the `help_generation_from_dict` function is used to keep
     track of the depth or level of recursion in the generation process. It starts at 1 for the initial
@@ -2658,22 +2664,33 @@ def help_generation_from_dict(
     :param table: The `table` parameter in the `help_generation_from_dict` function is used to store the
     table of contents for the generated help documentation. It is a string that contains the formatted
     table of contents with links to different sections or elements within the documentation. This table
-    helps users navigate through the documentation easily and
+    helps users navigate through the documentation easily
     :type table: str
     :param generate_table: The `generate_table` parameter in the `help_generation_from_dict` function is
     a boolean flag that determines whether the function should generate a table of contents for the help
     documentation. When set to `True`, the function will include a table of contents in the output based
     on the hierarchy of elements in the, defaults to False
     :type generate_table: bool (optional)
-    :param code_type: The `code_type` parameter in the `help_generation_from_dict`
-    function specifies the type of code examples that will be included in the generated help
-    documentation. It defaults to "json", meaning that the code examples provided in the
-    "__examples_code" section of the dictionary will be in JSON format, defaults to json
-    :type code_type: str (optional)
-    :return: The function `help_generation_from_dict` is returning the generated help documentation
-    based on the input `help_dict` dictionary. The output is formatted based on the specified
-    `output_type` (either "markdown" or "html") and includes sections such as "__help", "__format",
-    "__default", and "__examples" if they are present in the `help_dict`.
+    :param code_type: The `code_type` parameter in the `help_generation_from_dict` function specifies
+    the type of code examples that will be included in the generated help documentation. It defaults to
+    "json", meaning that the code examples provided in the "__examples_code" section of the dictionary
+    will be in JSON format
+    :type code_type: str
+    :param auto_default: The `auto_default` parameter in the `help_generation_from_dict` function is a
+    boolean flag that determines whether the function should automatically populate certain sections of
+    the help documentation based on the information available in the dictionary and the element's
+    arguments. When set to `True`, the function will automatically fill in sections, defaults to True
+    :type auto_default: bool (optional)
+    :param previous_sections: The `previous_sections` parameter in the `help_generation_from_dict`
+    function is a boolean flag that determines whether the function should include previous sections in
+    the hierarchy when generating help documentation for nested elements. When set to `True`, the
+    function will maintain the previous sections in the hierarchy path, helping to provide, defaults to
+    False
+    :type previous_sections: bool (optional)
+    :return: The `help_generation_from_dict` function returns the generated help documentation based on
+    the input `help_dict` dictionary. The output is formatted based on the specified `output_type`
+    (either "markdown" or "html") and includes sections such as "__help", "__format", "__default", and
+    "__examples" if they are present in the `help_dict`.
     """
 
     from howard.tools.tools import arguments
@@ -2703,7 +2720,7 @@ def help_generation_from_dict(
     ]
 
     # Previous level
-    if previous:
+    if previous and previous_sections:
         prefix = f"{previous}"
         previous = f"{prefix}{level_marker}"
     else:
@@ -2854,8 +2871,22 @@ def help_generation_from_dict(
                             if isinstance(example_code, list):
                                 example_code = "\n".join(example_code)
                             example = re.sub(r"^#*\s*", "", example)
-                            help_md += f"""\n> {example}\n"""
-                            help_md += f"""\n```{code_type}\n{example_code}\n```"""
+                            help_md += f"""\n\n> {example}\n"""
+                            # Clean example code
+                            if (
+                                len(example_code) > 0
+                                and code_type.upper() == "JSON"
+                                and example_code.strip()[0] != "{"
+                            ):
+                                example_code = example_code.replace("\n", "\n   ")
+                                example_code = f"""{{\n   {example_code}\n}}"""
+                            example_code = example_code.replace("\n", "\n> ")
+                            # Add example code
+                            log.debug(f"TTTEEESSSTTT: {code_type}{example_code}")
+                            help_md += (
+                                f"""\n> ```{code_type}\n> {example_code}\n> ```"""
+                            )
+                            # help_md += f"""\n> <code>{code_type}\n> {example_code}\n> </code>"""
 
                     if section in ["__default"]:
                         if help_md in [""]:
@@ -2999,6 +3030,7 @@ def help_generation_from_json(
     output_type: str = "markdown",
     title="Help",
     code_type: str = "",
+    include_toc: bool = False,
 ):
     """
     The function `help_generation_from_json` reads a JSON file containing help information, converts it
@@ -3032,15 +3064,18 @@ def help_generation_from_json(
         help_dict = yaml.safe_load(f)
 
     # Generate help table of content
-    output_table = help_generation_from_dict(
-        element=title,
-        help_dict=help_dict,
-        previous="",
-        output_type=output_type,
-        level=1,
-        generate_table=True,
-        code_type=code_type,
-    )
+    if include_toc:
+        output_table = help_generation_from_dict(
+            element=title,
+            help_dict=help_dict,
+            previous="",
+            output_type=output_type,
+            level=1,
+            generate_table=True,
+            code_type=code_type,
+        )
+    else:
+        output_table = None
 
     # Generate help
     output = help_generation_from_dict(
@@ -3114,7 +3149,7 @@ def help_generation(
         + f"""{prog_long_description_content_type}"""
     )
     parser.epilog = (
-        "Usage examples:\n"
+        "\nUsage examples:\n"
         + """   howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json \n"""
         + """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet' \n"""
         + """   howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations='vartype' \n"""
@@ -3137,6 +3172,8 @@ def help_generation(
 
     # Options for markdown
     options_md += f"# HOWARD Help"
+    options_md += "\n\n"
+    options_md += f"## Introduction"
     options_md += "\n\n"
     options_md += "<!--TOC-->"
     options_md += "\n\n"
@@ -3180,6 +3217,25 @@ def help_generation(
             r"> $", "", command_epilog.replace("\n", "\n\n").replace("   ", "> ")
         )
         options_md += "\n\n"
+
+        # options_md += f"## {command.upper()} tool\n"
+        # options_md += command_description.replace("\n", "\n\n")
+        # options_md += "\n\n"
+        # options_md += "\n<code>\n"
+        # options_md += re.sub(
+        #     r"> $", "", command_epilog.replace("\n", "\n\n").replace("   ", "> ")
+        # )
+        # options_md += "\n</code>\n"
+
+        # options_md += f"## {command.upper()} tool\n"
+        # options_md += command_description.replace("\n", "\n\n")
+        # options_md += "\n"
+        # options_md += "\n"
+        # options_md += "> ```\n"
+        # options_md += "> " + command_epilog.replace("\n", "\n> ")
+        # options_md += "```"
+        # options_md += "\n"
+        # options_md += "\n"
 
         # HTML
         options_html += f"<H2>{command.upper()}</H2>\n"
@@ -3247,7 +3303,7 @@ def help_generation(
                         if argument.get("help", "") in ["==SUPPRESS=="]:
                             argument["help"] = arg
                         argument["help"] = format_arg_help(
-                            argument["help"], str(argument.get("default", None))
+                            argument.get("help", ""), str(argument.get("default", None))
                         )
                     command_group.add_argument(f"--{arg}", **argument)
                     options_md += get_argument_to_mk(arg, argument)
@@ -3665,10 +3721,12 @@ def get_random(N: int = 10) -> str:
     return "".join(random.choices(string.ascii_uppercase + string.digits, k=N))
 
 
-def transcripts_file_to_df(transcripts_file: str, column_names: list = ["transcript", "gene"]) -> pd.DataFrame:
+def transcripts_file_to_df(
+    transcripts_file: str, column_names: list = ["transcript", "gene"]
+) -> pd.DataFrame:
     """
     This Python function reads a transcripts file into a pandas DataFrame, filtering out comment lines.
-    
+
     :param transcripts_file: The `transcripts_file` parameter is a string that represents the file path
     to a file containing transcript information. This function is designed to read the contents of this
     file and convert it into a pandas DataFrame. The file is expected to be tab-separated with two
