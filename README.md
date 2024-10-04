@@ -3,8 +3,9 @@
 <figure>
 <img src="images/icon.png" title="HOWARD Graphical User Interface"
 alt="HOWARD Graphical User Interface" />
-<figcaption aria-hidden="true">HOWARD Graphical User
-Interface</figcaption>
+<figcaption aria-hidden="true">
+HOWARD Graphical User Interface
+</figcaption>
 </figure>
 
 Highly Open Workflow for Annotation & Ranking toward genomic variant
@@ -132,8 +133,9 @@ supplementary packages, and run as a tool:
 <figure>
 <img src="images/howard-gui.png" title="HOWARD Graphical User Interface"
 alt="HOWARD Graphical User Interface" />
-<figcaption aria-hidden="true">HOWARD Graphical User
-Interface</figcaption>
+<figcaption aria-hidden="true">
+HOWARD Graphical User Interface
+</figcaption>
 </figure>
 
 ## Docker

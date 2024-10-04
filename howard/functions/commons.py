@@ -2865,8 +2865,6 @@ def help_generation_from_dict(
                         # Format examples
                         help_md = ""
                         for example in help_md_dict:
-                            # log.debug(f"example={example}")
-                            # log.debug(f"__examples_code={help_md_dict}")
                             example_code = help_md_dict.get(example, "")
                             if isinstance(example_code, list):
                                 example_code = "\n".join(example_code)
@@ -2882,11 +2880,9 @@ def help_generation_from_dict(
                                 example_code = f"""{{\n   {example_code}\n}}"""
                             example_code = example_code.replace("\n", "\n> ")
                             # Add example code
-                            log.debug(f"TTTEEESSSTTT: {code_type}{example_code}")
                             help_md += (
                                 f"""\n> ```{code_type}\n> {example_code}\n> ```"""
                             )
-                            # help_md += f"""\n> <code>{code_type}\n> {example_code}\n> </code>"""
 
                     if section in ["__default"]:
                         if help_md in [""]:
@@ -3033,8 +3029,8 @@ def help_generation_from_json(
     include_toc: bool = False,
 ):
     """
-    The function `help_generation_from_json` reads a JSON file containing help information, converts it
-    into a specified output format (default is markdown), and returns the generated help content.
+    The `help_generation_from_json` function reads a JSON file containing help information, converts it
+    into a specified output format, and returns the generated help content.
 
     :param help_json_file: The `help_json_file` parameter is a string that should contain the file path
     to the JSON file from which help information will be extracted. This JSON file likely contains
@@ -3049,11 +3045,16 @@ def help_generation_from_json(
     represents the title of the help documentation that will be generated. It is used to provide a title
     for the help content to make it more organized and informative. By default, the title is set to
     "Help", defaults to Help (optional)
-    :param code_type: The `code_type` parameter in the `help_generation_from_json`
-    function is used to specify the type of code examples that will be included in the generated help
-    content. This parameter allows you to define the format or language of the code examples to be
-    displayed alongside the help information extracted from the JSON
+    :param code_type: The `code_type` parameter in the `help_generation_from_json` function is used to
+    specify the type of code examples that will be included in the generated help content. This
+    parameter allows you to define the format or language of the code examples to be displayed alongside
+    the help information extracted from the JSON
     :type code_type: str
+    :param include_toc: The `include_toc` parameter in the `help_generation_from_json` function is a
+    boolean flag that determines whether a table of contents (TOC) should be included in the generated
+    help content. If `include_toc` is set to `True`, a table of contents will be generated based,
+    defaults to False
+    :type include_toc: bool (optional)
     :return: The function `help_generation_from_json` returns the generated help content based on the
     information stored in the JSON file provided as input.
     """
@@ -3217,25 +3218,6 @@ def help_generation(
             r"> $", "", command_epilog.replace("\n", "\n\n").replace("   ", "> ")
         )
         options_md += "\n\n"
-
-        # options_md += f"## {command.upper()} tool\n"
-        # options_md += command_description.replace("\n", "\n\n")
-        # options_md += "\n\n"
-        # options_md += "\n<code>\n"
-        # options_md += re.sub(
-        #     r"> $", "", command_epilog.replace("\n", "\n\n").replace("   ", "> ")
-        # )
-        # options_md += "\n</code>\n"
-
-        # options_md += f"## {command.upper()} tool\n"
-        # options_md += command_description.replace("\n", "\n\n")
-        # options_md += "\n"
-        # options_md += "\n"
-        # options_md += "> ```\n"
-        # options_md += "> " + command_epilog.replace("\n", "\n> ")
-        # options_md += "```"
-        # options_md += "\n"
-        # options_md += "\n"
 
         # HTML
         options_html += f"<H2>{command.upper()}</H2>\n"

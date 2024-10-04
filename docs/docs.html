@@ -239,28 +239,23 @@
 <h1 data-number="1" id="howard-help"><span
 class="header-section-number">1</span> HOWARD Help</h1>
 <p>How to generate doc</p>
-<h2 data-number="1.1"
+<h2 data-number="1.1" id="generate-docs-and-pydoc-html"><span
+class="header-section-number">1.1</span> Generate docs and pydoc
+html</h2>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./docs/docs.sh</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./docs/pdoc.sh</span></span></code></pre></div>
+<h2 data-number="1.2"
 id="generate-markdown-help-from-help-and-json"><span
-class="header-section-number">1.1</span> Generate MarkDown Help from
+class="header-section-number">1.2</span> Generate MarkDown Help from
 help and JSON</h2>
 <pre><code>howard help --help_md=docs/help.md
 howard help --help_json_input=docs/json/help.config.json --help_json_input_title=&#39;HOWARD Configuration&#39; --help_md=docs/help.config.md
 howard help --help_json_input=docs/json/help.param.json --help_json_input_title=&#39;HOWARD Parameters&#39; --help_md=docs/help.param.md
 howard help --help_json_input=docs/json/help.param.databases.json --help_json_input_title=&#39;HOWARD Parameters Databases&#39; --help_md=docs/help.param.databases.md</code></pre>
-<h2 data-number="1.2" id="generate-html-and-pdf"><span
-class="header-section-number">1.2</span> Generate HTML and PDF</h2>
+<h2 data-number="1.3" id="generate-html-and-pdf"><span
+class="header-section-number">1.3</span> Generate HTML and PDF</h2>
 <p>Use VSCode <code>Markdown PDF</code> plugin to generate HTML and PDF
 from MarkDown files All files in &#x2018;docs&#x2019; and README.md</p>
-<h2 data-number="1.3" id="generate-pydoc-html"><span
-class="header-section-number">1.3</span> Generate pydoc html</h2>
-<div class="sourceCode" id="cb2"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./docs/pdoc.sh</span></span></code></pre></div>
-<p>or</p>
-<div class="sourceCode" id="cb3"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="va">folder</span><span class="op">=</span>docs/pdoc</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> <span class="va">$folder</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install pdoc==14.5.1</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">PDOC_DISPLAY_ENV_VARS</span><span class="op">=</span>1</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="ex">pdoc</span> <span class="at">-o</span> <span class="va">$folder</span> howard</span></code></pre></div>
 </body>
 </html>
