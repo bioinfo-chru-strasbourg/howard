@@ -194,9 +194,10 @@ on [cutevariant.labsquare.org](https://cutevariant.labsquare.org/) and
 <img
 src="https://raw.githubusercontent.com/labsquare/cutevariant/master/screencast.gif"
 title="HOWARD Graphical User Interface" alt="CuteVariant" />
-<figcaption aria-hidden="true">CuteVariant</figcaption>
+<figcaption aria-hidden="true">
+CuteVariant
+</figcaption>
 </figure>
-
 </details>
 <details>
 <summary>

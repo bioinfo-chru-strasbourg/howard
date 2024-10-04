@@ -2383,7 +2383,7 @@ Usage examples:
 
 <small>
 
->     --databases_folder=<databases_folder> (default: /home1/DB/HOWARD)
+>     --databases_folder=<databases_folder> (default: ~/howard/databases)
 >
 >     Path of HOWARD database folder.
 >
@@ -2391,7 +2391,7 @@ Usage examples:
 
 <small>
 
->     --database=<database> ['clinvar'] (default: /home1/DB/HOWARD)
+>     --database=<database> ['clinvar'] (default: clinvar)
 >
 >     Which database to update.
 >

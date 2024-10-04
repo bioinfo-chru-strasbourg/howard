@@ -177,8 +177,9 @@ class="header-section-number">1</span> HOWARD</h1>
 <figure>
 <img src="images/icon.png" title="HOWARD Graphical User Interface"
 alt="HOWARD Graphical User Interface" />
-<figcaption aria-hidden="true">HOWARD Graphical User
-Interface</figcaption>
+<figcaption aria-hidden="true">
+HOWARD Graphical User Interface
+</figcaption>
 </figure>
 <p>Highly Open Workflow for Annotation &amp; Ranking toward genomic
 variant Discovery</p>
@@ -256,8 +257,9 @@ options:</p>
 <pre><code>conda create --name=howard python=3.10
 conda activate howard
 python -m pip install -e .
-howard --help</code></pre>
-<pre><code>usage: howard [-h] {query,stats,convert,hgvs,annotation,calculation,prioritization,process,databases,gui,help,genebe,minimalize} ...
+howard --help
+
+usage: howard [-h] {query,stats,convert,hgvs,annotation,calculation,prioritization,process,databases,gui,help,genebe,minimalize} ...
 
 HOWARD:0.11.0
 Highly Open Workflow for Annotation &amp; Ranking toward genomic variant Discovery
@@ -297,8 +299,9 @@ howard gui</code></pre>
 <figure>
 <img src="images/howard-gui.png" title="HOWARD Graphical User Interface"
 alt="HOWARD Graphical User Interface" />
-<figcaption aria-hidden="true">HOWARD Graphical User
-Interface</figcaption>
+<figcaption aria-hidden="true">
+HOWARD Graphical User Interface
+</figcaption>
 </figure>
 <h2 data-number="2.2" id="docker"><span
 class="header-section-number">2.2</span> Docker</h2>
@@ -317,8 +320,8 @@ href="#databases">Databases section</a> to download manually), just
 start:</p>
 <pre><code>docker-compose up -d HOWARD-CLI</code></pre>
 <p>A Command Line Interface container (HOWARD-CLI) is started with host
-data and databases folders mounted (by default in ~/howard folder,
-i.e.&#xA0;<code>~/howard/data:/data</code> and
+data and databases folders mounted (by default in ~/howard folder, i.e.
+<code>~/howard/data:/data</code> and
 <code>~/howard/databases:/databases</code>). Let&#x2019;s play within Docker
 HOWARD-CLI service!</p>
 <pre><code>docker exec -ti HOWARD-CLI bash
@@ -600,8 +603,9 @@ howard query \
                count(*) AS &#39;Count&#39;
             FROM variants
             GROUP BY &quot;VARTYPE&quot;
-            ORDER BY count DESC&#39;</code></pre>
-<pre><code>  VariantType  Count
+            ORDER BY count DESC&#39;
+
+  VariantType  Count
 0         BND      7
 1         DUP      6
 2         INS      5
@@ -659,8 +663,9 @@ howard query \
             FROM variants \
             WHERE \&quot;PZScore\&quot; &gt; 0 \
               AND \&quot;PZFlag\&quot; == &#39;PASS&#39; \
-            ORDER BY \&quot;PZScore\&quot; DESC&quot;</code></pre>
-<pre><code>  #CHROM       POS ALT REF PZFlag  PZScore                                             PZTags     DP      CLNSIG
+            ORDER BY \&quot;PZScore\&quot; DESC&quot;
+
+  #CHROM       POS ALT REF PZFlag  PZScore                                             PZTags     DP      CLNSIG
 0   chr1     28736   C   A   PASS       15  PZFlag#PASS|PZScore#15|PZComment#Described on ...    NaN  pathogenic
 1   chr1     69101   G   A   PASS        5  PZFlag#PASS|PZScore#5|PZComment#DP higher than 50   50.0        None
 2   chr7  55249063   A   G   PASS        5  PZFlag#PASS|PZScore#5|PZComment#DP higher than 50  125.0        None</code></pre>
@@ -694,8 +699,9 @@ howard query \
    --input=/tmp/example.process.tsv \
    --explode_infos \
    --query=&quot;SELECT hgvs \
-            FROM variants &quot;</code></pre>
-<pre><code>                                                hgvs
+            FROM variants &quot;
+
+                                                hgvs
 0                     WASH7P:NR_024540.1:n.50+585T&gt;G
 1     FAM138A:NR_026818.1:exon3:n.597T&gt;G:p.Tyr199Asp
 2  OR4F5:NM_001005484.2:NP_001005484.2:exon3:c.74...
@@ -742,8 +748,9 @@ calculation and prioritization)</p>
    --explode_infos \
    --query=&quot;SELECT NOMEN, PZFlag, PZScore, snpeff_hgvs \
             FROM variants \
-            ORDER BY PZScore DESC&quot;</code></pre>
-<pre><code>                                            NOMEN    PZFlag  PZScore                                        snpeff_hgvs
+            ORDER BY PZScore DESC&quot;
+
+                                            NOMEN    PZFlag  PZScore                                        snpeff_hgvs
 0                    WASH7P:NR_024540:n.50+585T&gt;G      PASS       15  MIR1302-2:NR_036051.1:n.-1630A&gt;C,MIR1302-9:NR_...
 1     OR4F5:NP_001005484:exon3:c.74A&gt;G:p.Glu25Gly      PASS        5       OR4F5:NM_001005484.1:exon1:c.11A&gt;G:p.Glu4Gly
 2  EGFR:NM_001346897:exon19:c.2226G&gt;A:p.Gln742Gln      PASS        5  EGFR:NM_005228.5:exon20:c.2361G&gt;A:p.Gln787Gln,...

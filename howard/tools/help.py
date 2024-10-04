@@ -82,7 +82,6 @@ def help(args: argparse) -> None:
         code_type = args.code_type
     else:
         code_type = ""
-    log.debug(f"code_type={code_type}")
 
     # MarkDown file
     if ("help_md" in args and args.help_md) or help_json_file or help_md_file:
@@ -146,14 +145,12 @@ def help(args: argparse) -> None:
             # shutil.copy(help_file_tmp, help_file + ".tmp.md")
 
             # Generate MarkDown
-            log.debug(f"help_file_tmp={help_file_tmp}")
             if help_file:
                 pdoc_args = [
                     "-s",
                     f"--table-of-contents={toc}",
                     "-N",
                     f"--shift-heading-level-by={shift_heading_level_by}",
-                    # "--fenced_code_attributes=true",
                 ]
                 pypandoc.convert_file(
                     help_file_tmp,
@@ -171,7 +168,7 @@ def help(args: argparse) -> None:
                         parents=True, exist_ok=True
                     )
 
-                # Tmp md file
+                # Markdown file - rename links
                 help_file_tmp_html = help_file_tmp + ".html.md"
                 with open(help_file_tmp, "r", encoding="utf-8") as f:
                     content = f.read()
@@ -202,14 +199,6 @@ def help(args: argparse) -> None:
                     outputfile=help_file_html,
                     extra_args=pdoc_args,
                 )
-                # command = f"pandoc -s --from=markdown-smart --table-of-contents=true --to=html5 --metadata title='{help_json_input_title}' -o {help_file_html} {help_file}"
-                # try:
-                #     run_parallel_commands([command])
-                # except Exception as inst:
-                #     log.error(
-                #         "Python pandoc package need to be installed ('pip install pandoc')"
-                #     )
-                #     log.error(inst)
 
             if "help_pdf" in args and args.help_pdf:
                 help_file_pdf = full_path(args.help_pdf)
@@ -219,7 +208,7 @@ def help(args: argparse) -> None:
                         parents=True, exist_ok=True
                     )
 
-                # Tmp md file
+                # Markdown file - rename links
                 help_file_tmp_pdf = help_file_tmp + ".pdf.md"
                 with open(help_file_tmp, "r", encoding="utf-8") as f:
                     content = f.read()
@@ -227,6 +216,7 @@ def help(args: argparse) -> None:
                 with open(help_file_tmp_pdf, "w", encoding="utf-8") as fichier:
                     fichier.write(content_changed)
 
+                # pdoc args
                 pdoc_args = [
                     "-s",
                     f"--table-of-contents={toc}",
@@ -242,6 +232,7 @@ def help(args: argparse) -> None:
                     f"title={help_json_input_title}",
                 ]
 
+                # Generate doc
                 pypandoc.convert_file(
                     help_file_tmp_pdf,
                     to="pdf",
@@ -249,73 +240,5 @@ def help(args: argparse) -> None:
                     outputfile=help_file_pdf,
                     extra_args=pdoc_args,
                 )
-
-                # command = f"pandoc -s --from=markdown-smart --table-of-contents=true -V geometry:margin=3cm --to=pdf --metadata title='{help_json_input_title}' -o {help_file_pdf} {help_file_tmp}"
-                # try:
-                #     run_parallel_commands([command])
-                # except Exception as inst:
-                #     log.error(
-                #         "Python pandoc package need to be installed ('pip install pandoc')"
-                #     )
-                #     log.error(inst)
-
-            # Remove tmp
-            # remove_if_exists(filepaths=[help_file_tmp])
-
-            # if "help_html" in args and args.help_html:
-            #     help_file_html = full_path(args.help_html)
-            #     log.info(f"Help - generate Markdown help file ['{help_file_html}']")
-            #     if not os.path.exists(os.path.dirname(help_file_html)):
-            #         Path(os.path.dirname(help_file_html)).mkdir(parents=True, exist_ok=True)
-            #     command = f"pandoc -s --from=markdown-smart --table-of-contents=true --to=html5 --metadata title='{help_json_input_title}' -o {help_file_html} {help_file}"
-            #     try:
-            #         run_parallel_commands([command])
-            #     except Exception as inst:
-            #         log.error(
-            #             "Python pandoc package need to be installed ('pip install pandoc')"
-            #         )
-            #         log.error(inst)
-
-            # if "help_pdf" in args and args.help_pdf:
-            #     help_file_pdf = full_path(args.help_pdf)
-            #     log.info(f"Help - generate Markdown help file ['{help_file_pdf}']")
-            #     if not os.path.exists(os.path.dirname(help_file_pdf)):
-            #         Path(os.path.dirname(help_file_pdf)).mkdir(parents=True, exist_ok=True)
-            #     command = f"pandoc -s --from=markdown-smart --table-of-contents=true -V geometry:margin=3cm --to=pdf --metadata title='{help_json_input_title}' -o {help_file_pdf} {help_file}"
-            #     try:
-            #         run_parallel_commands([command])
-            #     except Exception as inst:
-            #         log.error(
-            #             "Python pandoc package need to be installed ('pip install pandoc')"
-            #         )
-            #         log.error(inst)
-
-            # # Generate Table Of Content (if marker <!--TOC-->)
-            # if not help_md_file:
-            #     import md_toc
-
-            #     toc = md_toc.api.build_toc(help_file)
-            #     md_toc.api.write_string_on_file_between_markers(
-            #         help_file, toc, "<!--TOC-->"
-            #     )
-
-            # # PYPANDOC
-            # import pypandoc
-
-            # # pdoc_args = ["--mathjax", "+smart"]
-            # pdoc_args = []
-
-            # # With an input file: it will infer the input format from the filename
-            # output = pypandoc.convert_file(
-            #     help_file, "pdf", outputfile="docs/pdf/pypandoc.pdf", extra_args=pdoc_args
-            # )
-            # output = pypandoc.convert_file(
-            #     help_file,
-            #     "html",
-            #     outputfile="docs/html/pypandoc.html",
-            #     extra_args=pdoc_args,
-            # )
-
-    log.debug(f"main_folder={main_folder}")
 
     log.info("End")
