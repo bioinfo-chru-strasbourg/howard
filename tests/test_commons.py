@@ -135,7 +135,7 @@ def test_invalid_input():
 def test_help():
 
     # Init
-    help_json_file = os.path.join(folder_main, "docs", "json", "help.param.json")
+    help_json_file = os.path.join(folder_main, "docs", "json", "help.parameters.json")
 
     # Help JSON to MD
     help_content_md = help_generation_from_json(
