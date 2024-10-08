@@ -1,5 +1,45 @@
 # RELEASE NOTES
 
+## 0.12.0
+
+This release introduce prioritization options and transcripts view,
+improve samples managment, annotation databases generation and
+operations, and python packages stability.
+
+### News
+
+- Add prioritization options:
+  - SQL syntax available to define filters
+  - New 'Class' priorisation field
+- New transcripts view:
+  - Create a transcript view, using a structure from multiple source
+    type (e.g. snpEff, external annotation databases)
+  - Mapping between multiple transcript ID source (e.g. refSeq, Ensembl)
+  - Transcripts prioritization, using same prioritization process than
+    variants
+  - Export transcripts table as a file, in multiple format such as VCF,
+    TSV, Parquet
+- Export with a specific sample list
+- Add dynamic transcript column for NOMEN calculation (using transcript
+  priorization column)
+- Add plugins:
+  - 'update_databases'
+
+### Updates
+
+- Improve snpEff annotations operations
+- New option 'uniquify' for dbSNFP generation, identification of columns
+  type
+- Managment, check and export of samples columns
+- Improve query type mode
+- Improve splice annotation
+
+### Fixes
+
+- Genotype format detection
+- Fix packages releases
+- More explicite log messages
+
 ## 0.11.0
 
 This release introduce splice annotation tool, and update duckDB python

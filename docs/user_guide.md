@@ -115,22 +115,32 @@ HOWARD is multithreaded through the number of variants and by database
 
 Install HOWARD using Python Pip tool:
 
-    python -m pip install -e .
+``` bash
+conda create --name=howard python=3.10
+conda activate howard
+python -m pip install -e .
+```
 
 Run HOWARD for help options:
 
-    howard --help
+``` bash
+howard --help
+```
 
 ### GUI install
 
 Install HOWARD Graphical User Interface using Python Pip tool with
 supplementary packages:
 
-    python -m pip install -r requirements-gui.txt
+``` bash
+python -m pip install -r requirements-gui.txt
+```
 
 Run HOWARD Graphical User Interface as a tool:
 
-    howard gui
+``` bash
+howard gui
+```
 
 <figure>
 <img src="../images/howard-gui.png"
@@ -215,31 +225,32 @@ In order to build images, launch default setup and create a persitent
 CLI (Command Line Inferface container), docker-compose command build
 images and launch services as containers.
 
-    docker-compose up -d
+``` bash
+docker-compose up -d
+```
 
-The persitent CLI contains external tools, such as: \| External tool \|
-Description \| \| -- \| -- \| \|
-[BCFTools](https://samtools.github.io/bcftools/) \| Utilities for
-variant calling and manipulating VCFs and BCFs \| \|
-[snpEff](https://pcingola.github.io/SnpEff/) \| Genomic variant
-annotations, and functional effect prediction toolbox \| \|
-[Annovar](https://annovar.openbioinformatics.org/) \| Efficient software
-tool to utilize update-to-date information to functionally annotate
-genetic variants \| \|
-[Exomiser](https://www.sanger.ac.uk/tool/exomiser/) \| Program that
-finds potential disease-causing variants from whole-exome or
-whole-genome sequencing data \| \|
-[Splice](https://hub.docker.com/r/bioinfochrustrasbourg/splice) \| Image
-to run SPiP and SpliceAI tools in an nextflow pipeline. \|
+The persitent CLI contains external tools, such as:
+
+| External tool                                                   | Description                                                                                             |
+|-----------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
+| [BCFTools](https://samtools.github.io/bcftools/)                | Utilities for variant calling and manipulating VCFs and BCFs                                            |
+| [snpEff](https://pcingola.github.io/SnpEff/)                    | Genomic variant annotations, and functional effect prediction toolbox                                   |
+| [Annovar](https://annovar.openbioinformatics.org/)              | Efficient software tool to utilize update-to-date information to functionally annotate genetic variants |
+| [Exomiser](https://www.sanger.ac.uk/tool/exomiser/)             | Program that finds potential disease-causing variants from whole-exome or whole-genome sequencing data  |
+| [Splice](https://hub.docker.com/r/bioinfochrustrasbourg/splice) | Image to run SPiP and SpliceAI tools in an nextflow pipeline.                                           |
 
 ### Setup container
 
 Docker service HOWARD-setup creates HOWARD image and download useful
 databases to start with HOWARD tools.
 
+``` bash
+docker-compose up -d HOWARD-setup
+```
+
 List of databases downloaded in HOWARD setup for hg19 assembly (see
 [Databases section](#databases) for more information): - Genome -
-Annovar ([refGene](https://genome.ucsc.edu/),
+Annovar - ([refGene](https://genome.ucsc.edu/) -
 [COSMIC](https://cancer.sanger.ac.uk/cosmic)) - snpEff - refSeq -
 dbNSFP - AlphaMissense - dnSNP
 
@@ -253,38 +264,50 @@ A Command Line Interface container (HOWARD-CLI) is started with host
 data and databases folders mounted (by default both in \${HOME}/HOWARD
 folder). To manually start CLI container:
 
-    docker-compose up -d HOWARD-CLI
+``` bash
+docker-compose up -d HOWARD-CLI
+```
 
 To use HOWARD tools within HOWARD-CLI container:
 
-    docker exec -ti HOWARD-CLI bash
-    howard --help
+``` bash
+docker exec -ti HOWARD-CLI bash
+howard --help
+```
 
 To run a command into HOWARD-CLI container:
 
-    docker exec HOWARD-CLI <howard command>
+``` bash
+docker exec HOWARD-CLI <howard command>
+```
 
 Docker HOWARD-CLI container (Command Line Interface) can be used to
 execute commands.
 
 > Example: Query of an existing VCF
 >
->     docker exec HOWARD-CLI \
->        howard query \
->           --input=/tool/tests/data/example.vcf.gz \
->           --query='SELECT * FROM variants'
+> ``` bash
+> docker exec HOWARD-CLI \
+>    howard query \
+>    --input='/tool/tests/data/example.vcf.gz' \
+>    --query='SELECT * FROM variants'
+> ```
 
 > Example: VCF annotation using HOWARD-CLI (snpEff and ANNOVAR databases
 > will be automatically downloaded), and query list of genes with HGVS
 >
->     docker exec --workdir=/tool HOWARD-CLI \
->        howard process \
->           --config=config/config.json \
->           --param=config/param.json \
->           --input=tests/data/example.vcf.gz \
->           --output=/tmp/example.process.tsv \
->           --explode_infos \
->           --query='SELECT "NOMEN", "PZFlag", "PZScore", "PZComment" FROM variants ORDER BY "PZScore" DESC'
+> ``` bash
+> docker exec --workdir=/tool HOWARD-CLI \
+>    howard process \
+>       --config='config/config.json' \
+>       --param='config/param.json' \
+>       --input='tests/data/example.vcf.gz' \
+>       --output='/tmp/example.process.tsv' \
+>       --explode_infos \
+>       --query="SELECT NOMEN, PZFlag, PZScore, PZComment \
+>                FROM variants \
+>                ORDER BY PZScore DESC"
+> ```
 
 See [HOWARD Help](help.md) for more options.
 
@@ -294,12 +317,14 @@ Let's play within Docker HOWARD-CLI service!
 
 In order to test HOWARD within Docker, use this command:
 
-    docker exec -ti HOWARD-CLI bash
-    cd /tool
-    # Basic test
-    coverage run -m pytest .
-    # Debug test
-    coverage run -m pytest . -x -v --log-cli-level=DEBUG --capture=tee-sys
+``` bash
+docker exec -ti HOWARD-CLI bash
+cd /tool
+# Basic test
+coverage run -m pytest .
+# Debug test
+coverage run -m pytest . -x -v --log-cli-level=DEBUG --capture=tee-sys
+```
 
 # Databases
 
@@ -320,26 +345,28 @@ such as:
 | [Exomiser](https://www.sanger.ac.uk/tool/exomiser/)               | The Exomiser is a Java program that finds potential disease-causing variants from whole-exome or whole-genome sequencing data                                                                                                                                                  |
 
 > Example: Download Multiple databases in the same time for assembly
-> 'hg19' (can take a while):
+> 'hg19' (can take a while)
 >
->     howard databases \
->        --assembly=hg19 \
->        --download-genomes=~/howard/databases/genomes/current \
->            --download-genomes-provider=UCSC \
->            --download-genomes-contig-regex='chr[0-9XYM]+$' \
->        --download-annovar=~/howard/databases/annovar/current \
->            --download-annovar-files='refGene,cosmic70,nci60' \
->        --download-snpeff=~/howard/databases/snpeff/current \
->        --download-refseq=~/howard/databases/refseq/current \
->            --download-refseq-format-file='ncbiRefSeq.txt' \
->        --download-dbnsfp=~/howard/databases/dbnsfp/current \
->            --download-dbnsfp-release='4.4a' \
->            --download-dbnsfp-subdatabases \
->        --download-alphamissense=~/howard/databases/alphamissense/current \
->        --download-exomiser=~/howard/databases/exomiser/current \
->        --download-dbsnp=~/howard/databases/dbsnp/current \
->            --download-dbsnp-vcf \
->        --threads=8
+> ``` bash
+> howard databases \
+>    --assembly=hg19 \
+>    --download-genomes='~/howard/databases/genomes/current' \
+>    --download-genomes-provider='UCSC'\
+>    --download-genomes-contig-regex='chr[0-9XYM]+$' \
+>    --download-annovar='~/howard/databases/annovar/current' \
+>    --download-annovar-files='refGene,cosmic70,nci60' \
+>    --download-snpeff='~/howard/databases/snpeff/current' \
+>    --download-refseq='~/howard/databases/refseq/current' \
+>    --download-refseq-format-file='ncbiRefSeq.txt' \
+>    --download-dbnsfp='~/howard/databases/dbnsfp/current' \
+>    --download-dbnsfp-release='4.4a' \
+>    --download-dbnsfp-subdatabases \
+>    --download-alphamissense='~/howard/databases/alphamissense/current' \
+>    --download-exomiser='~/howard/databases/exomiser/current' \
+>    --download-dbsnp='~/howard/databases/dbsnp/current' \
+>    --download-dbsnp-vcf \
+>    --threads=8
+> ```
 
 See [HOWARD Help Databases tool](help.md#databases-tool) for more
 information.
@@ -401,9 +428,11 @@ See [HOWARD Parameters JSON](help.parameters.md) for more information.
 
 > Example: Use parameters JSON file with query tool
 >
->     howard query \
->        --input=tests/data/example.vcf.gz \
->        --param=config/param.json
+> ``` bash
+> howard query \
+>    --input='tests/data/example.vcf.gz' \
+>    --param='config/param.json'
+> ```
 >
 > ``` ts
 >   #CHROM       POS REF ALT                   INFO
@@ -419,10 +448,12 @@ See [HOWARD Parameters JSON](help.parameters.md) for more information.
 > Example: Use parameters JSON file with query tool, and add an option
 > to change the query (list of chromosomes)
 >
->     howard query \
->        --input=tests/data/example.vcf.gz \
->        --param=config/param.json \
->        --query="SELECT distinct(\"#CHROM\") as 'chromosomes' FROM variants"
+> ``` bash
+> howard query \
+>    --input='tests/data/example.vcf.gz' \
+>    --param='config/param.json' \
+>    --query="SELECT distinct(\"#CHROM\") as 'chromosomes' FROM variants"
+> ```
 >
 > ``` ts
 >   chromosomes
@@ -554,19 +585,23 @@ See [HOWARD Help Stats tool](help.md#stats-tool) for more information.
 
 > Example: Show example VCF statistics and brief overview
 >
->     howard stats \
->        --input=tests/data/example.vcf.gz
+> ``` bash
+> howard stats \
+>    --input='tests/data/example.vcf.gz'
+> ```
 
 > Example: Show example VCF statistics and generate a file in JSON and
 > Markdown formats (extract)
 >
->     howard stats \
->        --input=tests/data/example.vcf.gz \
->        --stats_json=/tmp/stats.json \
->        --stats_md=/tmp/stats.md
+> ``` bash
+> howard stats \
+>    --input='tests/data/example.vcf.gz' \
+>    --stats_json='/tmp/stats.json' \
+>    --stats_md='/tmp/stats.md'
 >
->     cat /tmp/stats.json /tmp/stats.md
->
+> cat '/tmp/stats.json' '/tmp/stats.md'
+> ```
+
 > ``` json
 > {
 >     "Infos": {
@@ -657,29 +692,35 @@ file.
 
 > Example: Convert VCF into TSV and show output file
 >
->     howard convert \
->        --input=tests/data/example.vcf.gz \
->        --output=/tmp/example.tsv
->     cat /tmp/example.tsv
+> ``` bash
+> howard convert \
+>    --input='tests/data/example.vcf.gz' \
+>    --output='/tmp/example.tsv'
+> cat '/tmp/example.tsv'
+> ```
 
 > Example: Convert TSV into VCF and show output file
 >
->     howard convert \
->        --input=tests/data/example.tsv \
->        --output=/tmp/example.vcf
->     cat /tmp/example.vcf
+> ``` bash
+> howard convert \
+>    --input='tests/data/example.tsv' \
+>    --output='/tmp/example.vcf'
+> cat '/tmp/example.vcf'
+> ```
 
 > Example: Convert VCF into CSV and compress file
 >
 >     howard convert \
->        --input=tests/data/example.vcf.gz \
->        --output=/tmp/example.csv.gz
+>        --input='tests/data/example.vcf.gz' \
+>        --output='/tmp/example.csv.gz'
 
 > Example: Convert VCF into JSON and compress file
 >
->     howard convert \
->        --input=tests/data/example.vcf.gz \
->        --output=/tmp/example.json.gz
+> ``` bash
+> howard convert \
+>    --input='tests/data/example.vcf.gz' \
+>    --output='/tmp/example.json.gz'
+> ```
 
 ### Parquet and duckDB convert
 
@@ -689,14 +730,16 @@ duckDB database will be created with a `variants` table.
 > Example: Convert VCF into parquet
 >
 >     howard convert \
->        --input=tests/data/example.vcf.gz \
->        --output=/tmp/example.parquet
+>        --input='tests/data/example.vcf.gz' \
+>        --output='/tmp/example.parquet'
 
 > Example: Convert VCF into duckDB
 >
->     howard convert \
->        --input=tests/data/example.vcf.gz \
->        --output=/tmp/example.duckdb
+> ``` bash
+> howard convert \
+>    --input='tests/data/example.vcf.gz' \
+>    --output='/tmp/example.duckdb'
+> ```
 
 ### BED convert
 
@@ -707,15 +750,19 @@ automatically included to decribe all columns.
 
 > Example: Convert BED in TSV format into BED format
 >
->     howard convert \
->        --input=tests/data/example.bed.tsv \
->        --output=/tmp/example.bed
+> ``` bash
+> howard convert \
+>    --input='tests/data/example.bed.tsv' \
+>    --output='/tmp/example.bed'
+> ```
 
 > Example: Convert BED in Parquet format into BED format
 >
->     howard convert \
->        --input=tests/data/example.bed.parquet \
->        --output=/tmp/example.bed
+> ``` bash
+> howard convert \
+>    --input='tests/data/example.bed.parquet' \
+>    --output='/tmp/example.bed'
+> ```
 
 HOWARD input file format does not allow BED format. To read a BED file
 and export into a CSV or Parquet file format, see [Query BED
@@ -739,29 +786,31 @@ reading.
 
 > Example: Convert VCF into partitioned Parquet and show tree structure
 >
->     howard convert \
->        --input=tests/data/example.vcf.gz \
->        --output=/tmp/example.partitioned.parquet \
->        --parquet_partitions="#CHROM"
+> ``` bash
+> howard convert \
+>    --input='tests/data/example.vcf.gz' \
+>    --output='/tmp/example.partitioned.parquet' \
+>    --parquet_partitions="#CHROM"
 >
->     tree /tmp/example.partitioned.parquet
+> tree '/tmp/example.partitioned.parquet'
+> ```
 >
->     /tmp/example.partitioned.parquet
->     |-- #CHROM=chr1
->     |   |-- fe61bf182de640f8840270a527aa1582-0.parquet
->     |-- #CHROM=chr7
->         |-- fe61bf182de640f8840270a527aa1582-0.parquet
+> /tmp/example.partitioned.parquet \|-- \#CHROM=chr1 \|   \|--
+> fe61bf182de640f8840270a527aa1582-0.parquet \|-- \#CHROM=chr7 \|--
+> fe61bf182de640f8840270a527aa1582-0.parquet \`\`\`
 
 > Example: Convert VCF into partitioned TSV (compressed) and show tree
 > structure (files are named with `.csv` extension, but are
 > tab-delimited and compressed)
 >
->     howard convert \
->        --input=tests/data/example.vcf.gz \
->        --output=/tmp/example.partitioned.tsv.gz \
->        --parquet_partitions="#CHROM,REF"
+> ``` bash
+> howard convert \
+>    --input='tests/data/example.vcf.gz' \
+>    --output='/tmp/example.partitioned.tsv.gz' \
+>    --parquet_partitions="#CHROM,REF"
 >
->     tree /tmp/example.partitioned.tsv.gz
+> tree '/tmp/example.partitioned.tsv.gz'
+> ```
 >
 >     /tmp/example.partitioned.tsv
 >     |-- #CHROM=chr1
@@ -780,14 +829,16 @@ infos](help.md#explode-infos)).
 > Example: Convert VCF into TSV, export INFO/tags into columns, and show
 > output file
 >
->     howard convert \
->        --input=tests/data/example.vcf.gz \
->        --explode_infos \
->        --output=/tmp/example.tsv
+> ``` bash
+> howard convert \
+>    --input='tests/data/example.vcf.gz' \
+>    --explode_infos \
+>    --output='/tmp/example.tsv'
 >
->     cut /tmp/example.tsv -f1-4,7,15
+> cut '/tmp/example.tsv' -f1-4,7,15
+> ```
 >
-> ``` cs
+> ``` ts
 > #CHROM  POS       REF  ALT  FILTER  CLNSIG
 > chr1    28736     A    C    PASS    pathogenic
 > chr1    35144     A    C    PASS    non-pathogenic
@@ -820,29 +871,35 @@ detected to be used in a SQL query.
 
 > Example: Select variants in VCF with REF and POS fields filter
 >
->     howard query \
->        --input=tests/data/example.vcf.gz \
->        --query="SELECT * FROM variants WHERE REF = 'A' AND POS < 100000"
+> ``` bash
+> howard query \
+>    --input='tests/data/example.vcf.gz' \
+>    --query="SELECT * FROM variants WHERE REF = 'A' AND POS < 100000"
+> ```
 
 > Example: Select variants in VCF with INFO Tags criteria filters
 >
->     howard query \
->        --input=tests/data/example.vcf.gz \
->        --explode_infos \
->        --query='SELECT "#CHROM", POS, REF, ALT, DP, CLNSIG, sample2, sample3 
->                 FROM variants 
->                 WHERE DP >= 50 OR CLNSIG NOT NULL 
->                 ORDER BY CLNSIG DESC, DP DESC'
+> ``` bash
+> howard query \
+>    --input='tests/data/example.vcf.gz' \
+>    --explode_infos \
+>    --query='SELECT "#CHROM", POS, REF, ALT, DP, CLNSIG, sample2, sample3 
+>             FROM variants 
+>             WHERE DP >= 50 OR CLNSIG NOT NULL 
+>             ORDER BY CLNSIG DESC, DP DESC'
+> ```
 
 > Example: Select variants in VCF and generate VCF output with variants
 >
->     howard query \
->        --input=tests/data/example.vcf.gz \
->        --output=/tmp/example.filtered.vcf \
->        --explode_infos \
->        --query='SELECT "#CHROM", POS, REF, ALT, QUAL, FILTER, INFO 
->                 FROM variants 
->                 WHERE DP >= 50 OR CLNSIG NOT NULL'
+> ``` bash
+> howard query \
+>    --input='tests/data/example.vcf.gz' \
+>    --output='/tmp/example.filtered.vcf' \
+>    --explode_infos \
+>     --query='SELECT "#CHROM", POS, REF, ALT, QUAL, FILTER, INFO 
+>             FROM variants 
+>             WHERE DP >= 50 OR CLNSIG NOT NULL'
+> ```
 
 #### External file
 
@@ -853,30 +910,34 @@ already contain variants information (e.g. "#CHROM", "POS", "REF",
 > Example: Query a Parquet file with specific columns (e.g. from VCF
 > convertion to Parquet)
 >
->     howard query \
->        --query="SELECT * \
->                 FROM 'tests/databases/annotations/current/hg19/dbnsfp42a.parquet' \
->                 WHERE \"INFO/Interpro_domain\" NOT NULL \
->                 ORDER BY \"INFO/SiPhy_29way_logOdds_rankscore\" DESC"
+> ``` bash
+> howard query \
+>    --query="SELECT * \
+>             FROM 'tests/databases/annotations/current/hg19/dbnsfp42a.parquet' \
+>             WHERE \"INFO/Interpro_domain\" NOT NULL \
+>             ORDER BY \"INFO/SiPhy_29way_logOdds_rankscore\" DESC"
+> ```
 
 > Example: Query multiple Parquet files, merge INFO columns, and extract
 > as TSV (in VCF format)
 >
->     howard query \
->        --query="
->           SELECT \
->              \"#CHROM\" AS \"#CHROM\", \
->              POS AS POS, \
->              '' AS ID, \
->              REF AS REF, \
->              ALT AS ALT, \
->              '' AS QUAL, \
->              '' AS FILTER, \
->              STRING_AGG(INFO, ';') AS INFO \
->           FROM 'tests/databases/annotations/current/hg19/*.parquet' \
->           GROUP BY \"#CHROM\", POS, REF, ALT" \
->        --output=/tmp/full_annotation.tsv \
->        --include_header
+> ``` bash
+> howard query \
+>    --query="
+>       SELECT \
+>          \"#CHROM\" AS \"#CHROM\", \
+>          POS AS POS, \
+>          '' AS ID, \
+>          REF AS REF, \
+>          ALT AS ALT, \
+>          '' AS QUAL, \
+>          '' AS FILTER, \
+>          STRING_AGG(INFO, ';') AS INFO \
+>       FROM 'tests/databases/annotations/current/hg19/*.parquet' \
+>       GROUP BY \"#CHROM\", POS, REF, ALT" \
+>    --output='/tmp/full_annotation.tsv' \
+>    --include_header
+> ```
 
 ### Other files
 
@@ -891,11 +952,13 @@ Simply use Parquet file path within the query (as descibe above).
 > Example: Query a Parquet file with specific columns (e.g. from VCF
 > convertion to Parquet)
 >
->     howard query \
->        --query="SELECT * \
->                 FROM 'tests/databases/annotations/current/hg19/dbnsfp42a.parquet' \
->                 WHERE \"INFO/Interpro_domain\" NOT NULL \
->                 ORDER BY \"INFO/SiPhy_29way_logOdds_rankscore\" DESC"
+> ``` bash
+> howard query \
+>    --query="SELECT * \
+>             FROM 'tests/databases/annotations/current/hg19/dbnsfp42a.parquet' \
+>             WHERE \"INFO/Interpro_domain\" NOT NULL \
+>             ORDER BY \"INFO/SiPhy_29way_logOdds_rankscore\" DESC"
+> ```
 
 #### CSV format
 
@@ -906,13 +969,19 @@ information.
 
 > Example: Query a TSV file
 >
->     howard query \
->        --query="SELECT * FROM read_csv_auto('tests/data/transcripts.tsv')"
+> ``` bash
+> howard query \
+>    --query="SELECT * FROM read_csv_auto('tests/data/transcripts.tsv')"
+> ```
 
 > Example: Query a TSV file with columns struct
 >
->     howard query \
->        --query="SELECT * FROM read_csv_auto('tests/data/transcripts.tsv', columns={'transcript': 'VARCHAR','gene': 'VARCHAR'})"
+> ``` bash
+> howard query \
+>    --query="SELECT * 
+>             FROM read_csv_auto('tests/data/transcripts.tsv',
+>                                columns={'transcript': 'VARCHAR','gene': 'VARCHAR'})"
+> ```
 
 #### BED format
 
@@ -921,19 +990,24 @@ and export file into a desired format.
 
 > Example: Read a BED file and export in Parquet format
 >
->     howard query \
->        --query="SELECT * FROM read_csv_auto('tests/data/example.bed', columns={'#CHROM': 'VARCHAR', 'START': 'INTEGER', 'END': 'INTEGER'})" \
->        --output=/tmp/example.bed.parquet
+> ``` bash
+> howard query \
+>    --query="SELECT * FROM read_csv_auto('tests/data/example.bed',
+>                     columns={'#CHROM': 'VARCHAR', 'START': 'INTEGER', 'END': 'INTEGER'})" \
+>    --output='/tmp/example.bed.parquet'
+> ```
 
 > Example: Convert a BED file in a Parquet format into a BED file format
 >
->     howard convert \
->        --input=tests/data/example.bed.parquet \
->        --output=/tmp/example.bed
+> ``` bash
+> howard convert \
+>    --input='tests/data/example.bed.parquet' \
+>    --output='/tmp/example.bed'
 >
->     cat /tmp/example.bed
+> cat '/tmp/example.bed'
+> ```
 >
-> ``` cs
+> ``` ts
 > #CHROM    START   END
 > chr1  28735   69101
 > chr1  768250  768253
@@ -945,16 +1019,18 @@ names, or transcripts.
 
 > Example: Filter a BED using positions
 >
->     howard query \
->        --input=tests/data/example.bed.parquet \
->        --query="SELECT * \
->                 FROM variants \
->                 WHERE \
->                    \"#CHROM\" = 'chr1' and \
->                    ( \
->                       (\"START\">28000 and \"END\"<70000) or \
->                       (\"START\">760000 and \"END\"<770000) \
->                    )"
+> ``` bash
+> howard query \
+>    --input='tests/data/example.bed.parquet' \
+>    --query="SELECT * \
+>             FROM variants \
+>             WHERE \
+>                \"#CHROM\" = 'chr1' and \
+>                ( \
+>                   (START>28000 and \"END\"<70000) or \
+>                   (START>760000 and \"END\"<770000) \
+>                )"
+> ```
 >
 > ``` cs
 >   #CHROM   START     END
@@ -967,12 +1043,16 @@ names, or transcripts.
 In order to extract variants from a VCF file, without annotations and
 samples, use a query to construct the VCF.
 
-> Example: Extract variants onnly \`\`\` howard query  
-> --input=tests/data/example.vcf.gz  
-> --output=/tmp/example.vcf.gz  
-> --query="SELECT "#CHROM", POS, ID, REF, ALT, QUAL, FILTER, '.' AS
-> INFO  
-> FROM variants"
+> Example: Extract variants onnly
+>
+> ``` bash
+> howard query \
+>    --input='tests/data/example.vcf.gz' \
+>    --output='/tmp/example.vcf.gz' \
+>    --query="SELECT \
+>                \"#CHROM\", POS, ID, REF, ALT, QUAL, FILTER, '.' AS INFO \
+>             FROM variants"
+> ```
 
 ## Annotation
 
@@ -1014,36 +1094,41 @@ annotation databases files can be used.
 
 > Example: VCF annotation with full path Parquet databases
 >
->     howard annotation \
->        --input=tests/data/example.vcf.gz \
->        --annotations='/tool/tests/databases/annotations/current/hg19/dbnsfp42a.parquet' \
->        --output=/tmp/example.howard.vcf.gz
+> ``` bash
+> howard annotation \
+>    --input='tests/data/example.vcf.gz' \
+>    --annotations=$(pwd)'/tests/databases/annotations/current/hg19/dbnsfp42a.parquet' \
+>    --output='/tmp/example.howard.vcf.gz'
+> ```
 
 > Example: VCF annotation with relative path VCF databases
 >
->     cd /tool
->     howard annotation \
->        --input=tests/data/example.vcf.gz \
->        --annotations='tests/databases/annotations/current/hg19/cosmic70.vcf.gz' \
->        --output=/tmp/example.howard.vcf.gz
+> ``` bash
+> howard annotation \
+>    --input='tests/data/example.vcf.gz' \
+>    --annotations='tests/databases/annotations/current/hg19/cosmic70.vcf.gz' \
+>    --output='/tmp/example.howard.vcf.gz'
+> ```
 
 > Example: VCF annotation with relative path BED databases
 >
->     cd /tool
->     howard annotation \
->        --input=tests/data/example.vcf.gz \
->        --annotations='tests/databases/annotations/current/hg19/refGene.bed.gz' \
->        --output=/tmp/example.howard.vcf.gz
+> ``` bash
+> howard annotation \
+>    --input='tests/data/example.vcf.gz' \
+>    --annotations='tests/databases/annotations/current/hg19/refGene.bed.gz' \
+>    --output='/tmp/example.howard.vcf.gz'
+> ```
 
 > Example: VCF annotation with 3 annotation databases files
 >
->     howard annotation \
->        --input=tests/data/example.vcf.gz \
->        --annotations='\
->            /tool/tests/databases/annotations/current/hg19/dbnsfp42a.parquet\
->            +tests/databases/annotations/current/hg19/cosmic70.vcf.gz\
->            +tests/databases/annotations/current/hg19/refGene.bed.gz' \
->        --output=/tmp/example.howard.vcf.gz
+> ``` bash
+> howard annotation \
+>    --input='tests/data/example.vcf.gz' \
+>    --annotations=$(pwd)'/tests/databases/annotations/current/hg19/dbnsfp42a.parquet,
+>        tests/databases/annotations/current/hg19/cosmic70.vcf.gz,
+>        tests/databases/annotations/current/hg19/refGene.bed.gz' \
+>    --output='/tmp/example.howard.vcf.gz'
+> ```
 
 ##### Parquet annotation with annotation folder
 
@@ -1055,11 +1140,13 @@ assembly).
 > Example: VCF annotation with Parquet and VCF databases, with
 > annotation database defined in JSON configuration (as a string)
 >
->     howard annotation \
->        --input=tests/data/example.vcf.gz \
->        --annotations='dbnsfp42a.parquet,cosmic70.vcf.gz' \
->        --config='{"folders": {"databases": {"annotations": ["/tool/tests/databases/annotations/current"]}}}' \
->        --output=/tmp/example.howard.vcf.gz 
+> ``` bash
+> howard annotation \
+>    --input='tests/data/example.vcf.gz' \
+>    --annotations='dbnsfp42a.parquet,cosmic70.vcf.gz' \
+>    --config='{"folders": {"databases": {"annotations": ["tests/databases/annotations/current"]}}}' \
+>    --output='/tmp/example.howard.vcf.gz'
+> ```
 
 ##### Full annotation
 
@@ -1077,12 +1164,14 @@ about databases structure.
 > in Parquet format (within the database annotation folder in
 > configuration):
 >
->     howard annotation \
->        --input=tests/data/example.vcf.gz \
->        --assembly='hg19' \
->        --annotations='ALL:format=parquet+vcf:release=current' \
->        --config='{"folders": {"databases": {"annotations": ["/tool/tests/databases/annotations/current"]}}}' \
->        --output=/tmp/example.howard.tsv
+> ``` bash
+> howard annotation \
+>    --input='tests/data/example.vcf.gz' \
+>    --assembly='hg19' \
+>    --annotations='ALL:format=parquet+vcf:release=current' \
+>    --config='{"folders": {"databases": {"annotations": ["tests/databases/annotations/current"]}}}' \
+>    --output='/tmp/example.howard.tsv'
+> ```
 
 #### External tools annotation
 
@@ -1102,10 +1191,13 @@ JSON](help.parameters.md) file.
 > Example: VCF annotation with Cosmic VCF databases and refGene BED
 > database
 >
->     howard annotation \
->        --input=tests/data/example.vcf.gz \
->        --annotations='bcftools:tests/databases/annotations/current/hg19/cosmic70.vcf.gz+tests/databases/annotations/current/hg19/refGene.bed.gz' \
->        --output=/tmp/example.howard.vcf.gz
+> ``` bash
+> howard annotation \
+>    --input='tests/data/example.vcf.gz' \
+>    --annotations='bcftools:tests/databases/annotations/current/hg19/cosmic70.vcf.gz,
+>                             tests/databases/annotations/current/hg19/refGene.bed.gz' \
+>    --output='/tmp/example.howard.vcf.gz'
+> ```
 
 ##### Annovar annotation
 
@@ -1115,10 +1207,12 @@ using [HOWARD Parameters JSON](help.parameters.md) file.
 
 > Example: VCF annotation with Annovar refGene and cosmic70
 >
->     howard annotation \
->        --input=tests/data/example.vcf.gz \
->        --annotations='annovar:refGene:cosmic70' \
->        --output=/tmp/example.howard.tsv
+> ``` bash
+> howard annotation \
+>    --input='tests/data/example.vcf.gz' \
+>    --annotations='annovar:refGene:cosmic70' \
+>    --output='/tmp/example.howard.tsv'
+> ```
 
 ##### snpEff annotation
 
@@ -1128,10 +1222,12 @@ snpEff](help.parameters.md#snpeff) for more options.
 
 > Example: VCF annotation with snpEff
 >
->     howard annotation \
->        --input=tests/data/example.vcf.gz \
->        --annotations='snpeff' \
->        --output=/tmp/example.howard.tsv
+> ``` bash
+> howard annotation \
+>    --input='tests/data/example.vcf.gz' \
+>    --annotations='snpeff' \
+>    --output='/tmp/example.howard.tsv'
+> ```
 
 ##### Exomiser Annotation
 
@@ -1145,10 +1241,13 @@ Parameters JSON](help.parameters.md) file.
 > Example: VCF annotation with Exomiser (exome preset, list of HPO
 > terms, transcript as refseq and release 2109)
 >
->     howard annotation \
->        --input=tests/data/example.vcf.gz \
->        --annotations='exomiser:preset=exome:hpo=0001156+0001363+0011304+0010055:transcript_source=refseq:release=2109' \
->        --output=/tmp/example.howard.tsv
+> ``` bash
+> howard annotation \
+>    --input='tests/data/example.vcf.gz' \
+>    --annotations='exomiser:preset=exome:hpo=0001156+0001363+0011304+0010055:
+>                   transcript_source=refseq:release=2109' \
+>    --output='/tmp/example.howard.tsv'
+> ```
 
 ##### Splice Annotation
 
@@ -1160,10 +1259,12 @@ JSON](help.parameters.md) file.
 > Example: VCF annotation with Splice (split mode, spliceAI distance,
 > spliceAI mask)
 >
->     howard annotation \
->        --input=tests/data/example.vcf.gz \
->        --annotations='splice:split_mode=one:spliceai_distance=500:spliceai_mask=1' \
->        --output=/tmp/example.howard.tsv
+> ``` bash
+> howard annotation \
+>    --input='tests/data/example.vcf.gz' \
+>    --annotations='splice:split_mode=one:spliceai_distance=500:spliceai_mask=1' \
+>    --output='/tmp/example.howard.tsv'
+> ```
 
 #### Annotation combination
 
@@ -1173,10 +1274,16 @@ method and external tools. Simply use a list with a comma separator.
 > Example: VCF annotation with build-in Parquet method and external
 > tools (Annovar, snpEff and Exomiser)
 >
->     howard annotation \
->        --input=tests/data/example.vcf.gz \
->        --annotations='tests/databases/annotations/current/hg19/dbnsfp42a.parquet,bcftools:tests/databases/annotations/current/hg19/cosmic70.vcf.gz,annovar:refGene:cosmic70,snpeff,exomiser:preset=exome:hpo=0001156+0001363+0011304+0010055' \
->        --output=/tmp/example.howard.tsv
+> ``` bash
+> howard annotation \
+>    --input='tests/data/example.vcf.gz' \
+>    --annotations='tests/databases/annotations/current/hg19/dbnsfp42a.parquet,
+>                   bcftools:tests/databases/annotations/current/hg19/cosmic70.vcf.gz,
+>                   annovar:refGene:cosmic70,
+>                   snpeff,
+>                   exomiser:preset=exome:hpo=0001156+0001363+0011304+0010055' \
+>    --output='/tmp/example.howard.tsv'
+> ```
 
 See [HOWARD Help Annotation tool](help.md#annotation-tool) tool for more
 information.
@@ -1212,10 +1319,12 @@ parameter.
 
 > Example: calculation of the variant type with `vartype` keyword
 >
->     howard calculation \
->        --input=tests/data/example.full.vcf \
->        --calculations='vartype' \
->        --output=/tmp/example.calculation.tsv
+> ``` bash
+> howard calculation \
+>    --input='tests/data/example.full.vcf' \
+>    --calculations='vartype' \
+>    --output='/tmp/example.calculation.tsv'
+> ```
 
 ### Available calculations
 
@@ -1225,32 +1334,36 @@ with a homemade Calculation configuration JSON file, use the
 
 > Example: List of build-in calculation
 >
->     howard calculation \
->        --show_calculations
+> ``` bash
+> howard calculation \
+>    --show_calculations
+> ```
 >
->     #[INFO] Start
->     #[INFO] Available calculation operations:
->     #[INFO]    BARCODE: BARCODE as VaRank tool
->     #[INFO]    BARCODEFAMILY: BARCODEFAMILY as VaRank tool
->     #[INFO]    DP_STATS: Depth (DP) statistics
->     #[INFO]    FINDBYPIPELINE: Number of pipeline that identify the variant (for multi pipeline VCF)
->     #[INFO]    FINDBYSAMPLE: Number of sample that have a genotype for the variant (for multi sample VCF)
->     #[INFO]    GENOTYPECONCORDANCE: Concordance of genotype for multi caller VCF
->     #[INFO]    NOMEN: NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature field
->     #[INFO]    SNPEFF_ANN_EXPLODE: Explode snpEff annotations
->     #[INFO]    SNPEFF_ANN_EXPLODE_JSON: Explode snpEff annotations in JSON format
->     #[INFO]    SNPEFF_ANN_EXPLODE_UNIQUIFY: Explode snpEff annotations with uniquify values
->     #[INFO]    SNPEFF_HGVS: HGVS nomenclatures from snpEff annotation
->     #[INFO]    TRANSCRIPTS_ANN: Add transcripts annotations in structured format (field 'transcripts_ann')
->     #[INFO]    TRANSCRIPTS_ANNOTATIONS: Add transcripts annotations in JSON and/or structured format (see param JSON file)
->     #[INFO]    TRANSCRIPTS_JSON: Add transcripts annotations in JSON format (field 'transcripts_json')
->     #[INFO]    TRANSCRIPTS_PRIORITIZATION: Prioritize transcripts with a prioritization profile (using param.json)
->     #[INFO]    TRIO: Inheritance for a trio family
->     #[INFO]    VAF: Variant Allele Frequency (VAF) harmonization
->     #[INFO]    VAF_STATS: Variant Allele Frequency (VAF) statistics
->     #[INFO]    VARIANT_ID: Variant ID generated from variant position and type
->     #[INFO]    VARTYPE: Variant type (e.g. SNV, INDEL, MNV, BND...)
->     #[INFO] End
+> ``` text
+> #[INFO] Start
+> #[INFO] Available calculation operations:
+> #[INFO]    BARCODE: BARCODE as VaRank tool
+> #[INFO]    BARCODEFAMILY: BARCODEFAMILY as VaRank tool
+> #[INFO]    DP_STATS: Depth (DP) statistics
+> #[INFO]    FINDBYPIPELINE: Number of pipeline that identify the variant (for multi pipeline VCF)
+> #[INFO]    FINDBYSAMPLE: Number of sample that have a genotype for the variant (for multi sample VCF)
+> #[INFO]    GENOTYPECONCORDANCE: Concordance of genotype for multi caller VCF
+> #[INFO]    NOMEN: NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature field
+> #[INFO]    SNPEFF_ANN_EXPLODE: Explode snpEff annotations
+> #[INFO]    SNPEFF_ANN_EXPLODE_JSON: Explode snpEff annotations in JSON format
+> #[INFO]    SNPEFF_ANN_EXPLODE_UNIQUIFY: Explode snpEff annotations with uniquify values
+> #[INFO]    SNPEFF_HGVS: HGVS nomenclatures from snpEff annotation
+> #[INFO]    TRANSCRIPTS_ANN: Add transcripts annotations in structured format (field 'transcripts_ann')
+> #[INFO]    TRANSCRIPTS_ANNOTATIONS: Add transcripts annotations in JSON and/or structured format (see param JSON file)
+> #[INFO]    TRANSCRIPTS_JSON: Add transcripts annotations in JSON format (field 'transcripts_json')
+> #[INFO]    TRANSCRIPTS_PRIORITIZATION: Prioritize transcripts with a prioritization profile (using param.json)
+> #[INFO]    TRIO: Inheritance for a trio family
+> #[INFO]    VAF: Variant Allele Frequency (VAF) harmonization
+> #[INFO]    VAF_STATS: Variant Allele Frequency (VAF) statistics
+> #[INFO]    VARIANT_ID: Variant ID generated from variant position and type
+> #[INFO]    VARTYPE: Variant type (e.g. SNV, INDEL, MNV, BND...)
+> #[INFO] End
+> ```
 
 ### Calculation configuration JSON file
 
@@ -1279,7 +1392,7 @@ a existing Python function and parameters (for 'python' type)
 >     "available": true,
 >     "output_column_name": "VARTYPE",
 >     "output_column_type": "String",
->     "output_column_description": "Variant type: SNV if X>Y, MOSAIC if X>Y,Z or X,Y>Z, INDEL if XY>Z or X>YZ",
+>     "output_column_description": "Variant type: SNV, MOSAIC or INDEL",
 >     "operation_query": [
 >       "CASE",
 >       "WHEN \"SVTYPE\" NOT NULL THEN \"SVTYPE\"",
@@ -1321,32 +1434,36 @@ X\>Y, MOSAIC if X\>Y,Z or X,Y\>Z, INDEL if XY\>Z or X\>YZ.
 > Example: Identify variant types and generate a table of variant type
 > count
 >
->     howard calculation \
->        --input=tests/data/example.full.vcf \
->        --calculations='vartype' \
->        --output=/tmp/example.calculation.tsv
+> ``` bash
+> howard calculation \
+>    --input='tests/data/example.full.vcf' \
+>    --calculations='vartype' \
+>    --output='/tmp/example.calculation.tsv'
 >
->     howard query \
->        --input=/tmp/example.calculation.tsv \
->        --explode_infos \
->        --query='SELECT
->                    "VARTYPE" AS 'VariantType',
->                    count(*) AS 'Count'
->                 FROM variants
->                 GROUP BY "VARTYPE"
->                 ORDER BY count DESC'
+> howard query \
+>    --input='/tmp/example.calculation.tsv' \
+>    --explode_infos \
+>    --query='SELECT
+>                "VARTYPE" AS 'VariantType',
+>                count(*) AS 'Count'
+>             FROM variants
+>             GROUP BY "VARTYPE"
+>             ORDER BY count DESC'
+> ```
 >
->       VariantType  Count
->     0         BND      7
->     1         DUP      6
->     2         INS      5
->     3         SNV      4
->     4         CNV      3
->     5         DEL      3
->     6         INV      3
->     7      MOSAIC      2
->     8       INDEL      2
->     9         MNV      1
+> ``` ts
+>   VariantType  Count
+> 0         BND      7
+> 1         DUP      6
+> 2         INS      5
+> 3         SNV      4
+> 4         CNV      3
+> 5         DEL      3
+> 6         INV      3
+> 7      MOSAIC      2
+> 8       INDEL      2
+> 9         MNV      1
+> ```
 
 #### HGVS and NOMEN from snpEff
 
@@ -1363,22 +1480,26 @@ transcripts
 > Example: Calculate NOMEN by extracting hgvs from snpEff annotation and
 > identifying transcripts from a list
 >
->     howard calculation \
->        --input=tests/data/example.ann.vcf.gz \
->        --calculations='snpeff_hgvs,NOMEN' \
->        --hgvs_field='snpeff_hgvs' \
->        --transcripts=tests/data/transcripts.tsv \
->        --output=/tmp/example.NOMEN.vcf.gz
+> ``` bash
+> howard calculation \
+>    --input='tests/data/example.ann.vcf.gz' \
+>    --calculations='snpeff_hgvs,NOMEN' \
+>    --hgvs_field='snpeff_hgvs' \
+>    --transcripts='tests/data/transcripts.tsv' \
+>    --output='/tmp/example.NOMEN.vcf.gz'
 >
->     howard query \
->        --input=/tmp/example.NOMEN.vcf.gz \
->        --explode_infos \
->        --query="SELECT GNOMEN, NOMEN, snpeff_hgvs \
->                 FROM variants \
->                 WHERE GNOMEN='EGFR'"
+> howard query \
+>    --input='/tmp/example.NOMEN.vcf.gz' \
+>    --explode_infos \
+>    --query="SELECT GNOMEN, NOMEN \
+>             FROM variants \
+>             WHERE GNOMEN = 'EGFR'"
+> ```
 >
->       GNOMEN  NOMEN                                           snpeff_hgvs
->     0   EGFR  EGFR:NM_001346897:exon19:c.2226G>A:p.Gln742Gln  EGFR:NM_005228.5:exon20:c.2361G>A:p.Gln787Gln,...
+> ``` ts
+>   GNOMEN  NOMEN
+> 0   EGFR  EGFR:NM_001346897:exon19:c.2226G>A:p.Gln742Gln
+> ```
 
 ## Prioritization
 
@@ -1423,35 +1544,35 @@ information about passing filter criteria
 > Example: Prioritize variants from criteria on INFO annotations for
 > profiles 'default' and 'GERMLINE' (from 'prioritization_profiles.json'
 > profiles configuration), export prioritization tags, and query
-> variants passing filters
+> variants by ordering with flags and scores
 >
->     howard prioritization \
->        --input=tests/data/example.vcf.gz \
->        --prioritizations='default,GERMLINE' \
->        --prioritization_config=config/prioritization_profiles.json \
->        --default_profile='default' \
->        --pzfields='PZFlag,PZScore,PZComment,PZTags,PZInfos' \
->        --prioritization_score_mode='HOWARD' \
->        --output=/tmp/example.prioritized.vcf.gz
+> ``` bash
+> howard prioritization \
+>    --input='tests/data/example.vcf.gz' \
+>    --prioritizations='default,GERMLINE' \
+>    --prioritization_config='tests/data/prioritization_profiles.json' \
+>    --default_profile='default' \
+>    --pzfields='PZFlag,PZScore,PZClass,PZComment,PZTags,PZInfos' \
+>    --prioritization_score_mode='HOWARD' \
+>    --output='/tmp/example.prioritized.vcf.gz'
 >
->     howard query \
->        --input=/tmp/example.prioritized.vcf.gz \
->        --explode_infos \
->        --query="SELECT \"#CHROM\", POS, ALT, REF, \"PZFlag\", \"PZScore\", \"PZTags\", \"DP\", \"CLNSIG\" \
->                 FROM variants \
->                 WHERE \"PZScore\" > 0 \
->                   AND \"PZFlag\" == 'PASS' \
->                 ORDER BY \"PZScore\" DESC"
+> howard query \
+>    --input='/tmp/example.prioritized.vcf.gz' \
+>    --explode_infos \
+>    --query="SELECT \"#CHROM\", POS, ALT, REF, PZFlag, PZScore, DP, CLNSIG \
+>             FROM variants \
+>             ORDER BY PZFlag DESC, PZScore DESC"
+> ```
 >
 > ``` ts
->   #CHROM       POS ALT REF    PZFlag  PZScore                                             PZTags     DP          CLNSIG
-> 0   chr1     28736   C   A      PASS       15  PZFlag#PASS|PZScore#15|PZComment#Described on ...    NaN      pathogenic
-> 1   chr1     35144   C   A  FILTERED     -100  PZFlag#FILTERED|PZScore#-100|PZComment#Describ...    NaN  non-pathogenic
-> 2   chr1     69101   G   A      PASS        5  PZFlag#PASS|PZScore#5|PZComment#DP higher than...   50.0            None
-> 3   chr1    768251   G   A      PASS        0          PZFlag#PASS|PZScore#0|PZComment#|PZInfos#    NaN            None
-> 4   chr1    768252   G   A      PASS        0          PZFlag#PASS|PZScore#0|PZComment#|PZInfos#    NaN            None
-> 5   chr1    768253   G   A      PASS        0          PZFlag#PASS|PZScore#0|PZComment#|PZInfos#    NaN            None
-> 6   chr7  55249063   A   G      PASS        5  PZFlag#PASS|PZScore#5|PZComment#DP higher than...  125.0            None
+>   #CHROM       POS ALT REF    PZFlag  PZScore     DP          CLNSIG
+> 0   chr1     69101   G   A      PASS      105   50.0            None
+> 1   chr7  55249063   A   G      PASS      105  125.0            None
+> 2   chr1     28736   C   A      PASS       15    NaN      pathogenic
+> 3   chr1    768251   G   A      PASS        0    NaN            None
+> 4   chr1    768252   G   A      PASS        0    NaN            None
+> 5   chr1    768253   G   A      PASS        0    NaN            None
+> 6   chr1     35144   C   A  FILTERED      -85    NaN  non-pathogenic
 > ```
 
 ### Prioritization query
@@ -1461,32 +1582,36 @@ fields and order by fields.
 
 > Example: Query variants using prioritization fields
 >
->     howard query \
->        --input=/tmp/example.prioritized.vcf.gz \
->        --explode_infos \
->        --query="SELECT \"#CHROM\", POS, ALT, REF, \"PZFlag\", \"PZScore\", \"PZTags\", \"DP\", \"CLNSIG\" \
->                 FROM variants \
->                 WHERE \"PZScore\" > 0 \
->                   AND \"PZFlag\" == 'PASS' \
->                 ORDER BY \"PZScore\" DESC"
+> ``` bash
+> howard query \
+>    --input='/tmp/example.prioritized.vcf.gz' \
+>    --explode_infos \
+>    --query="SELECT \"#CHROM\", POS, ALT, REF, PZFlag, PZScore, DP, CLNSIG \
+>             FROM variants \
+>             WHERE PZScore > 0 \
+>               AND PZFlag == 'PASS' \
+>             ORDER BY PZFlag DESC, PZScore DESC"
+> ```
 >
 > ``` ts
->   #CHROM       POS ALT REF PZFlag  PZScore                                             PZTags     DP      CLNSIG
-> 0   chr1     28736   C   A   PASS       15  PZFlag#PASS|PZScore#15|PZComment#Described on ...    NaN  pathogenic
-> 1   chr1     69101   G   A   PASS        5  PZFlag#PASS|PZScore#5|PZComment#DP higher than 50   50.0        None
-> 2   chr7  55249063   A   G   PASS        5  PZFlag#PASS|PZScore#5|PZComment#DP higher than 50  125.0        None
+>   #CHROM       POS ALT REF PZFlag  PZScore     DP      CLNSIG
+> 0   chr1     69101   G   A   PASS      105   50.0        None
+> 1   chr7  55249063   A   G   PASS      105  125.0        None
+> 2   chr1     28736   C   A   PASS       15    NaN  pathogenic
 > ```
 
 > Example: Query variants with different prioritization flag between
 > profiles
 >
->     howard query \
->        --input=/tmp/example.prioritized.vcf.gz \
->        --explode_infos \
->        --query="SELECT \"#CHROM\", POS, ALT, REF, \"PZFlag_default\", \"PZFlag_GERMLINE\" \
->                 FROM variants \
->                 WHERE \"PZFlag_default\" != \"PZFlag_GERMLINE\" \
->                 ORDER BY \"PZScore\" DESC"
+> ``` bash
+> howard query \
+>    --input='/tmp/example.prioritized.vcf.gz' \
+>    --explode_infos \
+>    --query="SELECT \"#CHROM\", POS, ALT, REF, PZFlag_default, PZFlag_GERMLINE \
+>             FROM variants \
+>             WHERE PZFlag_default != PZFlag_GERMLINE \
+>             ORDER BY PZFlag DESC, PZScore DESC"
+> ```
 >
 > ``` ts
 >   #CHROM    POS ALT REF PZFlag_default PZFlag_GERMLINE
@@ -1496,19 +1621,21 @@ fields and order by fields.
 > Example: Showing propritization comments of variants, with flags and
 > scores
 >
->     howard query \
->        --input=/tmp/example.prioritized.vcf.gz \
->        --explode_infos \
->        --query="SELECT \"#CHROM\", POS, ALT, REF, \"PZComment\", \"PZFlag\", \"PZScore\" \
->                 FROM variants WHERE \"PZComment\" IS NOT NULL \
->                 ORDER BY \"PZScore\" DESC"
+> ``` bash
+> howard query \
+>    --input='/tmp/example.prioritized.vcf.gz' \
+>    --explode_infos \
+>    --query="SELECT \"#CHROM\", POS, ALT, REF, PZComment, PZFlag \
+>             FROM variants WHERE PZComment IS NOT NULL \
+>             ORDER BY PZFlag DESC, PZScore DESC"
+> ```
 >
 > ``` ts
->   #CHROM       POS ALT REF                                        PZComment    PZFlag  PZScore
-> 0   chr1     28736   C   A      Described on CLINVAR database as pathogenic      PASS       15
-> 1   chr1     69101   G   A                                DP higher than 50      PASS        5
-> 2   chr7  55249063   A   G                                DP higher than 50      PASS        5
-> 3   chr1     35144   C   A  Described on CLINVAR database as non-pathogenic  FILTERED     -100
+>   #CHROM       POS ALT REF                                          PZComment    PZFlag
+> 0   chr1     69101   G   A                    DP, Variant probably pathogenic      PASS
+> 1   chr7  55249063   A   G                    DP, Variant probably pathogenic      PASS
+> 2   chr1     28736   C   A                      Described on CLINVAR database      PASS
+> 3   chr1     35144   C   A  Described on CLINVAR database, Described on CL...  FILTERED
 > ```
 
 Prioritization profiles are defined in a JSON configuration file. Each
@@ -1517,8 +1644,8 @@ filters (type of comparison and threshold, with related score, flag and
 comment).
 
 > Example: Profiles with 2 filters on annotation field 'DP' (threashold
-> 50) and 2 filters on annotation field 'CLNSIG' ("pathogenic" or
-> "non-pathogenic")
+> 50), 2 filters on annotation field 'CLNSIG' ("pathogenic" or
+> "non-pathogenic"), and 1 filter combining 'DP' and 'CLNSIG' (with SQL)
 >
 > ``` json
 > {
@@ -1562,7 +1689,16 @@ comment).
 >                     "Described on CLINVAR database as non-pathogenic"
 >                 ]
 >             }
->         ]
+>         ],
+>         "CLNSIG and DP filter": [
+>             {
+>               "sql": " DP >= 50 OR regexp_matches(CLNSIG, 'Pathogenic') ",
+>               "fields": ["DP", "CLNSIG"],
+>               "score": 100,
+>               "flag": "PASS",
+>               "comment": ["Variant probably pathogenic"]
+>             }
+>           ]
 >     }
 > }
 > ```
@@ -1614,39 +1750,56 @@ more options.
 
 > Example: HGVS annotation with quick options
 >
->     howard hgvs \
->        --input=tests/data/example.vcf.gz \
->        --output=/tmp/example.process.tsv \
->        --hgvs=full_format,use_exon
+> ``` bash
+> howard hgvs \
+>    --input='tests/data/example.vcf.gz' \
+>    --output='/tmp/example.process.tsv' \
+>    --hgvs='full_format,use_exon'
 >
->     howard query \
->        --input=/tmp/example.process.tsv \
->        --explode_infos \
->        --query="SELECT hgvs \
->                 FROM variants "
+> howard query \
+>    --input='/tmp/example.process.tsv' \
+>    --explode_infos \
+>    --query="SELECT hgvs \
+>             FROM variants "
+> ```
+
+> ``` ts
+>                                                 hgvs
+> 0                     WASH7P:NR_024540.1:n.50+585T>G
+> 1     FAM138A:NR_026818.1:exon3:n.597T>G:p.Tyr199Asp
+> 2  OR4F5:NM_001005484.2:NP_001005484.2:exon3:c.74...
+> 3  LINC01128:NR_047526.1:n.287+3767A>G,LINC01128:...
+> 4  LINC01128:NR_047526.1:n.287+3768A>G,LINC01128:...
+> 5  LINC01128:NR_047526.1:n.287+3769A>G,LINC01128:...
+> 6  EGFR:NM_001346897.2:NP_001333826.1:exon19:c.22...
+> ```
 
 > Example: HGVS annotation with separated options
 >
->     howard hgvs \
->        --input=tests/data/example.vcf.gz \
->        --output=/tmp/example.process.tsv \
->        --full_format \
->        --use_exon
+> ``` bash
+> howard hgvs \
+>    --input='tests/data/example.vcf.gz' \
+>    --output='/tmp/example.process.tsv' \
+>    --full_format \
+>    --use_exon
 >
->     howard query \
->        --input=/tmp/example.process.tsv \
->        --explode_infos \
->        --query="SELECT hgvs \
->                 FROM variants "
->
->                                                     hgvs
->     0                     WASH7P:NR_024540.1:n.50+585T>G
->     1     FAM138A:NR_026818.1:exon3:n.597T>G:p.Tyr199Asp
->     2  OR4F5:NM_001005484.2:NP_001005484.2:exon3:c.74...
->     3  LINC01128:NR_047526.1:n.287+3767A>G,LINC01128:...
->     4  LINC01128:NR_047526.1:n.287+3768A>G,LINC01128:...
->     5  LINC01128:NR_047526.1:n.287+3769A>G,LINC01128:...
->     6  EGFR:NM_001346897.2:NP_001333826.1:exon19:c.22...
+> howard query \
+>    --input='/tmp/example.process.tsv' \
+>    --explode_infos \
+>    --query="SELECT hgvs \
+>             FROM variants "
+> ```
+
+> ``` ts
+>                                                 hgvs
+> 0                     WASH7P:NR_024540.1:n.50+585T>G
+> 1     FAM138A:NR_026818.1:exon3:n.597T>G:p.Tyr199Asp
+> 2  OR4F5:NM_001005484.2:NP_001005484.2:exon3:c.74...
+> 3  LINC01128:NR_047526.1:n.287+3767A>G,LINC01128:...
+> 4  LINC01128:NR_047526.1:n.287+3768A>G,LINC01128:...
+> 5  LINC01128:NR_047526.1:n.287+3769A>G,LINC01128:...
+> 6  EGFR:NM_001346897.2:NP_001333826.1:exon19:c.22...
+> ```
 
 ## Process
 
@@ -1677,49 +1830,75 @@ annotations.
 
 > Example: Process command with options (HGVS, annotation, calculation)
 >
->     howard process \
->        --input=tests/data/example.vcf.gz \
->        --output=/tmp/example.process.tsv \
->        --hgvs=full_format,use_exon \
->        --annotations='tests/databases/annotations/current/hg19/avsnp150.parquet,tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet' \
->        --calculations="NOMEN" \
->        --explode_infos \
->        --query="SELECT NOMEN, REVEL_score, SIFT_score, AF AS 'gnomad_AF', ClinPred_score, ClinPred_pred \
+> ``` bash
+> howard process \
+>    --input='tests/data/example.vcf.gz' \
+>    --output='/tmp/example.process.tsv' \
+>    --hgvs='full_format,use_exon' \
+>    --annotations='tests/databases/annotations/current/hg19/avsnp150.parquet,
+>                   tests/databases/annotations/current/hg19/dbnsfp42a.parquet,
+>                   tests/databases/annotations/current/hg19/gnomad211_genome.parquet' \
+>    --calculations='NOMEN' \
+>    --prioritizations='default' \
+>    --prioritization_config='tests/data/prioritization_profiles.json' \
+>    --explode_infos \
+>    --query="SELECT NOMEN,
+>                    PZFlag,
+>                    avsnp150 AS 'snpID',
+>                    SIFT_score AS 'SIFT',
+>                    AF AS 'gnomAD',
+>                    ClinPred_pred AS 'ClinPred' \
 >                 FROM variants"
->
->                                                 NOMEN REVEL_score SIFT_score gnomad_AF ClinPred_score ClinPred_pred
->     0                    WASH7P:NR_024540:n.50+585T>G        None       None      None           None          None
->     1    FAM138A:NR_026818:exon3:n.597T>G:p.Tyr199Asp        None       None      None           None          None
->     2     OR4F5:NP_001005484:exon3:c.74A>G:p.Glu25Gly       0.076      0.005      None          0.688             D
->     3               LINC01128:NR_047526:n.287+3767A>G        None       None      None           None          None
->     4               LINC01128:NR_047526:n.287+3768A>G        None       None      None           None          None
->     5               LINC01128:NR_047526:n.287+3769A>G        None       None      None           None          None
->     6  EGFR:NM_001346897:exon19:c.2226G>A:p.Gln742Gln        None       None    0.5029           None          None
+> ```
+
+> ``` ts
+>                                             NOMEN    PZFlag      snpID   SIFT  gnomAD ClinPred
+> 0                    WASH7P:NR_024540:n.50+585T>G      PASS       None   None    None     None
+> 1    FAM138A:NR_026818:exon3:n.597T>G:p.Tyr199Asp  FILTERED       None   None    None     None
+> 2     OR4F5:NM_001005484:exon3:c.74A>G:p.Glu25Gly      PASS       None  0.005    None        D
+> 3               LINC01128:NR_047526:n.287+3767A>G      PASS       None   None    None     None
+> 4               LINC01128:NR_047526:n.287+3768A>G      PASS       None   None    None     None
+> 5               LINC01128:NR_047526:n.287+3769A>G      PASS       None   None    None     None
+> 6  EGFR:NM_001346897:exon19:c.2226G>A:p.Gln742Gln      PASS  rs1050171   None  0.5029     None
+> ```
 
 > Example: Full process command with options (HGVS, annotation parquet,
-> snpEff and Annovar, calculation and prioritization)
+> annotation bcftools, snpEff and Annovar, calculation and
+> prioritization, and query)
 >
->     howard process \
->        --input=tests/data/example.vcf.gz \
->        --output=/tmp/example.process.tsv \
->        --hgvs=full_format,use_exon \
->        --annotations="tests/databases/annotations/current/hg19/avsnp150.parquet,tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet,bcftools:tests/databases/annotations/current/hg19/cosmic70.vcf.gz,snpeff,annovar:refGene" \
->        --calculations="vartype,snpeff_hgvs,VAF,NOMEN" \
->        --prioritizations="default,GERMLINE" \
->        --prioritization_config="config/prioritization_profiles.json" \
->        --explode_infos \
->        --query="SELECT NOMEN, PZFlag, PZScore, snpeff_hgvs \
->                 FROM variants \
->                 ORDER BY PZScore DESC"
->
->                                                 NOMEN    PZFlag  PZScore                                        snpeff_hgvs
->     0                    WASH7P:NR_024540:n.50+585T>G      PASS       15  MIR1302-2:NR_036051.1:n.-1630A>C,MIR1302-9:NR_...
->     1     OR4F5:NP_001005484:exon3:c.74A>G:p.Glu25Gly      PASS        5       OR4F5:NM_001005484.1:exon1:c.11A>G:p.Glu4Gly
->     2  EGFR:NM_001346897:exon19:c.2226G>A:p.Gln742Gln      PASS        5  EGFR:NM_005228.5:exon20:c.2361G>A:p.Gln787Gln,...
->     3               LINC01128:NR_047526:n.287+3767A>G      PASS        0  LINC01128:NR_047519.1:exon2:n.287+3767A>G,LINC...
->     4               LINC01128:NR_047526:n.287+3768A>G      PASS        0  LINC01128:NR_047519.1:exon2:n.287+3768A>G,LINC...
->     5               LINC01128:NR_047526:n.287+3769A>G      PASS        0  LINC01128:NR_047519.1:exon2:n.287+3769A>G,LINC...
->     6    FAM138A:NR_026818:exon3:n.597T>G:p.Tyr199Asp  FILTERED     -100  MIR1302-2:NR_036051.1:n.*4641A>C,MIR1302-9:NR_...
+> ``` bash
+> howard process \
+>    --input='tests/data/example.vcf.gz' \
+>    --output='/tmp/example.process.tsv' \
+>    --hgvs='full_format,use_exon' \
+>    --annotations='tests/databases/annotations/current/hg19/avsnp150.parquet,
+>                   tests/databases/annotations/current/hg19/dbnsfp42a.parquet,
+>                   tests/databases/annotations/current/hg19/gnomad211_genome.parquet,
+>                   bcftools:tests/databases/annotations/current/hg19/cosmic70.vcf.gz,
+>                   snpeff,
+>                   annovar:refGene' \
+>    --calculations='vartype,snpeff_hgvs,VAF,NOMEN' \
+>    --prioritizations='default' \
+>    --prioritization_config='config/prioritization_profiles.json' \
+>    --explode_infos \
+>    --query="SELECT string_split(snpeff_hgvs, ',')[1] AS 'HGVS',
+>                    PZScore,
+>                    Func_refGene AS 'Location',
+>                    string_split(string_split(cosmic70, ',')[2], '=')[2] AS 'COSMIC' \
+>             FROM variants \
+>             ORDER BY PZScore DESC"
+> ```
+
+> ``` ts
+>                                             HGVS  PZScore        Location              COSMIC
+> 0  EGFR:NM_005228.5:exon20:c.2361G>A:p.Gln787Gln      105          exonic  1(large_intestine)
+> 1               MIR1302-2:NR_036051.1:n.-1630A>C       15  ncRNA_intronic                None
+> 2   OR4F5:NM_001005484.1:exon1:c.11A>G:p.Glu4Gly        5          exonic                None
+> 3      LINC01128:NR_047519.1:exon2:n.287+3767A>G        0  ncRNA_intronic                None
+> 4      LINC01128:NR_047519.1:exon2:n.287+3768A>G        0  ncRNA_intronic                None
+> 5      LINC01128:NR_047519.1:exon2:n.287+3769A>G        0  ncRNA_intronic                None
+> 6               MIR1302-2:NR_036051.1:n.*4641A>C     -100    ncRNA_exonic                None
+> ```
 
 ### Process with parameters JSON file
 
@@ -1733,59 +1912,70 @@ file can be combine with options.
 > Example: Full process command with [Parameters JSON file
 > example](#parameters) and a query as option
 >
->     howard process \
->        --input=tests/data/example.vcf.gz \
->        --output=/tmp/example.process.tsv \
->        --param=config/param.json \
->        --explode_infos \
->        --query="SELECT NOMEN, PZFlag, PZScore, PZComment \
->                 FROM variants \
->                 ORDER BY PZScore DESC"
->
->                                                 NOMEN    PZFlag  PZScore                                        PZComment
->     0              WASH7P:NR_024540:exon1:n.50+585T>G      PASS       15.0      Described on CLINVAR database as pathogenic
->     1      OR4F5:NM_001005484:exon1:c.11A>G:p.Glu4Gly      PASS        5.0                                DP higher than 50
->     2  EGFR:NM_001346897:exon19:c.2226G>A:p.Gln742Gln      PASS        5.0                                DP higher than 50
->     3         LINC01128:NR_047519:exon2:n.287+3767A>G      PASS        0.0                                              NaN
->     4         LINC01128:NR_047519:exon2:n.287+3768A>G      PASS        0.0                                              NaN
->     5         LINC01128:NR_047519:exon2:n.287+3769A>G      PASS        0.0                                              NaN
->     6                  MIR1302-9:NR_036266:n.*4641A>C  FILTERED        NaN  Described on CLINVAR database as non-pathogenic
->
->     column -t  /tmp/example.process.tsv 
->
->     NOMEN                                           PZFlag    PZScore    PZComment
->     WASH7P:NR_024540:exon1:n.50+585T>G              PASS      15         Described  on       CLINVAR   database  as              pathogenic
->     OR4F5:NM_001005484:exon1:c.11A>G:p.Glu4Gly      PASS      5          DP         higher   than      50
->     EGFR:NM_001346897:exon19:c.2226G>A:p.Gln742Gln  PASS      5          DP         higher   than      50
->     LINC01128:NR_047519:exon2:n.287+3767A>G         PASS      0
->     LINC01128:NR_047519:exon2:n.287+3768A>G         PASS      0
->     LINC01128:NR_047519:exon2:n.287+3769A>G         PASS      0
->     MIR1302-9:NR_036266:n.*4641A>C                  FILTERED  Described  on         CLINVAR  database  as        non-pathogenic
+> ``` bash
+> howard process \
+>    --input='tests/data/example.vcf.gz' \
+>    --output='/tmp/example.process.tsv' \
+>    --param='config/param.json' \
+>    --explode_infos \
+>    --query="SELECT NOMEN, PZComment \
+>             FROM variants \
+>             ORDER BY PZScore DESC"
+> ```
+
+> ``` ts
+>                                             NOMEN                                          PZComment
+> 0  EGFR:NM_001346897:exon19:c.2226G>A:p.Gln742Gln  DP higher than 50, Described on CLINVAR databa...
+> 1              WASH7P:NR_024540:exon1:n.50+585T>G        Described on CLINVAR database as pathogenic
+> 2      OR4F5:NM_001005484:exon1:c.11A>G:p.Glu4Gly                                  DP higher than 50
+> 3         LINC01128:NR_047519:exon2:n.287+3767A>G                                               None
+> 4         LINC01128:NR_047519:exon2:n.287+3768A>G                                               None
+> 5         LINC01128:NR_047519:exon2:n.287+3769A>G                                               None
+> 6                  MIR1302-9:NR_036266:n.*4641A>C    Described on CLINVAR database as non-pathogenic
+> ```
+
+> ``` bash
+> cat '/tmp/example.process.tsv' | cut -c 1-80 
+> ```
+
+> ``` text
+> NOMEN   PZComment
+> EGFR:NM_001346897:exon19:c.2226G>A:p.Gln742Gln  DP higher than 50, Described on C
+> WASH7P:NR_024540:exon1:n.50+585T>G      Described on CLINVAR database as pathogenic
+> OR4F5:NM_001005484:exon1:c.11A>G:p.Glu4Gly      DP higher than 50
+> LINC01128:NR_047519:exon2:n.287+3767A>G
+> LINC01128:NR_047519:exon2:n.287+3768A>G
+> LINC01128:NR_047519:exon2:n.287+3769A>G
+> MIR1302-9:NR_036266:n.*4641A>C  Described on CLINVAR database as non-pathogenic
+> ```
 
 > Example: Full process command with [Parameters JSON file
-> example](#parameters) and switch off query and generate a VCF file
+> example](#parameters) and switch off query (configured in param JSON
+> file) and generate a VCF file
 >
->     howard process \
->        --input=tests/data/example.vcf.gz \
->        --output=/tmp/example.process.vcf \
->        --param=config/param.json \
->        --explode_infos \
->        --query=""
+> ``` bash
+> howard process \
+>    --input='tests/data/example.vcf.gz' \
+>    --output='/tmp/example.process.vcf' \
+>    --param='config/param.json' \
+>    --explode_infos \
+>    --query=""
 >
->     howard query \
->        --input=/tmp/example.process.vcf \
->        --explode_infos \
->        --query="SELECT \"#CHROM\", POS, ALT, REF, NOMEN, PZComment, PZFlag, PZScore \
->                 FROM variants \
->                 ORDER BY PZScore DESC"
->
+> howard query \
+>    --input='/tmp/example.process.vcf' \
+>    --explode_infos \
+>    --query="SELECT \"#CHROM\", POS, ALT, REF, NOMEN, PZFlag, PZScore \
+>             FROM variants \
+>             ORDER BY PZScore DESC"
+> ```
+
 > ``` ts
->   #CHROM       POS ALT REF                                           NOMEN                                        PZComment    PZFlag  PZScore
-> 0   chr1     28736   C   A              WASH7P:NR_024540:exon1:n.50+585T>G      Described on CLINVAR database as pathogenic      PASS     15.0
-> 1   chr1     69101   G   A      OR4F5:NM_001005484:exon1:c.11A>G:p.Glu4Gly                                DP higher than 50      PASS      5.0
-> 2   chr7  55249063   A   G  EGFR:NM_001346897:exon19:c.2226G>A:p.Gln742Gln                                DP higher than 50      PASS      5.0
-> 3   chr1    768251   G   A         LINC01128:NR_047519:exon2:n.287+3767A>G                                             None      PASS      0.0
-> 4   chr1    768252   G   A         LINC01128:NR_047519:exon2:n.287+3768A>G                                             None      PASS      0.0
-> 5   chr1    768253   G   A         LINC01128:NR_047519:exon2:n.287+3769A>G                                             None      PASS      0.0
-> 6   chr1     35144   C   A                  MIR1302-9:NR_036266:n.*4641A>C  Described on CLINVAR database as non-pathogenic  FILTERED      NaN
+>   #CHROM       POS ALT REF                                           NOMEN    PZFlag  PZScore
+> 0   chr7  55249063   A   G  EGFR:NM_001346897:exon19:c.2226G>A:p.Gln742Gln      PASS    100.0
+> 1   chr1     28736   C   A              WASH7P:NR_024540:exon1:n.50+585T>G      PASS     15.0
+> 2   chr1     69101   G   A      OR4F5:NM_001005484:exon1:c.11A>G:p.Glu4Gly      PASS      5.0
+> 3   chr1    768251   G   A         LINC01128:NR_047519:exon2:n.287+3767A>G      PASS      0.0
+> 4   chr1    768252   G   A         LINC01128:NR_047519:exon2:n.287+3768A>G      PASS      0.0
+> 5   chr1    768253   G   A         LINC01128:NR_047519:exon2:n.287+3769A>G      PASS      0.0
+> 6   chr1     35144   C   A                  MIR1302-9:NR_036266:n.*4641A>C  FILTERED      NaN
 > ```

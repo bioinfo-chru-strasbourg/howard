@@ -66,9 +66,7 @@ Examples:
 >       "bcftools": [
 >         "~/howard/databases/annotations/current"
 >       ],
->       "annovar": [
->         "~/howard/databases/annovar/current"
->       ],
+>       "annovar": "~/howard/databases/annovar/current",
 >       "snpeff": "~/howard/databases/snpeff/current",
 >       "varank": "~/howard/databases/varank/current"
 >     }
@@ -259,7 +257,7 @@ Examples:
 
 ### annovar
 
-Annotation databases folders for Annovar annotation.
+Annotation databases folder for Annovar annotation.
 
 Format: `a list of folder path (without assembly)`
 
@@ -271,21 +269,7 @@ Examples:
 
 > ``` json
 > {
->    "annovar": [
->       "~/howard/databases/annovar/current/"
->    ]
-> }
-> ```
-
-> Combinason of 2 folders with multiple Annovar TXT files for Annovar
-> annotation
-
-> ``` json
-> {
->    "annovar": [
->       "~/howard/databases/annovar/current/",
->       "~/howard/databases/annovar/homemade/"
->    ]
+>    "annovar": "~/howard/databases/annovar/current/"
 > }
 > ```
 
