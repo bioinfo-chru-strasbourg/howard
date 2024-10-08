@@ -795,9 +795,13 @@ reading.
 > tree '/tmp/example.partitioned.parquet'
 > ```
 >
-> /tmp/example.partitioned.parquet \|-- \#CHROM=chr1 \|   \|--
-> fe61bf182de640f8840270a527aa1582-0.parquet \|-- \#CHROM=chr7 \|--
-> fe61bf182de640f8840270a527aa1582-0.parquet \`\`\`
+> ``` text
+> /tmp/example.partitioned.parquet
+> |-- \#CHROM=chr1
+> |   |-- fe61bf182de640f8840270a527aa1582-0.parquet
+> |-- #CHROM=chr7
+>     |-- fe61bf182de640f8840270a527aa1582-0.parquet
+> ```
 
 > Example: Convert VCF into partitioned TSV (compressed) and show tree
 > structure (files are named with `.csv` extension, but are
@@ -811,14 +815,16 @@ reading.
 >
 > tree '/tmp/example.partitioned.tsv.gz'
 > ```
->
->     /tmp/example.partitioned.tsv
->     |-- #CHROM=chr1
->     |   |-- REF=A
->     |       |-- data_0.csv
->     |-- #CHROM=chr7
->         |-- REF=G
->             |-- data_0.csv
+
+> ``` text
+> /tmp/example.partitioned.tsv
+> |-- #CHROM=chr1
+> |   |-- REF=A
+> |       |-- data_0.csv
+> |-- #CHROM=chr7
+>     |-- REF=G
+>         |-- data_0.csv
+> ```
 
 ### Explode INFO tags
 
