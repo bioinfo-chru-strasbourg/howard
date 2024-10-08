@@ -531,7 +531,7 @@
       ],
       "release": {
         "__help": [
-          "Release of Exomiser database. This option replace the release variable in 'application.properties' file (see 'exomiser_application_properties' option). The release will be downloaded if it is not available locally. "
+          "Release of Exomiser database. This option replace the 'release' variable in 'application.properties' file (see 'exomiser_application_properties' option). The release will be downloaded if it is not available locally. "
         ],
         "__examples_code": [
           "# Annotation with release '2109' of Exomiser database.",
@@ -540,7 +540,7 @@
       },
       "transcript_source": {
         "__help": [
-          "Transcription source of Exomiser. This option replace the release variable in 'application.properties' file (see 'exomiser_application_properties' option). The release will be downloaded if it is not available locally. "
+          "Transcription source of Exomiser. This option replace the 'transcript_source' variable in 'application.properties' file (see 'exomiser_application_properties' option). The release will be downloaded if it is not available locally. "
         ],
         "__examples_code": [
           "# Annotation with transcription source 'refseq' of Exomiser.",
@@ -549,7 +549,7 @@
       },
       "hpo": {
         "__help": [
-          "List of HPO for Exomiser. This option replace the release variable in 'application.properties' file (see 'exomiser_application_properties' option). The release will be downloaded if it is not available locally. "
+          "List of HPO for Exomiser. This option replace the 'hpo' variable in 'application.properties' file (see 'exomiser_application_properties' option). The release will be downloaded if it is not available locally. "
         ],
         "__examples_code": [
           "# Annotation with a list of 4 HPO for Exomiser.",

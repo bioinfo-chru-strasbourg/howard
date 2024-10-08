@@ -24,9 +24,7 @@
         "      \"bcftools\": [",
         "        \"~/howard/databases/annotations/current\"",
         "      ],",
-        "      \"annovar\": [",
-        "        \"~/howard/databases/annovar/current\"",
-        "      ],",
+        "      \"annovar\": \"~/howard/databases/annovar/current\",",
         "      \"snpeff\": \"~/howard/databases/snpeff/current\",",
         "      \"varank\": \"~/howard/databases/varank/current\"",
         "    }",
@@ -146,19 +144,12 @@
         ]
       },
       "annovar": {
-        "__help": ["Annotation databases folders for Annovar annotation."],
+        "__help": ["Annotation databases folder for Annovar annotation."],
         "__format": "a list of folder path (without assembly)",
         "__default": "[\"~/howard/databases/annovar/current\"]",
         "__examples_code": [
           "# Uniq folder with multiple Annovar TXT files for Annovar annotation",
-          "\"annovar\": [",
-          "   \"~/howard/databases/annovar/current/\"",
-          "]",
-          "# Combinason of 2 folders with multiple Annovar TXT files for Annovar annotation",
-          "\"annovar\": [",
-          "   \"~/howard/databases/annovar/current/\",",
-          "   \"~/howard/databases/annovar/homemade/\"",
-          "]"
+          "\"annovar\": \"~/howard/databases/annovar/current/\""
         ]
       },
       "snpeff": {

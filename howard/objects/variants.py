@@ -2243,7 +2243,7 @@ class Variants:
         )
 
         # Existing colomns header
-        existing_columns_header = database.get_header_columns_from_database()
+        existing_columns_header = database.get_header_columns_from_database(query=query)
 
         # Sample list
         if output_file_type in ["vcf"]:
@@ -2962,7 +2962,7 @@ class Variants:
                     value for value in param.get("annotations", "").split(",")
                 ]
                 for annotation_file in annotation_file_list:
-                    annotations_list_input[annotation_file] = {"INFO": None}
+                    annotations_list_input[annotation_file.strip()] = {"INFO": None}
             else:
                 annotations_list_input = param.get("annotations", {})
 
@@ -3100,12 +3100,11 @@ class Variants:
                                 # Find file
                                 annotation_file_found = None
 
-                                # Expand user
-                                annotation_file = full_path(annotation_file)
 
                                 if os.path.exists(annotation_file):
                                     annotation_file_found = annotation_file
-
+                                elif os.path.exists(full_path(annotation_file)):
+                                    annotation_file_found = full_path(annotation_file)
                                 else:
                                     # Find within assembly folders
                                     for annotations_database in annotations_databases:
@@ -3198,10 +3197,7 @@ class Variants:
                                         ][annotation_file_found] = annotations
 
                                 else:
-                                    log.error(
-                                        f"Quick Annotation File {annotation_file} does NOT exist"
-                                    )
-                                    raise ValueError(
+                                    log.warning(
                                         f"Quick Annotation File {annotation_file} does NOT exist"
                                     )
 
@@ -4891,30 +4887,6 @@ class Variants:
         )
         log.debug("Databases annotations: " + str(databases_folders))
 
-        # # Config - Java
-        # java_bin = get_bin(
-        #     tool="java",
-        #     bin="java",
-        #     bin_type="bin",
-        #     config=config,
-        #     default_folder="/usr/bin",
-        # )
-        # if not (os.path.exists(java_bin) or (java_bin and which(java_bin))):
-        #     log.error(f"Annotation failed: no java bin '{java_bin}'")
-        #     raise ValueError(f"Annotation failed: no java bin '{java_bin}'")
-
-        # # Config - snpEff bin
-        # snpeff_jar = get_bin(
-        #     tool="snpeff",
-        #     bin="snpEff.jar",
-        #     bin_type="jar",
-        #     config=config,
-        #     default_folder=f"{DEFAULT_TOOLS_FOLDER}/snpeff",
-        # )
-        # if not (os.path.exists(snpeff_jar) or (snpeff_jar and which(snpeff_jar))):
-        #     log.error(f"Annotation failed: no snpEff jar '{snpeff_jar}'")
-        #     raise ValueError(f"Annotation failed: no snpEff jar '{snpeff_jar}'")
-
         # Config - snpEff bin command
         snpeff_bin_command = get_bin_command(
             bin="snpEff.jar",
@@ -5167,9 +5139,18 @@ class Variants:
             .get("databases", {})
             .get("annovar", DEFAULT_ANNOVAR_FOLDER)
         )
-        annovar_databases = full_path(annovar_databases)
-        if annovar_databases != "" and not os.path.exists(annovar_databases):
-            os.makedirs(annovar_databases)
+        if annovar_databases is not None:
+            if isinstance(annovar_databases, list):
+                annovar_databases = full_path(annovar_databases[0])
+                log.warning(f"Annovar databases folder '{annovar_databases}' selected")
+            annovar_databases = full_path(annovar_databases)
+            if not os.path.exists(annovar_databases):
+                log.info(f"Annovar databases folder '{annovar_databases}' created")
+                Path(annovar_databases).mkdir(parents=True, exist_ok=True)
+        else:
+            msg_err = f"Annovar databases configuration failed"
+            log.error(msg_err)
+            raise ValueError(msg_err)
 
         # Param
         param = self.get_param()
@@ -7941,24 +7922,41 @@ class Variants:
 
         # Quick calculation - add
         if param.get("calculations", None):
+
+            # List of operations
             calculations_list = [
-                value for value in param.get("calculations", "").split(",")
+                value.strip() for value in param.get("calculations", "").split(",")
             ]
+
+            # Log
             log.info(f"Quick Calculations:")
             for calculation_key in calculations_list:
                 log.info(f"   {calculation_key}")
+
+            # Create tmp operations (to keep operation order)
+            operations_tmp = {}
             for calculation_operation in calculations_list:
-                if calculation_operation.upper() not in operations:
-                    operations[calculation_operation.upper()] = {}
+                if calculation_operation.upper() not in operations_tmp:
+                    log.debug(
+                        f"{calculation_operation}.upper() not in {operations_tmp}"
+                    )
+                    operations_tmp[calculation_operation.upper()] = {}
                     add_value_into_dict(
-                        dict_tree=param,
+                        dict_tree=operations_tmp,
                         sections=[
-                            "calculation",
-                            "calculations",
                             calculation_operation.upper(),
                         ],
-                        value={},
+                        value=operations.get(calculation_operation.upper(), {}),
                     )
+            # Add operations already in param
+            for calculation_operation in operations:
+                if calculation_operation not in operations_tmp:
+                    operations_tmp[calculation_operation] = operations.get(
+                        calculation_operation, {}
+                    )
+            
+            # Update operations in param
+            operations = operations_tmp
 
         # Operations for calculation
         if not operations:

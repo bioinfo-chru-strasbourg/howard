@@ -224,7 +224,7 @@ def help(args: argparse) -> None:
                     "toc-title:Contents",
                     "-N",
                     "-V",
-                    "geometry:margin=2cm",
+                    "geometry:margin=1.5cm",
                     "-V",
                     "fontsize:10pt",
                     f"--shift-heading-level-by={shift_heading_level_by}",

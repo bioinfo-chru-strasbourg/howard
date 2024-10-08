@@ -709,22 +709,36 @@ class Database:
 
         self.header_file = header_file
 
-    def get_header_columns_from_database(self, database: str = None) -> Optional[list]:
+    def get_header_columns_from_database(
+        self, database: str = None, query: str = None
+    ) -> Optional[list]:
         """
-        The function `get_header_columns_from_database` retrieves the column names from a specified
-        database table.
+        The `get_header_columns_from_database` function retrieves column names from a specified database
+        table.
 
-        :param database: The `database` parameter is a string that represents the name of the database
-        from which you want to retrieve the header columns. If no database is provided, the method will
-        use the `get_database()` method to retrieve the default database
+        :param database: The `database` parameter in the `get_header_columns_from_database` function is
+        a string that represents the name of the database from which you want to retrieve the header
+        columns. If no specific database is provided when calling the function, it will default to using
+        the `get_database()` method to retrieve the
         :type database: str
-        :return: a list of column names from the specified database.
+        :param query: The `query` parameter in the `get_header_columns_from_database` function is a
+        string that represents a SQL query. If provided, this query will be used to retrieve column
+        names from the specified database table instead of using the default database table
+        :type query: str
+        :return: The function `get_header_columns_from_database` returns a list of column names from the
+        specified database table. If successful, it will return the list of column names. If there is an
+        error or no columns are found, it will return `None`.
         """
 
         if not database:
             database = self.get_database()
 
-        sql_from = self.get_sql_from(database=database)
+        # if from query
+        if query:
+            sql_from = f" ({query}) "
+        else:
+            sql_from = self.get_sql_from(database=database)
+
         if sql_from:
             sql_query = f"SELECT * FROM {sql_from} LIMIT 0"
             try:

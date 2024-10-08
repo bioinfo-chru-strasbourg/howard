@@ -1003,7 +1003,7 @@ Examples:
 
 ### release
 
-Release of Exomiser database. This option replace the release variable
+Release of Exomiser database. This option replace the 'release' variable
 in 'application.properties' file (see 'exomiser_application_properties'
 option). The release will be downloaded if it is not available locally.
 
@@ -1019,8 +1019,8 @@ Examples:
 
 ### transcript_source
 
-Transcription source of Exomiser. This option replace the release
-variable in 'application.properties' file (see
+Transcription source of Exomiser. This option replace the
+'transcript_source' variable in 'application.properties' file (see
 'exomiser_application_properties' option). The release will be
 downloaded if it is not available locally.
 
@@ -1036,7 +1036,7 @@ Examples:
 
 ### hpo
 
-List of HPO for Exomiser. This option replace the release variable in
+List of HPO for Exomiser. This option replace the 'hpo' variable in
 'application.properties' file (see 'exomiser_application_properties'
 option). The release will be downloaded if it is not available locally.
 
