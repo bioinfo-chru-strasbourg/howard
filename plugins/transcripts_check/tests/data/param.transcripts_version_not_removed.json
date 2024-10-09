@@ -1,0 +1,45 @@
+{
+  "transcripts": {
+    "table": "transcripts",
+    "transcripts_info_field_json": "transcripts_json",
+    "transcripts_info_field_format": "transcripts_ann",
+    "transcript_id_remove_version": false,
+    "struct": {
+      "from_column_format": [
+        {
+          "transcripts_column": "ANN",
+          "transcripts_infos_column": "Feature_ID",
+          "column_clean": true
+        }
+      ],
+      "from_columns_map": [
+        {
+          "transcripts_column": "Ensembl_transcriptid",
+          "transcripts_infos_columns": [
+            "genename",
+            "Ensembl_geneid",
+            "LIST_S2_score",
+            "LIST_S2_pred"
+          ]
+        },
+        {
+          "transcripts_column": "Ensembl_transcriptid",
+          "transcripts_infos_columns": [
+            "genename",
+            "VARITY_R_score",
+            "Aloft_pred"
+          ]
+        }
+      ]
+    },
+    "prioritization": {
+      "profiles": ["transcripts"],
+      "prioritization_config": "config/prioritization_transcripts_profiles.json",
+      "pzprefix": "PZT",
+      "prioritization_score_mode": "HOWARD"
+    },
+    "export": {
+      "output": "/tmp/output.transcripts.tsv"
+    }
+  }
+}

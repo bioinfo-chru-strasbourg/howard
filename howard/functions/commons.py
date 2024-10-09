@@ -3639,7 +3639,7 @@ def load_args(
 
     # List from command
     if command:
-        command_infos = arguments_dict.get("commands_arguments", {}).get(command)
+        command_infos = arguments_dict.get("commands_arguments", {}).get(command, {})
         for command_group in command_infos.get("groups", {}):
             for command_argument in command_infos.get("groups").get(command_group):
                 command_group_clean = command_group.replace(" ", "_").lower()
@@ -3731,12 +3731,26 @@ def transcripts_file_to_df(
     # If file exists
     if transcripts_file and os.path.exists(transcripts_file):
 
+        # Check column names length
+        transcripts_dataframe_nb_columns = pd.read_csv(
+            transcripts_file, sep="\t", header=None, index_col=False, nrows=1
+        )
+        if len(transcripts_dataframe_nb_columns.columns) != len(column_names):
+            column_names_new = []
+            for i in range(len(transcripts_dataframe_nb_columns.columns)):
+                if len(column_names) > i:
+                    column_names_new.append(column_names[i])
+                else:
+                    column_names_new.append(f"column_{i+1}")
+            column_names = column_names_new
+
         # Create dataframe
         transcripts_dataframe = pd.read_csv(
             transcripts_file,
             sep="\t",
             header=None,
             names=column_names,
+            index_col=False,
         )
 
         # First column

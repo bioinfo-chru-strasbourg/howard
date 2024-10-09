@@ -256,7 +256,6 @@ def test_transcripts_file_to_df():
     assert len(df) == 0
 
     df = transcripts_file_to_df(transcripts_file="file_not_exist")
-    log.debug(f"df={df}")
     assert list(df.columns) == ["transcript", "gene"]
     assert len(df) == 0
 
@@ -265,6 +264,19 @@ def test_transcripts_file_to_df():
     assert len(df) == 4
 
     df = transcripts_file_to_df(transcripts_file=transcripts_file_with_comments)
+    assert list(df.columns) == ["transcript", "gene"]
+    assert len(df) == 4
+
+    df = transcripts_file_to_df(
+        transcripts_file=transcripts_file_with_comments, column_names=["transcript"]
+    )
+    assert list(df.columns) == ["transcript", "column_2"]
+    assert len(df) == 4
+
+    df = transcripts_file_to_df(
+        transcripts_file=transcripts_file_with_comments,
+        column_names=["transcript", "gene", "column_3"],
+    )
     assert list(df.columns) == ["transcript", "gene"]
     assert len(df) == 4
 
