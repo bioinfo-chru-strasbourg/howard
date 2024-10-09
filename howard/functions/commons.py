@@ -3731,10 +3731,20 @@ def transcripts_file_to_df(
     # If file exists
     if transcripts_file and os.path.exists(transcripts_file):
 
-        # Check column names length
-        transcripts_dataframe_nb_columns = pd.read_csv(
-            transcripts_file, sep="\t", header=None, index_col=False, nrows=1
-        )
+        # Data
+        data = []
+
+        # Check column names length by reading all lines
+        with open(transcripts_file, "r") as f:
+            for line in f:
+                # Split line by tab
+                values = line.strip().split("\t")
+                data.append(values)
+
+        # Convert into DataFrame
+        transcripts_dataframe_nb_columns = pd.DataFrame(data)
+
+        # If dataframe not with the same len than input name columns
         if len(transcripts_dataframe_nb_columns.columns) != len(column_names):
             column_names_new = []
             for i in range(len(transcripts_dataframe_nb_columns.columns)):
