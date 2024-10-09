@@ -243,6 +243,7 @@ def test_transcripts_file_to_df():
     transcripts_file = tests_data_folder + "/transcripts.tsv"
     transcripts_file_empty = tests_data_folder + "/transcripts.empty.tsv"
     transcripts_file_with_header = tests_data_folder + "/transcripts.with_header.tsv"
+    transcripts_file_for_mapping = tests_data_folder + "/transcripts.for_mapping.tsv"
     transcripts_file_with_comments = (
         tests_data_folder + "/transcripts.with_comments.tsv"
     )
@@ -279,6 +280,27 @@ def test_transcripts_file_to_df():
     )
     assert list(df.columns) == ["transcript", "gene"]
     assert len(df) == 4
+
+    df = transcripts_file_to_df(
+        transcripts_file=transcripts_file_for_mapping,
+        column_names=["transcript"],
+    )
+    assert list(df.columns) == ["transcript", "column_2"]
+    assert len(df) == 8
+
+    df = transcripts_file_to_df(
+        transcripts_file=transcripts_file_for_mapping,
+        column_names=["transcript", "gene"],
+    )
+    assert list(df.columns) == ["transcript", "gene"]
+    assert len(df) == 8
+
+    df = transcripts_file_to_df(
+        transcripts_file=transcripts_file_for_mapping,
+        column_names=["transcript", "gene", "column_3"],
+    )
+    assert list(df.columns) == ["transcript", "gene"]
+    assert len(df) == 8
 
 
 def test_get_bin():
