@@ -1273,7 +1273,9 @@ Examples:
 
 > Calculation with operations for generate variant_id and variant type,
 > extract HGVS from snpEff annotation, select NOMEN from snpEff HGVS
-> with a list of transcripts of preference
+> with a prioritized transcript (from prioritization transcript
+> calculation) and list of transcripts of preference, with a specific
+> NOMEN pattern
 
 > ``` json
 > {
@@ -1284,7 +1286,11 @@ Examples:
 >      "NOMEN": {
 >        "options": {
 >          "hgvs_field": "snpeff_hgvs",
->          "transcripts": "tests/data/transcripts.tsv"
+>          "transcripts": "tests/data/transcripts.tsv",
+>          "transcripts_table": "variants",
+>          "transcripts_column": "PZTTranscript",
+>          "transcripts_order", ["column", "file"],
+>          "pattern": "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN"
 >        }
 >      }
 >    }
@@ -2106,7 +2112,7 @@ profiles and which profiles to use, which prioritization method to use
 Prioritized transcripts fields can be defined to provide VCF fields
 specific to the choosen transcript, using a specific prefix (e.g.
 'PZTScore', 'PZTFlag'). The selected 'best' transcript ID is always
-provided (e.g. 'PZTTranscipt'). Extra annotation fields can also be
+provided (e.g. 'PZTTranscript'). Extra annotation fields can also be
 defined (e.g. 'LISTScore', 'LISTPred'), as well as prioritizations
 informations from multiple profiles (e.g. 'PZTScore_myprofile',
 'PZTScore_myotherprofile' in 'pzfields' section with 2 profiles

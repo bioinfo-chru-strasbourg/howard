@@ -313,32 +313,39 @@ class="toc-section-number">13.2</span> Update_database</a></li>
 <li><a href="#options" id="toc-options"><span
 class="toc-section-number">13.3</span> Options</a></li>
 </ul></li>
-<li><a href="#genebe-tool" id="toc-genebe-tool"><span
-class="toc-section-number">14</span> GENEBE tool</a>
+<li><a href="#transcripts_check-tool"
+id="toc-transcripts_check-tool"><span
+class="toc-section-number">14</span> TRANSCRIPTS_CHECK tool</a>
 <ul>
 <li><a href="#main-options-11" id="toc-main-options-11"><span
 class="toc-section-number">14.1</span> Main options</a></li>
-<li><a href="#genebe" id="toc-genebe"><span
-class="toc-section-number">14.2</span> GeneBe</a></li>
-<li><a href="#explode-3" id="toc-explode-3"><span
-class="toc-section-number">14.3</span> Explode</a></li>
-<li><a href="#export-3" id="toc-export-3"><span
-class="toc-section-number">14.4</span> Export</a></li>
 </ul></li>
-<li><a href="#minimalize-tool" id="toc-minimalize-tool"><span
-class="toc-section-number">15</span> MINIMALIZE tool</a>
+<li><a href="#genebe-tool" id="toc-genebe-tool"><span
+class="toc-section-number">15</span> GENEBE tool</a>
 <ul>
 <li><a href="#main-options-12" id="toc-main-options-12"><span
 class="toc-section-number">15.1</span> Main options</a></li>
-<li><a href="#minimalize" id="toc-minimalize"><span
-class="toc-section-number">15.2</span> Minimalize</a></li>
-<li><a href="#explode-4" id="toc-explode-4"><span
+<li><a href="#genebe" id="toc-genebe"><span
+class="toc-section-number">15.2</span> GeneBe</a></li>
+<li><a href="#explode-3" id="toc-explode-3"><span
 class="toc-section-number">15.3</span> Explode</a></li>
-<li><a href="#export-4" id="toc-export-4"><span
+<li><a href="#export-3" id="toc-export-3"><span
 class="toc-section-number">15.4</span> Export</a></li>
 </ul></li>
+<li><a href="#minimalize-tool" id="toc-minimalize-tool"><span
+class="toc-section-number">16</span> MINIMALIZE tool</a>
+<ul>
+<li><a href="#main-options-13" id="toc-main-options-13"><span
+class="toc-section-number">16.1</span> Main options</a></li>
+<li><a href="#minimalize" id="toc-minimalize"><span
+class="toc-section-number">16.2</span> Minimalize</a></li>
+<li><a href="#explode-4" id="toc-explode-4"><span
+class="toc-section-number">16.3</span> Explode</a></li>
+<li><a href="#export-4" id="toc-export-4"><span
+class="toc-section-number">16.4</span> Export</a></li>
+</ul></li>
 <li><a href="#shared-arguments" id="toc-shared-arguments"><span
-class="toc-section-number">16</span> Shared arguments</a></li>
+class="toc-section-number">17</span> Shared arguments</a></li>
 </ul>
 </nav>
 <h1 data-number="1" id="introduction"><span
@@ -2545,8 +2552,64 @@ None</code></pre>
 None</code></pre>
 <p></small></p>
 </blockquote>
-<h1 data-number="14" id="genebe-tool"><span
-class="header-section-number">14</span> GENEBE tool</h1>
+<h1 data-number="14" id="transcripts_check-tool"><span
+class="header-section-number">14</span> TRANSCRIPTS_CHECK tool</h1>
+<p>Check if a transcript list is present in a generated transcript table
+from a input VCF file.</p>
+<p>Usage examples:</p>
+<blockquote>
+<p>howard transcripts_check
+&#x2013;input=plugins/transcripts_check/tests/data/example.ann.transcripts.vcf.gz
+&#x2013;param=plugins/transcripts_check/tests/data/param.transcripts.json
+&#x2013;transcripts_expected=plugins/transcripts_check/tests/data/transcripts.tsv
+&#x2013;stats=/tmp/transcripts.stats.json
+&#x2013;transcripts_missing=/tmp/transcripts.missing.tsv</p>
+</blockquote>
+<blockquote>
+
+</blockquote>
+<h2 data-number="14.1" id="main-options-11"><span
+class="header-section-number">14.1</span> Main options</h2>
+<p><small></p>
+<blockquote>
+<pre><code>--input=&lt;input&gt; | required
+
+Input file path.
+Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
+Files can be compressesd (e.g. vcf.gz, tsv.gz).</code></pre>
+<p></small></p>
+</blockquote>
+<p><small></p>
+<blockquote>
+<pre><code>--param=&lt;param&gt; (default: {}) | required
+
+Parameters JSON file (or string) defines parameters to process 
+annotations, calculations, prioritizations, convertions and queries.</code></pre>
+<p></small></p>
+</blockquote>
+<p><small></p>
+<blockquote>
+<pre><code>--transcripts_expected=&lt;List of transcripts (file)&gt; | required
+
+File with a list of transcripts in first column.</code></pre>
+<p></small></p>
+</blockquote>
+<p><small></p>
+<blockquote>
+<pre><code>--transcripts_missing=&lt;List of missing transcripts (file)&gt;
+
+File with a list of missing transcripts in first column.</code></pre>
+<p></small></p>
+</blockquote>
+<p><small></p>
+<blockquote>
+<pre><code>--stats_json=&lt;stats json&gt;
+
+Stats Output file in JSON format.</code></pre>
+<p></small></p>
+</blockquote>
+<h1 data-number="15" id="genebe-tool"><span
+class="header-section-number">15</span> GENEBE tool</h1>
 <p>GeneBe annotation using REST API (see https://genebe.net/).</p>
 <p>Usage examples:</p>
 <blockquote>
@@ -2556,8 +2619,8 @@ class="header-section-number">14</span> GENEBE tool</h1>
 <blockquote>
 
 </blockquote>
-<h2 data-number="14.1" id="main-options-11"><span
-class="header-section-number">14.1</span> Main options</h2>
+<h2 data-number="15.1" id="main-options-12"><span
+class="header-section-number">15.1</span> Main options</h2>
 <p><small></p>
 <blockquote>
 <pre><code>--input=&lt;input&gt; | required
@@ -2591,8 +2654,8 @@ annotations, calculations, prioritizations, convertions and queries.</code></pre
 Genome Assembly (e.g. &#39;hg19&#39;, &#39;hg38&#39;).</code></pre>
 <p></small></p>
 </blockquote>
-<h2 data-number="14.2" id="genebe"><span
-class="header-section-number">14.2</span> GeneBe</h2>
+<h2 data-number="15.2" id="genebe"><span
+class="header-section-number">15.2</span> GeneBe</h2>
 <p><small></p>
 <blockquote>
 <pre><code>--genebe_use_refseq
@@ -2614,8 +2677,8 @@ Use Ensembl to annotate.</code></pre>
 Use exploded annotation informations.</code></pre>
 <p></small></p>
 </blockquote>
-<h2 data-number="14.3" id="explode-3"><span
-class="header-section-number">14.3</span> Explode</h2>
+<h2 data-number="15.3" id="explode-3"><span
+class="header-section-number">15.3</span> Explode</h2>
 <p><small></p>
 <blockquote>
 <pre><code>--explode_infos
@@ -2645,8 +2708,8 @@ Examples:
 - &#39;HGVS,*,.*_score&#39; (1 field, all other fields, all scores)</code></pre>
 <p></small></p>
 </blockquote>
-<h2 data-number="14.4" id="export-3"><span
-class="header-section-number">14.4</span> Export</h2>
+<h2 data-number="15.4" id="export-3"><span
+class="header-section-number">15.4</span> Export</h2>
 <p><small></p>
 <blockquote>
 <pre><code>--include_header
@@ -2676,8 +2739,8 @@ Use &#39;None&#39; (string) for NO partition but split parquet files into a fold
 Examples: &#39;#CHROM&#39;, &#39;#CHROM,REF&#39;, &#39;None&#39;.</code></pre>
 <p></small></p>
 </blockquote>
-<h1 data-number="15" id="minimalize-tool"><span
-class="header-section-number">15</span> MINIMALIZE tool</h1>
+<h1 data-number="16" id="minimalize-tool"><span
+class="header-section-number">16</span> MINIMALIZE tool</h1>
 <p>Minimalize a VCF file consists in put missing value (&#x2018;.&#x2019;) on
 INFO/Tags, ID, QUAL or FILTER fields. Options can also minimalize
 samples (keep only GT) or remove all samples. INFO/tags can by exploded
@@ -2697,8 +2760,8 @@ Parquet or TSV format to constitute a database).</p>
 <blockquote>
 
 </blockquote>
-<h2 data-number="15.1" id="main-options-12"><span
-class="header-section-number">15.1</span> Main options</h2>
+<h2 data-number="16.1" id="main-options-13"><span
+class="header-section-number">16.1</span> Main options</h2>
 <p><small></p>
 <blockquote>
 <pre><code>--input=&lt;input&gt; | required
@@ -2725,8 +2788,8 @@ Parameters JSON file (or string) defines parameters to process
 annotations, calculations, prioritizations, convertions and queries.</code></pre>
 <p></small></p>
 </blockquote>
-<h2 data-number="15.2" id="minimalize"><span
-class="header-section-number">15.2</span> Minimalize</h2>
+<h2 data-number="16.2" id="minimalize"><span
+class="header-section-number">16.2</span> Minimalize</h2>
 <p><small></p>
 <blockquote>
 <pre><code>--minimalize_info
@@ -2769,8 +2832,8 @@ Minimalize samples to keep only genotypes (i.e. &#39;GT&#39;).</code></pre>
 Remove all samples to keep only variants.</code></pre>
 <p></small></p>
 </blockquote>
-<h2 data-number="15.3" id="explode-4"><span
-class="header-section-number">15.3</span> Explode</h2>
+<h2 data-number="16.3" id="explode-4"><span
+class="header-section-number">16.3</span> Explode</h2>
 <p><small></p>
 <blockquote>
 <pre><code>--explode_infos
@@ -2800,8 +2863,8 @@ Examples:
 - &#39;HGVS,*,.*_score&#39; (1 field, all other fields, all scores)</code></pre>
 <p></small></p>
 </blockquote>
-<h2 data-number="15.4" id="export-4"><span
-class="header-section-number">15.4</span> Export</h2>
+<h2 data-number="16.4" id="export-4"><span
+class="header-section-number">16.4</span> Export</h2>
 <p><small></p>
 <blockquote>
 <pre><code>--include_header
@@ -2831,8 +2894,8 @@ Use &#39;None&#39; (string) for NO partition but split parquet files into a fold
 Examples: &#39;#CHROM&#39;, &#39;#CHROM,REF&#39;, &#39;None&#39;.</code></pre>
 <p></small></p>
 </blockquote>
-<h1 data-number="16" id="shared-arguments"><span
-class="header-section-number">16</span> Shared arguments</h1>
+<h1 data-number="17" id="shared-arguments"><span
+class="header-section-number">17</span> Shared arguments</h1>
 <p><small></p>
 <blockquote>
 <pre><code>--config=&lt;config&gt; (default: {})

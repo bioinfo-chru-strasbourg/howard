@@ -506,36 +506,54 @@ def find_file_prefix(
 
 
 def find_nomen(
-    hgvs: str = "",
-    pattern="GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN",
+    hgvs: pd.DataFrame,
+    transcript: str = None,
     transcripts: list = [],
+    transcripts_source_order: list = None,
+    pattern=None,
 ) -> dict:
     """
-    > This function takes a HGVS string and a list of transcripts and returns a dictionary with the best
-    NOMEN for each HGVS string
-
-    :param hgvs: The HGVS string to parse
-    :type hgvs: str
-    :param pattern: This is the pattern that you want to use to construct the NOMEN. The default is
-    "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN". This means that the NOMEN will be constructed by
-    joining, defaults to GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN (optional)
-    :param transcripts: list of transcripts to use for ranking
+    The function `find_nomen` takes a HGVS string and a list of transcripts, parses the HGVS string, and
+    returns a dictionary with the best NOMEN based on specified patterns.
+    
+    :param hgvs: The `hgvs` parameter is a DataFrame containing the HGVS strings to parse. It seems like
+    the function is designed to process multiple HGVS strings at once. You can pass this DataFrame to
+    the function for processing. If you have a specific DataFrame that you would like to use, please
+    provide it
+    :type hgvs: pd.DataFrame
+    :param transcript: The `transcript` parameter in the `find_nomen` function is used to specify a
+    single transcript to use for ranking. It is a string that represents the transcript. If provided,
+    this transcript will be used along with the transcripts from the `transcripts` list to determine the
+    best NOMEN
+    :type transcript: str
+    :param transcripts: Transcripts are a list of transcripts to use for ranking in the `find_nomen`
+    function. You can provide a list of transcripts that you want to consider when constructing the
+    NOMEN for a given HGVS string
     :type transcripts: list
-    :return: A dictionary with the following keys:
-        NOMEN
-        CNOMEN
-        RNOMEN
-        NNOMEN
-        PNOMEN
-        TVNOMEN
-        TNOMEN
-        TPVNOMEN
-        TPNOMEN
-        VNOMEN
-        ENOMEN
-        GNOMEN
+    :param transcripts_source_order: The `transcripts_source_order` parameter is a list that specifies
+    the order in which different sources of transcripts should be considered. In the provided function,
+    the default order is `["column", "file"]`, which means that transcripts from a column in the input
+    data will be considered first, followed by
+    :type transcripts_source_order: list
+    :param pattern: The `pattern` parameter in the `find_nomen` function is used to specify the format
+    in which the NOMEN should be constructed. By default, the pattern is set to
+    "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN
+    :return: The function `find_nomen` returns a dictionary containing the following keys:
+    - NOMEN
+    - CNOMEN
+    - RNOMEN
+    - NNOMEN
+    - PNOMEN
+    - TVNOMEN
+    - TNOMEN
+    - TPVNOMEN
+    - TPNOMEN
+    - VNOMEN
+    - ENOMEN
+    - GNOMEN
     """
 
+    # Result structure
     empty_nomen_dict = {
         "NOMEN": None,
         "CNOMEN": None,
@@ -550,10 +568,30 @@ def find_nomen(
         "ENOMEN": None,
         "GNOMEN": None,
     }
-
     nomen_dict = empty_nomen_dict.copy()
 
-    if hgvs != "nan":
+    # Pattern
+    if pattern is None:
+        pattern = "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN"
+
+    # Transcripts source order
+    if transcripts_source_order is None:
+        transcripts_source_order = ["column", "file"]
+
+    # Add transcripts list from file into source
+    transcripts_sources = {"file": transcripts}
+
+    # Check if transcript in column transcript
+    if transcript is not None and str(transcript) != "nan":
+        transcripts_sources["column"] = str(transcript).split(",")
+
+    # Order transcript list by source order
+    transcripts_list = []
+    for order in transcripts_source_order:
+        transcripts_list += transcripts_sources.get(order, [])
+
+    # If hgvs not empty
+    if str(hgvs) != "nan":
 
         hgvs_split = str(hgvs).split(",")
 
@@ -587,15 +625,15 @@ def find_nomen(
                         one_nomen_score += 1
                     # NOMEN with default transcript
                     if (
-                        one_nomen_dict["TVNOMEN"] in transcripts
-                        or one_nomen_dict["TNOMEN"] in transcripts
+                        one_nomen_dict["TVNOMEN"] in transcripts_list
+                        or one_nomen_dict["TNOMEN"] in transcripts_list
                     ):
                         rank = max(
-                            get_index(one_nomen_dict["TVNOMEN"], transcripts),
-                            get_index(one_nomen_dict["TNOMEN"], transcripts),
+                            get_index(one_nomen_dict["TVNOMEN"], transcripts_list),
+                            get_index(one_nomen_dict["TNOMEN"], transcripts_list),
                         )
                         if rank >= 0:
-                            one_nomen_score += 100 * (len(transcripts) - rank)
+                            one_nomen_score += 100 * (len(transcripts_list) - rank)
 
                 elif re.match(r"^[NX]P_(.*)$", one_hgvs_infos):
                     # Transcript Protein with version
