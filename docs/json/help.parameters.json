@@ -692,7 +692,7 @@
       ],
       "__code_type": "json",
       "__examples_code": [
-        "# Calculation with operations for generate variant_id and variant type, extract HGVS from snpEff annotation, select NOMEN from snpEff HGVS with a list of transcripts of preference",
+        "# Calculation with operations for generate variant_id and variant type, extract HGVS from snpEff annotation, select NOMEN from snpEff HGVS with a prioritized transcript (from prioritization transcript calculation) and list of transcripts of preference, with a specific NOMEN pattern",
         "\"calculations\": {",
         "  \"variant_id\": null,",
         "  \"vartype\": null,",
@@ -700,7 +700,11 @@
         "  \"NOMEN\": {",
         "    \"options\": {",
         "      \"hgvs_field\": \"snpeff_hgvs\",",
-        "      \"transcripts\": \"tests/data/transcripts.tsv\"",
+        "      \"transcripts\": \"tests/data/transcripts.tsv\",",
+        "      \"transcripts_table\": \"variants\",",
+        "      \"transcripts_column\": \"PZTTranscript\",",
+        "      \"transcripts_order\", [\"column\", \"file\"],",
+        "      \"pattern\": \"GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN\"",
         "    }",
         "  }",
         "}"
@@ -1115,7 +1119,7 @@
     "prioritization": {
       "__help": [
         "Prioritization parameters for transcripts (see [Prioritization section](#prioritization) and [Priorization JSON file](help.configuration.prioritization.md) help), defining prioritization criteria with a configuration file of all available profiles and which profiles to use, which prioritization method to use (e.g. 'HOWARD', 'VaRank').\n",
-        "Prioritized transcripts fields can be defined to provide VCF fields specific to the choosen transcript, using a specific prefix (e.g. 'PZTScore', 'PZTFlag'). The selected 'best' transcript ID is always provided (e.g. 'PZTTranscipt'). Extra annotation fields can also be defined (e.g. 'LISTScore', 'LISTPred'), as well as prioritizations informations from multiple profiles (e.g. 'PZTScore_myprofile', 'PZTScore_myotherprofile' in 'pzfields' section with 2 profiles 'myprofile' and 'myotherprofile' in 'profiles' section).\n",
+        "Prioritized transcripts fields can be defined to provide VCF fields specific to the choosen transcript, using a specific prefix (e.g. 'PZTScore', 'PZTFlag'). The selected 'best' transcript ID is always provided (e.g. 'PZTTranscript'). Extra annotation fields can also be defined (e.g. 'LISTScore', 'LISTPred'), as well as prioritizations informations from multiple profiles (e.g. 'PZTScore_myprofile', 'PZTScore_myotherprofile' in 'pzfields' section with 2 profiles 'myprofile' and 'myotherprofile' in 'profiles' section).\n",
         "In order to choose the 'best' transcript, parameteres can define order of transcripts (by annotation columns or a preference transcripts file), by dealing with transcript versions.\n"
       ],
       "__type": "dict",

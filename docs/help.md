@@ -91,21 +91,25 @@ title: HOWARD Help
   - [<span class="toc-section-number">13.2</span>
     Update_database](#update_database)
   - [<span class="toc-section-number">13.3</span> Options](#options)
-- [<span class="toc-section-number">14</span> GENEBE tool](#genebe-tool)
+- [<span class="toc-section-number">14</span> TRANSCRIPTS_CHECK
+  tool](#transcripts_check-tool)
   - [<span class="toc-section-number">14.1</span> Main
     options](#main-options-11)
-  - [<span class="toc-section-number">14.2</span> GeneBe](#genebe)
-  - [<span class="toc-section-number">14.3</span> Explode](#explode-3)
-  - [<span class="toc-section-number">14.4</span> Export](#export-3)
-- [<span class="toc-section-number">15</span> MINIMALIZE
-  tool](#minimalize-tool)
+- [<span class="toc-section-number">15</span> GENEBE tool](#genebe-tool)
   - [<span class="toc-section-number">15.1</span> Main
     options](#main-options-12)
-  - [<span class="toc-section-number">15.2</span>
+  - [<span class="toc-section-number">15.2</span> GeneBe](#genebe)
+  - [<span class="toc-section-number">15.3</span> Explode](#explode-3)
+  - [<span class="toc-section-number">15.4</span> Export](#export-3)
+- [<span class="toc-section-number">16</span> MINIMALIZE
+  tool](#minimalize-tool)
+  - [<span class="toc-section-number">16.1</span> Main
+    options](#main-options-13)
+  - [<span class="toc-section-number">16.2</span>
     Minimalize](#minimalize)
-  - [<span class="toc-section-number">15.3</span> Explode](#explode-4)
-  - [<span class="toc-section-number">15.4</span> Export](#export-4)
-- [<span class="toc-section-number">16</span> Shared
+  - [<span class="toc-section-number">16.3</span> Explode](#explode-4)
+  - [<span class="toc-section-number">16.4</span> Export](#export-4)
+- [<span class="toc-section-number">17</span> Shared
   arguments](#shared-arguments)
 
 # Introduction
@@ -2428,6 +2432,65 @@ Usage examples:
 >     --limit=<limit>
 >
 >     None
+>
+> </small>
+
+# TRANSCRIPTS_CHECK tool
+
+Check if a transcript list is present in a generated transcript table
+from a input VCF file.
+
+Usage examples:
+
+> howard transcripts_check
+> --input=plugins/transcripts_check/tests/data/example.ann.transcripts.vcf.gz
+> --param=plugins/transcripts_check/tests/data/param.transcripts.json
+> --transcripts_expected=plugins/transcripts_check/tests/data/transcripts.tsv
+> --stats=/tmp/transcripts.stats.json
+> --transcripts_missing=/tmp/transcripts.missing.tsv
+
+## Main options
+
+<small>
+
+>     --input=<input> | required
+>
+>     Input file path.
+>     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
+>     Files can be compressesd (e.g. vcf.gz, tsv.gz).
+>
+> </small>
+
+<small>
+
+>     --param=<param> (default: {}) | required
+>
+>     Parameters JSON file (or string) defines parameters to process 
+>     annotations, calculations, prioritizations, convertions and queries.
+>
+> </small>
+
+<small>
+
+>     --transcripts_expected=<List of transcripts (file)> | required
+>
+>     File with a list of transcripts in first column.
+>
+> </small>
+
+<small>
+
+>     --transcripts_missing=<List of missing transcripts (file)>
+>
+>     File with a list of missing transcripts in first column.
+>
+> </small>
+
+<small>
+
+>     --stats_json=<stats json>
+>
+>     Stats Output file in JSON format.
 >
 > </small>
 

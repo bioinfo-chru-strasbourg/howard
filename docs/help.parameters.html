@@ -1574,7 +1574,8 @@ href="help.calculation.html">Calculation JSON file</a> help).</p>
 <blockquote>
 <p>Calculation with operations for generate variant_id and variant type,
 extract HGVS from snpEff annotation, select NOMEN from snpEff HGVS with
-a list of transcripts of preference</p>
+a prioritized transcript (from prioritization transcript calculation)
+and list of transcripts of preference, with a specific NOMEN pattern</p>
 </blockquote>
 <blockquote>
 <div class="sourceCode" id="cb54"><pre
@@ -1586,11 +1587,15 @@ class="sourceCode json"><code class="sourceCode json"><span id="cb54-1"><a href=
 <span id="cb54-6"><a href="#cb54-6" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;NOMEN&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
 <span id="cb54-7"><a href="#cb54-7" aria-hidden="true" tabindex="-1"></a>       <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
 <span id="cb54-8"><a href="#cb54-8" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;hgvs_field&quot;</span><span class="fu">:</span> <span class="st">&quot;snpeff_hgvs&quot;</span><span class="fu">,</span></span>
-<span id="cb54-9"><a href="#cb54-9" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;transcripts&quot;</span><span class="fu">:</span> <span class="st">&quot;tests/data/transcripts.tsv&quot;</span></span>
-<span id="cb54-10"><a href="#cb54-10" aria-hidden="true" tabindex="-1"></a>       <span class="fu">}</span></span>
-<span id="cb54-11"><a href="#cb54-11" aria-hidden="true" tabindex="-1"></a>     <span class="fu">}</span></span>
-<span id="cb54-12"><a href="#cb54-12" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
-<span id="cb54-13"><a href="#cb54-13" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<span id="cb54-9"><a href="#cb54-9" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;transcripts&quot;</span><span class="fu">:</span> <span class="st">&quot;tests/data/transcripts.tsv&quot;</span><span class="fu">,</span></span>
+<span id="cb54-10"><a href="#cb54-10" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;transcripts_table&quot;</span><span class="fu">:</span> <span class="st">&quot;variants&quot;</span><span class="fu">,</span></span>
+<span id="cb54-11"><a href="#cb54-11" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;transcripts_column&quot;</span><span class="fu">:</span> <span class="st">&quot;PZTTranscript&quot;</span><span class="fu">,</span></span>
+<span id="cb54-12"><a href="#cb54-12" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;transcripts_order&quot;</span><span class="fu">,</span> <span class="er">[</span><span class="dt">&quot;column&quot;</span><span class="fu">,</span> <span class="dt">&quot;file&quot;</span><span class="er">]</span><span class="fu">,</span></span>
+<span id="cb54-13"><a href="#cb54-13" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;pattern&quot;</span><span class="fu">:</span> <span class="st">&quot;GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN&quot;</span></span>
+<span id="cb54-14"><a href="#cb54-14" aria-hidden="true" tabindex="-1"></a>       <span class="fu">}</span></span>
+<span id="cb54-15"><a href="#cb54-15" aria-hidden="true" tabindex="-1"></a>     <span class="fu">}</span></span>
+<span id="cb54-16"><a href="#cb54-16" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb54-17"><a href="#cb54-17" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h2 data-number="4.2" id="calculation_config"><span
 class="header-section-number">4.2</span> calculation_config</h2>
@@ -2326,7 +2331,7 @@ method to use (e.g.&#xA0;&#x2018;HOWARD&#x2019;, &#x2018;VaRank&#x2019;).</p>
 <p>Prioritized transcripts fields can be defined to provide VCF fields
 specific to the choosen transcript, using a specific prefix
 (e.g.&#xA0;&#x2018;PZTScore&#x2019;, &#x2018;PZTFlag&#x2019;). The selected &#x2018;best&#x2019; transcript ID is
-always provided (e.g.&#xA0;&#x2018;PZTTranscipt&#x2019;). Extra annotation fields can also
+always provided (e.g.&#xA0;&#x2018;PZTTranscript&#x2019;). Extra annotation fields can also
 be defined (e.g.&#xA0;&#x2018;LISTScore&#x2019;, &#x2018;LISTPred&#x2019;), as well as prioritizations
 informations from multiple profiles (e.g.&#xA0;&#x2018;PZTScore_myprofile&#x2019;,
 &#x2018;PZTScore_myotherprofile&#x2019; in &#x2018;pzfields&#x2019; section with 2 profiles

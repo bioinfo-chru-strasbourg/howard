@@ -3100,7 +3100,6 @@ class Variants:
                                 # Find file
                                 annotation_file_found = None
 
-
                                 if os.path.exists(annotation_file):
                                     annotation_file_found = annotation_file
                                 elif os.path.exists(full_path(annotation_file)):
@@ -6498,7 +6497,7 @@ class Variants:
                 "NOMEN": {
                     "type": "python",
                     "name": "NOMEN",
-                    "description": "NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature field",
+                    "description": "NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature field (see parameters help)",
                     "available": True,
                     "function_name": "calculation_extract_nomen",
                     "function_params": [],
@@ -7954,7 +7953,7 @@ class Variants:
                     operations_tmp[calculation_operation] = operations.get(
                         calculation_operation, {}
                     )
-            
+
             # Update operations in param
             operations = operations_tmp
 
@@ -8572,6 +8571,15 @@ class Variants:
             .get("hgvs_field", "hgvs")
         )
 
+        # Get NOMEN pattern
+        nomen_pattern = (
+            param.get("calculation", {})
+            .get("calculations", {})
+            .get("NOMEN", {})
+            .get("options", {})
+            .get("pattern", None)
+        )
+
         # transcripts list of preference sources
         transcripts_sources = {}
 
@@ -8600,7 +8608,7 @@ class Variants:
             .get("calculations", {})
             .get("NOMEN", {})
             .get("options", {})
-            .get("transcripts_table", None)
+            .get("transcripts_table", self.get_table_variants())
         )
         # Get transcripts column
         transcripts_column = (
@@ -8612,24 +8620,11 @@ class Variants:
         )
 
         if transcripts_table and transcripts_column:
-            transcripts_dynamic = []
-            added_columns += self.explode_infos(
-                fields=[transcripts_column], table=transcripts_table
-            )
-            query_transcripts_list_dynamic = f"""
-                SELECT {transcripts_table}.{transcripts_column} FROM {transcripts_table}
-            """
-            try:
-                transcripts_dynamic = list(
-                    self.get_query_to_df(query=query_transcripts_list_dynamic)[
-                        transcripts_column
-                    ]
-                )
-            except:
-                msg_err = f"Transcriptfrom table.column '{transcripts_table}.{transcripts_column}' not found!"
-                log.error(msg_err)
-                raise ValueError(msg_err)
-            transcripts_sources["column"] = transcripts_dynamic
+            extra_field_transcript = f"{transcripts_table}.{transcripts_column}"
+            # Explode if not exists
+            self.explode_infos(fields=[transcripts_column], table=transcripts_table)
+        else:
+            extra_field_transcript = f"NULL"
 
         # Transcripts of preference source order
         transcripts_order = (
@@ -8640,10 +8635,8 @@ class Variants:
             .get("transcripts_order", ["column", "file"])
         )
 
-        # Transcripts of preference from file and dynamic 'table.column'
-        transcripts = []
-        for order in transcripts_order:
-            transcripts += transcripts_sources.get(order, [])
+        # Transcripts from file
+        transcripts = transcripts_sources.get("file", [])
 
         # Explode HGVS field in column
         added_columns += self.explode_infos(fields=[hgvs_field])
@@ -8656,12 +8649,19 @@ class Variants:
 
             # Create dataframe
             dataframe_hgvs = self.get_query_to_df(
-                f""" SELECT "#CHROM", "POS", "REF", "ALT", "{extra_field}" FROM variants """
+                f""" SELECT "#CHROM", "POS", "REF", "ALT", "{extra_field}" AS hgvs, {extra_field_transcript} AS transcript FROM variants """
             )
 
             # Create main NOMEN column
-            dataframe_hgvs[field_nomen_dict] = dataframe_hgvs[extra_field].apply(
-                lambda x: find_nomen(str(x), transcripts=transcripts)
+            dataframe_hgvs[field_nomen_dict] = dataframe_hgvs.apply(
+                lambda x: find_nomen(
+                    hgvs=x.hgvs,
+                    transcript=x.transcript,
+                    transcripts=transcripts,
+                    pattern=nomen_pattern,
+                    transcripts_source_order=transcripts_order
+                ),
+                axis=1,
             )
 
             # Explode NOMEN Structure and create SQL set for update
