@@ -515,7 +515,7 @@ def find_nomen(
     """
     The function `find_nomen` takes a HGVS string and a list of transcripts, parses the HGVS string, and
     returns a dictionary with the best NOMEN based on specified patterns.
-    
+
     :param hgvs: The `hgvs` parameter is a DataFrame containing the HGVS strings to parse. It seems like
     the function is designed to process multiple HGVS strings at once. You can pass this DataFrame to
     the function for processing. If you have a specific DataFrame that you would like to use, please
@@ -1729,7 +1729,6 @@ def get_bin_command(
 
         # Java Command for tool
         tool_command = f"{java_bin} {java_options} -jar {tool_bin}"
-
         # Return tool java command
         return tool_command
 
@@ -1747,17 +1746,41 @@ def get_bin_command(
         tool_bin_docker_entrypoint = tool_bin_dict.get("entrypoint", None)
         tool_bin_docker_command = tool_bin_dict.get("command", "")
         tool_bin_docker_options = tool_bin_dict.get("options", "")
-
         if not tool_bin_docker_image:
             msg_error = f"Error in Docker command for tool '{tool}'"
             log.error(msg_error)
             raise ValueError(msg_error)
 
         # Create default param
-        tool_bin_docker_params = " --rm "
+        tool_bin_docker_params = ""
+        if (
+            config.get("tools", {})
+            .get(tool, {})
+            .get("docker", {})
+            .get("config", {})
+            .get("notremove", "")
+            is True
+        ):
+            tool_bin_docker_params += ""
+        elif config.get("docker", {}).get("notremove", "") is True:
+            tool_bin_docker_params += ""
+        else:
+            tool_bin_docker_params += " --rm "
 
         # Temp folder by default
-        tool_bin_docker_params += f" -v {tmp}:{tmp} "
+        if (
+            config.get("tools", {})
+            .get(tool, {})
+            .get("docker", {})
+            .get("config", {})
+            .get("tmp", "")
+            is True
+        ):
+            tool_bin_docker_params += f" -v {tmp}:{tmp} "
+        elif config.get("docker", {}).get("tmp", "") is True:
+            tool_bin_docker_params += f" -v {tmp}:{tmp} "
+        else:
+            tool_bin_docker_params += ""
 
         # Threads
         if threads:
@@ -1767,11 +1790,47 @@ def get_bin_command(
         if memory:
             tool_bin_docker_params += f" --memory={memory}g "
 
+        def mount_folder(config):
+            add_options = ""
+            for databases, path in (
+                config.get("folders", {}).get("databases", {}).items()
+            ):
+                if path and isinstance(path, str):
+                    add_options += f" -v {path}:{path}:ro"
+                elif path and isinstance(path, list):
+                    for pathlist in path:
+                        add_options += f" -v {pathlist}:{pathlist}:ro"
+            return add_options
+
         # Init docker param
         if tool_bin_docker_options:
             tool_bin_docker_params += f" {tool_bin_docker_options} "
 
-        # Check params to add
+        # Mount folder only
+        if (
+            config.get("tools", {})
+            .get(tool, {})
+            .get("docker", {})
+            .get("config", {})
+            .get("automount", "")
+            is False
+        ):
+            tool_bin_docker_params += mount_folder(config)
+        elif (
+            config.get("tools", {})
+            .get(tool, {})
+            .get("docker", {})
+            .get("config", {})
+            .get("automount", "")
+            is True
+        ):
+            tool_bin_docker_params += mount_folder(config)
+        elif config.get("docker", {}).get("automount", "") is False:
+            tool_bin_docker_params += mount_folder(config)
+        elif config.get("docker", {}).get("automount", "") is True:
+            tool_bin_docker_params += docker_automount()
+        else:
+            tool_bin_docker_params += mount_folder(config)
 
         # Entrypoint
         if tool_bin_docker_entrypoint:
@@ -4123,3 +4182,29 @@ def clean_annotation_field(name: str = "", char_allowed: list = None) -> str:
     return "".join(
         char for char in name if (char.isalnum() or char in char_allowed_set)
     )
+
+
+def docker_automount() -> str:
+    """
+     Add needed volume to the tool container, check first if we are already inside one otherwise return empty string
+    :param containerid: for other linux distribution catch container mount from container ID
+    :return: string containing volume to add
+    """
+    if not os.path.exists("/.dockerenv"):
+        log.warning("Not inside docker container, block automount option")
+        return ""
+
+    container_id = command(
+        r"cat /proc/self/cgroup | grep 'docker' | sed 's/^.*\///' | tail -n1"
+    )
+    if not container_id:
+        container_id = command("cat /proc/1/cpuset | cut -d/ -f3")
+    if not container_id:
+        raise ValueError("Can't get container ID from within container EXIT")
+
+    mounts_new = ""
+    mounts = json.loads(command(f"docker inspect -f json {container_id}"))[0]["Mounts"]
+    for volume in mounts:
+        if "sock" not in volume.get("Source") and "tmp" not in volume.get("Source"):
+            mounts_new += f" -v {volume.get('Source')}:{volume.get ('Destination')}:{volume.get('Mode')}"
+    return mounts_new
