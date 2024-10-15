@@ -365,12 +365,152 @@ def test_get_bin():
     )
 
 
-def test_get_bin_command():
-    """ """
+GET_BIN_COMMAND_CONFIG_SPLICE = {
+    "docker": {
+        "automount": False,
+        "notremove": False,
+        "tmp": False,
+    },
+    "folders": {
+        "databases": {
+            "spliceai": "/home1/DB/HOWARD/SpliceAI/current",
+            "spip": "/home1/DB/HOWARD/SPiP/current",
+        }
+    },
+    "tools": {
+        "splice": {
+            "docker": {
+                "image": "bioinfochrustrasbourg/splice:0.2.1",
+                "entrypoint": "/bin/bash",
+            },
+        },
+    },
+}
 
-    # Test docker
+
+@pytest.mark.parametrize(
+    "config, modifier",
+    [
+        (
+            GET_BIN_COMMAND_CONFIG_SPLICE,
+            {
+                "notremove": False,
+                "tmp": True,
+            },
+        ),
+        (
+            GET_BIN_COMMAND_CONFIG_SPLICE,
+            {
+                "notremove": True,
+                "tmp": False,
+            },
+        ),
+        (
+            GET_BIN_COMMAND_CONFIG_SPLICE,
+            {},
+        ),
+        (
+            GET_BIN_COMMAND_CONFIG_SPLICE,
+            {
+                "notremove": False,
+                "tmp": False,
+            },
+        ),
+        (
+            GET_BIN_COMMAND_CONFIG_SPLICE,
+            {"automount": True},
+        ),
+    ],
+)
+def test_get_bin_command_splice(config, modifier):
+    param = {
+        "threads": 2,
+        "memory": "16g",
+        "tmp": "/tmp/howard",
+    }
+    config["tools"]["splice"]["docker"]["config"] = modifier
+    pattern = r"-v\s+([^:]+):"
+    tool_command = get_bin_command(tool="splice", config=config, param=param)
+    matches = re.findall(pattern, tool_command)
+    assert all(elem in tool_command for elem in ["--cpus=2", "--memory=16g"])
+    for path in matches:
+        if not path.startswith("/tmp"):
+            assert os.path.exists(path)
+    # erase global docker configuration by tool configuration 1
+    if (
+        config.get("tools", {})
+        .get("splice", {})
+        .get("docker", {})
+        .get("config", {})
+        .get("tmp", "")
+    ):
+        tmp = get_tmp(config=config, param=param)
+        assert f"-v {tmp}:{tmp}" in tool_command
+    # erase global docker configuration by tool configuration 2
+    if (
+        config.get("tools", {})
+        .get("splice", {})
+        .get("docker", {})
+        .get("config", {})
+        .get("notremove", "")
+    ):
+        assert "--rm" not in tool_command
+    # Default config
+    if not (
+        config.get("tools", {}).get("splice", {}).get("docker", {}).get("config", {})
+    ):
+        tmp = get_tmp(config, param)
+        assert "--rm" in tool_command, f"-v {tmp}:{tmp}" in tool_command
+    if not (
+        config.get("tools", {})
+        .get("splice", {})
+        .get("docker", {})
+        .get("config", {})
+        .get("automount", "")
+    ):
+        assert all(
+            os.path.exists(path)
+            for path in config.get("folders", {}).get("databases", {}).values()
+        )
+
+
+def test_get_bin_command_snpeff():
+    config = {
+        "docker": {"automount": False, "notremove": False, "tmp": True},
+        "tools": {
+            "docker": {"bin": "docker"},
+            "java": {"bin": "java"},
+            "snpeff": {
+                "jar": tests_config.get("folders").get("databases").get("snpeff")
+            },
+            "bcftools": {
+                "bin": "bcftools",
+                "docker": {
+                    "image": "howard:0.11.0",
+                    "entrypoint": "bcftools",
+                    "options": None,
+                    "command": None,
+                },
+            },
+        },
+        "threads": 12,
+        "memory": "40g",
+        "tmp": "/tmp",
+    }
+    param = {
+        "threads": 2,
+        "memory": "16g",
+        "tmp": "/tmp/howard",
+    }
+    tool_command = get_bin_command(tool="snpeff", config=config, param=param)
+    assert tool_command.endswith("snpEff.jar")
+    assert "java  -XX:ParallelGCThreads=2  -XX:MaxHeapSize=16G  -jar " in tool_command
+
+
+def test_get_bin_command_bcftools():
     snpeff_bin_path = tests_config.get("tools").get("snpeff")
     config = {
+        "docker": {"automount": False, "notremove": False, "tmp": True},
         "tools": {
             "docker": {"bin": "docker"},
             "java": {"bin": "java"},
@@ -394,20 +534,24 @@ def test_get_bin_command():
         "memory": "16g",
         "tmp": "/tmp/howard",
     }
-
     # Test command bcftools found with bin
     tool_command = get_bin_command(tool="bcftools", config=config, param=param)
     assert os.path.basename(tool_command) == "bcftools"
-
     # Test command bcftools found with docker (specified)
     tool_command = get_bin_command(
         tool="bcftools", bin_type="docker", config=config, param=param
     )
-    assert (
-        "run  --rm  -v /tmp/howard:/tmp/howard  --cpus=2  --memory=16g  --entrypoint='bcftools'  howard:0.11.0 "
-        in tool_command
+    assert all(
+        elem in tool_command
+        for elem in [
+            "--rm",
+            "--cpus=2",
+            "--memory=16g",
+            "--entrypoint='bcftools'",
+            "-v /tmp/howard:/tmp/howard",
+            "howard:0.11.0",
+        ]
     )
-
     # Test command bcftools found with docker with added options
     tool_command = get_bin_command(
         tool="bcftools",
@@ -416,15 +560,18 @@ def test_get_bin_command():
         param=param,
         add_options="-v /host/path/to/mount:/inner/path_to/mount",
     )
-    assert (
-        "run  --rm  -v /tmp/howard:/tmp/howard  --cpus=2  --memory=16g  --entrypoint='bcftools'  -v /host/path/to/mount:/inner/path_to/mount  howard:0.11.0 "
-        in tool_command
+    assert all(
+        elem in tool_command
+        for elem in [
+            "--rm",
+            "--cpus=2",
+            "--memory=16g",
+            "--entrypoint='bcftools'",
+            "-v /host/path/to/mount:/inner/path_to/mount",
+            "-v /tmp/howard:/tmp/howard",
+            "howard:0.11.0",
+        ]
     )
-
-    # Test command snpeff found with java/jar (added options for java optional)
-    tool_command = get_bin_command(tool="snpeff", config=config, param=param)
-    assert tool_command.endswith("snpEff.jar")
-    assert "java  -XX:ParallelGCThreads=2  -XX:MaxHeapSize=16G  -jar " in tool_command
 
 
 def test_download_file():
