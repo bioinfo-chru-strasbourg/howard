@@ -6074,11 +6074,9 @@ class Variants:
         splice_config = config.get("tools", {}).get("splice", {})
         if not splice_config:
             splice_config = DEFAULT_TOOLS_BIN.get("splice", {})
-        if not splice_config:
             msg_err = "No Splice tool config"
-            log.error(msg_err)
             raise ValueError(msg_err)
-        log.debug(f"splice_config={splice_config}")
+        log.debug(f"splice_config: {splice_config}")
 
         # Config - Folders - Databases
         databases_folders = (
@@ -6132,10 +6130,20 @@ class Variants:
         # Export in VCF
         log.debug("Create initial file to annotate")
 
-        # Create output folder
-        output_folder = os.path.join(self.get_tmp_dir(), f"splice-{get_random()}")
-        if not os.path.exists(output_folder):
-            Path(output_folder).mkdir(parents=True, exist_ok=True)
+        # Create output folder / work folder
+        if options.get("output_folder", ""):
+            output_folder = options.get("output_folder", "")
+            if not os.path.exists(output_folder):
+                Path(output_folder).mkdir(parents=True, exist_ok=True)
+        else:
+            output_folder = os.path.join(self.get_tmp_dir(), f"splice-{get_random()}")
+            if not os.path.exists(output_folder):
+                Path(output_folder).mkdir(parents=True, exist_ok=True)
+
+        if options.get("workdir", ""):
+            workdir = options.get("workdir", "")
+        else:
+            workdir = "/work"
 
         # Create tmp VCF file
         tmp_vcf = NamedTemporaryFile(
@@ -6188,190 +6196,145 @@ class Variants:
             index=False,
             where_clause=where_clause,
         )
+        mount = [f" -v {path}:{path}:rw" for path in [output_folder]]
+        if any(value for value in splice_config.values() if value is None):
+            log.warning("At least one splice config parameter is empty")
+            # exit annotation_splice
+            return None
 
-        # Create docker container and launch splice analysis
-        if splice_config:
-
-            # Splice mount folders
-            mount_folders = splice_config.get("mount", {})
-
-            # Genome mount
-            mount_folders[
-                config.get("folders", {})
-                .get("databases", {})
-                .get("genomes", DEFAULT_GENOME_FOLDER)
-            ] = "ro"
-
-            # SpliceAI mount
-            mount_folders[
-                config.get("folders", {})
-                .get("databases", {})
-                .get("spliceai", DEFAULT_SPLICEAI_FOLDER)
-            ] = "ro"
-
-            # Genome mount
-            mount_folders[
-                config.get("folders", {})
-                .get("databases", {})
-                .get("spip", DEFAULT_SPIP_FOLDER)
-            ] = "ro"
-
-            # Mount folders
-            mount = []
-
-            # Config mount
-            mount = [
-                f"-v {full_path(path)}:{full_path(path)}:{mode}"
-                for path, mode in mount_folders.items()
-            ]
-
-            if any(value for value in splice_config.values() if value is None):
-                log.warning("At least one splice config parameter is empty")
-                return None
-
-            # Params in splice nf
-            def check_values(dico: dict):
-                """
-                Ensure parameters for NF splice pipeline
-                """
-                for key, val in dico.items():
-                    if key == "genome":
-                        if any(
-                            assemb in options.get("genome", {})
-                            for assemb in ["hg19", "GRCh37", "grch37", "GRCH37"]
-                        ):
-                            yield f"--{key} hg19"
-                        elif any(
-                            assemb in options.get("genome", {})
-                            for assemb in ["hg38", "GRCh38", "grch38", "GRCH38"]
-                        ):
-                            yield f"--{key} hg38"
-                    elif (
-                        (isinstance(val, str) and val)
-                        or isinstance(val, int)
-                        or isinstance(val, bool)
+        # Params in splice nf
+        def check_values(dico: dict):
+            """
+            Ensure parameters for NF splice pipeline
+            """
+            for key, val in dico.items():
+                if key == "genome":
+                    if any(
+                        assemb in options.get("genome", {})
+                        for assemb in ["hg19", "GRCh37", "grch37", "GRCH37"]
                     ):
-                        yield f"--{key} {val}"
+                        yield f"--{key} hg19"
+                    elif any(
+                        assemb in options.get("genome", {})
+                        for assemb in ["hg38", "GRCh38", "grch38", "GRCH38"]
+                    ):
+                        yield f"--{key} hg38"
+                elif (
+                    (isinstance(val, str) and val)
+                    or isinstance(val, int)
+                    or isinstance(val, bool)
+                ):
+                    yield f"--{key} {val}"
 
-            # Genome
-            genome = options.get("genome", config.get("assembly", DEFAULT_ASSEMBLY))
-            options["genome"] = genome
-
-            # NF params
-            nf_params = []
-
-            # Add options
-            if options:
-                log.debug(options)
-                nf_params = list(check_values(options))
-                log.debug(f"Splice NF params: {' '.join(nf_params)}")
-            else:
-                log.debug("No NF params provided")
-
-            # Add threads
-            if "threads" not in options.keys():
-                nf_params.append(f"--threads {threads}")
-
-            # Genome path
-            genome_path = find_genome(
-                config.get("folders", {})
-                .get("databases", {})
-                .get("genomes", DEFAULT_GENOME_FOLDER),
-                file=f"{genome}.fa",
+        # Genome
+        genome = options.get("genome", config.get("assembly", DEFAULT_ASSEMBLY))
+        options["genome"] = genome
+        # NF params
+        nf_params = []
+        # Add options
+        if options:
+            log.debug(options)
+            nf_params = list(check_values(options))
+            log.debug(f"Splice NF params: {' '.join(nf_params)}")
+        else:
+            log.debug("No NF params provided")
+        # Add threads
+        if "threads" not in options.keys():
+            nf_params.append(f"--threads {threads}")
+        # Genome path
+        genome_path = find_genome(
+            config.get("folders", {})
+            .get("databases", {})
+            .get("genomes", DEFAULT_GENOME_FOLDER),
+            file=f"{genome}.fa",
+        )
+        # Add genome path
+        if not genome_path:
+            raise ValueError(
+                f"Can't find genome assembly {genome}.fa in {config.get('folders', {}).get('databases', {}).get('genomes', DEFAULT_GENOME_FOLDER)}"
             )
-            # Add genome path
-            if not genome_path:
-                raise ValueError(
-                    f"Can't find genome assembly {genome}.fa in {config.get('folders', {}).get('databases', {}).get('genomes', DEFAULT_GENOME_FOLDER)}"
+        else:
+            log.debug(f"Genome: {genome_path}")
+            nf_params.append(f"--genome_path {genome_path}")
+
+        def splice_annotations(options: dict = {}, config: dict = {}) -> list:
+            """
+            Setting up updated databases for SPiP and SpliceAI
+            """
+
+            try:
+
+                # SpliceAI assembly transcriptome
+                spliceai_assembly = os.path.join(
+                    config.get("folders", {}).get("databases", {}).get("spliceai", {}),
+                    options.get("genome"),
+                    "transcriptome",
                 )
-            else:
-                log.debug(f"Genome: {genome_path}")
-                nf_params.append(f"--genome_path {genome_path}")
+                spip_assembly = options.get("genome")
 
-            def splice_annotations(options: dict = {}, config: dict = {}) -> list:
-                """
-                Setting up updated databases for SPiP and SpliceAI
-                """
-
-                try:
-
-                    # SpliceAI assembly transcriptome
-                    spliceai_assembly = os.path.join(
-                        config.get("folders", {})
-                        .get("databases", {})
-                        .get("spliceai", {}),
-                        options.get("genome"),
-                        "transcriptome",
-                    )
-                    spip_assembly = options.get("genome")
-
-                    spip = find(
-                        f"transcriptome_{spip_assembly}.RData",
-                        config.get("folders", {}).get("databases", {}).get("spip", {}),
-                    )
-                    spliceai = find("spliceai.refseq.txt", spliceai_assembly)
-                    log.debug(f"SPiP annotations: {spip}")
-                    log.debug(f"SpliceAI annotations: {spliceai}")
-                    if spip and spliceai:
-                        return [
-                            f"--spip_transcriptome {spip}",
-                            f"--spliceai_transcriptome {spliceai}",
-                        ]
-                    else:
-                        # TODO crash and go on with basic annotations ?
-                        # raise ValueError(
-                        #     "Can't find splice databases in configuration EXIT"
-                        # )
-                        log.warning(
-                            "Can't find splice databases in configuration, use annotations file from image"
-                        )
-                except TypeError:
+                spip = find(
+                    f"transcriptome_{spip_assembly}.RData",
+                    config.get("folders", {}).get("databases", {}).get("spip", {}),
+                )
+                spliceai = find("spliceai.refseq.txt", spliceai_assembly)
+                log.debug(f"SPiP annotations: {spip}")
+                log.debug(f"SpliceAI annotations: {spliceai}")
+                if spip and spliceai:
+                    return [
+                        f"--spip_transcriptome {spip}",
+                        f"--spliceai_transcriptome {spliceai}",
+                    ]
+                else:
                     log.warning(
                         "Can't find splice databases in configuration, use annotations file from image"
                     )
-                    return []
+            except TypeError:
+                log.warning(
+                    "Can't find splice databases in configuration, use annotations file from image"
+                )
+                return []
 
-            # Add options, check if transcriptome option have already beend provided
-            if (
-                "spip_transcriptome" not in nf_params
-                and "spliceai_transcriptome" not in nf_params
-            ):
-                splice_reference = splice_annotations(options, config)
-                if splice_reference:
-                    nf_params.extend(splice_reference)
+        # Add options, check if transcriptome option have already beend provided
+        if (
+            "spip_transcriptome" not in nf_params
+            and "spliceai_transcriptome" not in nf_params
+        ):
+            splice_reference = splice_annotations(options, config)
+            if splice_reference:
+                nf_params.extend(splice_reference)
+        # nf_params.append(f"--output_folder {output_folder}")
+        random_uuid = f"HOWARD-SPLICE-{get_random()}"
+        cmd = f"nextflow -log {os.path.join(output_folder, f'{random_uuid}.log')} -c /app/SpliceToolBox/src/splicetoolbox/nextflow/nextflow.docker.config run /app/SpliceToolBox/src/splicetoolbox/nextflow/main.nf -entry SPLICE --vcf {tmp_vcf_name} {' '.join(nf_params)} -profile standard,conda,singularity,report,timeline"
+        log.debug(cmd)
+        splice_config["docker"]["command"] = cmd
 
-            nf_params.append(f"--output_folder {output_folder}")
-
-            random_uuid = f"HOWARD-SPLICE-{get_random()}"
-            cmd = f"nextflow -log {os.path.join(output_folder, f'{random_uuid}.log')} -c /app/SpliceToolBox/src/splicetoolbox/nextflow/nextflow.docker.config run /app/SpliceToolBox/src/splicetoolbox/nextflow/main.nf -entry SPLICE --vcf {tmp_vcf_name} {' '.join(nf_params)} -profile standard,conda,singularity,report,timeline"
-            log.debug(cmd)
-
-            splice_config["docker"]["command"] = cmd
-
-            docker_cmd = get_bin_command(
-                tool="splice",
-                bin_type="docker",
-                config=config,
-                default_folder=f"{DEFAULT_TOOLS_FOLDER}/docker",
-                add_options=f"--name {random_uuid} {' '.join(mount)}",
-            )
-
-            # Docker debug
-            # if splice_config.get("rm_container"):
-            #     rm_container = "--rm"
-            # else:
-            #     rm_container = ""
-            # docker_cmd = f"docker run {rm_container} --entrypoint '/bin/bash' --name {random_uuid} {' '.join(mount)} {':'.join(splice_config.get('image'))} {cmd}"
-
-            log.debug(docker_cmd)
-            res = subprocess.run(docker_cmd, shell=True, capture_output=True, text=True)
-            log.debug(res.stdout)
-            if res.stderr:
-                log.error(res.stderr)
-            res.check_returncode()
-        else:
-            log.warning(f"Splice tool configuration not found: {config}")
-
+        # Ensure proxy is set
+        proxy = [
+            f"-e {var}={os.getenv(var)}"
+            for var in ["https_proxy", "http_proxy", "ftp_proxy"]
+            if os.getenv(var) is not None
+        ]
+        docker_cmd = get_bin_command(
+            tool="splice",
+            bin_type="docker",
+            config=config,
+            default_folder=f"{DEFAULT_TOOLS_FOLDER}/docker",
+            add_options=f"--name {random_uuid} {' '.join(mount)} -e NXF_DISABLE_CHECK_LATEST=true {' '.join(proxy)}",
+        )
+        # print(docker_cmd)
+        # exit()
+        # Docker debug
+        # if splice_config.get("rm_container"):
+        #     rm_container = "--rm"
+        # else:
+        #     rm_container = ""
+        # docker_cmd = f"docker run {rm_container} --entrypoint '/bin/bash' --name {random_uuid} {' '.join(mount)} {':'.join(splice_config.get('image'))} {cmd}"
+        log.debug(docker_cmd)
+        res = subprocess.run(docker_cmd, shell=True, capture_output=True, text=True)
+        log.debug(res.stdout)
+        if res.stderr:
+            log.error(res.stderr)
+        res.check_returncode()
         # Update variants
         log.info("Annotation - Updating...")
         # Test find output vcf
@@ -6405,8 +6368,8 @@ class Variants:
             log.debug(f"Splice tmp output: {output_vcf[0]}")
             self.update_from_vcf(output_vcf[0])
 
-        # Remove folder
-        remove_if_exists(output_folder)
+        # Remove file
+        remove_if_exists(output_vcf)
 
     ###
     # Prioritization
