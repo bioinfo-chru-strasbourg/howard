@@ -1705,7 +1705,6 @@ def get_bin_command(
     threads = get_threads(config=config, param=param)
     memory = extract_memory_in_go(get_memory(config=config, param=param))
     tmp = get_tmp(config=config, param=param)
-
     # Java and jar command
     if tool_bin_type in ["jar", "java"]:
 
@@ -1824,7 +1823,7 @@ def get_bin_command(
             .get("automount", "")
             is True
         ):
-            tool_bin_docker_params += mount_folder(config)
+            tool_bin_docker_params += docker_automount()
         elif config.get("docker", {}).get("automount", "") is False:
             tool_bin_docker_params += mount_folder(config)
         elif config.get("docker", {}).get("automount", "") is True:

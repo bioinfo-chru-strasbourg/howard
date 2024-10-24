@@ -373,14 +373,13 @@ GET_BIN_COMMAND_CONFIG_SPLICE = {
     },
     "folders": {
         "databases": {
-            "spliceai": "/home1/DB/HOWARD/SpliceAI/current",
-            "spip": "/home1/DB/HOWARD/SPiP/current",
+            "genomes": f"{tests_databases_folder}/genomes/{tests_databases_release}",
         }
     },
     "tools": {
         "splice": {
             "docker": {
-                "image": "bioinfochrustrasbourg/splice:0.2.1",
+                "image": "bioinfochrustrasbourg/splice:0.2.2",
                 "entrypoint": "/bin/bash",
             },
         },
@@ -429,13 +428,10 @@ def test_get_bin_command_splice(config, modifier):
         "tmp": "/tmp/howard",
     }
     config["tools"]["splice"]["docker"]["config"] = modifier
-    pattern = r"-v\s+([^:]+):"
     tool_command = get_bin_command(tool="splice", config=config, param=param)
-    matches = re.findall(pattern, tool_command)
+    print(tool_command)
+    print(config)
     assert all(elem in tool_command for elem in ["--cpus=2", "--memory=16g"])
-    for path in matches:
-        if not path.startswith("/tmp"):
-            assert os.path.exists(path)
     # erase global docker configuration by tool configuration 1
     if (
         config.get("tools", {})
@@ -461,6 +457,12 @@ def test_get_bin_command_splice(config, modifier):
     ):
         tmp = get_tmp(config, param)
         assert "--rm" in tool_command, f"-v {tmp}:{tmp}" in tool_command
+        assert all(
+            os.path.exists(path)
+            for path in config.get("folders", {}).get("databases", {}).values()
+        )
+
+    # No automount
     if not (
         config.get("tools", {})
         .get("splice", {})
@@ -472,6 +474,15 @@ def test_get_bin_command_splice(config, modifier):
             os.path.exists(path)
             for path in config.get("folders", {}).get("databases", {}).values()
         )
+    # Automount enable
+    if (
+        config.get("tools", {})
+        .get("splice", {})
+        .get("docker", {})
+        .get("config", {})
+        .get("automount", "")
+    ):
+        assert "-v" not in tool_command
 
 
 def test_get_bin_command_snpeff():
@@ -480,9 +491,7 @@ def test_get_bin_command_snpeff():
         "tools": {
             "docker": {"bin": "docker"},
             "java": {"bin": "java"},
-            "snpeff": {
-                "jar": tests_config.get("folders").get("databases").get("snpeff")
-            },
+            "snpeff": {"jar": tests_config.get("tools").get("snpeff")},
             "bcftools": {
                 "bin": "bcftools",
                 "docker": {

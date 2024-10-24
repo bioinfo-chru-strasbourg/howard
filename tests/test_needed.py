@@ -35,7 +35,7 @@ tests_annotations_folder = (
 
 # Tools folder
 # tests_tools = "~/howard/tools"
-tests_tools = full_path("~/howard/tools")
+tests_tools = full_path("/home1/data/WORK_DIR_JB")
 
 setup_cfg = f"{main_folder}/../setup.cfg"
 
@@ -55,8 +55,6 @@ tests_config = {
             "varank": f"{tests_databases_folder}/varank/{tests_databases_release}",
             "genomes": f"{tests_databases_folder}/genomes/{tests_databases_release}",
             "refseq": f"{tests_databases_folder}/refseq/{tests_databases_release}",
-            "spip": f"{tests_databases_folder}/spip/{tests_databases_release}",
-            "spliceai": f"{tests_databases_folder}/spliceai/{tests_databases_release}",
         }
     },
     "tools": {
