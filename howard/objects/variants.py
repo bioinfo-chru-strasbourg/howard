@@ -8622,7 +8622,7 @@ class Variants:
                     transcript=x.transcript,
                     transcripts=transcripts,
                     pattern=nomen_pattern,
-                    transcripts_source_order=transcripts_order
+                    transcripts_source_order=transcripts_order,
                 ),
                 axis=1,
             )
@@ -11021,11 +11021,13 @@ class Variants:
         clause_to_json = []
         clause_to_format = []
         for field in transcripts_infos_columns:
-            clause_select.append(
-                f""" regexp_split_to_table(CAST("{field}" AS STRING), ',') AS '{field}' """
-            )
-            clause_to_json.append(f""" '{field}': "{field}" """)
-            clause_to_format.append(f""" "{field}" """)
+            # Do not consider INFO field for export into fields
+            if field not in ["INFO"]:
+                clause_select.append(
+                    f""" regexp_split_to_table(CAST("{field}" AS STRING), ',') AS '{field}' """
+                )
+                clause_to_json.append(f""" '{field}': "{field}" """)
+                clause_to_format.append(f""" "{field}" """)
 
         # Update
         update_set_json = []
@@ -11035,7 +11037,7 @@ class Variants:
         vcf_reader = self.get_header()
 
         # Transcripts to info column in JSON
-        if transcripts_info_json is not None:
+        if transcripts_info_json:
 
             # Create column on variants table
             self.add_column(
@@ -11063,7 +11065,7 @@ class Variants:
             )
 
         # Transcripts to info field in JSON
-        if transcripts_info_field_json is not None:
+        if transcripts_info_field_json:
 
             log.debug(f"{msg_info_prefix} - Annotation in JSON format...")
 
@@ -11140,7 +11142,7 @@ class Variants:
             self.execute_query(query=query_update)
 
         # Transcripts to info column in FORMAT
-        if transcripts_info_format is not None:
+        if transcripts_info_format:
 
             # Create column on variants table
             self.add_column(
@@ -11167,8 +11169,13 @@ class Variants:
                 f""" {transcripts_info_format}=t.{transcripts_info_format} """
             )
 
+        else:
+
+            # Set variable for internal queries
+            transcripts_info_format = "transcripts_info_format"
+
         # Transcripts to info field in JSON
-        if transcripts_info_field_format is not None:
+        if transcripts_info_field_format:
 
             log.debug(f"{msg_info_prefix} - Annotation in structured format...")
 
