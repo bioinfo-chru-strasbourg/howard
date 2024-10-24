@@ -35,7 +35,7 @@ tests_annotations_folder = (
 
 # Tools folder
 # tests_tools = "~/howard/tools"
-tests_tools = full_path("/home1/data/WORK_DIR_JB")
+tests_tools = full_path("~/howard/tools")
 
 setup_cfg = f"{main_folder}/../setup.cfg"
 
