@@ -23,6 +23,8 @@ import vcf
 import logging as log
 import fastparquet as fp
 from multiprocesspandas import applyparallel
+import cyvcf2
+import pyBigWig
 
 from howard.functions.commons import *
 from howard.objects.database import *
@@ -3082,6 +3084,9 @@ class Variants:
                         elif annotation_file.startswith("snpsift:"):
                             annotation_tool_initial = "snpsift"
                             annotation_file = ":".join(annotation_file.split(":")[1:])
+                        elif annotation_file.startswith("bigwig:"):
+                            annotation_tool_initial = "bigwig"
+                            annotation_file = ":".join(annotation_file.split(":")[1:])
                         else:
                             annotation_tool_initial = None
 
@@ -3168,6 +3173,10 @@ class Variants:
                                             "duckdb",
                                         ]:
                                             annotation_tool = "parquet"
+                                        elif quick_annotation_format in [
+                                            "bw"
+                                        ]:
+                                            annotation_tool = "bigwig"
                                         else:
                                             log.error(
                                                 f"Quick Annotation File {annotation_file_found} - Format {quick_annotation_format} not supported yet"
@@ -3213,6 +3222,9 @@ class Variants:
             if param.get("annotation", {}).get("snpsift", None):
                 log.info("Annotations 'snpsift'...")
                 self.annotation_snpsift()
+            if param.get("annotation", {}).get("bigwig", None):
+                log.info("Annotations 'bigwig'...")
+                self.annotation_bigwig()
             if param.get("annotation", {}).get("annovar", None):
                 log.info("Annotations 'annovar'...")
                 self.annotation_annovar()
@@ -3233,6 +3245,306 @@ class Variants:
                 fields=self.get_explode_infos_fields(),
                 force=True,
             )
+
+
+    def annotation_bigwig(self, threads: int = None) -> None:
+        """
+        The function `annotation_bigwig` annotates variants in a VCF file using bigwig databases.
+        
+        :param threads: The `threads` parameter in the `annotation_bigwig` method is used to specify the
+        number of threads to be used for parallel processing during the annotation process. If the
+        `threads` parameter is not provided, the method will attempt to determine the optimal number of
+        threads to use based on the system configuration
+        :type threads: int
+        :return: True
+        """
+
+        # DEBUG
+        log.debug("Start annotation with bigwig databases")
+
+        # # Threads
+        # if not threads:
+        #     threads = self.get_threads()
+        # log.debug("Threads: " + str(threads))
+
+        # Config
+        config = self.get_config()
+        log.debug("Config: " + str(config))
+
+        # Config - BCFTools databases folders
+        databases_folders = set(
+            self.get_config()
+            .get("folders", {})
+            .get("databases", {})
+            .get("annotations", ["."])
+            + self.get_config()
+            .get("folders", {})
+            .get("databases", {})
+            .get("bigwig", ["."])
+        )
+        log.debug("Databases annotations: " + str(databases_folders))
+
+        # Param
+        annotations = (
+            self.get_param()
+            .get("annotation", {})
+            .get("bigwig", {})
+            .get("annotations", None)
+        )
+        log.debug("Annotations: " + str(annotations))
+
+        # Assembly
+        assembly = self.get_param().get(
+            "assembly", self.get_config().get("assembly", DEFAULT_ASSEMBLY)
+        )
+
+        # Data
+        table_variants = self.get_table_variants()
+
+        # Check if not empty
+        log.debug("Check if not empty")
+        sql_query_chromosomes = (
+            f"""SELECT count(*) as count FROM {table_variants} as table_variants"""
+        )
+        sql_query_chromosomes_df = self.get_query_to_df(sql_query_chromosomes)
+        if not sql_query_chromosomes_df["count"][0]:
+            log.info(f"VCF empty")
+            return
+
+        # VCF header
+        vcf_reader = self.get_header()
+        log.debug("Initial header: " + str(vcf_reader.infos))
+
+        # Existing annotations
+        for vcf_annotation in self.get_header().infos:
+
+            vcf_annotation_line = self.get_header().infos.get(vcf_annotation)
+            log.debug(
+                f"Existing annotations in VCF: {vcf_annotation} [{vcf_annotation_line}]"
+            )
+
+        if annotations:
+
+            with TemporaryDirectory(dir=self.get_tmp_dir()) as tmp_dir:
+
+                # Export VCF file
+                tmp_vcf_name = os.path.join(tmp_dir, "input.vcf.gz")
+
+                # annotation_bigwig_config
+                annotation_bigwig_config_list = []
+
+                for annotation in annotations:
+                    annotation_fields = annotations[annotation]
+
+                    # Annotation Name
+                    annotation_name = os.path.basename(annotation)
+
+                    if not annotation_fields:
+                        annotation_fields = {"INFO": None}
+
+                    log.debug(f"Annotation '{annotation_name}'")
+                    log.debug(
+                        f"Annotation '{annotation_name}' - fields: {annotation_fields}"
+                    )
+
+                    # Create Database
+                    database = Database(
+                        database=annotation,
+                        databases_folders=databases_folders,
+                        assembly=assembly,
+                    )
+
+                    # Find files
+                    db_file = database.get_database()
+                    db_file = full_path(db_file)
+                    db_hdr_file = database.get_header_file()
+                    db_hdr_file = full_path(db_hdr_file)
+                    db_file_type = database.get_format()
+
+                    # If db_file is http ?
+                    if database.get_database().startswith("http"):
+
+                        # Datbase is HTTP URL
+                        db_file_is_http = True
+
+                        # DB file keep as URL
+                        db_file = database.get_database()
+                        log.warning(f"Annotations 'bigwig' database '{db_file}' - is an HTTP URL (experimental)")
+
+                        # Retrieve automatic annotation field name
+                        annotation_field = clean_annotation_field(os.path.basename(db_file).replace(".bw", ""))
+                        log.debug(f"Create header file with annotation field '{annotation_field}' is an HTTP URL")
+
+                        # Create automatic header file
+                        db_hdr_file = os.path.join(tmp_dir, "header.hdr")
+                        with open(db_hdr_file, 'w') as f:
+                            f.write("##fileformat=VCFv4.2\n")
+                            f.write(f"""##INFO=<ID={annotation_field},Number=.,Type=Float,Description="{annotation_field} annotation from {db_file}">\n""")
+                            f.write(f"#CHROM	START	END	{annotation_field}\n")
+
+                    else:
+
+                        # Datbase is NOT HTTP URL
+                        db_file_is_http = False
+                    
+
+                    # Check index - try to create if not exists
+                    if db_file is None or db_hdr_file is None or (not os.path.exists(db_file) and not db_file_is_http) or not os.path.exists(db_hdr_file) or not db_file_type in ["bw"]:
+                    #if False:
+                        log.error("Annotation failed: database not valid")
+                        log.error(f"Annotation annotation file: {db_file}")
+                        log.error(f"Annotation annotation file type: {db_file_type}")
+                        log.error(f"Annotation annotation header: {db_hdr_file}")
+                        raise ValueError(
+                            f"Annotation failed: database not valid - annotation file {db_file} / annotation file type {db_file_type} / annotation header {db_hdr_file}"
+                        )
+                    else:
+
+                        # Log
+                        log.debug(
+                            f"Annotation '{annotation}' - file: "
+                            + str(db_file)
+                            + " and "
+                            + str(db_hdr_file)
+                        )
+
+                        # Load header as VCF object
+                        db_hdr_vcf = Variants(input=db_hdr_file)
+                        db_hdr_vcf_header_infos = db_hdr_vcf.get_header().infos
+                        log.debug(
+                            "Annotation database header: "
+                            + str(db_hdr_vcf_header_infos)
+                        )
+
+                        # For all fields in database
+                        annotation_fields_full = False
+                        if "ALL" in annotation_fields or "INFO" in annotation_fields:
+                            annotation_fields = {
+                                key: key for key in db_hdr_vcf_header_infos
+                            }
+                            log.debug(
+                                "Annotation database header - All annotations added: "
+                                + str(annotation_fields)
+                            )
+                            annotation_fields_full = True
+
+                        # Init
+                        cyvcf2_header_rename_dict = {}
+                        cyvcf2_header_list = []
+                        cyvcf2_header_indexes = {}
+
+                        # process annotation fields
+                        for annotation_field in annotation_fields:
+
+                            # New annotation name 
+                            annotation_field_new = annotation_fields[annotation_field]
+
+                            # Check annotation field and index in header
+                            if annotation_field in db_hdr_vcf.get_header_columns_as_list():
+                                annotation_field_index = db_hdr_vcf.get_header_columns_as_list().index(annotation_field)-3
+                                cyvcf2_header_indexes[annotation_field_new] = annotation_field_index
+                            else:
+                                msg_err = f"Database '{db_file}' does NOT contain annotation field '{annotation_field}'"
+                                log.error(msg_err)
+                                raise ValueError(msg_err)
+
+                            # Append annotation field in cyvcf2 header list
+                            cyvcf2_header_rename_dict[annotation_field_new] = db_hdr_vcf_header_infos[annotation_field].id
+                            cyvcf2_header_list.append(
+                                {
+                                    "ID": annotation_field_new,
+                                    "Number": db_hdr_vcf_header_infos[annotation_field].num,
+                                    "Type": db_hdr_vcf_header_infos[annotation_field].type,
+                                    "Description": db_hdr_vcf_header_infos[annotation_field].desc,
+                                }
+                            )
+
+                        # Load bigwig database
+                        bw_db = pyBigWig.open(db_file)
+                        if bw_db.isBigWig():
+                            log.debug(f"Database '{db_file}' is in 'BigWig' format")
+                        else:
+                            msg_err = f"Database '{db_file}' is NOT in 'BigWig' format"
+                            log.error(msg_err)
+                            raise ValueError(msg_err)
+
+                        annotation_bigwig_config_list.append(
+                            {
+                                "db_file": db_file,
+                                "bw_db": bw_db,
+                                "cyvcf2_header_rename_dict": cyvcf2_header_rename_dict,
+                                "cyvcf2_header_list": cyvcf2_header_list,
+                                "cyvcf2_header_indexes": cyvcf2_header_indexes
+                            }
+                        )
+
+                # Annotate
+                if annotation_bigwig_config_list:
+
+                    # Annotation config
+                    log.debug(f"annotation_bigwig_config={annotation_bigwig_config_list}")
+
+                    # Export VCF file
+                    self.export_variant_vcf(
+                        vcf_file=tmp_vcf_name,
+                        remove_info=True,
+                        add_samples=False,
+                        index=True,
+                    )
+
+                    # Load input tmp file
+                    input_vcf = cyvcf2.VCF(tmp_vcf_name)
+
+                    # Add header in input file
+                    for annotation_bigwig_config in annotation_bigwig_config_list:
+                        for cyvcf2_header_field in annotation_bigwig_config.get("cyvcf2_header_list",[]):
+                            log.info(f"Annotations 'bigwig' database '{os.path.basename(annotation_bigwig_config.get('db_file'))}' - annotation field '{annotation_bigwig_config.get('cyvcf2_header_rename_dict',{}).get(cyvcf2_header_field.get('ID','Unknown'))}' -> '{cyvcf2_header_field.get('ID')}'")
+                            input_vcf.add_info_to_header(
+                                cyvcf2_header_field
+                            )
+
+                    # Create output VCF file
+                    output_vcf_file = os.path.join(tmp_dir,"output.vcf.gz")
+                    output_vcf = cyvcf2.Writer(output_vcf_file, input_vcf)
+
+                    # Fetch variants
+                    log.info(f"Annotations 'bigwig' start...")
+                    for variant in input_vcf:
+
+                        for annotation_bigwig_config in annotation_bigwig_config_list:
+
+                            # DB and indexes
+                            bw_db = annotation_bigwig_config.get("bw_db", None)
+                            cyvcf2_header_indexes = annotation_bigwig_config.get("cyvcf2_header_indexes", None)
+
+                            # Retrieve value from chrom pos
+                            res = bw_db.values(variant.CHROM, variant.POS - 1, variant.POS)
+                            
+                            # For each annotation fields (and indexes)
+                            for cyvcf2_header_index in cyvcf2_header_indexes:
+
+                                # If value is NOT nNone
+                                if not np.isnan(res[cyvcf2_header_indexes[cyvcf2_header_index]]):
+                                    variant.INFO[cyvcf2_header_index] = res[cyvcf2_header_indexes[cyvcf2_header_index]]
+
+                        # Add record in output file
+                        output_vcf.write_record(variant)
+
+                    # Log
+                    log.debug(f"Annotation done.")
+
+                    # Close and write file
+                    log.info(f"Annotations 'bigwig' write...")
+                    output_vcf.close()
+                    log.debug(f"Write done.")
+
+                    # Update variants
+                    log.info(f"Annotations 'bigwig' update...")
+                    self.update_from_vcf(output_vcf_file)
+                    log.debug(f"Update done.")
+
+        return True
+
 
     def annotation_snpsift(self, threads: int = None) -> None:
         """
@@ -3593,6 +3905,7 @@ class Variants:
                             f"Annotation - Updating [{nb_command}/{len(commands)}]..."
                         )
                         self.update_from_vcf(commands[command_annotate])
+
 
     def annotation_bcftools(self, threads: int = None) -> None:
         """
