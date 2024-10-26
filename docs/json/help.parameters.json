@@ -472,8 +472,8 @@
       ],
       "__examples_code": [
         "# Annotation with multiple databases in multiple formats",
-        "\"parquet\": {",
-        "   \"snpsift\": {",
+        "\"snpsift\": {",
+        "   \"annotations\": {",
         "      \"/path/to/database1.vcf.gz\": {",
         "         \"field1\": null,",
         "         \"field2\": null",
@@ -512,6 +512,55 @@
           "   \"dbnsfp42a.REVEL.vcf.gz\": {",
           "      \"REVEL_score\": null,",
           "      \"REVEL_rankscore\": null",
+          "   }",
+          "}"
+        ]
+      }
+    },
+    "bigwig": {
+      "__help": [
+        "Annotation process using BigWig files. Provide a list of database files in BigWig format ('.bw') and annotation fields."
+      ],
+      "__examples_code": [
+        "# Annotation with multiple databases in BigWig format",
+        "\"bigwig\": {",
+        "   \"annotations\": {",
+        "      \"/path/to/database1.bw\": {",
+        "         \"field1\": null,",
+        "         \"field2\": null",
+        "      },",
+        "      \"/path/to/database2.bw\": {",
+        "         \"field1\": null,",
+        "         \"field2\": null",
+        "      }",
+        "   }",
+        "}"
+      ],
+      "annotations": {
+        "__auto": false,
+        "__help": [
+          "Specify the list of database files in BigWig format.",
+          "This parameter enables users to select specific database fields and optionally rename them (e.g. '\"field\": null' to keep field name, '\"field\": \"new_name\"' to rename field). Use 'INFO' or 'ALL' keyword to select all fields within the database INFO/Tags header (e.g. '\"INFO\": null', '\"ALL\": null').\n",
+          "If a full path is not provided, the system will automatically detect files within database folders (see Configuration doc) and assembly (see Parameter option).\n",
+          "A URL can be provided as a database file (experimental). In this case, associated header file will be automatically generated with ua uniq value as the name of the file (cleaned for avoid special characters, and '.bw' extension)."
+        ],
+        "__examples_code": [
+          "# Annotation with GERP database with all fields",
+          "\"annotations\": {",
+          "   \"tests/databases/annotations/current/hg19/gerp.bw\": {",
+          "      \"INFO\": null",
+          "   }",
+          "}",
+          "# Annotation with GERP (only gerp score)",
+          "\"annotations\": {",
+          "   \"tests/databases/annotations/current/hg19/gerp.bw\": {",
+          "      \"gerp\": \"GERP_score\"",
+          "   }",
+          "}",
+          "# Annotation with GERP from a distante database (experimental)",
+          "\"annotations\": {",
+          "   \"https://hgdownload.soe.ucsc.edu/gbdb/hg19/bbi/All_hg19_RS.bw\": {",
+          "      \"INFO\": null",
           "   }",
           "}"
         ]

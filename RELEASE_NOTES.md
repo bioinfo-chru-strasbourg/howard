@@ -8,6 +8,7 @@ operations, and python packages stability.
 
 ### News
 
+- Add annotation method 'BigWig'
 - Add prioritization options:
   - SQL syntax available to define filters
   - New 'Class' priorisation field
@@ -33,6 +34,7 @@ operations, and python packages stability.
 - Managment, check and export of samples columns
 - Improve query type mode
 - Improve splice annotation
+- Improve NOMEN generation
 
 ### Fixes
 

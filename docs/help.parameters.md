@@ -38,29 +38,32 @@ title: HOWARD Help Parameters
   - [<span class="toc-section-number">3.5</span> snpsift](#snpsift)
     - [<span class="toc-section-number">3.5.1</span>
       annotations](#annotations-3)
-  - [<span class="toc-section-number">3.6</span> exomiser](#exomiser)
-    - [<span class="toc-section-number">3.6.1</span> release](#release)
-    - [<span class="toc-section-number">3.6.2</span>
-      transcript_source](#transcript_source)
-    - [<span class="toc-section-number">3.6.3</span> hpo](#hpo)
-  - [<span class="toc-section-number">3.7</span> splice](#splice)
-    - [<span class="toc-section-number">3.7.1</span>
-      split_mode](#split_mode)
+  - [<span class="toc-section-number">3.6</span> bigwig](#bigwig)
+    - [<span class="toc-section-number">3.6.1</span>
+      annotations](#annotations-4)
+  - [<span class="toc-section-number">3.7</span> exomiser](#exomiser)
+    - [<span class="toc-section-number">3.7.1</span> release](#release)
     - [<span class="toc-section-number">3.7.2</span>
-      spliceai_distance](#spliceai_distance)
-    - [<span class="toc-section-number">3.7.3</span>
-      spliceai_mask](#spliceai_mask)
-    - [<span class="toc-section-number">3.7.4</span>
-      transcript](#transcript)
-    - [<span class="toc-section-number">3.7.5</span> rm_snps](#rm_snps)
-    - [<span class="toc-section-number">3.7.6</span>
-      rm_annot](#rm_annot)
-    - [<span class="toc-section-number">3.7.7</span>
-      whitespace](#whitespace)
-  - [<span class="toc-section-number">3.8</span> options](#options-2)
+      transcript_source](#transcript_source)
+    - [<span class="toc-section-number">3.7.3</span> hpo](#hpo)
+  - [<span class="toc-section-number">3.8</span> splice](#splice)
     - [<span class="toc-section-number">3.8.1</span>
-      annotations_update](#annotations_update)
+      split_mode](#split_mode)
     - [<span class="toc-section-number">3.8.2</span>
+      spliceai_distance](#spliceai_distance)
+    - [<span class="toc-section-number">3.8.3</span>
+      spliceai_mask](#spliceai_mask)
+    - [<span class="toc-section-number">3.8.4</span>
+      transcript](#transcript)
+    - [<span class="toc-section-number">3.8.5</span> rm_snps](#rm_snps)
+    - [<span class="toc-section-number">3.8.6</span>
+      rm_annot](#rm_annot)
+    - [<span class="toc-section-number">3.8.7</span>
+      whitespace](#whitespace)
+  - [<span class="toc-section-number">3.9</span> options](#options-2)
+    - [<span class="toc-section-number">3.9.1</span>
+      annotations_update](#annotations_update)
+    - [<span class="toc-section-number">3.9.2</span>
       annotations_append](#annotations_append)
 - [<span class="toc-section-number">4</span> calculation](#calculation)
   - [<span class="toc-section-number">4.1</span>
@@ -907,8 +910,8 @@ Examples:
 
 > ``` json
 > {
->    "parquet": {
->       "snpsift": {
+>    "snpsift": {
+>       "annotations": {
 >          "/path/to/database1.vcf.gz": {
 >             "field1": null,
 >             "field2": null
@@ -976,6 +979,89 @@ Examples:
 >       "dbnsfp42a.REVEL.vcf.gz": {
 >          "REVEL_score": null,
 >          "REVEL_rankscore": null
+>       }
+>    }
+> }
+> ```
+
+## bigwig
+
+Annotation process using BigWig files. Provide a list of database files
+in BigWig format ('.bw') and annotation fields.
+
+Examples:
+
+> Annotation with multiple databases in BigWig format
+
+> ``` json
+> {
+>    "bigwig": {
+>       "annotations": {
+>          "/path/to/database1.bw": {
+>             "field1": null,
+>             "field2": null
+>          },
+>          "/path/to/database2.bw": {
+>             "field1": null,
+>             "field2": null
+>          }
+>       }
+>    }
+> }
+> ```
+
+### annotations
+
+Specify the list of database files in BigWig format.
+
+This parameter enables users to select specific database fields and
+optionally rename them (e.g. '"field": null' to keep field name,
+'"field": "new_name"' to rename field). Use 'INFO' or 'ALL' keyword to
+select all fields within the database INFO/Tags header (e.g. '"INFO":
+null', '"ALL": null').
+
+If a full path is not provided, the system will automatically detect
+files within database folders (see Configuration doc) and assembly (see
+Parameter option).
+
+A URL can be provided as a database file (experimental). In this case,
+associated header file will be automatically generated with ua uniq
+value as the name of the file (cleaned for avoid special characters, and
+'.bw' extension).
+
+Examples:
+
+> Annotation with GERP database with all fields
+
+> ``` json
+> {
+>    "annotations": {
+>       "tests/databases/annotations/current/hg19/gerp.bw": {
+>          "INFO": null
+>       }
+>    }
+> }
+> ```
+
+> Annotation with GERP (only gerp score)
+
+> ``` json
+> {
+>    "annotations": {
+>       "tests/databases/annotations/current/hg19/gerp.bw": {
+>          "gerp": "GERP_score"
+>       }
+>    }
+> }
+> ```
+
+> Annotation with GERP from a distante database (experimental)
+
+> ``` json
+> {
+>    "annotations": {
+>       "https://hgdownload.soe.ucsc.edu/gbdb/hg19/bbi/All_hg19_RS.bw": {
+>          "INFO": null
 >       }
 >    }
 > }

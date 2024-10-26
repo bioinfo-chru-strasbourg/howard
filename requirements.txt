@@ -26,4 +26,5 @@ md_toc~=9.0.0
 numpy~=1.26.0
 beautifulsoup4~=4.12.0
 pyBigWig~=0.3.0
+cyvcf2~=0.31.0
 pypandoc_binary~=1.13.0
