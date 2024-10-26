@@ -3173,9 +3173,7 @@ class Variants:
                                             "duckdb",
                                         ]:
                                             annotation_tool = "parquet"
-                                        elif quick_annotation_format in [
-                                            "bw"
-                                        ]:
+                                        elif quick_annotation_format in ["bw"]:
                                             annotation_tool = "bigwig"
                                         else:
                                             log.error(
@@ -3246,11 +3244,10 @@ class Variants:
                 force=True,
             )
 
-
     def annotation_bigwig(self, threads: int = None) -> None:
         """
         The function `annotation_bigwig` annotates variants in a VCF file using bigwig databases.
-        
+
         :param threads: The `threads` parameter in the `annotation_bigwig` method is used to specify the
         number of threads to be used for parallel processing during the annotation process. If the
         `threads` parameter is not provided, the method will attempt to determine the optimal number of
@@ -3369,28 +3366,41 @@ class Variants:
 
                         # DB file keep as URL
                         db_file = database.get_database()
-                        log.warning(f"Annotations 'bigwig' database '{db_file}' - is an HTTP URL (experimental)")
+                        log.warning(
+                            f"Annotations 'bigwig' database '{db_file}' - is an HTTP URL (experimental)"
+                        )
 
                         # Retrieve automatic annotation field name
-                        annotation_field = clean_annotation_field(os.path.basename(db_file).replace(".bw", ""))
-                        log.debug(f"Create header file with annotation field '{annotation_field}' is an HTTP URL")
+                        annotation_field = clean_annotation_field(
+                            os.path.basename(db_file).replace(".bw", "")
+                        )
+                        log.debug(
+                            f"Create header file with annotation field '{annotation_field}' is an HTTP URL"
+                        )
 
                         # Create automatic header file
                         db_hdr_file = os.path.join(tmp_dir, "header.hdr")
-                        with open(db_hdr_file, 'w') as f:
+                        with open(db_hdr_file, "w") as f:
                             f.write("##fileformat=VCFv4.2\n")
-                            f.write(f"""##INFO=<ID={annotation_field},Number=.,Type=Float,Description="{annotation_field} annotation from {db_file}">\n""")
+                            f.write(
+                                f"""##INFO=<ID={annotation_field},Number=.,Type=Float,Description="{annotation_field} annotation from {db_file}">\n"""
+                            )
                             f.write(f"#CHROM	START	END	{annotation_field}\n")
 
                     else:
 
                         # Datbase is NOT HTTP URL
                         db_file_is_http = False
-                    
 
                     # Check index - try to create if not exists
-                    if db_file is None or db_hdr_file is None or (not os.path.exists(db_file) and not db_file_is_http) or not os.path.exists(db_hdr_file) or not db_file_type in ["bw"]:
-                    #if False:
+                    if (
+                        db_file is None
+                        or db_hdr_file is None
+                        or (not os.path.exists(db_file) and not db_file_is_http)
+                        or not os.path.exists(db_hdr_file)
+                        or not db_file_type in ["bw"]
+                    ):
+                        # if False:
                         log.error("Annotation failed: database not valid")
                         log.error(f"Annotation annotation file: {db_file}")
                         log.error(f"Annotation annotation file type: {db_file_type}")
@@ -3436,26 +3446,44 @@ class Variants:
                         # process annotation fields
                         for annotation_field in annotation_fields:
 
-                            # New annotation name 
+                            # New annotation name
                             annotation_field_new = annotation_fields[annotation_field]
 
                             # Check annotation field and index in header
-                            if annotation_field in db_hdr_vcf.get_header_columns_as_list():
-                                annotation_field_index = db_hdr_vcf.get_header_columns_as_list().index(annotation_field)-3
-                                cyvcf2_header_indexes[annotation_field_new] = annotation_field_index
+                            if (
+                                annotation_field
+                                in db_hdr_vcf.get_header_columns_as_list()
+                            ):
+                                annotation_field_index = (
+                                    db_hdr_vcf.get_header_columns_as_list().index(
+                                        annotation_field
+                                    )
+                                    - 3
+                                )
+                                cyvcf2_header_indexes[annotation_field_new] = (
+                                    annotation_field_index
+                                )
                             else:
                                 msg_err = f"Database '{db_file}' does NOT contain annotation field '{annotation_field}'"
                                 log.error(msg_err)
                                 raise ValueError(msg_err)
 
                             # Append annotation field in cyvcf2 header list
-                            cyvcf2_header_rename_dict[annotation_field_new] = db_hdr_vcf_header_infos[annotation_field].id
+                            cyvcf2_header_rename_dict[annotation_field_new] = (
+                                db_hdr_vcf_header_infos[annotation_field].id
+                            )
                             cyvcf2_header_list.append(
                                 {
                                     "ID": annotation_field_new,
-                                    "Number": db_hdr_vcf_header_infos[annotation_field].num,
-                                    "Type": db_hdr_vcf_header_infos[annotation_field].type,
-                                    "Description": db_hdr_vcf_header_infos[annotation_field].desc,
+                                    "Number": db_hdr_vcf_header_infos[
+                                        annotation_field
+                                    ].num,
+                                    "Type": db_hdr_vcf_header_infos[
+                                        annotation_field
+                                    ].type,
+                                    "Description": db_hdr_vcf_header_infos[
+                                        annotation_field
+                                    ].desc,
                                 }
                             )
 
@@ -3474,7 +3502,7 @@ class Variants:
                                 "bw_db": bw_db,
                                 "cyvcf2_header_rename_dict": cyvcf2_header_rename_dict,
                                 "cyvcf2_header_list": cyvcf2_header_list,
-                                "cyvcf2_header_indexes": cyvcf2_header_indexes
+                                "cyvcf2_header_indexes": cyvcf2_header_indexes,
                             }
                         )
 
@@ -3482,7 +3510,9 @@ class Variants:
                 if annotation_bigwig_config_list:
 
                     # Annotation config
-                    log.debug(f"annotation_bigwig_config={annotation_bigwig_config_list}")
+                    log.debug(
+                        f"annotation_bigwig_config={annotation_bigwig_config_list}"
+                    )
 
                     # Export VCF file
                     self.export_variant_vcf(
@@ -3497,14 +3527,16 @@ class Variants:
 
                     # Add header in input file
                     for annotation_bigwig_config in annotation_bigwig_config_list:
-                        for cyvcf2_header_field in annotation_bigwig_config.get("cyvcf2_header_list",[]):
-                            log.info(f"Annotations 'bigwig' database '{os.path.basename(annotation_bigwig_config.get('db_file'))}' - annotation field '{annotation_bigwig_config.get('cyvcf2_header_rename_dict',{}).get(cyvcf2_header_field.get('ID','Unknown'))}' -> '{cyvcf2_header_field.get('ID')}'")
-                            input_vcf.add_info_to_header(
-                                cyvcf2_header_field
+                        for cyvcf2_header_field in annotation_bigwig_config.get(
+                            "cyvcf2_header_list", []
+                        ):
+                            log.info(
+                                f"Annotations 'bigwig' database '{os.path.basename(annotation_bigwig_config.get('db_file'))}' - annotation field '{annotation_bigwig_config.get('cyvcf2_header_rename_dict',{}).get(cyvcf2_header_field.get('ID','Unknown'))}' -> '{cyvcf2_header_field.get('ID')}'"
                             )
+                            input_vcf.add_info_to_header(cyvcf2_header_field)
 
                     # Create output VCF file
-                    output_vcf_file = os.path.join(tmp_dir,"output.vcf.gz")
+                    output_vcf_file = os.path.join(tmp_dir, "output.vcf.gz")
                     output_vcf = cyvcf2.Writer(output_vcf_file, input_vcf)
 
                     # Fetch variants
@@ -3515,17 +3547,25 @@ class Variants:
 
                             # DB and indexes
                             bw_db = annotation_bigwig_config.get("bw_db", None)
-                            cyvcf2_header_indexes = annotation_bigwig_config.get("cyvcf2_header_indexes", None)
+                            cyvcf2_header_indexes = annotation_bigwig_config.get(
+                                "cyvcf2_header_indexes", None
+                            )
 
                             # Retrieve value from chrom pos
-                            res = bw_db.values(variant.CHROM, variant.POS - 1, variant.POS)
-                            
+                            res = bw_db.values(
+                                variant.CHROM, variant.POS - 1, variant.POS
+                            )
+
                             # For each annotation fields (and indexes)
                             for cyvcf2_header_index in cyvcf2_header_indexes:
 
                                 # If value is NOT nNone
-                                if not np.isnan(res[cyvcf2_header_indexes[cyvcf2_header_index]]):
-                                    variant.INFO[cyvcf2_header_index] = res[cyvcf2_header_indexes[cyvcf2_header_index]]
+                                if not np.isnan(
+                                    res[cyvcf2_header_indexes[cyvcf2_header_index]]
+                                ):
+                                    variant.INFO[cyvcf2_header_index] = res[
+                                        cyvcf2_header_indexes[cyvcf2_header_index]
+                                    ]
 
                         # Add record in output file
                         output_vcf.write_record(variant)
@@ -3544,7 +3584,6 @@ class Variants:
                     log.debug(f"Update done.")
 
         return True
-
 
     def annotation_snpsift(self, threads: int = None) -> None:
         """
@@ -3905,7 +3944,6 @@ class Variants:
                             f"Annotation - Updating [{nb_command}/{len(commands)}]..."
                         )
                         self.update_from_vcf(commands[command_annotate])
-
 
     def annotation_bcftools(self, threads: int = None) -> None:
         """
@@ -6265,9 +6303,7 @@ class Variants:
                                         LEFT JOIN {parquet_file_link} as table_parquet_from ON (
                                             table_parquet_from."#CHROM" = '{chrom}'
                                             AND table_variants_from.\"POS\" <= table_parquet_from.\"END\"
-                                            AND (table_variants_from.\"POS\" >= (table_parquet_from.\"START\"+1)
-                                                OR table_variants_from.\"POS\" + (len(table_variants_from.\"REF\")-1) >= (table_parquet_from.\"START\"+1)
-                                                )
+                                            AND table_variants_from.\"POS\" + (len(table_variants_from.\"REF\")-1) >= (table_parquet_from.\"START\"+1)
                                         )
                                         WHERE table_variants_from.\"#CHROM\" in ('{chrom}')
                                         GROUP BY table_variants_from.\"POS\"
