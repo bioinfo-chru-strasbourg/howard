@@ -62,17 +62,19 @@ def calculation(args: argparse) -> None:
     if vcfdata_obj.get_input():
         vcfdata_obj.load_data()
 
+    # Operations config file
+    operations_config_file = param.get("calculation", {}).get("calculation_config")
+
+    # Show calculation
     if param.get("calculation", {}).get("show_calculations", False):
-        operations_config_file = param.get("calculation").get("calculation_config")
-        log.debug(f"operations_config_file={operations_config_file}")
         for help_line in vcfdata_obj.get_operations_help(
             operations_config_file=operations_config_file
         ):
             log.info(help_line)
         exit()
 
-    # Annotation
-    vcfdata_obj.calculation()
+    # Calculation
+    vcfdata_obj.calculation(operations_config_file=operations_config_file)
 
     # Export
     vcfdata_obj.export_output()
