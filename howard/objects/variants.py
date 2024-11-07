@@ -3487,6 +3487,19 @@ class Variants:
                                 }
                             )
 
+                            # Add header on VCF
+                            vcf_reader.infos[annotation_field_new] = vcf.parser._Info(
+                                annotation_field_new,
+                                db_hdr_vcf_header_infos[annotation_field].num,
+                                db_hdr_vcf_header_infos[annotation_field].type,
+                                db_hdr_vcf_header_infos[annotation_field].desc,
+                                "HOWARD BigWig annotation",
+                                "unknown",
+                                self.code_type_map[
+                                    db_hdr_vcf_header_infos[annotation_field].type
+                                ],
+                            )
+
                         # Load bigwig database
                         bw_db = pyBigWig.open(db_file)
                         if bw_db.isBigWig():
