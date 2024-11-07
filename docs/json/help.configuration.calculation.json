@@ -14,6 +14,7 @@
         "    \"name\": \"VARTYPE\",",
         "    \"description\": \"Variant type (e.g. SNV, INDEL, MNV, BND...)\",",
         "    \"available\": true,",
+        "    \"table\": \"variants\",",
         "    \"output_column_name\": \"VARTYPE\",",
         "    \"output_column_type\": \"String\",",
         "    \"output_column_description\": \"Variant type: SNV if X>Y, MOSAIC if X>Y,Z or X,Y>Z, INDEL if XY>Z or X>YZ\",",
@@ -66,6 +67,12 @@
       "__help": [
         "- *Type:* Boolean",
         "- *Description:* Specifies whether the calculation is available and enabled for use. If set to true, it's available; otherwise, it's not accessible."
+      ]
+    },
+    "table": {
+      "__help": [
+        "- *Type:* String",
+        "- *Description:* Specifies the table within the calculation is generated (default 'variants'). Useful for calculations on transcripts."
       ]
     },
     "output_column_name": {
