@@ -8406,7 +8406,8 @@ class Variants:
                 added_columns += self.explode_infos(
                     prefix=prefix,
                     fields=[output_column_name] + operation_info_fields,
-                    force=True,
+                    force=False,
+                    table=table_variants,
                 )
 
                 # Create column
