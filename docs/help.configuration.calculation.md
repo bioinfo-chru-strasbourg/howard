@@ -11,21 +11,22 @@ title: HOWARD Help Configuration Calculation
   - [<span class="toc-section-number">2.3</span>
     description](#description)
   - [<span class="toc-section-number">2.4</span> available](#available)
-  - [<span class="toc-section-number">2.5</span>
-    output_column_name](#output_column_name)
+  - [<span class="toc-section-number">2.5</span> table](#table)
   - [<span class="toc-section-number">2.6</span>
-    output_column_type](#output_column_type)
+    output_column_name](#output_column_name)
   - [<span class="toc-section-number">2.7</span>
-    output_column_description](#output_column_description)
+    output_column_type](#output_column_type)
   - [<span class="toc-section-number">2.8</span>
-    operation_query](#operation_query)
+    output_column_description](#output_column_description)
   - [<span class="toc-section-number">2.9</span>
-    info_fields](#info_fields)
+    operation_query](#operation_query)
   - [<span class="toc-section-number">2.10</span>
-    operation_info](#operation_info)
+    info_fields](#info_fields)
   - [<span class="toc-section-number">2.11</span>
-    function_name](#function_name)
+    operation_info](#operation_info)
   - [<span class="toc-section-number">2.12</span>
+    function_name](#function_name)
+  - [<span class="toc-section-number">2.13</span>
     function_params](#function_params)
 
 # Introduction
@@ -57,6 +58,7 @@ Examples:
 >     "name": "VARTYPE",
 >     "description": "Variant type (e.g. SNV, INDEL, MNV, BND...)",
 >     "available": true,
+>     "table": "variants",
 >     "output_column_name": "VARTYPE",
 >     "output_column_type": "String",
 >     "output_column_description": "Variant type: SNV if X>Y, MOSAIC if X>Y,Z or X,Y>Z, INDEL if XY>Z or X>YZ",
@@ -113,6 +115,13 @@ Examples:
 - *Description:* Specifies whether the calculation is available and
   enabled for use. If set to true, it's available; otherwise, it's not
   accessible.
+
+## table
+
+- *Type:* String
+
+- *Description:* Specifies the table within the calculation is generated
+  (default 'variants'). Useful for calculations on transcripts.
 
 ## output_column_name
 

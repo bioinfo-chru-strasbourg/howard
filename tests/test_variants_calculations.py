@@ -26,6 +26,100 @@ from howard.functions.databases import *
 from test_needed import *
 
 
+def test_calculation_sql_on_table():
+    """
+    The function `test_calculation_sql_on_table` performs various calculations and checks on a table of
+    genetic variants using SQL operations.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        tmp_dir = "/tmp"
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Create object
+        variants = Variants(input=input_vcf, output=output_vcf, load=True)
+
+        # Operations config file
+        operations_config_file = os.path.join(
+            tests_data_folder, "operations_config_test.json"
+        )
+
+        # New table
+        new_table = "transcripts"
+
+        # Operations config dict
+        operations_config_dict = {
+            "variant_chr_pos_alt_ref_dict": {
+                "type": "sql",
+                "name": "variant_chr_pos_alt_ref_dict",
+                "description": "Create a variant ID with chromosome, position, alt and ref",
+                "available": False,
+                "table": new_table,
+                "output_column_name": "variant_chr_pos_alt_ref_dict",
+                "output_column_type": "String",
+                "output_column_description": "variant ID with chromosome, position, alt and ref",
+                "operation_query": """ concat("#CHROM", '_', "POS", '_', "REF", '_', "ALT") """,
+                "operation_info": True,
+            }
+        }
+
+        # Operations
+        operations = {
+            "variant_chr_pos_alt_ref": None,
+            "variant_chr_pos_alt_ref_file": None,
+            "variant_chr_pos_alt_ref_dict": None,
+        }
+
+        # Create another table
+        query_create_table = f"""
+            CREATE TABLE {new_table} AS SELECT * FROM variants
+        """
+        variants.execute_query(query=query_create_table)
+
+        # Calculation
+        variants.calculation(
+            operations=operations,
+            operations_config_dict=operations_config_dict,
+            operations_config_file=operations_config_file,
+        )
+
+        # Check number of variant_chr_pos_alt_ref
+        result = variants.get_query_to_df(
+            f"""SELECT INFO FROM variants WHERE INFO LIKE '%variant_chr_pos_alt_ref=%' """
+        )
+        assert len(result) == 7
+
+        # Check number of variant_chr_pos_alt_ref_dict with new table
+        result = variants.get_query_to_df(
+            f"""SELECT INFO FROM {new_table} WHERE INFO LIKE '%variant_chr_pos_alt_ref_dict=%' """
+        )
+        assert len(result) == 7
+
+        # Check number of variant_chr_pos_alt_ref_file
+        result = variants.get_query_to_df(
+            f"""SELECT INFO FROM variants WHERE INFO LIKE '%variant_chr_pos_alt_ref_file=%' """
+        )
+        assert len(result) == 7
+
+        # Check number of middle (7)
+        result = variants.get_query_to_df(
+            f"""SELECT INFO FROM variants WHERE INFO LIKE '%variant_chr_pos_alt_ref=chr1_28736_A_C%' """
+        )
+        assert len(result) == 1
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
 def test_calculation_sql():
     """
     This function tests the calculation and annotation of genetic variants using input parameters and

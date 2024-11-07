@@ -6758,6 +6758,7 @@ class Variants:
                     "name": "VARTYPE",
                     "description": "Variant type (e.g. SNV, INDEL, MNV, BND...)",
                     "available": True,
+                    "table": "variants",
                     "output_column_name": "VARTYPE",
                     "output_column_type": "String",
                     "output_column_description": "Variant type: SNV if X>Y, MOSAIC if X>Y,Z or X,Y>Z, INDEL if XY>Z or X>YZ",
@@ -8331,9 +8332,6 @@ class Variants:
         :type operation_name: str (optional)
         """
 
-        # table variants
-        table_variants = self.get_table_variants(clause="alter")
-
         # Operation infos
         operation_name = operation.get("name", "unknown")
         log.debug(f"process sql {operation_name}")
@@ -8350,6 +8348,15 @@ class Variants:
         operation_info_fields = operation.get("info_fields", [])
         operation_info_fields_check = operation.get("info_fields_check", False)
         operation_info = operation.get("operation_info", True)
+        operation_table = operation.get(
+            "table", self.get_table_variants(clause="alter")
+        )
+
+        # table variants
+        if operation_table:
+            table_variants = operation_table
+        else:
+            table_variants = self.get_table_variants(clause="alter")
 
         if operation_query:
 
