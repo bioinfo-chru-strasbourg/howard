@@ -7573,14 +7573,10 @@ class Variants:
                                     f"{pz_prefix}Score{pzfields_sep}{profile}"
                                     in list_of_pzfields
                                 ):
-                                    # if prioritization_score_mode == "HOWARD":
-                                    #     sql_set.append(
-                                    #         f"{pz_prefix}Score{pzfields_sep}{profile} = {pz_prefix}Score{pzfields_sep}{profile} + {criterion_score}"
-                                    #     )
                                     # VaRank prioritization score mode
-                                    if prioritization_score_mode == "VaRank":
+                                    if prioritization_score_mode.upper().strip() in ["VARANK", "MAX", "MAXIMUM", "TOP"]:
                                         sql_set.append(
-                                            f"{pz_prefix}Score{pzfields_sep}{profile} = CASE WHEN {criterion_score}>{pz_prefix}Score{pzfields_sep}{profile} THEN {criterion_score} END"
+                                            f"{pz_prefix}Score{pzfields_sep}{profile} = CASE WHEN {criterion_score}>{pz_prefix}Score{pzfields_sep}{profile} THEN {criterion_score} ELSE {pz_prefix}Score{pzfields_sep}{profile} END "
                                         )
                                     # default HOWARD prioritization score mode
                                     else:
