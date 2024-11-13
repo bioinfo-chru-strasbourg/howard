@@ -8226,6 +8226,12 @@ class Variants:
         # Param
         param = self.get_param()
 
+        # CHeck operations config file
+        if operations_config_file is None:
+            operations_config_file = param.get("calculation", {}).get(
+                "calculation_config", None
+            )
+
         # operations config
         operations_config = self.get_config_json(
             name="calculations",
