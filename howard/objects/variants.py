@@ -4700,7 +4700,6 @@ class Variants:
                         with open(
                             param_exomiser_analysis_default_config_file
                         ) as json_file:
-                            # param_exomiser_analysis_dict[""] = json.load(json_file)
                             param_exomiser_analysis_dict["analysis"] = yaml.safe_load(
                                 json_file
                             )
@@ -7034,7 +7033,7 @@ class Variants:
         if config_file:
             if os.path.exists(config_file):
                 with open(config_file) as config_file_content:
-                    config_file_dict = json.load(config_file_content)
+                    config_file_dict = yaml.safe_load(config_file_content)
                 for config in config_file_dict:
                     configuration[config] = config_file_dict[config]
             else:
@@ -9419,7 +9418,7 @@ class Variants:
                 if isinstance(ped, str) and os.path.exists(full_path(ped)):
                     log.debug("Pedigree is file")
                     with open(full_path(ped)) as ped:
-                        ped = json.load(ped)
+                        ped = yaml.safe_load(ped)
 
                 # Pedigree is a string
                 elif isinstance(ped, str):
@@ -9600,7 +9599,7 @@ class Variants:
                 if isinstance(trio_ped, str) and os.path.exists(full_path(trio_ped)):
                     log.debug("TRIO pedigree is file")
                     with open(full_path(trio_ped)) as trio_ped:
-                        trio_ped = json.load(trio_ped)
+                        trio_ped = yaml.safe_load(trio_ped)
 
                 # Trio pedigree is a string
                 elif isinstance(trio_ped, str):

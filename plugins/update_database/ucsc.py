@@ -30,6 +30,7 @@ import time
 import pathlib
 from Bio.bgzf import BgzfWriter
 import re
+import yaml
 
 # https://docs.bedbase.org/bedboss/tutorials/bedmaker_tutorial/
 # transform bigwig
@@ -78,7 +79,7 @@ class Ucsc:
     @staticmethod
     def read_json(configfile: str) -> dict:
         with open(configfile) as js:
-            return json.load(js)
+            return yaml.safe_load(js)
 
     def list_databases(self, linkpage=None) -> list:
         """
