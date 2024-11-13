@@ -19,6 +19,7 @@ import sys
 import psutil
 import markdown
 from configparser import ConfigParser
+import yaml
 
 from howard.objects.variants import Variants
 from howard.objects.database import Database
@@ -203,7 +204,7 @@ def main() -> None:
             full_path(args.duckdb_settings)
         ):
             with open(full_path(args.duckdb_settings)) as config_file:
-                duckdb_settings = json.load(config_file)
+                duckdb_settings = yaml.safe_load(config_file)
         else:
             duckdb_settings = json.loads(args.duckdb_settings)
 
@@ -217,7 +218,7 @@ def main() -> None:
     if "config" in args:
         if isinstance(args.config, str) and os.path.exists(full_path(args.config)):
             with open(full_path(args.config)) as config_file:
-                config = json.load(config_file)
+                config = yaml.safe_load(config_file)
         else:
             config = json.loads(args.config)
     else:

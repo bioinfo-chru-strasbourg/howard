@@ -21,6 +21,7 @@ operations, and python packages stability.
   - Export transcripts table as a file, in multiple format such as VCF,
     TSV, Parquet
 - Export with a specific sample list
+- Configuration and parameters files in YAML format allowed
 - Add dynamic transcript column for NOMEN calculation (using transcript
   priorization column)
 - Add plugins:
@@ -40,6 +41,8 @@ operations, and python packages stability.
 
 - Genotype format detection
 - Fix packages releases
+- Fix parameters and configuration files options
+- Fix calculations list and parametrization
 - More explicite log messages
 
 ## 0.11.0

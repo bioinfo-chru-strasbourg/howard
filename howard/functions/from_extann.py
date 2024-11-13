@@ -7,6 +7,8 @@ import pandas as pd
 import json
 import os
 import time
+import yaml
+
 from howard.functions import commons
 
 
@@ -84,7 +86,7 @@ def read_json(file: str) -> dict:
     From json file to python dict
     """
     with open(file, "r") as jsonFile:
-        return json.load(jsonFile)
+        return yaml.safe_load(jsonFile)
 
 
 def read_refgene(refgene: str) -> pd.DataFrame:

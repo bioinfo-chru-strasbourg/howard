@@ -3642,7 +3642,8 @@ def load_param(args: argparse) -> dict:
     if "param" in args:
         if isinstance(args.param, str) and os.path.exists(full_path(args.param)):
             with open(full_path(args.param)) as param_file:
-                param = json.load(param_file)
+                param = yaml.safe_load(param_file)
+
         else:
             param = json.loads(args.param)
 
