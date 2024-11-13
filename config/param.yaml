@@ -1,0 +1,62 @@
+annotation:
+  annovar:
+    annotations:
+      refGene:
+        INFO: null
+    options:
+      genebase: '-hgvs -splicing_threshold 3 '
+      intronhgvs: 10
+  bcftools:
+    annotations:
+      tests/databases/annotations/current/hg19/cosmic70.vcf.gz:
+        INFO: null
+  parquet:
+    annotations:
+      tests/databases/annotations/current/hg19/avsnp150.parquet:
+        INFO: null
+      tests/databases/annotations/current/hg19/dbnsfp42a.parquet:
+        INFO: null
+      tests/databases/annotations/current/hg19/gnomad211_genome.parquet:
+        INFO: null
+  snpeff:
+    csvStats: OUTPUT.csv
+    options: '-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 '
+    stats: OUTPUT.html
+calculation:
+  calculation_config: config/calculations_config.json
+  calculations:
+    NOMEN:
+      options:
+        hgvs_field: snpeff_hgvs
+        transcripts: tests/data/transcripts.tsv
+    VAF: ''
+    snpeff_hgvs: null
+    vartype: null
+explode_infos:
+  explode_infos: false
+  explode_infos_prefix: ''
+export:
+  header_in_output: false
+  order_by: null
+  parquet_partitions: null
+hgvs:
+  full_format: true
+  use_exon: true
+prioritization:
+  prioritization_config: config/prioritization_profiles.json
+  prioritization_score_mode: VaRank
+  profiles:
+  - default
+  - GERMLINE
+  pzfields:
+  - PZScore
+  - PZFlag
+  - PZComment
+query:
+  query: SELECT "#CHROM", POS, REF, ALT, INFO FROM variants
+  query_limit: 10
+  query_print_mode: default
+stats:
+  stats_json: null
+  stats_md: null
+threads: 8
