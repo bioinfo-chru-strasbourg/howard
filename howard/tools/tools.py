@@ -523,7 +523,7 @@ arguments = {
         "extra": {
             "examples": {
                 "Order by ACMG score in descending order": """"order_by": "ACMG_score DESC" """,
-                "Order by PZFlag and PZScore in descending order": """"order_by": PZFlag DESC, PZScore DESC" """,
+                "Order by PZFlag and PZScore in descending order": """"order_by": "PZFlag DESC, PZScore DESC" """,
             }
         },
     },

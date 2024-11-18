@@ -877,6 +877,21 @@
     "__help": [
       "Export options for output files, such as data order, include header in output and hive partitioning."
     ],
+    "fields_to_rename": {
+      "__help": [
+        "Rename or remove INFO/tags before exporting."
+      ],
+      "__type": "dict",
+      "__default": null,
+      "__code_type": "json",
+      "__examples_code": [
+        "# Rename 'CLNSIG' field to 'CLNSIG_renamed' and remove 'SIFT' field:",
+        "\"fields_to_rename\": {",
+        "  \"CLNSIG\": \"CLNSIG_renamed\",",
+        "  \"SIFT\": null",
+        "}"
+      ]
+    },
     "order_by": {},
     "include_header": {},
     "parquet_partitions": {}
