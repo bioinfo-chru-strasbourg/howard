@@ -21,6 +21,7 @@ operations, and python packages stability.
   - Export transcripts table as a file, in multiple format such as VCF,
     TSV, Parquet
 - Export with a specific sample list
+- Rename or remove INFO/tags before exporting
 - Configuration and parameters files in YAML format allowed
 - Add dynamic transcript column for NOMEN calculation (using transcript
   priorization column)

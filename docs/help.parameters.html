@@ -389,12 +389,14 @@ class="toc-section-number">7.3</span> query_print_mode</a></li>
 <li><a href="#export" id="toc-export"><span
 class="toc-section-number">8</span> export</a>
 <ul>
+<li><a href="#fields_to_rename" id="toc-fields_to_rename"><span
+class="toc-section-number">8.1</span> fields_to_rename</a></li>
 <li><a href="#order_by" id="toc-order_by"><span
-class="toc-section-number">8.1</span> order_by</a></li>
+class="toc-section-number">8.2</span> order_by</a></li>
 <li><a href="#include_header" id="toc-include_header"><span
-class="toc-section-number">8.2</span> include_header</a></li>
+class="toc-section-number">8.3</span> include_header</a></li>
 <li><a href="#parquet_partitions" id="toc-parquet_partitions"><span
-class="toc-section-number">8.3</span> parquet_partitions</a></li>
+class="toc-section-number">8.4</span> parquet_partitions</a></li>
 </ul></li>
 <li><a href="#explode" id="toc-explode"><span
 class="toc-section-number">9</span> explode</a>
@@ -1954,8 +1956,27 @@ Either None (native), &#x2018;markdown&#x2019;, &#x2018;tabulate&#x2019; or disa
 class="header-section-number">8</span> export</h1>
 <p>Export options for output files, such as data order, include header
 in output and hive partitioning.</p>
-<h2 data-number="8.1" id="order_by"><span
-class="header-section-number">8.1</span> order_by</h2>
+<h2 data-number="8.1" id="fields_to_rename"><span
+class="header-section-number">8.1</span> fields_to_rename</h2>
+<p>Rename or remove INFO/tags before exporting.</p>
+<p>Type: <code>dict</code></p>
+<p>Default: <code>None</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Rename &#x2018;CLNSIG&#x2019; field to &#x2018;CLNSIG_renamed&#x2019; and remove &#x2018;SIFT&#x2019;
+field:</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb74"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;fields_to_rename&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb74-3"><a href="#cb74-3" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;CLNSIG&quot;</span><span class="fu">:</span> <span class="st">&quot;CLNSIG_renamed&quot;</span><span class="fu">,</span></span>
+<span id="cb74-4"><a href="#cb74-4" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;SIFT&quot;</span><span class="fu">:</span> <span class="kw">null</span></span>
+<span id="cb74-5"><a href="#cb74-5" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb74-6"><a href="#cb74-6" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h2 data-number="8.2" id="order_by"><span
+class="header-section-number">8.2</span> order_by</h2>
 <p>List of columns to sort the result-set in ascending or descending
 order. Use SQL format, and keywords ASC (ascending) and DESC
 (descending). If a column is not available, order will not be
@@ -1968,27 +1989,27 @@ JSON). Examples: &#x2018;ACMG_score DESC&#x2019;, &#x2018;PZFlag DESC, PZScore D
 <p>Order by ACMG score in descending order</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb74"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;order_by&quot;</span><span class="fu">:</span> <span class="st">&quot;ACMG_score DESC&quot;</span> </span>
-<span id="cb74-3"><a href="#cb74-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb75"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;order_by&quot;</span><span class="fu">:</span> <span class="st">&quot;ACMG_score DESC&quot;</span> </span>
+<span id="cb75-3"><a href="#cb75-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <blockquote>
 <p>Order by PZFlag and PZScore in descending order</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb75"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;order_by&quot;</span><span class="fu">:</span> <span class="er">PZFlag</span> <span class="er">DESC</span><span class="fu">,</span> <span class="er">PZScore</span> <span class="er">DESC</span><span class="dt">&quot; </span></span>
-<span id="cb75-3"><a href="#cb75-3" aria-hidden="true" tabindex="-1"></a><span class="dt">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb76"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;order_by&quot;</span><span class="fu">:</span> <span class="st">&quot;PZFlag DESC, PZScore DESC&quot;</span> </span>
+<span id="cb76-3"><a href="#cb76-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
-<h2 data-number="8.2" id="include_header"><span
-class="header-section-number">8.2</span> include_header</h2>
+<h2 data-number="8.3" id="include_header"><span
+class="header-section-number">8.3</span> include_header</h2>
 <p>Include header (in VCF format) in output file. Only for compatible
 formats (tab-delimiter format as TSV or BED).</p>
 <p>Default: <code>False</code></p>
-<h2 data-number="8.3" id="parquet_partitions"><span
-class="header-section-number">8.3</span> parquet_partitions</h2>
+<h2 data-number="8.4" id="parquet_partitions"><span
+class="header-section-number">8.4</span> parquet_partitions</h2>
 <p>Parquet partitioning using hive (available for any format). This
 option is faster parallel writing, but memory consuming. Use &#x2018;None&#x2019;
 (string) for NO partition but split parquet files into a folder.
@@ -2041,69 +2062,69 @@ help).</p>
 <p>Trancripts information from snpEff and dbNSFP annotation</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb76"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;transcripts&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb76-3"><a href="#cb76-3" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;table&quot;</span><span class="fu">:</span> <span class="st">&quot;transcripts&quot;</span><span class="fu">,</span></span>
-<span id="cb76-4"><a href="#cb76-4" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;transcripts_info_field_json&quot;</span><span class="fu">:</span> <span class="st">&quot;transcripts_json&quot;</span><span class="fu">,</span></span>
-<span id="cb76-5"><a href="#cb76-5" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;transcripts_info_field_format&quot;</span><span class="fu">:</span> <span class="st">&quot;transcripts_ann&quot;</span><span class="fu">,</span></span>
-<span id="cb76-6"><a href="#cb76-6" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;transcripts_info_json&quot;</span><span class="fu">:</span> <span class="st">&quot;transcripts_json&quot;</span><span class="fu">,</span></span>
-<span id="cb76-7"><a href="#cb76-7" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;transcripts_info_format&quot;</span><span class="fu">:</span> <span class="st">&quot;transcripts_format&quot;</span><span class="fu">,</span></span>
-<span id="cb76-8"><a href="#cb76-8" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;transcript_id_remove_version&quot;</span><span class="fu">:</span> <span class="kw">true</span><span class="fu">,</span></span>
-<span id="cb76-9"><a href="#cb76-9" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;transcript_id_mapping_file&quot;</span><span class="fu">:</span> <span class="st">&quot;transcripts.for_mapping.tsv&quot;</span><span class="fu">,</span></span>
-<span id="cb76-10"><a href="#cb76-10" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;transcript_id_mapping_force&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
-<span id="cb76-11"><a href="#cb76-11" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;struct&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb76-12"><a href="#cb76-12" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;from_column_format&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb76-13"><a href="#cb76-13" aria-hidden="true" tabindex="-1"></a>             <span class="fu">{</span></span>
-<span id="cb76-14"><a href="#cb76-14" aria-hidden="true" tabindex="-1"></a>                 <span class="dt">&quot;transcripts_column&quot;</span><span class="fu">:</span> <span class="st">&quot;ANN&quot;</span><span class="fu">,</span></span>
-<span id="cb76-15"><a href="#cb76-15" aria-hidden="true" tabindex="-1"></a>                 <span class="dt">&quot;transcripts_infos_column&quot;</span><span class="fu">:</span> <span class="st">&quot;Feature_ID&quot;</span><span class="fu">,</span></span>
-<span id="cb76-16"><a href="#cb76-16" aria-hidden="true" tabindex="-1"></a>                 <span class="dt">&quot;column_clean&quot;</span><span class="fu">:</span> <span class="kw">true</span><span class="fu">,</span></span>
-<span id="cb76-17"><a href="#cb76-17" aria-hidden="true" tabindex="-1"></a>                 <span class="dt">&quot;column_case&quot;</span><span class="fu">:</span> <span class="st">&quot;lower&quot;</span></span>
-<span id="cb76-18"><a href="#cb76-18" aria-hidden="true" tabindex="-1"></a>             <span class="fu">}</span></span>
-<span id="cb76-19"><a href="#cb76-19" aria-hidden="true" tabindex="-1"></a>         <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb76-20"><a href="#cb76-20" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;from_columns_map&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb76-21"><a href="#cb76-21" aria-hidden="true" tabindex="-1"></a>             <span class="fu">{</span></span>
-<span id="cb76-22"><a href="#cb76-22" aria-hidden="true" tabindex="-1"></a>                 <span class="dt">&quot;transcripts_column&quot;</span><span class="fu">:</span> <span class="st">&quot;Ensembl_transcriptid&quot;</span><span class="fu">,</span></span>
-<span id="cb76-23"><a href="#cb76-23" aria-hidden="true" tabindex="-1"></a>                 <span class="dt">&quot;transcripts_infos_columns&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb76-24"><a href="#cb76-24" aria-hidden="true" tabindex="-1"></a>                     <span class="st">&quot;genename&quot;</span><span class="ot">,</span></span>
-<span id="cb76-25"><a href="#cb76-25" aria-hidden="true" tabindex="-1"></a>                     <span class="st">&quot;Ensembl_geneid&quot;</span><span class="ot">,</span></span>
-<span id="cb76-26"><a href="#cb76-26" aria-hidden="true" tabindex="-1"></a>                     <span class="st">&quot;LIST_S2_score&quot;</span><span class="ot">,</span></span>
-<span id="cb76-27"><a href="#cb76-27" aria-hidden="true" tabindex="-1"></a>                     <span class="st">&quot;LIST_S2_pred&quot;</span></span>
-<span id="cb76-28"><a href="#cb76-28" aria-hidden="true" tabindex="-1"></a>                 <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb76-29"><a href="#cb76-29" aria-hidden="true" tabindex="-1"></a>                 <span class="dt">&quot;column_rename&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb76-30"><a href="#cb76-30" aria-hidden="true" tabindex="-1"></a>                     <span class="dt">&quot;LIST_S2_score&quot;</span><span class="fu">:</span> <span class="st">&quot;LISTScore&quot;</span><span class="fu">,</span></span>
-<span id="cb76-31"><a href="#cb76-31" aria-hidden="true" tabindex="-1"></a>                     <span class="dt">&quot;LIST_S2_pred&quot;</span><span class="fu">:</span> <span class="st">&quot;LISTPred&quot;</span></span>
-<span id="cb76-32"><a href="#cb76-32" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">},</span></span>
-<span id="cb76-33"><a href="#cb76-33" aria-hidden="true" tabindex="-1"></a>             <span class="fu">}</span><span class="ot">,</span></span>
-<span id="cb76-34"><a href="#cb76-34" aria-hidden="true" tabindex="-1"></a>             <span class="fu">{</span></span>
-<span id="cb76-35"><a href="#cb76-35" aria-hidden="true" tabindex="-1"></a>                 <span class="dt">&quot;transcripts_column&quot;</span><span class="fu">:</span> <span class="st">&quot;Ensembl_transcriptid&quot;</span><span class="fu">,</span></span>
-<span id="cb76-36"><a href="#cb76-36" aria-hidden="true" tabindex="-1"></a>                 <span class="dt">&quot;transcripts_infos_columns&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb76-37"><a href="#cb76-37" aria-hidden="true" tabindex="-1"></a>                     <span class="st">&quot;genename&quot;</span><span class="ot">,</span></span>
-<span id="cb76-38"><a href="#cb76-38" aria-hidden="true" tabindex="-1"></a>                     <span class="st">&quot;VARITY_R_score&quot;</span><span class="ot">,</span></span>
-<span id="cb76-39"><a href="#cb76-39" aria-hidden="true" tabindex="-1"></a>                     <span class="st">&quot;Aloft_pred&quot;</span></span>
-<span id="cb76-40"><a href="#cb76-40" aria-hidden="true" tabindex="-1"></a>                 <span class="ot">]</span></span>
-<span id="cb76-41"><a href="#cb76-41" aria-hidden="true" tabindex="-1"></a>             <span class="fu">}</span></span>
-<span id="cb76-42"><a href="#cb76-42" aria-hidden="true" tabindex="-1"></a>         <span class="ot">]</span></span>
-<span id="cb76-43"><a href="#cb76-43" aria-hidden="true" tabindex="-1"></a>     <span class="fu">},</span></span>
-<span id="cb76-44"><a href="#cb76-44" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;prioritization&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb76-45"><a href="#cb76-45" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;profiles&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;transcripts&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb76-46"><a href="#cb76-46" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;prioritization_config&quot;</span><span class="fu">:</span> <span class="st">&quot;config/prioritization_transcripts_profiles.json&quot;</span><span class="fu">,</span></span>
-<span id="cb76-47"><a href="#cb76-47" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;pzprefix&quot;</span><span class="fu">:</span> <span class="st">&quot;PZT&quot;</span><span class="fu">,</span></span>
-<span id="cb76-48"><a href="#cb76-48" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;pzfields&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;Score&quot;</span><span class="ot">,</span> <span class="st">&quot;Flag&quot;</span><span class="ot">,</span> <span class="st">&quot;LISTScore&quot;</span><span class="ot">,</span> <span class="st">&quot;LISTPred&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb76-49"><a href="#cb76-49" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;prioritization_transcripts_order&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb76-50"><a href="#cb76-50" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;PZTFlag&quot;</span><span class="fu">:</span> <span class="st">&quot;ASC&quot;</span><span class="fu">,</span></span>
-<span id="cb76-51"><a href="#cb76-51" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;PZTScore&quot;</span><span class="fu">:</span> <span class="st">&quot;DESC&quot;</span></span>
-<span id="cb76-52"><a href="#cb76-52" aria-hidden="true" tabindex="-1"></a>        <span class="fu">}</span></span>
-<span id="cb76-53"><a href="#cb76-53" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;prioritization_score_mode&quot;</span><span class="er">:</span> <span class="st">&quot;HOWARD&quot;</span><span class="fu">,</span></span>
-<span id="cb76-54"><a href="#cb76-54" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;prioritization_transcripts&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
-<span id="cb76-55"><a href="#cb76-55" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;prioritization_transcripts_force&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
-<span id="cb76-56"><a href="#cb76-56" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;prioritization_transcripts_version_force&quot;</span><span class="fu">:</span> <span class="kw">false</span></span>
-<span id="cb76-57"><a href="#cb76-57" aria-hidden="true" tabindex="-1"></a>     <span class="fu">},</span></span>
-<span id="cb76-58"><a href="#cb76-58" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;export&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb76-59"><a href="#cb76-59" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;output&quot;</span><span class="fu">:</span> <span class="st">&quot;/tmp/output.tsv.gz&quot;</span></span>
-<span id="cb76-60"><a href="#cb76-60" aria-hidden="true" tabindex="-1"></a>     <span class="fu">}</span></span>
-<span id="cb76-61"><a href="#cb76-61" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
-<span id="cb76-62"><a href="#cb76-62" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb77"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb77-2"><a href="#cb77-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;transcripts&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb77-3"><a href="#cb77-3" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;table&quot;</span><span class="fu">:</span> <span class="st">&quot;transcripts&quot;</span><span class="fu">,</span></span>
+<span id="cb77-4"><a href="#cb77-4" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;transcripts_info_field_json&quot;</span><span class="fu">:</span> <span class="st">&quot;transcripts_json&quot;</span><span class="fu">,</span></span>
+<span id="cb77-5"><a href="#cb77-5" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;transcripts_info_field_format&quot;</span><span class="fu">:</span> <span class="st">&quot;transcripts_ann&quot;</span><span class="fu">,</span></span>
+<span id="cb77-6"><a href="#cb77-6" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;transcripts_info_json&quot;</span><span class="fu">:</span> <span class="st">&quot;transcripts_json&quot;</span><span class="fu">,</span></span>
+<span id="cb77-7"><a href="#cb77-7" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;transcripts_info_format&quot;</span><span class="fu">:</span> <span class="st">&quot;transcripts_format&quot;</span><span class="fu">,</span></span>
+<span id="cb77-8"><a href="#cb77-8" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;transcript_id_remove_version&quot;</span><span class="fu">:</span> <span class="kw">true</span><span class="fu">,</span></span>
+<span id="cb77-9"><a href="#cb77-9" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;transcript_id_mapping_file&quot;</span><span class="fu">:</span> <span class="st">&quot;transcripts.for_mapping.tsv&quot;</span><span class="fu">,</span></span>
+<span id="cb77-10"><a href="#cb77-10" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;transcript_id_mapping_force&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
+<span id="cb77-11"><a href="#cb77-11" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;struct&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb77-12"><a href="#cb77-12" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;from_column_format&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb77-13"><a href="#cb77-13" aria-hidden="true" tabindex="-1"></a>             <span class="fu">{</span></span>
+<span id="cb77-14"><a href="#cb77-14" aria-hidden="true" tabindex="-1"></a>                 <span class="dt">&quot;transcripts_column&quot;</span><span class="fu">:</span> <span class="st">&quot;ANN&quot;</span><span class="fu">,</span></span>
+<span id="cb77-15"><a href="#cb77-15" aria-hidden="true" tabindex="-1"></a>                 <span class="dt">&quot;transcripts_infos_column&quot;</span><span class="fu">:</span> <span class="st">&quot;Feature_ID&quot;</span><span class="fu">,</span></span>
+<span id="cb77-16"><a href="#cb77-16" aria-hidden="true" tabindex="-1"></a>                 <span class="dt">&quot;column_clean&quot;</span><span class="fu">:</span> <span class="kw">true</span><span class="fu">,</span></span>
+<span id="cb77-17"><a href="#cb77-17" aria-hidden="true" tabindex="-1"></a>                 <span class="dt">&quot;column_case&quot;</span><span class="fu">:</span> <span class="st">&quot;lower&quot;</span></span>
+<span id="cb77-18"><a href="#cb77-18" aria-hidden="true" tabindex="-1"></a>             <span class="fu">}</span></span>
+<span id="cb77-19"><a href="#cb77-19" aria-hidden="true" tabindex="-1"></a>         <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb77-20"><a href="#cb77-20" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;from_columns_map&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb77-21"><a href="#cb77-21" aria-hidden="true" tabindex="-1"></a>             <span class="fu">{</span></span>
+<span id="cb77-22"><a href="#cb77-22" aria-hidden="true" tabindex="-1"></a>                 <span class="dt">&quot;transcripts_column&quot;</span><span class="fu">:</span> <span class="st">&quot;Ensembl_transcriptid&quot;</span><span class="fu">,</span></span>
+<span id="cb77-23"><a href="#cb77-23" aria-hidden="true" tabindex="-1"></a>                 <span class="dt">&quot;transcripts_infos_columns&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb77-24"><a href="#cb77-24" aria-hidden="true" tabindex="-1"></a>                     <span class="st">&quot;genename&quot;</span><span class="ot">,</span></span>
+<span id="cb77-25"><a href="#cb77-25" aria-hidden="true" tabindex="-1"></a>                     <span class="st">&quot;Ensembl_geneid&quot;</span><span class="ot">,</span></span>
+<span id="cb77-26"><a href="#cb77-26" aria-hidden="true" tabindex="-1"></a>                     <span class="st">&quot;LIST_S2_score&quot;</span><span class="ot">,</span></span>
+<span id="cb77-27"><a href="#cb77-27" aria-hidden="true" tabindex="-1"></a>                     <span class="st">&quot;LIST_S2_pred&quot;</span></span>
+<span id="cb77-28"><a href="#cb77-28" aria-hidden="true" tabindex="-1"></a>                 <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb77-29"><a href="#cb77-29" aria-hidden="true" tabindex="-1"></a>                 <span class="dt">&quot;column_rename&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb77-30"><a href="#cb77-30" aria-hidden="true" tabindex="-1"></a>                     <span class="dt">&quot;LIST_S2_score&quot;</span><span class="fu">:</span> <span class="st">&quot;LISTScore&quot;</span><span class="fu">,</span></span>
+<span id="cb77-31"><a href="#cb77-31" aria-hidden="true" tabindex="-1"></a>                     <span class="dt">&quot;LIST_S2_pred&quot;</span><span class="fu">:</span> <span class="st">&quot;LISTPred&quot;</span></span>
+<span id="cb77-32"><a href="#cb77-32" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">},</span></span>
+<span id="cb77-33"><a href="#cb77-33" aria-hidden="true" tabindex="-1"></a>             <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb77-34"><a href="#cb77-34" aria-hidden="true" tabindex="-1"></a>             <span class="fu">{</span></span>
+<span id="cb77-35"><a href="#cb77-35" aria-hidden="true" tabindex="-1"></a>                 <span class="dt">&quot;transcripts_column&quot;</span><span class="fu">:</span> <span class="st">&quot;Ensembl_transcriptid&quot;</span><span class="fu">,</span></span>
+<span id="cb77-36"><a href="#cb77-36" aria-hidden="true" tabindex="-1"></a>                 <span class="dt">&quot;transcripts_infos_columns&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb77-37"><a href="#cb77-37" aria-hidden="true" tabindex="-1"></a>                     <span class="st">&quot;genename&quot;</span><span class="ot">,</span></span>
+<span id="cb77-38"><a href="#cb77-38" aria-hidden="true" tabindex="-1"></a>                     <span class="st">&quot;VARITY_R_score&quot;</span><span class="ot">,</span></span>
+<span id="cb77-39"><a href="#cb77-39" aria-hidden="true" tabindex="-1"></a>                     <span class="st">&quot;Aloft_pred&quot;</span></span>
+<span id="cb77-40"><a href="#cb77-40" aria-hidden="true" tabindex="-1"></a>                 <span class="ot">]</span></span>
+<span id="cb77-41"><a href="#cb77-41" aria-hidden="true" tabindex="-1"></a>             <span class="fu">}</span></span>
+<span id="cb77-42"><a href="#cb77-42" aria-hidden="true" tabindex="-1"></a>         <span class="ot">]</span></span>
+<span id="cb77-43"><a href="#cb77-43" aria-hidden="true" tabindex="-1"></a>     <span class="fu">},</span></span>
+<span id="cb77-44"><a href="#cb77-44" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;prioritization&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb77-45"><a href="#cb77-45" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;profiles&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;transcripts&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb77-46"><a href="#cb77-46" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;prioritization_config&quot;</span><span class="fu">:</span> <span class="st">&quot;config/prioritization_transcripts_profiles.json&quot;</span><span class="fu">,</span></span>
+<span id="cb77-47"><a href="#cb77-47" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;pzprefix&quot;</span><span class="fu">:</span> <span class="st">&quot;PZT&quot;</span><span class="fu">,</span></span>
+<span id="cb77-48"><a href="#cb77-48" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;pzfields&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;Score&quot;</span><span class="ot">,</span> <span class="st">&quot;Flag&quot;</span><span class="ot">,</span> <span class="st">&quot;LISTScore&quot;</span><span class="ot">,</span> <span class="st">&quot;LISTPred&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb77-49"><a href="#cb77-49" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;prioritization_transcripts_order&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb77-50"><a href="#cb77-50" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;PZTFlag&quot;</span><span class="fu">:</span> <span class="st">&quot;ASC&quot;</span><span class="fu">,</span></span>
+<span id="cb77-51"><a href="#cb77-51" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;PZTScore&quot;</span><span class="fu">:</span> <span class="st">&quot;DESC&quot;</span></span>
+<span id="cb77-52"><a href="#cb77-52" aria-hidden="true" tabindex="-1"></a>        <span class="fu">}</span></span>
+<span id="cb77-53"><a href="#cb77-53" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;prioritization_score_mode&quot;</span><span class="er">:</span> <span class="st">&quot;HOWARD&quot;</span><span class="fu">,</span></span>
+<span id="cb77-54"><a href="#cb77-54" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;prioritization_transcripts&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
+<span id="cb77-55"><a href="#cb77-55" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;prioritization_transcripts_force&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
+<span id="cb77-56"><a href="#cb77-56" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;prioritization_transcripts_version_force&quot;</span><span class="fu">:</span> <span class="kw">false</span></span>
+<span id="cb77-57"><a href="#cb77-57" aria-hidden="true" tabindex="-1"></a>     <span class="fu">},</span></span>
+<span id="cb77-58"><a href="#cb77-58" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;export&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb77-59"><a href="#cb77-59" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;output&quot;</span><span class="fu">:</span> <span class="st">&quot;/tmp/output.tsv.gz&quot;</span></span>
+<span id="cb77-60"><a href="#cb77-60" aria-hidden="true" tabindex="-1"></a>     <span class="fu">}</span></span>
+<span id="cb77-61"><a href="#cb77-61" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb77-62"><a href="#cb77-62" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h2 data-number="10.1" id="table"><span
 class="header-section-number">10.1</span> table</h2>
@@ -2115,10 +2136,10 @@ class="header-section-number">10.1</span> table</h2>
 <p>Name of transcript table:</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb77"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb77-2"><a href="#cb77-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;table&quot;</span><span class="fu">:</span> <span class="st">&quot;transcripts&quot;</span></span>
-<span id="cb77-3"><a href="#cb77-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb78"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb78-2"><a href="#cb78-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;table&quot;</span><span class="fu">:</span> <span class="st">&quot;transcripts&quot;</span></span>
+<span id="cb78-3"><a href="#cb78-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h2 data-number="10.2" id="transcripts_info_field_json"><span
 class="header-section-number">10.2</span>
@@ -2132,10 +2153,10 @@ format.</p>
 <p>Transcripts INFO field name:</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb78"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb78-2"><a href="#cb78-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;transcripts_info_field_json&quot;</span><span class="fu">:</span> <span class="st">&quot;transcripts_json&quot;</span></span>
-<span id="cb78-3"><a href="#cb78-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb79"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;transcripts_info_field_json&quot;</span><span class="fu">:</span> <span class="st">&quot;transcripts_json&quot;</span></span>
+<span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h2 data-number="10.3" id="transcripts_info_field_format"><span
 class="header-section-number">10.3</span>
@@ -2149,10 +2170,10 @@ format.</p>
 <p>Transcripts INFO field name:</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb79"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;transcripts_info_field_format&quot;</span><span class="fu">:</span> <span class="st">&quot;transcripts_ann&quot;</span></span>
-<span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb80"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;transcripts_info_field_format&quot;</span><span class="fu">:</span> <span class="st">&quot;transcripts_ann&quot;</span></span>
+<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h2 data-number="10.4" id="transcripts_info_json"><span
 class="header-section-number">10.4</span> transcripts_info_json</h2>
@@ -2165,10 +2186,10 @@ format.</p>
 <p>Transcripts column name:</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb80"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;transcripts_info_json&quot;</span><span class="fu">:</span> <span class="st">&quot;transcripts_json&quot;</span></span>
-<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb81"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb81-2"><a href="#cb81-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;transcripts_info_json&quot;</span><span class="fu">:</span> <span class="st">&quot;transcripts_json&quot;</span></span>
+<span id="cb81-3"><a href="#cb81-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h2 data-number="10.5" id="transcripts_info_format"><span
 class="header-section-number">10.5</span> transcripts_info_format</h2>
@@ -2181,10 +2202,10 @@ format.</p>
 <p>Transcripts column name:</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb81"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb81-2"><a href="#cb81-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;transcripts_info_format&quot;</span><span class="fu">:</span> <span class="st">&quot;transcripts_format&quot;</span></span>
-<span id="cb81-3"><a href="#cb81-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb82"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb82-2"><a href="#cb82-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;transcripts_info_format&quot;</span><span class="fu">:</span> <span class="st">&quot;transcripts_format&quot;</span></span>
+<span id="cb82-3"><a href="#cb82-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h2 data-number="10.6" id="transcript_id_remove_version"><span
 class="header-section-number">10.6</span>
@@ -2198,10 +2219,10 @@ transcript (e.g &#x2018;NM_123456.2&#x2019; to &#x2018;NM_123456&#x2019;).</p>
 <p>Remove transcript version when merging and mapping:</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb82"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb82-2"><a href="#cb82-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;transcript_id_remove_version&quot;</span><span class="fu">:</span> <span class="kw">true</span></span>
-<span id="cb82-3"><a href="#cb82-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb83"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb83-1"><a href="#cb83-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb83-2"><a href="#cb83-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;transcript_id_remove_version&quot;</span><span class="fu">:</span> <span class="kw">true</span></span>
+<span id="cb83-3"><a href="#cb83-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h2 data-number="10.7" id="transcript_id_mapping_file"><span
 class="header-section-number">10.7</span>
@@ -2216,10 +2237,10 @@ map refSeq and Ensembl transcript IDs).</p>
 <p>Transcript IDs mapping file:</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb83"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb83-1"><a href="#cb83-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb83-2"><a href="#cb83-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;transcript_id_mapping_file&quot;</span><span class="fu">:</span> <span class="st">&quot;My_transcripts_mapping_file.tsv.gz&quot;</span></span>
-<span id="cb83-3"><a href="#cb83-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb84"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb84-1"><a href="#cb84-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb84-2"><a href="#cb84-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;transcript_id_mapping_file&quot;</span><span class="fu">:</span> <span class="st">&quot;My_transcripts_mapping_file.tsv.gz&quot;</span></span>
+<span id="cb84-3"><a href="#cb84-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h2 data-number="10.8" id="example-of-transcript-id-mapping-file"><span
 class="header-section-number">10.8</span> Example of transcript ID
@@ -2241,12 +2262,12 @@ section</a>)</p>
 <p>Example of transcripts mapping file:</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb84"><pre
-class="sourceCode ts"><code class="sourceCode typescript"><span id="cb84-1"><a href="#cb84-1" aria-hidden="true" tabindex="-1"></a>NM_001005484    ENST00000641515<span class="op">.</span><span class="dv">1</span></span>
-<span id="cb84-2"><a href="#cb84-2" aria-hidden="true" tabindex="-1"></a>NM_005228<span class="op">.</span><span class="dv">5</span>     ENST00000275493<span class="op">.</span><span class="dv">7</span></span>
-<span id="cb84-3"><a href="#cb84-3" aria-hidden="true" tabindex="-1"></a>NM_001346897    ENSG00000146648<span class="op">.</span><span class="dv">21</span></span>
-<span id="cb84-4"><a href="#cb84-4" aria-hidden="true" tabindex="-1"></a>NM_001346941    </span>
-<span id="cb84-5"><a href="#cb84-5" aria-hidden="true" tabindex="-1"></a>NM_005228       </span></code></pre></div>
+<div class="sourceCode" id="cb85"><pre
+class="sourceCode ts"><code class="sourceCode typescript"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a>NM_001005484    ENST00000641515<span class="op">.</span><span class="dv">1</span></span>
+<span id="cb85-2"><a href="#cb85-2" aria-hidden="true" tabindex="-1"></a>NM_005228<span class="op">.</span><span class="dv">5</span>     ENST00000275493<span class="op">.</span><span class="dv">7</span></span>
+<span id="cb85-3"><a href="#cb85-3" aria-hidden="true" tabindex="-1"></a>NM_001346897    ENSG00000146648<span class="op">.</span><span class="dv">21</span></span>
+<span id="cb85-4"><a href="#cb85-4" aria-hidden="true" tabindex="-1"></a>NM_001346941    </span>
+<span id="cb85-5"><a href="#cb85-5" aria-hidden="true" tabindex="-1"></a>NM_005228       </span></code></pre></div>
 </blockquote>
 <h2 data-number="10.9" id="transcript_id_mapping_force"><span
 class="header-section-number">10.9</span>
@@ -2263,10 +2284,10 @@ section</a>).</p>
 <p>Filter transcripts IDs only if present in mapping file:</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb85"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb85-2"><a href="#cb85-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;transcript_id_mapping_force&quot;</span><span class="fu">:</span> <span class="kw">true</span></span>
-<span id="cb85-3"><a href="#cb85-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb86"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb86-2"><a href="#cb86-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;transcript_id_mapping_force&quot;</span><span class="fu">:</span> <span class="kw">true</span></span>
+<span id="cb86-3"><a href="#cb86-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h2 data-number="10.10" id="struct"><span
 class="header-section-number">10.10</span> struct</h2>
@@ -2301,18 +2322,18 @@ annotations field within INFO field</p></li>
 changed for standard snpEff annotations):</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb86"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb86-2"><a href="#cb86-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;from_column_format&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb86-3"><a href="#cb86-3" aria-hidden="true" tabindex="-1"></a>     <span class="fu">{</span></span>
-<span id="cb86-4"><a href="#cb86-4" aria-hidden="true" tabindex="-1"></a>       <span class="dt">&quot;transcripts_column&quot;</span><span class="fu">:</span> <span class="st">&quot;ANN&quot;</span><span class="fu">,</span></span>
-<span id="cb86-5"><a href="#cb86-5" aria-hidden="true" tabindex="-1"></a>       <span class="dt">&quot;transcripts_infos_column&quot;</span><span class="fu">:</span> <span class="st">&quot;Feature_ID&quot;</span><span class="fu">,</span></span>
-<span id="cb86-6"><a href="#cb86-6" aria-hidden="true" tabindex="-1"></a>       <span class="dt">&quot;column_rename&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
-<span id="cb86-7"><a href="#cb86-7" aria-hidden="true" tabindex="-1"></a>       <span class="dt">&quot;column_clean&quot;</span><span class="fu">:</span> <span class="kw">true</span><span class="fu">,</span></span>
-<span id="cb86-8"><a href="#cb86-8" aria-hidden="true" tabindex="-1"></a>       <span class="dt">&quot;column_case&quot;</span><span class="fu">:</span> <span class="kw">null</span></span>
-<span id="cb86-9"><a href="#cb86-9" aria-hidden="true" tabindex="-1"></a>     <span class="fu">}</span></span>
-<span id="cb86-10"><a href="#cb86-10" aria-hidden="true" tabindex="-1"></a>   <span class="ot">]</span></span>
-<span id="cb86-11"><a href="#cb86-11" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb87"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb87-2"><a href="#cb87-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;from_column_format&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb87-3"><a href="#cb87-3" aria-hidden="true" tabindex="-1"></a>     <span class="fu">{</span></span>
+<span id="cb87-4"><a href="#cb87-4" aria-hidden="true" tabindex="-1"></a>       <span class="dt">&quot;transcripts_column&quot;</span><span class="fu">:</span> <span class="st">&quot;ANN&quot;</span><span class="fu">,</span></span>
+<span id="cb87-5"><a href="#cb87-5" aria-hidden="true" tabindex="-1"></a>       <span class="dt">&quot;transcripts_infos_column&quot;</span><span class="fu">:</span> <span class="st">&quot;Feature_ID&quot;</span><span class="fu">,</span></span>
+<span id="cb87-6"><a href="#cb87-6" aria-hidden="true" tabindex="-1"></a>       <span class="dt">&quot;column_rename&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
+<span id="cb87-7"><a href="#cb87-7" aria-hidden="true" tabindex="-1"></a>       <span class="dt">&quot;column_clean&quot;</span><span class="fu">:</span> <span class="kw">true</span><span class="fu">,</span></span>
+<span id="cb87-8"><a href="#cb87-8" aria-hidden="true" tabindex="-1"></a>       <span class="dt">&quot;column_case&quot;</span><span class="fu">:</span> <span class="kw">null</span></span>
+<span id="cb87-9"><a href="#cb87-9" aria-hidden="true" tabindex="-1"></a>     <span class="fu">}</span></span>
+<span id="cb87-10"><a href="#cb87-10" aria-hidden="true" tabindex="-1"></a>   <span class="ot">]</span></span>
+<span id="cb87-11"><a href="#cb87-11" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h3 data-number="10.10.2" id="from_columns_map"><span
 class="header-section-number">10.10.2</span> from_columns_map</h3>
@@ -2332,26 +2353,26 @@ with transcript information</p></li>
 <p>Structure from dbNSFP annotations (with 2 columns renamed):</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb87"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb87-2"><a href="#cb87-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;from_columns_map&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb87-3"><a href="#cb87-3" aria-hidden="true" tabindex="-1"></a>     <span class="fu">{</span></span>
-<span id="cb87-4"><a href="#cb87-4" aria-hidden="true" tabindex="-1"></a>       <span class="dt">&quot;transcripts_column&quot;</span><span class="fu">:</span> <span class="st">&quot;Ensembl_transcriptid&quot;</span><span class="fu">,</span></span>
-<span id="cb87-5"><a href="#cb87-5" aria-hidden="true" tabindex="-1"></a>       <span class="dt">&quot;transcripts_infos_columns&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb87-6"><a href="#cb87-6" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;genename&quot;</span><span class="ot">,</span></span>
-<span id="cb87-7"><a href="#cb87-7" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;Ensembl_geneid&quot;</span><span class="ot">,</span></span>
-<span id="cb87-8"><a href="#cb87-8" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;LIST_S2_score&quot;</span><span class="ot">,</span></span>
-<span id="cb87-9"><a href="#cb87-9" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;LIST_S2_pred&quot;</span></span>
-<span id="cb87-10"><a href="#cb87-10" aria-hidden="true" tabindex="-1"></a>       <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb87-11"><a href="#cb87-11" aria-hidden="true" tabindex="-1"></a>       <span class="dt">&quot;column_rename&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb87-12"><a href="#cb87-12" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;LIST_S2_score&quot;</span><span class="fu">:</span> <span class="st">&quot;LISTScore&quot;</span><span class="fu">,</span></span>
-<span id="cb87-13"><a href="#cb87-13" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;LIST_S2_pred&quot;</span><span class="fu">:</span> <span class="st">&quot;LISTPred&quot;</span></span>
-<span id="cb87-14"><a href="#cb87-14" aria-hidden="true" tabindex="-1"></a>       <span class="fu">},</span></span>
-<span id="cb87-15"><a href="#cb87-15" aria-hidden="true" tabindex="-1"></a>       <span class="dt">&quot;column_clean&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
-<span id="cb87-16"><a href="#cb87-16" aria-hidden="true" tabindex="-1"></a>       <span class="dt">&quot;column_case&quot;</span><span class="fu">:</span> <span class="kw">null</span></span>
-<span id="cb87-17"><a href="#cb87-17" aria-hidden="true" tabindex="-1"></a>     <span class="fu">}</span></span>
-<span id="cb87-18"><a href="#cb87-18" aria-hidden="true" tabindex="-1"></a>   <span class="ot">]</span></span>
-<span id="cb87-19"><a href="#cb87-19" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb88"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb88-2"><a href="#cb88-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;from_columns_map&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb88-3"><a href="#cb88-3" aria-hidden="true" tabindex="-1"></a>     <span class="fu">{</span></span>
+<span id="cb88-4"><a href="#cb88-4" aria-hidden="true" tabindex="-1"></a>       <span class="dt">&quot;transcripts_column&quot;</span><span class="fu">:</span> <span class="st">&quot;Ensembl_transcriptid&quot;</span><span class="fu">,</span></span>
+<span id="cb88-5"><a href="#cb88-5" aria-hidden="true" tabindex="-1"></a>       <span class="dt">&quot;transcripts_infos_columns&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb88-6"><a href="#cb88-6" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;genename&quot;</span><span class="ot">,</span></span>
+<span id="cb88-7"><a href="#cb88-7" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;Ensembl_geneid&quot;</span><span class="ot">,</span></span>
+<span id="cb88-8"><a href="#cb88-8" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;LIST_S2_score&quot;</span><span class="ot">,</span></span>
+<span id="cb88-9"><a href="#cb88-9" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;LIST_S2_pred&quot;</span></span>
+<span id="cb88-10"><a href="#cb88-10" aria-hidden="true" tabindex="-1"></a>       <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb88-11"><a href="#cb88-11" aria-hidden="true" tabindex="-1"></a>       <span class="dt">&quot;column_rename&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb88-12"><a href="#cb88-12" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;LIST_S2_score&quot;</span><span class="fu">:</span> <span class="st">&quot;LISTScore&quot;</span><span class="fu">,</span></span>
+<span id="cb88-13"><a href="#cb88-13" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;LIST_S2_pred&quot;</span><span class="fu">:</span> <span class="st">&quot;LISTPred&quot;</span></span>
+<span id="cb88-14"><a href="#cb88-14" aria-hidden="true" tabindex="-1"></a>       <span class="fu">},</span></span>
+<span id="cb88-15"><a href="#cb88-15" aria-hidden="true" tabindex="-1"></a>       <span class="dt">&quot;column_clean&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
+<span id="cb88-16"><a href="#cb88-16" aria-hidden="true" tabindex="-1"></a>       <span class="dt">&quot;column_case&quot;</span><span class="fu">:</span> <span class="kw">null</span></span>
+<span id="cb88-17"><a href="#cb88-17" aria-hidden="true" tabindex="-1"></a>     <span class="fu">}</span></span>
+<span id="cb88-18"><a href="#cb88-18" aria-hidden="true" tabindex="-1"></a>   <span class="ot">]</span></span>
+<span id="cb88-19"><a href="#cb88-19" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h3 data-number="10.10.3" id="commons-parameters"><span
 class="header-section-number">10.10.3</span> commons parameters</h3>
@@ -2373,38 +2394,38 @@ column names through &#x2018;column_rename&#x2019; is much more efficient.</p>
 <p>Commons parameters by default:</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb88"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb88-2"><a href="#cb88-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;column_rename&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
-<span id="cb88-3"><a href="#cb88-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;column_clean&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
-<span id="cb88-4"><a href="#cb88-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;column_case&quot;</span><span class="fu">:</span> <span class="kw">null</span></span>
-<span id="cb88-5"><a href="#cb88-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb89"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb89-1"><a href="#cb89-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb89-2"><a href="#cb89-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;column_rename&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
+<span id="cb89-3"><a href="#cb89-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;column_clean&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
+<span id="cb89-4"><a href="#cb89-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;column_case&quot;</span><span class="fu">:</span> <span class="kw">null</span></span>
+<span id="cb89-5"><a href="#cb89-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <blockquote>
 <p>Parameters to change 2 column names:</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb89"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb89-1"><a href="#cb89-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb89-2"><a href="#cb89-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;column_rename&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb89-3"><a href="#cb89-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;LIST_S2_score&quot;</span><span class="fu">:</span> <span class="st">&quot;LISTScore&quot;</span><span class="fu">,</span></span>
-<span id="cb89-4"><a href="#cb89-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;LIST_S2_pred&quot;</span><span class="fu">:</span> <span class="st">&quot;LISTPred&quot;</span></span>
-<span id="cb89-5"><a href="#cb89-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">},</span></span>
-<span id="cb89-6"><a href="#cb89-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;column_clean&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
-<span id="cb89-7"><a href="#cb89-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;column_case&quot;</span><span class="fu">:</span> <span class="kw">null</span></span>
-<span id="cb89-8"><a href="#cb89-8" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb90"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb90-1"><a href="#cb90-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb90-2"><a href="#cb90-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;column_rename&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb90-3"><a href="#cb90-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;LIST_S2_score&quot;</span><span class="fu">:</span> <span class="st">&quot;LISTScore&quot;</span><span class="fu">,</span></span>
+<span id="cb90-4"><a href="#cb90-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;LIST_S2_pred&quot;</span><span class="fu">:</span> <span class="st">&quot;LISTPred&quot;</span></span>
+<span id="cb90-5"><a href="#cb90-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">},</span></span>
+<span id="cb90-6"><a href="#cb90-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;column_clean&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
+<span id="cb90-7"><a href="#cb90-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;column_case&quot;</span><span class="fu">:</span> <span class="kw">null</span></span>
+<span id="cb90-8"><a href="#cb90-8" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <blockquote>
 <p>Parameters to ensure well-named column from format annotations field
 (such as snpEff):</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb90"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb90-1"><a href="#cb90-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb90-2"><a href="#cb90-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;column_rename&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
-<span id="cb90-3"><a href="#cb90-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;column_clean&quot;</span><span class="fu">:</span> <span class="kw">true</span><span class="fu">,</span></span>
-<span id="cb90-4"><a href="#cb90-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;column_case&quot;</span><span class="fu">:</span> <span class="kw">null</span></span>
-<span id="cb90-5"><a href="#cb90-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb91"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb91-1"><a href="#cb91-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb91-2"><a href="#cb91-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;column_rename&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
+<span id="cb91-3"><a href="#cb91-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;column_clean&quot;</span><span class="fu">:</span> <span class="kw">true</span><span class="fu">,</span></span>
+<span id="cb91-4"><a href="#cb91-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;column_case&quot;</span><span class="fu">:</span> <span class="kw">null</span></span>
+<span id="cb91-5"><a href="#cb91-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h2 data-number="10.11" id="prioritization-1"><span
 class="header-section-number">10.11</span> prioritization</h2>
@@ -2434,24 +2455,24 @@ profiles available in a configuration JSON file, with &#x2018;PZT&#x2019; as
 prefix:</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb91"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb91-1"><a href="#cb91-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb91-2"><a href="#cb91-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;prioritization&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb91-3"><a href="#cb91-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;profiles&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;transcripts&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb91-4"><a href="#cb91-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;default_profile&quot;</span><span class="fu">:</span> <span class="st">&quot;transcripts&quot;</span><span class="fu">,</span></span>
-<span id="cb91-5"><a href="#cb91-5" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;prioritization_config&quot;</span><span class="fu">:</span> <span class="st">&quot;config/prioritization_transcripts_profiles.json&quot;</span><span class="fu">,</span></span>
-<span id="cb91-6"><a href="#cb91-6" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;prioritization_score_mode&quot;</span><span class="fu">:</span> <span class="st">&quot;HOWARD&quot;</span><span class="fu">,</span></span>
-<span id="cb91-7"><a href="#cb91-7" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;pzprefix&quot;</span><span class="fu">:</span> <span class="st">&quot;PZT&quot;</span><span class="fu">,</span></span>
-<span id="cb91-8"><a href="#cb91-8" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;pzfields&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;Score&quot;</span><span class="ot">,</span> <span class="st">&quot;Flag&quot;</span><span class="ot">,</span> <span class="st">&quot;LISTScore&quot;</span><span class="ot">,</span> <span class="st">&quot;LISTPred&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb91-9"><a href="#cb91-9" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;prioritization_transcripts_order&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb91-10"><a href="#cb91-10" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;PZTFlag&quot;</span><span class="fu">:</span> <span class="st">&quot;ASC&quot;</span><span class="fu">,</span></span>
-<span id="cb91-11"><a href="#cb91-11" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;PZTScore&quot;</span><span class="fu">:</span> <span class="st">&quot;DESC&quot;</span></span>
-<span id="cb91-12"><a href="#cb91-12" aria-hidden="true" tabindex="-1"></a>      <span class="fu">},</span></span>
-<span id="cb91-13"><a href="#cb91-13" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;prioritization_transcripts&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
-<span id="cb91-14"><a href="#cb91-14" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;prioritization_transcripts_force&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
-<span id="cb91-15"><a href="#cb91-15" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;prioritization_transcripts_version_force&quot;</span><span class="fu">:</span> <span class="kw">false</span></span>
-<span id="cb91-16"><a href="#cb91-16" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
-<span id="cb91-17"><a href="#cb91-17" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb92"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb92-1"><a href="#cb92-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb92-2"><a href="#cb92-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;prioritization&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb92-3"><a href="#cb92-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;profiles&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;transcripts&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb92-4"><a href="#cb92-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;default_profile&quot;</span><span class="fu">:</span> <span class="st">&quot;transcripts&quot;</span><span class="fu">,</span></span>
+<span id="cb92-5"><a href="#cb92-5" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;prioritization_config&quot;</span><span class="fu">:</span> <span class="st">&quot;config/prioritization_transcripts_profiles.json&quot;</span><span class="fu">,</span></span>
+<span id="cb92-6"><a href="#cb92-6" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;prioritization_score_mode&quot;</span><span class="fu">:</span> <span class="st">&quot;HOWARD&quot;</span><span class="fu">,</span></span>
+<span id="cb92-7"><a href="#cb92-7" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;pzprefix&quot;</span><span class="fu">:</span> <span class="st">&quot;PZT&quot;</span><span class="fu">,</span></span>
+<span id="cb92-8"><a href="#cb92-8" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;pzfields&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;Score&quot;</span><span class="ot">,</span> <span class="st">&quot;Flag&quot;</span><span class="ot">,</span> <span class="st">&quot;LISTScore&quot;</span><span class="ot">,</span> <span class="st">&quot;LISTPred&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb92-9"><a href="#cb92-9" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;prioritization_transcripts_order&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb92-10"><a href="#cb92-10" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;PZTFlag&quot;</span><span class="fu">:</span> <span class="st">&quot;ASC&quot;</span><span class="fu">,</span></span>
+<span id="cb92-11"><a href="#cb92-11" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;PZTScore&quot;</span><span class="fu">:</span> <span class="st">&quot;DESC&quot;</span></span>
+<span id="cb92-12"><a href="#cb92-12" aria-hidden="true" tabindex="-1"></a>      <span class="fu">},</span></span>
+<span id="cb92-13"><a href="#cb92-13" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;prioritization_transcripts&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
+<span id="cb92-14"><a href="#cb92-14" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;prioritization_transcripts_force&quot;</span><span class="fu">:</span> <span class="kw">false</span><span class="fu">,</span></span>
+<span id="cb92-15"><a href="#cb92-15" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;prioritization_transcripts_version_force&quot;</span><span class="fu">:</span> <span class="kw">false</span></span>
+<span id="cb92-16"><a href="#cb92-16" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb92-17"><a href="#cb92-17" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h3 data-number="10.11.1" id="profiles-1"><span
 class="header-section-number">10.11.1</span> profiles</h3>
@@ -2473,10 +2494,10 @@ class="header-section-number">10.11.3</span> prioritization_config</h3>
 <p>Prioritization configuration JSON file as an option</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb92"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb92-1"><a href="#cb92-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb92-2"><a href="#cb92-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;prioritization_config&quot;</span><span class="fu">:</span> <span class="st">&quot;prioritization_config.json&quot;</span> </span>
-<span id="cb92-3"><a href="#cb92-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb93"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb93-1"><a href="#cb93-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb93-2"><a href="#cb93-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;prioritization_config&quot;</span><span class="fu">:</span> <span class="st">&quot;prioritization_config.json&quot;</span> </span>
+<span id="cb93-3"><a href="#cb93-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h3 data-number="10.11.4" id="prioritization_score_mode-1"><span
 class="header-section-number">10.11.4</span>
@@ -2507,27 +2528,27 @@ will be choosen in case of equal order.</p>
 <p>Default order of transcript using Flag and Score:</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb93"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb93-1"><a href="#cb93-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb93-2"><a href="#cb93-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;prioritization_transcripts_order&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb93-3"><a href="#cb93-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;PZTFlag&quot;</span><span class="fu">:</span> <span class="st">&quot;ASC&quot;</span><span class="fu">,</span></span>
-<span id="cb93-4"><a href="#cb93-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;PZTScore&quot;</span><span class="fu">:</span> <span class="st">&quot;DESC&quot;</span></span>
-<span id="cb93-5"><a href="#cb93-5" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
-<span id="cb93-6"><a href="#cb93-6" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb94"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb94-1"><a href="#cb94-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb94-2"><a href="#cb94-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;prioritization_transcripts_order&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb94-3"><a href="#cb94-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;PZTFlag&quot;</span><span class="fu">:</span> <span class="st">&quot;ASC&quot;</span><span class="fu">,</span></span>
+<span id="cb94-4"><a href="#cb94-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;PZTScore&quot;</span><span class="fu">:</span> <span class="st">&quot;DESC&quot;</span></span>
+<span id="cb94-5"><a href="#cb94-5" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb94-6"><a href="#cb94-6" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <blockquote>
 <p>Order of transcript using Flag, Score and additional specific
 spliceAI_score:</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb94"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb94-1"><a href="#cb94-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb94-2"><a href="#cb94-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;prioritization_transcripts_order&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb94-3"><a href="#cb94-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;PZTFlag&quot;</span><span class="fu">:</span> <span class="st">&quot;ASC&quot;</span><span class="fu">,</span></span>
-<span id="cb94-4"><a href="#cb94-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;PZTScore&quot;</span><span class="fu">:</span> <span class="st">&quot;DESC&quot;</span><span class="fu">,</span></span>
-<span id="cb94-5"><a href="#cb94-5" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;spliceAI_score&quot;</span><span class="fu">:</span> <span class="st">&quot;DESC&quot;</span></span>
-<span id="cb94-6"><a href="#cb94-6" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
-<span id="cb94-7"><a href="#cb94-7" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb95"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb95-1"><a href="#cb95-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb95-2"><a href="#cb95-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;prioritization_transcripts_order&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb95-3"><a href="#cb95-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;PZTFlag&quot;</span><span class="fu">:</span> <span class="st">&quot;ASC&quot;</span><span class="fu">,</span></span>
+<span id="cb95-4"><a href="#cb95-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;PZTScore&quot;</span><span class="fu">:</span> <span class="st">&quot;DESC&quot;</span><span class="fu">,</span></span>
+<span id="cb95-5"><a href="#cb95-5" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;spliceAI_score&quot;</span><span class="fu">:</span> <span class="st">&quot;DESC&quot;</span></span>
+<span id="cb95-6"><a href="#cb95-6" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb95-7"><a href="#cb95-7" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h3 data-number="10.11.8" id="prioritization_transcripts"><span
 class="header-section-number">10.11.8</span>
@@ -2542,10 +2563,10 @@ above), or if this list is not forced (see below).</p>
 <p>File with transcripts of preference:</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb95"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb95-1"><a href="#cb95-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb95-2"><a href="#cb95-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;prioritization_transcripts&quot;</span><span class="fu">:</span> <span class="st">&quot;transcripts.tsv&quot;</span></span>
-<span id="cb95-3"><a href="#cb95-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb96"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb96-1"><a href="#cb96-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb96-2"><a href="#cb96-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;prioritization_transcripts&quot;</span><span class="fu">:</span> <span class="st">&quot;transcripts.tsv&quot;</span></span>
+<span id="cb96-3"><a href="#cb96-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h3 data-number="10.11.9" id="prioritization_transcripts_force"><span
 class="header-section-number">10.11.9</span>
@@ -2559,10 +2580,10 @@ provided file (see above).</p>
 <p>Force using transcripts of preference in file:</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb96"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb96-1"><a href="#cb96-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb96-2"><a href="#cb96-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;prioritization_transcripts_force&quot;</span><span class="fu">:</span> <span class="kw">true</span></span>
-<span id="cb96-3"><a href="#cb96-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb97"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb97-1"><a href="#cb97-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb97-2"><a href="#cb97-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;prioritization_transcripts_force&quot;</span><span class="fu">:</span> <span class="kw">true</span></span>
+<span id="cb97-3"><a href="#cb97-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h3 data-number="10.11.10"
 id="prioritization_transcripts_version_force"><span
@@ -2579,10 +2600,10 @@ version.</p>
 <p>Force using transcripts version:</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb97"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb97-1"><a href="#cb97-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb97-2"><a href="#cb97-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;prioritization_transcripts_version_force&quot;</span><span class="fu">:</span> <span class="kw">true</span></span>
-<span id="cb97-3"><a href="#cb97-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb98"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb98-1"><a href="#cb98-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb98-2"><a href="#cb98-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;prioritization_transcripts_version_force&quot;</span><span class="fu">:</span> <span class="kw">true</span></span>
+<span id="cb98-3"><a href="#cb98-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h2 data-number="10.12" id="export-1"><span
 class="header-section-number">10.12</span> export</h2>
@@ -2597,34 +2618,34 @@ otherwise each column will be exported.</p>
 <p>Export as compressed TSV:</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb98"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb98-1"><a href="#cb98-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb98-2"><a href="#cb98-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;export&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb98-3"><a href="#cb98-3" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;output&quot;</span><span class="fu">:</span> <span class="st">&quot;/tmp/output.tsv.gz&quot;</span></span>
-<span id="cb98-4"><a href="#cb98-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
-<span id="cb98-5"><a href="#cb98-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb99"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb99-1"><a href="#cb99-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb99-2"><a href="#cb99-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;export&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb99-3"><a href="#cb99-3" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;output&quot;</span><span class="fu">:</span> <span class="st">&quot;/tmp/output.tsv.gz&quot;</span></span>
+<span id="cb99-4"><a href="#cb99-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb99-5"><a href="#cb99-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <blockquote>
 <p>Export as VCF:</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb99"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb99-1"><a href="#cb99-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb99-2"><a href="#cb99-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;export&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb99-3"><a href="#cb99-3" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;output&quot;</span><span class="fu">:</span> <span class="st">&quot;/tmp/output.vcf&quot;</span></span>
-<span id="cb99-4"><a href="#cb99-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
-<span id="cb99-5"><a href="#cb99-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb100"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb100-1"><a href="#cb100-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb100-2"><a href="#cb100-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;export&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb100-3"><a href="#cb100-3" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;output&quot;</span><span class="fu">:</span> <span class="st">&quot;/tmp/output.vcf&quot;</span></span>
+<span id="cb100-4"><a href="#cb100-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb100-5"><a href="#cb100-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <blockquote>
 <p>Export as Parquet:</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb100"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb100-1"><a href="#cb100-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb100-2"><a href="#cb100-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;export&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb100-3"><a href="#cb100-3" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;output&quot;</span><span class="fu">:</span> <span class="st">&quot;/tmp/output.parquet&quot;</span></span>
-<span id="cb100-4"><a href="#cb100-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
-<span id="cb100-5"><a href="#cb100-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb101"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb101-1"><a href="#cb101-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb101-2"><a href="#cb101-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;export&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb101-3"><a href="#cb101-3" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;output&quot;</span><span class="fu">:</span> <span class="st">&quot;/tmp/output.parquet&quot;</span></span>
+<span id="cb101-4"><a href="#cb101-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb101-5"><a href="#cb101-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h1 data-number="11" id="threads"><span
 class="header-section-number">11</span> threads</h1>
@@ -2640,19 +2661,19 @@ CPU/core.</p>
 <p>Automatically detect all available CPU/cores</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb101"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb101-1"><a href="#cb101-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb101-2"><a href="#cb101-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;threads&quot;</span><span class="fu">:</span> <span class="dv">-1</span></span>
-<span id="cb101-3"><a href="#cb101-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb102"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb102-1"><a href="#cb102-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb102-2"><a href="#cb102-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;threads&quot;</span><span class="fu">:</span> <span class="dv">-1</span></span>
+<span id="cb102-3"><a href="#cb102-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <blockquote>
 <p>Define 8 CPU/cores</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb102"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb102-1"><a href="#cb102-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb102-2"><a href="#cb102-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;threads&quot;</span><span class="fu">:</span> <span class="dv">8</span></span>
-<span id="cb102-3"><a href="#cb102-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb103"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb103-1"><a href="#cb103-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb103-2"><a href="#cb103-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;threads&quot;</span><span class="fu">:</span> <span class="dv">8</span></span>
+<span id="cb103-3"><a href="#cb103-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h1 data-number="12" id="samples"><span
 class="header-section-number">12</span> samples</h1>
@@ -2666,37 +2687,37 @@ genotype annotations (based on &#x2018;FORMAT&#x2019; VCF column).</p>
 <p>Export only a list of samples:</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb103"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb103-1"><a href="#cb103-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb103-2"><a href="#cb103-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;samples&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb103-3"><a href="#cb103-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;list&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;sample1&quot;</span><span class="ot">,</span> <span class="st">&quot;sample2&quot;</span><span class="ot">]</span></span>
-<span id="cb103-4"><a href="#cb103-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
-<span id="cb103-5"><a href="#cb103-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb104"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb104-1"><a href="#cb104-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb104-2"><a href="#cb104-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;samples&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb104-3"><a href="#cb104-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;list&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;sample1&quot;</span><span class="ot">,</span> <span class="st">&quot;sample2&quot;</span><span class="ot">]</span></span>
+<span id="cb104-4"><a href="#cb104-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb104-5"><a href="#cb104-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <blockquote>
 <p>Do not check existing samples (all VCF columns after FORMAT
 column):</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb104"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb104-1"><a href="#cb104-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb104-2"><a href="#cb104-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;samples&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb104-3"><a href="#cb104-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;check&quot;</span><span class="fu">:</span> <span class="kw">false</span></span>
-<span id="cb104-4"><a href="#cb104-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
-<span id="cb104-5"><a href="#cb104-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb105"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb105-1"><a href="#cb105-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb105-2"><a href="#cb105-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;samples&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb105-3"><a href="#cb105-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;check&quot;</span><span class="fu">:</span> <span class="kw">false</span></span>
+<span id="cb105-4"><a href="#cb105-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb105-5"><a href="#cb105-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <blockquote>
 <p>Default configuration, with all samples are considered (null) and
 checked (true):</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb105"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb105-1"><a href="#cb105-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb105-2"><a href="#cb105-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;samples&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb105-3"><a href="#cb105-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;list&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
-<span id="cb105-4"><a href="#cb105-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;check&quot;</span><span class="fu">:</span> <span class="kw">true</span></span>
-<span id="cb105-5"><a href="#cb105-5" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
-<span id="cb105-6"><a href="#cb105-6" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb106"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb106-1"><a href="#cb106-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb106-2"><a href="#cb106-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;samples&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb106-3"><a href="#cb106-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;list&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
+<span id="cb106-4"><a href="#cb106-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;check&quot;</span><span class="fu">:</span> <span class="kw">true</span></span>
+<span id="cb106-5"><a href="#cb106-5" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb106-6"><a href="#cb106-6" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h2 data-number="12.1" id="list"><span
 class="header-section-number">12.1</span> list</h2>
@@ -2709,10 +2730,10 @@ Only these samples are exported in VCF format file.</p>
 <p>Export only a list of samples:</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb106"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb106-1"><a href="#cb106-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb106-2"><a href="#cb106-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;list&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;sample1&quot;</span><span class="ot">,</span> <span class="st">&quot;sample2&quot;</span><span class="ot">]</span></span>
-<span id="cb106-3"><a href="#cb106-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb107"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb107-1"><a href="#cb107-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb107-2"><a href="#cb107-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;list&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;sample1&quot;</span><span class="ot">,</span> <span class="st">&quot;sample2&quot;</span><span class="ot">]</span></span>
+<span id="cb107-3"><a href="#cb107-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h2 data-number="12.2" id="check"><span
 class="header-section-number">12.2</span> check</h2>
@@ -2727,10 +2748,10 @@ well-formed.</p>
 <p>Do not check existing samples:</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb107"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb107-1"><a href="#cb107-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb107-2"><a href="#cb107-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;check&quot;</span><span class="fu">:</span> <span class="kw">false</span></span>
-<span id="cb107-3"><a href="#cb107-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb108"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb108-1"><a href="#cb108-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb108-2"><a href="#cb108-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;check&quot;</span><span class="fu">:</span> <span class="kw">false</span></span>
+<span id="cb108-3"><a href="#cb108-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h1 data-number="13" id="databases"><span
 class="header-section-number">13</span> databases</h1>

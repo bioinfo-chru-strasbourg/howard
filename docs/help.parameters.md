@@ -92,10 +92,12 @@ title: HOWARD Help Parameters
   - [<span class="toc-section-number">7.3</span>
     query_print_mode](#query_print_mode)
 - [<span class="toc-section-number">8</span> export](#export)
-  - [<span class="toc-section-number">8.1</span> order_by](#order_by)
-  - [<span class="toc-section-number">8.2</span>
-    include_header](#include_header)
+  - [<span class="toc-section-number">8.1</span>
+    fields_to_rename](#fields_to_rename)
+  - [<span class="toc-section-number">8.2</span> order_by](#order_by)
   - [<span class="toc-section-number">8.3</span>
+    include_header](#include_header)
+  - [<span class="toc-section-number">8.4</span>
     parquet_partitions](#parquet_partitions)
 - [<span class="toc-section-number">9</span> explode](#explode)
   - [<span class="toc-section-number">9.1</span>
@@ -1693,6 +1695,27 @@ Default: `None`
 Export options for output files, such as data order, include header in
 output and hive partitioning.
 
+## fields_to_rename
+
+Rename or remove INFO/tags before exporting.
+
+Type: `dict`
+
+Default: `None`
+
+Examples:
+
+> Rename 'CLNSIG' field to 'CLNSIG_renamed' and remove 'SIFT' field:
+
+> ``` json
+> {
+>    "fields_to_rename": {
+>      "CLNSIG": "CLNSIG_renamed",
+>      "SIFT": null
+>    }
+> }
+> ```
+
 ## order_by
 
 List of columns to sort the result-set in ascending or descending order.
@@ -1719,7 +1742,7 @@ Examples:
 
 > ``` json
 > {
->    "order_by": PZFlag DESC, PZScore DESC" 
+>    "order_by": "PZFlag DESC, PZScore DESC" 
 > }
 > ```
 
