@@ -2199,7 +2199,7 @@ def test_rename_fields():
         }
 
         # Rename fields
-        fields_renamed = variants.rename_fields(fields_to_rename=fields_to_rename)
+        fields_renamed = variants.rename_info_fields(fields_to_rename=fields_to_rename)
         assert fields_renamed == {'CLNSIG': 'CLNSIG_renamed', 'PREFIXCLNSIG': 'PREFIXCLNSIG_renamed', 'DP': 'depth', 'SIFT': None}
 
         # Check if VCF is in correct format with pyVCF
@@ -2248,4 +2248,3 @@ def test_rename_fields_to_param_and_export():
             assert list(set(vcf_obj.infos.keys())).sort() == ['CLNSIGSUFFIX', 'AA', 'NS', 'PREFIXCLNSIG_renamed', 'CLNSIG_renamed', 'depth'].sort()
         except:
             assert False
-

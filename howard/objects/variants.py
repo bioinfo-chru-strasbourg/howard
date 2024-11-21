@@ -2185,7 +2185,7 @@ class Variants:
         # Rename fields
         if not fields_to_rename:
             fields_to_rename = param.get("export", {}).get("fields_to_rename", None)
-        self.rename_fields(fields_to_rename=fields_to_rename)
+        self.rename_info_fields(fields_to_rename=fields_to_rename)
 
         # Auto header name with extension
         if export_header or output_header:
@@ -6843,6 +6843,14 @@ class Variants:
                     "function_name": "calculation_extract_nomen",
                     "function_params": [],
                 },
+                "RENAME_INFO_FIELDS": {
+                    "type": "python",
+                    "name": "RENAME_INFO_FIELDS",
+                    "description": "Rename or remove INFO/tags",
+                    "available": True,
+                    "function_name": "calculation_rename_info_fields",
+                    "function_params": [],
+                },
                 "FINDBYPIPELINE": {
                     "type": "python",
                     "name": "FINDBYPIPELINE",
@@ -8364,7 +8372,7 @@ class Variants:
 
         # Operation infos
         operation_name = operation.get("name", "unknown")
-        log.debug(f"process sql {operation_name}")
+        log.debug(f"process SQL {operation_name}")
         output_column_name = operation.get("output_column_name", operation_name)
         output_column_type = operation.get("output_column_type", "String")
         prefix = operation.get("explode_infos_prefix", "")
@@ -8509,7 +8517,7 @@ class Variants:
         """
 
         operation_name = operation["name"]
-        log.debug(f"process sql {operation_name}")
+        log.debug(f"process Python {operation_name}")
         function_name = operation["function_name"]
         function_params = operation["function_params"]
         getattr(self, function_name)(*function_params)
@@ -11634,26 +11642,36 @@ class Variants:
 
         return True
 
-
-    def rename_fields(self, fields_to_rename:dict = None) -> dict:
+    def rename_info_fields(
+        self, fields_to_rename: dict = None, table: str = None
+    ) -> dict:
         """
-        The `rename_fields` function renames specified fields in a VCF file header and updates
+        The `rename_info_fields` function renames specified fields in a VCF file header and updates
         corresponding INFO fields in the variants table.
-        
+
         :param fields_to_rename: The `fields_to_rename` parameter is a dictionary that contains the
         mapping of fields to be renamed in a VCF (Variant Call Format) file. The keys in the dictionary
         represent the original field names that need to be renamed, and the corresponding values
-        represent the new names to which the fields should be renamed. If the corresponding value
-        is None, the field will be removed.
-
+        represent the new names to which the fields should be
         :type fields_to_rename: dict
+        :param table: The `table` parameter in the `rename_info_fields` function represents the name of
+        the table in which the variants data is stored. This table contains information about genetic
+        variants, and the function updates the corresponding INFO fields in this table when renaming
+        specified fields in the VCF file header
+        :type table: str
+        :return: The `rename_info_fields` function returns a dictionary `fields_renamed` that contains
+        the original field names as keys and their corresponding new names (or None if the field was
+        removed) as values after renaming or removing specified fields in a VCF file header and updating
+        corresponding INFO fields in the variants table.
         """
-    
+
         # Init
         fields_renamed = {}
-        table_variants = self.get_table_variants()
         config = self.get_config()
         access = config.get("access")
+
+        if table is None:
+            table = self.get_table_variants()
 
         if fields_to_rename is not None and access not in ["RO"]:
 
@@ -11665,7 +11683,7 @@ class Variants:
             for field_to_rename, field_renamed in fields_to_rename.items():
 
                 if field_to_rename in header.infos:
-                    
+
                     # Rename header
                     if field_renamed is not None:
                         header.infos[field_renamed] = vcf.parser._Info(
@@ -11683,7 +11701,7 @@ class Variants:
                     field_pattern = rf'(^|;)({field_to_rename})=([^;]*)'
                     field_renamed_pattern = rf'\1{field_renamed}=\3'
                     query = f"""
-                        UPDATE {table_variants}
+                        UPDATE {table}
                         SET
                             INFO = regexp_replace(INFO, '{field_pattern}', '{field_renamed_pattern}', 'g')
                     """
@@ -11700,3 +11718,60 @@ class Variants:
 
         return fields_renamed
 
+    def calculation_rename_info_fields(
+        self,
+        fields_to_rename: dict = None,
+        table: str = None,
+        operation_name: str = "RENAME_INFO_FIELDS",
+    ) -> None:
+        """
+        The `calculation_rename_info_fields` function retrieves parameters from a dictionary, updates
+        fields to rename and table if provided, and then calls another function to rename the fields.
+
+        :param fields_to_rename: `fields_to_rename` is a dictionary that contains the fields to be
+        renamed in a table. Each key-value pair in the dictionary represents the original field name as
+        the key and the new field name as the value
+        :type fields_to_rename: dict
+        :param table: The `table` parameter in the `calculation_rename_info_fields` method is used to
+        specify the name of the table for which the fields are to be renamed. It is a string type
+        parameter
+        :type table: str
+        :param operation_name: The `operation_name` parameter in the `calculation_rename_info_fields`
+        method is a string that specifies the name of the operation being performed. In this context, it
+        is used as a default value for the operation name if not explicitly provided when calling the
+        function, defaults to RENAME_INFO_FIELDS
+        :type operation_name: str (optional)
+        """
+
+        # Param
+        param = self.get_param()
+
+        # Get param fields to rename
+        param_fields_to_rename = (
+            param.get("calculation", {})
+            .get("calculations", {})
+            .get(operation_name, {})
+            .get("fields_to_rename", None)
+        )
+
+        # Get param table
+        param_table = (
+            param.get("calculation", {})
+            .get("calculations", {})
+            .get(operation_name, {})
+            .get("table", None)
+        )
+
+        # Init fields_to_rename
+        if fields_to_rename is None:
+            fields_to_rename = param_fields_to_rename
+
+        # Init table
+        if table is None:
+            table = param_table
+
+        renamed_fields = self.rename_info_fields(
+            fields_to_rename=fields_to_rename, table=table
+        )
+
+        log.debug(f"renamed_fields:{renamed_fields}")
