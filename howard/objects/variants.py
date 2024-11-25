@@ -8980,7 +8980,7 @@ class Variants:
         if transcripts_table and transcripts_column:
             extra_field_transcript = f"{transcripts_table}.{transcripts_column}"
             # Explode if not exists
-            self.explode_infos(fields=[transcripts_column], table=transcripts_table)
+            added_columns += self.explode_infos(fields=[transcripts_column], table=transcripts_table)
         else:
             extra_field_transcript = f"NULL"
 
@@ -10333,7 +10333,7 @@ class Variants:
         )
         if not pz_orders:
             pz_orders = {
-                pz_param.get("pzprefix", "PTZ") + "Flag": "ASC",
+                pz_param.get("pzprefix", "PTZ") + "Flag": "DESC",
                 pz_param.get("pzprefix", "PTZ") + "Score": "DESC",
             }
         for pz_order in pz_orders:

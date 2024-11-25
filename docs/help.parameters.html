@@ -2112,7 +2112,7 @@ class="sourceCode json"><code class="sourceCode json"><span id="cb77-1"><a href=
 <span id="cb77-47"><a href="#cb77-47" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;pzprefix&quot;</span><span class="fu">:</span> <span class="st">&quot;PZT&quot;</span><span class="fu">,</span></span>
 <span id="cb77-48"><a href="#cb77-48" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;pzfields&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;Score&quot;</span><span class="ot">,</span> <span class="st">&quot;Flag&quot;</span><span class="ot">,</span> <span class="st">&quot;LISTScore&quot;</span><span class="ot">,</span> <span class="st">&quot;LISTPred&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
 <span id="cb77-49"><a href="#cb77-49" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;prioritization_transcripts_order&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb77-50"><a href="#cb77-50" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;PZTFlag&quot;</span><span class="fu">:</span> <span class="st">&quot;ASC&quot;</span><span class="fu">,</span></span>
+<span id="cb77-50"><a href="#cb77-50" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;PZTFlag&quot;</span><span class="fu">:</span> <span class="st">&quot;DESC&quot;</span><span class="fu">,</span></span>
 <span id="cb77-51"><a href="#cb77-51" aria-hidden="true" tabindex="-1"></a>             <span class="dt">&quot;PZTScore&quot;</span><span class="fu">:</span> <span class="st">&quot;DESC&quot;</span></span>
 <span id="cb77-52"><a href="#cb77-52" aria-hidden="true" tabindex="-1"></a>        <span class="fu">}</span></span>
 <span id="cb77-53"><a href="#cb77-53" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;prioritization_score_mode&quot;</span><span class="er">:</span> <span class="st">&quot;HOWARD&quot;</span><span class="fu">,</span></span>
@@ -2465,7 +2465,7 @@ class="sourceCode json"><code class="sourceCode json"><span id="cb92-1"><a href=
 <span id="cb92-7"><a href="#cb92-7" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;pzprefix&quot;</span><span class="fu">:</span> <span class="st">&quot;PZT&quot;</span><span class="fu">,</span></span>
 <span id="cb92-8"><a href="#cb92-8" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;pzfields&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;Score&quot;</span><span class="ot">,</span> <span class="st">&quot;Flag&quot;</span><span class="ot">,</span> <span class="st">&quot;LISTScore&quot;</span><span class="ot">,</span> <span class="st">&quot;LISTPred&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
 <span id="cb92-9"><a href="#cb92-9" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;prioritization_transcripts_order&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb92-10"><a href="#cb92-10" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;PZTFlag&quot;</span><span class="fu">:</span> <span class="st">&quot;ASC&quot;</span><span class="fu">,</span></span>
+<span id="cb92-10"><a href="#cb92-10" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;PZTFlag&quot;</span><span class="fu">:</span> <span class="st">&quot;DESC&quot;</span><span class="fu">,</span></span>
 <span id="cb92-11"><a href="#cb92-11" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;PZTScore&quot;</span><span class="fu">:</span> <span class="st">&quot;DESC&quot;</span></span>
 <span id="cb92-12"><a href="#cb92-12" aria-hidden="true" tabindex="-1"></a>      <span class="fu">},</span></span>
 <span id="cb92-13"><a href="#cb92-13" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;prioritization_transcripts&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
@@ -2525,13 +2525,14 @@ will be choosen in case of equal order.</p>
 <p>Default: <code>{}</code></p>
 <p>Examples:</p>
 <blockquote>
-<p>Default order of transcript using Flag and Score:</p>
+<p>Default order of transcript using Flag (PASS before FILTERED) and
+Score (higher scores before):</p>
 </blockquote>
 <blockquote>
 <div class="sourceCode" id="cb94"><pre
 class="sourceCode json"><code class="sourceCode json"><span id="cb94-1"><a href="#cb94-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
 <span id="cb94-2"><a href="#cb94-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;prioritization_transcripts_order&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb94-3"><a href="#cb94-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;PZTFlag&quot;</span><span class="fu">:</span> <span class="st">&quot;ASC&quot;</span><span class="fu">,</span></span>
+<span id="cb94-3"><a href="#cb94-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;PZTFlag&quot;</span><span class="fu">:</span> <span class="st">&quot;DESC&quot;</span><span class="fu">,</span></span>
 <span id="cb94-4"><a href="#cb94-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;PZTScore&quot;</span><span class="fu">:</span> <span class="st">&quot;DESC&quot;</span></span>
 <span id="cb94-5"><a href="#cb94-5" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
 <span id="cb94-6"><a href="#cb94-6" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
@@ -2544,7 +2545,7 @@ spliceAI_score:</p>
 <div class="sourceCode" id="cb95"><pre
 class="sourceCode json"><code class="sourceCode json"><span id="cb95-1"><a href="#cb95-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
 <span id="cb95-2"><a href="#cb95-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;prioritization_transcripts_order&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb95-3"><a href="#cb95-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;PZTFlag&quot;</span><span class="fu">:</span> <span class="st">&quot;ASC&quot;</span><span class="fu">,</span></span>
+<span id="cb95-3"><a href="#cb95-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;PZTFlag&quot;</span><span class="fu">:</span> <span class="st">&quot;DESC&quot;</span><span class="fu">,</span></span>
 <span id="cb95-4"><a href="#cb95-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;PZTScore&quot;</span><span class="fu">:</span> <span class="st">&quot;DESC&quot;</span><span class="fu">,</span></span>
 <span id="cb95-5"><a href="#cb95-5" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;spliceAI_score&quot;</span><span class="fu">:</span> <span class="st">&quot;DESC&quot;</span></span>
 <span id="cb95-6"><a href="#cb95-6" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>

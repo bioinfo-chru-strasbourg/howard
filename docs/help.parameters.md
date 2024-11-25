@@ -1871,7 +1871,7 @@ Examples:
 >         "pzprefix": "PZT",
 >         "pzfields": ["Score", "Flag", "LISTScore", "LISTPred"],
 >         "prioritization_transcripts_order": {
->              "PZTFlag": "ASC",
+>              "PZTFlag": "DESC",
 >              "PZTScore": "DESC"
 >         }
 >         "prioritization_score_mode": "HOWARD",
@@ -2250,7 +2250,7 @@ Examples:
 >       "pzprefix": "PZT",
 >       "pzfields": ["Score", "Flag", "LISTScore", "LISTPred"],
 >       "prioritization_transcripts_order": {
->          "PZTFlag": "ASC",
+>          "PZTFlag": "DESC",
 >          "PZTScore": "DESC"
 >       },
 >       "prioritization_transcripts": null,
@@ -2329,12 +2329,13 @@ Default: `{}`
 
 Examples:
 
-> Default order of transcript using Flag and Score:
+> Default order of transcript using Flag (PASS before FILTERED) and
+> Score (higher scores before):
 
 > ``` json
 > {
 >    "prioritization_transcripts_order": {
->       "PZTFlag": "ASC",
+>       "PZTFlag": "DESC",
 >       "PZTScore": "DESC"
 >    }
 > }
@@ -2346,7 +2347,7 @@ Examples:
 > ``` json
 > {
 >    "prioritization_transcripts_order": {
->       "PZTFlag": "ASC",
+>       "PZTFlag": "DESC",
 >       "PZTScore": "DESC",
 >       "spliceAI_score": "DESC"
 >    }
