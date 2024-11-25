@@ -11697,9 +11697,14 @@ class Variants:
                         )
                     del header.infos[field_to_rename]
 
-                    # Rename INFO
+                    # Rename INFO patterns
                     field_pattern = rf'(^|;)({field_to_rename})=([^;]*)'
-                    field_renamed_pattern = rf'\1{field_renamed}=\3'
+                    if field_renamed is not None:
+                        field_renamed_pattern = rf'\1{field_renamed}=\3'
+                    else:
+                        field_renamed_pattern = ''
+
+                    # Rename INFO
                     query = f"""
                         UPDATE {table}
                         SET
