@@ -421,6 +421,7 @@ class Ucsc:
         self,
         clinvar_assembly,
         clinvar_assembly_folder,
+        assembly,
         clinvar_local_folder,
     ):
         """
@@ -442,8 +443,8 @@ class Ucsc:
         )
         # CHeckMD5
         if self.check_md5(
-            find_files(osj(clinvar_local_folder), suffix=".md5")[0],
-            find_files(osj(clinvar_local_folder), suffix=".vcf.gz")[0],
+            find_files(osj(clinvar_local_folder, assembly), suffix=".md5")[0],
+            find_files(osj(clinvar_local_folder, assembly), suffix=".vcf.gz")[0],
         ):
             self.formatting_clinvar(
                 find_files(clinvar_assembly_folder, suffix=".vcf.gz")[0]
@@ -476,6 +477,7 @@ class Ucsc:
             self.download_format_clinvar(
                 clinvar_assembly,
                 clinvar_assembly_folder,
+                assembly,
                 clinvar_local_folder,
             )
         else:
