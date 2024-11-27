@@ -10797,7 +10797,7 @@ class Variants:
     def create_transcript_view(
         self,
         transcripts_table: str = None,
-        transcripts_table_drop: bool = True,
+        transcripts_table_drop: bool = False,
         param: dict = {},
     ) -> str:
         """
@@ -10812,7 +10812,7 @@ class Variants:
         :param transcripts_table_drop: The `transcripts_table_drop` parameter in the
         `create_transcript_view` function is a boolean parameter that determines whether to drop the
         existing transcripts table before creating a new one. If `transcripts_table_drop` is set to `True`,
-        the function will drop the existing transcripts table if it exists, defaults to True
+        the function will drop the existing transcripts table if it exists, defaults to False
         :type transcripts_table_drop: bool (optional)
         :param param: The `param` parameter in the `create_transcript_view` function is a dictionary that
         contains information needed to create a transcript view. It includes details such as the structure
