@@ -8,6 +8,32 @@ from datetime import datetime
 from pathlib import Path
 import time
 import logging as log
+import json
+import subprocess
+
+
+def count_row_file(file):
+    print("Checking number of rows")
+    result = subprocess.run(
+        ["bash", "-c", f"zcat {file} | wc -l"],
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    line_count = int(result.stdout.strip())
+    return line_count
+
+
+def read_json(configfile: str) -> dict:
+    """
+    From json file to python dict
+    :param configfile: path of json file
+    :return: python dict
+    """
+    with open(configfile) as js:
+        data = json.load(js)
+        return data
 
 
 def recursive_chmod(directory, mode):
@@ -24,19 +50,55 @@ def now():
     return current_date.strftime("%Y%m%d")
 
 
-def metaheader_rows(fields, id, number, type, description):
+def metaheader_rows(
+    fields, description, id=None, number=None, type=None, quoting=False
+) -> str:
     """
+    From metaheader information to VCF header row
     ##INFO=<ID=STRAND,Number=1,Type=String,Description="Gene strand">
+
+    :param fields: either INFO, FORMAT, FILTER, ALT from vcf
+    :param description: Description from metaheader file, could also be the assembly name   for contig
+    :param id: The ID of the corresponding field, which is an annotation in the INFO field  of the vcf
+    :param number: Number of value for the field, could be 0 for flag, 1, A (match number   of allele) or "." for a list
+    :param type: Type of Value Float, Integer, String.. conf vcf specs
+    :param quoting: double quote is mandatory for the description metaheader, if there is   no double quote in description string set this param
+    :return: processed row of metaheader
     """
-    keys = ["ID", "Number", "Type", "Description"]
-    values = list(map(str, [id, number, type, '"' + description + '"']))
-    return (
-        "##"
-        + fields
-        + "=<"
-        + ",".join(["=".join(val) for val in list(zip(keys, values))])
-        + ">"
-    )
+    if quoting and description is not None:
+        description = '"' + description + '"'
+    if fields in ["INFO", "FORMAT"]:
+        keys = ["ID", "Number", "Type", "Description"]
+        values = list(map(str, [id, number, type, description]))
+        return (
+            "##"
+            + fields
+            + "=<"
+            + ",".join(["=".join(val) for val in list(zip(keys, values))])
+            + ">"
+        )
+    elif fields in ["ALT", "FILTER"]:
+        keys = ["ID", "Description"]
+        values = list(map(str, [id, description]))
+        return (
+            "##"
+            + fields
+            + "=<"
+            + ",".join(["=".join(val) for val in list(zip(keys, values))])
+            + ">"
+        )
+    elif fields == "contig":
+        keys = ["ID", "assembly", "length"]
+        values = list(map(str, [id, description, number]))
+        return (
+            "##"
+            + fields
+            + "=<"
+            + ",".join(["=".join(val) for val in list(zip(keys, values))])
+            + ">"
+        )
+    else:
+        return "##" + fields + "=" + description
 
 
 def extract_gz_file(input_path: str, output_path: str) -> str:
