@@ -89,3 +89,24 @@ def find_files(path: str, prefix=None, suffix=None) -> list:
     ]
 
     return matching_files
+
+
+def timeit(func):
+    """
+    Decorator that measures the execution time of a function.
+
+    :param func: Function to measure.
+    :return: Wrapped function with timing.
+    """
+
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        execution_time = end_time - start_time
+        log.debug(
+            f"Function '{func.__name__}' executed in {execution_time:.2f} seconds."
+        )
+        return result
+
+    return wrapper
