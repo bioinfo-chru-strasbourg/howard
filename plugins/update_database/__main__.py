@@ -6,12 +6,8 @@ from howard.objects.variants import Variants
 from howard.functions.commons import DEFAULT_DATABASE_FOLDER
 
 sys.path.append(os.path.join(os.path.dirname(__file__)))
-from plugins.update_database import ucsc
+from plugins.update_database import clinvar, gnomad
 
-
-# from plugins.update_database import ucsc
-
-# Arguments
 arguments = {
     "databases_folder": {
         "help": """Path of HOWARD database folder.\n""",
@@ -21,8 +17,11 @@ arguments = {
     "database": {
         "help": """Which database to update.\n""",
         "type": str,
-        "default": "clinvar",
-        "choices": ["clinvar"],
+        "choices": ["clinvar", "gnomad"],
+    },
+    "data_folder": {
+        "help": """Path of data needed to update database.\n""",
+        "type": str,
     },
     "update_config": {
         "help": """Path of json configuration file.\n""",
@@ -49,6 +48,7 @@ commands_arguments = {
             "Update_database": {
                 "databases_folder": False,
                 "database": False,
+                "data_folder": False,
                 "update_config": False,
                 "current_folder": False,
             },
@@ -69,12 +69,31 @@ def main(args: argparse) -> None:
     # Log
     log.info("START")
     if args.database == "clinvar":
-        ucsc.Ucsc(
+        log.info("Update Clinvar")
+        clinvar.Clinvar(
             database=args.database,
             databases_folder=args.databases_folder,
             config_json=args.update_config,
             current_folder=args.current_folder,
-            verbosity="info",
         ).update_clinvar()
+
+    elif args.database == "gnomad":
+        log.info("Update Gnomad")
+        gnomad.Gnomad(
+            database=args.database,
+            databases_folder=args.databases_folder,
+            config_json=args.update_config,
+            current_folder=args.current_folder,
+            data_folder=args.data_folder,
+        ).update_gnomad()
+        # print(clinvar)
+        # exit()
+        # ucsc.Ucsc(
+        #     database=args.database,
+        #     databases_folder=args.databases_folder,
+        #     config_json=args.update_config,
+        #     current_folder=args.current_folder,
+        #     verbosity="info",
+        # ).update_clinvar()
     # Debug
     log.info("END")
