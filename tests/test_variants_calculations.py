@@ -774,13 +774,19 @@ def test_calculation_snpeff_hgvs_transcripts():
 
         # query annotated variant
         result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE INFO LIKE '%NOMEN=%' """
+            """ SELECT * FROM variants WHERE INFO LIKE '%;NOMEN=%' """
+        )
+        assert len(result) == 7
+
+        # query annotated variant
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE INFO LIKE '%;TNOMEN=%' """
         )
         assert len(result) == 7
 
         # Check transcript priority
         result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE INFO LIKE '%NOMEN=EGFR:NM_001346897%' """
+            """ SELECT * FROM variants WHERE INFO LIKE '%;NOMEN=EGFR:NM_001346897%' """
         )
         assert len(result) == 1
 

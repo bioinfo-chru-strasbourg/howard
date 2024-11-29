@@ -4208,3 +4208,21 @@ def docker_automount() -> str:
         if "sock" not in volume.get("Source") and "tmp" not in volume.get("Source"):
             mounts_new += f" -v {volume.get('Source')}:{volume.get ('Destination')}:{volume.get('Mode')}"
     return mounts_new
+
+###
+# Processes and Wrappers
+###
+
+# Find NOMEN - Wrapper function to unpack arguments (needed for Pool.map)
+def process_find_nomen_wrapper(args):
+    return process_find_nomen(*args)
+
+# Find NOMEN - Function to process a single row
+def process_find_nomen(row, transcripts, nomen_pattern, transcripts_order):
+    return find_nomen(
+        hgvs=row.hgvs,
+        transcript=row.transcript,
+        transcripts=transcripts,
+        pattern=nomen_pattern,
+        transcripts_source_order=transcripts_order,
+    )
