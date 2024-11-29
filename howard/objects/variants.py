@@ -8911,6 +8911,9 @@ class Variants:
         # Param
         param = self.get_param()
 
+        # Threads
+        threads = self.get_threads()
+
         # Prefix
         prefix = self.get_explode_infos_prefix()
 
@@ -9011,25 +9014,16 @@ class Variants:
             )
 
             # Create main NOMEN column
-            dataframe_hgvs[field_nomen_dict] = dataframe_hgvs.apply(
-                lambda x: find_nomen(
-                    hgvs=x.hgvs,
-                    transcript=x.transcript,
-                    transcripts=transcripts,
-                    pattern=nomen_pattern,
-                    transcripts_source_order=transcripts_order,
-                ),
-                axis=1,
-            )
+            args = [
+                (row, transcripts, nomen_pattern, transcripts_order)
+                for _, row in dataframe_hgvs.iterrows()
+            ]
+            with multiprocessing.Pool(processes=threads) as pool:
+                dataframe_hgvs[field_nomen_dict] = pool.map(process_find_nomen_wrapper, args)
 
             # Explode NOMEN Structure and create SQL set for update
             sql_nomen_fields = []
             for nomen_field in nomen_dict:
-
-                # Explode each field into a column
-                dataframe_hgvs[nomen_field] = dataframe_hgvs[field_nomen_dict].apply(
-                    lambda x: dict(x).get(nomen_field, "")
-                )
 
                 # Create VCF header field
                 vcf_reader.infos[nomen_field] = vcf.parser._Info(
@@ -9041,13 +9035,15 @@ class Variants:
                     "0",
                     self.code_type_map.get("String"),
                 )
+
+                # Add field to SQL query update
                 sql_nomen_fields.append(
                     f"""
                         CASE 
-                            WHEN dataframe_hgvs."{nomen_field}" NOT NULL AND dataframe_hgvs."{nomen_field}" NOT IN ('')
+                            WHEN dataframe_hgvs."{field_nomen_dict}"."{nomen_field}" NOT NULL AND dataframe_hgvs."{field_nomen_dict}"."{nomen_field}" NOT IN ('')
                             THEN concat(
                                     ';{nomen_field}=',
-                                    dataframe_hgvs."{nomen_field}"
+                                    dataframe_hgvs."{field_nomen_dict}"."{nomen_field}"
                                 )
                             ELSE ''
                         END
