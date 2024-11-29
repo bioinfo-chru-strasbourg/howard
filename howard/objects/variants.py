@@ -4261,9 +4261,9 @@ class Variants:
                         tmp_files.append(tmp_header_vcf_name)
                         # Command
                         if db_hdr_file.endswith(".gz"):
-                            command_extract_header = f"zcat {db_hdr_file} | grep '^##' > {tmp_header_vcf_name}"
+                            command_extract_header = f"zcat < {db_hdr_file} | grep '^##' > {tmp_header_vcf_name}"
                         else:
-                            command_extract_header = f"cat {db_hdr_file} | grep '^##' > {tmp_header_vcf_name}"
+                            command_extract_header = f"cat < {db_hdr_file} | grep '^##' > {tmp_header_vcf_name}"
                         # Run
                         run_parallel_commands([command_extract_header], 1)
 
