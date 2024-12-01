@@ -563,7 +563,7 @@ class Ucsc:
         clinvar_vcf = osj(os.path.dirname(clinvar_vcf_raw), "clinvar.vcf.gz")
         log.debug(f"Add 'chr' to {clinvar_vcf}")
         command(
-            "zcat "
+            "zcat < "
             + clinvar_vcf_raw
             + ' | awk \'{if ($0 !~ /^#/) $0="chr"$0; print}\' OFS="\t" > '
             + clinvar_vcf.replace(".vcf.gz", ".vcf")
