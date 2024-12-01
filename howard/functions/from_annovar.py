@@ -919,7 +919,7 @@ def annovar_to_vcf(
     log.debug("VCF Sorting and Normalization...")
 
     # Command
-    command = f"""zcat {output_file}.tmp.translation.header.vcf.gz {output_file}.tmp.translation.variants.vcf.gz 2>{output_file}.tmp.err | {bcftools} sort --max-mem={maxmem} 2>{output_file}.tmp.err | {bcftools} norm --threads={threads} --check-ref s -f {genome} -Oz -o {output_file} 2>{output_file}.tmp.err """
+    command = f"""cat {output_file}.tmp.translation.header.vcf.gz {output_file}.tmp.translation.variants.vcf.gz 2>>{output_file}.tmp.err | zcat 2>>{output_file}.tmp.err | {bcftools} sort --max-mem={maxmem} 2>{output_file}.tmp.err | {bcftools} norm --threads={threads} --check-ref s -f {genome} -Oz -o {output_file} 2>>{output_file}.tmp.err """
 
     # Log
     log.debug("bcftools command: " + command)
