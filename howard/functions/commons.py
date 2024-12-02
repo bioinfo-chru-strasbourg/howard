@@ -571,6 +571,9 @@ def find_nomen(
     }
     nomen_dict = empty_nomen_dict.copy()
 
+    # Transcripts list
+    transcripts_list = transcripts.copy()
+
     # Pattern
     if pattern is None:
         pattern = "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN"
@@ -584,7 +587,7 @@ def find_nomen(
 
     # Transcripts file length
     if transcripts_len is None:
-        transcripts_len = len(transcripts)
+        transcripts_len = len(transcripts_list)
 
     # Check if transcript in column transcript, and add to transcripts list/rank
     transcript_shift = 0
@@ -594,9 +597,9 @@ def find_nomen(
             transcript_shift = len(transcript_list)
         for rank, transcript in enumerate(transcript_list, start=1):
             if transcripts_source_order_rank.get("column", 0) < transcripts_source_order_rank.get("file", 0):
-                transcripts[transcript] = rank - len(transcript_list)
+                transcripts_list[transcript] = rank - len(transcript_list)
             elif transcript not in transcripts:
-                transcripts[transcript] = rank + transcripts_len
+                transcripts_list[transcript] = rank + transcripts_len
 
     # If hgvs not empty
     if str(hgvs) != "nan":
@@ -633,19 +636,15 @@ def find_nomen(
                         one_nomen_score += 1
                     # NOMEN with default transcript
                     if (
-                        one_nomen_dict["TVNOMEN"] in transcripts
-                        or one_nomen_dict["TNOMEN"] in transcripts
+                        one_nomen_dict["TVNOMEN"] in transcripts_list
+                        or one_nomen_dict["TNOMEN"] in transcripts_list
                     ):
                         rank = max(
-                            transcripts.get(one_nomen_dict["TVNOMEN"], -1000000),
-                            transcripts.get(one_nomen_dict["TNOMEN"], -1000000)
-                            ) + transcript_shift
-                        rank = max(
-                            transcripts.get(one_nomen_dict["TVNOMEN"], - transcript_shift - 1),
-                            transcripts.get(one_nomen_dict["TNOMEN"], - transcript_shift - 1)
+                            transcripts_list.get(one_nomen_dict["TVNOMEN"], - transcript_shift - 1),
+                            transcripts_list.get(one_nomen_dict["TNOMEN"], - transcript_shift - 1)
                             ) + transcript_shift
                         if rank >= 0:
-                            one_nomen_score += 100 * (len(transcripts) - rank)
+                            one_nomen_score += 100 * (len(transcripts_list) - rank + 1)
 
                 elif re.match(r"^[NX]P_(.*)$", one_hgvs_infos):
                     # Transcript Protein with version
@@ -4220,22 +4219,3 @@ def docker_automount() -> str:
         if "sock" not in volume.get("Source") and "tmp" not in volume.get("Source"):
             mounts_new += f" -v {volume.get('Source')}:{volume.get ('Destination')}:{volume.get('Mode')}"
     return mounts_new
-
-###
-# Processes and Wrappers
-###
-
-# Find NOMEN - Wrapper function to unpack arguments (needed for Pool.map)
-def process_find_nomen_wrapper(args):
-    return process_find_nomen(*args)
-
-# Find NOMEN - Function to process a single row
-def process_find_nomen(row, transcripts, nomen_pattern, transcripts_order, transcripts_len):
-    return find_nomen(
-        hgvs=row.hgvs,
-        transcript=row.transcript,
-        transcripts=transcripts,
-        pattern=nomen_pattern,
-        transcripts_source_order=transcripts_order,
-        transcripts_len=transcripts_len
-    )

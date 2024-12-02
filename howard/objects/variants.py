@@ -9019,12 +9019,17 @@ class Variants:
             transcripts_len = len(transcripts_rank)
 
             # Create main NOMEN column
-            args = [
-                (row, transcripts_rank, nomen_pattern, transcripts_order, transcripts_len)
-                for _, row in dataframe_hgvs.iterrows()
-            ]
-            with multiprocessing.Pool(processes=threads) as pool:
-                dataframe_hgvs[field_nomen_dict] = pool.map(process_find_nomen_wrapper, args)
+            dataframe_hgvs[field_nomen_dict] = dataframe_hgvs.apply(
+                lambda x: find_nomen(
+                    hgvs=x.hgvs,
+                    transcript=x.transcript,
+                    transcripts=transcripts_rank,
+                    pattern=nomen_pattern,
+                    transcripts_source_order=transcripts_order,
+                    transcripts_len=transcripts_len
+                ),
+                axis=1,
+            )
 
             # Explode NOMEN Structure and create SQL set for update
             sql_nomen_fields = []

@@ -49,7 +49,7 @@ CONFIG = {
     "tools": {
         "splice": {
             "docker": {
-                "image": "bioinfochrustrasbourg/splice:0.2.2",
+                "image": "bioinfochrustrasbourg/splice:0.2.3",
                 "entrypoint": "/bin/bash",
             }
         }
@@ -65,7 +65,7 @@ CONFIG_DOCKER = {
     "tools": {
         "splice": {
             "docker": {
-                "image": "bioinfochrustrasbourg/splice:0.2.2",
+                "image": "bioinfochrustrasbourg/splice:0.2.3",
                 "entrypoint": "/bin/bash",
                 "config": {"automount": True, "notremove": True, "tmp": False},
             }
