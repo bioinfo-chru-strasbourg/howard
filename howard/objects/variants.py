@@ -9014,9 +9014,13 @@ class Variants:
                 f""" SELECT "#CHROM", "POS", "REF", "ALT", "{extra_field}" AS hgvs, {extra_field_transcript} AS transcript FROM variants """
             )
 
+            # Transcripts rank
+            transcripts_rank = {transcript: rank for rank, transcript in enumerate(transcripts, start=1)}
+            transcripts_len = len(transcripts_rank)
+
             # Create main NOMEN column
             args = [
-                (row, transcripts, nomen_pattern, transcripts_order)
+                (row, transcripts_rank, nomen_pattern, transcripts_order, transcripts_len)
                 for _, row in dataframe_hgvs.iterrows()
             ]
             with multiprocessing.Pool(processes=threads) as pool:

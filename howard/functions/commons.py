@@ -511,6 +511,7 @@ def find_nomen(
     transcripts: list = [],
     transcripts_source_order: list = None,
     pattern=None,
+    transcripts_len: int = None
 ) -> dict:
     """
     The function `find_nomen` takes a HGVS string and a list of transcripts, parses the HGVS string, and
@@ -574,21 +575,28 @@ def find_nomen(
     if pattern is None:
         pattern = "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN"
 
-    # Transcripts source order
+    # Transcripts source order and rank
     if transcripts_source_order is None:
         transcripts_source_order = ["column", "file"]
+    transcripts_source_order_rank = {}
+    for rank, source in enumerate(transcripts_source_order, start=1):
+        transcripts_source_order_rank[source] = rank
 
-    # Add transcripts list from file into source
-    transcripts_sources = {"file": transcripts}
+    # Transcripts file length
+    if transcripts_len is None:
+        transcripts_len = len(transcripts)
 
-    # Check if transcript in column transcript
+    # Check if transcript in column transcript, and add to transcripts list/rank
+    transcript_shift = 0
     if transcript is not None and str(transcript) != "nan":
-        transcripts_sources["column"] = str(transcript).split(",")
-
-    # Order transcript list by source order
-    transcripts_list = []
-    for order in transcripts_source_order:
-        transcripts_list += transcripts_sources.get(order, [])
+        transcript_list = str(transcript).split(",")
+        if transcripts_source_order_rank.get("column", 0) < transcripts_source_order_rank.get("file", 0):
+            transcript_shift = len(transcript_list)
+        for rank, transcript in enumerate(transcript_list, start=1):
+            if transcripts_source_order_rank.get("column", 0) < transcripts_source_order_rank.get("file", 0):
+                transcripts[transcript] = rank - len(transcript_list)
+            elif transcript not in transcripts:
+                transcripts[transcript] = rank + transcripts_len
 
     # If hgvs not empty
     if str(hgvs) != "nan":
@@ -625,15 +633,19 @@ def find_nomen(
                         one_nomen_score += 1
                     # NOMEN with default transcript
                     if (
-                        one_nomen_dict["TVNOMEN"] in transcripts_list
-                        or one_nomen_dict["TNOMEN"] in transcripts_list
+                        one_nomen_dict["TVNOMEN"] in transcripts
+                        or one_nomen_dict["TNOMEN"] in transcripts
                     ):
                         rank = max(
-                            get_index(one_nomen_dict["TVNOMEN"], transcripts_list),
-                            get_index(one_nomen_dict["TNOMEN"], transcripts_list),
-                        )
+                            transcripts.get(one_nomen_dict["TVNOMEN"], -1000000),
+                            transcripts.get(one_nomen_dict["TNOMEN"], -1000000)
+                            ) + transcript_shift
+                        rank = max(
+                            transcripts.get(one_nomen_dict["TVNOMEN"], - transcript_shift - 1),
+                            transcripts.get(one_nomen_dict["TNOMEN"], - transcript_shift - 1)
+                            ) + transcript_shift
                         if rank >= 0:
-                            one_nomen_score += 100 * (len(transcripts_list) - rank)
+                            one_nomen_score += 100 * (len(transcripts) - rank)
 
                 elif re.match(r"^[NX]P_(.*)$", one_hgvs_infos):
                     # Transcript Protein with version
@@ -4218,11 +4230,12 @@ def process_find_nomen_wrapper(args):
     return process_find_nomen(*args)
 
 # Find NOMEN - Function to process a single row
-def process_find_nomen(row, transcripts, nomen_pattern, transcripts_order):
+def process_find_nomen(row, transcripts, nomen_pattern, transcripts_order, transcripts_len):
     return find_nomen(
         hgvs=row.hgvs,
         transcript=row.transcript,
         transcripts=transcripts,
         pattern=nomen_pattern,
         transcripts_source_order=transcripts_order,
+        transcripts_len=transcripts_len
     )
