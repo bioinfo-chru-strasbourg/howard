@@ -41,6 +41,10 @@ KEEP = [
 
 
 class Gnomad(Database):
+    """
+    class to deal with gnomad data. It's easier to download gnomad chr through gs utils inside a docker container
+    
+    """
     def __init__(
         self,
         link=None,
@@ -327,7 +331,8 @@ class Gnomad(Database):
         out.write("\t".join(variant) + "\n")
 
     def update_gnomad(self):
-        print(self.data_folder)
+        for chroms in 
+        
 
     # def parseargs():
     #     parser = argparse.ArgumentParser(description="VCF preprocessor")
