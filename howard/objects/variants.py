@@ -25,6 +25,7 @@ import fastparquet as fp
 from multiprocesspandas import applyparallel
 import cyvcf2
 import pyBigWig
+import math
 
 from howard.functions.commons import *
 from howard.objects.database import *
@@ -11669,6 +11670,12 @@ class Variants:
         if table is None:
             table = self.get_table_variants()
 
+        # regexp replace fonction
+        regex_replace_dict = {}
+        regex_replace_nb = 0
+        regex_replace_partition = 125
+        regex_replace = "INFO"
+
         if fields_to_rename is not None and access not in ["RO"]:
 
             log.info("Rename or remove fields...")
@@ -11700,22 +11707,33 @@ class Variants:
                     else:
                         field_renamed_pattern = ''
 
-                    # Rename INFO
-                    query = f"""
-                        UPDATE {table}
-                        SET
-                            INFO = regexp_replace(INFO, '{field_pattern}', '{field_renamed_pattern}', 'g')
-                    """
-                    self.execute_query(query=query)
+                    # regexp replace
+                    regex_replace_nb += 1
+                    regex_replace_key = math.floor(regex_replace_nb / regex_replace_partition)
+                    if (regex_replace_nb % regex_replace_partition) == 0:
+                        regex_replace = "INFO"
+                    regex_replace = f"regexp_replace({regex_replace}, '{field_pattern}', '{field_renamed_pattern}')"
+                    regex_replace_dict[regex_replace_key] = regex_replace
 
                     # Return
                     fields_renamed[field_to_rename] = field_renamed
 
                     # Log
                     if field_renamed is not None:
-                        log.info(f"Rename or remove fields: field '{field_to_rename}' renamed to '{field_renamed}'")
+                        log.info(f"Rename or remove fields - field '{field_to_rename}' renamed to '{field_renamed}'")
                     else:
-                        log.info(f"Rename or remove fields: field '{field_to_rename}' removed")
+                        log.info(f"Rename or remove fields - field '{field_to_rename}' removed")
+
+            # Rename INFO
+            for regex_replace_key, regex_replace  in regex_replace_dict.items():
+                log.info(f"Rename or remove fields - Process [{regex_replace_key+1}/{len(regex_replace_dict)}]...")
+                query = f"""
+                    UPDATE {table}
+                    SET
+                        INFO = {regex_replace}
+                """
+                log.debug(f"query={query}")
+                self.execute_query(query=query)
 
         return fields_renamed
 
