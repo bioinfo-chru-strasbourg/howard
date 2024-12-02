@@ -164,6 +164,7 @@ def write_extann(
         df_extann.fillna(".", inplace=True)
         for i, rows in df_extann.iterrows():
             # for each transcript
+            rows = rows.str.strip()
             pos_list = get_gene_coordinate(
                 df_refgene, rows, extra_cols, mode, df_transcript
             )
@@ -281,7 +282,7 @@ def get_gene_coordinate(
     log
     """
     match = df_refgene.loc[df_refgene["name"] == gene_row["genes"]]
-    if len(match.index) > 1:
+    if len(match.index) >= 1:
         if mode == "all":
             # Return list of list for each transcript
             return get_all_transcript(match, extra_col)
@@ -292,7 +293,7 @@ def get_gene_coordinate(
         else:
             return get_all_transcript(match, extra_col)
     else:
-        log.debug(f"Can't find {gene_row['genes']} symbol in refgene database")
+        log.warning(f"Can't find {gene_row['genes']} symbol in refgene database")
 
 
 def from_extann(args: argparse) -> None:
