@@ -49,6 +49,14 @@ import yaml
 
 
 class Database:
+    """
+    Parent class to update howard database
+
+    :param link: html file link to deal with
+    :param database: database from howard update_database utility (check help)
+    :param exclude_link:
+    """
+
     def __init__(
         self,
         link=None,
