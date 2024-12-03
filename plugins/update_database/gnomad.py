@@ -1,8 +1,16 @@
-from plugins.update_database.utils import read_json, count_row_file, timeit
+from plugins.update_database.utils import (
+    read_json,
+    count_row_file,
+    timeit,
+    metaheader_rows,
+)
 from plugins.update_database.factory import Database
+from howard.tools.query import query
+from howard.tools.tools import arguments, commands_arguments, shared_arguments
 import argparse
 import sys
 import json
+import os
 import io
 import gzip
 import re
@@ -12,6 +20,7 @@ import logging as log
 from Bio.bgzf import BgzfWriter, BgzfReader
 from tqdm import tqdm
 import subprocess
+from os.path import join as osj
 
 # Globals
 KEEP = [
@@ -43,8 +52,9 @@ KEEP = [
 class Gnomad(Database):
     """
     class to deal with gnomad data. It's easier to download gnomad chr through gs utils inside a docker container
-    
+
     """
+
     def __init__(
         self,
         link=None,
@@ -80,7 +90,7 @@ class Gnomad(Database):
                 for info_field, meta_desc in val.items():
                     if key in ["FILTER", "ALT"]:
                         io_out.write(
-                            self.metaheader_rows(
+                            metaheader_rows(
                                 key, meta_desc["Description"], id=info_field
                             )
                             + "\n"
@@ -88,7 +98,7 @@ class Gnomad(Database):
                     elif key in ["INFO", "FORMAT"]:
                         if info_field in keep:
                             io_out.write(
-                                self.metaheader_rows(
+                                metaheader_rows(
                                     key,
                                     meta_desc["Description"],
                                     info_field,
@@ -99,7 +109,7 @@ class Gnomad(Database):
                             )
                     elif key == "contig":
                         io_out.write(
-                            self.metaheader_rows(
+                            metaheader_rows(
                                 key,
                                 meta_desc["assembly"],
                                 number=meta_desc["length"],
@@ -108,9 +118,9 @@ class Gnomad(Database):
                             + "\n"
                         )
                     else:
-                        io_out.write(self.metaheader_rows(key, val) + "\n")
+                        io_out.write(metaheader_rows(key, val) + "\n")
             else:
-                io_out.write(self.metaheader_rows(key, val) + "\n")
+                io_out.write(metaheader_rows(key, val) + "\n")
 
     def process_header_rows(
         self, o: io.TextIOWrapper, lines: str, header: list, keep: list
@@ -179,8 +189,14 @@ class Gnomad(Database):
         :param keep: list of info field to split and extract
         """
         header = []
+        number_rows = count_row_file(file)
         with BgzfReader(file, "rt") as f, BgzfWriter(output, "wt") as o:
-            for i, lines in enumerate(f):
+            for i, lines in tqdm(
+                enumerate(f),
+                total=number_rows,
+                desc="Filtering info fields",
+                leave=False,
+            ):
                 if lines.startswith("##"):
                     header.append(lines)
                 elif lines.startswith("#"):
@@ -197,11 +213,13 @@ class Gnomad(Database):
 
     def explode_header(self, header: list, notparse=[]):
         """
-        Parses the header of a VCF file and returns a dictionary with metaheader information.
+                Parses the header of a VCF file and returns a dictionary with metaheader information.
 
-        :param header: List of header lines.
-        :param notparse: List of prefixes to avoid splitting in misformatted fields.
-        :return: Dictionary containing metaheader information.
+                :param header: List of header lines.
+                :param notparse: List of prefixes to avoid splitting in misformatted fields.
+                :return: Dictionary containing metaheader information.
+
+        ##FILTER=<ID=RF,Description="Failed random forest filtering thresholds of 0.2634762834546574, 0.22213813189901457 (probabilities of being a true positive variant) for SNPs, indels">
         """
         dico = {}
         error = []
@@ -222,7 +240,12 @@ class Gnomad(Database):
 
                 match = re.search(r"<(.*)>", content)
                 if match:
-                    fields = match.group(1).split(",")
+                    if key == "INFO":
+                        fields = match.group(1).split(",", 3)
+                    elif key == "contig":
+                        fields = match.group(1).split(",", 2)
+                    else:
+                        fields = match.group(1).split(",", 1)
                     tmp = {}
 
                     for field in fields:
@@ -257,7 +280,10 @@ class Gnomad(Database):
         mandatory = []
         with BgzfReader(input, "rt") as file, BgzfWriter(output, "wt") as out:
             with tqdm(
-                total=count_row_file(input), desc="Processing lines", unit="line"
+                total=count_row_file(input),
+                desc="Processing lines",
+                unit="line",
+                leave=False,
             ) as pbar:  # count_row_file(input)
                 if header is None:
                     for line in file:
@@ -313,6 +339,7 @@ class Gnomad(Database):
                         else:
                             self.merge_info_columns(line, mandatory, out)
                         pbar.update(1)
+        return output
 
     def merge_info_columns(self, line: str, mandatory: list, out: BgzfWriter):
         """
@@ -330,9 +357,87 @@ class Gnomad(Database):
         variant.append(res_string)
         out.write("\t".join(variant) + "\n")
 
+    def vcf_query(self, file):
+        gnomad_query = f"""COPY (SELECT \"#CHROM\", POS, REF, ALT, 
+                        CAST(SUM(CAST(AC AS BIGINT)) AS BIGINT) AS AC_all,
+                        CAST(SUM(AN) AS BIGINT) AS AN_all, 
+                            COALESCE(SUM(CAST(AC_amr AS BIGINT))/SUM(AN_amr), 0) AS gnomadAltFreq_amr, 
+                            COALESCE(SUM(CAST(AC_afr AS BIGINT))/SUM(AN_afr), 0) AS gnomadAltFreq_afr,
+                            COALESCE(SUM(CAST(AC_asj AS BIGINT))/SUM(AN_asj), 0) AS gnomadAltFreq_asj,
+                            COALESCE(SUM(CAST(AC_eas AS BIGINT))/SUM(AN_eas), 0) AS gnomadAltFreq_eas,
+                            COALESCE(SUM(CAST(AC_fin AS BIGINT))/SUM(AN_fin), 0) AS gnomadAltFreq_fin,
+                            COALESCE(SUM(CAST(AC_nfe AS BIGINT))/SUM(AN_nfe), 0) AS gnomadAltFreq_nfe,
+                            COALESCE(SUM(CAST(AC_oth AS BIGINT))/SUM(AN_oth), 0) AS gnomadAltFreq_oth,
+                            COALESCE(SUM(CAST(AC_sas AS BIGINT))/SUM(AN_sas), 0) AS gnomadAltFreq_sas,
+                            COALESCE(SUM(CAST(REPLACE(AC_popmax, '.', '0') AS BIGINT))/SUM(CAST(REPLACE(AN_popmax, '.', '0') AS BIGINT)), 0) AS gnomadAltFreq_popmax,
+                            CAST(SUM(CAST(nhomalt AS BIGINT)) AS BIGINT) AS gnomadHomCount_all,
+                            COALESCE(SUM(CAST(AC AS BIGINT))/SUM(AN), 0) AS gnomadAltFreq_all, CAST(SUM(CAST(AC AS BIGINT)) - (2 * SUM(CAST(nhomalt AS BIGINT))) AS BIGINT) AS gnomadHetCount_all,
+                            CAST(SUM(CAST(AC_male AS BIGINT)) AS BIGINT) AS gnomadHemCount_all
+                            FROM parquet_scan('{os.path.dirname(file)}/*.parquet', union_by_name = true) GROUP BY \"#CHROM\", POS, REF, ALT) TO '"
+            + osj(os.path.dirname(file), "exomes.genomes.processed.csv")
+            + "' DELIMITER '\t' CSV HEADER"""
+        commands_arguments["query"]["groups"]["Query"]["query_print_mode"] = True
+        commands_arguments["query"]["groups"]["main"]["param"] = {
+            "query": {"query": gnomad_query}
+        }
+        query(
+            argparse.Namespace(
+                command="query",
+                input=file,
+                output="",
+                arguments_dict={
+                    "arguments": arguments,
+                    "commands_arguments": commands_arguments,
+                    "shared_arguments": shared_arguments,
+                },
+                param=json.dumps({"query": {"query": gnomad_query}}),
+            )
+        )
+
     def update_gnomad(self):
-        for chroms in 
-        
+        """
+        1) Extract required annotations from vcf -> vcf
+        2) Convert each vcf to parquet
+        3) SQL query: merge exomes and genomes for all contig and calculate HOWARD annotations -> csv
+        4) Merge back csv with header and convert it to parquet
+        """
+        for chroms in os.listdir(self.data_folder):
+            if chroms.endswith(".bgz") and not os.path.exists(
+                osj(self.data_folder, chroms).replace(".vcf.bgz", ".parsed.vcf.gz")
+            ):
+                log.info(f"Processing {chroms}")
+                cleaned_vcf = osj(self.data_folder, chroms).replace(
+                    ".vcf.bgz", ".parsed.vcf.gz"
+                )
+                self.parse_info_field(osj(self.data_folder, chroms), cleaned_vcf, KEEP)
+            if not os.path.exists(
+                osj(self.data_folder, chroms.replace(".vcf.gz", ".parquet"))
+            ):
+                log.debug(
+                    f"VCF to parquet {osj(self.data_folder, chroms).replace('.vcf.bgz', '.parsed.vcf.gz')}"
+                )
+                self.vcf_to_parquet(
+                    osj(self.data_folder, chroms).replace(".vcf.bgz", ".parsed.vcf.gz")
+                )
+        if not os.path.exists(osj(self.data_folder, "exomes.genomes.processed.csv.gz")):
+            self.vcf_query(
+                osj(self.data_folder, chroms).replace(".vcf.bgz", ".parsed.vcf.gz")
+            )
+        header = osj(os.path.dirname(os.path.abspath(__file__)), "config", "gnomad.hdr")
+        self.vcf_to_parquet(
+            self.concat_info_field(
+                osj(self.data_folder, "exomes.genomes.processed.csv.gz"),
+                osj(self.data_folder, "chr22.gnomad.vcf.gz"),
+                header,
+            )
+        )
+
+
+"""
+    for F in ../genomes/*.vcf.bgz; do samp=$(echo "$(basename $F)" | cut -f 1-7 -d '.').PARSED.vcf.gz && echo $samp && python ../parse_info.py --input $F --output $samp --keep ../gnomad_fields.txt;done &
+
+
+
 
     # def parseargs():
     #     parser = argparse.ArgumentParser(description="VCF preprocessor")
@@ -370,7 +475,7 @@ class Gnomad(Database):
     #         keep = KEEP
     #         print(f"keep values default, count: {len(keep)}")
     #     self.parse_info_field(input_file, output_file, keep)
-    """
+
     for F in ../genomes/*.vcf.bgz; do samp=$(echo "$(basename $F)" | cut -f 1-7 -d '.').PARSED.vcf.gz && echo $samp && python ../parse_info.py --input $F --output $samp --keep ../gnomad_fields.txt;done &
 
     howard vcf to parquet:
@@ -380,7 +485,3 @@ class Gnomad(Database):
 
     howard query --input gnomad.exomes.r2.1.1.sites.22.PARSED.parquet --query "SELECT TABLE_CATALOG, DATA_TYPE, COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'variants'"
     """
-
-
-# if __name__ == "__main__":
-#     main()
