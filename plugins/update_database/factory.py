@@ -343,11 +343,13 @@ class Database:
 
     def vcf_to_parquet(self, file):
         output = file.replace(".vcf.gz", ".parquet")
+        param = {"input": file, "output": output, "explode": {"explode_infos": True}}
         convert(
             argparse.Namespace(
                 command="convert",
                 input=file,
                 output=output,
+                param=json.dumps(param),
                 arguments_dict={
                     "arguments": arguments,
                     "commands_arguments": commands_arguments,
