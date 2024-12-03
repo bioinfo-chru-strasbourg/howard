@@ -13,7 +13,7 @@ import subprocess
 
 
 def count_row_file(file):
-    print("Checking number of rows")
+    log.debug("Checking number of rows")
     result = subprocess.run(
         ["bash", "-c", f"zcat {file} | wc -l"],
         check=True,
