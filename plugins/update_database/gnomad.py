@@ -431,7 +431,7 @@ class Gnomad(Database):
         self.vcf_to_parquet(
             self.concat_info_field(
                 osj(self.data_folder, "exomes.genomes.processed.csv.gz"),
-                osj(self.data_folder, "chr22.gnomad.vcf.gz"),
+                osj(self.data_folder, "gnomad.vcf.gz"),
                 header,
             )
         )
