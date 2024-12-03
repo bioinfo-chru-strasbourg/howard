@@ -7,6 +7,7 @@ from plugins.update_database.utils import (
 from plugins.update_database.factory import Database
 from howard.tools.query import query
 from howard.tools.tools import arguments, commands_arguments, shared_arguments
+from howard.functions.commons import compress_file
 import argparse
 import sys
 import json
@@ -358,24 +359,25 @@ class Gnomad(Database):
         out.write("\t".join(variant) + "\n")
 
     def vcf_query(self, file):
-        gnomad_query = f"""COPY (SELECT \"#CHROM\", POS, REF, ALT, 
-                        CAST(SUM(CAST(AC AS BIGINT)) AS BIGINT) AS AC_all,
-                        CAST(SUM(AN) AS BIGINT) AS AN_all, 
-                            COALESCE(SUM(CAST(AC_amr AS BIGINT))/SUM(AN_amr), 0) AS gnomadAltFreq_amr, 
-                            COALESCE(SUM(CAST(AC_afr AS BIGINT))/SUM(AN_afr), 0) AS gnomadAltFreq_afr,
-                            COALESCE(SUM(CAST(AC_asj AS BIGINT))/SUM(AN_asj), 0) AS gnomadAltFreq_asj,
-                            COALESCE(SUM(CAST(AC_eas AS BIGINT))/SUM(AN_eas), 0) AS gnomadAltFreq_eas,
-                            COALESCE(SUM(CAST(AC_fin AS BIGINT))/SUM(AN_fin), 0) AS gnomadAltFreq_fin,
-                            COALESCE(SUM(CAST(AC_nfe AS BIGINT))/SUM(AN_nfe), 0) AS gnomadAltFreq_nfe,
-                            COALESCE(SUM(CAST(AC_oth AS BIGINT))/SUM(AN_oth), 0) AS gnomadAltFreq_oth,
-                            COALESCE(SUM(CAST(AC_sas AS BIGINT))/SUM(AN_sas), 0) AS gnomadAltFreq_sas,
-                            COALESCE(SUM(CAST(REPLACE(AC_popmax, '.', '0') AS BIGINT))/SUM(CAST(REPLACE(AN_popmax, '.', '0') AS BIGINT)), 0) AS gnomadAltFreq_popmax,
-                            CAST(SUM(CAST(nhomalt AS BIGINT)) AS BIGINT) AS gnomadHomCount_all,
-                            COALESCE(SUM(CAST(AC AS BIGINT))/SUM(AN), 0) AS gnomadAltFreq_all, CAST(SUM(CAST(AC AS BIGINT)) - (2 * SUM(CAST(nhomalt AS BIGINT))) AS BIGINT) AS gnomadHetCount_all,
-                            CAST(SUM(CAST(AC_male AS BIGINT)) AS BIGINT) AS gnomadHemCount_all
-                            FROM parquet_scan('{os.path.dirname(file)}/*.parquet', union_by_name = true) GROUP BY \"#CHROM\", POS, REF, ALT) TO '"
-            + osj(os.path.dirname(file), "exomes.genomes.processed.csv")
-            + "' DELIMITER '\t' CSV HEADER"""
+        freq = ["amr", "afr", "asj", "eas", "fin", "nfe", "oth", "sas"]
+        coalesce = [
+            f"COALESCE(SUM(CAST(AC_{val} AS BIGINT))/SUM(AN_{val}), 0) AS gnomadAltFreq_{val}"
+            for val in freq
+        ]
+        gnomad_query = (
+            'COPY (SELECT "#CHROM", POS, REF, ALT, CAST(SUM(CAST(AC AS BIGINT)) AS BIGINT) AS AC_all, CAST(SUM(AN) AS BIGINT) AS AN_all, '
+            + ", ".join(coalesce)
+            + ", COALESCE(SUM(CAST(REPLACE(AC_popmax, '.', '0') AS BIGINT))/SUM(CAST(REPLACE(AN_popmax, '.', '0') AS BIGINT)), 0) AS gnomadAltFreq_popmax, \
+                CAST(SUM(CAST(nhomalt AS BIGINT)) AS BIGINT) AS gnomadHomCount_all, \
+                    COALESCE(SUM(CAST(AC AS BIGINT))/SUM(AN), 0) AS gnomadAltFreq_all, \
+                        CAST(SUM(CAST(AC AS BIGINT)) - (2 * SUM(CAST(nhomalt AS BIGINT))) AS BIGINT) AS gnomadHetCount_all, \
+                           CAST(SUM(CASE WHEN \"#CHROM\" = 'chrX' THEN CAST(AC_male AS BIGINT) ELSE 0 END) AS BIGINT) AS gnomadHemCount_all \
+                                FROM parquet_scan('"
+            + os.path.dirname(file)
+            + "/*.parquet', union_by_name = true) GROUP BY \"#CHROM\", POS, REF, ALT) TO '"
+            + os.path.dirname(file)
+            + "/exomes.genomes.processed.csv' DELIMITER '\t' CSV HEADER"
+        )
         commands_arguments["query"]["groups"]["Query"]["query_print_mode"] = True
         commands_arguments["query"]["groups"]["main"]["param"] = {
             "query": {"query": gnomad_query}
@@ -393,6 +395,7 @@ class Gnomad(Database):
                 param=json.dumps({"query": {"query": gnomad_query}}),
             )
         )
+        return osj(os.path.dirname(file) + "/exomes.genomes.processed.csv")
 
     def update_gnomad(self):
         """
@@ -420,9 +423,10 @@ class Gnomad(Database):
                     osj(self.data_folder, chroms).replace(".vcf.bgz", ".parsed.vcf.gz")
                 )
         if not os.path.exists(osj(self.data_folder, "exomes.genomes.processed.csv.gz")):
-            self.vcf_query(
+            query_output_file = self.vcf_query(
                 osj(self.data_folder, chroms).replace(".vcf.bgz", ".parsed.vcf.gz")
             )
+            compress_file(query_output_file, query_output_file + ".gz")
         header = osj(os.path.dirname(os.path.abspath(__file__)), "config", "gnomad.hdr")
         self.vcf_to_parquet(
             self.concat_info_field(
