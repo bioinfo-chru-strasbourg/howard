@@ -2,11 +2,12 @@ import argparse
 import logging as log
 import sys
 import os
-from howard.objects.variants import Variants
 from howard.functions.commons import DEFAULT_DATABASE_FOLDER
+import multiprocess as mp
 
 sys.path.append(os.path.join(os.path.dirname(__file__)))
-from plugins.update_database import clinvar, gnomad
+from plugins.update_database import clinvar, gnomad, cadd
+from plugins.update_database import utils
 
 arguments = {
     "databases_folder": {
@@ -17,7 +18,7 @@ arguments = {
     "database": {
         "help": """Which database to update.\n""",
         "type": str,
-        "choices": ["clinvar", "gnomad"],
+        "choices": ["clinvar", "gnomad", "CADD"],
     },
     "data_folder": {
         "help": """Path of data needed to update database.\n""",
@@ -86,14 +87,26 @@ def main(args: argparse) -> None:
             current_folder=args.current_folder,
             data_folder=args.data_folder,
         ).update_gnomad()
-        # print(clinvar)
-        # exit()
-        # ucsc.Ucsc(
-        #     database=args.database,
-        #     databases_folder=args.databases_folder,
-        #     config_json=args.update_config,
-        #     current_folder=args.current_folder,
-        #     verbosity="info",
-        # ).update_clinvar()
+
+    elif args.database == "CADD":
+        cadd_input = [
+            os.path.join(args.data_folder, file)
+            for file in os.listdir(args.data_folder)
+            if file.endswith(".tsv.gz")
+        ][0]
+        if cadd_input:
+            log.info(f"CADD input {cadd_input}")
+            input_args = cadd.update_cadd(
+                cadd_input,
+                os.path.join(args.data_folder, "processing"),
+                os.path.join(
+                    args.data_folder, f"CADD.generated.{utils.now()}.partition.parquet"
+                ),
+            )
+        # Start processing
+        with mp.Pool(10) as p:
+            result = p.starmap(cadd.create_vcf_chunks, input_args)
+            for r in result:
+                log.debug(f"Generated {r} files")
     # Debug
     log.info("END")
