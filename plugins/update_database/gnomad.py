@@ -3,6 +3,7 @@ from plugins.update_database.utils import (
     count_row_file,
     timeit,
     metaheader_rows,
+    sort_vcf,
 )
 from plugins.update_database.factory import Database
 from howard.tools.query import query
@@ -428,13 +429,16 @@ class Gnomad(Database):
             )
             compress_file(query_output_file, query_output_file + ".gz")
         header = osj(os.path.dirname(os.path.abspath(__file__)), "config", "gnomad.hdr")
-        self.vcf_to_parquet(
-            self.concat_info_field(
-                osj(self.data_folder, "exomes.genomes.processed.csv.gz"),
-                osj(self.data_folder, "gnomad.vcf.gz"),
-                header,
-            )
+
+        unsorted_vcf = self.concat_info_field(
+            osj(self.data_folder, "exomes.genomes.processed.csv.gz"),
+            osj(self.data_folder, "gnomad.vcf.gz"),
+            header,
         )
+        sorted_vcf = sort_vcf(
+            unsorted_vcf, unsorted_vcf.replace(".vcf.gz", ".sorted.vcf.gz")
+        )
+        self.vcf_to_parquet(sorted_vcf)
 
 
 """
