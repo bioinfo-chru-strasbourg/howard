@@ -574,6 +574,14 @@ def find_nomen(
     # Transcripts list
     transcripts_list = transcripts.copy()
 
+    # Transcript as a list (create dict with rank, slow)
+    if isinstance(transcripts_list, list):
+        transcripts_list_tmp = {}
+        for rank, source in enumerate(transcripts_list, start=1):
+            transcripts_list_tmp[source] = rank
+        transcripts_list = transcripts_list_tmp
+
+
     # Pattern
     if pattern is None:
         pattern = "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN"
