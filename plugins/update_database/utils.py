@@ -58,7 +58,7 @@ def recursive_chmod(directory, mode):
 
 def now():
     current_date = datetime.now()
-    return current_date.strftime("%Y%m%d")
+    return current_date.strftime("%Y%m%d-%H%M%S")
 
 
 def metaheader_rows(
