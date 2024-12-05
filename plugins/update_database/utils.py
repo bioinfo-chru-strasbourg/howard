@@ -3,6 +3,7 @@ import shutil
 import os
 import hashlib
 import re
+from howard.functions.commons import command
 from functools import lru_cache
 from datetime import datetime
 from pathlib import Path
@@ -10,6 +11,16 @@ import time
 import logging as log
 import json
 import subprocess
+
+
+def sort_vcf(vcf, sorted_vcf):
+    if not vcf.endswith(".gz"):
+        raise ValueError("VCF is not compressed")
+    log.debug("Sortinh {vcf}")
+    command(f"zcat {vcf} | grep '^#' > {sorted_vcf}")
+    command(f"zcat {vcf} | grep -v '^#' | sort -k1,1V -k2,2n >> {sorted_vcf}")
+    command(f"bgzip {sorted_vcf}")
+    return sorted_vcf + ".gz"
 
 
 def count_row_file(file):
