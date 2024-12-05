@@ -2,9 +2,9 @@
 
 ## 0.12.0
 
-This release introduce prioritization options and transcripts view,
-improve samples managment, annotation databases generation and
-operations, and python packages stability.
+This release introduce 'BigWig' annotation, prioritization options and transcripts view,
+improve samples managment, INFO/tags rename, annotation databases generation and
+operations, confugation files in YAML format, and python packages stability.
 
 ### News
 

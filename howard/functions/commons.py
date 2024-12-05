@@ -2715,11 +2715,11 @@ def get_argument_to_mk(arg: str, argument: dict = {}, mode: str = "mk") -> str:
     else:
         text += "\n<small>\n"
         text += "\n> ```\n"
-        text += f"> {text_header}"
+        text += f">     {text_header}"
         text += "\n> \n> "
         text += str(help).strip().replace("\n", "\n> ")
         text += "\n> ```\n"
-        text += "</small>\n"
+        text += "\n</small>\n"
         text += "\n"
         text += ""
 
