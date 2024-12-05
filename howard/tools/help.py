@@ -103,7 +103,7 @@ def help(args: argparse) -> None:
         # If Help input MD file
         elif help_md_file:
             log.info(f"Help -     from MD help file ['{help_md_file}']")
-            help_file = help_md_file
+            # help_file = help_md_file
             with open(help_md_file, "r") as file:
                 help_content = file.read()
 

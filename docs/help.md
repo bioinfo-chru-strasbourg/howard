@@ -183,6 +183,8 @@ Usage examples:
 > howard query --input=tests/data/example.vcf.gz
 > --param=config/param.json
 
+> 
+
 ## Main options
 
 <small>
@@ -192,8 +194,8 @@ Usage examples:
 >     Input file path.
 >     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
 >     Files can be compressesd (e.g. vcf.gz, tsv.gz).
->
-> </small>
+
+</small>
 
 <small>
 
@@ -202,8 +204,8 @@ Usage examples:
 >     Output file path.
 >     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
 >     Files can be compressesd (e.g. vcf.gz, tsv.gz).
->
-> </small>
+
+</small>
 
 <small>
 
@@ -211,8 +213,8 @@ Usage examples:
 >
 >     Parameters JSON file (or string) defines parameters to process 
 >     annotations, calculations, prioritizations, convertions and queries.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -220,8 +222,8 @@ Usage examples:
 >
 >     Query in SQL format
 >     (e.g. 'SELECT * FROM variants LIMIT 50').
->
-> </small>
+
+</small>
 
 ## Explode
 
@@ -230,16 +232,16 @@ Usage examples:
 >     --explode_infos
 >
 >     Explode VCF INFO/Tag into 'variants' table columns.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --explode_infos_prefix=<explode infos prefix>
 >
 >     Explode VCF INFO/Tag with a specific prefix.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -254,8 +256,8 @@ Usage examples:
 >     - 'HGVS,.*_score,Clinvar' (list of 2 fields with all scores in the middle)
 >     - 'HGVS,.*_score,*' (1 field, scores, all other fields)
 >     - 'HGVS,*,.*_score' (1 field, all other fields, all scores)
->
-> </small>
+
+</small>
 
 ## Query
 
@@ -264,8 +266,8 @@ Usage examples:
 >     --query_limit=<query limit> (default: 10)
 >
 >     Limit of number of row for query (only for print result, not output).
->
-> </small>
+
+</small>
 
 <small>
 
@@ -273,8 +275,8 @@ Usage examples:
 >
 >     Print mode of query result (only for print result, not output).
 >     Either None (native), 'markdown', 'tabulate' or disabled.
->
-> </small>
+
+</small>
 
 ## Export
 
@@ -284,8 +286,8 @@ Usage examples:
 >
 >     Include header (in VCF format) in output file.
 >     Only for compatible formats (tab-delimiter format as TSV or BED).
->
-> </small>
+
+</small>
 
 <small>
 
@@ -295,8 +297,8 @@ Usage examples:
 >     This option is faster parallel writing, but memory consuming.
 >     Use 'None' (string) for NO partition but split parquet files into a folder.
 >     Examples: '#CHROM', '#CHROM,REF', 'None'.
->
-> </small>
+
+</small>
 
 # STATS tool
 
@@ -313,6 +315,8 @@ Usage examples:
 > howard stats --input=tests/data/example.vcf.gz
 > --param=config/param.json
 
+> 
+
 ## Main options
 
 <small>
@@ -322,8 +326,8 @@ Usage examples:
 >     Input file path.
 >     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
 >     Files can be compressesd (e.g. vcf.gz, tsv.gz).
->
-> </small>
+
+</small>
 
 <small>
 
@@ -331,8 +335,8 @@ Usage examples:
 >
 >     Parameters JSON file (or string) defines parameters to process 
 >     annotations, calculations, prioritizations, convertions and queries.
->
-> </small>
+
+</small>
 
 ## Stats
 
@@ -341,16 +345,16 @@ Usage examples:
 >     --stats_md=<stats markdown>
 >
 >     Stats Output file in MarkDown format.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --stats_json=<stats json>
 >
 >     Stats Output file in JSON format.
->
-> </small>
+
+</small>
 
 # CONVERT tool
 
@@ -383,6 +387,8 @@ Usage examples:
 > howard convert --input=tests/data/example.vcf.gz
 > --output=/tmp/example.tsv --param=config/param.json
 
+> 
+
 ## Main options
 
 <small>
@@ -392,8 +398,8 @@ Usage examples:
 >     Input file path.
 >     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
 >     Files can be compressesd (e.g. vcf.gz, tsv.gz).
->
-> </small>
+
+</small>
 
 <small>
 
@@ -402,8 +408,8 @@ Usage examples:
 >     Output file path.
 >     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
 >     Files can be compressesd (e.g. vcf.gz, tsv.gz).
->
-> </small>
+
+</small>
 
 <small>
 
@@ -411,8 +417,8 @@ Usage examples:
 >
 >     Parameters JSON file (or string) defines parameters to process 
 >     annotations, calculations, prioritizations, convertions and queries.
->
-> </small>
+
+</small>
 
 ## Explode
 
@@ -421,16 +427,16 @@ Usage examples:
 >     --explode_infos
 >
 >     Explode VCF INFO/Tag into 'variants' table columns.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --explode_infos_prefix=<explode infos prefix>
 >
 >     Explode VCF INFO/Tag with a specific prefix.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -445,8 +451,8 @@ Usage examples:
 >     - 'HGVS,.*_score,Clinvar' (list of 2 fields with all scores in the middle)
 >     - 'HGVS,.*_score,*' (1 field, scores, all other fields)
 >     - 'HGVS,*,.*_score' (1 field, all other fields, all scores)
->
-> </small>
+
+</small>
 
 ## Export
 
@@ -456,8 +462,8 @@ Usage examples:
 >
 >     Include header (in VCF format) in output file.
 >     Only for compatible formats (tab-delimiter format as TSV or BED).
->
-> </small>
+
+</small>
 
 <small>
 
@@ -468,8 +474,8 @@ Usage examples:
 >     If a column is not available, order will not be considered.
 >     Order is enable only for compatible format (e.g. TSV, CSV, JSON).
 >     Examples: 'ACMG_score DESC', 'PZFlag DESC, PZScore DESC'.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -479,8 +485,8 @@ Usage examples:
 >     This option is faster parallel writing, but memory consuming.
 >     Use 'None' (string) for NO partition but split parquet files into a folder.
 >     Examples: '#CHROM', '#CHROM,REF', 'None'.
->
-> </small>
+
+</small>
 
 # HGVS tool
 
@@ -500,6 +506,8 @@ Usage examples:
 > howard hgvs --input=tests/data/example.full.vcf
 > --output=/tmp/example.hgvs.vcf --full_format --use_exon
 
+> 
+
 ## Main options
 
 <small>
@@ -509,8 +517,8 @@ Usage examples:
 >     Input file path.
 >     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
 >     Files can be compressesd (e.g. vcf.gz, tsv.gz).
->
-> </small>
+
+</small>
 
 <small>
 
@@ -519,8 +527,8 @@ Usage examples:
 >     Output file path.
 >     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
 >     Files can be compressesd (e.g. vcf.gz, tsv.gz).
->
-> </small>
+
+</small>
 
 <small>
 
@@ -528,8 +536,8 @@ Usage examples:
 >
 >     Parameters JSON file (or string) defines parameters to process 
 >     annotations, calculations, prioritizations, convertions and queries.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -541,16 +549,16 @@ Usage examples:
 >     - 'default' (for default options)
 >     - 'full_format' (for full format HGVS annotation)
 >     - 'use_gene=True:add_protein=true:codon_type=FULL'
->
-> </small>
+
+</small>
 
 <small>
 
 >     --assembly=<assembly> (default: hg19)
 >
 >     Genome Assembly (e.g. 'hg19', 'hg38').
->
-> </small>
+
+</small>
 
 ## HGVS
 
@@ -560,8 +568,8 @@ Usage examples:
 >
 >     Use Gene information to generate HGVS annotation
 >     (e.g. 'NM_152232(TAS1R2):c.231T>C')
->
-> </small>
+
+</small>
 
 <small>
 
@@ -570,8 +578,8 @@ Usage examples:
 >     Use Exon information to generate HGVS annotation
 >     (e.g. 'NM_152232(exon2):c.231T>C').
 >     Only if 'use_gene' is not enabled.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -580,16 +588,16 @@ Usage examples:
 >     Use Protein level to generate HGVS annotation
 >     (e.g. 'NP_689418:p.Cys77Arg').
 >     Can be used with 'use_exon' or 'use_gene'.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --add_protein
 >
 >     Add Protein level to DNA HGVS annotation (e.g 'NM_152232:c.231T>C,NP_689418:p.Cys77Arg').
->
-> </small>
+
+</small>
 
 <small>
 
@@ -600,8 +608,8 @@ Usage examples:
 >     (non-standard, e.g. 'TAS1R2:NM_152232:NP_689418:c.231T>C:p.Cys77Arg').
 >     Use 'use_exon' to add exon information
 >     (e.g 'TAS1R2:NM_152232:NP_689418:exon2:c.231T>C:p.Cys77Arg').
->
-> </small>
+
+</small>
 
 <small>
 
@@ -612,24 +620,24 @@ Usage examples:
 >     - '1': codon in 1 character (e.g. 'C', 'R')
 >     - '3': codon in 3 character (e.g. 'Cys', 'Arg')
 >     -'FULL': codon in full name (e.g. 'Cysteine', 'Arginine')
->
-> </small>
+
+</small>
 
 <small>
 
 >     --refgene=<refGene>
 >
 >     Path to refGene annotation file.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --refseqlink=<refSeqLink>
 >
 >     Path to refSeqLink annotation file.
->
-> </small>
+
+</small>
 
 # ANNOTATION tool
 
@@ -684,6 +692,8 @@ Usage examples:
 > howard annotation --input=tests/data/example.vcf.gz
 > --output=/tmp/example.howard.tsv --param=config/param.json
 
+> 
+
 ## Main options
 
 <small>
@@ -693,8 +703,8 @@ Usage examples:
 >     Input file path.
 >     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
 >     Files can be compressesd (e.g. vcf.gz, tsv.gz).
->
-> </small>
+
+</small>
 
 <small>
 
@@ -703,8 +713,8 @@ Usage examples:
 >     Output file path.
 >     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
 >     Files can be compressesd (e.g. vcf.gz, tsv.gz).
->
-> </small>
+
+</small>
 
 <small>
 
@@ -712,8 +722,8 @@ Usage examples:
 >
 >     Parameters JSON file (or string) defines parameters to process 
 >     annotations, calculations, prioritizations, convertions and queries.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -726,6 +736,8 @@ Usage examples:
 >      (e.g. 'file1.parquet,file2.vcf.gz').
 >     - For BCFTools annotation, use keyword 'bcftools' with file paths
 >      (e.g. 'bcftools:file.vcf.gz:file.bed.gz').
+>     - For Parquet annotation, use keyword 'parquet' with file paths
+>      (e.g. 'parquet:file.parquet').
 >     - For Annovar annotation, use keyword 'annovar' with annovar code
 >      (e.g. 'annovar:refGene', 'annovar:refGene:cosmic70').
 >     - For snpeff annotation, use keyword 'snpeff' with options
@@ -735,10 +747,10 @@ Usage examples:
 >     - For Exomiser annotation, use keyword 'exomiser' with options as key=value
 >      (e.g. 'exomiser:preset=exome:transcript_source=refseq').
 >     - For add all availalbe databases files, use 'ALL' keyword,
->      with filters on type and release
->      (e.g. 'ALL', 'ALL:parquet:current', 'ALL:parquet,vcf:current,devel').
->
-> </small>
+>      with filters on format (e.g. 'parquet', 'vcf') and release (e.g. 'current', 'devel')
+>      (e.g. 'ALL', ALL:format=parquet', 'ALL:format=parquet:release=current', 'ALL:format=parquet+vcf:release=current+devel').
+
+</small>
 
 <small>
 
@@ -749,8 +761,8 @@ Usage examples:
 >     For add all availalbe databases files, use 'ALL' keyword,
 >      with filters on type and release
 >      (e.g. 'ALL', 'ALL:parquet:current', 'ALL:parquet,vcf:current,devel').
->
-> </small>
+
+</small>
 
 <small>
 
@@ -758,8 +770,8 @@ Usage examples:
 >
 >     Annotation with BCFTools, as a list of files VCF or BED
 >      (e.g. 'file.vcf.gz,file.bed.gz').
->
-> </small>
+
+</small>
 
 <small>
 
@@ -767,8 +779,8 @@ Usage examples:
 >
 >     Annotation with Annovar, as a list of database keywords
 >      (e.g. 'refGene', 'refGene:cosmic70').
->
-> </small>
+
+</small>
 
 <small>
 
@@ -776,8 +788,8 @@ Usage examples:
 >
 >     Annotation with snpEff, with options
 >      (e.g. '', '-hgvs -noShiftHgvs -spliceSiteSize 3').
->
-> </small>
+
+</small>
 
 <small>
 
@@ -785,8 +797,8 @@ Usage examples:
 >
 >     Annotation with snpSift, as a list of files VCF
 >      (e.g. 'file.vcf.gz,file.bed.gz').
->
-> </small>
+
+</small>
 
 <small>
 
@@ -794,8 +806,8 @@ Usage examples:
 >
 >     Annotation with Exomiser, as a list of options
 >      (e.g. 'preset=exome:transcript_source=refseq').
->
-> </small>
+
+</small>
 
 <small>
 
@@ -803,16 +815,16 @@ Usage examples:
 >
 >     Annotation with Splice, as a list of options
 >      (e.g. 'split_mode=one:spliceai_distance=500:spliceai_mask=1').
->
-> </small>
+
+</small>
 
 <small>
 
 >     --assembly=<assembly> (default: hg19)
 >
 >     Genome Assembly (e.g. 'hg19', 'hg38').
->
-> </small>
+
+</small>
 
 ## Annotation
 
@@ -823,8 +835,8 @@ Usage examples:
 >     Update option for annotation (Only for Parquet annotation).
 >     If True, annotation fields will be removed and re-annotated.
 >     These options will be applied to all annotation databases.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -833,8 +845,8 @@ Usage examples:
 >     Append option for annotation (Only for Parquet annotation).
 >     If True, annotation fields will be annotated only if not annotation exists for the variant.
 >     These options will be applied to all annotation databases.
->
-> </small>
+
+</small>
 
 # CALCULATION tool
 
@@ -873,6 +885,8 @@ Usage examples:
 
 > howard calculation --show_calculations
 
+> 
+
 ## Main options
 
 <small>
@@ -882,8 +896,8 @@ Usage examples:
 >     Input file path.
 >     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
 >     Files can be compressesd (e.g. vcf.gz, tsv.gz).
->
-> </small>
+
+</small>
 
 <small>
 
@@ -892,8 +906,8 @@ Usage examples:
 >     Output file path.
 >     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
 >     Files can be compressesd (e.g. vcf.gz, tsv.gz).
->
-> </small>
+
+</small>
 
 <small>
 
@@ -901,8 +915,8 @@ Usage examples:
 >
 >     Parameters JSON file (or string) defines parameters to process 
 >     annotations, calculations, prioritizations, convertions and queries.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -913,8 +927,8 @@ Usage examples:
 >     List of available calculations by default
 >      (unsensitive case, see doc for more information):
 >      VARTYPE  snpeff_hgvs  FINDBYPIPELINE  GENOTYPECONCORDANCE  BARCODE  TRIO  VAF  VAF_STATS  DP_STATS
->
-> </small>
+
+</small>
 
 ## Calculation
 
@@ -923,16 +937,16 @@ Usage examples:
 >     --calculation_config=<calculation config>
 >
 >     Calculation configuration JSON file.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --show_calculations
 >
 >     Show available calculation operations.
->
-> </small>
+
+</small>
 
 ## NOMEN
 
@@ -941,8 +955,8 @@ Usage examples:
 >     --hgvs_field=<HGVS field> (default: hgvs)
 >
 >     HGVS INFO/tag containing a list o HGVS annotations.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -950,8 +964,8 @@ Usage examples:
 >
 >     Transcripts TSV file,
 >     with Transcript in first column, optional Gene in second column.
->
-> </small>
+
+</small>
 
 ## TRIO
 
@@ -963,8 +977,8 @@ Usage examples:
 >     Either a JSON file or JSON string or a list of samples
 >     (e.g. 'sample1,sample2,sample3' for father, mother and child,
 >      '{"father": "sample1", "mother": "sample2", "child": "sample3"}').
->
-> </small>
+
+</small>
 
 ## BARCODEFAMILY
 
@@ -976,8 +990,8 @@ Usage examples:
 >     Either a JSON file or JSON string or a list of samples
 >     (e.g. 'sample1,sample2,sample3,sample4',
 >      '{"father": "sample1", "mother": "sample2", "child1": "sample3", "child2": "sample3"}').
->
-> </small>
+
+</small>
 
 # PRIORITIZATION tool
 
@@ -1008,6 +1022,8 @@ Usage examples:
 > howard prioritization --input=tests/data/example.vcf.gz
 > --output=/tmp/example.prioritized.tsv --param=config/param.json
 
+> 
+
 ## Main options
 
 <small>
@@ -1017,8 +1033,8 @@ Usage examples:
 >     Input file path.
 >     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
 >     Files can be compressesd (e.g. vcf.gz, tsv.gz).
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1027,8 +1043,8 @@ Usage examples:
 >     Output file path.
 >     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
 >     Files can be compressesd (e.g. vcf.gz, tsv.gz).
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1036,8 +1052,8 @@ Usage examples:
 >
 >     Parameters JSON file (or string) defines parameters to process 
 >     annotations, calculations, prioritizations, convertions and queries.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1046,8 +1062,8 @@ Usage examples:
 >     List of prioritization profiles to process (based on Prioritization JSON file),
 >     such as 'default', 'rare variants', 'low allele frequency', 'GERMLINE'.
 >     By default, all profiles available will be processed.
->
-> </small>
+
+</small>
 
 ## Prioritization
 
@@ -1057,8 +1073,8 @@ Usage examples:
 >
 >     Prioritization profile by default (see doc).
 >     Default is the first profile in the list of prioritization profiles.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1066,8 +1082,8 @@ Usage examples:
 >
 >     Prioritization fields to provide (see doc).
 >     Available: PZScore, PZFlag, PZTags, PZComment, PZInfos
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1075,16 +1091,16 @@ Usage examples:
 >
 >     Prioritization Score mode (see doc).
 >     Available: HOWARD (increment score), VaRank (max score)
->
-> </small>
+
+</small>
 
 <small>
 
 >     --prioritization_config=<prioritization config>
 >
 >     Prioritization configuration JSON file (defines profiles, see doc).
->
-> </small>
+
+</small>
 
 # PROCESS tool
 
@@ -1127,6 +1143,8 @@ Usage examples:
 > REVEL_score, SIFT_score, AF AS 'gnomad_AF', ClinPred_score,
 > ClinPred_pred FROM variants'
 
+> 
+
 ## Main options
 
 <small>
@@ -1136,8 +1154,8 @@ Usage examples:
 >     Input file path.
 >     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
 >     Files can be compressesd (e.g. vcf.gz, tsv.gz).
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1146,8 +1164,8 @@ Usage examples:
 >     Output file path.
 >     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
 >     Files can be compressesd (e.g. vcf.gz, tsv.gz).
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1155,8 +1173,8 @@ Usage examples:
 >
 >     Parameters JSON file (or string) defines parameters to process 
 >     annotations, calculations, prioritizations, convertions and queries.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1168,8 +1186,8 @@ Usage examples:
 >     - 'default' (for default options)
 >     - 'full_format' (for full format HGVS annotation)
 >     - 'use_gene=True:add_protein=true:codon_type=FULL'
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1182,6 +1200,8 @@ Usage examples:
 >      (e.g. 'file1.parquet,file2.vcf.gz').
 >     - For BCFTools annotation, use keyword 'bcftools' with file paths
 >      (e.g. 'bcftools:file.vcf.gz:file.bed.gz').
+>     - For Parquet annotation, use keyword 'parquet' with file paths
+>      (e.g. 'parquet:file.parquet').
 >     - For Annovar annotation, use keyword 'annovar' with annovar code
 >      (e.g. 'annovar:refGene', 'annovar:refGene:cosmic70').
 >     - For snpeff annotation, use keyword 'snpeff' with options
@@ -1191,10 +1211,10 @@ Usage examples:
 >     - For Exomiser annotation, use keyword 'exomiser' with options as key=value
 >      (e.g. 'exomiser:preset=exome:transcript_source=refseq').
 >     - For add all availalbe databases files, use 'ALL' keyword,
->      with filters on type and release
->      (e.g. 'ALL', 'ALL:parquet:current', 'ALL:parquet,vcf:current,devel').
->
-> </small>
+>      with filters on format (e.g. 'parquet', 'vcf') and release (e.g. 'current', 'devel')
+>      (e.g. 'ALL', ALL:format=parquet', 'ALL:format=parquet:release=current', 'ALL:format=parquet+vcf:release=current+devel').
+
+</small>
 
 <small>
 
@@ -1205,8 +1225,8 @@ Usage examples:
 >     List of available calculations by default
 >      (unsensitive case, see doc for more information):
 >      VARTYPE  snpeff_hgvs  FINDBYPIPELINE  GENOTYPECONCORDANCE  BARCODE  TRIO  VAF  VAF_STATS  DP_STATS
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1215,16 +1235,16 @@ Usage examples:
 >     List of prioritization profiles to process (based on Prioritization JSON file),
 >     such as 'default', 'rare variants', 'low allele frequency', 'GERMLINE'.
 >     By default, all profiles available will be processed.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --assembly=<assembly> (default: hg19)
 >
 >     Genome Assembly (e.g. 'hg19', 'hg38').
->
-> </small>
+
+</small>
 
 ## HGVS
 
@@ -1234,8 +1254,8 @@ Usage examples:
 >
 >     Use Gene information to generate HGVS annotation
 >     (e.g. 'NM_152232(TAS1R2):c.231T>C')
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1244,8 +1264,8 @@ Usage examples:
 >     Use Exon information to generate HGVS annotation
 >     (e.g. 'NM_152232(exon2):c.231T>C').
 >     Only if 'use_gene' is not enabled.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1254,16 +1274,16 @@ Usage examples:
 >     Use Protein level to generate HGVS annotation
 >     (e.g. 'NP_689418:p.Cys77Arg').
 >     Can be used with 'use_exon' or 'use_gene'.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --add_protein
 >
 >     Add Protein level to DNA HGVS annotation (e.g 'NM_152232:c.231T>C,NP_689418:p.Cys77Arg').
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1274,8 +1294,8 @@ Usage examples:
 >     (non-standard, e.g. 'TAS1R2:NM_152232:NP_689418:c.231T>C:p.Cys77Arg').
 >     Use 'use_exon' to add exon information
 >     (e.g 'TAS1R2:NM_152232:NP_689418:exon2:c.231T>C:p.Cys77Arg').
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1286,24 +1306,24 @@ Usage examples:
 >     - '1': codon in 1 character (e.g. 'C', 'R')
 >     - '3': codon in 3 character (e.g. 'Cys', 'Arg')
 >     -'FULL': codon in full name (e.g. 'Cysteine', 'Arginine')
->
-> </small>
+
+</small>
 
 <small>
 
 >     --refgene=<refGene>
 >
 >     Path to refGene annotation file.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --refseqlink=<refSeqLink>
 >
 >     Path to refSeqLink annotation file.
->
-> </small>
+
+</small>
 
 ## Annotation
 
@@ -1314,8 +1334,8 @@ Usage examples:
 >     Update option for annotation (Only for Parquet annotation).
 >     If True, annotation fields will be removed and re-annotated.
 >     These options will be applied to all annotation databases.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1324,8 +1344,8 @@ Usage examples:
 >     Append option for annotation (Only for Parquet annotation).
 >     If True, annotation fields will be annotated only if not annotation exists for the variant.
 >     These options will be applied to all annotation databases.
->
-> </small>
+
+</small>
 
 ## Calculation
 
@@ -1334,8 +1354,8 @@ Usage examples:
 >     --calculation_config=<calculation config>
 >
 >     Calculation configuration JSON file.
->
-> </small>
+
+</small>
 
 ## Prioritization
 
@@ -1345,8 +1365,8 @@ Usage examples:
 >
 >     Prioritization profile by default (see doc).
 >     Default is the first profile in the list of prioritization profiles.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1354,8 +1374,8 @@ Usage examples:
 >
 >     Prioritization fields to provide (see doc).
 >     Available: PZScore, PZFlag, PZTags, PZComment, PZInfos
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1363,16 +1383,16 @@ Usage examples:
 >
 >     Prioritization Score mode (see doc).
 >     Available: HOWARD (increment score), VaRank (max score)
->
-> </small>
+
+</small>
 
 <small>
 
 >     --prioritization_config=<prioritization config>
 >
 >     Prioritization configuration JSON file (defines profiles, see doc).
->
-> </small>
+
+</small>
 
 ## Query
 
@@ -1382,16 +1402,16 @@ Usage examples:
 >
 >     Query in SQL format
 >     (e.g. 'SELECT * FROM variants LIMIT 50').
->
-> </small>
+
+</small>
 
 <small>
 
 >     --query_limit=<query limit> (default: 10)
 >
 >     Limit of number of row for query (only for print result, not output).
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1399,8 +1419,8 @@ Usage examples:
 >
 >     Print mode of query result (only for print result, not output).
 >     Either None (native), 'markdown', 'tabulate' or disabled.
->
-> </small>
+
+</small>
 
 ## Explode
 
@@ -1409,16 +1429,16 @@ Usage examples:
 >     --explode_infos
 >
 >     Explode VCF INFO/Tag into 'variants' table columns.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --explode_infos_prefix=<explode infos prefix>
 >
 >     Explode VCF INFO/Tag with a specific prefix.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1433,8 +1453,8 @@ Usage examples:
 >     - 'HGVS,.*_score,Clinvar' (list of 2 fields with all scores in the middle)
 >     - 'HGVS,.*_score,*' (1 field, scores, all other fields)
 >     - 'HGVS,*,.*_score' (1 field, all other fields, all scores)
->
-> </small>
+
+</small>
 
 ## Export
 
@@ -1444,8 +1464,8 @@ Usage examples:
 >
 >     Include header (in VCF format) in output file.
 >     Only for compatible formats (tab-delimiter format as TSV or BED).
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1456,8 +1476,8 @@ Usage examples:
 >     If a column is not available, order will not be considered.
 >     Order is enable only for compatible format (e.g. TSV, CSV, JSON).
 >     Examples: 'ACMG_score DESC', 'PZFlag DESC, PZScore DESC'.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1467,8 +1487,8 @@ Usage examples:
 >     This option is faster parallel writing, but memory consuming.
 >     Use 'None' (string) for NO partition but split parquet files into a folder.
 >     Examples: '#CHROM', '#CHROM,REF', 'None'.
->
-> </small>
+
+</small>
 
 # DATABASES tool
 
@@ -1538,6 +1558,8 @@ Notes:
 > - dbNSFP download: More threads, more memory usage (8 threads ~ 16Gb,
 >   24 threads ~ 32Gb)
 
+> 
+
 ## Main options
 
 <small>
@@ -1545,8 +1567,8 @@ Notes:
 >     --assembly=<assembly> (default: hg19)
 >
 >     Genome Assembly (e.g. 'hg19', 'hg38').
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1554,16 +1576,16 @@ Notes:
 >
 >     Folder containing genomes.
 >     (e.g. '~/howard/databases/genomes/current'
->
-> </small>
+
+</small>
 
 <small>
 
 >     --genome=<genome> (default: ~/howard/databases/genomes/current/hg19/hg19.fa)
 >
 >     Genome file in fasta format (e.g. 'hg19.fa', 'hg38.fa').
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1571,8 +1593,8 @@ Notes:
 >
 >     Parameters JSON file (or string) defines parameters to process 
 >     annotations, calculations, prioritizations, convertions and queries.
->
-> </small>
+
+</small>
 
 ## Genomes
 
@@ -1584,8 +1606,8 @@ Notes:
 >     with Fasta files, indexes,
 >     and all files generated by pygenome module.
 >     (e.g. '~/howard/databases/genomes/current').
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1593,8 +1615,8 @@ Notes:
 >
 >     Download Genome from an external provider.
 >     Available: GENCODE, Ensembl, UCSC, NCBI.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1602,8 +1624,8 @@ Notes:
 >
 >     Regular expression to select specific chromosome
 >     (e.g 'chr[0-9XYM]+$').
->
-> </small>
+
+</small>
 
 ## snpEff
 
@@ -1612,8 +1634,8 @@ Notes:
 >     --download-snpeff=<snpEff>
 >
 >     Download snpEff databases within snpEff folder
->
-> </small>
+
+</small>
 
 ## Annovar
 
@@ -1623,8 +1645,8 @@ Notes:
 >
 >     Path to Annovar databases
 >     (e.g. '~/howard/databases/annovar/current').
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1635,16 +1657,16 @@ Notes:
 >     or Annovar keyword (e.g. 'refGene', 'cosmic70', 'clinvar_202*').
 >     Note that refGene will at least be downloaded,
 >     and only files that not already exist or changed will be downloaded.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --download-annovar-url=<Annovar url> (default: http://www.openbioinformatics.org/annovar/download)
 >
 >     Annovar databases URL (see Annovar Doc).
->
-> </small>
+
+</small>
 
 ## refSeq
 
@@ -1654,8 +1676,8 @@ Notes:
 >
 >     Path to refSeq databases
 >     (e.g. '~/howard/databases/refseq/current').
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1663,24 +1685,24 @@ Notes:
 >
 >     refSeq databases URL (see refSeq WebSite)
 >     (e.g. 'http://hgdownload.soe.ucsc.edu/goldenPath')•/n
->
-> </small>
+
+</small>
 
 <small>
 
 >     --download-refseq-prefix=<refSeq prefix> (default: ncbiRefSeq)
 >
 >     Check existing refSeq files in refSeq folder.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --download-refseq-files=<refSeq files> (default: ncbiRefSeq.txt,ncbiRefSeqLink.txt)
 >
 >     List of refSeq files to download.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1689,56 +1711,56 @@ Notes:
 >     Name of refSeq file to convert in BED format
 >     (e.g. 'ncbiRefSeq.txt').
 >     Process only if not None.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --download-refseq-include-utr5
 >
 >     Formating BED refSeq file including 5'UTR.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --download-refseq-include-utr3
 >
 >     Formating BED refSeq file including 3'UTR.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --download-refseq-include-chrM
 >
 >     Formating BED refSeq file including Mitochondiral chromosome 'chrM' or 'chrMT'.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --download-refseq-include-non-canonical-chr
 >
 >     Formating BED refSeq file including non canonical chromosomes.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --download-refseq-include-non-coding-transcripts
 >
 >     Formating BED refSeq file including non coding transcripts.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --download-refseq-include-transcript-version
 >
 >     Formating BED refSeq file including transcript version.
->
-> </small>
+
+</small>
 
 ## dbNSFP
 
@@ -1747,8 +1769,8 @@ Notes:
 >     --download-dbnsfp=<dbNSFP>
 >
 >     Download dbNSFP databases within dbNSFP folder(e.g. '~/howard/databases').
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1756,8 +1778,8 @@ Notes:
 >
 >     Download dbNSFP databases URL (see dbNSFP website)
 >     (e.g. https://dbnsfp.s3.amazonaws.com').
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1765,8 +1787,8 @@ Notes:
 >
 >     Release of dbNSFP to download (see dbNSFP website)
 >     (e.g. '4.4a').
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1775,8 +1797,8 @@ Notes:
 >     Maximum size (Mb) of data files in Parquet folder.
 >     Parquet folder are partitioned (hive) by chromosome (sub-folder),
 >     which contain N data files.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1785,16 +1807,16 @@ Notes:
 >     Generate dbNSFP sub-databases.
 >     dbNSFP provides multiple databases which are split onto multiple columns.
 >     This option create a Parquet folder for each sub-database (based on columns names).
->
-> </small>
+
+</small>
 
 <small>
 
 >     --download-dbnsfp-parquet
 >
 >     Generate a Parquet file for each Parquet folder.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1802,8 +1824,8 @@ Notes:
 >
 >     Generate a VCF file for each Parquet folder.
 >     Need genome FASTA file (see --download-genome).
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1812,8 +1834,8 @@ Notes:
 >     Not generate database Parquet/VCF file for the entire database ('ALL').
 >     Only sub-databases files will be generated.
 >     (see '--download-dbnsfp-subdatabases').
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1822,8 +1844,8 @@ Notes:
 >     Add INFO column (VCF format) in Parquet folder and file.
 >     Useful for speed up full annotation (all available columns).
 >     Increase memory and space during generation of files.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1833,8 +1855,8 @@ Notes:
 >     Useful for speed up full annotation (all available columns).
 >     Decrease memory and space during generation of files.
 >     Increase time for partial annotation (some available columns).
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1845,8 +1867,8 @@ Notes:
 >     Remove transcripts information details.
 >     Usefull to reduce size of the database.
 >     Increase memory and space during generation of files.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1855,8 +1877,8 @@ Notes:
 >     Minimum number of rows in a parquet row group (see duckDB doc).
 >     Lower can reduce memory usage and slightly increase space during generation,
 >     speed up highly selective queries, slow down whole file queries (e.g. aggregations).
->
-> </small>
+
+</small>
 
 ## AlphaMissense
 
@@ -1865,8 +1887,8 @@ Notes:
 >     --download-alphamissense=<AlphaMissense>
 >
 >     Path to AlphaMissense databases
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1874,8 +1896,8 @@ Notes:
 >
 >     Download AlphaMissense databases URL (see AlphaMissense website)
 >     (e.g. 'https://storage.googleapis.com/dm_alphamissense').
->
-> </small>
+
+</small>
 
 ## Exomiser
 
@@ -1885,8 +1907,8 @@ Notes:
 >
 >     Path to Exomiser databases
 >     (e.g. ~/howard/databases/exomiser/current).
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1898,8 +1920,8 @@ Notes:
 >     the application properties file automatically based on the Exomiser.
 >     Configuration information will be used to download expected releases (if no other parameters).
 >     CADD and REMM will be downloaded only if 'path' are provided.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1907,8 +1929,8 @@ Notes:
 >
 >     URL where Exomiser database files can be downloaded from
 >     (e.g. 'http://data.monarchinitiative.org/exomiser').
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1918,8 +1940,8 @@ Notes:
 >     If "default", "auto", or "config", retrieve from Application Properties file.
 >     If not provided (None), from Application Properties file (Exomiser data-version) 
 >     or default '2109'.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1928,8 +1950,8 @@ Notes:
 >     Release of Exomiser phenotype to download.
 >     If not provided (None), from Application Properties file (Exomiser Phenotype data-version)
 >     or Exomiser release.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1937,8 +1959,8 @@ Notes:
 >
 >     Release of ReMM (Regulatory Mendelian Mutation) database to download.
 >     If "default", "auto", or "config", retrieve from Application Properties file.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1946,8 +1968,8 @@ Notes:
 >
 >     URL where ReMM (Regulatory Mendelian Mutation) database files can be downloaded from
 >     (e.g. 'https://kircherlab.bihealth.org/download/ReMM').
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1955,8 +1977,8 @@ Notes:
 >
 >     Release of CADD (Combined Annotation Dependent Depletion) database to download.
 >     If "default", "auto", or "config", retrieve from Application Properties file.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1964,8 +1986,8 @@ Notes:
 >
 >     URL where CADD (Combined Annotation Dependent Depletion) database files can be downloaded from
 >     (e.g. 'https://kircherlab.bihealth.org/download/CADD').
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1973,8 +1995,8 @@ Notes:
 >
 >     Name of the file containing the SNV (Single Nucleotide Variant) data
 >     for the CADD (Combined Annotation Dependent Depletion) database.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -1982,8 +2004,8 @@ Notes:
 >
 >     Name of the file containing the INDEL (Insertion-Deletion) data
 >     for the CADD (Combined Annotation Dependent Depletion) database.
->
-> </small>
+
+</small>
 
 ## dbSNP
 
@@ -1993,8 +2015,8 @@ Notes:
 >
 >     Path to dbSNP databases
 >     (e.g. '~/howard/databases/exomiser/dbsnp').
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2002,8 +2024,8 @@ Notes:
 >
 >     Release of dbSNP to download
 >     (e.g. 'b152', 'b152,b156').
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2013,8 +2035,8 @@ Notes:
 >     (e.g. 'b156').
 >     If None, first release to download will be assigned as default
 >     only if it does not exists.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2022,8 +2044,8 @@ Notes:
 >
 >     URL where dbSNP database files can be downloaded from.
 >     (e.g. 'https://ftp.ncbi.nih.gov/snp/archive').
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2032,8 +2054,8 @@ Notes:
 >     Dictionary that maps assembly names to specific dbSNP URL files.
 >     It allows you to provide custom dbSNP URL files for specific assemblies
 >     instead of using the default file naming convention.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2041,8 +2063,8 @@ Notes:
 >
 >     String that represents the prefix of the dbSNP file name for a specific assembly.
 >     It is used to construct the full URL of the dbSNP file to be downloaded.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2050,8 +2072,8 @@ Notes:
 >
 >     dictionary that maps assembly names to their corresponding dbSNP versions.
 >     It is used to construct the dbSNP file name based on the assembly name.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2061,16 +2083,16 @@ Notes:
 >     - Add and filter contigs associated to assembly
 >     - Normalize by splitting multiallelics
 >     - Need genome (see --download-genome)
->
-> </small>
+
+</small>
 
 <small>
 
 >     --download-dbsnp-parquet
 >
 >     Generate Parquet file from VCF.
->
-> </small>
+
+</small>
 
 ## HGMD
 
@@ -2082,8 +2104,8 @@ Notes:
 >     Folder where the HGMD databases will be stored.
 >     Fields in VCF, Parquet and TSV will be generated.
 >     If the folder does not exist, it will be created.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2091,8 +2113,8 @@ Notes:
 >
 >     File from HGMD.
 >     Name format 'HGMD_Pro_<release>_<assembly>.vcf.gz'.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2102,8 +2124,8 @@ Notes:
 >     Generated files will be prefixed by basename
 >     (e.g. 'HGMD_Pro_MY_RELEASE')
 >     By default (None), input file name without '.vcf.gz'.
->
-> </small>
+
+</small>
 
 ## from_Annovar
 
@@ -2113,8 +2135,8 @@ Notes:
 >
 >     Input Annovar file path.
 >     Format file must be a Annovar TXT file, associated with '.idx'.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2122,8 +2144,8 @@ Notes:
 >
 >     Output Annovar file path.
 >     Format file must be either VCF compressesd file '.vcf.gz'.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2131,16 +2153,16 @@ Notes:
 >
 >     Annovar code, or database name.
 >     Usefull to name databases columns.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --annovar_to_parquet=<to parquet>
 >
 >     Parquet file conversion.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2148,8 +2170,8 @@ Notes:
 >
 >     Reduce memory option for Annovar convert,
 >     either 'auto' (auto-detection), 'enable' or 'disable'.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2157,8 +2179,8 @@ Notes:
 >
 >     Variant with multiple annotation lines on Annovar file.
 >     Either 'auto' (auto-detection), 'enable' or 'disable'.
->
-> </small>
+
+</small>
 
 ## from_extann
 
@@ -2169,8 +2191,8 @@ Notes:
 >     Input Extann file path.
 >     Format file must be a Extann TXT file or TSV file.
 >     File need to have at least the genes column.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2178,16 +2200,16 @@ Notes:
 >
 >     Output Extann file path.
 >     Output extann file, should be BED or BED.gz.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --refgene=<refGene>
 >
 >     Path to refGene annotation file.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2195,8 +2217,8 @@ Notes:
 >
 >     Transcripts TSV file,
 >     with Transcript in first column, optional Gene in second column.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2206,8 +2228,8 @@ Notes:
 >     Param containing configuration, options to replace chars and
 >     bedlike header description, conf vcf specs.
 >     (e.g. '~/howard/config/param.extann.json')
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2216,8 +2238,8 @@ Notes:
 >     Mode extann selection.
 >     How to pick transcript from ncbi, keep all,
 >     keep the longest, or keep the chosen one (transcript_extann).
->
-> </small>
+
+</small>
 
 ## Parameters
 
@@ -2229,8 +2251,8 @@ Notes:
 >     Databases folders scanned are defined in config file.
 >     Structure of databases follow this structure (see doc):
 >     .../<database>/<release>/<assembly>/*.[parquet|vcf.gz|...]
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2238,8 +2260,8 @@ Notes:
 >
 >     Description file (JSON) with all databases found.
 >     Contains all databases with description of format, assembly, fields...
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2247,8 +2269,8 @@ Notes:
 >
 >     List of database folder releases to check
 >     (e.g. 'current', 'latest').
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2256,8 +2278,8 @@ Notes:
 >
 >     List of database formats to check
 >     (e.g. 'parquet', 'parquet,vcf,bed,tsv').
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2265,8 +2287,8 @@ Notes:
 >
 >     Generate parameter JSON file with BCFTools annotation for allowed formats
 >     (i.e. 'vcf', 'bed').
->
-> </small>
+
+</small>
 
 # GUI tool
 
@@ -2304,6 +2326,8 @@ Usage examples:
 > --help_html=docs/html/help.parameteres.databases.html
 > --help_pdf=docs/pdf/help.parameteres.databases.pdf --code_type='json'
 
+> 
+
 ## Main options
 
 <small>
@@ -2311,48 +2335,48 @@ Usage examples:
 >     --help_md=<help markdown>
 >
 >     Help Output file in MarkDown format.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --help_html=<help html>
 >
 >     Help Output file in HTML format.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --help_pdf=<help pdf>
 >
 >     Help Output file in PDF format.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --help_md_input=<help MarkDown input>
 >
 >     Help input file in MarkDown format.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --help_json_input=<help JSON input>
 >
 >     Help input file in JSON format.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --help_json_input_title=<help JSON input title> (default: Help)
 >
 >     Help JSON input title.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2360,8 +2384,8 @@ Usage examples:
 >
 >     Help example code type for input JSON format
 >     (e.g. 'json', 'bash').
->
-> </small>
+
+</small>
 
 # UPDATE_DATABASE tool
 
@@ -2372,6 +2396,8 @@ Usage examples:
 > howard update_database --database clinvar --databases_folder
 > /home1/DB/HOWARD --update_config update_databases.json
 
+> 
+
 ## Main options
 
 <small>
@@ -2380,8 +2406,8 @@ Usage examples:
 >
 >     Parameters JSON file (or string) defines parameters to process 
 >     annotations, calculations, prioritizations, convertions and queries.
->
-> </small>
+
+</small>
 
 ## Update_database
 
@@ -2390,32 +2416,32 @@ Usage examples:
 >     --databases_folder=<databases_folder> (default: ~/howard/databases)
 >
 >     Path of HOWARD database folder.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --database=<database> ['clinvar'] (default: clinvar)
 >
 >     Which database to update.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --update_config=<update_config>
 >
 >     Path of json configuration file.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --current_folder=<current_folder> (default: current)
 >
 >     Path of json configuration file.
->
-> </small>
+
+</small>
 
 ## Options
 
@@ -2424,16 +2450,16 @@ Usage examples:
 >     --show=<show>
 >
 >     None
->
-> </small>
+
+</small>
 
 <small>
 
 >     --limit=<limit>
 >
 >     None
->
-> </small>
+
+</small>
 
 # TRANSCRIPTS_CHECK tool
 
@@ -2449,6 +2475,8 @@ Usage examples:
 > --stats=/tmp/transcripts.stats.json
 > --transcripts_missing=/tmp/transcripts.missing.tsv
 
+> 
+
 ## Main options
 
 <small>
@@ -2458,8 +2486,8 @@ Usage examples:
 >     Input file path.
 >     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
 >     Files can be compressesd (e.g. vcf.gz, tsv.gz).
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2467,32 +2495,32 @@ Usage examples:
 >
 >     Parameters JSON file (or string) defines parameters to process 
 >     annotations, calculations, prioritizations, convertions and queries.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --transcripts_expected=<List of transcripts (file)> | required
 >
 >     File with a list of transcripts in first column.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --transcripts_missing=<List of missing transcripts (file)>
 >
 >     File with a list of missing transcripts in first column.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --stats_json=<stats json>
 >
 >     Stats Output file in JSON format.
->
-> </small>
+
+</small>
 
 # GENEBE tool
 
@@ -2503,6 +2531,8 @@ Usage examples:
 > howard genebe --input=tests/data/example.vcf.gz
 > --output=/tmp/example.genebe.vcf.gz --genebe_use_refseq
 
+> 
+
 ## Main options
 
 <small>
@@ -2512,8 +2542,8 @@ Usage examples:
 >     Input file path.
 >     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
 >     Files can be compressesd (e.g. vcf.gz, tsv.gz).
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2522,8 +2552,8 @@ Usage examples:
 >     Output file path.
 >     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
 >     Files can be compressesd (e.g. vcf.gz, tsv.gz).
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2531,16 +2561,16 @@ Usage examples:
 >
 >     Parameters JSON file (or string) defines parameters to process 
 >     annotations, calculations, prioritizations, convertions and queries.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --assembly=<assembly> (default: hg19)
 >
 >     Genome Assembly (e.g. 'hg19', 'hg38').
->
-> </small>
+
+</small>
 
 ## GeneBe
 
@@ -2549,24 +2579,24 @@ Usage examples:
 >     --genebe_use_refseq
 >
 >     Use refSeq to annotate (default).
->
-> </small>
+
+</small>
 
 <small>
 
 >     --genebe_use_ensembl
 >
 >     Use Ensembl to annotate.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --not_flatten_consequences
 >
 >     Use exploded annotation informations.
->
-> </small>
+
+</small>
 
 ## Explode
 
@@ -2575,16 +2605,16 @@ Usage examples:
 >     --explode_infos
 >
 >     Explode VCF INFO/Tag into 'variants' table columns.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --explode_infos_prefix=<explode infos prefix>
 >
 >     Explode VCF INFO/Tag with a specific prefix.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2599,8 +2629,8 @@ Usage examples:
 >     - 'HGVS,.*_score,Clinvar' (list of 2 fields with all scores in the middle)
 >     - 'HGVS,.*_score,*' (1 field, scores, all other fields)
 >     - 'HGVS,*,.*_score' (1 field, all other fields, all scores)
->
-> </small>
+
+</small>
 
 ## Export
 
@@ -2610,8 +2640,8 @@ Usage examples:
 >
 >     Include header (in VCF format) in output file.
 >     Only for compatible formats (tab-delimiter format as TSV or BED).
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2622,8 +2652,8 @@ Usage examples:
 >     If a column is not available, order will not be considered.
 >     Order is enable only for compatible format (e.g. TSV, CSV, JSON).
 >     Examples: 'ACMG_score DESC', 'PZFlag DESC, PZScore DESC'.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2633,8 +2663,8 @@ Usage examples:
 >     This option is faster parallel writing, but memory consuming.
 >     Use 'None' (string) for NO partition but split parquet files into a folder.
 >     Examples: '#CHROM', '#CHROM,REF', 'None'.
->
-> </small>
+
+</small>
 
 # MINIMALIZE tool
 
@@ -2655,6 +2685,8 @@ Usage examples:
 > --output=/tmp/example.minimal.tsv --remove_samples --explode_infos
 > --minimalize_info
 
+> 
+
 ## Main options
 
 <small>
@@ -2664,8 +2696,8 @@ Usage examples:
 >     Input file path.
 >     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
 >     Files can be compressesd (e.g. vcf.gz, tsv.gz).
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2674,8 +2706,8 @@ Usage examples:
 >     Output file path.
 >     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
 >     Files can be compressesd (e.g. vcf.gz, tsv.gz).
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2683,8 +2715,8 @@ Usage examples:
 >
 >     Parameters JSON file (or string) defines parameters to process 
 >     annotations, calculations, prioritizations, convertions and queries.
->
-> </small>
+
+</small>
 
 ## Minimalize
 
@@ -2693,48 +2725,48 @@ Usage examples:
 >     --minimalize_info
 >
 >     Minimalize INFO field (e.g. '.' value).
->
-> </small>
+
+</small>
 
 <small>
 
 >     --minimalize_id
 >
 >     Minimalize ID field (e.g. '.' value).
->
-> </small>
+
+</small>
 
 <small>
 
 >     --minimalize_qual
 >
 >     Minimalize QUAL field (e.g. '.' value).
->
-> </small>
+
+</small>
 
 <small>
 
 >     --minimalize_filter
 >
 >     Minimalize FILTER field (e.g. '.' value).
->
-> </small>
+
+</small>
 
 <small>
 
 >     --minimalize_samples
 >
 >     Minimalize samples to keep only genotypes (i.e. 'GT').
->
-> </small>
+
+</small>
 
 <small>
 
 >     --remove_samples
 >
 >     Remove all samples to keep only variants.
->
-> </small>
+
+</small>
 
 ## Explode
 
@@ -2743,16 +2775,16 @@ Usage examples:
 >     --explode_infos
 >
 >     Explode VCF INFO/Tag into 'variants' table columns.
->
-> </small>
+
+</small>
 
 <small>
 
 >     --explode_infos_prefix=<explode infos prefix>
 >
 >     Explode VCF INFO/Tag with a specific prefix.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2767,8 +2799,8 @@ Usage examples:
 >     - 'HGVS,.*_score,Clinvar' (list of 2 fields with all scores in the middle)
 >     - 'HGVS,.*_score,*' (1 field, scores, all other fields)
 >     - 'HGVS,*,.*_score' (1 field, all other fields, all scores)
->
-> </small>
+
+</small>
 
 ## Export
 
@@ -2778,8 +2810,8 @@ Usage examples:
 >
 >     Include header (in VCF format) in output file.
 >     Only for compatible formats (tab-delimiter format as TSV or BED).
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2790,8 +2822,8 @@ Usage examples:
 >     If a column is not available, order will not be considered.
 >     Order is enable only for compatible format (e.g. TSV, CSV, JSON).
 >     Examples: 'ACMG_score DESC', 'PZFlag DESC, PZScore DESC'.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2801,8 +2833,8 @@ Usage examples:
 >     This option is faster parallel writing, but memory consuming.
 >     Use 'None' (string) for NO partition but split parquet files into a folder.
 >     Examples: '#CHROM', '#CHROM,REF', 'None'.
->
-> </small>
+
+</small>
 
 # Shared arguments
 
@@ -2815,8 +2847,8 @@ Usage examples:
 >     settings (e.g. verbosity, temporary files),
 >     default folders (e.g. for databases)
 >     and paths to external tools.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2828,8 +2860,8 @@ Usage examples:
 >     It and can help speed up the process/tool.
 >     Use -1 to use all available CPU/cores.
 >     Either non valid value is 1 CPU/core.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2841,8 +2873,8 @@ Usage examples:
 >     (especially for JAR programs).
 >     It can help to prevent 'out of memory' failures.
 >     By default (None) is 80%% of RAM (for duckDB).
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2851,8 +2883,8 @@ Usage examples:
 >     Number of records in batch to export output file.
 >     The lower the chunk size, the less memory consumption.
 >     For Parquet partitioning, files size will depend on the chunk size.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2860,8 +2892,8 @@ Usage examples:
 >
 >     Temporary folder (e.g. '/tmp').
 >     By default, '.tmp' for duckDB (see doc),external tools and python scripts.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2870,8 +2902,8 @@ Usage examples:
 >     DuckDB settings (see duckDB doc) as JSON (string or file).
 >     These settings have priority (see options 'threads', 'tmp'...).
 >     Examples: '{"TimeZone": "GMT", "temp_directory": "/tmp/duckdb", "threads": 8}'.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2885,8 +2917,8 @@ Usage examples:
 >     - ERROR: Due to a more serious problem.
 >     - CRITICAL: A serious error.
 >     - NOTSET: All messages.
->
-> </small>
+
+</small>
 
 <small>
 
@@ -2894,29 +2926,29 @@ Usage examples:
 >
 >     Logs file
 >     (e.g. 'my.log').
->
-> </small>
+
+</small>
 
 <small>
 
 >     --quiet
 >
 >     ==SUPPRESS==
->
-> </small>
+
+</small>
 
 <small>
 
 >     --verbose
 >
 >     ==SUPPRESS==
->
-> </small>
+
+</small>
 
 <small>
 
 >     --debug
 >
 >     ==SUPPRESS==
->
-> </small>
+
+</small>
