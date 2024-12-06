@@ -691,7 +691,7 @@
       "__examples_code": [
         "# Annotation with Parquet databases, with update annotation strategy.",
         "\"options\": {",
-        "   \"update\": true",
+        "   \"annotations_update\": true",
         "}"
       ],
       "annotations_update": {
@@ -700,7 +700,7 @@
         ],
         "__examples_code": [
           "# Apply update on all annotation fields for all databases.",
-          "\"update\": true"
+          "\"annotations_update\": true"
         ]
       },
       "annotations_append": {
@@ -709,7 +709,7 @@
         ],
         "__examples_code": [
           "# Apply append on all annotation fields for all databases.",
-          "\"append\": true"
+          "\"annotations_append\": true"
         ]
       }
     }

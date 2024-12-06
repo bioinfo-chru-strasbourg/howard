@@ -1283,7 +1283,7 @@ Examples:
 > ``` json
 > {
 >    "options": {
->       "update": true
+>       "annotations_update": true
 >    }
 > }
 > ```
@@ -1302,7 +1302,7 @@ Examples:
 
 > ``` json
 > {
->    "update": true
+>    "annotations_update": true
 > }
 > ```
 
@@ -1320,7 +1320,7 @@ Examples:
 
 > ``` json
 > {
->    "append": true
+>    "annotations_append": true
 > }
 > ```
 
