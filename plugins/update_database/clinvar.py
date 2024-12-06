@@ -11,6 +11,8 @@ from os.path import join as osj
 import os
 import re
 from plugins.update_database.factory import Database
+import shutil
+import cyvcf2
 
 
 class Clinvar(Database):
@@ -239,9 +241,35 @@ class Clinvar(Database):
             "You still need to validate the latest version of clinvar before using it in production"
         )
 
+    def variantid_to_info(self, vcf: str) -> str:
+        """ """
+        log.info("Add Clinvar ID to INFO field")
+        tmp = vcf.replace(".vcf", ".tmp.vcf")
+        shutil.copy2(vcf, tmp)
+        input_vcf_path = vcf
+        input_vcf = cyvcf2.VCF(input_vcf_path)
+        input_vcf.add_info_to_header(
+            {
+                "ID": "CLNID",
+                "Number": 1,
+                "Type": "Integer",
+                "Description": "Clinvar Variation ID Access clinvar data on ncbiwebsite/clinvar/variation/ID",
+            }
+        )
+        output_vcf_path = tmp
+        output_vcf = cyvcf2.Writer(output_vcf_path, input_vcf)
+        for variant in input_vcf:  # or VCF('some.bcf')
+            variant.INFO["CLNID"] = variant.ID
+            output_vcf.write_record(variant)
+        output_vcf.close()
+        os.remove(vcf)
+        shutil.move(tmp, vcf)
+        return vcf
+
     def formatting_clinvar(self, clinvar_vcf_raw):
         """
         Add chr in front of contig name and transform resulting vcf into parquet, BGZIP required
+        Add Variant ID in INFO field
 
         :param clinvar_vcf_raw: path of clinvar raw file from ucsc
         """
@@ -253,6 +281,7 @@ class Clinvar(Database):
             + ' | awk \'{if ($0 !~ /^#/) $0="chr"$0; print}\' OFS="\t" > '
             + clinvar_vcf.replace(".vcf.gz", ".vcf")
         )
+        self.variantid_to_info(clinvar_vcf.replace(".vcf.gz", ".vcf"))
         compress_file(clinvar_vcf.replace(".vcf.gz", ".vcf"), clinvar_vcf)
         os.remove(clinvar_vcf.replace(".vcf.gz", ".vcf"))
         log.info(f"Formatting {clinvar_vcf} to parquet")
