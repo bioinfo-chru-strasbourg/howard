@@ -11713,9 +11713,9 @@ class Variants:
                     del header.infos[field_to_rename]
 
                     # Rename INFO patterns
-                    field_pattern = rf'(^|;)({field_to_rename})=([^;]*)'
+                    field_pattern = rf'(^|;)({field_to_rename})($|;|=[^;]*)'
                     if field_renamed is not None:
-                        field_renamed_pattern = rf'\1{field_renamed}=\3'
+                        field_renamed_pattern = rf'\1{field_renamed}\3'
                     else:
                         field_renamed_pattern = ''
 
@@ -11735,6 +11735,11 @@ class Variants:
                         log.info(f"Rename or remove fields - field '{field_to_rename}' renamed to '{field_renamed}'")
                     else:
                         log.info(f"Rename or remove fields - field '{field_to_rename}' removed")
+
+                else:
+
+                    log.warning(f"Rename or remove fields - field '{field_to_rename}' not in header")
+
 
             # Rename INFO
             for regex_replace_key, regex_replace  in regex_replace_dict.items():
