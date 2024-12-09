@@ -2514,7 +2514,9 @@ class Variants:
             if not list_samples:
                 list_samples = self.get_header_sample_list()
             if list_samples:
-                samples_fields = " , FORMAT , " + " , ".join(list_samples)
+                samples_fields = " , FORMAT , " + " , ".join(
+                    [f""" "{sample}" """ for sample in list_samples]
+                )
             else:
                 samples_fields = ""
             log.debug(f"samples_fields: {samples_fields}")
@@ -9135,7 +9137,7 @@ class Variants:
 
             # variant_id, FORMAT and samples
             samples_fields = f" {variant_id_column}, FORMAT , " + " , ".join(
-                self.get_header_sample_list()
+                [f""" "{sample}" """ for sample in self.get_header_sample_list()]
             )
 
             # Create dataframe
@@ -9235,7 +9237,7 @@ class Variants:
 
             # variant_id, FORMAT and samples
             samples_fields = f" {variant_id_column}, FORMAT , " + " , ".join(
-                self.get_header_sample_list()
+                [f""" "{sample}" """ for sample in self.get_header_sample_list()]
             )
 
             # Create dataframe
@@ -9341,7 +9343,7 @@ class Variants:
 
             # variant_id, FORMAT and samples
             samples_fields = f" {variant_id_column}, FORMAT , " + " , ".join(
-                self.get_header_sample_list()
+                [f""" "{sample}" """ for sample in self.get_header_sample_list()]
             )
 
             # Create dataframe
@@ -9510,7 +9512,7 @@ class Variants:
 
             # variant_id, FORMAT and samples
             samples_fields = f" {variant_id_column}, FORMAT , " + " , ".join(
-                ped_samples
+                [f""" "{sample}" """ for sample in ped_samples]
             )
 
             # Create dataframe
@@ -9546,7 +9548,8 @@ class Variants:
             for sample in self.get_header_sample_list() + ["FORMAT"]:
                 if sample in ped_samples:
                     value = f'dataframe_barcode."{barcode_infos}"'
-                    value_samples = "'" + ",".join(ped_samples) + "'"
+                    value_samples = "'" + ",".join([f""" "{sample}" """ for sample in ped_samples]) + "'"
+                    ped_samples
                 elif sample == "FORMAT":
                     value = f"'{tag}'"
                     value_samples = f"'{tag}S'"
@@ -9710,7 +9713,7 @@ class Variants:
 
             # variant_id, FORMAT and samples
             samples_fields = f" {variant_id_column}, FORMAT , " + " , ".join(
-                self.get_header_sample_list()
+                [f""" "{sample}" """ for sample in self.get_header_sample_list()]
             )
 
             # Create dataframe
@@ -9917,7 +9920,7 @@ class Variants:
 
             # variant_id, FORMAT and samples
             samples_fields = f" {variant_id_column}, FORMAT , " + " , ".join(
-                self.get_header_sample_list()
+                [f""" "{sample}" """ for sample in self.get_header_sample_list()]
             )
 
             # Create dataframe
