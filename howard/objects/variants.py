@@ -6234,7 +6234,7 @@ class Variants:
                                 """
                                 )
                                 sql_query_annotation_to_agregate.append(
-                                    f""" string_agg(DISTINCT table_parquet_from."{annotation_field_column}", ',') AS "{annotation_field_column}" """
+                                    f""" string_agg(table_parquet_from."{annotation_field_column}", ',') AS "{annotation_field_column}" """
                                 )
 
                         # Not to annotate
