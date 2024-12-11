@@ -53,18 +53,14 @@ def test_query_empty():
         log.debug(result)
         assert len(result) == 0
 
-        # Check if VCF is in correct format with pyVCF
-        with pytest.raises(ValueError) as e:
-            variants.export_output(query=query)
-        assert str(e.value) == "Export failed: Empty"
+        # Export file
+        variants.export_output(query=query)
+        assert os.path.exists(output_vcf)
 
-        # Set output
-        variants.set_output = output_parquet
-
-        # Check if VCF is in correct format with pyVCF
-        with pytest.raises(ValueError) as e:
-            variants.export_output(query=query)
-        assert str(e.value) == "Export failed: Empty"
+        # Check if exported file is empty
+        variants_output_vcf = Variants(conn=None, input=output_vcf, load=True)
+        results = variants_output_vcf.get_query_to_df(query=f"""SELECT * FROM variants""")
+        assert len(results) == 0
 
 
 def test_query():
