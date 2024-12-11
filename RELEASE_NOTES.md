@@ -44,6 +44,8 @@ operations, confugation files in YAML format, and python packages stability.
 - Fix packages releases
 - Fix parameters and configuration files options
 - Fix calculations list and parametrization
+- Fix empty file export
+- Fix BED annotation with parquet method
 - More explicite log messages
 
 ## 0.11.0
