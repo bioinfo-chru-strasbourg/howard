@@ -2196,13 +2196,16 @@ def test_rename_fields():
             "field_not_in_header": "field_not_in_header_renamed",
             "": "",
             "SIFT": None,
+            "SPiP_Alt": "SPiP_alternative",
+            "SPiP_alternative": None,
         }
 
         # Rename fields
         fields_renamed = variants.rename_info_fields(fields_to_rename=fields_to_rename)
-        assert fields_renamed == {'CLNSIG': 'CLNSIG_renamed', 'PREFIXCLNSIG': 'PREFIXCLNSIG_renamed', 'DP': 'depth', 'SIFT': None}
+        assert fields_renamed == {'CLNSIG': 'CLNSIG_renamed', 'PREFIXCLNSIG': 'PREFIXCLNSIG_renamed', 'DP': 'depth', 'SIFT': None, 'SPiP_Alt': 'SPiP_alternative', 'SPiP_alternative': None}
         assert len(variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%SIFT%'")) == 0
         assert len(variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%None=%'")) == 0
+        assert len(variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%SPiP%'")) == 0
 
         # Check if VCF is in correct format with pyVCF
         remove_if_exists([output_vcf])
@@ -2235,6 +2238,8 @@ def test_rename_fields_to_param_and_export():
                     "field_not_in_header": "field_not_in_header_renamed",
                     "": "",
                     "SIFT": None,
+                    "SPiP_Alt": "SPiP_alternative",
+                    "SPiP_alternative": None,
                 }
             }
         }

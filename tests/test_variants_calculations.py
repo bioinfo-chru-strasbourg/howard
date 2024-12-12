@@ -774,13 +774,19 @@ def test_calculation_snpeff_hgvs_transcripts():
 
         # query annotated variant
         result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE INFO LIKE '%NOMEN=%' """
+            """ SELECT * FROM variants WHERE INFO LIKE '%;NOMEN=%' """
+        )
+        assert len(result) == 7
+
+        # query annotated variant
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE INFO LIKE '%;TNOMEN=%' """
         )
         assert len(result) == 7
 
         # Check transcript priority
         result = variants.get_query_to_df(
-            """ SELECT * FROM variants WHERE INFO LIKE '%NOMEN=EGFR:NM_001346897%' """
+            """ SELECT * FROM variants WHERE INFO LIKE '%;NOMEN=EGFR:NM_001346897%' """
         )
         assert len(result) == 1
 
@@ -975,6 +981,63 @@ def test_calculation_barcode():
 
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {"calculation": {"calculations": {"BARCODE": None}}}
+
+        # Create object
+        variants = Variants(
+            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+        )
+
+        # Calculation
+        variants.calculation()
+
+        result = variants.get_query_to_df(
+            """ SELECT INFO FROM variants WHERE INFO LIKE '%barcode%' """
+        )
+        assert len(result) == 7
+
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE INFO LIKE '%barcode=1122%' """
+        )
+        assert len(result) == 1
+
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE INFO LIKE '%barcode=0111%' """
+        )
+        assert len(result) == 1
+
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE INFO LIKE '%barcode=1011%' """
+        )
+        assert len(result) == 4
+
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE INFO LIKE '%barcode=1101%' """
+        )
+        assert len(result) == 1
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
+def test_calculation_barcode_sample_name_special_char():
+    """
+    This is a test function for a Python script that calculates barcode information from a VCF file and
+    checks if the output is correct.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.name_with_special_char.vcf"
         output_vcf = f"{tmp_dir}/output.vcf.gz"
 
         # Construct param dict

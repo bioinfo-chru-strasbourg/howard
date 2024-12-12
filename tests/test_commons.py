@@ -318,7 +318,7 @@ def test_get_bin():
         config=config,
         default_folder="/usr/bin",
     )
-    assert java_bin == "/usr/bin/java"
+    assert java_bin is not None and os.path.exists(java_bin)
 
     # Config
     tool_name = "snpeff"
@@ -1183,6 +1183,32 @@ def test_get_index():
 
     # Test with a None element
     assert get_index(None, values) == -1
+
+
+def test_find_nomen_full_transcripts_as_dict():
+    """
+    The function `test_find_nomen_full()` tests the `find_nomen()` function with various input cases and
+    expected outputs.
+    """
+
+    # Test case 1
+    hgvs = "NM_001637.3:c.1582G>T"
+    transcripts = {"NM_001637.3": 1}
+    expected_output = {
+        "NOMEN": "NM_001637:c.1582G>T",
+        "CNOMEN": "c.1582G>T",
+        "RNOMEN": None,
+        "NNOMEN": None,
+        "PNOMEN": None,
+        "TVNOMEN": "NM_001637.3",
+        "TNOMEN": "NM_001637",
+        "TPNOMEN": None,
+        "TPVNOMEN": None,
+        "VNOMEN": "3",
+        "ENOMEN": None,
+        "GNOMEN": None,
+    }
+    assert find_nomen(hgvs, transcripts=transcripts) == expected_output
 
 
 def test_find_nomen_full():

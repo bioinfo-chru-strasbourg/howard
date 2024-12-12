@@ -20,6 +20,31 @@ from howard.objects.database import Database
 from test_needed import *
 
 
+def test_export_empty():
+    """
+    The function tests the export functionality of an empty database.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        tmp_dir = "/tmp"
+
+        # No database input
+        database = Database()
+        input_database = database_files.get("example_empty_vcf")
+        output_database = f"{tmp_dir}/output.tsv"
+
+        # Export database
+        database = Database(database=input_database)
+        database.export(output_database)
+        assert os.path.exists(output_database)
+
+        # Check if exported database is empty
+        database = Database(database=output_database)
+        results = database.query(query=f"""SELECT * FROM variants""")
+        assert len(results) == 0
+        
+
 @pytest.mark.parametrize(
     "order_by, first_pos, first_qual, first_alt",
     [

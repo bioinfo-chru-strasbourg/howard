@@ -1809,11 +1809,21 @@ class Database:
                     "bed",
                     "json",
                 ]:
+                    # Query
                     sql_from = self.get_sql_from(
                         database=database, header_file=header_file
                     )
                     sql_query = f"SELECT * FROM {sql_from} LIMIT 0"
-                    return list(self.conn.query(sql_query).columns)
+                    
+                    # Get columns
+                    result_description = self.conn.execute(sql_query).description
+
+                    # Extract columns' names
+                    columns = [desc[0] for desc in result_description]
+                    
+                    # Return columns as list
+                    return columns
+
         except ValueError:
             return []
 
@@ -2557,8 +2567,10 @@ class Database:
                     query_empty = False
                     break
                 if query_empty:
-                    log.error("Export failed: Empty")
-                    raise ValueError("Export failed: Empty")
+                    log.warning("Export warning: Empty")
+                    remove_header_line = False
+                else:
+                    remove_header_line = True
 
                 # Schema names
                 schema_names = None
@@ -2597,7 +2609,7 @@ class Database:
                             query_output_header_tmp = os.path.join(tmp_dir, "header")
                             self.get_header_file(
                                 header_file=query_output_header_tmp,
-                                remove_header_line=True,
+                                remove_header_line=remove_header_line,
                                 sql_query=query,
                             )
 
@@ -2834,7 +2846,7 @@ class Database:
                         query_output_header_tmp = os.path.join(tmp_dir, "header")
                         tmp_files.append(query_output_header_tmp)
                         self.get_header_file(
-                            header_file=query_output_header_tmp, remove_header_line=True
+                            header_file=query_output_header_tmp, remove_header_line=remove_header_line
                         )
 
                         # Add tmp header file for concat and compress

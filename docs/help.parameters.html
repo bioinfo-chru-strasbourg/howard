@@ -875,8 +875,9 @@ to select all fields within the database INFO/Tags header (e.g.&#xA0;&#x2018;&#x
 null&#x2019;). Use &#x2018;ALL&#x2019; keyword to select all fields within the database
 regardless INFO/Tags header (e.g.&#xA0;&#x2018;&#x201C;ALL&#x201D;: null&#x2019;).</p>
 <p>For add all availalbe databases files, use &#x2018;ALL&#x2019; keyword, with
-filters on type and release (e.g.&#xA0;&#x2018;ALL&#x2019;, &#x2018;ALL:parquet:current&#x2019;,
-&#x2018;ALL:parquet,vcf:current,devel&#x2019;).</p>
+filters on type and release (e.g.&#xA0;&#x2018;ALL&#x2019;, &#x2018;ALL:format=parquet&#x2019;,
+&#x2018;ALL:format=parquet:release=current&#x2019;,
+&#x2018;ALL:format=parquet+vcf:release=current+devel&#x2019;).</p>
 <p>If a full path is not provided, the system will automatically detect
 files within database folders (see Configuration doc) and assembly (see
 Parameter option).</p>
@@ -1589,7 +1590,7 @@ strategy.</p>
 <div class="sourceCode" id="cb54"><pre
 class="sourceCode json"><code class="sourceCode json"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
 <span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;update&quot;</span><span class="fu">:</span> <span class="kw">true</span></span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;annotations_update&quot;</span><span class="fu">:</span> <span class="kw">true</span></span>
 <span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
 <span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
@@ -1606,7 +1607,7 @@ be applied to all annotation databases.</p>
 <blockquote>
 <div class="sourceCode" id="cb55"><pre
 class="sourceCode json"><code class="sourceCode json"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;update&quot;</span><span class="fu">:</span> <span class="kw">true</span></span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;annotations_update&quot;</span><span class="fu">:</span> <span class="kw">true</span></span>
 <span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h3 data-number="3.9.2" id="annotations_append"><span
@@ -1623,7 +1624,7 @@ databases.</p>
 <blockquote>
 <div class="sourceCode" id="cb56"><pre
 class="sourceCode json"><code class="sourceCode json"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;append&quot;</span><span class="fu">:</span> <span class="kw">true</span></span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;annotations_append&quot;</span><span class="fu">:</span> <span class="kw">true</span></span>
 <span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h1 data-number="4" id="calculation"><span

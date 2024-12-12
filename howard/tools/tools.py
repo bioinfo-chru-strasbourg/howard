@@ -188,6 +188,8 @@ arguments = {
         """ (e.g. 'file1.parquet,file2.vcf.gz').\n"""
         """- For BCFTools annotation, use keyword 'bcftools' with file paths\n"""
         """ (e.g. 'bcftools:file.vcf.gz:file.bed.gz').\n"""
+        """- For Parquet annotation, use keyword 'parquet' with file paths\n"""
+        """ (e.g. 'parquet:file.parquet').\n"""
         """- For Annovar annotation, use keyword 'annovar' with annovar code\n"""
         """ (e.g. 'annovar:refGene', 'annovar:refGene:cosmic70').\n"""
         """- For snpeff annotation, use keyword 'snpeff' with options\n"""
@@ -197,8 +199,8 @@ arguments = {
         """- For Exomiser annotation, use keyword 'exomiser' with options as key=value\n"""
         """ (e.g. 'exomiser:preset=exome:transcript_source=refseq').\n"""
         """- For add all availalbe databases files, use 'ALL' keyword,\n"""
-        """ with filters on type and release\n"""
-        """ (e.g. 'ALL', 'ALL:parquet:current', 'ALL:parquet,vcf:current,devel').\n""",
+        """ with filters on format (e.g. 'parquet', 'vcf') and release (e.g. 'current', 'devel')\n"""
+        """ (e.g. 'ALL', ALL:format=parquet', 'ALL:format=parquet:release=current', 'ALL:format=parquet+vcf:release=current+devel').\n""",
         "default": None,
         "type": str,
         "extra": {

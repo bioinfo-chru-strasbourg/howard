@@ -8,15 +8,15 @@ Plugins are store in 'plugins' folder, and follow a specific structure:
 
 ```
 plugins
-├── __init__.py
-├── plugin1
-│   ├── README.md
-│   ├── __init__.py
-│   └── __main__.py
-└── plugin2
-    ├── README.md
-    ├── __init__.py
-    └── __main__.py
+|-- __init__.py
+|-- plugin1
+|   |-- README.md
+|   |-- __init__.py
+|   |-- __main__.py
+|-- plugin2
+    |-- README.md
+    |-- __init__.py
+    |-- __main__.py
 ```
 
 ### Plugins module init file
@@ -49,10 +49,10 @@ Main plugin file (e.g. `__main__.py`) need to contain the main function (e.g. `m
 
 ```
 plugins
-├── __init__.py
-└── show_plugin
-    ├── __init__.py
-    └── __main__.py
+|-- __init__.py
+|-- show_plugin
+    |-- __init__.py
+    |-- __main__.py
 ```
 
 > Plugin is enable in main `plugins/__init__.py` file

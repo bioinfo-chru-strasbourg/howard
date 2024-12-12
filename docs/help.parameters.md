@@ -553,8 +553,9 @@ null'). Use 'ALL' keyword to select all fields within the database
 regardless INFO/Tags header (e.g. '"ALL": null').
 
 For add all availalbe databases files, use 'ALL' keyword, with filters
-on type and release (e.g. 'ALL', 'ALL:parquet:current',
-'ALL:parquet,vcf:current,devel').
+on type and release (e.g. 'ALL', 'ALL:format=parquet',
+'ALL:format=parquet:release=current',
+'ALL:format=parquet+vcf:release=current+devel').
 
 If a full path is not provided, the system will automatically detect
 files within database folders (see Configuration doc) and assembly (see
@@ -1282,7 +1283,7 @@ Examples:
 > ``` json
 > {
 >    "options": {
->       "update": true
+>       "annotations_update": true
 >    }
 > }
 > ```
@@ -1301,7 +1302,7 @@ Examples:
 
 > ``` json
 > {
->    "update": true
+>    "annotations_update": true
 > }
 > ```
 
@@ -1319,7 +1320,7 @@ Examples:
 
 > ``` json
 > {
->    "append": true
+>    "annotations_append": true
 > }
 > ```
 
@@ -1668,7 +1669,7 @@ Examples:
 
 > Simple query to show all variants file
 
->     SELECT "#CHROM", POS, REF, ALT, INFO 
+> SELECT "#CHROM", POS, REF, ALT, INFO 
 >     FROM variants
 
 ## query_limit

@@ -27,7 +27,7 @@ for json_file in $docs_folder/json/*.json; do
     # Init Help title
     help_title=""
     for var in $(basename $json_file | sed s/.json\$//gi | tr "." " " | tr "_" " "); do
-        help_title=$help_title" ${var^}"
+        help_title=$help_title" "$(echo "${var}" | awk '{for (i=1; i<=NF; i++) $i=toupper(substr($i,1,1)) substr($i,2); print}')
     done;
     # Generate
     howard help --help_json_input=$json_file --help_md=$md_file --help_html=$html_file --help_pdf=$pdf_file --help_json_input_title="HOWARD$help_title" --code_type="json"
@@ -46,7 +46,7 @@ for md_file in $docs_folder/*.md; do
         # Init Help title
         help_title=""
         for var in $(basename $md_file | sed s/.md\$//gi | tr "." " " | tr "_" " "); do
-            help_title=$help_title" ${var^}"
+            help_title=$help_title" "$(echo "${var}" | awk '{for (i=1; i<=NF; i++) $i=toupper(substr($i,1,1)) substr($i,2); print}')
         done;
         # Generate
         howard help --help_md_input=$md_file --help_html=$html_file --help_pdf=$pdf_file --help_json_input_title="HOWARD$help_title" --code_type="json"
@@ -54,7 +54,7 @@ for md_file in $docs_folder/*.md; do
 done;
 
 # Generate HOWARD Main README
-for md_file in $script_path/../*.md; do
+for md_file in $script_path/../*.md $script_path/../plugins/*.md; do
 # Check if file already processed
     if echo "$list" | grep -q "$md_file"; then
         echo $md_file" already exists";
@@ -65,7 +65,7 @@ for md_file in $script_path/../*.md; do
         # Init Help title
         help_title=""
         for var in $(basename $md_file | sed s/.md\$//gi | tr "." " " | tr "_" " "); do
-            help_title=$help_title" ${var^}"
+            help_title=$help_title" "$(echo "${var}" | awk '{for (i=1; i<=NF; i++) $i=toupper(substr($i,1,1)) substr($i,2); print}')
         done;
         # Generate
         howard help --help_md_input=$md_file --help_html=$html_file --help_pdf=$pdf_file --help_json_input_title="HOWARD$help_title" --code_type="json"

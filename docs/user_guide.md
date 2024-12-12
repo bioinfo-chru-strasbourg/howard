@@ -1,11 +1,14 @@
 # HOWARD User Guide
 
 <figure>
+
 <img src="../images/icon.png" title="HOWARD"
 alt="HOWARD" />
 <figcaption aria-hidden="true">
+
 HOWARD
 </figcaption>
+
 </figure>
 
 Highly Open Workflow for Annotation & Ranking toward genomic variant
@@ -113,7 +116,7 @@ HOWARD is multithreaded through the number of variants and by database
 
 ### Quick install
 
-Install HOWARD using Python Pip tool:
+Install HOWARD using Python Pip tool (we strongly suggest to use a virtual environment, such as conda):
 
 ``` bash
 conda create --name=howard python=3.10
@@ -126,6 +129,13 @@ Run HOWARD for help options:
 ``` bash
 howard --help
 ```
+
+### Requirements
+
+System packages `wget`, `llvm`and `libomp` are needed.
+
+Even if it is not necessary, we strongly suggest to install `aria2` package to speed up databases download.
+
 
 ### GUI install
 
@@ -143,12 +153,15 @@ howard gui
 ```
 
 <figure>
+
 <img src="../images/howard-gui.png"
 title="HOWARD Graphical User Interface"
 alt="HOWARD Graphical User Interface" />
 <figcaption aria-hidden="true">
+
 HOWARD Graphical User Interface
 </figcaption>
+
 </figure>
 
 ### Configuration
@@ -231,13 +244,13 @@ docker-compose up -d
 
 The persitent CLI contains external tools, such as:
 
-| External tool                                                   | Description                                                                                             |
-|-----------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
-| [BCFTools](https://samtools.github.io/bcftools/)                | Utilities for variant calling and manipulating VCFs and BCFs                                            |
-| [snpEff](https://pcingola.github.io/SnpEff/)                    | Genomic variant annotations, and functional effect prediction toolbox                                   |
-| [Annovar](https://annovar.openbioinformatics.org/)              | Efficient software tool to utilize update-to-date information to functionally annotate genetic variants |
-| [Exomiser](https://www.sanger.ac.uk/tool/exomiser/)             | Program that finds potential disease-causing variants from whole-exome or whole-genome sequencing data  |
-| [Splice](https://hub.docker.com/r/bioinfochrustrasbourg/splice) | Image to run SPiP and SpliceAI tools in an nextflow pipeline.                                           |
+| External tool | Description |
+|----|----|
+| [BCFTools](https://samtools.github.io/bcftools/) | Utilities for variant calling and manipulating VCFs and BCFs |
+| [snpEff](https://pcingola.github.io/SnpEff/) | Genomic variant annotations, and functional effect prediction toolbox |
+| [Annovar](https://annovar.openbioinformatics.org/) | Efficient software tool to utilize update-to-date information to functionally annotate genetic variants |
+| [Exomiser](https://www.sanger.ac.uk/tool/exomiser/) | Program that finds potential disease-causing variants from whole-exome or whole-genome sequencing data |
+| [Splice](https://hub.docker.com/r/bioinfochrustrasbourg/splice) | Image to run SPiP and SpliceAI tools in an nextflow pipeline. |
 
 ### Setup container
 
@@ -333,16 +346,16 @@ coverage run -m pytest . -x -v --log-cli-level=DEBUG --capture=tee-sys
 Multiple databases can be automatically downloaded with databases tool,
 such as:
 
-| database                                                          | description                                                                                                                                                                                                                                                                    |
-|-------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [Genome](https://genome.ucsc.edu/cgi-bin/hgGateway)               | Genome Reference Consortium Human                                                                                                                                                                                                                                              |
-| [Annovar](https://annovar.openbioinformatics.org/en/latest/)      | ANNOVAR is an efficient software tool to utilize update-to-date information to functionally annotate genetic variants detected from diverse genomes                                                                                                                            |
-| [snpEff](https://pcingola.github.io/SnpEff/)                      | Genetic variant annotation, and functional effect prediction toolbox                                                                                                                                                                                                           |
-| [refSeq](https://www.ncbi.nlm.nih.gov/refseq/)                    | A comprehensive, integrated, non-redundant, well-annotated set of reference sequences including genomic, transcript, and protein                                                                                                                                               |
-| [dbSNP](https://www.ncbi.nlm.nih.gov/snp/)                        | dbSNP contains human single nucleotide variations, microsatellites, and small-scale insertions and deletions along with publication, population frequency, molecular consequence, and genomic and RefSeq mapping information for both common variations and clinical mutations |
-| [dbNSFP](https://sites.google.com/site/jpopgen/dbNSFP)            | dbNSFP is a database developed for functional prediction and annotation of all potential non-synonymous single-nucleotide variants (nsSNVs) in the human genome                                                                                                                |
-| [AlphaMissense](https://github.com/google-deepmind/alphamissense) | AlphaMissense model implementation                                                                                                                                                                                                                                             |
-| [Exomiser](https://www.sanger.ac.uk/tool/exomiser/)               | The Exomiser is a Java program that finds potential disease-causing variants from whole-exome or whole-genome sequencing data                                                                                                                                                  |
+| database | description |
+|----|----|
+| [Genome](https://genome.ucsc.edu/cgi-bin/hgGateway) | Genome Reference Consortium Human |
+| [Annovar](https://annovar.openbioinformatics.org/en/latest/) | ANNOVAR is an efficient software tool to utilize update-to-date information to functionally annotate genetic variants detected from diverse genomes |
+| [snpEff](https://pcingola.github.io/SnpEff/) | Genetic variant annotation, and functional effect prediction toolbox |
+| [refSeq](https://www.ncbi.nlm.nih.gov/refseq/) | A comprehensive, integrated, non-redundant, well-annotated set of reference sequences including genomic, transcript, and protein |
+| [dbSNP](https://www.ncbi.nlm.nih.gov/snp/) | dbSNP contains human single nucleotide variations, microsatellites, and small-scale insertions and deletions along with publication, population frequency, molecular consequence, and genomic and RefSeq mapping information for both common variations and clinical mutations |
+| [dbNSFP](https://sites.google.com/site/jpopgen/dbNSFP) | dbNSFP is a database developed for functional prediction and annotation of all potential non-synonymous single-nucleotide variants (nsSNVs) in the human genome |
+| [AlphaMissense](https://github.com/google-deepmind/alphamissense) | AlphaMissense model implementation |
+| [Exomiser](https://www.sanger.ac.uk/tool/exomiser/) | The Exomiser is a Java program that finds potential disease-causing variants from whole-exome or whole-genome sequencing data |
 
 > Example: Download Multiple databases in the same time for assembly
 > 'hg19' (can take a while)

@@ -210,16 +210,16 @@ execute commands.
 Multiple databases can be automatically downloaded with databases tool,
 such as:
 
-| database                                                          | description                                                                                                                                                                                                                                                                    |
-|-------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [Genome](https://genome.ucsc.edu/cgi-bin/hgGateway)               | Genome Reference Consortium Human                                                                                                                                                                                                                                              |
-| [Annovar](https://annovar.openbioinformatics.org/en/latest/)      | ANNOVAR is an efficient software tool to utilize update-to-date information to functionally annotate genetic variants detected from diverse genomes                                                                                                                            |
-| [snpEff](https://pcingola.github.io/SnpEff/)                      | Genetic variant annotation, and functional effect prediction toolbox                                                                                                                                                                                                           |
-| [refSeq](https://www.ncbi.nlm.nih.gov/refseq/)                    | A comprehensive, integrated, non-redundant, well-annotated set of reference sequences including genomic, transcript, and protein                                                                                                                                               |
-| [dbSNP](https://www.ncbi.nlm.nih.gov/snp/)                        | dbSNP contains human single nucleotide variations, microsatellites, and small-scale insertions and deletions along with publication, population frequency, molecular consequence, and genomic and RefSeq mapping information for both common variations and clinical mutations |
-| [dbNSFP](https://sites.google.com/site/jpopgen/dbNSFP)            | dbNSFP is a database developed for functional prediction and annotation of all potential non-synonymous single-nucleotide variants (nsSNVs) in the human genome                                                                                                                |
-| [AlphaMissense](https://github.com/google-deepmind/alphamissense) | AlphaMissense model implementation                                                                                                                                                                                                                                             |
-| [Exomiser](https://www.sanger.ac.uk/tool/exomiser/)               | The Exomiser is a Java program that finds potential disease-causing variants from whole-exome or whole-genome sequencing data                                                                                                                                                  |
+| database | description |
+|----|----------------|
+| [Genome](https://genome.ucsc.edu/cgi-bin/hgGateway) | Genome Reference Consortium Human |
+| [Annovar](https://annovar.openbioinformatics.org/en/latest/) | ANNOVAR is an efficient software tool to utilize update-to-date information to functionally annotate genetic variants detected from diverse genomes |
+| [snpEff](https://pcingola.github.io/SnpEff/) | Genetic variant annotation, and functional effect prediction toolbox |
+| [refSeq](https://www.ncbi.nlm.nih.gov/refseq/) | A comprehensive, integrated, non-redundant, well-annotated set of reference sequences including genomic, transcript, and protein |
+| [dbSNP](https://www.ncbi.nlm.nih.gov/snp/) | dbSNP contains human single nucleotide variations, microsatellites, and small-scale insertions and deletions along with publication, population frequency, molecular consequence, and genomic and RefSeq mapping information for both common variations and clinical mutations |
+| [dbNSFP](https://sites.google.com/site/jpopgen/dbNSFP) | dbNSFP is a database developed for functional prediction and annotation of all potential non-synonymous single-nucleotide variants (nsSNVs) in the human genome |
+| [AlphaMissense](https://github.com/google-deepmind/alphamissense) | AlphaMissense model implementation |
+| [Exomiser](https://www.sanger.ac.uk/tool/exomiser/) | The Exomiser is a Java program that finds potential disease-causing variants from whole-exome or whole-genome sequencing data |
 
 <details>
 <summary>
@@ -657,16 +657,16 @@ annotation command, and so on.
 [HOWARD Tips](docs/tips.md) proposes some additional advices to handle
 HOWARD for particular use cases.
 
-[HOWARD Help](docs/options.md) describes options of all HOWARD tools.
+[HOWARD Help](docs/help.md) describes options of all HOWARD tools.
 All information are also available for each tool using `--help` option.
 
-[HOWARD Configuration JSON](docs/help.config.md) describes configuration
+[HOWARD Configuration JSON](docs/help.configuration.md) describes configuration
 JSON file structure and options.
 
-[HOWARD Parameters JSON](docs/help.param.md) describes parameters JSON
+[HOWARD Parameters JSON](docs/help.parameters.md) describes parameters JSON
 file structure and options.
 
-[HOWARD Parameters Databases JSON](docs/help.param.databases.md)
+[HOWARD Parameters Databases JSON](docs/help.parameters.databases.md)
 describes configuration JSON file for databases download and convert.
 
 [HOWARD Plugins](plugins/README.md) describes how to create HOWARD

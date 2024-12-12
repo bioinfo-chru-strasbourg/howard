@@ -25,6 +25,7 @@ import fastparquet as fp
 from multiprocesspandas import applyparallel
 import cyvcf2
 import pyBigWig
+import math
 
 from howard.functions.commons import *
 from howard.objects.database import *
@@ -2513,7 +2514,9 @@ class Variants:
             if not list_samples:
                 list_samples = self.get_header_sample_list()
             if list_samples:
-                samples_fields = " , FORMAT , " + " , ".join(list_samples)
+                samples_fields = " , FORMAT , " + " , ".join(
+                    [f""" "{sample}" """ for sample in list_samples]
+                )
             else:
                 samples_fields = ""
             log.debug(f"samples_fields: {samples_fields}")
@@ -4261,9 +4264,9 @@ class Variants:
                         tmp_files.append(tmp_header_vcf_name)
                         # Command
                         if db_hdr_file.endswith(".gz"):
-                            command_extract_header = f"zcat {db_hdr_file} | grep '^##' > {tmp_header_vcf_name}"
+                            command_extract_header = f"zcat < {db_hdr_file} | grep '^##' > {tmp_header_vcf_name}"
                         else:
-                            command_extract_header = f"cat {db_hdr_file} | grep '^##' > {tmp_header_vcf_name}"
+                            command_extract_header = f"cat < {db_hdr_file} | grep '^##' > {tmp_header_vcf_name}"
                         # Run
                         run_parallel_commands([command_extract_header], 1)
 
@@ -6231,7 +6234,7 @@ class Variants:
                                 """
                                 )
                                 sql_query_annotation_to_agregate.append(
-                                    f""" string_agg(DISTINCT table_parquet_from."{annotation_field_column}", ',') AS "{annotation_field_column}" """
+                                    f""" string_agg(table_parquet_from."{annotation_field_column}", ',') AS "{annotation_field_column}" """
                                 )
 
                         # Not to annotate
@@ -8911,6 +8914,9 @@ class Variants:
         # Param
         param = self.get_param()
 
+        # Threads
+        threads = self.get_threads()
+
         # Prefix
         prefix = self.get_explode_infos_prefix()
 
@@ -9010,14 +9016,19 @@ class Variants:
                 f""" SELECT "#CHROM", "POS", "REF", "ALT", "{extra_field}" AS hgvs, {extra_field_transcript} AS transcript FROM variants """
             )
 
+            # Transcripts rank
+            transcripts_rank = {transcript: rank for rank, transcript in enumerate(transcripts, start=1)}
+            transcripts_len = len(transcripts_rank)
+
             # Create main NOMEN column
             dataframe_hgvs[field_nomen_dict] = dataframe_hgvs.apply(
                 lambda x: find_nomen(
                     hgvs=x.hgvs,
                     transcript=x.transcript,
-                    transcripts=transcripts,
+                    transcripts=transcripts_rank,
                     pattern=nomen_pattern,
                     transcripts_source_order=transcripts_order,
+                    transcripts_len=transcripts_len
                 ),
                 axis=1,
             )
@@ -9025,11 +9036,6 @@ class Variants:
             # Explode NOMEN Structure and create SQL set for update
             sql_nomen_fields = []
             for nomen_field in nomen_dict:
-
-                # Explode each field into a column
-                dataframe_hgvs[nomen_field] = dataframe_hgvs[field_nomen_dict].apply(
-                    lambda x: dict(x).get(nomen_field, "")
-                )
 
                 # Create VCF header field
                 vcf_reader.infos[nomen_field] = vcf.parser._Info(
@@ -9041,13 +9047,15 @@ class Variants:
                     "0",
                     self.code_type_map.get("String"),
                 )
+
+                # Add field to SQL query update
                 sql_nomen_fields.append(
                     f"""
                         CASE 
-                            WHEN dataframe_hgvs."{nomen_field}" NOT NULL AND dataframe_hgvs."{nomen_field}" NOT IN ('')
+                            WHEN dataframe_hgvs."{field_nomen_dict}"."{nomen_field}" NOT NULL AND dataframe_hgvs."{field_nomen_dict}"."{nomen_field}" NOT IN ('')
                             THEN concat(
                                     ';{nomen_field}=',
-                                    dataframe_hgvs."{nomen_field}"
+                                    dataframe_hgvs."{field_nomen_dict}"."{nomen_field}"
                                 )
                             ELSE ''
                         END
@@ -9129,7 +9137,7 @@ class Variants:
 
             # variant_id, FORMAT and samples
             samples_fields = f" {variant_id_column}, FORMAT , " + " , ".join(
-                self.get_header_sample_list()
+                [f""" "{sample}" """ for sample in self.get_header_sample_list()]
             )
 
             # Create dataframe
@@ -9229,7 +9237,7 @@ class Variants:
 
             # variant_id, FORMAT and samples
             samples_fields = f" {variant_id_column}, FORMAT , " + " , ".join(
-                self.get_header_sample_list()
+                [f""" "{sample}" """ for sample in self.get_header_sample_list()]
             )
 
             # Create dataframe
@@ -9335,7 +9343,7 @@ class Variants:
 
             # variant_id, FORMAT and samples
             samples_fields = f" {variant_id_column}, FORMAT , " + " , ".join(
-                self.get_header_sample_list()
+                [f""" "{sample}" """ for sample in self.get_header_sample_list()]
             )
 
             # Create dataframe
@@ -9504,7 +9512,7 @@ class Variants:
 
             # variant_id, FORMAT and samples
             samples_fields = f" {variant_id_column}, FORMAT , " + " , ".join(
-                ped_samples
+                [f""" "{sample}" """ for sample in ped_samples]
             )
 
             # Create dataframe
@@ -9540,7 +9548,8 @@ class Variants:
             for sample in self.get_header_sample_list() + ["FORMAT"]:
                 if sample in ped_samples:
                     value = f'dataframe_barcode."{barcode_infos}"'
-                    value_samples = "'" + ",".join(ped_samples) + "'"
+                    value_samples = "'" + ",".join([f""" "{sample}" """ for sample in ped_samples]) + "'"
+                    ped_samples
                 elif sample == "FORMAT":
                     value = f"'{tag}'"
                     value_samples = f"'{tag}S'"
@@ -9704,7 +9713,7 @@ class Variants:
 
             # variant_id, FORMAT and samples
             samples_fields = f" {variant_id_column}, FORMAT , " + " , ".join(
-                self.get_header_sample_list()
+                [f""" "{sample}" """ for sample in self.get_header_sample_list()]
             )
 
             # Create dataframe
@@ -9911,7 +9920,7 @@ class Variants:
 
             # variant_id, FORMAT and samples
             samples_fields = f" {variant_id_column}, FORMAT , " + " , ".join(
-                self.get_header_sample_list()
+                [f""" "{sample}" """ for sample in self.get_header_sample_list()]
             )
 
             # Create dataframe
@@ -10797,7 +10806,7 @@ class Variants:
     def create_transcript_view(
         self,
         transcripts_table: str = None,
-        transcripts_table_drop: bool = True,
+        transcripts_table_drop: bool = False,
         param: dict = {},
     ) -> str:
         """
@@ -10812,7 +10821,7 @@ class Variants:
         :param transcripts_table_drop: The `transcripts_table_drop` parameter in the
         `create_transcript_view` function is a boolean parameter that determines whether to drop the
         existing transcripts table before creating a new one. If `transcripts_table_drop` is set to `True`,
-        the function will drop the existing transcripts table if it exists, defaults to True
+        the function will drop the existing transcripts table if it exists, defaults to False
         :type transcripts_table_drop: bool (optional)
         :param param: The `param` parameter in the `create_transcript_view` function is a dictionary that
         contains information needed to create a transcript view. It includes details such as the structure
@@ -11673,6 +11682,12 @@ class Variants:
         if table is None:
             table = self.get_table_variants()
 
+        # regexp replace fonction
+        regex_replace_dict = {}
+        regex_replace_nb = 0
+        regex_replace_partition = 125
+        regex_replace = "INFO"
+
         if fields_to_rename is not None and access not in ["RO"]:
 
             log.info("Rename or remove fields...")
@@ -11698,28 +11713,44 @@ class Variants:
                     del header.infos[field_to_rename]
 
                     # Rename INFO patterns
-                    field_pattern = rf'(^|;)({field_to_rename})=([^;]*)'
+                    field_pattern = rf'(^|;)({field_to_rename})($|;|=[^;]*)'
                     if field_renamed is not None:
-                        field_renamed_pattern = rf'\1{field_renamed}=\3'
+                        field_renamed_pattern = rf'\1{field_renamed}\3'
                     else:
                         field_renamed_pattern = ''
 
-                    # Rename INFO
-                    query = f"""
-                        UPDATE {table}
-                        SET
-                            INFO = regexp_replace(INFO, '{field_pattern}', '{field_renamed_pattern}', 'g')
-                    """
-                    self.execute_query(query=query)
+                    # regexp replace
+                    regex_replace_nb += 1
+                    regex_replace_key = math.floor(regex_replace_nb / regex_replace_partition)
+                    if (regex_replace_nb % regex_replace_partition) == 0:
+                        regex_replace = "INFO"
+                    regex_replace = f"regexp_replace({regex_replace}, '{field_pattern}', '{field_renamed_pattern}')"
+                    regex_replace_dict[regex_replace_key] = regex_replace
 
                     # Return
                     fields_renamed[field_to_rename] = field_renamed
 
                     # Log
                     if field_renamed is not None:
-                        log.info(f"Rename or remove fields: field '{field_to_rename}' renamed to '{field_renamed}'")
+                        log.info(f"Rename or remove fields - field '{field_to_rename}' renamed to '{field_renamed}'")
                     else:
-                        log.info(f"Rename or remove fields: field '{field_to_rename}' removed")
+                        log.info(f"Rename or remove fields - field '{field_to_rename}' removed")
+
+                else:
+
+                    log.warning(f"Rename or remove fields - field '{field_to_rename}' not in header")
+
+
+            # Rename INFO
+            for regex_replace_key, regex_replace  in regex_replace_dict.items():
+                log.info(f"Rename or remove fields - Process [{regex_replace_key+1}/{len(regex_replace_dict)}]...")
+                query = f"""
+                    UPDATE {table}
+                    SET
+                        INFO = {regex_replace}
+                """
+                log.debug(f"query={query}")
+                self.execute_query(query=query)
 
         return fields_renamed
 
