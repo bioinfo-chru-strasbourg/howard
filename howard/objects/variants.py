@@ -11686,7 +11686,7 @@ class Variants:
         regex_replace_dict = {}
         regex_replace_nb = 0
         regex_replace_partition = 125
-        regex_replace = "INFO"
+        regex_replace = "concat(INFO, ';')" # Add ';' to reduce regexp comlexity
 
         if fields_to_rename is not None and access not in ["RO"]:
 
@@ -11713,17 +11713,17 @@ class Variants:
                     del header.infos[field_to_rename]
 
                     # Rename INFO patterns
-                    field_pattern = rf'(^|;)({field_to_rename})($|;|=[^;]*)'
+                    field_pattern = rf'(^|;)({field_to_rename})(=[^;]*)?;'
                     if field_renamed is not None:
-                        field_renamed_pattern = rf'\1{field_renamed}\3'
+                        field_renamed_pattern = rf'\1{field_renamed}\3;'
                     else:
-                        field_renamed_pattern = ''
+                        field_renamed_pattern = r'\1'
 
                     # regexp replace
                     regex_replace_nb += 1
                     regex_replace_key = math.floor(regex_replace_nb / regex_replace_partition)
                     if (regex_replace_nb % regex_replace_partition) == 0:
-                        regex_replace = "INFO"
+                        regex_replace = "concat(INFO, ';')"
                     regex_replace = f"regexp_replace({regex_replace}, '{field_pattern}', '{field_renamed_pattern}')"
                     regex_replace_dict[regex_replace_key] = regex_replace
 
@@ -11747,7 +11747,7 @@ class Variants:
                 query = f"""
                     UPDATE {table}
                     SET
-                        INFO = {regex_replace}
+                        INFO = regexp_replace({regex_replace}, ';$', '')
                 """
                 log.debug(f"query={query}")
                 self.execute_query(query=query)
