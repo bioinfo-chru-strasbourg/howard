@@ -106,6 +106,7 @@ database_files = {
     "example_vcf": tests_data_folder + "/example.vcf",
     "example_vcf_gz": tests_data_folder + "/example.vcf.gz",
     "example_vcf_gzip": tests_data_folder + "/example.vcf.gzip",
+    "example_empty_vcf": tests_data_folder + "/example.empty.vcf",
 }
 
 

@@ -28,6 +28,60 @@ from howard.functions.commons import *
 from test_needed import *
 
 
+def test_detect_column_type():
+    """
+    The function `test_detect_column_type` contains test cases for detecting the type of data in a
+    column using the `detect_column_type` function.
+    """
+
+    # Test case 1: Numeric values
+    column = pd.Series([1, 2, 3, 4])
+    expected_output = "DOUBLE"
+    assert detect_column_type(column) == expected_output
+
+    # Test case 2: Datetime values
+    column = pd.to_datetime(["2022-01-01", "2022-01-02"])
+    expected_output = "DATETIME"
+    assert detect_column_type(column) == expected_output
+
+    # Test case 3: Boolean values
+    column = pd.Series([True, False, True])
+    expected_output = "BOOLEAN"
+    assert detect_column_type(column) == expected_output
+
+    # Test case 4: Mixed values
+    column = pd.Series([1, "2022-01-01", True, "Hello"])
+    expected_output = "VARCHAR"
+    assert detect_column_type(column) == expected_output
+
+
+def test_explode_annotation_format():
+
+    # Test case 1: Basic input
+    annotation = "A|B|C,D|E|F"
+    uniquify = False
+    output_format = "fields"
+    prefix = "ANN_"
+    header = ["Allele", "Annotation", "Annotation_Impact"]
+    expected_output = "ANN_Allele=A,D;ANN_Annotation=B,E;ANN_AnnotationImpact=C,F"
+    assert (
+        explode_annotation_format(annotation, uniquify, output_format, prefix, header)
+        == expected_output
+    )
+
+    # Test case 2: Uniquify and JSON format
+    annotation = "A|B|C,D|E|F"
+    uniquify = True
+    output_format = "JSON"
+    prefix = "ANN_"
+    header = ["Allele", "Annotation", "Annotation_Impact"]
+    expected_output = '{"0":{"Allele":"A","Annotation":"B","Annotation_Impact":"C"},"1":{"Allele":"D","Annotation":"E","Annotation_Impact":"F"}}'
+    assert (
+        explode_annotation_format(annotation, uniquify, output_format, prefix, header)
+        == expected_output
+    )
+
+
 def test_basic_functionality():
     # Test the basic functionality with default separators and clearing
     result = params_string_to_dict("app:param1=value1:param2=value2+value3")
@@ -81,7 +135,7 @@ def test_invalid_input():
 def test_help():
 
     # Init
-    help_json_file = os.path.join(folder_main, "docs", "json", "help.param.json")
+    help_json_file = os.path.join(folder_main, "docs", "json", "help.parameters.json")
 
     # Help JSON to MD
     help_content_md = help_generation_from_json(
@@ -189,6 +243,7 @@ def test_transcripts_file_to_df():
     transcripts_file = tests_data_folder + "/transcripts.tsv"
     transcripts_file_empty = tests_data_folder + "/transcripts.empty.tsv"
     transcripts_file_with_header = tests_data_folder + "/transcripts.with_header.tsv"
+    transcripts_file_for_mapping = tests_data_folder + "/transcripts.for_mapping.tsv"
     transcripts_file_with_comments = (
         tests_data_folder + "/transcripts.with_comments.tsv"
     )
@@ -202,7 +257,6 @@ def test_transcripts_file_to_df():
     assert len(df) == 0
 
     df = transcripts_file_to_df(transcripts_file="file_not_exist")
-    log.debug(f"df={df}")
     assert list(df.columns) == ["transcript", "gene"]
     assert len(df) == 0
 
@@ -213,6 +267,40 @@ def test_transcripts_file_to_df():
     df = transcripts_file_to_df(transcripts_file=transcripts_file_with_comments)
     assert list(df.columns) == ["transcript", "gene"]
     assert len(df) == 4
+
+    df = transcripts_file_to_df(
+        transcripts_file=transcripts_file_with_comments, column_names=["transcript"]
+    )
+    assert list(df.columns) == ["transcript", "column_2"]
+    assert len(df) == 4
+
+    df = transcripts_file_to_df(
+        transcripts_file=transcripts_file_with_comments,
+        column_names=["transcript", "gene", "column_3"],
+    )
+    assert list(df.columns) == ["transcript", "gene"]
+    assert len(df) == 4
+
+    df = transcripts_file_to_df(
+        transcripts_file=transcripts_file_for_mapping,
+        column_names=["transcript"],
+    )
+    assert list(df.columns) == ["transcript", "column_2"]
+    assert len(df) == 8
+
+    df = transcripts_file_to_df(
+        transcripts_file=transcripts_file_for_mapping,
+        column_names=["transcript", "gene"],
+    )
+    assert list(df.columns) == ["transcript", "gene"]
+    assert len(df) == 8
+
+    df = transcripts_file_to_df(
+        transcripts_file=transcripts_file_for_mapping,
+        column_names=["transcript", "gene", "column_3"],
+    )
+    assert list(df.columns) == ["transcript", "gene"]
+    assert len(df) == 8
 
 
 def test_get_bin():
@@ -230,7 +318,7 @@ def test_get_bin():
         config=config,
         default_folder="/usr/bin",
     )
-    assert java_bin == "/usr/bin/java"
+    assert java_bin is not None and os.path.exists(java_bin)
 
     # Config
     tool_name = "snpeff"
@@ -277,12 +365,161 @@ def test_get_bin():
     )
 
 
-def test_get_bin_command():
-    """ """
+GET_BIN_COMMAND_CONFIG_SPLICE = {
+    "docker": {
+        "automount": False,
+        "notremove": False,
+        "tmp": False,
+    },
+    "folders": {
+        "databases": {
+            "genomes": f"{tests_databases_folder}/genomes/{tests_databases_release}",
+        }
+    },
+    "tools": {
+        "splice": {
+            "docker": {
+                "image": "bioinfochrustrasbourg/splice:0.2.2",
+                "entrypoint": "/bin/bash",
+            },
+        },
+    },
+}
 
-    # Test docker
+
+@pytest.mark.parametrize(
+    "config, modifier",
+    [
+        (
+            GET_BIN_COMMAND_CONFIG_SPLICE,
+            {
+                "notremove": False,
+                "tmp": True,
+            },
+        ),
+        (
+            GET_BIN_COMMAND_CONFIG_SPLICE,
+            {
+                "notremove": True,
+                "tmp": False,
+            },
+        ),
+        (
+            GET_BIN_COMMAND_CONFIG_SPLICE,
+            {},
+        ),
+        (
+            GET_BIN_COMMAND_CONFIG_SPLICE,
+            {
+                "notremove": False,
+                "tmp": False,
+            },
+        ),
+        (
+            GET_BIN_COMMAND_CONFIG_SPLICE,
+            {"automount": True},
+        ),
+    ],
+)
+def test_get_bin_command_splice(config, modifier):
+    param = {
+        "threads": 2,
+        "memory": "16g",
+        "tmp": "/tmp/howard",
+    }
+    config["tools"]["splice"]["docker"]["config"] = modifier
+    tool_command = get_bin_command(tool="splice", config=config, param=param)
+    print(tool_command)
+    print(config)
+    assert all(elem in tool_command for elem in ["--cpus=2", "--memory=16g"])
+    # erase global docker configuration by tool configuration 1
+    if (
+        config.get("tools", {})
+        .get("splice", {})
+        .get("docker", {})
+        .get("config", {})
+        .get("tmp", "")
+    ):
+        tmp = get_tmp(config=config, param=param)
+        assert f"-v {tmp}:{tmp}" in tool_command
+    # erase global docker configuration by tool configuration 2
+    if (
+        config.get("tools", {})
+        .get("splice", {})
+        .get("docker", {})
+        .get("config", {})
+        .get("notremove", "")
+    ):
+        assert "--rm" not in tool_command
+    # Default config
+    if not (
+        config.get("tools", {}).get("splice", {}).get("docker", {}).get("config", {})
+    ):
+        tmp = get_tmp(config, param)
+        assert "--rm" in tool_command, f"-v {tmp}:{tmp}" in tool_command
+        assert all(
+            os.path.exists(path)
+            for path in config.get("folders", {}).get("databases", {}).values()
+        )
+
+    # No automount
+    if not (
+        config.get("tools", {})
+        .get("splice", {})
+        .get("docker", {})
+        .get("config", {})
+        .get("automount", "")
+    ):
+        assert all(
+            os.path.exists(path)
+            for path in config.get("folders", {}).get("databases", {}).values()
+        )
+    # Automount enable
+    if (
+        config.get("tools", {})
+        .get("splice", {})
+        .get("docker", {})
+        .get("config", {})
+        .get("automount", "")
+    ):
+        assert "-v" not in tool_command
+
+
+def test_get_bin_command_snpeff():
+    config = {
+        "docker": {"automount": False, "notremove": False, "tmp": True},
+        "tools": {
+            "docker": {"bin": "docker"},
+            "java": {"bin": "java"},
+            "snpeff": {"jar": tests_config.get("tools").get("snpeff")},
+            "bcftools": {
+                "bin": "bcftools",
+                "docker": {
+                    "image": "howard:0.11.0",
+                    "entrypoint": "bcftools",
+                    "options": None,
+                    "command": None,
+                },
+            },
+        },
+        "threads": 12,
+        "memory": "40g",
+        "tmp": "/tmp",
+    }
+    param = {
+        "threads": 2,
+        "memory": "16g",
+        "tmp": "/tmp/howard",
+    }
+    tool_command = get_bin_command(tool="snpeff", config=config, param=param)
+    assert tool_command.endswith("snpEff.jar")
+    assert "java  -XX:ParallelGCThreads=2  -XX:MaxHeapSize=16G  -jar " in tool_command
+
+
+def test_get_bin_command_bcftools():
     snpeff_bin_path = tests_config.get("tools").get("snpeff")
     config = {
+        "docker": {"automount": False, "notremove": False, "tmp": True},
         "tools": {
             "docker": {"bin": "docker"},
             "java": {"bin": "java"},
@@ -306,20 +543,24 @@ def test_get_bin_command():
         "memory": "16g",
         "tmp": "/tmp/howard",
     }
-
     # Test command bcftools found with bin
     tool_command = get_bin_command(tool="bcftools", config=config, param=param)
     assert os.path.basename(tool_command) == "bcftools"
-
     # Test command bcftools found with docker (specified)
     tool_command = get_bin_command(
         tool="bcftools", bin_type="docker", config=config, param=param
     )
-    assert (
-        "run  --rm  -v /tmp/howard:/tmp/howard  --cpus=2  --memory=16g  --entrypoint='bcftools'  howard:0.11.0 "
-        in tool_command
+    assert all(
+        elem in tool_command
+        for elem in [
+            "--rm",
+            "--cpus=2",
+            "--memory=16g",
+            "--entrypoint='bcftools'",
+            "-v /tmp/howard:/tmp/howard",
+            "howard:0.11.0",
+        ]
     )
-
     # Test command bcftools found with docker with added options
     tool_command = get_bin_command(
         tool="bcftools",
@@ -328,15 +569,18 @@ def test_get_bin_command():
         param=param,
         add_options="-v /host/path/to/mount:/inner/path_to/mount",
     )
-    assert (
-        "run  --rm  -v /tmp/howard:/tmp/howard  --cpus=2  --memory=16g  --entrypoint='bcftools'  -v /host/path/to/mount:/inner/path_to/mount  howard:0.11.0 "
-        in tool_command
+    assert all(
+        elem in tool_command
+        for elem in [
+            "--rm",
+            "--cpus=2",
+            "--memory=16g",
+            "--entrypoint='bcftools'",
+            "-v /host/path/to/mount:/inner/path_to/mount",
+            "-v /tmp/howard:/tmp/howard",
+            "howard:0.11.0",
+        ]
     )
-
-    # Test command snpeff found with java/jar (added options for java optional)
-    tool_command = get_bin_command(tool="snpeff", config=config, param=param)
-    assert tool_command.endswith("snpEff.jar")
-    assert "java  -XX:ParallelGCThreads=2  -XX:MaxHeapSize=16G  -jar " in tool_command
 
 
 def test_download_file():
@@ -941,6 +1185,32 @@ def test_get_index():
     assert get_index(None, values) == -1
 
 
+def test_find_nomen_full_transcripts_as_dict():
+    """
+    The function `test_find_nomen_full()` tests the `find_nomen()` function with various input cases and
+    expected outputs.
+    """
+
+    # Test case 1
+    hgvs = "NM_001637.3:c.1582G>T"
+    transcripts = {"NM_001637.3": 1}
+    expected_output = {
+        "NOMEN": "NM_001637:c.1582G>T",
+        "CNOMEN": "c.1582G>T",
+        "RNOMEN": None,
+        "NNOMEN": None,
+        "PNOMEN": None,
+        "TVNOMEN": "NM_001637.3",
+        "TNOMEN": "NM_001637",
+        "TPNOMEN": None,
+        "TPVNOMEN": None,
+        "VNOMEN": "3",
+        "ENOMEN": None,
+        "GNOMEN": None,
+    }
+    assert find_nomen(hgvs, transcripts=transcripts) == expected_output
+
+
 def test_find_nomen_full():
     """
     The function `test_find_nomen_full()` tests the `find_nomen()` function with various input cases and
@@ -1041,6 +1311,673 @@ def test_find_nomen_full():
         "GNOMEN": "Gene1",
     }
     assert find_nomen(hgvs, transcripts=transcripts) == expected_output
+
+
+@pytest.mark.parametrize(
+    "dict_hgvs, transcripts, pattern, expected_result",
+    [
+        (  # First Transcripts with version
+            {
+                "hgvs": [
+                    "NM_001637.3:c.1582G>T,NM_1234.5:c.1582G>T",
+                    "NM_001637.3:c.1582G>T,NM_1234.5:c.1582G>T",
+                    "NM_001637.3:c.1582G>T,NM_1234.5:c.1582G>T",
+                ],
+                "transcript": [None, None, None],
+            },
+            ["NM_001637.3"],
+            "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN",
+            {
+                0: {
+                    "NOMEN": "NM_001637:c.1582G>T",
+                    "CNOMEN": "c.1582G>T",
+                    "RNOMEN": None,
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": "NM_001637.3",
+                    "TNOMEN": "NM_001637",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "3",
+                    "ENOMEN": None,
+                    "GNOMEN": None,
+                },
+                1: {
+                    "NOMEN": "NM_001637:c.1582G>T",
+                    "CNOMEN": "c.1582G>T",
+                    "RNOMEN": None,
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": "NM_001637.3",
+                    "TNOMEN": "NM_001637",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "3",
+                    "ENOMEN": None,
+                    "GNOMEN": None,
+                },
+                2: {
+                    "NOMEN": "NM_001637:c.1582G>T",
+                    "CNOMEN": "c.1582G>T",
+                    "RNOMEN": None,
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": "NM_001637.3",
+                    "TNOMEN": "NM_001637",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "3",
+                    "ENOMEN": None,
+                    "GNOMEN": None,
+                },
+            },
+        ),
+        (  # Second Transcripts with version
+            {
+                "hgvs": [
+                    "NM_001637.3:c.1582G>T,NM_1234.5:c.1582G>T",
+                    "NM_001637.3:c.1582G>T,NM_1234.5:c.1582G>T",
+                    "NM_001637.3:c.1582G>T,NM_1234.5:c.1582G>T",
+                ],
+                "transcript": [None, None, None],
+            },
+            ["NM_1234.5"],
+            "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN",
+            {
+                0: {
+                    "NOMEN": "NM_1234:c.1582G>T",
+                    "CNOMEN": "c.1582G>T",
+                    "RNOMEN": None,
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": "NM_1234.5",
+                    "TNOMEN": "NM_1234",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "5",
+                    "ENOMEN": None,
+                    "GNOMEN": None,
+                },
+                1: {
+                    "NOMEN": "NM_1234:c.1582G>T",
+                    "CNOMEN": "c.1582G>T",
+                    "RNOMEN": None,
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": "NM_1234.5",
+                    "TNOMEN": "NM_1234",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "5",
+                    "ENOMEN": None,
+                    "GNOMEN": None,
+                },
+                2: {
+                    "NOMEN": "NM_1234:c.1582G>T",
+                    "CNOMEN": "c.1582G>T",
+                    "RNOMEN": None,
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": "NM_1234.5",
+                    "TNOMEN": "NM_1234",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "5",
+                    "ENOMEN": None,
+                    "GNOMEN": None,
+                },
+            },
+        ),
+        (  # First Transcripts without version
+            {
+                "hgvs": [
+                    "NM_001637.3:c.1582G>T,NM_1234.5:c.1582G>T",
+                    "NM_001637.3:c.1582G>T,NM_1234.5:c.1582G>T",
+                    "NM_001637.3:c.1582G>T,NM_1234.5:c.1582G>T",
+                ],
+                "transcript": [None, None, None],
+            },
+            ["NM_001637"],
+            "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN",
+            {
+                0: {
+                    "NOMEN": "NM_001637:c.1582G>T",
+                    "CNOMEN": "c.1582G>T",
+                    "RNOMEN": None,
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": "NM_001637.3",
+                    "TNOMEN": "NM_001637",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "3",
+                    "ENOMEN": None,
+                    "GNOMEN": None,
+                },
+                1: {
+                    "NOMEN": "NM_001637:c.1582G>T",
+                    "CNOMEN": "c.1582G>T",
+                    "RNOMEN": None,
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": "NM_001637.3",
+                    "TNOMEN": "NM_001637",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "3",
+                    "ENOMEN": None,
+                    "GNOMEN": None,
+                },
+                2: {
+                    "NOMEN": "NM_001637:c.1582G>T",
+                    "CNOMEN": "c.1582G>T",
+                    "RNOMEN": None,
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": "NM_001637.3",
+                    "TNOMEN": "NM_001637",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "3",
+                    "ENOMEN": None,
+                    "GNOMEN": None,
+                },
+            },
+        ),
+        (  # Second Transcripts without version with result TVNOMEN
+            {
+                "hgvs": [
+                    "NM_001637.3:c.1582G>T,NM_1234.5:c.1582G>T",
+                    "NM_001637.3:c.1582G>T,NM_1234.5:c.1582G>T",
+                    "NM_001637.3:c.1582G>T,NM_1234.5:c.1582G>T",
+                ],
+                "transcript": [None, None, None],
+            },
+            ["NM_001637"],
+            "GNOMEN:TVNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN",
+            {
+                0: {
+                    "NOMEN": "NM_001637.3:c.1582G>T",
+                    "CNOMEN": "c.1582G>T",
+                    "RNOMEN": None,
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": "NM_001637.3",
+                    "TNOMEN": "NM_001637",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "3",
+                    "ENOMEN": None,
+                    "GNOMEN": None,
+                },
+                1: {
+                    "NOMEN": "NM_001637.3:c.1582G>T",
+                    "CNOMEN": "c.1582G>T",
+                    "RNOMEN": None,
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": "NM_001637.3",
+                    "TNOMEN": "NM_001637",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "3",
+                    "ENOMEN": None,
+                    "GNOMEN": None,
+                },
+                2: {
+                    "NOMEN": "NM_001637.3:c.1582G>T",
+                    "CNOMEN": "c.1582G>T",
+                    "RNOMEN": None,
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": "NM_001637.3",
+                    "TNOMEN": "NM_001637",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "3",
+                    "ENOMEN": None,
+                    "GNOMEN": None,
+                },
+            },
+        ),
+        (  # First Transcripts with version with result with TVNOMEN
+            {
+                "hgvs": [
+                    "NM_001637.3:c.1582G>T,NM_1234.5:c.1582G>T",
+                    "NM_001637.3:c.1582G>T,NM_1234.5:c.1582G>T",
+                    "NM_001637.3:c.1582G>T,NM_1234.5:c.1582G>T",
+                ],
+                "transcript": [None, None, None],
+            },
+            ["NM_001637.3"],
+            "GNOMEN:TVNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN",
+            {
+                0: {
+                    "NOMEN": "NM_001637.3:c.1582G>T",
+                    "CNOMEN": "c.1582G>T",
+                    "RNOMEN": None,
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": "NM_001637.3",
+                    "TNOMEN": "NM_001637",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "3",
+                    "ENOMEN": None,
+                    "GNOMEN": None,
+                },
+                1: {
+                    "NOMEN": "NM_001637.3:c.1582G>T",
+                    "CNOMEN": "c.1582G>T",
+                    "RNOMEN": None,
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": "NM_001637.3",
+                    "TNOMEN": "NM_001637",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "3",
+                    "ENOMEN": None,
+                    "GNOMEN": None,
+                },
+                2: {
+                    "NOMEN": "NM_001637.3:c.1582G>T",
+                    "CNOMEN": "c.1582G>T",
+                    "RNOMEN": None,
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": "NM_001637.3",
+                    "TNOMEN": "NM_001637",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "3",
+                    "ENOMEN": None,
+                    "GNOMEN": None,
+                },
+            },
+        ),
+        (  # First Transcripts with wrong version with result with TVNOMEN
+            {
+                "hgvs": [
+                    "NM_001637.3:c.1582G>T,NM_1234.5:c.1582G>T",
+                    "NM_001637.3:c.1582G>T,NM_1234.5:c.1582G>T",
+                    "NM_001637.3:c.1582G>T,NM_1234.5:c.1582G>T",
+                ],
+                "transcript": [None, None, None],
+            },
+            ["NM_001637.4"],
+            "GNOMEN:TVNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN",
+            {
+                0: {
+                    "NOMEN": "NM_001637.3:c.1582G>T",
+                    "CNOMEN": "c.1582G>T",
+                    "RNOMEN": None,
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": "NM_001637.3",
+                    "TNOMEN": "NM_001637",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "3",
+                    "ENOMEN": None,
+                    "GNOMEN": None,
+                },
+                1: {
+                    "NOMEN": "NM_001637.3:c.1582G>T",
+                    "CNOMEN": "c.1582G>T",
+                    "RNOMEN": None,
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": "NM_001637.3",
+                    "TNOMEN": "NM_001637",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "3",
+                    "ENOMEN": None,
+                    "GNOMEN": None,
+                },
+                2: {
+                    "NOMEN": "NM_001637.3:c.1582G>T",
+                    "CNOMEN": "c.1582G>T",
+                    "RNOMEN": None,
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": "NM_001637.3",
+                    "TNOMEN": "NM_001637",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "3",
+                    "ENOMEN": None,
+                    "GNOMEN": None,
+                },
+            },
+        ),
+        (  # Second Transcripts with wrong version: found first Transcripts
+            {
+                "hgvs": [
+                    "NM_001637.3:c.1582G>T,NM_1234.5:c.1582G>T",
+                    "NM_001637.3:c.1582G>T,NM_1234.5:c.1582G>T",
+                    "NM_001637.3:c.1582G>T,NM_1234.5:c.1582G>T",
+                ],
+                "transcript": [None, None, None],
+            },
+            ["NM_1234.6"],
+            "GNOMEN:TVNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN",
+            {
+                0: {
+                    "NOMEN": "NM_001637.3:c.1582G>T",
+                    "CNOMEN": "c.1582G>T",
+                    "RNOMEN": None,
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": "NM_001637.3",
+                    "TNOMEN": "NM_001637",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "3",
+                    "ENOMEN": None,
+                    "GNOMEN": None,
+                },
+                1: {
+                    "NOMEN": "NM_001637.3:c.1582G>T",
+                    "CNOMEN": "c.1582G>T",
+                    "RNOMEN": None,
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": "NM_001637.3",
+                    "TNOMEN": "NM_001637",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "3",
+                    "ENOMEN": None,
+                    "GNOMEN": None,
+                },
+                2: {
+                    "NOMEN": "NM_001637.3:c.1582G>T",
+                    "CNOMEN": "c.1582G>T",
+                    "RNOMEN": None,
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": "NM_001637.3",
+                    "TNOMEN": "NM_001637",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "3",
+                    "ENOMEN": None,
+                    "GNOMEN": None,
+                },
+            },
+        ),
+        (  # List of transcript column with first transcript first
+            {
+                "hgvs": [
+                    "NM_001637.3:c.1582G>T,NM_1234.5:c.1582G>T",
+                    "NM_001637.3:c.1582G>T,NM_1234.5:c.1582G>T",
+                    "NM_001637.3:c.1582G>T,NM_1234.5:c.1582G>T",
+                ],
+                "transcript": ["NM_001637.3,NM_1234.5", "", ""],
+            },
+            ["NM_001637.3"],
+            "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN",
+            {
+                0: {
+                    "NOMEN": "NM_001637:c.1582G>T",
+                    "CNOMEN": "c.1582G>T",
+                    "RNOMEN": None,
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": "NM_001637.3",
+                    "TNOMEN": "NM_001637",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "3",
+                    "ENOMEN": None,
+                    "GNOMEN": None,
+                },
+                1: {
+                    "NOMEN": "NM_001637:c.1582G>T",
+                    "CNOMEN": "c.1582G>T",
+                    "RNOMEN": None,
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": "NM_001637.3",
+                    "TNOMEN": "NM_001637",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "3",
+                    "ENOMEN": None,
+                    "GNOMEN": None,
+                },
+                2: {
+                    "NOMEN": "NM_001637:c.1582G>T",
+                    "CNOMEN": "c.1582G>T",
+                    "RNOMEN": None,
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": "NM_001637.3",
+                    "TNOMEN": "NM_001637",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "3",
+                    "ENOMEN": None,
+                    "GNOMEN": None,
+                },
+            },
+        ),
+        (  # List of transcript column with second transcript first
+            {
+                "hgvs": [
+                    "NM_001637.3:c.1582G>T,NM_1234.5:c.1582G>T",
+                    "NM_001637.3:c.1582G>T,NM_1234.5:c.1582G>T",
+                    "NM_001637.3:c.1582G>T,NM_1234.5:c.1582G>T",
+                ],
+                "transcript": ["NM_1234.5,NM_001637.3", "", ""],
+            },
+            ["NM_001637.3"],
+            "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN",
+            {
+                0: {
+                    "NOMEN": "NM_1234:c.1582G>T",
+                    "CNOMEN": "c.1582G>T",
+                    "RNOMEN": None,
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": "NM_1234.5",
+                    "TNOMEN": "NM_1234",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "5",
+                    "ENOMEN": None,
+                    "GNOMEN": None,
+                },
+                1: {
+                    "NOMEN": "NM_001637:c.1582G>T",
+                    "CNOMEN": "c.1582G>T",
+                    "RNOMEN": None,
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": "NM_001637.3",
+                    "TNOMEN": "NM_001637",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "3",
+                    "ENOMEN": None,
+                    "GNOMEN": None,
+                },
+                2: {
+                    "NOMEN": "NM_001637:c.1582G>T",
+                    "CNOMEN": "c.1582G>T",
+                    "RNOMEN": None,
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": "NM_001637.3",
+                    "TNOMEN": "NM_001637",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "3",
+                    "ENOMEN": None,
+                    "GNOMEN": None,
+                },
+            },
+        ),
+        (  # List of transcript column with only second transcript
+            {
+                "hgvs": [
+                    "NM_001637.3:c.1582G>T,NM_1234.5:c.1582G>T",
+                    "NM_001637.3:c.1582G>T,NM_1234.5:c.1582G>T",
+                    "NM_001637.3:c.1582G>T,NM_1234.5:c.1582G>T",
+                ],
+                "transcript": ["NM_1234.5", "", ""],
+            },
+            ["NM_001637.3"],
+            "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN",
+            {
+                0: {
+                    "NOMEN": "NM_1234:c.1582G>T",
+                    "CNOMEN": "c.1582G>T",
+                    "RNOMEN": None,
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": "NM_1234.5",
+                    "TNOMEN": "NM_1234",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "5",
+                    "ENOMEN": None,
+                    "GNOMEN": None,
+                },
+                1: {
+                    "NOMEN": "NM_001637:c.1582G>T",
+                    "CNOMEN": "c.1582G>T",
+                    "RNOMEN": None,
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": "NM_001637.3",
+                    "TNOMEN": "NM_001637",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "3",
+                    "ENOMEN": None,
+                    "GNOMEN": None,
+                },
+                2: {
+                    "NOMEN": "NM_001637:c.1582G>T",
+                    "CNOMEN": "c.1582G>T",
+                    "RNOMEN": None,
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": "NM_001637.3",
+                    "TNOMEN": "NM_001637",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "3",
+                    "ENOMEN": None,
+                    "GNOMEN": None,
+                },
+            },
+        ),
+        (  # simple test
+            {
+                "hgvs": [
+                    "NM_001637.3:c.1582G>T,NM_001637.3:c.1583G>T",
+                ],
+                "transcript": [None],
+            },
+            ["NM_001637.3"],
+            "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN",
+            {
+                0: {
+                    "NOMEN": "NM_001637:c.1582G>T",
+                    "CNOMEN": "c.1582G>T",
+                    "RNOMEN": None,
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": "NM_001637.3",
+                    "TNOMEN": "NM_001637",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "3",
+                    "ENOMEN": None,
+                    "GNOMEN": None,
+                }
+            },
+        ),
+        (  # simple test with hgvs including gene and exon, NR ID, no transcripts
+            {
+                "hgvs": [
+                    "Gene1:exon12:n.1582G>T:NR_001637.3",
+                ],
+                "transcript": [None],
+            },
+            [],
+            "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN",
+            {
+                0: {
+                    "NOMEN": "Gene1:NR_001637:exon12:n.1582G>T",
+                    "CNOMEN": None,
+                    "RNOMEN": None,
+                    "NNOMEN": "n.1582G>T",
+                    "PNOMEN": None,
+                    "TVNOMEN": "NR_001637.3",
+                    "TNOMEN": "NR_001637",
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": "3",
+                    "ENOMEN": "exon12",
+                    "GNOMEN": "Gene1",
+                }
+            },
+        ),
+        (  # simple test with hgvs including gene and exon, and CNOME with r.
+            {
+                "hgvs": [
+                    "Gene1:exon12:r.1582G>T",
+                ],
+                "transcript": [None],
+            },
+            [],
+            "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN",
+            {
+                0: {
+                    "NOMEN": "Gene1:exon12:r.1582G>T",
+                    "CNOMEN": None,
+                    "RNOMEN": "r.1582G>T",
+                    "NNOMEN": None,
+                    "PNOMEN": None,
+                    "TVNOMEN": None,
+                    "TNOMEN": None,
+                    "TPVNOMEN": None,
+                    "TPNOMEN": None,
+                    "VNOMEN": None,
+                    "ENOMEN": "exon12",
+                    "GNOMEN": "Gene1",
+                }
+            },
+        ),
+    ],
+)
+def test_find_nomen_full_dataframe(dict_hgvs, transcripts, pattern, expected_result):
+    """
+    The function `test_find_nomen_full()` tests the `find_nomen()` function with various input cases and
+    expected outputs.
+    """
+
+    # Create dataframe
+    dataframe_hgvs = pd.DataFrame(dict_hgvs)
+
+    # Find NOMEN
+    dataframe_hgvs["result"] = dataframe_hgvs.apply(
+        lambda x: find_nomen(
+            hgvs=x.get("hgvs"),
+            transcript=x.get("transcript"),
+            transcripts=transcripts,
+            pattern=pattern,
+        ),
+        axis=1,
+    )
+
+    # Check
+    assert dataframe_hgvs.to_dict().get("result") == expected_result
 
 
 def test_find():
@@ -1477,3 +2414,31 @@ def test_get_duckdb_extension_file():
     conn = duckdb.connect()
 
     assert get_duckdb_extension_file("sqlite_scanner", conn=conn)
+
+
+def test_clean_annotation_field_basic_alphanumeric():
+    assert clean_annotation_field("HelloWorld") == "HelloWorld"
+
+
+def test_clean_annotation_field_with_special_characters():
+    assert clean_annotation_field("Hello, World!") == "HelloWorld"
+
+
+def test_clean_annotation_field_with_allowed_characters():
+    assert clean_annotation_field("Hello-World", char_allowed=["-"]) == "Hello-World"
+
+
+def test_clean_annotation_field_empty_string():
+    assert clean_annotation_field("") == ""
+
+
+def test_clean_annotation_field_no_allowed_characters():
+    assert clean_annotation_field("Hello@World#2023") == "HelloWorld2023"
+
+
+def test_clean_annotation_field_all_characters_removed():
+    assert clean_annotation_field("!!!") == ""
+
+
+def test_clean_annotation_field_non_alphanumeric_with_allowed_chars():
+    assert clean_annotation_field("Test123!@#", char_allowed=["!"]) == "Test123!"

@@ -4,5 +4,160 @@
         "phylop": "https://hgdownload.cse.ucsc.edu/goldenPath",
         "phastcons": "https://hgdownload.cse.ucsc.edu/goldenPath",
         "alphamissence": "https://zenodo.org/api/records/8208688/files-archive"
+    },
+    "header": {
+        "phyloP": {
+            "phyloP100way": {
+                "Number": "1",
+                "Type": "Float",
+                "Description": "phloP100way score comming from NCBI, range: -14.08 to 6.424"
+            }
+        },
+        "phastCons": {
+            "phastCons100way": {
+                "Number": "1",
+                "Type": "Float",
+                "Description": "phastCons score comming from NCBI, range 0-1"
+            }
+        },
+        "ALFA": {
+            "ALFA_AFA": {
+                "Number": "1",
+                "Type": "Float",
+                "Description": "Allele Frequency Aggregator, comming from chip array from almost 1M subject in dbGaP project, ALFA African American"
+            },
+            "ALFA_AFO": {
+                "Number": "1",
+                "Type": "Float",
+                "Description": "Allele Frequency Aggregator, comming from chip array from almost 1M subject in dbGaP project, ALFA African Others"
+            },
+            "ALFA_AFR": {
+                "Number": "1",
+                "Type": "Float",
+                "Description": "Allele Frequency Aggregator, comming from chip array from almost 1M subject in dbGaP project, ALFA African"
+            },
+            "ALFA_ASN": {
+                "Number": "1",
+                "Type": "Float",
+                "Description": "Allele Frequency Aggregator, comming from chip array from almost 1M subject in dbGaP project, ALFA Asian"
+            },
+            "ALFA_EAS": {
+                "Number": "1",
+                "Type": "Float",
+                "Description": "Allele Frequency Aggregator, comming from chip array from almost 1M subject in dbGaP project, ALFA East Asian"
+            },
+            "ALFA_EUR": {
+                "Number": "1",
+                "Type": "Float",
+                "Description": "Allele Frequency Aggregator, comming from chip array from almost 1M subject in dbGaP project, ALFA European"
+            },
+            "ALFA_GLB": {
+                "Number": "1",
+                "Type": "Float",
+                "Description": "Allele Frequency Aggregator, comming from chip array from almost 1M subject in dbGaP project, ALFA total population"
+            },
+            "ALFA_LAC": {
+                "Number": "1",
+                "Type": "Float",
+                "Description": "Allele Frequency Aggregator, comming from chip array from almost 1M subject in dbGaP project, ALFA Latin American 1"
+            },
+            "ALFA_LEN": {
+                "Number": "1",
+                "Type": "Float",
+                "Description": "Allele Frequency Aggregator, comming from chip array from almost 1M subject in dbGaP project, ALFA Latin American 2"
+            },
+            "ALFA_OAS": {
+                "Number": "1",
+                "Type": "Float",
+                "Description": "Allele Frequency Aggregator, comming from chip array from almost 1M subject in dbGaP project, ALFA Other Asian"
+            },
+            "ALFA_OTR": {
+                "Number": "1",
+                "Type": "Float",
+                "Description": "Allele Frequency Aggregator, comming from chip array from almost 1M subject in dbGaP project, ALFA Other population"
+            },
+            "ALFA_SAS": {
+                "Number": "1",
+                "Type": "Float",
+                "Description": "Allele Frequency Aggregator, comming from chip array from almost 1M subject in dbGaP project, ALFA South Asian"
+            }
+        },
+        "gnomAD": {
+            "AC_all": {
+                "Number": "1",
+                "Type": "Integer",
+                "Description": "Allele Count for all population"
+            },
+            "AN_all": {
+                "Number": "1",
+                "Type": "Integer",
+                "Description": "Allele Number for all population"
+            },
+            "gnomadAltFreq_amr": {
+                "Number": "1",
+                "Type": "Float",
+                "Description": "Allele Frequency from Latino/Admixed American"
+            },
+            "gnomadAltFreq_afr": {
+                "Number": "1",
+                "Type": "Float",
+                "Description": "Allele Frequency from African/African American"
+            },
+            "gnomadAltFreq_asj": {
+                "Number": "1",
+                "Type": "Float",
+                "Description": "Allele Frequency from Ashkenazi Jewish"
+            },
+            "gnomadAltFreq_eas": {
+                "Number": "1",
+                "Type": "Float",
+                "Description": "Allele Frequency from East Asian"
+            },
+            "gnomadAltFreq_fin": {
+                "Number": "1",
+                "Type": "Float",
+                "Description": "Allele Frequency from European Finnish"
+            },
+            "gnomadAltFreq_nfe": {
+                "Number": "1",
+                "Type": "Float",
+                "Description": "Allele Frequency from Non-Finnish European"
+            },
+            "gnomadAltFreq_oth": {
+                "Number": "1",
+                "Type": "Float",
+                "Description": "Allele Frequency from Other (population not assigned)"
+            },
+            "gnomadAltFreq_sas": {
+                "Number": "1",
+                "Type": "Float",
+                "Description": "Allele Frequency from South Asian"
+            },
+            "gnomadAltFreq_popmax": {
+                "Number": "1",
+                "Type": "Float",
+                "Description": "Allele Frequency from the max population (AC)"
+            },
+            "gnomadAltFreq_all": {
+                "Number": "1",
+                "Type": "Float",
+                "Description": "Allele Frequency from all population"
+            },
+            "gnomadHomCount_all": {
+                "Number": "1",
+                "Type": "Integer",
+                "Description": "Count of homozygous variant from all population"
+            },
+            "gnomadHetCount_all": {
+                "Number": "1",
+                "Type": "Integer",
+                "Description": "Count of heterozygous variant from all population"
+            },
+            "gnomadHemCount_all": {
+                "Number": "1",
+                "Type": "Integer",
+                "Description": "Count of heterozygous variant from all population"
+            }
+        }
     }
 }

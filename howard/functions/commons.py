@@ -506,36 +506,55 @@ def find_file_prefix(
 
 
 def find_nomen(
-    hgvs: str = "",
-    pattern="GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN",
+    hgvs: pd.DataFrame,
+    transcript: str = None,
     transcripts: list = [],
+    transcripts_source_order: list = None,
+    pattern=None,
+    transcripts_len: int = None
 ) -> dict:
     """
-    > This function takes a HGVS string and a list of transcripts and returns a dictionary with the best
-    NOMEN for each HGVS string
+    The function `find_nomen` takes a HGVS string and a list of transcripts, parses the HGVS string, and
+    returns a dictionary with the best NOMEN based on specified patterns.
 
-    :param hgvs: The HGVS string to parse
-    :type hgvs: str
-    :param pattern: This is the pattern that you want to use to construct the NOMEN. The default is
-    "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN". This means that the NOMEN will be constructed by
-    joining, defaults to GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN (optional)
-    :param transcripts: list of transcripts to use for ranking
+    :param hgvs: The `hgvs` parameter is a DataFrame containing the HGVS strings to parse. It seems like
+    the function is designed to process multiple HGVS strings at once. You can pass this DataFrame to
+    the function for processing. If you have a specific DataFrame that you would like to use, please
+    provide it
+    :type hgvs: pd.DataFrame
+    :param transcript: The `transcript` parameter in the `find_nomen` function is used to specify a
+    single transcript to use for ranking. It is a string that represents the transcript. If provided,
+    this transcript will be used along with the transcripts from the `transcripts` list to determine the
+    best NOMEN
+    :type transcript: str
+    :param transcripts: Transcripts are a list of transcripts to use for ranking in the `find_nomen`
+    function. You can provide a list of transcripts that you want to consider when constructing the
+    NOMEN for a given HGVS string
     :type transcripts: list
-    :return: A dictionary with the following keys:
-        NOMEN
-        CNOMEN
-        RNOMEN
-        NNOMEN
-        PNOMEN
-        TVNOMEN
-        TNOMEN
-        TPVNOMEN
-        TPNOMEN
-        VNOMEN
-        ENOMEN
-        GNOMEN
+    :param transcripts_source_order: The `transcripts_source_order` parameter is a list that specifies
+    the order in which different sources of transcripts should be considered. In the provided function,
+    the default order is `["column", "file"]`, which means that transcripts from a column in the input
+    data will be considered first, followed by
+    :type transcripts_source_order: list
+    :param pattern: The `pattern` parameter in the `find_nomen` function is used to specify the format
+    in which the NOMEN should be constructed. By default, the pattern is set to
+    "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN
+    :return: The function `find_nomen` returns a dictionary containing the following keys:
+    - NOMEN
+    - CNOMEN
+    - RNOMEN
+    - NNOMEN
+    - PNOMEN
+    - TVNOMEN
+    - TNOMEN
+    - TPVNOMEN
+    - TPNOMEN
+    - VNOMEN
+    - ENOMEN
+    - GNOMEN
     """
 
+    # Result structure
     empty_nomen_dict = {
         "NOMEN": None,
         "CNOMEN": None,
@@ -550,10 +569,48 @@ def find_nomen(
         "ENOMEN": None,
         "GNOMEN": None,
     }
-
     nomen_dict = empty_nomen_dict.copy()
 
-    if hgvs != "nan":
+    # Transcripts list
+    transcripts_list = transcripts.copy()
+
+    # Transcript as a list (create dict with rank, slow)
+    if isinstance(transcripts_list, list):
+        transcripts_list_tmp = {}
+        for rank, source in enumerate(transcripts_list, start=1):
+            transcripts_list_tmp[source] = rank
+        transcripts_list = transcripts_list_tmp
+
+
+    # Pattern
+    if pattern is None:
+        pattern = "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN"
+
+    # Transcripts source order and rank
+    if transcripts_source_order is None:
+        transcripts_source_order = ["column", "file"]
+    transcripts_source_order_rank = {}
+    for rank, source in enumerate(transcripts_source_order, start=1):
+        transcripts_source_order_rank[source] = rank
+
+    # Transcripts file length
+    if transcripts_len is None:
+        transcripts_len = len(transcripts_list)
+
+    # Check if transcript in column transcript, and add to transcripts list/rank
+    transcript_shift = 0
+    if transcript is not None and str(transcript) != "nan":
+        transcript_list = str(transcript).split(",")
+        if transcripts_source_order_rank.get("column", 0) < transcripts_source_order_rank.get("file", 0):
+            transcript_shift = len(transcript_list)
+        for rank, transcript in enumerate(transcript_list, start=1):
+            if transcripts_source_order_rank.get("column", 0) < transcripts_source_order_rank.get("file", 0):
+                transcripts_list[transcript] = rank - len(transcript_list)
+            elif transcript not in transcripts:
+                transcripts_list[transcript] = rank + transcripts_len
+
+    # If hgvs not empty
+    if str(hgvs) != "nan":
 
         hgvs_split = str(hgvs).split(",")
 
@@ -587,15 +644,15 @@ def find_nomen(
                         one_nomen_score += 1
                     # NOMEN with default transcript
                     if (
-                        one_nomen_dict["TVNOMEN"] in transcripts
-                        or one_nomen_dict["TNOMEN"] in transcripts
+                        one_nomen_dict["TVNOMEN"] in transcripts_list
+                        or one_nomen_dict["TNOMEN"] in transcripts_list
                     ):
                         rank = max(
-                            get_index(one_nomen_dict["TVNOMEN"], transcripts),
-                            get_index(one_nomen_dict["TNOMEN"], transcripts),
-                        )
+                            transcripts_list.get(one_nomen_dict["TVNOMEN"], - transcript_shift - 1),
+                            transcripts_list.get(one_nomen_dict["TNOMEN"], - transcript_shift - 1)
+                            ) + transcript_shift
                         if rank >= 0:
-                            one_nomen_score += 100 * (len(transcripts) - rank)
+                            one_nomen_score += 100 * (len(transcripts_list) - rank + 1)
 
                 elif re.match(r"^[NX]P_(.*)$", one_hgvs_infos):
                     # Transcript Protein with version
@@ -642,9 +699,99 @@ def find_nomen(
     return nomen_dict
 
 
+def explode_annotation_format(
+    annotation: str = "",
+    uniquify: bool = False,
+    output_format: str = "fields",
+    prefix: str = "ANN_",
+    header: list = [
+        "Allele",
+        "Annotation",
+        "Annotation_Impact",
+        "Gene_Name",
+        "Gene_ID",
+        "Feature_Type",
+        "Feature_ID",
+        "Transcript_BioType",
+        "Rank",
+        "HGVS.c",
+        "HGVS.p",
+        "cDNA.pos / cDNA.length",
+        "CDS.pos / CDS.length",
+        "AA.pos / AA.length",
+        "Distance",
+        "ERRORS / WARNINGS / INFO",
+    ],
+) -> str:
+    """
+    The `explode_annotation_format` function takes an annotation string and formats it into a specified
+    output format with optional customization parameters.
+
+    :param annotation: The `annotation` parameter is a string containing multiple annotations separated
+    by commas and pipe symbols. Each annotation consists of different fields separated by pipe symbols.
+    For example, an annotation string could look like this: "A|B|C,D|E|F"
+    :type annotation: str
+    :param uniquify: The `uniquify` parameter in the `explode_annotation_format` function is a boolean
+    flag that determines whether to keep only unique values for each annotation field. If set to `True`,
+    only unique values will be retained for each field before joining them together. If set to `False`,
+    all values, defaults to False
+    :type uniquify: bool (optional)
+    :param output_format: The `output_format` parameter specifies the format in which you want the
+    output to be generated. The function supports two output formats: "fields" and "JSON". If you choose
+    "fields", the output will be a string with annotations separated by semicolons. If you choose
+    "JSON", the, defaults to fields
+    :type output_format: str (optional)
+    :param prefix: The `prefix` parameter in the `explode_annotation_format` function is used to specify
+    the prefix that will be added to each annotation field when generating the exploded annotation
+    string. In the provided function, the default prefix value is set to "ANN_". You can customize this
+    prefix value to suit your specific, defaults to ANN_
+    :type prefix: str (optional)
+    :param header: The `header` parameter in the `explode_annotation_format` function is a list of
+    column names that will be used to create a DataFrame from the input annotation string. Each element
+    in the `header` list corresponds to a specific field in the annotation data
+    :type header: list
+    :return: The function `explode_annotation_format` returns a string that contains the exploded and
+    formatted annotation information based on the input parameters provided. The format of the returned
+    string depends on the `output_format` parameter. If `output_format` is set to "JSON", the function
+    returns a JSON-formatted string. Otherwise, it returns a string with annotations formatted based on
+    the other parameters such as `uniquify
+    """
+
+    # Split annotation ann values
+    annotation_infos = [x.split("|") for x in annotation.split(",")]
+
+    # Create Dataframe
+    annotation_dict = {}
+    for i in range(len(header)):
+        if output_format.upper() in ["JSON"]:
+            header_clean = header[i]
+        else:
+            header_clean = "".join(char for char in header[i] if char.isalnum())
+        annotation_dict[header_clean] = [x[i] for x in annotation_infos]
+    df = pd.DataFrame.from_dict(annotation_dict, orient="index").transpose()
+
+    # Fetch each annotations
+    if output_format.upper() in ["JSON"]:
+        annotation_explode = df.transpose().to_json()
+    else:
+        ann_list = []
+        for annotation in df:
+            if uniquify:
+                ann_list_infos = ",".join(df[annotation].unique())
+            else:
+                ann_list_infos = ",".join(df[annotation])
+            if ann_list_infos:
+                ann_list.append(f"{prefix}{annotation}={ann_list_infos}")
+
+        # join list
+        annotation_explode = ";".join(ann_list)
+
+    return annotation_explode
+
+
 def extract_snpeff_hgvs(
     snpeff: str = "",
-    header: str = [
+    header: list = [
         "Allele",
         "Annotation",
         "Annotation_Impact",
@@ -677,8 +824,6 @@ def extract_snpeff_hgvs(
     :return: a string that contains the HGVS annotations extracted from the input SNPEff annotation
     string.
     """
-
-    log.debug(f"snpeff={snpeff}")
 
     # Split snpeff ann values
     snpeff_infos = [x.split("|") for x in snpeff.split(",")]
@@ -721,6 +866,92 @@ def extract_snpeff_hgvs(
     snpeff_hgvs = ",".join(hgvs_list)
 
     return snpeff_hgvs
+
+
+def explode_snpeff_ann(
+    snpeff: str = "",
+    uniquify: bool = False,
+    output_format: str = "fields",
+    prefix: str = "ANN_",
+    header: list = [
+        "Allele",
+        "Annotation",
+        "Annotation_Impact",
+        "Gene_Name",
+        "Gene_ID",
+        "Feature_Type",
+        "Feature_ID",
+        "Transcript_BioType",
+        "Rank",
+        "HGVS.c",
+        "HGVS.p",
+        "cDNA.pos / cDNA.length",
+        "CDS.pos / CDS.length",
+        "AA.pos / AA.length",
+        "Distance",
+        "ERRORS / WARNINGS / INFO",
+    ],
+) -> str:
+    """
+    The `explode_snpeff_ann` function takes a string of SNPEff annotations, splits and processes them
+    based on specified parameters, and returns the processed annotations in a specified output format.
+
+    :param snpeff: The `snpeff` parameter is a string containing annotations separated by commas. Each
+    annotation is further divided into different fields separated by pipes (|)
+    :type snpeff: str
+    :param uniquify: The `uniquify` parameter in the `explode_snpeff_ann` function is a boolean flag
+    that determines whether to keep only unique values for each annotation field or not. If `uniquify`
+    is set to `True`, only unique values will be kept for each annotation field. If, defaults to False
+    :type uniquify: bool (optional)
+    :param output_format: The `output_format` parameter in the `explode_snpeff_ann` function specifies
+    the format in which the output will be generated. The function supports two output formats: "fields"
+    and "JSON", defaults to fields
+    :type output_format: str (optional)
+    :param prefix: The `prefix` parameter in the `explode_snpeff_ann` function is used to specify the
+    prefix that will be added to each annotation field in the output. For example, if the prefix is set
+    to "ANN_", then the output annotations will be formatted as "ANN_Annotation=example_annotation,
+    defaults to ANN_
+    :type prefix: str (optional)
+    :param header: The `header` parameter in the `explode_snpeff_ann` function is a list of strings that
+    represent the column names or fields for the output data. These strings include information such as
+    allele, annotation, gene name, gene ID, feature type, transcript biotype, and various other details
+    related
+    :type header: list
+    :return: The function `explode_snpeff_ann` returns a string that contains the exploded and formatted
+    SNPEff annotations based on the input parameters provided. The specific format of the returned
+    string depends on the `output_format`, `uniquify`, and other parameters specified in the function.
+    """
+
+    # Split snpeff ann values
+    snpeff_infos = [x.split("|") for x in snpeff.split(",")]
+
+    # Create Dataframe
+    snpeff_dict = {}
+    for i in range(len(header)):
+        if output_format.upper() in ["JSON"]:
+            header_clean = header[i]
+        else:
+            header_clean = "".join(char for char in header[i] if char.isalnum())
+        snpeff_dict[header_clean] = [x[i] for x in snpeff_infos]
+    df = pd.DataFrame.from_dict(snpeff_dict, orient="index").transpose()
+
+    # Fetch each annotations
+    if output_format.upper() in ["JSON"]:
+        snpeff_ann_explode = df.transpose().to_json()
+    else:
+        ann_list = []
+        for annotation in df:
+            if uniquify:
+                ann_list_infos = ",".join(df[annotation].unique())
+            else:
+                ann_list_infos = ",".join(df[annotation])
+            if ann_list_infos:
+                ann_list.append(f"{prefix}{annotation}={ann_list_infos}")
+
+        # join list
+        snpeff_ann_explode = ";".join(ann_list)
+
+    return snpeff_ann_explode
 
 
 def get_index(value, values: list = []) -> int:
@@ -1493,7 +1724,6 @@ def get_bin_command(
     threads = get_threads(config=config, param=param)
     memory = extract_memory_in_go(get_memory(config=config, param=param))
     tmp = get_tmp(config=config, param=param)
-
     # Java and jar command
     if tool_bin_type in ["jar", "java"]:
 
@@ -1517,7 +1747,6 @@ def get_bin_command(
 
         # Java Command for tool
         tool_command = f"{java_bin} {java_options} -jar {tool_bin}"
-
         # Return tool java command
         return tool_command
 
@@ -1535,17 +1764,41 @@ def get_bin_command(
         tool_bin_docker_entrypoint = tool_bin_dict.get("entrypoint", None)
         tool_bin_docker_command = tool_bin_dict.get("command", "")
         tool_bin_docker_options = tool_bin_dict.get("options", "")
-
         if not tool_bin_docker_image:
             msg_error = f"Error in Docker command for tool '{tool}'"
             log.error(msg_error)
             raise ValueError(msg_error)
 
         # Create default param
-        tool_bin_docker_params = " --rm "
+        tool_bin_docker_params = ""
+        if (
+            config.get("tools", {})
+            .get(tool, {})
+            .get("docker", {})
+            .get("config", {})
+            .get("notremove", "")
+            is True
+        ):
+            tool_bin_docker_params += ""
+        elif config.get("docker", {}).get("notremove", "") is True:
+            tool_bin_docker_params += ""
+        else:
+            tool_bin_docker_params += " --rm "
 
         # Temp folder by default
-        tool_bin_docker_params += f" -v {tmp}:{tmp} "
+        if (
+            config.get("tools", {})
+            .get(tool, {})
+            .get("docker", {})
+            .get("config", {})
+            .get("tmp", "")
+            is True
+        ):
+            tool_bin_docker_params += f" -v {tmp}:{tmp} "
+        elif config.get("docker", {}).get("tmp", "") is True:
+            tool_bin_docker_params += f" -v {tmp}:{tmp} "
+        else:
+            tool_bin_docker_params += ""
 
         # Threads
         if threads:
@@ -1555,11 +1808,47 @@ def get_bin_command(
         if memory:
             tool_bin_docker_params += f" --memory={memory}g "
 
+        def mount_folder(config):
+            add_options = ""
+            for databases, path in (
+                config.get("folders", {}).get("databases", {}).items()
+            ):
+                if path and isinstance(path, str):
+                    add_options += f" -v {path}:{path}:ro"
+                elif path and isinstance(path, list):
+                    for pathlist in path:
+                        add_options += f" -v {pathlist}:{pathlist}:ro"
+            return add_options
+
         # Init docker param
         if tool_bin_docker_options:
             tool_bin_docker_params += f" {tool_bin_docker_options} "
 
-        # Check params to add
+        # Mount folder only
+        if (
+            config.get("tools", {})
+            .get(tool, {})
+            .get("docker", {})
+            .get("config", {})
+            .get("automount", "")
+            is False
+        ):
+            tool_bin_docker_params += mount_folder(config)
+        elif (
+            config.get("tools", {})
+            .get(tool, {})
+            .get("docker", {})
+            .get("config", {})
+            .get("automount", "")
+            is True
+        ):
+            tool_bin_docker_params += docker_automount()
+        elif config.get("docker", {}).get("automount", "") is False:
+            tool_bin_docker_params += mount_folder(config)
+        elif config.get("docker", {}).get("automount", "") is True:
+            tool_bin_docker_params += docker_automount()
+        else:
+            tool_bin_docker_params += mount_folder(config)
 
         # Entrypoint
         if tool_bin_docker_entrypoint:
@@ -2432,11 +2721,15 @@ def get_argument_to_mk(arg: str, argument: dict = {}, mode: str = "mk") -> str:
         text += "\n\n"
         text += f"</pre>"
     else:
-        text += f"```\n"
-        text += text_header
-        text += "\n\n"
-        text += str(help)
-        text += "\n```\n\n"
+        text += "\n<small>\n"
+        text += "\n> ```\n"
+        text += f">     {text_header}"
+        text += "\n> \n> "
+        text += str(help).strip().replace("\n", "\n> ")
+        text += "\n> ```\n"
+        text += "\n</small>\n"
+        text += "\n"
+        text += ""
 
     return text
 
@@ -2451,6 +2744,7 @@ def help_generation_from_dict(
     generate_table: bool = False,
     code_type: str = "",
     auto_default: bool = True,
+    previous_sections: bool = False,
 ):
     """
     The `help_generation_from_dict` function generates help documentation from a dictionary input,
@@ -2474,7 +2768,8 @@ def help_generation_from_dict(
     :type previous: str
     :param output_type: The `output_type` parameter in the `help_generation_from_dict` function
     specifies the type of output format that you want the generated help documentation to be in. It can
-    take two possible values: "markdown" or "html", defaults to markdown
+    take two possible values: "markdown" or "html". By default, the output type is set to markdown,
+    defaults to markdown
     :type output_type: str (optional)
     :param level: The `level` parameter in the `help_generation_from_dict` function is used to keep
     track of the depth or level of recursion in the generation process. It starts at 1 for the initial
@@ -2484,22 +2779,33 @@ def help_generation_from_dict(
     :param table: The `table` parameter in the `help_generation_from_dict` function is used to store the
     table of contents for the generated help documentation. It is a string that contains the formatted
     table of contents with links to different sections or elements within the documentation. This table
-    helps users navigate through the documentation easily and
+    helps users navigate through the documentation easily
     :type table: str
     :param generate_table: The `generate_table` parameter in the `help_generation_from_dict` function is
     a boolean flag that determines whether the function should generate a table of contents for the help
     documentation. When set to `True`, the function will include a table of contents in the output based
     on the hierarchy of elements in the, defaults to False
     :type generate_table: bool (optional)
-    :param code_type: The `code_type` parameter in the `help_generation_from_dict`
-    function specifies the type of code examples that will be included in the generated help
-    documentation. It defaults to "json", meaning that the code examples provided in the
-    "__examples_code" section of the dictionary will be in JSON format, defaults to json
-    :type code_type: str (optional)
-    :return: The function `help_generation_from_dict` is returning the generated help documentation
-    based on the input `help_dict` dictionary. The output is formatted based on the specified
-    `output_type` (either "markdown" or "html") and includes sections such as "__help", "__format",
-    "__default", and "__examples" if they are present in the `help_dict`.
+    :param code_type: The `code_type` parameter in the `help_generation_from_dict` function specifies
+    the type of code examples that will be included in the generated help documentation. It defaults to
+    "json", meaning that the code examples provided in the "__examples_code" section of the dictionary
+    will be in JSON format
+    :type code_type: str
+    :param auto_default: The `auto_default` parameter in the `help_generation_from_dict` function is a
+    boolean flag that determines whether the function should automatically populate certain sections of
+    the help documentation based on the information available in the dictionary and the element's
+    arguments. When set to `True`, the function will automatically fill in sections, defaults to True
+    :type auto_default: bool (optional)
+    :param previous_sections: The `previous_sections` parameter in the `help_generation_from_dict`
+    function is a boolean flag that determines whether the function should include previous sections in
+    the hierarchy when generating help documentation for nested elements. When set to `True`, the
+    function will maintain the previous sections in the hierarchy path, helping to provide, defaults to
+    False
+    :type previous_sections: bool (optional)
+    :return: The `help_generation_from_dict` function returns the generated help documentation based on
+    the input `help_dict` dictionary. The output is formatted based on the specified `output_type`
+    (either "markdown" or "html") and includes sections such as "__help", "__format", "__default", and
+    "__examples" if they are present in the `help_dict`.
     """
 
     from howard.tools.tools import arguments
@@ -2529,7 +2835,7 @@ def help_generation_from_dict(
     ]
 
     # Previous level
-    if previous:
+    if previous and previous_sections:
         prefix = f"{previous}"
         previous = f"{prefix}{level_marker}"
     else:
@@ -2674,14 +2980,24 @@ def help_generation_from_dict(
                         # Format examples
                         help_md = ""
                         for example in help_md_dict:
-                            # log.debug(f"example={example}")
-                            # log.debug(f"__examples_code={help_md_dict}")
                             example_code = help_md_dict.get(example, "")
                             if isinstance(example_code, list):
                                 example_code = "\n".join(example_code)
                             example = re.sub(r"^#*\s*", "", example)
-                            help_md += f"""\n> {example}\n"""
-                            help_md += f"""\n```{code_type}\n{example_code}\n```"""
+                            help_md += f"""\n\n> {example}\n"""
+                            # Clean example code
+                            if (
+                                len(example_code) > 0
+                                and code_type.upper() == "JSON"
+                                and example_code.strip()[0] != "{"
+                            ):
+                                example_code = example_code.replace("\n", "\n   ")
+                                example_code = f"""{{\n   {example_code}\n}}"""
+                            example_code = example_code.replace("\n", "\n> ")
+                            # Add example code
+                            help_md += (
+                                f"""\n> ```{code_type}\n> {example_code}\n> ```"""
+                            )
 
                     if section in ["__default"]:
                         if help_md in [""]:
@@ -2825,10 +3141,11 @@ def help_generation_from_json(
     output_type: str = "markdown",
     title="Help",
     code_type: str = "",
+    include_toc: bool = False,
 ):
     """
-    The function `help_generation_from_json` reads a JSON file containing help information, converts it
-    into a specified output format (default is markdown), and returns the generated help content.
+    The `help_generation_from_json` function reads a JSON file containing help information, converts it
+    into a specified output format, and returns the generated help content.
 
     :param help_json_file: The `help_json_file` parameter is a string that should contain the file path
     to the JSON file from which help information will be extracted. This JSON file likely contains
@@ -2843,11 +3160,16 @@ def help_generation_from_json(
     represents the title of the help documentation that will be generated. It is used to provide a title
     for the help content to make it more organized and informative. By default, the title is set to
     "Help", defaults to Help (optional)
-    :param code_type: The `code_type` parameter in the `help_generation_from_json`
-    function is used to specify the type of code examples that will be included in the generated help
-    content. This parameter allows you to define the format or language of the code examples to be
-    displayed alongside the help information extracted from the JSON
+    :param code_type: The `code_type` parameter in the `help_generation_from_json` function is used to
+    specify the type of code examples that will be included in the generated help content. This
+    parameter allows you to define the format or language of the code examples to be displayed alongside
+    the help information extracted from the JSON
     :type code_type: str
+    :param include_toc: The `include_toc` parameter in the `help_generation_from_json` function is a
+    boolean flag that determines whether a table of contents (TOC) should be included in the generated
+    help content. If `include_toc` is set to `True`, a table of contents will be generated based,
+    defaults to False
+    :type include_toc: bool (optional)
     :return: The function `help_generation_from_json` returns the generated help content based on the
     information stored in the JSON file provided as input.
     """
@@ -2858,15 +3180,18 @@ def help_generation_from_json(
         help_dict = yaml.safe_load(f)
 
     # Generate help table of content
-    output_table = help_generation_from_dict(
-        element=title,
-        help_dict=help_dict,
-        previous="",
-        output_type=output_type,
-        level=1,
-        generate_table=True,
-        code_type=code_type,
-    )
+    if include_toc:
+        output_table = help_generation_from_dict(
+            element=title,
+            help_dict=help_dict,
+            previous="",
+            output_type=output_type,
+            level=1,
+            generate_table=True,
+            code_type=code_type,
+        )
+    else:
+        output_table = None
 
     # Generate help
     output = help_generation_from_dict(
@@ -2940,7 +3265,7 @@ def help_generation(
         + f"""{prog_long_description_content_type}"""
     )
     parser.epilog = (
-        "Usage examples:\n"
+        "\nUsage examples:\n"
         + """   howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json \n"""
         + """   howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet' \n"""
         + """   howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations='vartype' \n"""
@@ -2963,6 +3288,8 @@ def help_generation(
 
     # Options for markdown
     options_md += f"# HOWARD Help"
+    options_md += "\n\n"
+    options_md += f"## Introduction"
     options_md += "\n\n"
     options_md += "<!--TOC-->"
     options_md += "\n\n"
@@ -3043,7 +3370,7 @@ def help_generation(
                     if argument.get("help", "") in ["==SUPPRESS=="]:
                         argument["help"] = arg
                     argument["help"] = format_arg_help(
-                        argument["help"], str(argument.get("default", None))
+                        argument.get("help", ""), str(argument.get("default", None))
                     )
                 command_parser.add_argument(f"--{arg}", **argument)
                 options_md += get_argument_to_mk(arg, argument)
@@ -3073,7 +3400,7 @@ def help_generation(
                         if argument.get("help", "") in ["==SUPPRESS=="]:
                             argument["help"] = arg
                         argument["help"] = format_arg_help(
-                            argument["help"], str(argument.get("default", None))
+                            argument.get("help", ""), str(argument.get("default", None))
                         )
                     command_group.add_argument(f"--{arg}", **argument)
                     options_md += get_argument_to_mk(arg, argument)
@@ -3092,7 +3419,7 @@ def help_generation(
                 if argument.get("help", "") in ["==SUPPRESS=="]:
                     argument["help"] = arg
                 argument["help"] = format_arg_help(
-                    argument["help"], str(argument.get("default", None))
+                    argument.get("help", ""), str(argument.get("default", None))
                 )
             shared_group.add_argument(f"--{arg}", **argument)
 
@@ -3334,7 +3661,8 @@ def load_param(args: argparse) -> dict:
     if "param" in args:
         if isinstance(args.param, str) and os.path.exists(full_path(args.param)):
             with open(full_path(args.param)) as param_file:
-                param = json.load(param_file)
+                param = yaml.safe_load(param_file)
+
         else:
             param = json.loads(args.param)
 
@@ -3427,7 +3755,7 @@ def load_args(
 
     # List from command
     if command:
-        command_infos = arguments_dict.get("commands_arguments", {}).get(command)
+        command_infos = arguments_dict.get("commands_arguments", {}).get(command, {})
         for command_group in command_infos.get("groups", {}):
             for command_argument in command_infos.get("groups").get(command_group):
                 command_group_clean = command_group.replace(" ", "_").lower()
@@ -3491,40 +3819,72 @@ def get_random(N: int = 10) -> str:
     return "".join(random.choices(string.ascii_uppercase + string.digits, k=N))
 
 
-def transcripts_file_to_df(transcripts_file: str) -> pd.DataFrame:
+def transcripts_file_to_df(
+    transcripts_file: str, column_names: list = ["transcript", "gene"]
+) -> pd.DataFrame:
     """
-    This function reads a transcripts file into a pandas DataFrame, filtering out comment lines.
+    This Python function reads a transcripts file into a pandas DataFrame, filtering out comment lines.
 
     :param transcripts_file: The `transcripts_file` parameter is a string that represents the file path
     to a file containing transcript information. This function is designed to read the contents of this
     file and convert it into a pandas DataFrame. The file is expected to be tab-separated with two
     columns: "transcript" and "gene
     :type transcripts_file: str
-    :return: The function `transcripts_file_to_df` returns a pandas DataFrame containing transcript and
-    gene information read from a specified file. The function processes the file by filtering out
-    comment lines and then returns the resulting DataFrame.
+    :param column_names: The `column_names` parameter is a list that specifies the column names expected
+    in the transcripts file. By default, it is set to `["transcript", "gene"]`, indicating that the file
+    should have two columns named "transcript" and "gene". If the actual column names in the
+    :type column_names: list
+    :return: A pandas DataFrame containing transcript and gene information read from the specified file
+    after filtering out comment lines is being returned.
     """
 
     # Full path
     transcripts_file = full_path(transcripts_file)
 
     # Transcript dataframe
-    transcripts_dataframe = pd.DataFrame(columns=["transcript", "gene"])
+    transcripts_dataframe = pd.DataFrame(columns=column_names)
 
     # If file exists
     if transcripts_file and os.path.exists(transcripts_file):
+
+        # Data
+        data = []
+
+        # Check column names length by reading all lines
+        with open(transcripts_file, "r") as f:
+            for line in f:
+                # Split line by tab
+                values = line.strip().split("\t")
+                data.append(values)
+
+        # Convert into DataFrame
+        transcripts_dataframe_nb_columns = pd.DataFrame(data)
+
+        # If dataframe not with the same len than input name columns
+        if len(transcripts_dataframe_nb_columns.columns) != len(column_names):
+            column_names_new = []
+            for i in range(len(transcripts_dataframe_nb_columns.columns)):
+                if len(column_names) > i:
+                    column_names_new.append(column_names[i])
+                else:
+                    column_names_new.append(f"column_{i+1}")
+            column_names = column_names_new
 
         # Create dataframe
         transcripts_dataframe = pd.read_csv(
             transcripts_file,
             sep="\t",
             header=None,
-            names=["transcript", "gene"],
+            names=column_names,
+            index_col=False,
         )
+
+        # First column
+        first_column = column_names[0]
 
         # Filter comment on lines
         transcripts_dataframe = transcripts_dataframe[
-            transcripts_dataframe["transcript"].str.contains("^[^#]+")
+            transcripts_dataframe[first_column].str.contains("^[^#]+")
         ]
 
     # Return
@@ -3585,7 +3945,7 @@ def check_docker_image_exists(image_with_tag: str) -> bool:
     try:
         # Run the `docker images` command and capture the output
         result = subprocess.run(
-            ["docker", "images", "--format", "json"],
+            ["docker", "images", "--format", "{{json . }}"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -3674,3 +4034,196 @@ def params_string_to_dict(
                         params_option_val = params_option_val.replace(c[0], c[1])
                 params_dict[params_option_var] = params_option_val
     return params_dict
+
+
+def determine_value_type(
+    value: str, sep: str = ";", skip_null: list = ["", "."]
+) -> str:
+    """
+    The function `determine_value_type` determines the type of a given value in a string format,
+    handling lists of values separated by a specified separator and skipping specified null-like
+    values.
+
+    :param value: The `value` parameter in the `determine_value_type` function is the input value
+    that you want to determine the type of. It can be a string containing one or more values
+    separated by a specified separator (default is ';')
+    :type value: str
+    :param sep: The `sep` parameter in the `determine_value_type` function is used to specify the
+    separator character that is used to split the input `value` string into individual values. By
+    default, the separator is set to ";", but you can change it to a different character if needed,
+    defaults to ;
+    :type sep: str (optional)
+    :param skip_null: The `skip_null` parameter in the `determine_value_type` function is a list
+    that contains values that should be skipped during the type determination process. These values
+    are considered as null-like or empty values and are not taken into account when determining the
+    type of the given value
+    :type skip_null: list
+    :return: The function `determine_value_type` returns a string indicating the type of the given
+    value. The possible return values are:
+    - "VARCHAR" if the value contains at least one non-numeric character
+    - "DOUBLE" if the value contains at least one floating-point number
+    - "BIGINT" if the value contains only integers
+    - None if the value is empty or does not match any
+    """
+
+    # Split the value by sep (dafult ';') to handle lists of values
+    values = str(value).split(sep)
+
+    has_float = False
+    has_int = False
+    has_string = False
+
+    for val in values:
+        val = val.strip()
+
+        # Skip empty or null-like values
+        if skip_null and val in skip_null:
+            continue
+
+        # Check if value is integer
+        if re.match(r"^-?\d+$", val):
+            has_int = True
+        # Check if value is float
+        elif re.match(r"^-?\d*\.\d+$", val):
+            has_float = True
+        else:
+            has_string = True
+            return "VARCHAR"  # force return VARCHAR to speed up
+
+    if has_string:
+        return "VARCHAR"
+    elif has_float:
+        return "DOUBLE"
+    elif has_int:
+        return "BIGINT"
+    else:
+        return None  # Default to None if no identifiable type is found
+
+
+def determine_column_types(values_list: list) -> str:
+    """
+    The function `determine_column_types` analyzes a list of values to determine the predominant
+    data type among VARCHAR, DOUBLE, and BIGINT.
+
+    :param values_list: It seems like you have provided the code snippet for a function that
+    determines the type of values in a list, but you have not provided the actual values_list that
+    the function will operate on. If you provide me with the values_list, I can help you test the
+    function and see how it determines the
+    :type values_list: list
+    :return: the type of the column based on the types of values present in the input list. It will
+    return "VARCHAR" if the list contains any string values, "DOUBLE" if it contains any float
+    values, "BIGINT" if it contains any integer values, and "VARCHAR" if none of the specific types
+    are found.
+    """
+
+    has_float = False
+    has_int = False
+    has_string = False
+
+    for value in values_list:
+        value_type = determine_value_type(value)
+
+        if value_type == "VARCHAR":
+            has_string = True
+            return "VARCHAR"  # force return VARCHAR to speed up
+        elif value_type == "DOUBLE":
+            has_float = True
+        elif value_type == "BIGINT":
+            has_int = True
+
+    if has_string:
+        return "VARCHAR"
+    elif has_float:
+        return "DOUBLE"
+    elif has_int:
+        return "BIGINT"
+    else:
+        return "VARCHAR"  # Default to VARCHAR if no identifiable type is found
+
+
+def detect_column_type(column) -> str:
+    """
+    The function `detect_column_type` determines the type of a given column in a DataFrame as either
+    DATETIME, BOOLEAN, DOUBLE, or VARCHAR.
+
+    :param column: The function `detect_column_type` takes a column as input and determines its data
+    type based on certain conditions. The conditions are as follows:
+    :return: The function `detect_column_type` returns a string indicating the type of data in the input
+    column. The possible return values are "DATETIME", "BOOLEAN", "DOUBLE", or "VARCHAR" based on the
+    conditions checked in the function.
+    """
+
+    from pandas.api.types import is_datetime64_any_dtype as is_datetime
+
+    if is_datetime(column):
+        return "DATETIME"
+    elif column.dropna().apply(lambda x: str(x).lower() in ["true", "false"]).all():
+        return "BOOLEAN"
+    elif pd.to_numeric(column, errors="coerce").notnull().all():
+        return "DOUBLE"
+    else:
+        return "VARCHAR"
+
+
+def determine_column_number(values_list: list) -> str:
+    """ """
+
+    for value in values_list:
+        if ";" in str(value):
+            return "."
+
+    return "1"
+
+
+def clean_annotation_field(name: str = "", char_allowed: list = None) -> str:
+    """
+    The `clean_annotation_field` function removes characters from a string that are not alphanumeric or
+    in a specified list.
+
+    :param name: The `name` parameter is a string that represents the input text that you want to clean.
+    It typically contains annotations or other text that you want to process
+    :type name: str
+    :param char_allowed: The `char_allowed` parameter is a list that contains characters that are
+    allowed to remain in the `name` string after cleaning. Any character in the `name` string that is
+    not alphanumeric and not in the `char_allowed` list will be removed during the cleaning process
+    :type char_allowed: list
+    :return: The function `clean_annotation_field` returns a cleaned version of the `name` string, where
+    only alphanumeric characters and characters from the `char_allowed` list are kept.
+    """
+
+    # Init
+    if char_allowed is None:
+        char_allowed = []
+
+    # Convert char_allowed to a set for faster membership testing
+    char_allowed_set = set(char_allowed)
+
+    return "".join(
+        char for char in name if (char.isalnum() or char in char_allowed_set)
+    )
+
+
+def docker_automount() -> str:
+    """
+     Add needed volume to the tool container, check first if we are already inside one otherwise return empty string
+    :param containerid: for other linux distribution catch container mount from container ID
+    :return: string containing volume to add
+    """
+    if not os.path.exists("/.dockerenv"):
+        log.warning("Not inside docker container, block automount option")
+        return ""
+
+    container_id = command(
+        r"cat /proc/self/cgroup | grep 'docker' | sed 's/^.*\///' | tail -n1"
+    )
+    if not container_id:
+        container_id = command("cat /proc/1/cpuset | cut -d/ -f3")
+    if not container_id:
+        raise ValueError("Can't get container ID from within container EXIT")
+
+    mounts_new = ""
+    mounts = json.loads(command(f"docker inspect -f json {container_id}"))[0]["Mounts"]
+    for volume in mounts:
+        if "sock" not in volume.get("Source") and "tmp" not in volume.get("Source"):
+            mounts_new += f" -v {volume.get('Source')}:{volume.get ('Destination')}:{volume.get('Mode')}"
+    return mounts_new

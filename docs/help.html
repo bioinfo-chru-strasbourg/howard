@@ -1,1472 +1,1732 @@
 <!DOCTYPE html>
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
 <head>
-<title>help.md</title>
-<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
-
-<style>
-/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See License.txt in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
-
-body {
-	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
-	font-size: var(--vscode-markdown-font-size, 14px);
-	padding: 0 26px;
-	line-height: var(--vscode-markdown-line-height, 22px);
-	word-wrap: break-word;
-}
-
-#code-csp-warning {
-	position: fixed;
-	top: 0;
-	right: 0;
-	color: white;
-	margin: 16px;
-	text-align: center;
-	font-size: 12px;
-	font-family: sans-serif;
-	background-color:#444444;
-	cursor: pointer;
-	padding: 6px;
-	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
-}
-
-#code-csp-warning:hover {
-	text-decoration: none;
-	background-color:#007acc;
-	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
-}
-
-body.scrollBeyondLastLine {
-	margin-bottom: calc(100vh - 22px);
-}
-
-body.showEditorSelection .code-line {
-	position: relative;
-}
-
-body.showEditorSelection .code-active-line:before,
-body.showEditorSelection .code-line:hover:before {
-	content: "";
-	display: block;
-	position: absolute;
-	top: 0;
-	left: -12px;
-	height: 100%;
-}
-
-body.showEditorSelection li.code-active-line:before,
-body.showEditorSelection li.code-line:hover:before {
-	left: -30px;
-}
-
-.vscode-light.showEditorSelection .code-active-line:before {
-	border-left: 3px solid rgba(0, 0, 0, 0.15);
-}
-
-.vscode-light.showEditorSelection .code-line:hover:before {
-	border-left: 3px solid rgba(0, 0, 0, 0.40);
-}
-
-.vscode-light.showEditorSelection .code-line .code-line:hover:before {
-	border-left: none;
-}
-
-.vscode-dark.showEditorSelection .code-active-line:before {
-	border-left: 3px solid rgba(255, 255, 255, 0.4);
-}
-
-.vscode-dark.showEditorSelection .code-line:hover:before {
-	border-left: 3px solid rgba(255, 255, 255, 0.60);
-}
-
-.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
-	border-left: none;
-}
-
-.vscode-high-contrast.showEditorSelection .code-active-line:before {
-	border-left: 3px solid rgba(255, 160, 0, 0.7);
-}
-
-.vscode-high-contrast.showEditorSelection .code-line:hover:before {
-	border-left: 3px solid rgba(255, 160, 0, 1);
-}
-
-.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
-	border-left: none;
-}
-
-img {
-	max-width: 100%;
-	max-height: 100%;
-}
-
-a {
-	text-decoration: none;
-}
-
-a:hover {
-	text-decoration: underline;
-}
-
-a:focus,
-input:focus,
-select:focus,
-textarea:focus {
-	outline: 1px solid -webkit-focus-ring-color;
-	outline-offset: -1px;
-}
-
-hr {
-	border: 0;
-	height: 2px;
-	border-bottom: 2px solid;
-}
-
-h1 {
-	padding-bottom: 0.3em;
-	line-height: 1.2;
-	border-bottom-width: 1px;
-	border-bottom-style: solid;
-}
-
-h1, h2, h3 {
-	font-weight: normal;
-}
-
-table {
-	border-collapse: collapse;
-}
-
-table > thead > tr > th {
-	text-align: left;
-	border-bottom: 1px solid;
-}
-
-table > thead > tr > th,
-table > thead > tr > td,
-table > tbody > tr > th,
-table > tbody > tr > td {
-	padding: 5px 10px;
-}
-
-table > tbody > tr + tr > td {
-	border-top: 1px solid;
-}
-
-blockquote {
-	margin: 0 7px 0 5px;
-	padding: 0 16px 0 10px;
-	border-left-width: 5px;
-	border-left-style: solid;
-}
-
-code {
-	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
-	font-size: 1em;
-	line-height: 1.357em;
-}
-
-body.wordWrap pre {
-	white-space: pre-wrap;
-}
-
-pre:not(.hljs),
-pre.hljs code > div {
-	padding: 16px;
-	border-radius: 3px;
-	overflow: auto;
-}
-
-pre code {
-	color: var(--vscode-editor-foreground);
-	tab-size: 4;
-}
-
-/** Theming */
-
-.vscode-light pre {
-	background-color: rgba(220, 220, 220, 0.4);
-}
-
-.vscode-dark pre {
-	background-color: rgba(10, 10, 10, 0.4);
-}
-
-.vscode-high-contrast pre {
-	background-color: rgb(0, 0, 0);
-}
-
-.vscode-high-contrast h1 {
-	border-color: rgb(0, 0, 0);
-}
-
-.vscode-light table > thead > tr > th {
-	border-color: rgba(0, 0, 0, 0.69);
-}
-
-.vscode-dark table > thead > tr > th {
-	border-color: rgba(255, 255, 255, 0.69);
-}
-
-.vscode-light h1,
-.vscode-light hr,
-.vscode-light table > tbody > tr + tr > td {
-	border-color: rgba(0, 0, 0, 0.18);
-}
-
-.vscode-dark h1,
-.vscode-dark hr,
-.vscode-dark table > tbody > tr + tr > td {
-	border-color: rgba(255, 255, 255, 0.18);
-}
-
-</style>
-
-<style>
-/*
-
-github.com style (c) Vasily Polovnyov <vast@whiteants.net>
-
-*/
-
-.hljs {
-  display: block;
-  overflow-x: auto;
-  padding: 0.5em;
-  color: #333;
-  background: #f8f8f8;
-}
-
-.hljs-comment,
-.hljs-quote {
-  color: #998;
-  font-style: italic;
-}
-
-.hljs-keyword,
-.hljs-selector-tag,
-.hljs-subst {
-  color: #333;
-  font-weight: bold;
-}
-
-.hljs-number,
-.hljs-literal,
-.hljs-variable,
-.hljs-template-variable,
-.hljs-tag .hljs-attr {
-  color: #008080;
-}
-
-.hljs-string,
-.hljs-doctag {
-  color: #d14;
-}
-
-.hljs-title,
-.hljs-section,
-.hljs-selector-id {
-  color: #900;
-  font-weight: bold;
-}
-
-.hljs-subst {
-  font-weight: normal;
-}
-
-.hljs-type,
-.hljs-class .hljs-title {
-  color: #458;
-  font-weight: bold;
-}
-
-.hljs-tag,
-.hljs-name,
-.hljs-attribute {
-  color: #000080;
-  font-weight: normal;
-}
-
-.hljs-regexp,
-.hljs-link {
-  color: #009926;
-}
-
-.hljs-symbol,
-.hljs-bullet {
-  color: #990073;
-}
-
-.hljs-built_in,
-.hljs-builtin-name {
-  color: #0086b3;
-}
-
-.hljs-meta {
-  color: #999;
-  font-weight: bold;
-}
-
-.hljs-deletion {
-  background: #fdd;
-}
-
-.hljs-addition {
-  background: #dfd;
-}
-
-.hljs-emphasis {
-  font-style: italic;
-}
-
-.hljs-strong {
-  font-weight: bold;
-}
-
-</style>
-
-<style>
-/*
- * Markdown PDF CSS
- */
-
- body {
-	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
-	padding: 0 12px;
-}
-
-pre {
-	background-color: #f8f8f8;
-	border: 1px solid #cccccc;
-	border-radius: 3px;
-	overflow-x: auto;
-	white-space: pre-wrap;
-	overflow-wrap: break-word;
-}
-
-pre:not(.hljs) {
-	padding: 23px;
-	line-height: 19px;
-}
-
-blockquote {
-	background: rgba(127, 127, 127, 0.1);
-	border-color: rgba(0, 122, 204, 0.5);
-}
-
-.emoji {
-	height: 1.4em;
-}
-
-code {
-	font-size: 14px;
-	line-height: 19px;
-}
-
-/* for inline code */
-:not(pre):not(.hljs) > code {
-	color: #C9AE75; /* Change the old color so it seems less like an error */
-	font-size: inherit;
-}
-
-/* Page Break : use <div class="page"/> to insert page break
--------------------------------------------------------- */
-.page {
-	page-break-after: always;
-}
-
-</style>
-
-<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>HOWARD Help</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 1000px;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
 </head>
 <body>
-  <script>
-    mermaid.initialize({
-      startOnLoad: true,
-      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
-          ? 'dark'
-          : 'default'
-    });
-  </script>
-<h1 id="howard-help">HOWARD Help</h1>
-<!--TOC-->
+<header id="title-block-header">
+<h1 class="title">HOWARD Help</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<h2 id="toc-title">Contents</h2>
 <ul>
-<li><a href="#howard-help">HOWARD Help</a>
+<li><a href="#introduction" id="toc-introduction"><span
+class="toc-section-number">1</span> Introduction</a></li>
+<li><a href="#query-tool" id="toc-query-tool"><span
+class="toc-section-number">2</span> QUERY tool</a>
 <ul>
-<li><a href="#query-tool">QUERY tool</a>
+<li><a href="#main-options" id="toc-main-options"><span
+class="toc-section-number">2.1</span> Main options</a></li>
+<li><a href="#explode" id="toc-explode"><span
+class="toc-section-number">2.2</span> Explode</a></li>
+<li><a href="#query" id="toc-query"><span
+class="toc-section-number">2.3</span> Query</a></li>
+<li><a href="#export" id="toc-export"><span
+class="toc-section-number">2.4</span> Export</a></li>
+</ul></li>
+<li><a href="#stats-tool" id="toc-stats-tool"><span
+class="toc-section-number">3</span> STATS tool</a>
 <ul>
-<li><a href="#main-options">Main options</a></li>
-<li><a href="#explode">Explode</a></li>
-<li><a href="#query">Query</a></li>
-<li><a href="#export">Export</a></li>
-</ul>
-</li>
-<li><a href="#stats-tool">STATS tool</a>
+<li><a href="#main-options-1" id="toc-main-options-1"><span
+class="toc-section-number">3.1</span> Main options</a></li>
+<li><a href="#stats" id="toc-stats"><span
+class="toc-section-number">3.2</span> Stats</a></li>
+</ul></li>
+<li><a href="#convert-tool" id="toc-convert-tool"><span
+class="toc-section-number">4</span> CONVERT tool</a>
 <ul>
-<li><a href="#main-options-1">Main options</a></li>
-<li><a href="#stats">Stats</a></li>
-</ul>
-</li>
-<li><a href="#convert-tool">CONVERT tool</a>
+<li><a href="#main-options-2" id="toc-main-options-2"><span
+class="toc-section-number">4.1</span> Main options</a></li>
+<li><a href="#explode-1" id="toc-explode-1"><span
+class="toc-section-number">4.2</span> Explode</a></li>
+<li><a href="#export-1" id="toc-export-1"><span
+class="toc-section-number">4.3</span> Export</a></li>
+</ul></li>
+<li><a href="#hgvs-tool" id="toc-hgvs-tool"><span
+class="toc-section-number">5</span> HGVS tool</a>
 <ul>
-<li><a href="#main-options-2">Main options</a></li>
-<li><a href="#explode-1">Explode</a></li>
-<li><a href="#export-1">Export</a></li>
-</ul>
-</li>
-<li><a href="#hgvs-tool">HGVS tool</a>
+<li><a href="#main-options-3" id="toc-main-options-3"><span
+class="toc-section-number">5.1</span> Main options</a></li>
+<li><a href="#hgvs" id="toc-hgvs"><span
+class="toc-section-number">5.2</span> HGVS</a></li>
+</ul></li>
+<li><a href="#annotation-tool" id="toc-annotation-tool"><span
+class="toc-section-number">6</span> ANNOTATION tool</a>
 <ul>
-<li><a href="#main-options-3">Main options</a></li>
-<li><a href="#hgvs">HGVS</a></li>
-</ul>
-</li>
-<li><a href="#annotation-tool">ANNOTATION tool</a>
+<li><a href="#main-options-4" id="toc-main-options-4"><span
+class="toc-section-number">6.1</span> Main options</a></li>
+<li><a href="#annotation" id="toc-annotation"><span
+class="toc-section-number">6.2</span> Annotation</a></li>
+</ul></li>
+<li><a href="#calculation-tool" id="toc-calculation-tool"><span
+class="toc-section-number">7</span> CALCULATION tool</a>
 <ul>
-<li><a href="#main-options-4">Main options</a></li>
-<li><a href="#annotation">Annotation</a></li>
-</ul>
-</li>
-<li><a href="#calculation-tool">CALCULATION tool</a>
+<li><a href="#main-options-5" id="toc-main-options-5"><span
+class="toc-section-number">7.1</span> Main options</a></li>
+<li><a href="#calculation" id="toc-calculation"><span
+class="toc-section-number">7.2</span> Calculation</a></li>
+<li><a href="#nomen" id="toc-nomen"><span
+class="toc-section-number">7.3</span> NOMEN</a></li>
+<li><a href="#trio" id="toc-trio"><span
+class="toc-section-number">7.4</span> TRIO</a></li>
+<li><a href="#barcodefamily" id="toc-barcodefamily"><span
+class="toc-section-number">7.5</span> BARCODEFAMILY</a></li>
+</ul></li>
+<li><a href="#prioritization-tool" id="toc-prioritization-tool"><span
+class="toc-section-number">8</span> PRIORITIZATION tool</a>
 <ul>
-<li><a href="#main-options-5">Main options</a></li>
-<li><a href="#calculation">Calculation</a></li>
-<li><a href="#nomen">NOMEN</a></li>
-<li><a href="#trio">TRIO</a></li>
-<li><a href="#barcodefamily">BARCODEFAMILY</a></li>
-</ul>
-</li>
-<li><a href="#prioritization-tool">PRIORITIZATION tool</a>
+<li><a href="#main-options-6" id="toc-main-options-6"><span
+class="toc-section-number">8.1</span> Main options</a></li>
+<li><a href="#prioritization" id="toc-prioritization"><span
+class="toc-section-number">8.2</span> Prioritization</a></li>
+</ul></li>
+<li><a href="#process-tool" id="toc-process-tool"><span
+class="toc-section-number">9</span> PROCESS tool</a>
 <ul>
-<li><a href="#main-options-6">Main options</a></li>
-<li><a href="#prioritization">Prioritization</a></li>
-</ul>
-</li>
-<li><a href="#process-tool">PROCESS tool</a>
+<li><a href="#main-options-7" id="toc-main-options-7"><span
+class="toc-section-number">9.1</span> Main options</a></li>
+<li><a href="#hgvs-1" id="toc-hgvs-1"><span
+class="toc-section-number">9.2</span> HGVS</a></li>
+<li><a href="#annotation-1" id="toc-annotation-1"><span
+class="toc-section-number">9.3</span> Annotation</a></li>
+<li><a href="#calculation-1" id="toc-calculation-1"><span
+class="toc-section-number">9.4</span> Calculation</a></li>
+<li><a href="#prioritization-1" id="toc-prioritization-1"><span
+class="toc-section-number">9.5</span> Prioritization</a></li>
+<li><a href="#query-1" id="toc-query-1"><span
+class="toc-section-number">9.6</span> Query</a></li>
+<li><a href="#explode-2" id="toc-explode-2"><span
+class="toc-section-number">9.7</span> Explode</a></li>
+<li><a href="#export-2" id="toc-export-2"><span
+class="toc-section-number">9.8</span> Export</a></li>
+</ul></li>
+<li><a href="#databases-tool" id="toc-databases-tool"><span
+class="toc-section-number">10</span> DATABASES tool</a>
 <ul>
-<li><a href="#main-options-7">Main options</a></li>
-<li><a href="#hgvs-1">HGVS</a></li>
-<li><a href="#annotation-1">Annotation</a></li>
-<li><a href="#calculation-1">Calculation</a></li>
-<li><a href="#prioritization-1">Prioritization</a></li>
-<li><a href="#query-1">Query</a></li>
-<li><a href="#explode-2">Explode</a></li>
-<li><a href="#export-2">Export</a></li>
-</ul>
-</li>
-<li><a href="#databases-tool">DATABASES tool</a>
+<li><a href="#main-options-8" id="toc-main-options-8"><span
+class="toc-section-number">10.1</span> Main options</a></li>
+<li><a href="#genomes" id="toc-genomes"><span
+class="toc-section-number">10.2</span> Genomes</a></li>
+<li><a href="#snpeff" id="toc-snpeff"><span
+class="toc-section-number">10.3</span> snpEff</a></li>
+<li><a href="#annovar" id="toc-annovar"><span
+class="toc-section-number">10.4</span> Annovar</a></li>
+<li><a href="#refseq" id="toc-refseq"><span
+class="toc-section-number">10.5</span> refSeq</a></li>
+<li><a href="#dbnsfp" id="toc-dbnsfp"><span
+class="toc-section-number">10.6</span> dbNSFP</a></li>
+<li><a href="#alphamissense" id="toc-alphamissense"><span
+class="toc-section-number">10.7</span> AlphaMissense</a></li>
+<li><a href="#exomiser" id="toc-exomiser"><span
+class="toc-section-number">10.8</span> Exomiser</a></li>
+<li><a href="#dbsnp" id="toc-dbsnp"><span
+class="toc-section-number">10.9</span> dbSNP</a></li>
+<li><a href="#hgmd" id="toc-hgmd"><span
+class="toc-section-number">10.10</span> HGMD</a></li>
+<li><a href="#from_annovar" id="toc-from_annovar"><span
+class="toc-section-number">10.11</span> from_Annovar</a></li>
+<li><a href="#from_extann" id="toc-from_extann"><span
+class="toc-section-number">10.12</span> from_extann</a></li>
+<li><a href="#parameters" id="toc-parameters"><span
+class="toc-section-number">10.13</span> Parameters</a></li>
+</ul></li>
+<li><a href="#gui-tool" id="toc-gui-tool"><span
+class="toc-section-number">11</span> GUI tool</a></li>
+<li><a href="#help-tool" id="toc-help-tool"><span
+class="toc-section-number">12</span> HELP tool</a>
 <ul>
-<li><a href="#main-options-8">Main options</a></li>
-<li><a href="#genomes">Genomes</a></li>
-<li><a href="#snpeff">snpEff</a></li>
-<li><a href="#annovar">Annovar</a></li>
-<li><a href="#refseq">refSeq</a></li>
-<li><a href="#dbnsfp">dbNSFP</a></li>
-<li><a href="#alphamissense">AlphaMissense</a></li>
-<li><a href="#exomiser">Exomiser</a></li>
-<li><a href="#dbsnp">dbSNP</a></li>
-<li><a href="#hgmd">HGMD</a></li>
-<li><a href="#from_annovar">from_Annovar</a></li>
-<li><a href="#from_extann">from_extann</a></li>
-<li><a href="#parameters">Parameters</a></li>
-</ul>
-</li>
-<li><a href="#gui-tool">GUI tool</a></li>
-<li><a href="#help-tool">HELP tool</a>
+<li><a href="#main-options-9" id="toc-main-options-9"><span
+class="toc-section-number">12.1</span> Main options</a></li>
+</ul></li>
+<li><a href="#update_database-tool" id="toc-update_database-tool"><span
+class="toc-section-number">13</span> UPDATE_DATABASE tool</a>
 <ul>
-<li><a href="#main-options-9">Main options</a></li>
-</ul>
-</li>
-<li><a href="#genebe-tool">GENEBE tool</a>
+<li><a href="#main-options-10" id="toc-main-options-10"><span
+class="toc-section-number">13.1</span> Main options</a></li>
+<li><a href="#update_database" id="toc-update_database"><span
+class="toc-section-number">13.2</span> Update_database</a></li>
+<li><a href="#options" id="toc-options"><span
+class="toc-section-number">13.3</span> Options</a></li>
+</ul></li>
+<li><a href="#transcripts_check-tool"
+id="toc-transcripts_check-tool"><span
+class="toc-section-number">14</span> TRANSCRIPTS_CHECK tool</a>
 <ul>
-<li><a href="#main-options-10">Main options</a></li>
-<li><a href="#genebe">GeneBe</a></li>
-<li><a href="#explode-3">Explode</a></li>
-<li><a href="#export-3">Export</a></li>
-</ul>
-</li>
-<li><a href="#minimalize-tool">MINIMALIZE tool</a>
+<li><a href="#main-options-11" id="toc-main-options-11"><span
+class="toc-section-number">14.1</span> Main options</a></li>
+</ul></li>
+<li><a href="#genebe-tool" id="toc-genebe-tool"><span
+class="toc-section-number">15</span> GENEBE tool</a>
 <ul>
-<li><a href="#main-options-11">Main options</a></li>
-<li><a href="#minimalize">Minimalize</a></li>
-<li><a href="#explode-4">Explode</a></li>
-<li><a href="#export-4">Export</a></li>
+<li><a href="#main-options-12" id="toc-main-options-12"><span
+class="toc-section-number">15.1</span> Main options</a></li>
+<li><a href="#genebe" id="toc-genebe"><span
+class="toc-section-number">15.2</span> GeneBe</a></li>
+<li><a href="#explode-3" id="toc-explode-3"><span
+class="toc-section-number">15.3</span> Explode</a></li>
+<li><a href="#export-3" id="toc-export-3"><span
+class="toc-section-number">15.4</span> Export</a></li>
+</ul></li>
+<li><a href="#minimalize-tool" id="toc-minimalize-tool"><span
+class="toc-section-number">16</span> MINIMALIZE tool</a>
+<ul>
+<li><a href="#main-options-13" id="toc-main-options-13"><span
+class="toc-section-number">16.1</span> Main options</a></li>
+<li><a href="#minimalize" id="toc-minimalize"><span
+class="toc-section-number">16.2</span> Minimalize</a></li>
+<li><a href="#explode-4" id="toc-explode-4"><span
+class="toc-section-number">16.3</span> Explode</a></li>
+<li><a href="#export-4" id="toc-export-4"><span
+class="toc-section-number">16.4</span> Export</a></li>
+</ul></li>
+<li><a href="#shared-arguments" id="toc-shared-arguments"><span
+class="toc-section-number">17</span> Shared arguments</a></li>
 </ul>
-</li>
-<li><a href="#shared-arguments">Shared arguments</a></li>
-</ul>
-</li>
-</ul>
+</nav>
+<h1 data-number="1" id="introduction"><span
+class="header-section-number">1</span> Introduction</h1>
 <!--TOC-->
 <p>HOWARD:0.11.0</p>
-<p>Highly Open Workflow for Annotation &amp; Ranking toward genomic variant Discovery</p>
-<p>HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations, convert on multiple formats, query variations and generates statisticsUsage examples:</p>
-<blockquote>
-<p>howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json</p>
-</blockquote>
-<blockquote>
-<p>howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet'</p>
-</blockquote>
-<blockquote>
-<p>howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations='vartype'</p>
-</blockquote>
-<blockquote>
-<p>howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritization_config=config/prioritization_profiles.json --prioritizations='default,GERMLINE'</p>
-</blockquote>
-<blockquote>
-<p>howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT &quot;#CHROM&quot;, POS, REF, ALT, &quot;DP&quot;, &quot;CLNSIG&quot;, sample2, sample3 FROM variants WHERE &quot;DP&quot; &gt;= 50 OR &quot;CLNSIG&quot; NOT NULL ORDER BY &quot;CLNSIG&quot; DESC, &quot;DP&quot; DESC'</p>
-</blockquote>
-<blockquote>
-<p>howard stats --input=tests/data/example.vcf.gz</p>
-</blockquote>
-<blockquote>
-<p>howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos &amp;&amp; cat /tmp/example.tsv</p>
-</blockquote>
-<h2 id="query-tool">QUERY tool</h2>
-<p>Query genetic variations in SQL format. Data can be loaded into 'variants' table from various formats (e.g. VCF, TSV, Parquet...). Using --explode_infos allow query on INFO/tag annotations. SQL query can also use external data within the request, such as a Parquet file(s).</p>
+<p>Highly Open Workflow for Annotation &amp; Ranking toward genomic
+variant Discovery</p>
+<p>HOWARD annotates and prioritizes genetic variations, calculates and
+normalizes annotations, convert on multiple formats, query variations
+and generates statistics</p>
 <p>Usage examples:</p>
 <blockquote>
-<p>howard query --input=tests/data/example.vcf.gz --query=&quot;SELECT * FROM variants WHERE REF = 'A' AND POS &lt; 100000&quot;</p>
+<p>howard process &#x2013;input=tests/data/example.vcf.gz
+&#x2013;output=/tmp/example.annotated.vcf.gz &#x2013;param=config/param.json</p>
 </blockquote>
 <blockquote>
-<p>howard query --input=tests/data/example.vcf.gz --explode_infos --query='SELECT &quot;#CHROM&quot;, POS, REF, ALT, DP, CLNSIG, sample2, sample3 FROM variants WHERE DP &gt;= 50 OR CLNSIG NOT NULL ORDER BY DP DESC'</p>
+<p>howard annotation &#x2013;input=tests/data/example.vcf.gz
+&#x2013;output=/tmp/example.howard.vcf.gz
+&#x2013;annotations=&#x2018;tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet&#x2019;</p>
 </blockquote>
 <blockquote>
-<p>howard query --query=&quot;SELECT &quot;#CHROM&quot;, POS, REF, ALT, &quot;INFO/Interpro_domain&quot; FROM 'tests/databases/annotations/current/hg19/dbnsfp42a.parquet' WHERE &quot;INFO/Interpro_domain&quot; NOT NULL ORDER BY &quot;INFO/SiPhy_29way_logOdds_rankscore&quot; DESC LIMIT 10&quot;</p>
+<p>howard calculation &#x2013;input=tests/data/example.full.vcf
+&#x2013;output=/tmp/example.calculation.tsv &#x2013;calculations=&#x2018;vartype&#x2019;</p>
 </blockquote>
 <blockquote>
-<p>howard query --explode_infos --explode_infos_prefix='INFO/' --query=&quot;SELECT &quot;#CHROM&quot;, POS, REF, ALT, STRING_AGG(INFO, ';') AS INFO FROM 'tests/databases/annotations/current/hg19/*.parquet' GROUP BY &quot;#CHROM&quot;, POS, REF, ALT&quot; --output=/tmp/full_annotation.tsv  &amp;&amp; head -n2 /tmp/full_annotation.tsv</p>
+<p>howard prioritization &#x2013;input=tests/data/example.vcf.gz
+&#x2013;output=/tmp/example.prioritized.vcf.gz
+&#x2013;prioritization_config=config/prioritization_profiles.json
+&#x2013;prioritizations=&#x2018;default,GERMLINE&#x2019;</p>
 </blockquote>
 <blockquote>
-<p>howard query --input=tests/data/example.vcf.gz --param=config/param.json</p>
+<p>howard query &#x2013;input=tests/data/example.vcf.gz &#x2013;explode_infos
+&#x2013;query=&#x2018;SELECT &#x201C;#CHROM&#x201D;, POS, REF, ALT, &#x201C;DP&#x201D;, &#x201C;CLNSIG&#x201D;, sample2, sample3
+FROM variants WHERE &#x201C;DP&#x201D; &gt;= 50 OR &#x201C;CLNSIG&#x201D; NOT NULL ORDER BY &#x201C;CLNSIG&#x201D;
+DESC, &#x201C;DP&#x201D; DESC&#x2019;</p>
 </blockquote>
-<blockquote></blockquote>
-<h3 id="main-options">Main options</h3>
-<pre class="hljs"><code><div>--input=&lt;input&gt;
+<blockquote>
+<p>howard stats &#x2013;input=tests/data/example.vcf.gz</p>
+</blockquote>
+<blockquote>
+<p>howard convert &#x2013;input=tests/data/example.vcf.gz
+&#x2013;output=/tmp/example.tsv &#x2013;explode_infos &amp;&amp; cat
+/tmp/example.tsv</p>
+</blockquote>
+<h1 data-number="2" id="query-tool"><span
+class="header-section-number">2</span> QUERY tool</h1>
+<p>Query genetic variations in SQL format. Data can be loaded into
+&#x2018;variants&#x2019; table from various formats (e.g.&#xA0;VCF, TSV, Parquet&#x2026;). Using
+&#x2013;explode_infos allow query on INFO/tag annotations. SQL query can also
+use external data within the request, such as a Parquet file(s).</p>
+<p>Usage examples:</p>
+<blockquote>
+<p>howard query &#x2013;input=tests/data/example.vcf.gz &#x2013;query=&#x201C;SELECT * FROM
+variants WHERE REF = &#x2018;A&#x2019; AND POS &lt; 100000&#x201D;</p>
+</blockquote>
+<blockquote>
+<p>howard query &#x2013;input=tests/data/example.vcf.gz &#x2013;explode_infos
+&#x2013;query=&#x2018;SELECT &#x201C;#CHROM&#x201D;, POS, REF, ALT, DP, CLNSIG, sample2, sample3
+FROM variants WHERE DP &gt;= 50 OR CLNSIG NOT NULL ORDER BY DP DESC&#x2019;</p>
+</blockquote>
+<blockquote>
+<p>howard query &#x2013;query=&#x201C;SELECT "#CHROM", POS, REF, ALT,
+"INFO/Interpro_domain" FROM
+&#x2018;tests/databases/annotations/current/hg19/dbnsfp42a.parquet&#x2019; WHERE
+"INFO/Interpro_domain" NOT NULL ORDER BY
+"INFO/SiPhy_29way_logOdds_rankscore" DESC LIMIT 10&#x201D;</p>
+</blockquote>
+<blockquote>
+<p>howard query &#x2013;explode_infos &#x2013;explode_infos_prefix=&#x2018;INFO/&#x2019;
+&#x2013;query=&#x201C;SELECT "#CHROM", POS, REF, ALT, STRING_AGG(INFO, &#x2018;;&#x2019;) AS INFO
+FROM &#x2019;tests/databases/annotations/current/hg19/*.parquet&#x2019; GROUP BY
+"#CHROM", POS, REF, ALT&#x201D; &#x2013;output=/tmp/full_annotation.tsv &amp;&amp;
+head -n2 /tmp/full_annotation.tsv</p>
+</blockquote>
+<blockquote>
+<p>howard query &#x2013;input=tests/data/example.vcf.gz
+&#x2013;param=config/param.json</p>
+</blockquote>
+<blockquote>
+
+</blockquote>
+<h2 data-number="2.1" id="main-options"><span
+class="header-section-number">2.1</span> Main options</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --input=&lt;input&gt;
 
 Input file path.
 Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
-Files can be compressesd (e.g. vcf.gz, tsv.gz).
-
-</div></code></pre>
-<pre class="hljs"><code><div>--output=&lt;output&gt;
+Files can be compressesd (e.g. vcf.gz, tsv.gz).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --output=&lt;output&gt;
 
 Output file path.
 Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
-Files can be compressesd (e.g. vcf.gz, tsv.gz).
-
-</div></code></pre>
-<pre class="hljs"><code><div>--param=&lt;param&gt; (default: {})
+Files can be compressesd (e.g. vcf.gz, tsv.gz).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --param=&lt;param&gt; (default: {})
 
 Parameters JSON file (or string) defines parameters to process 
-annotations, calculations, prioritizations, convertions and queries.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--query=&lt;query&gt;
+annotations, calculations, prioritizations, convertions and queries.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --query=&lt;query&gt;
 
 Query in SQL format
-(e.g. 'SELECT * FROM variants LIMIT 50').
+(e.g. &#39;SELECT * FROM variants LIMIT 50&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="2.2" id="explode"><span
+class="header-section-number">2.2</span> Explode</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --explode_infos
 
-</div></code></pre>
-<h3 id="explode">Explode</h3>
-<pre class="hljs"><code><div>--explode_infos
+Explode VCF INFO/Tag into &#39;variants&#39; table columns.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --explode_infos_prefix=&lt;explode infos prefix&gt;
 
-Explode VCF INFO/Tag into 'variants' table columns.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--explode_infos_prefix=&lt;explode infos prefix&gt;
-
-Explode VCF INFO/Tag with a specific prefix.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--explode_infos_fields=&lt;explode infos list&gt; (default: *)
+Explode VCF INFO/Tag with a specific prefix.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --explode_infos_fields=&lt;explode infos list&gt; (default: *)
 
 Explode VCF INFO/Tag specific fields/tags.
 Keyword `*` specify all available fields, except those already specified.
-Pattern (regex) can be used, such as `.*_score` for fields named with '_score' at the end.
+Pattern (regex) can be used, such as `.*_score` for fields named with &#39;_score&#39; at the end.
 Examples:
-- 'HGVS,SIFT,Clinvar' (list of fields)
-- 'HGVS,*,Clinvar' (list of fields with all other fields at the end)
-- 'HGVS,.*_score,Clinvar' (list of 2 fields with all scores in the middle)
-- 'HGVS,.*_score,*' (1 field, scores, all other fields)
-- 'HGVS,*,.*_score' (1 field, all other fields, all scores)
+- &#39;HGVS,SIFT,Clinvar&#39; (list of fields)
+- &#39;HGVS,*,Clinvar&#39; (list of fields with all other fields at the end)
+- &#39;HGVS,.*_score,Clinvar&#39; (list of 2 fields with all scores in the middle)
+- &#39;HGVS,.*_score,*&#39; (1 field, scores, all other fields)
+- &#39;HGVS,*,.*_score&#39; (1 field, all other fields, all scores)</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="2.3" id="query"><span
+class="header-section-number">2.3</span> Query</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --query_limit=&lt;query limit&gt; (default: 10)
 
-</div></code></pre>
-<h3 id="query">Query</h3>
-<pre class="hljs"><code><div>--query_limit=&lt;query limit&gt; (default: 10)
-
-Limit of number of row for query (only for print result, not output).
-
-</div></code></pre>
-<pre class="hljs"><code><div>--query_print_mode=&lt;print mode&gt; [None, 'markdown', 'tabulate']
+Limit of number of row for query (only for print result, not output).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --query_print_mode=&lt;print mode&gt; [None, &#39;markdown&#39;, &#39;tabulate&#39;, &#39;disabled&#39;]
 
 Print mode of query result (only for print result, not output).
-Either None (native), 'markdown' or 'tabulate'.
-
-</div></code></pre>
-<h3 id="export">Export</h3>
-<pre class="hljs"><code><div>--include_header
+Either None (native), &#39;markdown&#39;, &#39;tabulate&#39; or disabled.</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="2.4" id="export"><span
+class="header-section-number">2.4</span> Export</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --include_header
 
 Include header (in VCF format) in output file.
-Only for compatible formats (tab-delimiter format as TSV or BED).
-
-</div></code></pre>
-<pre class="hljs"><code><div>--parquet_partitions=&lt;parquet partitions&gt;
+Only for compatible formats (tab-delimiter format as TSV or BED).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --parquet_partitions=&lt;parquet partitions&gt;
 
 Parquet partitioning using hive (available for any format).
 This option is faster parallel writing, but memory consuming.
-Use 'None' (string) for NO partition but split parquet files into a folder.
-Examples: '#CHROM', '#CHROM,REF', 'None'.
-
-</div></code></pre>
-<h2 id="stats-tool">STATS tool</h2>
-<p>Statistics on genetic variations, such as: number of variants, number of samples, statistics by chromosome, genotypes by samples...</p>
+Use &#39;None&#39; (string) for NO partition but split parquet files into a folder.
+Examples: &#39;#CHROM&#39;, &#39;#CHROM,REF&#39;, &#39;None&#39;.</code></pre>
+</blockquote>
+<p></small></p>
+<h1 data-number="3" id="stats-tool"><span
+class="header-section-number">3</span> STATS tool</h1>
+<p>Statistics on genetic variations, such as: number of variants, number
+of samples, statistics by chromosome, genotypes by samples&#x2026;</p>
 <p>Usage examples:</p>
 <blockquote>
-<p>howard stats --input=tests/data/example.vcf.gz</p>
+<p>howard stats &#x2013;input=tests/data/example.vcf.gz</p>
 </blockquote>
 <blockquote>
-<p>howard stats --input=tests/data/example.vcf.gz --stats_md=/tmp/stats.md</p>
+<p>howard stats &#x2013;input=tests/data/example.vcf.gz
+&#x2013;stats_md=/tmp/stats.md</p>
 </blockquote>
 <blockquote>
-<p>howard stats --input=tests/data/example.vcf.gz --param=config/param.json</p>
+<p>howard stats &#x2013;input=tests/data/example.vcf.gz
+&#x2013;param=config/param.json</p>
 </blockquote>
-<blockquote></blockquote>
-<h3 id="main-options">Main options</h3>
-<pre class="hljs"><code><div>--input=&lt;input&gt; | required
+<blockquote>
+
+</blockquote>
+<h2 data-number="3.1" id="main-options-1"><span
+class="header-section-number">3.1</span> Main options</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --input=&lt;input&gt; | required
 
 Input file path.
 Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
-Files can be compressesd (e.g. vcf.gz, tsv.gz).
-
-</div></code></pre>
-<pre class="hljs"><code><div>--param=&lt;param&gt; (default: {})
+Files can be compressesd (e.g. vcf.gz, tsv.gz).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --param=&lt;param&gt; (default: {})
 
 Parameters JSON file (or string) defines parameters to process 
-annotations, calculations, prioritizations, convertions and queries.
+annotations, calculations, prioritizations, convertions and queries.</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="3.2" id="stats"><span
+class="header-section-number">3.2</span> Stats</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --stats_md=&lt;stats markdown&gt;
 
-</div></code></pre>
-<h3 id="stats">Stats</h3>
-<pre class="hljs"><code><div>--stats_md=&lt;stats markdown&gt;
+Stats Output file in MarkDown format.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --stats_json=&lt;stats json&gt;
 
-Stats Output file in MarkDown format.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--stats_json=&lt;stats json&gt;
-
-Stats Output file in JSON format.
-
-</div></code></pre>
-<h2 id="convert-tool">CONVERT tool</h2>
-<p>Convert genetic variations file to another format. Multiple format are available, such as usual and official VCF and BCF format, but also other formats such as TSV, CSV, PSV and Parquet/duckDB. These formats need a header '.hdr' file to take advantage of the power of howard (especially through INFO/tag definition), and using howard convert tool automatically generate header file fo futher use.</p>
+Stats Output file in JSON format.</code></pre>
+</blockquote>
+<p></small></p>
+<h1 data-number="4" id="convert-tool"><span
+class="header-section-number">4</span> CONVERT tool</h1>
+<p>Convert genetic variations file to another format. Multiple format
+are available, such as usual and official VCF and BCF format, but also
+other formats such as TSV, CSV, PSV and Parquet/duckDB. These formats
+need a header &#x2018;.hdr&#x2019; file to take advantage of the power of howard
+(especially through INFO/tag definition), and using howard convert tool
+automatically generate header file fo futher use.</p>
 <p>Usage examples:</p>
 <blockquote>
-<p>howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv</p>
+<p>howard convert &#x2013;input=tests/data/example.vcf.gz
+&#x2013;output=/tmp/example.tsv</p>
 </blockquote>
 <blockquote>
-<p>howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.parquet</p>
+<p>howard convert &#x2013;input=tests/data/example.vcf.gz
+&#x2013;output=/tmp/example.parquet</p>
 </blockquote>
 <blockquote>
-<p>howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos --explode_infos_fields='CLNSIG,SIFT,DP' --order_by='CLNSIG DESC, DP DESC'</p>
+<p>howard convert &#x2013;input=tests/data/example.vcf.gz
+&#x2013;output=/tmp/example.tsv &#x2013;explode_infos
+&#x2013;explode_infos_fields=&#x2018;CLNSIG,SIFT,DP&#x2019; &#x2013;order_by=&#x2018;CLNSIG DESC, DP
+DESC&#x2019;</p>
 </blockquote>
 <blockquote>
-<p>howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --explode_infos --explode_infos_prefix='INFO/' --explode_infos_fields='CLNSIG,SIFT,DP,*' --order_by='&quot;INFO/CLNSIG&quot; DESC, &quot;INFO/DP&quot; DESC' --include_header</p>
+<p>howard convert &#x2013;input=tests/data/example.vcf.gz
+&#x2013;output=/tmp/example.tsv &#x2013;explode_infos &#x2013;explode_infos_prefix=&#x2018;INFO/&#x2019;
+&#x2013;explode_infos_fields=&#x2019;CLNSIG,SIFT,DP,*&#x2019; &#x2013;order_by=&#x2018;&#x201C;INFO/CLNSIG&#x201D; DESC,
+&#x201C;INFO/DP&#x201D; DESC&#x2019; &#x2013;include_header</p>
 </blockquote>
 <blockquote>
-<p>howard convert --input=tests/data/example.vcf.gz --output=/tmp/example.tsv --param=config/param.json</p>
+<p>howard convert &#x2013;input=tests/data/example.vcf.gz
+&#x2013;output=/tmp/example.tsv &#x2013;param=config/param.json</p>
 </blockquote>
-<blockquote></blockquote>
-<h3 id="main-options">Main options</h3>
-<pre class="hljs"><code><div>--input=&lt;input&gt; | required
+<blockquote>
+
+</blockquote>
+<h2 data-number="4.1" id="main-options-2"><span
+class="header-section-number">4.1</span> Main options</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --input=&lt;input&gt; | required
 
 Input file path.
 Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
-Files can be compressesd (e.g. vcf.gz, tsv.gz).
-
-</div></code></pre>
-<pre class="hljs"><code><div>--output=&lt;output&gt; | required
+Files can be compressesd (e.g. vcf.gz, tsv.gz).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --output=&lt;output&gt; | required
 
 Output file path.
 Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
-Files can be compressesd (e.g. vcf.gz, tsv.gz).
-
-</div></code></pre>
-<pre class="hljs"><code><div>--param=&lt;param&gt; (default: {})
+Files can be compressesd (e.g. vcf.gz, tsv.gz).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --param=&lt;param&gt; (default: {})
 
 Parameters JSON file (or string) defines parameters to process 
-annotations, calculations, prioritizations, convertions and queries.
+annotations, calculations, prioritizations, convertions and queries.</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="4.2" id="explode-1"><span
+class="header-section-number">4.2</span> Explode</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --explode_infos
 
-</div></code></pre>
-<h3 id="explode">Explode</h3>
-<pre class="hljs"><code><div>--explode_infos
+Explode VCF INFO/Tag into &#39;variants&#39; table columns.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --explode_infos_prefix=&lt;explode infos prefix&gt;
 
-Explode VCF INFO/Tag into 'variants' table columns.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--explode_infos_prefix=&lt;explode infos prefix&gt;
-
-Explode VCF INFO/Tag with a specific prefix.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--explode_infos_fields=&lt;explode infos list&gt; (default: *)
+Explode VCF INFO/Tag with a specific prefix.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --explode_infos_fields=&lt;explode infos list&gt; (default: *)
 
 Explode VCF INFO/Tag specific fields/tags.
 Keyword `*` specify all available fields, except those already specified.
-Pattern (regex) can be used, such as `.*_score` for fields named with '_score' at the end.
+Pattern (regex) can be used, such as `.*_score` for fields named with &#39;_score&#39; at the end.
 Examples:
-- 'HGVS,SIFT,Clinvar' (list of fields)
-- 'HGVS,*,Clinvar' (list of fields with all other fields at the end)
-- 'HGVS,.*_score,Clinvar' (list of 2 fields with all scores in the middle)
-- 'HGVS,.*_score,*' (1 field, scores, all other fields)
-- 'HGVS,*,.*_score' (1 field, all other fields, all scores)
-
-</div></code></pre>
-<h3 id="export">Export</h3>
-<pre class="hljs"><code><div>--include_header
+- &#39;HGVS,SIFT,Clinvar&#39; (list of fields)
+- &#39;HGVS,*,Clinvar&#39; (list of fields with all other fields at the end)
+- &#39;HGVS,.*_score,Clinvar&#39; (list of 2 fields with all scores in the middle)
+- &#39;HGVS,.*_score,*&#39; (1 field, scores, all other fields)
+- &#39;HGVS,*,.*_score&#39; (1 field, all other fields, all scores)</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="4.3" id="export-1"><span
+class="header-section-number">4.3</span> Export</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --include_header
 
 Include header (in VCF format) in output file.
-Only for compatible formats (tab-delimiter format as TSV or BED).
-
-</div></code></pre>
-<pre class="hljs"><code><div>--order_by=&lt;order by&gt;
+Only for compatible formats (tab-delimiter format as TSV or BED).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --order_by=&lt;order by&gt;
 
 List of columns to sort the result-set in ascending or descending order.
 Use SQL format, and keywords ASC (ascending) and DESC (descending).
 If a column is not available, order will not be considered.
 Order is enable only for compatible format (e.g. TSV, CSV, JSON).
-Examples: 'ACMG_score DESC', 'PZFlag DESC, PZScore DESC'.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--parquet_partitions=&lt;parquet partitions&gt;
+Examples: &#39;ACMG_score DESC&#39;, &#39;PZFlag DESC, PZScore DESC&#39;.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --parquet_partitions=&lt;parquet partitions&gt;
 
 Parquet partitioning using hive (available for any format).
 This option is faster parallel writing, but memory consuming.
-Use 'None' (string) for NO partition but split parquet files into a folder.
-Examples: '#CHROM', '#CHROM,REF', 'None'.
-
-</div></code></pre>
-<h2 id="hgvs-tool">HGVS tool</h2>
-<p>HGVS annotation using HUGO HGVS internation Sequence Variant Nomenclature (http://varnomen.hgvs.org/). Annotation refere to refGene and genome to generate HGVS nomenclature for all available transcripts. This annotation add 'hgvs' field into VCF INFO column of a VCF file.</p>
+Use &#39;None&#39; (string) for NO partition but split parquet files into a folder.
+Examples: &#39;#CHROM&#39;, &#39;#CHROM,REF&#39;, &#39;None&#39;.</code></pre>
+</blockquote>
+<p></small></p>
+<h1 data-number="5" id="hgvs-tool"><span
+class="header-section-number">5</span> HGVS tool</h1>
+<p>HGVS annotation using HUGO HGVS internation Sequence Variant
+Nomenclature (http://varnomen.hgvs.org/). Annotation refere to refGene
+and genome to generate HGVS nomenclature for all available transcripts.
+This annotation add &#x2018;hgvs&#x2019; field into VCF INFO column of a VCF file.</p>
 <p>Usage examples:</p>
 <blockquote>
-<p>howard hgvs --input=tests/data/example.full.vcf --output=/tmp/example.hgvs.vcf</p>
+<p>howard hgvs &#x2013;input=tests/data/example.full.vcf
+&#x2013;output=/tmp/example.hgvs.vcf</p>
 </blockquote>
 <blockquote>
-<p>howard hgvs --input=tests/data/example.full.vcf --output=/tmp/example.hgvs.tsv --param=config/param.json</p>
+<p>howard hgvs &#x2013;input=tests/data/example.full.vcf
+&#x2013;output=/tmp/example.hgvs.tsv &#x2013;param=config/param.json</p>
 </blockquote>
 <blockquote>
-<p>howard hgvs --input=tests/data/example.full.vcf --output=/tmp/example.hgvs.vcf --full_format --use_exon</p>
+<p>howard hgvs &#x2013;input=tests/data/example.full.vcf
+&#x2013;output=/tmp/example.hgvs.vcf &#x2013;full_format &#x2013;use_exon</p>
 </blockquote>
-<blockquote></blockquote>
-<h3 id="main-options">Main options</h3>
-<pre class="hljs"><code><div>--input=&lt;input&gt; | required
+<blockquote>
+
+</blockquote>
+<h2 data-number="5.1" id="main-options-3"><span
+class="header-section-number">5.1</span> Main options</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --input=&lt;input&gt; | required
 
 Input file path.
 Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
-Files can be compressesd (e.g. vcf.gz, tsv.gz).
-
-</div></code></pre>
-<pre class="hljs"><code><div>--output=&lt;output&gt; | required
+Files can be compressesd (e.g. vcf.gz, tsv.gz).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --output=&lt;output&gt; | required
 
 Output file path.
 Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
-Files can be compressesd (e.g. vcf.gz, tsv.gz).
-
-</div></code></pre>
-<pre class="hljs"><code><div>--param=&lt;param&gt; (default: {})
+Files can be compressesd (e.g. vcf.gz, tsv.gz).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --param=&lt;param&gt; (default: {})
 
 Parameters JSON file (or string) defines parameters to process 
-annotations, calculations, prioritizations, convertions and queries.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--hgvs_options=&lt;HGVS options&gt;
+annotations, calculations, prioritizations, convertions and queries.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --hgvs_options=&lt;HGVS options&gt;
 
 Quick HGVS annotation options.
 This option will skip all other hgvs options.
 Examples:
-- 'default' (for default options)
-- 'full_format' (for full format HGVS annotation)
-- 'use_gene=True:add_protein=true:codon_type=FULL'
+- &#39;default&#39; (for default options)
+- &#39;full_format&#39; (for full format HGVS annotation)
+- &#39;use_gene=True:add_protein=true:codon_type=FULL&#39;</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --assembly=&lt;assembly&gt; (default: hg19)
 
-</div></code></pre>
-<pre class="hljs"><code><div>--assembly=&lt;assembly&gt; (default: hg19)
-
-Genome Assembly (e.g. 'hg19', 'hg38').
-
-</div></code></pre>
-<h3 id="hgvs">HGVS</h3>
-<pre class="hljs"><code><div>--use_gene
+Genome Assembly (e.g. &#39;hg19&#39;, &#39;hg38&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="5.2" id="hgvs"><span
+class="header-section-number">5.2</span> HGVS</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --use_gene
 
 Use Gene information to generate HGVS annotation
-(e.g. 'NM_152232(TAS1R2):c.231T&gt;C')
-</div></code></pre>
-<pre class="hljs"><code><div>--use_exon
+(e.g. &#39;NM_152232(TAS1R2):c.231T&gt;C&#39;)</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --use_exon
 
 Use Exon information to generate HGVS annotation
-(e.g. 'NM_152232(exon2):c.231T&gt;C').
-Only if 'use_gene' is not enabled.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--use_protein
+(e.g. &#39;NM_152232(exon2):c.231T&gt;C&#39;).
+Only if &#39;use_gene&#39; is not enabled.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --use_protein
 
 Use Protein level to generate HGVS annotation
-(e.g. 'NP_689418:p.Cys77Arg').
-Can be used with 'use_exon' or 'use_gene'.
+(e.g. &#39;NP_689418:p.Cys77Arg&#39;).
+Can be used with &#39;use_exon&#39; or &#39;use_gene&#39;.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --add_protein
 
-</div></code></pre>
-<pre class="hljs"><code><div>--add_protein
-
-Add Protein level to DNA HGVS annotation (e.g 'NM_152232:c.231T&gt;C,NP_689418:p.Cys77Arg').
-
-</div></code></pre>
-<pre class="hljs"><code><div>--full_format
+Add Protein level to DNA HGVS annotation (e.g &#39;NM_152232:c.231T&gt;C,NP_689418:p.Cys77Arg&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --full_format
 
 Generates HGVS annotation in a full format
 by using all information to generates an exhaustive annotation
-(non-standard, e.g. 'TAS1R2:NM_152232:NP_689418:c.231T&gt;C:p.Cys77Arg').
-Use 'use_exon' to add exon information
-(e.g 'TAS1R2:NM_152232:NP_689418:exon2:c.231T&gt;C:p.Cys77Arg').
-
-</div></code></pre>
-<pre class="hljs"><code><div>--codon_type=&lt;Codon type&gt; ['1', '3', 'FULL'] (default: 3)
+(non-standard, e.g. &#39;TAS1R2:NM_152232:NP_689418:c.231T&gt;C:p.Cys77Arg&#39;).
+Use &#39;use_exon&#39; to add exon information
+(e.g &#39;TAS1R2:NM_152232:NP_689418:exon2:c.231T&gt;C:p.Cys77Arg&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --codon_type=&lt;Codon type&gt; [&#39;1&#39;, &#39;3&#39;, &#39;FULL&#39;] (default: 3)
 
 Amino Acide Codon format type to use to generate HGVS annotation.
 Available:
-- '1': codon in 1 character (e.g. 'C', 'R')
-- '3': codon in 3 character (e.g. 'Cys', 'Arg')
--'FULL': codon in full name (e.g. 'Cysteine', 'Arginine')
+- &#39;1&#39;: codon in 1 character (e.g. &#39;C&#39;, &#39;R&#39;)
+- &#39;3&#39;: codon in 3 character (e.g. &#39;Cys&#39;, &#39;Arg&#39;)
+-&#39;FULL&#39;: codon in full name (e.g. &#39;Cysteine&#39;, &#39;Arginine&#39;)</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --refgene=&lt;refGene&gt;
 
-</div></code></pre>
-<pre class="hljs"><code><div>--refgene=&lt;refGene&gt;
+Path to refGene annotation file.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --refseqlink=&lt;refSeqLink&gt;
 
-Path to refGene annotation file.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--refseqlink=&lt;refSeqLink&gt;
-
-Path to refSeqLink annotation file.
-
-</div></code></pre>
-<h2 id="annotation-tool">ANNOTATION tool</h2>
-<p>Annotation is mainly based on a build-in Parquet annotation method, and tools such as BCFTOOLS, Annovar and snpEff. It uses available databases (see Annovar and snpEff) and homemade databases. Format of databases are: parquet, duckdb, vcf, bed, Annovar and snpEff (Annovar and snpEff databases are automatically downloaded, see howard databases tool).</p>
+Path to refSeqLink annotation file.</code></pre>
+</blockquote>
+<p></small></p>
+<h1 data-number="6" id="annotation-tool"><span
+class="header-section-number">6</span> ANNOTATION tool</h1>
+<p>Annotation is mainly based on a build-in Parquet annotation method,
+and tools such as BCFTOOLS, Annovar and snpEff. It uses available
+databases (see Annovar and snpEff) and homemade databases. Format of
+databases are: parquet, duckdb, vcf, bed, Annovar and snpEff (Annovar
+and snpEff databases are automatically downloaded, see howard databases
+tool).</p>
 <p>Usage examples:</p>
 <blockquote>
-<p>howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --annotations='tests/databases/annotations/current/hg19/avsnp150.parquet,tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet'</p>
+<p>howard annotation &#x2013;input=tests/data/example.vcf.gz
+&#x2013;output=/tmp/example.howard.vcf.gz
+&#x2013;annotations=&#x2018;tests/databases/annotations/current/hg19/avsnp150.parquet,tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet&#x2019;</p>
 </blockquote>
 <blockquote>
-<p>howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotations='annovar:refGene,annovar:cosmic70,snpeff,tests/databases/annotations/current/hg19/clinvar_20210123.parquet'</p>
+<p>howard annotation &#x2013;input=tests/data/example.vcf.gz
+&#x2013;output=/tmp/example.howard.tsv &#x2013;assembly=hg19
+&#x2013;annotations=&#x2018;annovar:refGene,annovar:cosmic70,snpeff,tests/databases/annotations/current/hg19/clinvar_20210123.parquet&#x2019;</p>
 </blockquote>
 <blockquote>
-<p>howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotation_parquet='tests/databases/annotations/current/hg19/avsnp150.parquet,tests/databases/annotations/current/hg19/dbnsfp42a.parquet'</p>
+<p>howard annotation &#x2013;input=tests/data/example.vcf.gz
+&#x2013;output=/tmp/example.howard.tsv &#x2013;assembly=hg19
+&#x2013;annotation_parquet=&#x2018;tests/databases/annotations/current/hg19/avsnp150.parquet,tests/databases/annotations/current/hg19/dbnsfp42a.parquet&#x2019;</p>
 </blockquote>
 <blockquote>
-<p>howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotation_bcftools='tests/databases/annotations/current/hg19/nci60.vcf.gz,tests/databases/annotations/current/hg19/dbnsfp42a.vcf.gz'</p>
+<p>howard annotation &#x2013;input=tests/data/example.vcf.gz
+&#x2013;output=/tmp/example.howard.tsv &#x2013;assembly=hg19
+&#x2013;annotation_bcftools=&#x2018;tests/databases/annotations/current/hg19/nci60.vcf.gz,tests/databases/annotations/current/hg19/dbnsfp42a.vcf.gz&#x2019;</p>
 </blockquote>
 <blockquote>
-<p>howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotation_snpsift='tests/databases/annotations/current/hg19/nci60.vcf.gz,tests/databases/annotations/current/hg19/dbnsfp42a.vcf.gz'</p>
+<p>howard annotation &#x2013;input=tests/data/example.vcf.gz
+&#x2013;output=/tmp/example.howard.tsv &#x2013;assembly=hg19
+&#x2013;annotation_snpsift=&#x2018;tests/databases/annotations/current/hg19/nci60.vcf.gz,tests/databases/annotations/current/hg19/dbnsfp42a.vcf.gz&#x2019;</p>
 </blockquote>
 <blockquote>
-<p>howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotation_annovar='nci60:cosmic70'</p>
+<p>howard annotation &#x2013;input=tests/data/example.vcf.gz
+&#x2013;output=/tmp/example.howard.tsv &#x2013;assembly=hg19
+&#x2013;annotation_annovar=&#x2018;nci60:cosmic70&#x2019;</p>
 </blockquote>
 <blockquote>
-<p>howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotation_snpeff='-hgvs'</p>
+<p>howard annotation &#x2013;input=tests/data/example.vcf.gz
+&#x2013;output=/tmp/example.howard.tsv &#x2013;assembly=hg19
+&#x2013;annotation_snpeff=&#x2018;-hgvs&#x2019;</p>
 </blockquote>
 <blockquote>
-<p>howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotation_exomiser='preset=exome:transcript_source=refseq'</p>
+<p>howard annotation &#x2013;input=tests/data/example.vcf.gz
+&#x2013;output=/tmp/example.howard.tsv &#x2013;assembly=hg19
+&#x2013;annotation_exomiser=&#x2018;preset=exome:transcript_source=refseq&#x2019;</p>
 </blockquote>
 <blockquote>
-<p>howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotation_splice='split_mode=one:spliceai_distance=500:spliceai_mask=1'</p>
+<p>howard annotation &#x2013;input=tests/data/example.vcf.gz
+&#x2013;output=/tmp/example.howard.tsv &#x2013;assembly=hg19
+&#x2013;annotation_splice=&#x2018;split_mode=one:spliceai_distance=500:spliceai_mask=1&#x2019;</p>
 </blockquote>
 <blockquote>
-<p>howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --assembly=hg19 --annotations='ALL:parquet'</p>
+<p>howard annotation &#x2013;input=tests/data/example.vcf.gz
+&#x2013;output=/tmp/example.howard.tsv &#x2013;assembly=hg19
+&#x2013;annotations=&#x2018;ALL:parquet&#x2019;</p>
 </blockquote>
 <blockquote>
-<p>howard annotation --input=tests/data/example.vcf.gz --output=/tmp/example.howard.tsv --param=config/param.json</p>
+<p>howard annotation &#x2013;input=tests/data/example.vcf.gz
+&#x2013;output=/tmp/example.howard.tsv &#x2013;param=config/param.json</p>
 </blockquote>
-<blockquote></blockquote>
-<h3 id="main-options">Main options</h3>
-<pre class="hljs"><code><div>--input=&lt;input&gt; | required
+<blockquote>
+
+</blockquote>
+<h2 data-number="6.1" id="main-options-4"><span
+class="header-section-number">6.1</span> Main options</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --input=&lt;input&gt; | required
 
 Input file path.
 Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
-Files can be compressesd (e.g. vcf.gz, tsv.gz).
-
-</div></code></pre>
-<pre class="hljs"><code><div>--output=&lt;output&gt; | required
+Files can be compressesd (e.g. vcf.gz, tsv.gz).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --output=&lt;output&gt; | required
 
 Output file path.
 Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
-Files can be compressesd (e.g. vcf.gz, tsv.gz).
-
-</div></code></pre>
-<pre class="hljs"><code><div>--param=&lt;param&gt; (default: {})
+Files can be compressesd (e.g. vcf.gz, tsv.gz).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --param=&lt;param&gt; (default: {})
 
 Parameters JSON file (or string) defines parameters to process 
-annotations, calculations, prioritizations, convertions and queries.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--annotations=&lt;annotations&gt;
+annotations, calculations, prioritizations, convertions and queries.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --annotations=&lt;annotations&gt;
 
 Annotation with databases files, or with tools,
 as a list of files in Parquet, VCF, BED, or keywords
- (e.g. 'file.parquet,bcftools:file2.vcf.gz,annovar:refGene,snpeff').
+ (e.g. &#39;file.parquet,bcftools:file2.vcf.gz,annovar:refGene,snpeff&#39;).
 - For a Parquet/VCF/BED, use file paths
- (e.g. 'file1.parquet,file2.vcf.gz').
-- For BCFTools annotation, use keyword 'bcftools' with file paths
- (e.g. 'bcftools:file.vcf.gz:file.bed.gz').
-- For Annovar annotation, use keyword 'annovar' with annovar code
- (e.g. 'annovar:refGene', 'annovar:refGene:cosmic70').
-- For snpeff annotation, use keyword 'snpeff' with options
- (e.g. 'snpeff', 'snpeff:-hgvs -noShiftHgvs -spliceSiteSize 3').
-- For snpSift annotation, use keyword 'snpsift' with file paths
- (e.g. 'snpsift:file.vcf.gz:file.bed.gz').
-- For Exomiser annotation, use keyword 'exomiser' with options as key=value
- (e.g. 'exomiser:preset=exome:transcript_source=refseq').
-- For add all availalbe databases files, use 'ALL' keyword,
- with filters on type and release
- (e.g. 'ALL', 'ALL:parquet:current', 'ALL:parquet,vcf:current,devel').
-
-</div></code></pre>
-<pre class="hljs"><code><div>--annotation_parquet=&lt;annotation parquet&gt;
+ (e.g. &#39;file1.parquet,file2.vcf.gz&#39;).
+- For BCFTools annotation, use keyword &#39;bcftools&#39; with file paths
+ (e.g. &#39;bcftools:file.vcf.gz:file.bed.gz&#39;).
+- For Parquet annotation, use keyword &#39;parquet&#39; with file paths
+ (e.g. &#39;parquet:file.parquet&#39;).
+- For Annovar annotation, use keyword &#39;annovar&#39; with annovar code
+ (e.g. &#39;annovar:refGene&#39;, &#39;annovar:refGene:cosmic70&#39;).
+- For snpeff annotation, use keyword &#39;snpeff&#39; with options
+ (e.g. &#39;snpeff&#39;, &#39;snpeff:-hgvs -noShiftHgvs -spliceSiteSize 3&#39;).
+- For snpSift annotation, use keyword &#39;snpsift&#39; with file paths
+ (e.g. &#39;snpsift:file.vcf.gz:file.bed.gz&#39;).
+- For Exomiser annotation, use keyword &#39;exomiser&#39; with options as key=value
+ (e.g. &#39;exomiser:preset=exome:transcript_source=refseq&#39;).
+- For add all availalbe databases files, use &#39;ALL&#39; keyword,
+ with filters on format (e.g. &#39;parquet&#39;, &#39;vcf&#39;) and release (e.g. &#39;current&#39;, &#39;devel&#39;)
+ (e.g. &#39;ALL&#39;, ALL:format=parquet&#39;, &#39;ALL:format=parquet:release=current&#39;, &#39;ALL:format=parquet+vcf:release=current+devel&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --annotation_parquet=&lt;annotation parquet&gt;
 
 Annotation with Parquet method, as a list of files in Parquet, VCF or BED
- (e.g. 'file1.parquet,file2.vcf.gz').
-For add all availalbe databases files, use 'ALL' keyword,
+ (e.g. &#39;file1.parquet,file2.vcf.gz&#39;).
+For add all availalbe databases files, use &#39;ALL&#39; keyword,
  with filters on type and release
- (e.g. 'ALL', 'ALL:parquet:current', 'ALL:parquet,vcf:current,devel').
-
-</div></code></pre>
-<pre class="hljs"><code><div>--annotation_bcftools=&lt;annotation BCFTools&gt;
+ (e.g. &#39;ALL&#39;, &#39;ALL:parquet:current&#39;, &#39;ALL:parquet,vcf:current,devel&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --annotation_bcftools=&lt;annotation BCFTools&gt;
 
 Annotation with BCFTools, as a list of files VCF or BED
- (e.g. 'file.vcf.gz,file.bed.gz').
-
-</div></code></pre>
-<pre class="hljs"><code><div>--annotation_annovar=&lt;annotation Annovar&gt;
+ (e.g. &#39;file.vcf.gz,file.bed.gz&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --annotation_annovar=&lt;annotation Annovar&gt;
 
 Annotation with Annovar, as a list of database keywords
- (e.g. 'refGene', 'refGene:cosmic70').
-
-</div></code></pre>
-<pre class="hljs"><code><div>--annotation_snpeff=&lt;annotation snpEff&gt;
+ (e.g. &#39;refGene&#39;, &#39;refGene:cosmic70&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --annotation_snpeff=&lt;annotation snpEff&gt;
 
 Annotation with snpEff, with options
- (e.g. '', '-hgvs -noShiftHgvs -spliceSiteSize 3').
-
-</div></code></pre>
-<pre class="hljs"><code><div>--annotation_snpsift=&lt;annotation snpSift&gt;
+ (e.g. &#39;&#39;, &#39;-hgvs -noShiftHgvs -spliceSiteSize 3&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --annotation_snpsift=&lt;annotation snpSift&gt;
 
 Annotation with snpSift, as a list of files VCF
- (e.g. 'file.vcf.gz,file.bed.gz').
-
-</div></code></pre>
-<pre class="hljs"><code><div>--annotation_exomiser=&lt;annotation Exomiser&gt;
+ (e.g. &#39;file.vcf.gz,file.bed.gz&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --annotation_exomiser=&lt;annotation Exomiser&gt;
 
 Annotation with Exomiser, as a list of options
- (e.g. 'preset=exome:transcript_source=refseq').
-
-</div></code></pre>
-<pre class="hljs"><code><div>--annotation_splice=&lt;annotation Splice&gt;
+ (e.g. &#39;preset=exome:transcript_source=refseq&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --annotation_splice=&lt;annotation Splice&gt;
 
 Annotation with Splice, as a list of options
- (e.g. 'split_mode=one:spliceai_distance=500:spliceai_mask=1').
+ (e.g. &#39;split_mode=one:spliceai_distance=500:spliceai_mask=1&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --assembly=&lt;assembly&gt; (default: hg19)
 
-</div></code></pre>
-<pre class="hljs"><code><div>--assembly=&lt;assembly&gt; (default: hg19)
-
-Genome Assembly (e.g. 'hg19', 'hg38').
-
-</div></code></pre>
-<h3 id="annotation">Annotation</h3>
-<pre class="hljs"><code><div>--annotations_update
+Genome Assembly (e.g. &#39;hg19&#39;, &#39;hg38&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="6.2" id="annotation"><span
+class="header-section-number">6.2</span> Annotation</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --annotations_update
 
 Update option for annotation (Only for Parquet annotation).
 If True, annotation fields will be removed and re-annotated.
-These options will be applied to all annotation databases.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--annotations_append
+These options will be applied to all annotation databases.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --annotations_append
 
 Append option for annotation (Only for Parquet annotation).
 If True, annotation fields will be annotated only if not annotation exists for the variant.
-These options will be applied to all annotation databases.
-
-</div></code></pre>
-<h2 id="calculation-tool">CALCULATION tool</h2>
-<p>Calculation processes variants information to generate new information, such as: identify variation type (VarType), harmonizes allele frequency (VAF) and calculate sttistics (VAF_stats), extracts Nomen (transcript, cNomen, pNomen...) from an HGVS field (e.g. snpEff, Annovar) with an optional list of personalized transcripts, generates VaRank format barcode, identify trio inheritance.</p>
+These options will be applied to all annotation databases.</code></pre>
+</blockquote>
+<p></small></p>
+<h1 data-number="7" id="calculation-tool"><span
+class="header-section-number">7</span> CALCULATION tool</h1>
+<p>Calculation processes variants information to generate new
+information, such as: identify variation type (VarType), harmonizes
+allele frequency (VAF) and calculate sttistics (VAF_stats), extracts
+Nomen (transcript, cNomen, pNomen&#x2026;) from an HGVS field (e.g.&#xA0;snpEff,
+Annovar) with an optional list of personalized transcripts, generates
+VaRank format barcode, identify trio inheritance.</p>
 <p>Usage examples:</p>
 <blockquote>
-<p>howard calculation --input=tests/data/example.full.vcf --output=/tmp/example.calculation.tsv --calculations='vartype'</p>
+<p>howard calculation &#x2013;input=tests/data/example.full.vcf
+&#x2013;output=/tmp/example.calculation.tsv &#x2013;calculations=&#x2018;vartype&#x2019;</p>
 </blockquote>
 <blockquote>
-<p>howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.calculated.tsv --calculations='snpeff_hgvs,NOMEN' --hgvs_field=snpeff_hgvs --transcripts=tests/data/transcripts.tsv</p>
+<p>howard calculation &#x2013;input=tests/data/example.ann.vcf.gz
+&#x2013;output=/tmp/example.calculated.tsv &#x2013;calculations=&#x2018;snpeff_hgvs,NOMEN&#x2019;
+&#x2013;hgvs_field=snpeff_hgvs &#x2013;transcripts=tests/data/transcripts.tsv</p>
 </blockquote>
 <blockquote>
-<p>howard calculation --input=tests/data/example.vcf.gz --output=/tmp/example.calculated.tsv --calculations='TRIO' --trio_pedigree='sample1,sample2,sample4'</p>
+<p>howard calculation &#x2013;input=tests/data/example.vcf.gz
+&#x2013;output=/tmp/example.calculated.tsv &#x2013;calculations=&#x2018;TRIO&#x2019;
+&#x2013;trio_pedigree=&#x2018;sample1,sample2,sample4&#x2019;</p>
 </blockquote>
 <blockquote>
-<p>howard calculation --input=tests/data/example.vcf.gz --output=/tmp/example.calculated.tsv --calculations='BARCODEFAMILY' --family_pedigree='sample1,sample2,sample4'</p>
+<p>howard calculation &#x2013;input=tests/data/example.vcf.gz
+&#x2013;output=/tmp/example.calculated.tsv &#x2013;calculations=&#x2018;BARCODEFAMILY&#x2019;
+&#x2013;family_pedigree=&#x2018;sample1,sample2,sample4&#x2019;</p>
 </blockquote>
 <blockquote>
-<p>howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.ann.tsv --param=config/param.json</p>
+<p>howard calculation &#x2013;input=tests/data/example.ann.transcripts.vcf.gz
+&#x2013;output=/tmp/example.calculation.transcripts.tsv
+&#x2013;param=config/param.transcripts.json
+&#x2013;calculations=&#x2018;TRANSCRIPTS_ANNOTATIONS,TRANSCRIPTS_PRIORITIZATION,TRANSCRIPTS_EXPORT&#x2019;</p>
 </blockquote>
 <blockquote>
-<p>howard calculation --show_calculations</p>
+<p>howard calculation &#x2013;input=tests/data/example.ann.vcf.gz
+&#x2013;output=/tmp/example.ann.tsv &#x2013;param=config/param.json</p>
 </blockquote>
-<blockquote></blockquote>
-<h3 id="main-options">Main options</h3>
-<pre class="hljs"><code><div>--input=&lt;input&gt;
+<blockquote>
+<p>howard calculation &#x2013;show_calculations</p>
+</blockquote>
+<blockquote>
+
+</blockquote>
+<h2 data-number="7.1" id="main-options-5"><span
+class="header-section-number">7.1</span> Main options</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --input=&lt;input&gt;
 
 Input file path.
 Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
-Files can be compressesd (e.g. vcf.gz, tsv.gz).
-
-</div></code></pre>
-<pre class="hljs"><code><div>--output=&lt;output&gt;
+Files can be compressesd (e.g. vcf.gz, tsv.gz).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --output=&lt;output&gt;
 
 Output file path.
 Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
-Files can be compressesd (e.g. vcf.gz, tsv.gz).
-
-</div></code></pre>
-<pre class="hljs"><code><div>--param=&lt;param&gt; (default: {})
+Files can be compressesd (e.g. vcf.gz, tsv.gz).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --param=&lt;param&gt; (default: {})
 
 Parameters JSON file (or string) defines parameters to process 
-annotations, calculations, prioritizations, convertions and queries.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--calculations=&lt;operations&gt;
+annotations, calculations, prioritizations, convertions and queries.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --calculations=&lt;operations&gt;
 
 Quick calculations on genetic variants information and genotype information,
-as a list of operations (e.g. 'VARTYPE,variant_id').
+as a list of operations (e.g. &#39;VARTYPE,variant_id&#39;).
 List of available calculations by default
  (unsensitive case, see doc for more information):
- VARTYPE  snpeff_hgvs  FINDBYPIPELINE  GENOTYPECONCORDANCE  BARCODE  TRIO  VAF  VAF_STATS  DP_STATS 
+ VARTYPE  snpeff_hgvs  FINDBYPIPELINE  GENOTYPECONCORDANCE  BARCODE  TRIO  VAF  VAF_STATS  DP_STATS</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="7.2" id="calculation"><span
+class="header-section-number">7.2</span> Calculation</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --calculation_config=&lt;calculation config&gt;
 
-</div></code></pre>
-<h3 id="calculation">Calculation</h3>
-<pre class="hljs"><code><div>--calculation_config=&lt;calculation config&gt;
+Calculation configuration JSON file.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --show_calculations
 
-Calculation configuration JSON file.
+Show available calculation operations.</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="7.3" id="nomen"><span
+class="header-section-number">7.3</span> NOMEN</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --hgvs_field=&lt;HGVS field&gt; (default: hgvs)
 
-</div></code></pre>
-<pre class="hljs"><code><div>--show_calculations
-
-Show available calculation operations.
-
-</div></code></pre>
-<h3 id="nomen">NOMEN</h3>
-<pre class="hljs"><code><div>--hgvs_field=&lt;HGVS field&gt; (default: hgvs)
-
-HGVS INFO/tag containing a list o HGVS annotations.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--transcripts=&lt;transcripts&gt;
+HGVS INFO/tag containing a list o HGVS annotations.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --transcripts=&lt;transcripts&gt;
 
 Transcripts TSV file,
-with Transcript in first column, optional Gene in second column.
-
-</div></code></pre>
-<h3 id="trio">TRIO</h3>
-<pre class="hljs"><code><div>--trio_pedigree=&lt;trio pedigree&gt;
+with Transcript in first column, optional Gene in second column.</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="7.4" id="trio"><span
+class="header-section-number">7.4</span> TRIO</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --trio_pedigree=&lt;trio pedigree&gt;
 
 Pedigree Trio for trio inheritance calculation.
 Either a JSON file or JSON string or a list of samples
-(e.g. 'sample1,sample2,sample3' for father, mother and child,
- '{&quot;father&quot;: &quot;sample1&quot;, &quot;mother&quot;: &quot;sample2&quot;, &quot;child&quot;: &quot;sample3&quot;}').
-
-</div></code></pre>
-<h3 id="barcodefamily">BARCODEFAMILY</h3>
-<pre class="hljs"><code><div>--family_pedigree=&lt;family pedigree&gt;
+(e.g. &#39;sample1,sample2,sample3&#39; for father, mother and child,
+ &#39;{&quot;father&quot;: &quot;sample1&quot;, &quot;mother&quot;: &quot;sample2&quot;, &quot;child&quot;: &quot;sample3&quot;}&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="7.5" id="barcodefamily"><span
+class="header-section-number">7.5</span> BARCODEFAMILY</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --family_pedigree=&lt;family pedigree&gt;
 
 Pedigree family for barcode calculation on genotype.
 Either a JSON file or JSON string or a list of samples
-(e.g. 'sample1,sample2,sample3,sample4',
- '{&quot;father&quot;: &quot;sample1&quot;, &quot;mother&quot;: &quot;sample2&quot;, &quot;child1&quot;: &quot;sample3&quot;, &quot;child2&quot;: &quot;sample3&quot;}').
-
-</div></code></pre>
-<h2 id="prioritization-tool">PRIORITIZATION tool</h2>
-<p>Prioritization algorithm uses profiles to flag variants (as passed or filtered), calculate a prioritization score, and automatically generate a comment for each variants (example: 'polymorphism identified in dbSNP. associated to Lung Cancer. Found in ClinVar database'). Prioritization profiles are defined in a configuration file in JSON format. A profile is defined as a list of annotation/value, using wildcards and comparison options (contains, lower than, greater than, equal...). Annotations fields may be quality values (usually from callers, such as 'DP') or other annotations fields provided by annotations tools, such as HOWARD itself (example: COSMIC, Clinvar, 1000genomes, PolyPhen, SIFT). Multiple profiles can be used simultaneously, which is useful to define multiple validation/prioritization levels (example: 'standard', 'stringent', 'rare variants', 'low allele frequency').</p>
+(e.g. &#39;sample1,sample2,sample3,sample4&#39;,
+ &#39;{&quot;father&quot;: &quot;sample1&quot;, &quot;mother&quot;: &quot;sample2&quot;, &quot;child1&quot;: &quot;sample3&quot;, &quot;child2&quot;: &quot;sample3&quot;}&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<h1 data-number="8" id="prioritization-tool"><span
+class="header-section-number">8</span> PRIORITIZATION tool</h1>
+<p>Prioritization algorithm uses profiles to flag variants (as passed or
+filtered), calculate a prioritization score, and automatically generate
+a comment for each variants (example: &#x2018;polymorphism identified in dbSNP.
+associated to Lung Cancer. Found in ClinVar database&#x2019;). Prioritization
+profiles are defined in a configuration file in JSON format. A profile
+is defined as a list of annotation/value, using wildcards and comparison
+options (contains, lower than, greater than, equal&#x2026;). Annotations fields
+may be quality values (usually from callers, such as &#x2018;DP&#x2019;) or other
+annotations fields provided by annotations tools, such as HOWARD itself
+(example: COSMIC, Clinvar, 1000genomes, PolyPhen, SIFT). Multiple
+profiles can be used simultaneously, which is useful to define multiple
+validation/prioritization levels (example: &#x2018;standard&#x2019;, &#x2018;stringent&#x2019;,
+&#x2018;rare variants&#x2019;, &#x2018;low allele frequency&#x2019;).</p>
 <p>Usage examples:</p>
 <blockquote>
-<p>howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations='default'</p>
+<p>howard prioritization &#x2013;input=tests/data/example.vcf.gz
+&#x2013;output=/tmp/example.prioritized.vcf.gz &#x2013;prioritizations=&#x2018;default&#x2019;</p>
 </blockquote>
 <blockquote>
-<p>howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.vcf.gz --prioritizations='default,GERMLINE' --prioritization_config=config/prioritization_profiles.json</p>
+<p>howard prioritization &#x2013;input=tests/data/example.vcf.gz
+&#x2013;output=/tmp/example.prioritized.vcf.gz
+&#x2013;prioritizations=&#x2018;default,GERMLINE&#x2019;
+&#x2013;prioritization_config=config/prioritization_profiles.json</p>
 </blockquote>
 <blockquote>
-<p>howard prioritization --input=tests/data/example.vcf.gz --output=/tmp/example.prioritized.tsv --param=config/param.json</p>
+<p>howard prioritization &#x2013;input=tests/data/example.vcf.gz
+&#x2013;output=/tmp/example.prioritized.tsv &#x2013;param=config/param.json</p>
 </blockquote>
-<blockquote></blockquote>
-<h3 id="main-options">Main options</h3>
-<pre class="hljs"><code><div>--input=&lt;input&gt; | required
+<blockquote>
+
+</blockquote>
+<h2 data-number="8.1" id="main-options-6"><span
+class="header-section-number">8.1</span> Main options</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --input=&lt;input&gt; | required
 
 Input file path.
 Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
-Files can be compressesd (e.g. vcf.gz, tsv.gz).
-
-</div></code></pre>
-<pre class="hljs"><code><div>--output=&lt;output&gt; | required
+Files can be compressesd (e.g. vcf.gz, tsv.gz).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --output=&lt;output&gt; | required
 
 Output file path.
 Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
-Files can be compressesd (e.g. vcf.gz, tsv.gz).
-
-</div></code></pre>
-<pre class="hljs"><code><div>--param=&lt;param&gt; (default: {})
+Files can be compressesd (e.g. vcf.gz, tsv.gz).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --param=&lt;param&gt; (default: {})
 
 Parameters JSON file (or string) defines parameters to process 
-annotations, calculations, prioritizations, convertions and queries.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--prioritizations=&lt;prioritisations&gt;
+annotations, calculations, prioritizations, convertions and queries.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --prioritizations=&lt;prioritisations&gt;
 
 List of prioritization profiles to process (based on Prioritization JSON file),
-such as 'default', 'rare variants', 'low allele frequency', 'GERMLINE'.
-By default, all profiles available will be processed.
-
-</div></code></pre>
-<h3 id="prioritization">Prioritization</h3>
-<pre class="hljs"><code><div>--default_profile=&lt;default profile&gt;
+such as &#39;default&#39;, &#39;rare variants&#39;, &#39;low allele frequency&#39;, &#39;GERMLINE&#39;.
+By default, all profiles available will be processed.</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="8.2" id="prioritization"><span
+class="header-section-number">8.2</span> Prioritization</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --default_profile=&lt;default profile&gt;
 
 Prioritization profile by default (see doc).
-Default is the first profile in the list of prioritization profiles.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--pzfields=&lt;pzfields&gt; (default: PZScore,PZFlag)
+Default is the first profile in the list of prioritization profiles.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --pzfields=&lt;pzfields&gt; (default: PZScore,PZFlag)
 
 Prioritization fields to provide (see doc).
-Available: PZScore, PZFlag, PZTags, PZComment, PZInfos
-
-</div></code></pre>
-<pre class="hljs"><code><div>--prioritization_score_mode=&lt;prioritization score mode&gt; ['HOWARD', 'VaRank'] (default: HOWARD)
+Available: PZScore, PZFlag, PZTags, PZComment, PZInfos</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --prioritization_score_mode=&lt;prioritization score mode&gt; [&#39;HOWARD&#39;, &#39;VaRank&#39;] (default: HOWARD)
 
 Prioritization Score mode (see doc).
-Available: HOWARD (increment score), VaRank (max score)
+Available: HOWARD (increment score), VaRank (max score)</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --prioritization_config=&lt;prioritization config&gt;
 
-</div></code></pre>
-<pre class="hljs"><code><div>--prioritization_config=&lt;prioritization config&gt;
-
-Prioritization configuration JSON file (defines profiles, see doc).
-
-</div></code></pre>
-<h2 id="process-tool">PROCESS tool</h2>
+Prioritization configuration JSON file (defines profiles, see doc).</code></pre>
+</blockquote>
+<p></small></p>
+<h1 data-number="9" id="process-tool"><span
+class="header-section-number">9</span> PROCESS tool</h1>
 <p>howard process tool manage genetic variations to:</p>
 <ul>
-<li>
-<p>annotates genetic variants with multiple annotation databases/files and tools</p>
-</li>
-<li>
-<p>calculates and normalizes annotations</p>
-</li>
-<li>
-<p>prioritizes variants with profiles (list of citeria) to calculate scores and flags</p>
-</li>
-<li>
-<p>translates into various formats</p>
-</li>
-<li>
-<p>query genetic variants and annotations</p>
-</li>
-<li>
-<p>generates variants statistics</p>
-</li>
+<li><p>annotates genetic variants with multiple annotation
+databases/files and tools</p></li>
+<li><p>calculates and normalizes annotations</p></li>
+<li><p>prioritizes variants with profiles (list of citeria) to calculate
+scores and flags</p></li>
+<li><p>translates into various formats</p></li>
+<li><p>query genetic variants and annotations</p></li>
+<li><p>generates variants statistics</p></li>
 </ul>
 <p>Usage examples:</p>
 <blockquote>
-<p>howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json</p>
+<p>howard process &#x2013;input=tests/data/example.vcf.gz
+&#x2013;output=/tmp/example.annotated.vcf.gz &#x2013;param=config/param.json</p>
 </blockquote>
 <blockquote>
-<p>howard process --input=tests/data/example.vcf.gz --annotations='snpeff' --calculations='snpeff_hgvs' --prioritizations='default' --explode_infos --output=/tmp/example.annotated.tsv --query='SELECT &quot;#CHROM&quot;, POS, ALT, REF, snpeff_hgvs FROM variants'</p>
+<p>howard process &#x2013;input=tests/data/example.vcf.gz &#x2013;annotations=&#x2018;snpeff&#x2019;
+&#x2013;calculations=&#x2018;snpeff_hgvs&#x2019; &#x2013;prioritizations=&#x2018;default&#x2019; &#x2013;explode_infos
+&#x2013;output=/tmp/example.annotated.tsv &#x2013;query=&#x2018;SELECT &#x201C;#CHROM&#x201D;, POS, ALT,
+REF, snpeff_hgvs FROM variants&#x2019;</p>
 </blockquote>
 <blockquote>
-<p>howard process --input=tests/data/example.vcf.gz --hgvs_options='full_format,use_exon' --explode_infos --output=/tmp/example.annotated.tsv --query='SELECT &quot;#CHROM&quot;, POS, ALT, REF, hgvs FROM variants'</p>
+<p>howard process &#x2013;input=tests/data/example.vcf.gz
+&#x2013;hgvs_options=&#x2018;full_format,use_exon&#x2019; &#x2013;explode_infos
+&#x2013;output=/tmp/example.annotated.tsv &#x2013;query=&#x2018;SELECT &#x201C;#CHROM&#x201D;, POS, ALT,
+REF, hgvs FROM variants&#x2019;</p>
 </blockquote>
 <blockquote>
-<p>howard process --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --hgvs='full_format,use_exon' --annotations='tests/databases/annotations/current/hg19/avsnp150.parquet,tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet' --calculations='NOMEN' --explode_infos --query='SELECT NOMEN, REVEL_score, SIFT_score, AF AS 'gnomad_AF', ClinPred_score, ClinPred_pred FROM variants'</p>
+<p>howard process &#x2013;input=tests/data/example.vcf.gz
+&#x2013;output=/tmp/example.howard.vcf.gz &#x2013;hgvs=&#x2018;full_format,use_exon&#x2019;
+&#x2013;annotations=&#x2018;tests/databases/annotations/current/hg19/avsnp150.parquet,tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet&#x2019;
+&#x2013;calculations=&#x2018;NOMEN&#x2019; &#x2013;explode_infos &#x2013;query=&#x2018;SELECT NOMEN, REVEL_score,
+SIFT_score, AF AS &#x2019;gnomad_AF&#x2019;, ClinPred_score, ClinPred_pred FROM
+variants&#x2019;</p>
 </blockquote>
-<blockquote></blockquote>
-<h3 id="main-options">Main options</h3>
-<pre class="hljs"><code><div>--input=&lt;input&gt; | required
+<blockquote>
+
+</blockquote>
+<h2 data-number="9.1" id="main-options-7"><span
+class="header-section-number">9.1</span> Main options</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --input=&lt;input&gt; | required
 
 Input file path.
 Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
-Files can be compressesd (e.g. vcf.gz, tsv.gz).
-
-</div></code></pre>
-<pre class="hljs"><code><div>--output=&lt;output&gt; | required
+Files can be compressesd (e.g. vcf.gz, tsv.gz).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --output=&lt;output&gt; | required
 
 Output file path.
 Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
-Files can be compressesd (e.g. vcf.gz, tsv.gz).
-
-</div></code></pre>
-<pre class="hljs"><code><div>--param=&lt;param&gt; (default: {})
+Files can be compressesd (e.g. vcf.gz, tsv.gz).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --param=&lt;param&gt; (default: {})
 
 Parameters JSON file (or string) defines parameters to process 
-annotations, calculations, prioritizations, convertions and queries.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--hgvs_options=&lt;HGVS options&gt;
+annotations, calculations, prioritizations, convertions and queries.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --hgvs_options=&lt;HGVS options&gt;
 
 Quick HGVS annotation options.
 This option will skip all other hgvs options.
 Examples:
-- 'default' (for default options)
-- 'full_format' (for full format HGVS annotation)
-- 'use_gene=True:add_protein=true:codon_type=FULL'
-
-</div></code></pre>
-<pre class="hljs"><code><div>--annotations=&lt;annotations&gt;
+- &#39;default&#39; (for default options)
+- &#39;full_format&#39; (for full format HGVS annotation)
+- &#39;use_gene=True:add_protein=true:codon_type=FULL&#39;</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --annotations=&lt;annotations&gt;
 
 Annotation with databases files, or with tools,
 as a list of files in Parquet, VCF, BED, or keywords
- (e.g. 'file.parquet,bcftools:file2.vcf.gz,annovar:refGene,snpeff').
+ (e.g. &#39;file.parquet,bcftools:file2.vcf.gz,annovar:refGene,snpeff&#39;).
 - For a Parquet/VCF/BED, use file paths
- (e.g. 'file1.parquet,file2.vcf.gz').
-- For BCFTools annotation, use keyword 'bcftools' with file paths
- (e.g. 'bcftools:file.vcf.gz:file.bed.gz').
-- For Annovar annotation, use keyword 'annovar' with annovar code
- (e.g. 'annovar:refGene', 'annovar:refGene:cosmic70').
-- For snpeff annotation, use keyword 'snpeff' with options
- (e.g. 'snpeff', 'snpeff:-hgvs -noShiftHgvs -spliceSiteSize 3').
-- For snpSift annotation, use keyword 'snpsift' with file paths
- (e.g. 'snpsift:file.vcf.gz:file.bed.gz').
-- For Exomiser annotation, use keyword 'exomiser' with options as key=value
- (e.g. 'exomiser:preset=exome:transcript_source=refseq').
-- For add all availalbe databases files, use 'ALL' keyword,
- with filters on type and release
- (e.g. 'ALL', 'ALL:parquet:current', 'ALL:parquet,vcf:current,devel').
-
-</div></code></pre>
-<pre class="hljs"><code><div>--calculations=&lt;operations&gt;
+ (e.g. &#39;file1.parquet,file2.vcf.gz&#39;).
+- For BCFTools annotation, use keyword &#39;bcftools&#39; with file paths
+ (e.g. &#39;bcftools:file.vcf.gz:file.bed.gz&#39;).
+- For Parquet annotation, use keyword &#39;parquet&#39; with file paths
+ (e.g. &#39;parquet:file.parquet&#39;).
+- For Annovar annotation, use keyword &#39;annovar&#39; with annovar code
+ (e.g. &#39;annovar:refGene&#39;, &#39;annovar:refGene:cosmic70&#39;).
+- For snpeff annotation, use keyword &#39;snpeff&#39; with options
+ (e.g. &#39;snpeff&#39;, &#39;snpeff:-hgvs -noShiftHgvs -spliceSiteSize 3&#39;).
+- For snpSift annotation, use keyword &#39;snpsift&#39; with file paths
+ (e.g. &#39;snpsift:file.vcf.gz:file.bed.gz&#39;).
+- For Exomiser annotation, use keyword &#39;exomiser&#39; with options as key=value
+ (e.g. &#39;exomiser:preset=exome:transcript_source=refseq&#39;).
+- For add all availalbe databases files, use &#39;ALL&#39; keyword,
+ with filters on format (e.g. &#39;parquet&#39;, &#39;vcf&#39;) and release (e.g. &#39;current&#39;, &#39;devel&#39;)
+ (e.g. &#39;ALL&#39;, ALL:format=parquet&#39;, &#39;ALL:format=parquet:release=current&#39;, &#39;ALL:format=parquet+vcf:release=current+devel&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --calculations=&lt;operations&gt;
 
 Quick calculations on genetic variants information and genotype information,
-as a list of operations (e.g. 'VARTYPE,variant_id').
+as a list of operations (e.g. &#39;VARTYPE,variant_id&#39;).
 List of available calculations by default
  (unsensitive case, see doc for more information):
- VARTYPE  snpeff_hgvs  FINDBYPIPELINE  GENOTYPECONCORDANCE  BARCODE  TRIO  VAF  VAF_STATS  DP_STATS 
-
-</div></code></pre>
-<pre class="hljs"><code><div>--prioritizations=&lt;prioritisations&gt;
+ VARTYPE  snpeff_hgvs  FINDBYPIPELINE  GENOTYPECONCORDANCE  BARCODE  TRIO  VAF  VAF_STATS  DP_STATS</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --prioritizations=&lt;prioritisations&gt;
 
 List of prioritization profiles to process (based on Prioritization JSON file),
-such as 'default', 'rare variants', 'low allele frequency', 'GERMLINE'.
-By default, all profiles available will be processed.
+such as &#39;default&#39;, &#39;rare variants&#39;, &#39;low allele frequency&#39;, &#39;GERMLINE&#39;.
+By default, all profiles available will be processed.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --assembly=&lt;assembly&gt; (default: hg19)
 
-</div></code></pre>
-<pre class="hljs"><code><div>--assembly=&lt;assembly&gt; (default: hg19)
-
-Genome Assembly (e.g. 'hg19', 'hg38').
-
-</div></code></pre>
-<h3 id="hgvs">HGVS</h3>
-<pre class="hljs"><code><div>--use_gene
+Genome Assembly (e.g. &#39;hg19&#39;, &#39;hg38&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="9.2" id="hgvs-1"><span
+class="header-section-number">9.2</span> HGVS</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --use_gene
 
 Use Gene information to generate HGVS annotation
-(e.g. 'NM_152232(TAS1R2):c.231T&gt;C')
-</div></code></pre>
-<pre class="hljs"><code><div>--use_exon
+(e.g. &#39;NM_152232(TAS1R2):c.231T&gt;C&#39;)</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --use_exon
 
 Use Exon information to generate HGVS annotation
-(e.g. 'NM_152232(exon2):c.231T&gt;C').
-Only if 'use_gene' is not enabled.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--use_protein
+(e.g. &#39;NM_152232(exon2):c.231T&gt;C&#39;).
+Only if &#39;use_gene&#39; is not enabled.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --use_protein
 
 Use Protein level to generate HGVS annotation
-(e.g. 'NP_689418:p.Cys77Arg').
-Can be used with 'use_exon' or 'use_gene'.
+(e.g. &#39;NP_689418:p.Cys77Arg&#39;).
+Can be used with &#39;use_exon&#39; or &#39;use_gene&#39;.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --add_protein
 
-</div></code></pre>
-<pre class="hljs"><code><div>--add_protein
-
-Add Protein level to DNA HGVS annotation (e.g 'NM_152232:c.231T&gt;C,NP_689418:p.Cys77Arg').
-
-</div></code></pre>
-<pre class="hljs"><code><div>--full_format
+Add Protein level to DNA HGVS annotation (e.g &#39;NM_152232:c.231T&gt;C,NP_689418:p.Cys77Arg&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --full_format
 
 Generates HGVS annotation in a full format
 by using all information to generates an exhaustive annotation
-(non-standard, e.g. 'TAS1R2:NM_152232:NP_689418:c.231T&gt;C:p.Cys77Arg').
-Use 'use_exon' to add exon information
-(e.g 'TAS1R2:NM_152232:NP_689418:exon2:c.231T&gt;C:p.Cys77Arg').
-
-</div></code></pre>
-<pre class="hljs"><code><div>--codon_type=&lt;Codon type&gt; ['1', '3', 'FULL'] (default: 3)
+(non-standard, e.g. &#39;TAS1R2:NM_152232:NP_689418:c.231T&gt;C:p.Cys77Arg&#39;).
+Use &#39;use_exon&#39; to add exon information
+(e.g &#39;TAS1R2:NM_152232:NP_689418:exon2:c.231T&gt;C:p.Cys77Arg&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --codon_type=&lt;Codon type&gt; [&#39;1&#39;, &#39;3&#39;, &#39;FULL&#39;] (default: 3)
 
 Amino Acide Codon format type to use to generate HGVS annotation.
 Available:
-- '1': codon in 1 character (e.g. 'C', 'R')
-- '3': codon in 3 character (e.g. 'Cys', 'Arg')
--'FULL': codon in full name (e.g. 'Cysteine', 'Arginine')
+- &#39;1&#39;: codon in 1 character (e.g. &#39;C&#39;, &#39;R&#39;)
+- &#39;3&#39;: codon in 3 character (e.g. &#39;Cys&#39;, &#39;Arg&#39;)
+-&#39;FULL&#39;: codon in full name (e.g. &#39;Cysteine&#39;, &#39;Arginine&#39;)</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --refgene=&lt;refGene&gt;
 
-</div></code></pre>
-<pre class="hljs"><code><div>--refgene=&lt;refGene&gt;
+Path to refGene annotation file.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --refseqlink=&lt;refSeqLink&gt;
 
-Path to refGene annotation file.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--refseqlink=&lt;refSeqLink&gt;
-
-Path to refSeqLink annotation file.
-
-</div></code></pre>
-<h3 id="annotation">Annotation</h3>
-<pre class="hljs"><code><div>--annotations_update
+Path to refSeqLink annotation file.</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="9.3" id="annotation-1"><span
+class="header-section-number">9.3</span> Annotation</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --annotations_update
 
 Update option for annotation (Only for Parquet annotation).
 If True, annotation fields will be removed and re-annotated.
-These options will be applied to all annotation databases.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--annotations_append
+These options will be applied to all annotation databases.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --annotations_append
 
 Append option for annotation (Only for Parquet annotation).
 If True, annotation fields will be annotated only if not annotation exists for the variant.
-These options will be applied to all annotation databases.
+These options will be applied to all annotation databases.</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="9.4" id="calculation-1"><span
+class="header-section-number">9.4</span> Calculation</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --calculation_config=&lt;calculation config&gt;
 
-</div></code></pre>
-<h3 id="calculation">Calculation</h3>
-<pre class="hljs"><code><div>--calculation_config=&lt;calculation config&gt;
-
-Calculation configuration JSON file.
-
-</div></code></pre>
-<h3 id="prioritization">Prioritization</h3>
-<pre class="hljs"><code><div>--default_profile=&lt;default profile&gt;
+Calculation configuration JSON file.</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="9.5" id="prioritization-1"><span
+class="header-section-number">9.5</span> Prioritization</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --default_profile=&lt;default profile&gt;
 
 Prioritization profile by default (see doc).
-Default is the first profile in the list of prioritization profiles.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--pzfields=&lt;pzfields&gt; (default: PZScore,PZFlag)
+Default is the first profile in the list of prioritization profiles.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --pzfields=&lt;pzfields&gt; (default: PZScore,PZFlag)
 
 Prioritization fields to provide (see doc).
-Available: PZScore, PZFlag, PZTags, PZComment, PZInfos
-
-</div></code></pre>
-<pre class="hljs"><code><div>--prioritization_score_mode=&lt;prioritization score mode&gt; ['HOWARD', 'VaRank'] (default: HOWARD)
+Available: PZScore, PZFlag, PZTags, PZComment, PZInfos</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --prioritization_score_mode=&lt;prioritization score mode&gt; [&#39;HOWARD&#39;, &#39;VaRank&#39;] (default: HOWARD)
 
 Prioritization Score mode (see doc).
-Available: HOWARD (increment score), VaRank (max score)
+Available: HOWARD (increment score), VaRank (max score)</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --prioritization_config=&lt;prioritization config&gt;
 
-</div></code></pre>
-<pre class="hljs"><code><div>--prioritization_config=&lt;prioritization config&gt;
-
-Prioritization configuration JSON file (defines profiles, see doc).
-
-</div></code></pre>
-<h3 id="query">Query</h3>
-<pre class="hljs"><code><div>--query=&lt;query&gt;
+Prioritization configuration JSON file (defines profiles, see doc).</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="9.6" id="query-1"><span
+class="header-section-number">9.6</span> Query</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --query=&lt;query&gt;
 
 Query in SQL format
-(e.g. 'SELECT * FROM variants LIMIT 50').
+(e.g. &#39;SELECT * FROM variants LIMIT 50&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --query_limit=&lt;query limit&gt; (default: 10)
 
-</div></code></pre>
-<pre class="hljs"><code><div>--query_limit=&lt;query limit&gt; (default: 10)
-
-Limit of number of row for query (only for print result, not output).
-
-</div></code></pre>
-<pre class="hljs"><code><div>--query_print_mode=&lt;print mode&gt; [None, 'markdown', 'tabulate']
+Limit of number of row for query (only for print result, not output).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --query_print_mode=&lt;print mode&gt; [None, &#39;markdown&#39;, &#39;tabulate&#39;, &#39;disabled&#39;]
 
 Print mode of query result (only for print result, not output).
-Either None (native), 'markdown' or 'tabulate'.
+Either None (native), &#39;markdown&#39;, &#39;tabulate&#39; or disabled.</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="9.7" id="explode-2"><span
+class="header-section-number">9.7</span> Explode</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --explode_infos
 
-</div></code></pre>
-<h3 id="explode">Explode</h3>
-<pre class="hljs"><code><div>--explode_infos
+Explode VCF INFO/Tag into &#39;variants&#39; table columns.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --explode_infos_prefix=&lt;explode infos prefix&gt;
 
-Explode VCF INFO/Tag into 'variants' table columns.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--explode_infos_prefix=&lt;explode infos prefix&gt;
-
-Explode VCF INFO/Tag with a specific prefix.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--explode_infos_fields=&lt;explode infos list&gt; (default: *)
+Explode VCF INFO/Tag with a specific prefix.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --explode_infos_fields=&lt;explode infos list&gt; (default: *)
 
 Explode VCF INFO/Tag specific fields/tags.
 Keyword `*` specify all available fields, except those already specified.
-Pattern (regex) can be used, such as `.*_score` for fields named with '_score' at the end.
+Pattern (regex) can be used, such as `.*_score` for fields named with &#39;_score&#39; at the end.
 Examples:
-- 'HGVS,SIFT,Clinvar' (list of fields)
-- 'HGVS,*,Clinvar' (list of fields with all other fields at the end)
-- 'HGVS,.*_score,Clinvar' (list of 2 fields with all scores in the middle)
-- 'HGVS,.*_score,*' (1 field, scores, all other fields)
-- 'HGVS,*,.*_score' (1 field, all other fields, all scores)
-
-</div></code></pre>
-<h3 id="export">Export</h3>
-<pre class="hljs"><code><div>--include_header
+- &#39;HGVS,SIFT,Clinvar&#39; (list of fields)
+- &#39;HGVS,*,Clinvar&#39; (list of fields with all other fields at the end)
+- &#39;HGVS,.*_score,Clinvar&#39; (list of 2 fields with all scores in the middle)
+- &#39;HGVS,.*_score,*&#39; (1 field, scores, all other fields)
+- &#39;HGVS,*,.*_score&#39; (1 field, all other fields, all scores)</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="9.8" id="export-2"><span
+class="header-section-number">9.8</span> Export</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --include_header
 
 Include header (in VCF format) in output file.
-Only for compatible formats (tab-delimiter format as TSV or BED).
-
-</div></code></pre>
-<pre class="hljs"><code><div>--order_by=&lt;order by&gt;
+Only for compatible formats (tab-delimiter format as TSV or BED).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --order_by=&lt;order by&gt;
 
 List of columns to sort the result-set in ascending or descending order.
 Use SQL format, and keywords ASC (ascending) and DESC (descending).
 If a column is not available, order will not be considered.
 Order is enable only for compatible format (e.g. TSV, CSV, JSON).
-Examples: 'ACMG_score DESC', 'PZFlag DESC, PZScore DESC'.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--parquet_partitions=&lt;parquet partitions&gt;
+Examples: &#39;ACMG_score DESC&#39;, &#39;PZFlag DESC, PZScore DESC&#39;.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --parquet_partitions=&lt;parquet partitions&gt;
 
 Parquet partitioning using hive (available for any format).
 This option is faster parallel writing, but memory consuming.
-Use 'None' (string) for NO partition but split parquet files into a folder.
-Examples: '#CHROM', '#CHROM,REF', 'None'.
-
-</div></code></pre>
-<h2 id="databases-tool">DATABASES tool</h2>
-<p>Download databases and needed files for howard and associated tools</p>
+Use &#39;None&#39; (string) for NO partition but split parquet files into a folder.
+Examples: &#39;#CHROM&#39;, &#39;#CHROM,REF&#39;, &#39;None&#39;.</code></pre>
+</blockquote>
+<p></small></p>
+<h1 data-number="10" id="databases-tool"><span
+class="header-section-number">10</span> DATABASES tool</h1>
+<p>Download databases and needed files for howard and associated
+tools</p>
 <p>Usage examples:</p>
 <blockquote>
-<p>howard databases --assembly=hg19 --download-genomes=~/howard/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$'</p>
+<p>howard databases &#x2013;assembly=hg19
+&#x2013;download-genomes=~/howard/databases/genomes/current
+&#x2013;download-genomes-provider=UCSC
+&#x2013;download-genomes-contig-regex=&#x2018;chr[0-9XYM]+$&#x2019;</p>
 </blockquote>
 <blockquote>
-<p>howard databases --assembly=hg19 --download-annovar=~/howard/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60'</p>
+<p>howard databases &#x2013;assembly=hg19
+&#x2013;download-annovar=~/howard/databases/annovar/current
+&#x2013;download-annovar-files=&#x2018;refGene,cosmic70,nci60&#x2019;</p>
 </blockquote>
 <blockquote>
-<p>howard databases --assembly=hg19 --download-snpeff=~/howard/databases/snpeff/current</p>
+<p>howard databases &#x2013;assembly=hg19
+&#x2013;download-snpeff=~/howard/databases/snpeff/current</p>
 </blockquote>
 <blockquote>
-<p>howard databases --assembly=hg19 --download-refseq=~/howard/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt'</p>
+<p>howard databases &#x2013;assembly=hg19
+&#x2013;download-refseq=~/howard/databases/refseq/current
+&#x2013;download-refseq-format-file=&#x2018;ncbiRefSeq.txt&#x2019;</p>
 </blockquote>
 <blockquote>
-<p>howard databases --assembly=hg19 --download-dbnsfp=~/howard/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases</p>
+<p>howard databases &#x2013;assembly=hg19
+&#x2013;download-dbnsfp=~/howard/databases/dbnsfp/current
+&#x2013;download-dbnsfp-release=&#x2018;4.4a&#x2019; &#x2013;download-dbnsfp-subdatabases</p>
 </blockquote>
 <blockquote>
-<p>howard databases --assembly=hg19 --download-alphamissense=~/howard/databases/alphamissense/current</p>
+<p>howard databases &#x2013;assembly=hg19
+&#x2013;download-alphamissense=~/howard/databases/alphamissense/current</p>
 </blockquote>
 <blockquote>
-<p>howard databases --assembly=hg19 --download-exomiser=~/howard/databases/exomiser/current</p>
+<p>howard databases &#x2013;assembly=hg19
+&#x2013;download-exomiser=~/howard/databases/exomiser/current</p>
 </blockquote>
 <blockquote>
-<p>howard databases --assembly=hg19 --download-dbsnp=~/howard/databases/dbsnp/current --download-dbsnp-vcf</p>
+<p>howard databases &#x2013;assembly=hg19
+&#x2013;download-dbsnp=~/howard/databases/dbsnp/current &#x2013;download-dbsnp-vcf</p>
 </blockquote>
 <blockquote>
-<p>cd ~/howard/databases &amp;&amp; howard databases --assembly=hg19 --download-genomes=genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' --download-annovar=annovar/current --download-annovar-files='refGene,cosmic70,nci60' --download-snpeff=snpeff/current --download-refseq=refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-dbnsfp=dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases --download-alphamissense=alphamissense/current --download-exomiser=exomiser/current --download-dbsnp=dbsnp/current --download-dbsnp-vcf --threads=8</p>
+<p>cd ~/howard/databases &amp;&amp; howard databases &#x2013;assembly=hg19
+&#x2013;download-genomes=genomes/current &#x2013;download-genomes-provider=UCSC
+&#x2013;download-genomes-contig-regex=&#x2018;chr[0-9XYM]+$&#x2019;
+&#x2013;download-annovar=annovar/current
+&#x2013;download-annovar-files=&#x2018;refGene,cosmic70,nci60&#x2019;
+&#x2013;download-snpeff=snpeff/current &#x2013;download-refseq=refseq/current
+&#x2013;download-refseq-format-file=&#x2018;ncbiRefSeq.txt&#x2019;
+&#x2013;download-dbnsfp=dbnsfp/current &#x2013;download-dbnsfp-release=&#x2018;4.4a&#x2019;
+&#x2013;download-dbnsfp-subdatabases
+&#x2013;download-alphamissense=alphamissense/current
+&#x2013;download-exomiser=exomiser/current &#x2013;download-dbsnp=dbsnp/current
+&#x2013;download-dbsnp-vcf &#x2013;threads=8</p>
 </blockquote>
 <blockquote>
-<p>howard databases --generate-param=/tmp/param.json --generate-param-description=/tmp/test.description.json --generate-param-formats=parquet</p>
+<p>howard databases &#x2013;generate-param=/tmp/param.json
+&#x2013;generate-param-description=/tmp/test.description.json
+&#x2013;generate-param-formats=parquet</p>
 </blockquote>
 <blockquote>
-<p>howard databases --input_annovar=tests/databases/others/hg19_nci60.txt --output_annovar=/tmp/nci60.from_annovar.vcf.gz --annovar_to_parquet=/tmp/nci60.from_annovar.parquet --annovar_code=nci60 --genome=~/howard/databases/genomes/current/hg19.fa</p>
+<p>howard databases &#x2013;input_annovar=tests/databases/others/hg19_nci60.txt
+&#x2013;output_annovar=/tmp/nci60.from_annovar.vcf.gz
+&#x2013;annovar_to_parquet=/tmp/nci60.from_annovar.parquet &#x2013;annovar_code=nci60
+&#x2013;genome=~/howard/databases/genomes/current/hg19.fa</p>
 </blockquote>
 <p>Notes:</p>
 <blockquote>
 <ul>
-<li>Downloading databases can take a while, depending on network, threads and memory</li>
+<li>Downloading databases can take a while, depending on network,
+threads and memory</li>
 </ul>
 </blockquote>
 <blockquote>
@@ -1476,790 +1736,1234 @@ Examples: '#CHROM', '#CHROM,REF', 'None'.
 </blockquote>
 <blockquote>
 <ul>
-<li>dbNSFP download: More threads, more memory usage (8 threads ~ 16Gb, 24 threads ~ 32Gb)</li>
+<li>dbNSFP download: More threads, more memory usage (8 threads ~ 16Gb,
+24 threads ~ 32Gb)</li>
 </ul>
 </blockquote>
-<blockquote></blockquote>
-<h3 id="main-options">Main options</h3>
-<pre class="hljs"><code><div>--assembly=&lt;assembly&gt; (default: hg19)
+<blockquote>
 
-Genome Assembly (e.g. 'hg19', 'hg38').
+</blockquote>
+<h2 data-number="10.1" id="main-options-8"><span
+class="header-section-number">10.1</span> Main options</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --assembly=&lt;assembly&gt; (default: hg19)
 
-</div></code></pre>
-<pre class="hljs"><code><div>--genomes-folder=&lt;genomes&gt; (default: ~/howard/databases/genomes/current)
+Genome Assembly (e.g. &#39;hg19&#39;, &#39;hg38&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --genomes-folder=&lt;genomes&gt; (default: ~/howard/databases/genomes/current)
 
 Folder containing genomes.
-(e.g. '~/howard/databases/genomes/current'
-</div></code></pre>
-<pre class="hljs"><code><div>--genome=&lt;genome&gt; (default: ~/howard/databases/genomes/current/hg19/hg19.fa)
+(e.g. &#39;~/howard/databases/genomes/current&#39;</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --genome=&lt;genome&gt; (default: ~/howard/databases/genomes/current/hg19/hg19.fa)
 
-Genome file in fasta format (e.g. 'hg19.fa', 'hg38.fa').
-
-</div></code></pre>
-<pre class="hljs"><code><div>--param=&lt;param&gt; (default: {})
+Genome file in fasta format (e.g. &#39;hg19.fa&#39;, &#39;hg38.fa&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --param=&lt;param&gt; (default: {})
 
 Parameters JSON file (or string) defines parameters to process 
-annotations, calculations, prioritizations, convertions and queries.
-
-</div></code></pre>
-<h3 id="genomes">Genomes</h3>
-<pre class="hljs"><code><div>--download-genomes=&lt;genomes&gt;
+annotations, calculations, prioritizations, convertions and queries.</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="10.2" id="genomes"><span
+class="header-section-number">10.2</span> Genomes</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-genomes=&lt;genomes&gt;
 
 Path to genomes folder
 with Fasta files, indexes,
 and all files generated by pygenome module.
-(e.g. '~/howard/databases/genomes/current').
-
-</div></code></pre>
-<pre class="hljs"><code><div>--download-genomes-provider=&lt;genomes provider&gt; ['GENCODE', 'Ensembl', 'UCSC', 'NCBI'] (default: UCSC)
+(e.g. &#39;~/howard/databases/genomes/current&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-genomes-provider=&lt;genomes provider&gt; [&#39;GENCODE&#39;, &#39;Ensembl&#39;, &#39;UCSC&#39;, &#39;NCBI&#39;] (default: UCSC)
 
 Download Genome from an external provider.
-Available: GENCODE, Ensembl, UCSC, NCBI.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--download-genomes-contig-regex=&lt;genomes contig regex&gt;
+Available: GENCODE, Ensembl, UCSC, NCBI.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-genomes-contig-regex=&lt;genomes contig regex&gt;
 
 Regular expression to select specific chromosome
-(e.g 'chr[0-9XYM]+$').
+(e.g &#39;chr[0-9XYM]+$&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="10.3" id="snpeff"><span
+class="header-section-number">10.3</span> snpEff</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-snpeff=&lt;snpEff&gt;
 
-</div></code></pre>
-<h3 id="snpeff">snpEff</h3>
-<pre class="hljs"><code><div>--download-snpeff=&lt;snpEff&gt;
-
-Download snpEff databases within snpEff folder
-</div></code></pre>
-<h3 id="annovar">Annovar</h3>
-<pre class="hljs"><code><div>--download-annovar=&lt;Annovar&gt;
+Download snpEff databases within snpEff folder</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="10.4" id="annovar"><span
+class="header-section-number">10.4</span> Annovar</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-annovar=&lt;Annovar&gt;
 
 Path to Annovar databases
-(e.g. '~/howard/databases/annovar/current').
-
-</div></code></pre>
-<pre class="hljs"><code><div>--download-annovar-files=&lt;Annovar code&gt;
+(e.g. &#39;~/howard/databases/annovar/current&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-annovar-files=&lt;Annovar code&gt;
 
 Download Annovar databases for a list of Annovar file code (see Annovar Doc).
 Use None to donwload all available files,
-or Annovar keyword (e.g. 'refGene', 'cosmic70', 'clinvar_202*').
+or Annovar keyword (e.g. &#39;refGene&#39;, &#39;cosmic70&#39;, &#39;clinvar_202*&#39;).
 Note that refGene will at least be downloaded,
-and only files that not already exist or changed will be downloaded.
+and only files that not already exist or changed will be downloaded.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-annovar-url=&lt;Annovar url&gt; (default: http://www.openbioinformatics.org/annovar/download)
 
-</div></code></pre>
-<pre class="hljs"><code><div>--download-annovar-url=&lt;Annovar url&gt; (default: http://www.openbioinformatics.org/annovar/download)
-
-Annovar databases URL (see Annovar Doc).
-
-</div></code></pre>
-<h3 id="refseq">refSeq</h3>
-<pre class="hljs"><code><div>--download-refseq=&lt;refSeq&gt;
+Annovar databases URL (see Annovar Doc).</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="10.5" id="refseq"><span
+class="header-section-number">10.5</span> refSeq</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-refseq=&lt;refSeq&gt;
 
 Path to refSeq databases
-(e.g. '~/howard/databases/refseq/current').
-
-</div></code></pre>
-<pre class="hljs"><code><div>--download-refseq-url=&lt;refSeq url&gt; (default: http://hgdownload.soe.ucsc.edu/goldenPath)
+(e.g. &#39;~/howard/databases/refseq/current&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-refseq-url=&lt;refSeq url&gt; (default: http://hgdownload.soe.ucsc.edu/goldenPath)
 
 refSeq databases URL (see refSeq WebSite)
-(e.g. 'http://hgdownload.soe.ucsc.edu/goldenPath')•/n
-</div></code></pre>
-<pre class="hljs"><code><div>--download-refseq-prefix=&lt;refSeq prefix&gt; (default: ncbiRefSeq)
+(e.g. &#39;http://hgdownload.soe.ucsc.edu/goldenPath&#39;)&#x2022;/n</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-refseq-prefix=&lt;refSeq prefix&gt; (default: ncbiRefSeq)
 
-Check existing refSeq files in refSeq folder.
+Check existing refSeq files in refSeq folder.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-refseq-files=&lt;refSeq files&gt; (default: ncbiRefSeq.txt,ncbiRefSeqLink.txt)
 
-</div></code></pre>
-<pre class="hljs"><code><div>--download-refseq-files=&lt;refSeq files&gt; (default: ncbiRefSeq.txt,ncbiRefSeqLink.txt)
-
-List of refSeq files to download.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--download-refseq-format-file=&lt;refSeq format file&gt;
+List of refSeq files to download.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-refseq-format-file=&lt;refSeq format file&gt;
 
 Name of refSeq file to convert in BED format
-(e.g. 'ncbiRefSeq.txt').
-Process only if not None.
+(e.g. &#39;ncbiRefSeq.txt&#39;).
+Process only if not None.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-refseq-include-utr5
 
-</div></code></pre>
-<pre class="hljs"><code><div>--download-refseq-include-utr5
+Formating BED refSeq file including 5&#39;UTR.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-refseq-include-utr3
 
-Formating BED refSeq file including 5'UTR.
+Formating BED refSeq file including 3&#39;UTR.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-refseq-include-chrM
 
-</div></code></pre>
-<pre class="hljs"><code><div>--download-refseq-include-utr3
+Formating BED refSeq file including Mitochondiral chromosome &#39;chrM&#39; or &#39;chrMT&#39;.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-refseq-include-non-canonical-chr
 
-Formating BED refSeq file including 3'UTR.
+Formating BED refSeq file including non canonical chromosomes.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-refseq-include-non-coding-transcripts
 
-</div></code></pre>
-<pre class="hljs"><code><div>--download-refseq-include-chrM
+Formating BED refSeq file including non coding transcripts.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-refseq-include-transcript-version
 
-Formating BED refSeq file including Mitochondiral chromosome 'chrM' or 'chrMT'.
+Formating BED refSeq file including transcript version.</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="10.6" id="dbnsfp"><span
+class="header-section-number">10.6</span> dbNSFP</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-dbnsfp=&lt;dbNSFP&gt;
 
-</div></code></pre>
-<pre class="hljs"><code><div>--download-refseq-include-non-canonical-chr
-
-Formating BED refSeq file including non canonical chromosomes.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--download-refseq-include-non-coding-transcripts
-
-Formating BED refSeq file including non coding transcripts.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--download-refseq-include-transcript-version
-
-Formating BED refSeq file including transcript version.
-
-</div></code></pre>
-<h3 id="dbnsfp">dbNSFP</h3>
-<pre class="hljs"><code><div>--download-dbnsfp=&lt;dbNSFP&gt;
-
-Download dbNSFP databases within dbNSFP folder(e.g. '~/howard/databases').
-
-</div></code></pre>
-<pre class="hljs"><code><div>--download-dbnsfp-url=&lt;dbNSFP url&gt; (default: https://dbnsfp.s3.amazonaws.com)
+Download dbNSFP databases within dbNSFP folder(e.g. &#39;~/howard/databases&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-dbnsfp-url=&lt;dbNSFP url&gt; (default: https://dbnsfp.s3.amazonaws.com)
 
 Download dbNSFP databases URL (see dbNSFP website)
-(e.g. https://dbnsfp.s3.amazonaws.com').
-
-</div></code></pre>
-<pre class="hljs"><code><div>--download-dbnsfp-release=&lt;dnNSFP release&gt; (default: 4.4a)
+(e.g. https://dbnsfp.s3.amazonaws.com&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-dbnsfp-release=&lt;dnNSFP release&gt; (default: 4.4a)
 
 Release of dbNSFP to download (see dbNSFP website)
-(e.g. '4.4a').
-
-</div></code></pre>
-<pre class="hljs"><code><div>--download-dbnsfp-parquet-size=&lt;dbNSFP parquet size&gt; (default: 100)
+(e.g. &#39;4.4a&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-dbnsfp-parquet-size=&lt;dbNSFP parquet size&gt; (default: 100)
 
 Maximum size (Mb) of data files in Parquet folder.
 Parquet folder are partitioned (hive) by chromosome (sub-folder),
-which contain N data files.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--download-dbnsfp-subdatabases
+which contain N data files.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-dbnsfp-subdatabases
 
 Generate dbNSFP sub-databases.
 dbNSFP provides multiple databases which are split onto multiple columns.
-This option create a Parquet folder for each sub-database (based on columns names).
+This option create a Parquet folder for each sub-database (based on columns names).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-dbnsfp-parquet
 
-</div></code></pre>
-<pre class="hljs"><code><div>--download-dbnsfp-parquet
-
-Generate a Parquet file for each Parquet folder.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--download-dbnsfp-vcf
+Generate a Parquet file for each Parquet folder.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-dbnsfp-vcf
 
 Generate a VCF file for each Parquet folder.
-Need genome FASTA file (see --download-genome).
+Need genome FASTA file (see --download-genome).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-dbnsfp-no-files-all
 
-</div></code></pre>
-<pre class="hljs"><code><div>--download-dbnsfp-no-files-all
-
-Not generate database Parquet/VCF file for the entire database ('ALL').
+Not generate database Parquet/VCF file for the entire database (&#39;ALL&#39;).
 Only sub-databases files will be generated.
-(see '--download-dbnsfp-subdatabases').
-
-</div></code></pre>
-<pre class="hljs"><code><div>--download-dbnsfp-add-info
+(see &#39;--download-dbnsfp-subdatabases&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-dbnsfp-add-info
 
 Add INFO column (VCF format) in Parquet folder and file.
 Useful for speed up full annotation (all available columns).
-Increase memory and space during generation of files.
+Increase memory and space during generation of files.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-dbnsfp-only-info
 
-</div></code></pre>
-<pre class="hljs"><code><div>--download-dbnsfp-row-group-size=&lt;dnNSFP row grooup size&gt; (default: 100000)
+Add only INFO column (VCF format) in Parquet folder and file.
+Useful for speed up full annotation (all available columns).
+Decrease memory and space during generation of files.
+Increase time for partial annotation (some available columns).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-dbnsfp-uniquify
+
+Uniquify values within column
+(e.g. &quot;D,D&quot; to &quot;D&quot;, &quot;D,.,T&quot; to &quot;D,T&quot;).
+Remove transcripts information details.
+Usefull to reduce size of the database.
+Increase memory and space during generation of files.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-dbnsfp-row-group-size=&lt;dnNSFP row grooup size&gt; (default: 100000)
 
 Minimum number of rows in a parquet row group (see duckDB doc).
 Lower can reduce memory usage and slightly increase space during generation,
-speed up highly selective queries, slow down whole file queries (e.g. aggregations).
+speed up highly selective queries, slow down whole file queries (e.g. aggregations).</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="10.7" id="alphamissense"><span
+class="header-section-number">10.7</span> AlphaMissense</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-alphamissense=&lt;AlphaMissense&gt;
 
-</div></code></pre>
-<h3 id="alphamissense">AlphaMissense</h3>
-<pre class="hljs"><code><div>--download-alphamissense=&lt;AlphaMissense&gt;
-
-Path to AlphaMissense databases
-</div></code></pre>
-<pre class="hljs"><code><div>--download-alphamissense-url=&lt;AlphaMissense url&gt; (default: https://storage.googleapis.com/dm_alphamissense)
+Path to AlphaMissense databases</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-alphamissense-url=&lt;AlphaMissense url&gt; (default: https://storage.googleapis.com/dm_alphamissense)
 
 Download AlphaMissense databases URL (see AlphaMissense website)
-(e.g. 'https://storage.googleapis.com/dm_alphamissense').
-
-</div></code></pre>
-<h3 id="exomiser">Exomiser</h3>
-<pre class="hljs"><code><div>--download-exomiser=&lt;Exomiser&gt;
+(e.g. &#39;https://storage.googleapis.com/dm_alphamissense&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="10.8" id="exomiser"><span
+class="header-section-number">10.8</span> Exomiser</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-exomiser=&lt;Exomiser&gt;
 
 Path to Exomiser databases
-(e.g. ~/howard/databases/exomiser/current).
-
-</div></code></pre>
-<pre class="hljs"><code><div>--download-exomiser-application-properties=&lt;Exomiser application properties&gt;
+(e.g. ~/howard/databases/exomiser/current).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-exomiser-application-properties=&lt;Exomiser application properties&gt;
 
 Exomiser Application Properties configuration file (see Exomiser website).
 This file contains configuration settings for the Exomiser tool.
 If this parameter is not provided, the function will attempt to locate
 the application properties file automatically based on the Exomiser.
 Configuration information will be used to download expected releases (if no other parameters).
-CADD and REMM will be downloaded only if 'path' are provided.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--download-exomiser-url=&lt;Exomiser url&gt; (default: http://data.monarchinitiative.org/exomiser)
+CADD and REMM will be downloaded only if &#39;path&#39; are provided.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-exomiser-url=&lt;Exomiser url&gt; (default: http://data.monarchinitiative.org/exomiser)
 
 URL where Exomiser database files can be downloaded from
-(e.g. 'http://data.monarchinitiative.org/exomiser').
-
-</div></code></pre>
-<pre class="hljs"><code><div>--download-exomiser-release=&lt;Exomiser release&gt;
+(e.g. &#39;http://data.monarchinitiative.org/exomiser&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-exomiser-release=&lt;Exomiser release&gt;
 
 Release of Exomiser data to download.
 If &quot;default&quot;, &quot;auto&quot;, or &quot;config&quot;, retrieve from Application Properties file.
 If not provided (None), from Application Properties file (Exomiser data-version) 
-or default '2109'.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--download-exomiser-phenotype-release=&lt;Exomiser phenoptye release&gt;
+or default &#39;2109&#39;.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-exomiser-phenotype-release=&lt;Exomiser phenoptye release&gt;
 
 Release of Exomiser phenotype to download.
 If not provided (None), from Application Properties file (Exomiser Phenotype data-version)
-or Exomiser release.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--download-exomiser-remm-release=&lt;Exomiser remm release&gt;
+or Exomiser release.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-exomiser-remm-release=&lt;Exomiser remm release&gt;
 
 Release of ReMM (Regulatory Mendelian Mutation) database to download.
-If &quot;default&quot;, &quot;auto&quot;, or &quot;config&quot;, retrieve from Application Properties file.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--download-exomiser-remm-url=&lt;Exomiser remm url&gt; (default: https://kircherlab.bihealth.org/download/ReMM)
+If &quot;default&quot;, &quot;auto&quot;, or &quot;config&quot;, retrieve from Application Properties file.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-exomiser-remm-url=&lt;Exomiser remm url&gt; (default: https://kircherlab.bihealth.org/download/ReMM)
 
 URL where ReMM (Regulatory Mendelian Mutation) database files can be downloaded from
-(e.g. 'https://kircherlab.bihealth.org/download/ReMM').
-
-</div></code></pre>
-<pre class="hljs"><code><div>--download-exomiser-cadd-release=&lt;Exomiser cadd release&gt;
+(e.g. &#39;https://kircherlab.bihealth.org/download/ReMM&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-exomiser-cadd-release=&lt;Exomiser cadd release&gt;
 
 Release of CADD (Combined Annotation Dependent Depletion) database to download.
-If &quot;default&quot;, &quot;auto&quot;, or &quot;config&quot;, retrieve from Application Properties file.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--download-exomiser-cadd-url=&lt;Exomiser cadd url&gt; (default: https://kircherlab.bihealth.org/download/CADD)
+If &quot;default&quot;, &quot;auto&quot;, or &quot;config&quot;, retrieve from Application Properties file.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-exomiser-cadd-url=&lt;Exomiser cadd url&gt; (default: https://kircherlab.bihealth.org/download/CADD)
 
 URL where CADD (Combined Annotation Dependent Depletion) database files can be downloaded from
-(e.g. 'https://kircherlab.bihealth.org/download/CADD').
-
-</div></code></pre>
-<pre class="hljs"><code><div>--download-exomiser-cadd-url-snv-file=&lt;Exomiser url snv file&gt; (default: whole_genome_SNVs.tsv.gz)
+(e.g. &#39;https://kircherlab.bihealth.org/download/CADD&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-exomiser-cadd-url-snv-file=&lt;Exomiser url snv file&gt; (default: whole_genome_SNVs.tsv.gz)
 
 Name of the file containing the SNV (Single Nucleotide Variant) data
-for the CADD (Combined Annotation Dependent Depletion) database.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--download-exomiser-cadd-url-indel-file=&lt;Exomiser cadd url indel&gt; (default: InDels.tsv.gz)
+for the CADD (Combined Annotation Dependent Depletion) database.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-exomiser-cadd-url-indel-file=&lt;Exomiser cadd url indel&gt; (default: InDels.tsv.gz)
 
 Name of the file containing the INDEL (Insertion-Deletion) data
-for the CADD (Combined Annotation Dependent Depletion) database.
-
-</div></code></pre>
-<h3 id="dbsnp">dbSNP</h3>
-<pre class="hljs"><code><div>--download-dbsnp=&lt;dnSNP&gt;
+for the CADD (Combined Annotation Dependent Depletion) database.</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="10.9" id="dbsnp"><span
+class="header-section-number">10.9</span> dbSNP</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-dbsnp=&lt;dnSNP&gt;
 
 Path to dbSNP databases
-(e.g. '~/howard/databases/exomiser/dbsnp').
-
-</div></code></pre>
-<pre class="hljs"><code><div>--download-dbsnp-releases=&lt;dnSNP releases&gt; (default: b156)
+(e.g. &#39;~/howard/databases/exomiser/dbsnp&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-dbsnp-releases=&lt;dnSNP releases&gt; (default: b156)
 
 Release of dbSNP to download
-(e.g. 'b152', 'b152,b156').
+(e.g. &#39;b152&#39;, &#39;b152,b156&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-dbsnp-release-default=&lt;dnSNP release default&gt;
 
-</div></code></pre>
-<pre class="hljs"><code><div>--download-dbsnp-release-default=&lt;dnSNP release default&gt;
-
-Default Release of dbSNP ('default' symlink)
-(e.g. 'b156').
+Default Release of dbSNP (&#39;default&#39; symlink)
+(e.g. &#39;b156&#39;).
 If None, first release to download will be assigned as default
-only if it does not exists.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--download-dbsnp-url=&lt;dbSNP url&gt; (default: https://ftp.ncbi.nih.gov/snp/archive)
+only if it does not exists.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-dbsnp-url=&lt;dbSNP url&gt; (default: https://ftp.ncbi.nih.gov/snp/archive)
 
 URL where dbSNP database files can be downloaded from.
-(e.g. 'https://ftp.ncbi.nih.gov/snp/archive').
-
-</div></code></pre>
-<pre class="hljs"><code><div>--download-dbsnp-url-files=&lt;dbSNP url files&gt;
+(e.g. &#39;https://ftp.ncbi.nih.gov/snp/archive&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-dbsnp-url-files=&lt;dbSNP url files&gt;
 
 Dictionary that maps assembly names to specific dbSNP URL files.
 It allows you to provide custom dbSNP URL files for specific assemblies
-instead of using the default file naming convention.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--download-dbsnp-url-files-prefix=&lt;dbSNP url files prefix&gt; (default: GCF_000001405)
+instead of using the default file naming convention.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-dbsnp-url-files-prefix=&lt;dbSNP url files prefix&gt; (default: GCF_000001405)
 
 String that represents the prefix of the dbSNP file name for a specific assembly.
-It is used to construct the full URL of the dbSNP file to be downloaded.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--download-dbsnp-assemblies-map=&lt;dbSNP assemblies map&gt; (default: {'hg19': '25', 'hg38': '40'})
+It is used to construct the full URL of the dbSNP file to be downloaded.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-dbsnp-assemblies-map=&lt;dbSNP assemblies map&gt; (default: {&#39;hg19&#39;: &#39;25&#39;, &#39;hg38&#39;: &#39;40&#39;})
 
 dictionary that maps assembly names to their corresponding dbSNP versions.
-It is used to construct the dbSNP file name based on the assembly name.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--download-dbsnp-vcf
+It is used to construct the dbSNP file name based on the assembly name.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-dbsnp-vcf
 
 Generate well-formatted VCF from downloaded file:
 - Add and filter contigs associated to assembly
 - Normalize by splitting multiallelics
-- Need genome (see --download-genome)
+- Need genome (see --download-genome)</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --download-dbsnp-parquet
 
-</div></code></pre>
-<pre class="hljs"><code><div>--download-dbsnp-parquet
-
-Generate Parquet file from VCF.
-
-</div></code></pre>
-<h3 id="hgmd">HGMD</h3>
-<pre class="hljs"><code><div>--convert-hgmd=&lt;HGMD&gt;
+Generate Parquet file from VCF.</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="10.10" id="hgmd"><span
+class="header-section-number">10.10</span> HGMD</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --convert-hgmd=&lt;HGMD&gt;
 
 Convert HGMD databases.
 Folder where the HGMD databases will be stored.
 Fields in VCF, Parquet and TSV will be generated.
-If the folder does not exist, it will be created.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--convert-hgmd-file=&lt;HGMD file&gt;
+If the folder does not exist, it will be created.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --convert-hgmd-file=&lt;HGMD file&gt;
 
 File from HGMD.
-Name format 'HGMD_Pro_&lt;release&gt;_&lt;assembly&gt;.vcf.gz'.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--convert-hgmd-basename=&lt;HGMD basename&gt;
+Name format &#39;HGMD_Pro_&lt;release&gt;_&lt;assembly&gt;.vcf.gz&#39;.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --convert-hgmd-basename=&lt;HGMD basename&gt;
 
 File output basename.
 Generated files will be prefixed by basename
-(e.g. 'HGMD_Pro_MY_RELEASE')
-By default (None), input file name without '.vcf.gz'.
-
-</div></code></pre>
-<h3 id="fromannovar">from_Annovar</h3>
-<pre class="hljs"><code><div>--input_annovar=&lt;input annovar&gt;
+(e.g. &#39;HGMD_Pro_MY_RELEASE&#39;)
+By default (None), input file name without &#39;.vcf.gz&#39;.</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="10.11" id="from_annovar"><span
+class="header-section-number">10.11</span> from_Annovar</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --input_annovar=&lt;input annovar&gt;
 
 Input Annovar file path.
-Format file must be a Annovar TXT file, associated with '.idx'.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--output_annovar=&lt;output annovar&gt;
+Format file must be a Annovar TXT file, associated with &#39;.idx&#39;.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --output_annovar=&lt;output annovar&gt;
 
 Output Annovar file path.
-Format file must be either VCF compressesd file '.vcf.gz'.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--annovar_code=&lt;Annovar code&gt;
+Format file must be either VCF compressesd file &#39;.vcf.gz&#39;.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --annovar_code=&lt;Annovar code&gt;
 
 Annovar code, or database name.
-Usefull to name databases columns.
+Usefull to name databases columns.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --annovar_to_parquet=&lt;to parquet&gt;
 
-</div></code></pre>
-<pre class="hljs"><code><div>--annovar_to_parquet=&lt;to parquet&gt;
-
-Parquet file conversion.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--annovar_reduce_memory=&lt;reduce memory&gt; ['auto', 'enable', 'disable'] (default: auto)
+Parquet file conversion.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --annovar_reduce_memory=&lt;reduce memory&gt; [&#39;auto&#39;, &#39;enable&#39;, &#39;disable&#39;] (default: auto)
 
 Reduce memory option for Annovar convert,
-either 'auto' (auto-detection), 'enable' or 'disable'.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--annovar_multi_variant=&lt;Annovar multi variant&gt; ['auto', 'enable', 'disable'] (default: auto)
+either &#39;auto&#39; (auto-detection), &#39;enable&#39; or &#39;disable&#39;.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --annovar_multi_variant=&lt;Annovar multi variant&gt; [&#39;auto&#39;, &#39;enable&#39;, &#39;disable&#39;] (default: auto)
 
 Variant with multiple annotation lines on Annovar file.
-Either 'auto' (auto-detection), 'enable' or 'disable'.
-
-</div></code></pre>
-<h3 id="fromextann">from_extann</h3>
-<pre class="hljs"><code><div>--input_extann=&lt;input extann&gt;
+Either &#39;auto&#39; (auto-detection), &#39;enable&#39; or &#39;disable&#39;.</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="10.12" id="from_extann"><span
+class="header-section-number">10.12</span> from_extann</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --input_extann=&lt;input extann&gt;
 
 Input Extann file path.
 Format file must be a Extann TXT file or TSV file.
-File need to have at least the genes column.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--output_extann=&lt;output extann&gt;
+File need to have at least the genes column.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --output_extann=&lt;output extann&gt;
 
 Output Extann file path.
-Output extann file, should be BED or BED.gz.
+Output extann file, should be BED or BED.gz.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --refgene=&lt;refGene&gt;
 
-</div></code></pre>
-<pre class="hljs"><code><div>--refgene=&lt;refGene&gt;
-
-Path to refGene annotation file.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--transcripts=&lt;transcripts&gt;
+Path to refGene annotation file.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --transcripts=&lt;transcripts&gt;
 
 Transcripts TSV file,
-with Transcript in first column, optional Gene in second column.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--param_extann=&lt;param extann&gt;
+with Transcript in first column, optional Gene in second column.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --param_extann=&lt;param extann&gt;
 
 Param extann file path.
 Param containing configuration, options to replace chars and
 bedlike header description, conf vcf specs.
-(e.g. '~/howard/config/param.extann.json')
-
-</div></code></pre>
-<pre class="hljs"><code><div>--mode_extann=&lt;mode extann&gt; ['all', 'longest', 'chosen'] (default: longest)
+(e.g. &#39;~/howard/config/param.extann.json&#39;)</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --mode_extann=&lt;mode extann&gt; [&#39;all&#39;, &#39;longest&#39;, &#39;chosen&#39;] (default: longest)
 
 Mode extann selection.
 How to pick transcript from ncbi, keep all,
-keep the longest, or keep the chosen one (transcript_extann).
-
-</div></code></pre>
-<h3 id="parameters">Parameters</h3>
-<pre class="hljs"><code><div>--generate-param=&lt;param&gt;
+keep the longest, or keep the chosen one (transcript_extann).</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="10.13" id="parameters"><span
+class="header-section-number">10.13</span> Parameters</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --generate-param=&lt;param&gt;
 
 Parameter file (JSON) with all databases found.
 Databases folders scanned are defined in config file.
 Structure of databases follow this structure (see doc):
-.../&lt;database&gt;/&lt;release&gt;/&lt;assembly&gt;/*.[parquet|vcf.gz|...]
-
-</div></code></pre>
-<pre class="hljs"><code><div>--generate-param-description=&lt;param description&gt;
+.../&lt;database&gt;/&lt;release&gt;/&lt;assembly&gt;/*.[parquet|vcf.gz|...]</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --generate-param-description=&lt;param description&gt;
 
 Description file (JSON) with all databases found.
-Contains all databases with description of format, assembly, fields...
-
-</div></code></pre>
-<pre class="hljs"><code><div>--generate-param-releases=&lt;param release&gt; (default: current)
+Contains all databases with description of format, assembly, fields...</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --generate-param-releases=&lt;param release&gt; (default: current)
 
 List of database folder releases to check
-(e.g. 'current', 'latest').
-
-</div></code></pre>
-<pre class="hljs"><code><div>--generate-param-formats=&lt;param formats&gt; (default: parquet)
+(e.g. &#39;current&#39;, &#39;latest&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --generate-param-formats=&lt;param formats&gt; (default: parquet)
 
 List of database formats to check
-(e.g. 'parquet', 'parquet,vcf,bed,tsv').
-
-</div></code></pre>
-<pre class="hljs"><code><div>--generate-param-bcftools
+(e.g. &#39;parquet&#39;, &#39;parquet,vcf,bed,tsv&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --generate-param-bcftools
 
 Generate parameter JSON file with BCFTools annotation for allowed formats
-(i.e. 'vcf', 'bed').
-
-</div></code></pre>
-<h2 id="gui-tool">GUI tool</h2>
+(i.e. &#39;vcf&#39;, &#39;bed&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<h1 data-number="11" id="gui-tool"><span
+class="header-section-number">11</span> GUI tool</h1>
 <p>Graphical User Interface tools</p>
 <p>Usage examples:</p>
 <blockquote>
 <p>howard gui</p>
 </blockquote>
-<h2 id="help-tool">HELP tool</h2>
+<h1 data-number="12" id="help-tool"><span
+class="header-section-number">12</span> HELP tool</h1>
 <p>Help tools</p>
 <p>Usage examples:</p>
 <blockquote>
-<p>howard help --help_md=docs/help.md --help_html=docs/html/help.html --help_pdf=docs/pdf/help.pdf</p>
+<p>howard help &#x2013;help_md=docs/help.md &#x2013;help_html=docs/html/help.html
+&#x2013;help_pdf=docs/pdf/help.pdf</p>
 </blockquote>
 <blockquote>
-<p>howard help --help_json_input=docs/json/help.config.json --help_json_input_title='HOWARD Configuration' --help_md=docs/help.config.md --help_html=docs/html/help.config.html --help_pdf=docs/pdf/help.config.pdf --code_type='json'</p>
+<p>howard help &#x2013;help_json_input=docs/json/help.configuration.json
+&#x2013;help_json_input_title=&#x2018;HOWARD Configuration&#x2019;
+&#x2013;help_md=docs/help.configuration.md
+&#x2013;help_html=docs/html/help.configuration.html
+&#x2013;help_pdf=docs/pdf/help.configuration.pdf &#x2013;code_type=&#x2018;json&#x2019;</p>
 </blockquote>
 <blockquote>
-<p>howard help --help_json_input=docs/json/help.param.json --help_json_input_title='HOWARD Parameters' --help_md=docs/help.param.md --help_html=docs/html/help.param.html --help_pdf=docs/pdf/help.param.pdf --code_type='json'</p>
+<p>howard help &#x2013;help_json_input=docs/json/help.parameteres.json
+&#x2013;help_json_input_title=&#x2018;HOWARD Parameters&#x2019;
+&#x2013;help_md=docs/help.parameteres.md
+&#x2013;help_html=docs/html/help.parameteres.html
+&#x2013;help_pdf=docs/pdf/help.parameteres.pdf &#x2013;code_type=&#x2018;json&#x2019;</p>
 </blockquote>
 <blockquote>
-<p>howard help --help_json_input=docs/json/help.param.databases.json --help_json_input_title='HOWARD Parameters Databases' --help_md=docs/help.param.databases.md --help_html=docs/html/help.param.databases.html --help_pdf=docs/pdf/help.param.databases.pdf --code_type='json'</p>
+<p>howard help
+&#x2013;help_json_input=docs/json/help.parameteres.databases.json
+&#x2013;help_json_input_title=&#x2018;HOWARD Parameters Databases&#x2019;
+&#x2013;help_md=docs/help.parameteres.databases.md
+&#x2013;help_html=docs/html/help.parameteres.databases.html
+&#x2013;help_pdf=docs/pdf/help.parameteres.databases.pdf &#x2013;code_type=&#x2018;json&#x2019;</p>
 </blockquote>
-<blockquote></blockquote>
-<h3 id="main-options">Main options</h3>
-<pre class="hljs"><code><div>--help_md=&lt;help markdown&gt;
+<blockquote>
 
-Help Output file in MarkDown format.
+</blockquote>
+<h2 data-number="12.1" id="main-options-9"><span
+class="header-section-number">12.1</span> Main options</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --help_md=&lt;help markdown&gt;
 
-</div></code></pre>
-<pre class="hljs"><code><div>--help_html=&lt;help html&gt;
+Help Output file in MarkDown format.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --help_html=&lt;help html&gt;
 
-Help Output file in HTML format.
+Help Output file in HTML format.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --help_pdf=&lt;help pdf&gt;
 
-</div></code></pre>
-<pre class="hljs"><code><div>--help_pdf=&lt;help pdf&gt;
+Help Output file in PDF format.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --help_md_input=&lt;help MarkDown input&gt;
 
-Help Output file in PDF format.
+Help input file in MarkDown format.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --help_json_input=&lt;help JSON input&gt;
 
-</div></code></pre>
-<pre class="hljs"><code><div>--help_json_input=&lt;help JSON input&gt;
+Help input file in JSON format.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --help_json_input_title=&lt;help JSON input title&gt; (default: Help)
 
-Help input file in JSON format.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--help_json_input_title=&lt;help JSON input title&gt; (default: Help)
-
-Help JSON input title.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--code_type=&lt;example code type&gt;
+Help JSON input title.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --code_type=&lt;example code type&gt;
 
 Help example code type for input JSON format
-(e.g. 'json', 'bash').
+(e.g. &#39;json&#39;, &#39;bash&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<h1 data-number="13" id="update_database-tool"><span
+class="header-section-number">13</span> UPDATE_DATABASE tool</h1>
+<p>Update HOWARD database</p>
+<p>Usage examples:</p>
+<blockquote>
+<p>howard update_database &#x2013;database clinvar &#x2013;databases_folder
+/home1/DB/HOWARD &#x2013;update_config update_databases.json</p>
+</blockquote>
+<blockquote>
 
-</div></code></pre>
-<h2 id="genebe-tool">GENEBE tool</h2>
+</blockquote>
+<h2 data-number="13.1" id="main-options-10"><span
+class="header-section-number">13.1</span> Main options</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --param=&lt;param&gt; (default: {})
+
+Parameters JSON file (or string) defines parameters to process 
+annotations, calculations, prioritizations, convertions and queries.</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="13.2" id="update_database"><span
+class="header-section-number">13.2</span> Update_database</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --databases_folder=&lt;databases_folder&gt; (default: ~/howard/databases)
+
+Path of HOWARD database folder.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --database=&lt;database&gt; [&#39;clinvar&#39;] (default: clinvar)
+
+Which database to update.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --update_config=&lt;update_config&gt;
+
+Path of json configuration file.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --current_folder=&lt;current_folder&gt; (default: current)
+
+Path of json configuration file.</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="13.3" id="options"><span
+class="header-section-number">13.3</span> Options</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --show=&lt;show&gt;
+
+None</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --limit=&lt;limit&gt;
+
+None</code></pre>
+</blockquote>
+<p></small></p>
+<h1 data-number="14" id="transcripts_check-tool"><span
+class="header-section-number">14</span> TRANSCRIPTS_CHECK tool</h1>
+<p>Check if a transcript list is present in a generated transcript table
+from a input VCF file.</p>
+<p>Usage examples:</p>
+<blockquote>
+<p>howard transcripts_check
+&#x2013;input=plugins/transcripts_check/tests/data/example.ann.transcripts.vcf.gz
+&#x2013;param=plugins/transcripts_check/tests/data/param.transcripts.json
+&#x2013;transcripts_expected=plugins/transcripts_check/tests/data/transcripts.tsv
+&#x2013;stats=/tmp/transcripts.stats.json
+&#x2013;transcripts_missing=/tmp/transcripts.missing.tsv</p>
+</blockquote>
+<blockquote>
+
+</blockquote>
+<h2 data-number="14.1" id="main-options-11"><span
+class="header-section-number">14.1</span> Main options</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --input=&lt;input&gt; | required
+
+Input file path.
+Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
+Files can be compressesd (e.g. vcf.gz, tsv.gz).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --param=&lt;param&gt; (default: {}) | required
+
+Parameters JSON file (or string) defines parameters to process 
+annotations, calculations, prioritizations, convertions and queries.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --transcripts_expected=&lt;List of transcripts (file)&gt; | required
+
+File with a list of transcripts in first column.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --transcripts_missing=&lt;List of missing transcripts (file)&gt;
+
+File with a list of missing transcripts in first column.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --stats_json=&lt;stats json&gt;
+
+Stats Output file in JSON format.</code></pre>
+</blockquote>
+<p></small></p>
+<h1 data-number="15" id="genebe-tool"><span
+class="header-section-number">15</span> GENEBE tool</h1>
 <p>GeneBe annotation using REST API (see https://genebe.net/).</p>
 <p>Usage examples:</p>
 <blockquote>
-<p>howard genebe --input=tests/data/example.vcf.gz --output=/tmp/example.genebe.vcf.gz --genebe_use_refseq</p>
+<p>howard genebe &#x2013;input=tests/data/example.vcf.gz
+&#x2013;output=/tmp/example.genebe.vcf.gz &#x2013;genebe_use_refseq</p>
 </blockquote>
-<blockquote></blockquote>
-<h3 id="main-options">Main options</h3>
-<pre class="hljs"><code><div>--input=&lt;input&gt; | required
+<blockquote>
+
+</blockquote>
+<h2 data-number="15.1" id="main-options-12"><span
+class="header-section-number">15.1</span> Main options</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --input=&lt;input&gt; | required
 
 Input file path.
 Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
-Files can be compressesd (e.g. vcf.gz, tsv.gz).
-
-</div></code></pre>
-<pre class="hljs"><code><div>--output=&lt;output&gt; | required
+Files can be compressesd (e.g. vcf.gz, tsv.gz).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --output=&lt;output&gt; | required
 
 Output file path.
 Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
-Files can be compressesd (e.g. vcf.gz, tsv.gz).
-
-</div></code></pre>
-<pre class="hljs"><code><div>--param=&lt;param&gt; (default: {})
+Files can be compressesd (e.g. vcf.gz, tsv.gz).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --param=&lt;param&gt; (default: {})
 
 Parameters JSON file (or string) defines parameters to process 
-annotations, calculations, prioritizations, convertions and queries.
+annotations, calculations, prioritizations, convertions and queries.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --assembly=&lt;assembly&gt; (default: hg19)
 
-</div></code></pre>
-<pre class="hljs"><code><div>--assembly=&lt;assembly&gt; (default: hg19)
+Genome Assembly (e.g. &#39;hg19&#39;, &#39;hg38&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="15.2" id="genebe"><span
+class="header-section-number">15.2</span> GeneBe</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --genebe_use_refseq
 
-Genome Assembly (e.g. 'hg19', 'hg38').
+Use refSeq to annotate (default).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --genebe_use_ensembl
 
-</div></code></pre>
-<h3 id="genebe">GeneBe</h3>
-<pre class="hljs"><code><div>--genebe_use_refseq
+Use Ensembl to annotate.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --not_flatten_consequences
 
-Use refSeq to annotate (default).
+Use exploded annotation informations.</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="15.3" id="explode-3"><span
+class="header-section-number">15.3</span> Explode</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --explode_infos
 
-</div></code></pre>
-<pre class="hljs"><code><div>--genebe_use_ensembl
+Explode VCF INFO/Tag into &#39;variants&#39; table columns.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --explode_infos_prefix=&lt;explode infos prefix&gt;
 
-Use Ensembl to annotate.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--not_flatten_consequences
-
-Use exploded annotation informations.
-
-</div></code></pre>
-<h3 id="explode">Explode</h3>
-<pre class="hljs"><code><div>--explode_infos
-
-Explode VCF INFO/Tag into 'variants' table columns.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--explode_infos_prefix=&lt;explode infos prefix&gt;
-
-Explode VCF INFO/Tag with a specific prefix.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--explode_infos_fields=&lt;explode infos list&gt; (default: *)
+Explode VCF INFO/Tag with a specific prefix.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --explode_infos_fields=&lt;explode infos list&gt; (default: *)
 
 Explode VCF INFO/Tag specific fields/tags.
 Keyword `*` specify all available fields, except those already specified.
-Pattern (regex) can be used, such as `.*_score` for fields named with '_score' at the end.
+Pattern (regex) can be used, such as `.*_score` for fields named with &#39;_score&#39; at the end.
 Examples:
-- 'HGVS,SIFT,Clinvar' (list of fields)
-- 'HGVS,*,Clinvar' (list of fields with all other fields at the end)
-- 'HGVS,.*_score,Clinvar' (list of 2 fields with all scores in the middle)
-- 'HGVS,.*_score,*' (1 field, scores, all other fields)
-- 'HGVS,*,.*_score' (1 field, all other fields, all scores)
-
-</div></code></pre>
-<h3 id="export">Export</h3>
-<pre class="hljs"><code><div>--include_header
+- &#39;HGVS,SIFT,Clinvar&#39; (list of fields)
+- &#39;HGVS,*,Clinvar&#39; (list of fields with all other fields at the end)
+- &#39;HGVS,.*_score,Clinvar&#39; (list of 2 fields with all scores in the middle)
+- &#39;HGVS,.*_score,*&#39; (1 field, scores, all other fields)
+- &#39;HGVS,*,.*_score&#39; (1 field, all other fields, all scores)</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="15.4" id="export-3"><span
+class="header-section-number">15.4</span> Export</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --include_header
 
 Include header (in VCF format) in output file.
-Only for compatible formats (tab-delimiter format as TSV or BED).
-
-</div></code></pre>
-<pre class="hljs"><code><div>--order_by=&lt;order by&gt;
+Only for compatible formats (tab-delimiter format as TSV or BED).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --order_by=&lt;order by&gt;
 
 List of columns to sort the result-set in ascending or descending order.
 Use SQL format, and keywords ASC (ascending) and DESC (descending).
 If a column is not available, order will not be considered.
 Order is enable only for compatible format (e.g. TSV, CSV, JSON).
-Examples: 'ACMG_score DESC', 'PZFlag DESC, PZScore DESC'.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--parquet_partitions=&lt;parquet partitions&gt;
+Examples: &#39;ACMG_score DESC&#39;, &#39;PZFlag DESC, PZScore DESC&#39;.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --parquet_partitions=&lt;parquet partitions&gt;
 
 Parquet partitioning using hive (available for any format).
 This option is faster parallel writing, but memory consuming.
-Use 'None' (string) for NO partition but split parquet files into a folder.
-Examples: '#CHROM', '#CHROM,REF', 'None'.
-
-</div></code></pre>
-<h2 id="minimalize-tool">MINIMALIZE tool</h2>
-<p>Minimalize a VCF file consists in put missing value ('.') on INFO/Tags, ID, QUAL or FILTER fields. Options can also minimalize samples (keep only GT) or remove all samples. INFO/tags can by exploded before minimalize to keep tags into separated columns (useful for Parquet or TSV format to constitute a database).</p>
+Use &#39;None&#39; (string) for NO partition but split parquet files into a folder.
+Examples: &#39;#CHROM&#39;, &#39;#CHROM,REF&#39;, &#39;None&#39;.</code></pre>
+</blockquote>
+<p></small></p>
+<h1 data-number="16" id="minimalize-tool"><span
+class="header-section-number">16</span> MINIMALIZE tool</h1>
+<p>Minimalize a VCF file consists in put missing value (&#x2018;.&#x2019;) on
+INFO/Tags, ID, QUAL or FILTER fields. Options can also minimalize
+samples (keep only GT) or remove all samples. INFO/tags can by exploded
+before minimalize to keep tags into separated columns (useful for
+Parquet or TSV format to constitute a database).</p>
 <p>Usage examples:</p>
 <blockquote>
-<p>howard minimalize --input=tests/data/example.vcf.gz --output=/tmp/example.minimal.vcf.gz --minimalize_info --minimalize_filter --minimalize_qual --minimalize_id --minimalize_samples</p>
+<p>howard minimalize &#x2013;input=tests/data/example.vcf.gz
+&#x2013;output=/tmp/example.minimal.vcf.gz &#x2013;minimalize_info &#x2013;minimalize_filter
+&#x2013;minimalize_qual &#x2013;minimalize_id &#x2013;minimalize_samples</p>
 </blockquote>
 <blockquote>
-<p>howard minimalize --input=tests/data/example.vcf.gz --output=/tmp/example.minimal.tsv --remove_samples --explode_infos --minimalize_info</p>
+<p>howard minimalize &#x2013;input=tests/data/example.vcf.gz
+&#x2013;output=/tmp/example.minimal.tsv &#x2013;remove_samples &#x2013;explode_infos
+&#x2013;minimalize_info</p>
 </blockquote>
-<blockquote></blockquote>
-<h3 id="main-options">Main options</h3>
-<pre class="hljs"><code><div>--input=&lt;input&gt; | required
+<blockquote>
+
+</blockquote>
+<h2 data-number="16.1" id="main-options-13"><span
+class="header-section-number">16.1</span> Main options</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --input=&lt;input&gt; | required
 
 Input file path.
 Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
-Files can be compressesd (e.g. vcf.gz, tsv.gz).
-
-</div></code></pre>
-<pre class="hljs"><code><div>--output=&lt;output&gt; | required
+Files can be compressesd (e.g. vcf.gz, tsv.gz).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --output=&lt;output&gt; | required
 
 Output file path.
 Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
-Files can be compressesd (e.g. vcf.gz, tsv.gz).
-
-</div></code></pre>
-<pre class="hljs"><code><div>--param=&lt;param&gt; (default: {})
+Files can be compressesd (e.g. vcf.gz, tsv.gz).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --param=&lt;param&gt; (default: {})
 
 Parameters JSON file (or string) defines parameters to process 
-annotations, calculations, prioritizations, convertions and queries.
+annotations, calculations, prioritizations, convertions and queries.</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="16.2" id="minimalize"><span
+class="header-section-number">16.2</span> Minimalize</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --minimalize_info
 
-</div></code></pre>
-<h3 id="minimalize">Minimalize</h3>
-<pre class="hljs"><code><div>--minimalize_info
+Minimalize INFO field (e.g. &#39;.&#39; value).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --minimalize_id
 
-Minimalize INFO field (e.g. '.' value).
+Minimalize ID field (e.g. &#39;.&#39; value).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --minimalize_qual
 
-</div></code></pre>
-<pre class="hljs"><code><div>--minimalize_id
+Minimalize QUAL field (e.g. &#39;.&#39; value).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --minimalize_filter
 
-Minimalize ID field (e.g. '.' value).
+Minimalize FILTER field (e.g. &#39;.&#39; value).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --minimalize_samples
 
-</div></code></pre>
-<pre class="hljs"><code><div>--minimalize_qual
+Minimalize samples to keep only genotypes (i.e. &#39;GT&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --remove_samples
 
-Minimalize QUAL field (e.g. '.' value).
+Remove all samples to keep only variants.</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="16.3" id="explode-4"><span
+class="header-section-number">16.3</span> Explode</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --explode_infos
 
-</div></code></pre>
-<pre class="hljs"><code><div>--minimalize_filter
+Explode VCF INFO/Tag into &#39;variants&#39; table columns.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --explode_infos_prefix=&lt;explode infos prefix&gt;
 
-Minimalize FILTER field (e.g. '.' value).
-
-</div></code></pre>
-<pre class="hljs"><code><div>--minimalize_samples
-
-Minimalize samples to keep only genotypes (i.e. 'GT').
-
-</div></code></pre>
-<pre class="hljs"><code><div>--remove_samples
-
-Remove all samples to keep only variants.
-
-</div></code></pre>
-<h3 id="explode">Explode</h3>
-<pre class="hljs"><code><div>--explode_infos
-
-Explode VCF INFO/Tag into 'variants' table columns.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--explode_infos_prefix=&lt;explode infos prefix&gt;
-
-Explode VCF INFO/Tag with a specific prefix.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--explode_infos_fields=&lt;explode infos list&gt; (default: *)
+Explode VCF INFO/Tag with a specific prefix.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --explode_infos_fields=&lt;explode infos list&gt; (default: *)
 
 Explode VCF INFO/Tag specific fields/tags.
 Keyword `*` specify all available fields, except those already specified.
-Pattern (regex) can be used, such as `.*_score` for fields named with '_score' at the end.
+Pattern (regex) can be used, such as `.*_score` for fields named with &#39;_score&#39; at the end.
 Examples:
-- 'HGVS,SIFT,Clinvar' (list of fields)
-- 'HGVS,*,Clinvar' (list of fields with all other fields at the end)
-- 'HGVS,.*_score,Clinvar' (list of 2 fields with all scores in the middle)
-- 'HGVS,.*_score,*' (1 field, scores, all other fields)
-- 'HGVS,*,.*_score' (1 field, all other fields, all scores)
-
-</div></code></pre>
-<h3 id="export">Export</h3>
-<pre class="hljs"><code><div>--include_header
+- &#39;HGVS,SIFT,Clinvar&#39; (list of fields)
+- &#39;HGVS,*,Clinvar&#39; (list of fields with all other fields at the end)
+- &#39;HGVS,.*_score,Clinvar&#39; (list of 2 fields with all scores in the middle)
+- &#39;HGVS,.*_score,*&#39; (1 field, scores, all other fields)
+- &#39;HGVS,*,.*_score&#39; (1 field, all other fields, all scores)</code></pre>
+</blockquote>
+<p></small></p>
+<h2 data-number="16.4" id="export-4"><span
+class="header-section-number">16.4</span> Export</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --include_header
 
 Include header (in VCF format) in output file.
-Only for compatible formats (tab-delimiter format as TSV or BED).
-
-</div></code></pre>
-<pre class="hljs"><code><div>--order_by=&lt;order by&gt;
+Only for compatible formats (tab-delimiter format as TSV or BED).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --order_by=&lt;order by&gt;
 
 List of columns to sort the result-set in ascending or descending order.
 Use SQL format, and keywords ASC (ascending) and DESC (descending).
 If a column is not available, order will not be considered.
 Order is enable only for compatible format (e.g. TSV, CSV, JSON).
-Examples: 'ACMG_score DESC', 'PZFlag DESC, PZScore DESC'.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--parquet_partitions=&lt;parquet partitions&gt;
+Examples: &#39;ACMG_score DESC&#39;, &#39;PZFlag DESC, PZScore DESC&#39;.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --parquet_partitions=&lt;parquet partitions&gt;
 
 Parquet partitioning using hive (available for any format).
 This option is faster parallel writing, but memory consuming.
-Use 'None' (string) for NO partition but split parquet files into a folder.
-Examples: '#CHROM', '#CHROM,REF', 'None'.
-
-</div></code></pre>
-<h2 id="shared-arguments">Shared arguments</h2>
-<pre class="hljs"><code><div>--config=&lt;config&gt; (default: {})
+Use &#39;None&#39; (string) for NO partition but split parquet files into a folder.
+Examples: &#39;#CHROM&#39;, &#39;#CHROM,REF&#39;, &#39;None&#39;.</code></pre>
+</blockquote>
+<p></small></p>
+<h1 data-number="17" id="shared-arguments"><span
+class="header-section-number">17</span> Shared arguments</h1>
+<p><small></p>
+<blockquote>
+<pre><code>    --config=&lt;config&gt; (default: {})
 
 Configuration JSON file defined default configuration regarding 
 resources (e.g. threads, memory),
 settings (e.g. verbosity, temporary files),
 default folders (e.g. for databases)
-and paths to external tools.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--threads=&lt;threads&gt; (default: -1)
+and paths to external tools.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --threads=&lt;threads&gt; (default: -1)
 
 Specify the number of threads to use for processing HOWARD.
 It determines the level of parallelism,
 either on python scripts, duckdb engine and external tools.
 It and can help speed up the process/tool.
 Use -1 to use all available CPU/cores.
-Either non valid value is 1 CPU/core.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--memory=&lt;memory&gt;
+Either non valid value is 1 CPU/core.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --memory=&lt;memory&gt;
 
 Specify the memory to use in format FLOAT[kMG]
-(e.g. '8G', '12.42G', '1024M').
+(e.g. &#39;8G&#39;, &#39;12.42G&#39;, &#39;1024M&#39;).
 It determines the amount of memory for duckDB engine and external tools
 (especially for JAR programs).
-It can help to prevent 'out of memory' failures.
-By default (None) is 80%% of RAM (for duckDB).
-
-</div></code></pre>
-<pre class="hljs"><code><div>--chunk_size=&lt;chunk size&gt; (default: 1000000)
+It can help to prevent &#39;out of memory&#39; failures.
+By default (None) is 80%% of RAM (for duckDB).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --chunk_size=&lt;chunk size&gt; (default: 1000000)
 
 Number of records in batch to export output file.
 The lower the chunk size, the less memory consumption.
-For Parquet partitioning, files size will depend on the chunk size.
+For Parquet partitioning, files size will depend on the chunk size.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --tmp=&lt;Temporary folder&gt;
 
-</div></code></pre>
-<pre class="hljs"><code><div>--tmp=&lt;Temporary folder&gt;
-
-Temporary folder (e.g. '/tmp').
-By default, '.tmp' for duckDB (see doc),external tools and python scripts.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--duckdb_settings=&lt;duckDB settings&gt;
+Temporary folder (e.g. &#39;/tmp&#39;).
+By default, &#39;.tmp&#39; for duckDB (see doc),external tools and python scripts.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --duckdb_settings=&lt;duckDB settings&gt;
 
 DuckDB settings (see duckDB doc) as JSON (string or file).
-These settings have priority (see options 'threads', 'tmp'...).
-Examples: '{&quot;TimeZone&quot;: &quot;GMT&quot;, &quot;temp_directory&quot;: &quot;/tmp/duckdb&quot;, &quot;threads&quot;: 8}'.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--verbosity=&lt;verbosity&gt; ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET'] (default: INFO)
+These settings have priority (see options &#39;threads&#39;, &#39;tmp&#39;...).
+Examples: &#39;{&quot;TimeZone&quot;: &quot;GMT&quot;, &quot;temp_directory&quot;: &quot;/tmp/duckdb&quot;, &quot;threads&quot;: 8}&#39;.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --verbosity=&lt;verbosity&gt; [&#39;CRITICAL&#39;, &#39;ERROR&#39;, &#39;WARNING&#39;, &#39;INFO&#39;, &#39;DEBUG&#39;, &#39;NOTSET&#39;] (default: INFO)
 
 Verbosity level
 Available: CRITICAL, ERROR, WARNING, INFO, DEBUG or NOTSET
@@ -2268,27 +2972,37 @@ Available: CRITICAL, ERROR, WARNING, INFO, DEBUG or NOTSET
 - WARNING: An indication that something unexpected happened.
 - ERROR: Due to a more serious problem.
 - CRITICAL: A serious error.
-- NOTSET: All messages.
-
-</div></code></pre>
-<pre class="hljs"><code><div>--log=&lt;log&gt;
+- NOTSET: All messages.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --log=&lt;log&gt;
 
 Logs file
-(e.g. 'my.log').
+(e.g. &#39;my.log&#39;).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --quiet
 
-</div></code></pre>
-<pre class="hljs"><code><div>--quiet
+==SUPPRESS==</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --verbose
 
-==SUPPRESS==
-</div></code></pre>
-<pre class="hljs"><code><div>--verbose
+==SUPPRESS==</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --debug
 
-==SUPPRESS==
-</div></code></pre>
-<pre class="hljs"><code><div>--debug
-
-==SUPPRESS==
-</div></code></pre>
-
+==SUPPRESS==</code></pre>
+</blockquote>
+<p></small></p>
 </body>
 </html>

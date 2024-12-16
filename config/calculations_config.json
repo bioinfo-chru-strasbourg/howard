@@ -37,7 +37,31 @@
     "description": "HGVS nomenclatures from snpEff annotation",
     "available": true,
     "function_name": "calculation_extract_snpeff_hgvs",
-    "function_params": []
+    "function_params": ["snpeff_hgvs", "ANN"]
+  },
+  "snpeff_ann_explode": {
+    "type": "python",
+    "name": "snpeff_ann_explode",
+    "description": "Explode snpEff annotations",
+    "available": true,
+    "function_name": "calculation_snpeff_ann_explode",
+    "function_params": [true, "fields", "snpeff_", "ANN"]
+  },
+  "snpeff_ann_explode_uniquify": {
+    "type": "python",
+    "name": "snpeff_ann_explode_uniquify",
+    "description": "Explode snpEff annotations with uniquify values",
+    "available": true,
+    "function_name": "calculation_snpeff_ann_explode",
+    "function_params": [true, "fields", "snpeff_uniquify_", "ANN"]
+  },
+  "snpeff_ann_explode_json": {
+    "type": "python",
+    "name": "snpeff_ann_explode_json",
+    "description": "Explode snpEff annotations in JSON format",
+    "available": true,
+    "function_name": "calculation_snpeff_ann_explode",
+    "function_params": [true, "JSON", "snpeff_json", "ANN"]
   },
   "NOMEN": {
     "type": "python",

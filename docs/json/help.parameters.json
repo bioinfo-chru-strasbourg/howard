@@ -1,0 +1,1359 @@
+{
+  "__help": [],
+  "Introduction": {
+    "__help": [
+      "HOWARD Parameters JSON file defines parameters to process annotations, calculations, prioritizations, convertions and queries."
+    ],
+    "__code_type": "json",
+    "__examples_code": {
+      "# Parameters for annotation, calculation, prioritization, HGVS annotation and export": [
+        "{",
+        "   \"hgvs\": {",
+        "      \"full_format\": true,",
+        "      \"use_exon\": true",
+        "   }",
+        "   \"annotation\": {",
+        "      \"parquet\": {",
+        "         \"annotations\": {",
+        "            \"/path/to/database3.parquet\": {",
+        "               \"field1\": null,",
+        "               \"field2\": \"field2_renamed\"",
+        "            },",
+        "            \"/path/to/database4.vcf.gz\": {",
+        "               \"INFO\": null",
+        "            },",
+        "            \"/path/to/database5.bed.gz\": {",
+        "               \"INFO\": null",
+        "            }",
+        "         }",
+        "      },",
+        "      \"bcftools\": {",
+        "         \"annotations\": {",
+        "            \"/path/to/database6.vcf.gz\": {",
+        "               \"field1\": null,",
+        "               \"field2\": \"field2_renamed\"",
+        "            },",
+        "            \"/path/to/database7.bed\": {",
+        "               \"INFO\": null",
+        "            }",
+        "         }",
+        "      },",
+        "      \"annovar\": {",
+        "         \"annotations\": {",
+        "            \"annovar_keyword2\": {",
+        "               \"field1\": null,",
+        "               \"field2\": \"field2_renamed\"",
+        "            },",
+        "            \"annovar_keyword3\": {",
+        "               \"INFO\": null",
+        "            }",
+        "         }",
+        "      },",
+        "      \"snpeff\": {",
+        "         \"options\": \" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr \"",
+        "      },",
+        "      \"exomiser\": {",
+        "         \"release\": \"2109\",",
+        "         \"transcript_source\": \"refseq\",",
+        "         \"hpo\": [\"HP:0001156\", \"HP:0001363\", \"HP:0011304\", \"HP:0010055\"]",
+        "      },",
+        "      \"options\": {",
+        "         \"append\": true",
+        "      }",
+        "   },",
+        "   \"calculation\": {",
+        "      \"operation1\": null,",
+        "      \"operation2\": {",
+        "        \"options\": {",
+        "          \"option1\": \"value1\",",
+        "          \"option2\": \"value2\"",
+        "        }",
+        "      }",
+        "   },",
+        "   \"prioritization\": {",
+        "      \"prioritizations\": \"config/prioritization_profiles.json\",",
+        "      \"profiles\": [\"GENOME\", \"GERMLINE\"],",
+        "      \"default_profile\": \"GERMLINE\",",
+        "      \"pzfields\": [\"PZScore\", \"PZFlag\", \"PZComment\"],",
+        "      \"prioritization_score_mode\": \"VaRank\"",
+        "   },",
+        "   \"export\": {",
+        "      \"include_header\": true",
+        "   }",
+        "}"
+      ]
+    }
+  },
+  "hgvs": {
+    "__help": [
+      "HOWARD annotates variants with HGVS annotation using HUGO HGVS internation Sequence Variant Nomenclature (http://varnomen.hgvs.org/). Annotation refere to refGene and genome to generate HGVS nomenclature for all available transcripts. This annotation add 'hgvs' field into VCF INFO column of a VCF file. Several options are available, to add gene, exon and protein information, to generate a 'full format' detailed annotation, to choose codon format."
+    ],
+    "__code_type": "json",
+    "__examples_code": [
+      "# HGVS annotation  with operations for generate variant_id and variant type, extract HGVS from snpEff annotation, select NOMEN from snpEff HGVS with a list of transcripts of preference",
+      "\"hgvs\": {",
+      "  \"full_format\": true,",
+      "  \"use_exon\": true",
+      "}"
+    ],
+    "use_gene": {
+      "__help": [
+        "Add Gene information to generate HGVS annotation (e.g. 'NM_152232**(TAS1R2)**:c.231T>C')."
+      ],
+      "__code_type": "json",
+      "__examples_code": ["# Use Gene in HGVS annotation", "\"use_gene\": true"]
+    },
+    "use_exon": {
+      "__help": [
+        "Add Exon information to generate HGVS annotation (e.g. 'NM_152232(exon2):c.231T>C'). Only if 'use_gene' is not enabled."
+      ],
+      "__code_type": "json",
+      "__examples_code": ["# Use Exon in HGVS annotation", "\"use_exon\": true"]
+    },
+    "use_protein": {
+      "__help": [
+        "Use Protein level to generate HGVS annotation (e.g. 'NP_689418:p.Cys77Arg'). Can be used with 'use_exon' or 'use_gene'."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Use Protein in HGVS annotation",
+        "\"use_protein\": true"
+      ]
+    },
+    "add_protein": {
+      "__help": [
+        "Add Protein level to DNA HGVS annotation (e.g. 'NM_152232:c.231T>C,NP_689418:p.Cys77Arg')."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Add Protein level to DNA HGVS annotation",
+        "\"add_protein\": true"
+      ]
+    },
+    "full_format": {
+      "__help": [
+        "Generates HGVS annotation in a full format (non-standard, e.g. 'TAS1R2:NM_152232:NP_689418:c.231T>C:p.Cys77Arg', 'TAS1R2:NM_152232:NP_689418:exon2:c.231T>C:p.Cys77Arg'). Full format use all information to generates an exhaustive annotation. Use specifically 'use_exon' to add exon information."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Use full format for HGVS annotation",
+        "\"full_format\": true"
+      ]
+    },
+    "codon_type": {
+      "__help": [
+        "Amino Acide Codon format type to use to generate HGVS annotation (default '3'):",
+        "- '1': codon in 1 character (e.g. 'C', 'R')",
+        "- '3': codon in 3 character (e.g. 'Cys', 'Arg')",
+        "- 'FULL': codon in full name (e.g. 'Cysteine', 'Arginine')"
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Amino Acide Codon format with 1 character",
+        "\"codon_type\": \"1\"",
+        "# Amino Acide Codon format with 3 character",
+        "\"codon_type\": \"3\"",
+        "# Amino Acide Codon format with full name",
+        "\"codon_type\": \"FULL\""
+      ]
+    },
+    "refgene": {
+      "__help": [
+        "Path to refGene annotation file (see [HOWARD User Guide](user_guide.md#databases-tool))."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Path to refSeq file",
+        "\"refgene\": \"~/howard/databases/refseq/current/hg19/ncbiRefSeq.txt\""
+      ]
+    },
+    "refseqlink": {
+      "__help": [
+        "Path to refGeneLink annotation file (see [HOWARD User Guide](user_guide.md#databases-tool))."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Path to refSeq file",
+        "\"refseqlink\": \"~/howard/databases/refseq/current/hg19/ncbiRefSeqLink.txt\""
+      ]
+    }
+  },
+  "annotation": {
+    "__help": [
+      "Annotation process using HOWARD algorithms or external tools.\n",
+      "For HOWARD Parquet algorithm, provide the list of database files available (formats such as Parquet, VCF, TSV, duckDB, JSON) and select fields (rename possible, 'INFO' keyword for all fields), or use 'ALL' keyword to detect available databases.\n",
+      "For external tools, such as Annovar, snpEff and Exomiser, specify parameters such as annotation keywords (Annovar) and options (depending on the tool), and select fields (BCFtools and Annovar, field rename available)."
+    ],
+    "__examples_code": [
+      "# Annotation with multiple tools in multiple formats with multiple options",
+      "\"annotation\": {",
+      "   \"parquet\": {",
+      "      \"annotations\": {",
+      "         \"/path/to/database3.parquet\": {",
+      "            \"field1\": null,",
+      "            \"field2\": \"field2_renamed\"",
+      "         },",
+      "         \"/path/to/database4.vcf.gz\": {",
+      "            \"INFO\": null",
+      "         }",
+      "         \"/path/to/database5.bed.gz\": {",
+      "            \"INFO\": null",
+      "         }",
+      "      }",
+      "   }",
+      "   \"bcftools\": {",
+      "      \"annotations\": {",
+      "         \"/path/to/database6.vcf.gz\": {",
+      "            \"field1\": null,",
+      "            \"field2\": \"field2_renamed\"",
+      "         },",
+      "         \"/path/to/database7.bed\": {",
+      "            \"INFO\": null",
+      "         }",
+      "      }",
+      "   }",
+      "   \"annovar\": {",
+      "      \"annotations\": {",
+      "         \"annovar_keyword2\": {",
+      "            \"field1\": null,",
+      "            \"field2\": \"field2_renamed\"",
+      "         },",
+      "         \"annovar_keyword3\": {",
+      "            \"INFO\": null",
+      "         }",
+      "      }",
+      "   }",
+      "   \"snpeff\": {",
+      "      \"options\": \" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr \"",
+      "   }",
+      "   \"exomiser\": {",
+      "      \"release\": \"2109\",",
+      "      \"transcript_source\": \"refseq\",",
+      "      \"hpo\": [\"HP:0001156\", \"HP:0001363\", \"HP:0011304\", \"HP:0010055\"]",
+      "   }",
+      "   \"options\": {",
+      "      \"append\": true",
+      "   }",
+      "}"
+    ],
+    "parquet": {
+      "__help": [
+        "Annotation process using HOWARD Parquet algorithm, for the list of databases available (formats such as Parquet, VCF, TSV, duckDB, JSON)."
+      ],
+      "__examples_code": {
+        "Annotation with multiple databases in multiple formats": [
+          "\"parquet\": {",
+          "   \"annotations\": {",
+          "      \"/path/to/database3.parquet\": {",
+          "         \"field1\": null,",
+          "         \"field2\": \"field2_renamed\",",
+          "      },",
+          "      \"/path/to/database4.vcf.gz\": {",
+          "         \"INFO\": null",
+          "      }",
+          "      \"/path/to/database5.bed.gz\": {",
+          "         \"INFO\": null",
+          "      }",
+          "   }",
+          "}"
+        ]
+      },
+      "annotations": {
+        "__auto": false,
+        "__help": [
+          "Specify a list of databases files available (formats such as Parquet, VCF, TSV, duckDB, JSON). This parameter enables users to select specific database fields and optionally rename them (e.g. '\"field\": null' to keep field name, '\"field\": \"new_name\"' to rename field). Use 'INFO' keyword to select all fields within the database INFO/Tags header (e.g. '\"INFO\": null'). Use 'ALL' keyword to select all fields within the database regardless INFO/Tags header (e.g. '\"ALL\": null').\n",
+          "For add all availalbe databases files, use 'ALL' keyword, with filters on type and release (e.g. 'ALL', 'ALL:format=parquet', 'ALL:format=parquet:release=current', 'ALL:format=parquet+vcf:release=current+devel').\n",
+          "If a full path is not provided, the system will automatically detect files within database folders (see Configuration doc) and assembly (see Parameter option)."
+        ],
+        "__examples_code": {
+          "# Annotation with dbSNP database with INFO/tags fields, and dbNSFP databases with all fields": [
+            "\"annotations\": {",
+            "   \"tests/databases/annotations/current/hg19/avsnp150.parquet\": {",
+            "      \"INFO\": null",
+            "   }",
+            "   \"tests/databases/annotations/current/hg19/dbnsfp42a.parquet\": {",
+            "      \"ALL\": null",
+            "   }",
+            "}"
+          ],
+          "# Annotation with dbNSFP (only PolyPhen, ClinVar and REVEL score), and rename fields": [
+            "\"annotations\": {",
+            "   \"tests/databases/annotations/current/hg19/dbnsfp42a.parquet\": {",
+            "      \"Polyphen2_HDIV_pred\": \"PolyPhen\",",
+            "      \"ClinPred_pred\": \"ClinVar\",",
+            "      \"REVEL_score\": null",
+            "   }",
+            "}",
+            ""
+          ],
+          "# Annotation with refSeq as a BED file": [
+            "\"annotations\": {",
+            "   \"tests/databases/annotations/current/hg19/refGene.bed\": {",
+            "      \"INFO\": null",
+            "   }",
+            "}"
+          ],
+          "# Annotation with dbNSFP REVEL annotation (as a VCF file) within configured annotation databases folders (default: '~/howard/databases/annotations/current') and assembly (default: 'hg19')": [
+            "\"annotations\": {",
+            "   \"dbnsfp42a.REVEL.vcf.gz\": {",
+            "      \"REVEL_score\": null,",
+            "      \"REVEL_rankscore\": null",
+            "   }",
+            "}",
+            ""
+          ],
+          "Annotation with all available databases in Parquet for ''current release": [
+            "\"parquet\": {",
+            "   \"annotations\": {",
+            "      \"ALL\": {",
+            "         \"formats\": [\"parquet\"],",
+            "         \"releases\": [\"current\"]",
+            "      }",
+            "   }",
+            "}"
+          ]
+        }
+      }
+    },
+    "bcftools": {
+      "__help": [
+        "Annotation process using BCFTools. Provide a list of database files and annotation fields."
+      ],
+      "__examples_code": [
+        "# Annotation with multiple databases in multiple formats",
+        "\"parquet\": {",
+        "   \"bcftools\": {",
+        "      \"/path/to/database1.vcf.gz\": {",
+        "         \"field1\": null,",
+        "         \"field2\": \"field2_renamed\"",
+        "      },",
+        "      \"database2.bed.gz\": {",
+        "         \"INFO\": null",
+        "      }",
+        "   }",
+        "}"
+      ],
+      "annotations": {
+        "__auto": false,
+        "__help": [
+          "Specify the list of database files in formats VCF or BED. Files need to be compressed and indexed.",
+          "This parameter enables users to select specific database fields and optionally rename them (e.g. '\"field\": null' to keep field name, '\"field\": \"new_name\"' to rename field). Use 'INFO' or 'ALL' keyword to select all fields within the database INFO/Tags header (e.g. '\"INFO\": null', '\"ALL\": null').\n",
+          "If a full path is not provided, the system will automatically detect files within database folders (see Configuration doc) and assembly (see Parameter option)."
+        ],
+        "__examples_code": [
+          "# Annotation with dbSNP database  with all fields",
+          "\"annotations\": {",
+          "   \"tests/databases/annotations/current/hg19/avsnp150.vcf.gz\": {",
+          "      \"INFO\": null",
+          "   }",
+          "}",
+          "# Annotation with dbNSFP (only PolyPhen, ClinVar and REVEL score), and rename fields",
+          "\"annotations\": {",
+          "   \"tests/databases/annotations/current/hg19/dbnsfp42a.vcf.gz\": {",
+          "      \"Polyphen2_HDIV_pred\": \"PolyPhen\",",
+          "      \"ClinPred_pred\": \"ClinVar\",",
+          "      \"REVEL_score\": null",
+          "   }",
+          "}",
+          "# Annotation with refSeq as a BED file",
+          "\"annotations\": {",
+          "   \"tests/databases/annotations/current/hg19/refGene.bed\": {",
+          "      \"INFO\": null",
+          "   }",
+          "}",
+          "# Annotation with dbNSFP REVEL annotation (as a VCF file) within configured annotation databases folders (default: '~/howard/databases/annotations/current') and assembly (default: 'hg19')",
+          "\"annotations\": {",
+          "   \"dbnsfp42a.REVEL.vcf.gz\": {",
+          "      \"REVEL_score\": null,",
+          "      \"REVEL_rankscore\": null",
+          "   }",
+          "}"
+        ]
+      }
+    },
+    "annovar": {
+      "__help": [
+        "Annotation process using Annovar tool. Provides a list of keywords to select Annovar databases, and defines Annovar options (see [Annovar documentation](https://annovar.openbioinformatics.org))."
+      ],
+      "__examples_code": [
+        "# Annotation with multiple Annovar databases, with fields selection, and Annovar options",
+        "\"annovar\": {",
+        "   \"annotations\": {",
+        "      \"annovar_keyword2\": {",
+        "         \"field1\": null,",
+        "         \"field2\": \"field2_renamed\",",
+        "      },",
+        "      \"annovar_keyword3\": {",
+        "         \"INFO\": null",
+        "      }",
+        "   }",
+        "}"
+      ],
+      "annotations": {
+        "__auto": false,
+        "__help": [
+          "List of keywords refering to Annovar databases (see [Annovar Databases documentation](https://annovar.openbioinformatics.org/en/latest/user-guide/download/)), with a list of selected fields for each of them (rename available)"
+        ],
+        "__examples_code": [
+          "# Annotation with ClinVar (fields CLNSIG and CLNDN renamed) and Cosmic (all fields)",
+          "\"annotations\": {",
+          "   \"clinvar_20221231\": {",
+          "      \"CLNSIG\": \"ClinVar_class\"",
+          "      \"CLNDN\": \"ClinVar_desease\",",
+          "   },",
+          "   \"cosmic70\": {",
+          "      \"INFO\": null",
+          "   },",
+          "}"
+        ]
+      },
+      "options": {
+        "__help": [
+          "List of options available with Annovar tool (see Annovar documentation). As example, these options allows to define splicing threshold or HGVS annotation with refGene database"
+        ],
+        "__examples_code": [
+          "# HGVS Annotation with refGene (add 'refGene' to 'annotations') and a splicing threshold as 3",
+          "\"options\": {",
+          "   \"splicing_threshold\": 3,",
+          "   \"argument\": \"'-hgvs'\"",
+          "   }",
+          "}"
+        ]
+      }
+    },
+    "snpeff": {
+      "__help": [
+        "Annotation process using snpEff tool and options (see [snpEff documentation](https://pcingola.github.io/SnpEff/snpeff/commandline/))."
+      ],
+      "__examples_code": [
+        "# Annotation with snpEff databases, with options for HGVS annotation and additional tags.",
+        "\"snpeff\": {",
+        "   \"options\": \" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr \"",
+        "}"
+      ],
+      "options": {
+        "__help": [
+          "String (as command line) of options available such as:",
+          " - filters on variants (regions filter, specific changes as intronic or downstream)",
+          " - annotation (e.g. HGVS, loss of function) ",
+          " - database (e.g. only protein coding transcripts, splice sites size)"
+        ],
+        "__examples_code": [
+          "# Annotation with snpEff databases, with options to generate HGVS annotation, specify to not shift variants according to HGVS notation, define splice sites size to 3, add loss of function (LOF), Nonsense mediated decay and OICR tags.",
+          "\"options\": \" -hgvs -noShiftHgvs -spliceSiteSize 3 -lof -oicr \""
+        ]
+      },
+      "stats": {
+        "__help": [
+          "HTML file for snpEff stats. Use keyword 'OUTPUT' to generate file according to output file."
+        ],
+        "__examples_code": [
+          "# Annotation with snpEff databases, and generate a specific stats in HTML format.",
+          "\"stats\": \"/path/to/stats.html\"",
+          "# Annotation with snpEff databases, and generate stats in HTML format associated with output file.",
+          "\"stats\": \"OUTPUT.html\""
+        ]
+      },
+      "csvStats": {
+        "__help": [
+          "CSV file for snpEff stats. Use keyword 'OUTPUT' to generate file according to output file."
+        ],
+        "__examples_code": [
+          "# Annotation with snpEff databases, and generate a specific stats in CSV format.",
+          "\"csvStats\": \"/path/to/stats.csv\"",
+          "# Annotation with snpEff databases, and generate stats in CSV format associated with output file.",
+          "\"csvStats\": \"OUTPUT.csv\""
+        ]
+      }
+    },
+    "snpsift": {
+      "__help": [
+        "Annotation process using snpSift. Provide a list of database files and annotation fields."
+      ],
+      "__examples_code": [
+        "# Annotation with multiple databases in multiple formats",
+        "\"snpsift\": {",
+        "   \"annotations\": {",
+        "      \"/path/to/database1.vcf.gz\": {",
+        "         \"field1\": null,",
+        "         \"field2\": null",
+        "      },",
+        "      \"/path/to/database2.vcf.gz\": {",
+        "         \"field1\": null,",
+        "         \"field2\": null",
+        "      }",
+        "   }",
+        "}"
+      ],
+      "annotations": {
+        "__auto": false,
+        "__help": [
+          "Specify the list of database files in formats VCF. Files need to be compressed and indexed.",
+          "This parameter enables users to select specific database fields and optionally rename them (e.g. '\"field\": null' to keep field name, '\"field\": \"new_name\"' to rename field). Use 'INFO' or 'ALL' keyword to select all fields within the database INFO/Tags header (e.g. '\"INFO\": null', '\"ALL\": null').\n",
+          "If a full path is not provided, the system will automatically detect files within database folders (see Configuration doc) and assembly (see Parameter option)."
+        ],
+        "__examples_code": [
+          "# Annotation with dbSNP database  with all fields",
+          "\"annotations\": {",
+          "   \"tests/databases/annotations/current/hg19/avsnp150.vcf.gz\": {",
+          "      \"INFO\": null",
+          "   }",
+          "}",
+          "# Annotation with dbNSFP (only PolyPhen, ClinVar and REVEL score)",
+          "\"annotations\": {",
+          "   \"tests/databases/annotations/current/hg19/dbnsfp42a.vcf.gz\": {",
+          "      \"Polyphen2_HDIV_pred\": \"PolyPhen\",",
+          "      \"ClinPred_pred\": \"ClinVar\",",
+          "      \"REVEL_score\": null",
+          "   }",
+          "}",
+          "# Annotation with dbNSFP REVEL annotation (as a VCF file) within configured annotation databases folders (default: '~/howard/databases/annotations/current') and assembly (default: 'hg19')",
+          "\"annotations\": {",
+          "   \"dbnsfp42a.REVEL.vcf.gz\": {",
+          "      \"REVEL_score\": null,",
+          "      \"REVEL_rankscore\": null",
+          "   }",
+          "}"
+        ]
+      }
+    },
+    "bigwig": {
+      "__help": [
+        "Annotation process using BigWig files. Provide a list of database files in BigWig format ('.bw') and annotation fields."
+      ],
+      "__examples_code": [
+        "# Annotation with multiple databases in BigWig format",
+        "\"bigwig\": {",
+        "   \"annotations\": {",
+        "      \"/path/to/database1.bw\": {",
+        "         \"field1\": null,",
+        "         \"field2\": null",
+        "      },",
+        "      \"/path/to/database2.bw\": {",
+        "         \"field1\": null,",
+        "         \"field2\": null",
+        "      }",
+        "   }",
+        "}"
+      ],
+      "annotations": {
+        "__auto": false,
+        "__help": [
+          "Specify the list of database files in BigWig format.",
+          "This parameter enables users to select specific database fields and optionally rename them (e.g. '\"field\": null' to keep field name, '\"field\": \"new_name\"' to rename field). Use 'INFO' or 'ALL' keyword to select all fields within the database INFO/Tags header (e.g. '\"INFO\": null', '\"ALL\": null').\n",
+          "If a full path is not provided, the system will automatically detect files within database folders (see Configuration doc) and assembly (see Parameter option).\n",
+          "A URL can be provided as a database file (experimental). In this case, associated header file will be automatically generated with ua uniq value as the name of the file (cleaned for avoid special characters, and '.bw' extension)."
+        ],
+        "__examples_code": [
+          "# Annotation with GERP database with all fields",
+          "\"annotations\": {",
+          "   \"tests/databases/annotations/current/hg19/gerp.bw\": {",
+          "      \"INFO\": null",
+          "   }",
+          "}",
+          "# Annotation with GERP (only gerp score)",
+          "\"annotations\": {",
+          "   \"tests/databases/annotations/current/hg19/gerp.bw\": {",
+          "      \"gerp\": \"GERP_score\"",
+          "   }",
+          "}",
+          "# Annotation with GERP from a distante database (experimental)",
+          "\"annotations\": {",
+          "   \"https://hgdownload.soe.ucsc.edu/gbdb/hg19/bbi/All_hg19_RS.bw\": {",
+          "      \"INFO\": null",
+          "   }",
+          "}"
+        ]
+      }
+    },
+    "exomiser": {
+      "__help": [
+        "Annotation process using Exomiser tool and options (see [Exomiser website documentation](https://www.sanger.ac.uk/tool/exomiser/))."
+      ],
+      "__examples_code": [
+        "# Annotation with Exomiser, using database release '2109', transcripts source as UCSC and a list of HPO terms.",
+        "\"exomiser\": {",
+        "   \"release\": \"2109\"",
+        "   \"transcript_source\": \"refseq\"",
+        "   \"hpo\": [\"HP:0001156\", \"HP:0001363\", \"HP:0011304\", \"HP:0010055\"]",
+        "}"
+      ],
+      "release": {
+        "__help": [
+          "Release of Exomiser database. This option replace the 'release' variable in 'application.properties' file (see 'exomiser_application_properties' option). The release will be downloaded if it is not available locally. "
+        ],
+        "__examples_code": [
+          "# Annotation with release '2109' of Exomiser database.",
+          "\"release\": \"2109\""
+        ]
+      },
+      "transcript_source": {
+        "__help": [
+          "Transcription source of Exomiser. This option replace the 'transcript_source' variable in 'application.properties' file (see 'exomiser_application_properties' option). The release will be downloaded if it is not available locally. "
+        ],
+        "__examples_code": [
+          "# Annotation with transcription source 'refseq' of Exomiser.",
+          "\"transcript_source\": \"refseq\""
+        ]
+      },
+      "hpo": {
+        "__help": [
+          "List of HPO for Exomiser. This option replace the 'hpo' variable in 'application.properties' file (see 'exomiser_application_properties' option). The release will be downloaded if it is not available locally. "
+        ],
+        "__examples_code": [
+          "# Annotation with a list of 4 HPO for Exomiser.",
+          "\"hpo\": [\"HP:0001156\", \"HP:0001363\", \"HP:0011304\", \"HP:0010055\"]"
+        ]
+      }
+    },
+    "splice": {
+      "__help": [
+        "Annotation process using Splice tool and options. This annotation will be proccessed only for variants that are not already annotated (i.e. without annotation like 'SpliceAI_\\*' and 'SPiP_\\*')"
+      ],
+      "__examples_code": [
+        "# Annotation with Splice, using database splice mode ('one'), spliceAI distance (500) and spliceAI mask (1).",
+        "\"splice\": {",
+        "   \"split_mode\": \"one\",",
+        "   \"spliceai_distance\": 500,",
+        "   \"spliceai_mask\": 1",
+        "}"
+      ],
+      "split_mode": {
+        "__help": [
+          "Split mode of Exomiser database (default 'one'): \n",
+          "- all: report all annotated transcript for one gene.\n",
+          "- one: keep only the transcript with the most pathogenic score (in case of identical score, take the first).\n",
+          "- list: keep transcript provided in transcript file, if no matching transcript in file 'one' mode is activated.\n",
+          "- mixed: 'one' mode, if identical score, list mode is activated."
+        ],
+        "__examples_code": [
+          "# Split mode to report all annotated transcript for one gene.",
+          "\"split_mode\": \"all\""
+        ]
+      },
+      "spliceai_distance": {
+        "__help": [
+          "Maximum distance between the variant and gained/lost splice site (default: 500)."
+        ],
+        "__examples_code": [
+          "# Maximum distance of '500' between variant and splice site.",
+          "\"spliceai_distance\": 500"
+        ]
+      },
+      "spliceai_mask": {
+        "__help": [
+          "Mask scores representing annotated acceptor/donor gain and unannotated acceptor/donor loss (default: 1)."
+        ],
+        "__examples_code": [
+          "# Mask score of '1' for acceptor/donor gain fain and loss.",
+          "\"spliceai_mask\": 1"
+        ]
+      },
+      "transcript": {
+        "__help": ["Path to a list of transcripts of preference (default '')."],
+        "__examples_code": [
+          "# Path to file of transcripts.",
+          "\"transcript\": \"tests/data/transcripts.tsv\""
+        ]
+      },
+      "rm_snps": {
+        "__help": [
+          "Do not consider SNV for the analysis, only Indels and MNV (default 'false')."
+        ],
+        "__examples_code": [
+          "# Analysing only non SNV.",
+          "\"rm_snps\": \"true\""
+        ]
+      },
+      "rm_annot": {
+        "__help": [
+          "Remove existing annotation before analysing (default 'true')."
+        ],
+        "__examples_code": [
+          "# Remove annotation before analysing.",
+          "\"rm_annot\": \"true\""
+        ]
+      },
+      "whitespace": {
+        "__help": [
+          "Remove spaces in INFO field, 'true' to remove (default 'true')."
+        ],
+        "__examples_code": [
+          "# Remove spaces in INFO field.",
+          "\"whitespace\": \"true\""
+        ]
+      }
+    },
+    "options": {
+      "__help": [
+        "Options for annotations, such as annotation strategy (skip if exists, update, append)"
+      ],
+      "__examples_code": [
+        "# Annotation with Parquet databases, with update annotation strategy.",
+        "\"options\": {",
+        "   \"annotations_update\": true",
+        "}"
+      ],
+      "annotations_update": {
+        "__help": [
+          "Update option for annotation (only for Parquet annotation). If True, annotation fields will be removed and re-annotated. These options will be applied to all annotation databases."
+        ],
+        "__examples_code": [
+          "# Apply update on all annotation fields for all databases.",
+          "\"annotations_update\": true"
+        ]
+      },
+      "annotations_append": {
+        "__help": [
+          "Append option for annotation (only for Parquet annotation). If True, annotation fields will be annotated only if not annotation exists for the variant. These options will be applied to all annotation databases."
+        ],
+        "__examples_code": [
+          "# Apply append on all annotation fields for all databases.",
+          "\"annotations_append\": true"
+        ]
+      }
+    }
+  },
+  "calculation": {
+    "__help": [
+      "Calculation process operations that are defiend in a Calculation Configuration JSON file. List available calculation operations with possible options (see [Calculation JSON file](help.calculation.md) help)."
+    ],
+    "__code_type": "json",
+    "__examples_code": [
+      "# Calculation of operations 'operation1' and 'operation2' (with options) defined in 'calculation_config.json' file",
+      "\"calculation\": {",
+      "  \"calculations\": {",
+      "    \"operation1\": null,",
+      "    \"operation2\": {",
+      "      \"options\": {",
+      "        \"option1\": \"value1\",",
+      "        \"option2\": \"value2\"",
+      "      }",
+      "    }",
+      "  },",
+      "  \"calculation_config\": \"calculation_config.json\"",
+      "}"
+    ],
+    "calculations": {
+      "__auto": false,
+      "__help": [
+        "List of operations to process with possible options (see [Calculation JSON file](help.calculation.md) help)."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Calculation with operations for generate variant_id and variant type, extract HGVS from snpEff annotation, select NOMEN from snpEff HGVS with a prioritized transcript (from prioritization transcript calculation) and list of transcripts of preference, with a specific NOMEN pattern",
+        "\"calculations\": {",
+        "  \"variant_id\": null,",
+        "  \"vartype\": null,",
+        "  \"snpeff_hgvs\": null,",
+        "  \"NOMEN\": {",
+        "    \"options\": {",
+        "      \"hgvs_field\": \"snpeff_hgvs\",",
+        "      \"transcripts\": \"tests/data/transcripts.tsv\",",
+        "      \"transcripts_table\": \"variants\",",
+        "      \"transcripts_column\": \"PZTTranscript\",",
+        "      \"transcripts_order\", [\"column\", \"file\"],",
+        "      \"pattern\": \"GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN\"",
+        "    }",
+        "  }",
+        "}"
+      ]
+    },
+    "calculation_config": {}
+  },
+  "prioritization": {
+    "__help": [
+      "Prioritization process use a JSON configuration file that defines all profiles that can be used. By default, all profiles will be calculated from the JSON configuration file, and the first profile will be considered as default. Proritization annotations (INFO/tags) will be generated depending of a input list (default 'PZScore' and 'PZFlag'), for all profiles (e.g. 'PZScore_GERMLINE' for 'GERMLINE' profile) and for default profile (e.g. 'PZScore' for default). Prioritization score mode is 'HOWARD' by default."
+    ],
+    "__code_type": "json",
+    "__examples_code": [
+      "# Prioritization with 'GENOME' and 'GERMLINE' (default) profiles, from a list of configured profiles, only 3 prioritization fields returned, and score calculated in 'VaRank' mode",
+      "\"prioritization\": {",
+      "  \"prioritizations\": \"config/prioritization_profiles.json\",",
+      "  \"profiles\": [\"GENOME\", \"GERMLINE\"],",
+      "  \"default_profile\": \"GERMLINE\",",
+      "  \"pzfields\": [\"PZScore\", \"PZFlag\", \"PZComment\"],",
+      "  \"prioritization_score_mode\": \"VaRank\"",
+      "}"
+    ],
+    "prioritizations": {
+      "__help": [
+        "Prioritization configuration profiles JSON file defining profiles to calculate. All configured profiles will be calculated by default (see 'profiles' parameter). First profile will be considered as 'default' if none are provided (see 'default_profile' parameter). Default score calculation mode is 'HOWARD'. This option refers to the quick prioritization command line parameter `--prioritizations`."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Prioritization configuration profile JSON file",
+        "\"prioritizations\": \"config/prioritization_profiles.json\""
+      ]
+    },
+    "profiles": {
+      "__help": [
+        "Prioritization profiles to consider, from the list of configured profiles. If empty, all configured profiles will be calculated. First profile will be considered as 'default' if none are provided (see 'default_profile' parameter). Prioritization annotations (INFO/tags) will be generated for all these profiles (e.g. 'PZScore_GERMLINE' for 'GERMLINE' profile)."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Prioritization with 'GERMLINE' profile only",
+        "\"profiles\": [\"GERMLINE\"]",
+        "# Prioritization with 'GENOME' and 'GERMLINE' profiles",
+        "\"profiles\": [\"GENOME\", \"GERMLINE\"]"
+      ]
+    },
+    "default_profile": {
+      "__help": [
+        "Prioritization default profile from the list of processed profiles. Prioritization annotations (INFO/tags) will be generated for this default profile (e.g. 'PZScore', 'PZFlags')."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Prioritization default profile 'GERMLINE'",
+        "\"default_profile\": \"GERMLINE\""
+      ]
+    },
+    "pzfields": {
+      "__help": [
+        "Prioritization annotations (INFO/tags) to generate. By default 'PZScore', 'PZFlags'.",
+        "Prioritization fields can be selected from:",
+        "- PZScore: calculated score from all passing filters, depending of the mode",
+        "- PZFlag: final flag ('PASS' or 'FILTERED'), with strategy that consider a variant is filtered as soon as at least one filter do not pass. By default, the variant is considered as 'PASS' (no filter pass)",
+        "- PZComment: concatenation of all passing filter comments",
+        "- PZTags: combinason of score, flags and comments in a tags format (e.g. 'PZFlag#PASS|PZScore#15|PZComment#Described on ...')",
+        "- PZInfos: information about passing filter criteria"
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Prioritization annotations (INFO/tags) list",
+        "\"pzfields\": [\"PZScore\", \"PZFlag\", \"PZComment\"]"
+      ]
+    },
+    "prioritization_score_mode": {
+      "__help": [
+        "Prioritization score can be calculated following multiple mode. The HOWARD mode will increment scores of all passing filters (default). The VaRank mode will select the maximum score from all passing filters."
+      ],
+      "__code_type": "json",
+      "__examples_code": [
+        "# Prioritization score calculation mode 'HOWARD'",
+        "\"prioritization_score_mode\": \"HOWARD\"",
+        "# Prioritization score calculation mode 'VaRank'",
+        "\"prioritization_score_mode\": \"VaRank\""
+      ]
+    },
+    "pzprefix": {
+      "__help": [
+        "Prioritization prefix for all annotations generated by prioritization."
+      ],
+      "__type": "str",
+      "__default": "PZ",
+      "__code_type": "json",
+      "__examples_code": [
+        "# Prioritization prefix by default ('PZ'):",
+        "\"pzprefix\": \"PZ\"",
+        "# Specific prioritization prefix:",
+        "\"pzprefix\": \"PrioritiZation_\"",
+        "# Specific prioritization prefix for transcript (see below):",
+        "\"pzprefix\": \"PZT\""
+      ]
+    }
+  },
+  "stats": {
+    "__help": "Statistics on loaded variants.",
+    "stats_md": {},
+    "stats_json": {}
+  },
+  "query": {
+    "__help": [
+      "Query options tools. Mainly a SQL query, based on 'variants' table corresponding on input file data, or a independant query. Print options for 'query' tool allow limiting number of lines and choose printing mode."
+    ],
+    "query": {
+      "__code_type": "",
+      "__examples_code": [
+        "# Simple query to show all variants file",
+        "SELECT \"#CHROM\", POS, REF, ALT, INFO ",
+        "FROM variants"
+      ]
+    },
+    "query_limit": {},
+    "query_print_mode": {}
+  },
+  "export": {
+    "__help": [
+      "Export options for output files, such as data order, include header in output and hive partitioning."
+    ],
+    "fields_to_rename": {
+      "__help": [
+        "Rename or remove INFO/tags before exporting."
+      ],
+      "__type": "dict",
+      "__default": null,
+      "__code_type": "json",
+      "__examples_code": [
+        "# Rename 'CLNSIG' field to 'CLNSIG_renamed' and remove 'SIFT' field:",
+        "\"fields_to_rename\": {",
+        "  \"CLNSIG\": \"CLNSIG_renamed\",",
+        "  \"SIFT\": null",
+        "}"
+      ]
+    },
+    "order_by": {},
+    "include_header": {},
+    "parquet_partitions": {}
+  },
+  "explode": {
+    "__help": ["Explode options for INFO/tags annotations within VCF files."],
+    "explode_infos": {},
+    "explode_infos_prefix": {},
+    "explode_infos_fields": {}
+  },
+  "transcripts": {
+    "__help": [
+      "Transcripts information to create transcript view. Useful to add transcripts annotations in INFO field, to calculate transcripts specific scores (see [Calculation JSON file](help.configuration.calculation.md) help), to merge and map transcript IDs (e.g. from Ensembl to refSeq), or prioritize transcripts (see [Priorization JSON file](help.configuration.prioritization.md) help)."
+    ],
+    "__type": "dict",
+    "__default": {},
+    "__code_type": "json",
+    "__examples_code": [
+      "# Trancripts information from snpEff and dbNSFP annotation",
+      "\"transcripts\": {",
+      "  \"table\": \"transcripts\",",
+      "  \"transcripts_info_field_json\": \"transcripts_json\",",
+      "  \"transcripts_info_field_format\": \"transcripts_ann\",",
+      "  \"transcripts_info_json\": \"transcripts_json\",",
+      "  \"transcripts_info_format\": \"transcripts_format\",",
+      "  \"transcript_id_remove_version\": true,",
+      "  \"transcript_id_mapping_file\": \"transcripts.for_mapping.tsv\",",
+      "  \"transcript_id_mapping_force\": false,",
+      "  \"struct\": {",
+      "      \"from_column_format\": [",
+      "          {",
+      "              \"transcripts_column\": \"ANN\",",
+      "              \"transcripts_infos_column\": \"Feature_ID\",",
+      "              \"column_clean\": true,",
+      "              \"column_case\": \"lower\"",
+      "          }",
+      "      ],",
+      "      \"from_columns_map\": [",
+      "          {",
+      "              \"transcripts_column\": \"Ensembl_transcriptid\",",
+      "              \"transcripts_infos_columns\": [",
+      "                  \"genename\",",
+      "                  \"Ensembl_geneid\",",
+      "                  \"LIST_S2_score\",",
+      "                  \"LIST_S2_pred\"",
+      "              ],",
+      "              \"column_rename\": {",
+      "                  \"LIST_S2_score\": \"LISTScore\",",
+      "                  \"LIST_S2_pred\": \"LISTPred\"",
+      "              },",
+      "          },",
+      "          {",
+      "              \"transcripts_column\": \"Ensembl_transcriptid\",",
+      "              \"transcripts_infos_columns\": [",
+      "                  \"genename\",",
+      "                  \"VARITY_R_score\",",
+      "                  \"Aloft_pred\"",
+      "              ]",
+      "          }",
+      "      ]",
+      "  },",
+      "  \"prioritization\": {",
+      "     \"profiles\": [\"transcripts\"],",
+      "     \"prioritization_config\": \"config/prioritization_transcripts_profiles.json\",",
+      "     \"pzprefix\": \"PZT\",",
+      "     \"pzfields\": [\"Score\", \"Flag\", \"LISTScore\", \"LISTPred\"],",
+      "     \"prioritization_transcripts_order\": {",
+      "          \"PZTFlag\": \"DESC\",",
+      "          \"PZTScore\": \"DESC\"",
+      "     }",
+      "     \"prioritization_score_mode\": \"HOWARD\",",
+      "     \"prioritization_transcripts\": null,",
+      "     \"prioritization_transcripts_force\": false,",
+      "     \"prioritization_transcripts_version_force\": false",
+      "  },",
+      "  \"export\": {",
+      "     \"output\": \"/tmp/output.tsv.gz\"",
+      "  }",
+      "}"
+    ],
+    "table": {
+      "__help": ["Transcripts table name to create."],
+      "__type": "str",
+      "__default": "transcripts",
+      "__code_type": "json",
+      "__examples_code": [
+        "# Name of transcript table:",
+        "\"table\": \"transcripts\""
+      ]
+    },
+    "transcripts_info_field_json": {
+      "__help": [
+        "Transcripts INFO field name to add in VCF INFO field in JSON format."
+      ],
+      "__type": "str",
+      "__default": null,
+      "__code_type": "json",
+      "__examples_code": [
+        "# Transcripts INFO field name:",
+        "\"transcripts_info_field_json\": \"transcripts_json\""
+      ]
+    },
+    "transcripts_info_field_format": {
+      "__help": [
+        "Transcripts INFO field name to add in VCF INFO field in strutured format."
+      ],
+      "__type": "str",
+      "__default": null,
+      "__code_type": "json",
+      "__examples_code": [
+        "# Transcripts INFO field name:",
+        "\"transcripts_info_field_format\": \"transcripts_ann\""
+      ]
+    },
+    "transcripts_info_json": {
+      "__help": [
+        "Transcripts column name to add to transcripts table in JSON format."
+      ],
+      "__type": "str",
+      "__default": null,
+      "__code_type": "json",
+      "__examples_code": [
+        "# Transcripts column name:",
+        "\"transcripts_info_json\": \"transcripts_json\""
+      ]
+    },
+    "transcripts_info_format": {
+      "__help": [
+        "Transcripts column name to add to transcripts table in structured format."
+      ],
+      "__type": "str",
+      "__default": null,
+      "__code_type": "json",
+      "__examples_code": [
+        "# Transcripts column name:",
+        "\"transcripts_info_format\": \"transcripts_format\""
+      ]
+    },
+    "transcript_id_remove_version": {
+      "__help": [
+        "When merging and mapping transcript IDs, remove possible version of transcript (e.g 'NM_123456.2' to 'NM_123456')."
+      ],
+      "__type": "Boolean",
+      "__default": false,
+      "__code_type": "json",
+      "__examples_code": [
+        "# Remove transcript version when merging and mapping:",
+        "\"transcript_id_remove_version\": true"
+      ]
+    },
+    "transcript_id_mapping_file": {
+      "__help": [
+        "When merging and mapping transcript IDs, indicate a transcript mapping file that provides mapping between transcripts IDs (useful to map refSeq and Ensembl transcript IDs)."
+      ],
+      "__type": "Path",
+      "__default": null,
+      "__code_type": "json",
+      "__examples_code": [
+        "# Transcript IDs mapping file:",
+        "\"transcript_id_mapping_file\": \"My_transcripts_mapping_file.tsv.gz\""
+      ]
+    },
+    "Example of transcript ID mapping file": {
+      "__help": [
+        "Transcript IDs mapping file is a tab-delimited file with 2 columns:\n",
+        "- first column corresponds to the reference transcript ID to use\n",
+        "- second column correspond to an alias of the reference transcript\n",
+        "Second column can be empty (no alias is provided). Transcript IDs can include version or not (see [transcript_id_remove_version section](#transcript_id_remove_version))"
+      ],
+      "__code_type": "ts",
+      "__examples": [
+        "# Example of transcripts mapping file:",
+        "NM_001005484    ENST00000641515.1",
+        "NM_005228.5     ENST00000275493.7",
+        "NM_001346897    ENSG00000146648.21",
+        "NM_001346941    ",
+        "NM_005228       "
+      ]
+    },
+    "transcript_id_mapping_force": {
+      "__help": [
+        "When merging and mapping transcript IDs, allows to filter transcript IDs only if they are present in first column of the transcript mapping file (see [transcript_id_mapping_file section](#transcript_id_mapping_file))."
+      ],
+      "__type": "Boolean",
+      "__default": false,
+      "__code_type": "json",
+      "__examples_code": [
+        "# Filter transcripts IDs only if present in mapping file:",
+        "\"transcript_id_mapping_force\": true"
+      ]
+    },
+    "struct": {
+      "__help": [
+        "Structure of transcripts information, corresponding to columns dedicated to transcripts, such as: \n",
+        "- 'from_column_format': a uniq annotation field with a specific format, like snpEff annotation,\n",
+        "- 'from_columns_map': a list of annotation fields corresponding to transcripts in another specific field, like dbNSFP annotation.\n",
+        "Some parameters are commons between these structure (e.g. 'column_rename', 'column_clean' and 'column_case')."
+      ],
+      "__type": "dict",
+      "__default": {},
+      "from_column_format": {
+        "__help": [
+          "Structure of transcripts information from a uniq annotation field with a specific format (such as snpEff annotation): \n",
+          "- 'transcripts_column' correspond to INFO field with annotations\n",
+          "- 'transcripts_infos_column' correspond to transcription ID annotations field within INFO field\n",
+          "Column can be renamed, cleaned and/or case changed (see below)."
+        ],
+        "__type": "dict",
+        "__default": {},
+        "__code_type": "json",
+        "__examples_code": [
+          "# Structure from snpEff annotation (columns names must be clean or changed for standard snpEff annotations):",
+          "\"from_column_format\": [",
+          "  {",
+          "    \"transcripts_column\": \"ANN\",",
+          "    \"transcripts_infos_column\": \"Feature_ID\",",
+          "    \"column_rename\": null,",
+          "    \"column_clean\": true,",
+          "    \"column_case\": null",
+          "  }",
+          "]"
+        ]
+      },
+      "from_columns_map": {
+        "__help": [
+          "list of annotation fields corresponding to transcripts in another specific field (such as dbNSFP annotation): \n",
+          "- 'transcripts_column' correspond to INFO field with transcription ID\n",
+          "- 'transcripts_infos_columns' correspond to a list of INFO fields with transcript information\n",
+          "Column can be renamed, cleaned and/or case changed (see below)."
+        ],
+        "__type": "dict",
+        "__default": {},
+        "__code_type": "json",
+        "__examples_code": [
+          "# Structure from dbNSFP annotations (with 2 columns renamed):",
+          "\"from_columns_map\": [",
+          "  {",
+          "    \"transcripts_column\": \"Ensembl_transcriptid\",",
+          "    \"transcripts_infos_columns\": [",
+          "      \"genename\",",
+          "      \"Ensembl_geneid\",",
+          "      \"LIST_S2_score\",",
+          "      \"LIST_S2_pred\"",
+          "    ],",
+          "    \"column_rename\": {",
+          "      \"LIST_S2_score\": \"LISTScore\",",
+          "      \"LIST_S2_pred\": \"LISTPred\"",
+          "    },",
+          "    \"column_clean\": false,",
+          "    \"column_case\": null",
+          "  }",
+          "]"
+        ]
+      },
+      "commons parameters": {
+        "__help": [
+          "Some parameters are commons between these structure:\n",
+          "- 'column_rename': dict defining mapping of column name changes\n",
+          "- 'column_clean': if true, clean column name to remove not alphanum characters not allowed in VCF (e.g. space, dash)\n",
+          "- 'column_case': rename column into lowercase ('lower') or uppercase ('upper')\n",
+          "Combining 'column_clean' and 'column_case' ensure well formed VCF field name and merging identical columns (e.g. same field 'Gene_Name', 'Gene name' and 'genename' from multiple sources). However, controling column names through 'column_rename' is much more efficient."
+        ],
+        "__code_type": "json",
+        "__examples_code": [
+          "# Commons parameters by default:",
+          "{",
+          "  \"column_rename\": null,",
+          "  \"column_clean\": false,",
+          "  \"column_case\": null",
+          "}",
+          "# Parameters to change 2 column names:",
+          "{",
+          "  \"column_rename\": {",
+          "    \"LIST_S2_score\": \"LISTScore\",",
+          "    \"LIST_S2_pred\": \"LISTPred\"",
+          "  },",
+          "  \"column_clean\": false,",
+          "  \"column_case\": null",
+          "}",
+          "# Parameters to ensure well-named column from format annotations field (such as snpEff):",
+          "{",
+          "  \"column_rename\": null,",
+          "  \"column_clean\": true,",
+          "  \"column_case\": null",
+          "}"
+        ]
+      }
+    },
+    "prioritization": {
+      "__help": [
+        "Prioritization parameters for transcripts (see [Prioritization section](#prioritization) and [Priorization JSON file](help.configuration.prioritization.md) help), defining prioritization criteria with a configuration file of all available profiles and which profiles to use, which prioritization method to use (e.g. 'HOWARD', 'VaRank').\n",
+        "Prioritized transcripts fields can be defined to provide VCF fields specific to the choosen transcript, using a specific prefix (e.g. 'PZTScore', 'PZTFlag'). The selected 'best' transcript ID is always provided (e.g. 'PZTTranscript'). Extra annotation fields can also be defined (e.g. 'LISTScore', 'LISTPred'), as well as prioritizations informations from multiple profiles (e.g. 'PZTScore_myprofile', 'PZTScore_myotherprofile' in 'pzfields' section with 2 profiles 'myprofile' and 'myotherprofile' in 'profiles' section).\n",
+        "In order to choose the 'best' transcript, parameteres can define order of transcripts (by annotation columns or a preference transcripts file), by dealing with transcript versions.\n"
+      ],
+      "__type": "dict",
+      "__default": {},
+      "__code_type": "json",
+      "__examples_code": [
+        "# Prioritization of transcripts in 'HOWARD' mode with 'transcripts' profiles available in a configuration JSON file, with 'PZT' as prefix:",
+        "\"prioritization\": {",
+        "   \"profiles\": [\"transcripts\"],",
+        "   \"default_profile\": \"transcripts\",",
+        "   \"prioritization_config\": \"config/prioritization_transcripts_profiles.json\",",
+        "   \"prioritization_score_mode\": \"HOWARD\",",
+        "   \"pzprefix\": \"PZT\",",
+        "   \"pzfields\": [\"Score\", \"Flag\", \"LISTScore\", \"LISTPred\"],",
+        "   \"prioritization_transcripts_order\": {",
+        "      \"PZTFlag\": \"DESC\",",
+        "      \"PZTScore\": \"DESC\"",
+        "   },",
+        "   \"prioritization_transcripts\": null,",
+        "   \"prioritization_transcripts_force\": false,",
+        "   \"prioritization_transcripts_version_force\": false",
+        "}"
+      ],
+      "profiles": {
+        "__help": ["See [Prioritization section](#prioritization)"]
+      },
+      "default_profile": {
+        "__help": ["See [Prioritization section](#prioritization)"]
+      },
+      "prioritization_config": {
+        "__help": ["See [Prioritization section](#prioritization)"]
+      },
+      "prioritization_score_mode": {
+        "__help": ["See [Prioritization section](#prioritization)"]
+      },
+      "pzprefix": {
+        "__help": ["See [Prioritization section](#prioritization)"]
+      },
+      "pzfields": {
+        "__help": ["See [Prioritization section](#prioritization)"]
+      },
+      "prioritization_transcripts_order": {
+        "__help": [
+          "Defines the order of transcripts to determine which one is chosen (by default PZTFlag and PZTScore). All available annotation can be used (e.g. scores, length of transcript, predictions...). The first transcript will be choosen in case of equal order."
+        ],
+        "__type": "dict",
+        "__default": {},
+        "__code_type": "json",
+        "__examples_code": [
+          "# Default order of transcript using Flag (PASS before FILTERED) and Score (higher scores before):",
+          "\"prioritization_transcripts_order\": {",
+          "   \"PZTFlag\": \"DESC\",",
+          "   \"PZTScore\": \"DESC\"",
+          "}",
+          "# Order of transcript using Flag, Score and additional specific spliceAI_score:",
+          "\"prioritization_transcripts_order\": {",
+          "   \"PZTFlag\": \"DESC\",",
+          "   \"PZTScore\": \"DESC\",",
+          "   \"spliceAI_score\": \"DESC\"",
+          "}"
+        ]
+      },
+      "prioritization_transcripts": {
+        "__help": [
+          "Defines a file with an ordered list of transcripts of preference. The first transcript in this list will be chosen, if no order is define (see above), or if this list is not forced (see below)."
+        ],
+        "__type": "Path",
+        "__default": null,
+        "__code_type": "json",
+        "__examples_code": [
+          "# File with transcripts of preference:",
+          "\"prioritization_transcripts\": \"transcripts.tsv\""
+        ]
+      },
+      "prioritization_transcripts_force": {
+        "__help": [
+          "Force to use the list of transcripts of preference define in the provided file (see above)."
+        ],
+        "__type": "Boolean",
+        "__default": false,
+        "__code_type": "json",
+        "__examples_code": [
+          "# Force using transcripts of preference in file:",
+          "\"prioritization_transcripts_force\": true"
+        ]
+      },
+      "prioritization_transcripts_version_force": {
+        "__help": [
+          "By default, versions of transcripts are not considered when comparison is needed (e.g. transcript ID and list of transcript of preference). If true, all transcript ID will be considered with their version."
+        ],
+        "__type": "Boolean",
+        "__default": false,
+        "__code_type": "json",
+        "__examples_code": [
+          "# Force using transcripts version:",
+          "\"prioritization_transcripts_version_force\": true"
+        ]
+      }
+    },
+    "export": {
+      "__help": [
+        "Options to export transcripts view/table into a file ('output' parameter). All HOWARD format are available (e.g. VCF, Parquet, TSV). For VCF format, all columns will be concatenate into INFO column, otherwise each column will be exported."
+      ],
+      "__type": "Dict",
+      "__default": {},
+      "__code_type": "json",
+      "__examples_code": [
+        "# Export as compressed TSV:",
+        "\"export\": {",
+        "  \"output\": \"/tmp/output.tsv.gz\"",
+        "}",
+        "# Export as VCF:",
+        "\"export\": {",
+        "  \"output\": \"/tmp/output.vcf\"",
+        "}",
+        "# Export as Parquet:",
+        "\"export\": {",
+        "  \"output\": \"/tmp/output.parquet\"",
+        "}"
+      ]
+    }
+  },
+  "threads": {},
+  "samples": {
+    "__help": [
+      "Samples parameters to defined a list of samples or use options to check samples. Only for export in VCF format. By default, if no samples are listed, all existing samples are checked if they contain well-formed genotype annotations (based on 'FORMAT' VCF column)."
+    ],
+    "__type": "dict",
+    "__code_type": "json",
+    "__examples_code": [
+      "# Export only a list of samples:",
+      "\"samples\": {",
+      "   \"list\": [\"sample1\", \"sample2\"]",
+      "}",
+      "# Do not check existing samples (all VCF columns after FORMAT column):",
+      "\"samples\": {",
+      "   \"check\": false",
+      "}",
+      "# Default configuration, with all samples are considered (null) and checked (true):",
+      "\"samples\": {",
+      "   \"list\": null,",
+      "   \"check\": true",
+      "}"
+    ],
+    "list": {
+      "__help": [
+        "List of columns that correspond to samples (with well formed genotype, based on 'FORMAT' VCF column). Only for export in VCF format. Only these samples are exported in VCF format file."
+      ],
+      "__type": "dict",
+      "__code_type": "json",
+      "__examples_code": [
+        "# Export only a list of samples:",
+        "\"list\": [\"sample1\", \"sample2\"]"
+      ]
+    },
+    "check": {
+      "__help": [
+        "Check if samples (either provided in 'list' parameters, or all existing column after 'FORMAT' column) according to 'FORMAT' VCF column. Only for export in VCF format. By default, samples are checked (beware of format if check is disabled) and removed if they are not well-formed."
+      ],
+      "__type": "dict",
+      "__code_type": "json",
+      "__examples_code": [
+        "# Do not check existing samples:",
+        "\"check\": false"
+      ]
+    }
+  },
+  "databases": {
+    "__help": [
+      "[HOWARD Parameters Databases JSON](help.parameters.databases.md) describes configuration JSON file for databases download and convert."
+    ]
+  }
+}

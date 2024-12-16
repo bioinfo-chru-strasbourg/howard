@@ -2,7 +2,13 @@
 <!-- TOC -->
 
 - [Databases](#databases)
-- [UCSC](#ucsc)
+- [dbNSFP](#dbnsfp)
+  - [InterproDomain](#interprodomain)
+  - [SIFT / SIFT 4G](#sift--sift-4g)
+  - [PROVEAN](#provean)
+  - [fatHMM](#fathmm)
+  - [PrimateAI](#primateai)
+- [NCBI](#ncbi)
   - [Clinvar](#clinvar)
     - [Resume](#resume)
     - [Update](#update)
@@ -23,28 +29,105 @@
     - [Update](#update-3)
     - [Format](#format-3)
     - [Assembly](#assembly-3)
-- [Annovar *TODO conf Antony*](#annovar-todo-conf-antony)
-- [Autres](#autres)
-  - [Alphamissence](#alphamissence)
+  - [dbSNP](#dbsnp)
     - [Resume](#resume-4)
     - [Update](#update-4)
     - [Format](#format-4)
     - [Assembly](#assembly-4)
-  - [1000g](#1000g)
-    - [Update](#update-5)
+  - [ALFA](#alfa)
+    - [Resume](#resume-5)
     - [Format](#format-5)
     - [Assembly](#assembly-5)
-  - [gnomAD](#gnomad)
-    - [Resume](#resume-5)
+    - [Update](#update-5)
+- [Annovar *TODO conf Antony*](#annovar-todo-conf-antony)
+  - [PopFreq](#popfreq)
+    - [Resume](#resume-6)
     - [Update](#update-6)
-    - [Format](#format-6)
     - [Assembly](#assembly-6)
+    - [Format](#format-6)
+  - [gme](#gme)
+    - [Resume](#resume-7)
+    - [Update](#update-7)
+    - [Assembly](#assembly-7)
+    - [Format](#format-7)
+  - [outcome](#outcome)
+    - [Resume](#resume-8)
+    - [Update](#update-8)
+  - [TODO](#todo)
+- [Autres](#autres)
+  - [Alphamissence](#alphamissence)
+    - [Resume](#resume-9)
+    - [Update](#update-9)
+    - [Format](#format-8)
+    - [Assembly](#assembly-8)
+  - [1000g](#1000g)
+    - [Update](#update-10)
+    - [Format](#format-9)
+    - [Assembly](#assembly-9)
+  - [gnomAD](#gnomad)
+    - [Resume](#resume-10)
+    - [Update](#update-11)
+    - [Format](#format-10)
+    - [Assembly](#assembly-10)
+  - [Decipher](#decipher)
+    - [Resume](#resume-11)
+    - [Update](#update-12)
+    - [Format](#format-11)
+    - [Assembly](#assembly-11)
+  - [CADD](#cadd)
+    - [Resume](#resume-12)
+    - [Update](#update-13)
+    - [Assembly](#assembly-12)
+    - [Format](#format-12)
+  - [SpliceAI](#spliceai)
+    - [Resume](#resume-13)
+    - [Update](#update-14)
+    - [Assembly](#assembly-13)
+    - [Format](#format-13)
 
 <!-- /TOC -->
 <!-- /TOC -->
 <!-- /TOC -->
 <!-- /TOC -->
-# UCSC
+<!-- /TOC -->
+<!-- /TOC -->
+<!-- /TOC -->
+<!-- /TOC -->
+<!-- /TOC -->
+<!-- /TOC -->
+<!-- /TOC -->
+<!-- /TOC -->
+<!-- /TOC -->
+<!-- /TOC -->
+<!-- /TOC -->
+~200Go de db annexes HUS
+
+# dbNSFP
+<b>v4.6a Parquet: 117 Go</b></br>
+https://sites.google.com/site/jpopgen/dbNSFP
+aggregator de differents outils pour évaluer la pathogeenicité des nsSNV sur le génome. La bdd ne contient en fait que les données d'exomes (hors outil WGSA).
+
+Disponible en hg19 et 38, utiliser les versions académiques 4.6a par exemple.
+Mise à jour régulière, plusieurs fois par an.
+## InterproDomain
+Base de données des familles de protéines, domaines et site importants. EMBL-EBI
+
+## SIFT / SIFT 4G
+Prediction de l'effet sur la protéine d'un changement d'AA. SIFT4G plus performant que SIFT.
+https://sift.bii.a-star.edu.sg/sift4g/AboutSIFT4G.html#:~:text=SIFT%204G%20is%20a%20faster,predictions%20for%20single%20nucleotide%20variants.
+score entre 0 et 1 ou label  Tolerated ou Damaging (T or D)
+
+## PROVEAN
+Prediction de l'effet sur la protéine d'un changement d'AA
+score entre 0 et 1 ou label  Tolerated ou Neutral (T or N)
+
+## fatHMM
+Outil pour évaluer pathogénicité des faux sens avec algo HMM
+
+## PrimateAI
+Deep neural network pour évaluer la pathogénicité des mutations faux sesn
+
+# NCBI
 FTP: https://ftp.ncbi.nlm.nih.gov
 
 ## Clinvar
@@ -104,8 +187,77 @@ Format <b>BigWig</b> de l'UCSC, à transformer en bed puis en parquet, script da
 ### Assembly
 version 37 et 38 disponible UCSC et ensembl
 
+## dbSNP
+### Resume
+base de données de public de SNP depuis plus de 20 ans
+
+### Update
+Tout les ans / 2 ans a peu près
+
+### Format
+VCF mais comprenant les NC comme numéro de chromosome au lieu de chr, donc a process avant d'être utilisable chez nous, eventuellement à transformer en parquet
+
+### Assembly
+Release en 37 et 38 avec les noms des assemblages originaux
+GCF_000001405.25 => GRCh37
+GCF_000001405.40 => GRCh48
+
+## ALFA
+### Resume
+AF from dbGaP project almost 1millions subject, chip seq WES and WGS in 12 diverse populations
+https://ftp.ncbi.nih.gov/snp/population_frequency/TrackHub/latest
+
+### Format
+Bigbed, donc a process avec les scripts deja mis en place
+
+### Assembly
+Track en hg19 et hg38 dans chaque release
+
+### Update
+Last in 2023
 
 # Annovar *TODO conf Antony*
+Ce qu'on a besoin: 16Go
+## PopFreq
+<b>DEPRECIATED (bases de données beaucoup plus récente, voir faire le score nous meme avec les nouvelles db)</b>
+
+### Resume
+Frequence Allélique max de de plusieures bases de données 1000g, Exac ESP6500
+
+### Update
+Aucune c'est 20150413 la version actuelle (modification de 2019 d'apres annovar avdblist)
+
+### Assembly
+que pour hg19
+
+### Format
+| #Chr | Start | End   | Ref | Alt | PopFreqMax |
+|:-----|:------|:------|:----|:----|:-----------|
+| 1    | 10177 | 10177 | A   | AC  | 0.49       |
+
+## gme
+### Resume
+Greater middle east variome, base de donnée de fréquence allélique pour des populations peu représenté dans les grandes db, (afrique ouest et est , peninsule arabique israel...)
+
+### Update
+Comme popfreq on a une maj de 2019 on dirait
+
+### Assembly
+hg19 et 38
+
+### Format
+
+
+| #Chr | Start | End   | Ref | Alt | GME_AF   | GME_NWA  | GME_NEA  | GME_AP   | GME_Israel | GME_SD   | GME_TP   | GME_CA   |
+|:-----|:------|:------|:----|:----|:---------|:---------|:---------|:---------|:-----------|:---------|:---------|:---------|
+| 1    | 69134 | 69134 | A   | G   | 0.049505 | 0.000000 | 0.032787 | 0.000000 | 0          | 0.000000 | 0.181818 | 0.133333 |
+
+## outcome
+### Resume
+Simplement la position du variant exon, splice UTR downstream etc établis par annovar en fonction du fichier refgene
+
+### Update
+## TODO
 
 # Autres
 
@@ -125,13 +277,15 @@ Format <b>tsv.gz</b>, étape de processing pour les transformer en parquet, mono
 version dossier hg19 et hg38 disponible
 
 ## 1000g
-Projet de séquençage de personnes sain, permet de déterminer une fréquence de population de variants
+Projet de séquençage de personnes "saines", permet de déterminer une fréquence de population de variants
 
 ### Update
-Ca va pas bouger, j'ai repris de Nirvanna, GRCh"7 de 2013 et 38 de 2019
+Ca va pas bouger, j'ai repris de Nirvanna, GRCh37 de 2013 et 38 de 2019
 
 ### Format
 VCF donc a transformer en parquet ou laisser tel quel
+Annotation pour DIAG, AF
+Pour les autres EUR_AF, EAS_AF etc.
 
 ### Assembly
 version dossier hg19 et hg38 disponible
@@ -139,10 +293,13 @@ hg19: https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/
 hg38: https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20190312_biallelic_SNV_and_INDEL/
 
 ## gnomAD
+<b>v2.1.1</b> 460Go WGS + 59Go WES  => 519Go, WES 17 209 972 var</br> 
+<b>v4.1</b> 524Go WGS+ 184Go WES => 708Go
 ### Resume
 <b>gs://gcp-public-data--gnomad/release/</b>
 Base de données comprenant le séquençage de milliers de génomes et d'exomes
 toutes les données sont disponible sur le cloud google, manière la plus simple et rapide de tout télécharger
+Genome 450 Go, possibilité de prende gnomAD genome coupé sur l'exome (10Go)
 
 ### Update
 A prévoir peut être une nouvelle version après la 4.1.0, sinon version stable donc pas besoin de prévoir une politique d'update
@@ -150,150 +307,108 @@ Certaines valeurs de pLi seront sans doute à calculer d'après les annotations 
 
 ### Format
 VCF pour les variants ou TSV pour les constraints
-Prévoir un formatage en parquet pour les VCFs et from extann pour les TSV avec descriptif des colonnes
-pLi: gnomad_pli
-LOEUF: oe_lof_upper
+Prévoir un formatage en parquet pour les VCFs et from extann pour les TSV avec descriptif des colonnes</br>
+
+<b>Constrains</b></br>
+pLi: gnomad_pli</br>
+LOEUF: oe_lof_upper</br>
 o/e: oe_lof
 
+<b>Statistiques</b></br>
+
+meme principe pour chaque pop AC wes + AC wgs / AN wes + AN wgs = AF_differentespop
+gnomadaltfreq_asj: AF_asj</br>
+gnomadaltfreq_amr: AF_amr</br>
+gnomadaltfreq_afr: AF_afr</br>
+gnomadaltfreq_eas: AF_eas</br>
+gnomadaltfreq_fin: AF_fin</br>
+gnomadaltfreq_nfe: AF_nfe</br>
+gnomadaltfreq_oth: AF_oth</br>
+gnomadaltfreq_sas: AF_sas</br>
+gnomadhomcount_all: nhomalt</br>
+
+<b>Pour calculer AF_popmax:</b></br>
+AC_popmax genome + AC_popmax exome / AC_popmax genomes + AC_popmax exomes gnomadaltfreq_popmax: AF_popmax</br>
+<b>Pour calculer la vraie AF gnomadaltfreq_all</b> représenté sur gnomad, il faut:</br>
+requete sql: AC exome + AC genome/ AN exome + AN genome = gnomadaltfreq_all</br>
+<b>Pour les heterozygotes:</b></br>
+AC exome + AC genome - 2x(nhomalt exome + nhomalt genome) = gnomadhetcount_all</br>
+<b>Pour les hemizygotes:</b></br>
+AC_male exome + AC_male genome = gnomadhemcount_all
 
 ### Assembly
 
 Version 2.1.1 en GRCh37 avec une version liftover en GRCh38
 Version 4.1.0 en GRCh38 only (version Beta d'après gnomAD)
 
+## Decipher
+### Resume
+BDD variants et phenotype / browser /tools etc
+on s'interesse nous au score de haploinsuffisance et a la base de données phenotype des troubles neurodéveloppementaux
+https://www.deciphergenomics.org/about/downloads/data
+
+### Update
+Aucune
+
+### Format
+NDD au format csv / extann, à transformer en extann bed
+HI format deja bed mais need parsing et ajouter le header
+
+### Assembly
+hg19 pour les HI uniquement
+
+## CADD
+<b>v1.7</b> 160 Go (GRCh38+37) | processed parquet 361 Go (GRCh38 + GRCh37)
+
+### Resume
+Prediction sur la pathogénicité d'un variant (modèle ML), sur toutes les bases du génomes pour la version 1.7. (exon score > 20 threshold)
+
+### Update
+Sans doute plus d'un an pour la prochaine vu la release 1.7
+
+### Assembly
+hg19 et hg38
+
+### Format
+| #Chrom | Pos   | Ref | Alt | RawScore | PHRED |
+|:-------|:------|:----|:----|:---------|:------|
+| chr1   | 10001 | T   | A   | 0.767991 | 7.993 |
+
+## SpliceAI
+<b>1.2.1</b>  500Go (non processé, plus lourd en parquet), si on ne garde que le vcf d'interet 92Go avec une option
+### Resume
+Illumina basespace ils ont analysé toutes les bases du génomes x4, DB disponible avec toutes les options mais distance D=50,
+
+### Update 
+Pas d'update prévu pour le moment
+
+### Assembly
+Tout les vcf sont dispo en 37 et 38
+
+### Format
+VCF, champs info doit être split comme dans le module splice + chr et transformé en parquet par la suite car grosse DB
+
 
 HUSDIAGGEN
 
-dejavu_HUSDIAGGEN_GOMV1_SOMATIC
-popfreq
-gnomAD
-gene_name
-transcript_name
-c_nomen
-PNOMEN
-location
-COVAR_ANN
-COVAR_COM
-CADD_phred
-DEEP_INTRON
-CLINVAR
-weighted_variation_class_name
-weighted_variation_class_number
-chromosome_number
-c_dna_start
-REF
-ALT
-variant_name
-coding_effect
 PZFlag
-ENOMEN
-ANN
 dbscsnv
-dbSNP
-dbSNPNonFlagged
-EXAC
 gme
-n1000genomesAFR
-n1000genomesALL
-n1000genomesAMR
-n1000genomesEUR
-n1000genomesSAS
 n6500NHLBIAA
 n6500NHLBIALL
 n6500NHLBIEA
-FindByPipelines
-id
-
 
 TUMSOL
  
-    - chr
-    - pos
-    - ref
-    - alt
-    - nomen
-    - findbypipelines
-    - vaf_list
     - pzscore-tumsol
     - count_var
-    - dejavu.hustumsol.xths
-    - dbsnpnonflagged
-    - popfreq
-    - gnomad
     - cosmic
-    - interpro_domain
-    - clinvar
     - mutationtaster_pred
-    - sift_pred
     - outcome
-    - samples.T22395.gt
 
 DIAG
 
-    - varankvarscore
-    - gene
-    - cnomen
-    - pnomen
-    - transcript
-    - chr
-    - pos
-    - ref
-    - alt
     - tags
     - genedesc
-    - clinvarclinsignifs
-    - clinvarphenotypes
-    - rsid
-    - gnomadaltfreq_all
-    - gnomadaltfreq_popmax
-    - gnomadhomcount_all
-    - gnomadhetcount_all
-    - gnomadhemcount_all
-    - deltamaxentscorepercent
-    - deltassfscorepercent
-    - deltannsscorepercent
-    - localspliceeffect
-    - siftprediction
-    - homcount
-    - hetcount
-    - allelecount
-    - samplecount
-    - allelefrequency
-    - ddd_hi_percent
-    - omim_id
-    - omim_phenotype
-    - omim_inheritance
-    - gnomen
-    - vartype
-    - codingeffect
-    - varlocation
-    - wtmaxentscore
-    - varmaxentscore
-    - wtssfscore
-    - varssfscore
-    - wtnnsscore
-    - varnnsscore
-    - nearestsschange
-    - distnearestss
-    - nearestsstype
-    - branchpointpos
-    - branchpointchange
-    - phylop
-    - phastcons
     - granthamdist
     - samva
-    - loeuf_bin
-    - omim_morbid
-    - exomiser_gene_pheno_score
-    - exon
-    - intron
-    - gnomad_pli
-    - gnomadaltfreq_afr
-    - gnomadaltfreq_amr
-    - gnomadaltfreq_asj
-    - gnomadaltfreq_eas
-    - gnomadaltfreq_fin
-    - gnomadaltfreq_nfe
-    - gnomadaltfreq_oth
-    - gnomadaltfreq_sas
-    - 1000g_af

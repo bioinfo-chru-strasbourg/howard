@@ -1,0 +1,29 @@
+{
+  "transcripts": {
+    "LIST_S2_score": [
+      {
+        "type": "gt",
+        "value": "0.75",
+        "score": 10,
+        "flag": "PASS",
+        "comment": ["Very Good LIST Score"]
+      },
+      {
+        "type": "gt",
+        "value": "0.50",
+        "score": 10,
+        "flag": "PASS",
+        "comment": ["Good LIST Score"]
+      }
+    ],
+    "CLNSIG": [
+      {
+        "type": "eq",
+        "value": "pathogenic",
+        "score": 100,
+        "flag": "PASS",
+        "comment": ["Pathogenic"]
+      }
+    ]
+  }
+}

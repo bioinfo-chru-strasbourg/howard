@@ -1,1 +1,1 @@
-__all__ = ["minimalize", "genebe"]
+__all__ = ["minimalize", "genebe", "update_database", "transcripts_check"]

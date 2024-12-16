@@ -188,6 +188,8 @@ arguments = {
         """ (e.g. 'file1.parquet,file2.vcf.gz').\n"""
         """- For BCFTools annotation, use keyword 'bcftools' with file paths\n"""
         """ (e.g. 'bcftools:file.vcf.gz:file.bed.gz').\n"""
+        """- For Parquet annotation, use keyword 'parquet' with file paths\n"""
+        """ (e.g. 'parquet:file.parquet').\n"""
         """- For Annovar annotation, use keyword 'annovar' with annovar code\n"""
         """ (e.g. 'annovar:refGene', 'annovar:refGene:cosmic70').\n"""
         """- For snpeff annotation, use keyword 'snpeff' with options\n"""
@@ -197,8 +199,8 @@ arguments = {
         """- For Exomiser annotation, use keyword 'exomiser' with options as key=value\n"""
         """ (e.g. 'exomiser:preset=exome:transcript_source=refseq').\n"""
         """- For add all availalbe databases files, use 'ALL' keyword,\n"""
-        """ with filters on type and release\n"""
-        """ (e.g. 'ALL', 'ALL:parquet:current', 'ALL:parquet,vcf:current,devel').\n""",
+        """ with filters on format (e.g. 'parquet', 'vcf') and release (e.g. 'current', 'devel')\n"""
+        """ (e.g. 'ALL', ALL:format=parquet', 'ALL:format=parquet:release=current', 'ALL:format=parquet+vcf:release=current+devel').\n""",
         "default": None,
         "type": str,
         "extra": {
@@ -405,7 +407,7 @@ arguments = {
             # "param_section": "prioritization",
             "examples": {
                 "Prioritization profile by default": """"prioritization": "default" """,
-                "Prioritization profile by default and GERLINE from Configuration JSON file": """"prioritization": "default,GERMLINE" """,
+                "Prioritization profile by default and GERMLINE from Configuration JSON file": """"prioritization": "default,GERMLINE" """,
             }
         },
     },
@@ -471,8 +473,8 @@ arguments = {
     "query_print_mode": {
         "metavar": "print mode",
         "help": """Print mode of query result (only for print result, not output).\n"""
-        """Either None (native), 'markdown' or 'tabulate'.\n""",
-        "choices": [None, "markdown", "tabulate"],
+        """Either None (native), 'markdown', 'tabulate' or disabled.\n""",
+        "choices": [None, "markdown", "tabulate", "disabled"],
         "default": None,
         "type": str,
         "gooey": {"widget": "Dropdown", "options": {}},
@@ -523,7 +525,7 @@ arguments = {
         "extra": {
             "examples": {
                 "Order by ACMG score in descending order": """"order_by": "ACMG_score DESC" """,
-                "Order by PZFlag and PZScore in descending order": """"order_by": PZFlag DESC, PZScore DESC" """,
+                "Order by PZFlag and PZScore in descending order": """"order_by": "PZFlag DESC, PZScore DESC" """,
             }
         },
     },
@@ -1149,6 +1151,23 @@ arguments = {
         "action": "store_true",
         "default": False,
     },
+    "download-dbnsfp-only-info": {
+        "help": """Add only INFO column (VCF format) in Parquet folder and file.\n"""
+        """Useful for speed up full annotation (all available columns).\n"""
+        """Decrease memory and space during generation of files.\n"""
+        """Increase time for partial annotation (some available columns).\n""",
+        "action": "store_true",
+        "default": False,
+    },
+    "download-dbnsfp-uniquify": {
+        "help": """Uniquify values within column\n"""
+        """(e.g. "D,D" to "D", "D,.,T" to "D,T").\n"""
+        """Remove transcripts information details.\n"""
+        """Usefull to reduce size of the database.\n"""
+        """Increase memory and space during generation of files.\n""",
+        "action": "store_true",
+        "default": False,
+    },
     "download-dbnsfp-row-group-size": {
         "metavar": "dnNSFP row grooup size",
         "help": """Minimum number of rows in a parquet row group (see duckDB doc).\n"""
@@ -1509,6 +1528,19 @@ arguments = {
             "widget": "FileChooser",
             "options": {
                 "wildcard": "JSON file (*.json)|*.json|" "All files (*)|*",
+            },
+        },
+    },
+    "help_md_input": {
+        "metavar": "help MarkDown input",
+        "help": """Help input file in MarkDown format.\n""",
+        "required": False,
+        "default": None,
+        "type": PathType(exists=True, type="file"),
+        "gooey": {
+            "widget": "FileChooser",
+            "options": {
+                "wildcard": "MarkDown file (*.md)|*.md|" "All files (*)|*",
             },
         },
     },
@@ -1876,6 +1908,7 @@ commands_arguments = {
         """   howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.calculated.tsv --calculations='snpeff_hgvs,NOMEN' --hgvs_field=snpeff_hgvs --transcripts=tests/data/transcripts.tsv \n"""
         """   howard calculation --input=tests/data/example.vcf.gz --output=/tmp/example.calculated.tsv --calculations='TRIO' --trio_pedigree='sample1,sample2,sample4' \n"""
         """   howard calculation --input=tests/data/example.vcf.gz --output=/tmp/example.calculated.tsv --calculations='BARCODEFAMILY' --family_pedigree='sample1,sample2,sample4' \n"""
+        """   howard calculation --input=tests/data/example.ann.transcripts.vcf.gz --output=/tmp/example.calculation.transcripts.tsv --param=config/param.transcripts.json --calculations='TRANSCRIPTS_ANNOTATIONS,TRANSCRIPTS_PRIORITIZATION,TRANSCRIPTS_EXPORT' \n"""
         """   howard calculation --input=tests/data/example.ann.vcf.gz --output=/tmp/example.ann.tsv --param=config/param.json \n"""
         """   howard calculation --show_calculations \n"""
         """    \n""",
@@ -2046,6 +2079,8 @@ commands_arguments = {
                 "download-dbnsfp-vcf": False,
                 "download-dbnsfp-no-files-all": False,
                 "download-dbnsfp-add-info": False,
+                "download-dbnsfp-only-info": False,
+                "download-dbnsfp-uniquify": False,
                 "download-dbnsfp-row-group-size": False,
             },
             "AlphaMissense": {
@@ -2119,15 +2154,16 @@ commands_arguments = {
         "help": """Help tools""",
         "epilog": """Usage examples:\n"""
         """   howard help --help_md=docs/help.md --help_html=docs/html/help.html --help_pdf=docs/pdf/help.pdf\n"""
-        """   howard help --help_json_input=docs/json/help.config.json --help_json_input_title='HOWARD Configuration' --help_md=docs/help.config.md --help_html=docs/html/help.config.html --help_pdf=docs/pdf/help.config.pdf --code_type='json'\n"""
-        """   howard help --help_json_input=docs/json/help.param.json --help_json_input_title='HOWARD Parameters' --help_md=docs/help.param.md --help_html=docs/html/help.param.html --help_pdf=docs/pdf/help.param.pdf --code_type='json' \n"""
-        """   howard help --help_json_input=docs/json/help.param.databases.json --help_json_input_title='HOWARD Parameters Databases' --help_md=docs/help.param.databases.md --help_html=docs/html/help.param.databases.html --help_pdf=docs/pdf/help.param.databases.pdf --code_type='json' \n"""
+        """   howard help --help_json_input=docs/json/help.configuration.json --help_json_input_title='HOWARD Configuration' --help_md=docs/help.configuration.md --help_html=docs/html/help.configuration.html --help_pdf=docs/pdf/help.configuration.pdf --code_type='json'\n"""
+        """   howard help --help_json_input=docs/json/help.parameteres.json --help_json_input_title='HOWARD Parameters' --help_md=docs/help.parameteres.md --help_html=docs/html/help.parameteres.html --help_pdf=docs/pdf/help.parameteres.pdf --code_type='json' \n"""
+        """   howard help --help_json_input=docs/json/help.parameteres.databases.json --help_json_input_title='HOWARD Parameters Databases' --help_md=docs/help.parameteres.databases.md --help_html=docs/html/help.parameteres.databases.html --help_pdf=docs/pdf/help.parameteres.databases.pdf --code_type='json' \n"""
         """    \n""",
         "groups": {
             "main": {
                 "help_md": False,
                 "help_html": False,
                 "help_pdf": False,
+                "help_md_input": False,
                 "help_json_input": False,
                 "help_json_input_title": False,
                 "code_type": False,

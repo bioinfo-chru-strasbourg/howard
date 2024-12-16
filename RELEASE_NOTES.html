@@ -1,550 +1,376 @@
 <!DOCTYPE html>
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
 <head>
-<title>RELEASE_NOTES.md</title>
-<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
-
-<style>
-/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See License.txt in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
-
-body {
-	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
-	font-size: var(--vscode-markdown-font-size, 14px);
-	padding: 0 26px;
-	line-height: var(--vscode-markdown-line-height, 22px);
-	word-wrap: break-word;
-}
-
-#code-csp-warning {
-	position: fixed;
-	top: 0;
-	right: 0;
-	color: white;
-	margin: 16px;
-	text-align: center;
-	font-size: 12px;
-	font-family: sans-serif;
-	background-color:#444444;
-	cursor: pointer;
-	padding: 6px;
-	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
-}
-
-#code-csp-warning:hover {
-	text-decoration: none;
-	background-color:#007acc;
-	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
-}
-
-body.scrollBeyondLastLine {
-	margin-bottom: calc(100vh - 22px);
-}
-
-body.showEditorSelection .code-line {
-	position: relative;
-}
-
-body.showEditorSelection .code-active-line:before,
-body.showEditorSelection .code-line:hover:before {
-	content: "";
-	display: block;
-	position: absolute;
-	top: 0;
-	left: -12px;
-	height: 100%;
-}
-
-body.showEditorSelection li.code-active-line:before,
-body.showEditorSelection li.code-line:hover:before {
-	left: -30px;
-}
-
-.vscode-light.showEditorSelection .code-active-line:before {
-	border-left: 3px solid rgba(0, 0, 0, 0.15);
-}
-
-.vscode-light.showEditorSelection .code-line:hover:before {
-	border-left: 3px solid rgba(0, 0, 0, 0.40);
-}
-
-.vscode-light.showEditorSelection .code-line .code-line:hover:before {
-	border-left: none;
-}
-
-.vscode-dark.showEditorSelection .code-active-line:before {
-	border-left: 3px solid rgba(255, 255, 255, 0.4);
-}
-
-.vscode-dark.showEditorSelection .code-line:hover:before {
-	border-left: 3px solid rgba(255, 255, 255, 0.60);
-}
-
-.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
-	border-left: none;
-}
-
-.vscode-high-contrast.showEditorSelection .code-active-line:before {
-	border-left: 3px solid rgba(255, 160, 0, 0.7);
-}
-
-.vscode-high-contrast.showEditorSelection .code-line:hover:before {
-	border-left: 3px solid rgba(255, 160, 0, 1);
-}
-
-.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
-	border-left: none;
-}
-
-img {
-	max-width: 100%;
-	max-height: 100%;
-}
-
-a {
-	text-decoration: none;
-}
-
-a:hover {
-	text-decoration: underline;
-}
-
-a:focus,
-input:focus,
-select:focus,
-textarea:focus {
-	outline: 1px solid -webkit-focus-ring-color;
-	outline-offset: -1px;
-}
-
-hr {
-	border: 0;
-	height: 2px;
-	border-bottom: 2px solid;
-}
-
-h1 {
-	padding-bottom: 0.3em;
-	line-height: 1.2;
-	border-bottom-width: 1px;
-	border-bottom-style: solid;
-}
-
-h1, h2, h3 {
-	font-weight: normal;
-}
-
-table {
-	border-collapse: collapse;
-}
-
-table > thead > tr > th {
-	text-align: left;
-	border-bottom: 1px solid;
-}
-
-table > thead > tr > th,
-table > thead > tr > td,
-table > tbody > tr > th,
-table > tbody > tr > td {
-	padding: 5px 10px;
-}
-
-table > tbody > tr + tr > td {
-	border-top: 1px solid;
-}
-
-blockquote {
-	margin: 0 7px 0 5px;
-	padding: 0 16px 0 10px;
-	border-left-width: 5px;
-	border-left-style: solid;
-}
-
-code {
-	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
-	font-size: 1em;
-	line-height: 1.357em;
-}
-
-body.wordWrap pre {
-	white-space: pre-wrap;
-}
-
-pre:not(.hljs),
-pre.hljs code > div {
-	padding: 16px;
-	border-radius: 3px;
-	overflow: auto;
-}
-
-pre code {
-	color: var(--vscode-editor-foreground);
-	tab-size: 4;
-}
-
-/** Theming */
-
-.vscode-light pre {
-	background-color: rgba(220, 220, 220, 0.4);
-}
-
-.vscode-dark pre {
-	background-color: rgba(10, 10, 10, 0.4);
-}
-
-.vscode-high-contrast pre {
-	background-color: rgb(0, 0, 0);
-}
-
-.vscode-high-contrast h1 {
-	border-color: rgb(0, 0, 0);
-}
-
-.vscode-light table > thead > tr > th {
-	border-color: rgba(0, 0, 0, 0.69);
-}
-
-.vscode-dark table > thead > tr > th {
-	border-color: rgba(255, 255, 255, 0.69);
-}
-
-.vscode-light h1,
-.vscode-light hr,
-.vscode-light table > tbody > tr + tr > td {
-	border-color: rgba(0, 0, 0, 0.18);
-}
-
-.vscode-dark h1,
-.vscode-dark hr,
-.vscode-dark table > tbody > tr + tr > td {
-	border-color: rgba(255, 255, 255, 0.18);
-}
-
-</style>
-
-<style>
-/*
-
-github.com style (c) Vasily Polovnyov <vast@whiteants.net>
-
-*/
-
-.hljs {
-  display: block;
-  overflow-x: auto;
-  padding: 0.5em;
-  color: #333;
-  background: #f8f8f8;
-}
-
-.hljs-comment,
-.hljs-quote {
-  color: #998;
-  font-style: italic;
-}
-
-.hljs-keyword,
-.hljs-selector-tag,
-.hljs-subst {
-  color: #333;
-  font-weight: bold;
-}
-
-.hljs-number,
-.hljs-literal,
-.hljs-variable,
-.hljs-template-variable,
-.hljs-tag .hljs-attr {
-  color: #008080;
-}
-
-.hljs-string,
-.hljs-doctag {
-  color: #d14;
-}
-
-.hljs-title,
-.hljs-section,
-.hljs-selector-id {
-  color: #900;
-  font-weight: bold;
-}
-
-.hljs-subst {
-  font-weight: normal;
-}
-
-.hljs-type,
-.hljs-class .hljs-title {
-  color: #458;
-  font-weight: bold;
-}
-
-.hljs-tag,
-.hljs-name,
-.hljs-attribute {
-  color: #000080;
-  font-weight: normal;
-}
-
-.hljs-regexp,
-.hljs-link {
-  color: #009926;
-}
-
-.hljs-symbol,
-.hljs-bullet {
-  color: #990073;
-}
-
-.hljs-built_in,
-.hljs-builtin-name {
-  color: #0086b3;
-}
-
-.hljs-meta {
-  color: #999;
-  font-weight: bold;
-}
-
-.hljs-deletion {
-  background: #fdd;
-}
-
-.hljs-addition {
-  background: #dfd;
-}
-
-.hljs-emphasis {
-  font-style: italic;
-}
-
-.hljs-strong {
-  font-weight: bold;
-}
-
-</style>
-
-<style>
-/*
- * Markdown PDF CSS
- */
-
- body {
-	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
-	padding: 0 12px;
-}
-
-pre {
-	background-color: #f8f8f8;
-	border: 1px solid #cccccc;
-	border-radius: 3px;
-	overflow-x: auto;
-	white-space: pre-wrap;
-	overflow-wrap: break-word;
-}
-
-pre:not(.hljs) {
-	padding: 23px;
-	line-height: 19px;
-}
-
-blockquote {
-	background: rgba(127, 127, 127, 0.1);
-	border-color: rgba(0, 122, 204, 0.5);
-}
-
-.emoji {
-	height: 1.4em;
-}
-
-code {
-	font-size: 14px;
-	line-height: 19px;
-}
-
-/* for inline code */
-:not(pre):not(.hljs) > code {
-	color: #C9AE75; /* Change the old color so it seems less like an error */
-	font-size: inherit;
-}
-
-/* Page Break : use <div class="page"/> to insert page break
--------------------------------------------------------- */
-.page {
-	page-break-after: always;
-}
-
-</style>
-
-<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>HOWARD RELEASE NOTES</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 1000px;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
 </head>
 <body>
-  <script>
-    mermaid.initialize({
-      startOnLoad: true,
-      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
-          ? 'dark'
-          : 'default'
-    });
-  </script>
-<h1 id="release-notes">RELEASE NOTES</h1>
-<h2 id="0110">0.11.0</h2>
-<p>This release introduce splice annotation tool, and update duckDB python package for improve stability.</p>
-<h3 id="news">News</h3>
+<header id="title-block-header">
+<h1 class="title">HOWARD RELEASE NOTES</h1>
+</header>
+<h1 data-number="1" id="release-notes"><span
+class="header-section-number">1</span> RELEASE NOTES</h1>
+<h2 data-number="1.1" id="section"><span
+class="header-section-number">1.1</span> 0.12.0</h2>
+<p>This release introduce &#x2018;BigWig&#x2019; annotation, prioritization options
+and transcripts view, improve samples managment, INFO/tags rename,
+annotation databases generation and operations, confugation files in
+YAML format, and python packages stability.</p>
+<h3 data-number="1.1.1" id="news"><span
+class="header-section-number">1.1.1</span> News</h3>
+<ul>
+<li>Add annotation method &#x2018;BigWig&#x2019;</li>
+<li>Add prioritization options:
+<ul>
+<li>SQL syntax available to define filters</li>
+<li>New &#x2018;Class&#x2019; priorisation field</li>
+</ul></li>
+<li>New transcripts view:
+<ul>
+<li>Create a transcript view, using a structure from multiple source
+type (e.g.&#xA0;snpEff, external annotation databases)</li>
+<li>Mapping between multiple transcript ID source (e.g.&#xA0;refSeq,
+Ensembl)</li>
+<li>Transcripts prioritization, using same prioritization process than
+variants</li>
+<li>Export transcripts table as a file, in multiple format such as VCF,
+TSV, Parquet</li>
+</ul></li>
+<li>Export with a specific sample list</li>
+<li>Rename or remove INFO/tags before exporting</li>
+<li>Configuration and parameters files in YAML format allowed</li>
+<li>Add dynamic transcript column for NOMEN calculation (using
+transcript priorization column)</li>
+<li>Add plugins:
+<ul>
+<li>&#x2018;update_databases&#x2019;</li>
+</ul></li>
+</ul>
+<h3 data-number="1.1.2" id="updates"><span
+class="header-section-number">1.1.2</span> Updates</h3>
+<ul>
+<li>Improve snpEff annotations operations</li>
+<li>New option &#x2018;uniquify&#x2019; for dbSNFP generation, identification of
+columns type</li>
+<li>Managment, check and export of samples columns</li>
+<li>Improve query type mode</li>
+<li>Improve splice annotation</li>
+<li>Improve NOMEN generation</li>
+</ul>
+<h3 data-number="1.1.3" id="fixes"><span
+class="header-section-number">1.1.3</span> Fixes</h3>
+<ul>
+<li>Genotype format detection</li>
+<li>Fix packages releases</li>
+<li>Fix parameters and configuration files options</li>
+<li>Fix calculations list and parametrization</li>
+<li>Fix empty file export</li>
+<li>Fix BED annotation with parquet method</li>
+<li>More explicite log messages</li>
+</ul>
+<h2 data-number="1.2" id="section-1"><span
+class="header-section-number">1.2</span> 0.11.0</h2>
+<p>This release introduce splice annotation tool, and update duckDB
+python package for improve stability.</p>
+<h3 data-number="1.2.1" id="news-1"><span
+class="header-section-number">1.2.1</span> News</h3>
 <ul>
 <li>Add splice tool with docker image</li>
 <li>Add plugins:
 <ul>
-<li>'genebe' (GeneBe annotation using REST API)</li>
-<li>'minimalize' (Minimalize a VCF file, such as removing INFO/Tags or samples)</li>
+<li>&#x2018;genebe&#x2019; (GeneBe annotation using REST API)</li>
+<li>&#x2018;minimalize&#x2019; (Minimalize a VCF file, such as removing INFO/Tags or
+samples)</li>
+</ul></li>
 </ul>
-</li>
-</ul>
-<h3 id="updates">Updates</h3>
+<h3 data-number="1.2.2" id="updates-1"><span
+class="header-section-number">1.2.2</span> Updates</h3>
 <ul>
 <li>DuckDB 1.0.0 stable Snow Duck (Anas Nivis) release</li>
 <li>Add API Documentation</li>
 <li>Improve tests</li>
 </ul>
-<h3 id="fixes">Fixes</h3>
+<h3 data-number="1.2.3" id="fixes-1"><span
+class="header-section-number">1.2.3</span> Fixes</h3>
 <ul>
 <li>Paths parameters check fixed (genome and genomes-folders)</li>
 <li>Fix snpEff download error with databases list</li>
 </ul>
-<h2 id="0100">0.10.0</h2>
-<p>This release is a refactor of HOWARD (Highly Open Workflow for Annotation &amp; Ranking toward genomic variant Discovery) in Python, using Parquet and duckDB.</p>
-<p>HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations, translates files in multiple formats (e.g. vcf, tsv, parquet) and generates variants statistics.</p>
-<p>See <a href="README.md">README</a> and <a href="https://github.com/bioinfo-chru-strasbourg/howard">gitHub</a> for more explanations.</p>
-<h2 id="previous-releases">Previous releases</h2>
-<p>See <a href="https://github.com/bioinfo-chru-strasbourg/howard">HOWARD gitHub</a> for more information about previous releases.</p>
-<h4 id="09b-07102016">0.9b-07/10/2016:</h4>
+<h2 data-number="1.3" id="section-2"><span
+class="header-section-number">1.3</span> 0.10.0</h2>
+<p>This release is a refactor of HOWARD (Highly Open Workflow for
+Annotation &amp; Ranking toward genomic variant Discovery) in Python,
+using Parquet and duckDB.</p>
+<p>HOWARD annotates and prioritizes genetic variations, calculates and
+normalizes annotations, translates files in multiple formats (e.g.&#xA0;vcf,
+tsv, parquet) and generates variants statistics.</p>
+<p>See <a href="README.html">README</a> and <a
+href="https://github.com/bioinfo-chru-strasbourg/howard">gitHub</a> for
+more explanations.</p>
+<h2 data-number="1.4" id="previous-releases"><span
+class="header-section-number">1.4</span> Previous releases</h2>
+<p>See <a
+href="https://github.com/bioinfo-chru-strasbourg/howard">HOWARD
+gitHub</a> for more information about previous releases.</p>
+<h4 data-number="1.4.0.1" id="b-07102016"><span
+class="header-section-number">1.4.0.1</span> 0.9b-07/10/2016:</h4>
 <ul>
-<li>Script creation</li>
-</ul>
-<h4 id="091b-11102016">0.9.1b-11/10/2016:</h4>
-<ul>
-<li>Add Prioritization and Translation</li>
-</ul>
-<h4 id="091b-11102016">0.9.1b-11/10/2016:</h4>
-<ul>
-<li>Add snpEff annotation and stats</li>
-</ul>
-<h4 id="098b-21032017">0.9.8b-21/03/2017:</h4>
-<ul>
-<li>Add Multithreading on Prioritization and Translation</li>
-</ul>
-<h4 id="099b-18042017">0.9.9b-18/04/2017:</h4>
-<ul>
-<li>Add Calculation step</li>
-</ul>
-<h4 id="0910b-07112017">0.9.10b-07/11/2017:</h4>
-<ul>
-<li>Add generic file annotation through --annotation option</li>
+<li>Script creation #### 0.9.1b-11/10/2016:</li>
+<li>Add Prioritization and Translation #### 0.9.1b-11/10/2016:</li>
+<li>Add snpEff annotation and stats #### 0.9.8b-21/03/2017:</li>
+<li>Add Multithreading on Prioritization and Translation ####
+0.9.9b-18/04/2017:</li>
+<li>Add Calculation step #### 0.9.10b-07/11/2017:</li>
+<li>Add generic file annotation through &#x2013;annotation option</li>
 <li>No need to be in configuration file</li>
-<li>Need to be in ANNOVAR database folder (file 'ASSEMBLY_ANN.txt' for annotation 'ANN')</li>
-<li>Add options: --force , --split</li>
-<li>Add options for VCFanotation.pl: --show_annoataion, --show_annotations_full</li>
+<li>Need to be in ANNOVAR database folder (file &#x2018;ASSEMBLY_ANN.txt&#x2019; for
+annotation &#x2018;ANN&#x2019;)</li>
+<li>Add options: &#x2013;force , &#x2013;split</li>
+<li>Add options for VCFanotation.pl: &#x2013;show_annoataion,
+&#x2013;show_annotations_full</li>
 <li>Add database download option nowget in VCFanotation.pl</li>
-<li>Fixes: multithreading, VAF calculation, configuration and check dependencies</li>
-</ul>
-<h4 id="0911b-07052018">0.9.11b-07/05/2018:</h4>
-<ul>
+<li>Fixes: multithreading, VAF calculation, configuration and check
+dependencies #### 0.9.11b-07/05/2018:</li>
 <li>Replace VCFTOOLS command to BCFTOOLS command</li>
 <li>Release added into the output VCF</li>
 <li>Update SNPEff options</li>
-<li>Add VARTYPE, CALLING_QUALITY and CALLING_QUALITY_EXPLODE option on calculation</li>
-<li>Add description on calculations</li>
-</ul>
-<h4 id="09111b-14052018">0.9.11.1b-14/05/2018:</h4>
-<ul>
+<li>Add VARTYPE, CALLING_QUALITY and CALLING_QUALITY_EXPLODE option on
+calculation</li>
+<li>Add description on calculations #### 0.9.11.1b-14/05/2018:</li>
 <li>Improve VCF validation</li>
-<li>Fix snpEff annotation bug</li>
-</ul>
-<h4 id="09112b-17082018">0.9.11.2b-17/08/2018:</h4>
-<ul>
-<li>Add --vcf input vcf file option</li>
+<li>Fix snpEff annotation bug #### 0.9.11.2b-17/08/2018:</li>
+<li>Add &#x2013;vcf input vcf file option</li>
 <li>Create Output file directory automatically</li>
-<li>Improve Multithreading</li>
-</ul>
-<h4 id="0912b-24082018">0.9.12b-24/08/2018:</h4>
-<ul>
+<li>Improve Multithreading #### 0.9.12b-24/08/2018:</li>
 <li>Improve Multithreading</li>
 <li>Input VCF compressed with BGZIP accepted</li>
 <li>Output VCF compression level</li>
 <li>Add VCF input sorting and multiallele split step (by default)</li>
-<li>Add VCF input normalization step with option --norm</li>
-<li>Bug fixes</li>
-</ul>
-<h4 id="0913b-04102018">0.9.13b-04/10/2018:</h4>
-<ul>
+<li>Add VCF input normalization step with option &#x2013;norm</li>
+<li>Bug fixes #### 0.9.13b-04/10/2018:</li>
 <li>Multithreading improved</li>
 <li>Change default output vcf</li>
 <li>Input vcf without samples allowed</li>
 <li>VCF Validation with contig check</li>
 <li>Add multi VCF in input option</li>
-<li>Add --annotate option for BCFTOOLS annotation with a VCF and TAG (beta)</li>
-<li>Remove no multithreading part code to multithreading with 1 thread</li>
-<li>Remove --multithreading parameter, only --thread parameter to deal with multithreading</li>
-<li>Replace --filter and --format parameters by --prioritization and --translation parameters</li>
-<li>Add snpeff options to VCFannotation.pl</li>
-</ul>
-<h4 id="0914b-21012019">0.9.14b-21/01/2019:</h4>
-<ul>
-<li>Reorganization of folders (bin, config, docs, toolbox...).</li>
-<li>Improve Translation (TSV or VCF, sort on fields, selection of fields, filtering on fields), especially memory efficiency</li>
-<li>Change Number/Type/Description of new INFO/FORMAT header generated</li>
-<li>Remove snpEff option --snpeff and --snpeff_hgvs. SnpEff is used through --annotation option</li>
-<li>Add '#' to the TAB/TSV delimiter format header</li>
+<li>Add &#x2013;annotate option for BCFTOOLS annotation with a VCF and TAG
+(beta)</li>
+<li>Remove no multithreading part code to multithreading with 1
+thread</li>
+<li>Remove &#x2013;multithreading parameter, only &#x2013;thread parameter to deal
+with multithreading</li>
+<li>Replace &#x2013;filter and &#x2013;format parameters by &#x2013;prioritization and
+&#x2013;translation parameters</li>
+<li>Add snpeff options to VCFannotation.pl #### 0.9.14b-21/01/2019:</li>
+<li>Reorganization of folders (bin, config, docs, toolbox&#x2026;).</li>
+<li>Improve Translation (TSV or VCF, sort on fields, selection of
+fields, filtering on fields), especially memory efficiency</li>
+<li>Change Number/Type/Description of new INFO/FORMAT header
+generated</li>
+<li>Remove snpEff option &#x2013;snpeff and &#x2013;snpeff_hgvs. SnpEff is used
+through &#x2013;annotation option</li>
+<li>Add &#x2018;#&#x2019; to the TAB/TSV delimiter format header</li>
 <li>Update dbNSFP config annotation file script</li>
-<li>Change default configuration files for annotation (add dbSNFP 3.5a, update mcap and regspintron) and prioritization</li>
+<li>Change default configuration files for annotation (add dbSNFP 3.5a,
+update mcap and regspintron) and prioritization</li>
 <li>Bug fixed: file identification in annotation configuration</li>
-<li>Bug fixed: calculation INFO fields header, snpeff parameters options on multithreading</li>
-<li>Bug fixed: snpeff parameters in command line</li>
-</ul>
-<h4 id="0915b-19092019">0.9.15b-19/09/2019:</h4>
-<ul>
+<li>Bug fixed: calculation INFO fields header, snpeff parameters options
+on multithreading</li>
+<li>Bug fixed: snpeff parameters in command line ####
+0.9.15b-19/09/2019:</li>
 <li>Rename HOWARD.sh to HOWARD.</li>
-<li>Add --nomen_fields parameter and update NOMEN calculation.</li>
-<li>Add --bcftools_stats and --stats parameter.</li>
-<li>Change PZScore, PZFlag, PZComment and PZInfos generation, adding default PZ and all PZ filters.</li>
-<li>Bug fixed: translation fields identification.</li>
-</ul>
-<h4 id="09151b-28052020">0.9.15.1b-28/05/2020:</h4>
-<ul>
-<li>Bug fixed: NOMEN calculation clear previous NOMEN values if using force option.</li>
-</ul>
-<h4 id="09152-12102020">0.9.15.2-12/10/2020:</h4>
-<ul>
-<li>Change --norm parameter by adding '--check-ref=s' in bcftools command.</li>
-<li>Add --norm_options parameter.</li>
+<li>Add &#x2013;nomen_fields parameter and update NOMEN calculation.</li>
+<li>Add &#x2013;bcftools_stats and &#x2013;stats parameter.</li>
+<li>Change PZScore, PZFlag, PZComment and PZInfos generation, adding
+default PZ and all PZ filters.</li>
+<li>Bug fixed: translation fields identification. ####
+0.9.15.1b-28/05/2020:</li>
+<li>Bug fixed: NOMEN calculation clear previous NOMEN values if using
+force option. #### 0.9.15.2-12/10/2020:</li>
+<li>Change &#x2013;norm parameter by adding &#x2018;&#x2013;check-ref=s&#x2019; in bcftools
+command.</li>
+<li>Add &#x2013;norm_options parameter.</li>
 <li>force translation VCF by default.</li>
-<li>Change VAF_stats and add DP_stats.</li>
-</ul>
-<h4 id="09154-11042021">0.9.15.4-11/04/2021:</h4>
-<ul>
-<li>Remove --snpeff_threads parameter (for snpEff 5.0e compatibility) and improve --snpeff_stats.</li>
-<li>Add a check and rehead INFO fields if necessary (prevent some incorrect INFO header format).</li>
-<li>Fix --compress parameter and add --index parameter.</li>
-</ul>
-<h4 id="09155-21072021">0.9.15.5-21/07/2021:</h4>
-<ul>
+<li>Change VAF_stats and add DP_stats. #### 0.9.15.4-11/04/2021:</li>
+<li>Remove &#x2013;snpeff_threads parameter (for snpEff 5.0e compatibility) and
+improve &#x2013;snpeff_stats.</li>
+<li>Add a check and rehead INFO fields if necessary (prevent some
+incorrect INFO header format).</li>
+<li>Fix &#x2013;compress parameter and add &#x2013;index parameter. ####
+0.9.15.5-21/07/2021:</li>
 <li>Add INFO description Type option, with autodetection.</li>
-<li>Add prioritization mode 'VaRank'/'max' for score calculation.</li>
+<li>Add prioritization mode &#x2018;VaRank&#x2019;/&#x2018;max&#x2019; for score calculation.</li>
 <li>Add calculation DP, AD, GQ and associated stats.</li>
-<li>Fix INFO field type for VCF.</li>
-</ul>
-<h4 id="09156-16092021">0.9.15.6-16/09/2021:</h4>
-<ul>
+<li>Fix INFO field type for VCF. #### 0.9.15.6-16/09/2021:</li>
 <li>Structural variant compatibility.</li>
-<li>NOMEN extraction and generation improved, with --nomen_pattern option (only for SNV and InDel).</li>
+<li>NOMEN extraction and generation improved, with &#x2013;nomen_pattern option
+(only for SNV and InDel).</li>
 <li>Improve translation with variant sorting.</li>
 <li>Improve error catching.</li>
 </ul>
-
 </body>
 </html>
