@@ -2,12 +2,17 @@
 
 ## 0.12.1
 
-Few fixes of release 0.12.0.
+Few updates and fixes.
+
+### Updates
+
+- Improve Docker image:
+  - Using Micromamba instead of mamba
+  - Reduce size by combining layers and cleaning caches
 
 ### Fixes
 
-- Release tag
-- Apple silicon Compatability
+- Fix tag of howard tool and docker images
 
 ## 0.12.0
 
