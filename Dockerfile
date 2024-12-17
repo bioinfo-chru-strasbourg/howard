@@ -39,12 +39,12 @@
 
 FROM almalinux:8
 LABEL Software="HOWARD" \
-	Version="0.11.0" \
+	Version="0.12.1" \
 	Website="https://github.com/bioinfo-chru-strasbourg/howard" \
 	Description="HOWARD" \
 	License="GNU Affero General Public License (AGPL)" \
     maintener="Antony Le Bechec <antony.lebechec@gmail.com>" \
-	Usage='docker run -v $DATA FOLDER:/data -v $DATABASE_FOLDER:/databases -ti howard:0.11.0'
+	Usage='docker run -v $DATA FOLDER:/data -v $DATABASE_FOLDER:/databases -ti howard:0.12.1'
 
 
 
@@ -286,7 +286,7 @@ RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
 ###########
 
 ENV TOOL_NAME=howard
-ENV TOOL_VERSION=0.11.0
+ENV TOOL_VERSION=0.12.1
 ENV DEST=$TOOLS/$TOOL_NAME/$TOOL_VERSION
 ENV PATH=$DEST/bin:$PATH
 ENV USER_HOME=/root

@@ -98,7 +98,7 @@ howard --help
 ``` text
 usage: howard [-h] {query,stats,convert,hgvs,annotation,calculation,prioritization,process,databases,gui} ...
 
-HOWARD:0.11.0
+HOWARD:0.12.1
 Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery
 HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations,
 convert on multiple formats, query variations and generates statistics

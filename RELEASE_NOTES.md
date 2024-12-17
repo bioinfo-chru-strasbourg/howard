@@ -1,38 +1,40 @@
 # RELEASE NOTES
 
+## 0.12.1
+
+Few fixes of release 0.12.0.
+
+### Fixes
+
+- Release tag
+- Apple silicon Compatability
+
 ## 0.12.0
 
-This release introduce 'BigWig' annotation, prioritization options and transcripts view,
-improve samples managment, INFO/tags rename, annotation databases generation and
-operations, confugation files in YAML format, and python packages stability.
+This release introduce 'BigWig' annotation, prioritization options and transcripts view, improve samples managment, INFO/tags rename, annotation databases generation and operations, configuration files in YAML format, and python packages stability.
 
 ### News
 
 - Add annotation method 'BigWig'
 - Add prioritization options:
   - SQL syntax available to define filters
-  - New 'Class' priorisation field
+  - New 'Class' prioritization field
 - New transcripts view:
-  - Create a transcript view, using a structure from multiple source
-    type (e.g. snpEff, external annotation databases)
+  - Create a transcript view, using a structure from multiple source type (e.g. snpEff, external annotation databases)
   - Mapping between multiple transcript ID source (e.g. refSeq, Ensembl)
-  - Transcripts prioritization, using same prioritization process than
-    variants
-  - Export transcripts table as a file, in multiple format such as VCF,
-    TSV, Parquet
+  - Transcripts prioritization, using same prioritization process than variants
+  - Export transcripts table as a file, in multiple format such as VCF, TSV, Parquet
 - Export with a specific sample list
 - Rename or remove INFO/tags before exporting
 - Configuration and parameters files in YAML format allowed
-- Add dynamic transcript column for NOMEN calculation (using transcript
-  priorization column)
+- Add dynamic transcript column for NOMEN calculation (using transcript prioritization column)
 - Add plugins:
   - 'update_databases'
 
 ### Updates
 
 - Improve snpEff annotations operations
-- New option 'uniquify' for dbSNFP generation, identification of columns
-  type
+- New option 'uniquify' for dbSNFP generation, identification of columns type
 - Managment, check and export of samples columns
 - Improve query type mode
 - Improve splice annotation
@@ -91,14 +93,25 @@ explanations.
 See [HOWARD gitHub](https://github.com/bioinfo-chru-strasbourg/howard)
 for more information about previous releases.
 
-#### 0.9b-07/10/2016:
+### 0.9b-07/10/2016
 
-- Script creation \#### 0.9.1b-11/10/2016:
-- Add Prioritization and Translation \#### 0.9.1b-11/10/2016:
-- Add snpEff annotation and stats \#### 0.9.8b-21/03/2017:
-- Add Multithreading on Prioritization and Translation \####
-  0.9.9b-18/04/2017:
-- Add Calculation step \#### 0.9.10b-07/11/2017:
+- Script creation
+
+### 0.9.1b-11/10/2016
+
+- Add Prioritization and Translation  
+- Add snpEff annotation and stats  
+
+### 0.9.8b-21/03/2017
+
+- Add Multithreading on Prioritization and Translation  
+
+### 0.9.9b-18/04/2017
+
+- Add Calculation step  
+
+### 0.9.10b-07/11/2017
+
 - Add generic file annotation through --annotation option
 - No need to be in configuration file
 - Need to be in ANNOVAR database folder (file 'ASSEMBLY_ANN.txt' for
@@ -108,24 +121,39 @@ for more information about previous releases.
   --show_annotations_full
 - Add database download option nowget in VCFanotation.pl
 - Fixes: multithreading, VAF calculation, configuration and check
-  dependencies \#### 0.9.11b-07/05/2018:
+  dependencies  
+
+### 0.9.11b-07/05/2018
+
 - Replace VCFTOOLS command to BCFTOOLS command
 - Release added into the output VCF
 - Update SNPEff options
 - Add VARTYPE, CALLING_QUALITY and CALLING_QUALITY_EXPLODE option on
   calculation
-- Add description on calculations \#### 0.9.11.1b-14/05/2018:
+- Add description on calculations  
+
+### 0.9.11.1b-14/05/2018
+
 - Improve VCF validation
-- Fix snpEff annotation bug \#### 0.9.11.2b-17/08/2018:
+- Fix snpEff annotation bug  
+
+### 0.9.11.2b-17/08/2018
+
 - Add --vcf input vcf file option
 - Create Output file directory automatically
-- Improve Multithreading \#### 0.9.12b-24/08/2018:
+- Improve Multithreading  
+
+### 0.9.12b-24/08/2018
+
 - Improve Multithreading
 - Input VCF compressed with BGZIP accepted
 - Output VCF compression level
 - Add VCF input sorting and multiallele split step (by default)
 - Add VCF input normalization step with option --norm
-- Bug fixes \#### 0.9.13b-04/10/2018:
+- Bug fixes  
+
+### 0.9.13b-04/10/2018
+
 - Multithreading improved
 - Change default output vcf
 - Input vcf without samples allowed
@@ -138,7 +166,10 @@ for more information about previous releases.
   with multithreading
 - Replace --filter and --format parameters by --prioritization and
   --translation parameters
-- Add snpeff options to VCFannotation.pl \#### 0.9.14b-21/01/2019:
+- Add snpeff options to VCFannotation.pl  
+
+### 0.9.14b-21/01/2019
+
 - Reorganization of folders (bin, config, docs, toolbox...).
 - Improve Translation (TSV or VCF, sort on fields, selection of fields,
   filtering on fields), especially memory efficiency
@@ -152,30 +183,46 @@ for more information about previous releases.
 - Bug fixed: file identification in annotation configuration
 - Bug fixed: calculation INFO fields header, snpeff parameters options
   on multithreading
-- Bug fixed: snpeff parameters in command line \#### 0.9.15b-19/09/2019:
+- Bug fixed: snpeff parameters in command line  
+
+### 0.9.15b-19/09/2019
+
 - Rename HOWARD.sh to HOWARD.
 - Add --nomen_fields parameter and update NOMEN calculation.
 - Add --bcftools_stats and --stats parameter.
 - Change PZScore, PZFlag, PZComment and PZInfos generation, adding
   default PZ and all PZ filters.
-- Bug fixed: translation fields identification. \####
-  0.9.15.1b-28/05/2020:
+- Bug fixed: translation fields identification.  
+
+### 0.9.15.1b-28/05/2020
+
 - Bug fixed: NOMEN calculation clear previous NOMEN values if using
-  force option. \#### 0.9.15.2-12/10/2020:
+  force option.  
+
+### 0.9.15.2-12/10/2020
+
 - Change --norm parameter by adding '--check-ref=s' in bcftools command.
 - Add --norm_options parameter.
 - force translation VCF by default.
-- Change VAF_stats and add DP_stats. \#### 0.9.15.4-11/04/2021:
+- Change VAF_stats and add DP_stats.  
+
+### 0.9.15.4-11/04/2021
+
 - Remove --snpeff_threads parameter (for snpEff 5.0e compatibility) and
   improve --snpeff_stats.
 - Add a check and rehead INFO fields if necessary (prevent some
   incorrect INFO header format).
-- Fix --compress parameter and add --index parameter. \####
-  0.9.15.5-21/07/2021:
+- Fix --compress parameter and add --index parameter.  
+
+### 0.9.15.5-21/07/2021
+
 - Add INFO description Type option, with autodetection.
 - Add prioritization mode 'VaRank'/'max' for score calculation.
 - Add calculation DP, AD, GQ and associated stats.
-- Fix INFO field type for VCF. \#### 0.9.15.6-16/09/2021:
+- Fix INFO field type for VCF.  
+
+### 0.9.15.6-16/09/2021
+
 - Structural variant compatibility.
 - NOMEN extraction and generation improved, with --nomen_pattern option
   (only for SNV and InDel).
