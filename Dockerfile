@@ -1,11 +1,11 @@
 
 ##############################################################
-# Dockerfile Version:   1.5
+# Dockerfile Version:   1.6
 # Software:             HOWARD
-# Software Version:     0.9.15.5
-# Software Website:     https://gitlab.bioinfo-diag.fr/Strasbourg/HOWARD
+# Software Version:     0.12.1
+# Software Website:     https://github.com/bioinfo-chru-strasbourg/howard
 # Licence:              GNU Affero General Public License (AGPL)
-# Description:          HOWARD
+# Description:          HOWARD - Highly Open Workflow for Annotation & Ranking toward genomic variant
 # Usage:                docker run -ti [-v [DATA FOLDER]:/data -v [DATABASE_FOLDER]:/databases] howard:version
 ##############################################################
 
@@ -65,30 +65,25 @@ ENV DATA=/data
 ENV TOOL=/tool
 ENV DATABASES=/databases
 
-# YUM
+# YUM and Perl
 ENV YUM_INSTALL="gcc bc make wget perl-devel which zlib-devel zlib bzip2-devel bzip2 xz-devel xz ncurses-devel unzip curl-devel java-17 htop libgomp aria2 docker-ce"
-#ENV YUM_REMOVE="zlib-devel bzip2-devel xz-devel ncurses-devel gcc"
-
-
-
-##########
-# BASHRC #
-##########
-
-RUN echo 'alias ll="ls -lah"' >> ~/.bashrc
-
+ENV PERL_INSTALL="perl-Switch perl-Time-HiRes perl-Data-Dumper perl-Digest-MD5 perl-Tk perl-devel"
 
 
 ###############
 # YUM INSTALL #
 ###############
 
-# AlmaLinux GPG key and YUM install
-RUN rpm --import https://repo.almalinux.org/almalinux/RPM-GPG-KEY-AlmaLinux && \
+# AlmaLinux GPG key and YUM install and Perl install and bashrc
+RUN echo "#[INFO] System YUM packages installation" && \
+    rpm --import https://repo.almalinux.org/almalinux/RPM-GPG-KEY-AlmaLinux && \
     yum install -y yum-utils && \
     yum config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo && \
     yum install -y epel-release && \
-    yum install -y $YUM_INSTALL;
+    yum install -y $YUM_INSTALL && \
+    yum install -y --enablerepo=powertools $PERL_INSTALL && \
+    yum clean all && \
+    echo 'alias ll="ls -lah"' >> ~/.bashrc;
 
 
 
@@ -97,24 +92,11 @@ RUN rpm --import https://repo.almalinux.org/almalinux/RPM-GPG-KEY-AlmaLinux && \
 ################
 
 
-
-########
-# PERL #
-########
-
-# PERL installation
-RUN	echo "#[INFO] System Perl packages installation"; \
-	yum -y --enablerepo=powertools install perl perl-Switch perl-Time-HiRes perl-Data-Dumper perl-Digest-MD5 perl-Tk perl-devel
-
-
-
-
 ##########
 # HTSLIB #
 ##########
 
 ENV TOOL_NAME=htslib
-#ENV TOOL_VERSION=1.15.1
 ENV TOOL_VERSION=1.19.1
 ENV TARBALL_LOCATION=https://github.com/samtools/$TOOL_NAME/releases/download/$TOOL_VERSION/
 ENV TARBALL=$TOOL_NAME-$TOOL_VERSION.tar.bz2
@@ -139,7 +121,6 @@ RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
 ############
 
 ENV TOOL_NAME=bcftools
-#ENV TOOL_VERSION=1.15.1
 ENV TOOL_VERSION=1.19
 ENV TARBALL_LOCATION=https://github.com/samtools/$TOOL_NAME/releases/download/$TOOL_VERSION/
 ENV TARBALL=$TOOL_NAME-$TOOL_VERSION.tar.bz2
@@ -164,9 +145,7 @@ RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
 ##########
 
 ENV TOOL_NAME=snpeff
-#ENV TOOL_VERSION=5.1d
 ENV TOOL_VERSION=5.2a
-#ENV TARBALL="snpEff_latest_core.zip"
 ENV TARBALL="snpEff_v5_2a_core.zip"
 ENV TARBALL_LOCATION=https://snpeff.blob.core.windows.net/versions
 ENV TARBALL_FOLDER=snpeff_folder
@@ -184,7 +163,8 @@ RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
     cp $TARBALL_FOLDER/*/*.config $DEST/bin/ -R && \
     ln -s $TOOL_VERSION $TOOLS/$TOOL_NAME/current && \
     mkdir -p $TOOL_DATABASE_FOLDER && \
-    ln -s $TOOL_DATABASE_FOLDER $DEST/bin/data ;
+    ln -s $TOOL_DATABASE_FOLDER $DEST/bin/data && \
+    rm -rf $TARBALL $TARBALL_FOLDER;
 
 
 
@@ -217,24 +197,23 @@ RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
     ln -s $TOOL_DATABASE_FOLDER $DEST/bin/databases ;
 
 
+##############
+# MICROMAMBA #
+##############
 
-#########
-# MAMBA #
-#########
-
-ENV TOOL_NAME=mamba
-ENV TOOL_VERSION=23.3.1-1
-ENV TARBALL_LOCATION=https://github.com/conda-forge/miniforge/releases/download/$TOOL_VERSION
+ENV TOOL_NAME=micromamba
+ENV TOOL_VERSION=2.0.5-0
 ENV DEST=$TOOLS/$TOOL_NAME/$TOOL_VERSION
-ENV MAMBA=$DEST/bin/mamba
-ENV PIP=$DEST/bin/pip
+ENV MICROMAMBA=$DEST/bin/micromamba
+ENV PATH=$TOOLS/$TOOL_NAME/current/bin:$PATH
 
-# INSTALL
 RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
-    wget "$TARBALL_LOCATION/Mambaforge-$TOOL_VERSION-$(uname)-$(uname -m).sh" && \
-    bash "Mambaforge-$TOOL_VERSION-$(uname)-$(uname -m).sh" -b -p $DEST && \
-    rm -f "Mambaforge-$TOOL_VERSION-$(uname)-$(uname -m).sh"
-    
+    mkdir -p $DEST/bin && \
+    wget "micro.mamba.pm/install.sh" && \
+    chmod 0755 "install.sh" && \
+    VERSION=$TOOL_VERSION && yes | bash install.sh && \
+    ln -s ~/.local/bin/micromamba $MICROMAMBA
+
 
 
 ##########
@@ -251,7 +230,8 @@ ENV DEST=$TOOLS/$TOOL_NAME/$TOOL_VERSION
 
 # INSTALL
 RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
-    $MAMBA create python=$TOOL_VERSION -p $TOOLS/$TOOL_NAME/$TOOL_VERSION && \
+    $MICROMAMBA create python=$TOOL_VERSION -p $TOOLS/$TOOL_NAME/$TOOL_VERSION && \
+    $MICROMAMBA clean --all && \
     cd $TOOLS/$TOOL_NAME && \
     ln -s $TOOL_VERSION current
 
@@ -262,7 +242,6 @@ RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
 ############
 
 ENV TOOL_NAME=exomiser
-#ENV TOOL_VERSION=13.2.0
 ENV TOOL_VERSION=14.0.0
 ENV TARBALL_LOCATION=https://data.monarchinitiative.org/exomiser/$TOOL_VERSION
 ENV TARBALL=exomiser-cli-$TOOL_VERSION-distribution.zip
@@ -306,17 +285,9 @@ RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
     mkdir -p $HOWARD_HOME && \
     ln -s $TOOLS $HOWARD_HOME$TOOLS && \
     ln -s $DATABASES $HOWARD_HOME$DATABASES && \
-    ln -s $DATA $HOWARD_HOME$DATA
-
-
-
-######################
-# YUM REMOVE & CLEAR #
-######################
-
-RUN [ "${YUM_REMOVE}" != "" ] && yum erase -y $YUM_REMOVE || echo "Nothing to clean"
-RUN yum clean all
-
+    ln -s $DATA $HOWARD_HOME$DATA && \
+    python -m pip cache purge && \
+    rm -rf $DEST/.git* $DEST/howard.*
 
 
 ##############################
