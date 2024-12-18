@@ -1,6 +1,6 @@
 
 ##############################################################
-# Dockerfile Version:   1.6
+# Dockerfile Version:   1.7
 # Software:             HOWARD
 # Software Version:     0.12.1
 # Software Website:     https://github.com/bioinfo-chru-strasbourg/howard
@@ -37,7 +37,7 @@
 # FROM #
 ########
 
-FROM almalinux:8
+FROM almalinux:8-minimal
 LABEL Software="HOWARD" \
 	Version="0.12.1" \
 	Website="https://github.com/bioinfo-chru-strasbourg/howard" \
@@ -75,14 +75,14 @@ ENV PERL_INSTALL="perl-Switch perl-Time-HiRes perl-Data-Dumper perl-Digest-MD5 p
 ###############
 
 # AlmaLinux GPG key and YUM install and Perl install and bashrc
-RUN echo "#[INFO] System YUM packages installation" && \
+RUN echo "#[INFO] System packages installation" && \
     rpm --import https://repo.almalinux.org/almalinux/RPM-GPG-KEY-AlmaLinux && \
-    yum install -y yum-utils && \
-    yum config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo && \
-    yum install -y epel-release && \
-    yum install -y $YUM_INSTALL && \
-    yum install -y --enablerepo=powertools $PERL_INSTALL && \
-    yum clean all && \
+    microdnf install -y wget && \
+    wget https://download.docker.com/linux/centos/docker-ce.repo -O /etc/yum.repos.d/docker-ce.repo && \
+    microdnf install -y epel-release && \
+    microdnf install -y $YUM_INSTALL && \
+    microdnf install -y --enablerepo=powertools $PERL_INSTALL && \
+    microdnf clean all && \
     echo 'alias ll="ls -lah"' >> ~/.bashrc;
 
 
@@ -197,45 +197,6 @@ RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
     ln -s $TOOL_DATABASE_FOLDER $DEST/bin/databases ;
 
 
-##############
-# MICROMAMBA #
-##############
-
-ENV TOOL_NAME=micromamba
-ENV TOOL_VERSION=2.0.5-0
-ENV DEST=$TOOLS/$TOOL_NAME/$TOOL_VERSION
-ENV MICROMAMBA=$DEST/bin/micromamba
-ENV PATH=$TOOLS/$TOOL_NAME/current/bin:$PATH
-
-RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
-    mkdir -p $DEST/bin && \
-    wget "micro.mamba.pm/install.sh" && \
-    chmod 0755 "install.sh" && \
-    VERSION=$TOOL_VERSION && yes | bash install.sh && \
-    ln -s ~/.local/bin/micromamba $MICROMAMBA
-
-
-
-##########
-# PYTHON #
-##########
-
-ENV TOOL_NAME=python
-ENV PATH=$TOOLS/$TOOL_NAME/current/bin:$PATH
-
-# PYTHON 3.10 - current
-ENV TOOL_NAME=python
-ENV TOOL_VERSION=3.10
-ENV DEST=$TOOLS/$TOOL_NAME/$TOOL_VERSION
-
-# INSTALL
-RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
-    $MICROMAMBA create python=$TOOL_VERSION -p $TOOLS/$TOOL_NAME/$TOOL_VERSION && \
-    $MICROMAMBA clean --all && \
-    cd $TOOLS/$TOOL_NAME && \
-    ln -s $TOOL_VERSION current
-
-
 
 ############
 # EXOMISER #
@@ -260,6 +221,46 @@ RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
 
 
 
+#############
+# MINIFORGE #
+#############
+
+ENV TOOL_NAME=miniforge
+ENV TOOL_VERSION=24.7.1-2
+ENV TARBALL_LOCATION=https://github.com/conda-forge/miniforge/releases/download/$TOOL_VERSION
+ENV TARBALL=Miniforge-pypy3.sh
+ENV DEST=$TOOLS/$TOOL_NAME/$TOOL_VERSION
+ENV MAMBA=$DEST/bin/mamba
+ENV PATH=$TOOLS/$TOOL_NAME/current/bin:$PATH
+
+# INSTALL
+RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
+    wget $TARBALL_LOCATION/Miniforge-pypy3-$TOOL_VERSION-$(uname)-$(uname -m).sh -O $TARBALL && \
+    bash $TARBALL -b -p $DEST && \
+    rm -f $TARBALL
+
+
+##########
+# PYTHON #
+##########
+
+ENV TOOL_NAME=python
+ENV PATH=$TOOLS/$TOOL_NAME/current/bin:$PATH
+
+# PYTHON 3.10 - current
+ENV TOOL_NAME=python
+ENV TOOL_VERSION=3.10
+ENV DEST=$TOOLS/$TOOL_NAME/$TOOL_VERSION
+
+# INSTALL
+RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
+    $MAMBA create python=$TOOL_VERSION -p $TOOLS/$TOOL_NAME/$TOOL_VERSION && \
+    $MAMBA clean --all && \
+    cd $TOOLS/$TOOL_NAME && \
+    ln -s $TOOL_VERSION current
+
+
+
 ###########
 # HOWARD #
 ###########
@@ -274,20 +275,19 @@ ENV HOWARD_HOME=$USER_HOME/howard
 # INSTALL
 ADD . $DEST
 RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
-    ln -s $DEST $TOOLS/$TOOL_NAME/current && \
-    chmod 0775 $DEST $TOOLS/$TOOL_NAME/current -R && \
+    chmod 0775 $DEST -R && \
 	mkdir -p $DATABASES && \
 	ln -s $TOOL_VERSION $TOOLS/$TOOL_NAME/current && \
 	ln -s $DEST/ /tool && \
     (cd /tool && python -m pip install -e .) && \
     mkdir -p $DEST/bin && \
-    cp $(whereis howard | cut -d" " -f2) $DEST/bin/ && \
     mkdir -p $HOWARD_HOME && \
     ln -s $TOOLS $HOWARD_HOME$TOOLS && \
     ln -s $DATABASES $HOWARD_HOME$DATABASES && \
     ln -s $DATA $HOWARD_HOME$DATA && \
     python -m pip cache purge && \
-    rm -rf $DEST/.git* $DEST/howard.*
+    rm -rf $DEST/.git* && \
+    howard --help
 
 
 ##############################
