@@ -1585,7 +1585,7 @@ class Variants:
                     field = ".*"
 
                 # Find all fields with pattern
-                r = re.compile(field)
+                r = re.compile(rf"^{field}$")
                 fields_search = sorted(list(filter(r.match, fields_in_header)))
 
                 # Remove fields input from search
