@@ -14,7 +14,6 @@ howard.egg-info/
 tests/databases/annovar/
 tests/databases/snpeff/
 tests/databases/genomes/
-tests/databases/hgmd/
 tests/databases/refseq/
 tests/databases/hg19.fa
 tests/databases/hg19.fa.fai
