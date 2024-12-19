@@ -6,6 +6,7 @@ howard.egg-info/
 .coverage
 .tmp
 .git
+.github
 .gitignore
 .obsidian
 .benchmarks
@@ -21,6 +22,7 @@ tests/databases/.DS_Store
 tests/data/TEM*
 howard/functions/duckdb_extension
 build/
+dist/
 benchmark/
 notes/
 kubernetes/
