@@ -118,6 +118,14 @@ HOWARD is multithreaded through the number of variants and by database
 
 ### Quick install
 
+Download HOWARD source code from gitHub:
+
+```bash
+mkdir -p ~/howard/src
+cd ~/howard/src
+git clone https://github.com/bioinfo-chru-strasbourg/howard.git .
+```
+
 Install HOWARD using Python Pip tool (we strongly suggest to use a virtual environment, such as conda):
 
 ``` bash
