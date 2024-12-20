@@ -60,6 +60,7 @@ HOWARD is able to add plugins for further analyses.
 ## Table of contents
 
 - [Installation](#installation)
+  - [Download](#download)
   - [Python](#python)
   - [Docker](#docker)
   - [Databases](#databases)
@@ -83,6 +84,16 @@ HOWARD can be installed using [Python](#python), and a [Docker](#docker)
 installation provides a CLI (Command Line Interface) with all external
 tools and useful databases. [Databases](#databases) can be automatically
 downloaded, or home-made generated (created or downloaded).
+
+## Download
+
+Download sources from gitHub
+
+```bash
+mkdir -p ~/howard/src
+cd ~/howard/src
+git clone https://github.com/bioinfo-chru-strasbourg/howard.git .
+```
 
 ## Python
 
