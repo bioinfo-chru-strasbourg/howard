@@ -27,14 +27,347 @@
             "Description": "List of OMIM ID"
         }
     },
+    "20240913_morbid": {
+        "reference": "hg19",
+        "genes": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Gene symbol"
+        },
+        "transcript": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Refgene transcript"
+        },
+        "OMIM_morbid": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Yes if OMIM morbid"
+        }
+    },
+    "20240913_morbidCandidate": {
+        "reference": "hg19",
+        "genes": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Gene symbol"
+        },
+        "transcript": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Refgene transcript"
+        },
+        "OMIM_morbid_candidate": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Yes if OMIM morbid candidate"
+        }
+    },
+    "Annotation_Genes_DI_V03": {
+        "reference": "hg19",
+        "genes": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Gene symbol"
+        },
+        "transcript": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Refgene transcript"
+        },
+        "maladie": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "maladie"
+        },
+        "Mss": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Mss"
+        },
+        "LoF": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Loss of Function"
+        },
+        "inheritance": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "inheritance, AR, AD, XL..."
+        },
+        "detail": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Disease explanation"
+        },
+        "OMIM": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "OMIM number"
+        },
+        "Phenotype": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Phenotype"
+        }
+    },
+    "Annotations_pour_Varank_Liste_v4_genespanelMYOPATHIE_2_20200611": {
+        "reference": "hg19",
+        "genes": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Gene symbol"
+        },
+        "transcript": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Refgene transcript"
+        },
+        "INHERITANCE v4": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "inheritance, AR, AD, XL..."
+        },
+        "v design": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "STARK design version"
+        },
+        "FILNEMUS": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Present in FILNEMUS gene list"
+        },
+        "DISEASE GROUP 2019": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Present in DISEASE GROUP 2019 pathology list"
+        },
+        "DISEASE NAME": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Disease name"
+        },
+        "Signes appels": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Warning clinical sign"
+        }
+    },
+    "BBS_Tableau_Genes_VaRank": {
+        "reference": "hg19",
+        "genes": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Gene symbol"
+        },
+        "transcript": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Refgene transcript"
+        },
+        "BBS": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "BBS genes"
+        },
+        "NPHP": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "NPHP genes"
+        },
+        "MKS": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "MKS genes"
+        },
+        "Joubert": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Joubert genes"
+        },
+        "Senior Loken": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Senior Loken genes"
+        },
+        "Alstrom": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Alstrom gene"
+        }
+    },
+    "EPI-PAGEMv5.1_092024": {
+        "reference": "hg19",
+        "genes": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Gene symbol"
+        },
+        "transcript": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Refgene transcript"
+        },
+        "EPI": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "True if gene is in epilepsy pannel"
+        }
+    },
+    "v5_Annotations_Varank": {
+        "reference": "hg19",
+        "genes": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Gene symbol"
+        },
+        "transcript": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Refgene transcript"
+        },
+        "GENE": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Gene symbol"
+        },
+        "INHERITANCE v5": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "inheritance, AR, AD, XL..."
+        },
+        "v design": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "STARK design version"
+        },
+        "FILNEMUS 2019": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Present in FILNEMUS gene list"
+        },
+        "v5 DISEASE NAME GT2022": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Disease list DISEASE NAME GT2022"
+        },
+        "v5 DISEASE GP GT2022": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Disease list DISEASE GP GT2022"
+        },
+        "Signes appels": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Warning clinical sign"
+        }
+    },
+    "RP_Design_v9_19052020_v4": {
+        "reference": "hg19",
+        "genes": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Gene symbol"
+        },
+        "transcript": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Refgene transcript"
+        },
+        "Disease_Acronym": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Disease acronym"
+        },
+        "Disease_Name_RetNet": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Disease Name RetNet"
+        }
+    },
+    "dentalList.merged": {
+        "reference": "hg19",
+        "genes": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Gene symbol"
+        },
+        "transcript": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Refgene transcript"
+        },
+        "dentalLists": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Disease list with inheritance"
+        },
+        "dentalInteractors": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "dental Interactors"
+        }
+    },
+    "genes_NER": {
+        "reference": "hg19",
+        "genes": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Gene symbol"
+        },
+        "transcript": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Refgene transcript"
+        },
+        "pathologie": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "NER, pathology pathway"
+        }
+    },
+    "DDG2P": {
+        "reference": "hg19",
+        "genes": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Gene symbol"
+        },
+        "transcript": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Refgene transcript"
+        },
+        "DDD_status": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Green, Red, Removed or empty, conf DDG2P consortium. Green for Definitive, Strong and Moderate, Red for Limited, Removed for gene removed from the DD panel"
+        },
+        "DDD_mode": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Mode of inheritance"
+        },
+        "DDD_disease": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Phenotypes"
+        },
+        "DDD_pmid": {
+            "Number": "1",
+            "Type": "String",
+            "Description": "Publicatio"
+        }
+    },
     "replace": {
         ",": "|",
-        ";": ","
+        ";": "_"
     },
     "extra_col_list": [
         "transcript"
     ],
     "transcript_extann": "",
-    "mode_extann": "",
-    "refgene_extann": ""
+    "mode_extann": "all",
+    "refgene_extann": "",
 }
