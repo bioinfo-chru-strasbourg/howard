@@ -90,7 +90,11 @@ def test_create_transcript_view(input_vcf):
 
         # Create object
         variants = Variants(
-            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            param=param,
+            load=True,
         )
 
         # Create transcript view
@@ -103,6 +107,7 @@ def test_create_transcript_view(input_vcf):
         query_check = f"""
             SELECT * FROM {transcripts_table}
             ORDER BY "#CHROM", POS, REF, ALT, transcript
+            LIMIT 1
         """
         check = variants.get_query_to_df(query=query_check)
         assert len(check) > 0
