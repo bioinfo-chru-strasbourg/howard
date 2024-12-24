@@ -2096,13 +2096,13 @@ class Variants:
         sort: bool = False,
         index: bool = False,
         order_by: str | None = None,
-        fields_to_rename: dict | None = None
+        fields_to_rename: dict | None = None,
     ) -> bool:
         """
         The `export_output` function exports data from a VCF file to various formats, including VCF,
         CSV, TSV, PSV, and Parquet, with options for customization such as filtering, sorting, and
         partitioning.
-        
+
         :param output_file: The `output_file` parameter is a string that specifies the name of the
         output file where the exported data will be saved
         :type output_file: str | None
@@ -7600,7 +7600,12 @@ class Variants:
                                     in list_of_pzfields
                                 ):
                                     # VaRank prioritization score mode
-                                    if prioritization_score_mode.upper().strip() in ["VARANK", "MAX", "MAXIMUM", "TOP"]:
+                                    if prioritization_score_mode.upper().strip() in [
+                                        "VARANK",
+                                        "MAX",
+                                        "MAXIMUM",
+                                        "TOP",
+                                    ]:
                                         sql_set.append(
                                             f"{pz_prefix}Score{pzfields_sep}{profile} = CASE WHEN {criterion_score}>{pz_prefix}Score{pzfields_sep}{profile} THEN {criterion_score} ELSE {pz_prefix}Score{pzfields_sep}{profile} END "
                                         )
@@ -8986,7 +8991,9 @@ class Variants:
         if transcripts_table and transcripts_column:
             extra_field_transcript = f"{transcripts_table}.{transcripts_column}"
             # Explode if not exists
-            added_columns += self.explode_infos(fields=[transcripts_column], table=transcripts_table)
+            added_columns += self.explode_infos(
+                fields=[transcripts_column], table=transcripts_table
+            )
         else:
             extra_field_transcript = f"NULL"
 
@@ -9017,7 +9024,9 @@ class Variants:
             )
 
             # Transcripts rank
-            transcripts_rank = {transcript: rank for rank, transcript in enumerate(transcripts, start=1)}
+            transcripts_rank = {
+                transcript: rank for rank, transcript in enumerate(transcripts, start=1)
+            }
             transcripts_len = len(transcripts_rank)
 
             # Create main NOMEN column
@@ -9028,7 +9037,7 @@ class Variants:
                     transcripts=transcripts_rank,
                     pattern=nomen_pattern,
                     transcripts_source_order=transcripts_order,
-                    transcripts_len=transcripts_len
+                    transcripts_len=transcripts_len,
                 ),
                 axis=1,
             )
@@ -9548,7 +9557,11 @@ class Variants:
             for sample in self.get_header_sample_list() + ["FORMAT"]:
                 if sample in ped_samples:
                     value = f'dataframe_barcode."{barcode_infos}"'
-                    value_samples = "'" + ",".join([f""" "{sample}" """ for sample in ped_samples]) + "'"
+                    value_samples = (
+                        "'"
+                        + ",".join([f""" "{sample}" """ for sample in ped_samples])
+                        + "'"
+                    )
                     ped_samples
                 elif sample == "FORMAT":
                     value = f"'{tag}'"
@@ -11077,6 +11090,14 @@ class Variants:
             """
             self.execute_query(query=query_create_view)
 
+            # Remove temporary tables
+            if temporary_tables:
+                for temporary_table in list(set(temporary_tables)):
+                    query_drop_tmp_table = f"""
+                        DROP TABLE IF EXISTS {temporary_table}
+                    """
+                    self.execute_query(query=query_drop_tmp_table)
+
             # Remove added columns
             for added_column in added_columns:
                 self.drop_column(column=added_column)
@@ -11243,20 +11264,33 @@ class Variants:
                         key_clean = key_clean.upper()
 
                 # Type
-                query_json_type = f"""SELECT unnest(json_extract_string({annotation_format}, '$.*."{key}"')) AS '{key_clean}' FROM dataframe_annotation_format WHERE trim('{key}') NOT IN ('');"""
+                query_json_type = f"""
+                    SELECT * 
+                    FROM (
+                        SELECT 
+                            NULLIF(unnest(json_extract_string({annotation_format}, '$.*."{key}"')), '') AS '{key_clean}'
+                        FROM
+                            dataframe_annotation_format
+                        )
+                    WHERE "{key_clean}" NOT NULL AND "{key_clean}" NOT IN ('')
+                    LIMIT 1000
+                """
 
                 # Get DataFrame from query
                 df_json_type = self.get_query_to_df(query=query_json_type)
 
-                # Fill missing values with empty strings and then replace empty strings or None with NaN and drop rows with NaN
-                with pd.option_context("future.no_silent_downcasting", True):
-                    df_json_type.fillna(value="", inplace=True)
-                    replace_dict = {None: np.nan, "": np.nan}
-                    df_json_type.replace(replace_dict, inplace=True)
-                    df_json_type.dropna(inplace=True)
+                # # Fill missing values with empty strings and then replace empty strings or None with NaN and drop rows with NaN
+                # with pd.option_context("future.no_silent_downcasting", True):
+                #     df_json_type.fillna(value="", inplace=True)
+                #     replace_dict = {None: np.nan, "": np.nan}
+                #     df_json_type.replace(replace_dict, inplace=True)
+                #     df_json_type.dropna(inplace=True)
 
                 # Detect column type
                 column_type = detect_column_type(df_json_type[key_clean])
+
+                # Free up memory
+                del df_json_type
 
                 # Append
                 query_json_key.append(
@@ -11275,6 +11309,9 @@ class Variants:
                     );
             """
             self.execute_query(query=query_view)
+
+            # Free up memory
+            del dataframe_annotation_format
 
         else:
 
@@ -11686,7 +11723,7 @@ class Variants:
         regex_replace_dict = {}
         regex_replace_nb = 0
         regex_replace_partition = 125
-        regex_replace = "concat(INFO, ';')" # Add ';' to reduce regexp comlexity
+        regex_replace = "concat(INFO, ';')"  # Add ';' to reduce regexp comlexity
 
         if fields_to_rename is not None and access not in ["RO"]:
 
@@ -11713,15 +11750,17 @@ class Variants:
                     del header.infos[field_to_rename]
 
                     # Rename INFO patterns
-                    field_pattern = rf'(^|;)({field_to_rename})(=[^;]*)?;'
+                    field_pattern = rf"(^|;)({field_to_rename})(=[^;]*)?;"
                     if field_renamed is not None:
-                        field_renamed_pattern = rf'\1{field_renamed}\3;'
+                        field_renamed_pattern = rf"\1{field_renamed}\3;"
                     else:
-                        field_renamed_pattern = r'\1'
+                        field_renamed_pattern = r"\1"
 
                     # regexp replace
                     regex_replace_nb += 1
-                    regex_replace_key = math.floor(regex_replace_nb / regex_replace_partition)
+                    regex_replace_key = math.floor(
+                        regex_replace_nb / regex_replace_partition
+                    )
                     if (regex_replace_nb % regex_replace_partition) == 0:
                         regex_replace = "concat(INFO, ';')"
                     regex_replace = f"regexp_replace({regex_replace}, '{field_pattern}', '{field_renamed_pattern}')"
@@ -11732,18 +11771,25 @@ class Variants:
 
                     # Log
                     if field_renamed is not None:
-                        log.info(f"Rename or remove fields - field '{field_to_rename}' renamed to '{field_renamed}'")
+                        log.info(
+                            f"Rename or remove fields - field '{field_to_rename}' renamed to '{field_renamed}'"
+                        )
                     else:
-                        log.info(f"Rename or remove fields - field '{field_to_rename}' removed")
+                        log.info(
+                            f"Rename or remove fields - field '{field_to_rename}' removed"
+                        )
 
                 else:
 
-                    log.warning(f"Rename or remove fields - field '{field_to_rename}' not in header")
-
+                    log.warning(
+                        f"Rename or remove fields - field '{field_to_rename}' not in header"
+                    )
 
             # Rename INFO
-            for regex_replace_key, regex_replace  in regex_replace_dict.items():
-                log.info(f"Rename or remove fields - Process [{regex_replace_key+1}/{len(regex_replace_dict)}]...")
+            for regex_replace_key, regex_replace in regex_replace_dict.items():
+                log.info(
+                    f"Rename or remove fields - Process [{regex_replace_key+1}/{len(regex_replace_dict)}]..."
+                )
                 query = f"""
                     UPDATE {table}
                     SET
