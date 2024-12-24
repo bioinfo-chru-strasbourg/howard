@@ -11243,29 +11243,17 @@ class Variants:
                         key_clean = key_clean.upper()
 
                 # Type
-                query_json_type = f"""
-                    SELECT * 
-                    FROM (
-                        SELECT 
-                            NULLIF(unnest(json_extract_string({annotation_format}, '$.*."{key}"')), '') AS '{key_clean}'
-                        FROM
-                            dataframe_annotation_format
-                        WHERE 
-                            trim('{key}') NOT IN ('')
-                        )
-                    WHERE "{key_clean}" NOT IN ('')
-                    LIMIT 10000
-                """
+                query_json_type = f"""SELECT unnest(json_extract_string({annotation_format}, '$.*."{key}"')) AS '{key_clean}' FROM dataframe_annotation_format WHERE trim('{key}') NOT IN ('');"""
 
                 # Get DataFrame from query
                 df_json_type = self.get_query_to_df(query=query_json_type)
 
-                # # Fill missing values with empty strings and then replace empty strings or None with NaN and drop rows with NaN
-                # with pd.option_context("future.no_silent_downcasting", True):
-                #     df_json_type.fillna(value="", inplace=True)
-                #     replace_dict = {None: np.nan, "": np.nan}
-                #     df_json_type.replace(replace_dict, inplace=True)
-                #     df_json_type.dropna(inplace=True)
+                # Fill missing values with empty strings and then replace empty strings or None with NaN and drop rows with NaN
+                with pd.option_context("future.no_silent_downcasting", True):
+                    df_json_type.fillna(value="", inplace=True)
+                    replace_dict = {None: np.nan, "": np.nan}
+                    df_json_type.replace(replace_dict, inplace=True)
+                    df_json_type.dropna(inplace=True)
 
                 # Detect column type
                 column_type = detect_column_type(df_json_type[key_clean])
