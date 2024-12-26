@@ -794,7 +794,8 @@ def explode_annotation_format(
                 values = set(values)
             ann_list_infos = ",".join(values)
             if ann_list_infos:
-                ann_list.append(f"{prefix}{key}={ann_list_infos}")
+                header_clean = "".join(char for char in key if char.isalnum())
+                ann_list.append(f"{prefix}{header_clean}={ann_list_infos}")
 
         # join list
         annotation_explode = ";".join(ann_list)
