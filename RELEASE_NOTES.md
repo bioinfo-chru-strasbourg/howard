@@ -1,11 +1,12 @@
 # RELEASE NOTES
 
-## 0.12.1
+## 0.12.1.1
 
 Few updates and fixes.
 
 ### Updates
 
+- Improve transcripts table creation
 - Improve Docker image:
   - Using Micromamba instead of mamba
   - Reduce size by combining layers and cleaning caches
