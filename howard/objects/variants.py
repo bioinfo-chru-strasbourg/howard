@@ -2,7 +2,7 @@ import csv
 import gc
 import gzip
 import io
-import multiprocessing
+import multiprocessing as mp
 import os
 import random
 import re
@@ -10912,13 +10912,29 @@ class Variants:
             "transcript_id_mapping_force", None
         )
 
-        if struct:
+        # Transcripts table
+        if transcripts_table is None:
+            transcripts_table = param.get("transcripts", {}).get(
+                "table", transcripts_table_default
+            )
 
-            # Transcripts table
-            if transcripts_table is None:
-                transcripts_table = param.get("transcripts", {}).get(
-                    "table", transcripts_table_default
-                )
+        # Check transcripts table exists
+        if transcripts_table:
+
+            # Query to check if transcripts table exists
+            query_check_table = f"""
+                SELECT * 
+                FROM information_schema.tables 
+                WHERE table_name = '{transcripts_table}'
+            """
+            df_check_table = self.get_query_to_df(query=query_check_table)
+
+            # Check if transcripts table exists
+            if len(df_check_table) > 0 and not transcripts_table_drop:
+                log.debug(f"Table {transcripts_table} exists and not drop option")
+                return transcripts_table
+
+        if struct:
 
             # added_columns
             added_columns = []
@@ -11300,6 +11316,109 @@ class Variants:
             """
             unique_chroms = self.get_query_to_df(query=query_unique_chrom)
 
+            # Base for database anontation format
+            dataframe_annotation_format_base = f"""
+                SELECT "#CHROM", POS, REF, ALT, INFO, "{variant_id_column}", "{annotation_infos}"
+                FROM {table_variants}
+            """
+
+            # Create dataframe for keys column type
+            dataframe_annotation_format = self.get_query_to_df(
+                f""" {dataframe_annotation_format_base} LIMIT 1000 """
+            )
+
+            # Define a vectorized function to apply explode_annotation_format
+            vectorized_explode_annotation_format = np.vectorize(
+                lambda x: explode_annotation_format(
+                    annotation=str(x),
+                    uniquify=uniquify,
+                    output_format="JSON",
+                    prefix="",
+                    header=list(ann_header_desc.values()),
+                )
+            )
+
+            # Assign the exploded annotations back to the dataframe
+            dataframe_annotation_format[annotation_format_infos] = (
+                vectorized_explode_annotation_format(
+                    dataframe_annotation_format[annotation_infos].to_numpy()
+                )
+            )
+
+            # Find keys
+            query_json = f"""
+                SELECT distinct(unnest(json_keys({annotation_format}, '$.0'))) AS 'key'
+                FROM dataframe_annotation_format;
+            """
+            df_keys = self.get_query_to_df(query=query_json)
+
+            # Check keys
+            query_json_key = []
+            for _, row in df_keys.iterrows():
+
+                # Key
+                key = row.iloc[0]
+                key_clean = key
+
+                # key rename
+                if column_rename:
+                    key_clean = column_rename.get(key_clean, key_clean)
+
+                # key clean
+                if column_clean:
+                    key_clean = clean_annotation_field(key_clean)
+
+                # Key case
+                if column_case:
+                    if column_case.lower() in ["lower"]:
+                        key_clean = key_clean.lower()
+                    elif column_case.lower() in ["upper"]:
+                        key_clean = key_clean.upper()
+
+                # Type
+                query_json_type = f"""
+                    SELECT * 
+                    FROM (
+                        SELECT 
+                            NULLIF(unnest(json_extract_string({annotation_format}, '$.*."{key}"')), '') AS '{key_clean}'
+                        FROM
+                            dataframe_annotation_format
+                        )
+                    WHERE "{key_clean}" NOT NULL AND "{key_clean}" NOT IN ('')
+                """
+
+                # Get DataFrame from query
+                df_json_type = self.get_query_to_df(query=query_json_type)
+
+                # Detect column type
+                column_type = detect_column_type(df_json_type[key_clean])
+
+                # Free up memory
+                del df_json_type
+
+                # Append
+                query_json_key.append(
+                    f"""NULLIF(unnest(json_extract_string({annotation_format}, '$.*."{key}"')), '')::{column_type}  AS '{prefix}{key_clean}' """
+                )
+
+            # Create table with structure but without data, if not exists
+            query_create_table = f"""
+                CREATE TABLE IF NOT EXISTS {view_name}
+                AS (
+                    SELECT *, {annotation_id} AS 'transcript'
+                    FROM (
+                        SELECT "#CHROM", POS, REF, ALT, INFO, {",".join(query_json_key)}
+                        FROM dataframe_annotation_format
+                        )
+                    LIMIT 0
+                    );
+            """
+            self.execute_query(query=query_create_table)
+
+            # Free up memory
+            del dataframe_annotation_format
+
+            # Insert data by chromosome
             for chrom in unique_chroms["#CHROM"]:
 
                 # Log
@@ -11307,13 +11426,11 @@ class Variants:
 
                 # Create dataframe
                 dataframe_annotation_format = self.get_query_to_df(
-                    f""" SELECT "#CHROM", POS, REF, ALT, INFO, "{variant_id_column}", "{annotation_infos}" FROM {table_variants}  WHERE "#CHROM" = '{chrom}' """
+                    f""" {dataframe_annotation_format_base}  WHERE "#CHROM" = '{chrom}' """
                 )
 
-                # Create annotation columns
-                dataframe_annotation_format[
-                    annotation_format_infos
-                ] = dataframe_annotation_format[annotation_infos].apply(
+                # Define a vectorized function to apply explode_annotation_format
+                vectorized_explode_annotation_format = np.vectorize(
                     lambda x: explode_annotation_format(
                         annotation=str(x),
                         uniquify=uniquify,
@@ -11323,111 +11440,21 @@ class Variants:
                     )
                 )
 
-                # Find keys
-                query_json = f"""SELECT distinct(unnest(json_keys({annotation_format}, '$.0'))) AS 'key' FROM dataframe_annotation_format;"""
-                df_keys = self.get_query_to_df(query=query_json)
-
-                # Check keys
-                query_json_key = []
-                for _, row in df_keys.iterrows():
-
-                    # Key
-                    key = row.iloc[0]
-                    key_clean = key
-
-                    # key rename
-                    if column_rename:
-                        key_clean = column_rename.get(key_clean, key_clean)
-
-                    # key clean
-                    if column_clean:
-                        key_clean = clean_annotation_field(key_clean)
-
-                    # Key case
-                    if column_case:
-                        if column_case.lower() in ["lower"]:
-                            key_clean = key_clean.lower()
-                        elif column_case.lower() in ["upper"]:
-                            key_clean = key_clean.upper()
-
-                    # Type
-                    query_json_type = f"""
-                        SELECT * 
-                        FROM (
-                            SELECT 
-                                NULLIF(unnest(json_extract_string({annotation_format}, '$.*."{key}"')), '') AS '{key_clean}'
-                            FROM
-                                dataframe_annotation_format
-                            )
-                        WHERE "{key_clean}" NOT NULL AND "{key_clean}" NOT IN ('')
-                        LIMIT 1000
-                    """
-
-                    # Get DataFrame from query
-                    df_json_type = self.get_query_to_df(query=query_json_type)
-
-                    # # Fill missing values with empty strings and then replace empty strings or None with NaN and drop rows with NaN
-                    # with pd.option_context("future.no_silent_downcasting", True):
-                    #     df_json_type.fillna(value="", inplace=True)
-                    #     replace_dict = {None: np.nan, "": np.nan}
-                    #     df_json_type.replace(replace_dict, inplace=True)
-                    #     df_json_type.dropna(inplace=True)
-
-                    # Detect column type
-                    column_type = detect_column_type(df_json_type[key_clean])
-
-                    # Free up memory
-                    del df_json_type
-
-                    # Append
-                    query_json_key.append(
-                        f"""NULLIF(unnest(json_extract_string({annotation_format}, '$.*."{key}"')), '')::{column_type}  AS '{prefix}{key_clean}' """
+                # Assign the exploded annotations back to the dataframe
+                dataframe_annotation_format[annotation_format_infos] = (
+                    vectorized_explode_annotation_format(
+                        dataframe_annotation_format[annotation_infos].to_numpy()
                     )
+                )
 
-                # # Create view
-                # query_view = f"""
-                #     CREATE TEMPORARY TABLE {view_name}
-                #     AS (
-                #         SELECT *, {annotation_id} AS 'transcript'
-                #         FROM (
-                #             SELECT "#CHROM", POS, REF, ALT, INFO, {",".join(query_json_key)}
-                #             FROM dataframe_annotation_format
-                #             )
-                #         );
-                # """
-                # self.execute_query(query=query_view)
-
-                # Create view by chromosome
-                ########
-
-                # Create table with structure but without data, if not exists
-                query_create_table = f"""
-                    CREATE TABLE IF NOT EXISTS {view_name}
-                    AS (
-                        SELECT *, {annotation_id} AS 'transcript'
-                        FROM (
-                            SELECT "#CHROM", POS, REF, ALT, INFO, {",".join(query_json_key)}
-                            FROM dataframe_annotation_format
-                            )
-                        LIMIT 0
-                        );
-                """
-                self.execute_query(query=query_create_table)
-
-                # Query to insert data by chunk on chromosome
-                query_chunk = f"""
+                # Insert data into tmp table
+                query_insert_chunk = f"""
+                    INSERT INTO {view_name}
                     SELECT *, {annotation_id} AS 'transcript'
                     FROM (
                         SELECT "#CHROM", POS, REF, ALT, INFO, {",".join(query_json_key)}
                         FROM dataframe_annotation_format
                         )
-                    
-                """
-
-                # Insert data into tmp table
-                query_insert_chunk = f"""
-                    INSERT INTO {view_name}
-                    {query_chunk}
                 """
                 self.execute_query(query=query_insert_chunk)
 
