@@ -3278,8 +3278,7 @@ def help_generation(
     #     prog_long_description_content_type = "text/plain"
 
     try:
-        meta = metadata("howard")
-        print(meta.keys())
+        meta = metadata("howard-ann")
         prog_name = meta.get("Name")
         prog_version = meta.get("Version")
         prog_description = meta.get("Summary")

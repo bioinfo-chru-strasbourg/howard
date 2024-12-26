@@ -495,7 +495,7 @@ def test_get_bin_command_snpeff():
             "bcftools": {
                 "bin": "bcftools",
                 "docker": {
-                    "image": "howard:0.12.1",
+                    "image": "howard:0.12.1.1",
                     "entrypoint": "bcftools",
                     "options": None,
                     "command": None,
@@ -527,7 +527,7 @@ def test_get_bin_command_bcftools():
             "bcftools": {
                 "bin": "bcftools",
                 "docker": {
-                    "image": "howard:0.12.1",
+                    "image": "howard:0.12.1.1",
                     "entrypoint": "bcftools",
                     "options": None,
                     "command": None,
@@ -558,7 +558,7 @@ def test_get_bin_command_bcftools():
             "--memory=16g",
             "--entrypoint='bcftools'",
             "-v /tmp/howard:/tmp/howard",
-            "howard:0.12.1",
+            "howard:0.12.1.1",
         ]
     )
     # Test command bcftools found with docker with added options
@@ -578,7 +578,7 @@ def test_get_bin_command_bcftools():
             "--entrypoint='bcftools'",
             "-v /host/path/to/mount:/inner/path_to/mount",
             "-v /tmp/howard:/tmp/howard",
-            "howard:0.12.1",
+            "howard:0.12.1.1",
         ]
     )
 
