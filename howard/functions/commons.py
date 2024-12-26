@@ -772,28 +772,29 @@ def explode_annotation_format(
     # Split annotation ann values
     annotation_infos = [x.split("|") for x in annotation.split(",")]
 
-    # Create Dataframe
-    annotation_dict = {}
-    for i in range(len(header)):
-        if output_format.upper() in ["JSON"]:
-            header_clean = header[i]
-        else:
-            header_clean = "".join(char for char in header[i] if char.isalnum())
-        annotation_dict[header_clean] = [x[i] for x in annotation_infos]
-    df = pd.DataFrame.from_dict(annotation_dict, orient="index").transpose()
+    # Create dictionary
+    annotation_dict = {header[i]: [] for i in range(len(header))}
+    for info in annotation_infos:
+        for i in range(len(header)):
+            annotation_dict[header[i]].append(info[i])
 
     # Fetch each annotations
-    if output_format.upper() in ["JSON"]:
-        annotation_explode = df.transpose().to_json()
+    if output_format.upper() == "JSON":
+
+        # Transpose dict
+        annotation_explode = {
+            i: {f"{prefix}{key}": value[i] for key, value in annotation_dict.items()}
+            for i in range(len(next(iter(annotation_dict.values()))))
+        }
+
     else:
         ann_list = []
-        for annotation in df:
+        for key, values in annotation_dict.items():
             if uniquify:
-                ann_list_infos = ",".join(df[annotation].unique())
-            else:
-                ann_list_infos = ",".join(df[annotation])
+                values = set(values)
+            ann_list_infos = ",".join(values)
             if ann_list_infos:
-                ann_list.append(f"{prefix}{annotation}={ann_list_infos}")
+                ann_list.append(f"{prefix}{key}={ann_list_infos}")
 
         # join list
         annotation_explode = ";".join(ann_list)
