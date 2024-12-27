@@ -4190,7 +4190,9 @@ def detect_column_type(column) -> str:
 
     from pandas.api.types import is_datetime64_any_dtype as is_datetime
 
-    if is_datetime(column):
+    if len(column) == 0:
+        return "VARCHAR"
+    elif is_datetime(column):
         return "DATETIME"
     elif column.dropna().apply(lambda x: str(x).lower() in ["true", "false"]).all():
         return "BOOLEAN"
