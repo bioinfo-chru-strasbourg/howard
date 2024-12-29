@@ -7756,6 +7756,7 @@ class Variants:
                                         END,
                                         '{pz_prefix}Tags{pzfields_sep}{profile}={pztags_value}'
                                     )
+                                WHERE 1=1
                                 """
                             sql_queries.append(sql_update_pztags)
 
@@ -7768,33 +7769,57 @@ class Variants:
                                         ';',
                                         '{pz_prefix}Tags={pztags_value}'
                                     )
+                                    WHERE 1=1
                                 """
                                 sql_queries.append(sql_update_pztags_default)
 
                         log.info(f"""Profile '{profile}' - Prioritization... """)
 
-                        if sql_queries:
+                        # Chromosomes list
+                        if False:
+                            sql_uniq_chrom = f"""
+                                SELECT DISTINCT "#CHROM"
+                                FROM {table_variants}
+                            """
+                            chroms = self.get_query_to_df(sql_uniq_chrom)["#CHROM"]
+                        else:
+                            chroms = ["%"]
 
-                            for sql_query in sql_queries:
-                                log.debug(
-                                    f"""Profile '{profile}' - Prioritization query: {sql_query}... """
-                                )
-                                self.conn.execute(sql_query)
+                        for chrom in chroms:
 
-                        log.info(f"""Profile '{profile}' - Update... """)
-                        sql_query_update = f"""
-                            UPDATE {table_variants}
-                            SET INFO =  
-                                concat(
-                                    CASE
-                                        WHEN INFO NOT IN ('','.')
-                                        THEN concat(INFO, ';')
-                                        ELSE ''
-                                    END
-                                    {sql_set_info_option}
-                                )
-                        """
-                        self.conn.execute(sql_query_update)
+                            log.debug(
+                                f"""Profile '{profile}' - Prioritization query - Chromosome '{chrom}'... """
+                            )
+
+                            if sql_queries:
+
+                                for sql_query in sql_queries:
+
+                                    sql_query_chrom = f"""
+                                        {sql_query}
+                                        AND "#CHROM" LIKE '{chrom}' 
+                                    """
+                                    # log.debug(f"sql_query_chrom={sql_query_chrom}")
+                                    log.debug(
+                                        f"""Profile '{profile}' - Prioritization query - Chomosome '{chrom}': {sql_query_chrom}"""
+                                    )
+                                    # self.conn.execute({sql_query_chrom})
+                                    self.execute_query(query=sql_query_chrom)
+
+                            log.info(f"""Profile '{profile}' - Update... """)
+                            sql_query_update = f"""
+                                UPDATE {table_variants}
+                                SET INFO =  
+                                    concat(
+                                        CASE
+                                            WHEN INFO NOT IN ('','.')
+                                            THEN concat(INFO, ';')
+                                            ELSE ''
+                                        END
+                                        {sql_set_info_option}
+                                    )
+                            """
+                            self.execute_query(query=sql_query_update)
 
         else:
 
