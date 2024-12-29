@@ -4199,7 +4199,11 @@ def detect_column_type(column) -> str:
     elif pd.to_numeric(column, errors="coerce").notnull().all():
         return "DOUBLE"
     else:
-        return "VARCHAR"
+        try:
+            pd.to_numeric(column)
+            return "DOUBLE"
+        except:
+            return "VARCHAR"
 
 
 def determine_column_number(values_list: list) -> str:

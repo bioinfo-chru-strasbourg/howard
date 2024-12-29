@@ -10682,50 +10682,13 @@ class Variants:
                     random.choices(string.ascii_uppercase + string.digits, k=10)
                 )
 
-                # # Temporary_tables
-                # temporary_tables.append(temporary_table)
-                # query_view = f"""
-                #     CREATE TEMPORARY TABLE {temporary_table}
-                #     AS ({query})
-                # """
-                # self.execute_query(query=query_view)
-
-                # Temporary_tables
+                # Temporary view
                 temporary_tables.append(temporary_table)
-
-                # List of unique #CHROM
-                query_unique_chrom = f"""
-                    SELECT DISTINCT "#CHROM"
-                    FROM variants
+                query_view = f"""
+                    CREATE view {temporary_table}
+                    AS ({query})
                 """
-                unique_chroms = self.get_query_to_df(query=query_unique_chrom)
-
-                # Create table with structure but without data
-                query_create_table = f"""
-                    CREATE TABLE {temporary_table}
-                    AS ({query} LIMIT 0)
-                """
-                self.execute_query(query=query_create_table)
-
-                # Process by #CHROM
-                for chrom in unique_chroms["#CHROM"]:
-
-                    # Log
-                    log.debug(f"Processing #CHROM={chrom}")
-
-                    # Select data by #CHROM
-                    query_chunk = f"""
-                        SELECT *
-                        FROM ({query})
-                        WHERE "#CHROM" = '{chrom}'
-                    """
-
-                    # Insert data
-                    query_insert_chunk = f"""
-                        INSERT INTO {temporary_table}
-                        {query_chunk}
-                    """
-                    self.execute_query(query=query_insert_chunk)
+                self.execute_query(query=query_view)
 
         return added_columns, temporary_tables, annotation_fields
 
@@ -10803,6 +10766,8 @@ class Variants:
         if annotation_fields is None:
             annotation_fields = []
 
+        added_columns = []
+
         for column_format in column_formats:
 
             # annotation field and transcript annotation field
@@ -10826,8 +10791,7 @@ class Variants:
             )
 
             # Create temporary view name
-            temporary_view_name = self.annotation_format_to_table(
-                uniquify=True,
+            temporary_view_name, added_columns = self.annotation_format_to_table(
                 annotation_field=annotation_field,
                 view_name=temporary_view_name,
                 annotation_id=transcript_annotation,
@@ -10854,7 +10818,7 @@ class Variants:
                 temporary_tables.append(temporary_view_name)
                 annotation_fields += list(set(df_annotation_fields["column_name"]))
 
-        return temporary_tables, annotation_fields
+        return added_columns, temporary_tables, annotation_fields
 
     def create_transcript_view(
         self,
@@ -10962,7 +10926,7 @@ class Variants:
 
             # from column format
             column_formats = struct.get("from_column_format", [])
-            temporary_tables_tmp, annotation_fields_tmp = (
+            added_columns, temporary_tables_tmp, annotation_fields_tmp = (
                 self.create_transcript_view_from_column_format(
                     transcripts_table=transcripts_table,
                     column_formats=column_formats,
@@ -10970,6 +10934,7 @@ class Variants:
                     annotation_fields=annotation_fields,
                 )
             )
+            added_columns += added_columns_tmp
             temporary_tables += temporary_tables_tmp
             annotation_fields += annotation_fields_tmp
 
@@ -11137,16 +11102,6 @@ class Variants:
                 """
                 self.execute_query(query=query_drop)
 
-            # # Merge and create transcript view
-            # query_create_view = f"""
-            #     CREATE TABLE IF NOT EXISTS {transcripts_table}
-            #     AS {query_merge_on_transcripts}
-            # """
-            # self.execute_query(query=query_create_view)
-
-            # Using #CHROM chunk
-            ######
-
             # List of unique #CHROM
             query_unique_chrom = f"""
                 SELECT DISTINCT "#CHROM"
@@ -11184,10 +11139,20 @@ class Variants:
             # Remove temporary tables
             if temporary_tables:
                 for temporary_table in list(set(temporary_tables)):
-                    query_drop_tmp_table = f"""
-                        DROP TABLE IF EXISTS {temporary_table}
-                    """
-                    self.execute_query(query=query_drop_tmp_table)
+                    try:
+                        query_drop_tmp_table = f"""
+                            DROP TABLE IF EXISTS {temporary_table}
+                        """
+                        self.execute_query(query=query_drop_tmp_table)
+                    except Exception as e:
+                        log.debug(f"'{temporary_table}' Not a table")
+                    try:
+                        query_drop_tmp_table = f"""
+                            DROP VIEW IF EXISTS {temporary_table}
+                        """
+                        self.execute_query(query=query_drop_tmp_table)
+                    except Exception as e:
+                        log.debug(f"'{temporary_table}' Not a view")
 
             # Remove added columns
             for added_column in added_columns:
@@ -11201,7 +11166,6 @@ class Variants:
 
     def annotation_format_to_table(
         self,
-        uniquify: bool = True,
         annotation_field: str = "ANN",
         annotation_id: str = "Feature_ID",
         view_name: str = "transcripts",
@@ -11253,9 +11217,6 @@ class Variants:
         which is stored in the variable `view_name`.
         """
 
-        # Annotation field
-        annotation_format = "annotation_explode"
-
         # Transcript annotation
         if column_rename:
             annotation_id = column_rename.get(annotation_id, annotation_id)
@@ -11267,10 +11228,6 @@ class Variants:
         prefix = self.get_explode_infos_prefix()
         if prefix:
             prefix = "INFO/"
-
-        # Annotation fields
-        annotation_infos = prefix + annotation_field
-        annotation_format_infos = prefix + annotation_format
 
         # Variants table
         table_variants = self.get_table_variants()
@@ -11305,59 +11262,32 @@ class Variants:
             else:
                 raise ValueError("Invalid header description format")
 
-            # Create variant id
-            variant_id_column = self.get_variant_id_column()
-            added_columns += [variant_id_column]
-
-            # Get list of #CHROM
-            query_unique_chrom = f"""
-                SELECT DISTINCT "#CHROM"
-                FROM variants AS subquery
-            """
-            unique_chroms = self.get_query_to_df(query=query_unique_chrom)
-
-            # Base for database anontation format
-            dataframe_annotation_format_base = f"""
-                SELECT "#CHROM", POS, REF, ALT, INFO, "{variant_id_column}", "{annotation_infos}"
-                FROM {table_variants}
-            """
-
             # Create dataframe for keys column type
             dataframe_annotation_format = self.get_query_to_df(
-                f""" {dataframe_annotation_format_base} LIMIT 1000 """
-            )
-
-            # Define a vectorized function to apply explode_annotation_format
-            vectorized_explode_annotation_format = np.vectorize(
-                lambda x: explode_annotation_format(
-                    annotation=str(x),
-                    uniquify=uniquify,
-                    output_format="JSON",
-                    prefix="",
-                    header=list(ann_header_desc.values()),
+                f""" 
+                WITH exploded_annotations AS (
+                    SELECT
+                        UNNEST(STRING_SPLIT(ANN, ',')) AS annotation
+                    FROM {table_variants}
+                ),
+                split_annotations AS (
+                    SELECT
+                        {", ".join([f"SPLIT_PART(annotation, '|', {i+1}) AS '{header}'" for i, header in enumerate(ann_header_desc.values())])},
+                    FROM exploded_annotations
                 )
+                SELECT * FROM split_annotations
+                LIMIT 1000
+                """
             )
 
-            # Assign the exploded annotations back to the dataframe
-            dataframe_annotation_format[annotation_format_infos] = (
-                vectorized_explode_annotation_format(
-                    dataframe_annotation_format[annotation_infos].to_numpy()
-                )
-            )
+            # Init
+            query_list_keys = []
+            key_i = 0
 
-            # Find keys
-            query_json = f"""
-                SELECT distinct(unnest(json_keys({annotation_format}, '$.0'))) AS 'key'
-                FROM dataframe_annotation_format;
-            """
-            df_keys = self.get_query_to_df(query=query_json)
-
-            # Check keys
-            query_json_key = []
-            for _, row in df_keys.iterrows():
+            for key in dataframe_annotation_format.keys():
 
                 # Key
-                key = row.iloc[0]
+                key_i += 1
                 key_clean = key
 
                 # key rename
@@ -11375,102 +11305,49 @@ class Variants:
                     elif column_case.lower() in ["upper"]:
                         key_clean = key_clean.upper()
 
-                # Type
-                query_json_type = f"""
-                    SELECT * 
-                    FROM (
-                        SELECT 
-                            NULLIF(unnest(json_extract_string({annotation_format}, '$.*."{key}"')), '') AS '{key_clean}'
-                        FROM
-                            dataframe_annotation_format
-                        )
-                    WHERE "{key_clean}" NOT NULL AND "{key_clean}" NOT IN ('')
-                """
-
-                # Get DataFrame from query
-                df_json_type = self.get_query_to_df(query=query_json_type)
-
                 # Detect column type
-                column_type = detect_column_type(df_json_type[key_clean])
+                column_type = detect_column_type(dataframe_annotation_format[key])
 
-                # Free up memory
-                del df_json_type
-
-                # Append
-                query_json_key.append(
-                    f"""NULLIF(unnest(json_extract_string({annotation_format}, '$.*."{key}"')), '')::{column_type}  AS '{prefix}{key_clean}' """
+                # Append key to list
+                query_list_keys.append(
+                    f""" NULLIF(SPLIT_PART(annotation, '|', {key_i}), '')::{column_type} AS '{prefix}{key_clean}' """
                 )
 
-            # Create table with structure but without data, if not exists
-            query_create_table = f"""
-                CREATE TABLE IF NOT EXISTS {view_name}
-                AS (
-                    SELECT *, {annotation_id} AS 'transcript'
-                    FROM (
-                        SELECT "#CHROM", POS, REF, ALT, INFO, {",".join(query_json_key)}
-                        FROM dataframe_annotation_format
-                        )
-                    LIMIT 0
-                    );
+            # Create temporary table
+            query_create_view = f"""
+                CREATE VIEW {view_name} AS (
+                    WITH exploded_annotations AS (
+                        SELECT
+                            "#CHROM",
+                            POS,
+                            REF,
+                            ALT,
+                            INFO,
+                            UNNEST(STRING_SPLIT(ANN, ',')) AS annotation
+                        FROM {table_variants}
+                    ),
+                    split_annotations AS (
+                        SELECT
+                            "#CHROM",
+                            POS,
+                            REF,
+                            ALT,
+                            INFO,
+                            {", ".join(query_list_keys)},
+                        FROM exploded_annotations
+                    )
+                    SELECT *, {annotation_id} AS 'transcript' FROM split_annotations
+                )
             """
-            self.execute_query(query=query_create_table)
-
-            # Free up memory
-            del dataframe_annotation_format
-
-            # Insert data by chromosome
-            for chrom in unique_chroms["#CHROM"]:
-
-                # Log
-                log.debug(f"Processing #CHROM={chrom}")
-
-                # Create dataframe
-                dataframe_annotation_format = self.get_query_to_df(
-                    f""" {dataframe_annotation_format_base}  WHERE "#CHROM" = '{chrom}' """
-                )
-
-                # Define a vectorized function to apply explode_annotation_format
-                vectorized_explode_annotation_format = np.vectorize(
-                    lambda x: explode_annotation_format(
-                        annotation=str(x),
-                        uniquify=uniquify,
-                        output_format="JSON",
-                        prefix="",
-                        header=list(ann_header_desc.values()),
-                    )
-                )
-
-                # Assign the exploded annotations back to the dataframe
-                dataframe_annotation_format[annotation_format_infos] = (
-                    vectorized_explode_annotation_format(
-                        dataframe_annotation_format[annotation_infos].to_numpy()
-                    )
-                )
-
-                # Insert data into tmp table
-                query_insert_chunk = f"""
-                    INSERT INTO {view_name}
-                    SELECT *, {annotation_id} AS 'transcript'
-                    FROM (
-                        SELECT "#CHROM", POS, REF, ALT, INFO, {",".join(query_json_key)}
-                        FROM dataframe_annotation_format
-                        )
-                """
-                self.execute_query(query=query_insert_chunk)
-
-                # Free up memory
-                del dataframe_annotation_format
+            log.debug(f"query_create_view: {query_create_view}")
+            self.execute_query(query=query_create_view)
 
         else:
 
             # Return None
             view_name = None
 
-        # Remove added columns
-        for added_column in added_columns:
-            self.drop_column(column=added_column)
-
-        return view_name
+        return view_name, added_columns
 
     def transcript_view_to_variants(
         self,
