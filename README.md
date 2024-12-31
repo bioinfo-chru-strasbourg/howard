@@ -60,6 +60,7 @@ HOWARD is able to add plugins for further analyses.
 ## Table of contents
 
 - [Installation](#installation)
+  - [Download](#download)
   - [Python](#python)
   - [Docker](#docker)
   - [Databases](#databases)
@@ -84,6 +85,16 @@ installation provides a CLI (Command Line Interface) with all external
 tools and useful databases. [Databases](#databases) can be automatically
 downloaded, or home-made generated (created or downloaded).
 
+## Download
+
+Download sources from gitHub
+
+```bash
+mkdir -p ~/howard/src
+cd ~/howard/src
+git clone https://github.com/bioinfo-chru-strasbourg/howard.git .
+```
+
 ## Python
 
 Install HOWARD using Python Pip tool, and run HOWARD for help options:
@@ -98,10 +109,7 @@ howard --help
 ``` text
 usage: howard [-h] {query,stats,convert,hgvs,annotation,calculation,prioritization,process,databases,gui} ...
 
-HOWARD:0.11.0
-Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery
-HOWARD annotates and prioritizes genetic variations, calculates and normalizes annotations,
-convert on multiple formats, query variations and generates statistics
+HOWARD:0.12.1.1 - Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery
 
 Shared arguments:
   -h, --help            show this help message and exit

@@ -61,6 +61,18 @@ def test_explode_annotation_format():
     annotation = "A|B|C,D|E|F"
     uniquify = False
     output_format = "fields"
+    prefix = ""
+    header = ["Allele", "Annotation", "Annotation_Impact"]
+    expected_output = "Allele=A,D;Annotation=B,E;AnnotationImpact=C,F"
+    assert (
+        explode_annotation_format(annotation, uniquify, output_format, prefix, header)
+        == expected_output
+    )
+
+    # Test case 2: Basic input with prefix
+    annotation = "A|B|C,D|E|F"
+    uniquify = False
+    output_format = "fields"
     prefix = "ANN_"
     header = ["Allele", "Annotation", "Annotation_Impact"]
     expected_output = "ANN_Allele=A,D;ANN_Annotation=B,E;ANN_AnnotationImpact=C,F"
@@ -69,13 +81,31 @@ def test_explode_annotation_format():
         == expected_output
     )
 
-    # Test case 2: Uniquify and JSON format
+    # Test case 3: Uniquify and JSON format
+    annotation = "A|B|C,D|E|F"
+    uniquify = True
+    output_format = "JSON"
+    prefix = ""
+    header = ["Allele", "Annotation", "Annotation_Impact"]
+    expected_output = {
+        0: {"Allele": "A", "Annotation": "B", "Annotation_Impact": "C"},
+        1: {"Allele": "D", "Annotation": "E", "Annotation_Impact": "F"},
+    }
+    assert (
+        explode_annotation_format(annotation, uniquify, output_format, prefix, header)
+        == expected_output
+    )
+
+    # Test case 4: Uniquify and JSON format with prefix
     annotation = "A|B|C,D|E|F"
     uniquify = True
     output_format = "JSON"
     prefix = "ANN_"
     header = ["Allele", "Annotation", "Annotation_Impact"]
-    expected_output = '{"0":{"Allele":"A","Annotation":"B","Annotation_Impact":"C"},"1":{"Allele":"D","Annotation":"E","Annotation_Impact":"F"}}'
+    expected_output = {
+        0: {"ANN_Allele": "A", "ANN_Annotation": "B", "ANN_Annotation_Impact": "C"},
+        1: {"ANN_Allele": "D", "ANN_Annotation": "E", "ANN_Annotation_Impact": "F"},
+    }
     assert (
         explode_annotation_format(annotation, uniquify, output_format, prefix, header)
         == expected_output
@@ -495,7 +525,7 @@ def test_get_bin_command_snpeff():
             "bcftools": {
                 "bin": "bcftools",
                 "docker": {
-                    "image": "howard:0.11.0",
+                    "image": "howard:0.12.1.1",
                     "entrypoint": "bcftools",
                     "options": None,
                     "command": None,
@@ -527,7 +557,7 @@ def test_get_bin_command_bcftools():
             "bcftools": {
                 "bin": "bcftools",
                 "docker": {
-                    "image": "howard:0.11.0",
+                    "image": "howard:0.12.1.1",
                     "entrypoint": "bcftools",
                     "options": None,
                     "command": None,
@@ -558,7 +588,7 @@ def test_get_bin_command_bcftools():
             "--memory=16g",
             "--entrypoint='bcftools'",
             "-v /tmp/howard:/tmp/howard",
-            "howard:0.11.0",
+            "howard:0.12.1.1",
         ]
     )
     # Test command bcftools found with docker with added options
@@ -578,7 +608,7 @@ def test_get_bin_command_bcftools():
             "--entrypoint='bcftools'",
             "-v /host/path/to/mount:/inner/path_to/mount",
             "-v /tmp/howard:/tmp/howard",
-            "howard:0.11.0",
+            "howard:0.12.1.1",
         ]
     )
 

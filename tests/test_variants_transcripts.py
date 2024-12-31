@@ -88,9 +88,17 @@ def test_create_transcript_view(input_vcf):
             }
         }
 
+        # Config
+        config = tests_config
+
         # Create object
         variants = Variants(
-            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            param=param,
+            load=True,
         )
 
         # Create transcript view
@@ -106,6 +114,23 @@ def test_create_transcript_view(input_vcf):
         """
         check = variants.get_query_to_df(query=query_check)
         assert len(check) > 0
+
+        # Count number of lines in transcripts table
+        count_lines = len(check)
+
+        # ReCreate transcript view
+        transcripts_table = variants.create_transcript_view()
+
+        # Check table content
+        query_check = f"""
+            SELECT * FROM {transcripts_table}
+            ORDER BY "#CHROM", POS, REF, ALT, transcript
+        """
+        check = variants.get_query_to_df(query=query_check)
+        assert len(check) > 0
+
+        # Check if number of lines is the same
+        assert len(check) == count_lines
 
 
 @pytest.mark.parametrize(
@@ -170,9 +195,17 @@ def test_create_transcript_view_to_variants(input_vcf):
             }
         }
 
+        # Config
+        config = tests_config
+
         # Create object
         variants = Variants(
-            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            param=param,
+            load=True,
         )
 
         # Create transcript view
@@ -383,9 +416,17 @@ def test_transcripts_prioritization(input_vcf):
             param_prioritization
         )
 
+        # Config
+        config = tests_config
+
         # Create object
         variants = Variants(
-            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            param=param,
+            load=True,
         )
 
         # Create transcript view
@@ -722,7 +763,11 @@ def test_transcripts_prioritization_multiple_param(
 
         # Create object
         variants = Variants(
-            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            param=param,
+            load=True,
         )
 
         # Create transcript view
@@ -1068,9 +1113,17 @@ def test_create_transcript_view_rename_clean_case(struct, fields_list):
         # Construct param dict
         param = {"transcripts": {"table": "transcripts", "struct": struct}}
 
+        # Config
+        config = tests_config
+
         # Create object
         variants = Variants(
-            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            param=param,
+            load=True,
         )
 
         # Create transcript view
@@ -1202,9 +1255,17 @@ def test_transcripts_prioritization_multiple_param_fields_renamed(
             param_prioritization
         )
 
+        # Config
+        config = tests_config
+
         # Create object
         variants = Variants(
-            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            param=param,
+            load=True,
         )
 
         # Create transcript view
@@ -1661,9 +1722,17 @@ def test_transcripts_create_view_param_mapping(
             param_prioritization
         )
 
+        # Config
+        config = tests_config
+
         # Create object
         variants = Variants(
-            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            param=param,
+            load=True,
         )
 
         # Create transcript view
@@ -1777,9 +1846,16 @@ def test_transcripts_create_view_export(output):
         # Param without prioritization
         param_with_transcripts = {"transcripts": dict(param_struct)}
 
+        # Config
+        config = tests_config
+
         # Create object
         variants = Variants(
-            conn=None, input=input_vcf, param=param_with_transcripts, load=True
+            conn=None,
+            input=input_vcf,
+            config=config,
+            param=param_with_transcripts,
+            load=True,
         )
 
         # Create transcript view

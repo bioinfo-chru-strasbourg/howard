@@ -60,8 +60,10 @@ HOWARD is multithreaded through the number of variants and by database
 - [Installation](#installation)
   - [Python](#python)
     - [Quick install](#quick-install)
+    - [Requirements](#requirements)
     - [GUI install](#quick-install)
     - [Configuration](#configuration)
+    - [External tools](#external-tools)
   - [Docker](#docker)
     - [Quick start](#quick-start)
     - [Setup container](#setup-container)
@@ -115,6 +117,14 @@ HOWARD is multithreaded through the number of variants and by database
 ## Python
 
 ### Quick install
+
+Download HOWARD source code from gitHub:
+
+```bash
+mkdir -p ~/howard/src
+cd ~/howard/src
+git clone https://github.com/bioinfo-chru-strasbourg/howard.git .
+```
 
 Install HOWARD using Python Pip tool (we strongly suggest to use a virtual environment, such as conda):
 

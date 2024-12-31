@@ -175,19 +175,37 @@
 <h1 data-number="1" id="release-notes"><span
 class="header-section-number">1</span> RELEASE NOTES</h1>
 <h2 data-number="1.1" id="section"><span
-class="header-section-number">1.1</span> 0.12.0</h2>
+class="header-section-number">1.1</span> 0.12.1.1</h2>
+<p>Few updates and fixes.</p>
+<h3 data-number="1.1.1" id="updates"><span
+class="header-section-number">1.1.1</span> Updates</h3>
+<ul>
+<li>Improve transcripts table creation</li>
+<li>Improve Docker image:
+<ul>
+<li>Using Micromamba instead of mamba</li>
+<li>Reduce size by combining layers and cleaning caches</li>
+</ul></li>
+</ul>
+<h3 data-number="1.1.2" id="fixes"><span
+class="header-section-number">1.1.2</span> Fixes</h3>
+<ul>
+<li>Fix tag of howard tool and docker images</li>
+</ul>
+<h2 data-number="1.2" id="section-1"><span
+class="header-section-number">1.2</span> 0.12.0</h2>
 <p>This release introduce &#x2018;BigWig&#x2019; annotation, prioritization options
 and transcripts view, improve samples managment, INFO/tags rename,
-annotation databases generation and operations, confugation files in
+annotation databases generation and operations, configuration files in
 YAML format, and python packages stability.</p>
-<h3 data-number="1.1.1" id="news"><span
-class="header-section-number">1.1.1</span> News</h3>
+<h3 data-number="1.2.1" id="news"><span
+class="header-section-number">1.2.1</span> News</h3>
 <ul>
 <li>Add annotation method &#x2018;BigWig&#x2019;</li>
 <li>Add prioritization options:
 <ul>
 <li>SQL syntax available to define filters</li>
-<li>New &#x2018;Class&#x2019; priorisation field</li>
+<li>New &#x2018;Class&#x2019; prioritization field</li>
 </ul></li>
 <li>New transcripts view:
 <ul>
@@ -204,14 +222,14 @@ TSV, Parquet</li>
 <li>Rename or remove INFO/tags before exporting</li>
 <li>Configuration and parameters files in YAML format allowed</li>
 <li>Add dynamic transcript column for NOMEN calculation (using
-transcript priorization column)</li>
+transcript prioritization column)</li>
 <li>Add plugins:
 <ul>
 <li>&#x2018;update_databases&#x2019;</li>
 </ul></li>
 </ul>
-<h3 data-number="1.1.2" id="updates"><span
-class="header-section-number">1.1.2</span> Updates</h3>
+<h3 data-number="1.2.2" id="updates-1"><span
+class="header-section-number">1.2.2</span> Updates</h3>
 <ul>
 <li>Improve snpEff annotations operations</li>
 <li>New option &#x2018;uniquify&#x2019; for dbSNFP generation, identification of
@@ -221,8 +239,8 @@ columns type</li>
 <li>Improve splice annotation</li>
 <li>Improve NOMEN generation</li>
 </ul>
-<h3 data-number="1.1.3" id="fixes"><span
-class="header-section-number">1.1.3</span> Fixes</h3>
+<h3 data-number="1.2.3" id="fixes-1"><span
+class="header-section-number">1.2.3</span> Fixes</h3>
 <ul>
 <li>Genotype format detection</li>
 <li>Fix packages releases</li>
@@ -232,12 +250,12 @@ class="header-section-number">1.1.3</span> Fixes</h3>
 <li>Fix BED annotation with parquet method</li>
 <li>More explicite log messages</li>
 </ul>
-<h2 data-number="1.2" id="section-1"><span
-class="header-section-number">1.2</span> 0.11.0</h2>
+<h2 data-number="1.3" id="section-2"><span
+class="header-section-number">1.3</span> 0.11.0</h2>
 <p>This release introduce splice annotation tool, and update duckDB
 python package for improve stability.</p>
-<h3 data-number="1.2.1" id="news-1"><span
-class="header-section-number">1.2.1</span> News</h3>
+<h3 data-number="1.3.1" id="news-1"><span
+class="header-section-number">1.3.1</span> News</h3>
 <ul>
 <li>Add splice tool with docker image</li>
 <li>Add plugins:
@@ -247,21 +265,21 @@ class="header-section-number">1.2.1</span> News</h3>
 samples)</li>
 </ul></li>
 </ul>
-<h3 data-number="1.2.2" id="updates-1"><span
-class="header-section-number">1.2.2</span> Updates</h3>
+<h3 data-number="1.3.2" id="updates-2"><span
+class="header-section-number">1.3.2</span> Updates</h3>
 <ul>
 <li>DuckDB 1.0.0 stable Snow Duck (Anas Nivis) release</li>
 <li>Add API Documentation</li>
 <li>Improve tests</li>
 </ul>
-<h3 data-number="1.2.3" id="fixes-1"><span
-class="header-section-number">1.2.3</span> Fixes</h3>
+<h3 data-number="1.3.3" id="fixes-2"><span
+class="header-section-number">1.3.3</span> Fixes</h3>
 <ul>
 <li>Paths parameters check fixed (genome and genomes-folders)</li>
 <li>Fix snpEff download error with databases list</li>
 </ul>
-<h2 data-number="1.3" id="section-2"><span
-class="header-section-number">1.3</span> 0.10.0</h2>
+<h2 data-number="1.4" id="section-3"><span
+class="header-section-number">1.4</span> 0.10.0</h2>
 <p>This release is a refactor of HOWARD (Highly Open Workflow for
 Annotation &amp; Ranking toward genomic variant Discovery) in Python,
 using Parquet and duckDB.</p>
@@ -271,20 +289,36 @@ tsv, parquet) and generates variants statistics.</p>
 <p>See <a href="README.html">README</a> and <a
 href="https://github.com/bioinfo-chru-strasbourg/howard">gitHub</a> for
 more explanations.</p>
-<h2 data-number="1.4" id="previous-releases"><span
-class="header-section-number">1.4</span> Previous releases</h2>
+<h2 data-number="1.5" id="previous-releases"><span
+class="header-section-number">1.5</span> Previous releases</h2>
 <p>See <a
 href="https://github.com/bioinfo-chru-strasbourg/howard">HOWARD
 gitHub</a> for more information about previous releases.</p>
-<h4 data-number="1.4.0.1" id="b-07102016"><span
-class="header-section-number">1.4.0.1</span> 0.9b-07/10/2016:</h4>
+<h3 data-number="1.5.1" id="b-07102016"><span
+class="header-section-number">1.5.1</span> 0.9b-07/10/2016</h3>
 <ul>
-<li>Script creation #### 0.9.1b-11/10/2016:</li>
-<li>Add Prioritization and Translation #### 0.9.1b-11/10/2016:</li>
-<li>Add snpEff annotation and stats #### 0.9.8b-21/03/2017:</li>
-<li>Add Multithreading on Prioritization and Translation ####
-0.9.9b-18/04/2017:</li>
-<li>Add Calculation step #### 0.9.10b-07/11/2017:</li>
+<li>Script creation</li>
+</ul>
+<h3 data-number="1.5.2" id="b-11102016"><span
+class="header-section-number">1.5.2</span> 0.9.1b-11/10/2016</h3>
+<ul>
+<li>Add Prioritization and Translation<br />
+</li>
+<li>Add snpEff annotation and stats</li>
+</ul>
+<h3 data-number="1.5.3" id="b-21032017"><span
+class="header-section-number">1.5.3</span> 0.9.8b-21/03/2017</h3>
+<ul>
+<li>Add Multithreading on Prioritization and Translation</li>
+</ul>
+<h3 data-number="1.5.4" id="b-18042017"><span
+class="header-section-number">1.5.4</span> 0.9.9b-18/04/2017</h3>
+<ul>
+<li>Add Calculation step</li>
+</ul>
+<h3 data-number="1.5.5" id="b-07112017"><span
+class="header-section-number">1.5.5</span> 0.9.10b-07/11/2017</h3>
+<ul>
 <li>Add generic file annotation through &#x2013;annotation option</li>
 <li>No need to be in configuration file</li>
 <li>Need to be in ANNOVAR database folder (file &#x2018;ASSEMBLY_ANN.txt&#x2019; for
@@ -294,24 +328,44 @@ annotation &#x2018;ANN&#x2019;)</li>
 &#x2013;show_annotations_full</li>
 <li>Add database download option nowget in VCFanotation.pl</li>
 <li>Fixes: multithreading, VAF calculation, configuration and check
-dependencies #### 0.9.11b-07/05/2018:</li>
+dependencies</li>
+</ul>
+<h3 data-number="1.5.6" id="b-07052018"><span
+class="header-section-number">1.5.6</span> 0.9.11b-07/05/2018</h3>
+<ul>
 <li>Replace VCFTOOLS command to BCFTOOLS command</li>
 <li>Release added into the output VCF</li>
 <li>Update SNPEff options</li>
 <li>Add VARTYPE, CALLING_QUALITY and CALLING_QUALITY_EXPLODE option on
 calculation</li>
-<li>Add description on calculations #### 0.9.11.1b-14/05/2018:</li>
+<li>Add description on calculations</li>
+</ul>
+<h3 data-number="1.5.7" id="b-14052018"><span
+class="header-section-number">1.5.7</span> 0.9.11.1b-14/05/2018</h3>
+<ul>
 <li>Improve VCF validation</li>
-<li>Fix snpEff annotation bug #### 0.9.11.2b-17/08/2018:</li>
+<li>Fix snpEff annotation bug</li>
+</ul>
+<h3 data-number="1.5.8" id="b-17082018"><span
+class="header-section-number">1.5.8</span> 0.9.11.2b-17/08/2018</h3>
+<ul>
 <li>Add &#x2013;vcf input vcf file option</li>
 <li>Create Output file directory automatically</li>
-<li>Improve Multithreading #### 0.9.12b-24/08/2018:</li>
+<li>Improve Multithreading</li>
+</ul>
+<h3 data-number="1.5.9" id="b-24082018"><span
+class="header-section-number">1.5.9</span> 0.9.12b-24/08/2018</h3>
+<ul>
 <li>Improve Multithreading</li>
 <li>Input VCF compressed with BGZIP accepted</li>
 <li>Output VCF compression level</li>
 <li>Add VCF input sorting and multiallele split step (by default)</li>
 <li>Add VCF input normalization step with option &#x2013;norm</li>
-<li>Bug fixes #### 0.9.13b-04/10/2018:</li>
+<li>Bug fixes</li>
+</ul>
+<h3 data-number="1.5.10" id="b-04102018"><span
+class="header-section-number">1.5.10</span> 0.9.13b-04/10/2018</h3>
+<ul>
 <li>Multithreading improved</li>
 <li>Change default output vcf</li>
 <li>Input vcf without samples allowed</li>
@@ -325,7 +379,11 @@ thread</li>
 with multithreading</li>
 <li>Replace &#x2013;filter and &#x2013;format parameters by &#x2013;prioritization and
 &#x2013;translation parameters</li>
-<li>Add snpeff options to VCFannotation.pl #### 0.9.14b-21/01/2019:</li>
+<li>Add snpeff options to VCFannotation.pl</li>
+</ul>
+<h3 data-number="1.5.11" id="b-21012019"><span
+class="header-section-number">1.5.11</span> 0.9.14b-21/01/2019</h3>
+<ul>
 <li>Reorganization of folders (bin, config, docs, toolbox&#x2026;).</li>
 <li>Improve Translation (TSV or VCF, sort on fields, selection of
 fields, filtering on fields), especially memory efficiency</li>
@@ -340,32 +398,53 @@ update mcap and regspintron) and prioritization</li>
 <li>Bug fixed: file identification in annotation configuration</li>
 <li>Bug fixed: calculation INFO fields header, snpeff parameters options
 on multithreading</li>
-<li>Bug fixed: snpeff parameters in command line ####
-0.9.15b-19/09/2019:</li>
+<li>Bug fixed: snpeff parameters in command line</li>
+</ul>
+<h3 data-number="1.5.12" id="b-19092019"><span
+class="header-section-number">1.5.12</span> 0.9.15b-19/09/2019</h3>
+<ul>
 <li>Rename HOWARD.sh to HOWARD.</li>
 <li>Add &#x2013;nomen_fields parameter and update NOMEN calculation.</li>
 <li>Add &#x2013;bcftools_stats and &#x2013;stats parameter.</li>
 <li>Change PZScore, PZFlag, PZComment and PZInfos generation, adding
 default PZ and all PZ filters.</li>
-<li>Bug fixed: translation fields identification. ####
-0.9.15.1b-28/05/2020:</li>
+<li>Bug fixed: translation fields identification.</li>
+</ul>
+<h3 data-number="1.5.13" id="b-28052020"><span
+class="header-section-number">1.5.13</span> 0.9.15.1b-28/05/2020</h3>
+<ul>
 <li>Bug fixed: NOMEN calculation clear previous NOMEN values if using
-force option. #### 0.9.15.2-12/10/2020:</li>
+force option.</li>
+</ul>
+<h3 data-number="1.5.14" id="section-4"><span
+class="header-section-number">1.5.14</span> 0.9.15.2-12/10/2020</h3>
+<ul>
 <li>Change &#x2013;norm parameter by adding &#x2018;&#x2013;check-ref=s&#x2019; in bcftools
 command.</li>
 <li>Add &#x2013;norm_options parameter.</li>
 <li>force translation VCF by default.</li>
-<li>Change VAF_stats and add DP_stats. #### 0.9.15.4-11/04/2021:</li>
+<li>Change VAF_stats and add DP_stats.</li>
+</ul>
+<h3 data-number="1.5.15" id="section-5"><span
+class="header-section-number">1.5.15</span> 0.9.15.4-11/04/2021</h3>
+<ul>
 <li>Remove &#x2013;snpeff_threads parameter (for snpEff 5.0e compatibility) and
 improve &#x2013;snpeff_stats.</li>
 <li>Add a check and rehead INFO fields if necessary (prevent some
 incorrect INFO header format).</li>
-<li>Fix &#x2013;compress parameter and add &#x2013;index parameter. ####
-0.9.15.5-21/07/2021:</li>
+<li>Fix &#x2013;compress parameter and add &#x2013;index parameter.</li>
+</ul>
+<h3 data-number="1.5.16" id="section-6"><span
+class="header-section-number">1.5.16</span> 0.9.15.5-21/07/2021</h3>
+<ul>
 <li>Add INFO description Type option, with autodetection.</li>
 <li>Add prioritization mode &#x2018;VaRank&#x2019;/&#x2018;max&#x2019; for score calculation.</li>
 <li>Add calculation DP, AD, GQ and associated stats.</li>
-<li>Fix INFO field type for VCF. #### 0.9.15.6-16/09/2021:</li>
+<li>Fix INFO field type for VCF.</li>
+</ul>
+<h3 data-number="1.5.17" id="section-7"><span
+class="header-section-number">1.5.17</span> 0.9.15.6-16/09/2021</h3>
+<ul>
 <li>Structural variant compatibility.</li>
 <li>NOMEN extraction and generation improved, with &#x2013;nomen_pattern option
 (only for SNV and InDel).</li>

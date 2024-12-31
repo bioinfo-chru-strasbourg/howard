@@ -2,7 +2,7 @@ import csv
 import gc
 import gzip
 import io
-import multiprocessing
+import multiprocessing as mp
 import os
 import random
 import re
@@ -1585,7 +1585,7 @@ class Variants:
                     field = ".*"
 
                 # Find all fields with pattern
-                r = re.compile(field)
+                r = re.compile(rf"^{field}$")
                 fields_search = sorted(list(filter(r.match, fields_in_header)))
 
                 # Remove fields input from search
@@ -2096,13 +2096,13 @@ class Variants:
         sort: bool = False,
         index: bool = False,
         order_by: str | None = None,
-        fields_to_rename: dict | None = None
+        fields_to_rename: dict | None = None,
     ) -> bool:
         """
         The `export_output` function exports data from a VCF file to various formats, including VCF,
         CSV, TSV, PSV, and Parquet, with options for customization such as filtering, sorting, and
         partitioning.
-        
+
         :param output_file: The `output_file` parameter is a string that specifies the name of the
         output file where the exported data will be saved
         :type output_file: str | None
@@ -7600,7 +7600,12 @@ class Variants:
                                     in list_of_pzfields
                                 ):
                                     # VaRank prioritization score mode
-                                    if prioritization_score_mode.upper().strip() in ["VARANK", "MAX", "MAXIMUM", "TOP"]:
+                                    if prioritization_score_mode.upper().strip() in [
+                                        "VARANK",
+                                        "MAX",
+                                        "MAXIMUM",
+                                        "TOP",
+                                    ]:
                                         sql_set.append(
                                             f"{pz_prefix}Score{pzfields_sep}{profile} = CASE WHEN {criterion_score}>{pz_prefix}Score{pzfields_sep}{profile} THEN {criterion_score} ELSE {pz_prefix}Score{pzfields_sep}{profile} END "
                                         )
@@ -8986,7 +8991,9 @@ class Variants:
         if transcripts_table and transcripts_column:
             extra_field_transcript = f"{transcripts_table}.{transcripts_column}"
             # Explode if not exists
-            added_columns += self.explode_infos(fields=[transcripts_column], table=transcripts_table)
+            added_columns += self.explode_infos(
+                fields=[transcripts_column], table=transcripts_table
+            )
         else:
             extra_field_transcript = f"NULL"
 
@@ -9017,7 +9024,9 @@ class Variants:
             )
 
             # Transcripts rank
-            transcripts_rank = {transcript: rank for rank, transcript in enumerate(transcripts, start=1)}
+            transcripts_rank = {
+                transcript: rank for rank, transcript in enumerate(transcripts, start=1)
+            }
             transcripts_len = len(transcripts_rank)
 
             # Create main NOMEN column
@@ -9028,7 +9037,7 @@ class Variants:
                     transcripts=transcripts_rank,
                     pattern=nomen_pattern,
                     transcripts_source_order=transcripts_order,
-                    transcripts_len=transcripts_len
+                    transcripts_len=transcripts_len,
                 ),
                 axis=1,
             )
@@ -9548,7 +9557,11 @@ class Variants:
             for sample in self.get_header_sample_list() + ["FORMAT"]:
                 if sample in ped_samples:
                     value = f'dataframe_barcode."{barcode_infos}"'
-                    value_samples = "'" + ",".join([f""" "{sample}" """ for sample in ped_samples]) + "'"
+                    value_samples = (
+                        "'"
+                        + ",".join([f""" "{sample}" """ for sample in ped_samples])
+                        + "'"
+                    )
                     ped_samples
                 elif sample == "FORMAT":
                     value = f"'{tag}'"
@@ -10586,6 +10599,9 @@ class Variants:
 
         for columns_map in columns_maps:
 
+            # Log
+            log.debug(f"columns_map={columns_map}")
+
             # Transcript column
             transcripts_column = columns_map.get("transcripts_column", None)
 
@@ -10646,7 +10662,7 @@ class Variants:
                         )
                         annotation_fields.append(as_field)
 
-                # Querey View
+                # Query View
                 query = f""" 
                     SELECT
                         "#CHROM", POS, REF, ALT, INFO,
@@ -10666,13 +10682,50 @@ class Variants:
                     random.choices(string.ascii_uppercase + string.digits, k=10)
                 )
 
+                # # Temporary_tables
+                # temporary_tables.append(temporary_table)
+                # query_view = f"""
+                #     CREATE TEMPORARY TABLE {temporary_table}
+                #     AS ({query})
+                # """
+                # self.execute_query(query=query_view)
+
                 # Temporary_tables
                 temporary_tables.append(temporary_table)
-                query_view = f"""
-                    CREATE TEMPORARY TABLE {temporary_table}
-                    AS ({query})
+
+                # List of unique #CHROM
+                query_unique_chrom = f"""
+                    SELECT DISTINCT "#CHROM"
+                    FROM variants
                 """
-                self.execute_query(query=query_view)
+                unique_chroms = self.get_query_to_df(query=query_unique_chrom)
+
+                # Create table with structure but without data
+                query_create_table = f"""
+                    CREATE TABLE {temporary_table}
+                    AS ({query} LIMIT 0)
+                """
+                self.execute_query(query=query_create_table)
+
+                # Process by #CHROM
+                for chrom in unique_chroms["#CHROM"]:
+
+                    # Log
+                    log.debug(f"Processing #CHROM={chrom}")
+
+                    # Select data by #CHROM
+                    query_chunk = f"""
+                        SELECT *
+                        FROM ({query})
+                        WHERE "#CHROM" = '{chrom}'
+                    """
+
+                    # Insert data
+                    query_insert_chunk = f"""
+                        INSERT INTO {temporary_table}
+                        {query_chunk}
+                    """
+                    self.execute_query(query=query_insert_chunk)
 
         return added_columns, temporary_tables, annotation_fields
 
@@ -10859,13 +10912,29 @@ class Variants:
             "transcript_id_mapping_force", None
         )
 
-        if struct:
+        # Transcripts table
+        if transcripts_table is None:
+            transcripts_table = param.get("transcripts", {}).get(
+                "table", transcripts_table_default
+            )
 
-            # Transcripts table
-            if transcripts_table is None:
-                transcripts_table = param.get("transcripts", {}).get(
-                    "table", transcripts_table_default
-                )
+        # Check transcripts table exists
+        if transcripts_table:
+
+            # Query to check if transcripts table exists
+            query_check_table = f"""
+                SELECT * 
+                FROM information_schema.tables 
+                WHERE table_name = '{transcripts_table}'
+            """
+            df_check_table = self.get_query_to_df(query=query_check_table)
+
+            # Check if transcripts table exists
+            if len(df_check_table) > 0 and not transcripts_table_drop:
+                log.debug(f"Table {transcripts_table} exists and not drop option")
+                return transcripts_table
+
+        if struct:
 
             # added_columns
             added_columns = []
@@ -11061,8 +11130,6 @@ class Variants:
                     GROUP BY "#CHROM", POS, REF, ALT, INFO, {query_transcript_column}
                 """
 
-            log.debug(f"query_merge_on_transcripts={query_merge_on_transcripts}")
-
             # Drop transcript view is necessary
             if transcripts_table_drop:
                 query_drop = f"""
@@ -11070,12 +11137,57 @@ class Variants:
                 """
                 self.execute_query(query=query_drop)
 
-            # Merge and create transcript view
-            query_create_view = f"""
-                CREATE TABLE IF NOT EXISTS {transcripts_table}
-                AS {query_merge_on_transcripts}
+            # # Merge and create transcript view
+            # query_create_view = f"""
+            #     CREATE TABLE IF NOT EXISTS {transcripts_table}
+            #     AS {query_merge_on_transcripts}
+            # """
+            # self.execute_query(query=query_create_view)
+
+            # Using #CHROM chunk
+            ######
+
+            # List of unique #CHROM
+            query_unique_chrom = f"""
+                SELECT DISTINCT "#CHROM"
+                FROM variants AS subquery
             """
-            self.execute_query(query=query_create_view)
+            unique_chroms = self.get_query_to_df(query=query_unique_chrom)
+
+            # Create table with structure but without data, if not exists
+            query_create_table = f"""
+                CREATE TABLE IF NOT EXISTS {transcripts_table} AS
+                SELECT * FROM ({query_merge_on_transcripts}) AS subquery LIMIT 0
+            """
+            self.execute_query(query=query_create_table)
+
+            # Process by #CHROM
+            for chrom in unique_chroms["#CHROM"]:
+
+                # Log
+                log.debug(f"Processing #CHROM={chrom}")
+
+                # Select data by #CHROM
+                query_chunk = f"""
+                    SELECT *
+                    FROM ({query_merge_on_transcripts})
+                    WHERE "#CHROM" = '{chrom}'
+                """
+
+                # Insert data
+                query_insert_chunk = f"""
+                    INSERT INTO {transcripts_table}
+                    {query_chunk}
+                """
+                self.execute_query(query=query_insert_chunk)
+
+            # Remove temporary tables
+            if temporary_tables:
+                for temporary_table in list(set(temporary_tables)):
+                    query_drop_tmp_table = f"""
+                        DROP TABLE IF EXISTS {temporary_table}
+                    """
+                    self.execute_query(query=query_drop_tmp_table)
 
             # Remove added columns
             for added_column in added_columns:
@@ -11197,15 +11309,26 @@ class Variants:
             variant_id_column = self.get_variant_id_column()
             added_columns += [variant_id_column]
 
-            # Create dataframe
+            # Get list of #CHROM
+            query_unique_chrom = f"""
+                SELECT DISTINCT "#CHROM"
+                FROM variants AS subquery
+            """
+            unique_chroms = self.get_query_to_df(query=query_unique_chrom)
+
+            # Base for database anontation format
+            dataframe_annotation_format_base = f"""
+                SELECT "#CHROM", POS, REF, ALT, INFO, "{variant_id_column}", "{annotation_infos}"
+                FROM {table_variants}
+            """
+
+            # Create dataframe for keys column type
             dataframe_annotation_format = self.get_query_to_df(
-                f""" SELECT "#CHROM", POS, REF, ALT, INFO, "{variant_id_column}", "{annotation_infos}" FROM {table_variants} """
+                f""" {dataframe_annotation_format_base} LIMIT 1000 """
             )
 
-            # Create annotation columns
-            dataframe_annotation_format[
-                annotation_format_infos
-            ] = dataframe_annotation_format[annotation_infos].apply(
+            # Define a vectorized function to apply explode_annotation_format
+            vectorized_explode_annotation_format = np.vectorize(
                 lambda x: explode_annotation_format(
                     annotation=str(x),
                     uniquify=uniquify,
@@ -11215,8 +11338,18 @@ class Variants:
                 )
             )
 
+            # Assign the exploded annotations back to the dataframe
+            dataframe_annotation_format[annotation_format_infos] = (
+                vectorized_explode_annotation_format(
+                    dataframe_annotation_format[annotation_infos].to_numpy()
+                )
+            )
+
             # Find keys
-            query_json = f"""SELECT distinct(unnest(json_keys({annotation_format}, '$.0'))) AS 'key' FROM dataframe_annotation_format;"""
+            query_json = f"""
+                SELECT distinct(unnest(json_keys({annotation_format}, '$.0'))) AS 'key'
+                FROM dataframe_annotation_format;
+            """
             df_keys = self.get_query_to_df(query=query_json)
 
             # Check keys
@@ -11243,38 +11376,90 @@ class Variants:
                         key_clean = key_clean.upper()
 
                 # Type
-                query_json_type = f"""SELECT unnest(json_extract_string({annotation_format}, '$.*."{key}"')) AS '{key_clean}' FROM dataframe_annotation_format WHERE trim('{key}') NOT IN ('');"""
+                query_json_type = f"""
+                    SELECT * 
+                    FROM (
+                        SELECT 
+                            NULLIF(unnest(json_extract_string({annotation_format}, '$.*."{key}"')), '') AS '{key_clean}'
+                        FROM
+                            dataframe_annotation_format
+                        )
+                    WHERE "{key_clean}" NOT NULL AND "{key_clean}" NOT IN ('')
+                """
 
                 # Get DataFrame from query
                 df_json_type = self.get_query_to_df(query=query_json_type)
 
-                # Fill missing values with empty strings and then replace empty strings or None with NaN and drop rows with NaN
-                with pd.option_context("future.no_silent_downcasting", True):
-                    df_json_type.fillna(value="", inplace=True)
-                    replace_dict = {None: np.nan, "": np.nan}
-                    df_json_type.replace(replace_dict, inplace=True)
-                    df_json_type.dropna(inplace=True)
-
                 # Detect column type
                 column_type = detect_column_type(df_json_type[key_clean])
+
+                # Free up memory
+                del df_json_type
 
                 # Append
                 query_json_key.append(
                     f"""NULLIF(unnest(json_extract_string({annotation_format}, '$.*."{key}"')), '')::{column_type}  AS '{prefix}{key_clean}' """
                 )
 
-            # Create view
-            query_view = f"""
-                CREATE TEMPORARY TABLE {view_name}
+            # Create table with structure but without data, if not exists
+            query_create_table = f"""
+                CREATE TABLE IF NOT EXISTS {view_name}
                 AS (
                     SELECT *, {annotation_id} AS 'transcript'
                     FROM (
                         SELECT "#CHROM", POS, REF, ALT, INFO, {",".join(query_json_key)}
                         FROM dataframe_annotation_format
                         )
+                    LIMIT 0
                     );
             """
-            self.execute_query(query=query_view)
+            self.execute_query(query=query_create_table)
+
+            # Free up memory
+            del dataframe_annotation_format
+
+            # Insert data by chromosome
+            for chrom in unique_chroms["#CHROM"]:
+
+                # Log
+                log.debug(f"Processing #CHROM={chrom}")
+
+                # Create dataframe
+                dataframe_annotation_format = self.get_query_to_df(
+                    f""" {dataframe_annotation_format_base}  WHERE "#CHROM" = '{chrom}' """
+                )
+
+                # Define a vectorized function to apply explode_annotation_format
+                vectorized_explode_annotation_format = np.vectorize(
+                    lambda x: explode_annotation_format(
+                        annotation=str(x),
+                        uniquify=uniquify,
+                        output_format="JSON",
+                        prefix="",
+                        header=list(ann_header_desc.values()),
+                    )
+                )
+
+                # Assign the exploded annotations back to the dataframe
+                dataframe_annotation_format[annotation_format_infos] = (
+                    vectorized_explode_annotation_format(
+                        dataframe_annotation_format[annotation_infos].to_numpy()
+                    )
+                )
+
+                # Insert data into tmp table
+                query_insert_chunk = f"""
+                    INSERT INTO {view_name}
+                    SELECT *, {annotation_id} AS 'transcript'
+                    FROM (
+                        SELECT "#CHROM", POS, REF, ALT, INFO, {",".join(query_json_key)}
+                        FROM dataframe_annotation_format
+                        )
+                """
+                self.execute_query(query=query_insert_chunk)
+
+                # Free up memory
+                del dataframe_annotation_format
 
         else:
 
@@ -11686,7 +11871,7 @@ class Variants:
         regex_replace_dict = {}
         regex_replace_nb = 0
         regex_replace_partition = 125
-        regex_replace = "concat(INFO, ';')" # Add ';' to reduce regexp comlexity
+        regex_replace = "concat(INFO, ';')"  # Add ';' to reduce regexp comlexity
 
         if fields_to_rename is not None and access not in ["RO"]:
 
@@ -11713,15 +11898,17 @@ class Variants:
                     del header.infos[field_to_rename]
 
                     # Rename INFO patterns
-                    field_pattern = rf'(^|;)({field_to_rename})(=[^;]*)?;'
+                    field_pattern = rf"(^|;)({field_to_rename})(=[^;]*)?;"
                     if field_renamed is not None:
-                        field_renamed_pattern = rf'\1{field_renamed}\3;'
+                        field_renamed_pattern = rf"\1{field_renamed}\3;"
                     else:
-                        field_renamed_pattern = r'\1'
+                        field_renamed_pattern = r"\1"
 
                     # regexp replace
                     regex_replace_nb += 1
-                    regex_replace_key = math.floor(regex_replace_nb / regex_replace_partition)
+                    regex_replace_key = math.floor(
+                        regex_replace_nb / regex_replace_partition
+                    )
                     if (regex_replace_nb % regex_replace_partition) == 0:
                         regex_replace = "concat(INFO, ';')"
                     regex_replace = f"regexp_replace({regex_replace}, '{field_pattern}', '{field_renamed_pattern}')"
@@ -11732,18 +11919,25 @@ class Variants:
 
                     # Log
                     if field_renamed is not None:
-                        log.info(f"Rename or remove fields - field '{field_to_rename}' renamed to '{field_renamed}'")
+                        log.info(
+                            f"Rename or remove fields - field '{field_to_rename}' renamed to '{field_renamed}'"
+                        )
                     else:
-                        log.info(f"Rename or remove fields - field '{field_to_rename}' removed")
+                        log.info(
+                            f"Rename or remove fields - field '{field_to_rename}' removed"
+                        )
 
                 else:
 
-                    log.warning(f"Rename or remove fields - field '{field_to_rename}' not in header")
-
+                    log.warning(
+                        f"Rename or remove fields - field '{field_to_rename}' not in header"
+                    )
 
             # Rename INFO
-            for regex_replace_key, regex_replace  in regex_replace_dict.items():
-                log.info(f"Rename or remove fields - Process [{regex_replace_key+1}/{len(regex_replace_dict)}]...")
+            for regex_replace_key, regex_replace in regex_replace_dict.items():
+                log.info(
+                    f"Rename or remove fields - Process [{regex_replace_key+1}/{len(regex_replace_dict)}]..."
+                )
                 query = f"""
                     UPDATE {table}
                     SET

@@ -2604,7 +2604,7 @@ def databases_download_dbnsfp(
                                         "\t"
                                     )[1].strip()
                         else:
-                            genomes_sizes = None
+                            genomes_sizes = {}
 
                     # VCF file
                     if not os.path.exists(output_vcf):
