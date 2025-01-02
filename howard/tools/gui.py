@@ -87,7 +87,6 @@ def gui(args: argparse) -> None:
     parser_gooey = help_generation(
         arguments_dict=arguments_dict,
         parser=parser,
-        setup=setup_cfg,
         output_type="gooey",
     )
     parser_gooey.print_help()

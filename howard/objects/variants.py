@@ -7071,7 +7071,11 @@ class Variants:
         return configuration
 
     def prioritization(
-        self, table: str = None, pz_prefix: str = None, pz_param: dict = None
+        self,
+        table: str = None,
+        pz_prefix: str = None,
+        pz_param: dict = None,
+        pz_keys: list = None,
     ) -> bool:
         """
         The `prioritization` function in Python processes VCF files, adds new INFO fields, and
@@ -7090,7 +7094,14 @@ class Variants:
         settings related to prioritization profiles, fields, scoring modes, flags, comments, and other
         configurations needed for the prioritization of variants in a V
         :type pz_param: dict
-        :return: A boolean value (True) is being returned from the `prioritization` function.
+        :param pz_keys: The `pz_keys` parameter in the `prioritization` function is used to specify the
+        keys that will be used to join the prioritization table with the variant table. If no keys are
+        provided, the function will use the default keys of ["#CHROM", "POS", "REF", "ALT"]
+        :type pz_keys: list
+        :return: The `prioritization` function returns a boolean value (True) if the prioritization
+        operation is successful. If the operation fails, the function will return a boolean value of
+        False
+
         """
 
         # Config
@@ -7142,6 +7153,10 @@ class Variants:
                 if profile not in profiles:
                     profiles.append(profile)
                     log.info(f"   {profile}")
+
+        # Keys for prioritization join
+        if pz_keys is None:
+            pz_keys = ["#CHROM", "POS", "REF", "ALT"]
 
         # If profile "ALL" provided, all profiles in the config profiles
         if "ALL" in profiles:
@@ -7498,11 +7513,20 @@ class Variants:
                             sql_set_sep = ";"
 
                         sql_queries = []
+                        criterion_fields_profile = []
+                        annotation_view_name = (
+                            "annotation_view_for_prioritization_"
+                            + str(random.randrange(1000))
+                        )
+                        annotation_view_prefix = ""
                         for annotation in prioritizations_config[profile]:
 
                             # skip special sections
                             if annotation.startswith("_"):
                                 continue
+
+                            # Log
+                            log.info(f"Profile '{profile}' - Filter '{annotation}'")
 
                             # For each criterions
                             for criterion in prioritizations_config[profile][
@@ -7520,6 +7544,12 @@ class Variants:
                                 ):
                                     criterion_mode = "sql"
                                 log.debug(f"Criterion Mode: {criterion_mode}")
+
+                                if criterion_mode in ["operation"]:
+                                    log.warning(
+                                        f"Prioritization criterion mode '{criterion_mode}' is deprecated. Please use 'sql' mode instead."
+                                    )
+                                    log.debug(f"Criterion: {criterion}")
 
                                 # Criterion parameters
                                 criterion_type = criterion.get("type", None)
@@ -7561,32 +7591,39 @@ class Variants:
                                 ):
                                     criterion_class = str(criterion_class).split(",")
 
-                                for annotation_field in criterion_fields:
+                                # Add criterion fields to the list of profile's criteria
+                                criterion_fields_profile = list(
+                                    set(criterion_fields_profile + criterion_fields)
+                                )
 
-                                    # Explode specific annotation
-                                    log.debug(
-                                        f"Explode annotation '{annotation_field}'"
-                                    )
-                                    added_columns += self.explode_infos(
-                                        prefix=explode_infos_prefix,
-                                        fields=[annotation_field],
-                                        table=table_variants,
-                                    )
-                                    extra_infos = self.get_extra_infos(
-                                        table=table_variants
-                                    )
+                                # Create annotations view for prioritization
+                                log.debug(
+                                    f"""Profile '{profile}' - Prioritization - Create '{annotation_view_name}' view with '{criterion_fields_profile}'... """
+                                )
+                                annotation_view = self.create_annotations_view(
+                                    view=annotation_view_name,
+                                    table=table_variants,
+                                    prefix=annotation_view_prefix,
+                                    fields=criterion_fields_profile + pz_keys,
+                                    drop_view=True,
+                                )
 
-                                    # Check if annotation field is present
-                                    if (
-                                        f"{explode_infos_prefix}{annotation_field}"
-                                        not in extra_infos
-                                    ):
-                                        msq_err = f"Annotation '{annotation_field}' not in data"
-                                        log.error(msq_err)
-                                        raise ValueError(msq_err)
-                                    else:
-                                        log.debug(
-                                            f"Annotation '{annotation_field}' in data"
+                                # Describe annotation view and dict
+                                annotation_view_describe = self.get_query_to_df(
+                                    f"DESCRIBE {annotation_view}"
+                                )
+                                annotation_view_describe_dict = (
+                                    annotation_view_describe.set_index("column_name")[
+                                        "column_type"
+                                    ].to_dict()
+                                )
+
+                                # Keys for join
+                                clause_join = []
+                                for key in pz_keys:
+                                    if key in annotation_view_describe_dict:
+                                        clause_join.append(
+                                            f""" "{table_variants}"."{key}" == "{annotation_view_name}"."{key}" """
                                         )
 
                                 sql_set = []
@@ -7673,33 +7710,70 @@ class Variants:
                                 # Criterion and comparison
                                 if sql_set_option:
 
+                                    # Operation mode
                                     if criterion_mode in ["operation"]:
 
+                                        # Check if value is a float
                                         try:
+
+                                            # Test if criterion is a float
                                             float(criterion_value)
-                                            sql_update = f"""
-                                                UPDATE {table_variants}
-                                                SET {sql_set_option}
-                                                WHERE CAST("{explode_infos_prefix}{annotation}" AS VARCHAR) NOT IN ('','.')
-                                                AND CAST("{explode_infos_prefix}{annotation}" AS FLOAT){comparison_map[criterion_type]}{criterion_value}
+
+                                            # Query test cast as float
+                                            query_test_cast = f"""
+                                                SELECT "{annotation_view_name}"."{annotation_view_prefix}{annotation}"
+                                                    FROM "{annotation_view_name}"
+                                                    WHERE CAST("{annotation_view_name}"."{annotation_view_prefix}{annotation}" AS FLOAT) > 0
+                                                LIMIT 1
                                             """
+                                            self.execute_query(query_test_cast)
+
+                                            sql_update = f"""
+                                                UPDATE "{table_variants}"
+                                                SET {sql_set_option}
+                                                FROM (
+                                                    SELECT *
+                                                    FROM "{annotation_view_name}"
+                                                    WHERE (
+                                                        CAST("{annotation_view_name}"."{annotation_view_prefix}{annotation}" AS VARCHAR) NOT IN ('','.')
+                                                        AND   CAST("{annotation_view_name}"."{annotation_view_prefix}{annotation}" AS FLOAT){comparison_map[criterion_type]}{criterion_value}
+                                                        )
+                                                    ) AS "{annotation_view_name}"
+                                                WHERE ({" AND ".join(clause_join)})
+                                                
+                                            """
+                                        # If not a float
                                         except:
                                             contains_option = ""
                                             if criterion_type == "contains":
                                                 contains_option = ".*"
                                             sql_update = f"""
-                                                UPDATE {table_variants}
+                                                UPDATE "{table_variants}"
                                                 SET {sql_set_option}
-                                                WHERE "{explode_infos_prefix}{annotation}" SIMILAR TO '{contains_option}{criterion_value}{contains_option}'
+                                                FROM (
+                                                    SELECT *
+                                                    FROM "{annotation_view_name}"
+                                                    WHERE (
+                                                    CAST("{annotation_view_name}"."{annotation_view_prefix}{annotation}" AS STRING) SIMILAR TO '{contains_option}{criterion_value}{contains_option}'
+                                                        )
+                                                    ) AS "{annotation_view_name}"
+                                                WHERE ({" AND ".join(clause_join)})
+                                                  
                                             """
                                         sql_queries.append(sql_update)
 
+                                    # SQL mode
                                     elif criterion_mode in ["sql"]:
 
                                         sql_update = f"""
                                             UPDATE {table_variants}
                                             SET {sql_set_option}
-                                            WHERE {criterion_sql}
+                                            FROM (
+                                                SELECT *
+                                                FROM "{annotation_view_name}"
+                                                WHERE ({criterion_sql})
+                                                ) AS "{annotation_view_name}"
+                                            WHERE ({" AND ".join(clause_join)})
                                         """
                                         sql_queries.append(sql_update)
 
@@ -7756,6 +7830,7 @@ class Variants:
                                         END,
                                         '{pz_prefix}Tags{pzfields_sep}{profile}={pztags_value}'
                                     )
+                                WHERE 1=1
                                 """
                             sql_queries.append(sql_update_pztags)
 
@@ -7768,19 +7843,47 @@ class Variants:
                                         ';',
                                         '{pz_prefix}Tags={pztags_value}'
                                     )
+                                    WHERE 1=1
                                 """
                                 sql_queries.append(sql_update_pztags_default)
 
                         log.info(f"""Profile '{profile}' - Prioritization... """)
 
-                        if sql_queries:
+                        # Chromosomes list
+                        sql_uniq_chrom = f"""
+                            SELECT DISTINCT "#CHROM"
+                            FROM {table_variants}
+                        """
+                        chroms = self.get_query_to_df(sql_uniq_chrom)["#CHROM"].tolist()
 
-                            for sql_query in sql_queries:
-                                log.debug(
-                                    f"""Profile '{profile}' - Prioritization query: {sql_query}... """
-                                )
-                                self.conn.execute(sql_query)
+                        for chrom in chroms:
 
+                            log.debug(
+                                f"""Profile '{profile}' - Prioritization query - Chromosome '{chrom}'... """
+                            )
+
+                            if sql_queries:
+
+                                # Query num
+                                num_query = 0
+
+                                # For each query
+                                for sql_query in sql_queries:
+
+                                    # Query num
+                                    num_query += 1
+
+                                    sql_query_chrom = f"""
+                                        {sql_query}
+                                        AND {table_variants}."#CHROM" LIKE '{chrom}' 
+                                    """
+                                    log.debug(
+                                        f"""Profile '{profile}' - Prioritization query - Chromosome '{chrom}' [{num_query}/{len(sql_queries)}]"""
+                                    )
+                                    # log.debug(f"""sql_query_chrom: {sql_query_chrom}""")
+                                    self.execute_query(query=sql_query_chrom)
+
+                        # Update INFO field
                         log.info(f"""Profile '{profile}' - Update... """)
                         sql_query_update = f"""
                             UPDATE {table_variants}
@@ -7794,7 +7897,14 @@ class Variants:
                                     {sql_set_info_option}
                                 )
                         """
-                        self.conn.execute(sql_query_update)
+                        # log.debug(f"sql_query_update={sql_query_update}")
+                        self.execute_query(query=sql_query_update)
+
+                        # Remove annotations view for prioritization
+                        query_drop_tmp_table = f"""
+                            DROP VIEW IF EXISTS {annotation_view_name}
+                        """
+                        self.execute_query(query=query_drop_tmp_table)
 
         else:
 
@@ -9409,7 +9519,9 @@ class Variants:
             del dataframe_barcode
             gc.collect()
 
-    def calculation_barcode_family(self, tag: str = "BCF") -> None:
+    def calculation_barcode_family(
+        self, tag: str = None, tag_samples: str = None
+    ) -> None:
         """
         The `calculation_barcode_family` function calculates barcode values for variants in a VCF file
         and updates the INFO field in the file with the calculated barcode values.
@@ -9418,6 +9530,11 @@ class Variants:
         the barcode tag that will be added to the VCF file during the calculation process. If no value
         is provided for the `tag` parameter, the default value used is "BCF", defaults to BCF
         :type tag: str (optional)
+        :param tag_samples: The `tag_samples` parameter in the `calculation_barcode_family` function is
+        used to specify the barcode tag that will be added to the VCF file for samples during the
+        calculation process. If no value is provided for the `tag_samples` parameter, the default value
+        used is "BCFS", defaults to BCFS
+
         """
 
         # if FORMAT and samples
@@ -9430,10 +9547,14 @@ class Variants:
             if not tag:
                 tag = "BCF"
 
+            # barcode annotation field for samples
+            if not tag_samples:
+                tag_samples = f"{tag}S"
+
             # VCF infos tags
             vcf_infos_tags = {
-                tag: "barcode family calculation",
-                f"{tag}S": "barcode family samples",
+                "tag": "barcode family calculation",
+                "tag_samples": "barcode family samples",
             }
 
             # Param
@@ -9506,14 +9627,55 @@ class Variants:
             )
             log.debug(f"ped_samples={ped_samples}")
 
+            # Header
+            vcf_reader = self.get_header()
+
+            # Check for other tag names starting with 'tag'
+            log.debug(f"tag={tag}")
+            log.debug(f"tag_samples={tag_samples}")
+            if tag in vcf_reader.formats:
+                # Create a new tag name with a suffix based on the number of tags match with the same 'tag' pattern '{tag}_<integer>'
+                tag_new = f"{tag}_" + str(
+                    len(
+                        [
+                            t
+                            for t in vcf_reader.formats
+                            if (t == tag or re.match(f"{tag}_\d+", t))
+                        ]
+                    )
+                )
+
+                tag = tag_new
+            if tag_samples in vcf_reader.formats:
+                # Create a new tag name with a suffix based on the number of tags match with the same 'tag' pattern '{tag}_<integer>'
+                tag_samples_new = f"{tag_samples}_" + str(
+                    len(
+                        [
+                            t
+                            for t in vcf_reader.formats
+                            if (t == tag_samples or re.match(f"{tag_samples}_\d+", t))
+                        ]
+                    )
+                )
+
+                tag_samples = tag_samples_new
+            log.debug(f"NEW tag={tag}")
+            log.debug(f"NEW tag_samples={tag_samples}")
+
+            # Create vcf_infos_tags for the tags
+            vcf_infos_tags[tag] = vcf_infos_tags.get(
+                "tag", "barcode family calculation"
+            )
+            vcf_infos_tags[tag_samples] = vcf_infos_tags.get(
+                "tag_samples", "barcode family samples"
+            )
+            log.debug(f"vcf_infos_tags={vcf_infos_tags}")
+
             # Field
             barcode_infos = prefix + tag
 
             # Variants table
             table_variants = self.get_table_variants()
-
-            # Header
-            vcf_reader = self.get_header()
 
             # Create variant id
             variant_id_column = self.get_variant_id_column()
@@ -9538,16 +9700,22 @@ class Variants:
             # Add vaf_normalization to header
             vcf_reader.formats[tag] = vcf.parser._Format(
                 id=tag,
-                num=".",
+                num="1",
                 type="String",
-                desc=vcf_infos_tags.get(tag, "barcode family calculation"),
+                desc=vcf_infos_tags.get(
+                    tag, f"barcode family calculation for {ped_samples}"
+                )
+                + f" for {ped_samples}",
                 type_code=self.code_type_map.get("String"),
             )
             vcf_reader.formats[f"{tag}S"] = vcf.parser._Format(
-                id=f"{tag}S",
-                num=".",
+                id=tag_samples,
+                num=str(len(ped_samples)),
                 type="String",
-                desc=vcf_infos_tags.get(f"{tag}S", "barcode family samples"),
+                desc=vcf_infos_tags.get(
+                    tag_samples, f"barcode family samples for {ped_samples}"
+                )
+                + f" for {ped_samples}",
                 type_code=self.code_type_map.get("String"),
             )
 
@@ -9559,17 +9727,21 @@ class Variants:
                     value = f'dataframe_barcode."{barcode_infos}"'
                     value_samples = (
                         "'"
-                        + ",".join([f""" "{sample}" """ for sample in ped_samples])
+                        + ",".join([f"""{sample}""" for sample in ped_samples])
                         + "'"
                     )
                     ped_samples
                 elif sample == "FORMAT":
                     value = f"'{tag}'"
-                    value_samples = f"'{tag}S'"
+                    value_samples = f"'{tag_samples}'"
                 else:
                     value = "'.'"
                     value_samples = "'.'"
+
+                # Format regex
                 format_regex = r"[a-zA-Z0-9\s]"
+
+                # Update query
                 sql_update_set.append(
                     f"""
                         "{sample}" = 
@@ -10265,6 +10437,18 @@ class Variants:
         # PZ fields
         pz_param_pzfields = {}
 
+        # Order by
+        pz_orders = (
+            param.get("transcripts", {})
+            .get("prioritization", {})
+            .get("prioritization_transcripts_order", {})
+        )
+        if not pz_orders:
+            pz_orders = {
+                pz_param.get("pzprefix", "PTZ") + "Flag": "DESC",
+                pz_param.get("pzprefix", "PTZ") + "Score": "DESC",
+            }
+
         # PZ field transcripts
         pz_fields_transcripts = pz_param.get("pzprefix", "PTZ") + "Transcript"
 
@@ -10279,7 +10463,7 @@ class Variants:
             code_type_map["String"],
         )
 
-        # Mandatory fields
+        # Mandatory fields if asked in param
         pz_mandatory_fields_list = [
             "Score",
             "Flag",
@@ -10295,9 +10479,13 @@ class Variants:
             )
 
         # PZ fields in param
+        pz_param_mandatory_fields = []
         for pz_field in pz_param.get("pzfields", []):
             if pz_field in pz_mandatory_fields_list:
                 pz_param_pzfields[pz_param.get("pzprefix", "PTZ") + pz_field] = (
+                    pz_param.get("pzprefix", "PTZ") + pz_field
+                )
+                pz_param_mandatory_fields.append(
                     pz_param.get("pzprefix", "PTZ") + pz_field
                 )
             else:
@@ -10314,14 +10502,20 @@ class Variants:
                     "unknown",
                     code_type_map["String"],
                 )
+        # Add order by fields in mandatory fields
+        for pz_order in pz_orders:
+            if pz_order not in pz_param_mandatory_fields:
+                pz_param_mandatory_fields.append(pz_order)
 
         # PZ fields param
+        pz_mandatory_fields = pz_param_mandatory_fields
         pz_param["pzfields"] = pz_mandatory_fields
 
         # Prioritization
         prioritization_result = self.prioritization(
             table=transcripts_table,
             pz_param=param.get("transcripts", {}).get("prioritization", {}),
+            pz_keys=["#CHROM", "POS", "REF", "ALT", "transcript"],
         )
         if not prioritization_result:
             log.warning("Transcripts prioritization not processed")
@@ -10347,17 +10541,6 @@ class Variants:
                 """
             )
 
-        # Order by
-        pz_orders = (
-            param.get("transcripts", {})
-            .get("prioritization", {})
-            .get("prioritization_transcripts_order", {})
-        )
-        if not pz_orders:
-            pz_orders = {
-                pz_param.get("pzprefix", "PTZ") + "Flag": "DESC",
-                pz_param.get("pzprefix", "PTZ") + "Score": "DESC",
-            }
         for pz_order in pz_orders:
             query_update_order_list.append(
                 f""" {pz_order} {pz_orders.get(pz_order, "DESC")} """
@@ -10682,50 +10865,13 @@ class Variants:
                     random.choices(string.ascii_uppercase + string.digits, k=10)
                 )
 
-                # # Temporary_tables
-                # temporary_tables.append(temporary_table)
-                # query_view = f"""
-                #     CREATE TEMPORARY TABLE {temporary_table}
-                #     AS ({query})
-                # """
-                # self.execute_query(query=query_view)
-
-                # Temporary_tables
+                # Temporary view
                 temporary_tables.append(temporary_table)
-
-                # List of unique #CHROM
-                query_unique_chrom = f"""
-                    SELECT DISTINCT "#CHROM"
-                    FROM variants
+                query_view = f"""
+                    CREATE view {temporary_table}
+                    AS ({query})
                 """
-                unique_chroms = self.get_query_to_df(query=query_unique_chrom)
-
-                # Create table with structure but without data
-                query_create_table = f"""
-                    CREATE TABLE {temporary_table}
-                    AS ({query} LIMIT 0)
-                """
-                self.execute_query(query=query_create_table)
-
-                # Process by #CHROM
-                for chrom in unique_chroms["#CHROM"]:
-
-                    # Log
-                    log.debug(f"Processing #CHROM={chrom}")
-
-                    # Select data by #CHROM
-                    query_chunk = f"""
-                        SELECT *
-                        FROM ({query})
-                        WHERE "#CHROM" = '{chrom}'
-                    """
-
-                    # Insert data
-                    query_insert_chunk = f"""
-                        INSERT INTO {temporary_table}
-                        {query_chunk}
-                    """
-                    self.execute_query(query=query_insert_chunk)
+                self.execute_query(query=query_view)
 
         return added_columns, temporary_tables, annotation_fields
 
@@ -10803,6 +10949,8 @@ class Variants:
         if annotation_fields is None:
             annotation_fields = []
 
+        added_columns = []
+
         for column_format in column_formats:
 
             # annotation field and transcript annotation field
@@ -10826,8 +10974,7 @@ class Variants:
             )
 
             # Create temporary view name
-            temporary_view_name = self.annotation_format_to_table(
-                uniquify=True,
+            temporary_view_name, added_columns = self.annotation_format_to_table(
                 annotation_field=annotation_field,
                 view_name=temporary_view_name,
                 annotation_id=transcript_annotation,
@@ -10854,7 +11001,7 @@ class Variants:
                 temporary_tables.append(temporary_view_name)
                 annotation_fields += list(set(df_annotation_fields["column_name"]))
 
-        return temporary_tables, annotation_fields
+        return added_columns, temporary_tables, annotation_fields
 
     def create_transcript_view(
         self,
@@ -10962,7 +11109,7 @@ class Variants:
 
             # from column format
             column_formats = struct.get("from_column_format", [])
-            temporary_tables_tmp, annotation_fields_tmp = (
+            added_columns, temporary_tables_tmp, annotation_fields_tmp = (
                 self.create_transcript_view_from_column_format(
                     transcripts_table=transcripts_table,
                     column_formats=column_formats,
@@ -10970,6 +11117,7 @@ class Variants:
                     annotation_fields=annotation_fields,
                 )
             )
+            added_columns += added_columns_tmp
             temporary_tables += temporary_tables_tmp
             annotation_fields += annotation_fields_tmp
 
@@ -11137,16 +11285,6 @@ class Variants:
                 """
                 self.execute_query(query=query_drop)
 
-            # # Merge and create transcript view
-            # query_create_view = f"""
-            #     CREATE TABLE IF NOT EXISTS {transcripts_table}
-            #     AS {query_merge_on_transcripts}
-            # """
-            # self.execute_query(query=query_create_view)
-
-            # Using #CHROM chunk
-            ######
-
             # List of unique #CHROM
             query_unique_chrom = f"""
                 SELECT DISTINCT "#CHROM"
@@ -11184,10 +11322,20 @@ class Variants:
             # Remove temporary tables
             if temporary_tables:
                 for temporary_table in list(set(temporary_tables)):
-                    query_drop_tmp_table = f"""
-                        DROP TABLE IF EXISTS {temporary_table}
-                    """
-                    self.execute_query(query=query_drop_tmp_table)
+                    try:
+                        query_drop_tmp_table = f"""
+                            DROP TABLE IF EXISTS {temporary_table}
+                        """
+                        self.execute_query(query=query_drop_tmp_table)
+                    except Exception as e:
+                        log.debug(f"'{temporary_table}' Not a table")
+                    try:
+                        query_drop_tmp_table = f"""
+                            DROP VIEW IF EXISTS {temporary_table}
+                        """
+                        self.execute_query(query=query_drop_tmp_table)
+                    except Exception as e:
+                        log.debug(f"'{temporary_table}' Not a view")
 
             # Remove added columns
             for added_column in added_columns:
@@ -11201,7 +11349,6 @@ class Variants:
 
     def annotation_format_to_table(
         self,
-        uniquify: bool = True,
         annotation_field: str = "ANN",
         annotation_id: str = "Feature_ID",
         view_name: str = "transcripts",
@@ -11253,9 +11400,6 @@ class Variants:
         which is stored in the variable `view_name`.
         """
 
-        # Annotation field
-        annotation_format = "annotation_explode"
-
         # Transcript annotation
         if column_rename:
             annotation_id = column_rename.get(annotation_id, annotation_id)
@@ -11267,10 +11411,6 @@ class Variants:
         prefix = self.get_explode_infos_prefix()
         if prefix:
             prefix = "INFO/"
-
-        # Annotation fields
-        annotation_infos = prefix + annotation_field
-        annotation_format_infos = prefix + annotation_format
 
         # Variants table
         table_variants = self.get_table_variants()
@@ -11305,59 +11445,32 @@ class Variants:
             else:
                 raise ValueError("Invalid header description format")
 
-            # Create variant id
-            variant_id_column = self.get_variant_id_column()
-            added_columns += [variant_id_column]
-
-            # Get list of #CHROM
-            query_unique_chrom = f"""
-                SELECT DISTINCT "#CHROM"
-                FROM variants AS subquery
-            """
-            unique_chroms = self.get_query_to_df(query=query_unique_chrom)
-
-            # Base for database anontation format
-            dataframe_annotation_format_base = f"""
-                SELECT "#CHROM", POS, REF, ALT, INFO, "{variant_id_column}", "{annotation_infos}"
-                FROM {table_variants}
-            """
-
             # Create dataframe for keys column type
             dataframe_annotation_format = self.get_query_to_df(
-                f""" {dataframe_annotation_format_base} LIMIT 1000 """
-            )
-
-            # Define a vectorized function to apply explode_annotation_format
-            vectorized_explode_annotation_format = np.vectorize(
-                lambda x: explode_annotation_format(
-                    annotation=str(x),
-                    uniquify=uniquify,
-                    output_format="JSON",
-                    prefix="",
-                    header=list(ann_header_desc.values()),
+                f""" 
+                WITH exploded_annotations AS (
+                    SELECT
+                        UNNEST(STRING_SPLIT(ANN, ',')) AS annotation
+                    FROM {table_variants}
+                ),
+                split_annotations AS (
+                    SELECT
+                        {", ".join([f"SPLIT_PART(annotation, '|', {i+1}) AS '{header}'" for i, header in enumerate(ann_header_desc.values())])},
+                    FROM exploded_annotations
                 )
+                SELECT * FROM split_annotations
+                LIMIT 1000
+                """
             )
 
-            # Assign the exploded annotations back to the dataframe
-            dataframe_annotation_format[annotation_format_infos] = (
-                vectorized_explode_annotation_format(
-                    dataframe_annotation_format[annotation_infos].to_numpy()
-                )
-            )
+            # Init
+            query_list_keys = []
+            key_i = 0
 
-            # Find keys
-            query_json = f"""
-                SELECT distinct(unnest(json_keys({annotation_format}, '$.0'))) AS 'key'
-                FROM dataframe_annotation_format;
-            """
-            df_keys = self.get_query_to_df(query=query_json)
-
-            # Check keys
-            query_json_key = []
-            for _, row in df_keys.iterrows():
+            for key in dataframe_annotation_format.keys():
 
                 # Key
-                key = row.iloc[0]
+                key_i += 1
                 key_clean = key
 
                 # key rename
@@ -11375,102 +11488,49 @@ class Variants:
                     elif column_case.lower() in ["upper"]:
                         key_clean = key_clean.upper()
 
-                # Type
-                query_json_type = f"""
-                    SELECT * 
-                    FROM (
-                        SELECT 
-                            NULLIF(unnest(json_extract_string({annotation_format}, '$.*."{key}"')), '') AS '{key_clean}'
-                        FROM
-                            dataframe_annotation_format
-                        )
-                    WHERE "{key_clean}" NOT NULL AND "{key_clean}" NOT IN ('')
-                """
-
-                # Get DataFrame from query
-                df_json_type = self.get_query_to_df(query=query_json_type)
-
                 # Detect column type
-                column_type = detect_column_type(df_json_type[key_clean])
+                column_type = detect_column_type(dataframe_annotation_format[key])
 
-                # Free up memory
-                del df_json_type
-
-                # Append
-                query_json_key.append(
-                    f"""NULLIF(unnest(json_extract_string({annotation_format}, '$.*."{key}"')), '')::{column_type}  AS '{prefix}{key_clean}' """
+                # Append key to list
+                query_list_keys.append(
+                    f""" NULLIF(SPLIT_PART(annotation, '|', {key_i}), '')::{column_type} AS '{prefix}{key_clean}' """
                 )
 
-            # Create table with structure but without data, if not exists
-            query_create_table = f"""
-                CREATE TABLE IF NOT EXISTS {view_name}
-                AS (
-                    SELECT *, {annotation_id} AS 'transcript'
-                    FROM (
-                        SELECT "#CHROM", POS, REF, ALT, INFO, {",".join(query_json_key)}
-                        FROM dataframe_annotation_format
-                        )
-                    LIMIT 0
-                    );
+            # Create temporary table
+            query_create_view = f"""
+                CREATE VIEW {view_name} AS (
+                    WITH exploded_annotations AS (
+                        SELECT
+                            "#CHROM",
+                            POS,
+                            REF,
+                            ALT,
+                            INFO,
+                            UNNEST(STRING_SPLIT(ANN, ',')) AS annotation
+                        FROM {table_variants}
+                    ),
+                    split_annotations AS (
+                        SELECT
+                            "#CHROM",
+                            POS,
+                            REF,
+                            ALT,
+                            INFO,
+                            {", ".join(query_list_keys)},
+                        FROM exploded_annotations
+                    )
+                    SELECT *, {annotation_id} AS 'transcript' FROM split_annotations
+                )
             """
-            self.execute_query(query=query_create_table)
-
-            # Free up memory
-            del dataframe_annotation_format
-
-            # Insert data by chromosome
-            for chrom in unique_chroms["#CHROM"]:
-
-                # Log
-                log.debug(f"Processing #CHROM={chrom}")
-
-                # Create dataframe
-                dataframe_annotation_format = self.get_query_to_df(
-                    f""" {dataframe_annotation_format_base}  WHERE "#CHROM" = '{chrom}' """
-                )
-
-                # Define a vectorized function to apply explode_annotation_format
-                vectorized_explode_annotation_format = np.vectorize(
-                    lambda x: explode_annotation_format(
-                        annotation=str(x),
-                        uniquify=uniquify,
-                        output_format="JSON",
-                        prefix="",
-                        header=list(ann_header_desc.values()),
-                    )
-                )
-
-                # Assign the exploded annotations back to the dataframe
-                dataframe_annotation_format[annotation_format_infos] = (
-                    vectorized_explode_annotation_format(
-                        dataframe_annotation_format[annotation_infos].to_numpy()
-                    )
-                )
-
-                # Insert data into tmp table
-                query_insert_chunk = f"""
-                    INSERT INTO {view_name}
-                    SELECT *, {annotation_id} AS 'transcript'
-                    FROM (
-                        SELECT "#CHROM", POS, REF, ALT, INFO, {",".join(query_json_key)}
-                        FROM dataframe_annotation_format
-                        )
-                """
-                self.execute_query(query=query_insert_chunk)
-
-                # Free up memory
-                del dataframe_annotation_format
+            # log.debug(f"query_create_view: {query_create_view}")
+            self.execute_query(query=query_create_view)
 
         else:
 
             # Return None
             view_name = None
 
-        # Remove added columns
-        for added_column in added_columns:
-            self.drop_column(column=added_column)
-
-        return view_name
+        return view_name, added_columns
 
     def transcript_view_to_variants(
         self,
@@ -11943,7 +12003,7 @@ class Variants:
                     SET
                         INFO = regexp_replace({regex_replace}, ';$', '')
                 """
-                log.debug(f"query={query}")
+                # log.debug(f"query={query}")
                 self.execute_query(query=query)
 
         return fields_renamed
@@ -12005,3 +12065,197 @@ class Variants:
         )
 
         log.debug(f"renamed_fields:{renamed_fields}")
+
+    def create_annotations_view(
+        self,
+        table: str = None,
+        view: str = None,
+        view_type: str = None,
+        fields: list = None,
+        detect_type_list: bool = False,
+        prefix: str = "",
+        drop_view: bool = False,
+        fields_to_rename: dict = None,
+        limit: int = None,
+    ) -> str:
+        """
+        The `create_annotations_view` function creates a SQL view from fields in a VCF INFO column.
+
+        :param table: The `table` parameter in the `create_annotations_view` function is used to specify
+        the name of the table from which the fields are to be extracted. This table contains the
+        variants data, and the function creates a view based on the fields in the INFO column of this
+        table
+        :type table: str
+        :param view: The `view` parameter in the `create_annotations_view` function is used to specify
+        the name of the view that will be created based on the fields in the VCF INFO column. This view
+        will contain the extracted fields from the INFO column in a structured format for further
+        processing or analysis
+        :type view: str
+        :param view_type: The `view_type` parameter in the `create_annotations_view` function is used to
+        specify the type of view that will be created. It can be either a `VIEW` or a `TABLE`, and the
+        function will create the view based on the specified type
+        :type view_type: str
+        :param fields: The `fields` parameter in the `create_annotations_view` function is a list that
+        contains the names of the fields to be extracted from the INFO column in the VCF file. These
+        fields will be used to create the view with the specified columns and data extracted from the
+        INFO column
+        :type fields: list
+        :param prefix: The `prefix` parameter in the `create_annotations_view` function is used to
+        specify a prefix that will be added to the field names in the view. This prefix helps in
+        distinguishing the fields extracted from the INFO column in the view
+        :type prefix: str
+        :param drop_view: The `drop_view` parameter in the `create_annotations_view` function is a boolean
+        flag that determines whether to drop the existing view with the same name before creating a new
+        view. If set to `True`, the function will drop the existing view before creating a new view with
+        the specified name
+        :type drop_view: bool
+        :param fields_to_rename: The `fields_to_rename` parameter in the `create_annotations_view`
+        function is a dictionary that contains the mapping of fields to be renamed in the VCF file. The
+        keys in the dictionary represent the original field names that need to be renamed, and the
+        corresponding values represent the new names to which the fields should be
+        :type fields_to_rename: dict
+        :param limit: The `limit` parameter in the `create_annotations_view` function is an integer that
+        specifies the maximum number of rows to be included in the view. If provided, the function will
+        limit the number of rows in the view to the specified value
+        :type limit: int
+        :return: The `create_annotations_view` function returns the name of the view that is created
+        based on the fields extracted from the INFO column in the VCF file. This view contains the
+        extracted fields in a structured format for further processing or analysis
+        """
+
+        # Create a sql view from fields in VCF INFO column, with each column is a field present in the VCF header (with a specific type from VCF header) and extracted from INFO column (with a regexp like in rename_info_fields), and each row is a variant.
+
+        # Get table
+        if table is None:
+            table = self.get_table_variants()
+
+        # Get view
+        if view is None:
+            view = f"{table}_annotations"
+
+        # Get view type
+        if view_type is None:
+            view_type = "VIEW"
+
+        # Check view type value
+        if view_type.upper() not in ["VIEW", "TABLE"]:
+            raise ValueError(
+                f"Invalid view type value: {view_type}. Either 'VIEW' or 'TABLE'"
+            )
+
+        # Get header
+        header = self.get_header()
+
+        # Get fields
+        if fields is None:
+            fields = list(header.infos.keys())
+
+        # Get fields to rename
+        if fields_to_rename is None:
+            fields_to_rename = {}
+
+        log.debug(
+            f"Create '{view}' view (as '{view_type}') from table '{table}' with {len(fields)} fields"
+        )
+
+        # Describe table
+        table_describe_query = f"""
+            DESCRIBE {table}
+        """
+        table_describe = self.get_query_to_df(query=table_describe_query)
+
+        # Create fields for annotation view extracted from INFO column in table variants (with regexp_replace like in rename_info_fields), with column type from VCF header
+        fields_columns = []
+        fields_needed = ["#CHROM", "POS", "REF", "ALT"]
+        field_sql_type_list = False
+        for field in fields:
+
+            # Rename field
+            field_to_rename = fields_to_rename.get(field, field)
+
+            # Check field type
+
+            # Needed fields
+            if field in fields_needed:
+                continue
+
+            # Fields in table
+            elif field in list(table_describe.get("column_name")):
+                fields_columns.append(f""" "{field}" AS '{prefix}{field_to_rename}' """)
+
+            # Fields in header
+            elif field in header.infos:
+
+                # Field info
+                field_infos = header.infos.get(field, None)
+
+                # Field SQL type
+                field_sql_type = code_type_map_to_sql.get(field_infos.type, "VARCHAR")
+
+                # Column is a list
+                if detect_type_list and field_infos.num != 1:
+                    field_sql_type_list = True
+
+                # Colonne is a flag
+                if field_infos.type == "Flag":
+                    field_pattern = rf"(^|;)({field})([^;]*)?"
+                    fields_columns.append(
+                        f""" regexp_matches("INFO", '{field_pattern}')::BOOLEAN AS '{prefix}{field_to_rename}' """
+                    )
+
+                # Colonne with a type
+                else:
+
+                    # Field pattern
+                    field_pattern = rf"(^|;)({field})=([^;]*)?"
+
+                    # Field is a list
+                    if field_sql_type_list:
+                        fields_columns.append(
+                            f""" CAST(list_transform(string_split(NULLIF(regexp_extract("INFO", '{field_pattern}', 3), ''), ','), x -> CASE WHEN x = '.' OR x = '' THEN NULL ELSE x END) AS {field_sql_type}[]) AS '{prefix}{field_to_rename}' """
+                        )
+
+                    # Field is a unique value
+                    else:
+                        fields_columns.append(
+                            f""" NULLIF(regexp_replace(regexp_extract("INFO", '{field_pattern}', 3), '^\\.$', ''), '')::{field_sql_type} AS '{prefix}{field_to_rename}' """
+                        )
+
+            else:
+                fields_columns.append(f""" null AS '{prefix}{field_to_rename}' """)
+                msg_err = f"Field '{field}' is not found (in table or header): '{field}' will be set to NULL"
+                log.debug(msg=msg_err)
+
+        # Limit
+        limit_clause = ""
+        if limit is not None:
+            limit_clause = f" LIMIT {limit} "
+
+        # Query select
+        query_select = f"""
+            SELECT
+                {', '.join([f'"{field}"' for field in fields_needed])}, {", ".join(fields_columns)}
+            FROM
+                {table}
+            {limit_clause}
+        """
+
+        # Drop if any
+        if drop_view:
+            log.debug(f"Drop view: {view}")
+            query_create_view = f"""
+                DROP {view_type} IF EXISTS {view}
+            """
+            self.execute_query(query=query_create_view)
+            log.debug(f"View dropped: {view}")
+
+        # Create view
+        log.debug(f"Create view: {view}")
+        query_create_view = f"""
+            CREATE {view_type} IF NOT EXISTS {view} AS {query_select}
+        """
+        # log.debug(f"query_create_view:{query_create_view}")
+        self.execute_query(query=query_create_view)
+        log.debug(f"View created: {view}")
+
+        return view

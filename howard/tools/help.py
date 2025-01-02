@@ -51,9 +51,7 @@ def help(args: argparse) -> None:
         setup_cfg = None
 
     # Parser
-    parser = help_generation(
-        arguments_dict=arguments_dict, setup=setup_cfg, output_type="parser"
-    )
+    parser = help_generation(arguments_dict=arguments_dict, output_type="parser")
     parser.print_help()
     print("")
 
@@ -110,7 +108,7 @@ def help(args: argparse) -> None:
         # Help from options
         else:
             help_content = help_generation(
-                arguments_dict=arguments_dict, setup=setup_cfg, output_type="markdown"
+                arguments_dict=arguments_dict, output_type="markdown"
             )
 
         # Clean MD content

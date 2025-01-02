@@ -116,9 +116,6 @@ title: HOWARD Help
 
 <!--TOC-->
 
-HOWARD-ANN:0.12.1.1 - HOWARD - Highly Open Workflow for Annotation &
-Ranking toward genomic variant Discovery
-
 Usage examples:
 
 > howard process --input=tests/data/example.vcf.gz

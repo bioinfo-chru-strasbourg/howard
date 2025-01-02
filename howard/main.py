@@ -34,7 +34,12 @@ from howard.tools.tools import (
     DEFAULT_CHUNK_SIZE,
 )
 from howard.functions.plugins import plugins_infos, plugins_list, plugins_to_load
-from howard.functions.commons import folder_main, folder_plugins, subfolder_plugins
+from howard.functions.commons import (
+    folder_main,
+    folder_plugins,
+    subfolder_plugins,
+    help_header,
+)
 
 
 # Usage
@@ -130,12 +135,14 @@ def main() -> None:
         "shared_arguments": shared_arguments,
     }
 
+    # Header
+    print(help_header(setup=setup_cfg))
+
     # Generate parser
     parser = argparse.ArgumentParser()
     parser = help_generation(
         arguments_dict=arguments_dict,
         parser=parser,
-        setup=setup_cfg,
         output_type="parser",
     )
 
