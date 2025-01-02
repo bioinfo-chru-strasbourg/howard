@@ -3228,10 +3228,64 @@ class RawTextArgumentDefaultsHelpFormatter(
     pass
 
 
+def help_header(setup: str = None) -> str:
+    """
+    The `help_header` function generates a header for the help documentation based on the metadata
+    information provided in the setup file.
+
+    :param setup: The `setup` parameter is a string that represents the path to a configuration file.
+    This file contains metadata about the program, such as its name, version, description, and long
+    description content type
+    :type setup: str
+    :return: The function `help_header` returns a string that represents the header for the help
+    documentation. The header includes the program name, version, authors, and description.
+
+    """
+
+    # Config Parser
+    # setup = "/tmp/config"
+    if os.path.isfile(setup):
+        cf = ConfigParser()
+        cf.read(setup)
+        prog_name = cf.get("metadata", "name", fallback="Unknown Program")
+        prog_version = cf.get("metadata", "version", fallback="0.0.0")
+        prog_authors = cf.get("metadata", "author", fallback="0.0.0")
+        prog_description = cf.get(
+            "metadata", "description", fallback="No description available."
+        )
+    else:
+        # meta
+        try:
+            meta = metadata("howard-ann")
+            prog_name = meta.get("Name")
+            prog_version = meta.get("Version")
+            prog_authors = meta.get("author")
+            prog_description = meta.get("Summary")
+        # Default
+        except Exception as e:
+            print(f"Erreur : {e}")
+            prog_name = "HOWARD"
+            prog_version = "0.0.0"
+            prog_authors = "ALB"
+            prog_description = "HOWARD - Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery"
+
+    # Logo
+    import pyfiglet
+
+    ascii_logo = pyfiglet.figlet_format(
+        prog_name.split("-")[0].upper()
+    )  # , font="slant")
+
+    # Header
+    header = f"""{ascii_logo}{prog_name.split('-')[0].upper()}::{prog_version} [{prog_authors}]\n{prog_description}\n"""
+
+    # Return
+    return header
+
+
 def help_generation(
     arguments_dict: dict = {},
     parser=None,
-    setup: str = None,
     output_type: str = "parser",
 ):
     """
@@ -3259,46 +3313,13 @@ def help_generation(
     commands_arguments = arguments_dict.get("commands_arguments", {})
     shared_arguments = arguments_dict.get("shared_arguments", {})
 
-    # # Config Parser
-    # cf = ConfigParser()
-    # try:
-    #     cf.read(setup)
-    #     prog_name = cf.get("metadata", "name", fallback="Unknown Program")
-    #     prog_version = cf.get("metadata", "version", fallback="0.0.0")
-    #     prog_description = cf.get(
-    #         "metadata", "description", fallback="No description available."
-    #     )
-    #     prog_long_description_content_type = cf.get(
-    #         "metadata", "long_description_content_type", fallback="text/plain"
-    #     )
-    # except (NoSectionError, NoOptionError) as e:
-    #     print(f"Error reading configuration file: {e}")
-    #     prog_name = "HOWARD"
-    #     prog_version = "0.0.0"
-    #     prog_description = "HOWARD - Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery"
-    #     prog_long_description_content_type = "text/plain"
-
-    try:
-        meta = metadata("howard-ann")
-        prog_name = meta.get("Name")
-        prog_version = meta.get("Version")
-        prog_description = meta.get("Summary")
-    except Exception as e:
-        print(f"Erreur : {e}")
-        prog_name = "HOWARD"
-        prog_version = "0.0.0"
-        prog_description = "HOWARD - Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery"
-
     # Parser default
     if not parser:
         parser = argparse.ArgumentParser()
 
     # Parser information
-    parser.prog = prog_name
-    parser.description = (
-        f"""{prog_name.upper()}:{prog_version} - {prog_description}\n"""
-        # + f"""{prog_long_description_content_type}"""
-    )
+    parser.prog = metadata("howard-ann").get("Name").split("-")[0]
+    parser.description = ""
     parser.epilog = (
         "\nUsage examples:\n"
         + """   howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json \n"""

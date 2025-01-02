@@ -107,9 +107,16 @@ howard --help
 ```
 
 ``` text
-usage: howard [-h] {query,stats,convert,hgvs,annotation,calculation,prioritization,process,databases,gui} ...
+ _   _  _____        ___    ____  ____
+| | | |/ _ \ \      / / \  |  _ \|  _ \ 
+| |_| | | | \ \ /\ / / _ \ | |_) | | | |
+|  _  | |_| |\ V  V / ___ \|  _ <| |_| |
+|_| |_|\___/  \_/\_/_/   \_\_| \_\____/ 
+                                        
+HOWARD::0.12.2.0 [Antony Le Bechec, Jean-Baptiste Lamouche]
+HOWARD - Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery
 
-HOWARD:0.12.1.1 - Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery
+usage: howard [-h] {query,stats,convert,hgvs,annotation,calculation,prioritization,process,databases,gui} ...
 
 Shared arguments:
   -h, --help            show this help message and exit

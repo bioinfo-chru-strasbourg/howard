@@ -1,5 +1,6 @@
 __pycache__/
 howard.egg-info/
+howard_ann.egg-info/
 .pytest_cache/
 .cache
 .vscode
@@ -15,10 +16,15 @@ tests/databases/hg19.fa
 tests/databases/hg19.fa.fai
 tests/databases/.DS_Store
 tests/data/TEM*
-tests/*.DS_Store
+tests/.DS_Store
 benchmark
 misc/
 *.DS_Store
 snpEff_*
 .gitignore
 tests/tmp*
+tmp/
+build/
+images/howard/
+images/old/
+kubernetes/

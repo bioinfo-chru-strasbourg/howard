@@ -1,5 +1,22 @@
 # RELEASE NOTES
 
+## 0.12.2.0
+
+Few improvements and fixes.
+
+### News
+
+- View variants "annotations" to: (TODO)
+  - query more easily (with "variants_annotations" view loaded by default)
+  - improve performances
+
+### Updates
+
+- Improve prioritization performances (vith annotations view)
+- Improve transcripts prioritization performances (reduce memory)
+
+### Fixes
+
 ## 0.12.1.1
 
 Few updates and fixes.

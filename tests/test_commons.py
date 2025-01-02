@@ -195,7 +195,7 @@ def test_help():
         "shared_arguments": shared_arguments,
     }
     help_content = help_generation(
-        arguments_dict=arguments_dict, setup=setup_cfg, output_type="markdown"
+        arguments_dict=arguments_dict, output_type="markdown"
     )
     assert help_content != ""
 
@@ -525,7 +525,7 @@ def test_get_bin_command_snpeff():
             "bcftools": {
                 "bin": "bcftools",
                 "docker": {
-                    "image": "howard:0.12.1.1",
+                    "image": "howard:0.12.2.0",
                     "entrypoint": "bcftools",
                     "options": None,
                     "command": None,
@@ -557,7 +557,7 @@ def test_get_bin_command_bcftools():
             "bcftools": {
                 "bin": "bcftools",
                 "docker": {
-                    "image": "howard:0.12.1.1",
+                    "image": "howard:0.12.2.0",
                     "entrypoint": "bcftools",
                     "options": None,
                     "command": None,
@@ -588,7 +588,7 @@ def test_get_bin_command_bcftools():
             "--memory=16g",
             "--entrypoint='bcftools'",
             "-v /tmp/howard:/tmp/howard",
-            "howard:0.12.1.1",
+            "howard:0.12.2.0",
         ]
     )
     # Test command bcftools found with docker with added options
@@ -608,7 +608,7 @@ def test_get_bin_command_bcftools():
             "--entrypoint='bcftools'",
             "-v /host/path/to/mount:/inner/path_to/mount",
             "-v /tmp/howard:/tmp/howard",
-            "howard:0.12.1.1",
+            "howard:0.12.2.0",
         ]
     )
 

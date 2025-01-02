@@ -1,8 +1,8 @@
 
 ##############################################################
-# Dockerfile Version:   1.7
+# Dockerfile Version:   1.7.1
 # Software:             HOWARD
-# Software Version:     0.12.1.1
+# Software Version:     0.12.2.0
 # Software Website:     https://github.com/bioinfo-chru-strasbourg/howard
 # Licence:              GNU Affero General Public License (AGPL)
 # Description:          HOWARD - Highly Open Workflow for Annotation & Ranking toward genomic variant
@@ -39,12 +39,12 @@
 
 FROM almalinux:8-minimal
 LABEL Software="HOWARD" \
-	Version="0.12.1.1" \
+	Version="0.12.2.0" \
 	Website="https://github.com/bioinfo-chru-strasbourg/howard" \
 	Description="HOWARD" \
 	License="GNU Affero General Public License (AGPL)" \
     maintener="Antony Le Bechec <antony.lebechec@gmail.com>" \
-	Usage='docker run -v $DATA FOLDER:/data -v $DATABASE_FOLDER:/databases -ti howard:0.12.1.1'
+	Usage='docker run -v $DATA FOLDER:/data -v $DATABASE_FOLDER:/databases -ti howard:0.12.2.0'
 
 
 
@@ -266,7 +266,7 @@ RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
 ###########
 
 ENV TOOL_NAME=howard
-ENV TOOL_VERSION=0.12.1.1
+ENV TOOL_VERSION=0.12.2.0
 ENV DEST=$TOOLS/$TOOL_NAME/$TOOL_VERSION
 ENV PATH=$DEST/bin:$PATH
 ENV USER_HOME=/root
