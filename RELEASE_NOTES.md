@@ -14,6 +14,7 @@ Few improvements and fixes.
 
 - Improve prioritization performances (vith annotations view)
 - Improve transcripts prioritization performances (reduce memory)
+- Improve BARCODEFAMILY calculation (multiple barcode allowed with successive commandes)
 
 ### Fixes
 

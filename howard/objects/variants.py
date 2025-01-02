@@ -9519,7 +9519,9 @@ class Variants:
             del dataframe_barcode
             gc.collect()
 
-    def calculation_barcode_family(self, tag: str = "BCF") -> None:
+    def calculation_barcode_family(
+        self, tag: str = None, tag_samples: str = None
+    ) -> None:
         """
         The `calculation_barcode_family` function calculates barcode values for variants in a VCF file
         and updates the INFO field in the file with the calculated barcode values.
@@ -9528,6 +9530,11 @@ class Variants:
         the barcode tag that will be added to the VCF file during the calculation process. If no value
         is provided for the `tag` parameter, the default value used is "BCF", defaults to BCF
         :type tag: str (optional)
+        :param tag_samples: The `tag_samples` parameter in the `calculation_barcode_family` function is
+        used to specify the barcode tag that will be added to the VCF file for samples during the
+        calculation process. If no value is provided for the `tag_samples` parameter, the default value
+        used is "BCFS", defaults to BCFS
+
         """
 
         # if FORMAT and samples
@@ -9540,10 +9547,14 @@ class Variants:
             if not tag:
                 tag = "BCF"
 
+            # barcode annotation field for samples
+            if not tag_samples:
+                tag_samples = f"{tag}S"
+
             # VCF infos tags
             vcf_infos_tags = {
-                tag: "barcode family calculation",
-                f"{tag}S": "barcode family samples",
+                "tag": "barcode family calculation",
+                "tag_samples": "barcode family samples",
             }
 
             # Param
@@ -9616,14 +9627,55 @@ class Variants:
             )
             log.debug(f"ped_samples={ped_samples}")
 
+            # Header
+            vcf_reader = self.get_header()
+
+            # Check for other tag names starting with 'tag'
+            log.debug(f"tag={tag}")
+            log.debug(f"tag_samples={tag_samples}")
+            if tag in vcf_reader.formats:
+                # Create a new tag name with a suffix based on the number of tags match with the same 'tag' pattern '{tag}_<integer>'
+                tag_new = f"{tag}_" + str(
+                    len(
+                        [
+                            t
+                            for t in vcf_reader.formats
+                            if (t == tag or re.match(f"{tag}_\d+", t))
+                        ]
+                    )
+                )
+
+                tag = tag_new
+            if tag_samples in vcf_reader.formats:
+                # Create a new tag name with a suffix based on the number of tags match with the same 'tag' pattern '{tag}_<integer>'
+                tag_samples_new = f"{tag_samples}_" + str(
+                    len(
+                        [
+                            t
+                            for t in vcf_reader.formats
+                            if (t == tag_samples or re.match(f"{tag_samples}_\d+", t))
+                        ]
+                    )
+                )
+
+                tag_samples = tag_samples_new
+            log.debug(f"NEW tag={tag}")
+            log.debug(f"NEW tag_samples={tag_samples}")
+
+            # Create vcf_infos_tags for the tags
+            vcf_infos_tags[tag] = vcf_infos_tags.get(
+                "tag", "barcode family calculation"
+            )
+            vcf_infos_tags[tag_samples] = vcf_infos_tags.get(
+                "tag_samples", "barcode family samples"
+            )
+            log.debug(f"vcf_infos_tags={vcf_infos_tags}")
+
             # Field
             barcode_infos = prefix + tag
 
             # Variants table
             table_variants = self.get_table_variants()
-
-            # Header
-            vcf_reader = self.get_header()
 
             # Create variant id
             variant_id_column = self.get_variant_id_column()
@@ -9648,16 +9700,22 @@ class Variants:
             # Add vaf_normalization to header
             vcf_reader.formats[tag] = vcf.parser._Format(
                 id=tag,
-                num=".",
+                num="1",
                 type="String",
-                desc=vcf_infos_tags.get(tag, "barcode family calculation"),
+                desc=vcf_infos_tags.get(
+                    tag, f"barcode family calculation for {ped_samples}"
+                )
+                + f" for {ped_samples}",
                 type_code=self.code_type_map.get("String"),
             )
             vcf_reader.formats[f"{tag}S"] = vcf.parser._Format(
-                id=f"{tag}S",
-                num=".",
+                id=tag_samples,
+                num=str(len(ped_samples)),
                 type="String",
-                desc=vcf_infos_tags.get(f"{tag}S", "barcode family samples"),
+                desc=vcf_infos_tags.get(
+                    tag_samples, f"barcode family samples for {ped_samples}"
+                )
+                + f" for {ped_samples}",
                 type_code=self.code_type_map.get("String"),
             )
 
@@ -9669,17 +9727,21 @@ class Variants:
                     value = f'dataframe_barcode."{barcode_infos}"'
                     value_samples = (
                         "'"
-                        + ",".join([f""" "{sample}" """ for sample in ped_samples])
+                        + ",".join([f"""{sample}""" for sample in ped_samples])
                         + "'"
                     )
                     ped_samples
                 elif sample == "FORMAT":
                     value = f"'{tag}'"
-                    value_samples = f"'{tag}S'"
+                    value_samples = f"'{tag_samples}'"
                 else:
                     value = "'.'"
                     value_samples = "'.'"
+
+                # Format regex
                 format_regex = r"[a-zA-Z0-9\s]"
+
+                # Update query
                 sql_update_set.append(
                     f"""
                         "{sample}" = 
@@ -11941,7 +12003,7 @@ class Variants:
                     SET
                         INFO = regexp_replace({regex_replace}, ';$', '')
                 """
-                log.debug(f"query={query}")
+                # log.debug(f"query={query}")
                 self.execute_query(query=query)
 
         return fields_renamed
@@ -12010,6 +12072,7 @@ class Variants:
         view: str = None,
         view_type: str = None,
         fields: list = None,
+        detect_type_list: bool = False,
         prefix: str = "",
         drop_view: bool = False,
         fields_to_rename: dict = None,
@@ -12130,7 +12193,7 @@ class Variants:
                 field_sql_type = code_type_map_to_sql.get(field_infos.type, "VARCHAR")
 
                 # Column is a list
-                if field_infos.num != 1:
+                if detect_type_list and field_infos.num != 1:
                     field_sql_type_list = True
 
                 # Colonne is a flag
