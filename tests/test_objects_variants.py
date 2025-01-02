@@ -2182,7 +2182,7 @@ def test_rename_fields():
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
-        input_vcf = tests_data_folder + "/example.annotation_names.vcf"
+        input_vcf = tests_data_folder + "/example.annotation_names.vcf.gz"
         output_vcf = f"{tmp_dir}/output.vcf"
 
         # Create object
@@ -2202,10 +2202,38 @@ def test_rename_fields():
 
         # Rename fields
         fields_renamed = variants.rename_info_fields(fields_to_rename=fields_to_rename)
-        assert fields_renamed == {'CLNSIG': 'CLNSIG_renamed', 'PREFIXCLNSIG': 'PREFIXCLNSIG_renamed', 'DP': 'depth', 'SIFT': None, 'SPiP_Alt': 'SPiP_alternative', 'SPiP_alternative': None}
-        assert len(variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%SIFT%'")) == 0
-        assert len(variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%None=%'")) == 0
-        assert len(variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%SPiP%'")) == 0
+        assert fields_renamed == {
+            "CLNSIG": "CLNSIG_renamed",
+            "PREFIXCLNSIG": "PREFIXCLNSIG_renamed",
+            "DP": "depth",
+            "SIFT": None,
+            "SPiP_Alt": "SPiP_alternative",
+            "SPiP_alternative": None,
+        }
+        assert (
+            len(
+                variants.get_query_to_df(
+                    "SELECT INFO FROM variants WHERE INFO LIKE '%SIFT%'"
+                )
+            )
+            == 0
+        )
+        assert (
+            len(
+                variants.get_query_to_df(
+                    "SELECT INFO FROM variants WHERE INFO LIKE '%None=%'"
+                )
+            )
+            == 0
+        )
+        assert (
+            len(
+                variants.get_query_to_df(
+                    "SELECT INFO FROM variants WHERE INFO LIKE '%SPiP%'"
+                )
+            )
+            == 0
+        )
 
         # Check if VCF is in correct format with pyVCF
         remove_if_exists([output_vcf])
@@ -2225,7 +2253,7 @@ def test_rename_fields_to_param_and_export():
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
-        input_vcf = tests_data_folder + "/example.annotation_names.vcf"
+        input_vcf = tests_data_folder + "/example.annotation_names.vcf.gz"
         output_vcf = f"{tmp_dir}/output.test.vcf"
 
         # Param
@@ -2252,6 +2280,16 @@ def test_rename_fields_to_param_and_export():
         variants.export_output(output_file=output_vcf)
         try:
             vcf_obj = vcf.Reader(filename=output_vcf)
-            assert list(set(vcf_obj.infos.keys())).sort() == ['CLNSIGSUFFIX', 'AA', 'NS', 'PREFIXCLNSIG_renamed', 'CLNSIG_renamed', 'depth'].sort()
+            assert (
+                list(set(vcf_obj.infos.keys())).sort()
+                == [
+                    "CLNSIGSUFFIX",
+                    "AA",
+                    "NS",
+                    "PREFIXCLNSIG_renamed",
+                    "CLNSIG_renamed",
+                    "depth",
+                ].sort()
+            )
         except:
             assert False
