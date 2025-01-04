@@ -49,7 +49,7 @@ def test_create_annotations_view():
 
         annotations_view_name = "annotations_view_test"
 
-        # TEST 1
+        # TEST 0
         ##########
 
         # Create annotations view
@@ -69,34 +69,25 @@ def test_create_annotations_view():
             """
         )
         # Check shape
-        assert annotations_view_select.shape == (7, 12)
+        assert annotations_view_select.shape == (7, 4)
         assert annotations_view_select.columns.to_list() == [
             "#CHROM",
             "POS",
             "REF",
             "ALT",
-            "NS",
-            "DP",
-            "AA",
-            "CLNSIG",
-            "PREFIXCLNSIG",
-            "CLNSIGSUFFIX",
-            "SPiP_Alt",
-            "SIFT",
         ]
 
-        # TEST 2
+        # TEST 1
         ##########
-        # Add specific fields
-        # Without drop
+        # Generates columns from fields
+        # Not dropped! Same than before
 
         # Create annotations view
-        fields = [
-            "CLNSIG",
-            "SIFT",
-        ]
         annotations_view_name_result = variants.create_annotations_view(
-            view=annotations_view_name, table="variants", fields=fields
+            view=annotations_view_name,
+            table="variants",
+            fields=None,
+            info_prefix_column="",
         )
 
         # Check annotations view name
@@ -111,20 +102,49 @@ def test_create_annotations_view():
             """
         )
         # Check shape
-        assert annotations_view_select.shape == (7, 12)
+        assert annotations_view_select.shape == (7, 4)
         assert annotations_view_select.columns.to_list() == [
             "#CHROM",
             "POS",
             "REF",
             "ALT",
-            "NS",
-            "DP",
-            "AA",
+        ]
+
+        # TEST 2
+        ##########
+        # Add specific fields
+        # Without drop
+
+        # Create annotations view
+        fields = [
             "CLNSIG",
-            "PREFIXCLNSIG",
-            "CLNSIGSUFFIX",
-            "SPiP_Alt",
             "SIFT",
+        ]
+        annotations_view_name_result = variants.create_annotations_view(
+            view=annotations_view_name,
+            table="variants",
+            fields=fields,
+            info_prefix_column="",
+        )
+
+        # Check annotations view name
+        assert annotations_view_name == annotations_view_name_result
+
+        # Check annotations_view content
+        annotations_view_select = variants.get_query_to_df(
+            query=f"""
+            SELECT *
+            FROM {annotations_view_name}
+            LIMIT 100
+            """
+        )
+        # Check shape
+        assert annotations_view_select.shape == (7, 4)
+        assert annotations_view_select.columns.to_list() == [
+            "#CHROM",
+            "POS",
+            "REF",
+            "ALT",
         ]
 
         # TEST 3
@@ -138,7 +158,11 @@ def test_create_annotations_view():
             "SIFT",
         ]
         annotations_view_name_result = variants.create_annotations_view(
-            view=annotations_view_name, table="variants", fields=fields, drop_view=True
+            view=annotations_view_name,
+            table="variants",
+            fields=fields,
+            info_prefix_column="",
+            drop_view=True,
         )
 
         # Check annotations view name
@@ -179,6 +203,7 @@ def test_create_annotations_view():
             view=annotations_view_name,
             table="variants",
             fields=fields,
+            info_prefix_column="",
             fields_needed=fields_needed,
             drop_view=True,
         )
@@ -224,6 +249,7 @@ def test_create_annotations_view():
             view=annotations_view_name,
             table="variants",
             fields=fields,
+            info_prefix_column="",
             fields_needed=fields_needed,
             fields_needed_all=fields_needed_all,
             drop_view=True,
@@ -277,6 +303,7 @@ def test_create_annotations_view():
             view=annotations_view_name,
             table="variants",
             fields=fields,
+            info_prefix_column="",
             fields_needed=fields_needed,
             detect_type_list=True,
             drop_view=True,
@@ -338,6 +365,7 @@ def test_create_annotations_view():
             view=annotations_view_name,
             table="variants",
             fields=fields,
+            info_prefix_column="",
             fields_needed=fields_needed,
             detect_type_list=True,
             drop_view=True,
@@ -382,6 +410,7 @@ def test_create_annotations_view():
             view=annotations_view_name,
             table="variants",
             fields=fields,
+            info_prefix_column="",
             fields_needed=fields_needed,
             fields_not_exists=False,
             detect_type_list=True,
@@ -428,11 +457,11 @@ def test_create_annotations_view():
             view=annotations_view_name,
             table="variants",
             fields=fields,
+            info_prefix_column=prefix,
             fields_needed=fields_needed,
             fields_not_exists=False,
             detect_type_list=True,
             drop_view=True,
-            prefix=prefix,
         )
 
         # Check annotations view name
@@ -478,11 +507,11 @@ def test_create_annotations_view():
             view=annotations_view_name,
             table="variants",
             fields=fields,
+            info_prefix_column=prefix,
             fields_needed=fields_needed,
             fields_not_exists=False,
             detect_type_list=True,
             drop_view=True,
-            prefix=prefix,
             limit=limit,
         )
 
@@ -508,4 +537,47 @@ def test_create_annotations_view():
             "FILTER",
             "PREFIX_CLNSIG",
             "PREFIX_SIFT",
+        ]
+
+        # TEST 11
+        ##########
+        # Add INFO struct column
+
+        # Create annotations view
+        fields = ["CLNSIG", "SIFT", "FIELD_THAT_NOT_EXISTS"]
+        fields_needed = ["#CHROM", "POS", "ID", "REF", "ALT", "FILTER"]
+        info_struct_column = "INFOS"
+        annotations_view_name_result = variants.create_annotations_view(
+            view=annotations_view_name,
+            table="variants",
+            fields=fields,
+            info_struct_column=info_struct_column,
+            fields_needed=fields_needed,
+            fields_not_exists=False,
+            detect_type_list=True,
+            drop_view=True,
+        )
+
+        # Check annotations view name
+        assert annotations_view_name == annotations_view_name_result
+
+        # Check annotations_view content
+        annotations_view_select = variants.get_query_to_df(
+            query=f"""
+            SELECT *
+            FROM {annotations_view_name}
+            LIMIT 100
+            """
+        )
+        log.debug(annotations_view_select)
+        # Check shape
+        assert annotations_view_select.shape == (7, 7)
+        assert annotations_view_select.columns.to_list() == [
+            "#CHROM",
+            "POS",
+            "ID",
+            "REF",
+            "ALT",
+            "FILTER",
+            "INFOS",
         ]

@@ -7515,7 +7515,8 @@ class Variants:
                             "annotation_view_for_prioritization_"
                             + str(random.randrange(1000))
                         )
-                        annotation_view_prefix = ""
+                        annotations_view_prefix = ""
+                        annotations_view_struct = "INFOS"
                         for annotation in prioritizations_config[profile]:
 
                             # skip special sections
@@ -7600,7 +7601,8 @@ class Variants:
                                 annotation_view = self.create_annotations_view(
                                     view=annotation_view_name,
                                     table=table_variants,
-                                    prefix=annotation_view_prefix,
+                                    info_prefix_column=annotations_view_prefix,
+                                    info_struct_column=annotations_view_struct,
                                     fields=criterion_fields_profile + pz_keys,
                                     drop_view=True,
                                 )
@@ -7718,9 +7720,9 @@ class Variants:
 
                                             # Query test cast as float
                                             query_test_cast = f"""
-                                                SELECT "{annotation_view_name}"."{annotation_view_prefix}{annotation}"
+                                                SELECT "{annotation_view_name}"."{annotations_view_prefix}{annotation}"
                                                     FROM "{annotation_view_name}"
-                                                    WHERE CAST("{annotation_view_name}"."{annotation_view_prefix}{annotation}" AS FLOAT) > 0
+                                                    WHERE CAST("{annotation_view_name}"."{annotations_view_prefix}{annotation}" AS FLOAT) > 0
                                                 LIMIT 1
                                             """
                                             self.execute_query(query_test_cast)
@@ -7732,8 +7734,8 @@ class Variants:
                                                     SELECT *
                                                     FROM "{annotation_view_name}"
                                                     WHERE (
-                                                        CAST("{annotation_view_name}"."{annotation_view_prefix}{annotation}" AS VARCHAR) NOT IN ('','.')
-                                                        AND   CAST("{annotation_view_name}"."{annotation_view_prefix}{annotation}" AS FLOAT){comparison_map[criterion_type]}{criterion_value}
+                                                        CAST("{annotation_view_name}"."{annotations_view_prefix}{annotation}" AS VARCHAR) NOT IN ('','.')
+                                                        AND   CAST("{annotation_view_name}"."{annotations_view_prefix}{annotation}" AS FLOAT){comparison_map[criterion_type]}{criterion_value}
                                                         )
                                                     ) AS "{annotation_view_name}"
                                                 WHERE ({" AND ".join(clause_join)})
@@ -7751,7 +7753,7 @@ class Variants:
                                                     SELECT *
                                                     FROM "{annotation_view_name}"
                                                     WHERE (
-                                                    CAST("{annotation_view_name}"."{annotation_view_prefix}{annotation}" AS STRING) SIMILAR TO '{contains_option}{criterion_value}{contains_option}'
+                                                    CAST("{annotation_view_name}"."{annotations_view_prefix}{annotation}" AS STRING) SIMILAR TO '{contains_option}{criterion_value}{contains_option}'
                                                         )
                                                     ) AS "{annotation_view_name}"
                                                 WHERE ({" AND ".join(clause_join)})
@@ -12073,7 +12075,8 @@ class Variants:
         fields_needed_all: bool = False,
         detect_type_list: bool = False,
         fields_not_exists: bool = True,
-        prefix: str = "",
+        info_prefix_column: str = None,
+        info_struct_column: str = None,
         drop_view: bool = False,
         fields_to_rename: dict = None,
         limit: int = None,
@@ -12123,10 +12126,18 @@ class Variants:
         table in the view. If set to `True`, the function will include fields that do not exist in the
         table as NULL values in the view. Defaults to True
         :type fields_not_exists: bool
-        :param prefix: The `prefix` parameter in the `create_annotations_view` function is used to
-        specify a prefix that will be added to the field names in the view. This prefix helps in
-        distinguishing the fields extracted from the INFO column in the view. Defaults to an empty string
-        :type prefix: str
+        :param info_prefix_column: The `info_prefix_column` parameter in the `create_annotations_view`
+        function is used to specify a prefix that will be added to the field names in the view.
+        If provided, the function will generate a fields with the prefix (e.g. "", "INFOS_", "annotations_").
+        If not provided (None), the function will not genereate columns. This prefix helps in
+        distinguishing the fields extracted from the INFO column in the view. Defaults to None.
+        :type info_prefix_column: str
+        :param info_struct_column: The `info_struct_column` parameter in the `create_annotations_view`
+        function is used to specify the name of the column that will contain the extracted fields from
+        the INFO column in the view. This column will hold the structured data extracted from the INFO
+        column for further processing or analysis (e.g. "INFOS" or "annotations"). If not provided (None),
+        the function will not genereate the column. Defaults to None
+        :type info_struct_column: str
         :param drop_view: The `drop_view` parameter in the `create_annotations_view` function is a boolean
         flag that determines whether to drop the existing view with the same name before creating a new
         view. If set to `True`, the function will drop the existing view before creating a new view with
@@ -12160,11 +12171,20 @@ class Variants:
         if view_type is None:
             view_type = "VIEW"
 
+        if info_prefix_column is not None:
+            prefix = info_prefix_column
+        else:
+            prefix = ""
+
         # Check view type value
         if view_type.upper() not in ["VIEW", "TABLE"]:
             raise ValueError(
                 f"Invalid view type value: {view_type}. Either 'VIEW' or 'TABLE'"
             )
+
+        # INFO struct
+        # info_struct_column = "annotations"
+        # info_struct_column = "INFOS"
 
         # Get header
         header = self.get_header()
@@ -12197,6 +12217,7 @@ class Variants:
 
         # Create fields for annotation view extracted from INFO column in table variants (with regexp_replace like in rename_info_fields), with column type from VCF header
         fields_columns = []
+        fields_columns_annotations_struct = []
         field_sql_type_list = False
         for field in fields:
 
@@ -12225,12 +12246,18 @@ class Variants:
                 # Column is a list
                 if detect_type_list and field_infos.num != 1:
                     field_sql_type_list = True
+                else:
+                    field_sql_type_list = False
 
                 # Colonne is a flag
                 if field_infos.type == "Flag":
                     field_pattern = rf"(^|;)({field})([^;]*)?"
                     fields_columns.append(
                         f""" regexp_matches("INFO", '{field_pattern}')::BOOLEAN AS '{prefix}{field_to_rename}' """
+                    )
+                    fields_columns_annotations_struct.append(
+                        f""" "{field_to_rename}":= regexp_matches("INFO", '{field_pattern}')::BOOLEAN
+                        """
                     )
 
                 # Colonne with a type
@@ -12244,18 +12271,44 @@ class Variants:
                         fields_columns.append(
                             f""" CAST(list_transform(string_split(NULLIF(regexp_extract("INFO", '{field_pattern}', 3), ''), ','), x -> CASE WHEN x = '.' OR x = '' THEN NULL ELSE x END) AS {field_sql_type}[]) AS '{prefix}{field_to_rename}' """
                         )
+                        fields_columns_annotations_struct.append(
+                            f""" "{field_to_rename}":= CAST(list_transform(string_split(NULLIF(regexp_extract("INFO", '{field_pattern}', 3), ''), ','), x -> CASE WHEN x = '.' OR x = '' THEN NULL ELSE x END) AS {field_sql_type}[])
+                            """
+                        )
 
                     # Field is a unique value
                     else:
                         fields_columns.append(
                             f""" NULLIF(regexp_replace(regexp_extract("INFO", '{field_pattern}', 3), '^\\.$', ''), '')::{field_sql_type} AS '{prefix}{field_to_rename}' """
                         )
+                        fields_columns_annotations_struct.append(
+                            f""" "{field_to_rename}":= COALESCE(NULLIF(regexp_replace(regexp_extract("INFO", '{field_pattern}', 3), '^\\.$', ''), '')::{field_sql_type}, NULL)
+                            """
+                        )
 
             else:
                 if fields_not_exists:
                     fields_columns.append(f""" null AS '{prefix}{field_to_rename}' """)
+                    fields_columns_annotations_struct.append(
+                        f""" "{field_to_rename}":= NULL  """
+                    )
                     msg_err = f"Field '{field}' is not found (in table or header): '{field}' will be set to NULL"
                     log.debug(msg=msg_err)
+
+        # Combine fields into a STRUCT
+        if info_struct_column and len(fields_columns_annotations_struct):
+            annotations_column_annotations_struct = f""" 
+                , STRUCT_PACK({", ".join(fields_columns_annotations_struct)}) AS {info_struct_column}
+                """
+        else:
+            annotations_column_annotations_struct = ""
+
+        if info_prefix_column is not None and len(fields_columns):
+            annotations_column_annotations_columns = f""" 
+                , {", ".join(fields_columns)}
+                """
+        else:
+            annotations_column_annotations_columns = ""
 
         # Limit
         limit_clause = ""
@@ -12265,7 +12318,7 @@ class Variants:
         # Query select
         query_select = f"""
             SELECT
-                {', '.join([f'"{field}"' for field in fields_needed])}, {", ".join(fields_columns)}
+                {', '.join([f'"{field}"' for field in fields_needed])} {annotations_column_annotations_columns} {annotations_column_annotations_struct}
             FROM
                 {table}
             {limit_clause}
@@ -12285,7 +12338,229 @@ class Variants:
         query_create_view = f"""
             CREATE {view_type} IF NOT EXISTS {view} AS {query_select}
         """
-        # log.debug(f"query_create_view:{query_create_view}")
+        log.debug(f"query_create_view:{query_create_view}")
+        self.execute_query(query=query_create_view)
+        log.debug(f"View created: {view}")
+
+        return view
+
+    def create_annotations_view_with_structured_info(
+        self,
+        table: str,
+        view: str,
+        view_type: str = "VIEW",
+        fields: list = None,
+        fields_needed: list = None,
+        fields_needed_all: bool = False,
+        detect_type_list: bool = False,
+        fields_not_exists: bool = True,
+        prefix: str = "",
+        drop_view: bool = False,
+        fields_to_rename: dict = None,
+        limit: int = None,
+    ) -> str:
+        """
+        The `create_annotations_view_with_structured_info` function creates a SQL view from fields in a VCF INFO column,
+        structuring the INFO tags into a JSON or structured column.
+
+        :param table: The `table` parameter specifies the name of the table from which the fields are to be extracted.
+        :param view: The `view` parameter specifies the name of the view that will be created.
+        :param view_type: The `view_type` parameter specifies the type of view that will be created. Defaults to `VIEW`.
+        :param fields: The `fields` parameter is a list of fields to be extracted from the INFO column.
+        :param fields_needed: The `fields_needed` parameter is a list of fields that are required for the view.
+        :param fields_needed_all: The `fields_needed_all` parameter determines whether to include all fields in the table.
+        :param detect_type_list: The `detect_type_list` parameter determines whether to detect the type of the fields.
+        :param fields_not_exists: The `fields_not_exists` parameter determines whether to include fields that do not exist.
+        :param prefix: The `prefix` parameter specifies a prefix that will be added to the field names in the view.
+        :param drop_view: The `drop_view` parameter determines whether to drop the existing view with the same name.
+        :param fields_to_rename: The `fields_to_rename` parameter is a dictionary that contains the mapping of fields to be renamed.
+        :param limit: The `limit` parameter specifies the maximum number of rows to be included in the view.
+        :return: The `create_annotations_view_with_structured_info` function returns the name of the view that is created.
+        """
+
+        # Get table
+        if table is None:
+            table = self.get_table_variants()
+
+        # Get view
+        if view is None:
+            view = f"{table}_annotations"
+
+        # Get view type
+        if view_type is None:
+            view_type = "VIEW"
+
+        # Check view type value
+        if view_type.upper() not in ["VIEW", "TABLE"]:
+            raise ValueError(
+                f"Invalid view type value: {view_type}. Either 'VIEW' or 'TABLE'"
+            )
+
+        # INFO struct
+        info_struct_column = "annotations"
+
+        # Get header
+        header = self.get_header()
+
+        # Get fields
+        if fields is None:
+            fields = list(header.infos.keys())
+
+        # Get fields to rename
+        if fields_to_rename is None:
+            fields_to_rename = {}
+
+        log.debug(
+            f"Create '{view}' view (as '{view_type}') from table '{table}' with {len(fields)} fields"
+        )
+
+        # Describe table
+        table_describe_query = f"""
+            DESCRIBE {table}
+        """
+        table_describe = self.get_query_to_df(query=table_describe_query)
+
+        # fields needed
+        if fields_needed is None:
+            if fields_needed_all:
+                fields_needed = list(table_describe.get("column_name"))
+            else:
+                fields_needed = ["#CHROM", "POS", "REF", "ALT"]
+
+        # Create fields for annotation view extracted from INFO column in table variants (with regexp_replace like in rename_info_fields), with column type from VCF header
+        fields_columns = []
+        field_sql_type_list = False
+        for field in fields:
+
+            # # Rename field
+            # field_to_rename = fields_to_rename.get(field, field)
+
+            # # Check field type
+
+            # # Needed fields
+            # if field in fields_needed:
+            #     continue
+
+            # # Fields in table
+            # elif field in list(table_describe.get("column_name")):
+            #     fields_columns.append(f'"{field}"')
+
+            # # Fields in INFO column
+            # else:
+            #     field_pattern = rf"(^|;)({field})=([^;]*)?"
+            #     # fields_columns.append(
+            #     #     f""" '{field}': NULLIF(regexp_replace(regexp_extract("INFO", '{field_pattern}', 3), '^\\.$', ''), '') """
+            #     # )
+            #     # fields_columns.append(
+            #     #     f""" '{field}', NULLIF(regexp_replace(regexp_extract("INFO", '{field_pattern}', 3), '^\\.$', ''), '') """
+            #     # )
+            #     fields_columns.append(
+            #         f""" '{field}', NULLIF(regexp_replace(regexp_extract("INFO", '{field_pattern}', 3), '^\\.$', ''), '') """
+            #     )
+
+            # Rename field
+            field_to_rename = fields_to_rename.get(field, field)
+
+            # Check field type
+
+            # Needed fields
+            if field in fields_needed:
+                continue
+
+            # Fields in table
+            elif field in list(table_describe.get("column_name")):
+                fields_columns.append(f""" "{field}" AS '{prefix}{field_to_rename}' """)
+
+            # Fields in header
+            elif field in header.infos:
+
+                # Field info
+                field_infos = header.infos.get(field, None)
+
+                # Field SQL type
+                field_sql_type = code_type_map_to_sql.get(field_infos.type, "VARCHAR")
+
+                # Column is a list
+                if detect_type_list and field_infos.num != 1:
+                    field_sql_type_list = True
+                else:
+                    field_sql_type_list = False
+
+                # Colonne is a flag
+                if field_infos.type == "Flag":
+                    field_pattern = rf"(^|;)({field})([^;]*)?"
+                    # fields_columns.append(
+                    #     f""" '{prefix}{field_to_rename}', regexp_matches("INFO", '{field_pattern}')::BOOLEAN  """
+                    # )
+                    fields_columns.append(
+                        f""" "{prefix}{field_to_rename}":= regexp_matches("INFO", '{field_pattern}')::BOOLEAN
+                        """
+                    )
+
+                # Colonne with a type
+                else:
+
+                    # Field pattern
+                    field_pattern = rf"(^|;)({field})=([^;]*)?"
+
+                    # Field is a list
+                    if field_sql_type_list:
+                        fields_columns.append(
+                            f""" "{prefix}{field_to_rename}":= CAST(list_transform(string_split(NULLIF(regexp_extract("INFO", '{field_pattern}', 3), ''), ','), x -> CASE WHEN x = '.' OR x = '' THEN NULL ELSE x END) AS {field_sql_type}[])
+                            """
+                        )
+
+                    # Field is a unique value
+                    else:
+                        fields_columns.append(
+                            f""" "{prefix}{field_to_rename}":= COALESCE(NULLIF(regexp_replace(regexp_extract("INFO", '{field_pattern}', 3), '^\\.$', ''), '')::{field_sql_type}, NULL)
+                            """
+                        )
+
+            else:
+                if fields_not_exists:
+                    # fields_columns.append(f""" '{prefix}{field_to_rename}', null  """)
+                    fields_columns.append(f""" "{prefix}{field_to_rename}":= NULL  """)
+                    msg_err = f"Field '{field}' is not found (in table or header): '{field}' will be set to NULL"
+                    log.debug(msg=msg_err)
+
+        # Combine fields into a STRUCT
+        annotations_column = f""" 
+            STRUCT_PACK({", ".join(fields_columns)}) AS {info_struct_column}
+            """
+
+        # Limit
+        limit_clause = ""
+        if limit is not None:
+            limit_clause = f" LIMIT {limit} "
+
+        # Query select
+        query_select = f"""
+            SELECT
+                {', '.join([f'"{field}"' for field in fields_needed])}, {annotations_column}
+            FROM
+                {table}
+            {limit_clause}
+        """
+
+        # DEVEL
+        # view_type = "TABLE"
+
+        # Drop if any
+        if drop_view:
+            log.debug(f"Drop view: {view}")
+            query_create_view = f"""
+                DROP {view_type} IF EXISTS {view}
+            """
+            self.execute_query(query=query_create_view)
+            log.debug(f"View dropped: {view}")
+
+        # Create view
+        query_create_view = f"""
+            CREATE {view_type} {view} AS
+            {query_select}
+        """
+        log.debug(f"query_create_view view: {query_create_view}")
         self.execute_query(query=query_create_view)
         log.debug(f"View created: {view}")
 
