@@ -12073,7 +12073,7 @@ class Variants:
         fields: list = None,
         fields_needed: list = None,
         fields_needed_all: bool = False,
-        detect_type_list: bool = False,
+        detect_type_list: bool = True,
         fields_not_exists: bool = True,
         info_prefix_column: str = None,
         info_struct_column: str = None,
