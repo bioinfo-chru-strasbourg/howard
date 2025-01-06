@@ -569,7 +569,7 @@ def test_create_annotations_view():
             LIMIT 100
             """
         )
-        log.debug(annotations_view_select)
+        # log.debug(annotations_view_select)
         # Check shape
         assert annotations_view_select.shape == (7, 7)
         assert annotations_view_select.columns.to_list() == [
