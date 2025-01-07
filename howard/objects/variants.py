@@ -83,6 +83,158 @@ class Variants:
         if load:
             self.load_data()
 
+    def load_header(self, header=None, table: str = None, drop: bool = False) -> str:
+        """
+        Load header in a table, with INFO, FORMAT, FILTERS, SAMPLES and METADATA
+
+        Args:
+            header (vcfobject, optional): VCF object from pyVCF. Defaults to None (header of the Variants object).
+            table (str, optional): Table name of the header table. Defaults to None (defined as 'header' later).
+            drop (bool, optional): Drop table if exists. Defaults to False.
+
+        Returns:
+            str: Name of the table, None otherwise
+
+        """
+
+        def create_header_table(conn):
+            """
+            Create header table
+
+            Args:
+                conn (conn): Database connexion.
+
+            """
+
+            # Columns
+            columns = [
+                "section VARCHAR",
+                "id VARCHAR",
+                "number VARCHAR",
+                "type VARCHAR",
+                "description VARCHAR",
+            ]
+
+            # Query create
+            query_create = f"""
+            CREATE TABLE header (
+                {', '.join(columns)},
+                PRIMARY KEY (section, id)
+            );
+            """
+
+            # Execute
+            conn.execute(query_create)
+
+        def insert_header(conn, vcf_header):
+            """
+            Insert header into table
+
+            Args:
+                conn (conn): Database connexion.
+
+            """
+
+            # Init
+            inserts = []
+
+            # Add INFO section
+            for info_id, info in vcf_header.infos.items():
+                inserts.append(
+                    (
+                        "INFO",
+                        info_id,
+                        str(info.num if info.num is not None else "."),
+                        info.type if info.type is not None else "",
+                        info.desc if info.desc is not None else "",
+                    )
+                )
+
+            # Add FORMAT section
+            for format_id, format in vcf_header.formats.items():
+                inserts.append(
+                    (
+                        "FORMAT",
+                        format_id,
+                        str(format.num if format.num is not None else "."),
+                        format.type if format.type is not None else "",
+                        format.desc if format.desc is not None else "",
+                    )
+                )
+
+            # Add FILTER section
+            for filter_id, filter in vcf_header.filters.items():
+                inserts.append(
+                    (
+                        "FILTER",
+                        filter_id,
+                        "",
+                        "",
+                        filter.desc if filter.desc is not None else "",
+                    )
+                )
+
+            # Add Samples
+            for sample_id in vcf_header.samples:
+                inserts.append(
+                    (
+                        "SAMPLE",
+                        sample_id,
+                        "",
+                        "",
+                        "",
+                    )
+                )
+
+            # Add Metadata
+            for key, value in vcf_header.metadata.items():
+                inserts.append(
+                    (
+                        "METADATA",
+                        key,
+                        "",
+                        "",
+                        str(value) if value is not None else "",
+                    )
+                )
+
+            # Create query of insert with parameters
+            query_insert = """
+            INSERT INTO header (section, id, number, type, description) VALUES (?, ?, ?, ?, ?);
+            """
+            conn.executemany(query_insert, inserts)
+
+        # Get header is None
+        if header is None:
+            header = self.get_header()
+
+        # Header table
+        if table is None:
+            table = "header"
+
+        # If header is not None
+        if header is not None:
+
+            # Connexion
+            conn = self.get_connexion()
+
+            # Drop table
+            if drop:
+                query_drop = f"""
+                DROP TABLE IF EXISTS {table}
+                """
+                conn.execute(query_drop)
+
+            # Create table
+            create_header_table(conn)
+            insert_header(conn, header)
+
+            return table
+
+        else:
+
+            return None
+
     def set_samples(self, samples: list = None) -> list:
         """
         The function `set_samples` sets the samples attribute of an object to a provided list or
@@ -12165,7 +12317,7 @@ class Variants:
 
         # Get view
         if view is None:
-            view = f"{table}_annotations"
+            view = f"{table}_view"
 
         # Get view type
         if view_type is None:
@@ -12181,10 +12333,6 @@ class Variants:
             raise ValueError(
                 f"Invalid view type value: {view_type}. Either 'VIEW' or 'TABLE'"
             )
-
-        # INFO struct
-        # info_struct_column = "annotations"
-        # info_struct_column = "INFOS"
 
         # Get header
         header = self.get_header()

@@ -72,7 +72,9 @@ def stats(args: argparse) -> None:
     # Stats
     vcfdata_obj.print_stats(output_file=stats_md, json_file=stats_json)
 
-    # Close connexion
-    vcfdata_obj.close_connexion()
+    # # Close connexion
+    # vcfdata_obj.close_connexion()
 
     log.info("End")
+
+    return vcfdata_obj

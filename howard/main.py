@@ -264,6 +264,9 @@ def main() -> None:
     args.config = config
     log.debug(f"config: {config}")
 
+    # Variants object
+    vcfdata_obj = None
+
     # Command eval
     if not args.command:
         parser.print_help()
@@ -278,7 +281,38 @@ def main() -> None:
             raise ValueError(msg_gui_disable)
         command_function = commands_arguments[args.command]["function"]
         log.debug(f"Command/Tool: {command_function}")
-        eval(f"{command_function}(args)")
+        vcfdata_obj = eval(f"{command_function}(args)")
+
+    # Interactive option
+    interactive = False
+
+    # Specific "query" tool interactivity
+    if command_function == "query" and ("query" not in args or not args.query):
+        interactive = True
+        log.debug("Interactivity terminal activated")
+
+    # Launch interactive terminal if --interactive is specified
+    if interactive or ("interactive" in args and args.interactive):
+
+        # Check variants object
+        if vcfdata_obj is None:
+            msg_err = f"Command/Tool '{command_function}' does not support interactive terminal"
+            log.warning(msg_err)
+            return None
+
+        # Import
+        from howard.tools.interactive import launch_interactive_terminal
+
+        # Launch interactive terminal
+        log.info("Start interative terminal")
+        launch_interactive_terminal(args=args, variants=vcfdata_obj)
+        log.info("End interative terminal")
+
+    # Close Variants object connexion
+    if vcfdata_obj is not None:
+        log.debug("Close connexion")
+        vcfdata_obj.close_connexion()
+        log.debug("Connexion closed")
 
 
 if __name__ == "__main__":
