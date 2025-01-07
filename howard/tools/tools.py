@@ -1743,6 +1743,13 @@ arguments = {
             }
         },
     },
+    # Interactivity
+    "interactive": {
+        "help": """Interative mose..\n""",
+        "action": "store_true",
+        "default": False,
+    },
+    # Verbosity
     "quiet": {"help": argparse.SUPPRESS, "action": "store_true", "default": False},
     "verbose": {"help": argparse.SUPPRESS, "action": "store_true", "default": False},
     "debug": {"help": argparse.SUPPRESS, "action": "store_true", "default": False},
@@ -1758,6 +1765,7 @@ shared_arguments = [
     "chunk_size",
     "tmp",
     "duckdb_settings",
+    "interactive",
     "verbosity",
     "log",
     "quiet",

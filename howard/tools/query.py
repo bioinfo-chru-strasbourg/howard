@@ -67,6 +67,14 @@ def query(args: argparse) -> None:
     # Load data
     if vcfdata_obj.get_input():
         vcfdata_obj.load_data()
+        vcfdata_obj.load_header()
+        vcfdata_obj.create_annotations_view(
+            view="variants_view",
+            info_prefix_column="",
+            fields_needed_all=True,
+            info_struct_column="INFOS",
+            detect_type_list=True,
+        )
 
     # Query
     if param.get("query", {}).get("query", None):
@@ -102,7 +110,9 @@ def query(args: argparse) -> None:
             query=param.get("query", {}).get("query", None), export_header=True
         )
 
-    # Close connexion
-    vcfdata_obj.close_connexion()
+    # # Close connexion
+    # vcfdata_obj.close_connexion()
 
     log.info("End")
+
+    return vcfdata_obj

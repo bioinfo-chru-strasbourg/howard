@@ -10,4 +10,5 @@ __all__ = [
     "databases",
     "gui",
     "help",
+    "interactive",
 ]
