@@ -15,47 +15,50 @@ Highly Open Workflow for Annotation & Ranking toward genomic variant
 Discovery
 
 HOWARD annotates and prioritizes genetic variations, calculates and
-normalizes annotations, translates files in multiple formats (e.g. vcf,
-tsv, parquet) and generates variants statistics.
+normalizes annotations, explore data with an interactive terminal,
+translates files in multiple formats (e.g. vcf, tsv, Parquet),
+generates variants statistics, and provides a graphical user interface.
 
-HOWARD annotation is mainly based on a build-in Parquet annotation
-method, and external tools such as BCFTOOLS, ANNOVAR, snpEff, Exomiser
-and Splice (see docs, automatically downloaded if needed). Parquet
-annotation uses annotation database in VCF or BED format, in mutliple
-file format: Parquet/duckdb, VCF, BED, TSV, CSV, TBL, JSON.
+HOWARD annotation tool is primarily based on a built-in Parquet annotation
+method and external tools such as BCFTOOLS, ANNOVAR, snpEff, Exomiser,
+and Splice (see documentation, automatically downloaded if needed).
+Parquet annotation uses annotation databases in VCF or BED format,
+in multiple file formats: Parquet/DuckDB, VCF, BED, TSV, CSV, TBL, JSON.
 
-HOWARD calculation processes variants information to calculate new
-information, such as: harmonizes allele frequency (VAF), extracts Nomen
-(transcript, cNomen, pNomen...) from HGVS fields with an optional list
-of personalized transcripts, generates VaRank format barcode.
+HOWARD calculation tool processes variants information to calculate new
+information, such as harmonizing allele frequency (VAF), extracting
+nomenclature (transcript, cNomen, pNomen etc.) from HGVS fields
+with an optional list of personalized transcripts,
+generating VaRank format barcodes.
 
-HOWARD prioritization algorithm uses profiles to flag variants (as
-passed or filtered), calculate a prioritization score, and automatically
-generate a comment for each variants (example: 'polymorphism identified
-in dbSNP. associated to Lung Cancer. Found in ClinVar
-database').Prioritization profiles are defined in a configuration file.
-A profile is defined as a list of annotation/value, using wildcards and
-comparison options (contains, lower than, greater than, equal...).
-Annotations fields may be quality values (usually from callers, such as
-'GQ', 'DP') or other annotations fields provided by annotations tools,
-such as HOWARD itself (example: COSMIC, Clinvar, 1000genomes, PolyPhen,
-SIFT). Multiple profiles can be used simultaneously, which is useful to
-define multiple validation/prioritization levels (example: 'standard',
-'stringent', 'rare variants', 'low allele frequency').
+HOWARD prioritization tool uses profiles to flag variants (passed/filtered),
+calculate a prioritization score, and automatically generate a comment
+for each variant (e.g., 'polymorphism identified in dbSNP, associated
+with Lung Cancer, found in ClinVar database'). Prioritization profiles 
+are defined in a configuration file. A profile is defined as a list 
+of annotation/value pairs, using wildcards and comparison options
+(contains, less than, greater than, equal, etc.). Annotation fields may
+be quality values (usually from callers, such as 'GQ', 'DP') or other
+annotation fields provided by annotation tools, such as HOWARD itself
+(e.g., COSMIC, ClinVar, 1000 Genomes, PolyPhen, SIFT). Multiple profiles
+can be used simultaneously, which is useful for defining multiple
+validation/prioritization levels (e.g., 'standard', 'stringent',
+'rare variants', 'low allele frequency').
 
-HOWARD translates VCF format into multiple formats (e.g. VCF, TSV,
-Parquet), by sorting variants using specific fields (example :
-'prioritization score', 'allele frequency', 'gene symbol'),
-including/excluding annotations/fields, including/excluding variants,
-adding fixed columns.
+HOWARD provides an interactive terminal for exploring data using SQL queries.
+With tables and views such as variants, variants_view, and header,
+data is structured based on their definitions (header format),
+enabling easy selection and filtering using the SQL language. Moreover, 
+HOWARD provides a graphical user interface to easily launch available tools.
 
-HOWARD generates statistics files with a specific algorithm, snpEff and
-BCFTOOLS.
+HOWARD translates VCF format into multiple formats (e.g., VCF, TSV, Parquet)
+by sorting variants using specific fields (e.g., 'prioritization score',
+'allele frequency', 'gene symbol'), including/excluding annotations/fields,
+including/excluding variants, and adding fixed columns. HOWARD also generates
+statistics using a build-in algorithm, snpEff, or BCFTOOLS.
 
-HOWARD is multithreaded through the number of variants and by database
-(data-scaling).
-
-HOWARD is able to add plugins for further analyses.
+HOWARD is multithreaded, processing data across multiple variants
+and databases (data-scaling), and supports plugins for further analyses.
 
 ## Table of contents
 
@@ -97,6 +100,8 @@ git clone https://github.com/bioinfo-chru-strasbourg/howard.git .
 
 ## Python
 
+### Pip install
+
 Install HOWARD using Python Pip tool, and run HOWARD for help options:
 
 ``` bash
@@ -136,6 +141,43 @@ Tools:
     databases           Download databases and needed files for howard and associated tools
     gui                 Graphical User Interface tools
 ```
+
+### Interactive terminal
+
+Launch HOWARD interactive terminal to explore a VCF file:
+
+``` bash
+howard query --input='tests/data/examples.vcf'
+```
+
+``` text
+ _   _  _____        ___    ____  ____  
+| | | |/ _ \ \      / / \  |  _ \|  _ \ 
+| |_| | | | \ \ /\ / / _ \ | |_) | | | |
+|  _  | |_| |\ V  V / ___ \|  _ <| |_| |
+|_| |_|\___/  \_/\_/_/   \_\_| \_\____/ 
+                                        
+HOWARD::0.12.2.0 [Antony Le Bechec, Jean-Baptiste Lamouche]
+HOWARD - Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery
+
+#[2025-01-07 14:19:24] [INFO] Start
+#[2025-01-07 14:19:24] [INFO] Loading...
+#[2025-01-07 14:19:24] [INFO] End
+#[2025-01-07 14:19:24] [INFO] Start interative terminal
+#[2025-01-07 14:19:24] [INFO] Interactive DuckDB SQL terminal. Type 'exit' to quit.
+#[2025-01-07 14:19:24] [INFO] Type 'help' for a list of commands.
+#[2025-01-07 14:22:25] [SQL]> SELECT "#CHROM", "POS", "REF", "ALT", "INFO"
+#[2025-01-07 14:22:25] [SQL]| FROM variants_view
+#[2025-01-07 14:22:25] [SQL]| WHERE DP>30 
+#[2025-01-07 14:22:25] [SQL]|    OR CLNSIG LIKE 'pathogenic';
+  #CHROM       POS REF ALT               INFO
+0   chr1     28736   A   C  CLNSIG=pathogenic
+1   chr1     69101   A   G              DP=50
+2   chr7  55249063   G   A             DP=125
+#[2025-01-07 14:23:10] [SQL]> 
+```
+
+### Graphical User Interface
 
 Install HOWARD Graphical User Interface using Python Pip tool with
 supplementary packages, and run as a tool:
@@ -365,26 +407,50 @@ options.
 
 ## Query
 
-Query genetic variations in SQL format. Data can be loaded into
-'variants' table from various formats (e.g. VCF, TSV, Parquet...). Using
-'explode' option allows querying on INFO/tag annotations. SQL query can
-also use external data within the request, such as a Parquet file(s).
+Query genetic variations in SQL format. Data are loaded into
+'variants' table from various formats (e.g. VCF, TSV, Parquet...).
+A view of variants 'variants_view' and a table header 'header'
+are available to easily explore data, by querying INFO/tag annotations.
+SQL query can also use external data within the request,
+such as a Parquet file(s).
+The '--interactive' option opens a SQL terminal to dynamically
+launch SQL queries.
 
 <details>
 <summary>
 More details
 </summary>
 
-> Example: Select variants in VCF with INFO Tags criterions
+> Example: Select variants in VCF with INFO Tags criterions, using 'variants_view' view
+>
+> ``` bash
+> howard query \
+>    --input='tests/data/example.vcf.gz' \
+>    --query='SELECT "#CHROM", POS, REF, ALT, DP, CLNSIG, sample2, sample3 
+>             FROM variants_view 
+>             WHERE DP >= 50 OR CLNSIG NOT NULL 
+>             ORDER BY CLNSIG DESC, DP DESC'
+> ```
+
+> Example: Select INFO Tags in sections 'INFO' and 'FORMAT', using 'header' table
+>
+> ``` bash
+> howard query \
+>    --input='tests/data/example.vcf.gz' \
+>    --query="SELECT * 
+>             FROM header
+>             WHERE "section" in ('INFO', 'FORMAT')"
+> ```
+
+> Example: Select number of variants in VCF, and open interactive terminal
 >
 > ``` bash
 > howard query \
 >    --input='tests/data/example.vcf.gz' \
 >    --explode_infos \
->    --query='SELECT "#CHROM", POS, REF, ALT, DP, CLNSIG, sample2, sample3 
->             FROM variants 
->             WHERE DP >= 50 OR CLNSIG NOT NULL 
->             ORDER BY CLNSIG DESC, DP DESC'
+>    --query='SELECT count(*) AS nb_variants 
+>             FROM variants' \
+>    --interactive
 > ```
 
 See [HOWARD Help Query tool](docs/help.md#query-tool) for more options.

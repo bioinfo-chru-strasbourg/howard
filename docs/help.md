@@ -2898,6 +2898,14 @@ Usage examples:
 
 <small>
 
+>     --interactive
+>
+>     Interative mose..
+
+</small>
+
+<small>
+
 >     --verbosity=<verbosity> ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET'] (default: INFO)
 >
 >     Verbosity level

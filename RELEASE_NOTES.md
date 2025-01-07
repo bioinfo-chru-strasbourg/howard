@@ -6,9 +6,10 @@ Few improvements and fixes.
 
 ### News
 
-- View variants "annotations" to: (TODO)
-  - query more easily (with "variants_annotations" view loaded by default)
-  - improve performances
+- Interactive mode: add a terminal to execute SQL queries
+- View variants "annotations" to:
+  - query more easily (with "variants_view" view loaded by default in query tools)
+  - improve performances for annotations, calculations and prioritizations
 
 ### Updates
 
