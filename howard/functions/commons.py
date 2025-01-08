@@ -76,6 +76,14 @@ code_type_map_to_sql = {
     "Flag": "VARCHAR",
 }
 
+code_type_map_to_vcf = {
+    "INTEGER": "Integer",
+    "VARCHAR": "String",
+    "FLOAT": "Float",
+    "DOUBLE": "Integer",
+    "BOOLEAN": "String",
+}
+
 
 file_format_delimiters = {"vcf": "\t", "tsv": "\t", "csv": ",", "psv": "|", "bed": "\t"}
 
