@@ -7781,6 +7781,7 @@ class Variants:
                                 annotation_view = self.create_annotations_view(
                                     view=annotation_view_name,
                                     table=table_variants,
+                                    view_type="view",
                                     info_prefix_column=annotations_view_prefix,
                                     info_struct_column=annotations_view_struct,
                                     fields=criterion_fields_profile + pz_keys,
@@ -8948,7 +8949,7 @@ class Variants:
                     annotation_number = "0"
                 elif annotation_name in ["Annotation"]:
                     annotation_number = "."
-                    annotation_column = f"""replace("{annotation_name}", '_', ',')"""
+                    annotation_column = f"""replace("{annotation_name}", '&', ',')"""
                 elif annotation_name in ["Distance"]:
                     annotation_column = (
                         f"""string_split(CAST("{annotation_name}" AS STRING), '.')[1]"""
@@ -10477,10 +10478,1048 @@ class Variants:
     # Transcripts #
     ###############
 
+    # Transcripts view creation
+
+    def create_transcript_view(
+        self,
+        transcripts_table: str = None,
+        transcripts_table_drop: bool = False,
+        param: dict = {},
+    ) -> str:
+        """
+        The `create_transcript_view` function generates a transcript view by processing data from a
+        specified table based on provided parameters and structural information.
+
+        :param transcripts_table: The `transcripts_table` parameter in the `create_transcript_view` function
+        is used to specify the name of the table that will store the final transcript view data. If a table
+        name is not provided, the function will create a new table to store the transcript view data, and by
+        default,, defaults to transcripts
+        :type transcripts_table: str (optional)
+        :param transcripts_table_drop: The `transcripts_table_drop` parameter in the
+        `create_transcript_view` function is a boolean parameter that determines whether to drop the
+        existing transcripts table before creating a new one. If `transcripts_table_drop` is set to `True`,
+        the function will drop the existing transcripts table if it exists, defaults to False
+        :type transcripts_table_drop: bool (optional)
+        :param param: The `param` parameter in the `create_transcript_view` function is a dictionary that
+        contains information needed to create a transcript view. It includes details such as the structure
+        of the transcripts, columns mapping, column formats, and other necessary information for generating
+        the view. This parameter allows for flexibility and customization
+        :type param: dict
+        :return: The `create_transcript_view` function returns the name of the transcripts table that was
+        created or modified during the execution of the function.
+        """
+
+        log.info("Transcripts view creation")
+
+        # Default
+        transcripts_table_default = "transcripts"
+
+        # Param
+        if not param:
+            param = self.get_param()
+
+        # Struct
+        struct = param.get("transcripts", {}).get("struct", None)
+
+        # Transcript veresion
+        transcript_id_remove_version = param.get("transcripts", {}).get(
+            "transcript_id_remove_version", False
+        )
+
+        # Transcripts mapping
+        transcript_id_mapping_file = param.get("transcripts", {}).get(
+            "transcript_id_mapping_file", None
+        )
+
+        # Transcripts mapping
+        transcript_id_mapping_force = param.get("transcripts", {}).get(
+            "transcript_id_mapping_force", None
+        )
+
+        # Transcripts table
+        if transcripts_table is None:
+            transcripts_table = param.get("transcripts", {}).get(
+                "table", transcripts_table_default
+            )
+
+        # Check transcripts table exists
+        if transcripts_table:
+
+            # Query to check if transcripts table exists
+            query_check_table = f"""
+                SELECT * 
+                FROM information_schema.tables 
+                WHERE table_name = '{transcripts_table}'
+            """
+            df_check_table = self.get_query_to_df(query=query_check_table)
+
+            # Check if transcripts table exists
+            if len(df_check_table) > 0 and not transcripts_table_drop:
+                log.debug(f"Table {transcripts_table} exists and not drop option")
+                log.info("Transcripts view creation - already exists")
+                return transcripts_table
+
+        if struct:
+
+            # added_columns
+            added_columns = []
+
+            # Temporary tables
+            temporary_tables = []
+            temporary_intermediate_tables = []
+
+            # Annotation fields
+            annotation_fields = []
+
+            # Annotation fields
+            annotation_fields_type = {}
+
+            # from columns map
+            log.info("Transcripts view creation - Annotations mapping...")
+            columns_maps = struct.get("from_columns_map", [])
+            (
+                added_columns_tmp,
+                temporary_tables_tmp,
+                temporary_intermediate_tables_tmp,
+                annotation_fields_tmp,
+                annotation_fields_type_tmp,
+            ) = self.create_transcript_view_from_columns_map(
+                transcripts_table=transcripts_table,
+                columns_maps=columns_maps,
+                added_columns=added_columns,
+                temporary_tables=temporary_tables,
+                annotation_fields=annotation_fields,
+            )
+
+            # Append temporary tables infos
+            added_columns += added_columns_tmp
+            temporary_tables += temporary_tables_tmp
+            temporary_intermediate_tables += temporary_intermediate_tables_tmp
+            annotation_fields += annotation_fields_tmp
+            for field in annotation_fields_type_tmp:
+                field_type = annotation_fields_type_tmp.get(field, "VARCHAR")
+                annotation_fields_type[field] = field_type
+
+            # from column format
+            log.info("Transcripts view creation - Annotations in format field...")
+            column_formats = struct.get("from_column_format", [])
+            (
+                added_columns,
+                temporary_tables_tmp,
+                annotation_fields_tmp,
+                added_columns_type_list,
+            ) = self.create_transcript_view_from_column_format(
+                transcripts_table=transcripts_table,
+                column_formats=column_formats,
+                temporary_tables=temporary_tables,
+                annotation_fields=annotation_fields,
+            )
+
+            # Append temporary tables infos
+            added_columns += added_columns_tmp
+            temporary_tables += temporary_tables_tmp
+            annotation_fields += annotation_fields_tmp
+            for field in added_columns_type_list:
+                annotation_fields_type[field] = added_columns_type_list.get(
+                    field, "VARCHAR"
+                )
+
+            # Remove some specific fields/column
+            annotation_fields = list(set(annotation_fields))
+            for field in ["#CHROM", "POS", "REF", "ALT", "INFO", "transcript"]:
+                if field in annotation_fields:
+                    annotation_fields.remove(field)
+
+            # Merge temporary tables query
+            query_merge = ""
+            for temporary_table in list(set(temporary_tables)):
+
+                # First temporary table
+                if not query_merge:
+                    query_merge = f"""
+                        SELECT * FROM {temporary_table}
+                    """
+                # other temporary table (using UNION)
+                else:
+                    query_merge += f"""
+                        UNION BY NAME SELECT * FROM {temporary_table}
+                    """
+
+            # transcript table tmp
+            transcript_table_tmp = "transcripts_tmp"
+            transcript_table_tmp2 = "transcripts_tmp2"
+            transcript_table_tmp3 = "transcripts_tmp3"
+
+            # Merge on transcript
+            query_merge_on_transcripts_annotation_fields = []
+
+            # Add transcript list
+            query_merge_on_transcripts_annotation_fields.append(
+                f""" list_aggregate(list_distinct(array_agg({transcript_table_tmp}.transcript)), 'string_agg', ',') AS transcript_list """
+            )
+
+            # Aggregate all annotations fields
+            for annotation_field in set(annotation_fields):
+
+                # Check feild type
+                annotation_field_type = annotation_fields_type.get(
+                    annotation_field, "VARCHAR"
+                )
+
+                # Aggregate field
+                query_merge_on_transcripts_annotation_fields.append(
+                    f""" list_aggregate(list_distinct(array_agg({transcript_table_tmp}.{annotation_field})), 'string_agg', ',')::{annotation_field_type} AS {annotation_field} """
+                )
+
+            # Transcripts mapping
+            if transcript_id_mapping_file:
+
+                # Transcript dataframe
+                transcript_id_mapping_dataframe_name = "transcript_id_mapping_dataframe"
+                transcript_id_mapping_dataframe = transcripts_file_to_df(
+                    transcript_id_mapping_file, column_names=["transcript", "alias"]
+                )
+
+                # Transcript version remove
+                if transcript_id_remove_version:
+                    query_transcript_column_select = f"split_part({transcript_table_tmp}.transcript, '.', 1) AS transcript_original, split_part({transcript_id_mapping_dataframe_name}.transcript, '.', 1) AS transcript_mapped"
+                    query_transcript_column_group_by = f"split_part({transcript_table_tmp}.transcript, '.', 1), split_part({transcript_id_mapping_dataframe_name}.transcript, '.', 1)"
+                    query_left_join = f"""
+                        LEFT JOIN {transcript_id_mapping_dataframe_name} ON (split_part({transcript_id_mapping_dataframe_name}.alias, '.', 1)=split_part({transcript_table_tmp}.transcript, '.', 1))
+                    """
+                else:
+                    query_transcript_column_select = f"{transcript_table_tmp}.transcript AS transcript_original, {transcript_id_mapping_dataframe_name}.transcript AS transcript_mapped"
+                    query_transcript_column_group_by = f"{transcript_table_tmp}.transcript, {transcript_id_mapping_dataframe_name}.transcript"
+                    query_left_join = f"""
+                        LEFT JOIN {transcript_id_mapping_dataframe_name} ON (split_part({transcript_id_mapping_dataframe_name}.alias, '.', 1)=split_part({transcript_table_tmp}.transcript, '.', 1))
+                    """
+
+                # Transcript column for group by merge
+                query_transcript_merge_group_by = """
+                        CASE
+                            WHEN transcript_mapped NOT IN ('')
+                            THEN split_part(transcript_mapped, '.', 1)
+                            ELSE split_part(transcript_original, '.', 1)
+                        END
+                    """
+
+                # Merge query
+                transcripts_tmp2_query = f"""
+                    SELECT "#CHROM", POS, REF, ALT, INFO, {query_transcript_column_select}, {", ".join(query_merge_on_transcripts_annotation_fields)}
+                    FROM ({query_merge}) AS {transcript_table_tmp}
+                    {query_left_join}
+                    GROUP BY "#CHROM", POS, REF, ALT, INFO, {query_transcript_column_group_by}
+                """
+
+                # Retrive columns after mege
+                transcripts_tmp2_describe_query = f"""
+                    DESCRIBE {transcripts_tmp2_query}
+                """
+                transcripts_tmp2_describe_list = list(
+                    self.get_query_to_df(query=transcripts_tmp2_describe_query)[
+                        "column_name"
+                    ]
+                )
+
+                # Create list of columns for select clause
+                transcripts_tmp2_describe_select_clause = []
+                for field in transcripts_tmp2_describe_list:
+                    if field not in [
+                        "#CHROM",
+                        "POS",
+                        "REF",
+                        "ALT",
+                        "INFO",
+                        "transcript_mapped",
+                    ]:
+                        as_field = field
+                        if field in ["transcript_original"]:
+                            as_field = "transcripts_mapped"
+                        transcripts_tmp2_describe_select_clause.append(
+                            f""" list_aggregate(list_distinct(array_agg({transcript_table_tmp2}.{field})), 'string_agg', ',') AS {as_field} """
+                        )
+
+                # Merge with mapping
+                query_merge_on_transcripts = f"""
+                    SELECT
+                        "#CHROM", POS, REF, ALT, INFO,
+                        CASE
+                            WHEN ANY_VALUE(transcript_mapped) NOT IN ('')
+                            THEN ANY_VALUE(transcript_mapped)
+                            ELSE ANY_VALUE(transcript_original)
+                        END AS transcript,
+                        {", ".join(transcripts_tmp2_describe_select_clause)}
+                    FROM ({transcripts_tmp2_query}) AS {transcript_table_tmp2}
+                    GROUP BY "#CHROM", POS, REF, ALT, INFO,
+                        {query_transcript_merge_group_by}
+                """
+
+                # Add transcript filter from mapping file
+                if transcript_id_mapping_force:
+                    query_merge_on_transcripts = f"""
+                        SELECT *
+                        FROM ({query_merge_on_transcripts}) AS {transcript_table_tmp3}
+                        WHERE split_part({transcript_table_tmp3}.transcript, '.', 1) in (SELECT split_part(transcript, '.', 1) FROM transcript_id_mapping_dataframe)
+                    """
+
+            # No transcript mapping
+            else:
+
+                # Remove transcript version
+                if transcript_id_remove_version:
+                    query_transcript_column = f"""
+                        split_part({transcript_table_tmp}.transcript, '.', 1)
+                    """
+                else:
+                    query_transcript_column = """
+                        transcript
+                    """
+
+                # Query sections
+                query_transcript_column_select = (
+                    f"{query_transcript_column} AS transcript"
+                )
+                query_transcript_column_group_by = query_transcript_column
+
+                # Query for transcripts view
+                query_merge_on_transcripts = f"""
+                    SELECT "#CHROM", POS, REF, ALT, INFO, {query_transcript_column} AS transcript, NULL AS transcript_mapped, {", ".join(query_merge_on_transcripts_annotation_fields)}
+                    FROM ({query_merge}) AS {transcript_table_tmp}
+                    GROUP BY "#CHROM", POS, REF, ALT, INFO, {query_transcript_column}
+                """
+
+            # Drop transcript view is necessary
+            if transcripts_table_drop:
+                query_drop = f"""
+                    DROP TABLE IF EXISTS {transcripts_table};
+                """
+                self.execute_query(query=query_drop)
+
+            # List of unique #CHROM
+            query_unique_chrom = f"""
+                SELECT DISTINCT "#CHROM"
+                FROM variants AS subquery
+            """
+            unique_chroms = self.get_query_to_df(query=query_unique_chrom)
+
+            # Create table with structure but without data, if not exists
+            query_create_table = f"""
+                CREATE TABLE IF NOT EXISTS {transcripts_table} AS
+                SELECT * FROM ({query_merge_on_transcripts}) AS subquery LIMIT 0
+            """
+            self.execute_query(query=query_create_table)
+
+            # Process by #CHROM
+            for chrom in unique_chroms["#CHROM"]:
+
+                # Log
+                log.info(
+                    f"Transcripts view creation - Processing chromosome '{chrom}'..."
+                )
+
+                # Select data by #CHROM
+                query_chunk = f"""
+                    SELECT *
+                    FROM ({query_merge_on_transcripts})
+                    WHERE "#CHROM" = '{chrom}'
+                """
+
+                # Insert data
+                query_insert_chunk = f"""
+                    INSERT INTO {transcripts_table}
+                    {query_chunk}
+                """
+                self.execute_query(query=query_insert_chunk)
+
+            # Remove temporary tables
+            self.remove_tables_or_views(
+                tables=temporary_tables + temporary_intermediate_tables
+            )
+
+            # Remove added columns
+            for added_column in added_columns:
+                self.drop_column(column=added_column)
+
+        else:
+
+            transcripts_table = None
+
+        return transcripts_table
+
+    def create_transcript_view_from_columns_map(
+        self,
+        transcripts_table: str = "transcripts",
+        columns_maps: dict = {},
+        added_columns: list = [],
+        temporary_tables: list = None,
+        annotation_fields: list = None,
+        column_rename: dict = {},
+        column_clean: bool = False,
+        column_case: str = None,
+    ) -> tuple[list, list, list]:
+        """
+        The `create_transcript_view_from_columns_map` function generates a temporary table view based on
+        specified columns mapping for transcripts data.
+
+        :param transcripts_table: The `transcripts_table` parameter is a string that specifies the name
+        of the table where the transcripts data is stored or will be stored in the database. This table
+        typically contains information about transcripts such as Ensembl transcript IDs, gene names,
+        scores, predictions, etc. It defaults to "transcripts, defaults to transcripts
+        :type transcripts_table: str (optional)
+        :param columns_maps: The `columns_maps` parameter is a dictionary that contains information
+        about how to map columns from a transcripts table to create a view. Each entry in the
+        `columns_maps` list represents a mapping configuration for a specific set of columns. It
+        typically includes details such as the main transcript column and additional information columns
+        :type columns_maps: dict
+        :param added_columns: The `added_columns` parameter in the
+        `create_transcript_view_from_columns_map` function is a list that stores the additional columns
+        that will be added to the view being created based on the columns map provided. These columns
+        are generated by exploding the transcript information columns along with the main transcript
+        column
+        :type added_columns: list
+        :param temporary_tables: The `temporary_tables` parameter in the
+        `create_transcript_view_from_columns_map` function is a list that stores the names of temporary
+        tables created during the process of creating a transcript view from a columns map. These
+        temporary tables are used to store intermediate results or transformations before the final view
+        is generated
+        :type temporary_tables: list
+        :param annotation_fields: The `annotation_fields` parameter in the
+        `create_transcript_view_from_columns_map` function is a list that stores the fields that are
+        used for annotation in the query view creation process. These fields are extracted from the
+        `transcripts_column` and `transcripts_infos_columns` specified in the `columns
+        :type annotation_fields: list
+        :param column_rename: The `column_rename` parameter in the
+        `create_transcript_view_from_columns_map` function is a dictionary that allows you to specify
+        custom renaming for columns during the creation of the temporary table view. This parameter
+        provides a mapping of original column names to the desired renamed column names. By using this
+        parameter,
+        :type column_rename: dict
+        :param column_clean: The `column_clean` parameter in the
+        `create_transcript_view_from_columns_map` function is a boolean flag that determines whether the
+        column values should be cleaned or not. If set to `True`, the column values will be cleaned by
+        removing any non-alphanumeric characters from them. This cleaning process ensures, defaults to
+        False
+        :type column_clean: bool (optional)
+        :param column_case: The `column_case` parameter in the `create_transcript_view_from_columns_map`
+        function is used to specify the case transformation to be applied to the columns during the view
+        creation process. It allows you to control whether the column values should be converted to
+        lowercase, uppercase, or remain unchanged
+        :type column_case: str
+        :return: The `create_transcript_view_from_columns_map` function returns a tuple containing three
+        lists: `added_columns`, `temporary_tables`, and `annotation_fields`.
+        """
+
+        log.debug("Start transcrpts view creation from columns map...")
+
+        # "from_columns_map": [
+        #     {
+        #         "transcripts_column": "Ensembl_transcriptid",
+        #         "transcripts_infos_columns": [
+        #             "genename",
+        #             "Ensembl_geneid",
+        #             "LIST_S2_score",
+        #             "LIST_S2_pred",
+        #         ],
+        #     },
+        #     {
+        #         "transcripts_column": "Ensembl_transcriptid",
+        #         "transcripts_infos_columns": [
+        #             "genename",
+        #             "VARITY_R_score",
+        #             "Aloft_pred",
+        #         ],
+        #     },
+        # ],
+
+        # Init
+        if temporary_tables is None:
+            temporary_tables = []
+        if annotation_fields is None:
+            annotation_fields = []
+
+        # Init
+        annotation_fields_type = {}
+        temporary_intermediate_tables = []
+
+        # Variants table
+        table_variants = self.get_table_variants()
+
+        for columns_map in columns_maps:
+
+            # Log
+            log.debug(f"columns_map={columns_map}")
+
+            # Transcript column
+            transcripts_column = columns_map.get("transcripts_column", None)
+
+            # Transcripts infos columns
+            transcripts_infos_columns = columns_map.get("transcripts_infos_columns", [])
+
+            # Transcripts infos columns rename
+            column_rename = columns_map.get("column_rename", column_rename)
+
+            # Transcripts infos columns clean
+            column_clean = columns_map.get("column_clean", column_clean)
+
+            # Transcripts infos columns case
+            column_case = columns_map.get("column_case", column_case)
+
+            if transcripts_column is not None:
+
+                table_for_view = table_variants
+
+                annotation_view_name_for_type = None
+
+                if True:
+
+                    # Create annotations view
+                    annotation_view_name = (
+                        table_variants
+                        + "_view_"
+                        + "".join(
+                            random.choices(string.ascii_uppercase + string.digits, k=10)
+                        )
+                    )
+                    annotation_view_fields = [
+                        transcripts_column
+                    ] + transcripts_infos_columns  # + ["INFO"]
+                    annotation_view_name = self.create_annotations_view(
+                        table=table_variants,
+                        view=annotation_view_name,
+                        view_type="table",
+                        info_prefix_column="",
+                        detect_type_list=False,
+                        fields=annotation_view_fields,
+                        fields_not_exists=True,
+                        fields_forced_as_varchar=True,
+                        fields_needed_all=True,
+                    )
+                    temporary_intermediate_tables.append(annotation_view_name)
+                    table_for_view = annotation_view_name
+
+                    # Create annotation view for field type
+                    annotation_view_name_for_type = self.create_annotations_view(
+                        table=table_variants,
+                        view=annotation_view_name + "for_type",
+                        info_prefix_column="",
+                        detect_type_list=True,
+                        fields=annotation_view_fields,
+                        fields_not_exists=True,
+                        fields_needed_all=True,
+                    )
+                    temporary_intermediate_tables.append(annotation_view_name_for_type)
+
+                # Old generation using explode fields
+                if False:
+                    # Explode
+                    added_columns += self.explode_infos(
+                        fields=[transcripts_column] + transcripts_infos_columns
+                    )
+
+                # View clauses
+                clause_select_variants = []
+                clause_select_tanscripts = []
+                for field in [transcripts_column] + transcripts_infos_columns:
+
+                    # AS field
+                    as_field = field
+
+                    # Rename
+                    if column_rename:
+                        as_field = column_rename.get(as_field, as_field)
+
+                    # Clean
+                    if column_clean:
+                        as_field = clean_annotation_field(as_field)
+
+                    # Case
+                    if column_case:
+                        if column_case.lower() in ["lower"]:
+                            as_field = as_field.lower()
+                        elif column_case.lower() in ["upper"]:
+                            as_field = as_field.upper()
+
+                    # Field Type
+                    if annotation_view_name_for_type:
+                        field_type = self.get_query_to_df(
+                            f""" 
+                                    SELECT column_type
+                                    FROM (
+                                        DESCRIBE {annotation_view_name_for_type}
+                                    )
+                                    WHERE column_name == '{field}'
+                                """
+                        )["column_type"][0].replace("[]", "")
+
+                        # If field type is "NULL" due to no data
+                        if field_type == '"NULL"':
+                            field_type = "VARCHAR"
+                    else:
+                        field_type = "VARCHAR"
+
+                    # Clause select Variants OK
+                    clause_select_variants.append(
+                        f""" regexp_split_to_table(CAST("{field}" AS VARCHAR), ',')::VARCHAR AS '{field}' """
+                    )
+
+                    if field in [transcripts_column]:
+                        clause_select_tanscripts.append(
+                            f""" regexp_split_to_table("{field}", ',')::{field_type} AS '{field}' """
+                        )
+                    else:
+                        clause_select_tanscripts.append(
+                            f""" regexp_split_to_table("{field}", ',')::{field_type} AS '{as_field}' """
+                        )
+                        annotation_fields.append(as_field)
+                        annotation_fields_type[as_field] = field_type
+
+                # Query View
+                query = f""" 
+                    SELECT
+                        "#CHROM", POS, REF, ALT, INFO,
+                        "{transcripts_column}" AS 'transcript',
+                        {", ".join(clause_select_tanscripts)}
+                    FROM (
+                        SELECT 
+                            "#CHROM", POS, REF, ALT, INFO,
+                            {", ".join(clause_select_variants)}
+                        FROM {table_for_view}
+                        )
+                    WHERE "{transcripts_column}" IS NOT NULL
+                """
+
+                # Create temporary table
+                temporary_table = transcripts_table + "".join(
+                    random.choices(string.ascii_uppercase + string.digits, k=10)
+                )
+
+                # Temporary view
+                temporary_tables.append(temporary_table)
+                query_view = f"""
+                    CREATE view {temporary_table}
+                    AS ({query})
+                """
+                # log.debug(f"Create view:{query_view}")
+                self.execute_query(query=query_view)
+
+        return (
+            added_columns,
+            temporary_tables,
+            temporary_intermediate_tables,
+            annotation_fields,
+            annotation_fields_type,
+        )
+
+    def create_transcript_view_from_column_format(
+        self,
+        transcripts_table: str = "transcripts",
+        column_formats: dict = {},
+        temporary_tables: list = None,
+        annotation_fields: list = None,
+        column_rename: dict = {},
+        column_clean: bool = False,
+        column_case: str = None,
+    ) -> tuple[list, list, list]:
+        """
+        The `create_transcript_view_from_column_format` function generates a transcript view based on
+        specified column formats, adds additional columns and annotation fields, and returns the list of
+        temporary tables and annotation fields.
+
+        :param transcripts_table: The `transcripts_table` parameter is a string that specifies the name
+        of the table containing the transcripts data. This table will be used as the base table for
+        creating the transcript view. The default value for this parameter is "transcripts", but you can
+        provide a different table name if needed, defaults to transcripts
+        :type transcripts_table: str (optional)
+        :param column_formats: The `column_formats` parameter is a dictionary that contains information
+        about the columns to be used for creating the transcript view. Each entry in the dictionary
+        specifies the mapping between a transcripts column and a transcripts infos column. This
+        parameter allows you to define how the columns from the transcripts table should be transformed
+        or mapped
+        :type column_formats: dict
+        :param temporary_tables: The `temporary_tables` parameter in the
+        `create_transcript_view_from_column_format` function is a list that stores the names of
+        temporary views created during the process of creating a transcript view from a column format.
+        These temporary views are used to manipulate and extract data before generating the final
+        transcript view
+        :type temporary_tables: list
+        :param annotation_fields: The `annotation_fields` parameter in the
+        `create_transcript_view_from_column_format` function is a list that stores the annotation fields
+        that are extracted from the temporary views created during the process. These annotation fields
+        are obtained by querying the temporary views and extracting the column names excluding specific
+        columns like `#CH
+        :type annotation_fields: list
+        :param column_rename: The `column_rename` parameter in the
+        `create_transcript_view_from_column_format` function is a dictionary that allows you to specify
+        custom renaming of columns in the transcripts infos table. By providing a mapping of original
+        column names to new column names in this dictionary, you can rename specific columns during the
+        process
+        :type column_rename: dict
+        :param column_clean: The `column_clean` parameter in the
+        `create_transcript_view_from_column_format` function is a boolean flag that determines whether
+        the transcripts infos columns should undergo a cleaning process. If set to `True`, the columns
+        will be cleaned during the creation of the transcript view based on the specified column format,
+        defaults to False
+        :type column_clean: bool (optional)
+        :param column_case: The `column_case` parameter in the
+        `create_transcript_view_from_column_format` function is used to specify the case transformation
+        to be applied to the columns in the transcript view. It can be set to either "upper" or "lower"
+        to convert the column names to uppercase or lowercase, respectively
+        :type column_case: str
+        :return: The `create_transcript_view_from_column_format` function returns two lists:
+        `temporary_tables` and `annotation_fields`.
+        """
+
+        log.debug("Start transcrpts view creation from column format...")
+
+        #  "from_column_format": [
+        #     {
+        #         "transcripts_column": "ANN",
+        #         "transcripts_infos_column": "Feature_ID",
+        #     }
+        # ],
+
+        # Init
+        if temporary_tables is None:
+            temporary_tables = []
+        if annotation_fields is None:
+            annotation_fields = []
+
+        added_columns = []
+        added_columns_type_list = {}
+
+        for column_format in column_formats:
+
+            # annotation field and transcript annotation field
+            annotation_field = column_format.get("transcripts_column", "ANN")
+            transcript_annotation = column_format.get(
+                "transcripts_infos_column", "Feature_ID"
+            )
+
+            # Transcripts infos columns rename
+            column_rename = column_format.get("column_rename", column_rename)
+
+            # Transcripts infos columns clean
+            column_clean = column_format.get("column_clean", column_clean)
+
+            # Transcripts infos columns case
+            column_case = column_format.get("column_case", column_case)
+
+            # Temporary View name
+            temporary_view_name = transcripts_table + "".join(
+                random.choices(string.ascii_uppercase + string.digits, k=10)
+            )
+
+            # Create temporary view name
+            temporary_view_name, added_columns, added_columns_type = (
+                self.annotation_format_to_table(
+                    annotation_field=annotation_field,
+                    view_name=temporary_view_name,
+                    annotation_id=transcript_annotation,
+                    column_rename=column_rename,
+                    column_clean=column_clean,
+                    column_case=column_case,
+                )
+            )
+
+            # columns_types
+            for column_type in added_columns_type:
+                added_columns_type_list[column_type] = added_columns_type.get(
+                    column_type, "VARCHAR"
+                )
+
+            # Annotation fields
+            if temporary_view_name:
+                query_annotation_fields = f"""
+                    SELECT *
+                    FROM (
+                        DESCRIBE SELECT *
+                        FROM {temporary_view_name}
+                        )
+                        WHERE column_name not in ('#CHROM', 'POS', 'REF', 'ALT')
+                """
+                df_annotation_fields = self.get_query_to_df(
+                    query=query_annotation_fields
+                )
+
+                # Add temporary view and annotation fields
+                temporary_tables.append(temporary_view_name)
+                annotation_fields += list(set(df_annotation_fields["column_name"]))
+
+        return (
+            added_columns,
+            temporary_tables,
+            annotation_fields,
+            added_columns_type_list,
+        )
+
+    def annotation_format_to_table(
+        self,
+        annotation_field: str = "ANN",
+        annotation_id: str = "Feature_ID",
+        view_name: str = "transcripts",
+        column_rename: dict = {},
+        column_clean: bool = False,
+        column_case: str = None,
+        column_split: str = "&",
+    ) -> str:
+        """
+        The `annotation_format_to_table` function converts annotation data from a VCF file into a
+        structured table format, ensuring unique values and creating a temporary table for further
+        processing or analysis.
+
+        :param uniquify: The `uniquify` parameter is a boolean flag that determines whether to ensure
+        unique values in the output or not. If set to `True`, the function will make sure that the
+        output values are unique, defaults to True
+        :type uniquify: bool (optional)
+        :param annotation_field: The `annotation_field` parameter refers to the field in the VCF file
+        that contains the annotation information for each variant. This field is used to extract the
+        annotation details for further processing in the function. By default, it is set to "ANN",
+        defaults to ANN
+        :type annotation_field: str (optional)
+        :param annotation_id: The `annotation_id` parameter in the `annotation_format_to_table` method
+        is used to specify the identifier for the annotation feature. This identifier will be used as a
+        column name in the resulting table or view that is created based on the annotation data. It
+        helps in uniquely identifying each annotation entry in the, defaults to Feature_ID
+        :type annotation_id: str (optional)
+        :param view_name: The `view_name` parameter in the `annotation_format_to_table` method is used
+        to specify the name of the temporary table that will be created to store the transformed
+        annotation data. This table will hold the extracted information from the annotation field in a
+        structured format for further processing or analysis. By default,, defaults to transcripts
+        :type view_name: str (optional)
+        :param column_rename: The `column_rename` parameter in the `annotation_format_to_table` method
+        is a dictionary that allows you to specify custom renaming for columns. By providing key-value
+        pairs in this dictionary, you can rename specific columns in the resulting table or view that is
+        created based on the annotation data. This feature enables
+        :type column_rename: dict
+        :param column_clean: The `column_clean` parameter in the `annotation_format_to_table` method is
+        a boolean flag that determines whether the annotation field should undergo a cleaning process.
+        If set to `True`, the function will clean the annotation field before further processing. This
+        cleaning step may involve removing any unwanted characters, formatting inconsistencies, defaults
+        to False
+        :type column_clean: bool (optional)
+        :param column_case: The `column_case` parameter in the `annotation_format_to_table` method is
+        used to specify the case transformation to be applied to the column names extracted from the
+        annotation data. It allows you to set the case of the column names to either lowercase or
+        uppercase for consistency or other specific requirements during the conversion
+        :type column_case: str
+        :param column_split: The `column_split` parameter in the `annotation_format_to_table` method is
+        used to specify the separator to split fields values. Default as '&'. None to disable.
+        :type column_case: str
+        :return: The function `annotation_format_to_table` is returning the name of the view created,
+        which is stored in the variable `view_name`.
+        """
+
+        # annotation_id original name
+        annotation_id_original = annotation_id
+
+        # Transcript annotation
+        if column_rename:
+            annotation_id = column_rename.get(annotation_id, annotation_id)
+
+        if column_clean:
+            annotation_id = clean_annotation_field(annotation_id)
+
+        # Prefix
+        prefix = self.get_explode_infos_prefix()
+        if prefix:
+            prefix = "INFO/"
+
+        # Variants table
+        table_variants = self.get_table_variants()
+
+        # Header
+        vcf_reader = self.get_header()
+
+        # Add columns
+        added_columns = []
+        added_columns_type = {}
+
+        # If annotation_field exists
+        if annotation_field in vcf_reader.infos:
+
+            # Extract ANN header
+            ann_description = vcf_reader.infos[annotation_field].desc
+            pattern = r"'(.+?)'"
+            match = re.search(pattern, ann_description)
+            if match:
+                ann_header_match = match.group(1).split(" | ")
+                ann_header = []
+                ann_header_desc = {}
+                for i in range(len(ann_header_match)):
+                    ann_header_info = "".join(
+                        char for char in ann_header_match[i] if char.isalnum()
+                    )
+                    ann_header.append(ann_header_info)
+                    ann_header_desc[ann_header_info] = ann_header_match[i]
+                if not ann_header_desc:
+                    raise ValueError("Invalid header description format")
+            else:
+                raise ValueError("Invalid header description format")
+
+            # annotation field pattern
+            annotation_field_pattern = rf"(^|;)({annotation_field})=([^;]*)?"
+
+            # Create dataframe for keys column type
+            # query = f"""
+            #     WITH exploded_annotations AS (
+            #         SELECT
+            #             UNNEST(
+            #                 STRING_SPLIT(
+            #                     regexp_extract("INFO", '{annotation_field_pattern}', 3),
+            #                     ','
+            #                 )
+            #             ) AS annotation
+            #         FROM {table_variants}
+            #     ),
+            #     split_annotations AS (
+            #         SELECT
+            #             {", ".join([f"SPLIT_PART(annotation, '|', {i+1}) AS '{header}'" for i, header in enumerate(ann_header_desc.values())])},
+            #         FROM exploded_annotations
+            #     )
+            #     SELECT * FROM split_annotations
+            #     LIMIT 1000
+            #     """
+            # dataframe_annotation_format = self.get_query_to_df(query=query)
+            # log.debug(f"dataframe_annotation_format={dataframe_annotation_format}")
+
+            annotation_fields_for_format = []
+            for i, header in enumerate(ann_header_desc.values()):
+                if header in [annotation_id_original]:
+                    annotation_fields_for_format.append(
+                        f"SPLIT_PART(annotation, '|', {i+1}) AS '{header}'"
+                    )
+                else:
+                    annotation_fields_for_format.append(
+                        f"string_agg(SPLIT_PART(annotation, '|', {i+1}), ',') AS '{header}'"
+                    )
+
+            query = f""" 
+                WITH exploded_annotations AS (
+                    SELECT
+                        "#CHROM", POS, REF, ALT,
+                        UNNEST(
+                            STRING_SPLIT(
+                                regexp_extract("INFO", '{annotation_field_pattern}', 3),
+                                ','
+                            )
+                        ) AS annotation
+                    FROM {table_variants}
+                ),
+                split_annotations AS (
+                    SELECT
+                        "#CHROM", POS, REF, ALT,
+                        {", ".join(annotation_fields_for_format)}
+                    FROM exploded_annotations
+                    GROUP BY "#CHROM", POS, REF, ALT, "{annotation_id_original}"
+                )
+                SELECT * FROM split_annotations
+                LIMIT 10000
+                """
+            dataframe_annotation_format = self.get_query_to_df(query=query)
+
+            # Init
+            query_list_keys = []
+            key_i = 0
+
+            for key in dataframe_annotation_format.keys():
+
+                if key in ann_header_desc.values():
+
+                    # Key
+                    key_i += 1
+                    key_clean = key
+
+                    # key rename
+                    if column_rename:
+                        key_clean = column_rename.get(key_clean, key_clean)
+
+                    # key clean
+                    if column_clean:
+                        key_clean = clean_annotation_field(key_clean)
+
+                    # Key case
+                    if column_case:
+                        if column_case.lower() in ["lower"]:
+                            key_clean = key_clean.lower()
+                        elif column_case.lower() in ["upper"]:
+                            key_clean = key_clean.upper()
+
+                    # Detect column type
+                    column_type = detect_column_type(dataframe_annotation_format[key])
+                    added_columns_type[key] = column_type
+                    log.debug(f"Field '{key}' type detected: {column_type}")
+
+                    # Append key to list
+                    # query_list_keys.append(
+                    #     f""" NULLIF(SPLIT_PART(annotation, '|', {key_i}), '')::{column_type} AS '{prefix}{key_clean}' """
+                    # )
+                    if column_split is not None:
+                        query_list_keys.append(
+                            f""" TRY_CAST(replace(NULLIF(SPLIT_PART(annotation, '|', {key_i}), ''), '{column_split}', ',') AS {column_type}) AS '{prefix}{key_clean}' """
+                        )
+                    else:
+                        query_list_keys.append(
+                            f""" TRY_CAST(NULLIF(SPLIT_PART(annotation, '|', {key_i}), '') AS {column_type}) AS '{prefix}{key_clean}' """
+                        )
+
+            # Create temporary table
+            query_create_view = f"""
+                CREATE VIEW {view_name} AS (
+                    WITH exploded_annotations AS (
+                        SELECT
+                            "#CHROM",
+                            POS,
+                            REF,
+                            ALT,
+                            INFO,
+                            UNNEST(
+                                STRING_SPLIT(
+                                    regexp_extract("INFO", '{annotation_field_pattern}', 3),
+                                    ','
+                                )
+                            ) AS annotation
+                        FROM {table_variants}
+                    ),
+                    split_annotations AS (
+                        SELECT
+                            "#CHROM",
+                            POS,
+                            REF,
+                            ALT,
+                            INFO,
+                            {", ".join(query_list_keys)},
+                        FROM exploded_annotations
+                    )
+                    SELECT *, {annotation_id} AS 'transcript' FROM split_annotations
+                )
+            """
+            # log.debug(f"Create view FORMAT:{query_create_view}")
+            self.execute_query(query=query_create_view)
+
+        else:
+
+            # Return None
+            view_name = None
+
+        return view_name, added_columns, added_columns_type
+
+    # Transcripts operations
+
     def transcripts_export(
         self, transcripts_table: str = None, param: dict = {}
     ) -> bool:
-        """ """
+        """
+        Exports transcript data from a table to a specified file.
+
+        Args:
+            transcripts_table (str): The name of the transcripts table.
+            param (dict): A dictionary of parameters to customize the export process. This can include various options such as filtering criteria, formatting options, etc.
+
+        Returns:
+            bool: Returns True if the export is successful, False otherwise.
+
+        This function exports transcript data to a specified file, using the provided parameters to customize the export process. The function returns True if the export is successful, and False otherwise.
+        """
 
         log.debug("Start transcripts export...")
 
@@ -10910,862 +11949,6 @@ class Variants:
         # Return
         return True
 
-    def create_transcript_view_from_columns_map(
-        self,
-        transcripts_table: str = "transcripts",
-        columns_maps: dict = {},
-        added_columns: list = [],
-        temporary_tables: list = None,
-        annotation_fields: list = None,
-        column_rename: dict = {},
-        column_clean: bool = False,
-        column_case: str = None,
-    ) -> tuple[list, list, list]:
-        """
-        The `create_transcript_view_from_columns_map` function generates a temporary table view based on
-        specified columns mapping for transcripts data.
-
-        :param transcripts_table: The `transcripts_table` parameter is a string that specifies the name
-        of the table where the transcripts data is stored or will be stored in the database. This table
-        typically contains information about transcripts such as Ensembl transcript IDs, gene names,
-        scores, predictions, etc. It defaults to "transcripts, defaults to transcripts
-        :type transcripts_table: str (optional)
-        :param columns_maps: The `columns_maps` parameter is a dictionary that contains information
-        about how to map columns from a transcripts table to create a view. Each entry in the
-        `columns_maps` list represents a mapping configuration for a specific set of columns. It
-        typically includes details such as the main transcript column and additional information columns
-        :type columns_maps: dict
-        :param added_columns: The `added_columns` parameter in the
-        `create_transcript_view_from_columns_map` function is a list that stores the additional columns
-        that will be added to the view being created based on the columns map provided. These columns
-        are generated by exploding the transcript information columns along with the main transcript
-        column
-        :type added_columns: list
-        :param temporary_tables: The `temporary_tables` parameter in the
-        `create_transcript_view_from_columns_map` function is a list that stores the names of temporary
-        tables created during the process of creating a transcript view from a columns map. These
-        temporary tables are used to store intermediate results or transformations before the final view
-        is generated
-        :type temporary_tables: list
-        :param annotation_fields: The `annotation_fields` parameter in the
-        `create_transcript_view_from_columns_map` function is a list that stores the fields that are
-        used for annotation in the query view creation process. These fields are extracted from the
-        `transcripts_column` and `transcripts_infos_columns` specified in the `columns
-        :type annotation_fields: list
-        :param column_rename: The `column_rename` parameter in the
-        `create_transcript_view_from_columns_map` function is a dictionary that allows you to specify
-        custom renaming for columns during the creation of the temporary table view. This parameter
-        provides a mapping of original column names to the desired renamed column names. By using this
-        parameter,
-        :type column_rename: dict
-        :param column_clean: The `column_clean` parameter in the
-        `create_transcript_view_from_columns_map` function is a boolean flag that determines whether the
-        column values should be cleaned or not. If set to `True`, the column values will be cleaned by
-        removing any non-alphanumeric characters from them. This cleaning process ensures, defaults to
-        False
-        :type column_clean: bool (optional)
-        :param column_case: The `column_case` parameter in the `create_transcript_view_from_columns_map`
-        function is used to specify the case transformation to be applied to the columns during the view
-        creation process. It allows you to control whether the column values should be converted to
-        lowercase, uppercase, or remain unchanged
-        :type column_case: str
-        :return: The `create_transcript_view_from_columns_map` function returns a tuple containing three
-        lists: `added_columns`, `temporary_tables`, and `annotation_fields`.
-        """
-
-        log.debug("Start transcrpts view creation from columns map...")
-
-        # "from_columns_map": [
-        #     {
-        #         "transcripts_column": "Ensembl_transcriptid",
-        #         "transcripts_infos_columns": [
-        #             "genename",
-        #             "Ensembl_geneid",
-        #             "LIST_S2_score",
-        #             "LIST_S2_pred",
-        #         ],
-        #     },
-        #     {
-        #         "transcripts_column": "Ensembl_transcriptid",
-        #         "transcripts_infos_columns": [
-        #             "genename",
-        #             "VARITY_R_score",
-        #             "Aloft_pred",
-        #         ],
-        #     },
-        # ],
-
-        # Init
-        if temporary_tables is None:
-            temporary_tables = []
-        if annotation_fields is None:
-            annotation_fields = []
-
-        # Variants table
-        table_variants = self.get_table_variants()
-
-        for columns_map in columns_maps:
-
-            # Log
-            log.debug(f"columns_map={columns_map}")
-
-            # Transcript column
-            transcripts_column = columns_map.get("transcripts_column", None)
-
-            # Transcripts infos columns
-            transcripts_infos_columns = columns_map.get("transcripts_infos_columns", [])
-
-            # Transcripts infos columns rename
-            column_rename = columns_map.get("column_rename", column_rename)
-
-            # Transcripts infos columns clean
-            column_clean = columns_map.get("column_clean", column_clean)
-
-            # Transcripts infos columns case
-            column_case = columns_map.get("column_case", column_case)
-
-            if transcripts_column is not None:
-
-                # Explode
-                added_columns += self.explode_infos(
-                    fields=[transcripts_column] + transcripts_infos_columns
-                )
-
-                # View clauses
-                clause_select_variants = []
-                clause_select_tanscripts = []
-                for field in [transcripts_column] + transcripts_infos_columns:
-
-                    # AS field
-                    as_field = field
-
-                    # Rename
-                    if column_rename:
-                        as_field = column_rename.get(as_field, as_field)
-
-                    # Clean
-                    if column_clean:
-                        as_field = clean_annotation_field(as_field)
-
-                    # Case
-                    if column_case:
-                        if column_case.lower() in ["lower"]:
-                            as_field = as_field.lower()
-                        elif column_case.lower() in ["upper"]:
-                            as_field = as_field.upper()
-
-                    # Clause select Variants
-                    clause_select_variants.append(
-                        f""" regexp_split_to_table("{field}", ',') AS '{field}' """
-                    )
-
-                    if field in [transcripts_column]:
-                        clause_select_tanscripts.append(
-                            f""" regexp_split_to_table("{field}", ',') AS '{field}' """
-                        )
-                    else:
-                        clause_select_tanscripts.append(
-                            f""" regexp_split_to_table("{field}", ',') AS '{as_field}' """
-                        )
-                        annotation_fields.append(as_field)
-
-                # Query View
-                query = f""" 
-                    SELECT
-                        "#CHROM", POS, REF, ALT, INFO,
-                        "{transcripts_column}" AS 'transcript',
-                        {", ".join(clause_select_tanscripts)}
-                    FROM (
-                        SELECT 
-                            "#CHROM", POS, REF, ALT, INFO,
-                            {", ".join(clause_select_variants)}
-                        FROM {table_variants}
-                        )
-                    WHERE "{transcripts_column}" IS NOT NULL
-                """
-
-                # Create temporary table
-                temporary_table = transcripts_table + "".join(
-                    random.choices(string.ascii_uppercase + string.digits, k=10)
-                )
-
-                # Temporary view
-                temporary_tables.append(temporary_table)
-                query_view = f"""
-                    CREATE view {temporary_table}
-                    AS ({query})
-                """
-                self.execute_query(query=query_view)
-
-        return added_columns, temporary_tables, annotation_fields
-
-    def create_transcript_view_from_column_format(
-        self,
-        transcripts_table: str = "transcripts",
-        column_formats: dict = {},
-        temporary_tables: list = None,
-        annotation_fields: list = None,
-        column_rename: dict = {},
-        column_clean: bool = False,
-        column_case: str = None,
-    ) -> tuple[list, list, list]:
-        """
-        The `create_transcript_view_from_column_format` function generates a transcript view based on
-        specified column formats, adds additional columns and annotation fields, and returns the list of
-        temporary tables and annotation fields.
-
-        :param transcripts_table: The `transcripts_table` parameter is a string that specifies the name
-        of the table containing the transcripts data. This table will be used as the base table for
-        creating the transcript view. The default value for this parameter is "transcripts", but you can
-        provide a different table name if needed, defaults to transcripts
-        :type transcripts_table: str (optional)
-        :param column_formats: The `column_formats` parameter is a dictionary that contains information
-        about the columns to be used for creating the transcript view. Each entry in the dictionary
-        specifies the mapping between a transcripts column and a transcripts infos column. This
-        parameter allows you to define how the columns from the transcripts table should be transformed
-        or mapped
-        :type column_formats: dict
-        :param temporary_tables: The `temporary_tables` parameter in the
-        `create_transcript_view_from_column_format` function is a list that stores the names of
-        temporary views created during the process of creating a transcript view from a column format.
-        These temporary views are used to manipulate and extract data before generating the final
-        transcript view
-        :type temporary_tables: list
-        :param annotation_fields: The `annotation_fields` parameter in the
-        `create_transcript_view_from_column_format` function is a list that stores the annotation fields
-        that are extracted from the temporary views created during the process. These annotation fields
-        are obtained by querying the temporary views and extracting the column names excluding specific
-        columns like `#CH
-        :type annotation_fields: list
-        :param column_rename: The `column_rename` parameter in the
-        `create_transcript_view_from_column_format` function is a dictionary that allows you to specify
-        custom renaming of columns in the transcripts infos table. By providing a mapping of original
-        column names to new column names in this dictionary, you can rename specific columns during the
-        process
-        :type column_rename: dict
-        :param column_clean: The `column_clean` parameter in the
-        `create_transcript_view_from_column_format` function is a boolean flag that determines whether
-        the transcripts infos columns should undergo a cleaning process. If set to `True`, the columns
-        will be cleaned during the creation of the transcript view based on the specified column format,
-        defaults to False
-        :type column_clean: bool (optional)
-        :param column_case: The `column_case` parameter in the
-        `create_transcript_view_from_column_format` function is used to specify the case transformation
-        to be applied to the columns in the transcript view. It can be set to either "upper" or "lower"
-        to convert the column names to uppercase or lowercase, respectively
-        :type column_case: str
-        :return: The `create_transcript_view_from_column_format` function returns two lists:
-        `temporary_tables` and `annotation_fields`.
-        """
-
-        log.debug("Start transcrpts view creation from column format...")
-
-        #  "from_column_format": [
-        #     {
-        #         "transcripts_column": "ANN",
-        #         "transcripts_infos_column": "Feature_ID",
-        #     }
-        # ],
-
-        # Init
-        if temporary_tables is None:
-            temporary_tables = []
-        if annotation_fields is None:
-            annotation_fields = []
-
-        added_columns = []
-
-        for column_format in column_formats:
-
-            # annotation field and transcript annotation field
-            annotation_field = column_format.get("transcripts_column", "ANN")
-            transcript_annotation = column_format.get(
-                "transcripts_infos_column", "Feature_ID"
-            )
-
-            # Transcripts infos columns rename
-            column_rename = column_format.get("column_rename", column_rename)
-
-            # Transcripts infos columns clean
-            column_clean = column_format.get("column_clean", column_clean)
-
-            # Transcripts infos columns case
-            column_case = column_format.get("column_case", column_case)
-
-            # Temporary View name
-            temporary_view_name = transcripts_table + "".join(
-                random.choices(string.ascii_uppercase + string.digits, k=10)
-            )
-
-            # Create temporary view name
-            temporary_view_name, added_columns = self.annotation_format_to_table(
-                annotation_field=annotation_field,
-                view_name=temporary_view_name,
-                annotation_id=transcript_annotation,
-                column_rename=column_rename,
-                column_clean=column_clean,
-                column_case=column_case,
-            )
-
-            # Annotation fields
-            if temporary_view_name:
-                query_annotation_fields = f"""
-                    SELECT *
-                    FROM (
-                        DESCRIBE SELECT *
-                        FROM {temporary_view_name}
-                        )
-                        WHERE column_name not in ('#CHROM', 'POS', 'REF', 'ALT')
-                """
-                df_annotation_fields = self.get_query_to_df(
-                    query=query_annotation_fields
-                )
-
-                # Add temporary view and annotation fields
-                temporary_tables.append(temporary_view_name)
-                annotation_fields += list(set(df_annotation_fields["column_name"]))
-
-        return added_columns, temporary_tables, annotation_fields
-
-    def create_transcript_view(
-        self,
-        transcripts_table: str = None,
-        transcripts_table_drop: bool = False,
-        param: dict = {},
-    ) -> str:
-        """
-        The `create_transcript_view` function generates a transcript view by processing data from a
-        specified table based on provided parameters and structural information.
-
-        :param transcripts_table: The `transcripts_table` parameter in the `create_transcript_view` function
-        is used to specify the name of the table that will store the final transcript view data. If a table
-        name is not provided, the function will create a new table to store the transcript view data, and by
-        default,, defaults to transcripts
-        :type transcripts_table: str (optional)
-        :param transcripts_table_drop: The `transcripts_table_drop` parameter in the
-        `create_transcript_view` function is a boolean parameter that determines whether to drop the
-        existing transcripts table before creating a new one. If `transcripts_table_drop` is set to `True`,
-        the function will drop the existing transcripts table if it exists, defaults to False
-        :type transcripts_table_drop: bool (optional)
-        :param param: The `param` parameter in the `create_transcript_view` function is a dictionary that
-        contains information needed to create a transcript view. It includes details such as the structure
-        of the transcripts, columns mapping, column formats, and other necessary information for generating
-        the view. This parameter allows for flexibility and customization
-        :type param: dict
-        :return: The `create_transcript_view` function returns the name of the transcripts table that was
-        created or modified during the execution of the function.
-        """
-
-        log.debug("Start transcripts view creation...")
-
-        # Default
-        transcripts_table_default = "transcripts"
-
-        # Param
-        if not param:
-            param = self.get_param()
-
-        # Struct
-        struct = param.get("transcripts", {}).get("struct", None)
-
-        # Transcript veresion
-        transcript_id_remove_version = param.get("transcripts", {}).get(
-            "transcript_id_remove_version", False
-        )
-
-        # Transcripts mapping
-        transcript_id_mapping_file = param.get("transcripts", {}).get(
-            "transcript_id_mapping_file", None
-        )
-
-        # Transcripts mapping
-        transcript_id_mapping_force = param.get("transcripts", {}).get(
-            "transcript_id_mapping_force", None
-        )
-
-        # Transcripts table
-        if transcripts_table is None:
-            transcripts_table = param.get("transcripts", {}).get(
-                "table", transcripts_table_default
-            )
-
-        # Check transcripts table exists
-        if transcripts_table:
-
-            # Query to check if transcripts table exists
-            query_check_table = f"""
-                SELECT * 
-                FROM information_schema.tables 
-                WHERE table_name = '{transcripts_table}'
-            """
-            df_check_table = self.get_query_to_df(query=query_check_table)
-
-            # Check if transcripts table exists
-            if len(df_check_table) > 0 and not transcripts_table_drop:
-                log.debug(f"Table {transcripts_table} exists and not drop option")
-                return transcripts_table
-
-        if struct:
-
-            # added_columns
-            added_columns = []
-
-            # Temporary tables
-            temporary_tables = []
-
-            # Annotation fields
-            annotation_fields = []
-
-            # from columns map
-            columns_maps = struct.get("from_columns_map", [])
-            added_columns_tmp, temporary_tables_tmp, annotation_fields_tmp = (
-                self.create_transcript_view_from_columns_map(
-                    transcripts_table=transcripts_table,
-                    columns_maps=columns_maps,
-                    added_columns=added_columns,
-                    temporary_tables=temporary_tables,
-                    annotation_fields=annotation_fields,
-                )
-            )
-            added_columns += added_columns_tmp
-            temporary_tables += temporary_tables_tmp
-            annotation_fields += annotation_fields_tmp
-
-            # from column format
-            column_formats = struct.get("from_column_format", [])
-            added_columns, temporary_tables_tmp, annotation_fields_tmp = (
-                self.create_transcript_view_from_column_format(
-                    transcripts_table=transcripts_table,
-                    column_formats=column_formats,
-                    temporary_tables=temporary_tables,
-                    annotation_fields=annotation_fields,
-                )
-            )
-            added_columns += added_columns_tmp
-            temporary_tables += temporary_tables_tmp
-            annotation_fields += annotation_fields_tmp
-
-            # Remove some specific fields/column
-            annotation_fields = list(set(annotation_fields))
-            for field in ["#CHROM", "POS", "REF", "ALT", "INFO", "transcript"]:
-                if field in annotation_fields:
-                    annotation_fields.remove(field)
-
-            # Merge temporary tables query
-            query_merge = ""
-            for temporary_table in list(set(temporary_tables)):
-
-                # First temporary table
-                if not query_merge:
-                    query_merge = f"""
-                        SELECT * FROM {temporary_table}
-                    """
-                # other temporary table (using UNION)
-                else:
-                    query_merge += f"""
-                        UNION BY NAME SELECT * FROM {temporary_table}
-                    """
-
-            # transcript table tmp
-            transcript_table_tmp = "transcripts_tmp"
-            transcript_table_tmp2 = "transcripts_tmp2"
-            transcript_table_tmp3 = "transcripts_tmp3"
-
-            # Merge on transcript
-            query_merge_on_transcripts_annotation_fields = []
-
-            # Add transcript list
-            query_merge_on_transcripts_annotation_fields.append(
-                f""" list_aggregate(list_distinct(array_agg({transcript_table_tmp}.transcript)), 'string_agg', ',') AS transcript_list """
-            )
-
-            # Aggregate all annotations fields
-            for annotation_field in set(annotation_fields):
-                query_merge_on_transcripts_annotation_fields.append(
-                    f""" list_aggregate(list_distinct(array_agg({transcript_table_tmp}.{annotation_field})), 'string_agg', ',') AS {annotation_field} """
-                )
-
-            # Transcripts mapping
-            if transcript_id_mapping_file:
-
-                # Transcript dataframe
-                transcript_id_mapping_dataframe_name = "transcript_id_mapping_dataframe"
-                transcript_id_mapping_dataframe = transcripts_file_to_df(
-                    transcript_id_mapping_file, column_names=["transcript", "alias"]
-                )
-
-                # Transcript version remove
-                if transcript_id_remove_version:
-                    query_transcript_column_select = f"split_part({transcript_table_tmp}.transcript, '.', 1) AS transcript_original, split_part({transcript_id_mapping_dataframe_name}.transcript, '.', 1) AS transcript_mapped"
-                    query_transcript_column_group_by = f"split_part({transcript_table_tmp}.transcript, '.', 1), split_part({transcript_id_mapping_dataframe_name}.transcript, '.', 1)"
-                    query_left_join = f"""
-                        LEFT JOIN {transcript_id_mapping_dataframe_name} ON (split_part({transcript_id_mapping_dataframe_name}.alias, '.', 1)=split_part({transcript_table_tmp}.transcript, '.', 1))
-                    """
-                else:
-                    query_transcript_column_select = f"{transcript_table_tmp}.transcript AS transcript_original, {transcript_id_mapping_dataframe_name}.transcript AS transcript_mapped"
-                    query_transcript_column_group_by = f"{transcript_table_tmp}.transcript, {transcript_id_mapping_dataframe_name}.transcript"
-                    query_left_join = f"""
-                        LEFT JOIN {transcript_id_mapping_dataframe_name} ON (split_part({transcript_id_mapping_dataframe_name}.alias, '.', 1)=split_part({transcript_table_tmp}.transcript, '.', 1))
-                    """
-
-                # Transcript column for group by merge
-                query_transcript_merge_group_by = """
-                        CASE
-                            WHEN transcript_mapped NOT IN ('')
-                            THEN split_part(transcript_mapped, '.', 1)
-                            ELSE split_part(transcript_original, '.', 1)
-                        END
-                    """
-
-                # Merge query
-                transcripts_tmp2_query = f"""
-                    SELECT "#CHROM", POS, REF, ALT, INFO, {query_transcript_column_select}, {", ".join(query_merge_on_transcripts_annotation_fields)}
-                    FROM ({query_merge}) AS {transcript_table_tmp}
-                    {query_left_join}
-                    GROUP BY "#CHROM", POS, REF, ALT, INFO, {query_transcript_column_group_by}
-                """
-
-                # Retrive columns after mege
-                transcripts_tmp2_describe_query = f"""
-                    DESCRIBE {transcripts_tmp2_query}
-                """
-                transcripts_tmp2_describe_list = list(
-                    self.get_query_to_df(query=transcripts_tmp2_describe_query)[
-                        "column_name"
-                    ]
-                )
-
-                # Create list of columns for select clause
-                transcripts_tmp2_describe_select_clause = []
-                for field in transcripts_tmp2_describe_list:
-                    if field not in [
-                        "#CHROM",
-                        "POS",
-                        "REF",
-                        "ALT",
-                        "INFO",
-                        "transcript_mapped",
-                    ]:
-                        as_field = field
-                        if field in ["transcript_original"]:
-                            as_field = "transcripts_mapped"
-                        transcripts_tmp2_describe_select_clause.append(
-                            f""" list_aggregate(list_distinct(array_agg({transcript_table_tmp2}.{field})), 'string_agg', ',') AS {as_field} """
-                        )
-
-                # Merge with mapping
-                query_merge_on_transcripts = f"""
-                    SELECT
-                        "#CHROM", POS, REF, ALT, INFO,
-                        CASE
-                            WHEN ANY_VALUE(transcript_mapped) NOT IN ('')
-                            THEN ANY_VALUE(transcript_mapped)
-                            ELSE ANY_VALUE(transcript_original)
-                        END AS transcript,
-                        {", ".join(transcripts_tmp2_describe_select_clause)}
-                    FROM ({transcripts_tmp2_query}) AS {transcript_table_tmp2}
-                    GROUP BY "#CHROM", POS, REF, ALT, INFO,
-                        {query_transcript_merge_group_by}
-                """
-
-                # Add transcript filter from mapping file
-                if transcript_id_mapping_force:
-                    query_merge_on_transcripts = f"""
-                        SELECT *
-                        FROM ({query_merge_on_transcripts}) AS {transcript_table_tmp3}
-                        WHERE split_part({transcript_table_tmp3}.transcript, '.', 1) in (SELECT split_part(transcript, '.', 1) FROM transcript_id_mapping_dataframe)
-                    """
-
-            # No transcript mapping
-            else:
-
-                # Remove transcript version
-                if transcript_id_remove_version:
-                    query_transcript_column = f"""
-                        split_part({transcript_table_tmp}.transcript, '.', 1)
-                    """
-                else:
-                    query_transcript_column = """
-                        transcript
-                    """
-
-                # Query sections
-                query_transcript_column_select = (
-                    f"{query_transcript_column} AS transcript"
-                )
-                query_transcript_column_group_by = query_transcript_column
-
-                # Query for transcripts view
-                query_merge_on_transcripts = f"""
-                    SELECT "#CHROM", POS, REF, ALT, INFO, {query_transcript_column} AS transcript, NULL AS transcript_mapped, {", ".join(query_merge_on_transcripts_annotation_fields)}
-                    FROM ({query_merge}) AS {transcript_table_tmp}
-                    GROUP BY "#CHROM", POS, REF, ALT, INFO, {query_transcript_column}
-                """
-
-            # Drop transcript view is necessary
-            if transcripts_table_drop:
-                query_drop = f"""
-                    DROP TABLE IF EXISTS {transcripts_table};
-                """
-                self.execute_query(query=query_drop)
-
-            # List of unique #CHROM
-            query_unique_chrom = f"""
-                SELECT DISTINCT "#CHROM"
-                FROM variants AS subquery
-            """
-            unique_chroms = self.get_query_to_df(query=query_unique_chrom)
-
-            # Create table with structure but without data, if not exists
-            query_create_table = f"""
-                CREATE TABLE IF NOT EXISTS {transcripts_table} AS
-                SELECT * FROM ({query_merge_on_transcripts}) AS subquery LIMIT 0
-            """
-            self.execute_query(query=query_create_table)
-
-            # Process by #CHROM
-            for chrom in unique_chroms["#CHROM"]:
-
-                # Log
-                log.debug(f"Processing #CHROM={chrom}")
-
-                # Select data by #CHROM
-                query_chunk = f"""
-                    SELECT *
-                    FROM ({query_merge_on_transcripts})
-                    WHERE "#CHROM" = '{chrom}'
-                """
-
-                # Insert data
-                query_insert_chunk = f"""
-                    INSERT INTO {transcripts_table}
-                    {query_chunk}
-                """
-                self.execute_query(query=query_insert_chunk)
-
-            # Remove temporary tables
-            if temporary_tables:
-                for temporary_table in list(set(temporary_tables)):
-                    try:
-                        query_drop_tmp_table = f"""
-                            DROP TABLE IF EXISTS {temporary_table}
-                        """
-                        self.execute_query(query=query_drop_tmp_table)
-                    except Exception as e:
-                        log.debug(f"'{temporary_table}' Not a table")
-                    try:
-                        query_drop_tmp_table = f"""
-                            DROP VIEW IF EXISTS {temporary_table}
-                        """
-                        self.execute_query(query=query_drop_tmp_table)
-                    except Exception as e:
-                        log.debug(f"'{temporary_table}' Not a view")
-
-            # Remove added columns
-            for added_column in added_columns:
-                self.drop_column(column=added_column)
-
-        else:
-
-            transcripts_table = None
-
-        return transcripts_table
-
-    def annotation_format_to_table(
-        self,
-        annotation_field: str = "ANN",
-        annotation_id: str = "Feature_ID",
-        view_name: str = "transcripts",
-        column_rename: dict = {},
-        column_clean: bool = False,
-        column_case: str = None,
-    ) -> str:
-        """
-        The `annotation_format_to_table` function converts annotation data from a VCF file into a
-        structured table format, ensuring unique values and creating a temporary table for further
-        processing or analysis.
-
-        :param uniquify: The `uniquify` parameter is a boolean flag that determines whether to ensure
-        unique values in the output or not. If set to `True`, the function will make sure that the
-        output values are unique, defaults to True
-        :type uniquify: bool (optional)
-        :param annotation_field: The `annotation_field` parameter refers to the field in the VCF file
-        that contains the annotation information for each variant. This field is used to extract the
-        annotation details for further processing in the function. By default, it is set to "ANN",
-        defaults to ANN
-        :type annotation_field: str (optional)
-        :param annotation_id: The `annotation_id` parameter in the `annotation_format_to_table` method
-        is used to specify the identifier for the annotation feature. This identifier will be used as a
-        column name in the resulting table or view that is created based on the annotation data. It
-        helps in uniquely identifying each annotation entry in the, defaults to Feature_ID
-        :type annotation_id: str (optional)
-        :param view_name: The `view_name` parameter in the `annotation_format_to_table` method is used
-        to specify the name of the temporary table that will be created to store the transformed
-        annotation data. This table will hold the extracted information from the annotation field in a
-        structured format for further processing or analysis. By default,, defaults to transcripts
-        :type view_name: str (optional)
-        :param column_rename: The `column_rename` parameter in the `annotation_format_to_table` method
-        is a dictionary that allows you to specify custom renaming for columns. By providing key-value
-        pairs in this dictionary, you can rename specific columns in the resulting table or view that is
-        created based on the annotation data. This feature enables
-        :type column_rename: dict
-        :param column_clean: The `column_clean` parameter in the `annotation_format_to_table` method is
-        a boolean flag that determines whether the annotation field should undergo a cleaning process.
-        If set to `True`, the function will clean the annotation field before further processing. This
-        cleaning step may involve removing any unwanted characters, formatting inconsistencies, defaults
-        to False
-        :type column_clean: bool (optional)
-        :param column_case: The `column_case` parameter in the `annotation_format_to_table` method is
-        used to specify the case transformation to be applied to the column names extracted from the
-        annotation data. It allows you to set the case of the column names to either lowercase or
-        uppercase for consistency or other specific requirements during the conversion
-        :type column_case: str
-        :return: The function `annotation_format_to_table` is returning the name of the view created,
-        which is stored in the variable `view_name`.
-        """
-
-        # Transcript annotation
-        if column_rename:
-            annotation_id = column_rename.get(annotation_id, annotation_id)
-
-        if column_clean:
-            annotation_id = clean_annotation_field(annotation_id)
-
-        # Prefix
-        prefix = self.get_explode_infos_prefix()
-        if prefix:
-            prefix = "INFO/"
-
-        # Variants table
-        table_variants = self.get_table_variants()
-
-        # Header
-        vcf_reader = self.get_header()
-
-        # Add columns
-        added_columns = []
-
-        # If annotation_field exists
-        if annotation_field in vcf_reader.infos:
-
-            # Extract ANN header
-            ann_description = vcf_reader.infos[annotation_field].desc
-            pattern = r"'(.+?)'"
-            match = re.search(pattern, ann_description)
-            if match:
-                ann_header_match = match.group(1).split(" | ")
-                ann_header = []
-                ann_header_desc = {}
-                for i in range(len(ann_header_match)):
-                    ann_header_info = "".join(
-                        char for char in ann_header_match[i] if char.isalnum()
-                    )
-                    ann_header.append(ann_header_info)
-                    ann_header_desc[ann_header_info] = ann_header_match[i]
-                if not ann_header_desc:
-                    raise ValueError("Invalid header description format")
-            else:
-                raise ValueError("Invalid header description format")
-
-            # annotation field pattern
-            annotation_field_pattern = rf"(^|;)({annotation_field})=([^;]*)?"
-
-            # Create dataframe for keys column type
-            query = f""" 
-                WITH exploded_annotations AS (
-                    SELECT
-                        UNNEST(
-                            STRING_SPLIT(
-                                regexp_extract("INFO", '{annotation_field_pattern}', 3),
-                                ','
-                            )
-                        ) AS annotation
-                    FROM {table_variants}
-                ),
-                split_annotations AS (
-                    SELECT
-                        {", ".join([f"SPLIT_PART(annotation, '|', {i+1}) AS '{header}'" for i, header in enumerate(ann_header_desc.values())])},
-                    FROM exploded_annotations
-                )
-                SELECT * FROM split_annotations
-                LIMIT 1000
-                """
-            dataframe_annotation_format = self.get_query_to_df(query=query)
-
-            # Init
-            query_list_keys = []
-            key_i = 0
-
-            for key in dataframe_annotation_format.keys():
-
-                # Key
-                key_i += 1
-                key_clean = key
-
-                # key rename
-                if column_rename:
-                    key_clean = column_rename.get(key_clean, key_clean)
-
-                # key clean
-                if column_clean:
-                    key_clean = clean_annotation_field(key_clean)
-
-                # Key case
-                if column_case:
-                    if column_case.lower() in ["lower"]:
-                        key_clean = key_clean.lower()
-                    elif column_case.lower() in ["upper"]:
-                        key_clean = key_clean.upper()
-
-                # Detect column type
-                column_type = detect_column_type(dataframe_annotation_format[key])
-
-                # Append key to list
-                query_list_keys.append(
-                    f""" NULLIF(SPLIT_PART(annotation, '|', {key_i}), '')::{column_type} AS '{prefix}{key_clean}' """
-                )
-
-            # Create temporary table
-            query_create_view = f"""
-                CREATE VIEW {view_name} AS (
-                    WITH exploded_annotations AS (
-                        SELECT
-                            "#CHROM",
-                            POS,
-                            REF,
-                            ALT,
-                            INFO,
-                            UNNEST(
-                                STRING_SPLIT(
-                                    regexp_extract("INFO", '{annotation_field_pattern}', 3),
-                                    ','
-                                )
-                            ) AS annotation
-                        FROM {table_variants}
-                    ),
-                    split_annotations AS (
-                        SELECT
-                            "#CHROM",
-                            POS,
-                            REF,
-                            ALT,
-                            INFO,
-                            {", ".join(query_list_keys)},
-                        FROM exploded_annotations
-                    )
-                    SELECT *, {annotation_id} AS 'transcript' FROM split_annotations
-                )
-            """
-            # log.debug(f"query_create_view: {query_create_view}")
-            self.execute_query(query=query_create_view)
-
-        else:
-
-            # Return None
-            view_name = None
-
-        return view_name, added_columns
-
     def transcript_view_to_variants(
         self,
         transcripts_table: str = None,
@@ -12130,6 +12313,10 @@ class Variants:
 
         return True
 
+    ############################
+    # Rename and remove fields #
+    ############################
+
     def rename_info_fields(
         self, fields_to_rename: dict = None, table: str = None, multiple: bool = False
     ) -> dict:
@@ -12309,6 +12496,10 @@ class Variants:
 
         log.debug(f"renamed_fields:{renamed_fields}")
 
+    ####################
+    # Anontations view #
+    ####################
+
     def create_annotations_view(
         self,
         table: str = None,
@@ -12323,6 +12514,7 @@ class Variants:
         info_struct_column: str = None,
         drop_view: bool = False,
         fields_to_rename: dict = None,
+        fields_forced_as_varchar: bool = False,
         limit: int = None,
     ) -> str:
         """
@@ -12392,6 +12584,8 @@ class Variants:
         keys in the dictionary represent the original field names that need to be renamed, and the
         corresponding values represent the new names to which the fields should be. Defaults to None
         :type fields_to_rename: dict
+        :param fields_forced_as_varchar: Force fields as type VARCHAR
+        :type fields_forced_as_varchar: bool
         :param limit: The `limit` parameter in the `create_annotations_view` function is an integer that
         specifies the maximum number of rows to be included in the view. If provided, the function will
         limit the number of rows in the view to the specified value. Defaults to None
@@ -12489,6 +12683,11 @@ class Variants:
                 else:
                     field_sql_type_list = False
 
+                # fields_forced_as_varchar
+                if fields_forced_as_varchar:
+                    field_sql_type = "VARCHAR"
+                    field_sql_type_list = False
+
                 # Colonne is a flag
                 if field_infos.type == "Flag":
                     field_pattern = rf"(^|;)({field})([^;]*)?"
@@ -12578,8 +12777,52 @@ class Variants:
         query_create_view = f"""
             CREATE {view_type} IF NOT EXISTS {view} AS {query_select}
         """
-        # log.debug(f"query_create_view:{query_create_view}")
+        # log.debug(f"Create view:{query_create_view}")
         self.execute_query(query=query_create_view)
         log.debug(f"View created: {view}")
 
         return view
+
+    def remove_tables_or_views(self, tables: list = None, views: list = None) -> list:
+        """
+        Remove specified tables and views from the database.
+
+        Args:
+            tables (list): A list of table names to be removed. Default is None.
+            views (list): A list of view names to be removed. Default is None.
+
+        Returns:
+            list: A list of tables and views that were successfully removed.
+
+        This function attempts to remove the specified tables and views from the database.
+        It first tries to drop each item as a table, and if that fails, it tries to drop it as a view.
+        If an item is neither a table nor a view, an error is logged.
+        """
+        temporary_tables = (tables or []) + (views or [])
+        removed_items = []
+
+        # Remove temporary tables and views
+        if temporary_tables:
+            for temporary_table in set(temporary_tables):
+                try:
+                    query_drop_tmp_table = f"""
+                        DROP TABLE IF EXISTS {temporary_table}
+                    """
+                    self.execute_query(query=query_drop_tmp_table)
+                    log.debug(f"'{temporary_table}' is a table")
+                    removed_items.append(temporary_table)
+                except Exception as e:
+                    log.debug(f"'{temporary_table}' Not a table. Try as a view.")
+
+                    try:
+                        query_drop_tmp_view = f"""
+                            DROP VIEW IF EXISTS {temporary_table}
+                        """
+                        self.execute_query(query=query_drop_tmp_view)
+                        log.debug(f"'{temporary_table}' is a view")
+                        removed_items.append(temporary_table)
+                    except Exception as e:
+                        log.debug(f"'{temporary_table}' Not a view")
+                        log.error(f"'{temporary_table}' is neither a table nor a view")
+
+        return removed_items
