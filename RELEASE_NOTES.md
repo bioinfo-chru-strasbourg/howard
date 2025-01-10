@@ -15,6 +15,8 @@ Few improvements and fixes.
 
 - Improve prioritization performances (vith annotations view)
 - Improve transcripts prioritization performances (reduce memory)
+- Improve transcripts view creation (columns type detected)
+- Improve snpEff extract information (HGVS list, explode annotations, generate as JSON)
 - Improve BARCODEFAMILY calculation (multiple barcode allowed with successive commandes)
 
 ### Fixes
