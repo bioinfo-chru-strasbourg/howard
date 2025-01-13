@@ -6,19 +6,254 @@ Usage:
 pytest tests/
 
 Coverage:
-coverage run -m pytest tests/test_variants_transcripts.py -x -vv --log-cli-level=DEBUG --capture=tee-sys
+coverage run -m pytest tests/test_variants_annotations_view.py -x -vv --log-cli-level=DEBUG --capture=tee-sys
 coverage report --include=howard/* -m
 """
 
-import logging as log
+# import logging as log
 from tempfile import TemporaryDirectory
-import pytest
-import vcf
-import os
+import pytest  # type: ignore
+
 
 from howard.functions.commons import remove_if_exists, get_file_format
 from howard.objects.variants import Variants
 from test_needed import tests_folder, tests_config, tests_data_folder
+
+
+def test_create_annotations_view_chrom_pos_ref_alt():
+    """ """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.chrom.pos.ref.alt.vcf"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # config dict
+        config = tests_config
+        # config["access"] = "RO"
+
+        # Construct param dict
+        param = {}
+
+        # Create object
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            param=param,
+            load=True,
+        )
+
+        annotations_view_name = "annotations_view_test"
+
+        # TEST 0
+        ##########
+
+        # Create annotations view
+        annotations_view_name_result = variants.create_annotations_view(
+            view=annotations_view_name, table="variants", fields=None
+        )
+
+        # Check annotations view name
+        assert annotations_view_name == annotations_view_name_result
+
+        # Check annotations_view content
+        annotations_view_select = variants.get_query_to_df(
+            query=f"""
+            SELECT *
+            FROM {annotations_view_name}
+            LIMIT 100
+            """
+        )
+        # Check shape
+        assert annotations_view_select.shape == (7, 4)
+        assert annotations_view_select.columns.to_list() == [
+            "#CHROM",
+            "POS",
+            "REF",
+            "ALT",
+        ]
+
+        # TEST 1
+        ##########
+        # Generates columns from fields
+        # Not dropped! Same than before
+
+        # Create annotations view
+        annotations_view_name_result = variants.create_annotations_view(
+            view=annotations_view_name,
+            table="variants",
+            fields=None,
+            info_prefix_column="",
+        )
+
+        # Check annotations view name
+        assert annotations_view_name == annotations_view_name_result
+
+        # Check annotations_view content
+        annotations_view_select = variants.get_query_to_df(
+            query=f"""
+            SELECT *
+            FROM {annotations_view_name}
+            LIMIT 100
+            """
+        )
+        # Check shape
+        assert annotations_view_select.shape == (7, 4)
+        assert annotations_view_select.columns.to_list() == [
+            "#CHROM",
+            "POS",
+            "REF",
+            "ALT",
+        ]
+
+        # TEST 2
+        ##########
+        # Add specific fields
+        # Without drop
+
+        # Create annotations view
+        fields = [
+            "CLNSIG",
+            "SIFT",
+        ]
+        annotations_view_name_result = variants.create_annotations_view(
+            view=annotations_view_name,
+            table="variants",
+            fields=fields,
+            info_prefix_column="",
+        )
+
+        # Check annotations view name
+        assert annotations_view_name == annotations_view_name_result
+
+        # Check annotations_view content
+        annotations_view_select = variants.get_query_to_df(
+            query=f"""
+            SELECT *
+            FROM {annotations_view_name}
+            LIMIT 100
+            """
+        )
+        # Check shape
+        assert annotations_view_select.shape == (7, 4)
+        assert annotations_view_select.columns.to_list() == [
+            "#CHROM",
+            "POS",
+            "REF",
+            "ALT",
+        ]
+
+        # TEST 3
+        ##########
+        # Add specific fields
+        # With drop
+
+        # Create annotations view
+        fields = [
+            "CLNSIG",
+            "SIFT",
+        ]
+        annotations_view_name_result = variants.create_annotations_view(
+            view=annotations_view_name,
+            table="variants",
+            fields=fields,
+            info_prefix_column="",
+            drop_view=True,
+        )
+
+        # Check annotations view name
+        assert annotations_view_name == annotations_view_name_result
+
+        # Check annotations_view content
+        annotations_view_select = variants.get_query_to_df(
+            query=f"""
+            SELECT *
+            FROM {annotations_view_name}
+            LIMIT 100
+            """
+        )
+        # Check shape
+        assert annotations_view_select.shape == (7, 6)
+        assert annotations_view_select.columns.to_list() == [
+            "#CHROM",
+            "POS",
+            "REF",
+            "ALT",
+            "CLNSIG",
+            "SIFT",
+        ]
+
+        # TEST 4
+        ##########
+        # Add specific fields
+        # Add specific fields needed
+        # With drop
+
+        # Create annotations view
+        fields = [
+            "CLNSIG",
+            "SIFT",
+        ]
+        fields_needed = ["#CHROM", "POS", "ID", "REF", "ALT", "FILTER"]
+
+        with pytest.raises(ValueError) as e:
+            annotations_view_name_result = variants.create_annotations_view(
+                view=annotations_view_name,
+                table="variants",
+                fields=fields,
+                info_prefix_column="",
+                fields_needed=fields_needed,
+                drop_view=True,
+            )
+        assert str(e.value) == f"Field 'ID' is needed, but not in file"
+
+        # TEST 5
+        ##########
+        # Add INFO struct column
+
+        # Create annotations view
+        fields = ["CLNSIG", "SIFT", "FIELD_THAT_NOT_EXISTS"]
+        fields_needed = ["#CHROM", "POS", "ID", "REF", "ALT", "FILTER"]
+        info_struct_column = "INFOS"
+        sample_struct_column = "SAMPLES"
+        annotations_view_name_result = variants.create_annotations_view(
+            view=annotations_view_name,
+            table="variants",
+            fields=fields,
+            info_prefix_column="INFOS_",
+            info_struct_column=info_struct_column,
+            sample_struct_column=sample_struct_column,
+            # fields_needed=fields_needed,
+            # fields_needed=None,
+            fields_needed_all=True,
+            fields_not_exists=False,
+            detect_type_list=True,
+            drop_view=True,
+        )
+
+        # Check annotations view name
+        assert annotations_view_name == annotations_view_name_result
+
+        # Check annotations_view content
+        annotations_view_select = variants.get_query_to_df(
+            query=f"""
+            SELECT *
+            FROM {annotations_view_name}
+            LIMIT 100
+            """
+        )
+        # log.debug(annotations_view_select)
+        # Check shape
+        assert annotations_view_select.shape == (7, 4)
+        assert annotations_view_select.columns.to_list() == [
+            "#CHROM",
+            "POS",
+            "REF",
+            "ALT",
+        ]
 
 
 def test_create_annotations_view():
@@ -477,7 +712,6 @@ def test_create_annotations_view():
         )
         # Check shape
         assert annotations_view_select.shape == (7, 8)
-        log.debug(annotations_view_select.columns.to_list())
         assert annotations_view_select.columns.to_list() == [
             "#CHROM",
             "POS",
@@ -580,4 +814,83 @@ def test_create_annotations_view():
             "ALT",
             "FILTER",
             "INFOS",
+        ]
+
+        # TEST 12
+        ##########
+        # Add INFO struct column
+
+        # Create annotations view
+        fields = ["CLNSIG", "SIFT", "FIELD_THAT_NOT_EXISTS"]
+        fields_needed = ["#CHROM", "POS", "ID", "REF", "ALT", "FILTER"]
+        info_struct_column = "INFOS"
+        sample_struct_column = "SAMPLES"
+        annotations_view_name_result = variants.create_annotations_view(
+            view=annotations_view_name,
+            table="variants",
+            fields=fields,
+            info_struct_column=info_struct_column,
+            sample_struct_column=sample_struct_column,
+            # fields_needed=fields_needed,
+            fields_needed=None,
+            fields_needed_all=True,
+            fields_not_exists=False,
+            detect_type_list=True,
+            drop_view=True,
+        )
+
+        # Check annotations view name
+        assert annotations_view_name == annotations_view_name_result
+
+        # Check annotations_view content
+        annotations_view_select = variants.get_query_to_df(
+            query=f"""
+            SELECT *
+            FROM {annotations_view_name}
+            LIMIT 100
+            """
+        )
+        # log.debug(annotations_view_select)
+        # Check shape
+        assert annotations_view_select.shape == (7, 15)
+        assert annotations_view_select.columns.to_list() == [
+            "#CHROM",
+            "POS",
+            "ID",
+            "REF",
+            "ALT",
+            "QUAL",
+            "FILTER",
+            "INFO",
+            "FORMAT",
+            "sample1",
+            "sample2",
+            "sample3",
+            "sample4",
+            "INFOS",
+            "SAMPLES",
+        ]
+
+        # Check struct
+        annotations_view_select = variants.get_query_to_df(
+            query=f"""
+            SELECT "#CHROM", POS, REF, ALT, FORMAT, SAMPLES.sample1, SAMPLES.sample1.AD[2]/(SAMPLES.sample1.AD[1]+SAMPLES.sample1.AD[2]) AS 'sample1_VAF'
+            FROM {annotations_view_name}
+            WHERE SAMPLES.sample1.GQ > 90
+              AND SAMPLES.sample1.DP > 300
+              AND sample1_VAF >= 0
+            LIMIT 100
+            """
+        )
+        # log.debug(annotations_view_select.to_string())
+        # Check shape
+        assert annotations_view_select.shape == (6, 7)
+        assert annotations_view_select.columns.to_list() == [
+            "#CHROM",
+            "POS",
+            "REF",
+            "ALT",
+            "FORMAT",
+            "sample1",
+            "sample1_VAF",
         ]

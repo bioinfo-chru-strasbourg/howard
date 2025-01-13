@@ -12512,6 +12512,7 @@ class Variants:
         fields_not_exists: bool = True,
         info_prefix_column: str = None,
         info_struct_column: str = None,
+        sample_struct_column: str = None,
         drop_view: bool = False,
         fields_to_rename: dict = None,
         fields_forced_as_varchar: bool = False,
@@ -12574,6 +12575,12 @@ class Variants:
         column for further processing or analysis (e.g. "INFOS" or "annotations"). If not provided (None),
         the function will not genereate the column. Defaults to None
         :type info_struct_column: str
+        :param sample_struct_column: The `sample_struct_column` parameter in the `create_annotations_view`
+        function is used to specify the name of the column that will contain the extracted formats from
+        the samples columns in the view. This column will hold the structured data extracted from all
+        samples column for further processing or analysis (e.g. "SAMPLES" or "genotypes"). If not provided (None),
+        the function will not genereate the column. Defaults to None
+        :type sample_struct_column: str
         :param drop_view: The `drop_view` parameter in the `create_annotations_view` function is a boolean
         flag that determines whether to drop the existing view with the same name before creating a new
         view. If set to `True`, the function will drop the existing view before creating a new view with
@@ -12631,6 +12638,15 @@ class Variants:
         if fields_to_rename is None:
             fields_to_rename = {}
 
+        # If Samples structured columns
+        if sample_struct_column:
+
+            # Get format
+            formats = list(header.formats.keys())
+
+            # Get samples
+            samples = list(header.samples)
+
         log.debug(
             f"Create '{view}' view (as '{view_type}') from table '{table}' with {len(fields)} fields"
         )
@@ -12648,6 +12664,12 @@ class Variants:
             else:
                 fields_needed = ["#CHROM", "POS", "REF", "ALT"]
             # list(table_describe.get("column_name"))
+
+        # Check needed fieds
+        for field in fields_needed:
+            if field not in list(table_describe.get("column_name")):
+                msg_err = f"Field '{field}' is needed, but not in file"
+                raise ValueError(msg_err)
 
         # Create fields for annotation view extracted from INFO column in table variants (with regexp_replace like in rename_info_fields), with column type from VCF header
         fields_columns = []
@@ -12669,7 +12691,9 @@ class Variants:
                 fields_columns.append(f""" "{field}" AS '{prefix}{field_to_rename}' """)
 
             # Fields in header
-            elif field in header.infos:
+            elif field in header.infos and "INFO" in list(
+                table_describe.get("column_name")
+            ):
 
                 # Field info
                 field_infos = header.infos.get(field, None)
@@ -12734,6 +12758,82 @@ class Variants:
                     msg_err = f"Field '{field}' is not found (in table or header): '{field}' will be set to NULL"
                     log.debug(msg=msg_err)
 
+        # Samples struct
+
+        # Init
+        samples_format_struct_clause = ""
+
+        # If samples and struct as option
+        if sample_struct_column and len(samples):
+
+            # Struct by samples
+            samples_format_struct = []
+
+            # Format info
+            format_infos = header.formats
+
+            # For each sample
+            for sample in samples:
+
+                # Struct by format
+                sample_format_struct = []
+
+                # For each format
+                for format in formats:
+
+                    # Format cast and list
+                    format_cast = ""
+                    format_list = False
+                    format_cast = code_type_map_to_sql.get(
+                        format_infos.get(format).type, "VARCHAR"
+                    )
+                    if format_infos.get(format).num != 1:
+                        format_list = True
+
+                    # If format is a list
+                    if format_list:
+                        sample_format_struct.append(
+                            f""" 
+                                "{format}":= 
+                                    list_transform(
+                                        string_split(
+                                            NULLIF(
+                                                string_split("{sample}", ':')[list_position(string_split("FORMAT", ':'), '{format}')]
+                                                , ''
+                                            )
+                                            , ',')
+                                        , x -> CASE WHEN x = '.' OR x = '' THEN NULL ELSE x END
+                                    )::{format_cast}[]
+                            """
+                        )
+                    # If format is NOT a list
+                    else:
+                        sample_format_struct.append(
+                            f""" 
+                                "{format}":= 
+                                    COALESCE(
+                                        NULLIF(
+                                            regexp_replace(
+                                                string_split("{sample}", ':')[list_position(string_split("FORMAT", ':'), '{format}')]
+                                                , '^\\.$', ''
+                                            )
+                                        , ''
+                                        )
+                                    )::{format_cast}
+                            """
+                        )
+
+                # Add struct of the sample
+                samples_format_struct.append(
+                    f"""
+                    "{sample}":= STRUCT_PACK({", ".join(sample_format_struct)})
+                """
+                )
+
+            samples_format_struct_clause = f"""
+                , STRUCT_PACK({", ".join(samples_format_struct)}) AS {sample_struct_column}
+            """
+
         # Combine fields into a STRUCT
         if info_struct_column and len(fields_columns_annotations_struct):
             annotations_column_annotations_struct = f""" 
@@ -12757,7 +12857,7 @@ class Variants:
         # Query select
         query_select = f"""
             SELECT
-                {', '.join([f'"{field}"' for field in fields_needed])} {annotations_column_annotations_columns} {annotations_column_annotations_struct}
+                {', '.join([f'"{field}"' for field in fields_needed])} {annotations_column_annotations_columns} {annotations_column_annotations_struct} {samples_format_struct_clause}
             FROM
                 {table}
             {limit_clause}
