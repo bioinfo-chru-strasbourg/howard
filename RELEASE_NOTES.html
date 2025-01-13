@@ -176,17 +176,35 @@
 class="header-section-number">1</span> RELEASE NOTES</h1>
 <h2 data-number="1.1" id="section"><span
 class="header-section-number">1.1</span> 0.12.2.0</h2>
-<p>Few improvements and fixes.</p>
+<p>Introduction of interactvie mode to dynamically explore data, using
+variants view with columns types (define din VCF header). Improvements
+using view duckDB feature, mainly for calculations and prioritizations,
+and transcripts mapping.</p>
 <h3 data-number="1.1.1" id="news"><span
 class="header-section-number">1.1.1</span> News</h3>
 <ul>
-<li>Interactive mode: add a terminal to execute SQL queries</li>
-<li>View variants &#x201C;annotations&#x201D; to:
+<li>Interactivity mode:
 <ul>
-<li>query more easily (with &#x201C;variants_view&#x201D; view loaded by default in
+<li>Interactive terminal to execute SQL queries</li>
+<li>Completion and history features</li>
+<li>Display modes (e.g.&#xA0;&#x2018;dataframe&#x2019;, &#x2018;markdown&#x2019;, &#x2018;simple&#x2019;,
+&#x2018;tabulate&#x2019;)</li>
+<li>Query result limitation, to speedup exploration</li>
+</ul></li>
+<li>Variants &#x201C;view&#x201D;:
+<ul>
+<li>Query more easily (with &#x201C;variants_view&#x201D; view loaded by default in
 query tools)</li>
-<li>improve performances for annotations, calculations and
+<li>INFO/tags and samples structured on specific columns (&#x2018;INFOS&#x2019; and
+&#x2018;SAMPLES&#x2019;)</li>
+<li>Improve performances for annotations, calculations and
 prioritizations</li>
+<li>Improve prioritization profiles definition using columns types
+(Integer, Float, String) with list type (defined in VCF header)</li>
+</ul></li>
+<li>Plugins:
+<ul>
+<li>&#x2018;to_excel&#x2019;: Convert VCF to Excel &#x2018;.xlsx&#x2019; format</li>
 </ul></li>
 </ul>
 <h3 data-number="1.1.2" id="updates"><span

@@ -160,21 +160,29 @@ howard query --input='tests/data/examples.vcf'
 HOWARD::0.12.2.0 [Antony Le Bechec, Jean-Baptiste Lamouche]
 HOWARD - Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery
 
-#[2025-01-07 14:19:24] [INFO] Start
-#[2025-01-07 14:19:24] [INFO] Loading...
-#[2025-01-07 14:19:24] [INFO] End
-#[2025-01-07 14:19:24] [INFO] Start interative terminal
-#[2025-01-07 14:19:24] [INFO] Interactive DuckDB SQL terminal. Type 'exit' to quit.
-#[2025-01-07 14:19:24] [INFO] Type 'help' for a list of commands.
-#[2025-01-07 14:22:25] [SQL]> SELECT "#CHROM", "POS", "REF", "ALT", "INFO"
-#[2025-01-07 14:22:25] [SQL]| FROM variants_view
-#[2025-01-07 14:22:25] [SQL]| WHERE DP>30 
-#[2025-01-07 14:22:25] [SQL]|    OR CLNSIG LIKE 'pathogenic';
-  #CHROM       POS REF ALT               INFO
-0   chr1     28736   A   C  CLNSIG=pathogenic
-1   chr1     69101   A   G              DP=50
-2   chr7  55249063   G   A             DP=125
-#[2025-01-07 14:23:10] [SQL]> 
+#[2025-01-13 22:18:34] [INFO] Start
+#[2025-01-13 22:18:34] [INFO] Loading...
+#[2025-01-13 22:18:34] [INFO] End
+#[2025-01-13 22:18:34] [INFO] Start interative terminal
+#[2025-01-13 22:18:34] [INFO] Interactive DuckDB SQL terminal. Type 'exit' to quit.
+#[2025-01-13 22:18:34] [INFO] Type 'help' for a list of commands.
+#[2025-01-13 22:18:34] [SQL]> SELECT
+#[2025-01-13 22:18:34] [SQL]|   "#CHROM", "POS", "REF", "ALT",
+#[2025-01-13 22:18:34] [SQL]|   INFOS.*,
+#[2025-01-13 22:18:34] [SQL]|   SAMPLES.sample1.GT AS 'sample1_GT', 
+#[2025-01-13 22:18:34] [SQL]|   SAMPLES.sample1.DP AS 'sample1_DP'
+#[2025-01-13 22:18:34] [SQL]| FROM variants_view
+#[2025-01-13 22:18:34] [SQL]| WHERE SAMPLES.sample1.DP > 30
+#[2025-01-13 22:18:34] [SQL]|    OR INFOS.CLNSIG LIKE 'pathogenic'
+#[2025-01-13 22:18:34] [SQL]| 
+  #CHROM       POS REF ALT    NS     DP    AA      CLNSIG  SIFT sample1_GT  sample1_DP
+0   chr1     28736   A   C  None    NaN  None  pathogenic  None        0/1         729
+1   chr1     69101   A   G  None   50.0  None        None  None        0/1         729
+2   chr1    768251   A   G  None    NaN  None        None  None        0/1         729
+3   chr1    768252   A   G  None    NaN  None        None  None        0/1         729
+4   chr1    768253   A   G  None    NaN  None        None  None        0/1         729
+5   chr7  55249063   G   A  None  125.0  None        None  None        0/1         729
+#[2025-01-13 22:18:38] [SQL]> 
 ```
 
 ### Graphical User Interface

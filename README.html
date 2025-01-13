@@ -385,21 +385,29 @@ class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="
 HOWARD::0.12.2.0 [Antony Le Bechec, Jean-Baptiste Lamouche]
 HOWARD - Highly Open Workflow for Annotation &amp; Ranking toward genomic variant Discovery
 
-#[2025-01-07 14:19:24] [INFO] Start
-#[2025-01-07 14:19:24] [INFO] Loading...
-#[2025-01-07 14:19:24] [INFO] End
-#[2025-01-07 14:19:24] [INFO] Start interative terminal
-#[2025-01-07 14:19:24] [INFO] Interactive DuckDB SQL terminal. Type &#39;exit&#39; to quit.
-#[2025-01-07 14:19:24] [INFO] Type &#39;help&#39; for a list of commands.
-#[2025-01-07 14:22:25] [SQL]&gt; SELECT &quot;#CHROM&quot;, &quot;POS&quot;, &quot;REF&quot;, &quot;ALT&quot;, &quot;INFO&quot;
-#[2025-01-07 14:22:25] [SQL]| FROM variants_view
-#[2025-01-07 14:22:25] [SQL]| WHERE DP&gt;30 
-#[2025-01-07 14:22:25] [SQL]|    OR CLNSIG LIKE &#39;pathogenic&#39;;
-  #CHROM       POS REF ALT               INFO
-0   chr1     28736   A   C  CLNSIG=pathogenic
-1   chr1     69101   A   G              DP=50
-2   chr7  55249063   G   A             DP=125
-#[2025-01-07 14:23:10] [SQL]&gt; </code></pre>
+#[2025-01-13 22:18:34] [INFO] Start
+#[2025-01-13 22:18:34] [INFO] Loading...
+#[2025-01-13 22:18:34] [INFO] End
+#[2025-01-13 22:18:34] [INFO] Start interative terminal
+#[2025-01-13 22:18:34] [INFO] Interactive DuckDB SQL terminal. Type &#39;exit&#39; to quit.
+#[2025-01-13 22:18:34] [INFO] Type &#39;help&#39; for a list of commands.
+#[2025-01-13 22:18:34] [SQL]&gt; SELECT
+#[2025-01-13 22:18:34] [SQL]|   &quot;#CHROM&quot;, &quot;POS&quot;, &quot;REF&quot;, &quot;ALT&quot;,
+#[2025-01-13 22:18:34] [SQL]|   INFOS.*,
+#[2025-01-13 22:18:34] [SQL]|   SAMPLES.sample1.GT AS &#39;sample1_GT&#39;, 
+#[2025-01-13 22:18:34] [SQL]|   SAMPLES.sample1.DP AS &#39;sample1_DP&#39;
+#[2025-01-13 22:18:34] [SQL]| FROM variants_view
+#[2025-01-13 22:18:34] [SQL]| WHERE SAMPLES.sample1.DP &gt; 30
+#[2025-01-13 22:18:34] [SQL]|    OR INFOS.CLNSIG LIKE &#39;pathogenic&#39;
+#[2025-01-13 22:18:34] [SQL]| 
+  #CHROM       POS REF ALT    NS     DP    AA      CLNSIG  SIFT sample1_GT  sample1_DP
+0   chr1     28736   A   C  None    NaN  None  pathogenic  None        0/1         729
+1   chr1     69101   A   G  None   50.0  None        None  None        0/1         729
+2   chr1    768251   A   G  None    NaN  None        None  None        0/1         729
+3   chr1    768252   A   G  None    NaN  None        None  None        0/1         729
+4   chr1    768253   A   G  None    NaN  None        None  None        0/1         729
+5   chr7  55249063   G   A  None  125.0  None        None  None        0/1         729
+#[2025-01-13 22:18:38] [SQL]&gt; </code></pre>
 <h3 data-number="2.2.3" id="graphical-user-interface"><span
 class="header-section-number">2.2.3</span> Graphical User Interface</h3>
 <p>Install HOWARD Graphical User Interface using Python Pip tool with

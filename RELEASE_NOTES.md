@@ -2,14 +2,26 @@
 
 ## 0.12.2.0
 
-Few improvements and fixes.
+Introduction of interactvie mode to dynamically explore data, using variants view
+with columns types (define din VCF header).
+Improvements using view duckDB feature, mainly for calculations and prioritizations,
+and transcripts mapping.
 
 ### News
 
-- Interactive mode: add a terminal to execute SQL queries
-- View variants "annotations" to:
-  - query more easily (with "variants_view" view loaded by default in query tools)
-  - improve performances for annotations, calculations and prioritizations
+- Interactivity mode:
+  - Interactive terminal to execute SQL queries
+  - Completion and history features
+  - Display modes (e.g. 'dataframe', 'markdown', 'simple', 'tabulate')
+  - Query result limitation, to speedup exploration
+- Variants "view":
+  - Query more easily (with "variants_view" view loaded by default in query tools)
+  - INFO/tags and samples structured on specific columns ('INFOS' and 'SAMPLES')
+  - Improve performances for annotations, calculations and prioritizations
+  - Improve prioritization profiles definition using columns types
+    (Integer, Float, String) with list type (defined in VCF header)
+- Plugins:
+  - 'to_excel': Convert VCF to Excel '.xlsx' format
 
 ### Updates
 
