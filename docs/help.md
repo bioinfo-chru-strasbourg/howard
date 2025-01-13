@@ -91,25 +91,30 @@ title: HOWARD Help
   - [<span class="toc-section-number">13.2</span>
     Update_database](#update_database)
   - [<span class="toc-section-number">13.3</span> Options](#options)
-- [<span class="toc-section-number">14</span> TRANSCRIPTS_CHECK
-  tool](#transcripts_check-tool)
+- [<span class="toc-section-number">14</span> TO_EXCEL
+  tool](#to_excel-tool)
   - [<span class="toc-section-number">14.1</span> Main
     options](#main-options-11)
-- [<span class="toc-section-number">15</span> GENEBE tool](#genebe-tool)
+  - [<span class="toc-section-number">14.2</span> Add](#add)
+- [<span class="toc-section-number">15</span> TRANSCRIPTS_CHECK
+  tool](#transcripts_check-tool)
   - [<span class="toc-section-number">15.1</span> Main
     options](#main-options-12)
-  - [<span class="toc-section-number">15.2</span> GeneBe](#genebe)
-  - [<span class="toc-section-number">15.3</span> Explode](#explode-3)
-  - [<span class="toc-section-number">15.4</span> Export](#export-3)
-- [<span class="toc-section-number">16</span> MINIMALIZE
-  tool](#minimalize-tool)
+- [<span class="toc-section-number">16</span> GENEBE tool](#genebe-tool)
   - [<span class="toc-section-number">16.1</span> Main
     options](#main-options-13)
-  - [<span class="toc-section-number">16.2</span>
+  - [<span class="toc-section-number">16.2</span> GeneBe](#genebe)
+  - [<span class="toc-section-number">16.3</span> Explode](#explode-3)
+  - [<span class="toc-section-number">16.4</span> Export](#export-3)
+- [<span class="toc-section-number">17</span> MINIMALIZE
+  tool](#minimalize-tool)
+  - [<span class="toc-section-number">17.1</span> Main
+    options](#main-options-14)
+  - [<span class="toc-section-number">17.2</span>
     Minimalize](#minimalize)
-  - [<span class="toc-section-number">16.3</span> Explode](#explode-4)
-  - [<span class="toc-section-number">16.4</span> Export](#export-4)
-- [<span class="toc-section-number">17</span> Shared
+  - [<span class="toc-section-number">17.3</span> Explode](#explode-4)
+  - [<span class="toc-section-number">17.4</span> Export](#export-4)
+- [<span class="toc-section-number">18</span> Shared
   arguments](#shared-arguments)
 
 # Introduction
@@ -2449,6 +2454,57 @@ Usage examples:
 >     --limit=<limit>
 >
 >     None
+
+</small>
+
+# TO_EXCEL tool
+
+Convert VCF file to Excel '.xlsx' format.
+
+Usage examples:
+
+> howard to_excel --input=tests/data/example.vcf.gz
+> --output=/tmp/example.xlsx --add_variants_view
+
+> 
+
+## Main options
+
+<small>
+
+>     --input=<input> | required
+>
+>     Input file path.
+>     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
+>     Files can be compressesd (e.g. vcf.gz, tsv.gz).
+
+</small>
+
+<small>
+
+>     --output=<output> | required
+>
+>     Output file path.
+>     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
+>     Files can be compressesd (e.g. vcf.gz, tsv.gz).
+
+</small>
+
+## Add
+
+<small>
+
+>     --add_variants_view
+>
+>     Create a sheet with all INFO fields exploded.
+
+</small>
+
+<small>
+
+>     --add_header
+>
+>     Create a sheet with all INFO fields header descritions.
 
 </small>
 
