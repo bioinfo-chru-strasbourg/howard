@@ -1,24 +1,10 @@
 #!/usr/bin/env python
 
-import io
-import multiprocessing
-import os
-import re
-import subprocess
-from tempfile import NamedTemporaryFile
-import tempfile
-import duckdb
-import json
 import argparse
-import Bio.bgzf as bgzf
-import pandas as pd
-import vcf
 import logging as log
-import sys
-from tabulate import tabulate
+from tabulate import tabulate  # type: ignore
 
 from howard.objects.variants import Variants
-from howard.objects.database import Database
 from howard.functions.commons import *
 from howard.functions.databases import *
 
@@ -36,7 +22,7 @@ def query(args: argparse) -> None:
     log.info("Start")
 
     # Load config args
-    arguments_dict, setup_cfg, config, param = load_config_args(args)
+    arguments_dict, _, config, param = load_config_args(args)
 
     # Create variants object
     vcfdata_obj = Variants(
@@ -73,6 +59,7 @@ def query(args: argparse) -> None:
             info_prefix_column="",
             fields_needed_all=True,
             info_struct_column="INFOS",
+            sample_struct_column="SAMPLES",
             detect_type_list=True,
         )
 
@@ -110,9 +97,8 @@ def query(args: argparse) -> None:
             query=param.get("query", {}).get("query", None), export_header=True
         )
 
-    # # Close connexion
-    # vcfdata_obj.close_connexion()
-
+    # Log
     log.info("End")
 
+    # Return variants object
     return vcfdata_obj
