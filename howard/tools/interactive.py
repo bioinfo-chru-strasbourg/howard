@@ -3,9 +3,9 @@
 import logging as log
 import readline
 from datetime import datetime
-from tabulate import tabulate
-import pandas as pd
-import duckdb
+from tabulate import tabulate  # type: ignore
+import pandas as pd  # type: ignore
+import duckdb  # type: ignore
 import tempfile
 import signal
 import contextlib
@@ -305,9 +305,14 @@ def launch_interactive_terminal(
             # Check for special commands - display
             elif query.lower().startswith("display"):
                 display_format_input = query.lower().split(" ")[-1]
-                if display_format_input not in ["tabulate", "dataframe"]:
+                if display_format_input not in [
+                    "dataframe",
+                    "markdown",
+                    "simple",
+                    "tabulate",
+                ]:
                     print(
-                        "Unknown display format. Please use 'tabulate' or 'dataframe'."
+                        "Unknown display format. Please use 'dataframe', 'markdown', 'simple' or 'tabulate'."
                     )
                     continue
                 display_format = display_format_input
@@ -405,11 +410,18 @@ def launch_interactive_terminal(
                 "select"
             ) or query.strip().lower().startswith("describe"):
                 # Print the results based on the display format
-                if display_format == "tabulate":
-                    print(tabulate(rows, headers=columns, tablefmt="grid"))
-                elif display_format == "dataframe":
+                if display_format in ["dataframe"]:
                     df = pd.DataFrame(rows, columns=columns)
                     print(df)
+                elif display_format in ["markdown", "tabulate", "simple"]:
+                    df = pd.DataFrame(rows, columns=columns)
+                    if display_format in ["tabulate"]:
+                        tablefmt = "grid"
+                    elif display_format in ["simple"]:
+                        tablefmt = "simple"
+                    else:
+                        tablefmt = "pipe"
+                    print(df.to_markdown(tablefmt=tablefmt))
                 else:
                     print(
                         "Unknown display format. Please use 'tabulate' or 'dataframe'."
