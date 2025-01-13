@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import logging as log
+import re
 import readline
 from datetime import datetime
 from tabulate import tabulate  # type: ignore
@@ -31,6 +32,9 @@ def launch_interactive_terminal(
     # Get the DuckDB connection
     conn = variants.get_connexion()
 
+    # Query limit
+    query_limit = 100
+
     try:
         # Execute query to test connexion
         conn.execute("SELECT 1")
@@ -47,6 +51,7 @@ def launch_interactive_terminal(
             info_prefix_column="",
             fields_needed_all=True,
             info_struct_column="INFOS",
+            sample_struct_column="SAMPLES",
             detect_type_list=True,
         )
     except:
@@ -75,6 +80,7 @@ def launch_interactive_terminal(
         "tables",
         "history",
         "display",
+        "limit",
         "python",
         "exit",
         "quit",
@@ -113,6 +119,7 @@ def launch_interactive_terminal(
         "DEFAULT",
         "DELETE",
         "DESC",
+        "DESCRIBE",
         "DISTINCT",
         "DOUBLE",
         "DROP",
@@ -156,6 +163,7 @@ def launch_interactive_terminal(
         "RIGHT",
         "SELECT",
         "SET",
+        "SHOW",
         "SMALLINT",
         "TABLE",
         "THEN",
@@ -175,9 +183,12 @@ def launch_interactive_terminal(
     ]
 
     # Create keywords
-    keywords = [f"{k} " for k in keywords_sql] + special_commands
+    keywords = [f"{k.upper()} " for k in keywords_sql + special_commands]
 
-    def get_table_and_column_names():
+    # tables and columns names
+    tables_columns_names = []
+
+    def get_table_and_column_names(reload: bool = False):
         """
         Get a list of table and column names from the database
 
@@ -185,22 +196,27 @@ def launch_interactive_terminal(
             list: A list of table and column names
 
         """
+        nonlocal tables_columns_names
 
-        # Check tables
-        tables = conn.execute("SHOW TABLES").fetchall()
-        table_names = [table[0] for table in tables]
+        if not len(tables_columns_names) or reload:
 
-        # Create table.column keywords
-        column_names = []
-        for table in table_names:
-            columns = conn.execute(f"DESCRIBE {table}").fetchall()
-            for col in columns:
-                column_names.extend(
-                    [
-                        f"{table}.{col[0]}",
-                    ]
-                )
-        return table_names + column_names
+            # Check tables
+            tables = conn.execute("SHOW TABLES").fetchall()
+            table_names = [table[0] for table in tables]
+
+            # Create table.column keywords
+            column_names = []
+            for table in table_names:
+                columns = conn.execute(f"DESCRIBE {table}").fetchall()
+                for col in columns:
+                    column_names.extend(
+                        [
+                            f"{table}.{col[0]}",
+                        ]
+                    )
+            tables_columns_names = table_names + column_names
+
+        return tables_columns_names
 
     def completer(text, state):
         """
@@ -214,6 +230,7 @@ def launch_interactive_terminal(
             str: The next auto-completion option
 
         """
+        global tables_columns_names
 
         # Get auto-completion options
         options = [
@@ -296,15 +313,19 @@ def launch_interactive_terminal(
             # Add to history
             readline.add_history(query)
 
+            # Clean query for special commands
+            query_clean = query.replace(";", "").strip().lower()
+
             # Check for special commands
+            ######
 
             # Check for special commands - exit or quit
-            if query.lower() in ["exit", "quit"]:
+            if query_clean in ["exit", "quit"]:
                 break
 
             # Check for special commands - display
-            elif query.lower().startswith("display"):
-                display_format_input = query.lower().split(" ")[-1]
+            elif query_clean.startswith("display"):
+                display_format_input = query_clean.split(" ")[-1]
                 if display_format_input not in [
                     "dataframe",
                     "markdown",
@@ -320,9 +341,9 @@ def launch_interactive_terminal(
                 continue
 
             # Check for special commands - history
-            elif query.lower().startswith("history"):
+            elif query_clean.startswith("history"):
                 # Get the history index, if any
-                history_idx = query.lower().split(" ")[-1]
+                history_idx = query_clean.split(" ")[-1]
                 # If no index is provided, show the last command
                 history_as_query = None
                 try:
@@ -356,7 +377,7 @@ def launch_interactive_terminal(
                     query = history_as_query
 
             # Check for special commands - help
-            elif query.lower() == "help":
+            elif query_clean.startswith("help"):
                 print("Available commands:")
                 print(
                     "  history - Show command history (add a number to relaod a specific command)"
@@ -364,18 +385,36 @@ def launch_interactive_terminal(
                 print(
                     "  display - Change display mode for query results (either 'tabulate' or 'dataframe')"
                 )
+                print(
+                    "  limit - Change query limit for query results (e.g. 'limit 100')"
+                )
                 print("  tables - List all tables")
                 print("  Ctrl+C - Cancel query input or execution")
                 print("  exit, quit - Exit the terminal")
                 continue
 
             # Check for special commands - tables
-            elif query.lower() == "tables":
+            elif query_clean == "tables":
                 result = conn.execute("SHOW TABLES").fetchall()
                 print(tabulate(result, headers=["Tables"], tablefmt="grid"))
                 continue
 
-            elif query.lower().startswith("python"):
+            # Change query limit
+            elif query_clean.startswith("limit"):
+                query_limit_input = query_clean.split(" ")[-1]
+                try:
+                    query_limit_input = int(query_limit_input)
+                except:
+                    print(
+                        f"Unknown limit value '{display_format_input}'. Please use integer value (e.g. 'limit {query_limit}')."
+                    )
+                    continue
+                query_limit = query_limit_input
+                print(f"Query limit set to: {query_limit}")
+                continue
+
+            # Python
+            elif query_clean.startswith("python") and False:
                 # print(f"query={query}")
                 try:
                     exec_code = query[len("python") :].strip()
@@ -397,22 +436,53 @@ def launch_interactive_terminal(
                 continue
 
             # Execute the query
-            result = conn.execute(query)
-
-            # Fetch all results
-            rows = result.fetchall()
-
-            # Get column names
-            columns = [desc[0] for desc in result.description]
+            #####
 
             # Check if the query is a SELECT statement or a DESCRIBE statement
-            if query.strip().lower().startswith(
-                "select"
-            ) or query.strip().lower().startswith("describe"):
+            if (
+                query.strip().lower().startswith("select")
+                or query.strip().lower().startswith("describe")
+                or query.strip().lower().startswith("show")
+            ):
+
+                # Try limit query
+                query_limited_check = False
+                try:
+                    query_limited = f"""
+                    SELECT *
+                    FROM
+                        ({re.sub(";$", "", query.strip())})
+                    LIMIT {query_limit}
+                        """
+                    log.debug(f"Try query limitation to {query_limit} lines...")
+                    result = conn.execute(query_limited)
+                    query_limited_check = True
+
+                # Query without limitation
+                except:
+                    log.debug(f"Query limitation failed. Try without limitation...")
+                    result = conn.execute(query)
+
+                # Fetch rows
+                rows = result.fetchmany(query_limit)
+
+                # Fetch rows plus
+                rows_plus = result.fetchmany(1)
+
+                if rows_plus or (query_limited_check and len(rows) == query_limit):
+                    msg_query_limit = f"Only {query_limit} lines shown (use 'limit' command to change)"
+                else:
+                    msg_query_limit = None
+                # Get column names
+                columns = [desc[0] for desc in result.description]
+
                 # Print the results based on the display format
                 if display_format in ["dataframe"]:
                     df = pd.DataFrame(rows, columns=columns)
                     print(df)
+                    if msg_query_limit:
+                        print("...")
+                        log.warning(msg_query_limit)
                 elif display_format in ["markdown", "tabulate", "simple"]:
                     df = pd.DataFrame(rows, columns=columns)
                     if display_format in ["tabulate"]:
@@ -422,16 +492,27 @@ def launch_interactive_terminal(
                     else:
                         tablefmt = "pipe"
                     print(df.to_markdown(tablefmt=tablefmt))
+                    if msg_query_limit:
+                        print("...")
+                        log.warning(msg_query_limit)
                 else:
                     print(
                         "Unknown display format. Please use 'tabulate' or 'dataframe'."
                     )
             else:
+
+                # Fetch All query
+                result = conn.execute(query)
+                rows = result.fetchall()
+
                 # Print the number of affected rows for other types of queries
                 if result.rowcount == -1:
                     print("Query executed successfully.")
                 else:
                     print(f"{result.rowcount} rows affected.")
+
+                # Reload tables and columns names for completer
+                get_table_and_column_names(reload=True)
 
         except KeyboardInterrupt:
             # Handle the signal and return to prompt
