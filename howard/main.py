@@ -1,28 +1,12 @@
 #!/usr/bin/env python
 
-import importlib
-import io
-import multiprocessing
 import os
-import re
-import subprocess
-from tempfile import NamedTemporaryFile
-import tempfile
-import duckdb
-import json
 import argparse
-import Bio.bgzf as bgzf
-import pandas as pd
-import vcf
 import logging as log
-import sys
-import psutil
-import markdown
-from configparser import ConfigParser
-import yaml
+import psutil  # type: ignore
+import json
+import yaml  # type: ignore
 
-from howard.objects.variants import Variants
-from howard.objects.database import Database
 from howard.tools.tools import (
     set_log_level,
     help_generation,
@@ -35,7 +19,6 @@ from howard.tools.tools import (
 )
 from howard.functions.plugins import plugins_infos, plugins_list, plugins_to_load
 from howard.functions.commons import (
-    folder_main,
     folder_plugins,
     subfolder_plugins,
     help_header,
@@ -46,7 +29,7 @@ from howard.functions.commons import (
 # python -m pip install -e .
 # howard --help
 # howard query --help
-# howard analysis --input=my.vcf.gz --output=my.output.vcf --annotations=my.annotations.vcf.gz
+# howard process --input=my.vcf.gz --output=my.output.vcf --annotations=my.annotations.vcf.gz
 # howard gui
 # python -m howard.main --input=my.vcf.gz --output=my.output.vcf --annotations=my.annotations.vcf.gz
 
@@ -268,6 +251,7 @@ def main() -> None:
     vcfdata_obj = None
 
     # Command eval
+    command_function = None
     if not args.command:
         parser.print_help()
     else:
