@@ -11,12 +11,11 @@ coverage run -m pytest . -x -v
 coverage report --include=howard/* -m
 """
 
-import logging as log
 import os
-import sys
-import duckdb
+import duckdb  # type: ignore
 
-from howard.functions.commons import *
+# from howard.functions.commons import *
+from howard.functions.commons import remove_if_exists
 from howard.objects.variants import Variants
 
 

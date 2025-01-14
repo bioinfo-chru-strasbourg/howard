@@ -1,11 +1,14 @@
-from howard.functions.commons import download_file, compress_file, find, command
+from howard.functions.commons import (
+    download_file,
+    compress_file,
+    command,
+    set_log_level,
+)
 from howard.tools.convert import convert
 from howard.tools.tools import (
     arguments,
     commands_arguments,
     shared_arguments,
-    help_generation,
-    set_log_level,
 )
 from utils import (
     get_compiled_pattern,
@@ -19,18 +22,17 @@ from utils import (
 import tempfile
 import argparse
 import logging as log
-import requests
-from bs4 import BeautifulSoup
+import requests  # type: ignore
+from bs4 import BeautifulSoup  # type: ignore
 from os.path import join as osj
-import pyBigWig
-import tqdm
+import pyBigWig  # type: ignore
 import os
 import json
 import time
 import pathlib
-from Bio.bgzf import BgzfWriter
+from Bio.bgzf import BgzfWriter  # type: ignore
 import re
-import yaml
+import yaml  # type: ignore
 
 # https://docs.bedbase.org/bedboss/tutorials/bedmaker_tutorial/
 # transform bigwig

@@ -12,8 +12,8 @@ coverage report --include=howard/* -m
 
 import logging as log
 from tempfile import TemporaryDirectory
-import pytest
-import vcf
+import pytest  # type: ignore
+import vcf  # type: ignore
 import os
 
 from howard.functions.commons import remove_if_exists, get_file_format

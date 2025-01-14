@@ -15,7 +15,6 @@ from tempfile import TemporaryDirectory
 import pytest  # type: ignore
 
 
-from howard.functions.commons import remove_if_exists, get_file_format
 from howard.objects.variants import Variants
 from test_needed import tests_folder, tests_config, tests_data_folder
 

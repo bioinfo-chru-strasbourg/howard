@@ -1,49 +1,34 @@
-import io
 import multiprocessing
 import os
 from pathlib import Path
-import platform
 import re
 import statistics
 import string
 import subprocess
-import sys
-from tempfile import NamedTemporaryFile
-import tempfile
 import typing
-import duckdb
+import duckdb  # type: ignore
 import json
 import argparse
-import pandas as pd
-import vcf
+import pandas as pd  # type: ignore
 import logging as log
 import shutil
-import urllib.request
 import zipfile
-import gzip
-import requests
+import requests  # type: ignore
 import fnmatch
 import ast
-
 import random
-
-import pgzip
-import mgzip
-import bgzip
-
-import pysam
-import yaml
-import pysam.bcftools
-
+import pgzip  # type: ignore
+import mgzip  # type: ignore
+import bgzip  # type: ignore
+import pysam  # type: ignore
+import yaml  # type: ignore
+import pysam.bcftools  # type: ignore
 import signal
-from contextlib import contextmanager
-
-from configparser import ConfigParser, NoSectionError, NoOptionError
-
+from configparser import ConfigParser
 from importlib.metadata import metadata
-
 from shutil import which
 
+# File folder
 file_folder = os.path.dirname(__file__)
 
 # plugin subfolder
@@ -1993,7 +1978,7 @@ def get_memory(config: dict = {}, param: dict = None) -> str:
     provided in the `param` dictionary, and if not, it looks for a default value in the `config`
     """
 
-    import psutil
+    import psutil  # type: ignore
 
     # Memory system
     mem = psutil.virtual_memory()
@@ -2586,7 +2571,7 @@ def genome_build_switch(assembly: str) -> str:
     :return: The function `genome_build_switch` returns a string.
     """
 
-    import genomepy
+    import genomepy  # type: ignore
 
     genome_list = genomepy.search(assembly, exact=False)
 
@@ -3278,7 +3263,7 @@ def help_header(setup: str = None) -> str:
             prog_description = "HOWARD - Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery"
 
     # Logo
-    import pyfiglet
+    import pyfiglet  # type: ignore
 
     ascii_logo = pyfiglet.figlet_format(
         prog_name.split("-")[0].upper()
@@ -4217,7 +4202,7 @@ def detect_column_type(column) -> str:
     conditions checked in the function.
     """
 
-    from pandas.api.types import is_datetime64_any_dtype as is_datetime
+    from pandas.api.types import is_datetime64_any_dtype as is_datetime  # type: ignore
 
     if len(column) == 0:
         return "VARCHAR"

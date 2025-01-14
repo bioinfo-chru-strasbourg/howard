@@ -1,36 +1,41 @@
-#!/usr/bin/env python
-
-import io
-import multiprocessing
 import os
-import re
-import subprocess
-from tempfile import NamedTemporaryFile
-import tempfile
-import duckdb
 import json
 import argparse
-import Bio.bgzf as bgzf
-import pandas as pd
-import vcf
-import logging as log
-import sys
 import importlib
 
 # Import Commons
-from howard.functions.commons import *
+from howard.functions.commons import (
+    DEFAULT_ALPHAMISSENSE_URL,
+    DEFAULT_ANNOTATIONS_FOLDER,
+    DEFAULT_ANNOVAR_FOLDER,
+    DEFAULT_ANNOVAR_URL,
+    DEFAULT_ASSEMBLY,
+    DEFAULT_DATABASE_FOLDER,
+    DEFAULT_DBNSFP_URL,
+    DEFAULT_DBSNP_FOLDER,
+    DEFAULT_DBSNP_URL,
+    DEFAULT_EXOMISER_CADD_URL,
+    DEFAULT_EXOMISER_FOLDER,
+    DEFAULT_EXOMISER_REMM_URL,
+    DEFAULT_EXOMISER_URL,
+    DEFAULT_GENOME_FOLDER,
+    DEFAULT_REFSEQ_FOLDER,
+    DEFAULT_REFSEQ_URL,
+    full_path,
+)
+
 
 # Import tools
-from howard.tools.process import *
-from howard.tools.annotation import *
-from howard.tools.calculation import *
-from howard.tools.hgvs import *
-from howard.tools.prioritization import *
-from howard.tools.query import *
-from howard.tools.stats import *
-from howard.tools.convert import *
-from howard.tools.databases import *
-from howard.tools.help import *
+from howard.tools.process import process
+from howard.tools.annotation import annotation
+from howard.tools.calculation import calculation
+from howard.tools.hgvs import hgvs
+from howard.tools.prioritization import prioritization
+from howard.tools.query import query
+from howard.tools.stats import stats
+from howard.tools.convert import convert
+from howard.tools.databases import databases
+from howard.tools.help import help
 
 
 # Import gui only if gooey and wx is installed
@@ -42,7 +47,7 @@ except ImportError:
     tool_gui_enable = False
 
 if tool_gui_enable:
-    from howard.tools.gui import *
+    from howard.tools.gui import gui
 
 
 class PathType(object):

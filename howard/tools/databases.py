@@ -1,42 +1,28 @@
-#!/usr/bin/env python
-
 import argparse
-import datetime
-from functools import partial
-import itertools
-import multiprocessing
-import os
-import subprocess
-import pyarrow.parquet as pq
-import pyarrow as pa
-from pyarrow import csv
-import duckdb
-import pandas as pd
-import Bio.bgzf as bgzf
-import numpy as np
-import concurrent.futures
-from multiprocessing import Pool, cpu_count
-import dask.dataframe as dd
 import logging as log
-import fnmatch
-import glob
 
-import os
-import requests
-import shutil
-import zipfile
-import gzip
-import pandas as pd
-from typing import List
-from tempfile import TemporaryDirectory
-
-from jproperties import Properties  # jproperties 2.1.1
-
-
-from howard.functions.commons import *
-from howard.objects.variants import *
-from howard.functions.databases import *
-from howard.functions.from_annovar import *
+from howard.functions import from_annovar
+from howard.functions.commons import (
+    DEFAULT_REFSEQ_FOLDER,
+    add_value_into_dict,
+    extract_memory_in_go,
+    get_memory,
+    get_threads,
+    load_args,
+    load_config_args,
+)
+from howard.functions.databases import (
+    databases_download_alphamissense,
+    databases_download_annovar,
+    databases_download_dbnsfp,
+    databases_download_dbsnp,
+    databases_download_exomiser,
+    databases_download_genomes,
+    databases_download_hgmd,
+    databases_download_refseq,
+    databases_download_snpeff,
+    generate_databases_param,
+)
 from howard.functions.from_extann import from_extann
 
 
@@ -54,7 +40,7 @@ def databases(args: argparse) -> None:
     log.info("Start")
 
     # Load config args
-    arguments_dict, setup_cfg, config, param = load_config_args(args)
+    arguments_dict, _, config, param = load_config_args(args)
 
     # Load args into param
     param = load_args(
@@ -405,4 +391,5 @@ def databases(args: argparse) -> None:
         log.debug("Convert ExtAnn")
         from_extann(args=args)
 
+    # Log
     log.info("End")

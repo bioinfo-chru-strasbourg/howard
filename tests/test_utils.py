@@ -10,21 +10,12 @@ coverage run -m pytest . -x -v
 coverage report --include=howard/* -m
 """
 
-import logging as log
-import os
-import sys
-import duckdb
-import re
-import Bio.bgzf as bgzf
-import gzip
-import pytest
-import pandas as pd
-from pandas.testing import assert_frame_equal
-from unittest.mock import patch
-
-from howard.objects.variants import Variants
-from howard.functions.utils import *
-from test_needed import *
+from howard.functions.utils import (
+    json_perfect_exons_to_cdna_match,
+    get_genomic_sequence,
+    hgvs_justify_dup,
+    hgvs_justify_indel,
+)
 
 
 def test_json_perfect_exons_to_cdna_match():

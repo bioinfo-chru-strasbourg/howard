@@ -12,18 +12,15 @@ coverage report --include=howard/* -m
 
 import logging as log
 import os
-import sys
+import vcf  # type: ignore
 from tempfile import TemporaryDirectory
-import duckdb
-import re
-import Bio.bgzf as bgzf
-import gzip
-import pytest
+import duckdb  # type: ignore
+import pytest  # type: ignore
 
-from howard.functions.commons import *
 from howard.objects.variants import Variants
-from howard.functions.databases import *
-from test_needed import *
+from howard.functions.commons import remove_if_exists, vcf_required_columns
+
+from test_needed import tests_folder, tests_data_folder, tests_config, database_files
 
 
 def test_genotype_format():

@@ -1,25 +1,8 @@
-#!/usr/bin/env python
-
-import io
-import multiprocessing
-import os
-import re
-import subprocess
-from tempfile import NamedTemporaryFile
-import tempfile
-import duckdb
-import json
 import argparse
-import Bio.bgzf as bgzf
-import pandas as pd
-import vcf
 import logging as log
-import sys
 
+from howard.functions.commons import load_args, load_config_args
 from howard.objects.variants import Variants
-from howard.objects.database import Database
-from howard.functions.commons import *
-from howard.functions.databases import *
 
 
 def hgvs(args: argparse) -> None:
@@ -36,7 +19,7 @@ def hgvs(args: argparse) -> None:
     log.info("Start")
 
     # Load config args
-    arguments_dict, setup_cfg, config, param = load_config_args(args)
+    arguments_dict, _, config, param = load_config_args(args)
 
     # Create variants object
     vcfdata_obj = Variants(
@@ -69,9 +52,8 @@ def hgvs(args: argparse) -> None:
     # Export
     vcfdata_obj.export_output(export_header=True)
 
-    # # Close connexion
-    # vcfdata_obj.close_connexion()
-
+    # Log
     log.info("End")
 
+    # Return Variants object
     return vcfdata_obj

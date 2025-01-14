@@ -1,36 +1,95 @@
-import csv
+import datetime
 import gc
 import gzip
 import io
-import multiprocessing as mp
 import os
+from pathlib import Path
 import random
 import re
-import shlex
+import shutil
 import sqlite3
+import string
 import subprocess
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 import tempfile
-import duckdb
+import duckdb  # type: ignore
 import json
-import yaml
-import argparse
-import Bio.bgzf as bgzf
-import pandas as pd
-from pyfaidx import Fasta
-import numpy as np
-import vcf
+import yaml  # type: ignore
+import Bio.bgzf as bgzf  # type: ignore
+import pandas as pd  # type: ignore
+import polars as pl  # type: ignore
+from pyfaidx import Fasta  # type: ignore
+import numpy as np  # type: ignore
+import vcf  # type: ignore
 import logging as log
-import fastparquet as fp
-from multiprocesspandas import applyparallel
-import cyvcf2
-import pyBigWig
+import fastparquet as fp  # type: ignore
+import cyvcf2  # type: ignore
+import pyBigWig  # type: ignore
 import math
 
-from howard.functions.commons import *
-from howard.objects.database import *
-from howard.functions.databases import *
-from howard.functions.utils import *
+from howard.functions.commons import (
+    CODE_TYPE_MAP,
+    DEFAULT_ANNOTATIONS_FOLDER,
+    DEFAULT_ANNOVAR_FOLDER,
+    DEFAULT_ASSEMBLY,
+    DEFAULT_DATABASE_FOLDER,
+    DEFAULT_GENOME_FOLDER,
+    DEFAULT_REFSEQ_FOLDER,
+    DEFAULT_SNPEFF_FOLDER,
+    DEFAULT_SPLICE_FOLDER,
+    DEFAULT_TOOLS_BIN,
+    DEFAULT_TOOLS_FOLDER,
+    add_value_into_dict,
+    barcode,
+    check_docker_image_exists,
+    clean_annotation_field,
+    command,
+    detect_column_type,
+    find,
+    find_all,
+    find_file_prefix,
+    find_genome,
+    find_nomen,
+    findbypipeline,
+    full_path,
+    genotype_stats,
+    genotypeconcordance,
+    get_bin_command,
+    get_file_compressed,
+    get_file_format,
+    get_random,
+    get_tmp,
+    merge_regions,
+    params_string_to_dict,
+    remove_if_exists,
+    run_parallel_commands,
+    transcripts_file_to_df,
+    trio,
+    vaf_normalization,
+    vcf_required,
+    file_format_delimiters,
+    folder_config,
+    code_type_map,
+    comparison_map,
+    code_type_map_to_sql,
+    code_type_map_to_vcf,
+)
+
+from howard.objects.database import Database
+
+from howard.functions.databases import (
+    databases_download_annovar,
+    databases_download_exomiser,
+    databases_download_snpeff,
+    databases_infos,
+)
+
+from howard.functions.utils import (
+    format_hgvs_name,
+    get_refseq_table,
+    get_transcript,
+    read_transcripts,
+)
 
 
 class Variants:
@@ -8118,6 +8177,8 @@ class Variants:
         of threads obtained from the `get_threads()` method
         :type threads: int
         """
+
+        import dask.dataframe as dd  # type: ignore
 
         # Function for each partition of the Dask Dataframe
         def partition_function(partition):

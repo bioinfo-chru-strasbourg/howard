@@ -10,26 +10,16 @@ coverage run -m pytest tests/test_databases.py -x -vv --log-cli-level=DEBUG --ca
 coverage report --include=howard/* -m
 """
 
-import logging as log
 import os
-import sys
 from tempfile import TemporaryDirectory
-import duckdb
-import re
-import Bio.bgzf as bgzf
-import gzip
-import pytest
-import pandas as pd
-from pandas.testing import assert_frame_equal
-from unittest.mock import patch
 
-from howard.objects.variants import Variants
-from howard.objects.database import Database
-from howard.functions.commons import *
-from howard.tools.databases import *
-from howard.tools.tools import arguments_dict
+from howard.functions.commons import DEFAULT_GENOME_FOLDER
+from howard.functions.databases import databases_download_genomes
 
-from test_needed import *
+# from howard.functions.commons import *
+# from howard.tools.databases import *
+
+# from test_needed import *
 
 
 def test_databases_download_genomes():
@@ -38,7 +28,7 @@ def test_databases_download_genomes():
     different assemblies and contig filters.
     """
 
-    import genomepy
+    import genomepy  # type: ignore
 
     # Init
     assemblies_config = {
@@ -91,7 +81,7 @@ def test_databases_download_genomes():
     threads = 2
 
     # Uniq assembly not folder provided
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with TemporaryDirectory() as tmpdir:
 
         assemblies = ["sacCer3"]
 
@@ -117,7 +107,7 @@ def test_databases_download_genomes():
             assert False
 
     # Uniq assembly
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with TemporaryDirectory() as tmpdir:
 
         assemblies = ["sacCer3"]
 
@@ -143,7 +133,7 @@ def test_databases_download_genomes():
             assert False
 
     # Multiple assemblies
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with TemporaryDirectory() as tmpdir:
 
         assemblies = ["sacCer2", "sacCer3"]
 
@@ -169,7 +159,7 @@ def test_databases_download_genomes():
             assert False
 
     # Filtered assembl
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with TemporaryDirectory() as tmpdir:
 
         assemblies = ["sacCer3"]
 

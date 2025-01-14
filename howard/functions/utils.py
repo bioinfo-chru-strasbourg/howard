@@ -4,16 +4,12 @@ Helper functions.
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
-
 import operator
 import re
-import time
-import polars as pl
 
-from howard.objects.transcript import Transcript, CDNA_Match, Exon
-from howard.objects.cdna import CDNACoord, CDNA_START_CODON, CDNA_STOP_CODON
+from howard.objects.transcript import Transcript, CDNA_Match
 from howard.objects.genome import GenomeSubset
-from howard.objects.hgvs import HGVSName, InvalidHGVSName, CODON_1, CODON_3, CODON_FULL
+from howard.objects.hgvs import HGVSName, CODON_1, CODON_3, CODON_FULL
 from howard.objects.variant import Position, justify_indel, normalize_variant, revcomp
 
 _indel_mutation_types = set(["ins", "del", "dup", "delins"])

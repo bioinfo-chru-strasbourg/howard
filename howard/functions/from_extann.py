@@ -2,14 +2,12 @@
 
 import argparse
 import logging as log
-from os.path import join as osj
-import pandas as pd
-import json
+import pandas as pd  # type: ignore
 import os
 import time
-import yaml
+import yaml  # type: ignore
 
-from howard.functions import commons
+from howard.functions.commons import command, full_path, transcripts_file_to_df
 
 
 # Aim: This script was created to transform VARANK extann file to vcf, in order to be use in HOWARD 1.0.
@@ -310,14 +308,14 @@ def from_extann(args: argparse) -> None:
         input_file = args.input_extann
     else:
         input_file = args.input_extann.name
-    input_file = commons.full_path(input_file)
+    input_file = full_path(input_file)
 
     # Output
     if isinstance(args.output_extann, str):
         output_file = args.output_extann
     else:
         output_file = args.output_extann.name
-    output_file = commons.full_path(output_file)
+    output_file = full_path(output_file)
 
     # Refgene
     if args.refgene:
@@ -341,10 +339,10 @@ def from_extann(args: argparse) -> None:
     # Transcript
     if args.transcripts:
         # df_transcript = pd.read_csv(args.transcript_extann, header=0, sep="\t")
-        df_transcript = commons.transcripts_file_to_df(args.transcripts)
+        df_transcript = transcripts_file_to_df(args.transcripts)
     elif param.get("transcripts"):
         # df_transcript = pd.read_csv(param.get("transcript_extann"), header=0, sep="\t")
-        df_transcript = commons.transcripts_file_to_df(param.get("transcripts"))
+        df_transcript = transcripts_file_to_df(param.get("transcripts"))
     else:
         if param.get("mode_extann") == "chosen":
             log.error(
@@ -378,7 +376,7 @@ def from_extann(args: argparse) -> None:
         args.mode_extann,
         df_transcript,
     )
-    commons.command(
+    command(
         f"grep '^#' {args.output_extann}.tmp > {args.output_extann} && grep -v '^#' {args.output_extann}.tmp | sort -k1,1V -k2,2n >> {args.output_extann}"
     )
     log.debug("Removing tmp output")
@@ -386,6 +384,6 @@ def from_extann(args: argparse) -> None:
 
     if args.output_extann.endswith(".gz"):
         log.debug("Compressing output")
-        commons.command(
+        command(
             f"mv {args.output_extann} {args.output_extann.replace('.gz', '')} && bgzip {args.output_extann.replace('.gz', '')}"
         )

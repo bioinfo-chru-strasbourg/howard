@@ -1,12 +1,9 @@
-#!/usr/bin/env python
-
 import argparse
 import logging as log
 from tabulate import tabulate  # type: ignore
 
+from howard.functions.commons import load_args, load_config_args
 from howard.objects.variants import Variants
-from howard.functions.commons import *
-from howard.functions.databases import *
 
 
 def query(args: argparse) -> None:

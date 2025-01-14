@@ -12,18 +12,14 @@ coverage report --include=howard/* -m
 
 import logging as log
 import os
-import sys
 from tempfile import TemporaryDirectory
-import duckdb
-import re
-import Bio.bgzf as bgzf
-import gzip
-import pytest
+import pytest  # type: ignore
+import vcf  # type: ignore
 
-from howard.functions.commons import *
 from howard.objects.variants import Variants
-from howard.functions.databases import *
-from test_needed import *
+from howard.functions.commons import remove_if_exists
+
+from test_needed import tests_folder, tests_data_folder, tests_config
 
 
 def test_calculation_sql_on_table():
