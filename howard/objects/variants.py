@@ -2635,12 +2635,12 @@ class Variants:
                     for head in header_list:
                         # Clean head for malformed header
                         head_clean = head
-                        head_clean = re.subn(
-                            "##FORMAT=<ID=(.*),Number=(.*),Type=Flag",
-                            r"##FORMAT=<ID=\1,Number=\2,Type=String",
-                            head_clean,
-                            2,
-                        )[0]
+                        # head_clean = re.subn(
+                        #     "##FORMAT=<ID=(.*),Number=(.*),Type=Flag",
+                        #     r"##FORMAT=<ID=\1,Number=\2,Type=String",
+                        #     head_clean,
+                        #     2,
+                        # )[0]
                         # Write header
                         header_list_clean.append(head_clean)
                     header_list = header_list_clean
@@ -6990,6 +6990,7 @@ class Variants:
                     "description": "Create a variant ID with chromosome, position, alt and ref",
                     "available": False,
                     "output_column_name": "variant_chr_pos_alt_ref",
+                    "output_column_number": "1",
                     "output_column_type": "String",
                     "output_column_description": "variant ID with chromosome, position, alt and ref",
                     "operation_query": """ concat("#CHROM", '_', "POS", '_', "REF", '_', "ALT") """,
@@ -7002,6 +7003,7 @@ class Variants:
                     "available": True,
                     "table": "variants",
                     "output_column_name": "VARTYPE",
+                    "output_column_number": "1",
                     "output_column_type": "String",
                     "output_column_description": "Variant type: SNV if X>Y, MOSAIC if X>Y,Z or X,Y>Z, INDEL if XY>Z or X>YZ",
                     "operation_query": """
@@ -8733,6 +8735,7 @@ class Variants:
         operation_name = operation.get("name", "unknown")
         log.debug(f"process SQL {operation_name}")
         output_column_name = operation.get("output_column_name", operation_name)
+        output_column_number = operation.get("output_column_number", ".")
         output_column_type = operation.get("output_column_type", "String")
         prefix = operation.get("explode_infos_prefix", "")
         output_column_type_sql = code_type_map_to_sql.get(output_column_type, "VARCHAR")
@@ -8777,7 +8780,7 @@ class Variants:
                 vcf_reader = self.get_header()
                 vcf_reader.infos[output_column_name] = vcf.parser._Info(
                     output_column_name,
-                    ".",
+                    output_column_number,
                     output_column_type,
                     output_column_description,
                     "howard calculation",
@@ -10860,6 +10863,7 @@ class Variants:
             query_unique_chrom = f"""
                 SELECT DISTINCT "#CHROM"
                 FROM variants AS subquery
+                ORDER BY "#CHROM"
             """
             unique_chroms = self.get_query_to_df(query=query_unique_chrom)
 
@@ -11634,15 +11638,26 @@ class Variants:
                 # If field not in header
                 if field not in self.get_header_infos_list():
 
+                    # Find previous desc
+                    if self.get_header().infos.get(field, None) is not None:
+                        field_description = self.get_header().infos.get(field).desc
+                        field_type = self.get_header().infos.get(field).type
+                    else:
+                        field_description = "Unknown annotation"
+                        field_type = "String"
+
+                    # Add description about transription prioritization
+                    field_description += f". Annotation '{field}' from transcript view"
+
                     # Add PZ Transcript in header
                     self.get_header().infos[field] = vcf.parser._Info(
                         field,
-                        ".",
-                        "String",
-                        f"Annotation '{field}' from transcript view",
+                        "1",
+                        field_type,
+                        field_description,
                         "unknown",
                         "unknown",
-                        0,
+                        code_type_map.get(field_type, 0),
                     )
 
                 # Add field as INFO/tag
@@ -11776,15 +11791,18 @@ class Variants:
         # PZ field transcripts
         pz_fields_transcripts = pz_param.get("pzprefix", "PTZ") + "Transcript"
 
+        # Add description about transription prioritization
+        pz_field_transcripts_description = f"Transcript selected from prioritization process, profile {pz_profile_default}"
+
         # Add PZ Transcript in header
         self.get_header().infos[pz_fields_transcripts] = vcf.parser._Info(
             pz_fields_transcripts,
-            ".",
+            "1",
             "String",
-            f"Transcript selected from prioritization process, profile {pz_profile_default}",
+            pz_field_transcripts_description,
+            "HOWARD transcript prioritization",
             "unknown",
-            "unknown",
-            code_type_map["String"],
+            code_type_map.get("String", 0),
         )
 
         # Mandatory fields if asked in param
@@ -11816,15 +11834,28 @@ class Variants:
                 pz_field_new = pz_param.get("pzprefix", "PTZ") + pz_field
                 pz_param_pzfields[pz_field] = pz_field_new
 
+                # Find previous desc and type
+                if self.get_header().infos.get(pz_field, None) is not None:
+                    pz_field_new_description = (
+                        self.get_header().infos.get(pz_field).desc
+                    )
+                    pz_field_new_type = self.get_header().infos.get(pz_field).type
+                else:
+                    pz_field_new_description = "Unknown annotation"
+                    pz_field_new_type = "String"
+
+                # Add description about transription prioritization
+                pz_field_new_description += f". Annotation '{pz_field}' from transcript selected from prioritization process, profile {pz_profile_default}"
+
                 # Add PZ Transcript in header
                 self.get_header().infos[pz_field_new] = vcf.parser._Info(
                     pz_field_new,
-                    ".",
-                    "String",
-                    f"Annotation '{pz_field}' from transcript selected from prioritization process, profile {pz_profile_default}",
+                    "1",
+                    pz_field_new_type,
+                    pz_field_new_description,
                     "unknown",
                     "unknown",
-                    code_type_map["String"],
+                    code_type_map.get(pz_field_new_type, 0),
                 )
         # Add order by fields in mandatory fields
         for pz_order in pz_orders:
