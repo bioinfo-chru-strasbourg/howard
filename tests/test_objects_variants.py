@@ -669,10 +669,10 @@ def test_get_header():
     # Check header List and nb
     header_list = variants.get_header(type="list")
     assert header_list != []
-    assert len(header_list) == 53
+    assert len(header_list) == 54
 
     # check header length
-    assert variants.get_header_length() == 52
+    assert variants.get_header_length() == 53
 
     # check get_header_columns
     header_columns = variants.get_header_columns().strip()

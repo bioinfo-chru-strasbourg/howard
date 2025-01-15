@@ -1,5 +1,4 @@
 ##fileformat=VCFv4.1
-##FILTER=<ID=PASS,Description="All filters passed">
 ##fileDate=20140624
 ##source=./export.pl release 1.5
 ##reference=IRC
@@ -7,6 +6,9 @@
 ##INFO=<ID=NS,Number=1,Type=Integer,Description="Number of Samples With Data">
 ##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
 ##INFO=<ID=AA,Number=1,Type=String,Description="Ancestral Allele">
+##INFO=<ID=CLNSIG,Number=1,Type=String,Description="CLNSIG">
+##INFO=<ID=SIFT,Number=.,Type=String,Description="Annotation 'SIFT'">
+##FILTER=<ID=PASS,Description="All filters passed">
 ##FILTER=<ID=FSFilter,Description="FS > 200.0">
 ##FILTER=<ID=LowQual,Description="Low quality">
 ##FILTER=<ID=QDFilter,Description="QD < 2.0">
@@ -19,9 +21,7 @@
 ##FORMAT=<ID=GQ,Number=1,Type=Float,Description="Genotype Quality">
 ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
 ##FORMAT=<ID=AD,Number=2,Type=Integer,Description="Allelic Depth">
-##FORMAT=<ID=FILTER,Number=.,Type=String,Description="Filter quality">
 ##FORMAT=<ID=QUAL,Number=1,Type=Integer,Description="Filter quality value">
-##INFO=<ID=CLNSIG,Number=1,Type=String,Description="CLNSIG">
 ##contig=<ID=chr1,length=249250621,assembly=hg19>
 ##contig=<ID=chr7,length=159138663,assembly=hg19>
 ##contig=<ID=1,length=249250621,assembly=hg19>
@@ -49,9 +49,6 @@
 ##contig=<ID=M,length=16571,assembly=hg19>
 ##contig=<ID=X,length=155270560,assembly=hg19>
 ##contig=<ID=Y,length=59373566,assembly=hg19>
-##INFO=<ID=SIFT,Number=.,Type=String,Description="Annotation 'SIFT'">
-##bcftools_viewVersion=1.15.1+htslib-1.15.1
-##bcftools_viewCommand=view tests/data/example.vcf.gz; Date=Fri Mar 10 21:25:44 2023
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sample1	sample2	sample3	sample4
 chr1	28736	.	A	C	100	PASS	CLNSIG=pathogenic	GT:AD:DP:GQ	0/1:525,204:729:99	0/1:12659,4994:17664:99	1/1:12658,4995:17663:99	1/1:401,175:576:99
 chr1	35144	.	A	C	100	PASS	CLNSIG=non-pathogenic	GT:AD:DP:GQ	./.:.:.:.	0/1:12659,4994:17664:99	0/1:12658,4995:17663:99	0/1:401,175:576:99

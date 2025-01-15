@@ -375,7 +375,7 @@ Tools:
 class="header-section-number">2.2.2</span> Interactive terminal</h3>
 <p>Launch HOWARD interactive terminal to explore a VCF file:</p>
 <div class="sourceCode" id="cb4"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">howard</span> query <span class="at">--input</span><span class="op">=</span><span class="st">&#39;tests/data/examples.vcf&#39;</span></span></code></pre></div>
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">howard</span> query <span class="at">--input</span><span class="op">=</span><span class="st">&#39;tests/data/example.vcf.gz&#39;</span></span></code></pre></div>
 <pre class="text"><code> _   _  _____        ___    ____  ____  
 | | | |/ _ \ \      / / \  |  _ \|  _ \ 
 | |_| | | | \ \ /\ / / _ \ | |_) | | | |
@@ -385,29 +385,29 @@ class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="
 HOWARD::0.12.2.0 [Antony Le Bechec, Jean-Baptiste Lamouche]
 HOWARD - Highly Open Workflow for Annotation &amp; Ranking toward genomic variant Discovery
 
-#[2025-01-13 22:18:34] [INFO] Start
-#[2025-01-13 22:18:34] [INFO] Loading...
-#[2025-01-13 22:18:34] [INFO] End
-#[2025-01-13 22:18:34] [INFO] Start interative terminal
-#[2025-01-13 22:18:34] [INFO] Interactive DuckDB SQL terminal. Type &#39;exit&#39; to quit.
-#[2025-01-13 22:18:34] [INFO] Type &#39;help&#39; for a list of commands.
-#[2025-01-13 22:18:34] [SQL]&gt; SELECT
-#[2025-01-13 22:18:34] [SQL]|   &quot;#CHROM&quot;, &quot;POS&quot;, &quot;REF&quot;, &quot;ALT&quot;,
-#[2025-01-13 22:18:34] [SQL]|   INFOS.*,
-#[2025-01-13 22:18:34] [SQL]|   SAMPLES.sample1.GT AS &#39;sample1_GT&#39;, 
-#[2025-01-13 22:18:34] [SQL]|   SAMPLES.sample1.DP AS &#39;sample1_DP&#39;
-#[2025-01-13 22:18:34] [SQL]| FROM variants_view
-#[2025-01-13 22:18:34] [SQL]| WHERE SAMPLES.sample1.DP &gt; 30
-#[2025-01-13 22:18:34] [SQL]|    OR INFOS.CLNSIG LIKE &#39;pathogenic&#39;
-#[2025-01-13 22:18:34] [SQL]| 
-  #CHROM       POS REF ALT    NS     DP    AA      CLNSIG  SIFT sample1_GT  sample1_DP
-0   chr1     28736   A   C  None    NaN  None  pathogenic  None        0/1         729
-1   chr1     69101   A   G  None   50.0  None        None  None        0/1         729
-2   chr1    768251   A   G  None    NaN  None        None  None        0/1         729
-3   chr1    768252   A   G  None    NaN  None        None  None        0/1         729
-4   chr1    768253   A   G  None    NaN  None        None  None        0/1         729
-5   chr7  55249063   G   A  None  125.0  None        None  None        0/1         729
-#[2025-01-13 22:18:38] [SQL]&gt; </code></pre>
+#[2025-01-15 23:13:44]    INFO| Start
+#[2025-01-15 23:13:44]    INFO| Loading...
+#[2025-01-15 23:13:45]    INFO| End
+#[2025-01-15 23:13:45]    INFO| Start interative terminal
+#[2025-01-15 23:13:45]    INFO| Interactive DuckDB SQL terminal. Type &#39;exit&#39; to quit.
+#[2025-01-15 23:13:45]    INFO| Type &#39;help&#39; for a list of commands.
+#[2025-01-15 23:13:45]        | &gt;&gt;&gt; SELECT
+#[2025-01-15 23:13:46]        | ++&gt;   &quot;#CHROM&quot;, &quot;POS&quot;, &quot;REF&quot;, &quot;ALT&quot;,
+#[2025-01-15 23:13:46]        | ++&gt;   INFOS.CLNSIG,
+#[2025-01-15 23:13:46]        | ++&gt;   SAMPLES.sample1.GT AS &#39;GT&#39;, 
+#[2025-01-15 23:13:46]        | ++&gt;   SAMPLES.sample1.DP AS &#39;DP&#39;
+#[2025-01-15 23:13:46]        | ++&gt; FROM variants_view
+#[2025-01-15 23:13:46]        | ++&gt; WHERE SAMPLES.sample1.DP &gt; 30
+#[2025-01-15 23:13:46]        | ++&gt;    OR INFOS.CLNSIG LIKE &#39;pathogenic&#39;
+#[2025-01-15 23:13:46]        | ++&gt; 
+  #CHROM       POS REF ALT      CLNSIG   GT   DP
+0   chr1     28736   A   C  pathogenic  0/1  729
+1   chr1     69101   A   G        None  0/1  729
+2   chr1    768251   A   G        None  0/1  729
+3   chr1    768252   A   G        None  0/1  729
+4   chr1    768253   A   G        None  0/1  729
+5   chr7  55249063   G   A        None  0/1  729
+#[2025-01-15 23:13:47]        | &gt;&gt;&gt; </code></pre>
 <h3 data-number="2.2.3" id="graphical-user-interface"><span
 class="header-section-number">2.2.3</span> Graphical User Interface</h3>
 <p>Install HOWARD Graphical User Interface using Python Pip tool with

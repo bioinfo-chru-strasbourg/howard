@@ -27,6 +27,8 @@ import signal
 from configparser import ConfigParser
 from importlib.metadata import metadata
 from shutil import which
+from termcolor import colored  # type: ignore
+from colorama import init  # type: ignore
 
 # File folder
 file_folder = os.path.dirname(__file__)
@@ -50,9 +52,7 @@ comparison_map = {
     "contains": "SIMILAR TO",
 }
 
-
 code_type_map = {"Integer": 0, "String": 1, "Float": 2, "Flag": 3}
-
 
 code_type_map_to_sql = {
     "Integer": "INTEGER",
@@ -69,7 +69,6 @@ code_type_map_to_vcf = {
     "BOOLEAN": "String",
 }
 
-
 file_format_delimiters = {"vcf": "\t", "tsv": "\t", "csv": ",", "psv": "|", "bed": "\t"}
 
 file_format_allowed = list(file_format_delimiters.keys()) + [
@@ -79,7 +78,6 @@ file_format_allowed = list(file_format_delimiters.keys()) + [
 ]
 
 file_compressed_format = ["gz", "bgz"]
-
 
 vcf_required_release = "##fileformat=VCFv4.2"
 vcf_required_columns = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO"]
@@ -147,8 +145,6 @@ MACHIN_LIST = {"amd64": "amd64", "arm64": "arm64"}
 # bcftools format allowed
 BCFTOOLS_FORMAT = ["vcf", "bed"]
 
-LOG_FORMAT = "#[%(asctime)s] [%(levelname)s] %(message)s"
-
 CODE_TYPE_MAP = {"Integer": 0, "String": 1, "Float": 2, "Flag": 3}
 
 GENOTYPE_MAP = {None: ".", -1: "A", -2: "G", -3: "R"}
@@ -156,6 +152,17 @@ GENOTYPE_MAP = {None: ".", -1: "A", -2: "G", -3: "R"}
 DTYPE_LIMIT_AUTO = 10000
 
 DEFAULT_CHUNK_SIZE = 1024 * 1024
+
+# LOG_FORMAT = "#[%(asctime)s] [%(levelname)-7s] %(message)s"
+LOG_FORMAT = "#[%(asctime)s] %(levelname)7s| %(message)s"
+
+# Log Color
+log_color = None
+
+# Prompt
+prompt_mesage = "#[{}]        |"
+prompt_color = None
+prompt_line_color = "green"
 
 
 def remove_if_exists(filepaths: list) -> None:
@@ -196,24 +203,76 @@ def set_log_level(verbosity: str, log_file: str = None) -> str:
     :param verbosity: The level of verbosity
     """
 
+    import coloredlogs  # type: ignore
+
+    # Verbosity configs
     verbosity = verbosity.lower()
+
+    # Config
     configs = {
         "debug": log.DEBUG,
         "info": log.INFO,
         "warning": log.WARNING,
+        "warn": log.WARN,
         "error": log.ERROR,
         "critical": log.CRITICAL,
+        "fatal": log.FATAL,
         "notset": log.NOTSET,
     }
     if verbosity not in configs.keys():
         raise ValueError("Unknown verbosity level:" + verbosity)
 
-    log.basicConfig(
-        filename=log_file,
-        encoding="utf-8",
-        format=LOG_FORMAT,
-        datefmt="%Y-%m-%d %H:%M:%S",
+    # Format
+    format = LOG_FORMAT
+
+    # # Basic config
+    # log.basicConfig(
+    #     filename=log_file,
+    #     encoding="utf-8",
+    #     format=format,
+    #     datefmt="%Y-%m-%d %H:%M:%S",
+    #     level=configs[verbosity],
+    # )
+
+    # Logger
+    logger = log.getLogger()
+
+    # Styles
+    LEVEL_STYLES = {
+        "debug": {"color": "magenta"},
+        # "info": {"color": "white"},
+        "info": {},
+        "warning": {"color": "yellow"},
+        "warn": {"color": "yellow"},
+        "error": {"color": "red"},
+        "critical": {"bold": True, "color": "red"},
+        "fatal": {"bold": True, "color": "red"},
+        "notset": {},
+        # "notice": {"color": "magenta"},
+        # "spam": {"color": "green", "faint": True},
+        # "success": {"bold": True, "color": "green"},
+        # "verbose": {"color": "blue"},
+    }
+    color = log_color
+    bold = False
+    faint = False
+    FIELDS_STYLES = {
+        "asctime": {"bold": bold, "color": color, "faint": faint},
+        "hostname": {"bold": bold, "color": color, "faint": faint},
+        "levelname": {"bold": bold, "color": color, "faint": faint},
+        "name": {"bold": bold, "color": color, "faint": faint},
+        "programname": {"bold": bold, "color": color, "faint": faint},
+        "username": {"bold": bold, "color": color, "faint": faint},
+    }
+
+    # coloredlogs install
+    coloredlogs.install(
         level=configs[verbosity],
+        encoding="utf-8",
+        logger=logger,
+        fmt=format,
+        level_styles=LEVEL_STYLES,
+        field_styles=FIELDS_STYLES,
     )
 
     return verbosity
@@ -3265,12 +3324,23 @@ def help_header(setup: str = None) -> str:
     # Logo
     import pyfiglet  # type: ignore
 
-    ascii_logo = pyfiglet.figlet_format(
-        prog_name.split("-")[0].upper()
-    )  # , font="slant")
+    # This ensures that the color settings are reset after each print
+    init(autoreset=True)
+
+    ascii_logo = colored(
+        pyfiglet.figlet_format(prog_name.split("-")[0].upper()),  # , font="slant")
+        color=log_color,
+    )
+
+    # Description
+    header_description = colored(
+        f"{prog_name.split('-')[0].upper()}::{prog_version} [{prog_authors}]\n{prog_description}\n"
+        "",
+        color=log_color,
+    )
 
     # Header
-    header = f"""{ascii_logo}{prog_name.split('-')[0].upper()}::{prog_version} [{prog_authors}]\n{prog_description}\n"""
+    header = f"""{ascii_logo}{header_description}"""
 
     # Return
     return header

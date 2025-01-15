@@ -75,10 +75,10 @@ def test_query():
 
         query_list = {
             "SELECT count(*) AS '#count' FROM variants": {
-                "nb_lines": 54,
+                "nb_lines": 55,
                 "nb_variants": 1,
             },
-            "SELECT * AS '#count' FROM variants": {"nb_lines": 60, "nb_variants": 7},
+            "SELECT * AS '#count' FROM variants": {"nb_lines": 61, "nb_variants": 7},
         }
 
         for explode_infos in [True, False]:

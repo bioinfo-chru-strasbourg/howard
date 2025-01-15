@@ -660,11 +660,14 @@ NOTSET
 
 - CRITICAL: A serious error.
 
+- FATAL: A fatal error.
+
 - NOTSET: All messages.
 
 Type: `str`
 
-Choices: `['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET']`
+Choices:
+`['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET', 'WARN', 'FATAL']`
 
 Default: `INFO`
 

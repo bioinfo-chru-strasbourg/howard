@@ -2565,6 +2565,7 @@ class Variants:
         output_file: str = None,
         output_file_ext: str = ".hdr",
         clean_header: bool = True,
+        clean_info_flag: bool = False,
         remove_chrom_line: bool = False,
     ) -> str:
         """
@@ -2588,6 +2589,11 @@ class Variants:
         `True`, the function will clean the header by modifying certain lines based on a specific
         pattern. If `clean_header`, defaults to True
         :type clean_header: bool (optional)
+        :param clean_info_flag: The `clean_info_flag` parameter in the `export_header` function is a boolean
+        flag that determines whether the header should be cleaned for INFO/tags that are 'Flag' type.
+        When `clean_info_flag` is set to `True`, the function will replace INFO/tags 'Type' as 'String'.
+        Default to False
+        :type clean_info_flag: bool (optional)
         :param remove_chrom_line: The `remove_chrom_line` parameter in the `export_header` function is a
         boolean flag that determines whether the #CHROM line should be removed from the header before
         writing it to the output file. If set to `True`, the #CHROM line will be removed; if set to `,
@@ -2635,12 +2641,13 @@ class Variants:
                     for head in header_list:
                         # Clean head for malformed header
                         head_clean = head
-                        # head_clean = re.subn(
-                        #     "##FORMAT=<ID=(.*),Number=(.*),Type=Flag",
-                        #     r"##FORMAT=<ID=\1,Number=\2,Type=String",
-                        #     head_clean,
-                        #     2,
-                        # )[0]
+                        if clean_info_flag:
+                            head_clean = re.subn(
+                                "##FORMAT=<ID=(.*),Number=(.*),Type=Flag",
+                                r"##FORMAT=<ID=\1,Number=\2,Type=String",
+                                head_clean,
+                                2,
+                            )[0]
                         # Write header
                         header_list_clean.append(head_clean)
                     header_list = header_list_clean
@@ -4637,7 +4644,6 @@ class Variants:
                     run_parallel_commands([merge_command], 1)
 
                     # Error messages
-                    log.info(f"Error/Warning messages:")
                     error_message_command_all = []
                     error_message_command_warning = []
                     error_message_command_err = []
@@ -4652,12 +4658,17 @@ class Variants:
                                     error_message_command_err.append(
                                         f"{err_file}: " + message
                                     )
-                    # log info
-                    for message in list(
-                        set(error_message_command_err + error_message_command_warning)
-                    ):
-                        log.info(f"   {message}")
+
+                    if len(error_message_command_err):
+                        log.error(f"Error messages:")
+                        for message in list(set(error_message_command_err)):
+                            log.error(f"   {message}")
+                    elif len(error_message_command_warning):
+                        log.warning(f"Warning messages:")
+                        for message in list(set(error_message_command_warning)):
+                            log.warning(f"   {message}")
                     # debug info
+                    log.debug(f"Warning/Error messages:")
                     for message in list(set(error_message_command_all)):
                         log.debug(f"   {message}")
                     # failed
@@ -4850,8 +4861,6 @@ class Variants:
             log.debug("Start annotation Exomiser")
 
             with TemporaryDirectory(dir=self.get_tmp_dir()) as tmp_dir:
-
-                # tmp_dir = "/tmp/exomiser"
 
                 ### ANALYSIS ###
                 ################
@@ -5617,7 +5626,6 @@ class Variants:
             run_parallel_commands([snpeff_command], 1)
 
             # Error messages
-            log.info(f"Error/Warning messages:")
             error_message_command_all = []
             error_message_command_warning = []
             error_message_command_err = []
@@ -5630,12 +5638,18 @@ class Variants:
                             error_message_command_warning.append(message)
                         if line.startswith("[E::"):
                             error_message_command_err.append(f"{err_file}: " + message)
-            # log info
-            for message in list(
-                set(error_message_command_err + error_message_command_warning)
-            ):
-                log.info(f"   {message}")
+
+            # Warning/Error messages
+            if len(error_message_command_err):
+                log.error(f"Error messages:")
+                for message in list(set(error_message_command_err)):
+                    log.error(f"   {message}")
+            elif len(error_message_command_warning):
+                log.warning(f"Warning messages:")
+                for message in list(set(error_message_command_warning)):
+                    log.warning(f"   {message}")
             # debug info
+            log.debug(f"Warning/Error messages:")
             for message in list(set(error_message_command_all)):
                 log.debug(f"   {message}")
             # failed
@@ -5972,7 +5986,6 @@ class Variants:
                 run_parallel_commands([command_annovar], 1)
 
                 # Error messages
-                log.info(f"Error/Warning messages:")
                 error_message_command_all = []
                 error_message_command_warning = []
                 error_message_command_err = []
@@ -5981,18 +5994,24 @@ class Variants:
                         for line in f:
                             message = line.strip()
                             error_message_command_all.append(message)
-                            if line.startswith("[W::") or line.startswith("WARNING"):
+                            if line.startswith("[W::"):
                                 error_message_command_warning.append(message)
-                            if line.startswith("[E::") or line.startswith("ERROR"):
+                            if line.startswith("[E::"):
                                 error_message_command_err.append(
                                     f"{err_file}: " + message
                                 )
-                # log info
-                for message in list(
-                    set(error_message_command_err + error_message_command_warning)
-                ):
-                    log.info(f"   {message}")
+
+                # Error/Warning messages
+                if len(error_message_command_err):
+                    log.error(f"Error messages:")
+                    for message in list(set(error_message_command_err)):
+                        log.error(f"   {message}")
+                elif len(error_message_command_warning):
+                    log.warning(f"Warning messages:")
+                    for message in list(set(error_message_command_warning)):
+                        log.warning(f"   {message}")
                 # debug info
+                log.debug(f"Warning/Error messages:")
                 for message in list(set(error_message_command_all)):
                     log.debug(f"   {message}")
                 # failed

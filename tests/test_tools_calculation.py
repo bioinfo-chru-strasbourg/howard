@@ -132,7 +132,7 @@ def test_calculation_vcf():
                 result_output_nb_variants += 1
 
     # Expected result
-    expected_result_nb_lines = 72
+    expected_result_nb_lines = 73
     expected_result_nb_variants = 7
 
     # Compare

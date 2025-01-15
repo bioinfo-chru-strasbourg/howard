@@ -2962,7 +2962,7 @@ Usage examples:
 
 <small>
 
->     --verbosity=<verbosity> ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET'] (default: INFO)
+>     --verbosity=<verbosity> ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET', 'WARN', 'FATAL'] (default: INFO)
 >
 >     Verbosity level
 >     Available: CRITICAL, ERROR, WARNING, INFO, DEBUG or NOTSET
@@ -2971,6 +2971,7 @@ Usage examples:
 >     - WARNING: An indication that something unexpected happened.
 >     - ERROR: Due to a more serious problem.
 >     - CRITICAL: A serious error.
+>     - FATAL: A fatal error.
 >     - NOTSET: All messages.
 
 </small>
