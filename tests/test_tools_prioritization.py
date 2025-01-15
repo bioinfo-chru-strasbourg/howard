@@ -113,7 +113,7 @@ def test_prioritization_vcf():
                 result_output_nb_variants += 1
 
     # Expected result
-    expected_result_nb_lines = 66
+    expected_result_nb_lines = 67
     expected_result_nb_variants = 7
 
     # Compare

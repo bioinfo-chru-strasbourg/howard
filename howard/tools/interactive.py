@@ -11,6 +11,10 @@ import tempfile
 import signal
 import contextlib
 import io
+from termcolor import colored  # type: ignore
+from colorama import init  # type: ignore
+
+from howard.functions.commons import prompt_color, prompt_mesage, prompt_line_color
 
 
 def launch_interactive_terminal(
@@ -33,7 +37,7 @@ def launch_interactive_terminal(
     conn = variants.get_connexion()
 
     # Query limit
-    query_limit = 100
+    query_limit = 1000
 
     try:
         # Execute query to test connexion
@@ -291,12 +295,30 @@ def launch_interactive_terminal(
 
     signal.signal(signal.SIGINT, signal_handler)
 
+    def print_prompt(line: int = 0) -> str:
+        init(autoreset=True)
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        prompt_log = colored(
+            prompt_mesage.format(current_time, title="SQL"),
+            color=prompt_color,
+            attrs=[],
+        )
+        if line:
+            prompt_line = " ++> "
+        else:
+            prompt_line = f" >>> "
+        prompt_line = colored(prompt_line, color=prompt_line_color)
+
+        colored_prompt = prompt_log + prompt_line
+
+        return colored_prompt
+
     while True:
         try:
             # Get current date and time
-            current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             query_lines = []
-            line = input(f"#[{current_time}] [SQL]> ")
+            line = input(print_prompt(line=0))
+
             while True:
 
                 if (
@@ -307,7 +329,7 @@ def launch_interactive_terminal(
                     query_lines.append(line.strip())
                     break
                 query_lines.append(line.strip())
-                line = input(f"#[{current_time}] [SQL]| ")
+                line = input(print_prompt(line=1))
             query = " ".join(query_lines)
 
             # Add to history
@@ -480,9 +502,6 @@ def launch_interactive_terminal(
                 if display_format in ["dataframe"]:
                     df = pd.DataFrame(rows, columns=columns)
                     print(df)
-                    if msg_query_limit:
-                        print("...")
-                        log.warning(msg_query_limit)
                 elif display_format in ["markdown", "tabulate", "simple"]:
                     df = pd.DataFrame(rows, columns=columns)
                     if display_format in ["tabulate"]:
@@ -492,13 +511,15 @@ def launch_interactive_terminal(
                     else:
                         tablefmt = "pipe"
                     print(df.to_markdown(tablefmt=tablefmt))
-                    if msg_query_limit:
-                        print("...")
-                        log.warning(msg_query_limit)
                 else:
                     print(
                         "Unknown display format. Please use 'tabulate' or 'dataframe'."
                     )
+
+                # Limit message
+                if msg_query_limit:
+                    log.warning(msg_query_limit)
+
             else:
 
                 # Fetch All query

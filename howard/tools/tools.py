@@ -1704,9 +1704,19 @@ arguments = {
         """- WARNING: An indication that something unexpected happened.\n"""
         """- ERROR: Due to a more serious problem.\n"""
         """- CRITICAL: A serious error.\n"""
+        """- FATAL: A fatal error.\n"""
         """- NOTSET: All messages.\n""",
         "required": False,
-        "choices": ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG", "NOTSET"],
+        "choices": [
+            "CRITICAL",
+            "ERROR",
+            "WARNING",
+            "INFO",
+            "DEBUG",
+            "NOTSET",
+            "WARN",
+            "FATAL",
+        ],
         "default": "INFO",
         "type": str,
         "gooey": {"widget": "Dropdown", "options": {}},
