@@ -8174,13 +8174,13 @@ class Variants:
         for added_column in added_columns:
             self.drop_column(column=added_column)
 
-        # Explode INFOS fields into table fields
-        if self.get_explode_infos():
-            self.explode_infos(
-                prefix=self.get_explode_infos_prefix(),
-                fields=self.get_explode_infos_fields(),
-                force=True,
-            )
+        # # Explode INFOS fields into table fields
+        # if self.get_explode_infos():
+        #     self.explode_infos(
+        #         prefix=self.get_explode_infos_prefix(),
+        #         fields=self.get_explode_infos_fields(),
+        #         force=True,
+        #     )
 
         return True
 
@@ -11945,11 +11945,29 @@ class Variants:
                 log.error(msg_err)
                 raise ValueError(msg_err)
 
-        # Explode fields to explode
-        self.explode_infos(
-            table=transcripts_table,
-            fields=fields_to_explode,
+        # # Explode fields to explode
+        # self.explode_infos(
+        #     table=transcripts_table,
+        #     fields=fields_to_explode,
+        # )
+
+        # Create view as table
+        # log.debug(f"fields_to_explode={fields_to_explode}")
+        annotation_view_name = "annotation_view_for_transcripts_prioritization_" + str(
+            random.randrange(1000)
         )
+        annotation_view_name = self.create_annotations_view(
+            table=transcripts_table,
+            view=annotation_view_name,
+            view_type="view",
+            info_prefix_column="",
+            detect_type_list=False,
+            fields=fields_to_explode + ["transcript"],
+            fields_not_exists=True,
+            fields_forced_as_varchar=False,
+            fields_needed_all=False,
+        )
+        transcripts_table = annotation_view_name
 
         # Transcript preference file
         transcripts_preference_file = (
