@@ -7093,6 +7093,14 @@ class Variants:
                     "function_name": "calculation_extract_nomen",
                     "function_params": [],
                 },
+                "RECREATE_INFO_FIELDS": {
+                    "type": "python",
+                    "name": "RENAME_INFO_FIELDS",
+                    "description": "Recreate INFO_tags, rename or remove tags",
+                    "available": True,
+                    "function_name": "calculation_recreate_info_fields",
+                    "function_params": [],
+                },
                 "RENAME_INFO_FIELDS": {
                     "type": "python",
                     "name": "RENAME_INFO_FIELDS",
@@ -7100,19 +7108,6 @@ class Variants:
                     "available": True,
                     "function_name": "calculation_rename_info_fields",
                     "function_params": [],
-                },
-                "RENAME_INFO_FIELDS_MULTIPLE": {
-                    "type": "python",
-                    "name": "RENAME_INFO_FIELDS",
-                    "description": "Rename or remove INFO/tags, and ensure multiple times process",
-                    "available": True,
-                    "function_name": "calculation_rename_info_fields",
-                    "function_params": [
-                        None,
-                        None,
-                        True,
-                        "RENAME_INFO_FIELDS_MULTIPLE",
-                    ],
                 },
                 "FINDBYPIPELINE": {
                     "type": "python",
@@ -11895,6 +11890,8 @@ class Variants:
             log.warning("Transcripts prioritization not processed")
             return False
 
+        log.info(f"Update {table_variants} table with transcripts prioritization...")
+
         # PZ fields sql query
         query_update_select_list = []
         query_update_concat_list = []
@@ -12447,7 +12444,7 @@ class Variants:
     ############################
 
     def rename_info_fields(
-        self, fields_to_rename: dict = None, table: str = None, multiple: bool = False
+        self, fields_to_rename: dict = None, table: str = None
     ) -> dict:
         """
         The `rename_info_fields` function renames specified fields in a VCF file header and updates
@@ -12463,41 +12460,295 @@ class Variants:
         variants, and the function updates the corresponding INFO fields in this table when renaming
         specified fields in the VCF file header
         :type table: str
-        :param multiple: Ensure to remove fields if prenset multiple times (bad VCF format)
-        :type multiple: bool
-        :return: The `rename_info_fields` function returns a dictionary `fields_renamed` that contains
+        :return: The `rename_info_fields` function returns a dictionary `fields_processed` that contains
+        the original field names as keys and their corresponding new names (or None if the field was
+        removed) as values after renaming or removing specified fields in a VCF file header and updating
+        corresponding INFO fields in the variants table.
+        """
+
+        # Config
+        config = self.get_config()
+        access = config.get("access")
+
+        # Init
+        fields_processed = {
+            "renamed": {},
+            "removed": {},
+            "not_processed": {},
+            "not_found": {},
+        }
+
+        if table is None:
+            table = self.get_table_variants()
+
+        # Clasue case
+        clause_case = []
+
+        # Init
+        fields_to_process = {}
+
+        # For each field to rename or remove, one by one
+        if fields_to_rename is not None:
+            for field_to_rename, field_renamed in fields_to_rename.items():
+
+                # If no field to process
+                if field_to_rename != "":
+
+                    # rename empty is remove
+                    if field_renamed == "":
+                        field_renamed = None
+
+                    # Check if already to process
+                    check_field_to_rename_found = False
+                    for (
+                        field_to_process_to_rename,
+                        field_to_process_renamed,
+                    ) in fields_to_process.items():
+                        if field_to_rename == field_to_process_renamed:
+                            # Replace filed to process
+                            fields_to_process[field_to_process_to_rename] = (
+                                field_renamed
+                            )
+                            check_field_to_rename_found = True
+                    if not check_field_to_rename_found:
+                        # Add field to process
+                        fields_to_process[field_to_rename] = field_renamed
+
+        if len(fields_to_process) and access not in ["RO"]:
+
+            # Log
+            log.info("Rename or remove fields...")
+
+            # Header
+            header = self.get_header()
+
+            # For each field
+            for field_to_rename, field_renamed in fields_to_process.items():
+
+                # If to rename or remove
+                if (
+                    field_to_rename != field_renamed
+                    and field_to_rename not in ["", None]
+                    and field_renamed not in [""]
+                ):
+
+                    # Rename
+                    if field_renamed is not None:
+
+                        # Case clause
+                        clause_case.append(
+                            f""" WHEN k = '{field_to_rename}' THEN '{field_renamed}'  """
+                        )
+
+                        # Fields processed
+                        fields_processed["renamed"][field_to_rename] = field_renamed
+
+                        # Log
+                        log.debug(
+                            f"Rename or remove fields - field '{field_to_rename}' renamed as '{field_renamed}'"
+                        )
+
+                    # Remove
+                    else:
+
+                        # Case clause
+                        clause_case.append(
+                            f""" WHEN k = '{field_to_rename}' THEN NULL  """
+                        )
+
+                        # Fields processed
+                        fields_processed["removed"][field_to_rename] = field_renamed
+
+                        # Log
+                        log.debug(
+                            f"Rename or remove fields - field '{field_to_rename}' removed"
+                        )
+
+                    # Header
+                    if field_to_rename in header.infos:
+
+                        # Rename header if to rename
+                        if field_renamed is not None:
+                            header.infos[field_renamed] = vcf.parser._Info(
+                                field_renamed,
+                                header.infos[field_to_rename].num,
+                                header.infos[field_to_rename].type,
+                                header.infos[field_to_rename].desc,
+                                header.infos[field_to_rename].source,
+                                header.infos[field_to_rename].version,
+                                header.infos[field_to_rename].type_code,
+                            )
+
+                        # Remove header, if rename or remove
+                        del header.infos[field_to_rename]
+
+                    else:
+
+                        # Log
+                        log.warning(
+                            f"Rename or remove fields - field '{field_to_rename}' not in header"
+                        )
+
+                        # Fields processed
+                        fields_processed["not_found"][field_to_rename] = field_renamed
+
+                else:
+
+                    # Fields processed
+                    fields_processed["not_pocessed"][field_to_rename] = field_renamed
+
+            # Process
+            if len(clause_case):
+
+                # Update query
+                query_update = f"""
+                    UPDATE {table}
+                    SET INFO = renamed_table.INFO                       -- update INFO
+                    FROM (
+                        SELECT
+                            "#CHROM", POS, REF, ALT,                    -- variant id
+                            IFNULL(string_agg(kv, ';'), '') AS INFO     -- INFO
+                        FROM (
+                            SELECT
+                                "#CHROM", POS, REF, ALT,                -- variant id
+                                CASE
+                                    WHEN k IS NOT NULL                  -- key not null
+                                    THEN
+                                        CASE 
+                                            WHEN v IS NOT NULL          -- value not null
+                                            THEN concat(k, '=', v)      -- key-value: either String, Integer, Float
+                                            ELSE k                      -- Flag
+                                        END
+                                    ELSE NULL                           -- remove
+                                END AS kv
+                            FROM (
+                                SELECT "#CHROM", POS, REF, ALT,         -- variant id
+                                    CASE
+                                        {" ".join(clause_case)}         -- rename or remove
+                                        ELSE k                          -- no change
+                                    END AS k,                           -- key
+                                    v                                   -- value
+                                FROM (
+                                    SELECT
+                                        "#CHROM", POS, REF, ALT,        -- variant id
+                                        string_split(kv, '=')[1] AS k,  -- key
+                                        string_split(kv, '=')[2] AS v   -- value
+                                    FROM (
+                                        SELECT "#CHROM", POS, REF, ALT, unnest(string_split(INFO, ';')) AS kv
+                                        FROM variants
+                                        )
+                                    )
+                                )
+                            )
+                        GROUP BY "#CHROM", POS, REF, ALT
+                    ) AS renamed_table
+                    WHERE {table}."#CHROM" = renamed_table."#CHROM"     -- join
+                    AND {table}."POS" = renamed_table."POS"
+                    AND {table}."REF" = renamed_table."REF"
+                    AND {table}."ALT" = renamed_table."ALT"
+                """
+                # log.debug(f"query={query_update}")
+                log.debug(self.execute_query(query_update))
+
+        return fields_processed
+
+    def recreate_info_fields(
+        self, fields_to_rename: dict = None, table: str = None
+    ) -> dict:
+        """
+        The `recreate_info_fields` function renames specified fields in a VCF file header and updates
+        corresponding INFO fields in the variants table.
+
+        :param fields_to_rename: The `fields_to_rename` parameter is a dictionary that contains the
+        mapping of fields to be renamed in a VCF (Variant Call Format) file. The keys in the dictionary
+        represent the original field names that need to be renamed, and the corresponding values
+        represent the new names to which the fields should be renamed. Default {}
+        :type fields_to_rename: dict
+        :param table: The `table` parameter in the `recreate_info_fields` function represents the name of
+        the table in which the variants data is stored. This table contains information about genetic
+        variants, and the function updates the corresponding INFO fields in this table when renaming
+        specified fields in the VCF file header. Default Variants table 'variants'.
+        :type table: str
+        :return: The `recreate_info_fields` function returns a dictionary `fields_renamed` that contains
         the original field names as keys and their corresponding new names (or None if the field was
         removed) as values after renaming or removing specified fields in a VCF file header and updating
         corresponding INFO fields in the variants table.
         """
 
         # Init
-        fields_renamed = {}
         config = self.get_config()
         access = config.get("access")
 
+        # Table
         if table is None:
             table = self.get_table_variants()
 
-        # regexp replace fonction
-        regex_replace_dict = {}
-        regex_replace_nb = 0
-        regex_replace_partition = 125
-        regex_replace = "concat(INFO, ';')"  # Add ';' to reduce regexp comlexity
+        # Fields to rename or remove
+        if fields_to_rename is None:
+            fields_to_rename = {}
 
-        if fields_to_rename is not None and access not in ["RO"]:
+        # Fields on header
+        fields_to_process = {k: k for k in self.get_header().infos.keys()}
 
-            log.info("Rename or remove fields...")
+        # For each field to rename or remove, one by one
+        for field_to_rename, field_renamed in fields_to_rename.items():
+            log.debug(f"{field_to_rename}, {field_renamed}")
+            if field_to_rename != "" and field_renamed != "":
+                log.debug(f"{field_to_rename}, {field_renamed} OK")
+                # Check if already to process
+                check_field_to_rename_found = False
+                for (
+                    field_to_process_to_rename,
+                    field_to_process_renamed,
+                ) in fields_to_process.items():
+                    if field_to_rename == field_to_process_renamed:
+                        fields_to_process[field_to_process_to_rename] = field_renamed
+                        check_field_to_rename_found = True
+                if not check_field_to_rename_found:
+                    fields_to_process[field_to_rename] = field_renamed
+
+        # Init
+        fields_processed = {"removed": {}, "renamed": {}, "not_found": {}}
+
+        # if fields_to_rename is not None and access not in ["RO"]:
+        if fields_to_process is not None and access not in ["RO"]:
+
+            log.info(f"Recreate INFO with {len(fields_to_process)} fields...")
+
+            # Create view
+            annotation_view_name = "annotation_view_for_recreate_infos_" + str(
+                random.randrange(1000)
+            )
 
             # Header
             header = self.get_header()
 
-            for field_to_rename, field_renamed in fields_to_rename.items():
+            # Update query select clauses
+            query_view_select_clause = []
 
-                if field_to_rename in header.infos:
+            for field_to_rename, field_renamed in fields_to_process.items():
+
+                # Action
+                action = None
+
+                # Header
+
+                # Field to remove
+                if field_renamed is None:
+
+                    if field_renamed in header.infos:
+
+                        # Remove in header
+                        del header.infos[field_renamed]
+
+                    # Action
+                    action = "removed"
+
+                # Field to rename
+                elif field_to_rename in header.infos:
 
                     # Rename header
-                    if field_renamed is not None:
+                    if field_renamed is not None and field_renamed != field_to_rename:
                         header.infos[field_renamed] = vcf.parser._Info(
                             field_renamed,
                             header.infos[field_to_rename].num,
@@ -12507,41 +12758,30 @@ class Variants:
                             header.infos[field_to_rename].version,
                             header.infos[field_to_rename].type_code,
                         )
-                    del header.infos[field_to_rename]
+                        del header.infos[field_to_rename]
 
-                    # Rename INFO patterns
-                    field_pattern = rf"(^|;)({field_to_rename})(=[^;]*)?;"
-                    if field_renamed is not None:
-                        field_renamed_pattern = rf"\1{field_renamed}\3;"
-                    else:
-                        field_renamed_pattern = r"\1"
-
-                    # regexp replace
-                    regex_replace_nb += 1
-                    regex_replace_key = math.floor(
-                        regex_replace_nb / regex_replace_partition
-                    )
-                    if (regex_replace_nb % regex_replace_partition) == 0:
-                        regex_replace = "concat(INFO, ';')"
-                    if multiple:
-                        multiple_option = ", 'g'"
-                    else:
-                        multiple_option = ""
-                    regex_replace = f"regexp_replace({regex_replace}, '{field_pattern}', '{field_renamed_pattern}'{multiple_option})"
-                    regex_replace_dict[regex_replace_key] = regex_replace
-
-                    # Return
-                    fields_renamed[field_to_rename] = field_renamed
-
-                    # Log
-                    if field_renamed is not None:
-                        log.info(
-                            f"Rename or remove fields - field '{field_to_rename}' renamed to '{field_renamed}'"
+                    # Update query
+                    if header.infos[field_renamed].type == "Flag":
+                        query_view_select_clause.append(
+                            f"""
+                                CASE
+                                    WHEN "{field_renamed}" IS NOT NULL AND TRY_CAST("{field_renamed}" AS FLOAT) != 0
+                                    THEN '{field_renamed};'
+                                END
+                            """
                         )
                     else:
-                        log.info(
-                            f"Rename or remove fields - field '{field_to_rename}' removed"
+                        query_view_select_clause.append(
+                            f"""
+                                CASE
+                                    WHEN "{field_renamed}" IS NOT NULL
+                                    THEN concat('{field_renamed}=',"{field_renamed}",';')
+                                END
+                            """
                         )
+
+                    # Action
+                    action = "renamed"
 
                 else:
 
@@ -12549,26 +12789,62 @@ class Variants:
                         f"Rename or remove fields - field '{field_to_rename}' not in header"
                     )
 
-            # Rename INFO
-            for regex_replace_key, regex_replace in regex_replace_dict.items():
-                log.info(
-                    f"Rename or remove fields - Process [{regex_replace_key+1}/{len(regex_replace_dict)}]..."
+                    # Action
+                    action = "not_found"
+
+                # List of renamed or removed fields
+                if action:
+                    fields_processed[action][field_to_rename] = field_renamed
+
+            if len(query_view_select_clause):
+
+                # Create view
+                annotation_view_name = self.create_annotations_view(
+                    table=table,
+                    view=annotation_view_name,
+                    view_type="view",
+                    info_prefix_column="",
+                    # info_struct_column="INFOS",
+                    detect_type_list=False,
+                    fields=fields_processed["renamed"].keys(),
+                    fields_not_exists=True,
+                    fields_forced_as_varchar=True,
+                    fields_needed_all=False,
+                    fields_to_rename=fields_processed["renamed"],
+                    drop_view=True,
                 )
+
+                # Log
+                log.info(
+                    f"Recreate INFO with {len(query_view_select_clause)} found fields..."
+                )
+
+                # Query
                 query = f"""
                     UPDATE {table}
                     SET
-                        INFO = regexp_replace({regex_replace}, ';$', '')
+                        INFO = regexp_replace(
+                                concat({", ".join(query_view_select_clause)}),
+                                ';$',
+                                ''
+                            )
+                    FROM {annotation_view_name}
+                    WHERE {table}."#CHROM" = {annotation_view_name}."#CHROM"
+                      AND {table}."POS" = {annotation_view_name}."POS"
+                      AND {table}."REF" = {annotation_view_name}."REF"
+                      AND {table}."ALT" = {annotation_view_name}."ALT"
                 """
                 # log.debug(f"query={query}")
+
+                # Excecute query
                 self.execute_query(query=query)
 
-        return fields_renamed
+        return fields_processed
 
     def calculation_rename_info_fields(
         self,
         fields_to_rename: dict = None,
         table: str = None,
-        multiple: bool = False,
         operation_name: str = "RENAME_INFO_FIELDS",
     ) -> None:
         """
@@ -12583,8 +12859,6 @@ class Variants:
         specify the name of the table for which the fields are to be renamed. It is a string type
         parameter
         :type table: str
-        :param multiple: Ensure to remove fields if prenset multiple times (bad VCF format)
-        :type multiple: bool
         :param operation_name: The `operation_name` parameter in the `calculation_rename_info_fields`
         method is a string that specifies the name of the operation being performed. In this context, it
         is used as a default value for the operation name if not explicitly provided when calling the
@@ -12620,7 +12894,65 @@ class Variants:
             table = param_table
 
         renamed_fields = self.rename_info_fields(
-            fields_to_rename=fields_to_rename, table=table, multiple=multiple
+            fields_to_rename=fields_to_rename, table=table
+        )
+
+        log.debug(f"renamed_fields:{renamed_fields}")
+
+    def calculation_recreate_info_fields(
+        self,
+        fields_to_rename: dict = None,
+        table: str = None,
+        operation_name: str = "RENAME_INFO_FIELDS",
+    ) -> None:
+        """
+        The `calculation_recreate_info_fields` function retrieves parameters from a dictionary, recreate
+        INFO fields with rename and table if provided, and then calls another function to rename the fields.
+
+        :param fields_to_rename: `fields_to_rename` is a dictionary that contains the fields to be
+        renamed in a table. Each key-value pair in the dictionary represents the original field name as
+        the key and the new field name as the value
+        :type fields_to_rename: dict
+        :param table: The `table` parameter in the `calculation_recreate_info_fields` method is used to
+        specify the name of the table for which the fields are to be renamed. It is a string type
+        parameter
+        :type table: str
+        :param operation_name: The `operation_name` parameter in the `calculation_recreate_info_fields`
+        method is a string that specifies the name of the operation being performed. In this context, it
+        is used as a default value for the operation name if not explicitly provided when calling the
+        function, defaults to RENAME_INFO_FIELDS
+        :type operation_name: str (optional)
+        """
+
+        # Param
+        param = self.get_param()
+
+        # Get param fields to rename
+        param_fields_to_rename = (
+            param.get("calculation", {})
+            .get("calculations", {})
+            .get(operation_name, {})
+            .get("fields_to_rename", None)
+        )
+
+        # Get param table
+        param_table = (
+            param.get("calculation", {})
+            .get("calculations", {})
+            .get(operation_name, {})
+            .get("table", None)
+        )
+
+        # Init fields_to_rename
+        if fields_to_rename is None:
+            fields_to_rename = param_fields_to_rename
+
+        # Init table
+        if table is None:
+            table = param_table
+
+        renamed_fields = self.recreate_info_fields(
+            fields_to_rename=fields_to_rename, table=table
         )
 
         log.debug(f"renamed_fields:{renamed_fields}")
@@ -12808,6 +13140,8 @@ class Variants:
 
             # Rename field
             field_to_rename = fields_to_rename.get(field, field)
+            if field_to_rename is None:
+                field_to_rename = field
 
             # Check field type
 
