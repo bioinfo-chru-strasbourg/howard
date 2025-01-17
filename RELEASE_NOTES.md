@@ -30,6 +30,7 @@ and transcripts mapping.
 - Improve transcripts view creation (columns type detected)
 - Improve snpEff extract information (HGVS list, explode annotations, generate as JSON)
 - Improve BARCODEFAMILY calculation (multiple barcode allowed with successive commandes)
+- Improve rename or remove INFO/tags
 
 ### Fixes
 
