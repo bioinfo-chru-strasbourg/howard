@@ -2195,17 +2195,29 @@ def test_rename_fields():
             "SIFT": None,
             "SPiP_Alt": "SPiP_alternative",
             "SPiP_alternative": None,
+            "CLNSIGSUFFIX": "",
         }
 
         # Rename fields
-        fields_renamed = variants.rename_info_fields(fields_to_rename=fields_to_rename)
-        assert fields_renamed == {
-            "CLNSIG": "CLNSIG_renamed",
-            "PREFIXCLNSIG": "PREFIXCLNSIG_renamed",
-            "DP": "depth",
-            "SIFT": None,
-            "SPiP_Alt": "SPiP_alternative",
-            "SPiP_alternative": None,
+        fields_processed = variants.rename_info_fields(
+            fields_to_rename=fields_to_rename
+        )
+
+        # Check
+        assert fields_processed == {
+            "renamed": {
+                "CLNSIG": "CLNSIG_renamed",
+                "PREFIXCLNSIG": "PREFIXCLNSIG_renamed",
+                "DP": "depth",
+                "field_not_in_header": "field_not_in_header_renamed",
+            },
+            "removed": {
+                "CLNSIGSUFFIX": None,
+                "SIFT": None,
+                "SPiP_Alt": None,
+            },
+            "not_processed": {},
+            "not_found": {"field_not_in_header": "field_not_in_header_renamed"},
         }
         assert (
             len(
@@ -2230,6 +2242,20 @@ def test_rename_fields():
                 )
             )
             == 0
+        )
+        assert (
+            len(
+                variants.get_query_to_df(
+                    "SELECT INFO FROM variants WHERE INFO LIKE '%CLNSIGSUFFIX%'"
+                )
+            )
+            == 0
+        )
+        assert (
+            len(
+                variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE ''")
+            )
+            == 1
         )
 
         # Check if VCF is in correct format with pyVCF
@@ -2265,6 +2291,7 @@ def test_rename_fields_to_param_and_export():
                     "SIFT": None,
                     "SPiP_Alt": "SPiP_alternative",
                     "SPiP_alternative": None,
+                    "CLNSIGSUFFIX": None,
                 }
             }
         }
@@ -2288,5 +2315,84 @@ def test_rename_fields_to_param_and_export():
                     "depth",
                 ].sort()
             )
+        except:
+            assert False
+
+
+def test_recreate_infos_fields():
+    """
+    The function `test_recreate_infos_fields` recreate INFO fields in a VCF file and checks if the output
+    VCF is in the correct format using pyVCF.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.annotation_names.vcf.gz"
+        output_vcf = f"{tmp_dir}/output.vcf"
+
+        # Create object
+        variants = Variants(input=input_vcf, load=True)
+
+        # Fieldst to rename
+        fields_to_rename = {
+            "CLNSIG": "CLNSIG_renamed",
+            "PREFIXCLNSIG": "PREFIXCLNSIG_renamed",
+            "DP": "depth",
+            "field_not_in_header": "field_not_in_header_renamed",
+            "": "",
+            "SIFT": None,
+            "SPiP_Alt": "SPiP_alternative",
+            "SPiP_alternative": None,
+        }
+
+        # recreate info fields
+        fields_processed = variants.recreate_info_fields(
+            fields_to_rename=fields_to_rename
+        )
+
+        # Check
+        assert fields_processed == {
+            "not_found": {"field_not_in_header": "field_not_in_header_renamed"},
+            "removed": {"SIFT": None, "SPiP_Alt": None},
+            "renamed": {
+                "AA": "AA",
+                "CLNSIG": "CLNSIG_renamed",
+                "CLNSIGSUFFIX": "CLNSIGSUFFIX",
+                "DP": "depth",
+                "NS": "NS",
+                "PREFIXCLNSIG": "PREFIXCLNSIG_renamed",
+            },
+        }
+        assert (
+            len(
+                variants.get_query_to_df(
+                    "SELECT INFO FROM variants WHERE INFO LIKE '%SIFT%'"
+                )
+            )
+            == 0
+        )
+        assert (
+            len(
+                variants.get_query_to_df(
+                    "SELECT INFO FROM variants WHERE INFO LIKE '%None=%'"
+                )
+            )
+            == 0
+        )
+        assert (
+            len(
+                variants.get_query_to_df(
+                    "SELECT INFO FROM variants WHERE INFO LIKE '%SPiP%'"
+                )
+            )
+            == 0
+        )
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output(output_file=output_vcf)
+        try:
+            vcf_obj = vcf.Reader(filename=output_vcf)
         except:
             assert False
