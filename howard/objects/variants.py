@@ -13167,7 +13167,11 @@ class Variants:
 
         # Add samples in view mode 'full'
         if view_mode in ["full"] and sample_struct_column and len(samples):
-            fields_needed = list(set(fields_needed + samples + ["FORMAT"]))
+            if "FORMAT" not in fields_needed:
+                fields_needed += ["FORMAT"]
+            for field_needed in fields_needed:
+                if field_needed not in fields_needed:
+                    fields_needed += [field_needed]
 
         # Check needed fieds
         for field in fields_needed:
@@ -13207,7 +13211,8 @@ class Variants:
 
                 # Add field in needed if 'full' view mode
                 if view_mode in ["full"]:
-                    fields_needed = list(set(fields_needed + [field]))
+                    if field not in fields_needed:
+                        fields_needed += [field]
 
             # Fields in header
             elif field in header.infos and "INFO" in list(

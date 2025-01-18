@@ -302,7 +302,7 @@ def launch_interactive_terminal(
 
     # Set up signal handler
     def signal_handler(sig, frame):
-        print("\nQuery input cancelled. Type 'exit' or 'Ctrl+C' again to quit.")
+        print("\nQuery input cancelled. Type 'exit' to quit.")
         raise KeyboardInterrupt
 
     signal.signal(signal.SIGINT, signal_handler)

@@ -160,29 +160,29 @@ howard query --input='tests/data/example.vcf.gz'
 HOWARD::0.12.2.0 [Antony Le Bechec, Jean-Baptiste Lamouche]
 HOWARD - Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery
 
-#[2025-01-15 23:13:44]    INFO| Start
-#[2025-01-15 23:13:44]    INFO| Loading...
-#[2025-01-15 23:13:45]    INFO| End
-#[2025-01-15 23:13:45]    INFO| Start interative terminal
-#[2025-01-15 23:13:45]    INFO| Interactive DuckDB SQL terminal. Type 'exit' to quit.
-#[2025-01-15 23:13:45]    INFO| Type 'help' for a list of commands.
-#[2025-01-15 23:13:45]        | >>> SELECT
-#[2025-01-15 23:13:46]        | ++>   "#CHROM", "POS", "REF", "ALT",
-#[2025-01-15 23:13:46]        | ++>   INFOS.CLNSIG,
-#[2025-01-15 23:13:46]        | ++>   SAMPLES.sample1.GT AS 'GT', 
-#[2025-01-15 23:13:46]        | ++>   SAMPLES.sample1.DP AS 'DP'
-#[2025-01-15 23:13:46]        | ++> FROM variants_view
-#[2025-01-15 23:13:46]        | ++> WHERE SAMPLES.sample1.DP > 30
-#[2025-01-15 23:13:46]        | ++>    OR INFOS.CLNSIG LIKE 'pathogenic'
-#[2025-01-15 23:13:46]        | ++> 
+#[2025-01-18 01:35:37]    INFO| Start
+#[2025-01-18 01:35:37]    INFO| Loading...
+#[2025-01-18 01:35:37]    INFO| End
+#[2025-01-18 01:35:37]    INFO| Start interative terminal
+#[2025-01-18 01:35:37]    INFO| Loading table 'header'...
+#[2025-01-18 01:35:37]    INFO| Loading table 'variants_view'...
+#[2025-01-18 01:35:37]    INFO| Interactive DuckDB SQL terminal
+#[2025-01-18 01:35:37]    INFO| - 'exit' to quit.
+#[2025-01-18 01:35:37]    INFO| - 'help' for a list of commands
+#[2025-01-18 01:35:37]        | >>> SELECT
+#[2025-01-18 01:35:40]        | ++>    "#CHROM", "POS", "REF", "ALT",
+#[2025-01-18 01:35:40]        | ++>    INFOS.CLNSIG,
+#[2025-01-18 01:35:40]        | ++>    SAMPLES.sample1.GT AS 'GT', 
+#[2025-01-18 01:35:40]        | ++>    SAMPLES.sample1.DP AS 'DP'
+#[2025-01-18 01:35:40]        | ++>  FROM variants_view
+#[2025-01-18 01:35:40]        | ++>  WHERE SAMPLES.sample1.DP > 30
+#[2025-01-18 01:35:40]        | ++>     OR INFOS.CLNSIG LIKE 'pathogenic'
+#[2025-01-18 01:35:40]        | ++>  
   #CHROM       POS REF ALT      CLNSIG   GT   DP
 0   chr1     28736   A   C  pathogenic  0/1  729
-1   chr1     69101   A   G        None  0/1  729
-2   chr1    768251   A   G        None  0/1  729
-3   chr1    768252   A   G        None  0/1  729
-4   chr1    768253   A   G        None  0/1  729
-5   chr7  55249063   G   A        None  0/1  729
-#[2025-01-15 23:13:47]        | >>> 
+1   chr7  55249063   G   A        None  0/1  729
+2   chr1     69101   A   G        None  0/1  729
+#[2025-01-18 01:35:40]        | >>> 
 ```
 
 ### Graphical User Interface
