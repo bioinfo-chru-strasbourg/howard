@@ -32,6 +32,7 @@ from howard.tools.calculation import calculation
 from howard.tools.hgvs import hgvs
 from howard.tools.prioritization import prioritization
 from howard.tools.query import query
+from howard.tools.filter import filter
 from howard.tools.stats import stats
 from howard.tools.convert import convert
 from howard.tools.databases import databases
@@ -169,6 +170,28 @@ arguments = {
             "options": {"initial_value": "SELECT * FROM variants"},
         },
         "extra": {"param_section": "query"},
+    },
+    "filter": {
+        "metavar": "filter",
+        "help": """Filter variant using SQL format\n""" """(e.g. 'POS < 100000').\n""",
+        "default": None,
+        "type": str,
+        "gooey": {
+            "widget": "Textarea",
+            "options": {"initial_value": ""},
+        },
+        # "extra": {"param_section": "filter"},
+    },
+    "samples": {
+        "metavar": "samples",
+        "help": """List of samples\n""" """(e.g. 'sample1,sample2').\n""",
+        "default": None,
+        "type": str,
+        "gooey": {
+            "widget": "Textarea",
+            "options": {"initial_value": ""},
+        },
+        # "extra": {"param_section": "filter"},
     },
     "output_query": {
         "metavar": "output",
@@ -1809,6 +1832,28 @@ commands_arguments = {
                 "explode_infos_fields": False,
             },
             "Query": {"query_limit": False, "query_print_mode": False},
+            "Export": {"include_header": False, "parquet_partitions": False},
+        },
+    },
+    "filter": {
+        "function": "filter",
+        "description": """Filter genetic variations in SQL format. Data can be loaded into 'variants' table from various formats (e.g. VCF, TSV, Parquet...). SQL filter can also use external data within the request, such as a Parquet file(s).  """,
+        "help": "Filter genetic variations file in SQL format.",
+        "epilog": """Usage examples:\n"""
+        """   howard filter --input=tests/data/example.vcf.gz --output=/tmp/example.filter.vcf.gz --filter="REF = 'A' AND POS < 100000" \n"""
+        """   howard filter --input=tests/data/example.vcf.gz --output=/tmp/example.filter.vcf.gz --filter="REF = 'A' AND POS < 100000" --samples="sample1,sample2" \n"""
+        """   howard filter --input=tests/data/example.vcf.gz --output=/tmp/example.filter.vcf.gz --filter="INFOS.CLNSIG LIKE 'pathogenic'" --samples="sample1,sample2" \n"""
+        """   howard filter --input=tests/data/example.vcf.gz --output=/tmp/example.filter.vcf.gz --filter="QUAL > 100 AND SAMPLES.sample2.GT != './.'" --samples="sample2" \n"""
+        """    \n""",
+        "groups": {
+            "main": {
+                "input": True,
+                "output": True,
+            },
+            "Filters": {
+                "filter": False,
+                "samples": False,
+            },
             "Export": {"include_header": False, "parquet_partitions": False},
         },
     },

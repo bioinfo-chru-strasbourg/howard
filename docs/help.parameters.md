@@ -2496,6 +2496,8 @@ genotype annotations (based on 'FORMAT' VCF column).
 
 Type: `dict`
 
+Default: `None`
+
 Examples:
 
 > Export only a list of samples:

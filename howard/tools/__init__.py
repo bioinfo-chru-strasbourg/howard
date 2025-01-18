@@ -6,6 +6,7 @@ __all__ = [
     "hgvs",
     "prioritization",
     "query",
+    "filter",
     "stats",
     "databases",
     "gui",
