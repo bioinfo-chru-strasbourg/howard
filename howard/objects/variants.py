@@ -7853,10 +7853,11 @@ class Variants:
                                 log.debug(
                                     f"""Profile '{profile}' - Prioritization - Create '{annotation_view_name}' view with '{criterion_fields_profile}'... """
                                 )
-                                annotation_view = self.create_annotations_view(
+                                annotation_view_name = self.create_annotations_view(
                                     view=annotation_view_name,
                                     table=table_variants,
                                     view_type="view",
+                                    view_mode="explore",
                                     info_prefix_column=annotations_view_prefix,
                                     info_struct_column=annotations_view_struct,
                                     fields=criterion_fields_profile + pz_keys,
@@ -7865,7 +7866,7 @@ class Variants:
 
                                 # Describe annotation view and dict
                                 annotation_view_describe = self.get_query_to_df(
-                                    f"DESCRIBE {annotation_view}"
+                                    f"DESCRIBE {annotation_view_name}"
                                 )
                                 annotation_view_describe_dict = (
                                     annotation_view_describe.set_index("column_name")[
@@ -11066,6 +11067,7 @@ class Variants:
                         table=table_variants,
                         view=annotation_view_name,
                         view_type="table",
+                        view_mode="full",
                         info_prefix_column="",
                         detect_type_list=False,
                         fields=annotation_view_fields,
@@ -11080,6 +11082,8 @@ class Variants:
                     annotation_view_name_for_type = self.create_annotations_view(
                         table=table_variants,
                         view=annotation_view_name + "for_type",
+                        view_type="view",
+                        view_mode="full",
                         info_prefix_column="",
                         detect_type_list=True,
                         fields=annotation_view_fields,
@@ -11956,7 +11960,8 @@ class Variants:
         annotation_view_name = self.create_annotations_view(
             table=transcripts_table,
             view=annotation_view_name,
-            view_type="view",
+            view_type="table",
+            view_mode="full",
             info_prefix_column="",
             detect_type_list=False,
             fields=fields_to_explode + ["transcript"],
@@ -12803,6 +12808,7 @@ class Variants:
                     table=table,
                     view=annotation_view_name,
                     view_type="view",
+                    view_mode="full",
                     info_prefix_column="",
                     # info_struct_column="INFOS",
                     detect_type_list=False,
@@ -12966,6 +12972,7 @@ class Variants:
         table: str = None,
         view: str = None,
         view_type: str = None,
+        view_mode: str = None,
         fields: list = None,
         fields_needed: list = None,
         fields_needed_all: bool = False,
@@ -12996,6 +13003,10 @@ class Variants:
         specify the type of view that will be created. It can be either a `VIEW` or a `TABLE`, and the
         function will create the view based on the specified type. Defaults to `VIEW`
         :type view_type: str
+        :param view_mode: The `view_mode` parameter in the `create_annotations_view` function is used to
+        specify the mode of view that will be created. It can be either a `full` or a `explore`, and the
+        function will create the view based on the specified algorithm/SQL query. Defaults to `full`
+        :type view_mode: str
         :param fields: The `fields` parameter in the `create_annotations_view` function is a list that
         contains the names of the fields to be extracted from the INFO column in the VCF file. These
         fields will be used to create the view with the specified columns and data extracted from the
@@ -13077,16 +13088,32 @@ class Variants:
         if view_type is None:
             view_type = "VIEW"
 
+        # Get mode
+        view_mode_allowed = ["full", "explore"]
+        if view_mode is None:
+            view_mode = "explore"
+
+        # Mode lower
+        view_mode = view_mode.lower()
+
+        # Mode check
+        if view_mode not in view_mode_allowed:
+            msg_err = f"Invalid view mode: '{view_mode}' (either {view_mode_allowed})"
+            log.error(msg_err)
+            raise ValueError(msg_err)
+
+        # Prefix
         if info_prefix_column is not None:
             prefix = info_prefix_column
         else:
             prefix = ""
 
         # Check view type value
-        if view_type.upper() not in ["VIEW", "TABLE"]:
-            raise ValueError(
-                f"Invalid view type value: {view_type}. Either 'VIEW' or 'TABLE'"
-            )
+        view_type_allowed = ["view", "table"]
+        if view_type.lower() not in view_type_allowed:
+            msg_err = f"Invalid view type: {view_type} (either {view_type_allowed})"
+            log.error(msg_err)
+            raise ValueError(msg_err)
 
         # Get header
         header = self.get_header()
@@ -13108,6 +13135,12 @@ class Variants:
             # Get samples
             samples = list(header.samples)
 
+        else:
+
+            # Empty format and samples
+            formats = []
+            samples = []
+
         log.debug(
             f"Create '{view}' view (as '{view_type}') from table '{table}' with {len(fields)} fields"
         )
@@ -13124,7 +13157,10 @@ class Variants:
                 fields_needed = list(table_describe.get("column_name"))
             else:
                 fields_needed = ["#CHROM", "POS", "REF", "ALT"]
-            # list(table_describe.get("column_name"))
+
+        # Add samples in view mode 'full'
+        if view_mode in ["full"] and sample_struct_column and len(samples):
+            fields_needed = list(set(fields_needed + samples + ["FORMAT"]))
 
         # Check needed fieds
         for field in fields_needed:
@@ -13135,7 +13171,16 @@ class Variants:
         # Create fields for annotation view extracted from INFO column in table variants (with regexp_replace like in rename_info_fields), with column type from VCF header
         fields_columns = []
         fields_columns_annotations_struct = []
+        samples_format_struct = []
         field_sql_type_list = False
+
+        # Find "INFO" column
+        if "INFO" in list(table_describe.get("column_name")):
+            info_column = '"INFO"'
+        else:
+            info_column = "''"
+
+        # Each filed
         for field in fields:
 
             # Rename field
@@ -13152,6 +13197,10 @@ class Variants:
             # Fields in table
             elif field in list(table_describe.get("column_name")):
                 fields_columns.append(f""" "{field}" AS '{prefix}{field_to_rename}' """)
+
+                # Add field in needed if 'full' view mode
+                if view_mode in ["full"]:
+                    fields_needed = list(set(fields_needed + [field]))
 
             # Fields in header
             elif field in header.infos and "INFO" in list(
@@ -13177,14 +13226,32 @@ class Variants:
 
                 # Colonne is a flag
                 if field_infos.type == "Flag":
+
+                    # Field pattern
                     field_pattern = rf"(^|;)({field})([^;]*)?"
-                    fields_columns.append(
-                        f""" regexp_matches("INFO", '{field_pattern}')::BOOLEAN AS '{prefix}{field_to_rename}' """
-                    )
-                    fields_columns_annotations_struct.append(
-                        f""" "{field_to_rename}":= regexp_matches("INFO", '{field_pattern}')::BOOLEAN
-                        """
-                    )
+
+                    if view_mode in ["explore"]:
+                        fields_columns.append(
+                            f"""
+                                regexp_matches({info_column}, '{field_pattern}')::BOOLEAN AS '{prefix}{field_to_rename}'
+                            """
+                        )
+                        fields_columns_annotations_struct.append(
+                            f"""
+                                "{field_to_rename}":= regexp_matches({info_column}, '{field_pattern}')::BOOLEAN
+                            """
+                        )
+                    elif view_mode in ["full"]:
+                        fields_columns.append(
+                            f"""
+                                string_agg(CASE WHEN k = '{field}' THEN true END, ',')::BOOLEAN AS '{prefix}{field_to_rename}'
+                            """
+                        )
+                        fields_columns_annotations_struct.append(
+                            f"""
+                                "{field_to_rename}":= string_agg(CASE WHEN k = '{field}' THEN true END, ',')::BOOLEAN
+                            """
+                        )
 
                 # Colonne with a type
                 else:
@@ -13192,45 +13259,63 @@ class Variants:
                     # Field pattern
                     field_pattern = rf"(^|;)({field})=([^;]*)?"
 
+                    if view_mode in ["explore"]:
+                        field_source = (
+                            f""" regexp_extract({info_column}, '{field_pattern}', 3) """
+                        )
+                    elif view_mode in ["full"]:
+                        field_source = (
+                            f""" string_agg(CASE WHEN k = '{field}' THEN v END, ',') """
+                        )
+
                     # Field is a list
                     if field_sql_type_list:
+
                         fields_columns.append(
-                            f""" CAST(list_transform(string_split(NULLIF(regexp_extract("INFO", '{field_pattern}', 3), ''), ','), x -> CASE WHEN x = '.' OR x = '' THEN NULL ELSE x END) AS {field_sql_type}[]) AS '{prefix}{field_to_rename}' """
+                            f"""
+                                CAST(list_transform(string_split({field_source}, ','), x -> CASE WHEN x = '.' OR x = '' THEN NULL ELSE x END) AS {field_sql_type}[]) AS '{prefix}{field_to_rename}'
+                            """
                         )
                         fields_columns_annotations_struct.append(
-                            f""" "{field_to_rename}":= CAST(list_transform(string_split(NULLIF(regexp_extract("INFO", '{field_pattern}', 3), ''), ','), x -> CASE WHEN x = '.' OR x = '' THEN NULL ELSE x END) AS {field_sql_type}[])
+                            f"""
+                                "{field_to_rename}":= CAST(list_transform(string_split({field_source}, ','), x -> CASE WHEN x = '.' OR x = '' THEN NULL ELSE x END) AS {field_sql_type}[])
                             """
                         )
 
                     # Field is a unique value
                     else:
+
                         fields_columns.append(
-                            f""" NULLIF(regexp_replace(regexp_extract("INFO", '{field_pattern}', 3), '^\\.$', ''), '')::{field_sql_type} AS '{prefix}{field_to_rename}' """
+                            f"""
+                                NULLIF(regexp_replace({field_source}, '^\\.$', ''), '')::{field_sql_type} AS '{prefix}{field_to_rename}'
+                            """
                         )
                         fields_columns_annotations_struct.append(
-                            f""" "{field_to_rename}":= COALESCE(NULLIF(regexp_replace(regexp_extract("INFO", '{field_pattern}', 3), '^\\.$', ''), '')::{field_sql_type}, NULL)
+                            f"""
+                                "{field_to_rename}":= COALESCE(NULLIF(regexp_replace({field_source}, '^\\.$', ''), '')::{field_sql_type}, NULL)
                             """
                         )
 
             else:
+
+                # Add field even if not exists
                 if fields_not_exists:
-                    fields_columns.append(f""" null AS '{prefix}{field_to_rename}' """)
+
+                    fields_columns.append(
+                        f"""
+                            null AS '{prefix}{field_to_rename}'
+                        """
+                    )
                     fields_columns_annotations_struct.append(
-                        f""" "{field_to_rename}":= NULL  """
+                        f"""
+                            "{field_to_rename}":= NULL
+                        """
                     )
                     msg_err = f"Field '{field}' is not found (in table or header): '{field}' will be set to NULL"
                     log.debug(msg=msg_err)
 
-        # Samples struct
-
-        # Init
-        samples_format_struct_clause = ""
-
         # If samples and struct as option
         if sample_struct_column and len(samples):
-
-            # Struct by samples
-            samples_format_struct = []
 
             # Format info
             format_infos = header.formats
@@ -13293,9 +13378,13 @@ class Variants:
                 """
                 )
 
-            samples_format_struct_clause = f"""
-                , STRUCT_PACK({", ".join(samples_format_struct)}) AS {sample_struct_column}
-            """
+        # Combine fields into columns
+        if info_prefix_column is not None and len(fields_columns):
+            annotations_column_annotations_columns = (
+                f""", {", ".join(fields_columns)}"""
+            )
+        else:
+            annotations_column_annotations_columns = ""
 
         # Combine fields into a STRUCT
         if info_struct_column and len(fields_columns_annotations_struct):
@@ -13305,12 +13394,11 @@ class Variants:
         else:
             annotations_column_annotations_struct = ""
 
-        if info_prefix_column is not None and len(fields_columns):
-            annotations_column_annotations_columns = f""" 
-                , {", ".join(fields_columns)}
-                """
+        # Combine samples into a STRUCT
+        if sample_struct_column and len(samples_format_struct):
+            samples_format_struct_clause = f""", STRUCT_PACK({", ".join(samples_format_struct)}) AS {sample_struct_column} """
         else:
-            annotations_column_annotations_columns = ""
+            samples_format_struct_clause = ""
 
         # Limit
         limit_clause = ""
@@ -13318,22 +13406,67 @@ class Variants:
             limit_clause = f" LIMIT {limit} "
 
         # Query select
-        query_select = f"""
-            SELECT
-                {', '.join([f'"{field}"' for field in fields_needed])} {annotations_column_annotations_columns} {annotations_column_annotations_struct} {samples_format_struct_clause}
-            FROM
-                {table}
-            {limit_clause}
-        """
+
+        if view_mode in ["explore"]:
+            query_select = f"""
+                SELECT
+                    {', '.join([f'"{field}"' for field in fields_needed])} {annotations_column_annotations_columns} {annotations_column_annotations_struct} {samples_format_struct_clause}
+                FROM
+                    {table}
+                {limit_clause}
+            """
+
+        elif view_mode in ["full"]:
+            query_select = f"""
+                    SELECT
+                        {', '.join([f'"{field}"' for field in fields_needed])}         -- variant id
+                        {annotations_column_annotations_columns}
+                        {annotations_column_annotations_struct}
+                        {samples_format_struct_clause}
+                    FROM (
+                        SELECT
+                            {', '.join([f'"{field}"' for field in fields_needed])},         -- variant id
+                            k,
+                            v                                   -- value
+                        FROM (
+                            SELECT
+                                {', '.join([f'"{field}"' for field in fields_needed])},        -- variant id
+                                string_split(kv, '=')[1] AS k,  -- key
+                                string_split(kv, '=')[2] AS v   -- value
+                            FROM (
+                                SELECT {', '.join([f'"{field}"' for field in fields_needed])}, unnest(string_split({info_column}, ';')) AS kv
+                                FROM {table}
+                                )
+                            WHERE k in ('{"', '".join(fields)}')
+                            )
+                        )
+                    GROUP BY {', '.join([f'"{field}"' for field in fields_needed])}
+                    {limit_clause}
+
+            """
+
+        # log.debug(f"query_select={query_select}")
 
         # Drop if any
         if drop_view:
             log.debug(f"Drop view: {view}")
-            query_create_view = f"""
-                DROP {view_type} IF EXISTS {view}
-            """
-            self.execute_query(query=query_create_view)
-            log.debug(f"View dropped: {view}")
+            try:
+                query_create_view = f"""
+                    DROP view IF EXISTS {view}
+                """
+                self.execute_query(query=query_create_view)
+                log.debug(f"View dropped: {view}")
+            except:
+                try:
+                    query_create_view = f"""
+                        DROP table IF EXISTS {view}
+                    """
+                    self.execute_query(query=query_create_view)
+                    log.debug(f"View dropped: {view}")
+                except:
+                    msg_err = f"View '{view}' can NOT be dropped"
+                    log.error(msg_err)
+                    raise ValueError(msg_err)
 
         # Create view
         log.debug(f"Create view: {view}")
