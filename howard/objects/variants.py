@@ -142,7 +142,13 @@ class Variants:
         if load:
             self.load_data()
 
-    def load_header(self, header=None, table: str = None, drop: bool = False) -> str:
+    def load_header(
+        self,
+        header=None,
+        table: str = None,
+        drop: bool = False,
+        view_name: str = "header",
+    ) -> str:
         """
         Load header in a table, with INFO, FORMAT, FILTERS, SAMPLES and METADATA
 
@@ -150,6 +156,7 @@ class Variants:
             header (vcfobject, optional): VCF object from pyVCF. Defaults to None (header of the Variants object).
             table (str, optional): Table name of the header table. Defaults to None (defined as 'header' later).
             drop (bool, optional): Drop table if exists. Defaults to False.
+            view_name (str, optional): Name of the table. Defaults to 'header'.
 
         Returns:
             str: Name of the table, None otherwise
@@ -176,7 +183,7 @@ class Variants:
 
             # Query create
             query_create = f"""
-            CREATE TABLE header (
+            CREATE table {view_name} (
                 {', '.join(columns)},
                 PRIMARY KEY (section, id)
             );
@@ -258,8 +265,8 @@ class Variants:
                 )
 
             # Create query of insert with parameters
-            query_insert = """
-            INSERT INTO header (section, id, number, type, description) VALUES (?, ?, ?, ?, ?);
+            query_insert = f"""
+            INSERT INTO {view_name} (section, id, number, type, description) VALUES (?, ?, ?, ?, ?);
             """
             conn.executemany(query_insert, inserts)
 
@@ -13160,7 +13167,11 @@ class Variants:
 
         # Add samples in view mode 'full'
         if view_mode in ["full"] and sample_struct_column and len(samples):
-            fields_needed = list(set(fields_needed + samples + ["FORMAT"]))
+            if "FORMAT" not in fields_needed:
+                fields_needed += ["FORMAT"]
+            for field_needed in fields_needed:
+                if field_needed not in fields_needed:
+                    fields_needed += [field_needed]
 
         # Check needed fieds
         for field in fields_needed:
@@ -13200,7 +13211,8 @@ class Variants:
 
                 # Add field in needed if 'full' view mode
                 if view_mode in ["full"]:
-                    fields_needed = list(set(fields_needed + [field]))
+                    if field not in fields_needed:
+                        fields_needed += [field]
 
             # Fields in header
             elif field in header.infos and "INFO" in list(

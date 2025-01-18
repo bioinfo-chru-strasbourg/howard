@@ -48,28 +48,40 @@ def launch_interactive_terminal(
         log.warning("Create empty connexion")
         conn = duckdb.connect(":memory:")
 
-    # Create variants view
+    # Create header table
+    header_name = "header"
+    log.debug(f"Loading table '{header_name}' as 'table'")
+    log.info(f"Loading table '{header_name}'...")
+    try:
+        variants.load_header(drop=True, view_name=header_name)
+    except:
+        log.debug("View 'header' can not be loaded")
+
+    # Create variants table
+    view_name = "variants_view"
+    view_type = "table"
+    view_mode = "full"
+    log.debug(f"Loading table '{view_name}' as '{view_type}' (mode '{view_mode}')")
+    log.info(f"Loading table '{view_name}'...")
     try:
         variants.create_annotations_view(
-            view="variants_view",
+            view=view_name,
+            view_type=view_type,
+            view_mode=view_mode,
             info_prefix_column="",
             fields_needed_all=True,
             info_struct_column="INFOS",
             sample_struct_column="SAMPLES",
             detect_type_list=True,
+            drop_view=True,
         )
     except:
-        log.debug("View can not be created")
-
-    variants.load_header(drop=True)
-    try:
-        variants.load_header(drop=True)
-    except:
-        log.debug("View can not reloaded")
+        log.warning(f"View '{view_name}' can not be created")
 
     # Print welcome message
-    log.info(f"Interactive DuckDB SQL terminal. Type 'exit' to quit.")
-    log.info("Type 'help' for a list of commands.")
+    log.info("Interactive DuckDB SQL terminal")
+    log.info("- 'exit' to quit.")
+    log.info("- 'help' for a list of commands")
 
     # Configure readline for history
     histfile = f"{tmp}/.howard_interactive_history"
@@ -290,7 +302,7 @@ def launch_interactive_terminal(
 
     # Set up signal handler
     def signal_handler(sig, frame):
-        print("\nQuery input cancelled. Type 'exit' or 'Ctrl+C' again to quit.")
+        print("\nQuery input cancelled. Type 'exit' to quit.")
         raise KeyboardInterrupt
 
     signal.signal(signal.SIGINT, signal_handler)
