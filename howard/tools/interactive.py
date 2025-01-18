@@ -57,10 +57,12 @@ def launch_interactive_terminal(
     except:
         log.debug("View 'header' can not be loaded")
 
-    # Create variants table
+    # Variants table param
     view_name = "variants_view"
     view_type = "table"
     view_mode = "full"
+
+    # Create variants table
     log.debug(f"Loading table '{view_name}' as '{view_type}' (mode '{view_mode}')")
     log.info(f"Loading table '{view_name}'...")
     try:

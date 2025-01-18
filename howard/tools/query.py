@@ -40,8 +40,15 @@ def query(args: argparse) -> None:
     )
 
     # Access
-    if not param.get("explode", {}).get("explode_infos", False):
-        config["access"] = "RO"
+    input_format = vcfdata_obj.get_input_format()
+    if param.get("explode", {}).get("explode_infos", False) or not input_format in [
+        "duckdb",
+        "parquet",
+    ]:
+        access = "RW"
+    else:
+        access = "RO"
+    config["access"] = access
 
     # Re-Load Config and Params
     vcfdata_obj.set_param(param)
@@ -53,6 +60,8 @@ def query(args: argparse) -> None:
         vcfdata_obj.load_header()
         vcfdata_obj.create_annotations_view(
             view="variants_view",
+            view_type="view",
+            view_mode="explore",
             info_prefix_column="",
             fields_needed_all=True,
             info_struct_column="INFOS",

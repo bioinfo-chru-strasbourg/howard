@@ -20,6 +20,8 @@ and transcripts mapping.
   - Improve performances for annotations, calculations and prioritizations
   - Improve prioritization profiles definition using columns types
     (Integer, Float, String) with list type (defined in VCF header)
+- New tools:
+  - Tool 'filter' to filter variants in SQL format and samples 
 - Plugins:
   - 'to_excel': Convert VCF to Excel '.xlsx' format
 
