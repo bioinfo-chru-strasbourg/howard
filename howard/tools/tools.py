@@ -33,6 +33,7 @@ from howard.tools.hgvs import hgvs
 from howard.tools.prioritization import prioritization
 from howard.tools.query import query
 from howard.tools.filter import filter
+from howard.tools.sort import sort
 from howard.tools.stats import stats
 from howard.tools.convert import convert
 from howard.tools.databases import databases
@@ -1853,6 +1854,21 @@ commands_arguments = {
             "Filters": {
                 "filter": False,
                 "samples": False,
+            },
+            "Export": {"include_header": False, "parquet_partitions": False},
+        },
+    },
+    "sort": {
+        "function": "sort",
+        "description": """Sort genetic variations from contig order. Data can be loaded into 'variants' table from various formats (e.g. VCF, TSV, Parquet...). SQL filter can also use external data within the request, such as a Parquet file(s).  """,
+        "help": "Sort genetic variations file from contig order.",
+        "epilog": """Usage examples:\n"""
+        """   howard sort --input=tests/data/example.vcf.gz --output=/tmp/example.sorted.vcf.gz \n"""
+        """    \n""",
+        "groups": {
+            "main": {
+                "input": True,
+                "output": True,
             },
             "Export": {"include_header": False, "parquet_partitions": False},
         },

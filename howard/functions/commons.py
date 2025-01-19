@@ -4352,3 +4352,60 @@ def docker_automount() -> str:
         if "sock" not in volume.get("Source") and "tmp" not in volume.get("Source"):
             mounts_new += f" -v {volume.get('Source')}:{volume.get ('Destination')}:{volume.get('Mode')}"
     return mounts_new
+
+
+def sort_contigs(vcf_reader):
+    """
+    Function that sort contigs in VCF header
+
+    Args:
+        vcf_reader (vcf): VCF object from VCF package
+
+    Returns:
+        vcf:VCF object from VCF package
+    """
+
+    from collections import OrderedDict
+
+    # inf
+    inf = 100000000
+
+    # Extract contigs from header
+    contigs = list(vcf_reader.contigs.keys())
+
+    # Sort function
+    def contig_sort_key(contig):
+
+        # Remove 'chr' from contig
+        contig_clean = re.sub(r"^chr", "", contig)
+
+        # Special cases: X, Y, M/MT
+        if contig_clean == "X":
+            return (float(inf) - 3, contig)
+        elif contig_clean == "Y":
+            return (float(inf) - 2, contig)
+        elif contig_clean in ["M", "MT"]:
+            return (float(inf) - 1, contig)
+
+        # Contig as integer
+        try:
+            return (int(contig_clean), contig)
+        except ValueError:
+            # Contig as on-numeric
+            return (float(inf), contig_clean)
+
+    # Sort contigs
+    sorted_contigs = sorted(contigs, key=contig_sort_key)
+
+    # Create new contgis OrderedDict
+    ordered_contigs = OrderedDict()
+
+    # Add contigs
+    for contig in sorted_contigs:
+        ordered_contigs[contig] = vcf_reader.contigs[contig]
+
+    # Replace contigs
+    vcf_reader.contigs = ordered_contigs
+
+    # Return
+    return vcf_reader

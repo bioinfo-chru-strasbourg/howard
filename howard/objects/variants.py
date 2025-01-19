@@ -73,6 +73,7 @@ from howard.functions.commons import (
     comparison_map,
     code_type_map_to_sql,
     code_type_map_to_vcf,
+    sort_contigs,
 )
 
 from howard.objects.database import Database
@@ -1436,6 +1437,20 @@ class Variants:
 
         # Return samples list
         return samples_list
+
+    def sort_contigs(self) -> None:
+        """
+        This function sort contigs
+
+        :return: None
+        """
+
+        # Sort contigs
+        header = self.get_header()
+        header = sort_contigs(header)
+
+        # Return
+        return None
 
     def is_genotype_column(self, column: str = None) -> bool:
         """

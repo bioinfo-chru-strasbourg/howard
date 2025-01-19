@@ -429,6 +429,9 @@
             <li>
                     <a class="function" href="#docker_automount">docker_automount</a>
             </li>
+            <li>
+                    <a class="function" href="#sort_contigs">sort_contigs</a>
+            </li>
     </ul>
 
 
@@ -4804,6 +4807,63 @@
 </span><span id="L-4352"><a href="#L-4352"><span class="linenos">4352</span></a>        <span class="k">if</span> <span class="s2">&quot;sock&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">volume</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Source&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;tmp&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">volume</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Source&quot;</span><span class="p">):</span>
 </span><span id="L-4353"><a href="#L-4353"><span class="linenos">4353</span></a>            <span class="n">mounts_new</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot; -v </span><span class="si">{</span><span class="n">volume</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;Source&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">volume</span><span class="o">.</span><span class="n">get</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;Destination&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">volume</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;Mode&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
 </span><span id="L-4354"><a href="#L-4354"><span class="linenos">4354</span></a>    <span class="k">return</span> <span class="n">mounts_new</span>
+</span><span id="L-4355"><a href="#L-4355"><span class="linenos">4355</span></a>
+</span><span id="L-4356"><a href="#L-4356"><span class="linenos">4356</span></a>
+</span><span id="L-4357"><a href="#L-4357"><span class="linenos">4357</span></a><span class="k">def</span> <span class="nf">sort_contigs</span><span class="p">(</span><span class="n">vcf_reader</span><span class="p">):</span>
+</span><span id="L-4358"><a href="#L-4358"><span class="linenos">4358</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-4359"><a href="#L-4359"><span class="linenos">4359</span></a><span class="sd">    Function that sort contigs in VCF header</span>
+</span><span id="L-4360"><a href="#L-4360"><span class="linenos">4360</span></a>
+</span><span id="L-4361"><a href="#L-4361"><span class="linenos">4361</span></a><span class="sd">    Args:</span>
+</span><span id="L-4362"><a href="#L-4362"><span class="linenos">4362</span></a><span class="sd">        vcf_reader (vcf): VCF object from VCF package</span>
+</span><span id="L-4363"><a href="#L-4363"><span class="linenos">4363</span></a>
+</span><span id="L-4364"><a href="#L-4364"><span class="linenos">4364</span></a><span class="sd">    Returns:</span>
+</span><span id="L-4365"><a href="#L-4365"><span class="linenos">4365</span></a><span class="sd">        vcf:VCF object from VCF package</span>
+</span><span id="L-4366"><a href="#L-4366"><span class="linenos">4366</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-4367"><a href="#L-4367"><span class="linenos">4367</span></a>
+</span><span id="L-4368"><a href="#L-4368"><span class="linenos">4368</span></a>    <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+</span><span id="L-4369"><a href="#L-4369"><span class="linenos">4369</span></a>
+</span><span id="L-4370"><a href="#L-4370"><span class="linenos">4370</span></a>    <span class="c1"># inf</span>
+</span><span id="L-4371"><a href="#L-4371"><span class="linenos">4371</span></a>    <span class="n">inf</span> <span class="o">=</span> <span class="mi">100000000</span>
+</span><span id="L-4372"><a href="#L-4372"><span class="linenos">4372</span></a>
+</span><span id="L-4373"><a href="#L-4373"><span class="linenos">4373</span></a>    <span class="c1"># Extract contigs from header</span>
+</span><span id="L-4374"><a href="#L-4374"><span class="linenos">4374</span></a>    <span class="n">contigs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">vcf_reader</span><span class="o">.</span><span class="n">contigs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+</span><span id="L-4375"><a href="#L-4375"><span class="linenos">4375</span></a>
+</span><span id="L-4376"><a href="#L-4376"><span class="linenos">4376</span></a>    <span class="c1"># Sort function</span>
+</span><span id="L-4377"><a href="#L-4377"><span class="linenos">4377</span></a>    <span class="k">def</span> <span class="nf">contig_sort_key</span><span class="p">(</span><span class="n">contig</span><span class="p">):</span>
+</span><span id="L-4378"><a href="#L-4378"><span class="linenos">4378</span></a>
+</span><span id="L-4379"><a href="#L-4379"><span class="linenos">4379</span></a>        <span class="c1"># Remove &#39;chr&#39; from contig</span>
+</span><span id="L-4380"><a href="#L-4380"><span class="linenos">4380</span></a>        <span class="n">contig_clean</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^chr&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">contig</span><span class="p">)</span>
+</span><span id="L-4381"><a href="#L-4381"><span class="linenos">4381</span></a>
+</span><span id="L-4382"><a href="#L-4382"><span class="linenos">4382</span></a>        <span class="c1"># Special cases: X, Y, M/MT</span>
+</span><span id="L-4383"><a href="#L-4383"><span class="linenos">4383</span></a>        <span class="k">if</span> <span class="n">contig_clean</span> <span class="o">==</span> <span class="s2">&quot;X&quot;</span><span class="p">:</span>
+</span><span id="L-4384"><a href="#L-4384"><span class="linenos">4384</span></a>            <span class="k">return</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">inf</span><span class="p">)</span> <span class="o">-</span> <span class="mi">3</span><span class="p">,</span> <span class="n">contig</span><span class="p">)</span>
+</span><span id="L-4385"><a href="#L-4385"><span class="linenos">4385</span></a>        <span class="k">elif</span> <span class="n">contig_clean</span> <span class="o">==</span> <span class="s2">&quot;Y&quot;</span><span class="p">:</span>
+</span><span id="L-4386"><a href="#L-4386"><span class="linenos">4386</span></a>            <span class="k">return</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">inf</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span><span class="p">,</span> <span class="n">contig</span><span class="p">)</span>
+</span><span id="L-4387"><a href="#L-4387"><span class="linenos">4387</span></a>        <span class="k">elif</span> <span class="n">contig_clean</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;M&quot;</span><span class="p">,</span> <span class="s2">&quot;MT&quot;</span><span class="p">]:</span>
+</span><span id="L-4388"><a href="#L-4388"><span class="linenos">4388</span></a>            <span class="k">return</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">inf</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">contig</span><span class="p">)</span>
+</span><span id="L-4389"><a href="#L-4389"><span class="linenos">4389</span></a>
+</span><span id="L-4390"><a href="#L-4390"><span class="linenos">4390</span></a>        <span class="c1"># Contig as integer</span>
+</span><span id="L-4391"><a href="#L-4391"><span class="linenos">4391</span></a>        <span class="k">try</span><span class="p">:</span>
+</span><span id="L-4392"><a href="#L-4392"><span class="linenos">4392</span></a>            <span class="k">return</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">contig_clean</span><span class="p">),</span> <span class="n">contig</span><span class="p">)</span>
+</span><span id="L-4393"><a href="#L-4393"><span class="linenos">4393</span></a>        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+</span><span id="L-4394"><a href="#L-4394"><span class="linenos">4394</span></a>            <span class="c1"># Contig as on-numeric</span>
+</span><span id="L-4395"><a href="#L-4395"><span class="linenos">4395</span></a>            <span class="k">return</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">inf</span><span class="p">),</span> <span class="n">contig_clean</span><span class="p">)</span>
+</span><span id="L-4396"><a href="#L-4396"><span class="linenos">4396</span></a>
+</span><span id="L-4397"><a href="#L-4397"><span class="linenos">4397</span></a>    <span class="c1"># Sort contigs</span>
+</span><span id="L-4398"><a href="#L-4398"><span class="linenos">4398</span></a>    <span class="n">sorted_contigs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">contigs</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">contig_sort_key</span><span class="p">)</span>
+</span><span id="L-4399"><a href="#L-4399"><span class="linenos">4399</span></a>
+</span><span id="L-4400"><a href="#L-4400"><span class="linenos">4400</span></a>    <span class="c1"># Create new contgis OrderedDict</span>
+</span><span id="L-4401"><a href="#L-4401"><span class="linenos">4401</span></a>    <span class="n">ordered_contigs</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+</span><span id="L-4402"><a href="#L-4402"><span class="linenos">4402</span></a>
+</span><span id="L-4403"><a href="#L-4403"><span class="linenos">4403</span></a>    <span class="c1"># Add contigs</span>
+</span><span id="L-4404"><a href="#L-4404"><span class="linenos">4404</span></a>    <span class="k">for</span> <span class="n">contig</span> <span class="ow">in</span> <span class="n">sorted_contigs</span><span class="p">:</span>
+</span><span id="L-4405"><a href="#L-4405"><span class="linenos">4405</span></a>        <span class="n">ordered_contigs</span><span class="p">[</span><span class="n">contig</span><span class="p">]</span> <span class="o">=</span> <span class="n">vcf_reader</span><span class="o">.</span><span class="n">contigs</span><span class="p">[</span><span class="n">contig</span><span class="p">]</span>
+</span><span id="L-4406"><a href="#L-4406"><span class="linenos">4406</span></a>
+</span><span id="L-4407"><a href="#L-4407"><span class="linenos">4407</span></a>    <span class="c1"># Replace contigs</span>
+</span><span id="L-4408"><a href="#L-4408"><span class="linenos">4408</span></a>    <span class="n">vcf_reader</span><span class="o">.</span><span class="n">contigs</span> <span class="o">=</span> <span class="n">ordered_contigs</span>
+</span><span id="L-4409"><a href="#L-4409"><span class="linenos">4409</span></a>
+</span><span id="L-4410"><a href="#L-4410"><span class="linenos">4410</span></a>    <span class="c1"># Return</span>
+</span><span id="L-4411"><a href="#L-4411"><span class="linenos">4411</span></a>    <span class="k">return</span> <span class="n">vcf_reader</span>
 </span></pre></div>
 
 
@@ -12423,6 +12483,86 @@ not alphanumeric and not in the <code>char_allowed</code> list will be removed d
 <blockquote>
   <p>string containing volume to add</p>
 </blockquote>
+</div>
+
+
+                </section>
+                <section id="sort_contigs">
+                            <input id="sort_contigs-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">sort_contigs</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">vcf_reader</span></span><span class="return-annotation">):</span></span>
+
+                <label class="view-source-button" for="sort_contigs-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#sort_contigs"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="sort_contigs-4358"><a href="#sort_contigs-4358"><span class="linenos">4358</span></a><span class="k">def</span> <span class="nf">sort_contigs</span><span class="p">(</span><span class="n">vcf_reader</span><span class="p">):</span>
+</span><span id="sort_contigs-4359"><a href="#sort_contigs-4359"><span class="linenos">4359</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="sort_contigs-4360"><a href="#sort_contigs-4360"><span class="linenos">4360</span></a><span class="sd">    Function that sort contigs in VCF header</span>
+</span><span id="sort_contigs-4361"><a href="#sort_contigs-4361"><span class="linenos">4361</span></a>
+</span><span id="sort_contigs-4362"><a href="#sort_contigs-4362"><span class="linenos">4362</span></a><span class="sd">    Args:</span>
+</span><span id="sort_contigs-4363"><a href="#sort_contigs-4363"><span class="linenos">4363</span></a><span class="sd">        vcf_reader (vcf): VCF object from VCF package</span>
+</span><span id="sort_contigs-4364"><a href="#sort_contigs-4364"><span class="linenos">4364</span></a>
+</span><span id="sort_contigs-4365"><a href="#sort_contigs-4365"><span class="linenos">4365</span></a><span class="sd">    Returns:</span>
+</span><span id="sort_contigs-4366"><a href="#sort_contigs-4366"><span class="linenos">4366</span></a><span class="sd">        vcf:VCF object from VCF package</span>
+</span><span id="sort_contigs-4367"><a href="#sort_contigs-4367"><span class="linenos">4367</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="sort_contigs-4368"><a href="#sort_contigs-4368"><span class="linenos">4368</span></a>
+</span><span id="sort_contigs-4369"><a href="#sort_contigs-4369"><span class="linenos">4369</span></a>    <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+</span><span id="sort_contigs-4370"><a href="#sort_contigs-4370"><span class="linenos">4370</span></a>
+</span><span id="sort_contigs-4371"><a href="#sort_contigs-4371"><span class="linenos">4371</span></a>    <span class="c1"># inf</span>
+</span><span id="sort_contigs-4372"><a href="#sort_contigs-4372"><span class="linenos">4372</span></a>    <span class="n">inf</span> <span class="o">=</span> <span class="mi">100000000</span>
+</span><span id="sort_contigs-4373"><a href="#sort_contigs-4373"><span class="linenos">4373</span></a>
+</span><span id="sort_contigs-4374"><a href="#sort_contigs-4374"><span class="linenos">4374</span></a>    <span class="c1"># Extract contigs from header</span>
+</span><span id="sort_contigs-4375"><a href="#sort_contigs-4375"><span class="linenos">4375</span></a>    <span class="n">contigs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">vcf_reader</span><span class="o">.</span><span class="n">contigs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+</span><span id="sort_contigs-4376"><a href="#sort_contigs-4376"><span class="linenos">4376</span></a>
+</span><span id="sort_contigs-4377"><a href="#sort_contigs-4377"><span class="linenos">4377</span></a>    <span class="c1"># Sort function</span>
+</span><span id="sort_contigs-4378"><a href="#sort_contigs-4378"><span class="linenos">4378</span></a>    <span class="k">def</span> <span class="nf">contig_sort_key</span><span class="p">(</span><span class="n">contig</span><span class="p">):</span>
+</span><span id="sort_contigs-4379"><a href="#sort_contigs-4379"><span class="linenos">4379</span></a>
+</span><span id="sort_contigs-4380"><a href="#sort_contigs-4380"><span class="linenos">4380</span></a>        <span class="c1"># Remove &#39;chr&#39; from contig</span>
+</span><span id="sort_contigs-4381"><a href="#sort_contigs-4381"><span class="linenos">4381</span></a>        <span class="n">contig_clean</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^chr&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">contig</span><span class="p">)</span>
+</span><span id="sort_contigs-4382"><a href="#sort_contigs-4382"><span class="linenos">4382</span></a>
+</span><span id="sort_contigs-4383"><a href="#sort_contigs-4383"><span class="linenos">4383</span></a>        <span class="c1"># Special cases: X, Y, M/MT</span>
+</span><span id="sort_contigs-4384"><a href="#sort_contigs-4384"><span class="linenos">4384</span></a>        <span class="k">if</span> <span class="n">contig_clean</span> <span class="o">==</span> <span class="s2">&quot;X&quot;</span><span class="p">:</span>
+</span><span id="sort_contigs-4385"><a href="#sort_contigs-4385"><span class="linenos">4385</span></a>            <span class="k">return</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">inf</span><span class="p">)</span> <span class="o">-</span> <span class="mi">3</span><span class="p">,</span> <span class="n">contig</span><span class="p">)</span>
+</span><span id="sort_contigs-4386"><a href="#sort_contigs-4386"><span class="linenos">4386</span></a>        <span class="k">elif</span> <span class="n">contig_clean</span> <span class="o">==</span> <span class="s2">&quot;Y&quot;</span><span class="p">:</span>
+</span><span id="sort_contigs-4387"><a href="#sort_contigs-4387"><span class="linenos">4387</span></a>            <span class="k">return</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">inf</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span><span class="p">,</span> <span class="n">contig</span><span class="p">)</span>
+</span><span id="sort_contigs-4388"><a href="#sort_contigs-4388"><span class="linenos">4388</span></a>        <span class="k">elif</span> <span class="n">contig_clean</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;M&quot;</span><span class="p">,</span> <span class="s2">&quot;MT&quot;</span><span class="p">]:</span>
+</span><span id="sort_contigs-4389"><a href="#sort_contigs-4389"><span class="linenos">4389</span></a>            <span class="k">return</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">inf</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">contig</span><span class="p">)</span>
+</span><span id="sort_contigs-4390"><a href="#sort_contigs-4390"><span class="linenos">4390</span></a>
+</span><span id="sort_contigs-4391"><a href="#sort_contigs-4391"><span class="linenos">4391</span></a>        <span class="c1"># Contig as integer</span>
+</span><span id="sort_contigs-4392"><a href="#sort_contigs-4392"><span class="linenos">4392</span></a>        <span class="k">try</span><span class="p">:</span>
+</span><span id="sort_contigs-4393"><a href="#sort_contigs-4393"><span class="linenos">4393</span></a>            <span class="k">return</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">contig_clean</span><span class="p">),</span> <span class="n">contig</span><span class="p">)</span>
+</span><span id="sort_contigs-4394"><a href="#sort_contigs-4394"><span class="linenos">4394</span></a>        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+</span><span id="sort_contigs-4395"><a href="#sort_contigs-4395"><span class="linenos">4395</span></a>            <span class="c1"># Contig as on-numeric</span>
+</span><span id="sort_contigs-4396"><a href="#sort_contigs-4396"><span class="linenos">4396</span></a>            <span class="k">return</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">inf</span><span class="p">),</span> <span class="n">contig_clean</span><span class="p">)</span>
+</span><span id="sort_contigs-4397"><a href="#sort_contigs-4397"><span class="linenos">4397</span></a>
+</span><span id="sort_contigs-4398"><a href="#sort_contigs-4398"><span class="linenos">4398</span></a>    <span class="c1"># Sort contigs</span>
+</span><span id="sort_contigs-4399"><a href="#sort_contigs-4399"><span class="linenos">4399</span></a>    <span class="n">sorted_contigs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">contigs</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">contig_sort_key</span><span class="p">)</span>
+</span><span id="sort_contigs-4400"><a href="#sort_contigs-4400"><span class="linenos">4400</span></a>
+</span><span id="sort_contigs-4401"><a href="#sort_contigs-4401"><span class="linenos">4401</span></a>    <span class="c1"># Create new contgis OrderedDict</span>
+</span><span id="sort_contigs-4402"><a href="#sort_contigs-4402"><span class="linenos">4402</span></a>    <span class="n">ordered_contigs</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+</span><span id="sort_contigs-4403"><a href="#sort_contigs-4403"><span class="linenos">4403</span></a>
+</span><span id="sort_contigs-4404"><a href="#sort_contigs-4404"><span class="linenos">4404</span></a>    <span class="c1"># Add contigs</span>
+</span><span id="sort_contigs-4405"><a href="#sort_contigs-4405"><span class="linenos">4405</span></a>    <span class="k">for</span> <span class="n">contig</span> <span class="ow">in</span> <span class="n">sorted_contigs</span><span class="p">:</span>
+</span><span id="sort_contigs-4406"><a href="#sort_contigs-4406"><span class="linenos">4406</span></a>        <span class="n">ordered_contigs</span><span class="p">[</span><span class="n">contig</span><span class="p">]</span> <span class="o">=</span> <span class="n">vcf_reader</span><span class="o">.</span><span class="n">contigs</span><span class="p">[</span><span class="n">contig</span><span class="p">]</span>
+</span><span id="sort_contigs-4407"><a href="#sort_contigs-4407"><span class="linenos">4407</span></a>
+</span><span id="sort_contigs-4408"><a href="#sort_contigs-4408"><span class="linenos">4408</span></a>    <span class="c1"># Replace contigs</span>
+</span><span id="sort_contigs-4409"><a href="#sort_contigs-4409"><span class="linenos">4409</span></a>    <span class="n">vcf_reader</span><span class="o">.</span><span class="n">contigs</span> <span class="o">=</span> <span class="n">ordered_contigs</span>
+</span><span id="sort_contigs-4410"><a href="#sort_contigs-4410"><span class="linenos">4410</span></a>
+</span><span id="sort_contigs-4411"><a href="#sort_contigs-4411"><span class="linenos">4411</span></a>    <span class="c1"># Return</span>
+</span><span id="sort_contigs-4412"><a href="#sort_contigs-4412"><span class="linenos">4412</span></a>    <span class="k">return</span> <span class="n">vcf_reader</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>Function that sort contigs in VCF header</p>
+
+<p>Args:
+    vcf_reader (vcf): VCF object from VCF package</p>
+
+<p>Returns:
+    vcf:VCF object from VCF package</p>
 </div>
 
 

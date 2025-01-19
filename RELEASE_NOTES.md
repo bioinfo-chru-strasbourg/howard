@@ -22,6 +22,7 @@ and transcripts mapping.
     (Integer, Float, String) with list type (defined in VCF header)
 - New tools:
   - Tool 'filter' to filter variants in SQL format and samples 
+  - Tool 'sort' to sort variants from contig order
 - Plugins:
   - 'to_excel': Convert VCF to Excel '.xlsx' format
 
