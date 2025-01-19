@@ -53,48 +53,9 @@ def sort(args: argparse) -> None:
     # Load data
     if vcfdata_obj.get_input():
         vcfdata_obj.load_data()
-        # vcfdata_obj.load_header()
-        # view_name = "variants_view"
-        # vcfdata_obj.create_annotations_view(
-        #     view=view_name,
-        #     view_type="view",
-        #     view_mode="explore",
-        #     info_prefix_column="",
-        #     fields_needed_all=True,
-        #     info_struct_column="INFOS",
-        #     sample_struct_column="SAMPLES",
-        #     detect_type_list=True,
-        # )
 
     # Filtering
     log.info("Sorting...")
-
-    # # Filter
-    # filter = param.get("filters", {}).get("filter", None)
-
-    # # Columns
-    # columns = vcfdata_obj.get_header_columns_as_list()
-
-    # # Samples
-    # samples_param = param.get("filters", {}).get("samples", None)
-    # samples = []
-    # if not (samples_param is None or samples_param.strip() == ""):
-
-    #     # Check samples in file
-    #     samples_in_file = vcfdata_obj.get_header_sample_list(check=True)
-
-    #     for s in samples_param.split(","):
-    #         # Check if sample in file
-    #         if s.strip() in samples_in_file:
-    #             samples.append(s.strip())
-    #         else:
-    #             log.warning(f"Sample '{s.strip()}' not in file")
-
-    #     if len(samples):
-    #         # Remove samples from columns if not selected
-    #         for s in samples_in_file:
-    #             if s not in samples:
-    #                 columns.remove(s)
 
     # Sort contigs
     vcfdata_obj.sort_contigs()
@@ -102,10 +63,14 @@ def sort(args: argparse) -> None:
     # variants table
     table_variants = vcfdata_obj.get_table_variants()
 
+    # Columns
+    columns = vcfdata_obj.get_header_columns_as_list()
+
     # Create case clause
     case_clause = ""
-    for i, chrom in enumerate(vcfdata_obj.get_header().contigs):
-        case_clause += f"""    WHEN "#CHROM" = '{chrom}' THEN {i + 1}\n"""
+    if "#CHROM" in columns and "POS" in columns:
+        for i, chrom in enumerate(vcfdata_obj.get_header().contigs):
+            case_clause += f""" WHEN "#CHROM" = '{chrom}' THEN {i + 1} """
 
     # Create case clause order by
     if case_clause != "":
@@ -113,10 +78,13 @@ def sort(args: argparse) -> None:
             ORDER BY 
             CASE
                 {case_clause}
-            END
+            END,
+            POS
         """
     else:
-        case_clause_order_by = ""
+        case_clause_order_by = """
+            ORDER BY "#CHROM", POS
+        """
 
     # Create sort query
     query_sort = f"""
