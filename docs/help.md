@@ -15,111 +15,115 @@ title: HOWARD Help
     options](#main-options-1)
   - [<span class="toc-section-number">3.2</span> Filters](#filters)
   - [<span class="toc-section-number">3.3</span> Export](#export-1)
-- [<span class="toc-section-number">4</span> STATS tool](#stats-tool)
+- [<span class="toc-section-number">4</span> SORT tool](#sort-tool)
   - [<span class="toc-section-number">4.1</span> Main
     options](#main-options-2)
-  - [<span class="toc-section-number">4.2</span> Stats](#stats)
-- [<span class="toc-section-number">5</span> CONVERT
-  tool](#convert-tool)
+  - [<span class="toc-section-number">4.2</span> Export](#export-2)
+- [<span class="toc-section-number">5</span> STATS tool](#stats-tool)
   - [<span class="toc-section-number">5.1</span> Main
     options](#main-options-3)
-  - [<span class="toc-section-number">5.2</span> Explode](#explode-1)
-  - [<span class="toc-section-number">5.3</span> Export](#export-2)
-- [<span class="toc-section-number">6</span> HGVS tool](#hgvs-tool)
+  - [<span class="toc-section-number">5.2</span> Stats](#stats)
+- [<span class="toc-section-number">6</span> CONVERT
+  tool](#convert-tool)
   - [<span class="toc-section-number">6.1</span> Main
     options](#main-options-4)
-  - [<span class="toc-section-number">6.2</span> HGVS](#hgvs)
-- [<span class="toc-section-number">7</span> ANNOTATION
-  tool](#annotation-tool)
+  - [<span class="toc-section-number">6.2</span> Explode](#explode-1)
+  - [<span class="toc-section-number">6.3</span> Export](#export-3)
+- [<span class="toc-section-number">7</span> HGVS tool](#hgvs-tool)
   - [<span class="toc-section-number">7.1</span> Main
     options](#main-options-5)
-  - [<span class="toc-section-number">7.2</span>
-    Annotation](#annotation)
-- [<span class="toc-section-number">8</span> CALCULATION
-  tool](#calculation-tool)
+  - [<span class="toc-section-number">7.2</span> HGVS](#hgvs)
+- [<span class="toc-section-number">8</span> ANNOTATION
+  tool](#annotation-tool)
   - [<span class="toc-section-number">8.1</span> Main
     options](#main-options-6)
   - [<span class="toc-section-number">8.2</span>
-    Calculation](#calculation)
-  - [<span class="toc-section-number">8.3</span> NOMEN](#nomen)
-  - [<span class="toc-section-number">8.4</span> TRIO](#trio)
-  - [<span class="toc-section-number">8.5</span>
-    BARCODEFAMILY](#barcodefamily)
-- [<span class="toc-section-number">9</span> PRIORITIZATION
-  tool](#prioritization-tool)
+    Annotation](#annotation)
+- [<span class="toc-section-number">9</span> CALCULATION
+  tool](#calculation-tool)
   - [<span class="toc-section-number">9.1</span> Main
     options](#main-options-7)
   - [<span class="toc-section-number">9.2</span>
-    Prioritization](#prioritization)
-- [<span class="toc-section-number">10</span> PROCESS
-  tool](#process-tool)
+    Calculation](#calculation)
+  - [<span class="toc-section-number">9.3</span> NOMEN](#nomen)
+  - [<span class="toc-section-number">9.4</span> TRIO](#trio)
+  - [<span class="toc-section-number">9.5</span>
+    BARCODEFAMILY](#barcodefamily)
+- [<span class="toc-section-number">10</span> PRIORITIZATION
+  tool](#prioritization-tool)
   - [<span class="toc-section-number">10.1</span> Main
     options](#main-options-8)
-  - [<span class="toc-section-number">10.2</span> HGVS](#hgvs-1)
-  - [<span class="toc-section-number">10.3</span>
-    Annotation](#annotation-1)
-  - [<span class="toc-section-number">10.4</span>
-    Calculation](#calculation-1)
-  - [<span class="toc-section-number">10.5</span>
-    Prioritization](#prioritization-1)
-  - [<span class="toc-section-number">10.6</span> Query](#query-1)
-  - [<span class="toc-section-number">10.7</span> Explode](#explode-2)
-  - [<span class="toc-section-number">10.8</span> Export](#export-3)
-- [<span class="toc-section-number">11</span> DATABASES
-  tool](#databases-tool)
+  - [<span class="toc-section-number">10.2</span>
+    Prioritization](#prioritization)
+- [<span class="toc-section-number">11</span> PROCESS
+  tool](#process-tool)
   - [<span class="toc-section-number">11.1</span> Main
     options](#main-options-9)
-  - [<span class="toc-section-number">11.2</span> Genomes](#genomes)
-  - [<span class="toc-section-number">11.3</span> snpEff](#snpeff)
-  - [<span class="toc-section-number">11.4</span> Annovar](#annovar)
-  - [<span class="toc-section-number">11.5</span> refSeq](#refseq)
-  - [<span class="toc-section-number">11.6</span> dbNSFP](#dbnsfp)
-  - [<span class="toc-section-number">11.7</span>
-    AlphaMissense](#alphamissense)
-  - [<span class="toc-section-number">11.8</span> Exomiser](#exomiser)
-  - [<span class="toc-section-number">11.9</span> dbSNP](#dbsnp)
-  - [<span class="toc-section-number">11.10</span> HGMD](#hgmd)
-  - [<span class="toc-section-number">11.11</span>
-    from_Annovar](#from_annovar)
-  - [<span class="toc-section-number">11.12</span>
-    from_extann](#from_extann)
-  - [<span class="toc-section-number">11.13</span>
-    Parameters](#parameters)
-- [<span class="toc-section-number">12</span> GUI tool](#gui-tool)
-- [<span class="toc-section-number">13</span> HELP tool](#help-tool)
-  - [<span class="toc-section-number">13.1</span> Main
+  - [<span class="toc-section-number">11.2</span> HGVS](#hgvs-1)
+  - [<span class="toc-section-number">11.3</span>
+    Annotation](#annotation-1)
+  - [<span class="toc-section-number">11.4</span>
+    Calculation](#calculation-1)
+  - [<span class="toc-section-number">11.5</span>
+    Prioritization](#prioritization-1)
+  - [<span class="toc-section-number">11.6</span> Query](#query-1)
+  - [<span class="toc-section-number">11.7</span> Explode](#explode-2)
+  - [<span class="toc-section-number">11.8</span> Export](#export-4)
+- [<span class="toc-section-number">12</span> DATABASES
+  tool](#databases-tool)
+  - [<span class="toc-section-number">12.1</span> Main
     options](#main-options-10)
-- [<span class="toc-section-number">14</span> UPDATE_DATABASE
-  tool](#update_database-tool)
+  - [<span class="toc-section-number">12.2</span> Genomes](#genomes)
+  - [<span class="toc-section-number">12.3</span> snpEff](#snpeff)
+  - [<span class="toc-section-number">12.4</span> Annovar](#annovar)
+  - [<span class="toc-section-number">12.5</span> refSeq](#refseq)
+  - [<span class="toc-section-number">12.6</span> dbNSFP](#dbnsfp)
+  - [<span class="toc-section-number">12.7</span>
+    AlphaMissense](#alphamissense)
+  - [<span class="toc-section-number">12.8</span> Exomiser](#exomiser)
+  - [<span class="toc-section-number">12.9</span> dbSNP](#dbsnp)
+  - [<span class="toc-section-number">12.10</span> HGMD](#hgmd)
+  - [<span class="toc-section-number">12.11</span>
+    from_Annovar](#from_annovar)
+  - [<span class="toc-section-number">12.12</span>
+    from_extann](#from_extann)
+  - [<span class="toc-section-number">12.13</span>
+    Parameters](#parameters)
+- [<span class="toc-section-number">13</span> GUI tool](#gui-tool)
+- [<span class="toc-section-number">14</span> HELP tool](#help-tool)
   - [<span class="toc-section-number">14.1</span> Main
     options](#main-options-11)
-  - [<span class="toc-section-number">14.2</span>
-    Update_database](#update_database)
-  - [<span class="toc-section-number">14.3</span> Options](#options)
-- [<span class="toc-section-number">15</span> TO_EXCEL
-  tool](#to_excel-tool)
+- [<span class="toc-section-number">15</span> UPDATE_DATABASE
+  tool](#update_database-tool)
   - [<span class="toc-section-number">15.1</span> Main
     options](#main-options-12)
-  - [<span class="toc-section-number">15.2</span> Add](#add)
-- [<span class="toc-section-number">16</span> TRANSCRIPTS_CHECK
-  tool](#transcripts_check-tool)
+  - [<span class="toc-section-number">15.2</span>
+    Update_database](#update_database)
+  - [<span class="toc-section-number">15.3</span> Options](#options)
+- [<span class="toc-section-number">16</span> TO_EXCEL
+  tool](#to_excel-tool)
   - [<span class="toc-section-number">16.1</span> Main
     options](#main-options-13)
-- [<span class="toc-section-number">17</span> GENEBE tool](#genebe-tool)
+  - [<span class="toc-section-number">16.2</span> Add](#add)
+- [<span class="toc-section-number">17</span> TRANSCRIPTS_CHECK
+  tool](#transcripts_check-tool)
   - [<span class="toc-section-number">17.1</span> Main
     options](#main-options-14)
-  - [<span class="toc-section-number">17.2</span> GeneBe](#genebe)
-  - [<span class="toc-section-number">17.3</span> Explode](#explode-3)
-  - [<span class="toc-section-number">17.4</span> Export](#export-4)
-- [<span class="toc-section-number">18</span> MINIMALIZE
-  tool](#minimalize-tool)
+- [<span class="toc-section-number">18</span> GENEBE tool](#genebe-tool)
   - [<span class="toc-section-number">18.1</span> Main
     options](#main-options-15)
-  - [<span class="toc-section-number">18.2</span>
-    Minimalize](#minimalize)
-  - [<span class="toc-section-number">18.3</span> Explode](#explode-4)
+  - [<span class="toc-section-number">18.2</span> GeneBe](#genebe)
+  - [<span class="toc-section-number">18.3</span> Explode](#explode-3)
   - [<span class="toc-section-number">18.4</span> Export](#export-5)
-- [<span class="toc-section-number">19</span> Shared
+- [<span class="toc-section-number">19</span> MINIMALIZE
+  tool](#minimalize-tool)
+  - [<span class="toc-section-number">19.1</span> Main
+    options](#main-options-16)
+  - [<span class="toc-section-number">19.2</span>
+    Minimalize](#minimalize)
+  - [<span class="toc-section-number">19.3</span> Explode](#explode-4)
+  - [<span class="toc-section-number">19.4</span> Export](#export-6)
+- [<span class="toc-section-number">20</span> Shared
   arguments](#shared-arguments)
 
 # Introduction
@@ -367,6 +371,64 @@ Usage examples:
 >
 >     List of samples
 >     (e.g. 'sample1,sample2').
+
+</small>
+
+## Export
+
+<small>
+
+>     --include_header
+>
+>     Include header (in VCF format) in output file.
+>     Only for compatible formats (tab-delimiter format as TSV or BED).
+
+</small>
+
+<small>
+
+>     --parquet_partitions=<parquet partitions>
+>
+>     Parquet partitioning using hive (available for any format).
+>     This option is faster parallel writing, but memory consuming.
+>     Use 'None' (string) for NO partition but split parquet files into a folder.
+>     Examples: '#CHROM', '#CHROM,REF', 'None'.
+
+</small>
+
+# SORT tool
+
+Sort genetic variations from contig order. Data can be loaded into
+'variants' table from various formats (e.g. VCF, TSV, Parquet...). SQL
+filter can also use external data within the request, such as a Parquet
+file(s).
+
+Usage examples:
+
+> howard sort --input=tests/data/example.vcf.gz
+> --output=/tmp/example.sorted.vcf.gz
+
+> 
+
+## Main options
+
+<small>
+
+>     --input=<input> | required
+>
+>     Input file path.
+>     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
+>     Files can be compressesd (e.g. vcf.gz, tsv.gz).
+
+</small>
+
+<small>
+
+>     --output=<output> | required
+>
+>     Output file path.
+>     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
+>     Files can be compressesd (e.g. vcf.gz, tsv.gz).
 
 </small>
 

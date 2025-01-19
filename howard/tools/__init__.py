@@ -7,6 +7,7 @@ __all__ = [
     "prioritization",
     "query",
     "filter",
+    "sort",
     "stats",
     "databases",
     "gui",
