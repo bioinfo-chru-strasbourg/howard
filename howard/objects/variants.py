@@ -45,6 +45,7 @@ from howard.functions.commons import (
     clean_annotation_field,
     command,
     detect_column_type,
+    extract_memory_in_go,
     find,
     find_all,
     find_file_prefix,
@@ -57,6 +58,7 @@ from howard.functions.commons import (
     get_bin_command,
     get_file_compressed,
     get_file_format,
+    get_memory,
     get_random,
     get_tmp,
     merge_regions,
@@ -2001,11 +2003,55 @@ class Variants:
 
         return removed
 
+    def get_batch_split(self, table: str = None, block: int = 1000) -> int:
+        """
+        Calculate the batch size for processing data based on the number of rows in the table and available memory.
+
+        Args:
+            table (str, optional): The name of the table to evaluate. If None, the default variants table is used.
+            block (int, optional): The block size to use for the calculation. Default is 1000.
+
+        Returns:
+            int: The calculated batch size.
+        """
+
+        # Get table variants if no table
+        if table is None:
+            table = self.get_table_variants()
+
+        # Evaluate split
+        log.debug(f"Evaluate batch size by parameter")
+
+        # Count numbber of variants in table variants
+        nb_lines = (
+            self.get_connexion()
+            .execute(
+                f"""
+            SELECT count(*)
+            FROM {table}
+            """
+            )
+            .fetchone()[0]
+        )
+
+        # Check memory
+        memory = extract_memory_in_go(get_memory(self.get_config(), self.get_param()))
+
+        # Avaluate block size using block size (e.g. 1000 viarants) and memory
+        block_size = block * memory
+
+        # Calculate batch
+        batch = round(nb_lines / block_size) + 1
+
+        # Return
+        return batch
+
     def explode_infos(
         self,
         prefix: str = None,
         create_index: bool = False,
         fields: list = None,
+        fields_just_add: list = [],
         force: bool = False,
         proccess_all_fields_together: bool = False,
         table: str = None,
@@ -2027,6 +2073,9 @@ class Variants:
         fields will be exploded. You can specify the INFO fields you want to explode by passing them as
         a list to the `
         :type fields: list
+        :param fields_just_add: The `fields_just_add` parameter in the `explode_infos` function is a
+        list of INFO fields that you want to just add into individual columns, without exploding values.
+        :type fields_just_add: list
         :param force: The `force` parameter in the `explode_infos` function is a boolean flag that
         determines whether to drop and recreate a column if it already exists in the table. If `force`
         is set to `True`, the column will be dropped and recreated. If `force` is set to `False,
@@ -2135,7 +2184,8 @@ class Variants:
                     if added_column:
                         added_columns.append(added_column)
 
-                    if added_column or force:
+                    # if added_column or force: #fileds_just_add
+                    if (added_column or force) and not info in fields_just_add:
 
                         # add field to index
                         self.index_additionnal_fields.append(info_id_sql)
@@ -2163,23 +2213,21 @@ class Variants:
 
             if sql_info_alter_table_array:
 
-                # By chromosomes
-                try:
-                    chromosomes_list = list(
-                        self.get_query_to_df(
-                            f""" SELECT "#CHROM" FROM {table_variants} GROUP BY "#CHROM" """
-                        )["#CHROM"]
+                # Evaluate block size
+                batch_split = self.get_batch_split()
+
+                # Insert by batch
+                for batch_index in range(batch_split):
+
+                    log.debug(
+                        f"Explode INFO fields - Process batch [{batch_index+1}/{batch_split}]..."
                     )
-                except:
-                    chromosomes_list = [None]
 
-                for chrom in chromosomes_list:
-                    log.debug(f"Explode INFO fields - Chromosome {chrom}...")
-
-                    # Where clause
-                    where_clause = ""
-                    if chrom and len(chromosomes_list) > 1:
-                        where_clause = f""" WHERE "#CHROM" = '{chrom}' """
+                    # where clause
+                    if batch_split > 1:
+                        where_clause = f" WHERE (POS % {batch_split}) = {batch_index} "
+                    else:
+                        where_clause = ""
 
                     # Update table
                     if proccess_all_fields_together:
@@ -8788,12 +8836,12 @@ class Variants:
         operation_table = operation.get(
             "table", self.get_table_variants(clause="alter")
         )
-
-        # table variants
-        if operation_table:
-            table_variants = operation_table
-        else:
-            table_variants = self.get_table_variants(clause="alter")
+        operation_table_source = operation.get("table_source", operation_table)
+        operation_table_dest = operation.get("table_dest", operation_table)
+        operation_table_key = operation.get(
+            "table_key", ["#CHROM", "POS", "REF", "ALT"]
+        )
+        # log.debug(f"operation={operation}")
 
         if operation_query:
 
@@ -8825,51 +8873,78 @@ class Variants:
                     self.code_type_map.get(output_column_type),
                 )
 
-                # Explode infos if needed
-                log.debug(f"calculation_process_sql prefix {prefix}")
-                added_columns += self.explode_infos(
-                    prefix=prefix,
-                    fields=[output_column_name] + operation_info_fields,
-                    force=False,
-                    table=table_variants,
+                # Create view
+                table_view_name = "table_view_calculation_process"
+                table_view_name = self.create_annotations_view(
+                    table=operation_table_source,
+                    view=table_view_name,
+                    view_type="view",
+                    view_mode="explore",
+                    fields=operation_info_fields,
+                    fields_needed=operation_table_key,
+                    info_prefix_column="",
+                    info_struct_column="INFOS",
+                    drop_view=True,
                 )
 
-                # Create column
-                added_column = self.add_column(
-                    table_name=table_variants,
-                    column_name=prefix + output_column_name,
-                    column_type=output_column_type_sql,
-                    default_value="null",
-                )
-                added_columns.append(added_column)
+                # Table key construct
+                clause_key = []
+                for key in operation_table_key:
+                    clause_key.append(
+                        f""" {operation_table_dest}."{key}" = table_view."{key}" """
+                    )
+
+                # Add to INFO
+                if operation_info:
+                    sql_update_info = f"""
+                        UPDATE {operation_table_dest}
+                        SET "INFO" =
+                            concat(
+                                CASE
+                                    WHEN "INFO" IS NOT NULL
+                                    THEN concat("INFO", ';')
+                                    ELSE ''
+                                END,
+                                '{output_column_name}=',
+                                table_view.output_column_name
+                            )
+                        FROM (
+                            SELECT *, TRY_CAST(({operation_query}) AS VARCHAR) AS output_column_name
+                            FROM {table_view_name}
+                            WHERE TRY_CAST(({operation_query}) AS VARCHAR) IS NOT NULL AND TRY_CAST(({operation_query}) AS VARCHAR) NOT IN ('')
+                        ) AS table_view
+                        WHERE {" AND ".join(clause_key)}
+                    """
 
                 # Operation calculation
                 try:
 
-                    # Query to update calculation column
-                    sql_update = f"""
-                        UPDATE {table_variants}
-                        SET "{prefix}{output_column_name}" = ({operation_query})
-                    """
-                    self.conn.execute(sql_update)
-
                     # Add to INFO
                     if operation_info:
-                        sql_update_info = f"""
-                            UPDATE {table_variants}
-                            SET "INFO" =
-                                concat(
-                                    CASE
-                                        WHEN "INFO" IS NOT NULL
-                                        THEN concat("INFO", ';')
-                                        ELSE ''
-                                    END,
-                                    '{output_column_name}=',
-                                    "{prefix}{output_column_name}"
+
+                        if True:
+                            # Batch split
+                            batch_split = self.get_batch_split()
+
+                            # Insert by batch
+                            for batch_index in range(batch_split):
+                                # where clause
+                                if batch_split > 1:
+                                    where_clause = f""" AND ({operation_table_dest}."POS" % {batch_split}) = {batch_index} """
+                                else:
+                                    where_clause = ""
+                                # Insert data
+                                sql_update_info_chunk = f"""
+                                    {sql_update_info}
+                                    {where_clause}
+                                """
+                                log.debug(
+                                    f"Calculation process - process batch [{batch_index+1}/{batch_split}]..."
                                 )
-                            WHERE "{prefix}{output_column_name}" IS NOT NULL AND "{prefix}{output_column_name}" NOT IN ('')
-                        """
-                        self.conn.execute(sql_update_info)
+                                # log.debug(
+                                #     f"sql_update_info_chunk={sql_update_info_chunk}"
+                                # )
+                                self.conn.execute(sql_update_info_chunk)
 
                 except:
                     log.error(
@@ -10660,6 +10735,9 @@ class Variants:
                 log.info("Transcripts view creation - already exists")
                 return transcripts_table
 
+        # # Variants table
+        # variants_table = self.get_table_variants()
+
         if struct:
 
             # added_columns
@@ -10713,6 +10791,7 @@ class Variants:
                 transcripts_table=transcripts_table,
                 column_formats=column_formats,
                 temporary_tables=temporary_tables,
+                view_type="table",
                 annotation_fields=annotation_fields,
             )
 
@@ -10762,10 +10841,8 @@ class Variants:
             # Aggregate all annotations fields
             for annotation_field in set(annotation_fields):
 
-                # Check feild type
-                annotation_field_type = annotation_fields_type.get(
-                    annotation_field, "VARCHAR"
-                )
+                # Annotation field type
+                annotation_field_type = "VARCHAR"
 
                 # Aggregate field
                 query_merge_on_transcripts_annotation_fields.append(
@@ -10896,41 +10973,43 @@ class Variants:
                 """
                 self.execute_query(query=query_drop)
 
-            # List of unique #CHROM
-            query_unique_chrom = f"""
-                SELECT DISTINCT "#CHROM"
-                FROM variants AS subquery
-                ORDER BY "#CHROM"
-            """
-            unique_chroms = self.get_query_to_df(query=query_unique_chrom)
+            # Log
+            log.info(f"Transcripts view creation - Create view...")
+
+            # # DEVEL
+            # query_merge_on_transcripts = query_merge_on_transcripts.replace(
+            #     """SELECT "#CHROM", POS, REF, ALT, INFO, """,
+            #     """SELECT "#CHROM", POS, REF, ALT, '' AS INFO, """,
+            # )
 
             # Create table with structure but without data, if not exists
             query_create_table = f"""
                 CREATE TABLE IF NOT EXISTS {transcripts_table} AS
-                SELECT * FROM ({query_merge_on_transcripts}) AS subquery LIMIT 0
+                SELECT * FROM ({query_merge_on_transcripts}) LIMIT 0
             """
             self.execute_query(query=query_create_table)
 
-            # Process by #CHROM
-            for chrom in unique_chroms["#CHROM"]:
+            # Evaluate block size
+            batch_split = self.get_batch_split()
 
-                # Log
-                log.info(
-                    f"Transcripts view creation - Processing chromosome '{chrom}'..."
-                )
-
-                # Select data by #CHROM
-                query_chunk = f"""
-                    SELECT *
-                    FROM ({query_merge_on_transcripts})
-                    WHERE "#CHROM" = '{chrom}'
-                """
-
+            # Insert by batch
+            for batch_index in range(batch_split):
+                # where clause
+                if batch_split > 1:
+                    where_clause = f" WHERE (POS % {batch_split}) = {batch_index} "
+                else:
+                    where_clause = ""
                 # Insert data
                 query_insert_chunk = f"""
                     INSERT INTO {transcripts_table}
-                    {query_chunk}
+                    SELECT * FROM ({query_merge_on_transcripts})
+                    {where_clause}
                 """
+                # Log
+                log.debug(
+                    f"Transcripts view creation - Insert batch [{batch_index+1}/{batch_split}]..."
+                )
+                # Execute
                 self.execute_query(query=query_insert_chunk)
 
             # Remove temporary tables
@@ -11082,9 +11161,9 @@ class Variants:
                             random.choices(string.ascii_uppercase + string.digits, k=10)
                         )
                     )
-                    annotation_view_fields = [
-                        transcripts_column
-                    ] + transcripts_infos_columns  # + ["INFO"]
+                    annotation_view_fields = (
+                        [transcripts_column] + transcripts_infos_columns + ["INFO"]
+                    )
                     annotation_view_name = self.create_annotations_view(
                         table=table_variants,
                         view=annotation_view_name,
@@ -11095,7 +11174,7 @@ class Variants:
                         fields=annotation_view_fields,
                         fields_not_exists=True,
                         fields_forced_as_varchar=True,
-                        fields_needed_all=True,
+                        fields_needed_all=False,
                     )
                     temporary_intermediate_tables.append(annotation_view_name)
                     table_for_view = annotation_view_name
@@ -11110,16 +11189,9 @@ class Variants:
                         detect_type_list=True,
                         fields=annotation_view_fields,
                         fields_not_exists=True,
-                        fields_needed_all=True,
+                        fields_needed_all=False,
                     )
                     temporary_intermediate_tables.append(annotation_view_name_for_type)
-
-                # Old generation using explode fields
-                if False:
-                    # Explode
-                    added_columns += self.explode_infos(
-                        fields=[transcripts_column] + transcripts_infos_columns
-                    )
 
                 # View clauses
                 clause_select_variants = []
@@ -11162,18 +11234,19 @@ class Variants:
                     else:
                         field_type = "VARCHAR"
 
-                    # Clause select Variants OK
+                    # Clause select Variants
                     clause_select_variants.append(
-                        f""" regexp_split_to_table(CAST("{field}" AS VARCHAR), ',')::VARCHAR AS '{field}' """
+                        f""" TRY_CAST(regexp_split_to_table(CAST("{field}" AS VARCHAR), ',') AS VARCHAR) AS '{field}' """
                     )
 
+                    # Clause select Transcripts
                     if field in [transcripts_column]:
                         clause_select_tanscripts.append(
-                            f""" regexp_split_to_table("{field}", ',')::{field_type} AS '{field}' """
+                            f""" TRY_CAST(regexp_split_to_table("{field}", ',') AS {field_type}) AS '{field}' """
                         )
                     else:
                         clause_select_tanscripts.append(
-                            f""" regexp_split_to_table("{field}", ',')::{field_type} AS '{as_field}' """
+                            f""" TRY_CAST(regexp_split_to_table("{field}", ',') AS {field_type}) AS '{as_field}' """
                         )
                         annotation_fields.append(as_field)
                         annotation_fields_type[as_field] = field_type
@@ -11222,6 +11295,7 @@ class Variants:
         temporary_tables: list = None,
         annotation_fields: list = None,
         column_rename: dict = {},
+        view_type: str = "view",
         column_clean: bool = False,
         column_case: str = None,
     ) -> tuple[list, list, list]:
@@ -11319,6 +11393,7 @@ class Variants:
                 self.annotation_format_to_table(
                     annotation_field=annotation_field,
                     view_name=temporary_view_name,
+                    view_type=view_type,
                     annotation_id=transcript_annotation,
                     column_rename=column_rename,
                     column_clean=column_clean,
@@ -11362,6 +11437,7 @@ class Variants:
         annotation_field: str = "ANN",
         annotation_id: str = "Feature_ID",
         view_name: str = "transcripts",
+        view_type: str = "view",
         column_rename: dict = {},
         column_clean: bool = False,
         column_case: str = None,
@@ -11464,29 +11540,6 @@ class Variants:
             # annotation field pattern
             annotation_field_pattern = rf"(^|;)({annotation_field})=([^;]*)?"
 
-            # Create dataframe for keys column type
-            # query = f"""
-            #     WITH exploded_annotations AS (
-            #         SELECT
-            #             UNNEST(
-            #                 STRING_SPLIT(
-            #                     regexp_extract("INFO", '{annotation_field_pattern}', 3),
-            #                     ','
-            #                 )
-            #             ) AS annotation
-            #         FROM {table_variants}
-            #     ),
-            #     split_annotations AS (
-            #         SELECT
-            #             {", ".join([f"SPLIT_PART(annotation, '|', {i+1}) AS '{header}'" for i, header in enumerate(ann_header_desc.values())])},
-            #         FROM exploded_annotations
-            #     )
-            #     SELECT * FROM split_annotations
-            #     LIMIT 1000
-            #     """
-            # dataframe_annotation_format = self.get_query_to_df(query=query)
-            # log.debug(f"dataframe_annotation_format={dataframe_annotation_format}")
-
             annotation_fields_for_format = []
             for i, header in enumerate(ann_header_desc.values()):
                 if header in [annotation_id_original]:
@@ -11555,9 +11608,6 @@ class Variants:
                     log.debug(f"Field '{key}' type detected: {column_type}")
 
                     # Append key to list
-                    # query_list_keys.append(
-                    #     f""" NULLIF(SPLIT_PART(annotation, '|', {key_i}), '')::{column_type} AS '{prefix}{key_clean}' """
-                    # )
                     if column_split is not None:
                         query_list_keys.append(
                             f""" TRY_CAST(replace(NULLIF(SPLIT_PART(annotation, '|', {key_i}), ''), '{column_split}', ',') AS {column_type}) AS '{prefix}{key_clean}' """
@@ -11569,7 +11619,7 @@ class Variants:
 
             # Create temporary table
             query_create_view = f"""
-                CREATE VIEW {view_name} AS (
+                CREATE {view_type} {view_name} AS (
                     WITH exploded_annotations AS (
                         SELECT
                             "#CHROM",
@@ -11968,14 +12018,7 @@ class Variants:
                 log.error(msg_err)
                 raise ValueError(msg_err)
 
-        # # Explode fields to explode
-        # self.explode_infos(
-        #     table=transcripts_table,
-        #     fields=fields_to_explode,
-        # )
-
         # Create view as table
-        # log.debug(f"fields_to_explode={fields_to_explode}")
         annotation_view_name = "annotation_view_for_transcripts_prioritization_" + str(
             random.randrange(1000)
         )
@@ -11988,7 +12031,7 @@ class Variants:
             detect_type_list=False,
             fields=fields_to_explode + ["transcript"],
             fields_not_exists=True,
-            fields_forced_as_varchar=False,
+            fields_forced_as_varchar=True,
             fields_needed_all=False,
         )
         transcripts_table = annotation_view_name
@@ -13339,7 +13382,7 @@ class Variants:
                         """
                     )
                     msg_err = f"Field '{field}' is not found (in table or header): '{field}' will be set to NULL"
-                    log.debug(msg=msg_err)
+                    log.warning(msg=msg_err)
 
         # If samples and struct as option
         if sample_struct_column and len(samples):

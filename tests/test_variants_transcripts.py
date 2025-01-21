@@ -1914,7 +1914,8 @@ def test_transcripts_create_view_export(output):
                 "transcripts_column": "PZTTranscript",
                 # "transcripts_order": ["column", "file"],
             },
-            ["NR_047526", "NR_036051", "NR_047551", "NM_001005484"],
+            # ["NR_047526", "NR_036051", "NR_047551", "NM_001005484"],
+            ["NR_047519", "NR_036051", "NR_047551", "NM_001005484"],
         ),
         (
             {
@@ -1924,7 +1925,8 @@ def test_transcripts_create_view_export(output):
                 "transcripts_column": "PZTTranscript",
                 # "transcripts_order": ["column", "file"],
             },
-            ["NR_047526", "NR_036051", "NR_047551", "NM_001005484"],
+            # ["NR_047526", "NR_036051", "NR_047551", "NM_001005484"],
+            ["NR_047519", "NR_036051", "NR_047551", "NM_001005484"],
         ),
         (
             {
@@ -1934,7 +1936,8 @@ def test_transcripts_create_view_export(output):
                 "transcripts_column": "PZTTranscript",
                 "transcripts_order": ["column", "file"],
             },
-            ["NR_047526", "NR_036051", "NR_047551", "NM_001005484"],
+            # ["NR_047526", "NR_036051", "NR_047551", "NM_001005484"],
+            ["NR_047519", "NR_036051", "NR_047551", "NM_001005484"],
         ),
         (
             {
@@ -1944,7 +1947,8 @@ def test_transcripts_create_view_export(output):
                 "transcripts_column": "PZTTranscript",
                 "transcripts_order": ["file", "column"],
             },
-            ["NR_047526", "NR_036266", "NM_001346897", "NM_001005484", "NR_024540"],
+            # ["NR_047526", "NR_036266", "NM_001346897", "NM_001005484", "NR_024540"],
+            ["NR_047519", "NR_036266", "NM_001346897", "NM_001005484", "NR_024540"],
         ),
     ],
 )
