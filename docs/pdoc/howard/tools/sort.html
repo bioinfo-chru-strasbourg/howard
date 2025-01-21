@@ -109,86 +109,54 @@
 </span><span id="L-53"><a href="#L-53"><span class="linenos"> 53</span></a>    <span class="c1"># Load data</span>
 </span><span id="L-54"><a href="#L-54"><span class="linenos"> 54</span></a>    <span class="k">if</span> <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">get_input</span><span class="p">():</span>
 </span><span id="L-55"><a href="#L-55"><span class="linenos"> 55</span></a>        <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">load_data</span><span class="p">()</span>
-</span><span id="L-56"><a href="#L-56"><span class="linenos"> 56</span></a>        <span class="c1"># vcfdata_obj.load_header()</span>
-</span><span id="L-57"><a href="#L-57"><span class="linenos"> 57</span></a>        <span class="c1"># view_name = &quot;variants_view&quot;</span>
-</span><span id="L-58"><a href="#L-58"><span class="linenos"> 58</span></a>        <span class="c1"># vcfdata_obj.create_annotations_view(</span>
-</span><span id="L-59"><a href="#L-59"><span class="linenos"> 59</span></a>        <span class="c1">#     view=view_name,</span>
-</span><span id="L-60"><a href="#L-60"><span class="linenos"> 60</span></a>        <span class="c1">#     view_type=&quot;view&quot;,</span>
-</span><span id="L-61"><a href="#L-61"><span class="linenos"> 61</span></a>        <span class="c1">#     view_mode=&quot;explore&quot;,</span>
-</span><span id="L-62"><a href="#L-62"><span class="linenos"> 62</span></a>        <span class="c1">#     info_prefix_column=&quot;&quot;,</span>
-</span><span id="L-63"><a href="#L-63"><span class="linenos"> 63</span></a>        <span class="c1">#     fields_needed_all=True,</span>
-</span><span id="L-64"><a href="#L-64"><span class="linenos"> 64</span></a>        <span class="c1">#     info_struct_column=&quot;INFOS&quot;,</span>
-</span><span id="L-65"><a href="#L-65"><span class="linenos"> 65</span></a>        <span class="c1">#     sample_struct_column=&quot;SAMPLES&quot;,</span>
-</span><span id="L-66"><a href="#L-66"><span class="linenos"> 66</span></a>        <span class="c1">#     detect_type_list=True,</span>
-</span><span id="L-67"><a href="#L-67"><span class="linenos"> 67</span></a>        <span class="c1"># )</span>
+</span><span id="L-56"><a href="#L-56"><span class="linenos"> 56</span></a>
+</span><span id="L-57"><a href="#L-57"><span class="linenos"> 57</span></a>    <span class="c1"># Filtering</span>
+</span><span id="L-58"><a href="#L-58"><span class="linenos"> 58</span></a>    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Sorting...&quot;</span><span class="p">)</span>
+</span><span id="L-59"><a href="#L-59"><span class="linenos"> 59</span></a>
+</span><span id="L-60"><a href="#L-60"><span class="linenos"> 60</span></a>    <span class="c1"># Sort contigs</span>
+</span><span id="L-61"><a href="#L-61"><span class="linenos"> 61</span></a>    <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">sort_contigs</span><span class="p">()</span>
+</span><span id="L-62"><a href="#L-62"><span class="linenos"> 62</span></a>
+</span><span id="L-63"><a href="#L-63"><span class="linenos"> 63</span></a>    <span class="c1"># variants table</span>
+</span><span id="L-64"><a href="#L-64"><span class="linenos"> 64</span></a>    <span class="n">table_variants</span> <span class="o">=</span> <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">get_table_variants</span><span class="p">()</span>
+</span><span id="L-65"><a href="#L-65"><span class="linenos"> 65</span></a>
+</span><span id="L-66"><a href="#L-66"><span class="linenos"> 66</span></a>    <span class="c1"># Columns</span>
+</span><span id="L-67"><a href="#L-67"><span class="linenos"> 67</span></a>    <span class="n">columns</span> <span class="o">=</span> <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">get_header_columns_as_list</span><span class="p">()</span>
 </span><span id="L-68"><a href="#L-68"><span class="linenos"> 68</span></a>
-</span><span id="L-69"><a href="#L-69"><span class="linenos"> 69</span></a>    <span class="c1"># Filtering</span>
-</span><span id="L-70"><a href="#L-70"><span class="linenos"> 70</span></a>    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Sorting...&quot;</span><span class="p">)</span>
-</span><span id="L-71"><a href="#L-71"><span class="linenos"> 71</span></a>
-</span><span id="L-72"><a href="#L-72"><span class="linenos"> 72</span></a>    <span class="c1"># # Filter</span>
-</span><span id="L-73"><a href="#L-73"><span class="linenos"> 73</span></a>    <span class="c1"># filter = param.get(&quot;filters&quot;, {}).get(&quot;filter&quot;, None)</span>
+</span><span id="L-69"><a href="#L-69"><span class="linenos"> 69</span></a>    <span class="c1"># Create case clause</span>
+</span><span id="L-70"><a href="#L-70"><span class="linenos"> 70</span></a>    <span class="n">case_clause</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+</span><span id="L-71"><a href="#L-71"><span class="linenos"> 71</span></a>    <span class="k">if</span> <span class="s2">&quot;#CHROM&quot;</span> <span class="ow">in</span> <span class="n">columns</span> <span class="ow">and</span> <span class="s2">&quot;POS&quot;</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">:</span>
+</span><span id="L-72"><a href="#L-72"><span class="linenos"> 72</span></a>        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">chrom</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">get_header</span><span class="p">()</span><span class="o">.</span><span class="n">contigs</span><span class="p">):</span>
+</span><span id="L-73"><a href="#L-73"><span class="linenos"> 73</span></a>            <span class="n">case_clause</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot; WHEN &quot;#CHROM&quot; = &#39;</span><span class="si">{</span><span class="n">chrom</span><span class="si">}</span><span class="s2">&#39; THEN </span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> &quot;&quot;&quot;</span>
 </span><span id="L-74"><a href="#L-74"><span class="linenos"> 74</span></a>
-</span><span id="L-75"><a href="#L-75"><span class="linenos"> 75</span></a>    <span class="c1"># # Columns</span>
-</span><span id="L-76"><a href="#L-76"><span class="linenos"> 76</span></a>    <span class="c1"># columns = vcfdata_obj.get_header_columns_as_list()</span>
-</span><span id="L-77"><a href="#L-77"><span class="linenos"> 77</span></a>
-</span><span id="L-78"><a href="#L-78"><span class="linenos"> 78</span></a>    <span class="c1"># # Samples</span>
-</span><span id="L-79"><a href="#L-79"><span class="linenos"> 79</span></a>    <span class="c1"># samples_param = param.get(&quot;filters&quot;, {}).get(&quot;samples&quot;, None)</span>
-</span><span id="L-80"><a href="#L-80"><span class="linenos"> 80</span></a>    <span class="c1"># samples = []</span>
-</span><span id="L-81"><a href="#L-81"><span class="linenos"> 81</span></a>    <span class="c1"># if not (samples_param is None or samples_param.strip() == &quot;&quot;):</span>
-</span><span id="L-82"><a href="#L-82"><span class="linenos"> 82</span></a>
-</span><span id="L-83"><a href="#L-83"><span class="linenos"> 83</span></a>    <span class="c1">#     # Check samples in file</span>
-</span><span id="L-84"><a href="#L-84"><span class="linenos"> 84</span></a>    <span class="c1">#     samples_in_file = vcfdata_obj.get_header_sample_list(check=True)</span>
-</span><span id="L-85"><a href="#L-85"><span class="linenos"> 85</span></a>
-</span><span id="L-86"><a href="#L-86"><span class="linenos"> 86</span></a>    <span class="c1">#     for s in samples_param.split(&quot;,&quot;):</span>
-</span><span id="L-87"><a href="#L-87"><span class="linenos"> 87</span></a>    <span class="c1">#         # Check if sample in file</span>
-</span><span id="L-88"><a href="#L-88"><span class="linenos"> 88</span></a>    <span class="c1">#         if s.strip() in samples_in_file:</span>
-</span><span id="L-89"><a href="#L-89"><span class="linenos"> 89</span></a>    <span class="c1">#             samples.append(s.strip())</span>
-</span><span id="L-90"><a href="#L-90"><span class="linenos"> 90</span></a>    <span class="c1">#         else:</span>
-</span><span id="L-91"><a href="#L-91"><span class="linenos"> 91</span></a>    <span class="c1">#             log.warning(f&quot;Sample &#39;{s.strip()}&#39; not in file&quot;)</span>
-</span><span id="L-92"><a href="#L-92"><span class="linenos"> 92</span></a>
-</span><span id="L-93"><a href="#L-93"><span class="linenos"> 93</span></a>    <span class="c1">#     if len(samples):</span>
-</span><span id="L-94"><a href="#L-94"><span class="linenos"> 94</span></a>    <span class="c1">#         # Remove samples from columns if not selected</span>
-</span><span id="L-95"><a href="#L-95"><span class="linenos"> 95</span></a>    <span class="c1">#         for s in samples_in_file:</span>
-</span><span id="L-96"><a href="#L-96"><span class="linenos"> 96</span></a>    <span class="c1">#             if s not in samples:</span>
-</span><span id="L-97"><a href="#L-97"><span class="linenos"> 97</span></a>    <span class="c1">#                 columns.remove(s)</span>
+</span><span id="L-75"><a href="#L-75"><span class="linenos"> 75</span></a>    <span class="c1"># Create case clause order by</span>
+</span><span id="L-76"><a href="#L-76"><span class="linenos"> 76</span></a>    <span class="k">if</span> <span class="n">case_clause</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+</span><span id="L-77"><a href="#L-77"><span class="linenos"> 77</span></a>        <span class="n">case_clause_order_by</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+</span><span id="L-78"><a href="#L-78"><span class="linenos"> 78</span></a><span class="s2">            ORDER BY </span>
+</span><span id="L-79"><a href="#L-79"><span class="linenos"> 79</span></a><span class="s2">            CASE</span>
+</span><span id="L-80"><a href="#L-80"><span class="linenos"> 80</span></a><span class="s2">                </span><span class="si">{</span><span class="n">case_clause</span><span class="si">}</span>
+</span><span id="L-81"><a href="#L-81"><span class="linenos"> 81</span></a><span class="s2">            END,</span>
+</span><span id="L-82"><a href="#L-82"><span class="linenos"> 82</span></a><span class="s2">            POS</span>
+</span><span id="L-83"><a href="#L-83"><span class="linenos"> 83</span></a><span class="s2">        &quot;&quot;&quot;</span>
+</span><span id="L-84"><a href="#L-84"><span class="linenos"> 84</span></a>    <span class="k">else</span><span class="p">:</span>
+</span><span id="L-85"><a href="#L-85"><span class="linenos"> 85</span></a>        <span class="n">case_clause_order_by</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+</span><span id="L-86"><a href="#L-86"><span class="linenos"> 86</span></a><span class="s2">            ORDER BY &quot;#CHROM&quot;, POS</span>
+</span><span id="L-87"><a href="#L-87"><span class="linenos"> 87</span></a><span class="s2">        &quot;&quot;&quot;</span>
+</span><span id="L-88"><a href="#L-88"><span class="linenos"> 88</span></a>
+</span><span id="L-89"><a href="#L-89"><span class="linenos"> 89</span></a>    <span class="c1"># Create sort query</span>
+</span><span id="L-90"><a href="#L-90"><span class="linenos"> 90</span></a>    <span class="n">query_sort</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+</span><span id="L-91"><a href="#L-91"><span class="linenos"> 91</span></a><span class="s2">        SELECT *</span>
+</span><span id="L-92"><a href="#L-92"><span class="linenos"> 92</span></a><span class="s2">        FROM </span><span class="si">{</span><span class="n">table_variants</span><span class="si">}</span>
+</span><span id="L-93"><a href="#L-93"><span class="linenos"> 93</span></a><span class="s2">        </span><span class="si">{</span><span class="n">case_clause_order_by</span><span class="si">}</span>
+</span><span id="L-94"><a href="#L-94"><span class="linenos"> 94</span></a><span class="s2">    &quot;&quot;&quot;</span>
+</span><span id="L-95"><a href="#L-95"><span class="linenos"> 95</span></a>
+</span><span id="L-96"><a href="#L-96"><span class="linenos"> 96</span></a>    <span class="c1"># Export</span>
+</span><span id="L-97"><a href="#L-97"><span class="linenos"> 97</span></a>    <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">export_output</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="n">query_sort</span><span class="p">,</span> <span class="n">export_header</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </span><span id="L-98"><a href="#L-98"><span class="linenos"> 98</span></a>
-</span><span id="L-99"><a href="#L-99"><span class="linenos"> 99</span></a>    <span class="c1"># Sort contigs</span>
-</span><span id="L-100"><a href="#L-100"><span class="linenos">100</span></a>    <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">sort_contigs</span><span class="p">()</span>
+</span><span id="L-99"><a href="#L-99"><span class="linenos"> 99</span></a>    <span class="c1"># Log</span>
+</span><span id="L-100"><a href="#L-100"><span class="linenos">100</span></a>    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;End&quot;</span><span class="p">)</span>
 </span><span id="L-101"><a href="#L-101"><span class="linenos">101</span></a>
-</span><span id="L-102"><a href="#L-102"><span class="linenos">102</span></a>    <span class="c1"># variants table</span>
-</span><span id="L-103"><a href="#L-103"><span class="linenos">103</span></a>    <span class="n">table_variants</span> <span class="o">=</span> <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">get_table_variants</span><span class="p">()</span>
-</span><span id="L-104"><a href="#L-104"><span class="linenos">104</span></a>
-</span><span id="L-105"><a href="#L-105"><span class="linenos">105</span></a>    <span class="c1"># Create case clause</span>
-</span><span id="L-106"><a href="#L-106"><span class="linenos">106</span></a>    <span class="n">case_clause</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-</span><span id="L-107"><a href="#L-107"><span class="linenos">107</span></a>    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">chrom</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">get_header</span><span class="p">()</span><span class="o">.</span><span class="n">contigs</span><span class="p">):</span>
-</span><span id="L-108"><a href="#L-108"><span class="linenos">108</span></a>        <span class="n">case_clause</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;    WHEN &quot;#CHROM&quot; = &#39;</span><span class="si">{</span><span class="n">chrom</span><span class="si">}</span><span class="s2">&#39; THEN </span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;&quot;&quot;</span>
-</span><span id="L-109"><a href="#L-109"><span class="linenos">109</span></a>
-</span><span id="L-110"><a href="#L-110"><span class="linenos">110</span></a>    <span class="c1"># Create case clause order by</span>
-</span><span id="L-111"><a href="#L-111"><span class="linenos">111</span></a>    <span class="k">if</span> <span class="n">case_clause</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
-</span><span id="L-112"><a href="#L-112"><span class="linenos">112</span></a>        <span class="n">case_clause_order_by</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
-</span><span id="L-113"><a href="#L-113"><span class="linenos">113</span></a><span class="s2">            ORDER BY </span>
-</span><span id="L-114"><a href="#L-114"><span class="linenos">114</span></a><span class="s2">            CASE</span>
-</span><span id="L-115"><a href="#L-115"><span class="linenos">115</span></a><span class="s2">                </span><span class="si">{</span><span class="n">case_clause</span><span class="si">}</span>
-</span><span id="L-116"><a href="#L-116"><span class="linenos">116</span></a><span class="s2">            END</span>
-</span><span id="L-117"><a href="#L-117"><span class="linenos">117</span></a><span class="s2">        &quot;&quot;&quot;</span>
-</span><span id="L-118"><a href="#L-118"><span class="linenos">118</span></a>    <span class="k">else</span><span class="p">:</span>
-</span><span id="L-119"><a href="#L-119"><span class="linenos">119</span></a>        <span class="n">case_clause_order_by</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-</span><span id="L-120"><a href="#L-120"><span class="linenos">120</span></a>
-</span><span id="L-121"><a href="#L-121"><span class="linenos">121</span></a>    <span class="c1"># Create sort query</span>
-</span><span id="L-122"><a href="#L-122"><span class="linenos">122</span></a>    <span class="n">query_sort</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
-</span><span id="L-123"><a href="#L-123"><span class="linenos">123</span></a><span class="s2">        SELECT *</span>
-</span><span id="L-124"><a href="#L-124"><span class="linenos">124</span></a><span class="s2">        FROM </span><span class="si">{</span><span class="n">table_variants</span><span class="si">}</span>
-</span><span id="L-125"><a href="#L-125"><span class="linenos">125</span></a><span class="s2">        </span><span class="si">{</span><span class="n">case_clause_order_by</span><span class="si">}</span>
-</span><span id="L-126"><a href="#L-126"><span class="linenos">126</span></a><span class="s2">    &quot;&quot;&quot;</span>
-</span><span id="L-127"><a href="#L-127"><span class="linenos">127</span></a>
-</span><span id="L-128"><a href="#L-128"><span class="linenos">128</span></a>    <span class="c1"># Export</span>
-</span><span id="L-129"><a href="#L-129"><span class="linenos">129</span></a>    <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">export_output</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="n">query_sort</span><span class="p">,</span> <span class="n">export_header</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="L-130"><a href="#L-130"><span class="linenos">130</span></a>
-</span><span id="L-131"><a href="#L-131"><span class="linenos">131</span></a>    <span class="c1"># Log</span>
-</span><span id="L-132"><a href="#L-132"><span class="linenos">132</span></a>    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;End&quot;</span><span class="p">)</span>
-</span><span id="L-133"><a href="#L-133"><span class="linenos">133</span></a>
-</span><span id="L-134"><a href="#L-134"><span class="linenos">134</span></a>    <span class="c1"># Return variants object</span>
-</span><span id="L-135"><a href="#L-135"><span class="linenos">135</span></a>    <span class="k">return</span> <span class="n">vcfdata_obj</span>
+</span><span id="L-102"><a href="#L-102"><span class="linenos">102</span></a>    <span class="c1"># Return variants object</span>
+</span><span id="L-103"><a href="#L-103"><span class="linenos">103</span></a>    <span class="k">return</span> <span class="n">vcfdata_obj</span>
 </span></pre></div>
 
 
@@ -251,86 +219,54 @@
 </span><span id="sort-54"><a href="#sort-54"><span class="linenos"> 54</span></a>    <span class="c1"># Load data</span>
 </span><span id="sort-55"><a href="#sort-55"><span class="linenos"> 55</span></a>    <span class="k">if</span> <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">get_input</span><span class="p">():</span>
 </span><span id="sort-56"><a href="#sort-56"><span class="linenos"> 56</span></a>        <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">load_data</span><span class="p">()</span>
-</span><span id="sort-57"><a href="#sort-57"><span class="linenos"> 57</span></a>        <span class="c1"># vcfdata_obj.load_header()</span>
-</span><span id="sort-58"><a href="#sort-58"><span class="linenos"> 58</span></a>        <span class="c1"># view_name = &quot;variants_view&quot;</span>
-</span><span id="sort-59"><a href="#sort-59"><span class="linenos"> 59</span></a>        <span class="c1"># vcfdata_obj.create_annotations_view(</span>
-</span><span id="sort-60"><a href="#sort-60"><span class="linenos"> 60</span></a>        <span class="c1">#     view=view_name,</span>
-</span><span id="sort-61"><a href="#sort-61"><span class="linenos"> 61</span></a>        <span class="c1">#     view_type=&quot;view&quot;,</span>
-</span><span id="sort-62"><a href="#sort-62"><span class="linenos"> 62</span></a>        <span class="c1">#     view_mode=&quot;explore&quot;,</span>
-</span><span id="sort-63"><a href="#sort-63"><span class="linenos"> 63</span></a>        <span class="c1">#     info_prefix_column=&quot;&quot;,</span>
-</span><span id="sort-64"><a href="#sort-64"><span class="linenos"> 64</span></a>        <span class="c1">#     fields_needed_all=True,</span>
-</span><span id="sort-65"><a href="#sort-65"><span class="linenos"> 65</span></a>        <span class="c1">#     info_struct_column=&quot;INFOS&quot;,</span>
-</span><span id="sort-66"><a href="#sort-66"><span class="linenos"> 66</span></a>        <span class="c1">#     sample_struct_column=&quot;SAMPLES&quot;,</span>
-</span><span id="sort-67"><a href="#sort-67"><span class="linenos"> 67</span></a>        <span class="c1">#     detect_type_list=True,</span>
-</span><span id="sort-68"><a href="#sort-68"><span class="linenos"> 68</span></a>        <span class="c1"># )</span>
+</span><span id="sort-57"><a href="#sort-57"><span class="linenos"> 57</span></a>
+</span><span id="sort-58"><a href="#sort-58"><span class="linenos"> 58</span></a>    <span class="c1"># Filtering</span>
+</span><span id="sort-59"><a href="#sort-59"><span class="linenos"> 59</span></a>    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Sorting...&quot;</span><span class="p">)</span>
+</span><span id="sort-60"><a href="#sort-60"><span class="linenos"> 60</span></a>
+</span><span id="sort-61"><a href="#sort-61"><span class="linenos"> 61</span></a>    <span class="c1"># Sort contigs</span>
+</span><span id="sort-62"><a href="#sort-62"><span class="linenos"> 62</span></a>    <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">sort_contigs</span><span class="p">()</span>
+</span><span id="sort-63"><a href="#sort-63"><span class="linenos"> 63</span></a>
+</span><span id="sort-64"><a href="#sort-64"><span class="linenos"> 64</span></a>    <span class="c1"># variants table</span>
+</span><span id="sort-65"><a href="#sort-65"><span class="linenos"> 65</span></a>    <span class="n">table_variants</span> <span class="o">=</span> <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">get_table_variants</span><span class="p">()</span>
+</span><span id="sort-66"><a href="#sort-66"><span class="linenos"> 66</span></a>
+</span><span id="sort-67"><a href="#sort-67"><span class="linenos"> 67</span></a>    <span class="c1"># Columns</span>
+</span><span id="sort-68"><a href="#sort-68"><span class="linenos"> 68</span></a>    <span class="n">columns</span> <span class="o">=</span> <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">get_header_columns_as_list</span><span class="p">()</span>
 </span><span id="sort-69"><a href="#sort-69"><span class="linenos"> 69</span></a>
-</span><span id="sort-70"><a href="#sort-70"><span class="linenos"> 70</span></a>    <span class="c1"># Filtering</span>
-</span><span id="sort-71"><a href="#sort-71"><span class="linenos"> 71</span></a>    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Sorting...&quot;</span><span class="p">)</span>
-</span><span id="sort-72"><a href="#sort-72"><span class="linenos"> 72</span></a>
-</span><span id="sort-73"><a href="#sort-73"><span class="linenos"> 73</span></a>    <span class="c1"># # Filter</span>
-</span><span id="sort-74"><a href="#sort-74"><span class="linenos"> 74</span></a>    <span class="c1"># filter = param.get(&quot;filters&quot;, {}).get(&quot;filter&quot;, None)</span>
+</span><span id="sort-70"><a href="#sort-70"><span class="linenos"> 70</span></a>    <span class="c1"># Create case clause</span>
+</span><span id="sort-71"><a href="#sort-71"><span class="linenos"> 71</span></a>    <span class="n">case_clause</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+</span><span id="sort-72"><a href="#sort-72"><span class="linenos"> 72</span></a>    <span class="k">if</span> <span class="s2">&quot;#CHROM&quot;</span> <span class="ow">in</span> <span class="n">columns</span> <span class="ow">and</span> <span class="s2">&quot;POS&quot;</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">:</span>
+</span><span id="sort-73"><a href="#sort-73"><span class="linenos"> 73</span></a>        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">chrom</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">get_header</span><span class="p">()</span><span class="o">.</span><span class="n">contigs</span><span class="p">):</span>
+</span><span id="sort-74"><a href="#sort-74"><span class="linenos"> 74</span></a>            <span class="n">case_clause</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot; WHEN &quot;#CHROM&quot; = &#39;</span><span class="si">{</span><span class="n">chrom</span><span class="si">}</span><span class="s2">&#39; THEN </span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> &quot;&quot;&quot;</span>
 </span><span id="sort-75"><a href="#sort-75"><span class="linenos"> 75</span></a>
-</span><span id="sort-76"><a href="#sort-76"><span class="linenos"> 76</span></a>    <span class="c1"># # Columns</span>
-</span><span id="sort-77"><a href="#sort-77"><span class="linenos"> 77</span></a>    <span class="c1"># columns = vcfdata_obj.get_header_columns_as_list()</span>
-</span><span id="sort-78"><a href="#sort-78"><span class="linenos"> 78</span></a>
-</span><span id="sort-79"><a href="#sort-79"><span class="linenos"> 79</span></a>    <span class="c1"># # Samples</span>
-</span><span id="sort-80"><a href="#sort-80"><span class="linenos"> 80</span></a>    <span class="c1"># samples_param = param.get(&quot;filters&quot;, {}).get(&quot;samples&quot;, None)</span>
-</span><span id="sort-81"><a href="#sort-81"><span class="linenos"> 81</span></a>    <span class="c1"># samples = []</span>
-</span><span id="sort-82"><a href="#sort-82"><span class="linenos"> 82</span></a>    <span class="c1"># if not (samples_param is None or samples_param.strip() == &quot;&quot;):</span>
-</span><span id="sort-83"><a href="#sort-83"><span class="linenos"> 83</span></a>
-</span><span id="sort-84"><a href="#sort-84"><span class="linenos"> 84</span></a>    <span class="c1">#     # Check samples in file</span>
-</span><span id="sort-85"><a href="#sort-85"><span class="linenos"> 85</span></a>    <span class="c1">#     samples_in_file = vcfdata_obj.get_header_sample_list(check=True)</span>
-</span><span id="sort-86"><a href="#sort-86"><span class="linenos"> 86</span></a>
-</span><span id="sort-87"><a href="#sort-87"><span class="linenos"> 87</span></a>    <span class="c1">#     for s in samples_param.split(&quot;,&quot;):</span>
-</span><span id="sort-88"><a href="#sort-88"><span class="linenos"> 88</span></a>    <span class="c1">#         # Check if sample in file</span>
-</span><span id="sort-89"><a href="#sort-89"><span class="linenos"> 89</span></a>    <span class="c1">#         if s.strip() in samples_in_file:</span>
-</span><span id="sort-90"><a href="#sort-90"><span class="linenos"> 90</span></a>    <span class="c1">#             samples.append(s.strip())</span>
-</span><span id="sort-91"><a href="#sort-91"><span class="linenos"> 91</span></a>    <span class="c1">#         else:</span>
-</span><span id="sort-92"><a href="#sort-92"><span class="linenos"> 92</span></a>    <span class="c1">#             log.warning(f&quot;Sample &#39;{s.strip()}&#39; not in file&quot;)</span>
-</span><span id="sort-93"><a href="#sort-93"><span class="linenos"> 93</span></a>
-</span><span id="sort-94"><a href="#sort-94"><span class="linenos"> 94</span></a>    <span class="c1">#     if len(samples):</span>
-</span><span id="sort-95"><a href="#sort-95"><span class="linenos"> 95</span></a>    <span class="c1">#         # Remove samples from columns if not selected</span>
-</span><span id="sort-96"><a href="#sort-96"><span class="linenos"> 96</span></a>    <span class="c1">#         for s in samples_in_file:</span>
-</span><span id="sort-97"><a href="#sort-97"><span class="linenos"> 97</span></a>    <span class="c1">#             if s not in samples:</span>
-</span><span id="sort-98"><a href="#sort-98"><span class="linenos"> 98</span></a>    <span class="c1">#                 columns.remove(s)</span>
+</span><span id="sort-76"><a href="#sort-76"><span class="linenos"> 76</span></a>    <span class="c1"># Create case clause order by</span>
+</span><span id="sort-77"><a href="#sort-77"><span class="linenos"> 77</span></a>    <span class="k">if</span> <span class="n">case_clause</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+</span><span id="sort-78"><a href="#sort-78"><span class="linenos"> 78</span></a>        <span class="n">case_clause_order_by</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+</span><span id="sort-79"><a href="#sort-79"><span class="linenos"> 79</span></a><span class="s2">            ORDER BY </span>
+</span><span id="sort-80"><a href="#sort-80"><span class="linenos"> 80</span></a><span class="s2">            CASE</span>
+</span><span id="sort-81"><a href="#sort-81"><span class="linenos"> 81</span></a><span class="s2">                </span><span class="si">{</span><span class="n">case_clause</span><span class="si">}</span>
+</span><span id="sort-82"><a href="#sort-82"><span class="linenos"> 82</span></a><span class="s2">            END,</span>
+</span><span id="sort-83"><a href="#sort-83"><span class="linenos"> 83</span></a><span class="s2">            POS</span>
+</span><span id="sort-84"><a href="#sort-84"><span class="linenos"> 84</span></a><span class="s2">        &quot;&quot;&quot;</span>
+</span><span id="sort-85"><a href="#sort-85"><span class="linenos"> 85</span></a>    <span class="k">else</span><span class="p">:</span>
+</span><span id="sort-86"><a href="#sort-86"><span class="linenos"> 86</span></a>        <span class="n">case_clause_order_by</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+</span><span id="sort-87"><a href="#sort-87"><span class="linenos"> 87</span></a><span class="s2">            ORDER BY &quot;#CHROM&quot;, POS</span>
+</span><span id="sort-88"><a href="#sort-88"><span class="linenos"> 88</span></a><span class="s2">        &quot;&quot;&quot;</span>
+</span><span id="sort-89"><a href="#sort-89"><span class="linenos"> 89</span></a>
+</span><span id="sort-90"><a href="#sort-90"><span class="linenos"> 90</span></a>    <span class="c1"># Create sort query</span>
+</span><span id="sort-91"><a href="#sort-91"><span class="linenos"> 91</span></a>    <span class="n">query_sort</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+</span><span id="sort-92"><a href="#sort-92"><span class="linenos"> 92</span></a><span class="s2">        SELECT *</span>
+</span><span id="sort-93"><a href="#sort-93"><span class="linenos"> 93</span></a><span class="s2">        FROM </span><span class="si">{</span><span class="n">table_variants</span><span class="si">}</span>
+</span><span id="sort-94"><a href="#sort-94"><span class="linenos"> 94</span></a><span class="s2">        </span><span class="si">{</span><span class="n">case_clause_order_by</span><span class="si">}</span>
+</span><span id="sort-95"><a href="#sort-95"><span class="linenos"> 95</span></a><span class="s2">    &quot;&quot;&quot;</span>
+</span><span id="sort-96"><a href="#sort-96"><span class="linenos"> 96</span></a>
+</span><span id="sort-97"><a href="#sort-97"><span class="linenos"> 97</span></a>    <span class="c1"># Export</span>
+</span><span id="sort-98"><a href="#sort-98"><span class="linenos"> 98</span></a>    <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">export_output</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="n">query_sort</span><span class="p">,</span> <span class="n">export_header</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </span><span id="sort-99"><a href="#sort-99"><span class="linenos"> 99</span></a>
-</span><span id="sort-100"><a href="#sort-100"><span class="linenos">100</span></a>    <span class="c1"># Sort contigs</span>
-</span><span id="sort-101"><a href="#sort-101"><span class="linenos">101</span></a>    <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">sort_contigs</span><span class="p">()</span>
+</span><span id="sort-100"><a href="#sort-100"><span class="linenos">100</span></a>    <span class="c1"># Log</span>
+</span><span id="sort-101"><a href="#sort-101"><span class="linenos">101</span></a>    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;End&quot;</span><span class="p">)</span>
 </span><span id="sort-102"><a href="#sort-102"><span class="linenos">102</span></a>
-</span><span id="sort-103"><a href="#sort-103"><span class="linenos">103</span></a>    <span class="c1"># variants table</span>
-</span><span id="sort-104"><a href="#sort-104"><span class="linenos">104</span></a>    <span class="n">table_variants</span> <span class="o">=</span> <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">get_table_variants</span><span class="p">()</span>
-</span><span id="sort-105"><a href="#sort-105"><span class="linenos">105</span></a>
-</span><span id="sort-106"><a href="#sort-106"><span class="linenos">106</span></a>    <span class="c1"># Create case clause</span>
-</span><span id="sort-107"><a href="#sort-107"><span class="linenos">107</span></a>    <span class="n">case_clause</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-</span><span id="sort-108"><a href="#sort-108"><span class="linenos">108</span></a>    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">chrom</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">get_header</span><span class="p">()</span><span class="o">.</span><span class="n">contigs</span><span class="p">):</span>
-</span><span id="sort-109"><a href="#sort-109"><span class="linenos">109</span></a>        <span class="n">case_clause</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;    WHEN &quot;#CHROM&quot; = &#39;</span><span class="si">{</span><span class="n">chrom</span><span class="si">}</span><span class="s2">&#39; THEN </span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;&quot;&quot;</span>
-</span><span id="sort-110"><a href="#sort-110"><span class="linenos">110</span></a>
-</span><span id="sort-111"><a href="#sort-111"><span class="linenos">111</span></a>    <span class="c1"># Create case clause order by</span>
-</span><span id="sort-112"><a href="#sort-112"><span class="linenos">112</span></a>    <span class="k">if</span> <span class="n">case_clause</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
-</span><span id="sort-113"><a href="#sort-113"><span class="linenos">113</span></a>        <span class="n">case_clause_order_by</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
-</span><span id="sort-114"><a href="#sort-114"><span class="linenos">114</span></a><span class="s2">            ORDER BY </span>
-</span><span id="sort-115"><a href="#sort-115"><span class="linenos">115</span></a><span class="s2">            CASE</span>
-</span><span id="sort-116"><a href="#sort-116"><span class="linenos">116</span></a><span class="s2">                </span><span class="si">{</span><span class="n">case_clause</span><span class="si">}</span>
-</span><span id="sort-117"><a href="#sort-117"><span class="linenos">117</span></a><span class="s2">            END</span>
-</span><span id="sort-118"><a href="#sort-118"><span class="linenos">118</span></a><span class="s2">        &quot;&quot;&quot;</span>
-</span><span id="sort-119"><a href="#sort-119"><span class="linenos">119</span></a>    <span class="k">else</span><span class="p">:</span>
-</span><span id="sort-120"><a href="#sort-120"><span class="linenos">120</span></a>        <span class="n">case_clause_order_by</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-</span><span id="sort-121"><a href="#sort-121"><span class="linenos">121</span></a>
-</span><span id="sort-122"><a href="#sort-122"><span class="linenos">122</span></a>    <span class="c1"># Create sort query</span>
-</span><span id="sort-123"><a href="#sort-123"><span class="linenos">123</span></a>    <span class="n">query_sort</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
-</span><span id="sort-124"><a href="#sort-124"><span class="linenos">124</span></a><span class="s2">        SELECT *</span>
-</span><span id="sort-125"><a href="#sort-125"><span class="linenos">125</span></a><span class="s2">        FROM </span><span class="si">{</span><span class="n">table_variants</span><span class="si">}</span>
-</span><span id="sort-126"><a href="#sort-126"><span class="linenos">126</span></a><span class="s2">        </span><span class="si">{</span><span class="n">case_clause_order_by</span><span class="si">}</span>
-</span><span id="sort-127"><a href="#sort-127"><span class="linenos">127</span></a><span class="s2">    &quot;&quot;&quot;</span>
-</span><span id="sort-128"><a href="#sort-128"><span class="linenos">128</span></a>
-</span><span id="sort-129"><a href="#sort-129"><span class="linenos">129</span></a>    <span class="c1"># Export</span>
-</span><span id="sort-130"><a href="#sort-130"><span class="linenos">130</span></a>    <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">export_output</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="n">query_sort</span><span class="p">,</span> <span class="n">export_header</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="sort-131"><a href="#sort-131"><span class="linenos">131</span></a>
-</span><span id="sort-132"><a href="#sort-132"><span class="linenos">132</span></a>    <span class="c1"># Log</span>
-</span><span id="sort-133"><a href="#sort-133"><span class="linenos">133</span></a>    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;End&quot;</span><span class="p">)</span>
-</span><span id="sort-134"><a href="#sort-134"><span class="linenos">134</span></a>
-</span><span id="sort-135"><a href="#sort-135"><span class="linenos">135</span></a>    <span class="c1"># Return variants object</span>
-</span><span id="sort-136"><a href="#sort-136"><span class="linenos">136</span></a>    <span class="k">return</span> <span class="n">vcfdata_obj</span>
+</span><span id="sort-103"><a href="#sort-103"><span class="linenos">103</span></a>    <span class="c1"># Return variants object</span>
+</span><span id="sort-104"><a href="#sort-104"><span class="linenos">104</span></a>    <span class="k">return</span> <span class="n">vcfdata_obj</span>
 </span></pre></div>
 
 
