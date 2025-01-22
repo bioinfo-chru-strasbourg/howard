@@ -8880,12 +8880,14 @@ class Variants:
                     view=table_view_name,
                     view_type="view",
                     view_mode="explore",
-                    fields=operation_info_fields,
+                    fields=operation_info_fields + ["INFO"],
                     fields_needed=operation_table_key,
                     info_prefix_column="",
                     info_struct_column="INFOS",
                     drop_view=True,
                 )
+                # result_view = self.get_query_to_df(f"SELECT * FROM {table_view_name}")
+                # log.debug(f"result_view={result_view}")
 
                 # Table key construct
                 clause_key = []
@@ -8894,25 +8896,42 @@ class Variants:
                         f""" {operation_table_dest}."{key}" = table_view."{key}" """
                     )
 
+                # Create view
+                # create view name with random number
+                calculation_view_name = "calculation_view_" + str(
+                    random.randrange(1000)
+                )
+                query_create_view = f"""
+                    CREATE TABLE {calculation_view_name} AS
+                    SELECT {", ".join([f'"{k}"' for k in operation_table_key])},
+                        concat(
+                                CASE
+                                    WHEN "INFO" IS NOT NULL AND "INFO" NOT IN ('', '.')
+                                    THEN ';'
+                                    ELSE ''
+                                END,
+                                '{output_column_name}=',
+                                TRY_CAST(({operation_query}) AS VARCHAR)
+                            ) AS INFO
+                    FROM {table_view_name}
+                    
+                """
+                # log.debug(f"query_create_view={query_create_view}")
+                self.get_connexion().execute(query_create_view)
+
                 # Add to INFO
                 if operation_info:
                     sql_update_info = f"""
                         UPDATE {operation_table_dest}
-                        SET "INFO" =
-                            concat(
+                        SET "INFO" = concat(
                                 CASE
-                                    WHEN "INFO" IS NOT NULL
-                                    THEN concat("INFO", ';')
+                                    WHEN {operation_table_dest}."INFO" IS NOT NULL AND {operation_table_dest}."INFO" NOT IN ('', '.')
+                                    THEN {operation_table_dest}."INFO"
                                     ELSE ''
                                 END,
-                                '{output_column_name}=',
-                                table_view.output_column_name
-                            )
-                        FROM (
-                            SELECT *, TRY_CAST(({operation_query}) AS VARCHAR) AS output_column_name
-                            FROM {table_view_name}
-                            WHERE TRY_CAST(({operation_query}) AS VARCHAR) IS NOT NULL AND TRY_CAST(({operation_query}) AS VARCHAR) NOT IN ('')
-                        ) AS table_view
+                                table_view."INFO"
+                                )
+                        FROM {calculation_view_name} AS table_view
                         WHERE {" AND ".join(clause_key)}
                     """
 
@@ -8924,7 +8943,10 @@ class Variants:
 
                         if True:
                             # Batch split
-                            batch_split = self.get_batch_split()
+                            batch_split = self.get_batch_split(
+                                table=calculation_view_name, block=1000
+                            )
+                            # batch_split = 100
 
                             # Insert by batch
                             for batch_index in range(batch_split):
