@@ -10,6 +10,7 @@ import subprocess
 
 from howard.functions import commons
 
+
 def run_shell(command):
     try:
         # Run the command without check=True to handle return codes manually
@@ -39,9 +40,7 @@ def run_shell(command):
         log.error(f"Unexpected error: {str(e)}")
 
 
-def create_metaheader(
-    df_extann: pd.DataFrame, input: str, config: dict, extra_cols=None
-) -> str:
+def create_metaheader(df_extann: pd.DataFrame, input: str, config: dict, extra_cols=None) -> str:
     """
     From extann file in dataframe, create metaheader of pseudo bed file
     input: path of input extann
@@ -127,9 +126,7 @@ def read_refgene(refgene: str) -> pd.DataFrame:
     return df_refgene
 
 
-def metaheader_rows(
-    fields: str, id: str, number: str, type: str, description: str
-) -> str:
+def metaheader_rows(fields: str, id: str, number: str, type: str, description: str) -> str:
     """
     ##INFO=<ID=STRAND,Number=1,Type=String,Description="Gene strand">
     fields: INFO, FORMAT....
@@ -141,13 +138,7 @@ def metaheader_rows(
 
     keys = ["ID", "Number", "Type", "Description"]
     values = list(map(str, [id, number, type, '"' + description + '"']))
-    return (
-        "##"
-        + fields
-        + "=<"
-        + ",".join(["=".join(val) for val in list(zip(keys, values))])
-        + ">"
-    )
+    return "##" + fields + "=<" + ",".join(["=".join(val) for val in list(zip(keys, values))]) + ">"
 
 
 def replace_values(input_string: str, config: dict) -> str:
@@ -164,7 +155,7 @@ def write_extann(
     df_refgene,
     extra_cols=None,
     mode=None,
-    df_transcript=None
+    df_transcript=None,
 ):
     """
     Write ExtAnn into a bed like file and his hdr mate
@@ -198,9 +189,7 @@ def write_extann(
         df_extann.fillna(".", inplace=True)
         log.info("Get gene coordinates from refseq")
         for i, rows in df_extann.iterrows():
-            pos_list = get_gene_coordinate(
-                df_refgene, rows, extra_cols, mode,df_transcript, alias
-            )
+            pos_list = get_gene_coordinate(df_refgene, rows, extra_cols, mode, df_transcript, alias)
             if pos_list:
                 # for each transcript from same gene
                 for data in pos_list:
@@ -209,7 +198,7 @@ def write_extann(
                         data.pop()
                     for key, val in rows.items():
                         if param.get("replace"):
-                            data.append(replace_values(str(val),param.get("replace")))
+                            data.append(replace_values(str(val), param.get("replace")))
                         else:
                             data.append(val)
                     o.write("\t".join(list(map(str, data))) + "\n")
@@ -231,76 +220,71 @@ def get_longest_transcript(df: pd.DataFrame, extra_col=None) -> any:
     if there are many same size transcript keep the MANE
     """
     longest = {}
+    coordinates = {}
     match = df.groupby("transcript")
-    for transcript, data in match:
-        start = data.iloc[0]["START"]
-        end = data.iloc[-1]["END"]
-        length = end - start
-        longest[transcript] = length
+    match_gb = groupby_iterator(match, extra_col)
+    for transcript_data in match_gb:
+        longest[transcript_data[3]] = transcript_data[2] - transcript_data[1]
+        coordinates[transcript_data[3]] = transcript_data
     longest_transcript = max(longest, key=lambda k: longest[k])
-    df_longest_transcript = df.loc[df["transcript"] == longest_transcript]
-    tmp = [
-        df_longest_transcript.iloc[0]["#CHROM"],
-        df_longest_transcript.iloc[0]["START"],
-        df_longest_transcript.iloc[-1]["END"],
-    ]
-    if extra_col:
-        tmp.extend([df_longest_transcript.iloc[0][val] for val in extra_col])
-    return [tmp]
+    return [coordinates[longest_transcript]]
 
 
-def get_all_transcript(match: pd.DataFrame, extra_col=None) -> any:
+def get_all_transcript(match: pd.DataFrame, extra_col=None) -> list[list]:
     """
-    Get all from trasncript from refgene matching gene name
+    Get all transcript from one gene
     """
     # Keep all transcript
     match_gb = match.groupby("transcript")
-    match_list = []
-    # Iterate over each transcript for this gene
-    for grp, grp_data in match_gb:
-        tmp = [
-            grp_data.iloc[0]["#CHROM"],
-            grp_data.iloc[0]["START"],
-            grp_data.iloc[-1]["END"],
-        ]
+    match_list = groupby_iterator(match_gb, extra_col)
+    return list(match_list)
+
+
+def groupby_iterator(groupby: pd.DataFrame.groupby, extra_col=None):
+    for transcript, data in groupby:
+        # At least one exon number is duplicated meaning that Transcript / Gene are on multiple chrom, (PAR regions X and Y)
+        if not set(data["#CHROM"].unique()).issubset(["chrX", "chrY"]):
+            log.error(data)
+            raise ValueError("Transcript on multiple chrom (not PAR regions)")
+        log.debug(f"genes {' '.join(data['name'].unique().tolist())} {transcript} on PAR regions")
+        data = data.loc[data["#CHROM"] == "chrX"]
+        if len(data["#CHROM"].unique().tolist()) > 1:
+            log.error(data)
+            raise ValueError("Longest transcript, multiple chromosome for same transcript")
+        else:
+            chrom = data["#CHROM"].unique()[0]
+        start = data.iloc[0]["START"]
+        end = data.iloc[-1]["END"]
+        tmp = [chrom, start, end, transcript]
         if extra_col:
-            tmp.extend([grp_data.iloc[0][val] for val in extra_col])
-        match_list.append(tmp)
-    return match_list
+            tmp.extend([data.iloc[0][val] for val in extra_col if val != "transcript"])
+        yield tmp
 
 
-def get_chosen_transcript(
-    match: pd.DataFrame, df_transcript: pd.DataFrame, extra_col=None
-):
+def get_chosen_transcript(match: pd.DataFrame, df_transcript: pd.DataFrame, extra_col=None):
     """
     From a txt / tsv file with gene and transcript, it will keep only provided transcript for this gene, if gene does not match it will take the longest
     """
     gene = match["name"].unique()[0]
     if df_transcript.empty:
         return get_longest_transcript(match, extra_col)
-    assert "gene" in df_transcript.columns, "Gene column is missing (genes) exit"
-    assert (
-        "transcript" in df_transcript.columns
-    ), "Transcript column is missing (transcript) exit"
-    if len(df_transcript.loc[df_transcript["gene"] == gene].index) != 0:
+    if "gene" not in df_transcript.columns:
+        raise ValueError("Gene column is missing (genes) exit")
+    elif "transcript" not in df_transcript.columns:
+        raise ValueError("Transcript column is missing (transcript) exit")
+    elif len(df_transcript.loc[df_transcript["gene"] == gene].index) != 0:
         try:
-            chosen = df_transcript.loc[df_transcript["gene"] == gene].iloc[0][
-                "transcript"
-            ]
-            df_chosen_transcript = match.loc[match["transcript"] == chosen]
-            tmp = [
-                df_chosen_transcript.iloc[0]["#CHROM"],
-                df_chosen_transcript.iloc[0]["START"],
-                df_chosen_transcript.iloc[-1]["END"],
-            ]
-            if extra_col:
-                tmp.extend([df_chosen_transcript.iloc[0][val] for val in extra_col])
-            return [tmp]
+            chosen = df_transcript.loc[df_transcript["gene"] == gene].iloc[0]["transcript"]
+            match_gb = match.groupby("transcript")
+            match_tr = groupby_iterator(match_gb, extra_col)
+            for transcript_data in match_tr:
+                if chosen in transcript_data:
+                    return [transcript_data]
         except IndexError:
             log.debug(f"Chosen transcript for {' '.join(gene)} not found in refgene")
             return get_longest_transcript(match, extra_col)
     else:
-        log.debug(f"{' '.join(gene)} not provided")
+        log.debug(f"{gene} not provided")
         return get_longest_transcript(match, extra_col)
 
 
@@ -310,7 +294,7 @@ def get_gene_coordinate(
     extra_col=None,
     mode=None,
     df_transcript=None,
-    alias=None
+    alias=None,
 ) -> any:
     """
     From pandas dataframe containing refgene file, get chr start stop from each gene present in extann
@@ -334,22 +318,35 @@ def get_gene_coordinate(
             return get_all_transcript(match, extra_col)
     else:
         if alias is not None:
-        #For all transcript mode search in alias file like OMIM or search in HUGO database file
+            # For all transcript mode search in alias file like OMIM or search in HUGO database file
             return get_refseq_match(gene, df_refgene, alias)
 
+
 def get_transcript_coordinates(data, transcript):
-    """
-    """
-    data['Extracted'] = data['exon'].str.extract(r'(\d+)', expand=False).astype(int)
-    max_value = data['Extracted'].max()
-    min_value = data['Extracted'].min()
+    """ """
+    data["Extracted"] = data["exon"].str.extract(r"(\d+)", expand=False).astype(int)
+    max_value = data["Extracted"].max()
+    min_value = data["Extracted"].min()
     min_value_df = data.loc[data["Extracted"] == min_value]
     max_value_df = data.loc[data["Extracted"] == max_value]
     # try:
     if data["strand"].unique() == "+":
-        yield [max_value_df["#CHROM"].iloc[0], min_value_df["START"].iloc[0], max_value_df["END"].iloc[0], transcript, max_value_df["name"].iloc[0]]
+        yield [
+            max_value_df["#CHROM"].iloc[0],
+            min_value_df["START"].iloc[0],
+            max_value_df["END"].iloc[0],
+            transcript,
+            max_value_df["name"].iloc[0],
+        ]
     else:
-        yield [max_value_df["#CHROM"].iloc[0], max_value_df["START"].iloc[0], min_value_df["END"].iloc[0], transcript, max_value_df["name"].iloc[0]]
+        yield [
+            max_value_df["#CHROM"].iloc[0],
+            max_value_df["START"].iloc[0],
+            min_value_df["END"].iloc[0],
+            transcript,
+            max_value_df["name"].iloc[0],
+        ]
+
 
 def get_refseq_match(gene: str, refseq: pd.DataFrame, alias: pd.DataFrame) -> list:
     """
@@ -371,7 +368,7 @@ def get_refseq_match(gene: str, refseq: pd.DataFrame, alias: pd.DataFrame) -> li
             res = refseq.loc[refseq["name"] == snd_name]
             if len(res.index) > 1:
                 for transcript, data in res.groupby("transcript"):
-                   found.extend(list(get_transcript_coordinates(data, transcript)))
+                    found.extend(list(get_transcript_coordinates(data, transcript)))
             if found:
                 log.debug(f"Found match {snd_name}")
                 return found
@@ -380,7 +377,8 @@ def get_refseq_match(gene: str, refseq: pd.DataFrame, alias: pd.DataFrame) -> li
     else:
         raise ValueError("Dataframe is not empty EXIT")
 
-def find_rows_with_substring(df: pd.DataFrame, substring:str):
+
+def find_rows_with_substring(df: pd.DataFrame, substring: str):
     """
     Catch value in entire dataframe
     """
@@ -395,7 +393,7 @@ def find_rows_with_substring(df: pd.DataFrame, substring:str):
 def get_aliases(gene: str, alias: pd.DataFrame) -> list:
     """
     Get alias gene name from HGNC file
-    
+
     :param gene: gene name from extann raw
     :param alias: HNGC dataframe from raw txt file
     """
@@ -418,9 +416,10 @@ def get_aliases(gene: str, alias: pd.DataFrame) -> list:
             f"Partial match in aliases for gene: {gene}, list {alias_gene_splitted}, skip record"
         )
         return []
-    
+
     log.debug(alias_gene_splitted)
     return alias_gene_splitted
+
 
 def from_extann(args: argparse) -> None:
     """
@@ -453,9 +452,7 @@ def from_extann(args: argparse) -> None:
         df_refgene = read_refgene(param.get("refgene"))
 
     if args.input_extann.endswith(".gz"):
-        df_extann = pd.read_csv(
-            args.input_extann, header=0, sep="\t", compression="gzip"
-        )
+        df_extann = pd.read_csv(args.input_extann, header=0, sep="\t", compression="gzip")
     else:
         df_extann = pd.read_csv(args.input_extann, header=0, sep="\t")
 
@@ -472,9 +469,7 @@ def from_extann(args: argparse) -> None:
         df_transcript = commons.transcripts_file_to_df(param.get("transcripts"))
     else:
         if param.get("mode_extann") == "chosen":
-            log.error(
-                "Extann mode is set to user-specific but no transcript file provided EXIT"
-            )
+            log.error("Extann mode is set to user-specific but no transcript file provided EXIT")
             exit()
         else:
             log.debug("No transcript provided for extann")
@@ -488,9 +483,7 @@ def from_extann(args: argparse) -> None:
 
     # Header
     log.info("Create metaheader")
-    header = create_metaheader(
-        df_extann, args.input_extann, param, param["extra_col_list"]
-    )
+    header = create_metaheader(df_extann, args.input_extann, param, param["extra_col_list"])
     log.info("Writting extann ...")
 
     write_extann(
@@ -501,7 +494,7 @@ def from_extann(args: argparse) -> None:
         df_refgene,
         param["extra_col_list"],
         args.mode_extann,
-        df_transcript
+        df_transcript,
     )
     commons.command(
         f"grep '^#' {args.output_extann}.tmp > {args.output_extann} && grep -v '^#' {args.output_extann}.tmp | sort -k1,1V -k2,2n >> {args.output_extann}"
