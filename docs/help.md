@@ -283,6 +283,15 @@ Usage examples:
 
 </small>
 
+<small>
+
+>     --interactive_mode=<interactive mode> ['table', 'view'] (default: table)
+>
+>     Iteractive mode for variants view.
+>     Either 'table' for loading data and speed up queries, or 'view' for dynamic queries (slower).
+
+</small>
+
 ## Export
 
 <small>
