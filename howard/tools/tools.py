@@ -1788,6 +1788,22 @@ arguments = {
         "action": "store_true",
         "default": False,
     },
+    "interactive_mode": {
+        "metavar": "interactive mode",
+        "help": """Iteractive mode for variants view.\n"""
+        """Either 'table' for loading data and speed up queries"""
+        """, or 'view' for dynamic queries (slower).\n""",
+        "default": "table",
+        "type": str,
+        "choices": ["table", "view"],
+        "gooey": {"widget": "Dropdown", "options": {}},
+        "extra": {
+            "examples": {
+                "Table mode": '"interactive_mode": "table"',
+                "View mode": '"interactive_mode": "view"',
+            }
+        },
+    },
     # Verbosity
     "quiet": {"help": argparse.SUPPRESS, "action": "store_true", "default": False},
     "verbose": {"help": argparse.SUPPRESS, "action": "store_true", "default": False},
@@ -1832,7 +1848,11 @@ commands_arguments = {
                 "explode_infos_prefix": False,
                 "explode_infos_fields": False,
             },
-            "Query": {"query_limit": False, "query_print_mode": False},
+            "Query": {
+                "query_limit": False,
+                "query_print_mode": False,
+                "interactive_mode": False,
+            },
             "Export": {"include_header": False, "parquet_partitions": False},
         },
     },

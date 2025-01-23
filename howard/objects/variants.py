@@ -7502,7 +7502,7 @@ class Variants:
                 of variants.
             pz_keys (list, optional): The keys used to join the prioritization table with the variant table. Defaults to ["#CHROM", "POS", "REF", "ALT"]
                 if not provided.
-            strict (bool, optional): Whether to enforce strict prioritization criteria. Defaults to False.
+            strict (bool, optional): Whether to enforce strict prioritization criteria availability in view (need to be in header and in column). Defaults to False.
 
         Returns:
             bool: True if the prioritization operation is successful, False otherwise.
@@ -8011,6 +8011,8 @@ class Variants:
                                     info_struct_column=annotations_view_struct,
                                     fields=criterion_fields_profile + pz_keys,
                                     fields_not_exists=(not strict),
+                                    only_in_columns=strict,
+                                    strict=strict,
                                     drop_view=True,
                                     detect_type_list=True,
                                 )
@@ -13121,6 +13123,8 @@ class Variants:
         fields_needed_all: bool = False,
         detect_type_list: bool = True,
         fields_not_exists: bool = True,
+        only_in_columns: bool = False,
+        strict: bool = False,
         info_prefix_column: str = None,
         info_struct_column: str = None,
         sample_struct_column: str = None,
@@ -13130,91 +13134,47 @@ class Variants:
         limit: int = None,
     ) -> str:
         """
-        The `create_annotations_view` function creates a SQL view from fields in a VCF INFO column.
+        Creates a SQL view from fields in a VCF INFO column, or already in a column.
 
-        :param table: The `table` parameter in the `create_annotations_view` function is used to specify
-        the name of the table from which the fields are to be extracted. This table contains the
-        variants data, and the function creates a view based on the fields in the INFO column of this
-        table. Defaults to None
-        :type table: str
-        :param view: The `view` parameter in the `create_annotations_view` function is used to specify
-        the name of the view that will be created based on the fields in the VCF INFO column. This view
-        will contain the extracted fields from the INFO column in a structured format for further
-        processing or analysis. Defaults to None
-        :type view: str
-        :param view_type: The `view_type` parameter in the `create_annotations_view` function is used to
-        specify the type of view that will be created. It can be either a `VIEW` or a `TABLE`, and the
-        function will create the view based on the specified type. Defaults to `VIEW`
-        :type view_type: str
-        :param view_mode: The `view_mode` parameter in the `create_annotations_view` function is used to
-        specify the mode of view that will be created. It can be either a `full` or a `explore`, and the
-        function will create the view based on the specified algorithm/SQL query. Defaults to `full`
-        :type view_mode: str
-        :param fields: The `fields` parameter in the `create_annotations_view` function is a list that
-        contains the names of the fields to be extracted from the INFO column in the VCF file. These
-        fields will be used to create the view with the specified columns and data extracted from the
-        INFO column. Defaults to None
-        :type fields: list
-        :param fields_needed: The `fields_needed` parameter in the `create_annotations_view` function is
-        a list of fields that are required for the view. These fields are essential for the view and
-        must be included in the view to ensure that the data is complete and accurate. By default, the
-        function will include all columns' table in the view, but you can specify the
-        required fields using this parameter. Defaults to None, which means key columns corresponding
-        of a variant ["#CHROM", "POS", "REF", "ALT"]
-        :type fields_needed: list
-        :param fields_needed_all: The `fields_needed_all` parameter in the `create_annotations_view`
-        function is a boolean flag that determines whether to include all fields in the table in the
-        view. If set to `True`, the function will include all fields in the table in the view (only
-        if `fields_needed` is `False`). If set to `False`, the function will only include the
-        needed fields specified in the `fields_needed` parameter in the view. Defaults to False
-        :type fields_needed_all: bool
-        :param detect_type_list: The `detect_type_list` parameter in the `create_annotations_view`
-        function is a boolean flag that determines whether to detect the type of the fields extracted
-        from the INFO column. If set to `True`, the function will detect the type of the fields and
-        handle them accordingly in the view. Defaults to False
-        :type detect_type_list: bool
-        :param fields_not_exists: The `fields_not_exists` parameter in the `create_annotations_view`
-        function is a boolean flag that determines whether to include fields that do not exist in the
-        table in the view. If set to `True`, the function will include fields that do not exist in the
-        table as NULL values in the view. Defaults to True
-        :type fields_not_exists: bool
-        :param info_prefix_column: The `info_prefix_column` parameter in the `create_annotations_view`
-        function is used to specify a prefix that will be added to the field names in the view.
-        If provided, the function will generate a fields with the prefix (e.g. "", "INFOS_", "annotations_").
-        If not provided (None), the function will not genereate columns. This prefix helps in
-        distinguishing the fields extracted from the INFO column in the view. Defaults to None.
-        :type info_prefix_column: str
-        :param info_struct_column: The `info_struct_column` parameter in the `create_annotations_view`
-        function is used to specify the name of the column that will contain the extracted fields from
-        the INFO column in the view. This column will hold the structured data extracted from the INFO
-        column for further processing or analysis (e.g. "INFOS" or "annotations"). If not provided (None),
-        the function will not genereate the column. Defaults to None
-        :type info_struct_column: str
-        :param sample_struct_column: The `sample_struct_column` parameter in the `create_annotations_view`
-        function is used to specify the name of the column that will contain the extracted formats from
-        the samples columns in the view. This column will hold the structured data extracted from all
-        samples column for further processing or analysis (e.g. "SAMPLES" or "genotypes"). If not provided (None),
-        the function will not genereate the column. Defaults to None
-        :type sample_struct_column: str
-        :param drop_view: The `drop_view` parameter in the `create_annotations_view` function is a boolean
-        flag that determines whether to drop the existing view with the same name before creating a new
-        view. If set to `True`, the function will drop the existing view before creating a new view with
-        the specified name. Defaults to False
-        :type drop_view: bool
-        :param fields_to_rename: The `fields_to_rename` parameter in the `create_annotations_view`
-        function is a dictionary that contains the mapping of fields to be renamed in the VCF file. The
-        keys in the dictionary represent the original field names that need to be renamed, and the
-        corresponding values represent the new names to which the fields should be. Defaults to None
-        :type fields_to_rename: dict
-        :param fields_forced_as_varchar: Force fields as type VARCHAR
-        :type fields_forced_as_varchar: bool
-        :param limit: The `limit` parameter in the `create_annotations_view` function is an integer that
-        specifies the maximum number of rows to be included in the view. If provided, the function will
-        limit the number of rows in the view to the specified value. Defaults to None
-        :type limit: int
-        :return: The `create_annotations_view` function returns the name of the view that is created
-        based on the fields extracted from the INFO column in the VCF file. This view contains the
-        extracted fields in a structured format for further processing or analysis. Defaults to None
+        Args:
+            table (str, optional): The name of the table from which the fields are to be extracted. This table contains the
+                variants data, and the function creates a view based on the fields in the INFO column of this table. Defaults to None.
+            view (str, optional): The name of the view that will be created based on the fields in the VCF INFO column. This view
+                will contain the extracted fields from the INFO column in a structured format for further processing or analysis. Defaults to None.
+            view_type (str, optional): The type of view to be created. It can be either a `VIEW` or a `TABLE`. Defaults to `VIEW`.
+            view_mode (str, optional): The mode of view to be created. It can be either `full` or `explore`, and the function will create
+                the view based on the specified algorithm/SQL query. Defaults to `full`.
+            fields (list, optional): A list of field names to be extracted from the INFO column in the VCF file. These fields will be used
+                to create the view with the specified columns and data extracted from the INFO column. Defaults to None.
+            fields_needed (list, optional): A list of fields that are required for the view. These fields are essential for the view and
+                must be included to ensure that the data is complete and accurate. Defaults to None, which means key columns corresponding
+                to a variant ["#CHROM", "POS", "REF", "ALT"].
+            fields_needed_all (bool, optional): A flag that determines whether to include all fields in the table in the view. If set to `True`,
+                the function will include all fields in the table in the view (only if `fields_needed` is `False`). Defaults to False.
+            detect_type_list (bool, optional): A flag that determines whether to detect the type of the fields extracted from the INFO column.
+                If set to `True`, the function will detect the type of the fields and handle them accordingly in the view. Defaults to True.
+            fields_not_exists (bool, optional): A flag that determines whether to include fields that do not exist in the table in the view.
+                If set to `True`, the function will include fields that do not exist in the table as NULL values in the view. Defaults to True.
+            only_in_columns (bool, optional): A flag that determines whether to include only the fields that exist in the columns of the table.
+                If set to `True`, the function will include only the fields that exist in the columns of the table. Defaults to False.
+            strict (bool, optional): A flag that determines whether to enforce strict criteria for the fields in the view. Defaults to False.
+            info_prefix_column (str, optional): A prefix to be added to the field names in the view. If provided, the function will generate
+                fields with the prefix (e.g., "", "INFOS_", "annotations_"). Defaults to None.
+            info_struct_column (str, optional): The name of the column that will contain the extracted fields from the INFO column in the view.
+                This column will hold the structured data extracted from the INFO column for further processing or analysis. Defaults to None.
+            sample_struct_column (str, optional): The name of the column that will contain the extracted formats from the samples columns in the view.
+                This column will hold the structured data extracted from all samples columns for further processing or analysis. Defaults to None.
+            drop_view (bool, optional): A flag that determines whether to drop the existing view with the same name before creating a new view.
+                If set to `True`, the function will drop the existing view before creating a new view with the specified name. Defaults to False.
+            fields_to_rename (dict, optional): A dictionary that contains the mapping of fields to be renamed in the VCF file. The keys in the
+                dictionary represent the original field names that need to be renamed, and the corresponding values represent the new names. Defaults to None.
+            fields_forced_as_varchar (bool, optional): A flag that forces fields to be treated as type VARCHAR. Defaults to False.
+            limit (int, optional): The maximum number of rows to be included in the view. If provided, the function will limit the number of rows
+                in the view to the specified value. Defaults to None.
+
+        Returns:
+            str: The name of the view that is created based on the fields extracted from the INFO column in the VCF file. This view contains the
+                extracted fields in a structured format for further processing or analysis.
         """
 
         # Create a sql view from fields in VCF INFO column, with each column is a field present in the VCF header (with a specific type from VCF header) and extracted from INFO column (with a regexp like in rename_info_fields), and each row is a variant.
@@ -13360,8 +13320,10 @@ class Variants:
                         fields_needed += [field]
 
             # Fields in header
-            elif field in header.infos and "INFO" in list(
-                table_describe.get("column_name")
+            elif (
+                field in header.infos
+                and not only_in_columns
+                and "INFO" in list(table_describe.get("column_name"))
             ):
 
                 # Field info
@@ -13453,22 +13415,31 @@ class Variants:
                             """
                         )
 
-            else:
+            # Add field even if not exists
+            elif fields_not_exists:
 
-                # Add field even if not exists
-                if fields_not_exists:
-
-                    fields_columns.append(
-                        f"""
+                fields_columns.append(
+                    f"""
                             null AS '{prefix}{field_to_rename}'
                         """
-                    )
-                    fields_columns_annotations_struct.append(
-                        f"""
+                )
+                fields_columns_annotations_struct.append(
+                    f"""
                             "{field_to_rename}":= NULL
                         """
-                    )
-                    msg_err = f"Field '{field}' is not found (in table or header): '{field}' will be set to NULL"
+                )
+                msg_err = f"Field '{field}' is not found (in table or header): '{field}' will be set to NULL"
+                log.warning(msg=msg_err)
+
+            else:
+
+                # Field not found
+                msg_err = f"Field '{field}' is not found (in table or header or column)"
+
+                if strict:
+                    log.error(msg=msg_err)
+                    raise ValueError(msg_err)
+                else:
                     log.warning(msg=msg_err)
 
         # If samples and struct as option
@@ -13601,8 +13572,6 @@ class Variants:
                     {limit_clause}
 
             """
-
-        # log.debug(f"query_select={query_select}")
 
         # Drop if any
         if drop_view:

@@ -37,7 +37,10 @@ def launch_interactive_terminal(
     conn = variants.get_connexion()
 
     # Query limit
-    query_limit = 1000
+    if "query_limit" in args and args.query_limit is not None:
+        query_limit = args.query_limit
+    else:
+        query_limit = 1000
 
     try:
         # Execute query to test connexion
@@ -58,9 +61,19 @@ def launch_interactive_terminal(
         log.debug("View 'header' can not be loaded")
 
     # Variants table param
+    if "interactive_mode" in args and args.interactive_mode is not None:
+        interactive_mode = args.interactive_mode
+    else:
+        interactive_mode = "table"
+    log.debug(f"Interactive mode set to '{interactive_mode}'")
+
     view_name = "variants_view"
-    view_type = "table"
-    view_mode = "full"
+    if interactive_mode == "view":
+        view_type = "view"
+        view_mode = "explore"
+    elif interactive_mode == "table":
+        view_type = "table"
+        view_mode = "full"
 
     # Create variants table
     log.debug(f"Loading table '{view_name}' as '{view_type}' (mode '{view_mode}')")
@@ -77,8 +90,10 @@ def launch_interactive_terminal(
             detect_type_list=True,
             drop_view=True,
         )
-    except:
+    except Exception as e:
         log.warning(f"View '{view_name}' can not be created")
+        log.warning(f"Error: {e}")
+        log.warning("Please check variants annotations formats")
 
     # Print welcome message
     log.info("Interactive DuckDB SQL terminal")
@@ -506,7 +521,7 @@ def launch_interactive_terminal(
                 rows_plus = result.fetchmany(1)
 
                 if rows_plus or (query_limited_check and len(rows) == query_limit):
-                    msg_query_limit = f"Only {query_limit} lines shown (use 'limit' command to change)"
+                    msg_query_limit = f"Only {query_limit} first lines shown (use 'limit' command to change)"
                 else:
                     msg_query_limit = None
                 # Get column names
