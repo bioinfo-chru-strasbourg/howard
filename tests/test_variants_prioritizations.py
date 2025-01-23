@@ -10,20 +10,14 @@ coverage run -m pytest tests/test_objects_variants.py -x -v --log-cli-level=INFO
 coverage report --include=howard/* -m 
 """
 
-import logging as log
-import os
-import sys
 from tempfile import TemporaryDirectory
-import duckdb
-import re
-import Bio.bgzf as bgzf
-import gzip
-import pytest
+import pytest  # type: ignore
+import vcf  # type: ignore
 
-from howard.functions.commons import *
 from howard.objects.variants import Variants
-from howard.functions.databases import *
-from test_needed import *
+from howard.functions.commons import remove_if_exists
+
+from test_needed import tests_folder, tests_data_folder
 
 
 def test_prioritization():
@@ -241,7 +235,7 @@ def test_prioritization_full_unsorted():
             AND INFO LIKE '%PZInfos_GERMLINE=%'
             """
         )
-        assert len(result) == 2
+        assert len(result) == 3
 
         # Check all priorized default profile (as default)
         result = variants.get_query_to_df(
@@ -295,7 +289,7 @@ def test_prioritization_full_unsorted():
         result = variants.get_query_to_df(
             f""" SELECT INFO FROM variants WHERE INFO LIKE '%FILTERED%' """
         )
-        assert len(result) == 1
+        assert len(result) == 2
 
         # Check if VCF is in correct format with pyVCF
         remove_if_exists([output_vcf])

@@ -9,7 +9,6 @@ coverage run -m pytest tests/test_variants_annotations_splice.py -x -v --log-cli
 coverage report --include=howard/* -m
 """
 
-import logging as log
 from tempfile import TemporaryDirectory
 from howard.functions.commons import identical
 from howard.objects.variants import Variants

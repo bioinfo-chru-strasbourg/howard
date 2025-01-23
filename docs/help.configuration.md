@@ -362,7 +362,7 @@ Examples:
 >    "tools": {
 >       "bcftools": {
 >          "docker": {
->            "image": "howard:0.11.0",
+>            "image": "howard:0.12.2.0",
 >            "entrypoint": "bcftools",
 >            "options": null,
 >            "command": null
@@ -660,11 +660,14 @@ NOTSET
 
 - CRITICAL: A serious error.
 
+- FATAL: A fatal error.
+
 - NOTSET: All messages.
 
 Type: `str`
 
-Choices: `['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET']`
+Choices:
+`['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET', 'WARN', 'FATAL']`
 
 Default: `INFO`
 

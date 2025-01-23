@@ -1,36 +1,43 @@
-#!/usr/bin/env python
-
-import io
-import multiprocessing
 import os
-import re
-import subprocess
-from tempfile import NamedTemporaryFile
-import tempfile
-import duckdb
 import json
 import argparse
-import Bio.bgzf as bgzf
-import pandas as pd
-import vcf
-import logging as log
-import sys
 import importlib
 
 # Import Commons
-from howard.functions.commons import *
+from howard.functions.commons import (
+    DEFAULT_ALPHAMISSENSE_URL,
+    DEFAULT_ANNOTATIONS_FOLDER,
+    DEFAULT_ANNOVAR_FOLDER,
+    DEFAULT_ANNOVAR_URL,
+    DEFAULT_ASSEMBLY,
+    DEFAULT_DATABASE_FOLDER,
+    DEFAULT_DBNSFP_URL,
+    DEFAULT_DBSNP_FOLDER,
+    DEFAULT_DBSNP_URL,
+    DEFAULT_EXOMISER_CADD_URL,
+    DEFAULT_EXOMISER_FOLDER,
+    DEFAULT_EXOMISER_REMM_URL,
+    DEFAULT_EXOMISER_URL,
+    DEFAULT_GENOME_FOLDER,
+    DEFAULT_REFSEQ_FOLDER,
+    DEFAULT_REFSEQ_URL,
+    full_path,
+)
+
 
 # Import tools
-from howard.tools.process import *
-from howard.tools.annotation import *
-from howard.tools.calculation import *
-from howard.tools.hgvs import *
-from howard.tools.prioritization import *
-from howard.tools.query import *
-from howard.tools.stats import *
-from howard.tools.convert import *
-from howard.tools.databases import *
-from howard.tools.help import *
+from howard.tools.process import process
+from howard.tools.annotation import annotation
+from howard.tools.calculation import calculation
+from howard.tools.hgvs import hgvs
+from howard.tools.prioritization import prioritization
+from howard.tools.query import query
+from howard.tools.filter import filter
+from howard.tools.sort import sort
+from howard.tools.stats import stats
+from howard.tools.convert import convert
+from howard.tools.databases import databases
+from howard.tools.help import help
 
 
 # Import gui only if gooey and wx is installed
@@ -42,7 +49,7 @@ except ImportError:
     tool_gui_enable = False
 
 if tool_gui_enable:
-    from howard.tools.gui import *
+    from howard.tools.gui import gui
 
 
 class PathType(object):
@@ -164,6 +171,28 @@ arguments = {
             "options": {"initial_value": "SELECT * FROM variants"},
         },
         "extra": {"param_section": "query"},
+    },
+    "filter": {
+        "metavar": "filter",
+        "help": """Filter variant using SQL format\n""" """(e.g. 'POS < 100000').\n""",
+        "default": None,
+        "type": str,
+        "gooey": {
+            "widget": "Textarea",
+            "options": {"initial_value": ""},
+        },
+        # "extra": {"param_section": "filter"},
+    },
+    "samples": {
+        "metavar": "samples",
+        "help": """List of samples\n""" """(e.g. 'sample1,sample2').\n""",
+        "default": None,
+        "type": str,
+        "gooey": {
+            "widget": "Textarea",
+            "options": {"initial_value": ""},
+        },
+        # "extra": {"param_section": "filter"},
     },
     "output_query": {
         "metavar": "output",
@@ -1699,9 +1728,19 @@ arguments = {
         """- WARNING: An indication that something unexpected happened.\n"""
         """- ERROR: Due to a more serious problem.\n"""
         """- CRITICAL: A serious error.\n"""
+        """- FATAL: A fatal error.\n"""
         """- NOTSET: All messages.\n""",
         "required": False,
-        "choices": ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG", "NOTSET"],
+        "choices": [
+            "CRITICAL",
+            "ERROR",
+            "WARNING",
+            "INFO",
+            "DEBUG",
+            "NOTSET",
+            "WARN",
+            "FATAL",
+        ],
         "default": "INFO",
         "type": str,
         "gooey": {"widget": "Dropdown", "options": {}},
@@ -1743,6 +1782,13 @@ arguments = {
             }
         },
     },
+    # Interactivity
+    "interactive": {
+        "help": """Interative mose..\n""",
+        "action": "store_true",
+        "default": False,
+    },
+    # Verbosity
     "quiet": {"help": argparse.SUPPRESS, "action": "store_true", "default": False},
     "verbose": {"help": argparse.SUPPRESS, "action": "store_true", "default": False},
     "debug": {"help": argparse.SUPPRESS, "action": "store_true", "default": False},
@@ -1758,6 +1804,7 @@ shared_arguments = [
     "chunk_size",
     "tmp",
     "duckdb_settings",
+    "interactive",
     "verbosity",
     "log",
     "quiet",
@@ -1786,6 +1833,43 @@ commands_arguments = {
                 "explode_infos_fields": False,
             },
             "Query": {"query_limit": False, "query_print_mode": False},
+            "Export": {"include_header": False, "parquet_partitions": False},
+        },
+    },
+    "filter": {
+        "function": "filter",
+        "description": """Filter genetic variations in SQL format. Data can be loaded into 'variants' table from various formats (e.g. VCF, TSV, Parquet...). SQL filter can also use external data within the request, such as a Parquet file(s).  """,
+        "help": "Filter genetic variations file in SQL format.",
+        "epilog": """Usage examples:\n"""
+        """   howard filter --input=tests/data/example.vcf.gz --output=/tmp/example.filter.vcf.gz --filter="REF = 'A' AND POS < 100000" \n"""
+        """   howard filter --input=tests/data/example.vcf.gz --output=/tmp/example.filter.vcf.gz --filter="REF = 'A' AND POS < 100000" --samples="sample1,sample2" \n"""
+        """   howard filter --input=tests/data/example.vcf.gz --output=/tmp/example.filter.vcf.gz --filter="INFOS.CLNSIG LIKE 'pathogenic'" --samples="sample1,sample2" \n"""
+        """   howard filter --input=tests/data/example.vcf.gz --output=/tmp/example.filter.vcf.gz --filter="QUAL > 100 AND SAMPLES.sample2.GT != './.'" --samples="sample2" \n"""
+        """    \n""",
+        "groups": {
+            "main": {
+                "input": True,
+                "output": True,
+            },
+            "Filters": {
+                "filter": False,
+                "samples": False,
+            },
+            "Export": {"include_header": False, "parquet_partitions": False},
+        },
+    },
+    "sort": {
+        "function": "sort",
+        "description": """Sort genetic variations from contig order. Data can be loaded into 'variants' table from various formats (e.g. VCF, TSV, Parquet...). SQL filter can also use external data within the request, such as a Parquet file(s).  """,
+        "help": "Sort genetic variations file from contig order.",
+        "epilog": """Usage examples:\n"""
+        """   howard sort --input=tests/data/example.vcf.gz --output=/tmp/example.sorted.vcf.gz \n"""
+        """    \n""",
+        "groups": {
+            "main": {
+                "input": True,
+                "output": True,
+            },
             "Export": {"include_header": False, "parquet_partitions": False},
         },
     },

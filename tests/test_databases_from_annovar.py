@@ -21,7 +21,8 @@ from howard.functions.commons import (
     extract_file,
     identical,
 )
-from howard.tools.tools import from_annovar
+
+from howard.functions.from_annovar import from_annovar
 from test_needed import tests_config, tests_databases_folder
 
 

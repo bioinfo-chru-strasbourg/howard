@@ -1,26 +1,9 @@
-#!/usr/bin/env python
-
-import io
-import multiprocessing
-import os
-import re
-import subprocess
-from tempfile import NamedTemporaryFile
-import tempfile
-import duckdb
-import json
 import argparse
-import Bio.bgzf as bgzf
-import pandas as pd
-import vcf
 import logging as log
-import sys
-from tabulate import tabulate
+from tabulate import tabulate  # type: ignore
 
+from howard.functions.commons import load_args, load_config_args
 from howard.objects.variants import Variants
-from howard.objects.database import Database
-from howard.functions.commons import *
-from howard.functions.databases import *
 
 
 def query(args: argparse) -> None:
@@ -36,7 +19,7 @@ def query(args: argparse) -> None:
     log.info("Start")
 
     # Load config args
-    arguments_dict, setup_cfg, config, param = load_config_args(args)
+    arguments_dict, _, config, param = load_config_args(args)
 
     # Create variants object
     vcfdata_obj = Variants(
@@ -57,8 +40,15 @@ def query(args: argparse) -> None:
     )
 
     # Access
-    if not param.get("explode", {}).get("explode_infos", False):
-        config["access"] = "RO"
+    input_format = vcfdata_obj.get_input_format()
+    if param.get("explode", {}).get("explode_infos", False) or not input_format in [
+        "duckdb",
+        "parquet",
+    ]:
+        access = "RW"
+    else:
+        access = "RO"
+    config["access"] = access
 
     # Re-Load Config and Params
     vcfdata_obj.set_param(param)
@@ -67,6 +57,17 @@ def query(args: argparse) -> None:
     # Load data
     if vcfdata_obj.get_input():
         vcfdata_obj.load_data()
+        vcfdata_obj.load_header()
+        vcfdata_obj.create_annotations_view(
+            view="variants_view",
+            view_type="view",
+            view_mode="explore",
+            info_prefix_column="",
+            fields_needed_all=True,
+            info_struct_column="INFOS",
+            sample_struct_column="SAMPLES",
+            detect_type_list=True,
+        )
 
     # Query
     if param.get("query", {}).get("query", None):
@@ -102,7 +103,8 @@ def query(args: argparse) -> None:
             query=param.get("query", {}).get("query", None), export_header=True
         )
 
-    # Close connexion
-    vcfdata_obj.close_connexion()
-
+    # Log
     log.info("End")
+
+    # Return variants object
+    return vcfdata_obj

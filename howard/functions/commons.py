@@ -1,47 +1,36 @@
-import io
 import multiprocessing
 import os
 from pathlib import Path
-import platform
 import re
 import statistics
 import string
 import subprocess
-import sys
-from tempfile import NamedTemporaryFile
-import tempfile
 import typing
-import duckdb
+import duckdb  # type: ignore
 import json
 import argparse
-import pandas as pd
-import vcf
+import pandas as pd  # type: ignore
 import logging as log
 import shutil
-import urllib.request
 import zipfile
-import gzip
-import requests
+import requests  # type: ignore
 import fnmatch
 import ast
-
 import random
-
-import pgzip
-import mgzip
-import bgzip
-
-import pysam
-import yaml
-import pysam.bcftools
-
+import pgzip  # type: ignore
+import mgzip  # type: ignore
+import bgzip  # type: ignore
+import pysam  # type: ignore
+import yaml  # type: ignore
+import pysam.bcftools  # type: ignore
 import signal
-from contextlib import contextmanager
-
 from configparser import ConfigParser
-
+from importlib.metadata import metadata
 from shutil import which
+from termcolor import colored  # type: ignore
+from colorama import init  # type: ignore
 
+# File folder
 file_folder = os.path.dirname(__file__)
 
 # plugin subfolder
@@ -63,9 +52,7 @@ comparison_map = {
     "contains": "SIMILAR TO",
 }
 
-
 code_type_map = {"Integer": 0, "String": 1, "Float": 2, "Flag": 3}
-
 
 code_type_map_to_sql = {
     "Integer": "INTEGER",
@@ -74,6 +61,13 @@ code_type_map_to_sql = {
     "Flag": "VARCHAR",
 }
 
+code_type_map_to_vcf = {
+    "INTEGER": "Integer",
+    "VARCHAR": "String",
+    "FLOAT": "Float",
+    "DOUBLE": "Integer",
+    "BOOLEAN": "String",
+}
 
 file_format_delimiters = {"vcf": "\t", "tsv": "\t", "csv": ",", "psv": "|", "bed": "\t"}
 
@@ -84,7 +78,6 @@ file_format_allowed = list(file_format_delimiters.keys()) + [
 ]
 
 file_compressed_format = ["gz", "bgz"]
-
 
 vcf_required_release = "##fileformat=VCFv4.2"
 vcf_required_columns = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO"]
@@ -152,8 +145,6 @@ MACHIN_LIST = {"amd64": "amd64", "arm64": "arm64"}
 # bcftools format allowed
 BCFTOOLS_FORMAT = ["vcf", "bed"]
 
-LOG_FORMAT = "#[%(asctime)s] [%(levelname)s] %(message)s"
-
 CODE_TYPE_MAP = {"Integer": 0, "String": 1, "Float": 2, "Flag": 3}
 
 GENOTYPE_MAP = {None: ".", -1: "A", -2: "G", -3: "R"}
@@ -161,6 +152,17 @@ GENOTYPE_MAP = {None: ".", -1: "A", -2: "G", -3: "R"}
 DTYPE_LIMIT_AUTO = 10000
 
 DEFAULT_CHUNK_SIZE = 1024 * 1024
+
+# LOG_FORMAT = "#[%(asctime)s] [%(levelname)-7s] %(message)s"
+LOG_FORMAT = "#[%(asctime)s] %(levelname)7s| %(message)s"
+
+# Log Color
+log_color = None
+
+# Prompt
+prompt_mesage = "#[{}]        |"
+prompt_color = None
+prompt_line_color = "green"
 
 
 def remove_if_exists(filepaths: list) -> None:
@@ -201,24 +203,76 @@ def set_log_level(verbosity: str, log_file: str = None) -> str:
     :param verbosity: The level of verbosity
     """
 
+    import coloredlogs  # type: ignore
+
+    # Verbosity configs
     verbosity = verbosity.lower()
+
+    # Config
     configs = {
         "debug": log.DEBUG,
         "info": log.INFO,
         "warning": log.WARNING,
+        "warn": log.WARN,
         "error": log.ERROR,
         "critical": log.CRITICAL,
+        "fatal": log.FATAL,
         "notset": log.NOTSET,
     }
     if verbosity not in configs.keys():
         raise ValueError("Unknown verbosity level:" + verbosity)
 
-    log.basicConfig(
-        filename=log_file,
-        encoding="utf-8",
-        format=LOG_FORMAT,
-        datefmt="%Y-%m-%d %H:%M:%S",
+    # Format
+    format = LOG_FORMAT
+
+    # # Basic config
+    # log.basicConfig(
+    #     filename=log_file,
+    #     encoding="utf-8",
+    #     format=format,
+    #     datefmt="%Y-%m-%d %H:%M:%S",
+    #     level=configs[verbosity],
+    # )
+
+    # Logger
+    logger = log.getLogger()
+
+    # Styles
+    LEVEL_STYLES = {
+        "debug": {"color": "magenta"},
+        # "info": {"color": "white"},
+        "info": {},
+        "warning": {"color": "yellow"},
+        "warn": {"color": "yellow"},
+        "error": {"color": "red"},
+        "critical": {"bold": True, "color": "red"},
+        "fatal": {"bold": True, "color": "red"},
+        "notset": {},
+        # "notice": {"color": "magenta"},
+        # "spam": {"color": "green", "faint": True},
+        # "success": {"bold": True, "color": "green"},
+        # "verbose": {"color": "blue"},
+    }
+    color = log_color
+    bold = False
+    faint = False
+    FIELDS_STYLES = {
+        "asctime": {"bold": bold, "color": color, "faint": faint},
+        "hostname": {"bold": bold, "color": color, "faint": faint},
+        "levelname": {"bold": bold, "color": color, "faint": faint},
+        "name": {"bold": bold, "color": color, "faint": faint},
+        "programname": {"bold": bold, "color": color, "faint": faint},
+        "username": {"bold": bold, "color": color, "faint": faint},
+    }
+
+    # coloredlogs install
+    coloredlogs.install(
         level=configs[verbosity],
+        encoding="utf-8",
+        logger=logger,
+        fmt=format,
+        level_styles=LEVEL_STYLES,
+        field_styles=FIELDS_STYLES,
     )
 
     return verbosity
@@ -511,7 +565,7 @@ def find_nomen(
     transcripts: list = [],
     transcripts_source_order: list = None,
     pattern=None,
-    transcripts_len: int = None
+    transcripts_len: int = None,
 ) -> dict:
     """
     The function `find_nomen` takes a HGVS string and a list of transcripts, parses the HGVS string, and
@@ -581,7 +635,6 @@ def find_nomen(
             transcripts_list_tmp[source] = rank
         transcripts_list = transcripts_list_tmp
 
-
     # Pattern
     if pattern is None:
         pattern = "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN"
@@ -601,10 +654,14 @@ def find_nomen(
     transcript_shift = 0
     if transcript is not None and str(transcript) != "nan":
         transcript_list = str(transcript).split(",")
-        if transcripts_source_order_rank.get("column", 0) < transcripts_source_order_rank.get("file", 0):
+        if transcripts_source_order_rank.get(
+            "column", 0
+        ) < transcripts_source_order_rank.get("file", 0):
             transcript_shift = len(transcript_list)
         for rank, transcript in enumerate(transcript_list, start=1):
-            if transcripts_source_order_rank.get("column", 0) < transcripts_source_order_rank.get("file", 0):
+            if transcripts_source_order_rank.get(
+                "column", 0
+            ) < transcripts_source_order_rank.get("file", 0):
                 transcripts_list[transcript] = rank - len(transcript_list)
             elif transcript not in transcripts:
                 transcripts_list[transcript] = rank + transcripts_len
@@ -647,10 +704,17 @@ def find_nomen(
                         one_nomen_dict["TVNOMEN"] in transcripts_list
                         or one_nomen_dict["TNOMEN"] in transcripts_list
                     ):
-                        rank = max(
-                            transcripts_list.get(one_nomen_dict["TVNOMEN"], - transcript_shift - 1),
-                            transcripts_list.get(one_nomen_dict["TNOMEN"], - transcript_shift - 1)
-                            ) + transcript_shift
+                        rank = (
+                            max(
+                                transcripts_list.get(
+                                    one_nomen_dict["TVNOMEN"], -transcript_shift - 1
+                                ),
+                                transcripts_list.get(
+                                    one_nomen_dict["TNOMEN"], -transcript_shift - 1
+                                ),
+                            )
+                            + transcript_shift
+                        )
                         if rank >= 0:
                             one_nomen_score += 100 * (len(transcripts_list) - rank + 1)
 
@@ -760,28 +824,30 @@ def explode_annotation_format(
     # Split annotation ann values
     annotation_infos = [x.split("|") for x in annotation.split(",")]
 
-    # Create Dataframe
-    annotation_dict = {}
-    for i in range(len(header)):
-        if output_format.upper() in ["JSON"]:
-            header_clean = header[i]
-        else:
-            header_clean = "".join(char for char in header[i] if char.isalnum())
-        annotation_dict[header_clean] = [x[i] for x in annotation_infos]
-    df = pd.DataFrame.from_dict(annotation_dict, orient="index").transpose()
+    # Create dictionary
+    annotation_dict = {header[i]: [] for i in range(len(header))}
+    for info in annotation_infos:
+        for i in range(len(header)):
+            annotation_dict[header[i]].append(info[i])
 
     # Fetch each annotations
-    if output_format.upper() in ["JSON"]:
-        annotation_explode = df.transpose().to_json()
+    if output_format.upper() == "JSON":
+
+        # Transpose dict
+        annotation_explode = {
+            i: {f"{prefix}{key}": value[i] for key, value in annotation_dict.items()}
+            for i in range(len(next(iter(annotation_dict.values()))))
+        }
+
     else:
         ann_list = []
-        for annotation in df:
+        for key, values in annotation_dict.items():
             if uniquify:
-                ann_list_infos = ",".join(df[annotation].unique())
-            else:
-                ann_list_infos = ",".join(df[annotation])
+                values = set(values)
+            ann_list_infos = ",".join(values)
             if ann_list_infos:
-                ann_list.append(f"{prefix}{annotation}={ann_list_infos}")
+                header_clean = "".join(char for char in key if char.isalnum())
+                ann_list.append(f"{prefix}{header_clean}={ann_list_infos}")
 
         # join list
         annotation_explode = ";".join(ann_list)
@@ -1971,7 +2037,7 @@ def get_memory(config: dict = {}, param: dict = None) -> str:
     provided in the `param` dictionary, and if not, it looks for a default value in the `config`
     """
 
-    import psutil
+    import psutil  # type: ignore
 
     # Memory system
     mem = psutil.virtual_memory()
@@ -2564,7 +2630,7 @@ def genome_build_switch(assembly: str) -> str:
     :return: The function `genome_build_switch` returns a string.
     """
 
-    import genomepy
+    import genomepy  # type: ignore
 
     genome_list = genomepy.search(assembly, exact=False)
 
@@ -3214,10 +3280,75 @@ class RawTextArgumentDefaultsHelpFormatter(
     pass
 
 
+def help_header(setup: str = None) -> str:
+    """
+    The `help_header` function generates a header for the help documentation based on the metadata
+    information provided in the setup file.
+
+    :param setup: The `setup` parameter is a string that represents the path to a configuration file.
+    This file contains metadata about the program, such as its name, version, description, and long
+    description content type
+    :type setup: str
+    :return: The function `help_header` returns a string that represents the header for the help
+    documentation. The header includes the program name, version, authors, and description.
+
+    """
+
+    # Config Parser
+    # setup = "/tmp/config"
+    if os.path.isfile(setup):
+        cf = ConfigParser()
+        cf.read(setup)
+        prog_name = cf.get("metadata", "name", fallback="Unknown Program")
+        prog_version = cf.get("metadata", "version", fallback="0.0.0")
+        prog_authors = cf.get("metadata", "author", fallback="0.0.0")
+        prog_description = cf.get(
+            "metadata", "description", fallback="No description available."
+        )
+    else:
+        # meta
+        try:
+            meta = metadata("howard-ann")
+            prog_name = meta.get("Name")
+            prog_version = meta.get("Version")
+            prog_authors = meta.get("author")
+            prog_description = meta.get("Summary")
+        # Default
+        except Exception as e:
+            print(f"Erreur : {e}")
+            prog_name = "HOWARD"
+            prog_version = "0.0.0"
+            prog_authors = "ALB"
+            prog_description = "HOWARD - Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery"
+
+    # Logo
+    import pyfiglet  # type: ignore
+
+    # This ensures that the color settings are reset after each print
+    init(autoreset=True)
+
+    ascii_logo = colored(
+        pyfiglet.figlet_format(prog_name.split("-")[0].upper()),  # , font="slant")
+        color=log_color,
+    )
+
+    # Description
+    header_description = colored(
+        f"{prog_name.split('-')[0].upper()}::{prog_version} [{prog_authors}]\n{prog_description}\n"
+        "",
+        color=log_color,
+    )
+
+    # Header
+    header = f"""{ascii_logo}{header_description}"""
+
+    # Return
+    return header
+
+
 def help_generation(
     arguments_dict: dict = {},
     parser=None,
-    setup: str = None,
     output_type: str = "parser",
 ):
     """
@@ -3245,25 +3376,13 @@ def help_generation(
     commands_arguments = arguments_dict.get("commands_arguments", {})
     shared_arguments = arguments_dict.get("shared_arguments", {})
 
-    # Config Parser
-    cf = ConfigParser()
-    cf.read(setup)
-    prog_name = cf["metadata"]["name"]
-    prog_version = cf["metadata"]["version"]
-    prog_description = cf["metadata"]["description"]
-    prog_long_description_content_type = cf["metadata"]["long_description_content_type"]
-
     # Parser default
     if not parser:
         parser = argparse.ArgumentParser()
 
     # Parser information
-    parser.prog = prog_name
-    parser.description = (
-        f"""{prog_name.upper()}:{prog_version}\n"""
-        + f"""{prog_description}\n"""
-        + f"""{prog_long_description_content_type}"""
-    )
+    parser.prog = metadata("howard-ann").get("Name").split("-")[0]
+    parser.description = ""
     parser.epilog = (
         "\nUsage examples:\n"
         + """   howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json \n"""
@@ -4153,16 +4272,22 @@ def detect_column_type(column) -> str:
     conditions checked in the function.
     """
 
-    from pandas.api.types import is_datetime64_any_dtype as is_datetime
+    from pandas.api.types import is_datetime64_any_dtype as is_datetime  # type: ignore
 
-    if is_datetime(column):
+    if len(column) == 0:
+        return "VARCHAR"
+    elif is_datetime(column):
         return "DATETIME"
     elif column.dropna().apply(lambda x: str(x).lower() in ["true", "false"]).all():
         return "BOOLEAN"
     elif pd.to_numeric(column, errors="coerce").notnull().all():
         return "DOUBLE"
     else:
-        return "VARCHAR"
+        try:
+            pd.to_numeric(column)
+            return "DOUBLE"
+        except:
+            return "VARCHAR"
 
 
 def determine_column_number(values_list: list) -> str:
@@ -4227,3 +4352,60 @@ def docker_automount() -> str:
         if "sock" not in volume.get("Source") and "tmp" not in volume.get("Source"):
             mounts_new += f" -v {volume.get('Source')}:{volume.get ('Destination')}:{volume.get('Mode')}"
     return mounts_new
+
+
+def sort_contigs(vcf_reader):
+    """
+    Function that sort contigs in VCF header
+
+    Args:
+        vcf_reader (vcf): VCF object from VCF package
+
+    Returns:
+        vcf:VCF object from VCF package
+    """
+
+    from collections import OrderedDict
+
+    # inf
+    inf = 100000000
+
+    # Extract contigs from header
+    contigs = list(vcf_reader.contigs.keys())
+
+    # Sort function
+    def contig_sort_key(contig):
+
+        # Remove 'chr' from contig
+        contig_clean = re.sub(r"^chr", "", contig)
+
+        # Special cases: X, Y, M/MT
+        if contig_clean == "X":
+            return (float(inf) - 3, contig)
+        elif contig_clean == "Y":
+            return (float(inf) - 2, contig)
+        elif contig_clean in ["M", "MT"]:
+            return (float(inf) - 1, contig)
+
+        # Contig as integer
+        try:
+            return (int(contig_clean), contig)
+        except ValueError:
+            # Contig as on-numeric
+            return (float(inf), contig_clean)
+
+    # Sort contigs
+    sorted_contigs = sorted(contigs, key=contig_sort_key)
+
+    # Create new contgis OrderedDict
+    ordered_contigs = OrderedDict()
+
+    # Add contigs
+    for contig in sorted_contigs:
+        ordered_contigs[contig] = vcf_reader.contigs[contig]
+
+    # Replace contigs
+    vcf_reader.contigs = ordered_contigs
+
+    # Return
+    return vcf_reader

@@ -85,12 +85,10 @@ BASES = BASE+
 """
 
 import re
-
 from .cdna import CDNACoord
 from .variant import revcomp
 
 CHROM_PREFIX = "chr"
-
 
 CODON_1 = {
     "TTT": "F",

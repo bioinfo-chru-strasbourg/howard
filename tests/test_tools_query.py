@@ -12,20 +12,15 @@ coverage report --include=howard/* -m
 
 import logging as log
 import os
-import sys
-import duckdb
-import re
-import Bio.bgzf as bgzf
-import gzip
-import pytest
-import pandas as pd
-from pandas.testing import assert_frame_equal
-from unittest.mock import patch
+from tempfile import TemporaryDirectory
+import argparse
 
 from howard.objects.variants import Variants
-from howard.functions.commons import *
-from howard.tools.tools import *
-from test_needed import *
+from howard.functions.commons import remove_if_exists
+from howard.tools.tools import arguments_dict
+from howard.tools.query import query
+
+from test_needed import tests_folder, tests_data_folder
 
 
 def test_query_empty():
@@ -59,7 +54,9 @@ def test_query_empty():
 
         # Check if exported file is empty
         variants_output_vcf = Variants(conn=None, input=output_vcf, load=True)
-        results = variants_output_vcf.get_query_to_df(query=f"""SELECT * FROM variants""")
+        results = variants_output_vcf.get_query_to_df(
+            query=f"""SELECT * FROM variants"""
+        )
         assert len(results) == 0
 
 
@@ -78,10 +75,10 @@ def test_query():
 
         query_list = {
             "SELECT count(*) AS '#count' FROM variants": {
-                "nb_lines": 54,
+                "nb_lines": 55,
                 "nb_variants": 1,
             },
-            "SELECT * AS '#count' FROM variants": {"nb_lines": 60, "nb_variants": 7},
+            "SELECT * AS '#count' FROM variants": {"nb_lines": 61, "nb_variants": 7},
         }
 
         for explode_infos in [True, False]:

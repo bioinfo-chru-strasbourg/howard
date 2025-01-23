@@ -1,40 +1,57 @@
-#!/usr/bin/env python
-
 import argparse
-import datetime
-from functools import partial
-import itertools
-import multiprocessing
+import json
 import os
-import subprocess
-import pyarrow.parquet as pq
-import pyarrow as pa
-from pyarrow import csv
-import duckdb
-import pandas as pd
-import Bio.bgzf as bgzf
-import numpy as np
-import concurrent.futures
-from multiprocessing import Pool, cpu_count
-import dask.dataframe as dd
+from pathlib import Path
+import re
+import pyarrow.parquet as pq  # type: ignore
+import duckdb  # type: ignore
+import pandas as pd  # type: ignore
+from multiprocessing import Pool  # , cpu_count
+import dask.dataframe as dd  # type: ignore
 import logging as log
 import fnmatch
 import glob
-
 import os
-import requests
 import shutil
-import zipfile
-import gzip
-import pandas as pd
+import pandas as pd  # type: ignore
 from typing import List
 from tempfile import TemporaryDirectory
+from jproperties import Properties  # type: ignore
+import vcf  # type: ignore
+import io
 
-from jproperties import Properties  # jproperties 2.1.1
+from howard.functions.commons import (
+    BCFTOOLS_FORMAT,
+    DEFAULT_ALPHAMISSENSE_URL,
+    DEFAULT_ANNOTATIONS_FOLDER,
+    DEFAULT_DATABASE_FOLDER,
+    DEFAULT_DBNSFP_FOLDER,
+    DEFAULT_DBNSFP_URL,
+    DEFAULT_DBSNP_FOLDER,
+    DEFAULT_DBSNP_URL,
+    DEFAULT_EXOMISER_FOLDER,
+    DEFAULT_EXOMISER_URL,
+    DEFAULT_GENOME_FOLDER,
+    DEFAULT_REFSEQ_FOLDER,
+    DEFAULT_REFSEQ_URL,
+    DEFAULT_TOOLS_FOLDER,
+    GENOTYPE_MAP,
+    bed_sort,
+    command,
+    concat_and_compress_files,
+    determine_column_number,
+    determine_column_types,
+    download_file,
+    duckdb_execute,
+    extract_file,
+    full_path,
+    genome_build_switch,
+    get_bin,
+    code_type_map,
+    remove_if_exists,
+)
 
-
-from howard.functions.commons import *
-from howard.objects.variants import *
+# from howard.objects.variants import *
 
 
 def generate_databases_param(args: argparse, assemblies: list = []):
@@ -871,7 +888,7 @@ def databases_download_genomes(
 
     log.info(f"Download Genomes {assemblies}")
 
-    import genomepy
+    import genomepy  # type: ignore
 
     if not genomes_folder:
         genomes_folder = DEFAULT_GENOME_FOLDER
@@ -2604,7 +2621,7 @@ def databases_download_dbnsfp(
                                         "\t"
                                     )[1].strip()
                         else:
-                            genomes_sizes = None
+                            genomes_sizes = {}
 
                     # VCF file
                     if not os.path.exists(output_vcf):
@@ -3632,6 +3649,7 @@ def databases_download_dbsnp(
 
     # Import Database object
     from howard.objects.database import Database
+    import pgzip  # type: ignore
 
     # Log
     log.info(f"Download dbSNP {assemblies}")
@@ -4091,6 +4109,8 @@ def databases_download_hgmd(
     :type to_tsv: bool (optional)
     :return: a boolean value indicating whether the HGMD database conversion was successful or not.
     """
+
+    import mgzip  # type: ignore
 
     # Check assemblies
     if not assemblies or len(assemblies) > 1 or len(assemblies) == 0:

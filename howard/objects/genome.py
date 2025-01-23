@@ -1,11 +1,10 @@
 import itertools
 import os
-
 from .variant import revcomp
 
 
 try:
-    from pyfaidx import Genome as SequenceFileDB
+    from pyfaidx import Genome as SequenceFileDB  # type: ignore
 
     # Allow pyflakes to ignore redefinition in except clause.
     SequenceFileDB
