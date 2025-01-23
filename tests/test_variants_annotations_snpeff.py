@@ -10,6 +10,7 @@ coverage run -m pytest tests/test_objects_variants.py -x -v --log-cli-level=INFO
 coverage report --include=howard/* -m 
 """
 
+import logging as log
 from tempfile import TemporaryDirectory
 import vcf  # type: ignore
 
@@ -104,12 +105,19 @@ def test_annotation_snpeff_full_unsorted():
         # Remove if output file exists
         remove_if_exists([output_vcf])
 
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants ORDER BY "#CHROM", POS """
+        )
+        original_len = len(result)
+        # log.debug(f"result0: {result}")
+
         # Annotation
         variants.annotation()
 
         # query annotated variant
-        result = variants.get_query_to_df(""" SELECT INFO, "ANN" FROM variants """)
-        assert len(result) == 36
+        result = variants.get_query_to_df(""" SELECT "#CHROM", "ANN" FROM variants """)
+        # log.debug(f"result: {result}")
+        assert len(result) == original_len
 
         # query annotated variant as gene_fusion
         result = variants.get_query_to_df(

@@ -34,12 +34,13 @@ PARAM = {
                 "spliceai_mask": 1,
                 "workdir": "/work",
                 "condacachedir": "/work",
-                "threads": 8,
+                # "threads": 8,
             }
         }
     }
 }
 CONFIG = {
+    "threads": 2,
     "folders": {
         "databases": {
             "genomes": f"{tests_databases_folder}/genomes/{tests_databases_release}"

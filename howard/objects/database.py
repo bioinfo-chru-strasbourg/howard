@@ -2558,6 +2558,37 @@ class Database:
                         {order_by_sql}
                     """
 
+                # Find structure, with DESCRIBE with query, of query with columns and type like VARCHAR or VARCHAR[], or FLOAT or FLOAT[]
+                # and create a dictionary with column name and type
+                query_sql_structure = f"""
+                    DESCRIBE ({query})
+                """
+                result_describe = self.conn.execute(query_sql_structure)
+                description_dict = {
+                    row[0]: {"type": row[1]} for row in result_describe.fetchall()
+                }
+                # log.debug(f"description_dict={description_dict}")
+
+                # Add a select to aggregate list to string if needed
+                list_columns = []
+                for column in description_dict:
+                    column_type = description_dict[column]["type"]
+                    if column_type.endswith("[]"):
+                        column_type = "VARCHAR"
+                        list_columns.append(
+                            f""" list_aggregate("{column}", 'string_agg', ',') AS '{column}' """
+                        )
+                    else:
+                        list_columns.append(f""" "{column}" """)
+
+                # RE-Query
+                # log.debug(f"Export query 1: {query}")
+                query = f"""
+                    SELECT {",".join(list_columns)}
+                    FROM ({query})
+                """
+                # log.debug(f"Export query 2: {query}")
+
                 # Test empty query
                 df = self.conn.execute(query).fetch_record_batch(1)
                 query_empty = True

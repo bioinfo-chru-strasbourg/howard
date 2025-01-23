@@ -78,7 +78,8 @@ def test_query():
                 "nb_lines": 55,
                 "nb_variants": 1,
             },
-            "SELECT * AS '#count' FROM variants": {"nb_lines": 61, "nb_variants": 7},
+            # "SELECT * AS '#count' FROM variants": {"nb_lines": 61, "nb_variants": 7},
+            "SELECT * FROM variants": {"nb_lines": 61, "nb_variants": 7},
         }
 
         for explode_infos in [True, False]:

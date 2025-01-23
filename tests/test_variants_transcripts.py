@@ -22,16 +22,124 @@ from test_needed import tests_folder, tests_config, tests_data_folder
 
 
 @pytest.mark.parametrize(
-    "input_vcf",
+    "input_vcf, columns",
     [
-        f"{tests_data_folder}/example.ann.transcripts.vcf.gz",
-        f"{tests_data_folder}/example.ann.vcf.gz",
-        f"{tests_data_folder}/example.dbnsfp.transcripts.vcf.gz",
-        f"{tests_data_folder}/example.dbnsfp.no_transcripts.vcf.gz",
+        (
+            f"{tests_data_folder}/example.ann.transcripts.vcf.gz",
+            [
+                "#CHROM",
+                "AAposAAlength",
+                "ALT",
+                "Allele",
+                "Aloft_pred",
+                "Annotation",
+                "AnnotationImpact",
+                "CDSposCDSlength",
+                "CLNSIG",
+                "Distance",
+                "ERRORSWARNINGSINFO",
+                "Ensembl_geneid",
+                "FeatureID",
+                "FeatureType",
+                "GeneID",
+                "GeneName",
+                "HGVSc",
+                "HGVSp",
+                "INFO",
+                "LIST_S2_pred",
+                "LIST_S2_score",
+                "POS",
+                "REF",
+                "Rank",
+                "TranscriptBioType",
+                "VARITY_R_score",
+                "cDNAposcDNAlength",
+                "genename_1",
+                "transcript",
+                "transcript_list",
+                "transcript_mapped",
+            ],
+        ),
+        (
+            f"{tests_data_folder}/example.ann.vcf.gz",
+            [
+                "#CHROM",
+                "AAposAAlength",
+                "ALT",
+                "Allele",
+                "Aloft_pred",
+                "Annotation",
+                "AnnotationImpact",
+                "CDSposCDSlength",
+                "CLNSIG",
+                "Distance",
+                "ERRORSWARNINGSINFO",
+                "Ensembl_geneid",
+                "FeatureID",
+                "FeatureType",
+                "GeneID",
+                "GeneName",
+                "HGVSc",
+                "HGVSp",
+                "INFO",
+                "LIST_S2_pred",
+                "LIST_S2_score",
+                "POS",
+                "REF",
+                "Rank",
+                "TranscriptBioType",
+                "VARITY_R_score",
+                "cDNAposcDNAlength",
+                "genename_1",
+                "transcript",
+                "transcript_list",
+                "transcript_mapped",
+            ],
+        ),
+        (
+            f"{tests_data_folder}/example.dbnsfp.transcripts.vcf.gz",
+            [
+                "#CHROM",
+                "ALT",
+                "Aloft_pred",
+                "CLNSIG",
+                "Ensembl_geneid",
+                "INFO",
+                "LIST_S2_pred",
+                "LIST_S2_score",
+                "POS",
+                "REF",
+                "VARITY_R_score",
+                "genename",
+                "transcript",
+                "transcript_list",
+                "transcript_mapped",
+            ],
+        ),
+        (
+            f"{tests_data_folder}/example.dbnsfp.no_transcripts.vcf.gz",
+            [
+                "#CHROM",
+                "ALT",
+                "Aloft_pred",
+                "CLNSIG",
+                "Ensembl_geneid",
+                "INFO",
+                "LIST_S2_pred",
+                "LIST_S2_score",
+                "POS",
+                "REF",
+                "VARITY_R_score",
+                "genename",
+                "transcript",
+                "transcript_list",
+                "transcript_mapped",
+            ],
+        ),
         # "/Users/lebechea/howard/data/SGT2306387.final.vcf.gz",
     ],
 )
-def test_create_transcript_view(input_vcf):
+def test_create_transcript_view(input_vcf, columns):
     """
     The function `test_devel_create_transcript_view` creates a transcript view from a VCF file using
     specified parameters and checks the resulting table for data.
@@ -85,6 +193,10 @@ def test_create_transcript_view(input_vcf):
                             "column_case": None,
                         },
                     ],
+                    "from_variants": {
+                        "fields": ["CLNSIG", "not_a_field"],
+                        "prefix": "",
+                    },
                 },
             }
         }
@@ -115,12 +227,16 @@ def test_create_transcript_view(input_vcf):
         check = variants.get_query_to_df(query=query_check)
         assert check["count"][0] > 0
 
-        # # Check table content
-        # query_check = f"""
-        #     SELECT * FROM transcripts
-        # """
-        # check_variants = variants.get_query_to_df(query=query_check)
+        # Check table columns
+        query_check = f"""
+            SELECT * FROM transcripts
+        """
+        check_variants = variants.get_query_to_df(query=query_check)
+        # log.debug(f"check_variants columns: {sorted(set(check_variants.columns))}")
         # log.debug(f"check_variants: {check_variants}")
+        assert sorted(set([f.lower() for f in check_variants.columns])) == sorted(
+            set([f.lower() for f in columns])
+        )
 
         # ReCreate transcript view
         transcripts_table = variants.create_transcript_view()
@@ -401,6 +517,10 @@ def test_transcripts_prioritization(input_vcf):
                         "column_case": None,
                     },
                 ],
+                "from_variants": {
+                    "fields": ["CLNSIG", "DP"],
+                    "prefix": "",
+                },
             },
         }
         param_prioritization = {
@@ -446,7 +566,21 @@ def test_transcripts_prioritization(input_vcf):
         )
 
         # Transcripts with prioritization
-        assert variants.transcripts_prioritization(param=param_with_prioritization)
+        assert variants.transcripts_prioritization(
+            param=param_with_prioritization, strict=False
+        )
+
+        # # DEVEL
+        # query_check = """
+        #     SELECT * FROM variants
+        # """
+        # check = variants.get_query_to_df(query=query_check)
+        # log.debug(f"check={check}")
+        # query_check = """
+        #     SELECT * FROM transcripts
+        # """
+        # check = variants.get_query_to_df(query=query_check)
+        # log.debug(f"check={check}")
 
         # Check transcript prioritization result
         # Check table content
@@ -791,6 +925,19 @@ def test_transcripts_prioritization_multiple_param(
                 variants.transcripts_prioritization(param=param_with_prioritization)
 
             assert str(excinfo.value) == raise_value_error
+
+        # # DEVEL
+        # query_check_devel = f"""
+        #     SELECT INFO FROM variants
+        # """
+        # check_devel = variants.get_query_to_df(query=query_check_devel)
+        # log.debug(f"check: {check_devel.to_string()}")
+        # # DEVEL
+        # query_check_devel = f"""
+        #     SELECT * FROM transcripts
+        # """
+        # check_devel = variants.get_query_to_df(query=query_check_devel)
+        # log.debug(f"check: {check_devel.to_string()}")
 
         # If expected results
         if where_clause:
@@ -2030,7 +2177,10 @@ def test_transcripts_create_view_prioritize_nomen(nomen_options, tnomen_expected
         variants.calculation_extract_nomen()
 
         # Explode
-        variants.explode_infos(fields=["TNOMEN", "TVNOMEN", "GNOMEN", "PZTTranscript"])
+        variants.explode_infos(
+            fields=["TNOMEN", "TVNOMEN", "GNOMEN", "PZTTranscript"],
+            fields_forced_as_varchar=True,
+        )
 
         # DEVEL
         query_check = f"""
@@ -2038,8 +2188,16 @@ def test_transcripts_create_view_prioritize_nomen(nomen_options, tnomen_expected
         """
         check = variants.get_query_to_df(query=query_check)
 
+        # log.debug(f""" check INFO={check.to_string()} """)
+
         # Check list of expected transcripts
         assert len(check) == 7
+        # log.debug(
+        #     f""" sorted(list(set(check["TNOMEN"]))) = {sorted(list(set(check["TNOMEN"])))} """
+        # )
+        # log.debug(
+        #     f""" sorted(list(set(tnomen_expected))) = {sorted(list(set(tnomen_expected)))} """
+        # )
         assert sorted(list(set(check["TNOMEN"]))) == sorted(list(set(tnomen_expected)))
 
         # Check if PZTTranscript anre wwithin TNOMEN if transcript dynamic

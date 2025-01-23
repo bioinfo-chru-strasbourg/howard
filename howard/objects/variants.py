@@ -2052,9 +2052,15 @@ class Variants:
         create_index: bool = False,
         fields: list = None,
         fields_just_add: list = [],
+        fields_not_exists: bool = True,
+        detect_type_list: bool = True,
         force: bool = False,
         proccess_all_fields_together: bool = False,
+        fields_forced_as_varchar: bool = False,
         table: str = None,
+        table_source: str = None,
+        table_dest: str = None,
+        table_key: list = None,
     ) -> list:
         """
         The `explode_infos` function in Python takes a VCF file and explodes the INFO fields into
@@ -2099,6 +2105,12 @@ class Variants:
 
         # connexion format
         connexion_format = self.get_connexion_format()
+        if connexion_format in ["sqlite"]:
+            msg_err = (
+                f"Connexion format '{connexion_format}' not available for explode infos"
+            )
+            log.error(msg_err)
+            raise ValueError(msg_err)
 
         # Access
         access = self.get_config().get("access", None)
@@ -2116,16 +2128,38 @@ class Variants:
                     prefix = "INFO/"
 
             # table variants
-            if table is not None:
-                table_variants = table
-            else:
-                table_variants = self.get_table_variants(clause="select")
+            if table is None:
+                table = self.get_table_variants(clause="select")
 
-            # extra infos
-            try:
-                extra_infos = self.get_extra_infos()
-            except:
-                extra_infos = []
+            # table source
+            if table_source is None:
+                table_source = table
+
+            # table dest
+            if table_dest is None:
+                table_dest = table
+
+            # table key
+            if table_key is None:
+                table_key = ["#CHROM", "POS", "REF", "ALT"]
+
+            # Check source table columns
+            table_source_struct = self.get_columns(table=table_source)
+            table_dest_struct = self.get_columns(table=table_dest)
+            # log.debug(f"table_source_struct={table_source_struct}")
+            # log.debug(f"table_dest_struct={table_dest_struct}")
+
+            if "INFO" not in table_source_struct:
+                msg_err = f"Column 'INFO' not found in table '{table_source}'"
+                log.error(msg_err)
+                return None
+                # raise ValueError(msg_err)
+
+            # # extra infos
+            # try:
+            #     extra_infos = self.get_extra_infos(table=table_dest)
+            # except:
+            #     extra_infos = []
 
             # Header infos
             header_infos = self.get_header().infos
@@ -2136,28 +2170,68 @@ class Variants:
 
             sql_info_alter_table_array = []
 
-            # Info fields to check
-            fields_list = list(header_infos)
-            if fields:
-                fields_list += fields
-            fields_list = set(fields_list)
+            # # Info fields to check
+            # fields_list = list(header_infos)
+            # if fields:
+            #     fields_list += fields
+            # fields_list = set(fields_list)
 
-            # If no fields
-            if not fields:
-                fields = []
+            # # If no fields
+            # if not fields:
+            #     fields = []
 
             # Translate fields if patterns
             fields = self.get_explode_infos_fields(explode_infos_fields=fields)
+
+            # log.debug(f"fields={fields}")
+
+            # create view
+            view_source = "view_source_" + str(random.randint(10000, 100000))
+            view_source = self.create_annotations_view(
+                table=table_source,
+                fields=fields,
+                view=view_source,
+                view_type="view",
+                view_mode="explore",
+                info_prefix_column=prefix,
+                fields_needed=table_key,
+                fields_not_exists=fields_not_exists,
+                fields_forced_as_varchar=fields_forced_as_varchar,
+                detect_type_list=detect_type_list,
+            )
+            log.debug(f"view_source={view_source}")
+            log.debug(f"fields_forced_as_varchar={fields_forced_as_varchar}")
+            log.debug(self.execute_query(f"SELECT * FROM {view_source}").description)
+            log.debug(self.get_query_to_df(f"SELECT * FROM {view_source}"))
+
+            # res = self.execute_query(f"SELECT * FROM {view_source}")
+            # log.debug(res.description)
+            # description_dict = {col[0]: {"type": col[1]} for col in res.description}
+            # log.debug(f"description_dict={description_dict}")
+
+            describe_query = f"DESCRIBE {view_source}"
+            res = self.execute_query(describe_query)
+            description_dict = {row[0]: {"type": row[1]} for row in res.fetchall()}
+            log.debug(f"description_dict={description_dict}")
+
+            # exit()
+
+            view_source_struct = self.get_columns(table=view_source)
+            # log.debug(f"view_source_struct={view_source_struct}")
 
             for info in fields:
 
                 info_id_sql = prefix + info
 
-                if (
-                    info in fields_list
-                    or prefix + info in fields_list
-                    or info in extra_infos
-                ):
+                if info_id_sql in table_dest_struct:
+                    log.debug(f"Field '{info_id_sql}' already exists in table")
+
+                # if (
+                #     info in fields_list
+                #     or prefix + info in fields_list
+                #     or info in extra_infos
+                # ):
+                if info_id_sql in view_source_struct:
 
                     log.debug(f"Explode INFO fields - ADD '{info}' annotations fields")
 
@@ -2171,15 +2245,21 @@ class Variants:
                     type_sql = self.code_type_map_to_sql.get(info_type, "VARCHAR")
                     if info_num != 1:
                         type_sql = "VARCHAR"
+                        # type_sql += "[]"
+
+                    type_sql = description_dict.get(info_id_sql, {})["type"]
+
+                    # fields_forced_as_varchar
 
                     # Add field
                     added_column = self.add_column(
-                        table_name=table_variants,
+                        table_name=table_dest,
                         column_name=info_id_sql,
                         column_type=type_sql,
                         default_value="null",
                         drop=force,
                     )
+                    log.debug(f"added_column={added_column}")
 
                     if added_column:
                         added_columns.append(added_column)
@@ -2190,31 +2270,41 @@ class Variants:
                         # add field to index
                         self.index_additionnal_fields.append(info_id_sql)
 
-                        # Update field array
-                        if connexion_format in ["duckdb"]:
-                            update_info_field = f"""
-                            "{info_id_sql}" =
-                                CASE
-                                    WHEN REGEXP_EXTRACT(concat(';', INFO), ';{info}=([^;]*)',1) IN ('','.') THEN NULL
-                                    ELSE REGEXP_EXTRACT(concat(';', INFO), ';{info}=([^;]*)',1)
-                                END
+                        update_info_field = f"""
+                            "{info_id_sql}" = {view_source}."{info_id_sql}"
                             """
-                        elif connexion_format in ["sqlite"]:
-                            update_info_field = f"""
-                                "{info_id_sql}" =
-                                    CASE
-                                        WHEN instr(INFO, '{info}=') = 0 THEN NULL
-                                        WHEN instr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}),';') = 0 THEN substr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}), instr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}), '=')+1)
-                                        ELSE substr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}), instr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}), '=')+1, instr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}),';')-instr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}), '=')-1)
-                                    END
-                            """
+
+                        # # Update field array
+                        # if connexion_format in ["duckdb"]:
+                        #     update_info_field = f"""
+                        #     "{info_id_sql}" =
+                        #         CASE
+                        #             WHEN REGEXP_EXTRACT(concat(';', INFO), ';{info}=([^;]*)',1) IN ('','.') THEN NULL
+                        #             ELSE REGEXP_EXTRACT(concat(';', INFO), ';{info}=([^;]*)',1)
+                        #         END
+                        #     """
+                        # elif connexion_format in ["sqlite"]:
+                        #     update_info_field = f"""
+                        #         "{info_id_sql}" =
+                        #             CASE
+                        #                 WHEN instr(INFO, '{info}=') = 0 THEN NULL
+                        #                 WHEN instr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}),';') = 0 THEN substr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}), instr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}), '=')+1)
+                        #                 ELSE substr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}), instr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}), '=')+1, instr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}),';')-instr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}), '=')-1)
+                        #             END
+                        #     """
 
                         sql_info_alter_table_array.append(update_info_field)
 
             if sql_info_alter_table_array:
 
+                # Where clause join
+                where_clause_join = f"""
+                    {" AND ".join([f'"{table_dest}"."{key}" = "{view_source}"."{key}"' for key in table_key])}
+                """
+
                 # Evaluate block size
                 batch_split = self.get_batch_split()
+                # batch_split = 2
 
                 # Insert by batch
                 for batch_index in range(batch_split):
@@ -2223,11 +2313,15 @@ class Variants:
                         f"Explode INFO fields - Process batch [{batch_index+1}/{batch_split}]..."
                     )
 
+                    where_clause = where_clause_join
+
                     # where clause
                     if batch_split > 1:
-                        where_clause = f" WHERE (POS % {batch_split}) = {batch_index} "
+                        where_clause += (
+                            f" AND ({table_dest}.POS % {batch_split}) = {batch_index} "
+                        )
                     else:
-                        where_clause = ""
+                        where_clause += ""
 
                     # Update table
                     if proccess_all_fields_together:
@@ -2236,9 +2330,10 @@ class Variants:
                         )
                         if sql_info_alter_table_array_join:
                             sql_info_alter_table = f"""
-                                UPDATE {table_variants}
+                                UPDATE {table_dest}
                                 SET {sql_info_alter_table_array_join}
-                                {where_clause}
+                                FROM {view_source}
+                                WHERE {where_clause}
                                 """
                             log.debug(
                                 f"Explode INFO fields - Explode all {len(sql_info_alter_table_array)} fields..."
@@ -2250,9 +2345,10 @@ class Variants:
                         for sql_info_alter in sql_info_alter_table_array:
                             sql_info_alter_num += 1
                             sql_info_alter_table = f"""
-                                UPDATE {table_variants}
+                                UPDATE {table_dest}
                                 SET {sql_info_alter}
-                                {where_clause}
+                                FROM {view_source}
+                                WHERE {where_clause}
                                 """
                             log.debug(
                                 f"Explode INFO fields - Explode field {sql_info_alter_num}/{len(sql_info_alter_table_array)}..."
@@ -2511,6 +2607,7 @@ class Variants:
                 prefix=self.get_explode_infos_prefix(),
                 fields=self.get_explode_infos_fields(),
                 force=False,
+                fields_forced_as_varchar=True,
             )
 
         # if connexion_format in ["sqlite"] or query:
@@ -2581,6 +2678,24 @@ class Variants:
         return (os.path.exists(output_file) or None) and (
             os.path.exists(output_file) or None
         )
+
+    def get_columns(self, table: str = None) -> list:
+        """
+        The `get_columns` function returns a list of columns in a specified table.  If the `table`
+        parameter is not provided when calling the function, it will default to using the variants table.
+
+        :param table: The `table` parameter in the `get_columns` function is used to specify the name of
+        the table from which you want to retrieve the columns. If the `table` parameter is not provided
+        when calling the function, it will default to using the variants table
+        :type table: str
+        :return: A list of columns in the specified table.
+        """
+
+        if not table:
+            table = self.get_table_variants(clause="from")
+
+        query = f""" SELECT * FROM {table} LIMIT 1 """
+        return self.get_query_to_df(query).columns.tolist()
 
     def get_extra_infos(self, table: str = None) -> list:
         """
@@ -7289,7 +7404,15 @@ class Variants:
                     "description": "Prioritize transcripts with a prioritization profile (using param.json)",
                     "available": True,
                     "function_name": "calculation_transcripts_prioritization",
-                    "function_params": [],
+                    "function_params": [False],
+                },
+                "transcripts_prioritization_strict": {
+                    "type": "python",
+                    "name": "transcripts_prioritization",
+                    "description": "Prioritize transcripts with a prioritization profile (using param.json)",
+                    "available": True,
+                    "function_name": "calculation_transcripts_prioritization",
+                    "function_params": [True],
                 },
                 "transcripts_export": {
                     "type": "python",
@@ -7401,6 +7524,7 @@ class Variants:
         pz_prefix: str = None,
         pz_param: dict = None,
         pz_keys: list = None,
+        strict: bool = False,
     ) -> bool:
         """
         The `prioritization` function in Python processes VCF files, adds new INFO fields, and
@@ -7931,7 +8055,9 @@ class Variants:
                                     info_prefix_column=annotations_view_prefix,
                                     info_struct_column=annotations_view_struct,
                                     fields=criterion_fields_profile + pz_keys,
+                                    fields_not_exists=(not strict),
                                     drop_view=True,
+                                    detect_type_list=True,
                                 )
 
                                 # Describe annotation view and dict
@@ -8182,6 +8308,13 @@ class Variants:
                         """
                         chroms = self.get_query_to_df(sql_uniq_chrom)["#CHROM"].tolist()
 
+                        # # DEVEL
+                        # log.debug(
+                        #     self.execute_query(
+                        #         f""" SELECT * FROM {annotation_view_name} """
+                        #     ).description
+                        # )
+
                         for chrom in chroms:
 
                             log.debug(
@@ -8206,7 +8339,9 @@ class Variants:
                                     log.debug(
                                         f"""Profile '{profile}' - Prioritization query - Chromosome '{chrom}' [{num_query}/{len(sql_queries)}]"""
                                     )
-                                    # log.debug(f"""sql_query_chrom: {sql_query_chrom}""")
+                                    # log.debug(
+                                    #     f"""sql_query_chrom:\n{sql_query_chrom}"""
+                                    # )
                                     self.execute_query(query=sql_query_chrom)
 
                         # Update INFO field
@@ -8886,8 +9021,15 @@ class Variants:
                     info_struct_column="INFOS",
                     drop_view=True,
                 )
+
+                # # DEVEL
+                # log.debug(f"operation_info_fields={operation_info_fields}")
                 # result_view = self.get_query_to_df(f"SELECT * FROM {table_view_name}")
                 # log.debug(f"result_view={result_view}")
+                # # result_view = self.get_query_to_df(
+                # #     f"SELECT {', '.join(operation_info_fields)} FROM {table_view_name}"
+                # # )
+                # # log.debug(f"result_view={result_view}")
 
                 # Table key construct
                 clause_key = []
@@ -8897,27 +9039,32 @@ class Variants:
                     )
 
                 # Create view
-                # create view name with random number
-                calculation_view_name = "calculation_view_" + str(
-                    random.randrange(1000)
-                )
-                query_create_view = f"""
-                    CREATE TABLE {calculation_view_name} AS
-                    SELECT {", ".join([f'"{k}"' for k in operation_table_key])},
-                        concat(
-                                CASE
-                                    WHEN "INFO" IS NOT NULL AND "INFO" NOT IN ('', '.')
-                                    THEN ';'
-                                    ELSE ''
-                                END,
-                                '{output_column_name}=',
-                                TRY_CAST(({operation_query}) AS VARCHAR)
-                            ) AS INFO
-                    FROM {table_view_name}
-                    
-                """
-                # log.debug(f"query_create_view={query_create_view}")
-                self.get_connexion().execute(query_create_view)
+                try:
+                    # create view name with random number
+                    calculation_view_name = "calculation_view_" + str(
+                        random.randrange(1000)
+                    )
+                    query_create_view = f"""
+                        CREATE TABLE {calculation_view_name} AS
+                        SELECT {", ".join([f'"{k}"' for k in operation_table_key])},
+                            concat(
+                                    CASE
+                                        WHEN "INFO" IS NOT NULL AND "INFO" NOT IN ('', '.')
+                                        THEN ';'
+                                        ELSE ''
+                                    END,
+                                    '{output_column_name}=',
+                                    TRY_CAST(({operation_query}) AS VARCHAR)
+                                ) AS INFO
+                        FROM {table_view_name}
+                        
+                    """
+                    # log.debug(f"query_create_view={query_create_view}")
+                    self.get_connexion().execute(query_create_view)
+                except:
+                    msg_err = f"Operations config: Calculation '{operation_name}' query failed"
+                    log.error(msg_err)
+                    raise ValueError(msg_err)
 
                 # Add to INFO
                 if operation_info:
@@ -8969,12 +9116,9 @@ class Variants:
                                 self.conn.execute(sql_update_info_chunk)
 
                 except:
-                    log.error(
-                        f"Operations config: Calculation '{operation_name}' query failed"
-                    )
-                    raise ValueError(
-                        f"Operations config: Calculation '{operation_name}' query failed"
-                    )
+                    msg_err = f"Operations config: Calculation '{operation_name}' query failed"
+                    log.error(msg_err)
+                    raise ValueError(msg_err)
 
                 # Remove added columns
                 for added_column in added_columns:
@@ -8982,20 +9126,16 @@ class Variants:
                     self.drop_column(column=added_column)
 
             else:
-                log.error(
-                    f"Operations config: Calculation '{operation_name}' DOES NOT contain all mandatory fields {operation_info_fields}"
-                )
-                raise ValueError(
-                    f"Operations config: Calculation '{operation_name}' DOES NOT contain all mandatory fields {operation_info_fields}"
-                )
+                msg_err = f"Operations config: Calculation '{operation_name}' DOES NOT contain all mandatory fields {operation_info_fields}"
+                log.error(msg_err)
+                raise ValueError(msg_err)
 
         else:
-            log.error(
+            msg_err = (
                 f"Operations config: Calculation '{operation_name}' query NOT defined"
             )
-            raise ValueError(
-                f"Operations config: Calculation '{operation_name}' query NOT defined"
-            )
+            log.error(msg_err)
+            raise ValueError(msg_err)
 
     def calculation_process_function(
         self, operation: dict, operation_name: str = "unknown"
@@ -9525,7 +9665,9 @@ class Variants:
             extra_field_transcript = f"{transcripts_table}.{transcripts_column}"
             # Explode if not exists
             added_columns += self.explode_infos(
-                fields=[transcripts_column], table=transcripts_table
+                fields=[transcripts_column],
+                table=transcripts_table,
+                fields_forced_as_varchar=True,
             )
         else:
             extra_field_transcript = f"NULL"
@@ -9543,7 +9685,10 @@ class Variants:
         transcripts = transcripts_sources.get("file", [])
 
         # Explode HGVS field in column
-        added_columns += self.explode_infos(fields=[hgvs_field])
+        added_columns += self.explode_infos(
+            fields=[hgvs_field],
+            fields_forced_as_varchar=True,
+        )
 
         # extra infos
         extra_infos = self.get_extra_infos()
@@ -9555,6 +9700,7 @@ class Variants:
             dataframe_hgvs = self.get_query_to_df(
                 f""" SELECT "#CHROM", "POS", "REF", "ALT", "{extra_field}" AS hgvs, {extra_field_transcript} AS transcript FROM variants """
             )
+            # log.debug(f"dataframe_hgvs={dataframe_hgvs}")
 
             # Transcripts rank
             transcripts_rank = {
@@ -10645,7 +10791,7 @@ class Variants:
         else:
             log.info("No Transcripts to process. Check param.json file configuration")
 
-    def calculation_transcripts_prioritization(self) -> None:
+    def calculation_transcripts_prioritization(self, strict: bool = False) -> None:
         """
         The function `calculation_transcripts_prioritization` creates a transcripts table and
         prioritizes transcripts based on certain criteria.
@@ -10656,7 +10802,9 @@ class Variants:
 
         # Add info field
         if transcripts_table:
-            self.transcripts_prioritization(transcripts_table=transcripts_table)
+            self.transcripts_prioritization(
+                transcripts_table=transcripts_table, strict=strict
+            )
         else:
             log.info("No Transcripts to process. Check param.json file configuration")
 
@@ -10757,8 +10905,8 @@ class Variants:
                 log.info("Transcripts view creation - already exists")
                 return transcripts_table
 
-        # # Variants table
-        # variants_table = self.get_table_variants()
+        # Variants table
+        variants_table = self.get_table_variants()
 
         if struct:
 
@@ -10941,8 +11089,7 @@ class Variants:
 
                 # Merge with mapping
                 query_merge_on_transcripts = f"""
-                    SELECT
-                        "#CHROM", POS, REF, ALT, INFO,
+                    SELECT "#CHROM", POS, REF, ALT, INFO,
                         CASE
                             WHEN ANY_VALUE(transcript_mapped) NOT IN ('')
                             THEN ANY_VALUE(transcript_mapped)
@@ -10998,11 +11145,19 @@ class Variants:
             # Log
             log.info(f"Transcripts view creation - Create view...")
 
-            # # DEVEL
-            # query_merge_on_transcripts = query_merge_on_transcripts.replace(
-            #     """SELECT "#CHROM", POS, REF, ALT, INFO, """,
-            #     """SELECT "#CHROM", POS, REF, ALT, '' AS INFO, """,
-            # )
+            # FIX REMOVE INFO COLUMN BECAUSE IT IS TOO HEAVY - TODO
+            # log.debug(f"query_merge_on_transcripts={query_merge_on_transcripts}")
+            query_merge_on_transcripts = query_merge_on_transcripts.replace(
+                """SELECT "#CHROM", POS, REF, ALT, INFO,""",
+                """SELECT "#CHROM", POS, REF, ALT, '' AS INFO,""",
+                ##"""SELECT "#CHROM", POS, REF, ALT, NULL AS INFO,""",
+                # """SELECT "#CHROM", POS, REF, ALT,""",
+            )
+            # log.debug(f"query_merge_on_transcripts={query_merge_on_transcripts}")
+
+            # # Add columns from variants table as exploded from a list of fields
+            # fields_to_explode = ["CLINVAR_clnsig"]
+            # self.explode_infos(table)
 
             # Create table with structure but without data, if not exists
             query_create_table = f"""
@@ -11033,6 +11188,46 @@ class Variants:
                 )
                 # Execute
                 self.execute_query(query=query_insert_chunk)
+
+            # # DEVEL
+            # result_devel = self.get_query_to_df(
+            #     query=f"SELECT * FROM {transcripts_table}"
+            # )
+            # log.debug(f"result_devel={result_devel}")
+
+            log.info(
+                "Transcripts view creation - Annotations from variants annotations..."
+            )
+            columns_from_variants = struct.get("from_variants", {})
+            columns_from_variants_prefix = columns_from_variants.get("prefix", "")
+            columns_from_variants_fields = columns_from_variants.get("fields", [])
+
+            # Add columns from variants table as exploded from a list of fields
+            # log.debug(
+            #     self.execute_query(f"select * from {transcripts_table}").description
+            # )
+            if len(columns_from_variants_fields) > 0:
+                fields_exploded = self.explode_infos(
+                    fields=columns_from_variants_fields,
+                    prefix=columns_from_variants_prefix,
+                    table_source=variants_table,
+                    table_dest=transcripts_table,
+                    table_key=["#CHROM", "POS", "REF", "ALT"],
+                    proccess_all_fields_together=True,
+                    fields_not_exists=False,
+                    fields_forced_as_varchar=False,
+                )
+            # log.debug(
+            #     self.execute_query(f"select * from {transcripts_table}").description
+            # )
+            # exit()
+            # log.debug(f"fields_exploded={fields_exploded}")
+            # if sorted(set(fields_exploded)) != sorted(
+            #     set(columns_from_variants_fields)
+            # ):
+            #     msg_err = f"Filed exploded from variants table {fields_exploded} different from expected {columns_from_variants_fields}"
+            #     log.warning(msg_err)
+            #     # raise ValueError(msg_err)
 
             # Remove temporary tables
             self.remove_tables_or_views(
@@ -11716,22 +11911,51 @@ class Variants:
 
         # List of transcripts annotations
         query_describe = f"""
-            SELECT column_name
+            SELECT *
             FROM (
                     DESCRIBE SELECT * FROM {transcripts_table}
                 )
             WHERE column_name NOT IN ('#CHROM', 'POS', 'REF', 'ALT', 'INFO')
         """
-        transcripts_annotations_list = list(
-            self.get_query_to_df(query=query_describe)["column_name"]
-        )
+        result_describe = self.execute_query(query=query_describe)
+        # log.debug(f"result_describe={result_describe}")
+        description_dict = {
+            row[0]: {"type": row[1]} for row in result_describe.fetchall()
+        }
+        # log.debug(f"description_dict={description_dict}")
+        transcripts_annotations_list = list(description_dict.keys())
+
+        transcripts_annotations_list_columns = []
+        for column in description_dict:
+            column_type = description_dict[column]["type"]
+            if column_type.endswith("[]"):  # "ARRAY":
+                column_type = "VARCHAR"
+                transcripts_annotations_list_columns.append(
+                    f""" TRY_CAST(list_aggregate("{column}", 'string_agg', ',') AS {column_type}) AS '{column}' """
+                )
+            else:
+                transcripts_annotations_list_columns.append(f""" "{column}" """)
+
+        # log.debug(
+        #     f"transcripts_annotations_list_columns={transcripts_annotations_list_columns}"
+        # )
+
+        # description_dict = {
+        #     row[0]: {"type": row[1]} for row in result_describe.fetchall()
+        # }
 
         # Create transcripts table for export
         transcripts_table_export = f"{transcripts_table}_export_" + "".join(
             random.choices(string.ascii_uppercase + string.digits, k=10)
         )
         query_create_transcripts_table_export = f"""
-            CREATE TABLE {transcripts_table_export} AS (SELECT "#CHROM", "POS", "REF", "ALT", '' AS 'INFO', {', '.join(transcripts_annotations_list)} FROM {transcripts_table})
+            CREATE TABLE {transcripts_table_export}
+            AS (
+                SELECT "#CHROM", "POS", "REF", "ALT", '' AS 'INFO',
+                {', '.join(transcripts_annotations_list_columns)}
+                FROM {transcripts_table}
+                ORDER BY "#CHROM", "POS", "REF", "ALT"
+            )
         """
         self.execute_query(query=query_create_transcripts_table_export)
 
@@ -11753,9 +11977,11 @@ class Variants:
                     # Find previous desc
                     if self.get_header().infos.get(field, None) is not None:
                         field_description = self.get_header().infos.get(field).desc
+                        field_number = self.get_header().infos.get(field).num
                         field_type = self.get_header().infos.get(field).type
                     else:
                         field_description = "Unknown annotation"
+                        field_number = "."
                         field_type = "String"
 
                     # Add description about transription prioritization
@@ -11764,7 +11990,7 @@ class Variants:
                     # Add PZ Transcript in header
                     self.get_header().infos[field] = vcf.parser._Info(
                         field,
-                        "1",
+                        field_number,
                         field_type,
                         field_description,
                         "unknown",
@@ -11777,7 +12003,11 @@ class Variants:
                     f"""
                         CASE
                             WHEN "{field}" IS NOT NULL
-                            THEN concat('{field}=', "{field}", ';')    
+                            THEN concat(
+                                '{field}=',
+                                "{field}",
+                                ';'
+                            )    
                             ELSE ''     
                         END
                         """
@@ -11795,18 +12025,23 @@ class Variants:
             query_update_info_value = f""" NULL """
             query_export_columns = f""" "#CHROM", "POS", "REF", "ALT", {', '.join(transcripts_annotations_list)} """
 
-        # Update query INFO column
-        query_update = f"""
-            UPDATE {transcripts_table_export}
-            SET INFO = {query_update_info_value}
+        # # Update query INFO column
+        # query_update = f"""
+        #     UPDATE {transcripts_table_export}
+        #     SET INFO = {query_update_info_value}
 
-        """
-        self.execute_query(query=query_update)
+        # """
+        # self.execute_query(query=query_update)
 
         # Export
+        query_export = (
+            f""" SELECT {query_export_columns} FROM {transcripts_table_export} """
+        )
+        # log.debug(query_export)
+        # log.debug(self.get_query_to_df(query_export))
         self.export_output(
             output_file=transcripts_export_output,
-            query=f""" SELECT {query_export_columns} FROM {transcripts_table_export} """,
+            query=query_export,
         )
 
         # Drop transcripts export table
@@ -11816,7 +12051,7 @@ class Variants:
         self.execute_query(query=query_drop_transcripts_table_export)
 
     def transcripts_prioritization(
-        self, transcripts_table: str = None, param: dict = {}
+        self, transcripts_table: str = None, param: dict = {}, strict: bool = False
     ) -> bool:
         """
         The `transcripts_prioritization` function prioritizes transcripts based on certain parameters
@@ -11983,6 +12218,7 @@ class Variants:
             table=transcripts_table,
             pz_param=param.get("transcripts", {}).get("prioritization", {}),
             pz_keys=["#CHROM", "POS", "REF", "ALT", "transcript"],
+            strict=strict,
         )
         if not prioritization_result:
             log.warning("Transcripts prioritization not processed")
@@ -12048,11 +12284,11 @@ class Variants:
             table=transcripts_table,
             view=annotation_view_name,
             view_type="table",
-            view_mode="full",
+            view_mode="explore",
             info_prefix_column="",
-            detect_type_list=False,
+            detect_type_list=True,
             fields=fields_to_explode + ["transcript"],
-            fields_not_exists=True,
+            fields_not_exists=False,
             fields_forced_as_varchar=True,
             fields_needed_all=False,
         )
@@ -13232,11 +13468,20 @@ class Variants:
             f"Create '{view}' view (as '{view_type}') from table '{table}' with {len(fields)} fields"
         )
 
+        connexion_type = self.get_connexion_type()
+
         # Describe table
-        table_describe_query = f"""
-            DESCRIBE {table}
-        """
-        table_describe = self.get_query_to_df(query=table_describe_query)
+        if connexion_type in ["duckdb"]:
+            table_describe_query = f"""
+                DESCRIBE {table}
+            """
+            table_describe = self.get_query_to_df(query=table_describe_query)
+        else:
+            table_describe_query = f"""
+                PRAGMA table_info({table})
+            """
+            table_describe = self.get_query_to_df(query=table_describe_query)
+            table_describe["column_name"] = table_describe.get("name")
 
         # fields needed
         if fields_needed is None:
