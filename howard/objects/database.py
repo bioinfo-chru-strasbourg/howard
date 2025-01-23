@@ -2572,7 +2572,10 @@ class Database:
                 # Add a select to aggregate list to string if needed
                 list_columns = []
                 for column in description_dict:
-                    column_type = description_dict[column]["type"]
+                    # column_type = description_dict[column]["type"]
+                    column_type = description_dict.get(column, {}).get(
+                        "type", "VARCHAR"
+                    )
                     if column_type.endswith("[]"):
                         column_type = "VARCHAR"
                         list_columns.append(

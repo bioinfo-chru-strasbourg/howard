@@ -2589,3 +2589,38 @@ def test_recreate_infos_fields():
             vcf_obj = vcf.Reader(filename=output_vcf)
         except:
             assert False
+
+
+def test_get_columns():
+    """
+    This function tests the get_columns method of the Variants class by creating
+    an object and checking if the columns are as expected.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.annotation_names.vcf.gz"
+
+        # Create object
+        variants = Variants(input=input_vcf, load=True)
+
+        # Check get_columns
+        columns = variants.get_columns()
+        assert len(columns) == 13
+        log.debug(columns)
+        assert columns == [
+            "#CHROM",
+            "POS",
+            "ID",
+            "REF",
+            "ALT",
+            "QUAL",
+            "FILTER",
+            "INFO",
+            "FORMAT",
+            "sample1",
+            "sample2",
+            "sample3",
+            "sample4",
+        ]
