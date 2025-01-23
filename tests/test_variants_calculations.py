@@ -83,6 +83,9 @@ def test_calculation_sql_on_table():
             operations_config_file=operations_config_file,
         )
 
+        # result = variants.get_query_to_df(f"""SELECT * FROM variants """)
+        # log.debug(result.to_string())
+
         # Check number of variant_chr_pos_alt_ref
         result = variants.get_query_to_df(
             f"""SELECT INFO FROM variants WHERE INFO LIKE '%variant_chr_pos_alt_ref=%' """
@@ -769,6 +772,8 @@ def test_calculation_nomen_snpeff_hgvs_transcripts():
 
         # Calculation
         variants.calculation()
+        # result = variants.get_query_to_df(""" SELECT INFO FROM variants  """)
+        # log.debug(f"result=\n{result.to_string()}")
 
         # query annotated variant
         result = variants.get_query_to_df(
