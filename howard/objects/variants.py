@@ -186,7 +186,7 @@ class Variants:
 
             # Query create
             query_create = f"""
-            CREATE table {view_name} (
+            CREATE OR REPLACE table {view_name} (
                 {', '.join(columns)},
                 PRIMARY KEY (section, id)
             );
