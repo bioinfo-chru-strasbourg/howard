@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 
 import logging as log
+import os
+import random
 import re
 import readline
 from datetime import datetime
+import subprocess
 from tabulate import tabulate  # type: ignore
 import pandas as pd  # type: ignore
 import duckdb  # type: ignore
@@ -14,7 +17,129 @@ import io
 from termcolor import colored  # type: ignore
 from colorama import init  # type: ignore
 
-from howard.functions.commons import prompt_color, prompt_mesage, prompt_line_color
+from howard.functions.commons import (
+    prompt_color,
+    prompt_mesage,
+    prompt_line_color,
+    remove_if_exists,
+)
+
+
+def save_existing_connection_to_file(
+    existing_conn: duckdb.DuckDBPyConnection, new_db_file: str, folder: str = "."
+):
+    """
+    Save the data from an existing DuckDB connection to a new DuckDB file.
+
+    This function creates a new DuckDB connection to the specified file and copies
+    all tables and views from the existing DuckDB connection to the new connection.
+    Tables are copied as Parquet files, and views are recreated using their definitions.
+
+    Parameters:
+        existing_conn (duckdb.DuckDBPyConnection): The existing DuckDB connection.
+        new_db_file (str): The path to the new DuckDB file.
+        folder (str): The directory to use for storing intermediate Parquet files.
+
+    Raises:
+        duckdb.IOException: If there is an error creating the new DuckDB connection or copying data.
+        duckdb.BinderException: If there is an error executing SQL commands.
+
+    Example:
+        existing_conn = duckdb.connect('existing_db.duckdb')
+        new_db_file = 'new_db.duckdb'
+        save_existing_connection_to_file(existing_conn, new_db_file)
+    """
+    # Create a new DuckDB connection to the specified file
+    new_conn = duckdb.connect(new_db_file)
+
+    # Get the list of tables and views in the existing connection
+    tables_and_views = existing_conn.execute(
+        "SELECT table_name, table_type FROM information_schema.tables WHERE table_schema = 'main'"
+    ).fetchall()
+
+    # Copy each table to the new connection
+    for table_name, table_type in tables_and_views:
+
+        if table_type == "BASE TABLE":
+            table_file = os.path.join(folder, f"table_{table_name}.parquet")
+            log.debug(f"Create '{table_name}' as 'table' through {table_file}")
+            existing_conn.execute(
+                f"COPY {table_name} TO '{table_file}' (FORMAT 'parquet')"
+            )
+            new_conn.execute(
+                f"CREATE TABLE {table_name} AS SELECT * FROM '{table_file}'"
+            )
+            remove_if_exists(table_file)
+        elif table_type == "VIEW":
+            log.debug(f"Create '{table_name}' as 'view'")
+            view_definition = existing_conn.execute(
+                f"SELECT sql FROM duckdb_views() WHERE view_name = '{table_name}'"
+            ).fetchone()[0]
+            new_conn.execute(f"{view_definition}")
+
+    # Close the new connection
+    new_conn.close()
+
+
+def harlequin(conn: duckdb.DuckDBPyConnection, tmp_folder: str = "."):
+    """
+    Create a temporary DuckDB database from an existing connection and run the Harlequin tool on it.
+
+    This function creates a temporary DuckDB database from the provided connection, saves it to a temporary directory,
+    and then runs the Harlequin tool on the saved database. If Harlequin is not installed, it attempts to install it.
+
+    Parameters:
+        conn (duckdb.DuckDBPyConnection): The existing DuckDB connection.
+        tmp_folder (str): The directory to use for creating the temporary DuckDB database. Defaults to the current directory.
+
+    Raises:
+        subprocess.CalledProcessError: If there is an error running the Harlequin tool.
+        Exception: If there is an error installing the Harlequin tool.
+
+    Example:
+        conn = duckdb.connect('existing_db.duckdb')
+        harlequin(conn, tmp_folder='/tmp')
+    """
+
+    tmp_folder = "."
+    with tempfile.TemporaryDirectory(
+        dir=tmp_folder, prefix=".howard_harlequin_"
+    ) as tmp_dir:
+
+        # Harlequin database
+        harlequin_db = os.path.join(tmp_dir, "howard.duckdb")
+
+        # Load Harlequin database
+        save_existing_connection_to_file(
+            existing_conn=conn, new_db_file=harlequin_db, folder=tmp_dir
+        )
+
+        # Harlequin command
+        harlequin_command = [
+            "harlequin",
+            "--profile",
+            "None",
+            harlequin_db,
+        ]
+
+        try:
+            # Run harlequin
+            subprocess.run(harlequin_command)
+            return
+        except:
+            log.warning("Harlequin not installed failed")
+            try:
+                # Install harlequin
+                log.warning("Harlequin installation...")
+                subprocess.run(["pip", "install", "harlequin"])
+            except Exception as e:
+                log.error("Harlequin installation failed")
+                log.error(e)
+                return
+            # Run harlequin
+            log.debug("Run Harlequin...")
+            subprocess.run(["harlequin", harlequin_db])
+            return
 
 
 def launch_interactive_terminal(
@@ -68,10 +193,10 @@ def launch_interactive_terminal(
     log.debug(f"Interactive mode set to '{interactive_mode}'")
 
     view_name = "variants_view"
-    if interactive_mode == "view":
+    if interactive_mode in ["view", "harlequin_view"]:
         view_type = "view"
         view_mode = "explore"
-    elif interactive_mode == "table":
+    elif interactive_mode in ["table", "harlequin", "harlequin_table"]:
         view_type = "table"
         view_mode = "full"
 
@@ -95,6 +220,11 @@ def launch_interactive_terminal(
         log.warning(f"Error: {e}")
         log.warning("Please check variants annotations formats")
 
+    if interactive_mode.startswith("harlequin"):
+        log.info("Start Harlequin")
+        harlequin(conn)
+        return
+
     # Print welcome message
     log.info("Interactive DuckDB SQL terminal")
     log.info("- 'exit' to quit.")
@@ -114,6 +244,7 @@ def launch_interactive_terminal(
         "history",
         "display",
         "limit",
+        "harlequin",
         "python",
         "exit",
         "quit",
@@ -374,6 +505,11 @@ def launch_interactive_terminal(
             if query_clean in ["exit", "quit"]:
                 break
 
+            # Check for special commands - exit or quit
+            if query_clean.lower() in ["harlequin"]:
+                harlequin(conn)
+                continue
+
             # Check for special commands - display
             elif query_clean.startswith("display"):
                 display_format_input = query_clean.split(" ")[-1]
@@ -439,6 +575,7 @@ def launch_interactive_terminal(
                 print(
                     "  limit - Change query limit for query results (e.g. 'limit 100')"
                 )
+                print("  harlequin - Start harlequin SQL IDE")
                 print("  tables - List all tables")
                 print("  Ctrl+C - Cancel query input or execution")
                 print("  exit, quit - Exit the terminal")

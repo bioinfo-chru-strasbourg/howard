@@ -1795,7 +1795,7 @@ arguments = {
         """, or 'view' for dynamic queries (slower).\n""",
         "default": "table",
         "type": str,
-        "choices": ["table", "view"],
+        "choices": ["table", "view", "harlequin", "harlequin_view", "harlequin_table"],
         "gooey": {"widget": "Dropdown", "options": {}},
         "extra": {
             "examples": {
