@@ -7241,6 +7241,14 @@ class Variants:
                     "function_name": "calculation_extract_nomen",
                     "function_params": [],
                 },
+                "NOMEN_SNPEFF": {
+                    "type": "python",
+                    "name": "NOMEN",
+                    "description": "NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature field (see parameters help)",
+                    "available": True,
+                    "function_name": "calculation_extract_nomen",
+                    "function_params": ["snpeff_hgvs"],
+                },
                 "RECREATE_INFO_FIELDS": {
                     "type": "python",
                     "name": "RENAME_INFO_FIELDS",
@@ -9506,7 +9514,7 @@ class Variants:
                 f"Extract snpEff annotations - No snpEff annotation '{snpeff_field}'. Please Anotate with snpEff before use this calculation option"
             )
 
-    def calculation_extract_nomen(self) -> None:
+    def calculation_extract_nomen(self, hgvs_field: str = None) -> None:
         """
         This function extracts the HGVS nomenclature from the calculation/identification of NOMEN.
         """
@@ -9521,12 +9529,29 @@ class Variants:
             "RNOMEN": "RNOMEN hgvs nomenclature at RNA level related to a transcript (TNOMEN)",
             "NNOMEN": "NNOMEN hgvs nomenclature for non-coding variant",
             "PNOMEN": "PNOMEN hgvs nomenclature at Protein level related to a transcript (TNOMEN)",
+            "UPNOMEN": "UPNOMEN hgvs nomenclature at Protein level as uncertain related to a transcript (TNOMEN)",
             "TVNOMEN": "TVNOMEN hgvs transcript with version (if any) used (e.g. for CNOMEN and PNOMEN)",
             "TNOMEN": "TNOMEN hgvs transcript used (e.g. for CNOMEN and PNOMEN)",
             "VNOMEN": "VNOMEN hgvs transcript version used (e.g. for CNOMEN and PNOMEN)",
+            "TPVNOMEN": "TPVNOMEN hgvs protein transcript with version (if any) used (e.g. for CNOMEN and PNOMEN)",
+            "TPNOMEN": "TNOMEN hgvs protein transcript used (e.g. for CNOMEN and PNOMEN)",
+            "TPVVNOMEN": "VNOMEN hgvs protein transcript version used (e.g. for CNOMEN and PNOMEN)",
             "ENOMEN": "ENOMEN hgvs exon nomenclature related to a transcript (TNOMEN)",
             "GNOMEN": "GNOMEN hgvs gene nomenclature related to a transcript (TNOMEN)",
         }
+        # NOMEN structure
+        # nomen_dict = {
+        #     "NOMEN": "NOMEN hgvs nomenclature considered as reference hgvs (official transcript, first otherwise)",
+        #     "CNOMEN": "CNOMEN hgvs nomenclature at DNA level related to a transcript (TNOMEN)",
+        #     "RNOMEN": "RNOMEN hgvs nomenclature at RNA level related to a transcript (TNOMEN)",
+        #     "NNOMEN": "NNOMEN hgvs nomenclature for non-coding variant",
+        #     "PNOMEN": "PNOMEN hgvs nomenclature at Protein level related to a transcript (TNOMEN)",
+        #     "TVNOMEN": "TVNOMEN hgvs transcript with version (if any) used (e.g. for CNOMEN and PNOMEN)",
+        #     "TNOMEN": "TNOMEN hgvs transcript used (e.g. for CNOMEN and PNOMEN)",
+        #     "VNOMEN": "VNOMEN hgvs transcript version used (e.g. for CNOMEN and PNOMEN)",
+        #     "ENOMEN": "ENOMEN hgvs exon nomenclature related to a transcript (TNOMEN)",
+        #     "GNOMEN": "GNOMEN hgvs gene nomenclature related to a transcript (TNOMEN)",
+        # }
 
         # Param
         param = self.get_param()
@@ -9544,13 +9569,14 @@ class Variants:
         added_columns = []
 
         # Get HGVS field
-        hgvs_field = (
-            param.get("calculation", {})
-            .get("calculations", {})
-            .get("NOMEN", {})
-            .get("options", {})
-            .get("hgvs_field", "hgvs")
-        )
+        if hgvs_field is None:
+            hgvs_field = (
+                param.get("calculation", {})
+                .get("calculations", {})
+                .get("NOMEN", {})
+                .get("options", {})
+                .get("hgvs_field", "hgvs")
+            )
 
         # Get NOMEN pattern
         nomen_pattern = (
@@ -9560,6 +9586,26 @@ class Variants:
             .get("options", {})
             .get("pattern", None)
         )
+        # default NOMEN pattern
+        if nomen_pattern is None:
+            nomen_pattern = "GNOMEN:TVNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN"
+
+        # Get NOMEN pattern
+        nomen_fields = (
+            param.get("calculation", {})
+            .get("calculations", {})
+            .get("NOMEN", {})
+            .get("options", {})
+            .get("fields", None)
+        )
+
+        # default NOMEN pattern
+        if nomen_fields is None:  # or nomen_fields == []:
+            nomen_fields = list(nomen_dict.keys())
+
+        # Remove "NOMEN" as mandatory
+        if "NOMEN" in nomen_fields:
+            nomen_fields.remove("NOMEN")
 
         # transcripts list of preference sources
         transcripts_sources = {}
@@ -9600,17 +9646,6 @@ class Variants:
             .get("transcripts_column", None)
         )
 
-        if transcripts_table and transcripts_column:
-            extra_field_transcript = f"{transcripts_table}.{transcripts_column}"
-            # Explode if not exists
-            added_columns += self.explode_infos(
-                fields=[transcripts_column],
-                table=transcripts_table,
-                fields_forced_as_varchar=True,
-            )
-        else:
-            extra_field_transcript = f"NULL"
-
         # Transcripts of preference source order
         transcripts_order = (
             param.get("calculation", {})
@@ -9623,51 +9658,384 @@ class Variants:
         # Transcripts from file
         transcripts = transcripts_sources.get("file", [])
 
-        # Explode HGVS field in column
-        added_columns += self.explode_infos(
-            fields=[hgvs_field],
-            fields_forced_as_varchar=True,
+        # # Explode transcript table.column
+        # if transcripts_table and transcripts_column:
+        #     extra_field_transcript = f"{transcripts_table}.{transcripts_column}"
+        #     # Explode if not exists
+        #     added_columns += self.explode_infos(
+        #         fields=[transcripts_column],
+        #         table=transcripts_table,
+        #         fields_forced_as_varchar=True,
+        #     )
+        # else:
+        #     extra_field_transcript = f"NULL"
+
+        # # Explode HGVS field in column
+        # added_columns += self.explode_infos(
+        #     fields=[hgvs_field],
+        #     fields_forced_as_varchar=True,
+        # )
+
+        # Create annotation view
+        annotations_view = "annotations_vies_for_extract_nomen_" + str(
+            random.randrange(1000)
         )
+        if transcripts_column is None:
+            transcripts_column = "transcript"
+        annotations_view = self.create_annotations_view(
+            table=transcripts_table,
+            view=annotations_view,
+            view_type="table",
+            view_mode="explore",
+            fields=[transcripts_column, hgvs_field],
+            fields_forced_as_varchar=True,
+            info_prefix_column="",
+        )
+        # log.debug(self.get_query_to_df(query=f"SELECT * FROM {annotations_view}"))
 
         # extra infos
         extra_infos = self.get_extra_infos()
         extra_field = prefix + hgvs_field
 
-        if extra_field in extra_infos:
+        if extra_field in extra_infos or True:
 
-            # Create dataframe
-            dataframe_hgvs = self.get_query_to_df(
-                f""" SELECT "#CHROM", "POS", "REF", "ALT", "{extra_field}" AS hgvs, {extra_field_transcript} AS transcript FROM variants """
-            )
-            # log.debug(f"dataframe_hgvs={dataframe_hgvs}")
+            # Log
+            log.debug(f"START NOMEN calculation configuration")
+
+            # DEVEL
+            # extra_field = "snpeff_hgvs"
+            # added_columns += self.explode_infos(
+            #     fields=[extra_field],
+            #     fields_forced_as_varchar=True,
+            # )
+
+            # Create
+
+            # Construct NOMEN Pattern
+            separators = [",", "(", ")", "|", ":", "[", "]", "{", "}"]
+            regex_pattern = "|".join(map(re.escape, separators))
+            split_nomen_pattern = re.split(rf"({regex_pattern})", nomen_pattern)
+            # reconstructed_nomen_pattern = "".join(split_nomen_pattern)
+
+            # Construct SL NOMEN Pattern
+            nomen_pattern_sql_list = []
+            nomen_info_previous = ""
+            inside_parentheses = False
+            inside_brackets = False
+            inside_braces = False
+
+            for i, nomen_info in enumerate(split_nomen_pattern):
+                if nomen_info == "(":
+                    inside_parentheses = True
+                    nomen_info_previous += nomen_info
+                elif nomen_info == ")":
+                    inside_parentheses = False
+                    if nomen_info_previous:
+                        nomen_pattern_sql_list.append(nomen_info)
+                    nomen_info_previous = ""
+                elif nomen_info == "[":
+                    inside_brackets = True
+                    nomen_info_previous += nomen_info
+                elif nomen_info == "]":
+                    inside_brackets = False
+                    if nomen_info_previous:
+                        nomen_pattern_sql_list.append(nomen_info)
+                    nomen_info_previous = ""
+                elif nomen_info == "{":
+                    inside_braces = True
+                    nomen_info_previous += nomen_info
+                elif nomen_info == "}":
+                    inside_braces = False
+                    if nomen_info_previous:
+                        nomen_pattern_sql_list.append(nomen_info)
+                    nomen_info_previous = ""
+                elif nomen_info in separators:
+                    nomen_info_previous += nomen_info
+                else:
+                    if nomen_info != "":
+                        next_info = (
+                            split_nomen_pattern[i + 1]
+                            if i + 1 < len(split_nomen_pattern)
+                            else ""
+                        )
+                        if next_info in separators:
+                            if inside_parentheses or inside_brackets or inside_braces:
+                                nomen_pattern_sql_list.append(
+                                    f"""
+                                        CASE
+                                            WHEN {nomen_info} IS NOT NULL
+                                            THEN concat('{nomen_info_previous}', {nomen_info}, '{next_info}')
+                                        END
+                                    """
+                                )
+                            else:
+                                nomen_pattern_sql_list.append(
+                                    f"""
+                                        CASE
+                                            WHEN {nomen_info} IS NOT NULL
+                                            THEN concat('{nomen_info_previous}', {nomen_info})
+                                        END
+                                    """
+                                )
+                        else:
+                            nomen_pattern_sql_list.append(
+                                f"""
+                                    CASE
+                                        WHEN {nomen_info} IS NOT NULL
+                                        THEN concat('{nomen_info_previous}', {nomen_info})
+                                    END
+                                """
+                            )
+                        nomen_info_previous = ""
+
+                nomen_pattern_sql = ", ".join(nomen_pattern_sql_list)
+
+                # Afficher la partie SQL construite
+                # log.debug(f"Nomen pattern SQL: {nomen_pattern_sql}")
 
             # Transcripts rank
-            transcripts_rank = {
-                transcript: rank for rank, transcript in enumerate(transcripts, start=1)
+            transcripts_pond = {
+                transcript: len(transcripts) - rank
+                for rank, transcript in enumerate(transcripts, start=0)
             }
-            transcripts_len = len(transcripts_rank)
+
+            # Fix when no transcript of preference
+            if len(transcripts_pond) == 0:
+                transcripts_pond = {"no_transcript": 0}
+
+            # Construct transcripts pond table
+            transcripts_pond_table = "transcripts_pond_" + str(random.randrange(1000))
+            transcripts_pond_df = pd.DataFrame(
+                list(transcripts_pond.items()), columns=["transcript", "rank"]
+            )
+            self.execute_query(
+                f"CREATE TABLE {transcripts_pond_table} AS SELECT * FROM transcripts_pond_df"
+            )
+
+            # Transcript source order and index window
+            transcripts_order_length = len(transcripts_order)
+            transcripts_order_window = 10000000
+            try:
+                index_transcript_selected = (
+                    transcripts_order_length - transcripts_order.index("column")
+                ) * transcripts_order_window
+            except:
+                index_transcript_selected = 0
+            try:
+                index_transcript_prefered = (
+                    transcripts_order_length - transcripts_order.index("file")
+                ) * transcripts_order_window
+            except:
+                index_transcript_prefered = 0
+
+            # NOMEN Patterns
+            pattern_tvnomen = r".*[:]*([NX][MR]_[^:]*).*"
+            pattern_tpvnomen = r".*[:]*([NX]P_[^:]*).*"
+            pattern_cnomen = r".*[:]*([cgm]\.[^:]*).*"
+            pattern_pnomen = r".*[:]*([p]\.[^:]*).*"
+            pattern_nnomen = r".*[:]*([n]\.[^:]*).*"
+            pattern_rnomen = r".*[:]*([r]\.[^:]*).*"
+            pattern_enomen = r".*[:]*(exon[^:]*).*"
+
+            # {", ".join(nomen_fields)},
+            nomen_fields_select_sql = ""
+            if len(nomen_fields) >= 1:
+                nomen_fields_select_sql = ", ".join(nomen_fields) + ","
+            else:
+                nomen_fields_select_sql = ""
+
+            # Query find NOMEN
+            query_find_nomen = f"""
+                WITH
+                nomen_variants AS (
+                    SELECT
+                        "#CHROM",
+                        "POS",
+                        "REF",
+                        "ALT",  -- transcripts_column, hgvs_field
+                        "{hgvs_field}"::VARCHAR AS hgvs, {transcripts_column}::VARCHAR AS transcript,
+                        UNNEST(STRING_SPLIT("{hgvs_field}"::VARCHAR, ',')) AS nomen
+                    FROM {annotations_view}
+                ),
+                decomposed_variants AS (
+                    SELECT
+                        "#CHROM",
+                        "POS",
+                        "REF",
+                        "ALT",
+                        transcript,
+                        hgvs,
+                        nomen,
+                        -- TVNOMEN
+                        NULLIF(regexp_extract(nomen, '{pattern_tvnomen}', 1), '') AS TVNOMEN,
+                        CASE
+                            WHEN array_length(string_split(regexp_extract(nomen, '{pattern_tvnomen}', 1), '.'), 1) >= 1
+                            THEN NULLIF(string_split(regexp_extract(nomen, '{pattern_tvnomen}', 1), '.')[1], '')
+                            ELSE NULL
+                        END AS TNOMEN,
+                        CASE
+                            WHEN array_length(string_split(regexp_extract(nomen, '{pattern_tvnomen}', 1), '.'), 1) >= 2
+                            THEN NULLIF(string_split(regexp_extract(nomen, '{pattern_tvnomen}', 1), '.')[2], '')
+                            ELSE NULL
+                        END AS VNOMEN,
+                        -- TPVNOMEN
+                        NULLIF(regexp_extract(nomen, '{pattern_tpvnomen}', 1), '') AS TPVNOMEN,
+                        CASE
+                            WHEN array_length(string_split(regexp_extract(nomen, '{pattern_tpvnomen}', 1), '.'), 1) >= 1
+                            THEN NULLIF(string_split(regexp_extract(nomen, '{pattern_tpvnomen}', 1), '.')[1], '')
+                            ELSE NULL
+                        END AS TPNOMEN,
+                        CASE
+                            WHEN array_length(string_split(regexp_extract(nomen, '{pattern_tpvnomen}', 1), '.'), 1) >= 2
+                            THEN IFNULL(string_split(regexp_extract(nomen, '{pattern_tpvnomen}', 1), '.')[2], '')
+                            ELSE NULL
+                        END AS TPVVNOMEN,
+                        -- CPNR-NOMEN
+                        NULLIF(regexp_extract(nomen, '{pattern_cnomen}', 1), '') AS CNOMEN,
+                        NULLIF(regexp_extract(nomen, '{pattern_pnomen}', 1), '') AS PNOMEN,
+                        NULLIF(regexp_extract(nomen, '{pattern_nnomen}', 1), '') AS NNOMEN,
+                        NULLIF(regexp_extract(nomen, '{pattern_rnomen}', 1), '') AS RNOMEN,
+                        -- Uncertain p.
+                        NULLIF(
+                            CASE
+                                WHEN NULLIF(regexp_extract(nomen, '{pattern_pnomen}', 1), '') IS NOT NULL
+                                THEN concat(
+                                    'p.',
+                                    '(',
+                                    string_split(regexp_extract(nomen, '{pattern_pnomen}', 1), '.')[2],
+                                    ')'
+                                )
+                            END
+                        , '') AS UPNOMEN,
+                        -- exon
+                        NULLIF(regexp_extract(nomen, '{pattern_enomen}', 1), '') AS ENOMEN,
+                        -- gene
+                        CASE
+                            WHEN NULLIF(regexp_extract(string_split(nomen, ':')[1], '{pattern_tvnomen}', 1), '') IS NOT NULL
+                            OR NULLIF(regexp_extract(string_split(nomen, ':')[1], '{pattern_tpvnomen}', 1), '') IS NOT NULL
+                            OR NULLIF(regexp_extract(string_split(nomen, ':')[1], '{pattern_cnomen}', 1), '') IS NOT NULL
+                            OR NULLIF(regexp_extract(string_split(nomen, ':')[1], '{pattern_pnomen}', 1), '') IS NOT NULL
+                            OR NULLIF(regexp_extract(string_split(nomen, ':')[1], '{pattern_nnomen}', 1), '') IS NOT NULL
+                            OR NULLIF(regexp_extract(string_split(nomen, ':')[1], '{pattern_rnomen}', 1), '') IS NOT NULL
+                            OR NULLIF(regexp_extract(string_split(nomen, ':')[1], '{pattern_enomen}', 1), '') IS NOT NULL
+                            THEN NULL
+                            ELSE NULLIF(string_split(nomen, ':')[1], '')
+                        END AS GNOMEN
+                    FROM nomen_variants
+                ),
+                scored_variants AS (
+                    SELECT
+                        "#CHROM",
+                        "POS",
+                        "REF",
+                        "ALT",
+                        -- transcript,
+                        TNOMEN, TVNOMEN, VNOMEN,
+                        TPVNOMEN, TPNOMEN, TPVVNOMEN,
+                        CNOMEN, PNOMEN, NNOMEN, RNOMEN, UPNOMEN,
+                        ENOMEN, GNOMEN,
+                        -- nomen,
+                        0
+                        + CASE WHEN CNOMEN IS NOT NULL THEN 1 ELSE 0 END
+                        + CASE WHEN NNOMEN IS NOT NULL THEN 1 ELSE 0 END
+                        + CASE WHEN RNOMEN IS NOT NULL THEN 1 ELSE 0 END
+                        + CASE WHEN ENOMEN IS NOT NULL THEN 1 ELSE 0 END
+                        + CASE WHEN PNOMEN IS NOT NULL THEN 1 ELSE 0 END
+                        + CASE WHEN TPVNOMEN IS NOT NULL THEN 1 ELSE 0 END
+                        + CASE WHEN regexp_matches(TVNOMEN, '^NM_.*') THEN 2 ELSE 0 END
+                        + CASE WHEN regexp_matches(TVNOMEN, '^NR_.*') THEN 1 ELSE 0 END
+                        -- Selected transcript
+                        + CASE WHEN TVNOMEN == transcript OR TNOMEN == transcript THEN {index_transcript_selected} ELSE 0 END
+                        -- Preferend transcripts
+                        + CASE
+                            WHEN TVNOMEN in (SELECT transcript FROM {transcripts_pond_table})
+                                OR TNOMEN IN (SELECT transcript FROM {transcripts_pond_table})
+                            THEN {index_transcript_prefered} + (
+                                    SELECT rank
+                                    FROM {transcripts_pond_table}
+                                    WHERE transcript = TVNOMEN
+                                        OR transcript = TNOMEN
+                                    LIMIT 1
+                                )
+                            ELSE 0
+                        END
+                        AS SCORE
+                    FROM decomposed_variants
+                )
+                    SELECT
+                        "#CHROM",
+                        "POS",
+                        "REF",
+                        "ALT",
+                        -- transcript,
+                        -- TNOMEN, TVNOMEN, VNOMEN,
+                        -- TPVNOMEN, TPNOMEN, TPVVNOMEN,
+                        -- CNOMEN, PNOMEN, NNOMEN, RNOMEN, UPNOMEN,
+                        -- ENOMEN, GNOMEN,
+                        {nomen_fields_select_sql}
+                        regexp_replace(concat({nomen_pattern_sql}), ':$', '') AS NOMEN,
+                        -- nomen AS ORIGINAL_NOMEN,
+                        SCORE
+                    FROM (
+                        SELECT *,
+                            -- ROW_NUMBER() OVER (PARTITION BY "#CHROM", "POS", "REF", "ALT" ORDER BY SCORE DESC, TNOMEN) AS rn
+                            ROW_NUMBER() OVER (PARTITION BY "#CHROM", "POS", "REF", "ALT" ORDER BY SCORE DESC) AS rn
+                        FROM scored_variants
+                    )
+                    WHERE rn = 1
+            """
+            nomen_annotations_view = "annotations_vies_for_extract_nomen_" + str(
+                random.randrange(1000)
+            )
+            query_find_nomen_create = f"""
+            CREATE TABLE {nomen_annotations_view} AS (
+                {query_find_nomen}
+            )
+            """
+            # log.debug(f"query_devel={query_find_nomen}")
+            log.debug(f"START NOMEN calculation")
+            self.execute_query(query=query_find_nomen_create)
+            log.debug(f"STOP NOMEN calculation")
+            # res_devel = self.get_query_to_df(
+            #     query=f"SELECT * FROM {nomen_annotations_view}"
+            # )
+            # log.debug(f"res_devel=\n{res_devel.to_string()}")
+            # log.debug(f"res_devel=\n{res_devel}")
+
+            # Create dataframe
+            # dataframe_hgvs = self.get_query_to_df(
+            #     f""" SELECT "#CHROM", "POS", "REF", "ALT", "{extra_field}" AS hgvs, {extra_field_transcript} AS transcript FROM variants """
+            # )
+            # # log.debug(f"dataframe_hgvs={dataframe_hgvs}")
+
+            # Transcripts rank
+            # transcripts_rank = {
+            #     transcript: rank for rank, transcript in enumerate(transcripts, start=1)
+            # }
+            # transcripts_len = len(transcripts_rank)
 
             # Create main NOMEN column
-            dataframe_hgvs[field_nomen_dict] = dataframe_hgvs.apply(
-                lambda x: find_nomen(
-                    hgvs=x.hgvs,
-                    transcript=x.transcript,
-                    transcripts=transcripts_rank,
-                    pattern=nomen_pattern,
-                    transcripts_source_order=transcripts_order,
-                    transcripts_len=transcripts_len,
-                ),
-                axis=1,
-            )
+            # dataframe_hgvs[field_nomen_dict] = dataframe_hgvs.apply(
+            #     lambda x: find_nomen(
+            #         hgvs=x.hgvs,
+            #         transcript=x.transcript,
+            #         transcripts=transcripts_rank,
+            #         pattern=nomen_pattern,
+            #         transcripts_source_order=transcripts_order,
+            #         transcripts_len=transcripts_len,
+            #     ),
+            #     axis=1,
+            # )
 
             # Explode NOMEN Structure and create SQL set for update
             sql_nomen_fields = []
-            for nomen_field in nomen_dict:
+            # for nomen_field in nomen_dict: # nomen_fields
+            for nomen_field in ["NOMEN"] + nomen_fields:  # nomen_fields
 
                 # Create VCF header field
                 vcf_reader.infos[nomen_field] = vcf.parser._Info(
                     nomen_field,
-                    ".",
+                    1,
                     "String",
                     nomen_dict.get(nomen_field, "howard calculation NOMEN"),
                     "howard calculation",
@@ -9676,13 +10044,26 @@ class Variants:
                 )
 
                 # Add field to SQL query update
+                # sql_nomen_fields.append(
+                #     f"""
+                #         CASE
+                #             WHEN dataframe_hgvs."{field_nomen_dict}"."{nomen_field}" NOT NULL AND dataframe_hgvs."{field_nomen_dict}"."{nomen_field}" NOT IN ('')
+                #             THEN concat(
+                #                     ';{nomen_field}=',
+                #                     dataframe_hgvs."{field_nomen_dict}"."{nomen_field}"
+                #                 )
+                #             ELSE ''
+                #         END
+                #     """
+                # )
+                # Add field to SQL query update
                 sql_nomen_fields.append(
                     f"""
                         CASE 
-                            WHEN dataframe_hgvs."{field_nomen_dict}"."{nomen_field}" NOT NULL AND dataframe_hgvs."{field_nomen_dict}"."{nomen_field}" NOT IN ('')
+                            WHEN {nomen_annotations_view}."{nomen_field}" NOT NULL AND {nomen_annotations_view}."{nomen_field}" NOT IN ('')
                             THEN concat(
                                     ';{nomen_field}=',
-                                    dataframe_hgvs."{field_nomen_dict}"."{nomen_field}"
+                                    {nomen_annotations_view}."{nomen_field}"
                                 )
                             ELSE ''
                         END
@@ -9693,6 +10074,23 @@ class Variants:
             sql_nomen_fields_set = ", ".join(sql_nomen_fields)
 
             # Update
+            # sql_update = f"""
+            #     UPDATE variants
+            #     SET "INFO" =
+            #         concat(
+            #             CASE
+            #                 WHEN "INFO" IS NULL
+            #                 THEN ''
+            #                 ELSE "INFO"
+            #             END,
+            #             {sql_nomen_fields_set}
+            #         )
+            #     FROM dataframe_hgvs
+            #     WHERE variants."#CHROM" = dataframe_hgvs."#CHROM"
+            #         AND variants."POS" = dataframe_hgvs."POS"
+            #         AND variants."REF" = dataframe_hgvs."REF"
+            #         AND variants."ALT" = dataframe_hgvs."ALT"
+            # """
             sql_update = f"""
                 UPDATE variants
                 SET "INFO" = 
@@ -9704,17 +10102,18 @@ class Variants:
                         END,
                         {sql_nomen_fields_set}
                     )
-                FROM dataframe_hgvs
-                WHERE variants."#CHROM" = dataframe_hgvs."#CHROM"
-                    AND variants."POS" = dataframe_hgvs."POS" 
-                    AND variants."REF" = dataframe_hgvs."REF"
-                    AND variants."ALT" = dataframe_hgvs."ALT"
+                FROM {nomen_annotations_view}
+                WHERE variants."#CHROM" = {nomen_annotations_view}."#CHROM"
+                    AND variants."POS" = {nomen_annotations_view}."POS" 
+                    AND variants."REF" = {nomen_annotations_view}."REF"
+                    AND variants."ALT" = {nomen_annotations_view}."ALT"
             """
             self.conn.execute(sql_update)
 
-            # Delete dataframe
-            del dataframe_hgvs
-            gc.collect()
+            # Remove tables and view
+            self.remove_tables_or_views(
+                tables=[annotations_view, nomen_annotations_view]
+            )
 
         # Remove added columns
         for added_column in added_columns:
