@@ -14,6 +14,7 @@ and transcripts mapping. New useful tools and plugins.
   - Completion and history features
   - Display modes (e.g. 'dataframe', 'markdown', 'simple', 'tabulate')
   - Query result limitation, to speedup exploration
+  - Extended mode with Harlequin tool ([https://harlequin.sh](https://harlequin.sh))
 - Variants "view":
   - Query more easily (with "variants_view" view loaded by default in query tools)
   - INFO/tags and samples structured on specific columns ('INFOS' and 'SAMPLES')
