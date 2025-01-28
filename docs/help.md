@@ -285,7 +285,7 @@ Usage examples:
 
 <small>
 
->     --interactive_mode=<interactive mode> ['table', 'view'] (default: table)
+>     --interactive_mode=<interactive mode> ['table', 'view', 'harlequin', 'harlequin_view', 'harlequin_table'] (default: table)
 >
 >     Iteractive mode for variants view.
 >     Either 'table' for loading data and speed up queries, or 'view' for dynamic queries (slower).

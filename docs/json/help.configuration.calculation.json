@@ -29,6 +29,9 @@
         "      \"END\"",
         "    ],",
         "    \"info_fields\": [\"SVTYPE\"],",
+        "    \"table_source\": \"variants\",",
+        "    \"table_dest\": \"variants\",",
+        "    \"table_key\": [\"#CHROM\", \"POS\", \"REF\", \"ALT\"],",
         "    \"operation_info\": true",
         "  },",
         "  \"variant_id\": {",
@@ -72,7 +75,25 @@
     "table": {
       "__help": [
         "- *Type:* String",
-        "- *Description:* Specifies the table within the calculation is generated (default 'variants'). Useful for calculations on transcripts."
+        "- *Description:* Specifies the table within the calculation is generated (default 'variants'). This table is considered as source of infos fields and destintin of the calculation. Useful for calculations on transcripts."
+      ]
+    },
+    "table_source": {
+      "__help": [
+        "- *Type:* String",
+        "- *Description:* Specifies the table source where infos fields are located (default 'variants'). Useful to calculate from another table."
+      ]
+    },
+    "table_dest": {
+      "__help": [
+        "- *Type:* String",
+        "- *Description:* Specifies the table within the calculation is generated (default is 'table_source' parameter). Useful to calculate to another tables, like 'transcripts'."
+      ]
+    },
+    "table_key": {
+      "__help": [
+        "- *Type:* List",
+        "- *Description:* Specifies key, as a list of columns, to join table source and table dest (default '[\"#CHROM\", \"POS\", \"REF\", \"ALT\"]'). Useful for calculations on transcripts, with '[\"#CHROM\", \"POS\", \"REF\", \"ALT\", \"transcript\"]' value."
       ]
     },
     "output_column_name": {

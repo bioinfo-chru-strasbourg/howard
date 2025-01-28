@@ -3,9 +3,9 @@
 ## 0.12.2.0
 
 Introduction of interactvie mode to dynamically explore data, using variants view
-with columns types (define din VCF header).
+with columns types (defined in VCF header), with build-in tool or Harlequin tool.
 Improvements using view duckDB feature, mainly for calculations and prioritizations,
-and transcripts mapping.
+and transcripts mapping. New useful tools and plugins.
 
 ### News
 
@@ -32,10 +32,12 @@ and transcripts mapping.
 - Improve transcripts prioritization performances (reduce memory)
 - Improve transcripts view creation (columns type detected)
 - Improve snpEff extract information (HGVS list, explode annotations, generate as JSON)
-- Improve BARCODEFAMILY calculation (multiple barcode allowed with successive commandes)
+- Improve NOMEN extraction from HGVS list, including multiple patterns for NOMEN
 - Improve rename or remove INFO/tags
 
 ### Fixes
+
+- Fix BARCODEFAMILY calculation (multiple barcode with successive commandes)
 
 ## 0.12.1.1
 

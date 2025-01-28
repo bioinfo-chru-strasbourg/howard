@@ -1664,7 +1664,8 @@ href="help.calculation.html">Calculation JSON file</a> help).</p>
 <p>Calculation with operations for generate variant_id and variant type,
 extract HGVS from snpEff annotation, select NOMEN from snpEff HGVS with
 a prioritized transcript (from prioritization transcript calculation)
-and list of transcripts of preference, with a specific NOMEN pattern</p>
+and list of transcripts of preference, a list of NOMEN fields, with two
+specific NOMEN patterns</p>
 </blockquote>
 <blockquote>
 <div class="sourceCode" id="cb58"><pre
@@ -1680,11 +1681,15 @@ class="sourceCode json"><code class="sourceCode json"><span id="cb58-1"><a href=
 <span id="cb58-10"><a href="#cb58-10" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;transcripts_table&quot;</span><span class="fu">:</span> <span class="st">&quot;variants&quot;</span><span class="fu">,</span></span>
 <span id="cb58-11"><a href="#cb58-11" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;transcripts_column&quot;</span><span class="fu">:</span> <span class="st">&quot;PZTTranscript&quot;</span><span class="fu">,</span></span>
 <span id="cb58-12"><a href="#cb58-12" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;transcripts_order&quot;</span><span class="fu">,</span> <span class="er">[</span><span class="dt">&quot;column&quot;</span><span class="fu">,</span> <span class="dt">&quot;file&quot;</span><span class="er">]</span><span class="fu">,</span></span>
-<span id="cb58-13"><a href="#cb58-13" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;pattern&quot;</span><span class="fu">:</span> <span class="st">&quot;GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN&quot;</span></span>
-<span id="cb58-14"><a href="#cb58-14" aria-hidden="true" tabindex="-1"></a>       <span class="fu">}</span></span>
-<span id="cb58-15"><a href="#cb58-15" aria-hidden="true" tabindex="-1"></a>     <span class="fu">}</span></span>
-<span id="cb58-16"><a href="#cb58-16" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
-<span id="cb58-17"><a href="#cb58-17" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<span id="cb58-13"><a href="#cb58-13" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;fields&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;GNOMEN&quot;</span><span class="ot">,</span> <span class="st">&quot;TVNOMEN&quot;</span><span class="ot">,</span> <span class="st">&quot;ENOMEN&quot;</span><span class="ot">,</span> <span class="st">&quot;CNOMEN&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb58-14"><a href="#cb58-14" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;pattern&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb58-15"><a href="#cb58-15" aria-hidden="true" tabindex="-1"></a>           <span class="dt">&quot;NOMEN&quot;</span><span class="fu">:</span> <span class="st">&quot;GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN&quot;</span><span class="fu">,</span></span>
+<span id="cb58-16"><a href="#cb58-16" aria-hidden="true" tabindex="-1"></a>           <span class="dt">&quot;NOMENO&quot;</span><span class="fu">:</span> <span class="st">&quot;TNOMEN(ENOMEN):CNOMEN:RNOMEN:NNOMEN&quot;</span></span>
+<span id="cb58-17"><a href="#cb58-17" aria-hidden="true" tabindex="-1"></a>         <span class="fu">},</span></span>
+<span id="cb58-18"><a href="#cb58-18" aria-hidden="true" tabindex="-1"></a>       <span class="fu">}</span></span>
+<span id="cb58-19"><a href="#cb58-19" aria-hidden="true" tabindex="-1"></a>     <span class="fu">}</span></span>
+<span id="cb58-20"><a href="#cb58-20" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb58-21"><a href="#cb58-21" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h2 data-number="4.2" id="calculation_config"><span
 class="header-section-number">4.2</span> calculation_config</h2>

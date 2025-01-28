@@ -1363,8 +1363,8 @@ Examples:
 > Calculation with operations for generate variant_id and variant type,
 > extract HGVS from snpEff annotation, select NOMEN from snpEff HGVS
 > with a prioritized transcript (from prioritization transcript
-> calculation) and list of transcripts of preference, with a specific
-> NOMEN pattern
+> calculation) and list of transcripts of preference, a list of NOMEN
+> fields, with two specific NOMEN patterns
 
 > ``` json
 > {
@@ -1379,7 +1379,11 @@ Examples:
 >          "transcripts_table": "variants",
 >          "transcripts_column": "PZTTranscript",
 >          "transcripts_order", ["column", "file"],
->          "pattern": "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN"
+>          "fields": ["GNOMEN", "TVNOMEN", "ENOMEN", "CNOMEN"],
+>          "pattern": {
+>            "NOMEN": "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN",
+>            "NOMENO": "TNOMEN(ENOMEN):CNOMEN:RNOMEN:NNOMEN"
+>          },
 >        }
 >      }
 >    }
