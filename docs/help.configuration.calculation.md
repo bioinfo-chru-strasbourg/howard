@@ -13,20 +13,25 @@ title: HOWARD Help Configuration Calculation
   - [<span class="toc-section-number">2.4</span> available](#available)
   - [<span class="toc-section-number">2.5</span> table](#table)
   - [<span class="toc-section-number">2.6</span>
-    output_column_name](#output_column_name)
+    table_source](#table_source)
   - [<span class="toc-section-number">2.7</span>
-    output_column_type](#output_column_type)
-  - [<span class="toc-section-number">2.8</span>
-    output_column_description](#output_column_description)
+    table_dest](#table_dest)
+  - [<span class="toc-section-number">2.8</span> table_key](#table_key)
   - [<span class="toc-section-number">2.9</span>
-    operation_query](#operation_query)
+    output_column_name](#output_column_name)
   - [<span class="toc-section-number">2.10</span>
-    info_fields](#info_fields)
+    output_column_type](#output_column_type)
   - [<span class="toc-section-number">2.11</span>
-    operation_info](#operation_info)
+    output_column_description](#output_column_description)
   - [<span class="toc-section-number">2.12</span>
-    function_name](#function_name)
+    operation_query](#operation_query)
   - [<span class="toc-section-number">2.13</span>
+    info_fields](#info_fields)
+  - [<span class="toc-section-number">2.14</span>
+    operation_info](#operation_info)
+  - [<span class="toc-section-number">2.15</span>
+    function_name](#function_name)
+  - [<span class="toc-section-number">2.16</span>
     function_params](#function_params)
 
 # Introduction
@@ -73,6 +78,9 @@ Examples:
 >       "END"
 >     ],
 >     "info_fields": ["SVTYPE"],
+>     "table_source": "variants",
+>     "table_dest": "variants",
+>     "table_key": ["#CHROM", "POS", "REF", "ALT"],
 >     "operation_info": true
 >   },
 >   "variant_id": {
@@ -121,7 +129,33 @@ Examples:
 - *Type:* String
 
 - *Description:* Specifies the table within the calculation is generated
-  (default 'variants'). Useful for calculations on transcripts.
+  (default 'variants'). This table is considered as source of infos
+  fields and destintin of the calculation. Useful for calculations on
+  transcripts.
+
+## table_source
+
+- *Type:* String
+
+- *Description:* Specifies the table source where infos fields are
+  located (default 'variants'). Useful to calculate from another table.
+
+## table_dest
+
+- *Type:* String
+
+- *Description:* Specifies the table within the calculation is generated
+  (default is 'table_source' parameter). Useful to calculate to another
+  tables, like 'transcripts'.
+
+## table_key
+
+- *Type:* List
+
+- *Description:* Specifies key, as a list of columns, to join table
+  source and table dest (default '\["#CHROM", "POS", "REF", "ALT"\]').
+  Useful for calculations on transcripts, with '\["#CHROM", "POS",
+  "REF", "ALT", "transcript"\]' value.
 
 ## output_column_name
 
