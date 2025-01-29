@@ -3944,6 +3944,7 @@ class Variants:
 
                             # DB and indexes
                             bw_db = annotation_bigwig_config.get("bw_db", None)
+                            bw_db_file = annotation_bigwig_config.get("db_file", None)
                             cyvcf2_header_indexes = annotation_bigwig_config.get(
                                 "cyvcf2_header_indexes", None
                             )
@@ -3966,6 +3967,36 @@ class Variants:
 
                         # Add record in output file
                         output_vcf.write_record(variant)
+
+                    # Close bw db
+                    for annotation_bigwig_config in annotation_bigwig_config_list:
+
+                        # DB and indexes
+                        bw_db = annotation_bigwig_config.get("bw_db", None)
+                        bw_db_file = annotation_bigwig_config.get("db_file", None)
+
+                        # Try Close bw db
+                        try:
+                            if bw_db is not None:
+                                log.debug(
+                                    f"Annotations 'bigwig' file '{bw_db_file}' closing..."
+                                )
+                                bw_db.close()
+                                log.debug(
+                                    f"Annotations 'bigwig' file '{bw_db_file}' closed"
+                                )
+                            else:
+                                log.debug(
+                                    f"Annotations 'bigwig' file '{bw_db_file}' is already closed or not open"
+                                )
+                        except RuntimeError as e:
+                            log.error(
+                                f"RuntimeError while closing 'bigwig' file '{bw_db_file}': {e}"
+                            )
+                        except Exception as e:
+                            log.error(
+                                f"Unexpected error while closing 'bigwig' file '{bw_db_file}': {e}"
+                            )
 
                     # Log
                     log.debug(f"Annotation done.")
