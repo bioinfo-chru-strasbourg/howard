@@ -1,0 +1,18 @@
+##fileformat=VCFv4.2
+##INFO=<ID=genome,Number=1,Type=String,Description="genome annotation">
+##INFO=<ID=uniprot_id,Number=.,Type=String,Description="uniprot_id annotation">
+##INFO=<ID=transcript_id,Number=.,Type=String,Description="transcript_id annotation">
+##INFO=<ID=protein_variant,Number=.,Type=String,Description="protein_variant annotation">
+##INFO=<ID=am_pathogenicity,Number=1,Type=Float,Description="am_pathogenicity annotation">
+##INFO=<ID=am_class,Number=.,Type=Flag,Description="am_class annotation">
+#CHROM	POS	REF	ALT	genome	uniprot_id	protein_variant	am_pathogenicity
+chr1	69094	G	T	hg19	Q8NH21	V2L	0.2937
+chr1	69094	G	C	hg19	Q8NH21	V2L	0.2937
+chr1	69094	G	A	hg19	Q8NH21	V2M	0.3296
+chr1	69095	T	C	hg19	Q8NH21	V2A	0.2609
+chr1	69095	T	A	hg19	Q8NH21	V2E	0.2922
+chr1	69095	T	G	hg19	Q8NH21	V2G	0.203
+chr1	69097	A	G	hg19	Q8NH21	T3A	0.0929
+chr1	69097	A	C	hg19	Q8NH21	T3P	0.1264
+chr1	69097	A	T	hg19	Q8NH21	T3S	0.0979
+chr1	69098	C	A	hg19	Q8NH21	T3N	0.1121

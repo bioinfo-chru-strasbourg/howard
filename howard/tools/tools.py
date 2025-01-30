@@ -1784,7 +1784,7 @@ arguments = {
     },
     # Interactivity
     "interactive": {
-        "help": """Interative mose..\n""",
+        "help": """Interative mode.\n""",
         "action": "store_true",
         "default": False,
     },
@@ -1792,7 +1792,8 @@ arguments = {
         "metavar": "interactive mode",
         "help": """Iteractive mode for variants view.\n"""
         """Either 'table' for loading data and speed up queries"""
-        """, or 'view' for dynamic queries (slower).\n""",
+        """, or 'view' for dynamic queries (slower)"""
+        """, or 'harlequin' for using Harlequin tool.\n""",
         "default": "table",
         "type": str,
         "choices": ["table", "view", "harlequin", "harlequin_view", "harlequin_table"],
