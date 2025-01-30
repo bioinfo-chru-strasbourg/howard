@@ -13865,11 +13865,12 @@ class Variants:
                         )
 
                 # Add struct of the sample
-                samples_format_struct.append(
-                    f"""
-                    "{sample}":= STRUCT_PACK({", ".join(sample_format_struct)})
-                """
-                )
+                if len(sample_format_struct):
+                    samples_format_struct.append(
+                        f"""
+                        "{sample}":= STRUCT_PACK({", ".join(sample_format_struct)})
+                    """
+                    )
 
         # Combine fields into columns
         if info_prefix_column is not None and len(fields_columns):
@@ -13903,7 +13904,10 @@ class Variants:
         if view_mode in ["explore"]:
             query_select = f"""
                 SELECT
-                    {', '.join([f'"{field}"' for field in fields_needed])} {annotations_column_annotations_columns} {annotations_column_annotations_struct} {samples_format_struct_clause}
+                    {', '.join([f'"{field}"' for field in fields_needed])}  -- variant id
+                    {annotations_column_annotations_columns}                -- annotations_column_annotations_columns
+                    {annotations_column_annotations_struct}                 -- annotations_column_annotations_struct
+                    {samples_format_struct_clause}                          -- samples_format_struct_clause
                 FROM
                     {table}
                 {limit_clause}
@@ -13912,15 +13916,15 @@ class Variants:
         elif view_mode in ["full"]:
             query_select = f"""
                     SELECT
-                        {', '.join([f'"{field}"' for field in fields_needed])}         -- variant id
-                        {annotations_column_annotations_columns}
-                        {annotations_column_annotations_struct}
-                        {samples_format_struct_clause}
+                        {', '.join([f'"{field}"' for field in fields_needed])}          -- variant id
+                        {annotations_column_annotations_columns}                        -- annotations_column_annotations_columns
+                        {annotations_column_annotations_struct}                         -- annotations_column_annotations_struct
+                        {samples_format_struct_clause}                                  -- samples_format_struct_clause
                     FROM (
                         SELECT
                             {', '.join([f'"{field}"' for field in fields_needed])},         -- variant id
-                            k,
-                            v                                   -- value
+                            k,      -- key
+                            v       -- value
                         FROM (
                             SELECT
                                 {', '.join([f'"{field}"' for field in fields_needed])},        -- variant id
@@ -13964,7 +13968,7 @@ class Variants:
         query_create_view = f"""
             CREATE {view_type} IF NOT EXISTS {view} AS {query_select}
         """
-        # log.debug(f"Create view:{query_create_view}")
+        log.debug(f"Create view:{query_create_view}")
         self.execute_query(query=query_create_view)
         log.debug(f"View created: {view}")
 
