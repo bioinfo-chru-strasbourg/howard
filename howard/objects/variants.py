@@ -13636,8 +13636,10 @@ class Variants:
                 fields_needed = ["#CHROM", "POS", "REF", "ALT"]
 
         # Add samples in view mode 'full'
+        # log.debug(f"samples={samples}")
+        # log.debug(f"table_describe={table_describe}")
         if view_mode in ["full"] and sample_struct_column and len(samples):
-            if "FORMAT" not in fields_needed:
+            if "FORMAT" not in fields_needed and "FORMAT" in table_describe:
                 fields_needed += ["FORMAT"]
             for field_needed in fields_needed:
                 if field_needed not in fields_needed:
@@ -13661,8 +13663,8 @@ class Variants:
         else:
             info_column = "''"
 
-        # Each filed
-        for field in fields:
+        # Each field
+        for field in set(fields):
 
             # Rename field
             field_to_rename = fields_to_rename.get(field, field)
@@ -13671,28 +13673,11 @@ class Variants:
 
             # Check field type
 
-            # Needed fields
-            if field in fields_needed:
-                continue
+            # Field info
+            field_infos = header.infos.get(field, None)
 
-            # Fields in table
-            elif field in list(table_describe.get("column_name")):
-                fields_columns.append(f""" "{field}" AS '{prefix}{field_to_rename}' """)
-
-                # Add field in needed if 'full' view mode
-                if view_mode in ["full"]:
-                    if field not in fields_needed:
-                        fields_needed += [field]
-
-            # Fields in header
-            elif (
-                field in header.infos
-                and not only_in_columns
-                and "INFO" in list(table_describe.get("column_name"))
-            ):
-
-                # Field info
-                field_infos = header.infos.get(field, None)
+            # Field SQL type
+            if field_infos is not None:
 
                 # Field SQL type
                 field_sql_type = code_type_map_to_sql.get(field_infos.type, "VARCHAR")
@@ -13703,10 +13688,69 @@ class Variants:
                 else:
                     field_sql_type_list = False
 
-                # fields_forced_as_varchar
-                if fields_forced_as_varchar:
-                    field_sql_type = "VARCHAR"
-                    field_sql_type_list = False
+            else:
+
+                # Field SQL type
+                field_sql_type = "VARCHAR"
+
+                # Column is a list
+                field_sql_type_list = False
+
+            # fields_forced_as_varchar
+            if fields_forced_as_varchar:
+                field_sql_type = "VARCHAR"
+                field_sql_type_list = False
+
+            # Needed fields, not in other annotation fields (useful for DB with fields in column)
+            if field in fields_needed and not field in list(
+                table_describe.get("column_name")
+            ):
+                continue
+
+            # Fields in table
+            elif field in list(table_describe.get("column_name")):
+
+                # Add field in needed if 'full' view mode
+                if view_mode in ["full"]:
+                    if field not in fields_needed:
+                        fields_needed += [field]
+
+                # Only if not needes (already in a column)
+                if not field in fields_needed:
+                    # log.debug(f"Filed '{field}' not in needed")
+                    fields_columns.append(
+                        f"""
+                            "{field}" AS '{prefix}{field_to_rename}' -- field in column but not in needed
+                        """
+                    )
+
+                # Flag
+                if field_infos is not None and field_infos.type == "Flag":
+                    fields_columns_annotations_struct.append(
+                        f"""
+                            "{field_to_rename}":= TRY_CAST("{field}" AS BOOLEAN)
+                        """
+                    )
+                else:
+                    if field_sql_type_list:
+                        fields_columns_annotations_struct.append(
+                            f"""
+                                "{field_to_rename}":= CAST(list_transform(string_split(CAST("{field}" AS VARCHAR), ','), x -> CASE WHEN x = '.' OR x = '' THEN NULL ELSE x END) AS {field_sql_type}[]) -- field in column
+                            """
+                        )
+                    else:
+                        fields_columns_annotations_struct.append(
+                            f"""
+                                "{field_to_rename}":= COALESCE(NULLIF(regexp_replace(CAST("{field}" AS VARCHAR), '^\\.$', ''), '')::{field_sql_type}, NULL)  -- field in column
+                            """
+                        )
+
+            # Fields in header
+            elif (
+                field in header.infos
+                and not only_in_columns
+                and "INFO" in list(table_describe.get("column_name"))
+            ):
 
                 # Colonne is a flag
                 if field_infos.type == "Flag":
@@ -13922,19 +13966,23 @@ class Variants:
                         {samples_format_struct_clause}                                  -- samples_format_struct_clause
                     FROM (
                         SELECT
-                            {', '.join([f'"{field}"' for field in fields_needed])},         -- variant id
+                            {', '.join([f'"{field}"' for field in fields_needed])},     -- variant id
                             k,      -- key
                             v       -- value
                         FROM (
                             SELECT
-                                {', '.join([f'"{field}"' for field in fields_needed])},        -- variant id
+                                {', '.join([f'"{field}"' for field in fields_needed])},     -- variant id
+                                INFO,                                                       -- INFO
                                 string_split(kv, '=')[1] AS k,  -- key
                                 string_split(kv, '=')[2] AS v   -- value
                             FROM (
-                                SELECT {', '.join([f'"{field}"' for field in fields_needed])}, unnest(string_split({info_column}, ';')) AS kv
+                                SELECT {', '.join([f'"{field}"' for field in fields_needed])},  -- variant id
+                                {info_column} AS INFO,                                          -- INFO
+                                -- unnest(string_split({info_column}, ';')) AS kv
+                                unnest(string_split(concat({info_column}, ''), ';')) AS kv
                                 FROM {table}
                                 )
-                            WHERE k in ('{"', '".join(fields)}')
+                            WHERE k in ('{"', '".join(fields)}') OR INFO in ('')  OR INFO IS NULL
                             )
                         )
                     GROUP BY {', '.join([f'"{field}"' for field in fields_needed])}
@@ -13968,7 +14016,7 @@ class Variants:
         query_create_view = f"""
             CREATE {view_type} IF NOT EXISTS {view} AS {query_select}
         """
-        log.debug(f"Create view:{query_create_view}")
+        # log.debug(f"Create view:{query_create_view}")
         self.execute_query(query=query_create_view)
         log.debug(f"View created: {view}")
 

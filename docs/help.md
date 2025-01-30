@@ -288,7 +288,7 @@ Usage examples:
 >     --interactive_mode=<interactive mode> ['table', 'view', 'harlequin', 'harlequin_view', 'harlequin_table'] (default: table)
 >
 >     Iteractive mode for variants view.
->     Either 'table' for loading data and speed up queries, or 'view' for dynamic queries (slower).
+>     Either 'table' for loading data and speed up queries, or 'view' for dynamic queries (slower), or 'harlequin' for using Harlequin tool.
 
 </small>
 
@@ -3123,7 +3123,7 @@ Usage examples:
 
 >     --interactive
 >
->     Interative mose..
+>     Interative mode.
 
 </small>
 
