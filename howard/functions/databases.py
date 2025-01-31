@@ -2942,6 +2942,7 @@ def databases_download_alphamissense(
     """
 
     from howard.objects.database import Database
+    from howard.objects.variants import Variants
 
     # Log
     log.info(f"Download AlphaMissense {assemblies}")
@@ -2987,6 +2988,8 @@ def databases_download_alphamissense(
         # Convert to Parquet
         if os.path.exists(alphamissense_tsv_dest):
             if not os.path.exists(alphamissense_parquet_dest):
+
+                # Convert into Parquet
                 log.info(
                     f"Download AlphaMissense {assemblies} - Convert to '{alphamissense_parquet}'..."
                 )
@@ -2997,6 +3000,36 @@ def databases_download_alphamissense(
                     output_database=alphamissense_parquet_dest,
                     output_header=alphamissense_parquet_dest + ".hdr",
                     threads=threads,
+                )
+
+                # Header
+                log.info(
+                    f"Download AlphaMissense {assemblies} - Format '{alphamissense_parquet}' header..."
+                )
+                vcf_header = Variants(input=alphamissense_parquet_dest)
+                vcf_header_header = vcf_header.get_header()
+
+                # Change num as '1' instead of '.'
+                new_infos = {}
+                for field in vcf_header_header.infos:
+                    info = vcf_header_header.infos[field]
+                    new_info = vcf.parser._Info(
+                        id=info.id,
+                        num=1,  # Change '.' to '1'
+                        type=info.type,
+                        desc=info.desc,
+                        source=info.source,
+                        version=info.version,
+                        type_code=info.type_code,
+                    )
+                    new_infos[field] = new_info
+                vcf_header_header.infos = new_infos
+
+                # Export header
+                vcf_header.export_header(
+                    output_file=alphamissense_parquet_dest,
+                    output_file_ext=".hdr",
+                    remove_chrom_line=False,
                 )
             else:
                 log.info(
