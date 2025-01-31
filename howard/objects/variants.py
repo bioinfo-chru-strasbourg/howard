@@ -6442,10 +6442,10 @@ class Variants:
                     # Load header as VCF object
                     parquet_hdr_vcf_header_infos = database.get_header().infos
                     # Log
-                    log.debug(
-                        "Annotation database header: "
-                        + str(parquet_hdr_vcf_header_infos)
-                    )
+                    # log.debug(
+                    #     "Annotation database header: "
+                    #     + str(parquet_hdr_vcf_header_infos)
+                    # )
 
                     # Get extra infos
                     parquet_columns = database.get_extra_columns()
@@ -6576,10 +6576,15 @@ class Variants:
                             )
 
                             # Add INFO field to header
-                            parquet_hdr_vcf_header_infos_number = (
-                                parquet_hdr_vcf_header_infos[annotation_field].num
-                                or "."
-                            )
+
+                            # If regions, force values as list, due to overlap/aggregation
+                            if parquet_type in ["regions"]:
+                                parquet_hdr_vcf_header_infos_number = "."
+                            else:
+                                parquet_hdr_vcf_header_infos_number = (
+                                    parquet_hdr_vcf_header_infos[annotation_field].num
+                                    or "."
+                                )
                             parquet_hdr_vcf_header_infos_type = (
                                 parquet_hdr_vcf_header_infos[annotation_field].type
                                 or "String"
@@ -6828,7 +6833,7 @@ class Variants:
                             f"Annotation '{annotation_name}' - No Annotations available"
                         )
 
-                    log.debug("Final header: " + str(vcf_reader.infos))
+                    # log.debug("Final header: " + str(vcf_reader.infos))
 
         # Remove added columns
         for added_column in added_columns:
