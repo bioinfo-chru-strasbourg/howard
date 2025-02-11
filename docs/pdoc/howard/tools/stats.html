@@ -54,14 +54,14 @@
 
                         <label class="view-source-button" for="mod-stats-view-source"><span>View Source</span></label>
 
-                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos"> 1</span></a><span class="kn">import</span> <span class="nn">argparse</span>
-</span><span id="L-2"><a href="#L-2"><span class="linenos"> 2</span></a><span class="kn">import</span> <span class="nn">logging</span> <span class="k">as</span> <span class="nn">log</span>
+                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos"> 1</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+</span><span id="L-2"><a href="#L-2"><span class="linenos"> 2</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">log</span>
 </span><span id="L-3"><a href="#L-3"><span class="linenos"> 3</span></a>
-</span><span id="L-4"><a href="#L-4"><span class="linenos"> 4</span></a><span class="kn">from</span> <span class="nn">howard.functions.commons</span> <span class="kn">import</span> <span class="n">load_args</span><span class="p">,</span> <span class="n">load_config_args</span>
-</span><span id="L-5"><a href="#L-5"><span class="linenos"> 5</span></a><span class="kn">from</span> <span class="nn">howard.objects.variants</span> <span class="kn">import</span> <span class="n">Variants</span>
+</span><span id="L-4"><a href="#L-4"><span class="linenos"> 4</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">howard.functions.commons</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_args</span><span class="p">,</span> <span class="n">load_config_args</span>
+</span><span id="L-5"><a href="#L-5"><span class="linenos"> 5</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">howard.objects.variants</span><span class="w"> </span><span class="kn">import</span> <span class="n">Variants</span>
 </span><span id="L-6"><a href="#L-6"><span class="linenos"> 6</span></a>
 </span><span id="L-7"><a href="#L-7"><span class="linenos"> 7</span></a>
-</span><span id="L-8"><a href="#L-8"><span class="linenos"> 8</span></a><span class="k">def</span> <span class="nf">stats</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="L-8"><a href="#L-8"><span class="linenos"> 8</span></a><span class="k">def</span><span class="w"> </span><span class="nf">stats</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="L-10"><a href="#L-10"><span class="linenos">10</span></a><span class="sd">    The stats() function takes in arguments, loads data from an input file, gets statistics on the data,</span>
 </span><span id="L-11"><a href="#L-11"><span class="linenos">11</span></a><span class="sd">    and closes the connection.</span>
@@ -107,15 +107,18 @@
 </span><span id="L-51"><a href="#L-51"><span class="linenos">51</span></a>    <span class="c1"># Parameters</span>
 </span><span id="L-52"><a href="#L-52"><span class="linenos">52</span></a>    <span class="n">stats_md</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;stats&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;stats_md&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 </span><span id="L-53"><a href="#L-53"><span class="linenos">53</span></a>    <span class="n">stats_json</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;stats&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;stats_json&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-</span><span id="L-54"><a href="#L-54"><span class="linenos">54</span></a>
-</span><span id="L-55"><a href="#L-55"><span class="linenos">55</span></a>    <span class="c1"># Stats</span>
-</span><span id="L-56"><a href="#L-56"><span class="linenos">56</span></a>    <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">print_stats</span><span class="p">(</span><span class="n">output_file</span><span class="o">=</span><span class="n">stats_md</span><span class="p">,</span> <span class="n">json_file</span><span class="o">=</span><span class="n">stats_json</span><span class="p">)</span>
-</span><span id="L-57"><a href="#L-57"><span class="linenos">57</span></a>
-</span><span id="L-58"><a href="#L-58"><span class="linenos">58</span></a>    <span class="c1"># Log</span>
-</span><span id="L-59"><a href="#L-59"><span class="linenos">59</span></a>    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;End&quot;</span><span class="p">)</span>
+</span><span id="L-54"><a href="#L-54"><span class="linenos">54</span></a>    <span class="n">annotations_stats</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;stats&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;annotations_stats&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+</span><span id="L-55"><a href="#L-55"><span class="linenos">55</span></a>
+</span><span id="L-56"><a href="#L-56"><span class="linenos">56</span></a>    <span class="c1"># Stats</span>
+</span><span id="L-57"><a href="#L-57"><span class="linenos">57</span></a>    <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">print_stats</span><span class="p">(</span>
+</span><span id="L-58"><a href="#L-58"><span class="linenos">58</span></a>        <span class="n">output_file</span><span class="o">=</span><span class="n">stats_md</span><span class="p">,</span> <span class="n">json_file</span><span class="o">=</span><span class="n">stats_json</span><span class="p">,</span> <span class="n">annotations_stats</span><span class="o">=</span><span class="n">annotations_stats</span>
+</span><span id="L-59"><a href="#L-59"><span class="linenos">59</span></a>    <span class="p">)</span>
 </span><span id="L-60"><a href="#L-60"><span class="linenos">60</span></a>
-</span><span id="L-61"><a href="#L-61"><span class="linenos">61</span></a>    <span class="c1"># Return Variants object</span>
-</span><span id="L-62"><a href="#L-62"><span class="linenos">62</span></a>    <span class="k">return</span> <span class="n">vcfdata_obj</span>
+</span><span id="L-61"><a href="#L-61"><span class="linenos">61</span></a>    <span class="c1"># Log</span>
+</span><span id="L-62"><a href="#L-62"><span class="linenos">62</span></a>    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;End&quot;</span><span class="p">)</span>
+</span><span id="L-63"><a href="#L-63"><span class="linenos">63</span></a>
+</span><span id="L-64"><a href="#L-64"><span class="linenos">64</span></a>    <span class="c1"># Return Variants object</span>
+</span><span id="L-65"><a href="#L-65"><span class="linenos">65</span></a>    <span class="k">return</span> <span class="n">vcfdata_obj</span>
 </span></pre></div>
 
 
@@ -125,13 +128,13 @@
 <div class="attr function">
             
         <span class="def">def</span>
-        <span class="name">stats</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">args</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">module</span> <span class="s1">&#39;argparse&#39;</span> <span class="kn">from</span> <span class="s1">&#39;/Users/lebechea/miniconda/envs/howard_devel/lib/python3.10/argparse.py&#39;</span><span class="o">&gt;</span></span><span class="return-annotation">) -> <span class="kc">None</span>:</span></span>
+        <span class="name">stats</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">args</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">module</span> <span class="s1">&#39;argparse&#39;</span> <span class="kn">from</span><span class="w"> </span><span class="s1">&#39;/Users/lebechea/miniconda/envs/howard_devel/lib/python3.10/argparse.py&#39;</span><span class="o">&gt;</span></span><span class="return-annotation">) -> <span class="kc">None</span>:</span></span>
 
                 <label class="view-source-button" for="stats-view-source"><span>View Source</span></label>
 
     </div>
     <a class="headerlink" href="#stats"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="stats-9"><a href="#stats-9"><span class="linenos"> 9</span></a><span class="k">def</span> <span class="nf">stats</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="stats-9"><a href="#stats-9"><span class="linenos"> 9</span></a><span class="k">def</span><span class="w"> </span><span class="nf">stats</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="stats-10"><a href="#stats-10"><span class="linenos">10</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="stats-11"><a href="#stats-11"><span class="linenos">11</span></a><span class="sd">    The stats() function takes in arguments, loads data from an input file, gets statistics on the data,</span>
 </span><span id="stats-12"><a href="#stats-12"><span class="linenos">12</span></a><span class="sd">    and closes the connection.</span>
@@ -177,15 +180,18 @@
 </span><span id="stats-52"><a href="#stats-52"><span class="linenos">52</span></a>    <span class="c1"># Parameters</span>
 </span><span id="stats-53"><a href="#stats-53"><span class="linenos">53</span></a>    <span class="n">stats_md</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;stats&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;stats_md&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 </span><span id="stats-54"><a href="#stats-54"><span class="linenos">54</span></a>    <span class="n">stats_json</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;stats&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;stats_json&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-</span><span id="stats-55"><a href="#stats-55"><span class="linenos">55</span></a>
-</span><span id="stats-56"><a href="#stats-56"><span class="linenos">56</span></a>    <span class="c1"># Stats</span>
-</span><span id="stats-57"><a href="#stats-57"><span class="linenos">57</span></a>    <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">print_stats</span><span class="p">(</span><span class="n">output_file</span><span class="o">=</span><span class="n">stats_md</span><span class="p">,</span> <span class="n">json_file</span><span class="o">=</span><span class="n">stats_json</span><span class="p">)</span>
-</span><span id="stats-58"><a href="#stats-58"><span class="linenos">58</span></a>
-</span><span id="stats-59"><a href="#stats-59"><span class="linenos">59</span></a>    <span class="c1"># Log</span>
-</span><span id="stats-60"><a href="#stats-60"><span class="linenos">60</span></a>    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;End&quot;</span><span class="p">)</span>
+</span><span id="stats-55"><a href="#stats-55"><span class="linenos">55</span></a>    <span class="n">annotations_stats</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;stats&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;annotations_stats&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+</span><span id="stats-56"><a href="#stats-56"><span class="linenos">56</span></a>
+</span><span id="stats-57"><a href="#stats-57"><span class="linenos">57</span></a>    <span class="c1"># Stats</span>
+</span><span id="stats-58"><a href="#stats-58"><span class="linenos">58</span></a>    <span class="n">vcfdata_obj</span><span class="o">.</span><span class="n">print_stats</span><span class="p">(</span>
+</span><span id="stats-59"><a href="#stats-59"><span class="linenos">59</span></a>        <span class="n">output_file</span><span class="o">=</span><span class="n">stats_md</span><span class="p">,</span> <span class="n">json_file</span><span class="o">=</span><span class="n">stats_json</span><span class="p">,</span> <span class="n">annotations_stats</span><span class="o">=</span><span class="n">annotations_stats</span>
+</span><span id="stats-60"><a href="#stats-60"><span class="linenos">60</span></a>    <span class="p">)</span>
 </span><span id="stats-61"><a href="#stats-61"><span class="linenos">61</span></a>
-</span><span id="stats-62"><a href="#stats-62"><span class="linenos">62</span></a>    <span class="c1"># Return Variants object</span>
-</span><span id="stats-63"><a href="#stats-63"><span class="linenos">63</span></a>    <span class="k">return</span> <span class="n">vcfdata_obj</span>
+</span><span id="stats-62"><a href="#stats-62"><span class="linenos">62</span></a>    <span class="c1"># Log</span>
+</span><span id="stats-63"><a href="#stats-63"><span class="linenos">63</span></a>    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;End&quot;</span><span class="p">)</span>
+</span><span id="stats-64"><a href="#stats-64"><span class="linenos">64</span></a>
+</span><span id="stats-65"><a href="#stats-65"><span class="linenos">65</span></a>    <span class="c1"># Return Variants object</span>
+</span><span id="stats-66"><a href="#stats-66"><span class="linenos">66</span></a>    <span class="k">return</span> <span class="n">vcfdata_obj</span>
 </span></pre></div>
 
 
