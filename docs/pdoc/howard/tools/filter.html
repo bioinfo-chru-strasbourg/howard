@@ -54,15 +54,15 @@
 
                         <label class="view-source-button" for="mod-filter-view-source"><span>View Source</span></label>
 
-                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos">  1</span></a><span class="kn">import</span> <span class="nn">argparse</span>
-</span><span id="L-2"><a href="#L-2"><span class="linenos">  2</span></a><span class="kn">import</span> <span class="nn">logging</span> <span class="k">as</span> <span class="nn">log</span>
-</span><span id="L-3"><a href="#L-3"><span class="linenos">  3</span></a><span class="kn">from</span> <span class="nn">tabulate</span> <span class="kn">import</span> <span class="n">tabulate</span>  <span class="c1"># type: ignore</span>
+                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos">  1</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+</span><span id="L-2"><a href="#L-2"><span class="linenos">  2</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">log</span>
+</span><span id="L-3"><a href="#L-3"><span class="linenos">  3</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">tabulate</span><span class="w"> </span><span class="kn">import</span> <span class="n">tabulate</span>  <span class="c1"># type: ignore</span>
 </span><span id="L-4"><a href="#L-4"><span class="linenos">  4</span></a>
-</span><span id="L-5"><a href="#L-5"><span class="linenos">  5</span></a><span class="kn">from</span> <span class="nn">howard.functions.commons</span> <span class="kn">import</span> <span class="n">load_args</span><span class="p">,</span> <span class="n">load_config_args</span>
-</span><span id="L-6"><a href="#L-6"><span class="linenos">  6</span></a><span class="kn">from</span> <span class="nn">howard.objects.variants</span> <span class="kn">import</span> <span class="n">Variants</span>
+</span><span id="L-5"><a href="#L-5"><span class="linenos">  5</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">howard.functions.commons</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_args</span><span class="p">,</span> <span class="n">load_config_args</span>
+</span><span id="L-6"><a href="#L-6"><span class="linenos">  6</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">howard.objects.variants</span><span class="w"> </span><span class="kn">import</span> <span class="n">Variants</span>
 </span><span id="L-7"><a href="#L-7"><span class="linenos">  7</span></a>
 </span><span id="L-8"><a href="#L-8"><span class="linenos">  8</span></a>
-</span><span id="L-9"><a href="#L-9"><span class="linenos">  9</span></a><span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="L-9"><a href="#L-9"><span class="linenos">  9</span></a><span class="k">def</span><span class="w"> </span><span class="nf">filter</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="L-10"><a href="#L-10"><span class="linenos"> 10</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="L-11"><a href="#L-11"><span class="linenos"> 11</span></a><span class="sd">    This Python function loads and queries data from a VCF file based on user input and exports the</span>
 </span><span id="L-12"><a href="#L-12"><span class="linenos"> 12</span></a><span class="sd">    results.</span>
@@ -164,13 +164,13 @@
 <div class="attr function">
             
         <span class="def">def</span>
-        <span class="name">filter</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">args</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">module</span> <span class="s1">&#39;argparse&#39;</span> <span class="kn">from</span> <span class="s1">&#39;/Users/lebechea/miniconda/envs/howard_devel/lib/python3.10/argparse.py&#39;</span><span class="o">&gt;</span></span><span class="return-annotation">) -> <span class="kc">None</span>:</span></span>
+        <span class="name">filter</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">args</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">module</span> <span class="s1">&#39;argparse&#39;</span> <span class="kn">from</span><span class="w"> </span><span class="s1">&#39;/Users/lebechea/miniconda/envs/howard_devel/lib/python3.10/argparse.py&#39;</span><span class="o">&gt;</span></span><span class="return-annotation">) -> <span class="kc">None</span>:</span></span>
 
                 <label class="view-source-button" for="filter-view-source"><span>View Source</span></label>
 
     </div>
     <a class="headerlink" href="#filter"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="filter-10"><a href="#filter-10"><span class="linenos"> 10</span></a><span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="filter-10"><a href="#filter-10"><span class="linenos"> 10</span></a><span class="k">def</span><span class="w"> </span><span class="nf">filter</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="filter-11"><a href="#filter-11"><span class="linenos"> 11</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="filter-12"><a href="#filter-12"><span class="linenos"> 12</span></a><span class="sd">    This Python function loads and queries data from a VCF file based on user input and exports the</span>
 </span><span id="filter-13"><a href="#filter-13"><span class="linenos"> 13</span></a><span class="sd">    results.</span>

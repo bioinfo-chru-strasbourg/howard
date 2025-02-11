@@ -60,18 +60,18 @@
 
                         <label class="view-source-button" for="mod-gui-view-source"><span>View Source</span></label>
 
-                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos"> 1</span></a><span class="kn">import</span> <span class="nn">os</span>
-</span><span id="L-2"><a href="#L-2"><span class="linenos"> 2</span></a><span class="kn">import</span> <span class="nn">argparse</span>
-</span><span id="L-3"><a href="#L-3"><span class="linenos"> 3</span></a><span class="kn">import</span> <span class="nn">logging</span> <span class="k">as</span> <span class="nn">log</span>
-</span><span id="L-4"><a href="#L-4"><span class="linenos"> 4</span></a><span class="kn">import</span> <span class="nn">importlib.util</span>
+                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos"> 1</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+</span><span id="L-2"><a href="#L-2"><span class="linenos"> 2</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+</span><span id="L-3"><a href="#L-3"><span class="linenos"> 3</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">log</span>
+</span><span id="L-4"><a href="#L-4"><span class="linenos"> 4</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">importlib.util</span>
 </span><span id="L-5"><a href="#L-5"><span class="linenos"> 5</span></a>
-</span><span id="L-6"><a href="#L-6"><span class="linenos"> 6</span></a><span class="kn">from</span> <span class="nn">howard.functions.commons</span> <span class="kn">import</span> <span class="n">help_generation</span>
+</span><span id="L-6"><a href="#L-6"><span class="linenos"> 6</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">howard.functions.commons</span><span class="w"> </span><span class="kn">import</span> <span class="n">help_generation</span>
 </span><span id="L-7"><a href="#L-7"><span class="linenos"> 7</span></a>
 </span><span id="L-8"><a href="#L-8"><span class="linenos"> 8</span></a>
 </span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a><span class="c1"># Import Gooey only if exists</span>
 </span><span id="L-10"><a href="#L-10"><span class="linenos">10</span></a><span class="k">try</span><span class="p">:</span>
 </span><span id="L-11"><a href="#L-11"><span class="linenos">11</span></a>    <span class="n">importlib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">find_spec</span><span class="p">(</span><span class="s2">&quot;gooey&quot;</span><span class="p">)</span>
-</span><span id="L-12"><a href="#L-12"><span class="linenos">12</span></a>    <span class="kn">from</span> <span class="nn">gooey</span> <span class="kn">import</span> <span class="n">Gooey</span><span class="p">,</span> <span class="n">GooeyParser</span>  <span class="c1"># type: ignore</span>
+</span><span id="L-12"><a href="#L-12"><span class="linenos">12</span></a>    <span class="kn">from</span><span class="w"> </span><span class="nn">gooey</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gooey</span><span class="p">,</span> <span class="n">GooeyParser</span>  <span class="c1"># type: ignore</span>
 </span><span id="L-13"><a href="#L-13"><span class="linenos">13</span></a><span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
 </span><span id="L-14"><a href="#L-14"><span class="linenos">14</span></a>    <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;HOWARD GUI disabled&quot;&quot;&quot;</span><span class="p">)</span>
 </span><span id="L-15"><a href="#L-15"><span class="linenos">15</span></a>    <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;ModuleNotFoundError: No module named &#39;gooey&#39;&quot;&quot;&quot;</span><span class="p">)</span>
@@ -106,7 +106,7 @@
 </span><span id="L-44"><a href="#L-44"><span class="linenos">44</span></a><span class="p">)</span>
 </span><span id="L-45"><a href="#L-45"><span class="linenos">45</span></a>
 </span><span id="L-46"><a href="#L-46"><span class="linenos">46</span></a><span class="c1"># GUI function</span>
-</span><span id="L-47"><a href="#L-47"><span class="linenos">47</span></a><span class="k">def</span> <span class="nf">gui</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="L-47"><a href="#L-47"><span class="linenos">47</span></a><span class="k">def</span><span class="w"> </span><span class="nf">gui</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="L-48"><a href="#L-48"><span class="linenos">48</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="L-49"><a href="#L-49"><span class="linenos">49</span></a><span class="sd">    The `gui` function generates a graphical user interface (GUI) for a Python script using the</span>
 </span><span id="L-50"><a href="#L-50"><span class="linenos">50</span></a><span class="sd">    `argparse` module and the `Gooey` library.</span>
@@ -176,7 +176,7 @@
 
     </div>
     <a class="headerlink" href="#gui"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="gui-126"><a href="#gui-126"><span class="linenos">126</span></a>    <span class="k">def</span> <span class="nf">inner2</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="gui-126"><a href="#gui-126"><span class="linenos">126</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">inner2</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 </span><span id="gui-127"><a href="#gui-127"><span class="linenos">127</span></a>      <span class="n">ArgumentParser</span><span class="o">.</span><span class="n">original_parse_args</span> <span class="o">=</span> <span class="n">ArgumentParser</span><span class="o">.</span><span class="n">parse_args</span>
 </span><span id="gui-128"><a href="#gui-128"><span class="linenos">128</span></a>      <span class="n">ArgumentParser</span><span class="o">.</span><span class="n">parse_args</span> <span class="o">=</span> <span class="n">run_gooey</span>
 </span><span id="gui-129"><a href="#gui-129"><span class="linenos">129</span></a>      <span class="k">return</span> <span class="n">payload</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>

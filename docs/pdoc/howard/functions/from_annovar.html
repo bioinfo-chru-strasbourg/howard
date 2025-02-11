@@ -68,22 +68,22 @@
 
                         <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos">   1</span></a><span class="ch">#!/usr/bin/env python</span>
 </span><span id="L-2"><a href="#L-2"><span class="linenos">   2</span></a>
-</span><span id="L-3"><a href="#L-3"><span class="linenos">   3</span></a><span class="kn">import</span> <span class="nn">csv</span>
-</span><span id="L-4"><a href="#L-4"><span class="linenos">   4</span></a><span class="kn">import</span> <span class="nn">gc</span>
-</span><span id="L-5"><a href="#L-5"><span class="linenos">   5</span></a><span class="kn">import</span> <span class="nn">sys</span>
-</span><span id="L-6"><a href="#L-6"><span class="linenos">   6</span></a><span class="kn">import</span> <span class="nn">os</span>
-</span><span id="L-7"><a href="#L-7"><span class="linenos">   7</span></a><span class="kn">import</span> <span class="nn">subprocess</span>
-</span><span id="L-8"><a href="#L-8"><span class="linenos">   8</span></a><span class="kn">import</span> <span class="nn">duckdb</span>  <span class="c1"># type: ignore</span>
-</span><span id="L-9"><a href="#L-9"><span class="linenos">   9</span></a><span class="kn">import</span> <span class="nn">argparse</span>
-</span><span id="L-10"><a href="#L-10"><span class="linenos">  10</span></a><span class="kn">import</span> <span class="nn">Bio.bgzf</span> <span class="k">as</span> <span class="nn">bgzf</span>  <span class="c1"># type: ignore</span>
-</span><span id="L-11"><a href="#L-11"><span class="linenos">  11</span></a><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>  <span class="c1"># type: ignore</span>
-</span><span id="L-12"><a href="#L-12"><span class="linenos">  12</span></a><span class="kn">import</span> <span class="nn">logging</span> <span class="k">as</span> <span class="nn">log</span>
-</span><span id="L-13"><a href="#L-13"><span class="linenos">  13</span></a><span class="kn">import</span> <span class="nn">pyarrow</span> <span class="k">as</span> <span class="nn">pa</span>  <span class="c1"># type: ignore</span>
-</span><span id="L-14"><a href="#L-14"><span class="linenos">  14</span></a><span class="kn">import</span> <span class="nn">pyarrow.parquet</span> <span class="k">as</span> <span class="nn">pq</span>  <span class="c1"># type: ignore</span>
-</span><span id="L-15"><a href="#L-15"><span class="linenos">  15</span></a><span class="kn">import</span> <span class="nn">pyarrow.csv</span> <span class="k">as</span> <span class="nn">pcsv</span>  <span class="c1"># type: ignore</span>
+</span><span id="L-3"><a href="#L-3"><span class="linenos">   3</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
+</span><span id="L-4"><a href="#L-4"><span class="linenos">   4</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
+</span><span id="L-5"><a href="#L-5"><span class="linenos">   5</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+</span><span id="L-6"><a href="#L-6"><span class="linenos">   6</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+</span><span id="L-7"><a href="#L-7"><span class="linenos">   7</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+</span><span id="L-8"><a href="#L-8"><span class="linenos">   8</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">duckdb</span>  <span class="c1"># type: ignore</span>
+</span><span id="L-9"><a href="#L-9"><span class="linenos">   9</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+</span><span id="L-10"><a href="#L-10"><span class="linenos">  10</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">Bio.bgzf</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">bgzf</span>  <span class="c1"># type: ignore</span>
+</span><span id="L-11"><a href="#L-11"><span class="linenos">  11</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>  <span class="c1"># type: ignore</span>
+</span><span id="L-12"><a href="#L-12"><span class="linenos">  12</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">log</span>
+</span><span id="L-13"><a href="#L-13"><span class="linenos">  13</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">pyarrow</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pa</span>  <span class="c1"># type: ignore</span>
+</span><span id="L-14"><a href="#L-14"><span class="linenos">  14</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">pyarrow.parquet</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pq</span>  <span class="c1"># type: ignore</span>
+</span><span id="L-15"><a href="#L-15"><span class="linenos">  15</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">pyarrow.csv</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pcsv</span>  <span class="c1"># type: ignore</span>
 </span><span id="L-16"><a href="#L-16"><span class="linenos">  16</span></a>
-</span><span id="L-17"><a href="#L-17"><span class="linenos">  17</span></a><span class="kn">from</span> <span class="nn">howard.objects.variants</span> <span class="kn">import</span> <span class="n">Variants</span>
-</span><span id="L-18"><a href="#L-18"><span class="linenos">  18</span></a><span class="kn">from</span> <span class="nn">howard.functions.commons</span> <span class="kn">import</span> <span class="n">full_path</span><span class="p">,</span> <span class="n">remove_if_exists</span>
+</span><span id="L-17"><a href="#L-17"><span class="linenos">  17</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">howard.objects.variants</span><span class="w"> </span><span class="kn">import</span> <span class="n">Variants</span>
+</span><span id="L-18"><a href="#L-18"><span class="linenos">  18</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">howard.functions.commons</span><span class="w"> </span><span class="kn">import</span> <span class="n">full_path</span><span class="p">,</span> <span class="n">remove_if_exists</span>
 </span><span id="L-19"><a href="#L-19"><span class="linenos">  19</span></a>
 </span><span id="L-20"><a href="#L-20"><span class="linenos">  20</span></a>
 </span><span id="L-21"><a href="#L-21"><span class="linenos">  21</span></a><span class="c1"># Dictionnaire des types</span>
@@ -96,7 +96,7 @@
 </span><span id="L-28"><a href="#L-28"><span class="linenos">  28</span></a><span class="p">}</span>
 </span><span id="L-29"><a href="#L-29"><span class="linenos">  29</span></a>
 </span><span id="L-30"><a href="#L-30"><span class="linenos">  30</span></a>
-</span><span id="L-31"><a href="#L-31"><span class="linenos">  31</span></a><span class="k">def</span> <span class="nf">from_annovar</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="L-31"><a href="#L-31"><span class="linenos">  31</span></a><span class="k">def</span><span class="w"> </span><span class="nf">from_annovar</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="L-32"><a href="#L-32"><span class="linenos">  32</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="L-33"><a href="#L-33"><span class="linenos">  33</span></a><span class="sd">    This function converts an Annovar database to a VCF and Parquet format.</span>
 </span><span id="L-34"><a href="#L-34"><span class="linenos">  34</span></a>
@@ -272,7 +272,7 @@
 </span><span id="L-204"><a href="#L-204"><span class="linenos"> 204</span></a>    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;End&quot;</span><span class="p">)</span>
 </span><span id="L-205"><a href="#L-205"><span class="linenos"> 205</span></a>
 </span><span id="L-206"><a href="#L-206"><span class="linenos"> 206</span></a>
-</span><span id="L-207"><a href="#L-207"><span class="linenos"> 207</span></a><span class="k">def</span> <span class="nf">annovar_to_vcf</span><span class="p">(</span>
+</span><span id="L-207"><a href="#L-207"><span class="linenos"> 207</span></a><span class="k">def</span><span class="w"> </span><span class="nf">annovar_to_vcf</span><span class="p">(</span>
 </span><span id="L-208"><a href="#L-208"><span class="linenos"> 208</span></a>    <span class="n">input_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 </span><span id="L-209"><a href="#L-209"><span class="linenos"> 209</span></a>    <span class="n">output_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 </span><span id="L-210"><a href="#L-210"><span class="linenos"> 210</span></a>    <span class="n">output_file_parquet</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1014,7 +1014,7 @@
 </span><span id="L-946"><a href="#L-946"><span class="linenos"> 946</span></a>    <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">clean_command</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </span><span id="L-947"><a href="#L-947"><span class="linenos"> 947</span></a>
 </span><span id="L-948"><a href="#L-948"><span class="linenos"> 948</span></a>
-</span><span id="L-949"><a href="#L-949"><span class="linenos"> 949</span></a><span class="k">def</span> <span class="nf">parquet_info_explode</span><span class="p">(</span>
+</span><span id="L-949"><a href="#L-949"><span class="linenos"> 949</span></a><span class="k">def</span><span class="w"> </span><span class="nf">parquet_info_explode</span><span class="p">(</span>
 </span><span id="L-950"><a href="#L-950"><span class="linenos"> 950</span></a>    <span class="n">input_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 </span><span id="L-951"><a href="#L-951"><span class="linenos"> 951</span></a>    <span class="n">output_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 </span><span id="L-952"><a href="#L-952"><span class="linenos"> 952</span></a>    <span class="n">threads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1070,7 +1070,7 @@
 </span><span id="L-1002"><a href="#L-1002"><span class="linenos">1002</span></a>    <span class="n">parquet_explode</span><span class="o">.</span><span class="n">export_output</span><span class="p">()</span>
 </span><span id="L-1003"><a href="#L-1003"><span class="linenos">1003</span></a>
 </span><span id="L-1004"><a href="#L-1004"><span class="linenos">1004</span></a>
-</span><span id="L-1005"><a href="#L-1005"><span class="linenos">1005</span></a><span class="k">def</span> <span class="nf">tsv_to_parquet</span><span class="p">(</span>
+</span><span id="L-1005"><a href="#L-1005"><span class="linenos">1005</span></a><span class="k">def</span><span class="w"> </span><span class="nf">tsv_to_parquet</span><span class="p">(</span>
 </span><span id="L-1006"><a href="#L-1006"><span class="linenos">1006</span></a>    <span class="n">tsv</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 </span><span id="L-1007"><a href="#L-1007"><span class="linenos">1007</span></a>    <span class="n">parquet</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 </span><span id="L-1008"><a href="#L-1008"><span class="linenos">1008</span></a>    <span class="n">delim</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1177,13 +1177,13 @@
 <div class="attr function">
             
         <span class="def">def</span>
-        <span class="name">from_annovar</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">args</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">module</span> <span class="s1">&#39;argparse&#39;</span> <span class="kn">from</span> <span class="s1">&#39;/Users/lebechea/miniconda/envs/howard_devel/lib/python3.10/argparse.py&#39;</span><span class="o">&gt;</span></span><span class="return-annotation">) -> <span class="kc">None</span>:</span></span>
+        <span class="name">from_annovar</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">args</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">module</span> <span class="s1">&#39;argparse&#39;</span> <span class="kn">from</span><span class="w"> </span><span class="s1">&#39;/Users/lebechea/miniconda/envs/howard_devel/lib/python3.10/argparse.py&#39;</span><span class="o">&gt;</span></span><span class="return-annotation">) -> <span class="kc">None</span>:</span></span>
 
                 <label class="view-source-button" for="from_annovar-view-source"><span>View Source</span></label>
 
     </div>
     <a class="headerlink" href="#from_annovar"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="from_annovar-32"><a href="#from_annovar-32"><span class="linenos"> 32</span></a><span class="k">def</span> <span class="nf">from_annovar</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="from_annovar-32"><a href="#from_annovar-32"><span class="linenos"> 32</span></a><span class="k">def</span><span class="w"> </span><span class="nf">from_annovar</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="from_annovar-33"><a href="#from_annovar-33"><span class="linenos"> 33</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="from_annovar-34"><a href="#from_annovar-34"><span class="linenos"> 34</span></a><span class="sd">    This function converts an Annovar database to a VCF and Parquet format.</span>
 </span><span id="from_annovar-35"><a href="#from_annovar-35"><span class="linenos"> 35</span></a>
@@ -1383,7 +1383,7 @@ function. These attributes include:</li>
 
     </div>
     <a class="headerlink" href="#annovar_to_vcf"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="annovar_to_vcf-208"><a href="#annovar_to_vcf-208"><span class="linenos">208</span></a><span class="k">def</span> <span class="nf">annovar_to_vcf</span><span class="p">(</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="annovar_to_vcf-208"><a href="#annovar_to_vcf-208"><span class="linenos">208</span></a><span class="k">def</span><span class="w"> </span><span class="nf">annovar_to_vcf</span><span class="p">(</span>
 </span><span id="annovar_to_vcf-209"><a href="#annovar_to_vcf-209"><span class="linenos">209</span></a>    <span class="n">input_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 </span><span id="annovar_to_vcf-210"><a href="#annovar_to_vcf-210"><span class="linenos">210</span></a>    <span class="n">output_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 </span><span id="annovar_to_vcf-211"><a href="#annovar_to_vcf-211"><span class="linenos">211</span></a>    <span class="n">output_file_parquet</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -2178,7 +2178,7 @@ auto-detemine the parameter value with a sample of variants. Defaults to None (a
 
     </div>
     <a class="headerlink" href="#parquet_info_explode"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="parquet_info_explode-950"><a href="#parquet_info_explode-950"><span class="linenos"> 950</span></a><span class="k">def</span> <span class="nf">parquet_info_explode</span><span class="p">(</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="parquet_info_explode-950"><a href="#parquet_info_explode-950"><span class="linenos"> 950</span></a><span class="k">def</span><span class="w"> </span><span class="nf">parquet_info_explode</span><span class="p">(</span>
 </span><span id="parquet_info_explode-951"><a href="#parquet_info_explode-951"><span class="linenos"> 951</span></a>    <span class="n">input_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 </span><span id="parquet_info_explode-952"><a href="#parquet_info_explode-952"><span class="linenos"> 952</span></a>    <span class="n">output_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 </span><span id="parquet_info_explode-953"><a href="#parquet_info_explode-953"><span class="linenos"> 953</span></a>    <span class="n">threads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -2265,7 +2265,7 @@ performance but lower memory usage. If set to `, defaults to False</li>
 
     </div>
     <a class="headerlink" href="#tsv_to_parquet"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="tsv_to_parquet-1006"><a href="#tsv_to_parquet-1006"><span class="linenos">1006</span></a><span class="k">def</span> <span class="nf">tsv_to_parquet</span><span class="p">(</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="tsv_to_parquet-1006"><a href="#tsv_to_parquet-1006"><span class="linenos">1006</span></a><span class="k">def</span><span class="w"> </span><span class="nf">tsv_to_parquet</span><span class="p">(</span>
 </span><span id="tsv_to_parquet-1007"><a href="#tsv_to_parquet-1007"><span class="linenos">1007</span></a>    <span class="n">tsv</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 </span><span id="tsv_to_parquet-1008"><a href="#tsv_to_parquet-1008"><span class="linenos">1008</span></a>    <span class="n">parquet</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 </span><span id="tsv_to_parquet-1009"><a href="#tsv_to_parquet-1009"><span class="linenos">1009</span></a>    <span class="n">delim</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>

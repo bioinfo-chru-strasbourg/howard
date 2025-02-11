@@ -475,6 +475,8 @@ Usage examples:
 > howard stats --input=tests/data/example.vcf.gz
 > --stats_md=/tmp/stats.md
 
+> howard stats --input=tests/data/example.vcf.gz --annotations_stats
+
 > howard stats --input=tests/data/example.vcf.gz
 > --param=config/param.json
 
@@ -516,6 +518,14 @@ Usage examples:
 >     --stats_json=<stats json>
 >
 >     Stats Output file in JSON format.
+
+</small>
+
+<small>
+
+>     --annotations_stats
+>
+>     Add annotations stats.
 
 </small>
 

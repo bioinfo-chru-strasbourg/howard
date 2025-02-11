@@ -787,20 +787,111 @@ class Variants:
 
         return None
 
-    def get_stats(self) -> dict:
+    def get_stats(
+        self, table: str = None, table_view: str = None, annotations_stats: bool = False
+    ) -> dict:
         """
-        The `get_stats` function calculates and returns various statistics of the current object,
-        including information about the input file, variants, samples, header fields, quality, and
-        SNVs/InDels.
-        :return: a dictionary containing various statistics of the current object. The dictionary has
-        the following structure:
+        Calculate and return various statistics of the current object, including information about the input file,
+        variants, samples, header fields, quality, and SNVs/InDels.
+
+        :param table: The name of the table containing variant data. If not provided, the default table is used.
+        :type table: str, optional
+        :param table_view: The name of the table view to be used for statistics calculation. If not provided, a new view is created.
+        :type table_view: str, optional
+        :param annotations_stats: Whether to calculate annotation statistics. Defaults to False.
+        :type annotations_stats: bool, optional
+
+        :return: A dictionary containing various statistics of the current object. The dictionary has the following structure:
+
+            - **Infos** (*dict*): General information about the input file and header fields.
+                - **Input file** (*str*): The path to the input file.
+                - **Header Infos** (*list*): List of INFO fields in the header.
+                - **Header Formats** (*list*): List of FORMAT fields in the header.
+                - **Number of INFO fields** (*int*): Number of INFO fields in the header.
+                - **Number of FORMAT fields** (*int*): Number of FORMAT fields in the header.
+                - **Number of samples** (*int*): Number of samples in the dataset.
+                - **Number of variants** (*int*): Total number of variants in the dataset.
+
+            - **Variants** (*dict*): Statistics about the variants.
+                - **By Chromosome** (*list*): List of dictionaries with chromosome names and variant counts.
+                - **By Type** (*list*): List of dictionaries with variant types and counts.
+                - **By Quality** (*list*): List of dictionaries with quality scores and counts.
+                - **By Filter** (*list*): List of dictionaries with filter values and counts.
+
+            - **Samples** (*dict*): Statistics about the samples.
+                - **Variants in samples** (*list*): List of dictionaries with sample names, variant counts, and percentages.
+
+            - **Header** (*dict*): Detailed information about the header fields.
+                - **List of INFO fields** (*dict*): Dictionary with detailed information about INFO fields.
+                - **List of FORMAT fields** (*dict*): Dictionary with detailed information about FORMAT fields.
+                - **List of FILTER fields** (*dict*): Dictionary with detailed information about FILTER fields.
+
+            - **Annotations** (*dict*, optional): Annotation statistics, if `annotations_stats` is True.
+                - **Stats** (*dict*): Dictionary with annotation statistics.
+
+            - **Quality** (*dict*): Quality statistics.
+                - **QUAL** (*dict*): Dictionary with quality statistics (average, minimum, maximum, standard deviation, median, variance).
+
+        :rtype: dict
+
+        :example:
+
+        .. code-block:: python
+
+            stats = get_stats(table="variants_table", table_view="variants_view", annotations_stats=True)
+            print(stats)
         """
 
         # Log
         log.info(f"Stats Calculation...")
 
-        # table varaints
-        table_variants_from = self.get_table_variants()
+        # table variants
+        if table is None:
+            table_variants_from = self.get_table_variants()
+        else:
+            table_variants_from = table
+
+        # table view
+        if table_view is None:
+            variants_view_stats_name = "variants_view_stats_" + get_random()
+        else:
+            variants_view_stats_name = table_view
+
+        # Percent_round
+        percent_round = 2
+
+        # Sample struct column name
+        sample_struct_column = "SAMPLES"
+
+        # Info struct column name
+        info_struct_column = None
+
+        # Sample struct column format needed
+        if annotations_stats:
+            info_prefix_column = ""
+        else:
+            info_prefix_column = None
+
+        # Create view
+        variants_view_stats = self.create_annotations_view(
+            table=table_variants_from,
+            view=variants_view_stats_name,
+            view_type="table",
+            view_mode="full",
+            info_prefix_column=info_prefix_column,
+            info_struct_column=info_struct_column,
+            sample_struct_column=sample_struct_column,
+            formats=["GT"],
+            fields_needed=[
+                "#CHROM",
+                "POS",
+                "REF",
+                "ALT",
+                "QUAL",
+                "FILTER",
+            ]
+            + self.get_header_sample_list(),
+        )
 
         # stats dict
         stats = {"Infos": {}}
@@ -814,13 +905,14 @@ class Variants:
         header_formats = self.get_header().formats
         header_infos_list = list(header_infos)
         header_formats_list = list(header_formats)
+        header_table = self.load_header()
 
         ### Variants
 
-        stats["Variants"] = {}
+        stats["Stats"] = {}
 
         # Variants by chr
-        sql_query_nb_variant_by_chrom = f'SELECT "#CHROM" as CHROM, count(*) as count FROM {table_variants_from} GROUP BY "#CHROM"'
+        sql_query_nb_variant_by_chrom = f'SELECT "#CHROM" as CHROM, count(*) as count FROM {variants_view_stats} GROUP BY "#CHROM"'
         df_nb_of_variants_by_chrom = self.get_query_to_df(sql_query_nb_variant_by_chrom)
         nb_of_variants_by_chrom = df_nb_of_variants_by_chrom.sort_values(
             by=["CHROM"], kind="quicksort"
@@ -831,13 +923,15 @@ class Variants:
 
         # Calculate percentage
         nb_of_variants_by_chrom["percent"] = nb_of_variants_by_chrom["count"].apply(
-            lambda x: (x / nb_of_variants)
+            lambda x: round((x * 100 / nb_of_variants), percent_round)
         )
 
-        stats["Variants"]["Number of variants by chromosome"] = (
-            nb_of_variants_by_chrom.to_dict(orient="index")
+        # Add to stats dict the number of variants by chromosome and the total number of variants
+        stats["Stats"]["Variants by chromosome"] = nb_of_variants_by_chrom.to_dict(
+            orient="index"
         )
 
+        # Add to stats dict the total number of variants
         stats["Infos"]["Number of variants"] = int(nb_of_variants)
 
         ### Samples
@@ -849,90 +943,176 @@ class Variants:
         # Check Samples
         if "GT" in header_formats_list and "FORMAT" in self.get_header_columns():
             log.debug(f"Check samples...")
+
+            # Samples stats
+            samples_stats = {}
+
+            # Get samples stats by genotype for each sample in the header
             for sample in self.get_header_sample_list():
                 sql_query_samples = f"""
-                    SELECT  '{sample}' as sample,
-                            REGEXP_EXTRACT("{sample}", '^([0-9/|.]*)[:]*',1) as genotype,
-                            count(REGEXP_EXTRACT("{sample}", '^([0-9/|.]*)[:]*',1)) as count,
-                            concat((count(REGEXP_EXTRACT("{sample}", '^([0-9/|.]*)[:]*',1))/{nb_of_variants})) as percentage
-                    FROM {table_variants_from}
-                    WHERE (
-                        regexp_matches("{sample}", '^[0-9]([/|][0-9])+')
-                        AND
-                        len(string_split(CAST("FORMAT" AS VARCHAR), ':')) = len(string_split(CAST("{sample}" AS VARCHAR), ':'))
-                      )
+                    SELECT 
+                        '{sample}' as 'sample',
+                        SAMPLES."{sample}".GT as 'genotype',
+                        count(SAMPLES."{sample}".GT) as 'count',
+                        ROUND((count(SAMPLES."{sample}".GT)*100/{nb_of_variants}), {percent_round}) as 'percent'
+                    FROM {variants_view_stats_name}
+                    WHERE  SAMPLES."{sample}".GT IS NOT NULL
                     GROUP BY genotype
-                    """
+                    ORDER BY genotype
+                """
+
+                # Get samples stats by genotype for each sample in the header
                 sql_query_genotype_df = self.conn.execute(sql_query_samples).df()
-                sample_genotype_count = sql_query_genotype_df["count"].sum()
+                non_null_genotypes = sql_query_genotype_df[
+                    sql_query_genotype_df["genotype"].str.contains(r"\d")
+                ]
+                sample_genotype_count = non_null_genotypes["count"].sum()
+
+                # Add to samples dict the samples stats by genotype for each sample in the header
                 if len(sql_query_genotype_df):
+
+                    # Number of samples
                     nb_of_samples += 1
+
+                    # Add to samples dict the samples stats by genotype for each sample in the header
                     samples[f"{sample} - {sample_genotype_count} variants"] = (
                         sql_query_genotype_df.to_dict(orient="index")
                     )
 
+                    # Add to samples stats dict the samples stats by genotype for each sample in the header
+                    samples_stats[sample] = {
+                        "Sample": f"{sample}",
+                        "count": int(sample_genotype_count),
+                        "percent": round(
+                            (sample_genotype_count * 100 / nb_of_variants),
+                            percent_round,
+                        ),
+                    }
+
+            # Add to stats dict the samples stats by genotype for each sample in the header
             stats["Samples"] = samples
             stats["Infos"]["Number of samples"] = nb_of_samples
+            stats["Stats"]["Variants by sample"] = samples_stats
 
-        # #
-        # if "FORMAT" in self.get_header_columns() and "DP" in header_formats_list:
-        #     stats["Infos"]["Number of samples"] = nb_of_samples
-        # elif nb_of_samples:
-        #     stats["Infos"]["Number of samples"] = "not a VCF format"
+        else:
+
+            samples_stats = {}
 
         ### INFO and FORMAT fields
         header_types_df = {}
         header_types_list = {
-            "List of INFO fields": header_infos,
-            "List of FORMAT fields": header_formats,
+            "INFO": {
+                "label": "List of INFO fields",
+                "fields": {
+                    "id": "INFO",
+                    "number": "Number",
+                    "type": "Type",
+                    "description": "Description",
+                },
+            },
+            "FORMAT": {
+                "label": "List of FORMAT fields",
+                "fields": {
+                    "id": "FORMAT",
+                    "number": "Number",
+                    "type": "Type",
+                    "description": "Description",
+                },
+            },
+            "FILTER": {
+                "label": "List of FILTER fields",
+                "fields": {
+                    "id": "FILTER",
+                    "description": "Description",
+                },
+            },
         }
-        i = 0
-        for header_type in header_types_list:
 
-            header_type_infos = header_types_list.get(header_type)
+        # Init
+        header_types_df = {}
+
+        # Get header types for INFO and FORMAT fields
+        for header_section, header_info in header_types_list.items():
+            label = header_info["label"]
+            fields = header_info["fields"]
+
+            # Construire la liste des champs à sélectionner
+            select_fields = ", ".join(fields.keys())
+
+            # SQL query
+            sql_query_header = f"""
+                SELECT {select_fields}
+                FROM header
+                WHERE section = '{header_section}'
+            """
+            header_infos_df = self.get_query_to_df(sql_query_header)
             header_infos_dict = {}
 
-            for info in header_type_infos:
+            # Add to header_types_df the header types for INFO and FORMAT fields
+            for i, row in header_infos_df.iterrows():
+                header_infos_dict[i] = {
+                    new if new else original: row[original]
+                    for original, new in fields.items()
+                }
 
-                i += 1
-                header_infos_dict[i] = {}
-
-                # ID
-                header_infos_dict[i]["id"] = info
-
-                # num
-                genotype_map = {None: ".", -1: "A", -2: "G", -3: "R"}
-                if header_type_infos[info].num in genotype_map.keys():
-                    header_infos_dict[i]["Number"] = genotype_map.get(
-                        header_type_infos[info].num
-                    )
-                else:
-                    header_infos_dict[i]["Number"] = header_type_infos[info].num
-
-                # type
-                if header_type_infos[info].type:
-                    header_infos_dict[i]["Type"] = header_type_infos[info].type
-                else:
-                    header_infos_dict[i]["Type"] = "."
-
-                # desc
-                if header_type_infos[info].desc != None:
-                    header_infos_dict[i]["Description"] = header_type_infos[info].desc
-                else:
-                    header_infos_dict[i]["Description"] = ""
-
+            # Add to header_types_df the header types for INFO and FORMAT fields
             if len(header_infos_dict):
-                header_types_df[header_type] = pd.DataFrame.from_dict(
+
+                # Add to header_types_df the header types for INFO and FORMAT fields
+                header_types_df[label] = pd.DataFrame.from_dict(
                     header_infos_dict, orient="index"
                 ).to_dict(orient="index")
 
-        # Stats
-        stats["Infos"]["Number of INFO fields"] = len(header_infos_list)
-        stats["Infos"]["Number of FORMAT fields"] = len(header_formats_list)
+                # Add to stats dict the number of INFO and FORMAT fields
+                stats["Infos"][f"Number of {header_section} fields"] = len(
+                    header_types_df[label]
+                )
+
+        # Add to stats dict the header types for INFO and FORMAT fields
         stats["Header"] = header_types_df
 
+        # Annotations stats
+        if annotations_stats:
+
+            # Init
+            sql_queries_info = []
+
+            # Get header infos list
+            for field in header_infos_list:
+
+                # Create a table with a field by line (only for INFO section), and le number of distinct value on variants table, and the number of variants with a value
+                sql_queries_info.append(
+                    f"""
+                        SELECT
+                            '{field}' AS 'Annotation',
+                            count(distinct "{field}") as 'Distinct values',
+                            count("{field}") as 'Annotated Variants',
+                            ROUND((count("{field}") * 100 / {nb_of_variants}), {percent_round}) as 'Percent',
+                        FROM
+                            {variants_view_stats_name}
+                        WHERE
+                            "{field}" IS NOT NULL AND TRIM(CAST("{field}" AS VARCHAR)) NOT IN ('','.')
+                    """
+                )
+
+            # Join all queries
+            sql_query_info = f""" UNION ALL """.join(sql_queries_info)
+
+            # Get info stats
+            info_stats = self.get_query_to_df(sql_query_info)
+
+            # Add to stats dict the annotations stats
+            stats["Annotations"] = {"Stats": info_stats.to_dict(orient="index")}
+
+        ### Quality stats
+        log.debug(f"Quality stats...")
+
         ### QUAL
+        log.debug(f"Quality stats: QUAL...")
+
         if "QUAL" in self.get_header_columns():
+
+            # SQL query
             sql_query_qual = f"""
                     SELECT
                         avg(CAST(QUAL AS INTEGER)) AS Average,
@@ -945,19 +1125,68 @@ class Variants:
                     WHERE CAST(QUAL AS VARCHAR) NOT IN ('.')
                     """
 
-            qual = self.conn.execute(sql_query_qual).df().to_dict(orient="index")
-            stats["Quality"] = {"Stats": qual}
+            # Get quality stats
+            qual_stats = self.conn.execute(sql_query_qual).df().to_dict(orient="index")
+
+        else:
+
+            # Empty quality stats
+            qual_stats = {}
+
+        ### FILTER
+        log.debug(f"Quality stats: FILTER...")
+
+        if "FILTER" in self.get_header_columns():
+
+            # SQL query
+            sql_query_filter = f"""
+                WITH split_filter AS (
+                    SELECT
+                        TRIM(UNNEST(STRING_SPLIT(CASE WHEN TRIM(FILTER) = '' OR FILTER IS NULL THEN '.' ELSE FILTER END, ';'))) AS filter_value
+                    FROM
+                        {table_variants_from}
+                )
+                SELECT
+                    filter_value,
+                    COUNT(*) AS 'count',
+                    ROUND((count * 100 / {nb_of_variants}), {percent_round}) AS 'percent'
+                FROM
+                    split_filter
+                GROUP BY
+                    filter_value
+                ORDER BY
+                    count DESC
+            """
+
+            # Get filter stats
+            filter_stats = (
+                self.conn.execute(sql_query_filter).df().to_dict(orient="index")
+            )
+
+        else:
+
+            # Empty filter stats
+            filter_stats = {}
 
         ### SNV and InDel
 
+        # SQL query
         sql_query_snv = f"""
             
-            SELECT Type, count FROM (
+            SELECT Type, count, ROUND((count * 100 / {nb_of_variants}), {percent_round}) AS 'percent' FROM (
 
                     SELECT
                         'Total' AS Type,
                         count(*) AS count
                     FROM {table_variants_from}
+                    
+                    UNION
+
+                    SELECT
+                        'SNV' AS Type,
+                        count(*) AS count
+                    FROM {table_variants_from}
+                    WHERE len(REF) = 1 AND len(ALT) = 1
 
                     UNION
 
@@ -976,26 +1205,28 @@ class Variants:
                     FROM {table_variants_from}
                     WHERE len(REF) > 1 OR len(ALT) > 1
                     AND len(REF) != len(ALT)
-                    
-                    UNION
-
-                    SELECT
-                        'SNV' AS Type,
-                        count(*) AS count
-                    FROM {table_variants_from}
-                    WHERE len(REF) = 1 AND len(ALT) = 1
 
                 )
 
-            ORDER BY count DESC
+            ORDER BY 
+            CASE
+                WHEN Type = 'Total' THEN 1
+                WHEN Type = 'SNV' THEN 2
+                WHEN Type = 'MNV' THEN 3
+                WHEN Type = 'InDel' THEN 4
+            END
 
                 """
-        snv_indel = self.conn.execute(sql_query_snv).df().to_dict(orient="index")
 
+        # Get SNV and InDel stats
+        snv_indel = self.get_query_to_df(sql_query_snv).to_dict(orient="index")
+
+        # Substitutions
         sql_query_snv_substitution = f"""
                 SELECT
                     concat(REF, '>', ALT) AS 'Substitution',
-                    count(*) AS count
+                    count(*) AS count,
+                    ROUND((count * 100 / {nb_of_variants}), {percent_round}) AS 'percent'
                 FROM {table_variants_from}
                 WHERE len(REF) = 1 AND len(ALT) = 1
                 GROUP BY REF, ALT
@@ -1004,12 +1235,19 @@ class Variants:
         snv_substitution = (
             self.conn.execute(sql_query_snv_substitution).df().to_dict(orient="index")
         )
-        stats["Variants"]["Counts"] = snv_indel
-        stats["Variants"]["Substitutions"] = snv_substitution
+
+        # Add to stats dict the SNV and InDel stats
+        stats["Stats"]["Variant types"] = snv_indel
+        stats["Stats"]["Substitutions"] = snv_substitution
+        stats["Stats"]["Quality"] = qual_stats
+        stats["Stats"]["Filters"] = filter_stats
+
+        # Remove table or view
+        self.remove_tables_or_views(tables=[variants_view_stats_name])
 
         return stats
 
-    def stats_to_file(self, file: str = None) -> str:
+    def stats_to_file(self, file: str = None, annotations_stats: bool = False) -> str:
         """
         The function `stats_to_file` takes a file name as input, retrieves statistics, serializes them
         into a JSON object, and writes the JSON object to the specified file.
@@ -1017,11 +1255,17 @@ class Variants:
         :param file: The `file` parameter is a string that represents the file path where the JSON data
         will be written
         :type file: str
-        :return: the name of the file that was written to.
+        :param annotations_stats: The `annotations_stats` parameter is a boolean that specifies whether
+        to calculate annotation statistics. If `annotations_stats` is set to True, annotation statistics
+        will be calculated. If `annotations_stats` is set to False, annotation statistics will not be
+        calculated. The default value is False.
+        :type annotations_stats: bool
+
+        :return: The name of the file that was written to.
         """
 
         # Get stats
-        stats = self.get_stats()
+        stats = self.get_stats(annotations_stats=annotations_stats)
 
         # Serializing json
         json_object = json.dumps(stats, indent=4)
@@ -1032,7 +1276,12 @@ class Variants:
 
         return file
 
-    def print_stats(self, output_file: str = None, json_file: str = None) -> None:
+    def print_stats(
+        self,
+        output_file: str = None,
+        json_file: str = None,
+        annotations_stats: bool = False,
+    ) -> None:
         """
         The `print_stats` function generates a markdown file and prints the statistics contained in a
         JSON file in a formatted manner.
@@ -1069,7 +1318,9 @@ class Variants:
                 Path(os.path.dirname(json_file)).mkdir(parents=True, exist_ok=True)
 
             # Create stats JSON file
-            stats_file = self.stats_to_file(file=json_file)
+            stats_file = self.stats_to_file(
+                file=json_file, annotations_stats=annotations_stats
+            )
 
             # Print stats file
             with open(stats_file) as f:
@@ -13494,6 +13745,7 @@ class Variants:
         detect_type_list: bool = True,
         fields_not_exists: bool = True,
         only_in_columns: bool = False,
+        formats: list = None,
         strict: bool = False,
         info_prefix_column: str = None,
         info_struct_column: str = None,
@@ -13506,45 +13758,47 @@ class Variants:
         """
         Creates a SQL view from fields in a VCF INFO column, or already in a column.
 
-        Args:
-            table (str, optional): The name of the table from which the fields are to be extracted. This table contains the
-                variants data, and the function creates a view based on the fields in the INFO column of this table. Defaults to None.
-            view (str, optional): The name of the view that will be created based on the fields in the VCF INFO column. This view
-                will contain the extracted fields from the INFO column in a structured format for further processing or analysis. Defaults to None.
-            view_type (str, optional): The type of view to be created. It can be either a `VIEW` or a `TABLE`. Defaults to `VIEW`.
-            view_mode (str, optional): The mode of view to be created. It can be either `full` or `explore`, and the function will create
-                the view based on the specified algorithm/SQL query. Defaults to `full`.
-            fields (list, optional): A list of field names to be extracted from the INFO column in the VCF file. These fields will be used
-                to create the view with the specified columns and data extracted from the INFO column. Defaults to None.
-            fields_needed (list, optional): A list of fields that are required for the view. These fields are essential for the view and
-                must be included to ensure that the data is complete and accurate. Defaults to None, which means key columns corresponding
-                to a variant ["#CHROM", "POS", "REF", "ALT"].
-            fields_needed_all (bool, optional): A flag that determines whether to include all fields in the table in the view. If set to `True`,
-                the function will include all fields in the table in the view (only if `fields_needed` is `False`). Defaults to False.
-            detect_type_list (bool, optional): A flag that determines whether to detect the type of the fields extracted from the INFO column.
-                If set to `True`, the function will detect the type of the fields and handle them accordingly in the view. Defaults to True.
-            fields_not_exists (bool, optional): A flag that determines whether to include fields that do not exist in the table in the view.
-                If set to `True`, the function will include fields that do not exist in the table as NULL values in the view. Defaults to True.
-            only_in_columns (bool, optional): A flag that determines whether to include only the fields that exist in the columns of the table.
-                If set to `True`, the function will include only the fields that exist in the columns of the table. Defaults to False.
-            strict (bool, optional): A flag that determines whether to enforce strict criteria for the fields in the view. Defaults to False.
-            info_prefix_column (str, optional): A prefix to be added to the field names in the view. If provided, the function will generate
-                fields with the prefix (e.g., "", "INFOS_", "annotations_"). Defaults to None.
-            info_struct_column (str, optional): The name of the column that will contain the extracted fields from the INFO column in the view.
-                This column will hold the structured data extracted from the INFO column for further processing or analysis. Defaults to None.
-            sample_struct_column (str, optional): The name of the column that will contain the extracted formats from the samples columns in the view.
-                This column will hold the structured data extracted from all samples columns for further processing or analysis. Defaults to None.
-            drop_view (bool, optional): A flag that determines whether to drop the existing view with the same name before creating a new view.
-                If set to `True`, the function will drop the existing view before creating a new view with the specified name. Defaults to False.
-            fields_to_rename (dict, optional): A dictionary that contains the mapping of fields to be renamed in the VCF file. The keys in the
-                dictionary represent the original field names that need to be renamed, and the corresponding values represent the new names. Defaults to None.
-            fields_forced_as_varchar (bool, optional): A flag that forces fields to be treated as type VARCHAR. Defaults to False.
-            limit (int, optional): The maximum number of rows to be included in the view. If provided, the function will limit the number of rows
-                in the view to the specified value. Defaults to None.
+        :param table: The name of the table containing variant data. If not provided, the default table is used.
+        :type table: str, optional
+        :param view: The name of the view that will be created based on the fields in the VCF INFO column. Defaults to None.
+        :type view: str, optional
+        :param view_type: The type of view to be created. It can be either a `VIEW` or a `TABLE`. Defaults to `VIEW`.
+        :type view_type: str, optional
+        :param view_mode: The mode of view to be created. It can be either `full` or `explore`. Defaults to `full`.
+        :type view_mode: str, optional
+        :param fields: A list of field names to be extracted from the INFO column in the VCF file. Defaults to None.
+        :type fields: list, optional
+        :param fields_needed: A list of fields that are required for the view. Defaults to None.
+        :type fields_needed: list, optional
+        :param fields_needed_all: A flag that determines whether to include all fields in the table in the view. Defaults to False.
+        :type fields_needed_all: bool, optional
+        :param detect_type_list: A flag that determines whether to detect the type of the fields extracted from the INFO column. Defaults to True.
+        :type detect_type_list: bool, optional
+        :param fields_not_exists: A flag that determines whether to include fields that do not exist in the table in the view. Defaults to True.
+        :type fields_not_exists: bool, optional
+        :param only_in_columns: A flag that determines whether to include only the fields that exist in the columns of the table. Defaults to False.
+        :type only_in_columns: bool, optional
+        :param formats: A list of field names to be extracted from the FORMAT column in the VCF file. Defaults to None.
+        :type formats: list, optional
+        :param strict: A flag that determines whether to enforce strict criteria for the fields in the view. Defaults to False.
+        :type strict: bool, optional
+        :param info_prefix_column: A prefix to be added to the field names in the view. Defaults to None.
+        :type info_prefix_column: str, optional
+        :param info_struct_column: The name of the column that will contain the extracted fields from the INFO column in the view. Defaults to None.
+        :type info_struct_column: str, optional
+        :param sample_struct_column: The name of the column that will contain the extracted formats from the samples columns in the view. Defaults to None.
+        :type sample_struct_column: str, optional
+        :param drop_view: A flag that determines whether to drop the existing view with the same name before creating a new view. Defaults to False.
+        :type drop_view: bool, optional
+        :param fields_to_rename: A dictionary that contains the mapping of fields to be renamed in the VCF file. Defaults to None.
+        :type fields_to_rename: dict, optional
+        :param fields_forced_as_varchar: A flag that forces fields to be treated as type VARCHAR. Defaults to False.
+        :type fields_forced_as_varchar: bool, optional
+        :param limit: The maximum number of rows to be included in the view. Defaults to None.
+        :type limit: int, optional
 
-        Returns:
-            str: The name of the view that is created based on the fields extracted from the INFO column in the VCF file. This view contains the
-                extracted fields in a structured format for further processing or analysis.
+        :return: The name of the view that is created based on the fields extracted from the INFO column in the VCF file.
+        :rtype: str
         """
 
         # Create a sql view from fields in VCF INFO column, with each column is a field present in the VCF header (with a specific type from VCF header) and extracted from INFO column (with a regexp like in rename_info_fields), and each row is a variant.
@@ -13595,6 +13849,11 @@ class Variants:
         if fields is None:
             fields = list(header.infos.keys())
 
+        # # Get format fields
+        # if formats is None:
+        #     formats = list(header.formats.keys())
+        #     # fields = list(header.infos.keys())
+
         # Get fields to rename
         if fields_to_rename is None:
             fields_to_rename = {}
@@ -13602,8 +13861,10 @@ class Variants:
         # If Samples structured columns
         if sample_struct_column:
 
-            # Get format
-            formats = list(header.formats.keys())
+            # # Get format
+            # formats = list(header.formats.keys())
+            if formats is None:
+                formats = list(header.formats.keys())
 
             # Get samples
             samples = list(header.samples)
@@ -13615,7 +13876,7 @@ class Variants:
             samples = []
 
         log.debug(
-            f"Create '{view}' view (as '{view_type}') from table '{table}' with {len(fields)} fields"
+            f"Create '{view}' view (as '{view_type}' mode '{view_mode}') from table '{table}' with {len(fields)} fields"
         )
 
         connexion_type = self.get_connexion_type()
@@ -13644,7 +13905,9 @@ class Variants:
         # log.debug(f"samples={samples}")
         # log.debug(f"table_describe={table_describe}")
         if view_mode in ["full"] and sample_struct_column and len(samples):
-            if "FORMAT" not in fields_needed and "FORMAT" in table_describe:
+            if "FORMAT" not in fields_needed and "FORMAT" in list(
+                table_describe.get("column_name")
+            ):  # in table_describe:
                 fields_needed += ["FORMAT"]
             for field_needed in fields_needed:
                 if field_needed not in fields_needed:
@@ -13870,6 +14133,7 @@ class Variants:
 
                 # For each format
                 for format in formats:
+                    # for format in ["GT"]:
 
                     # Format cast and list
                     format_cast = ""
@@ -13987,7 +14251,7 @@ class Variants:
                                 unnest(string_split(concat({info_column}, ''), ';')) AS kv
                                 FROM {table}
                                 )
-                            WHERE k in ('{"', '".join(fields)}') OR INFO in ('')  OR INFO IS NULL
+                            WHERE k in ('{"', '".join(fields)}') OR TRIM(INFO) in ('', '.')  OR INFO IS NULL
                             )
                         )
                     GROUP BY {', '.join([f'"{field}"' for field in fields_needed])}

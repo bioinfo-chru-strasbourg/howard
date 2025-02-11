@@ -806,6 +806,11 @@ arguments = {
             }
         },
     },
+    "annotations_stats": {
+        "help": """Add annotations stats.\n""",
+        "action": "store_true",
+        "default": False,
+    },
     # Assembly and Genome
     "assembly": {
         "metavar": "assembly",
@@ -1901,11 +1906,16 @@ commands_arguments = {
         "epilog": """Usage examples:\n"""
         """   howard stats --input=tests/data/example.vcf.gz \n"""
         """   howard stats --input=tests/data/example.vcf.gz --stats_md=/tmp/stats.md \n"""
+        """   howard stats --input=tests/data/example.vcf.gz --annotations_stats \n"""
         """   howard stats --input=tests/data/example.vcf.gz --param=config/param.json \n"""
         """    \n""",
         "groups": {
             "main": {"input": True, "param": False},
-            "Stats": {"stats_md": False, "stats_json": False},
+            "Stats": {
+                "stats_md": False,
+                "stats_json": False,
+                "annotations_stats": False,
+            },
         },
     },
     "convert": {

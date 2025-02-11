@@ -35,6 +35,7 @@ and transcripts mapping. New useful tools and plugins.
 - Improve snpEff extract information (HGVS list, explode annotations, generate as JSON)
 - Improve NOMEN extraction from HGVS list, including multiple patterns for NOMEN
 - Improve rename or remove INFO/tags
+- Improve stats generation
 
 ### Fixes
 
