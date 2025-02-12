@@ -774,6 +774,11 @@ arguments = {
         "extra": {"param_section": "calculation:calculations:BARCODEFAMILY"},
     },
     # Stats
+    "stats_stdout": {
+        "help": """Print Markdown stats in stdout. Default False, except if no output files are requested.\n""",
+        "action": "store_true",
+        "default": False,
+    },
     "stats_md": {
         "metavar": "stats markdown",
         "help": """Stats Output file in MarkDown format.\n""",
@@ -1944,6 +1949,7 @@ commands_arguments = {
         "groups": {
             "main": {"input": True, "param": False},
             "Stats": {
+                "stats_stdout": False,
                 "stats_md": False,
                 "stats_json": False,
                 "stats_html": False,
