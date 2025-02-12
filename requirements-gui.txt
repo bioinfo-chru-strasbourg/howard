@@ -31,6 +31,7 @@ pypandoc_binary~=1.14.0
 pyfiglet~=1.0.0
 termcolor~=2.5.0
 coloredlogs~=15.0.0
+markdown2~=2.5.0
 Pillow~=10.2
 colored~=2.2
 pygtrie~=2.5

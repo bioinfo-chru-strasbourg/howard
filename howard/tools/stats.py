@@ -51,11 +51,21 @@ def stats(args: argparse) -> None:
     # Parameters
     stats_md = param.get("stats", {}).get("stats_md", None)
     stats_json = param.get("stats", {}).get("stats_json", None)
+    stats_html = param.get("stats", {}).get("stats_html", None)
+    stats_pdf = param.get("stats", {}).get("stats_pdf", None)
     annotations_stats = param.get("stats", {}).get("annotations_stats", False)
+    queries = param.get("stats", {}).get("queries", None)
+    queries_view = param.get("stats", {}).get("queries_view", None)
 
     # Stats
     vcfdata_obj.print_stats(
-        output_file=stats_md, json_file=stats_json, annotations_stats=annotations_stats
+        output_file=stats_md,
+        json_file=stats_json,
+        html_file=stats_html,
+        pdf_file=stats_pdf,
+        annotations_stats=annotations_stats,
+        queries=queries,
+        queries_view=queries_view,
     )
 
     # Log

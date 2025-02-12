@@ -806,8 +806,40 @@ arguments = {
             }
         },
     },
+    "stats_html": {
+        "metavar": "stats html",
+        "help": """Stats Output file in HTML format.\n""",
+        "required": False,
+        "default": None,
+        "type": PathType(exists=None, type="file"),
+        "gooey": {
+            "widget": "FileSaver",
+            "options": {"wildcard": "JSON file (*.html)|*.html"},
+        },
+        "extra": {
+            "examples": {
+                "Export statistics in JSON format": """"stats_html": "/tmp/stats.html" """
+            }
+        },
+    },
+    "stats_pdf": {
+        "metavar": "stats pdf",
+        "help": """Stats Output file in PDF format.\n""",
+        "required": False,
+        "default": None,
+        "type": PathType(exists=None, type="file"),
+        "gooey": {
+            "widget": "FileSaver",
+            "options": {"wildcard": "JSON file (*.pdf)|*.pdf"},
+        },
+        "extra": {
+            "examples": {
+                "Export statistics in JSON format": """"stats_pdf": "/tmp/stats.pdf" """
+            }
+        },
+    },
     "annotations_stats": {
-        "help": """Add annotations stats.\n""",
+        "help": """Add statistics on annotations (INFO/tags)).\n""",
         "action": "store_true",
         "default": False,
     },
@@ -1905,7 +1937,7 @@ commands_arguments = {
         "help": "Statistics on genetic variations file.",
         "epilog": """Usage examples:\n"""
         """   howard stats --input=tests/data/example.vcf.gz \n"""
-        """   howard stats --input=tests/data/example.vcf.gz --stats_md=/tmp/stats.md \n"""
+        """   howard stats --input=tests/data/example.vcf.gz --stats_md=/tmp/stats.md --stats_json=/tmp/stats.json --stats_html=/tmp/stats.html  --stats_pdf=/tmp/stats.pdf \n"""
         """   howard stats --input=tests/data/example.vcf.gz --annotations_stats \n"""
         """   howard stats --input=tests/data/example.vcf.gz --param=config/param.json \n"""
         """    \n""",
@@ -1914,6 +1946,8 @@ commands_arguments = {
             "Stats": {
                 "stats_md": False,
                 "stats_json": False,
+                "stats_html": False,
+                "stats_pdf": False,
                 "annotations_stats": False,
             },
         },

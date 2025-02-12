@@ -711,8 +711,9 @@ of samples, statistics by chromosome, genotypes by samples&#x2026;</p>
 <p>howard stats &#x2013;input=tests/data/example.vcf.gz</p>
 </blockquote>
 <blockquote>
-<p>howard stats &#x2013;input=tests/data/example.vcf.gz
-&#x2013;stats_md=/tmp/stats.md</p>
+<p>howard stats &#x2013;input=tests/data/example.vcf.gz &#x2013;stats_md=/tmp/stats.md
+&#x2013;stats_json=/tmp/stats.json &#x2013;stats_html=/tmp/stats.html
+&#x2013;stats_pdf=/tmp/stats.pdf</p>
 </blockquote>
 <blockquote>
 <p>howard stats &#x2013;input=tests/data/example.vcf.gz &#x2013;annotations_stats</p>
@@ -761,9 +762,23 @@ Stats Output file in JSON format.</code></pre>
 <p></small></p>
 <p><small></p>
 <blockquote>
+<pre><code>    --stats_html=&lt;stats html&gt;
+
+Stats Output file in HTML format.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --stats_pdf=&lt;stats pdf&gt;
+
+Stats Output file in PDF format.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
 <pre><code>    --annotations_stats
 
-Add annotations stats.</code></pre>
+Add statistics on annotations (INFO/tags)).</code></pre>
 </blockquote>
 <p></small></p>
 <h1 data-number="6" id="convert-tool"><span
