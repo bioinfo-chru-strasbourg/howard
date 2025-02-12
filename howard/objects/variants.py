@@ -1351,6 +1351,7 @@ class Variants:
 
     def print_stats(
         self,
+        stdout: bool = False,
         output_file: str = None,
         json_file: str = None,
         html_file: str = None,
@@ -1363,6 +1364,11 @@ class Variants:
         The `print_stats` function generates a markdown file and prints the statistics contained in a
         JSON file in a formatted manner.
 
+        :param stdout: The `stdout` parameter is a boolean that specifies whether to print the stats
+        directly to the standard output. If `stdout` is set to True, the stats will be printed to the
+        standard output. If `stdout` is set to False, the stats will not be printed to the standard
+        output. The default value is False.
+        :type stdout: bool
         :param output_file: The `output_file` parameter is a string that specifies the path and filename
         of the output file where the stats will be printed in Markdown format. If no `output_file` is
         provided, a temporary directory will be created and the stats will be saved in a file named
@@ -1494,11 +1500,12 @@ class Variants:
                     fp.write("%s\n" % item)
 
             # Output stats in markdown
-            print("")
-            print("\n\n".join(output_title))
-            print("")
-            print("\n\n".join(output))
-            print("")
+            if stdout:
+                print("")
+                print("\n\n".join(output_title))
+                print("")
+                print("\n\n".join(output))
+                print("")
 
             # Generate HTML and PDF files
             if html_file:

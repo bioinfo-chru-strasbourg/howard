@@ -49,6 +49,7 @@ def stats(args: argparse) -> None:
     vcfdata_obj.load_data()
 
     # Parameters
+    stats_stdout = param.get("stats", {}).get("stats_stdout", False)
     stats_md = param.get("stats", {}).get("stats_md", None)
     stats_json = param.get("stats", {}).get("stats_json", None)
     stats_html = param.get("stats", {}).get("stats_html", None)
@@ -57,8 +58,18 @@ def stats(args: argparse) -> None:
     queries = param.get("stats", {}).get("queries", None)
     queries_view = param.get("stats", {}).get("queries_view", None)
 
+    # Force if no stats file
+    if (
+        stats_md is None
+        and stats_json is None
+        and stats_html is None
+        and stats_pdf is None
+    ):
+        stats_stdout = True
+
     # Stats
     vcfdata_obj.print_stats(
+        stdout=stats_stdout,
         output_file=stats_md,
         json_file=stats_json,
         html_file=stats_html,

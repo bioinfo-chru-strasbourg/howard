@@ -508,6 +508,14 @@ Usage examples:
 
 <small>
 
+>     --stats_stdout
+>
+>     Print Markdown stats in stdout. Default False, except if no output files are requested.
+
+</small>
+
+<small>
+
 >     --stats_md=<stats markdown>
 >
 >     Stats Output file in MarkDown format.
