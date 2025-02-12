@@ -5,6 +5,7 @@ import re
 import statistics
 import string
 import subprocess
+import tempfile
 import typing
 import duckdb  # type: ignore
 import json
@@ -4356,13 +4357,12 @@ def docker_automount() -> str:
 
 def sort_contigs(vcf_reader):
     """
-    Function that sort contigs in VCF header
+    Sort contigs in VCF header.
 
-    Args:
-        vcf_reader (vcf): VCF object from VCF package
-
-    Returns:
-        vcf:VCF object from VCF package
+    :param vcf_reader: VCF object from VCF package.
+    :type vcf_reader: vcf.Reader
+    :return: VCF object with sorted contigs.
+    :rtype: vcf.Reader
     """
 
     from collections import OrderedDict
@@ -4409,3 +4409,305 @@ def sort_contigs(vcf_reader):
 
     # Return
     return vcf_reader
+
+
+def escape_markdown_table_chars(value, special_chars=None):
+    """
+    Escape special characters in a string value for Markdown tables.
+
+    :param value: The string value to process.
+    :type value: str
+    :param special_chars: A list of special characters to escape. Defaults to None.
+    :type special_chars: list, optional
+    :return: The string value with escaped special characters.
+    :rtype: str
+    """
+
+    if special_chars is None:
+        special_chars = [
+            "|",
+        ]
+    if isinstance(value, str):
+        for char in special_chars:
+            value = value.replace(char, f"\\{char}")
+    return value
+
+
+def convert_markdown_to_html(
+    input_file: str, output_file: str, css: str = None
+) -> None:
+    """
+    Convert a Markdown file to an HTML file.
+
+    :param input_file: The path to the input Markdown file.
+    :type input_file: str
+    :param output_file: The path to the output HTML file.
+    :type output_file: str
+    :param css: Optional CSS styles to include in the HTML file. Defaults to None.
+    :type css: str, optional
+    :return: None
+    :rtype: None
+    """
+    import markdown2  # type: ignore
+
+    # Read the Markdown content from the input file
+    with open(input_file, "r", encoding="utf-8") as md_file:
+        md_content = md_file.read()
+        html_content = markdown2.markdown(
+            md_content, extras=["tables", "toc", "code-friendly"]
+        )
+
+    # Add Default custom CSS for better styling
+    default_css = """
+        <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            width: 90%;
+            margin: auto;
+            overflow: hidden;
+            padding: 20px;
+            background: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .table-container {
+            overflow-x: auto; /* Enable horizontal scrolling */
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        table {
+            #width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        td:last-child {
+            word-wrap: break-word; /* Enable word wrapping */
+            word-break: break-all; /* Break words if necessary */
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        a:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+        </style>
+        """
+    default_css = """
+        <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            width: 90%;
+            margin: auto;
+            overflow: hidden;
+            padding: 20px;
+            background: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .table-container {
+            overflow-x: auto; /* Enable horizontal scrolling */
+        }
+        h1 {
+            background-color: #dcdcdc; /* Light purple background color */
+            color: #333; /* Dark text color */
+            font-size: 2em; /* Smaller font size */
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        h2 {
+            background-color: #dcdcdc; /* Light purple background color */
+            color: #333; /* Dark text color */
+            font-size: 1.5em; /* Smaller font size */
+            margin-top: 30px;
+            margin-bottom: 15px;
+            padding: 8px;
+            border-radius: 5px;
+        }
+        h3 {
+            color: #333;
+            font-size: 1.2em; /* Smaller font size */
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        table {
+            # width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        td:last-child {
+            word-wrap: break-word; /* Enable word wrapping */
+            word-break: break-all; /* Break words if necessary */
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        a:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+        </style>
+        """
+
+    # CSS content
+    if css is None:
+        css = default_css
+
+    # HTML content
+    html_content = f"<html><head>{css}</head><body><div class='container'><div class='table-container'>{html_content}</div></div></body></html>"
+
+    # Write the HTML content to the output file
+    with open(output_file, "w", encoding="utf-8") as html_file:
+        html_file.write(html_content)
+
+
+def convert_html_to_pdf(
+    input_file: str,
+    output_file: str,
+    extras_args: list = None,
+    custom_style: str = None,
+) -> None:
+    """
+    Convert an HTML file to a PDF file.
+
+    :param input_file: The path to the input HTML file.
+    :type input_file: str
+    :param output_file: The path to the output PDF file.
+    :type output_file: str
+    :param extra_args: Optional list of extra arguments for the PDF conversion. Defaults to None.
+    :type extra_args: list, optional
+    :return: None
+    :rtype: None
+    """
+    import pypandoc  # type: ignore
+
+    # Default extra arguments
+    default_extra_args = [
+        "--pdf-engine=xelatex",
+        "--variable",
+        "geometry:margin=1in",
+        "--variable",
+        "tables:autofit",
+        "--variable",
+        "table-use-row-colors=true",
+        "--variable",
+        "table-use-col-widths=true",
+        "--variable",
+        "table-col-widths=0.3,0.3,0.3",
+    ]
+
+    # Extra arguments
+    if extras_args is None:
+        extra_args = default_extra_args
+
+        # Default extra arguments custom style
+    if custom_style is None:
+        if os.path.exists(os.path.join(folder_config, "custom.sty")):
+            custom_style = os.path.join(folder_config, "custom.sty")
+
+    if os.path.exists(custom_style):
+        extra_args.append("--include-in-header=" + custom_style)
+
+    # Convert HTML to PDF
+    output = pypandoc.convert_file(
+        input_file, "pdf", outputfile=output_file, extra_args=extra_args
+    )
+
+    # Assert conversion success
+    assert output == "", "Conversion to PDF failed"
+
+
+def convert_markdown_to_pdf(input_file: str, output_file: str) -> None:
+    """
+    Convert a Markdown file to a PDF file.
+
+    :param input_file: The path to the input Markdown file.
+    :type input_file: str
+    :param output_file: The path to the output PDF file.
+    :type output_file: str
+    :return: None
+    :rtype: None
+    """
+
+    # Convert Markdown to HTML
+    with tempfile.NamedTemporaryFile(suffix=".html", delete=True) as temp_html_file:
+        temp_html_path = temp_html_file.name
+    convert_markdown_to_html(input_file, temp_html_path)
+
+    # Convert HTML to PDF
+    convert_html_to_pdf(temp_html_path, output_file)
+
+
+def cast_columns_query(query, conn):
+    """
+    Cast columns of a query to VARCHAR or aggregate arrays to strings.
+
+    :param query: The original SQL query.
+    :type query: str
+    :param conn: The database connection.
+    :type conn: duckDB connection
+    :return: The modified SQL query with casted columns.
+    :rtype: str
+    """
+
+    # Find structure, with DESCRIBE with query, of query with columns and type like VARCHAR or VARCHAR[], or FLOAT or FLOAT[]
+    # and create a dictionary with column name and type
+    query_sql_structure = f"""
+        DESCRIBE ({query})
+    """
+    result_describe = conn.execute(query_sql_structure)
+    description_dict = {row[0]: {"type": row[1]} for row in result_describe.fetchall()}
+
+    # Add a select to aggregate list to string if needed
+    list_columns = []
+    for column in description_dict:
+        column_type = description_dict.get(column, {}).get("type", "VARCHAR")
+        if column_type.endswith("[]"):
+            list_columns.append(
+                f""" list_aggregate("{column}", 'string_agg', ',') AS '{column}' """
+            )
+        else:
+            list_columns.append(f""" "{column}" """)
+
+    # RE-Query
+    query_cast = f"""
+        SELECT {",".join(list_columns)}
+        FROM ({query})
+    """
+
+    return query_cast

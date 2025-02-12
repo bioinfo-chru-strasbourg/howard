@@ -473,7 +473,8 @@ Usage examples:
 > howard stats --input=tests/data/example.vcf.gz
 
 > howard stats --input=tests/data/example.vcf.gz
-> --stats_md=/tmp/stats.md
+> --stats_md=/tmp/stats.md --stats_json=/tmp/stats.json
+> --stats_html=/tmp/stats.html --stats_pdf=/tmp/stats.pdf
 
 > howard stats --input=tests/data/example.vcf.gz --annotations_stats
 
@@ -523,9 +524,25 @@ Usage examples:
 
 <small>
 
+>     --stats_html=<stats html>
+>
+>     Stats Output file in HTML format.
+
+</small>
+
+<small>
+
+>     --stats_pdf=<stats pdf>
+>
+>     Stats Output file in PDF format.
+
+</small>
+
+<small>
+
 >     --annotations_stats
 >
->     Add annotations stats.
+>     Add statistics on annotations (INFO/tags)).
 
 </small>
 

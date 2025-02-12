@@ -41,10 +41,14 @@ from howard.functions.commons import (
     DEFAULT_TOOLS_FOLDER,
     add_value_into_dict,
     barcode,
+    cast_columns_query,
     check_docker_image_exists,
     clean_annotation_field,
     command,
+    convert_markdown_to_html,
+    convert_markdown_to_pdf,
     detect_column_type,
+    escape_markdown_table_chars,
     extract_memory_in_go,
     find,
     find_all,
@@ -788,7 +792,12 @@ class Variants:
         return None
 
     def get_stats(
-        self, table: str = None, table_view: str = None, annotations_stats: bool = False
+        self,
+        table: str = None,
+        table_view: str = None,
+        annotations_stats: bool = False,
+        queries: dict = None,
+        queries_view: str = None,
     ) -> dict:
         """
         Calculate and return various statistics of the current object, including information about the input file,
@@ -800,6 +809,13 @@ class Variants:
         :type table_view: str, optional
         :param annotations_stats: Whether to calculate annotation statistics. Defaults to False.
         :type annotations_stats: bool, optional
+        :param queries: The `queries` parameter is a dictionary that contains queries to be executed
+        and added to the statistics. The keys of the dictionary are the names of the queries, and the
+        values are the SQL queries to be executed.
+        :type queries: dict
+        :param queries_view: The `queries_view` parameter is a string that represents the name of the
+        view to be used for the queries. If no value is provided, a new view will be created.
+        :type queries_view: str
 
         :return: A dictionary containing various statistics of the current object. The dictionary has the following structure:
 
@@ -857,6 +873,9 @@ class Variants:
         else:
             variants_view_stats_name = table_view
 
+        # Tables to remove
+        tables_to_remove = []
+
         # Percent_round
         percent_round = 2
 
@@ -873,7 +892,7 @@ class Variants:
             info_prefix_column = None
 
         # Create view
-        variants_view_stats = self.create_annotations_view(
+        variants_view_stats_name = self.create_annotations_view(
             table=table_variants_from,
             view=variants_view_stats_name,
             view_type="table",
@@ -892,6 +911,7 @@ class Variants:
             ]
             + self.get_header_sample_list(),
         )
+        tables_to_remove.append(variants_view_stats_name)
 
         # stats dict
         stats = {"Infos": {}}
@@ -907,12 +927,13 @@ class Variants:
         header_formats_list = list(header_formats)
         header_table = self.load_header()
 
-        ### Variants
-
+        # Stat section
         stats["Stats"] = {}
 
+        ### Variants
+
         # Variants by chr
-        sql_query_nb_variant_by_chrom = f'SELECT "#CHROM" as CHROM, count(*) as count FROM {variants_view_stats} GROUP BY "#CHROM"'
+        sql_query_nb_variant_by_chrom = f'SELECT "#CHROM" as CHROM, count(*) as count FROM {variants_view_stats_name} GROUP BY "#CHROM"'
         df_nb_of_variants_by_chrom = self.get_query_to_df(sql_query_nb_variant_by_chrom)
         nb_of_variants_by_chrom = df_nb_of_variants_by_chrom.sort_values(
             by=["CHROM"], kind="quicksort"
@@ -975,9 +996,7 @@ class Variants:
                     nb_of_samples += 1
 
                     # Add to samples dict the samples stats by genotype for each sample in the header
-                    samples[f"{sample} - {sample_genotype_count} variants"] = (
-                        sql_query_genotype_df.to_dict(orient="index")
-                    )
+                    samples[sample] = sql_query_genotype_df.to_dict(orient="index")
 
                     # Add to samples stats dict the samples stats by genotype for each sample in the header
                     samples_stats[sample] = {
@@ -1042,7 +1061,7 @@ class Variants:
             # SQL query
             sql_query_header = f"""
                 SELECT {select_fields}
-                FROM header
+                FROM {header_table}
                 WHERE section = '{header_section}'
             """
             header_infos_df = self.get_query_to_df(sql_query_header)
@@ -1102,7 +1121,7 @@ class Variants:
             info_stats = self.get_query_to_df(sql_query_info)
 
             # Add to stats dict the annotations stats
-            stats["Annotations"] = {"Stats": info_stats.to_dict(orient="index")}
+            stats["Annotations"] = {"Distribution": info_stats.to_dict(orient="index")}
 
         ### Quality stats
         log.debug(f"Quality stats...")
@@ -1121,7 +1140,7 @@ class Variants:
                         stddev(CAST(QUAL AS INTEGER)) AS StandardDeviation,
                         median(CAST(QUAL AS INTEGER)) AS Median,
                         variance(CAST(QUAL AS INTEGER)) AS Variance
-                    FROM {table_variants_from}
+                    FROM {variants_view_stats_name}
                     WHERE CAST(QUAL AS VARCHAR) NOT IN ('.')
                     """
 
@@ -1144,7 +1163,7 @@ class Variants:
                     SELECT
                         TRIM(UNNEST(STRING_SPLIT(CASE WHEN TRIM(FILTER) = '' OR FILTER IS NULL THEN '.' ELSE FILTER END, ';'))) AS filter_value
                     FROM
-                        {table_variants_from}
+                        {variants_view_stats_name}
                 )
                 SELECT
                     filter_value,
@@ -1178,14 +1197,14 @@ class Variants:
                     SELECT
                         'Total' AS Type,
                         count(*) AS count
-                    FROM {table_variants_from}
+                    FROM {variants_view_stats_name}
                     
                     UNION
 
                     SELECT
                         'SNV' AS Type,
                         count(*) AS count
-                    FROM {table_variants_from}
+                    FROM {variants_view_stats_name}
                     WHERE len(REF) = 1 AND len(ALT) = 1
 
                     UNION
@@ -1193,7 +1212,7 @@ class Variants:
                     SELECT
                         'MNV' AS Type,
                         count(*) AS count
-                    FROM {table_variants_from}
+                    FROM {variants_view_stats_name}
                     WHERE len(REF) > 1 AND len(ALT) > 1
                     AND len(REF) = len(ALT)
 
@@ -1202,7 +1221,7 @@ class Variants:
                     SELECT
                         'InDel' AS Type,
                         count(*) AS count
-                    FROM {table_variants_from}
+                    FROM {variants_view_stats_name}
                     WHERE len(REF) > 1 OR len(ALT) > 1
                     AND len(REF) != len(ALT)
 
@@ -1227,13 +1246,13 @@ class Variants:
                     concat(REF, '>', ALT) AS 'Substitution',
                     count(*) AS count,
                     ROUND((count * 100 / {nb_of_variants}), {percent_round}) AS 'percent'
-                FROM {table_variants_from}
+                FROM {variants_view_stats_name}
                 WHERE len(REF) = 1 AND len(ALT) = 1
                 GROUP BY REF, ALT
                 ORDER BY count(*) DESC
                 """
-        snv_substitution = (
-            self.conn.execute(sql_query_snv_substitution).df().to_dict(orient="index")
+        snv_substitution = self.get_query_to_df(sql_query_snv_substitution).to_dict(
+            orient="index"
         )
 
         # Add to stats dict the SNV and InDel stats
@@ -1242,12 +1261,55 @@ class Variants:
         stats["Stats"]["Quality"] = qual_stats
         stats["Stats"]["Filters"] = filter_stats
 
+        # Queries
+        if queries is not None:
+
+            # Create full annotations view
+            variants_view_query_name = queries_view
+            variants_view_query_name = self.create_annotations_view(
+                table=table_variants_from,
+                view=variants_view_query_name,
+                view_type="view",
+                view_mode="explore",
+                info_prefix_column="",
+                info_struct_column="INFOS",
+                sample_struct_column="SAMPLES",
+                formats=None,
+                fields_needed_all=True,
+                drop_view=True,
+            )
+            if queries_view is not None:
+                tables_to_remove.append(variants_view_query_name)
+
+            # Stats queries section
+            stats["Queries"] = {}
+
+            # For each query
+            for query_infos in queries.items():
+
+                # Query name and query
+                query_name = query_infos[0]
+                query = query_infos[1]
+
+                # Query cast
+                query_cast = cast_columns_query(query=query, conn=self.get_connexion())
+
+                # Query execute
+                query_res = self.get_query_to_df(query_cast).to_dict(orient="index")
+                stats["Queries"][query_name] = query_res
+
         # Remove table or view
-        self.remove_tables_or_views(tables=[variants_view_stats_name])
+        self.remove_tables_or_views(tables=tables_to_remove)
 
         return stats
 
-    def stats_to_file(self, file: str = None, annotations_stats: bool = False) -> str:
+    def stats_to_file(
+        self,
+        file: str = None,
+        annotations_stats: bool = False,
+        queries: dict = None,
+        queries_view: str = None,
+    ) -> str:
         """
         The function `stats_to_file` takes a file name as input, retrieves statistics, serializes them
         into a JSON object, and writes the JSON object to the specified file.
@@ -1260,12 +1322,23 @@ class Variants:
         will be calculated. If `annotations_stats` is set to False, annotation statistics will not be
         calculated. The default value is False.
         :type annotations_stats: bool
+        :param queries: The `queries` parameter is a dictionary that contains queries to be executed
+        and added to the statistics. The keys of the dictionary are the names of the queries, and the
+        values are the SQL queries to be executed.
+        :type queries: dict
+        :param queries_view: The `queries_view` parameter is a string that represents the name of the
+        view to be used for the queries. If no value is provided, a new view will be created.
+        :type queries_view: str
 
         :return: The name of the file that was written to.
         """
 
         # Get stats
-        stats = self.get_stats(annotations_stats=annotations_stats)
+        stats = self.get_stats(
+            annotations_stats=annotations_stats,
+            queries=queries,
+            queries_view=queries_view,
+        )
 
         # Serializing json
         json_object = json.dumps(stats, indent=4)
@@ -1280,7 +1353,11 @@ class Variants:
         self,
         output_file: str = None,
         json_file: str = None,
+        html_file: str = None,
+        pdf_file: str = None,
         annotations_stats: bool = False,
+        queries: dict = None,
+        queries_view: str = None,
     ) -> None:
         """
         The `print_stats` function generates a markdown file and prints the statistics contained in a
@@ -1295,14 +1372,36 @@ class Variants:
         file where the statistics will be saved. If no value is provided, a temporary directory will be
         created and a default file name "stats.json" will be used
         :type json_file: str
-        :return: The function `print_stats` does not return any value. It has a return type annotation
+        :param html_file: The `html_file` parameter is a string that specifies the path and filename of
+        the output file where the stats will be printed in HTML format. If no `html_file` is provided,
+        a temporary directory will be created and the stats will be saved in a file named "stats.html"
+        within that
+        :type html_file: str
+        :param pdf_file: The `pdf_file` parameter is a string that specifies the path and filename of the
+        output file where the stats will be printed in PDF format. If no `pdf_file` is provided, a
+        temporary directory will be created and the stats will be saved in a file named "stats.pdf"
+        within that
+        :type pdf_file: str
+        :param annotations_stats: Whether to calculate annotation statistics. Defaults to False.
+        :type annotations_stats: bool, optional
+        :param queries: The `queries` parameter is a dictionary that contains queries to be executed
+        and added to the statistics. The keys of the dictionary are the names of the queries, and the
+        values are the SQL queries to be executed.
+        :type queries: dict
+        :param queries_view: The `queries_view` parameter is a string that represents the name of the
+        view to be used for the queries. If no value is provided, a new view will be created.
+        :type queries_view: str
         of `None`.
+
+        :return: The function `print_stats` does not return any value. It has a return type annotation
+
         """
 
         # Full path
         output_file = full_path(output_file)
         json_file = full_path(json_file)
 
+        # Create stats file in temporary directory
         with tempfile.TemporaryDirectory() as tmpdir:
 
             # Files
@@ -1319,7 +1418,10 @@ class Variants:
 
             # Create stats JSON file
             stats_file = self.stats_to_file(
-                file=json_file, annotations_stats=annotations_stats
+                file=json_file,
+                annotations_stats=annotations_stats,
+                queries=queries,
+                queries_view=queries_view,
             )
 
             # Print stats file
@@ -1335,17 +1437,22 @@ class Variants:
             output_title.append("# HOWARD Stats")
 
             # Index
-            output_index.append("## Index")
+            output_index.append("## Table of context")
 
             # Process sections
             for section in stats:
                 infos = stats.get(section)
                 section_link = "#" + section.lower().replace(" ", "-")
+                output.append(f"\n")
                 output.append(f"## {section}")
                 output_index.append(f"- [{section}]({section_link})")
 
                 if len(infos):
+
+                    # For each info
                     for info in infos:
+
+                        # Check if dataframe or not
                         try:
                             df = pd.DataFrame.from_dict(infos.get(info), orient="index")
                             is_df = True
@@ -1357,22 +1464,32 @@ class Variants:
                                 is_df = True
                             except:
                                 is_df = False
+
+                        # If dataframe is a dataframe
                         if is_df:
+                            df = df.map(escape_markdown_table_chars)
                             output.append(f"### {info}")
                             info_link = "#" + info.lower().replace(" ", "-")
                             output_index.append(f"   - [{info}]({info_link})")
                             output.append(f"{df.to_markdown(index=False)}")
+
+                        # If not a dataframe
                         else:
                             output.append(f"- {info}: {infos.get(info)}")
+
                 else:
+
+                    # If no info
                     output.append(f"NA")
 
             # Write stats in markdown file
             with open(output_file, "w") as fp:
                 for item in output_title:
                     fp.write("%s\n" % item)
+                fp.write("\n")
                 for item in output_index:
                     fp.write("%s\n" % item)
+                fp.write("\n")
                 for item in output:
                     fp.write("%s\n" % item)
 
@@ -1382,6 +1499,12 @@ class Variants:
             print("")
             print("\n\n".join(output))
             print("")
+
+            # Generate HTML and PDF files
+            if html_file:
+                convert_markdown_to_html(output_file, html_file)
+            if pdf_file:
+                convert_markdown_to_pdf(output_file, pdf_file)
 
         return None
 
