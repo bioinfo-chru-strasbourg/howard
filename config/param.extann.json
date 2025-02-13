@@ -366,8 +366,5 @@
     },
     "extra_col_list": [
         "transcript"
-    ],
-    "transcript_extann": "",
-    "mode_extann": "all",
-    "refgene_extann": "",
+    ]
 }

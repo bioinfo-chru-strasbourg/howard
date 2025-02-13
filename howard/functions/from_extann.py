@@ -153,6 +153,7 @@ def write_extann(
     output,
     df_extann,
     df_refgene,
+    hgnc,
     extra_cols=None,
     mode=None,
     df_transcript=None,
@@ -160,8 +161,8 @@ def write_extann(
     """
     Write ExtAnn into a bed like file and his hdr mate
     """
-    if os.path.exists(param.get("hgnc_file")):
-        alias = pd.read_csv(param.get("hgnc_file"), sep="\t", header=0, low_memory=False)
+    if os.path.exists(hgnc):
+        alias = pd.read_csv(hgnc, sep="\t", header=0, low_memory=False)
         alias = alias[["symbol", "alias_symbol", "prev_symbol"]]
         alias.fillna("NO", inplace=True)
     else:
@@ -243,16 +244,16 @@ def get_all_transcript(match: pd.DataFrame, extra_col=None) -> list[list]:
 def groupby_iterator(groupby: pd.DataFrame.groupby, extra_col=None):
     for transcript, data in groupby:
         # At least one exon number is duplicated meaning that Transcript / Gene are on multiple chrom, (PAR regions X and Y)
-        if not set(data["#CHROM"].unique()).issubset(["chrX", "chrY"]):
-            log.error(data)
-            raise ValueError("Transcript on multiple chrom (not PAR regions)")
-        log.debug(f"genes {' '.join(data['name'].unique().tolist())} {transcript} on PAR regions")
-        data = data.loc[data["#CHROM"] == "chrX"]
-        if len(data["#CHROM"].unique().tolist()) > 1:
-            log.error(data)
-            raise ValueError("Longest transcript, multiple chromosome for same transcript")
-        else:
-            chrom = data["#CHROM"].unique()[0]
+        if data["exon"].duplicated().any():
+            if not set(data["#CHROM"].unique()).issubset(["chrX", "chrY"]):
+                log.error(data)
+                raise ValueError("Transcript on multiple chrom (not PAR regions)")
+            else:
+                log.debug(
+                    f"genes {' '.join(data['name'].unique().tolist())} {transcript} on PAR regions"
+                )
+                data = data.loc[data["#CHROM"] == "chrX"]
+        chrom = data["#CHROM"].unique()[0]
         start = data.iloc[0]["START"]
         end = data.iloc[-1]["END"]
         tmp = [chrom, start, end, transcript]
@@ -464,7 +465,6 @@ def from_extann(args: argparse) -> None:
 
     # Transcript
     if args.transcripts:
-        # df_transcript = pd.read_csv(args.transcript_extann, header=0, sep="\t")
         df_transcript = transcripts_file_to_df(args.transcripts)
     elif param.get("transcripts"):
         df_transcript = transcripts_file_to_df(param.get("transcripts"))
@@ -475,9 +475,12 @@ def from_extann(args: argparse) -> None:
         else:
             log.debug("No transcript provided for extann")
             df_transcript = None
+    if not args.hgnc_extann:
+        args.hgnc_extann = ""
     # Param
     log.debug(f"Replace {str(param.get('replace'))}")
     log.debug(f"Config mode_extann {args.mode_extann}")
+    log.debug(f"Config hgnc file {args.hgnc_extann}")
     log.debug(f"Config extra_col_list {' '.join(param['extra_col_list'])}")
     log.debug(f"Config transcripts {args.transcripts}")
     log.debug(f"Config refgene {args.refgene}")
@@ -493,6 +496,7 @@ def from_extann(args: argparse) -> None:
         args.output_extann,
         df_extann,
         df_refgene,
+        args.hgnc_extann,
         param["extra_col_list"],
         args.mode_extann,
         df_transcript,
