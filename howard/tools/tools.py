@@ -706,6 +706,17 @@ arguments = {
             "options": {"wildcard": "TSV file format|*.tsv|"},
         },
     },
+    "hgnc_extann": {
+        "metavar": "hgnc_extann",
+        "help": """hgnc_extann file path.\n""" """Path of HGNC file\n""",
+        "required": False,
+        "default": None,
+        "type": PathType(exists=True, type=None),
+        "gooey": {
+            "widget": "FileChooser",
+            "options": {"wildcard": "TSV file format|*.tsv|"},
+        },
+    },
     # Calculation
     "calculation_config": {
         "metavar": "calculation config",
@@ -2286,6 +2297,7 @@ commands_arguments = {
                 "transcripts": False,
                 "param_extann": False,
                 "mode_extann": False,
+                "hgnc_extann": False,
             },
             "Parameters": {
                 "generate-param": False,
