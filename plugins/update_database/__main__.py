@@ -6,7 +6,7 @@ from howard.functions.commons import DEFAULT_DATABASE_FOLDER
 import multiprocess as mp
 
 sys.path.append(os.path.join(os.path.dirname(__file__)))
-from plugins.update_database import clinvar, gnomad, cadd
+from plugins.update_database import clinvar, gnomad, cadd, omim
 from plugins.update_database import utils
 
 arguments = {
@@ -18,7 +18,7 @@ arguments = {
     "database": {
         "help": """Which database to update.\n""",
         "type": str,
-        "choices": ["clinvar", "gnomad", "CADD"],
+        "choices": ["clinvar", "gnomad", "CADD", "omim"],
     },
     "data_folder": {
         "help": """Path of data needed to update database.\n""",
@@ -26,12 +26,19 @@ arguments = {
     },
     "update_config": {
         "help": """Path of json configuration file.\n""",
+        "default": os.path.join(
+            os.path.dirname(__file__), "config", "update_databases.json"
+        ),
         "type": str,
     },
     "current_folder": {
         "help": """Path of json configuration file.\n""",
         "type": str,
         "default": "current",
+    },
+    "refseq": {
+        "help": """Path of refseq file.\n""",
+        "type": str,
     },
 }
 
@@ -52,6 +59,7 @@ commands_arguments = {
                 "data_folder": False,
                 "update_config": False,
                 "current_folder": False,
+                "refseq": False,
             },
             "Options": {"show": False, "limit": False},
         },
@@ -108,5 +116,17 @@ def main(args: argparse) -> None:
             result = p.starmap(cadd.create_vcf_chunks, input_args)
             for r in result:
                 log.debug(f"Generated {r} files")
+
+    elif args.database == "omim":
+        o = omim.Omim(
+            database=args.database,
+            databases_folder=args.databases_folder,
+            input=os.path.join(args.databases_folder, "OMIMannotations.bed.gz"),
+            config_json=args.update_config,
+            current_folder=args.current_folder,
+            refseq=args.refseq,
+        )
+        o.update_omim()
+
     # Debug
     log.info("END")
