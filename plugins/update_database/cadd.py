@@ -221,6 +221,6 @@ def update_cadd(cadd_input: str, input_folder: str, output_folder: str) -> list:
             # Create header file for database
             if not os.path.exists(output_folder + ".hdr"):
                 extract_and_write_vcf_header(
-                    osj(input_folder, vcf), output_folder + ".hdr", log
+                    osj(input_folder, vcf), output_folder + ".hdr"
                 )
     return input_args
