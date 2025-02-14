@@ -54,7 +54,11 @@ class Database:
 
     :param link: html file link to deal with
     :param database: database from howard update_database utility (check help)
-    :param exclude_link:
+    :param exclude_link: exclude link from html parsing
+    :param databases_folder: path to databases folder
+    :param input: path to input file
+    :param config_json: path to json configuration file containing header data
+    :param current_folder: usually current
     """
 
     def __init__(
