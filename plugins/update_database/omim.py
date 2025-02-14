@@ -11,6 +11,10 @@ import os
 
 
 class Omim(Database):
+    """
+    :param refseq: Path to refseq file
+    """
+
     def __init__(
         self,
         link=None,
@@ -37,17 +41,22 @@ class Omim(Database):
         self.refseq = refseq
         self.refgene = self.get_refgene_list()
 
-    def write_omim(self, df_gb_sorted, output):
-        # output = "/home1/BAS/lamouchj/OMIMtest022025_V2.bed.gz"
+    def write_omim(self, df_gb_sorted: pd.DataFrame, output: str):
+        """
+        Write the final OMIM file bgzip compressed
+
+        :param df_gb_sorted: pandas dataframe with OMIM data
+        :param output: path to write the file
+        """
         with BgzfWriter(output, "wt") as o:
             for lines in self.header:
                 o.write(lines)
             df_gb_sorted.to_csv(o, header=True, index=False, sep="\t", mode="a")
 
-    def get_refgene_list(self):
-        # there are non coding transcript inside so more than 20K gene name is  normal
-        # refseq = "/home1/HUB/DB/refseq/current/hg19/ncbiRefSeq.all-except-ncc.bed"
-
+    def get_refgene_list(self) -> list:
+        """
+        there are non coding transcript inside so more than 20K gene name is  normal
+        """
         if not os.path.exists(self.refseq):
             raise ValueError(f"{self.refseq} does not exist")
         cmd = f"awk '{{print $4}}' {self.refseq} | sort -u"
