@@ -161,6 +161,7 @@ class Database:
     def create_header(self, header_dict: dict, type: str, subdatabase=None) -> list:
         """
          Create VCF or TSV header
+
         :param header_dict: from configuration json dict containing metaheader informations
         :param type: either vcf or tsv
         :param subdatabase: optionnal process subdatabase, example ALFA, ALFA_EUR
@@ -185,10 +186,11 @@ class Database:
                 header.append(
                     metaheader_rows(
                         "INFO",
-                        annotations,
-                        header_dict[annotations]["Number"],
-                        header_dict[annotations]["Type"],
                         header_dict[annotations]["Description"],
+                        id=annotations,
+                        number=header_dict[annotations]["Number"],
+                        type=header_dict[annotations]["Type"],
+                        quoting=True,
                     )
                 )
         if type == "tsv":
@@ -357,45 +359,3 @@ class Database:
                 },
             )
         )
-
-
-# def main():
-#     # ucsc = Ucsc(
-#     #     f"https://hgdownload.cse.ucsc.edu/goldenPath/{assembly}/{database}",
-#     #     database,
-#     #     assembly,
-#     #     ["parentDirectory", "goldenPath"],
-#     #     ".",
-#     # )
-#     # ucsc.download("https://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/hg19.gc5Base.wig.gz")
-
-#     # ucsc = Ucsc(
-#     #     "https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh37/clinvar_20240611.vcf.gz",
-#     #     "clinvar_20240611.vcf.gz",
-#     #     ["parentDirectory", "goldenPath"],
-#     #     "/home1/DB/HOWARD",
-#     #     "debug",
-#     # )
-#     # BIG BED TO BED WORK WELL
-#     # bw = sys.argv[1]
-#     # databases = sys.argv[2]
-#     # ucsc = Ucsc(input=bw, databases=databases)
-#     # ucsc.bigwig_to_bed(
-#     #     bw.replace(".bw", ".bed"),
-#     #     "/home1/data/WORK_DIR_JB/howard/plugins/update_database/config/update_databases.config_json",
-#     # )
-#     # Ucsc(
-#     #     link="https://ftp.ncbi.nih.gov/snp/population_frequency/TrackHub/latest/hg19/",
-#     #     database="ALFA",
-#     #     input="/home1/DB/HOWARD/ALFA/hg19/ALFA_AFA.bb",
-#     #     databases_folder="/home1/DB/HOWARD/ALFA/hg19",
-#     #     config_json="/home1/data/WORK_DIR_JB/howard/plugins/update_database/config/update_databases.json",
-#     # ).bigbed_to_vcf_batch(type="vcf", subdatabase=True)
-#     Ucsc(
-#         database="clinvar",
-#         databases_folder="/home1/DB/HOWARD",
-#         config_json="/home1/data/WORK_DIR_JB/howard/plugins/update_database/config/update_databases.json", verbosity="info").update_clinvar()
-
-
-# if __name__ == "__main__":
-#     main()
