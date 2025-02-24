@@ -36,7 +36,7 @@
     "name": "snpeff_hgvs",
     "description": "HGVS nomenclatures from snpEff annotation",
     "available": true,
-    "function_name": "calculation_extract_snpeff_hgvs",
+    "function_name": "calculation_extract_snpeff",
     "function_params": ["snpeff_hgvs", "ANN"]
   },
   "snpeff_ann_explode": {

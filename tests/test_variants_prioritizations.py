@@ -241,7 +241,7 @@ def test_prioritization_full_unsorted():
             AND INFO LIKE '%PZInfos_GERMLINE=%'
             """
         )
-        assert len(result) == 2
+        assert len(result) == 3
 
         # Check all priorized default profile (as default)
         result = variants.get_query_to_df(
@@ -295,7 +295,7 @@ def test_prioritization_full_unsorted():
         result = variants.get_query_to_df(
             f""" SELECT INFO FROM variants WHERE INFO LIKE '%FILTERED%' """
         )
-        assert len(result) == 1
+        assert len(result) == 2
 
         # Check if VCF is in correct format with pyVCF
         remove_if_exists([output_vcf])

@@ -116,15 +116,6 @@ title: HOWARD Help
 
 <!--TOC-->
 
-HOWARD:0.11.0
-
-Highly Open Workflow for Annotation & Ranking toward genomic variant
-Discovery
-
-HOWARD annotates and prioritizes genetic variations, calculates and
-normalizes annotations, convert on multiple formats, query variations
-and generates statistics
-
 Usage examples:
 
 > howard process --input=tests/data/example.vcf.gz
@@ -2902,6 +2893,14 @@ Usage examples:
 >     DuckDB settings (see duckDB doc) as JSON (string or file).
 >     These settings have priority (see options 'threads', 'tmp'...).
 >     Examples: '{"TimeZone": "GMT", "temp_directory": "/tmp/duckdb", "threads": 8}'.
+
+</small>
+
+<small>
+
+>     --interactive
+>
+>     Interative mose..
 
 </small>
 

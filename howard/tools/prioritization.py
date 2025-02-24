@@ -79,7 +79,9 @@ def prioritization(args: argparse) -> None:
     # Export
     vcfdata_obj.export_output()
 
-    # Close connexion
-    vcfdata_obj.close_connexion()
+    # # Close connexion
+    # vcfdata_obj.close_connexion()
 
     log.info("End")
+
+    return vcfdata_obj

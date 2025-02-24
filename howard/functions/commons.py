@@ -38,7 +38,9 @@ import pysam.bcftools
 import signal
 from contextlib import contextmanager
 
-from configparser import ConfigParser
+from configparser import ConfigParser, NoSectionError, NoOptionError
+
+from importlib.metadata import metadata
 
 from shutil import which
 
@@ -72,6 +74,14 @@ code_type_map_to_sql = {
     "String": "VARCHAR",
     "Float": "FLOAT",
     "Flag": "VARCHAR",
+}
+
+code_type_map_to_vcf = {
+    "INTEGER": "Integer",
+    "VARCHAR": "String",
+    "FLOAT": "Float",
+    "DOUBLE": "Integer",
+    "BOOLEAN": "String",
 }
 
 
@@ -511,7 +521,7 @@ def find_nomen(
     transcripts: list = [],
     transcripts_source_order: list = None,
     pattern=None,
-    transcripts_len: int = None
+    transcripts_len: int = None,
 ) -> dict:
     """
     The function `find_nomen` takes a HGVS string and a list of transcripts, parses the HGVS string, and
@@ -581,7 +591,6 @@ def find_nomen(
             transcripts_list_tmp[source] = rank
         transcripts_list = transcripts_list_tmp
 
-
     # Pattern
     if pattern is None:
         pattern = "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN"
@@ -601,10 +610,14 @@ def find_nomen(
     transcript_shift = 0
     if transcript is not None and str(transcript) != "nan":
         transcript_list = str(transcript).split(",")
-        if transcripts_source_order_rank.get("column", 0) < transcripts_source_order_rank.get("file", 0):
+        if transcripts_source_order_rank.get(
+            "column", 0
+        ) < transcripts_source_order_rank.get("file", 0):
             transcript_shift = len(transcript_list)
         for rank, transcript in enumerate(transcript_list, start=1):
-            if transcripts_source_order_rank.get("column", 0) < transcripts_source_order_rank.get("file", 0):
+            if transcripts_source_order_rank.get(
+                "column", 0
+            ) < transcripts_source_order_rank.get("file", 0):
                 transcripts_list[transcript] = rank - len(transcript_list)
             elif transcript not in transcripts:
                 transcripts_list[transcript] = rank + transcripts_len
@@ -647,10 +660,17 @@ def find_nomen(
                         one_nomen_dict["TVNOMEN"] in transcripts_list
                         or one_nomen_dict["TNOMEN"] in transcripts_list
                     ):
-                        rank = max(
-                            transcripts_list.get(one_nomen_dict["TVNOMEN"], - transcript_shift - 1),
-                            transcripts_list.get(one_nomen_dict["TNOMEN"], - transcript_shift - 1)
-                            ) + transcript_shift
+                        rank = (
+                            max(
+                                transcripts_list.get(
+                                    one_nomen_dict["TVNOMEN"], -transcript_shift - 1
+                                ),
+                                transcripts_list.get(
+                                    one_nomen_dict["TNOMEN"], -transcript_shift - 1
+                                ),
+                            )
+                            + transcript_shift
+                        )
                         if rank >= 0:
                             one_nomen_score += 100 * (len(transcripts_list) - rank + 1)
 
@@ -760,28 +780,30 @@ def explode_annotation_format(
     # Split annotation ann values
     annotation_infos = [x.split("|") for x in annotation.split(",")]
 
-    # Create Dataframe
-    annotation_dict = {}
-    for i in range(len(header)):
-        if output_format.upper() in ["JSON"]:
-            header_clean = header[i]
-        else:
-            header_clean = "".join(char for char in header[i] if char.isalnum())
-        annotation_dict[header_clean] = [x[i] for x in annotation_infos]
-    df = pd.DataFrame.from_dict(annotation_dict, orient="index").transpose()
+    # Create dictionary
+    annotation_dict = {header[i]: [] for i in range(len(header))}
+    for info in annotation_infos:
+        for i in range(len(header)):
+            annotation_dict[header[i]].append(info[i])
 
     # Fetch each annotations
-    if output_format.upper() in ["JSON"]:
-        annotation_explode = df.transpose().to_json()
+    if output_format.upper() == "JSON":
+
+        # Transpose dict
+        annotation_explode = {
+            i: {f"{prefix}{key}": value[i] for key, value in annotation_dict.items()}
+            for i in range(len(next(iter(annotation_dict.values()))))
+        }
+
     else:
         ann_list = []
-        for annotation in df:
+        for key, values in annotation_dict.items():
             if uniquify:
-                ann_list_infos = ",".join(df[annotation].unique())
-            else:
-                ann_list_infos = ",".join(df[annotation])
+                values = set(values)
+            ann_list_infos = ",".join(values)
             if ann_list_infos:
-                ann_list.append(f"{prefix}{annotation}={ann_list_infos}")
+                header_clean = "".join(char for char in key if char.isalnum())
+                ann_list.append(f"{prefix}{header_clean}={ann_list_infos}")
 
         # join list
         annotation_explode = ";".join(ann_list)
@@ -3214,10 +3236,64 @@ class RawTextArgumentDefaultsHelpFormatter(
     pass
 
 
+def help_header(setup: str = None) -> str:
+    """
+    The `help_header` function generates a header for the help documentation based on the metadata
+    information provided in the setup file.
+
+    :param setup: The `setup` parameter is a string that represents the path to a configuration file.
+    This file contains metadata about the program, such as its name, version, description, and long
+    description content type
+    :type setup: str
+    :return: The function `help_header` returns a string that represents the header for the help
+    documentation. The header includes the program name, version, authors, and description.
+
+    """
+
+    # Config Parser
+    # setup = "/tmp/config"
+    if os.path.isfile(setup):
+        cf = ConfigParser()
+        cf.read(setup)
+        prog_name = cf.get("metadata", "name", fallback="Unknown Program")
+        prog_version = cf.get("metadata", "version", fallback="0.0.0")
+        prog_authors = cf.get("metadata", "author", fallback="0.0.0")
+        prog_description = cf.get(
+            "metadata", "description", fallback="No description available."
+        )
+    else:
+        # meta
+        try:
+            meta = metadata("howard-ann")
+            prog_name = meta.get("Name")
+            prog_version = meta.get("Version")
+            prog_authors = meta.get("author")
+            prog_description = meta.get("Summary")
+        # Default
+        except Exception as e:
+            print(f"Erreur : {e}")
+            prog_name = "HOWARD"
+            prog_version = "0.0.0"
+            prog_authors = "ALB"
+            prog_description = "HOWARD - Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery"
+
+    # Logo
+    import pyfiglet
+
+    ascii_logo = pyfiglet.figlet_format(
+        prog_name.split("-")[0].upper()
+    )  # , font="slant")
+
+    # Header
+    header = f"""{ascii_logo}{prog_name.split('-')[0].upper()}::{prog_version} [{prog_authors}]\n{prog_description}\n"""
+
+    # Return
+    return header
+
+
 def help_generation(
     arguments_dict: dict = {},
     parser=None,
-    setup: str = None,
     output_type: str = "parser",
 ):
     """
@@ -3245,25 +3321,13 @@ def help_generation(
     commands_arguments = arguments_dict.get("commands_arguments", {})
     shared_arguments = arguments_dict.get("shared_arguments", {})
 
-    # Config Parser
-    cf = ConfigParser()
-    cf.read(setup)
-    prog_name = cf["metadata"]["name"]
-    prog_version = cf["metadata"]["version"]
-    prog_description = cf["metadata"]["description"]
-    prog_long_description_content_type = cf["metadata"]["long_description_content_type"]
-
     # Parser default
     if not parser:
         parser = argparse.ArgumentParser()
 
     # Parser information
-    parser.prog = prog_name
-    parser.description = (
-        f"""{prog_name.upper()}:{prog_version}\n"""
-        + f"""{prog_description}\n"""
-        + f"""{prog_long_description_content_type}"""
-    )
+    parser.prog = metadata("howard-ann").get("Name").split("-")[0]
+    parser.description = ""
     parser.epilog = (
         "\nUsage examples:\n"
         + """   howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json \n"""
@@ -4155,14 +4219,20 @@ def detect_column_type(column) -> str:
 
     from pandas.api.types import is_datetime64_any_dtype as is_datetime
 
-    if is_datetime(column):
+    if len(column) == 0:
+        return "VARCHAR"
+    elif is_datetime(column):
         return "DATETIME"
     elif column.dropna().apply(lambda x: str(x).lower() in ["true", "false"]).all():
         return "BOOLEAN"
     elif pd.to_numeric(column, errors="coerce").notnull().all():
         return "DOUBLE"
     else:
-        return "VARCHAR"
+        try:
+            pd.to_numeric(column)
+            return "DOUBLE"
+        except:
+            return "VARCHAR"
 
 
 def determine_column_number(values_list: list) -> str:

@@ -66,6 +66,7 @@ def test_database_dbnsfp_options_full(
     # Init
     dbnsfp_source = os.path.join(tests_databases_folder, "dbnsfp", "dbNSFP4.4a.zip")
     genomes_folder = tests_config["folders"]["databases"]["genomes"]
+    download_needed_databases()
 
     # Tmp folder
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
@@ -106,6 +107,7 @@ def test_database_dbnsfp_step_by_step():
     # Init
     dbnsfp_source = os.path.join(tests_databases_folder, "dbnsfp", "dbNSFP4.4a.zip")
     genomes_folder = tests_config["folders"]["databases"]["genomes"]
+    download_needed_databases()
     uniquify = False
     threads = 2
 
@@ -241,6 +243,7 @@ def test_database_dbnsfp_without_parquet_size_10k():
     # Init
     dbnsfp_source = os.path.join(tests_databases_folder, "dbnsfp", "dbNSFP4.4a.zip")
     genomes_folder = tests_config["folders"]["databases"]["genomes"]
+    download_needed_databases()
     threads = 2
 
     # Tmp folder
@@ -287,6 +290,7 @@ def test_database_dbnsfp_parquet_with_info():
     # Init
     dbnsfp_source = os.path.join(tests_databases_folder, "dbnsfp", "dbNSFP4.4a.zip")
     genomes_folder = tests_config["folders"]["databases"]["genomes"]
+    download_needed_databases()
     threads = 2
 
     # Tmp folder

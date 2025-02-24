@@ -227,11 +227,7 @@ def test_calculation_sql_config_file_in_param():
         )
 
         # Load param
-        param = {
-            "calculation": {
-                "calculation_config" : operations_config_file
-            }
-        }
+        param = {"calculation": {"calculation_config": operations_config_file}}
         variants.set_param(param=param)
 
         # Operations config dict
@@ -608,7 +604,13 @@ def test_calculation_vartype_full():
 
 @pytest.mark.parametrize(
     "calculation",
-    ["snpeff_ann_explode", "snpeff_ann_explode_uniquify", "snpeff_ann_explode_json"],
+    [
+        "snpeff_extract",
+        "snpeff_hgvs",
+        "snpeff_ann_explode",
+        "snpeff_ann_explode_uniquify",
+        "snpeff_ann_explode_json",
+    ],
 )
 def test_calculation_snpeff_ann_explode(calculation):
     """
@@ -737,7 +739,7 @@ def test_calculation_snpeff_hgvs_no_ann():
             assert False
 
 
-def test_calculation_snpeff_hgvs_transcripts():
+def test_calculation_nomen_snpeff_hgvs_transcripts():
     """
     This function tests the calculation of SNPEff HGVS transcripts using a VCF file and a transcripts
     file.
@@ -799,7 +801,7 @@ def test_calculation_snpeff_hgvs_transcripts():
             assert False
 
 
-def test_calculation_snpeff_hgvs_notranscripts():
+def test_calculation_nomen_snpeff_hgvs_notranscripts():
     """
     This function tests the calculation of SNPEff HGVS notranscripts in a VCF file.
     """

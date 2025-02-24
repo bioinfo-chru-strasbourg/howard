@@ -1,28 +1,12 @@
 #!/usr/bin/env python
 
-import importlib
-import io
-import multiprocessing
 import os
-import re
-import subprocess
-from tempfile import NamedTemporaryFile
-import tempfile
-import duckdb
-import json
 import argparse
-import Bio.bgzf as bgzf
-import pandas as pd
-import vcf
 import logging as log
-import sys
-import psutil
-import markdown
-from configparser import ConfigParser
-import yaml
+import psutil  # type: ignore
+import json
+import yaml  # type: ignore
 
-from howard.objects.variants import Variants
-from howard.objects.database import Database
 from howard.tools.tools import (
     set_log_level,
     help_generation,
@@ -34,14 +18,18 @@ from howard.tools.tools import (
     DEFAULT_CHUNK_SIZE,
 )
 from howard.functions.plugins import plugins_infos, plugins_list, plugins_to_load
-from howard.functions.commons import folder_main, folder_plugins, subfolder_plugins
+from howard.functions.commons import (
+    folder_plugins,
+    subfolder_plugins,
+    help_header,
+)
 
 
 # Usage
 # python -m pip install -e .
 # howard --help
 # howard query --help
-# howard analysis --input=my.vcf.gz --output=my.output.vcf --annotations=my.annotations.vcf.gz
+# howard process --input=my.vcf.gz --output=my.output.vcf --annotations=my.annotations.vcf.gz
 # howard gui
 # python -m howard.main --input=my.vcf.gz --output=my.output.vcf --annotations=my.annotations.vcf.gz
 
@@ -130,12 +118,14 @@ def main() -> None:
         "shared_arguments": shared_arguments,
     }
 
+    # Header
+    print(help_header(setup=setup_cfg))
+
     # Generate parser
     parser = argparse.ArgumentParser()
     parser = help_generation(
         arguments_dict=arguments_dict,
         parser=parser,
-        setup=setup_cfg,
         output_type="parser",
     )
 
@@ -257,7 +247,11 @@ def main() -> None:
     args.config = config
     log.debug(f"config: {config}")
 
+    # Variants object
+    vcfdata_obj = None
+
     # Command eval
+    command_function = None
     if not args.command:
         parser.print_help()
     else:
@@ -271,7 +265,38 @@ def main() -> None:
             raise ValueError(msg_gui_disable)
         command_function = commands_arguments[args.command]["function"]
         log.debug(f"Command/Tool: {command_function}")
-        eval(f"{command_function}(args)")
+        vcfdata_obj = eval(f"{command_function}(args)")
+
+    # Interactive option
+    interactive = False
+
+    # Specific "query" tool interactivity
+    if command_function == "query" and ("query" not in args or not args.query):
+        interactive = True
+        log.debug("Interactivity terminal activated")
+
+    # Launch interactive terminal if --interactive is specified
+    if interactive or ("interactive" in args and args.interactive):
+
+        # Check variants object
+        if vcfdata_obj is None:
+            msg_err = f"Command/Tool '{command_function}' does not support interactive terminal"
+            log.warning(msg_err)
+            return None
+
+        # Import
+        from howard.tools.interactive import launch_interactive_terminal
+
+        # Launch interactive terminal
+        log.info("Start interative terminal")
+        launch_interactive_terminal(args=args, variants=vcfdata_obj)
+        log.info("End interative terminal")
+
+    # Close Variants object connexion
+    if vcfdata_obj is not None:
+        log.debug("Close connexion")
+        vcfdata_obj.close_connexion()
+        log.debug("Connexion closed")
 
 
 if __name__ == "__main__":

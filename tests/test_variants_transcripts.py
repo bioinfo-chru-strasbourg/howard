@@ -28,6 +28,7 @@ from test_needed import tests_folder, tests_config, tests_data_folder
         f"{tests_data_folder}/example.ann.vcf.gz",
         f"{tests_data_folder}/example.dbnsfp.transcripts.vcf.gz",
         f"{tests_data_folder}/example.dbnsfp.no_transcripts.vcf.gz",
+        # "/Users/lebechea/howard/data/SGT2306387.final.vcf.gz",
     ],
 )
 def test_create_transcript_view(input_vcf):
@@ -88,9 +89,17 @@ def test_create_transcript_view(input_vcf):
             }
         }
 
+        # Config
+        config = tests_config
+
         # Create object
         variants = Variants(
-            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            param=param,
+            load=True,
         )
 
         # Create transcript view
@@ -101,11 +110,30 @@ def test_create_transcript_view(input_vcf):
 
         # Check table content
         query_check = f"""
-            SELECT * FROM {transcripts_table}
-            ORDER BY "#CHROM", POS, REF, ALT, transcript
+            SELECT count(*) AS count FROM {transcripts_table}
         """
         check = variants.get_query_to_df(query=query_check)
-        assert len(check) > 0
+        assert check["count"][0] > 0
+
+        # # Check table content
+        # query_check = f"""
+        #     SELECT * FROM transcripts
+        # """
+        # check_variants = variants.get_query_to_df(query=query_check)
+        # log.debug(f"check_variants: {check_variants}")
+
+        # ReCreate transcript view
+        transcripts_table = variants.create_transcript_view()
+
+        # Check table content
+        query_check2 = f"""
+            SELECT count(*) as count FROM {transcripts_table}
+        """
+        check2 = variants.get_query_to_df(query=query_check2)
+        assert check2["count"][0] > 0
+
+        # Check if number of lines is the same
+        assert check["count"][0] == check2["count"][0]
 
 
 @pytest.mark.parametrize(
@@ -170,9 +198,17 @@ def test_create_transcript_view_to_variants(input_vcf):
             }
         }
 
+        # Config
+        config = tests_config
+
         # Create object
         variants = Variants(
-            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            param=param,
+            load=True,
         )
 
         # Create transcript view
@@ -383,9 +419,17 @@ def test_transcripts_prioritization(input_vcf):
             param_prioritization
         )
 
+        # Config
+        config = tests_config
+
         # Create object
         variants = Variants(
-            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            param=param,
+            load=True,
         )
 
         # Create transcript view
@@ -722,7 +766,11 @@ def test_transcripts_prioritization_multiple_param(
 
         # Create object
         variants = Variants(
-            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            param=param,
+            load=True,
         )
 
         # Create transcript view
@@ -1068,9 +1116,17 @@ def test_create_transcript_view_rename_clean_case(struct, fields_list):
         # Construct param dict
         param = {"transcripts": {"table": "transcripts", "struct": struct}}
 
+        # Config
+        config = tests_config
+
         # Create object
         variants = Variants(
-            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            param=param,
+            load=True,
         )
 
         # Create transcript view
@@ -1202,9 +1258,17 @@ def test_transcripts_prioritization_multiple_param_fields_renamed(
             param_prioritization
         )
 
+        # Config
+        config = tests_config
+
         # Create object
         variants = Variants(
-            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            param=param,
+            load=True,
         )
 
         # Create transcript view
@@ -1661,9 +1725,17 @@ def test_transcripts_create_view_param_mapping(
             param_prioritization
         )
 
+        # Config
+        config = tests_config
+
         # Create object
         variants = Variants(
-            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            param=param,
+            load=True,
         )
 
         # Create transcript view
@@ -1777,9 +1849,16 @@ def test_transcripts_create_view_export(output):
         # Param without prioritization
         param_with_transcripts = {"transcripts": dict(param_struct)}
 
+        # Config
+        config = tests_config
+
         # Create object
         variants = Variants(
-            conn=None, input=input_vcf, param=param_with_transcripts, load=True
+            conn=None,
+            input=input_vcf,
+            config=config,
+            param=param_with_transcripts,
+            load=True,
         )
 
         # Create transcript view
@@ -1835,7 +1914,7 @@ def test_transcripts_create_view_export(output):
                 "transcripts_column": "PZTTranscript",
                 # "transcripts_order": ["column", "file"],
             },
-            ["NR_047519", "NR_036051", "NR_047551", "NM_001005484"],
+            ["NR_047526", "NR_036051", "NR_047551", "NM_001005484"],
         ),
         (
             {
@@ -1845,7 +1924,7 @@ def test_transcripts_create_view_export(output):
                 "transcripts_column": "PZTTranscript",
                 # "transcripts_order": ["column", "file"],
             },
-            ["NR_047519", "NR_036051", "NR_047551", "NM_001005484"],
+            ["NR_047526", "NR_036051", "NR_047551", "NM_001005484"],
         ),
         (
             {
@@ -1855,7 +1934,7 @@ def test_transcripts_create_view_export(output):
                 "transcripts_column": "PZTTranscript",
                 "transcripts_order": ["column", "file"],
             },
-            ["NR_047519", "NR_036051", "NR_047551", "NM_001005484"],
+            ["NR_047526", "NR_036051", "NR_047551", "NM_001005484"],
         ),
         (
             {
@@ -1865,7 +1944,7 @@ def test_transcripts_create_view_export(output):
                 "transcripts_column": "PZTTranscript",
                 "transcripts_order": ["file", "column"],
             },
-            ["NR_047519", "NR_036266", "NM_001346897", "NM_001005484", "NR_024540"],
+            ["NR_047526", "NR_036266", "NM_001346897", "NM_001005484", "NR_024540"],
         ),
     ],
 )
@@ -1941,7 +2020,7 @@ def test_transcripts_create_view_prioritize_nomen(nomen_options, tnomen_expected
         variants.transcripts_prioritization(param=param)
 
         # SNPEFF HGVS
-        variants.calculation_extract_snpeff_hgvs()
+        variants.calculation_extract_snpeff()
 
         # NOMEN
         variants.calculation_extract_nomen()
