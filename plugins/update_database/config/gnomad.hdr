@@ -1,0 +1,17 @@
+##fileformat=VCFv4.2
+##INFO=<ID=AC_all,Number=1,Type=Integer,Description="Allele Count for all population">
+##INFO=<ID=AN_all,Number=1,Type=Integer,Description="Allele Number for all population">
+##INFO=<ID=gnomadAltFreq_amr,Number=1,Type=Float,Description="Allele Frequency from Latino/Admixed American">
+##INFO=<ID=gnomadAltFreq_afr,Number=1,Type=Float,Description="Allele Frequency from African/African American">
+##INFO=<ID=gnomadAltFreq_asj,Number=1,Type=Float,Description="Allele Frequency from Ashkenazi Jewish">
+##INFO=<ID=gnomadAltFreq_eas,Number=1,Type=Float,Description="Allele Frequency from East Asian">
+##INFO=<ID=gnomadAltFreq_fin,Number=1,Type=Float,Description="Allele Frequency from European Finnish">
+##INFO=<ID=gnomadAltFreq_nfe,Number=1,Type=Float,Description="Allele Frequency from Non-Finnish European">
+##INFO=<ID=gnomadAltFreq_oth,Number=1,Type=Float,Description="Allele Frequency from Other (population not assigned)">
+##INFO=<ID=gnomadAltFreq_sas,Number=1,Type=Float,Description="Allele Frequency from South Asian">
+##INFO=<ID=gnomadAltFreq_popmax,Number=1,Type=Float,Description="Allele Frequency from the max population (Allele Count)">
+##INFO=<ID=gnomadHomCount_all,Number=1,Type=Integer,Description="Count of homozygous variant from all population">
+##INFO=<ID=gnomadAltFreq_all,Number=1,Type=Float,Description="Allele Frequency from all population">
+##INFO=<ID=gnomadHetCount_all,Number=1,Type=Integer,Description="Count of heterozygous variant from all population">
+##INFO=<ID=gnomadHemCount_all,Number=1,Type=Integer,Description="Count of heterozygous variant from all population">
+#CHROM	POS	REF	ALT	AC_all	AN_all	gnomadAltFreq_amr	gnomadAltFreq_afr	gnomadAltFreq_asj	gnomadAltFreq_eas	gnomadAltFreq_fin	gnomadAltFreq_nfe	gnomadAltFreq_oth	gnomadAltFreq_sas	gnomadAltFreq_popmax	gnomadHomCount_all	gnomadAltFreq_all	gnomadHetCount_all	gnomadHemCount_all

@@ -158,6 +158,43 @@
                 "Type": "Integer",
                 "Description": "Count of heterozygous variant from all population"
             }
+        },
+        "omim": {
+            "genes": {
+                "Number": ".",
+                "Type": "String",
+                "Description": "Gene symbol"
+            },
+            "transcript": {
+                "Number": "1",
+                "Type": "String",
+                "Description": "Refgene transcript"
+            },
+            "OMIM_phenotype": {
+                "Number": "1",
+                "Type": "String",
+                "Description": "List of OMIM phenotype"
+            },
+            "OMIM_inheritance": {
+                "Number": "1",
+                "Type": "String",
+                "Description": "List of OMIM inheritance"
+            },
+            "OMIM_ID": {
+                "Number": "1",
+                "Type": "Integer",
+                "Description": "List of OMIM ID"
+            },
+            "OMIM_morbid": {
+                "Number": "1",
+                "Type": "String",
+                "Description": "Morbid Yes"
+            },
+            "OMIM_morbid_candidate": {
+                "Number": "1",
+                "Type": "String",
+                "Description": "Morbid candidate Yes"
+            }
         }
     }
 }
