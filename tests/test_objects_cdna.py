@@ -14,7 +14,7 @@ coverage report --include=howard/* -m
     RefSeq transcripts don't always match the genome reference, so can align with gaps.
 """
 
-import nose
+import nose  # type: ignore
 from howard.objects.hgvs import HGVSName
 
 from howard.functions.utils import make_transcript

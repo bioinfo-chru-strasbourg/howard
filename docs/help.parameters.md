@@ -85,6 +85,14 @@ title: HOWARD Help Parameters
   - [<span class="toc-section-number">6.1</span> stats_md](#stats_md)
   - [<span class="toc-section-number">6.2</span>
     stats_json](#stats_json)
+  - [<span class="toc-section-number">6.3</span>
+    stats_html](#stats_html)
+  - [<span class="toc-section-number">6.4</span> stats_pdf](#stats_pdf)
+  - [<span class="toc-section-number">6.5</span>
+    annotations_stats](#annotations_stats)
+  - [<span class="toc-section-number">6.6</span> queries](#queries)
+  - [<span class="toc-section-number">6.7</span>
+    queries_view](#queries_view)
 - [<span class="toc-section-number">7</span> query](#query)
   - [<span class="toc-section-number">7.1</span> query](#query-1)
   - [<span class="toc-section-number">7.2</span>
@@ -1363,8 +1371,8 @@ Examples:
 > Calculation with operations for generate variant_id and variant type,
 > extract HGVS from snpEff annotation, select NOMEN from snpEff HGVS
 > with a prioritized transcript (from prioritization transcript
-> calculation) and list of transcripts of preference, with a specific
-> NOMEN pattern
+> calculation) and list of transcripts of preference, a list of NOMEN
+> fields, with two specific NOMEN patterns
 
 > ``` json
 > {
@@ -1379,7 +1387,11 @@ Examples:
 >          "transcripts_table": "variants",
 >          "transcripts_column": "PZTTranscript",
 >          "transcripts_order", ["column", "file"],
->          "pattern": "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN"
+>          "fields": ["GNOMEN", "TVNOMEN", "ENOMEN", "CNOMEN"],
+>          "pattern": {
+>            "NOMEN": "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN",
+>            "NOMENO": "TNOMEN(ENOMEN):CNOMEN:RNOMEN:NNOMEN"
+>          },
 >        }
 >      }
 >    }
@@ -1643,6 +1655,95 @@ Examples:
 > ``` json
 > {
 >    "stats_json": "/tmp/stats.json" 
+> }
+> ```
+
+## stats_html
+
+Stats Output file in HTML format.
+
+Type: `Path`
+
+Default: `None`
+
+Examples:
+
+> Export statistics in JSON format
+
+> ``` json
+> {
+>    "stats_html": "/tmp/stats.html" 
+> }
+> ```
+
+## stats_pdf
+
+Stats Output file in PDF format.
+
+Type: `Path`
+
+Default: `None`
+
+Examples:
+
+> Export statistics in JSON format
+
+> ``` json
+> {
+>    "stats_pdf": "/tmp/stats.pdf" 
+> }
+> ```
+
+## annotations_stats
+
+Add statistics on annotations (INFO/tags)).
+
+Default: `False`
+
+## queries
+
+Queries to add on statistics.
+
+Beware that queries are executed on the 'variants_view' view by default.
+If you want to use another view, please specify it with the
+'queries_view' parameter.
+
+Moreover, query limit is suggested to avoid long processing time and
+huge output files.
+
+Type: `dict`
+
+Default: `None`
+
+Examples:
+
+> Queries to add on statistics:
+
+> ``` json
+> {
+>    "queries": {
+>      "First 10 variants": "SELECT \"#CHROM\", POS, REF, ALT FROM variants_view LIMIT 10",
+>      "First 10 INFO tags": "SELECT INFOS.* FROM variants_view LIMIT 10",
+>    }
+> }
+> ```
+
+## queries_view
+
+Variants view name to use with queries to add on statistics. By default,
+the 'variants_view' view is used.
+
+Type: `str`
+
+Default: `None`
+
+Examples:
+
+> Variants view name for stats queries:
+
+> ``` json
+> {
+>    "queries_view": "variants_view_for_stats_queries"
 > }
 > ```
 
@@ -2495,6 +2596,8 @@ listed, all existing samples are checked if they contain well-formed
 genotype annotations (based on 'FORMAT' VCF column).
 
 Type: `dict`
+
+Default: `None`
 
 Examples:
 

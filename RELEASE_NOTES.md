@@ -2,14 +2,30 @@
 
 ## 0.12.2.0
 
-Few improvements and fixes.
+Introduction of interactvie mode to dynamically explore data, using variants view
+with columns types (defined in VCF header), with build-in tool or Harlequin tool.
+Improvements using view duckDB feature, mainly for calculations and prioritizations,
+and transcripts mapping. New useful tools and plugins.
 
 ### News
 
-- Interactive mode: add a terminal to execute SQL queries
-- View variants "annotations" to:
-  - query more easily (with "variants_view" view loaded by default in query tools)
-  - improve performances for annotations, calculations and prioritizations
+- Interactivity mode:
+  - Interactive terminal to execute SQL queries
+  - Completion and history features
+  - Display modes (e.g. 'dataframe', 'markdown', 'simple', 'tabulate')
+  - Query result limitation, to speedup exploration
+  - Extended mode with Harlequin tool ([https://harlequin.sh](https://harlequin.sh))
+- Variants "view":
+  - Query more easily (with "variants_view" view loaded by default in query tools)
+  - INFO/tags and samples structured on specific columns ('INFOS' and 'SAMPLES')
+  - Improve performances for annotations, calculations and prioritizations
+  - Improve prioritization profiles definition using columns types
+    (Integer, Float, String) with list type (defined in VCF header)
+- New tools:
+  - Tool 'filter' to filter variants in SQL format and samples 
+  - Tool 'sort' to sort variants from contig order
+- Plugins:
+  - 'to_excel': Convert VCF to Excel '.xlsx' format
 
 ### Updates
 
@@ -17,9 +33,13 @@ Few improvements and fixes.
 - Improve transcripts prioritization performances (reduce memory)
 - Improve transcripts view creation (columns type detected)
 - Improve snpEff extract information (HGVS list, explode annotations, generate as JSON)
-- Improve BARCODEFAMILY calculation (multiple barcode allowed with successive commandes)
+- Improve NOMEN extraction from HGVS list, including multiple patterns for NOMEN
+- Improve rename or remove INFO/tags
+- Improve stats generation (speedup, annotations stats, custom queries)
 
 ### Fixes
+
+- Fix BARCODEFAMILY calculation (multiple barcode with successive commandes)
 
 ## 0.12.1.1
 

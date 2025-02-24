@@ -10,22 +10,15 @@ coverage run -m pytest . -x -v --log-cli-level=INFO --capture=tee-sys
 coverage report --include=howard/* -m
 """
 
-import logging as log
+import argparse
 import os
-import sys
-import duckdb
-import re
-import Bio.bgzf as bgzf
-import gzip
-import pytest
-import pandas as pd
-from pandas.testing import assert_frame_equal
-from unittest.mock import patch
 
+from howard.functions.commons import remove_if_exists
 from howard.objects.variants import Variants
-from howard.functions.commons import *
-from howard.tools.tools import *
-from test_needed import *
+from howard.tools.hgvs import hgvs
+from howard.tools.tools import arguments_dict
+
+from test_needed import tests_data_folder, tests_config
 
 
 def test_hgvs_tsv():
@@ -125,7 +118,7 @@ def test_hgvs_vcf():
                 result_output_nb_variants += 1
 
     # Expected result
-    expected_result_nb_lines = 61
+    expected_result_nb_lines = 62
     expected_result_nb_variants = 7
 
     # Compare

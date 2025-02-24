@@ -1,36 +1,101 @@
-import csv
+import datetime
 import gc
 import gzip
 import io
-import multiprocessing as mp
 import os
+from pathlib import Path
 import random
 import re
-import shlex
+import shutil
 import sqlite3
+import string
 import subprocess
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 import tempfile
-import duckdb
+import duckdb  # type: ignore
 import json
-import yaml
-import argparse
-import Bio.bgzf as bgzf
-import pandas as pd
-from pyfaidx import Fasta
-import numpy as np
-import vcf
+import yaml  # type: ignore
+import Bio.bgzf as bgzf  # type: ignore
+import pandas as pd  # type: ignore
+import polars as pl  # type: ignore
+from pyfaidx import Fasta  # type: ignore
+import numpy as np  # type: ignore
+import vcf  # type: ignore
 import logging as log
-import fastparquet as fp
-from multiprocesspandas import applyparallel
-import cyvcf2
-import pyBigWig
+import fastparquet as fp  # type: ignore
+import cyvcf2  # type: ignore
+import pyBigWig  # type: ignore
 import math
 
-from howard.functions.commons import *
-from howard.objects.database import *
-from howard.functions.databases import *
-from howard.functions.utils import *
+from howard.functions.commons import (
+    CODE_TYPE_MAP,
+    DEFAULT_ANNOTATIONS_FOLDER,
+    DEFAULT_ANNOVAR_FOLDER,
+    DEFAULT_ASSEMBLY,
+    DEFAULT_DATABASE_FOLDER,
+    DEFAULT_GENOME_FOLDER,
+    DEFAULT_REFSEQ_FOLDER,
+    DEFAULT_SNPEFF_FOLDER,
+    DEFAULT_SPLICE_FOLDER,
+    DEFAULT_TOOLS_BIN,
+    DEFAULT_TOOLS_FOLDER,
+    add_value_into_dict,
+    barcode,
+    cast_columns_query,
+    check_docker_image_exists,
+    clean_annotation_field,
+    command,
+    convert_markdown_to_html,
+    convert_markdown_to_pdf,
+    detect_column_type,
+    escape_markdown_table_chars,
+    extract_memory_in_go,
+    find,
+    find_all,
+    find_file_prefix,
+    find_genome,
+    findbypipeline,
+    full_path,
+    genotype_stats,
+    genotypeconcordance,
+    get_bin_command,
+    get_file_compressed,
+    get_file_format,
+    get_memory,
+    get_random,
+    get_tmp,
+    merge_regions,
+    params_string_to_dict,
+    remove_if_exists,
+    run_parallel_commands,
+    transcripts_file_to_df,
+    trio,
+    vaf_normalization,
+    vcf_required,
+    file_format_delimiters,
+    folder_config,
+    code_type_map,
+    comparison_map,
+    code_type_map_to_sql,
+    code_type_map_to_vcf,
+    sort_contigs,
+)
+
+from howard.objects.database import Database
+
+from howard.functions.databases import (
+    databases_download_annovar,
+    databases_download_exomiser,
+    databases_download_snpeff,
+    databases_infos,
+)
+
+from howard.functions.utils import (
+    format_hgvs_name,
+    get_refseq_table,
+    get_transcript,
+    read_transcripts,
+)
 
 
 class Variants:
@@ -83,7 +148,13 @@ class Variants:
         if load:
             self.load_data()
 
-    def load_header(self, header=None, table: str = None, drop: bool = False) -> str:
+    def load_header(
+        self,
+        header=None,
+        table: str = None,
+        drop: bool = False,
+        view_name: str = "header",
+    ) -> str:
         """
         Load header in a table, with INFO, FORMAT, FILTERS, SAMPLES and METADATA
 
@@ -91,6 +162,7 @@ class Variants:
             header (vcfobject, optional): VCF object from pyVCF. Defaults to None (header of the Variants object).
             table (str, optional): Table name of the header table. Defaults to None (defined as 'header' later).
             drop (bool, optional): Drop table if exists. Defaults to False.
+            view_name (str, optional): Name of the table. Defaults to 'header'.
 
         Returns:
             str: Name of the table, None otherwise
@@ -117,7 +189,7 @@ class Variants:
 
             # Query create
             query_create = f"""
-            CREATE TABLE header (
+            CREATE OR REPLACE table {view_name} (
                 {', '.join(columns)},
                 PRIMARY KEY (section, id)
             );
@@ -199,8 +271,8 @@ class Variants:
                 )
 
             # Create query of insert with parameters
-            query_insert = """
-            INSERT INTO header (section, id, number, type, description) VALUES (?, ?, ?, ?, ?);
+            query_insert = f"""
+            INSERT INTO {view_name} (section, id, number, type, description) VALUES (?, ?, ?, ?, ?);
             """
             conn.executemany(query_insert, inserts)
 
@@ -719,20 +791,127 @@ class Variants:
 
         return None
 
-    def get_stats(self) -> dict:
+    def get_stats(
+        self,
+        table: str = None,
+        table_view: str = None,
+        annotations_stats: bool = False,
+        queries: dict = None,
+        queries_view: str = None,
+    ) -> dict:
         """
-        The `get_stats` function calculates and returns various statistics of the current object,
-        including information about the input file, variants, samples, header fields, quality, and
-        SNVs/InDels.
-        :return: a dictionary containing various statistics of the current object. The dictionary has
-        the following structure:
+        Calculate and return various statistics of the current object, including information about the input file,
+        variants, samples, header fields, quality, and SNVs/InDels.
+
+        :param table: The name of the table containing variant data. If not provided, the default table is used.
+        :type table: str, optional
+        :param table_view: The name of the table view to be used for statistics calculation. If not provided, a new view is created.
+        :type table_view: str, optional
+        :param annotations_stats: Whether to calculate annotation statistics. Defaults to False.
+        :type annotations_stats: bool, optional
+        :param queries: The `queries` parameter is a dictionary that contains queries to be executed
+        and added to the statistics. The keys of the dictionary are the names of the queries, and the
+        values are the SQL queries to be executed.
+        :type queries: dict
+        :param queries_view: The `queries_view` parameter is a string that represents the name of the
+        view to be used for the queries. If no value is provided, a new view will be created.
+        :type queries_view: str
+
+        :return: A dictionary containing various statistics of the current object. The dictionary has the following structure:
+
+            - **Infos** (*dict*): General information about the input file and header fields.
+                - **Input file** (*str*): The path to the input file.
+                - **Header Infos** (*list*): List of INFO fields in the header.
+                - **Header Formats** (*list*): List of FORMAT fields in the header.
+                - **Number of INFO fields** (*int*): Number of INFO fields in the header.
+                - **Number of FORMAT fields** (*int*): Number of FORMAT fields in the header.
+                - **Number of samples** (*int*): Number of samples in the dataset.
+                - **Number of variants** (*int*): Total number of variants in the dataset.
+
+            - **Variants** (*dict*): Statistics about the variants.
+                - **By Chromosome** (*list*): List of dictionaries with chromosome names and variant counts.
+                - **By Type** (*list*): List of dictionaries with variant types and counts.
+                - **By Quality** (*list*): List of dictionaries with quality scores and counts.
+                - **By Filter** (*list*): List of dictionaries with filter values and counts.
+
+            - **Samples** (*dict*): Statistics about the samples.
+                - **Variants in samples** (*list*): List of dictionaries with sample names, variant counts, and percentages.
+
+            - **Header** (*dict*): Detailed information about the header fields.
+                - **List of INFO fields** (*dict*): Dictionary with detailed information about INFO fields.
+                - **List of FORMAT fields** (*dict*): Dictionary with detailed information about FORMAT fields.
+                - **List of FILTER fields** (*dict*): Dictionary with detailed information about FILTER fields.
+
+            - **Annotations** (*dict*, optional): Annotation statistics, if `annotations_stats` is True.
+                - **Stats** (*dict*): Dictionary with annotation statistics.
+
+            - **Quality** (*dict*): Quality statistics.
+                - **QUAL** (*dict*): Dictionary with quality statistics (average, minimum, maximum, standard deviation, median, variance).
+
+        :rtype: dict
+
+        :example:
+
+        .. code-block:: python
+
+            stats = get_stats(table="variants_table", table_view="variants_view", annotations_stats=True)
+            print(stats)
         """
 
         # Log
         log.info(f"Stats Calculation...")
 
-        # table varaints
-        table_variants_from = self.get_table_variants()
+        # table variants
+        if table is None:
+            table_variants_from = self.get_table_variants()
+        else:
+            table_variants_from = table
+
+        # table view
+        if table_view is None:
+            variants_view_stats_name = "variants_view_stats_" + get_random()
+        else:
+            variants_view_stats_name = table_view
+
+        # Tables to remove
+        tables_to_remove = []
+
+        # Percent_round
+        percent_round = 2
+
+        # Sample struct column name
+        sample_struct_column = "SAMPLES"
+
+        # Info struct column name
+        info_struct_column = None
+
+        # Sample struct column format needed
+        if annotations_stats:
+            info_prefix_column = ""
+        else:
+            info_prefix_column = None
+
+        # Create view
+        variants_view_stats_name = self.create_annotations_view(
+            table=table_variants_from,
+            view=variants_view_stats_name,
+            view_type="table",
+            view_mode="full",
+            info_prefix_column=info_prefix_column,
+            info_struct_column=info_struct_column,
+            sample_struct_column=sample_struct_column,
+            formats=["GT"],
+            fields_needed=[
+                "#CHROM",
+                "POS",
+                "REF",
+                "ALT",
+                "QUAL",
+                "FILTER",
+            ]
+            + self.get_header_sample_list(),
+        )
+        tables_to_remove.append(variants_view_stats_name)
 
         # stats dict
         stats = {"Infos": {}}
@@ -746,13 +925,15 @@ class Variants:
         header_formats = self.get_header().formats
         header_infos_list = list(header_infos)
         header_formats_list = list(header_formats)
+        header_table = self.load_header()
+
+        # Stat section
+        stats["Stats"] = {}
 
         ### Variants
 
-        stats["Variants"] = {}
-
         # Variants by chr
-        sql_query_nb_variant_by_chrom = f'SELECT "#CHROM" as CHROM, count(*) as count FROM {table_variants_from} GROUP BY "#CHROM"'
+        sql_query_nb_variant_by_chrom = f'SELECT "#CHROM" as CHROM, count(*) as count FROM {variants_view_stats_name} GROUP BY "#CHROM"'
         df_nb_of_variants_by_chrom = self.get_query_to_df(sql_query_nb_variant_by_chrom)
         nb_of_variants_by_chrom = df_nb_of_variants_by_chrom.sort_values(
             by=["CHROM"], kind="quicksort"
@@ -763,13 +944,15 @@ class Variants:
 
         # Calculate percentage
         nb_of_variants_by_chrom["percent"] = nb_of_variants_by_chrom["count"].apply(
-            lambda x: (x / nb_of_variants)
+            lambda x: round((x * 100 / nb_of_variants), percent_round)
         )
 
-        stats["Variants"]["Number of variants by chromosome"] = (
-            nb_of_variants_by_chrom.to_dict(orient="index")
+        # Add to stats dict the number of variants by chromosome and the total number of variants
+        stats["Stats"]["Variants by chromosome"] = nb_of_variants_by_chrom.to_dict(
+            orient="index"
         )
 
+        # Add to stats dict the total number of variants
         stats["Infos"]["Number of variants"] = int(nb_of_variants)
 
         ### Samples
@@ -781,90 +964,174 @@ class Variants:
         # Check Samples
         if "GT" in header_formats_list and "FORMAT" in self.get_header_columns():
             log.debug(f"Check samples...")
+
+            # Samples stats
+            samples_stats = {}
+
+            # Get samples stats by genotype for each sample in the header
             for sample in self.get_header_sample_list():
                 sql_query_samples = f"""
-                    SELECT  '{sample}' as sample,
-                            REGEXP_EXTRACT("{sample}", '^([0-9/|.]*)[:]*',1) as genotype,
-                            count(REGEXP_EXTRACT("{sample}", '^([0-9/|.]*)[:]*',1)) as count,
-                            concat((count(REGEXP_EXTRACT("{sample}", '^([0-9/|.]*)[:]*',1))/{nb_of_variants})) as percentage
-                    FROM {table_variants_from}
-                    WHERE (
-                        regexp_matches("{sample}", '^[0-9]([/|][0-9])+')
-                        AND
-                        len(string_split(CAST("FORMAT" AS VARCHAR), ':')) = len(string_split(CAST("{sample}" AS VARCHAR), ':'))
-                      )
+                    SELECT 
+                        '{sample}' as 'sample',
+                        SAMPLES."{sample}".GT as 'genotype',
+                        count(SAMPLES."{sample}".GT) as 'count',
+                        ROUND((count(SAMPLES."{sample}".GT)*100/{nb_of_variants}), {percent_round}) as 'percent'
+                    FROM {variants_view_stats_name}
+                    WHERE  SAMPLES."{sample}".GT IS NOT NULL
                     GROUP BY genotype
-                    """
-                sql_query_genotype_df = self.conn.execute(sql_query_samples).df()
-                sample_genotype_count = sql_query_genotype_df["count"].sum()
-                if len(sql_query_genotype_df):
-                    nb_of_samples += 1
-                    samples[f"{sample} - {sample_genotype_count} variants"] = (
-                        sql_query_genotype_df.to_dict(orient="index")
-                    )
+                    ORDER BY genotype
+                """
 
+                # Get samples stats by genotype for each sample in the header
+                sql_query_genotype_df = self.conn.execute(sql_query_samples).df()
+                non_null_genotypes = sql_query_genotype_df[
+                    sql_query_genotype_df["genotype"].str.contains(r"\d")
+                ]
+                sample_genotype_count = non_null_genotypes["count"].sum()
+
+                # Add to samples dict the samples stats by genotype for each sample in the header
+                if len(sql_query_genotype_df):
+
+                    # Number of samples
+                    nb_of_samples += 1
+
+                    # Add to samples dict the samples stats by genotype for each sample in the header
+                    samples[sample] = sql_query_genotype_df.to_dict(orient="index")
+
+                    # Add to samples stats dict the samples stats by genotype for each sample in the header
+                    samples_stats[sample] = {
+                        "Sample": f"{sample}",
+                        "count": int(sample_genotype_count),
+                        "percent": round(
+                            (sample_genotype_count * 100 / nb_of_variants),
+                            percent_round,
+                        ),
+                    }
+
+            # Add to stats dict the samples stats by genotype for each sample in the header
             stats["Samples"] = samples
             stats["Infos"]["Number of samples"] = nb_of_samples
+            stats["Stats"]["Variants by sample"] = samples_stats
 
-        # #
-        # if "FORMAT" in self.get_header_columns() and "DP" in header_formats_list:
-        #     stats["Infos"]["Number of samples"] = nb_of_samples
-        # elif nb_of_samples:
-        #     stats["Infos"]["Number of samples"] = "not a VCF format"
+        else:
+
+            samples_stats = {}
 
         ### INFO and FORMAT fields
         header_types_df = {}
         header_types_list = {
-            "List of INFO fields": header_infos,
-            "List of FORMAT fields": header_formats,
+            "INFO": {
+                "label": "List of INFO fields",
+                "fields": {
+                    "id": "INFO",
+                    "number": "Number",
+                    "type": "Type",
+                    "description": "Description",
+                },
+            },
+            "FORMAT": {
+                "label": "List of FORMAT fields",
+                "fields": {
+                    "id": "FORMAT",
+                    "number": "Number",
+                    "type": "Type",
+                    "description": "Description",
+                },
+            },
+            "FILTER": {
+                "label": "List of FILTER fields",
+                "fields": {
+                    "id": "FILTER",
+                    "description": "Description",
+                },
+            },
         }
-        i = 0
-        for header_type in header_types_list:
 
-            header_type_infos = header_types_list.get(header_type)
+        # Init
+        header_types_df = {}
+
+        # Get header types for INFO and FORMAT fields
+        for header_section, header_info in header_types_list.items():
+            label = header_info["label"]
+            fields = header_info["fields"]
+
+            # Construire la liste des champs à sélectionner
+            select_fields = ", ".join(fields.keys())
+
+            # SQL query
+            sql_query_header = f"""
+                SELECT {select_fields}
+                FROM {header_table}
+                WHERE section = '{header_section}'
+            """
+            header_infos_df = self.get_query_to_df(sql_query_header)
             header_infos_dict = {}
 
-            for info in header_type_infos:
+            # Add to header_types_df the header types for INFO and FORMAT fields
+            for i, row in header_infos_df.iterrows():
+                header_infos_dict[i] = {
+                    new if new else original: row[original]
+                    for original, new in fields.items()
+                }
 
-                i += 1
-                header_infos_dict[i] = {}
-
-                # ID
-                header_infos_dict[i]["id"] = info
-
-                # num
-                genotype_map = {None: ".", -1: "A", -2: "G", -3: "R"}
-                if header_type_infos[info].num in genotype_map.keys():
-                    header_infos_dict[i]["Number"] = genotype_map.get(
-                        header_type_infos[info].num
-                    )
-                else:
-                    header_infos_dict[i]["Number"] = header_type_infos[info].num
-
-                # type
-                if header_type_infos[info].type:
-                    header_infos_dict[i]["Type"] = header_type_infos[info].type
-                else:
-                    header_infos_dict[i]["Type"] = "."
-
-                # desc
-                if header_type_infos[info].desc != None:
-                    header_infos_dict[i]["Description"] = header_type_infos[info].desc
-                else:
-                    header_infos_dict[i]["Description"] = ""
-
+            # Add to header_types_df the header types for INFO and FORMAT fields
             if len(header_infos_dict):
-                header_types_df[header_type] = pd.DataFrame.from_dict(
+
+                # Add to header_types_df the header types for INFO and FORMAT fields
+                header_types_df[label] = pd.DataFrame.from_dict(
                     header_infos_dict, orient="index"
                 ).to_dict(orient="index")
 
-        # Stats
-        stats["Infos"]["Number of INFO fields"] = len(header_infos_list)
-        stats["Infos"]["Number of FORMAT fields"] = len(header_formats_list)
+                # Add to stats dict the number of INFO and FORMAT fields
+                stats["Infos"][f"Number of {header_section} fields"] = len(
+                    header_types_df[label]
+                )
+
+        # Add to stats dict the header types for INFO and FORMAT fields
         stats["Header"] = header_types_df
 
+        # Annotations stats
+        if annotations_stats:
+
+            # Init
+            sql_queries_info = []
+
+            # Get header infos list
+            for field in header_infos_list:
+
+                # Create a table with a field by line (only for INFO section), and le number of distinct value on variants table, and the number of variants with a value
+                sql_queries_info.append(
+                    f"""
+                        SELECT
+                            '{field}' AS 'Annotation',
+                            count(distinct "{field}") as 'Distinct values',
+                            count("{field}") as 'Annotated Variants',
+                            ROUND((count("{field}") * 100 / {nb_of_variants}), {percent_round}) as 'Percent',
+                        FROM
+                            {variants_view_stats_name}
+                        WHERE
+                            "{field}" IS NOT NULL AND TRIM(CAST("{field}" AS VARCHAR)) NOT IN ('','.')
+                    """
+                )
+
+            # Join all queries
+            sql_query_info = f""" UNION ALL """.join(sql_queries_info)
+
+            # Get info stats
+            info_stats = self.get_query_to_df(sql_query_info)
+
+            # Add to stats dict the annotations stats
+            stats["Annotations"] = {"Distribution": info_stats.to_dict(orient="index")}
+
+        ### Quality stats
+        log.debug(f"Quality stats...")
+
         ### QUAL
+        log.debug(f"Quality stats: QUAL...")
+
         if "QUAL" in self.get_header_columns():
+
+            # SQL query
             sql_query_qual = f"""
                     SELECT
                         avg(CAST(QUAL AS INTEGER)) AS Average,
@@ -873,30 +1140,79 @@ class Variants:
                         stddev(CAST(QUAL AS INTEGER)) AS StandardDeviation,
                         median(CAST(QUAL AS INTEGER)) AS Median,
                         variance(CAST(QUAL AS INTEGER)) AS Variance
-                    FROM {table_variants_from}
+                    FROM {variants_view_stats_name}
                     WHERE CAST(QUAL AS VARCHAR) NOT IN ('.')
                     """
 
-            qual = self.conn.execute(sql_query_qual).df().to_dict(orient="index")
-            stats["Quality"] = {"Stats": qual}
+            # Get quality stats
+            qual_stats = self.conn.execute(sql_query_qual).df().to_dict(orient="index")
+
+        else:
+
+            # Empty quality stats
+            qual_stats = {}
+
+        ### FILTER
+        log.debug(f"Quality stats: FILTER...")
+
+        if "FILTER" in self.get_header_columns():
+
+            # SQL query
+            sql_query_filter = f"""
+                WITH split_filter AS (
+                    SELECT
+                        TRIM(UNNEST(STRING_SPLIT(CASE WHEN TRIM(FILTER) = '' OR FILTER IS NULL THEN '.' ELSE FILTER END, ';'))) AS filter_value
+                    FROM
+                        {variants_view_stats_name}
+                )
+                SELECT
+                    filter_value,
+                    COUNT(*) AS 'count',
+                    ROUND((count * 100 / {nb_of_variants}), {percent_round}) AS 'percent'
+                FROM
+                    split_filter
+                GROUP BY
+                    filter_value
+                ORDER BY
+                    count DESC
+            """
+
+            # Get filter stats
+            filter_stats = (
+                self.conn.execute(sql_query_filter).df().to_dict(orient="index")
+            )
+
+        else:
+
+            # Empty filter stats
+            filter_stats = {}
 
         ### SNV and InDel
 
+        # SQL query
         sql_query_snv = f"""
             
-            SELECT Type, count FROM (
+            SELECT Type, count, ROUND((count * 100 / {nb_of_variants}), {percent_round}) AS 'percent' FROM (
 
                     SELECT
                         'Total' AS Type,
                         count(*) AS count
-                    FROM {table_variants_from}
+                    FROM {variants_view_stats_name}
+                    
+                    UNION
+
+                    SELECT
+                        'SNV' AS Type,
+                        count(*) AS count
+                    FROM {variants_view_stats_name}
+                    WHERE len(REF) = 1 AND len(ALT) = 1
 
                     UNION
 
                     SELECT
                         'MNV' AS Type,
                         count(*) AS count
-                    FROM {table_variants_from}
+                    FROM {variants_view_stats_name}
                     WHERE len(REF) > 1 AND len(ALT) > 1
                     AND len(REF) = len(ALT)
 
@@ -905,43 +1221,95 @@ class Variants:
                     SELECT
                         'InDel' AS Type,
                         count(*) AS count
-                    FROM {table_variants_from}
+                    FROM {variants_view_stats_name}
                     WHERE len(REF) > 1 OR len(ALT) > 1
                     AND len(REF) != len(ALT)
-                    
-                    UNION
-
-                    SELECT
-                        'SNV' AS Type,
-                        count(*) AS count
-                    FROM {table_variants_from}
-                    WHERE len(REF) = 1 AND len(ALT) = 1
 
                 )
 
-            ORDER BY count DESC
+            ORDER BY 
+            CASE
+                WHEN Type = 'Total' THEN 1
+                WHEN Type = 'SNV' THEN 2
+                WHEN Type = 'MNV' THEN 3
+                WHEN Type = 'InDel' THEN 4
+            END
 
                 """
-        snv_indel = self.conn.execute(sql_query_snv).df().to_dict(orient="index")
 
+        # Get SNV and InDel stats
+        snv_indel = self.get_query_to_df(sql_query_snv).to_dict(orient="index")
+
+        # Substitutions
         sql_query_snv_substitution = f"""
                 SELECT
                     concat(REF, '>', ALT) AS 'Substitution',
-                    count(*) AS count
-                FROM {table_variants_from}
+                    count(*) AS count,
+                    ROUND((count * 100 / {nb_of_variants}), {percent_round}) AS 'percent'
+                FROM {variants_view_stats_name}
                 WHERE len(REF) = 1 AND len(ALT) = 1
                 GROUP BY REF, ALT
                 ORDER BY count(*) DESC
                 """
-        snv_substitution = (
-            self.conn.execute(sql_query_snv_substitution).df().to_dict(orient="index")
+        snv_substitution = self.get_query_to_df(sql_query_snv_substitution).to_dict(
+            orient="index"
         )
-        stats["Variants"]["Counts"] = snv_indel
-        stats["Variants"]["Substitutions"] = snv_substitution
+
+        # Add to stats dict the SNV and InDel stats
+        stats["Stats"]["Variant types"] = snv_indel
+        stats["Stats"]["Substitutions"] = snv_substitution
+        stats["Stats"]["Quality"] = qual_stats
+        stats["Stats"]["Filters"] = filter_stats
+
+        # Queries
+        if queries is not None:
+
+            # Create full annotations view
+            variants_view_query_name = queries_view
+            variants_view_query_name = self.create_annotations_view(
+                table=table_variants_from,
+                view=variants_view_query_name,
+                view_type="view",
+                view_mode="explore",
+                info_prefix_column="",
+                info_struct_column="INFOS",
+                sample_struct_column="SAMPLES",
+                formats=None,
+                fields_needed_all=True,
+                drop_view=True,
+            )
+            if queries_view is not None:
+                tables_to_remove.append(variants_view_query_name)
+
+            # Stats queries section
+            stats["Queries"] = {}
+
+            # For each query
+            for query_infos in queries.items():
+
+                # Query name and query
+                query_name = query_infos[0]
+                query = query_infos[1]
+
+                # Query cast
+                query_cast = cast_columns_query(query=query, conn=self.get_connexion())
+
+                # Query execute
+                query_res = self.get_query_to_df(query_cast).to_dict(orient="index")
+                stats["Queries"][query_name] = query_res
+
+        # Remove table or view
+        self.remove_tables_or_views(tables=tables_to_remove)
 
         return stats
 
-    def stats_to_file(self, file: str = None) -> str:
+    def stats_to_file(
+        self,
+        file: str = None,
+        annotations_stats: bool = False,
+        queries: dict = None,
+        queries_view: str = None,
+    ) -> str:
         """
         The function `stats_to_file` takes a file name as input, retrieves statistics, serializes them
         into a JSON object, and writes the JSON object to the specified file.
@@ -949,11 +1317,28 @@ class Variants:
         :param file: The `file` parameter is a string that represents the file path where the JSON data
         will be written
         :type file: str
-        :return: the name of the file that was written to.
+        :param annotations_stats: The `annotations_stats` parameter is a boolean that specifies whether
+        to calculate annotation statistics. If `annotations_stats` is set to True, annotation statistics
+        will be calculated. If `annotations_stats` is set to False, annotation statistics will not be
+        calculated. The default value is False.
+        :type annotations_stats: bool
+        :param queries: The `queries` parameter is a dictionary that contains queries to be executed
+        and added to the statistics. The keys of the dictionary are the names of the queries, and the
+        values are the SQL queries to be executed.
+        :type queries: dict
+        :param queries_view: The `queries_view` parameter is a string that represents the name of the
+        view to be used for the queries. If no value is provided, a new view will be created.
+        :type queries_view: str
+
+        :return: The name of the file that was written to.
         """
 
         # Get stats
-        stats = self.get_stats()
+        stats = self.get_stats(
+            annotations_stats=annotations_stats,
+            queries=queries,
+            queries_view=queries_view,
+        )
 
         # Serializing json
         json_object = json.dumps(stats, indent=4)
@@ -964,11 +1349,26 @@ class Variants:
 
         return file
 
-    def print_stats(self, output_file: str = None, json_file: str = None) -> None:
+    def print_stats(
+        self,
+        stdout: bool = False,
+        output_file: str = None,
+        json_file: str = None,
+        html_file: str = None,
+        pdf_file: str = None,
+        annotations_stats: bool = False,
+        queries: dict = None,
+        queries_view: str = None,
+    ) -> None:
         """
         The `print_stats` function generates a markdown file and prints the statistics contained in a
         JSON file in a formatted manner.
 
+        :param stdout: The `stdout` parameter is a boolean that specifies whether to print the stats
+        directly to the standard output. If `stdout` is set to True, the stats will be printed to the
+        standard output. If `stdout` is set to False, the stats will not be printed to the standard
+        output. The default value is False.
+        :type stdout: bool
         :param output_file: The `output_file` parameter is a string that specifies the path and filename
         of the output file where the stats will be printed in Markdown format. If no `output_file` is
         provided, a temporary directory will be created and the stats will be saved in a file named
@@ -978,14 +1378,36 @@ class Variants:
         file where the statistics will be saved. If no value is provided, a temporary directory will be
         created and a default file name "stats.json" will be used
         :type json_file: str
-        :return: The function `print_stats` does not return any value. It has a return type annotation
+        :param html_file: The `html_file` parameter is a string that specifies the path and filename of
+        the output file where the stats will be printed in HTML format. If no `html_file` is provided,
+        a temporary directory will be created and the stats will be saved in a file named "stats.html"
+        within that
+        :type html_file: str
+        :param pdf_file: The `pdf_file` parameter is a string that specifies the path and filename of the
+        output file where the stats will be printed in PDF format. If no `pdf_file` is provided, a
+        temporary directory will be created and the stats will be saved in a file named "stats.pdf"
+        within that
+        :type pdf_file: str
+        :param annotations_stats: Whether to calculate annotation statistics. Defaults to False.
+        :type annotations_stats: bool, optional
+        :param queries: The `queries` parameter is a dictionary that contains queries to be executed
+        and added to the statistics. The keys of the dictionary are the names of the queries, and the
+        values are the SQL queries to be executed.
+        :type queries: dict
+        :param queries_view: The `queries_view` parameter is a string that represents the name of the
+        view to be used for the queries. If no value is provided, a new view will be created.
+        :type queries_view: str
         of `None`.
+
+        :return: The function `print_stats` does not return any value. It has a return type annotation
+
         """
 
         # Full path
         output_file = full_path(output_file)
         json_file = full_path(json_file)
 
+        # Create stats file in temporary directory
         with tempfile.TemporaryDirectory() as tmpdir:
 
             # Files
@@ -1001,7 +1423,12 @@ class Variants:
                 Path(os.path.dirname(json_file)).mkdir(parents=True, exist_ok=True)
 
             # Create stats JSON file
-            stats_file = self.stats_to_file(file=json_file)
+            stats_file = self.stats_to_file(
+                file=json_file,
+                annotations_stats=annotations_stats,
+                queries=queries,
+                queries_view=queries_view,
+            )
 
             # Print stats file
             with open(stats_file) as f:
@@ -1016,17 +1443,22 @@ class Variants:
             output_title.append("# HOWARD Stats")
 
             # Index
-            output_index.append("## Index")
+            output_index.append("## Table of context")
 
             # Process sections
             for section in stats:
                 infos = stats.get(section)
                 section_link = "#" + section.lower().replace(" ", "-")
+                output.append(f"\n")
                 output.append(f"## {section}")
                 output_index.append(f"- [{section}]({section_link})")
 
                 if len(infos):
+
+                    # For each info
                     for info in infos:
+
+                        # Check if dataframe or not
                         try:
                             df = pd.DataFrame.from_dict(infos.get(info), orient="index")
                             is_df = True
@@ -1038,31 +1470,48 @@ class Variants:
                                 is_df = True
                             except:
                                 is_df = False
+
+                        # If dataframe is a dataframe
                         if is_df:
+                            df = df.map(escape_markdown_table_chars)
                             output.append(f"### {info}")
                             info_link = "#" + info.lower().replace(" ", "-")
                             output_index.append(f"   - [{info}]({info_link})")
                             output.append(f"{df.to_markdown(index=False)}")
+
+                        # If not a dataframe
                         else:
                             output.append(f"- {info}: {infos.get(info)}")
+
                 else:
+
+                    # If no info
                     output.append(f"NA")
 
             # Write stats in markdown file
             with open(output_file, "w") as fp:
                 for item in output_title:
                     fp.write("%s\n" % item)
+                fp.write("\n")
                 for item in output_index:
                     fp.write("%s\n" % item)
+                fp.write("\n")
                 for item in output:
                     fp.write("%s\n" % item)
 
             # Output stats in markdown
-            print("")
-            print("\n\n".join(output_title))
-            print("")
-            print("\n\n".join(output))
-            print("")
+            if stdout:
+                print("")
+                print("\n\n".join(output_title))
+                print("")
+                print("\n\n".join(output))
+                print("")
+
+            # Generate HTML and PDF files
+            if html_file:
+                convert_markdown_to_html(output_file, html_file)
+            if pdf_file:
+                convert_markdown_to_pdf(output_file, pdf_file)
 
         return None
 
@@ -1370,6 +1819,20 @@ class Variants:
 
         # Return samples list
         return samples_list
+
+    def sort_contigs(self) -> None:
+        """
+        This function sort contigs
+
+        :return: None
+        """
+
+        # Sort contigs
+        header = self.get_header()
+        header = sort_contigs(header)
+
+        # Return
+        return None
 
     def is_genotype_column(self, column: str = None) -> bool:
         """
@@ -1920,48 +2383,88 @@ class Variants:
 
         return removed
 
+    def get_batch_split(self, table: str = None, block: int = 1000) -> int:
+        """
+        Calculate the batch size for processing data based on the number of rows in the table and available memory.
+
+        Args:
+            table (str, optional): The name of the table to evaluate. If None, the default variants table is used.
+            block (int, optional): The block size to use for the calculation. Default is 1000.
+
+        Returns:
+            int: The calculated batch size.
+        """
+
+        # Get table variants if no table
+        if table is None:
+            table = self.get_table_variants()
+
+        # Evaluate split
+        log.debug(f"Evaluate batch size by parameter")
+
+        # Count numbber of variants in table variants
+        nb_lines = (
+            self.get_connexion()
+            .execute(
+                f"""
+            SELECT count(*)
+            FROM {table}
+            """
+            )
+            .fetchone()[0]
+        )
+
+        # Check memory
+        memory = extract_memory_in_go(get_memory(self.get_config(), self.get_param()))
+
+        # Avaluate block size using block size (e.g. 1000 viarants) and memory
+        block_size = block * memory
+
+        # Calculate batch
+        batch = round(nb_lines / block_size) + 1
+
+        # Return
+        return batch
+
     def explode_infos(
         self,
         prefix: str = None,
         create_index: bool = False,
         fields: list = None,
+        fields_just_add: list = [],
+        fields_not_exists: bool = True,
+        detect_type_list: bool = True,
         force: bool = False,
         proccess_all_fields_together: bool = False,
+        fields_forced_as_varchar: bool = False,
         table: str = None,
+        table_source: str = None,
+        table_dest: str = None,
+        table_key: list = None,
     ) -> list:
         """
-        The `explode_infos` function in Python takes a VCF file and explodes the INFO fields into
-        individual columns, returning a list of added columns.
+        Explode the INFO fields of a VCF file into individual columns in a specified table.
 
-        :param prefix: The `prefix` parameter is a string that is used as a prefix for the exploded INFO
-        fields. If the `prefix` is not provided or is set to `None`, the function will use the value of
-        `self.get_explode_infos_prefix()` as the prefix
-        :type prefix: str
-        :param create_index: The `create_index` parameter is a boolean flag that specifies whether to
-        create indexes on the exploded INFO fields. If set to `True`, indexes will be created; if set to
-        `False`, indexes will not be created. The default value is `False`, defaults to False
-        :type create_index: bool (optional)
-        :param fields: The `fields` parameter in the `explode_infos` function is a list of INFO fields
-        that you want to explode into individual columns. If this parameter is not provided, all INFO
-        fields will be exploded. You can specify the INFO fields you want to explode by passing them as
-        a list to the `
-        :type fields: list
-        :param force: The `force` parameter in the `explode_infos` function is a boolean flag that
-        determines whether to drop and recreate a column if it already exists in the table. If `force`
-        is set to `True`, the column will be dropped and recreated. If `force` is set to `False,
-        defaults to False
-        :type force: bool (optional)
-        :param proccess_all_fields_together: The `proccess_all_fields_together` parameter is a boolean
-        flag that determines whether to process all the INFO fields together or individually. If set to
-        `True`, all the INFO fields will be processed together. If set to `False`, each INFO field will
-        be processed individually. The default value is, defaults to False
-        :type proccess_all_fields_together: bool (optional)
-        :param table: The `table` parameter in the `explode_infos` function is used to specify the name
-        of the table where the exploded INFO fields will be added as individual columns. If you provide
-        a value for the `table` parameter, the function will use that table name. If the `table`
-        parameter is
-        :type table: str
-        :return: The `explode_infos` function returns a list of added columns.
+        Args:
+            prefix (str, optional): A prefix for the exploded INFO fields. If not provided, the function
+                will use the value of `self.get_explode_infos_prefix()`.
+            create_index (bool, optional): Whether to create indexes on the exploded INFO fields. Defaults to False.
+            fields (list, optional): A list of INFO fields to explode into individual columns. If not provided,
+                all INFO fields will be exploded.
+            fields_just_add (list, optional): A list of INFO fields to add as individual columns without exploding values.
+            fields_not_exists (bool, optional): Whether to add fields that do not exist in the table. Defaults to True.
+            detect_type_list (bool, optional): Whether to detect if the field is a list type. Defaults to True.
+            force (bool, optional): Whether to drop and recreate a column if it already exists in the table. Defaults to False.
+            proccess_all_fields_together (bool, optional): Whether to process all INFO fields together or individually.
+                Defaults to False.
+            fields_forced_as_varchar (bool, optional): Whether to force all fields to be treated as VARCHAR. Defaults to False.
+            table (str, optional): The name of the table where the exploded INFO fields will be added as individual columns.
+            table_source (str, optional): The name of the source table containing the INFO fields.
+            table_dest (str, optional): The name of the destination table where the exploded INFO fields will be added.
+            table_key (list, optional): A list of keys to use for identifying rows in the table.
+
+        Returns:
+            list: A list of added columns.
         """
 
         # drop indexes
@@ -1969,6 +2472,12 @@ class Variants:
 
         # connexion format
         connexion_format = self.get_connexion_format()
+        if connexion_format in ["sqlite"]:
+            msg_err = (
+                f"Connexion format '{connexion_format}' not available for explode infos"
+            )
+            log.error(msg_err)
+            raise ValueError(msg_err)
 
         # Access
         access = self.get_config().get("access", None)
@@ -1986,119 +2495,154 @@ class Variants:
                     prefix = "INFO/"
 
             # table variants
-            if table is not None:
-                table_variants = table
-            else:
-                table_variants = self.get_table_variants(clause="select")
+            if table is None:
+                table = self.get_table_variants(clause="select")
 
-            # extra infos
-            try:
-                extra_infos = self.get_extra_infos()
-            except:
-                extra_infos = []
+            # table source
+            if table_source is None:
+                table_source = table
+
+            # table dest
+            if table_dest is None:
+                table_dest = table
+
+            # table key
+            if table_key is None:
+                table_key = ["#CHROM", "POS", "REF", "ALT"]
+
+            # Check source table columns
+            table_source_struct = self.get_columns(table=table_source)
+            table_dest_struct = self.get_columns(table=table_dest)
+
+            if "INFO" not in table_source_struct:
+                msg_err = f"Column 'INFO' not found in table '{table_source}'"
+                log.warning(msg_err)
+                # return None
+                # raise ValueError(msg_err)
 
             # Header infos
             header_infos = self.get_header().infos
 
             log.debug(
-                f"Explode INFO fields - ADD [{len(header_infos)}] annotations fields"
+                f"Explode INFO fields - [{len(header_infos)}] annotations fields in header"
             )
-
-            sql_info_alter_table_array = []
-
-            # Info fields to check
-            fields_list = list(header_infos)
-            if fields:
-                fields_list += fields
-            fields_list = set(fields_list)
-
-            # If no fields
-            if not fields:
-                fields = []
 
             # Translate fields if patterns
             fields = self.get_explode_infos_fields(explode_infos_fields=fields)
+
+            # Create view with all fields
+            view_source = "view_source_" + str(random.randint(10000, 100000))
+            view_source = self.create_annotations_view(
+                table=table_source,
+                fields=fields,
+                view=view_source,
+                view_type="view",
+                view_mode="explore",
+                info_prefix_column=prefix,
+                fields_needed=table_key,
+                fields_not_exists=fields_not_exists,
+                fields_forced_as_varchar=fields_forced_as_varchar,
+                detect_type_list=detect_type_list,
+            )
+
+            # Describe view source
+            describe_query = f"DESCRIBE {view_source}"
+            res = self.execute_query(describe_query)
+            description_dict = {row[0]: {"type": row[1]} for row in res.fetchall()}
+
+            # View source structure
+            view_source_struct = self.get_columns(table=view_source)
+
+            # Set fields
+            sql_info_alter_table_array = []
 
             for info in fields:
 
                 info_id_sql = prefix + info
 
+                if info_id_sql in table_dest_struct:
+                    log.debug(f"Field '{info_id_sql}' already exists in table")
+
                 if (
-                    info in fields_list
-                    or prefix + info in fields_list
-                    or info in extra_infos
+                    info_id_sql in view_source_struct
+                    and "INFO" in table_source_struct
+                    and (info_id_sql not in table_dest_struct or force)
                 ):
+
+                    if "INFO" not in table_source_struct:
+                        msg_err = f"Column 'INFO' not found in table '{table_source}' - Column 'INFO' needed!!!"
+                        log.error(msg_err)
+                        raise ValueError(msg_err)
+
+                    if info_id_sql in table_dest_struct and force:
+                        log.debug(
+                            f"Explode INFO fields - Force '{info}' annotations fields update from 'INFO' column"
+                        )
 
                     log.debug(f"Explode INFO fields - ADD '{info}' annotations fields")
 
-                    if info in header_infos:
-                        info_type = header_infos[info].type
-                        info_num = header_infos[info].num
-                    else:
-                        info_type = "String"
-                        info_num = 0
-
-                    type_sql = self.code_type_map_to_sql.get(info_type, "VARCHAR")
-                    if info_num != 1:
-                        type_sql = "VARCHAR"
+                    # Get field type
+                    type_sql = description_dict.get(info_id_sql, {})["type"]
 
                     # Add field
                     added_column = self.add_column(
-                        table_name=table_variants,
+                        table_name=table_dest,
                         column_name=info_id_sql,
                         column_type=type_sql,
                         default_value="null",
                         drop=force,
                     )
 
+                    # Added column
                     if added_column:
                         added_columns.append(added_column)
+                        log.debug(
+                            f"Explode INFO fields - ADD '{info}' annotations fields - added"
+                        )
+                    else:
+                        log.debug(
+                            f"Explode INFO fields - ADD '{info}' annotations fields - not added"
+                        )
 
-                    if added_column or force:
+                    # if added_column or force: #fileds_just_add
+                    if (added_column or force) and not info in fields_just_add:
 
                         # add field to index
                         self.index_additionnal_fields.append(info_id_sql)
 
-                        # Update field array
-                        if connexion_format in ["duckdb"]:
-                            update_info_field = f"""
-                            "{info_id_sql}" =
-                                CASE
-                                    WHEN REGEXP_EXTRACT(concat(';', INFO), ';{info}=([^;]*)',1) IN ('','.') THEN NULL
-                                    ELSE REGEXP_EXTRACT(concat(';', INFO), ';{info}=([^;]*)',1)
-                                END
-                            """
-                        elif connexion_format in ["sqlite"]:
-                            update_info_field = f"""
-                                "{info_id_sql}" =
-                                    CASE
-                                        WHEN instr(INFO, '{info}=') = 0 THEN NULL
-                                        WHEN instr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}),';') = 0 THEN substr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}), instr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}), '=')+1)
-                                        ELSE substr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}), instr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}), '=')+1, instr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}),';')-instr(substr(INFO, instr(INFO, '{info}=')+{len(info)+1}), '=')-1)
-                                    END
+                        update_info_field = f"""
+                            "{info_id_sql}" = {view_source}."{info_id_sql}"
                             """
 
+                        # Set field append
                         sql_info_alter_table_array.append(update_info_field)
 
             if sql_info_alter_table_array:
 
-                # By chromosomes
-                try:
-                    chromosomes_list = list(
-                        self.get_query_to_df(
-                            f""" SELECT "#CHROM" FROM {table_variants} GROUP BY "#CHROM" """
-                        )["#CHROM"]
+                # Where clause join
+                where_clause_join = f"""
+                    {" AND ".join([f'"{table_dest}"."{key}" = "{view_source}"."{key}"' for key in table_key])}
+                """
+
+                # Evaluate block size
+                batch_split = self.get_batch_split()
+
+                # Insert by batch
+                for batch_index in range(batch_split):
+
+                    log.debug(
+                        f"Explode INFO fields - Process batch [{batch_index+1}/{batch_split}]..."
                     )
-                except:
-                    chromosomes_list = [None]
 
-                for chrom in chromosomes_list:
-                    log.debug(f"Explode INFO fields - Chromosome {chrom}...")
+                    where_clause = where_clause_join
 
-                    # Where clause
-                    where_clause = ""
-                    if chrom and len(chromosomes_list) > 1:
-                        where_clause = f""" WHERE "#CHROM" = '{chrom}' """
+                    # where clause
+                    if batch_split > 1:
+                        where_clause += (
+                            f" AND ({table_dest}.POS % {batch_split}) = {batch_index} "
+                        )
+                    else:
+                        where_clause += ""
 
                     # Update table
                     if proccess_all_fields_together:
@@ -2107,9 +2651,10 @@ class Variants:
                         )
                         if sql_info_alter_table_array_join:
                             sql_info_alter_table = f"""
-                                UPDATE {table_variants}
+                                UPDATE {table_dest}
                                 SET {sql_info_alter_table_array_join}
-                                {where_clause}
+                                FROM {view_source}
+                                WHERE {where_clause}
                                 """
                             log.debug(
                                 f"Explode INFO fields - Explode all {len(sql_info_alter_table_array)} fields..."
@@ -2121,15 +2666,19 @@ class Variants:
                         for sql_info_alter in sql_info_alter_table_array:
                             sql_info_alter_num += 1
                             sql_info_alter_table = f"""
-                                UPDATE {table_variants}
+                                UPDATE {table_dest}
                                 SET {sql_info_alter}
-                                {where_clause}
+                                FROM {view_source}
+                                WHERE {where_clause}
                                 """
                             log.debug(
                                 f"Explode INFO fields - Explode field {sql_info_alter_num}/{len(sql_info_alter_table_array)}..."
                             )
                             # log.debug(sql_info_alter_table)
                             self.conn.execute(sql_info_alter_table)
+
+            # Remove view_source
+            self.remove_tables_or_views(tables=[view_source])
 
         # create indexes
         if create_index:
@@ -2241,6 +2790,7 @@ class Variants:
         output_file: str | None = None,
         output_header: str | None = None,
         export_header: bool = True,
+        header_in_output: bool = None,
         query: str | None = None,
         parquet_partitions: list | None = None,
         chunk_size: int | None = None,
@@ -2273,6 +2823,12 @@ class Variants:
         provided, only the data that matches the query will be exported. This allows you to customize
         the exported data based on
         :type query: str | None
+        :param header_in_output: The `header_in_output` parameter is a boolean flag that determines
+        whether the header should be included in the output file. If `header_in_output` is set to `True`,
+        the header will be included in the output file. If `header_in_output` is set to `False`, the
+        header will not be included in the output file. By default, the header is included in the output
+        file
+        :type header_in_output: bool (optional)
         :param parquet_partitions: The `parquet_partitions` parameter is a list that specifies the
         columns to be used for partitioning the Parquet file during export. Partitioning is a way to
         organize data in a hierarchical directory structure based on the values of one or more columns.
@@ -2368,7 +2924,8 @@ class Variants:
             order_by = param.get("export", {}).get("order_by", "")
 
         # Header in output
-        header_in_output = param.get("export", {}).get("include_header", False)
+        if header_in_output is None:
+            header_in_output = param.get("export", {}).get("include_header", False)
 
         # Database
         database_source = self.get_connexion()
@@ -2382,6 +2939,7 @@ class Variants:
                 prefix=self.get_explode_infos_prefix(),
                 fields=self.get_explode_infos_fields(),
                 force=False,
+                fields_forced_as_varchar=True,
             )
 
         # if connexion_format in ["sqlite"] or query:
@@ -2453,6 +3011,35 @@ class Variants:
             os.path.exists(output_file) or None
         )
 
+    def get_columns(self, table: str = None) -> list:
+        """
+        The `get_columns` function returns a list of columns in a specified table. If the `table`
+        parameter is not provided when calling the function, it will default to using the variants table.
+
+        Args:
+            table (str, optional): The name of the table from which you want to retrieve the columns. If not provided,
+                it will default to using the variants table.
+
+        Returns:
+            list: A list of columns in the specified table.
+        """
+
+        if not table:
+            table = self.get_table_variants()
+
+        # Use PRAGMA table_info for SQLite or DESCRIBE for other databases
+        connexion_format = self.get_connexion_format()
+        if connexion_format == "sqlite":
+            query = f"PRAGMA table_info({table})"
+            columns_info = self.get_query_to_df(query)
+            columns = columns_info["name"].tolist()
+        else:
+            query = f"DESCRIBE {table}"
+            columns_info = self.get_query_to_df(query)
+            columns = columns_info["column_name"].tolist()
+
+        return columns
+
     def get_extra_infos(self, table: str = None) -> list:
         """
         The `get_extra_infos` function returns a list of columns that are in a specified table but not
@@ -2506,6 +3093,7 @@ class Variants:
         output_file: str = None,
         output_file_ext: str = ".hdr",
         clean_header: bool = True,
+        clean_info_flag: bool = False,
         remove_chrom_line: bool = False,
     ) -> str:
         """
@@ -2529,6 +3117,11 @@ class Variants:
         `True`, the function will clean the header by modifying certain lines based on a specific
         pattern. If `clean_header`, defaults to True
         :type clean_header: bool (optional)
+        :param clean_info_flag: The `clean_info_flag` parameter in the `export_header` function is a boolean
+        flag that determines whether the header should be cleaned for INFO/tags that are 'Flag' type.
+        When `clean_info_flag` is set to `True`, the function will replace INFO/tags 'Type' as 'String'.
+        Default to False
+        :type clean_info_flag: bool (optional)
         :param remove_chrom_line: The `remove_chrom_line` parameter in the `export_header` function is a
         boolean flag that determines whether the #CHROM line should be removed from the header before
         writing it to the output file. If set to `True`, the #CHROM line will be removed; if set to `,
@@ -2576,12 +3169,13 @@ class Variants:
                     for head in header_list:
                         # Clean head for malformed header
                         head_clean = head
-                        head_clean = re.subn(
-                            "##FORMAT=<ID=(.*),Number=(.*),Type=Flag",
-                            r"##FORMAT=<ID=\1,Number=\2,Type=String",
-                            head_clean,
-                            2,
-                        )[0]
+                        if clean_info_flag:
+                            head_clean = re.subn(
+                                "##FORMAT=<ID=(.*),Number=(.*),Type=Flag",
+                                r"##FORMAT=<ID=\1,Number=\2,Type=String",
+                                head_clean,
+                                2,
+                            )[0]
                         # Write header
                         header_list_clean.append(head_clean)
                     header_list = header_list_clean
@@ -3731,6 +4325,7 @@ class Variants:
 
                             # DB and indexes
                             bw_db = annotation_bigwig_config.get("bw_db", None)
+                            bw_db_file = annotation_bigwig_config.get("db_file", None)
                             cyvcf2_header_indexes = annotation_bigwig_config.get(
                                 "cyvcf2_header_indexes", None
                             )
@@ -3753,6 +4348,36 @@ class Variants:
 
                         # Add record in output file
                         output_vcf.write_record(variant)
+
+                    # Close bw db
+                    for annotation_bigwig_config in annotation_bigwig_config_list:
+
+                        # DB and indexes
+                        bw_db = annotation_bigwig_config.get("bw_db", None)
+                        bw_db_file = annotation_bigwig_config.get("db_file", None)
+
+                        # Try Close bw db
+                        try:
+                            if bw_db is not None:
+                                log.debug(
+                                    f"Annotations 'bigwig' file '{bw_db_file}' closing..."
+                                )
+                                bw_db.close()
+                                log.debug(
+                                    f"Annotations 'bigwig' file '{bw_db_file}' closed"
+                                )
+                            else:
+                                log.debug(
+                                    f"Annotations 'bigwig' file '{bw_db_file}' is already closed or not open"
+                                )
+                        except RuntimeError as e:
+                            log.error(
+                                f"RuntimeError while closing 'bigwig' file '{bw_db_file}': {e}"
+                            )
+                        except Exception as e:
+                            log.error(
+                                f"Unexpected error while closing 'bigwig' file '{bw_db_file}': {e}"
+                            )
 
                     # Log
                     log.debug(f"Annotation done.")
@@ -4578,7 +5203,6 @@ class Variants:
                     run_parallel_commands([merge_command], 1)
 
                     # Error messages
-                    log.info(f"Error/Warning messages:")
                     error_message_command_all = []
                     error_message_command_warning = []
                     error_message_command_err = []
@@ -4593,12 +5217,17 @@ class Variants:
                                     error_message_command_err.append(
                                         f"{err_file}: " + message
                                     )
-                    # log info
-                    for message in list(
-                        set(error_message_command_err + error_message_command_warning)
-                    ):
-                        log.info(f"   {message}")
+
+                    if len(error_message_command_err):
+                        log.error(f"Error messages:")
+                        for message in list(set(error_message_command_err)):
+                            log.error(f"   {message}")
+                    elif len(error_message_command_warning):
+                        log.warning(f"Warning messages:")
+                        for message in list(set(error_message_command_warning)):
+                            log.warning(f"   {message}")
                     # debug info
+                    log.debug(f"Warning/Error messages:")
                     for message in list(set(error_message_command_all)):
                         log.debug(f"   {message}")
                     # failed
@@ -4791,8 +5420,6 @@ class Variants:
             log.debug("Start annotation Exomiser")
 
             with TemporaryDirectory(dir=self.get_tmp_dir()) as tmp_dir:
-
-                # tmp_dir = "/tmp/exomiser"
 
                 ### ANALYSIS ###
                 ################
@@ -5558,7 +6185,6 @@ class Variants:
             run_parallel_commands([snpeff_command], 1)
 
             # Error messages
-            log.info(f"Error/Warning messages:")
             error_message_command_all = []
             error_message_command_warning = []
             error_message_command_err = []
@@ -5571,12 +6197,18 @@ class Variants:
                             error_message_command_warning.append(message)
                         if line.startswith("[E::"):
                             error_message_command_err.append(f"{err_file}: " + message)
-            # log info
-            for message in list(
-                set(error_message_command_err + error_message_command_warning)
-            ):
-                log.info(f"   {message}")
+
+            # Warning/Error messages
+            if len(error_message_command_err):
+                log.error(f"Error messages:")
+                for message in list(set(error_message_command_err)):
+                    log.error(f"   {message}")
+            elif len(error_message_command_warning):
+                log.warning(f"Warning messages:")
+                for message in list(set(error_message_command_warning)):
+                    log.warning(f"   {message}")
             # debug info
+            log.debug(f"Warning/Error messages:")
             for message in list(set(error_message_command_all)):
                 log.debug(f"   {message}")
             # failed
@@ -5913,7 +6545,6 @@ class Variants:
                 run_parallel_commands([command_annovar], 1)
 
                 # Error messages
-                log.info(f"Error/Warning messages:")
                 error_message_command_all = []
                 error_message_command_warning = []
                 error_message_command_err = []
@@ -5922,18 +6553,24 @@ class Variants:
                         for line in f:
                             message = line.strip()
                             error_message_command_all.append(message)
-                            if line.startswith("[W::") or line.startswith("WARNING"):
+                            if line.startswith("[W::"):
                                 error_message_command_warning.append(message)
-                            if line.startswith("[E::") or line.startswith("ERROR"):
+                            if line.startswith("[E::"):
                                 error_message_command_err.append(
                                     f"{err_file}: " + message
                                 )
-                # log info
-                for message in list(
-                    set(error_message_command_err + error_message_command_warning)
-                ):
-                    log.info(f"   {message}")
+
+                # Error/Warning messages
+                if len(error_message_command_err):
+                    log.error(f"Error messages:")
+                    for message in list(set(error_message_command_err)):
+                        log.error(f"   {message}")
+                elif len(error_message_command_warning):
+                    log.warning(f"Warning messages:")
+                    for message in list(set(error_message_command_warning)):
+                        log.warning(f"   {message}")
                 # debug info
+                log.debug(f"Warning/Error messages:")
                 for message in list(set(error_message_command_all)):
                     log.debug(f"   {message}")
                 # failed
@@ -6186,10 +6823,10 @@ class Variants:
                     # Load header as VCF object
                     parquet_hdr_vcf_header_infos = database.get_header().infos
                     # Log
-                    log.debug(
-                        "Annotation database header: "
-                        + str(parquet_hdr_vcf_header_infos)
-                    )
+                    # log.debug(
+                    #     "Annotation database header: "
+                    #     + str(parquet_hdr_vcf_header_infos)
+                    # )
 
                     # Get extra infos
                     parquet_columns = database.get_extra_columns()
@@ -6320,10 +6957,15 @@ class Variants:
                             )
 
                             # Add INFO field to header
-                            parquet_hdr_vcf_header_infos_number = (
-                                parquet_hdr_vcf_header_infos[annotation_field].num
-                                or "."
-                            )
+
+                            # If regions, force values as list, due to overlap/aggregation
+                            if parquet_type in ["regions"]:
+                                parquet_hdr_vcf_header_infos_number = "."
+                            else:
+                                parquet_hdr_vcf_header_infos_number = (
+                                    parquet_hdr_vcf_header_infos[annotation_field].num
+                                    or "."
+                                )
                             parquet_hdr_vcf_header_infos_type = (
                                 parquet_hdr_vcf_header_infos[annotation_field].type
                                 or "String"
@@ -6572,7 +7214,7 @@ class Variants:
                             f"Annotation '{annotation_name}' - No Annotations available"
                         )
 
-                    log.debug("Final header: " + str(vcf_reader.infos))
+                    # log.debug("Final header: " + str(vcf_reader.infos))
 
         # Remove added columns
         for added_column in added_columns:
@@ -6931,6 +7573,7 @@ class Variants:
                     "description": "Create a variant ID with chromosome, position, alt and ref",
                     "available": False,
                     "output_column_name": "variant_chr_pos_alt_ref",
+                    "output_column_number": "1",
                     "output_column_type": "String",
                     "output_column_description": "variant ID with chromosome, position, alt and ref",
                     "operation_query": """ concat("#CHROM", '_', "POS", '_', "REF", '_', "ALT") """,
@@ -6943,6 +7586,7 @@ class Variants:
                     "available": True,
                     "table": "variants",
                     "output_column_name": "VARTYPE",
+                    "output_column_number": "1",
                     "output_column_type": "String",
                     "output_column_description": "Variant type: SNV if X>Y, MOSAIC if X>Y,Z or X,Y>Z, INDEL if XY>Z or X>YZ",
                     "operation_query": """
@@ -7013,6 +7657,22 @@ class Variants:
                     "function_name": "calculation_extract_nomen",
                     "function_params": [],
                 },
+                "NOMEN_SNPEFF": {
+                    "type": "python",
+                    "name": "NOMEN",
+                    "description": "NOMEN information (e.g. NOMEN, CNOMEN, PNOMEN...) from HGVS nomenclature field (see parameters help)",
+                    "available": True,
+                    "function_name": "calculation_extract_nomen",
+                    "function_params": ["snpeff_hgvs"],
+                },
+                "RECREATE_INFO_FIELDS": {
+                    "type": "python",
+                    "name": "RENAME_INFO_FIELDS",
+                    "description": "Recreate INFO_tags, rename or remove tags",
+                    "available": True,
+                    "function_name": "calculation_recreate_info_fields",
+                    "function_params": [],
+                },
                 "RENAME_INFO_FIELDS": {
                     "type": "python",
                     "name": "RENAME_INFO_FIELDS",
@@ -7020,19 +7680,6 @@ class Variants:
                     "available": True,
                     "function_name": "calculation_rename_info_fields",
                     "function_params": [],
-                },
-                "RENAME_INFO_FIELDS_MULTIPLE": {
-                    "type": "python",
-                    "name": "RENAME_INFO_FIELDS",
-                    "description": "Rename or remove INFO/tags, and ensure multiple times process",
-                    "available": True,
-                    "function_name": "calculation_rename_info_fields",
-                    "function_params": [
-                        None,
-                        None,
-                        True,
-                        "RENAME_INFO_FIELDS_MULTIPLE",
-                    ],
                 },
                 "FINDBYPIPELINE": {
                     "type": "python",
@@ -7144,7 +7791,15 @@ class Variants:
                     "description": "Prioritize transcripts with a prioritization profile (using param.json)",
                     "available": True,
                     "function_name": "calculation_transcripts_prioritization",
-                    "function_params": [],
+                    "function_params": [False],
+                },
+                "transcripts_prioritization_strict": {
+                    "type": "python",
+                    "name": "transcripts_prioritization",
+                    "description": "Prioritize transcripts with a prioritization profile (using param.json)",
+                    "available": True,
+                    "function_name": "calculation_transcripts_prioritization",
+                    "function_params": [True],
                 },
                 "transcripts_export": {
                     "type": "python",
@@ -7256,32 +7911,25 @@ class Variants:
         pz_prefix: str = None,
         pz_param: dict = None,
         pz_keys: list = None,
+        strict: bool = False,
     ) -> bool:
         """
-        The `prioritization` function in Python processes VCF files, adds new INFO fields, and
-        prioritizes variants based on configured profiles and criteria.
+        Processes VCF files, adds new INFO fields, and prioritizes variants based on configured profiles and criteria.
 
-        :param table: The `table` parameter in the `prioritization` function is used to specify the name
-        of the table (presumably a VCF file) on which the prioritization operation will be performed. If
-        a table name is provided, the method will prioritize the variants in that specific table
-        :type table: str
-        :param pz_prefix: The `pz_prefix` parameter is used to specify a prefix that will be added to
-        certain INFO fields in a VCF file during the prioritization process. If this parameter is not
-        provided, the code will use a default prefix value of "PZ"
-        :type pz_prefix: str
-        :param pz_param: The `pz_param` parameter in the `prioritization` method is used to pass
-        additional parameters specific to the prioritization process. These parameters can include
-        settings related to prioritization profiles, fields, scoring modes, flags, comments, and other
-        configurations needed for the prioritization of variants in a V
-        :type pz_param: dict
-        :param pz_keys: The `pz_keys` parameter in the `prioritization` function is used to specify the
-        keys that will be used to join the prioritization table with the variant table. If no keys are
-        provided, the function will use the default keys of ["#CHROM", "POS", "REF", "ALT"]
-        :type pz_keys: list
-        :return: The `prioritization` function returns a boolean value (True) if the prioritization
-        operation is successful. If the operation fails, the function will return a boolean value of
-        False
+        Args:
+            table (str, optional): The name of the table (presumably a VCF file) on which the prioritization operation will be performed.
+                If not provided, the default variants table will be used.
+            pz_prefix (str, optional): A prefix to be added to certain INFO fields in the VCF file during the prioritization process.
+                Defaults to "PZ" if not provided.
+            pz_param (dict, optional): Additional parameters specific to the prioritization process. These parameters can include settings
+                related to prioritization profiles, fields, scoring modes, flags, comments, and other configurations needed for the prioritization
+                of variants.
+            pz_keys (list, optional): The keys used to join the prioritization table with the variant table. Defaults to ["#CHROM", "POS", "REF", "ALT"]
+                if not provided.
+            strict (bool, optional): Whether to enforce strict prioritization criteria availability in view (need to be in header and in column). Defaults to False.
 
+        Returns:
+            bool: True if the prioritization operation is successful, False otherwise.
         """
 
         # Config
@@ -7778,19 +8426,24 @@ class Variants:
                                 log.debug(
                                     f"""Profile '{profile}' - Prioritization - Create '{annotation_view_name}' view with '{criterion_fields_profile}'... """
                                 )
-                                annotation_view = self.create_annotations_view(
+                                annotation_view_name = self.create_annotations_view(
                                     view=annotation_view_name,
                                     table=table_variants,
                                     view_type="view",
+                                    view_mode="explore",
                                     info_prefix_column=annotations_view_prefix,
                                     info_struct_column=annotations_view_struct,
                                     fields=criterion_fields_profile + pz_keys,
+                                    fields_not_exists=(not strict),
+                                    only_in_columns=strict,
+                                    strict=strict,
                                     drop_view=True,
+                                    detect_type_list=True,
                                 )
 
                                 # Describe annotation view and dict
                                 annotation_view_describe = self.get_query_to_df(
-                                    f"DESCRIBE {annotation_view}"
+                                    f"DESCRIBE {annotation_view_name}"
                                 )
                                 annotation_view_describe_dict = (
                                     annotation_view_describe.set_index("column_name")[
@@ -8060,7 +8713,9 @@ class Variants:
                                     log.debug(
                                         f"""Profile '{profile}' - Prioritization query - Chromosome '{chrom}' [{num_query}/{len(sql_queries)}]"""
                                     )
-                                    # log.debug(f"""sql_query_chrom: {sql_query_chrom}""")
+                                    # log.debug(
+                                    #     f"""sql_query_chrom:\n{sql_query_chrom}"""
+                                    # )
                                     self.execute_query(query=sql_query_chrom)
 
                         # Update INFO field
@@ -8081,10 +8736,7 @@ class Variants:
                         self.execute_query(query=sql_query_update)
 
                         # Remove annotations view for prioritization
-                        query_drop_tmp_table = f"""
-                            DROP VIEW IF EXISTS {annotation_view_name}
-                        """
-                        self.execute_query(query=query_drop_tmp_table)
+                        self.remove_tables_or_views(tables=[annotation_view_name])
 
         else:
 
@@ -8093,14 +8745,6 @@ class Variants:
         # Remove added columns
         for added_column in added_columns:
             self.drop_column(column=added_column)
-
-        # Explode INFOS fields into table fields
-        if self.get_explode_infos():
-            self.explode_infos(
-                prefix=self.get_explode_infos_prefix(),
-                fields=self.get_explode_infos_fields(),
-                force=True,
-            )
 
         return True
 
@@ -8118,6 +8762,8 @@ class Variants:
         of threads obtained from the `get_threads()` method
         :type threads: int
         """
+
+        import dask.dataframe as dd  # type: ignore
 
         # Function for each partition of the Dask Dataframe
         def partition_function(partition):
@@ -8672,6 +9318,7 @@ class Variants:
         operation_name = operation.get("name", "unknown")
         log.debug(f"process SQL {operation_name}")
         output_column_name = operation.get("output_column_name", operation_name)
+        output_column_number = operation.get("output_column_number", ".")
         output_column_type = operation.get("output_column_type", "String")
         prefix = operation.get("explode_infos_prefix", "")
         output_column_type_sql = code_type_map_to_sql.get(output_column_type, "VARCHAR")
@@ -8687,12 +9334,12 @@ class Variants:
         operation_table = operation.get(
             "table", self.get_table_variants(clause="alter")
         )
-
-        # table variants
-        if operation_table:
-            table_variants = operation_table
-        else:
-            table_variants = self.get_table_variants(clause="alter")
+        operation_table_source = operation.get("table_source", operation_table)
+        operation_table_dest = operation.get("table_dest", operation_table)
+        operation_table_key = operation.get(
+            "table_key", ["#CHROM", "POS", "REF", "ALT"]
+        )
+        # log.debug(f"operation={operation}")
 
         if operation_query:
 
@@ -8716,7 +9363,7 @@ class Variants:
                 vcf_reader = self.get_header()
                 vcf_reader.infos[output_column_name] = vcf.parser._Info(
                     output_column_name,
-                    ".",
+                    output_column_number,
                     output_column_type,
                     output_column_description,
                     "howard calculation",
@@ -8724,59 +9371,117 @@ class Variants:
                     self.code_type_map.get(output_column_type),
                 )
 
-                # Explode infos if needed
-                log.debug(f"calculation_process_sql prefix {prefix}")
-                added_columns += self.explode_infos(
-                    prefix=prefix,
-                    fields=[output_column_name] + operation_info_fields,
-                    force=False,
-                    table=table_variants,
+                # Create view
+                table_view_name = "table_view_calculation_process"
+                table_view_name = self.create_annotations_view(
+                    table=operation_table_source,
+                    view=table_view_name,
+                    view_type="view",
+                    view_mode="explore",
+                    fields=operation_info_fields + ["INFO"],
+                    fields_needed=operation_table_key,
+                    info_prefix_column="",
+                    info_struct_column="INFOS",
+                    drop_view=True,
                 )
 
-                # Create column
-                added_column = self.add_column(
-                    table_name=table_variants,
-                    column_name=prefix + output_column_name,
-                    column_type=output_column_type_sql,
-                    default_value="null",
-                )
-                added_columns.append(added_column)
+                # # DEVEL
+                # log.debug(f"operation_info_fields={operation_info_fields}")
+                # result_view = self.get_query_to_df(f"SELECT * FROM {table_view_name}")
+                # log.debug(f"result_view={result_view}")
+                # # result_view = self.get_query_to_df(
+                # #     f"SELECT {', '.join(operation_info_fields)} FROM {table_view_name}"
+                # # )
+                # # log.debug(f"result_view={result_view}")
+
+                # Table key construct
+                clause_key = []
+                for key in operation_table_key:
+                    clause_key.append(
+                        f""" {operation_table_dest}."{key}" = table_view."{key}" """
+                    )
+
+                # Create view
+                try:
+                    # create view name with random number
+                    calculation_view_name = "calculation_view_" + str(
+                        random.randrange(1000)
+                    )
+                    query_create_view = f"""
+                        CREATE TABLE {calculation_view_name} AS
+                        SELECT {", ".join([f'"{k}"' for k in operation_table_key])},
+                            concat(
+                                    CASE
+                                        WHEN "INFO" IS NOT NULL AND "INFO" NOT IN ('', '.')
+                                        THEN ';'
+                                        ELSE ''
+                                    END,
+                                    '{output_column_name}=',
+                                    TRY_CAST(({operation_query}) AS VARCHAR)
+                                ) AS INFO
+                        FROM {table_view_name}
+                        
+                    """
+                    # log.debug(f"query_create_view={query_create_view}")
+                    self.get_connexion().execute(query_create_view)
+                except:
+                    msg_err = f"Operations config: Calculation '{operation_name}' query failed"
+                    log.error(msg_err)
+                    raise ValueError(msg_err)
+
+                # Add to INFO
+                if operation_info:
+                    sql_update_info = f"""
+                        UPDATE {operation_table_dest}
+                        SET "INFO" = concat(
+                                CASE
+                                    WHEN {operation_table_dest}."INFO" IS NOT NULL AND {operation_table_dest}."INFO" NOT IN ('', '.')
+                                    THEN {operation_table_dest}."INFO"
+                                    ELSE ''
+                                END,
+                                table_view."INFO"
+                                )
+                        FROM {calculation_view_name} AS table_view
+                        WHERE {" AND ".join(clause_key)}
+                    """
 
                 # Operation calculation
                 try:
 
-                    # Query to update calculation column
-                    sql_update = f"""
-                        UPDATE {table_variants}
-                        SET "{prefix}{output_column_name}" = ({operation_query})
-                    """
-                    self.conn.execute(sql_update)
-
                     # Add to INFO
                     if operation_info:
-                        sql_update_info = f"""
-                            UPDATE {table_variants}
-                            SET "INFO" =
-                                concat(
-                                    CASE
-                                        WHEN "INFO" IS NOT NULL
-                                        THEN concat("INFO", ';')
-                                        ELSE ''
-                                    END,
-                                    '{output_column_name}=',
-                                    "{prefix}{output_column_name}"
+
+                        if True:
+                            # Batch split
+                            batch_split = self.get_batch_split(
+                                table=calculation_view_name, block=1000
+                            )
+                            # batch_split = 100
+
+                            # Insert by batch
+                            for batch_index in range(batch_split):
+                                # where clause
+                                if batch_split > 1:
+                                    where_clause = f""" AND ({operation_table_dest}."POS" % {batch_split}) = {batch_index} """
+                                else:
+                                    where_clause = ""
+                                # Insert data
+                                sql_update_info_chunk = f"""
+                                    {sql_update_info}
+                                    {where_clause}
+                                """
+                                log.debug(
+                                    f"Calculation process - process batch [{batch_index+1}/{batch_split}]..."
                                 )
-                            WHERE "{prefix}{output_column_name}" IS NOT NULL AND "{prefix}{output_column_name}" NOT IN ('')
-                        """
-                        self.conn.execute(sql_update_info)
+                                # log.debug(
+                                #     f"sql_update_info_chunk={sql_update_info_chunk}"
+                                # )
+                                self.conn.execute(sql_update_info_chunk)
 
                 except:
-                    log.error(
-                        f"Operations config: Calculation '{operation_name}' query failed"
-                    )
-                    raise ValueError(
-                        f"Operations config: Calculation '{operation_name}' query failed"
-                    )
+                    msg_err = f"Operations config: Calculation '{operation_name}' query failed"
+                    log.error(msg_err)
+                    raise ValueError(msg_err)
 
                 # Remove added columns
                 for added_column in added_columns:
@@ -8784,20 +9489,16 @@ class Variants:
                     self.drop_column(column=added_column)
 
             else:
-                log.error(
-                    f"Operations config: Calculation '{operation_name}' DOES NOT contain all mandatory fields {operation_info_fields}"
-                )
-                raise ValueError(
-                    f"Operations config: Calculation '{operation_name}' DOES NOT contain all mandatory fields {operation_info_fields}"
-                )
+                msg_err = f"Operations config: Calculation '{operation_name}' DOES NOT contain all mandatory fields {operation_info_fields}"
+                log.error(msg_err)
+                raise ValueError(msg_err)
 
         else:
-            log.error(
+            msg_err = (
                 f"Operations config: Calculation '{operation_name}' query NOT defined"
             )
-            raise ValueError(
-                f"Operations config: Calculation '{operation_name}' query NOT defined"
-            )
+            log.error(msg_err)
+            raise ValueError(msg_err)
 
     def calculation_process_function(
         self, operation: dict, operation_name: str = "unknown"
@@ -9229,24 +9930,45 @@ class Variants:
                 f"Extract snpEff annotations - No snpEff annotation '{snpeff_field}'. Please Anotate with snpEff before use this calculation option"
             )
 
-    def calculation_extract_nomen(self) -> None:
+    def calculation_extract_nomen(self, hgvs_field: str = None) -> None:
         """
-        This function extracts the HGVS nomenclature from the calculation/identification of NOMEN.
-        """
+        Extracts the HGVS nomenclature from the provided field and calculates the NOMEN patterns.
 
-        # NOMEN field
-        field_nomen_dict = "NOMEN_DICT"
+        This function performs the following steps:
+        1. Retrieves extra information fields and constructs the NOMEN pattern.
+        2. Splits the NOMEN pattern based on predefined separators.
+        3. Constructs SQL queries to parse and extract various components of the NOMEN pattern.
+        4. Calculates scores for each variant based on the extracted NOMEN components.
+        5. Creates a temporary table to store the results of the NOMEN extraction and scoring.
+        6. Updates the main variants table with the extracted NOMEN information.
+
+        Args:
+            hgvs_field (str, optional): The field containing the HGVS nomenclature to be extracted. Defaults to None.
+
+        Returns:
+            None
+
+        Raises:
+            Any exceptions raised during the execution of the SQL queries or file operations.
+
+        Example:
+            self.calculation_extract_nomen(hgvs_field="hgvs_column")
+        """
 
         # NOMEN structure
         nomen_dict = {
-            "NOMEN": "NOMEN hgvs nomenclature considered as reference hgvs (official transcript, first otherwise)",
+            "NOMEN": "NOMEN hgvs nomenclature considered as reference hgvs",
             "CNOMEN": "CNOMEN hgvs nomenclature at DNA level related to a transcript (TNOMEN)",
             "RNOMEN": "RNOMEN hgvs nomenclature at RNA level related to a transcript (TNOMEN)",
             "NNOMEN": "NNOMEN hgvs nomenclature for non-coding variant",
             "PNOMEN": "PNOMEN hgvs nomenclature at Protein level related to a transcript (TNOMEN)",
+            "UPNOMEN": "UPNOMEN hgvs nomenclature at Protein level as uncertain related to a transcript (TNOMEN)",
             "TVNOMEN": "TVNOMEN hgvs transcript with version (if any) used (e.g. for CNOMEN and PNOMEN)",
             "TNOMEN": "TNOMEN hgvs transcript used (e.g. for CNOMEN and PNOMEN)",
             "VNOMEN": "VNOMEN hgvs transcript version used (e.g. for CNOMEN and PNOMEN)",
+            "TPVNOMEN": "TPVNOMEN hgvs protein transcript with version (if any) used (e.g. for CNOMEN and PNOMEN)",
+            "TPNOMEN": "TNOMEN hgvs protein transcript used (e.g. for CNOMEN and PNOMEN)",
+            "TPVVNOMEN": "VNOMEN hgvs protein transcript version used (e.g. for CNOMEN and PNOMEN)",
             "ENOMEN": "ENOMEN hgvs exon nomenclature related to a transcript (TNOMEN)",
             "GNOMEN": "GNOMEN hgvs gene nomenclature related to a transcript (TNOMEN)",
         }
@@ -9254,26 +9976,21 @@ class Variants:
         # Param
         param = self.get_param()
 
-        # Threads
-        threads = self.get_threads()
-
         # Prefix
         prefix = self.get_explode_infos_prefix()
 
         # Header
         vcf_reader = self.get_header()
 
-        # Added columns
-        added_columns = []
-
         # Get HGVS field
-        hgvs_field = (
-            param.get("calculation", {})
-            .get("calculations", {})
-            .get("NOMEN", {})
-            .get("options", {})
-            .get("hgvs_field", "hgvs")
-        )
+        if hgvs_field is None:
+            hgvs_field = (
+                param.get("calculation", {})
+                .get("calculations", {})
+                .get("NOMEN", {})
+                .get("options", {})
+                .get("hgvs_field", "hgvs")
+            )
 
         # Get NOMEN pattern
         nomen_pattern = (
@@ -9283,6 +10000,36 @@ class Variants:
             .get("options", {})
             .get("pattern", None)
         )
+        # default NOMEN pattern
+        if nomen_pattern is None:
+            nomen_pattern = "GNOMEN:TNOMEN:ENOMEN:CNOMEN:RNOMEN:NNOMEN:PNOMEN"
+
+        if isinstance(nomen_pattern, str):
+            nomen_patterns = {"NOMEN": nomen_pattern}
+        elif isinstance(nomen_pattern, dict):
+            nomen_patterns = nomen_pattern
+        else:
+            msg_err = f"NOMEN pattern '{nomen_pattern}' is not well formed"
+            log.error(msg_err)
+            raise ValueError(msg_err)
+
+        # Get NOMEN pattern
+        nomen_fields = (
+            param.get("calculation", {})
+            .get("calculations", {})
+            .get("NOMEN", {})
+            .get("options", {})
+            .get("fields", None)
+        )
+
+        # default NOMEN pattern
+        if nomen_fields is None:  # or nomen_fields == []:
+            nomen_fields = list(nomen_dict.keys())
+
+        # Remove "NOMEN" as patterns as separetly processed
+        for nomen_pattern in nomen_patterns.keys():
+            if nomen_pattern in nomen_fields:
+                nomen_fields.remove(nomen_pattern)
 
         # transcripts list of preference sources
         transcripts_sources = {}
@@ -9323,15 +10070,6 @@ class Variants:
             .get("transcripts_column", None)
         )
 
-        if transcripts_table and transcripts_column:
-            extra_field_transcript = f"{transcripts_table}.{transcripts_column}"
-            # Explode if not exists
-            added_columns += self.explode_infos(
-                fields=[transcripts_column], table=transcripts_table
-            )
-        else:
-            extra_field_transcript = f"NULL"
-
         # Transcripts of preference source order
         transcripts_order = (
             param.get("calculation", {})
@@ -9344,49 +10082,341 @@ class Variants:
         # Transcripts from file
         transcripts = transcripts_sources.get("file", [])
 
-        # Explode HGVS field in column
-        added_columns += self.explode_infos(fields=[hgvs_field])
+        # Log
+        log.info(f"Start NOMEN calculation configuration...")
+
+        # Create annotation view
+        annotations_view = "annotations_vies_for_extract_nomen_" + str(
+            random.randrange(1000)
+        )
+        if transcripts_column is None:
+            transcripts_column = "transcript"
+        annotations_view = self.create_annotations_view(
+            table=transcripts_table,
+            view=annotations_view,
+            view_type="table",
+            view_mode="explore",
+            fields=[transcripts_column, hgvs_field],
+            fields_forced_as_varchar=True,
+            info_prefix_column="",
+        )
 
         # extra infos
         extra_infos = self.get_extra_infos()
         extra_field = prefix + hgvs_field
 
-        if extra_field in extra_infos:
+        if extra_field in extra_infos or True:
 
-            # Create dataframe
-            dataframe_hgvs = self.get_query_to_df(
-                f""" SELECT "#CHROM", "POS", "REF", "ALT", "{extra_field}" AS hgvs, {extra_field_transcript} AS transcript FROM variants """
-            )
+            # Construct NOMEN Pattern
+            separators = [",", "(", ")", "|", ":", "[", "]", "{", "}"]
+            regex_pattern = "|".join(map(re.escape, separators))
+
+            # Init
+            nomen_patterns_sql = {}
+
+            for nomen_pattern_name, nomen_pattern in nomen_patterns.items():
+
+                # Split NOMEN pattern
+                split_nomen_pattern = re.split(rf"({regex_pattern})", nomen_pattern)
+
+                # Construct SQL NOMEN Pattern
+                nomen_pattern_sql_list = []
+                nomen_info_previous = ""
+                inside_parentheses = False
+                inside_brackets = False
+                inside_braces = False
+
+                # Parse NOMEN pattern
+                for i, nomen_info in enumerate(split_nomen_pattern):
+                    if nomen_info == "(":
+                        inside_parentheses = True
+                        nomen_info_previous += nomen_info
+                    elif nomen_info == ")":
+                        inside_parentheses = False
+                        if nomen_info_previous:
+                            nomen_pattern_sql_list.append(nomen_info)
+                        nomen_info_previous = ""
+                    elif nomen_info == "[":
+                        inside_brackets = True
+                        nomen_info_previous += nomen_info
+                    elif nomen_info == "]":
+                        inside_brackets = False
+                        if nomen_info_previous:
+                            nomen_pattern_sql_list.append(nomen_info)
+                        nomen_info_previous = ""
+                    elif nomen_info == "{":
+                        inside_braces = True
+                        nomen_info_previous += nomen_info
+                    elif nomen_info == "}":
+                        inside_braces = False
+                        if nomen_info_previous:
+                            nomen_pattern_sql_list.append(nomen_info)
+                        nomen_info_previous = ""
+                    elif nomen_info in separators:
+                        nomen_info_previous += nomen_info
+                    else:
+                        if nomen_info != "":
+                            next_info = (
+                                split_nomen_pattern[i + 1]
+                                if i + 1 < len(split_nomen_pattern)
+                                else ""
+                            )
+                            if next_info in separators:
+                                if (
+                                    inside_parentheses
+                                    or inside_brackets
+                                    or inside_braces
+                                ):
+                                    nomen_pattern_sql_list.append(
+                                        f"""
+                                            CASE
+                                                WHEN {nomen_info} IS NOT NULL
+                                                THEN concat('{nomen_info_previous}', {nomen_info}, '{next_info}')
+                                            END
+                                        """
+                                    )
+                                else:
+                                    nomen_pattern_sql_list.append(
+                                        f"""
+                                            CASE
+                                                WHEN {nomen_info} IS NOT NULL
+                                                THEN concat('{nomen_info_previous}', {nomen_info})
+                                            END
+                                        """
+                                    )
+                            else:
+                                nomen_pattern_sql_list.append(
+                                    f"""
+                                        CASE
+                                            WHEN {nomen_info} IS NOT NULL
+                                            THEN concat('{nomen_info_previous}', {nomen_info})
+                                        END
+                                    """
+                                )
+                            nomen_info_previous = ""
+
+                    # Construcut NOMEN pattern for SQL
+                    nomen_pattern_sql = ", ".join(nomen_pattern_sql_list)
+
+                    # Add NOMEN pattern for SQL
+                    nomen_patterns_sql[nomen_pattern_name] = nomen_pattern_sql
+
+            # Transcript source order and index window
+            transcripts_order_length = len(transcripts_order)
+            transcripts_order_window = 10000000
+            try:
+                index_transcript_selected = (
+                    transcripts_order_length - transcripts_order.index("column")
+                ) * transcripts_order_window
+            except:
+                index_transcript_selected = 0
+            try:
+                index_transcript_prefered = (
+                    transcripts_order_length - transcripts_order.index("file")
+                ) * transcripts_order_window
+            except:
+                index_transcript_prefered = 0
 
             # Transcripts rank
-            transcripts_rank = {
-                transcript: rank for rank, transcript in enumerate(transcripts, start=1)
-            }
-            transcripts_len = len(transcripts_rank)
+            if len(transcripts) >= 1:
+                transcripts_pond = {
+                    transcript: len(transcripts) - rank
+                    for rank, transcript in enumerate(transcripts, start=0)
+                }
 
-            # Create main NOMEN column
-            dataframe_hgvs[field_nomen_dict] = dataframe_hgvs.apply(
-                lambda x: find_nomen(
-                    hgvs=x.hgvs,
-                    transcript=x.transcript,
-                    transcripts=transcripts_rank,
-                    pattern=nomen_pattern,
-                    transcripts_source_order=transcripts_order,
-                    transcripts_len=transcripts_len,
+                # Construct transcripts pond table
+                transcripts_pond_table = "transcripts_pond_" + str(
+                    random.randrange(1000)
+                )
+                transcripts_pond_df = pd.DataFrame(
+                    list(transcripts_pond.items()), columns=["transcript", "rank"]
+                )
+                self.execute_query(
+                    f"CREATE TABLE {transcripts_pond_table} AS SELECT * FROM transcripts_pond_df"
+                )
+
+                transcripts_pond_score_sql = f"""
+                    + CASE
+                            WHEN TVNOMEN in (SELECT transcript FROM {transcripts_pond_table})
+                                OR TNOMEN IN (SELECT transcript FROM {transcripts_pond_table})
+                            THEN {index_transcript_prefered} + (
+                                    SELECT {transcripts_pond_table}.rank
+                                    FROM {transcripts_pond_table}
+                                    WHERE {transcripts_pond_table}.transcript = TVNOMEN
+                                        OR {transcripts_pond_table}.transcript = TNOMEN
+                                    LIMIT 1
+                                )
+                            ELSE 0
+                        END
+                """
+            else:
+                transcripts_pond_score_sql = ""
+
+            # NOMEN Patterns
+            pattern_tvnomen = r".*[:]*([NX][MR]_[^:]*).*"
+            pattern_tpvnomen = r".*[:]*([NX]P_[^:]*).*"
+            pattern_cnomen = r".*[:]*([cgm]\.[^:]*).*"
+            pattern_pnomen = r".*[:]*([p]\.[^:]*).*"
+            pattern_nnomen = r".*[:]*([n]\.[^:]*).*"
+            pattern_rnomen = r".*[:]*([r]\.[^:]*).*"
+            pattern_enomen = r".*[:]*(exon[^:]*).*"
+
+            # Check NOMEN fields length
+            nomen_fields_select_sql = ""
+            if len(nomen_fields) >= 1:
+                nomen_fields_select_sql = ", ".join(nomen_fields) + ","
+            else:
+                nomen_fields_select_sql = ""
+
+            # NOMEN patterns SQL select
+            nomen_patterns_sql_select_list = []
+            for nomen_pattern_name, nomen_pattern_sql in nomen_patterns_sql.items():
+                nomen_patterns_sql_select_list.append(
+                    f"""
+                    concat({nomen_pattern_sql}) AS "{nomen_pattern_name}",
+                """
+                )
+            nomen_patterns_sql_select = " ".join(nomen_patterns_sql_select_list)
+
+            # Query find NOMEN
+            query_find_nomen = f"""
+                WITH
+                nomen_variants AS (
+                    SELECT
+                        "#CHROM", "POS", "REF", "ALT",
+                        "{hgvs_field}"::VARCHAR AS hgvs, {transcripts_column}::VARCHAR AS 'transcript',
+                        UNNEST(STRING_SPLIT("{hgvs_field}"::VARCHAR, ',')) AS 'nomen'
+                    FROM {annotations_view}
                 ),
-                axis=1,
+                decomposed_variants AS (
+                    SELECT
+                        "#CHROM", "POS", "REF", "ALT",
+                        "transcript",
+                        -- TVNOMEN
+                        NULLIF(regexp_extract(nomen, '{pattern_tvnomen}', 1), '') AS 'TVNOMEN',
+                        CASE
+                            WHEN array_length(string_split(regexp_extract(nomen, '{pattern_tvnomen}', 1), '.'), 1) >= 1
+                            THEN NULLIF(string_split(regexp_extract(nomen, '{pattern_tvnomen}', 1), '.')[1], '')
+                            ELSE NULL
+                        END AS 'TNOMEN',
+                        CASE
+                            WHEN array_length(string_split(regexp_extract(nomen, '{pattern_tvnomen}', 1), '.'), 1) >= 2
+                            THEN NULLIF(string_split(regexp_extract(nomen, '{pattern_tvnomen}', 1), '.')[2], '')
+                            ELSE NULL
+                        END AS 'VNOMEN',
+                        -- TPVNOMEN
+                        NULLIF(regexp_extract(nomen, '{pattern_tpvnomen}', 1), '') AS 'TPVNOMEN',
+                        CASE
+                            WHEN array_length(string_split(regexp_extract(nomen, '{pattern_tpvnomen}', 1), '.'), 1) >= 1
+                            THEN NULLIF(string_split(regexp_extract(nomen, '{pattern_tpvnomen}', 1), '.')[1], '')
+                            ELSE NULL
+                        END AS 'TPNOMEN',
+                        CASE
+                            WHEN array_length(string_split(regexp_extract(nomen, '{pattern_tpvnomen}', 1), '.'), 1) >= 2
+                            THEN IFNULL(string_split(regexp_extract(nomen, '{pattern_tpvnomen}', 1), '.')[2], '')
+                            ELSE NULL
+                        END AS 'TPVVNOMEN',
+                        -- CPNR-NOMEN
+                        NULLIF(regexp_extract(nomen, '{pattern_cnomen}', 1), '') AS 'CNOMEN',
+                        NULLIF(regexp_extract(nomen, '{pattern_pnomen}', 1), '') AS 'PNOMEN',
+                        NULLIF(regexp_extract(nomen, '{pattern_nnomen}', 1), '') AS 'NNOMEN',
+                        NULLIF(regexp_extract(nomen, '{pattern_rnomen}', 1), '') AS 'RNOMEN',
+                        -- Uncertain p.
+                        NULLIF(
+                            CASE
+                                WHEN NULLIF(regexp_extract(nomen, '{pattern_pnomen}', 1), '') IS NOT NULL
+                                THEN concat(
+                                    'p.',
+                                    '(',
+                                    string_split(regexp_extract(nomen, '{pattern_pnomen}', 1), '.')[2],
+                                    ')'
+                                )
+                            END
+                        , '') AS 'UPNOMEN',
+                        -- exon
+                        NULLIF(regexp_extract(nomen, '{pattern_enomen}', 1), '') AS 'ENOMEN',
+                        -- gene
+                        CASE
+                            WHEN NULLIF(regexp_extract(string_split(nomen, ':')[1], '{pattern_tvnomen}', 1), '') IS NOT NULL
+                            OR NULLIF(regexp_extract(string_split(nomen, ':')[1], '{pattern_tpvnomen}', 1), '') IS NOT NULL
+                            OR NULLIF(regexp_extract(string_split(nomen, ':')[1], '{pattern_cnomen}', 1), '') IS NOT NULL
+                            OR NULLIF(regexp_extract(string_split(nomen, ':')[1], '{pattern_pnomen}', 1), '') IS NOT NULL
+                            OR NULLIF(regexp_extract(string_split(nomen, ':')[1], '{pattern_nnomen}', 1), '') IS NOT NULL
+                            OR NULLIF(regexp_extract(string_split(nomen, ':')[1], '{pattern_rnomen}', 1), '') IS NOT NULL
+                            OR NULLIF(regexp_extract(string_split(nomen, ':')[1], '{pattern_enomen}', 1), '') IS NOT NULL
+                            THEN NULL
+                            ELSE NULLIF(string_split(nomen, ':')[1], '')
+                        END AS 'GNOMEN'
+                    FROM nomen_variants
+                ),
+                scored_variants AS (
+                    SELECT
+                        "#CHROM", "POS", "REF", "ALT",
+                        "TNOMEN", "TVNOMEN", "VNOMEN",
+                        "TPVNOMEN", "TPNOMEN", "TPVVNOMEN",
+                        "CNOMEN", "PNOMEN", "NNOMEN", "RNOMEN", "UPNOMEN",
+                        "ENOMEN", "GNOMEN",
+                        -- Score calculation
+                        0
+                        + CASE WHEN CNOMEN IS NOT NULL THEN 1 ELSE 0 END
+                        + CASE WHEN NNOMEN IS NOT NULL THEN 1 ELSE 0 END
+                        + CASE WHEN RNOMEN IS NOT NULL THEN 1 ELSE 0 END
+                        + CASE WHEN ENOMEN IS NOT NULL THEN 1 ELSE 0 END
+                        + CASE WHEN PNOMEN IS NOT NULL THEN 1 ELSE 0 END
+                        + CASE WHEN TPVNOMEN IS NOT NULL THEN 1 ELSE 0 END
+                        + CASE WHEN regexp_matches(TVNOMEN, '^NM_.*') THEN 2 ELSE 0 END
+                        + CASE WHEN regexp_matches(TVNOMEN, '^NR_.*') THEN 1 ELSE 0 END
+                        -- Selected transcript
+                        + CASE WHEN transcript IS NOT NULL AND (TVNOMEN == transcript OR TNOMEN == transcript) THEN {index_transcript_selected} ELSE 0 END
+                        -- Preferend transcripts
+                        {transcripts_pond_score_sql}
+                        AS 'SCORE'
+                    FROM decomposed_variants
+                )
+                    SELECT
+                        "#CHROM", "POS", "REF", "ALT",
+                        {nomen_fields_select_sql}
+                        {nomen_patterns_sql_select}
+                    FROM (
+                        SELECT *,
+                            ROW_NUMBER() OVER (PARTITION BY "#CHROM", "POS", "REF", "ALT" ORDER BY SCORE DESC) AS rn
+                        FROM scored_variants
+                    )
+                    WHERE rn = 1
+            """
+            nomen_annotations_view = "annotations_vies_for_extract_nomen_" + str(
+                random.randrange(1000)
             )
+            query_find_nomen_create = f"""
+            CREATE TABLE {nomen_annotations_view} AS (
+                {query_find_nomen}
+            )
+            """
+            # log.debug(f"query_devel={query_find_nomen}")
+            log.info(f"Start NOMEN calculation...")
+            self.execute_query(query=query_find_nomen_create)
+            log.debug(f"Stop NOMEN calculation")
 
             # Explode NOMEN Structure and create SQL set for update
             sql_nomen_fields = []
-            for nomen_field in nomen_dict:
+            for nomen_field in list(nomen_patterns.keys()) + nomen_fields:
+
+                # Description
+                nomen_field_desc = nomen_dict.get(
+                    nomen_field, "howard calculation NOMEN"
+                )
+                if nomen_field in list(nomen_patterns.keys()):
+                    nomen_field_desc = (
+                        nomen_dict.get("NOMEN", "howard calculation NOMEN")
+                        + f""". Format '{nomen_patterns.get(nomen_field)}'"""
+                    )
 
                 # Create VCF header field
                 vcf_reader.infos[nomen_field] = vcf.parser._Info(
                     nomen_field,
-                    ".",
+                    1,
                     "String",
-                    nomen_dict.get(nomen_field, "howard calculation NOMEN"),
+                    nomen_field_desc,
                     "howard calculation",
                     "0",
                     self.code_type_map.get("String"),
@@ -9396,10 +10426,10 @@ class Variants:
                 sql_nomen_fields.append(
                     f"""
                         CASE 
-                            WHEN dataframe_hgvs."{field_nomen_dict}"."{nomen_field}" NOT NULL AND dataframe_hgvs."{field_nomen_dict}"."{nomen_field}" NOT IN ('')
+                            WHEN {nomen_annotations_view}."{nomen_field}" NOT NULL AND {nomen_annotations_view}."{nomen_field}" NOT IN ('')
                             THEN concat(
                                     ';{nomen_field}=',
-                                    dataframe_hgvs."{field_nomen_dict}"."{nomen_field}"
+                                    {nomen_annotations_view}."{nomen_field}"
                                 )
                             ELSE ''
                         END
@@ -9411,31 +10441,35 @@ class Variants:
 
             # Update
             sql_update = f"""
-                UPDATE variants
+                UPDATE {transcripts_table}
                 SET "INFO" = 
                     concat(
                         CASE
                             WHEN "INFO" IS NULL
                             THEN ''
-                            ELSE "INFO"
+                            ELSE concat("INFO", ';')
                         END,
-                        {sql_nomen_fields_set}
+                        regexp_replace(
+                            concat(
+                                {sql_nomen_fields_set}
+                            )
+                            ,'^;', ''
+                        )
                     )
-                FROM dataframe_hgvs
-                WHERE variants."#CHROM" = dataframe_hgvs."#CHROM"
-                    AND variants."POS" = dataframe_hgvs."POS" 
-                    AND variants."REF" = dataframe_hgvs."REF"
-                    AND variants."ALT" = dataframe_hgvs."ALT"
+                FROM {nomen_annotations_view}
+                WHERE {transcripts_table}."#CHROM" = {nomen_annotations_view}."#CHROM"
+                    AND {transcripts_table}."POS" = {nomen_annotations_view}."POS" 
+                    AND {transcripts_table}."REF" = {nomen_annotations_view}."REF"
+                    AND {transcripts_table}."ALT" = {nomen_annotations_view}."ALT"
             """
+            log.debug(f"Start NOMEN update...")
             self.conn.execute(sql_update)
+            log.debug(f"Stop NOMEN update...")
 
-            # Delete dataframe
-            del dataframe_hgvs
-            gc.collect()
-
-        # Remove added columns
-        for added_column in added_columns:
-            self.drop_column(column=added_column)
+            # Remove tables and view
+            self.remove_tables_or_views(
+                tables=[annotations_view, nomen_annotations_view]
+            )
 
     def calculation_find_by_pipeline(self, tag: str = "findbypipeline") -> None:
         """
@@ -10447,7 +11481,7 @@ class Variants:
         else:
             log.info("No Transcripts to process. Check param.json file configuration")
 
-    def calculation_transcripts_prioritization(self) -> None:
+    def calculation_transcripts_prioritization(self, strict: bool = False) -> None:
         """
         The function `calculation_transcripts_prioritization` creates a transcripts table and
         prioritizes transcripts based on certain criteria.
@@ -10458,7 +11492,9 @@ class Variants:
 
         # Add info field
         if transcripts_table:
-            self.transcripts_prioritization(transcripts_table=transcripts_table)
+            self.transcripts_prioritization(
+                transcripts_table=transcripts_table, strict=strict
+            )
         else:
             log.info("No Transcripts to process. Check param.json file configuration")
 
@@ -10487,26 +11523,19 @@ class Variants:
         param: dict = {},
     ) -> str:
         """
-        The `create_transcript_view` function generates a transcript view by processing data from a
-        specified table based on provided parameters and structural information.
+        Generates a transcript view by processing data from a specified table based on provided parameters and structural information.
 
-        :param transcripts_table: The `transcripts_table` parameter in the `create_transcript_view` function
-        is used to specify the name of the table that will store the final transcript view data. If a table
-        name is not provided, the function will create a new table to store the transcript view data, and by
-        default,, defaults to transcripts
-        :type transcripts_table: str (optional)
-        :param transcripts_table_drop: The `transcripts_table_drop` parameter in the
-        `create_transcript_view` function is a boolean parameter that determines whether to drop the
-        existing transcripts table before creating a new one. If `transcripts_table_drop` is set to `True`,
-        the function will drop the existing transcripts table if it exists, defaults to False
-        :type transcripts_table_drop: bool (optional)
-        :param param: The `param` parameter in the `create_transcript_view` function is a dictionary that
-        contains information needed to create a transcript view. It includes details such as the structure
-        of the transcripts, columns mapping, column formats, and other necessary information for generating
-        the view. This parameter allows for flexibility and customization
-        :type param: dict
-        :return: The `create_transcript_view` function returns the name of the transcripts table that was
-        created or modified during the execution of the function.
+        Args:
+            transcripts_table (str, optional): The name of the table that will store the final transcript view data.
+                If not provided, the function will create a new table to store the transcript view data. Defaults to "transcripts".
+            transcripts_table_drop (bool, optional): Determines whether to drop the existing transcripts table before creating a new one.
+                If set to True, the function will drop the existing transcripts table if it exists. Defaults to False.
+            param (dict, optional): A dictionary that contains information needed to create a transcript view.
+                It includes details such as the structure of the transcripts, columns mapping, column formats, and other necessary information
+                for generating the view. This parameter allows for flexibility and customization.
+
+        Returns:
+            str: The name of the transcripts table that was created or modified during the execution of the function.
         """
 
         log.info("Transcripts view creation")
@@ -10558,6 +11587,9 @@ class Variants:
                 log.debug(f"Table {transcripts_table} exists and not drop option")
                 log.info("Transcripts view creation - already exists")
                 return transcripts_table
+
+        # Variants table
+        variants_table = self.get_table_variants()
 
         if struct:
 
@@ -10612,6 +11644,7 @@ class Variants:
                 transcripts_table=transcripts_table,
                 column_formats=column_formats,
                 temporary_tables=temporary_tables,
+                view_type="table",
                 annotation_fields=annotation_fields,
             )
 
@@ -10661,10 +11694,8 @@ class Variants:
             # Aggregate all annotations fields
             for annotation_field in set(annotation_fields):
 
-                # Check feild type
-                annotation_field_type = annotation_fields_type.get(
-                    annotation_field, "VARCHAR"
-                )
+                # Annotation field type
+                annotation_field_type = "VARCHAR"
 
                 # Aggregate field
                 query_merge_on_transcripts_annotation_fields.append(
@@ -10705,10 +11736,10 @@ class Variants:
 
                 # Merge query
                 transcripts_tmp2_query = f"""
-                    SELECT "#CHROM", POS, REF, ALT, INFO, {query_transcript_column_select}, {", ".join(query_merge_on_transcripts_annotation_fields)}
+                    SELECT "#CHROM", POS, REF, ALT, {query_transcript_column_select}, {", ".join(query_merge_on_transcripts_annotation_fields)}
                     FROM ({query_merge}) AS {transcript_table_tmp}
                     {query_left_join}
-                    GROUP BY "#CHROM", POS, REF, ALT, INFO, {query_transcript_column_group_by}
+                    GROUP BY "#CHROM", POS, REF, ALT, {query_transcript_column_group_by}
                 """
 
                 # Retrive columns after mege
@@ -10741,8 +11772,7 @@ class Variants:
 
                 # Merge with mapping
                 query_merge_on_transcripts = f"""
-                    SELECT
-                        "#CHROM", POS, REF, ALT, INFO,
+                    SELECT "#CHROM", POS, REF, ALT, '' AS INFO,
                         CASE
                             WHEN ANY_VALUE(transcript_mapped) NOT IN ('')
                             THEN ANY_VALUE(transcript_mapped)
@@ -10750,7 +11780,7 @@ class Variants:
                         END AS transcript,
                         {", ".join(transcripts_tmp2_describe_select_clause)}
                     FROM ({transcripts_tmp2_query}) AS {transcript_table_tmp2}
-                    GROUP BY "#CHROM", POS, REF, ALT, INFO,
+                    GROUP BY "#CHROM", POS, REF, ALT,
                         {query_transcript_merge_group_by}
                 """
 
@@ -10783,9 +11813,9 @@ class Variants:
 
                 # Query for transcripts view
                 query_merge_on_transcripts = f"""
-                    SELECT "#CHROM", POS, REF, ALT, INFO, {query_transcript_column} AS transcript, NULL AS transcript_mapped, {", ".join(query_merge_on_transcripts_annotation_fields)}
+                    SELECT "#CHROM", POS, REF, ALT, '' AS INFO, {query_transcript_column} AS transcript, NULL AS transcript_mapped, {", ".join(query_merge_on_transcripts_annotation_fields)}
                     FROM ({query_merge}) AS {transcript_table_tmp}
-                    GROUP BY "#CHROM", POS, REF, ALT, INFO, {query_transcript_column}
+                    GROUP BY "#CHROM", POS, REF, ALT, {query_transcript_column}
                 """
 
             # Drop transcript view is necessary
@@ -10795,41 +11825,88 @@ class Variants:
                 """
                 self.execute_query(query=query_drop)
 
-            # List of unique #CHROM
-            query_unique_chrom = f"""
-                SELECT DISTINCT "#CHROM"
-                FROM variants AS subquery
-            """
-            unique_chroms = self.get_query_to_df(query=query_unique_chrom)
+            # Log
+            log.info(f"Transcripts view creation - Create view...")
 
             # Create table with structure but without data, if not exists
             query_create_table = f"""
                 CREATE TABLE IF NOT EXISTS {transcripts_table} AS
-                SELECT * FROM ({query_merge_on_transcripts}) AS subquery LIMIT 0
+                SELECT * FROM ({query_merge_on_transcripts}) LIMIT 0
             """
             self.execute_query(query=query_create_table)
 
-            # Process by #CHROM
-            for chrom in unique_chroms["#CHROM"]:
+            # Evaluate block size
+            batch_split = self.get_batch_split()
 
-                # Log
-                log.info(
-                    f"Transcripts view creation - Processing chromosome '{chrom}'..."
-                )
-
-                # Select data by #CHROM
-                query_chunk = f"""
-                    SELECT *
-                    FROM ({query_merge_on_transcripts})
-                    WHERE "#CHROM" = '{chrom}'
-                """
-
+            # Insert by batch
+            for batch_index in range(batch_split):
+                # where clause
+                if batch_split > 1:
+                    where_clause = f" WHERE (POS % {batch_split}) = {batch_index} "
+                else:
+                    where_clause = ""
                 # Insert data
                 query_insert_chunk = f"""
                     INSERT INTO {transcripts_table}
-                    {query_chunk}
+                    SELECT * FROM ({query_merge_on_transcripts})
+                    {where_clause}
                 """
+                # Log
+                log.debug(
+                    f"Transcripts view creation - Insert batch [{batch_index+1}/{batch_split}]..."
+                )
+                # Execute
                 self.execute_query(query=query_insert_chunk)
+
+            # Extract annotations from variants
+
+            # Columns from variants parameters
+            columns_from_variants = struct.get("from_variants", {})
+            columns_from_variants_prefix = columns_from_variants.get("prefix", "")
+            columns_from_variants_fields = columns_from_variants.get("fields", [])
+            columns_from_variants_info = columns_from_variants.get("INFO", False)
+
+            # Columns from variants processing
+            if len(columns_from_variants):
+                log.info(
+                    "Transcripts view creation - Extract annotations from variants"
+                )
+
+                # Add INFO column from variants table
+                if columns_from_variants_info:
+                    query_update_info_column = f"""
+                        UPDATE {transcripts_table}
+                        SET "INFO" = {variants_table}."INFO"
+                        FROM {variants_table}
+                        WHERE {transcripts_table}."#CHROM" = {variants_table}."#CHROM"
+                        AND {transcripts_table}."POS" = {variants_table}."POS"
+                        AND {transcripts_table}."REF" = {variants_table}."REF"
+                        AND {transcripts_table}."ALT" = {variants_table}."ALT"
+                    """
+                    # log.debug(f"query_update_info_column={query_update_info_column}")
+                    log.info(
+                        "Transcripts view creation - Extract annotations from variants - All INFO column..."
+                    )
+                    self.execute_query(query=query_update_info_column)
+
+                # Add columns from variants table as exploded from a list of fields
+                if len(columns_from_variants_fields) > 0:
+                    log.info(
+                        f"Transcripts view creation - Extract annotations from variants - Extract {len(columns_from_variants_fields)} fields..."
+                    )
+                    fields_exploded = self.explode_infos(
+                        fields=columns_from_variants_fields,
+                        prefix=columns_from_variants_prefix,
+                        table_source=variants_table,
+                        table_dest=transcripts_table,
+                        table_key=["#CHROM", "POS", "REF", "ALT"],
+                        proccess_all_fields_together=True,
+                        fields_not_exists=False,
+                        fields_forced_as_varchar=False,
+                    )
+                    log.debug(
+                        f"Transcripts view creation - Extract annotations from variants - Extract {len(columns_from_variants_fields)} fields: {fields_exploded}"
+                    )
 
             # Remove temporary tables
             self.remove_tables_or_views(
@@ -10858,55 +11935,29 @@ class Variants:
         column_case: str = None,
     ) -> tuple[list, list, list]:
         """
-        The `create_transcript_view_from_columns_map` function generates a temporary table view based on
-        specified columns mapping for transcripts data.
+        Generates a temporary table view based on specified columns mapping for transcripts data.
 
-        :param transcripts_table: The `transcripts_table` parameter is a string that specifies the name
-        of the table where the transcripts data is stored or will be stored in the database. This table
-        typically contains information about transcripts such as Ensembl transcript IDs, gene names,
-        scores, predictions, etc. It defaults to "transcripts, defaults to transcripts
-        :type transcripts_table: str (optional)
-        :param columns_maps: The `columns_maps` parameter is a dictionary that contains information
-        about how to map columns from a transcripts table to create a view. Each entry in the
-        `columns_maps` list represents a mapping configuration for a specific set of columns. It
-        typically includes details such as the main transcript column and additional information columns
-        :type columns_maps: dict
-        :param added_columns: The `added_columns` parameter in the
-        `create_transcript_view_from_columns_map` function is a list that stores the additional columns
-        that will be added to the view being created based on the columns map provided. These columns
-        are generated by exploding the transcript information columns along with the main transcript
-        column
-        :type added_columns: list
-        :param temporary_tables: The `temporary_tables` parameter in the
-        `create_transcript_view_from_columns_map` function is a list that stores the names of temporary
-        tables created during the process of creating a transcript view from a columns map. These
-        temporary tables are used to store intermediate results or transformations before the final view
-        is generated
-        :type temporary_tables: list
-        :param annotation_fields: The `annotation_fields` parameter in the
-        `create_transcript_view_from_columns_map` function is a list that stores the fields that are
-        used for annotation in the query view creation process. These fields are extracted from the
-        `transcripts_column` and `transcripts_infos_columns` specified in the `columns
-        :type annotation_fields: list
-        :param column_rename: The `column_rename` parameter in the
-        `create_transcript_view_from_columns_map` function is a dictionary that allows you to specify
-        custom renaming for columns during the creation of the temporary table view. This parameter
-        provides a mapping of original column names to the desired renamed column names. By using this
-        parameter,
-        :type column_rename: dict
-        :param column_clean: The `column_clean` parameter in the
-        `create_transcript_view_from_columns_map` function is a boolean flag that determines whether the
-        column values should be cleaned or not. If set to `True`, the column values will be cleaned by
-        removing any non-alphanumeric characters from them. This cleaning process ensures, defaults to
-        False
-        :type column_clean: bool (optional)
-        :param column_case: The `column_case` parameter in the `create_transcript_view_from_columns_map`
-        function is used to specify the case transformation to be applied to the columns during the view
-        creation process. It allows you to control whether the column values should be converted to
-        lowercase, uppercase, or remain unchanged
-        :type column_case: str
-        :return: The `create_transcript_view_from_columns_map` function returns a tuple containing three
-        lists: `added_columns`, `temporary_tables`, and `annotation_fields`.
+        Args:
+            transcripts_table (str, optional): The name of the table where the transcripts data is stored or will be stored in the database.
+                This table typically contains information about transcripts such as Ensembl transcript IDs, gene names, scores, predictions, etc.
+                Defaults to "transcripts".
+            columns_maps (dict): A dictionary that contains information about how to map columns from a transcripts table to create a view.
+                Each entry in the dictionary represents a mapping configuration for a specific set of columns.
+            added_columns (list): A list that stores the additional columns that will be added to the view being created based on the columns map provided.
+                These columns are generated by exploding the transcript information columns along with the main transcript column.
+            temporary_tables (list, optional): A list that stores the names of temporary tables created during the process of creating a transcript view from a columns map.
+                These temporary tables are used to store intermediate results or transformations before the final view is generated.
+            annotation_fields (list, optional): A list that stores the fields that are used for annotation in the query view creation process.
+                These fields are extracted from the `transcripts_column` and `transcripts_infos_columns` specified in the `columns_maps`.
+            column_rename (dict, optional): A dictionary that allows you to specify custom renaming for columns during the creation of the temporary table view.
+                This parameter provides a mapping of original column names to the desired renamed column names.
+            column_clean (bool, optional): A boolean flag that determines whether the column values should be cleaned or not.
+                If set to `True`, the column values will be cleaned by removing any non-alphanumeric characters from them. Defaults to False.
+            column_case (str, optional): Specifies the case transformation to be applied to the columns during the view creation process.
+                It allows you to control whether the column values should be converted to lowercase, uppercase, or remain unchanged.
+
+        Returns:
+            tuple[list, list, list]: The function returns a tuple containing three lists: `added_columns`, `temporary_tables`, and `annotation_fields`.
         """
 
         log.debug("Start transcrpts view creation from columns map...")
@@ -10982,17 +12033,18 @@ class Variants:
                     )
                     annotation_view_fields = [
                         transcripts_column
-                    ] + transcripts_infos_columns  # + ["INFO"]
+                    ] + transcripts_infos_columns
                     annotation_view_name = self.create_annotations_view(
                         table=table_variants,
                         view=annotation_view_name,
                         view_type="table",
+                        view_mode="full",
                         info_prefix_column="",
                         detect_type_list=False,
                         fields=annotation_view_fields,
                         fields_not_exists=True,
                         fields_forced_as_varchar=True,
-                        fields_needed_all=True,
+                        fields_needed_all=False,
                     )
                     temporary_intermediate_tables.append(annotation_view_name)
                     table_for_view = annotation_view_name
@@ -11001,20 +12053,15 @@ class Variants:
                     annotation_view_name_for_type = self.create_annotations_view(
                         table=table_variants,
                         view=annotation_view_name + "for_type",
+                        view_type="view",
+                        view_mode="full",
                         info_prefix_column="",
                         detect_type_list=True,
                         fields=annotation_view_fields,
                         fields_not_exists=True,
-                        fields_needed_all=True,
+                        fields_needed_all=False,
                     )
                     temporary_intermediate_tables.append(annotation_view_name_for_type)
-
-                # Old generation using explode fields
-                if False:
-                    # Explode
-                    added_columns += self.explode_infos(
-                        fields=[transcripts_column] + transcripts_infos_columns
-                    )
 
                 # View clauses
                 clause_select_variants = []
@@ -11057,18 +12104,19 @@ class Variants:
                     else:
                         field_type = "VARCHAR"
 
-                    # Clause select Variants OK
+                    # Clause select Variants
                     clause_select_variants.append(
-                        f""" regexp_split_to_table(CAST("{field}" AS VARCHAR), ',')::VARCHAR AS '{field}' """
+                        f""" TRY_CAST(regexp_split_to_table(CAST("{field}" AS VARCHAR), ',') AS VARCHAR) AS '{field}' """
                     )
 
+                    # Clause select Transcripts
                     if field in [transcripts_column]:
                         clause_select_tanscripts.append(
-                            f""" regexp_split_to_table("{field}", ',')::{field_type} AS '{field}' """
+                            f""" TRY_CAST(regexp_split_to_table("{field}", ',') AS {field_type}) AS '{field}' """
                         )
                     else:
                         clause_select_tanscripts.append(
-                            f""" regexp_split_to_table("{field}", ',')::{field_type} AS '{as_field}' """
+                            f""" TRY_CAST(regexp_split_to_table("{field}", ',') AS {field_type}) AS '{as_field}' """
                         )
                         annotation_fields.append(as_field)
                         annotation_fields_type[as_field] = field_type
@@ -11076,12 +12124,12 @@ class Variants:
                 # Query View
                 query = f""" 
                     SELECT
-                        "#CHROM", POS, REF, ALT, INFO,
+                        "#CHROM", POS, REF, ALT,
                         "{transcripts_column}" AS 'transcript',
                         {", ".join(clause_select_tanscripts)}
                     FROM (
                         SELECT 
-                            "#CHROM", POS, REF, ALT, INFO,
+                            "#CHROM", POS, REF, ALT,
                             {", ".join(clause_select_variants)}
                         FROM {table_for_view}
                         )
@@ -11117,56 +12165,37 @@ class Variants:
         temporary_tables: list = None,
         annotation_fields: list = None,
         column_rename: dict = {},
+        view_type: str = "view",
         column_clean: bool = False,
         column_case: str = None,
     ) -> tuple[list, list, list]:
         """
-        The `create_transcript_view_from_column_format` function generates a transcript view based on
-        specified column formats, adds additional columns and annotation fields, and returns the list of
-        temporary tables and annotation fields.
+        Generates a transcript view based on specified column formats, adds additional columns and annotation fields,
+        and returns the list of temporary tables and annotation fields.
 
-        :param transcripts_table: The `transcripts_table` parameter is a string that specifies the name
-        of the table containing the transcripts data. This table will be used as the base table for
-        creating the transcript view. The default value for this parameter is "transcripts", but you can
-        provide a different table name if needed, defaults to transcripts
-        :type transcripts_table: str (optional)
-        :param column_formats: The `column_formats` parameter is a dictionary that contains information
-        about the columns to be used for creating the transcript view. Each entry in the dictionary
-        specifies the mapping between a transcripts column and a transcripts infos column. This
-        parameter allows you to define how the columns from the transcripts table should be transformed
-        or mapped
-        :type column_formats: dict
-        :param temporary_tables: The `temporary_tables` parameter in the
-        `create_transcript_view_from_column_format` function is a list that stores the names of
-        temporary views created during the process of creating a transcript view from a column format.
-        These temporary views are used to manipulate and extract data before generating the final
-        transcript view
-        :type temporary_tables: list
-        :param annotation_fields: The `annotation_fields` parameter in the
-        `create_transcript_view_from_column_format` function is a list that stores the annotation fields
-        that are extracted from the temporary views created during the process. These annotation fields
-        are obtained by querying the temporary views and extracting the column names excluding specific
-        columns like `#CH
-        :type annotation_fields: list
-        :param column_rename: The `column_rename` parameter in the
-        `create_transcript_view_from_column_format` function is a dictionary that allows you to specify
-        custom renaming of columns in the transcripts infos table. By providing a mapping of original
-        column names to new column names in this dictionary, you can rename specific columns during the
-        process
-        :type column_rename: dict
-        :param column_clean: The `column_clean` parameter in the
-        `create_transcript_view_from_column_format` function is a boolean flag that determines whether
-        the transcripts infos columns should undergo a cleaning process. If set to `True`, the columns
-        will be cleaned during the creation of the transcript view based on the specified column format,
-        defaults to False
-        :type column_clean: bool (optional)
-        :param column_case: The `column_case` parameter in the
-        `create_transcript_view_from_column_format` function is used to specify the case transformation
-        to be applied to the columns in the transcript view. It can be set to either "upper" or "lower"
-        to convert the column names to uppercase or lowercase, respectively
-        :type column_case: str
-        :return: The `create_transcript_view_from_column_format` function returns two lists:
-        `temporary_tables` and `annotation_fields`.
+        Args:
+            transcripts_table (str, optional): The name of the table containing the transcripts data. This table will be used
+                as the base table for creating the transcript view. Defaults to "transcripts".
+            column_formats (dict): A dictionary that contains information about the columns to be used for creating the transcript view.
+                Each entry in the dictionary specifies the mapping between a transcripts column and a transcripts infos column.
+            temporary_tables (list, optional): A list that stores the names of temporary views created during the process of creating
+                a transcript view from a column format. These temporary views are used to manipulate and extract data before generating
+                the final transcript view.
+            annotation_fields (list, optional): A list that stores the annotation fields that are extracted from the temporary views
+                created during the process. These annotation fields are obtained by querying the temporary views and extracting the column
+                names excluding specific columns.
+            column_rename (dict, optional): A dictionary that allows you to specify custom renaming of columns in the transcripts infos table.
+                By providing a mapping of original column names to new column names in this dictionary, you can rename specific columns during
+                the process.
+            view_type (str, optional): The type of the view to be created. Defaults to "view".
+            column_clean (bool, optional): A flag that determines whether the transcripts infos columns should undergo a cleaning process.
+                If set to True, the columns will be cleaned during the creation of the transcript view based on the specified column format.
+                Defaults to False.
+            column_case (str, optional): Specifies the case transformation to be applied to the columns in the transcript view.
+                It can be set to either "upper" or "lower" to convert the column names to uppercase or lowercase, respectively.
+
+        Returns:
+            tuple[list, list, list]: The function returns two lists: `temporary_tables` and `annotation_fields`.
         """
 
         log.debug("Start transcrpts view creation from column format...")
@@ -11214,6 +12243,7 @@ class Variants:
                 self.annotation_format_to_table(
                     annotation_field=annotation_field,
                     view_name=temporary_view_name,
+                    view_type=view_type,
                     annotation_id=transcript_annotation,
                     column_rename=column_rename,
                     column_clean=column_clean,
@@ -11257,56 +12287,34 @@ class Variants:
         annotation_field: str = "ANN",
         annotation_id: str = "Feature_ID",
         view_name: str = "transcripts",
+        view_type: str = "view",
         column_rename: dict = {},
         column_clean: bool = False,
         column_case: str = None,
         column_split: str = "&",
     ) -> str:
         """
-        The `annotation_format_to_table` function converts annotation data from a VCF file into a
-        structured table format, ensuring unique values and creating a temporary table for further
-        processing or analysis.
+        Converts annotation data from a VCF file into a structured table format, ensuring unique values
+        and creating a temporary table for further processing or analysis.
 
-        :param uniquify: The `uniquify` parameter is a boolean flag that determines whether to ensure
-        unique values in the output or not. If set to `True`, the function will make sure that the
-        output values are unique, defaults to True
-        :type uniquify: bool (optional)
-        :param annotation_field: The `annotation_field` parameter refers to the field in the VCF file
-        that contains the annotation information for each variant. This field is used to extract the
-        annotation details for further processing in the function. By default, it is set to "ANN",
-        defaults to ANN
-        :type annotation_field: str (optional)
-        :param annotation_id: The `annotation_id` parameter in the `annotation_format_to_table` method
-        is used to specify the identifier for the annotation feature. This identifier will be used as a
-        column name in the resulting table or view that is created based on the annotation data. It
-        helps in uniquely identifying each annotation entry in the, defaults to Feature_ID
-        :type annotation_id: str (optional)
-        :param view_name: The `view_name` parameter in the `annotation_format_to_table` method is used
-        to specify the name of the temporary table that will be created to store the transformed
-        annotation data. This table will hold the extracted information from the annotation field in a
-        structured format for further processing or analysis. By default,, defaults to transcripts
-        :type view_name: str (optional)
-        :param column_rename: The `column_rename` parameter in the `annotation_format_to_table` method
-        is a dictionary that allows you to specify custom renaming for columns. By providing key-value
-        pairs in this dictionary, you can rename specific columns in the resulting table or view that is
-        created based on the annotation data. This feature enables
-        :type column_rename: dict
-        :param column_clean: The `column_clean` parameter in the `annotation_format_to_table` method is
-        a boolean flag that determines whether the annotation field should undergo a cleaning process.
-        If set to `True`, the function will clean the annotation field before further processing. This
-        cleaning step may involve removing any unwanted characters, formatting inconsistencies, defaults
-        to False
-        :type column_clean: bool (optional)
-        :param column_case: The `column_case` parameter in the `annotation_format_to_table` method is
-        used to specify the case transformation to be applied to the column names extracted from the
-        annotation data. It allows you to set the case of the column names to either lowercase or
-        uppercase for consistency or other specific requirements during the conversion
-        :type column_case: str
-        :param column_split: The `column_split` parameter in the `annotation_format_to_table` method is
-        used to specify the separator to split fields values. Default as '&'. None to disable.
-        :type column_case: str
-        :return: The function `annotation_format_to_table` is returning the name of the view created,
-        which is stored in the variable `view_name`.
+        Args:
+            annotation_field (str, optional): The field in the VCF file that contains the annotation information
+                for each variant. Defaults to "ANN".
+            annotation_id (str, optional): The identifier for the annotation feature, used as a column name
+                in the resulting table or view. Defaults to "Feature_ID".
+            view_name (str, optional): The name of the temporary table that will be created to store the transformed
+                annotation data. Defaults to "transcripts".
+            view_type (str, optional): The type of the view to be created. Defaults to "view".
+            column_rename (dict, optional): A dictionary to specify custom renaming for columns. By providing key-value
+                pairs in this dictionary, you can rename specific columns in the resulting table or view.
+            column_clean (bool, optional): A flag to determine whether the annotation field should undergo a cleaning process.
+                If set to True, the function will clean the annotation field before further processing. Defaults to False.
+            column_case (str, optional): Specifies the case transformation to be applied to the column names extracted from
+                the annotation data. It allows you to set the case of the column names to either lowercase or uppercase.
+            column_split (str, optional): The separator to split field values. Defaults to "&". Set to None to disable splitting.
+
+        Returns:
+            str: The name of the view created, which is stored in the variable `view_name`.
         """
 
         # annotation_id original name
@@ -11358,29 +12366,6 @@ class Variants:
 
             # annotation field pattern
             annotation_field_pattern = rf"(^|;)({annotation_field})=([^;]*)?"
-
-            # Create dataframe for keys column type
-            # query = f"""
-            #     WITH exploded_annotations AS (
-            #         SELECT
-            #             UNNEST(
-            #                 STRING_SPLIT(
-            #                     regexp_extract("INFO", '{annotation_field_pattern}', 3),
-            #                     ','
-            #                 )
-            #             ) AS annotation
-            #         FROM {table_variants}
-            #     ),
-            #     split_annotations AS (
-            #         SELECT
-            #             {", ".join([f"SPLIT_PART(annotation, '|', {i+1}) AS '{header}'" for i, header in enumerate(ann_header_desc.values())])},
-            #         FROM exploded_annotations
-            #     )
-            #     SELECT * FROM split_annotations
-            #     LIMIT 1000
-            #     """
-            # dataframe_annotation_format = self.get_query_to_df(query=query)
-            # log.debug(f"dataframe_annotation_format={dataframe_annotation_format}")
 
             annotation_fields_for_format = []
             for i, header in enumerate(ann_header_desc.values()):
@@ -11450,9 +12435,6 @@ class Variants:
                     log.debug(f"Field '{key}' type detected: {column_type}")
 
                     # Append key to list
-                    # query_list_keys.append(
-                    #     f""" NULLIF(SPLIT_PART(annotation, '|', {key_i}), '')::{column_type} AS '{prefix}{key_clean}' """
-                    # )
                     if column_split is not None:
                         query_list_keys.append(
                             f""" TRY_CAST(replace(NULLIF(SPLIT_PART(annotation, '|', {key_i}), ''), '{column_split}', ',') AS {column_type}) AS '{prefix}{key_clean}' """
@@ -11464,14 +12446,10 @@ class Variants:
 
             # Create temporary table
             query_create_view = f"""
-                CREATE VIEW {view_name} AS (
+                CREATE {view_type} {view_name} AS (
                     WITH exploded_annotations AS (
                         SELECT
-                            "#CHROM",
-                            POS,
-                            REF,
-                            ALT,
-                            INFO,
+                            "#CHROM", POS, REF, ALT,
                             UNNEST(
                                 STRING_SPLIT(
                                     regexp_extract("INFO", '{annotation_field_pattern}', 3),
@@ -11482,11 +12460,7 @@ class Variants:
                     ),
                     split_annotations AS (
                         SELECT
-                            "#CHROM",
-                            POS,
-                            REF,
-                            ALT,
-                            INFO,
+                            "#CHROM", POS, REF, ALT,
                             {", ".join(query_list_keys)},
                         FROM exploded_annotations
                     )
@@ -11504,6 +12478,7 @@ class Variants:
         return view_name, added_columns, added_columns_type
 
     # Transcripts operations
+    #######################
 
     def transcripts_export(
         self, transcripts_table: str = None, param: dict = {}
@@ -11529,34 +12504,33 @@ class Variants:
 
         # Param export
         param_transcript_export = param.get("transcripts", {}).get("export", {})
-
-        # Output file
         transcripts_export_output = param_transcript_export.get("output", None)
+        transcripts_export_header = param_transcript_export.get("export_header", False)
+        transcripts_export_header_in_output = param_transcript_export.get(
+            "header_in_output", False
+        )
 
         if not param_transcript_export or not transcripts_export_output:
             log.warning(f"No transcriipts export parameters defined!")
             return False
 
-        # List of transcripts annotations
+        # Create transcripts table description
         query_describe = f"""
-            SELECT column_name
+            SELECT *
             FROM (
                     DESCRIBE SELECT * FROM {transcripts_table}
                 )
             WHERE column_name NOT IN ('#CHROM', 'POS', 'REF', 'ALT', 'INFO')
         """
-        transcripts_annotations_list = list(
-            self.get_query_to_df(query=query_describe)["column_name"]
-        )
+        result_describe = self.execute_query(query=query_describe)
+        description_dict = {
+            row[0]: {"type": row[1]} for row in result_describe.fetchall()
+        }
+        transcripts_annotations_list = list(description_dict.keys())
 
-        # Create transcripts table for export
-        transcripts_table_export = f"{transcripts_table}_export_" + "".join(
-            random.choices(string.ascii_uppercase + string.digits, k=10)
-        )
-        query_create_transcripts_table_export = f"""
-            CREATE TABLE {transcripts_table_export} AS (SELECT "#CHROM", "POS", "REF", "ALT", '' AS 'INFO', {', '.join(transcripts_annotations_list)} FROM {transcripts_table})
-        """
-        self.execute_query(query=query_create_transcripts_table_export)
+        transcripts_annotations_list_columns = [
+            f'"{field}"' for field in transcripts_annotations_list
+        ]
 
         # Output file format
         transcripts_export_output_format = get_file_format(
@@ -11573,32 +12547,55 @@ class Variants:
                 # If field not in header
                 if field not in self.get_header_infos_list():
 
+                    # Find previous desc
+                    if self.get_header().infos.get(field, None) is not None:
+                        field_description = self.get_header().infos.get(field).desc
+                        field_number = self.get_header().infos.get(field).num
+                        field_type = self.get_header().infos.get(field).type
+                    else:
+                        field_description = "Unknown annotation"
+                        field_number = "."
+                        field_type = "String"
+
+                    # Add description about transription prioritization
+                    field_description += f". Annotation '{field}' from transcript view"
+
                     # Add PZ Transcript in header
                     self.get_header().infos[field] = vcf.parser._Info(
                         field,
-                        ".",
-                        "String",
-                        f"Annotation '{field}' from transcript view",
+                        field_number,
+                        field_type,
+                        field_description,
                         "unknown",
                         "unknown",
-                        0,
+                        code_type_map.get(field_type, 0),
                     )
 
                 # Add field as INFO/tag
+                column_type = description_dict.get(field, {}).get("type", "VARCHAR")
+                if column_type.endswith("[]"):
+                    column_type = "VARCHAR"
+                    field_value = f""" list_aggregate("{field}", 'string_agg', ',') """
+                else:
+                    field_value = f""" "{field}" """
+
+                # Add INFO field to query
                 query_update_info.append(
                     f"""
                         CASE
                             WHEN "{field}" IS NOT NULL
-                            THEN concat('{field}=', "{field}", ';')    
+                            THEN concat(
+                                '{field}=',
+                                {field_value},
+                                ';'
+                            )    
                             ELSE ''     
                         END
                         """
                 )
 
             # Query param
-            query_update_info_value = (
-                f""" concat('',  {", ".join(query_update_info)}) """
-            )
+            query_update_info_value = f""" regexp_replace(concat('',  {", ".join(query_update_info)}), ';$', '') """
             query_export_columns = f""" "#CHROM", "POS", '.' AS 'ID', "REF", "ALT", '.' AS 'QUAL', '.' AS 'FILTER', "INFO" """
 
         else:
@@ -11607,46 +12604,45 @@ class Variants:
             query_update_info_value = f""" NULL """
             query_export_columns = f""" "#CHROM", "POS", "REF", "ALT", {', '.join(transcripts_annotations_list)} """
 
-        # Update query INFO column
-        query_update = f"""
-            UPDATE {transcripts_table_export}
-            SET INFO = {query_update_info_value}
-
-        """
-        self.execute_query(query=query_update)
+        # Query export
+        query_export = f"""
+                SELECT
+                {query_export_columns}
+                FROM (
+                    SELECT "#CHROM", "POS", "REF", "ALT",
+                    {query_update_info_value} 
+                    AS 'INFO',
+                    {', '.join(transcripts_annotations_list_columns)}
+                    FROM {transcripts_table}
+                    ORDER BY "#CHROM", "POS", "REF", "ALT"
+                )
+            """
 
         # Export
         self.export_output(
             output_file=transcripts_export_output,
-            query=f""" SELECT {query_export_columns} FROM {transcripts_table_export} """,
+            query=query_export,
+            export_header=transcripts_export_header,
+            header_in_output=transcripts_export_header_in_output,
         )
 
-        # Drop transcripts export table
-        query_drop_transcripts_table_export = f"""
-            DROP TABLE {transcripts_table_export}
-        """
-        self.execute_query(query=query_drop_transcripts_table_export)
-
     def transcripts_prioritization(
-        self, transcripts_table: str = None, param: dict = {}
+        self, transcripts_table: str = None, param: dict = {}, strict: bool = False
     ) -> bool:
         """
-        The `transcripts_prioritization` function prioritizes transcripts based on certain parameters
-        and updates the variants table with the prioritized information.
+        Prioritizes transcripts based on specified parameters and updates the variants table with the prioritized information.
 
-        :param transcripts_table: The `transcripts_table` parameter is a string that specifies the name
-        of the table containing transcripts data. If no value is provided, it defaults to "transcripts".
-        This parameter is used to identify the table where the transcripts data is stored for the
-        prioritization process
-        :type transcripts_table: str
-        :param param: The `param` parameter in the `transcripts_prioritization` method is a dictionary
-        that contains various configuration settings for the prioritization process of transcripts. It
-        is used to customize the behavior of the prioritization algorithm and includes settings such as
-        the prefix for prioritization fields, default profiles, and other
-        :type param: dict
-        :return: The function `transcripts_prioritization` returns a boolean value `True` if the
-        transcripts prioritization process is successfully completed, and `False` if there are any
-        issues or if no profile is defined for transcripts prioritization.
+        Args:
+            transcripts_table (str, optional): The name of the table containing transcripts data. If not provided, it defaults to "transcripts".
+                This parameter is used to identify the table where the transcripts data is stored for the prioritization process.
+            param (dict, optional): A dictionary containing various configuration settings for the prioritization process of transcripts.
+                It is used to customize the behavior of the prioritization algorithm and includes settings such as the prefix for prioritization fields,
+                default profiles, and other relevant configurations.
+            strict (bool, optional): A flag indicating whether to enforce strict prioritization criteria. Defaults to False.
+
+        Returns:
+            bool: True if the transcripts prioritization process is successfully completed, and False if there are any issues or if no profile is defined
+                for transcripts prioritization.
         """
 
         log.debug("Start transcripts prioritization...")
@@ -11667,7 +12663,6 @@ class Variants:
             msg_err = "No Transcripts table availalble"
             log.error(msg_err)
             raise ValueError(msg_err)
-        log.debug(f"transcripts_table={transcripts_table}")
 
         # Get transcripts columns
         columns_as_list_query = f"""
@@ -11715,15 +12710,18 @@ class Variants:
         # PZ field transcripts
         pz_fields_transcripts = pz_param.get("pzprefix", "PTZ") + "Transcript"
 
+        # Add description about transription prioritization
+        pz_field_transcripts_description = f"Transcript selected from prioritization process, profile {pz_profile_default}"
+
         # Add PZ Transcript in header
         self.get_header().infos[pz_fields_transcripts] = vcf.parser._Info(
             pz_fields_transcripts,
-            ".",
+            "1",
             "String",
-            f"Transcript selected from prioritization process, profile {pz_profile_default}",
+            pz_field_transcripts_description,
+            "HOWARD transcript prioritization",
             "unknown",
-            "unknown",
-            code_type_map["String"],
+            code_type_map.get("String", 0),
         )
 
         # Mandatory fields if asked in param
@@ -11755,15 +12753,28 @@ class Variants:
                 pz_field_new = pz_param.get("pzprefix", "PTZ") + pz_field
                 pz_param_pzfields[pz_field] = pz_field_new
 
+                # Find previous desc and type
+                if self.get_header().infos.get(pz_field, None) is not None:
+                    pz_field_new_description = (
+                        self.get_header().infos.get(pz_field).desc
+                    )
+                    pz_field_new_type = self.get_header().infos.get(pz_field).type
+                else:
+                    pz_field_new_description = "Unknown annotation"
+                    pz_field_new_type = "String"
+
+                # Add description about transription prioritization
+                pz_field_new_description += f". Annotation '{pz_field}' from transcript selected from prioritization process, profile {pz_profile_default}"
+
                 # Add PZ Transcript in header
                 self.get_header().infos[pz_field_new] = vcf.parser._Info(
                     pz_field_new,
-                    ".",
-                    "String",
-                    f"Annotation '{pz_field}' from transcript selected from prioritization process, profile {pz_profile_default}",
+                    "1",
+                    pz_field_new_type,
+                    pz_field_new_description,
                     "unknown",
                     "unknown",
-                    code_type_map["String"],
+                    code_type_map.get(pz_field_new_type, 0),
                 )
         # Add order by fields in mandatory fields
         for pz_order in pz_orders:
@@ -11779,10 +12790,13 @@ class Variants:
             table=transcripts_table,
             pz_param=param.get("transcripts", {}).get("prioritization", {}),
             pz_keys=["#CHROM", "POS", "REF", "ALT", "transcript"],
+            strict=strict,
         )
         if not prioritization_result:
             log.warning("Transcripts prioritization not processed")
             return False
+
+        log.info(f"Update {table_variants} table with transcripts prioritization...")
 
         # PZ fields sql query
         query_update_select_list = []
@@ -11815,6 +12829,7 @@ class Variants:
             + pz_mandatory_fields
             + list(pz_orders.keys())
         )
+
         # Remove transcript column as a specific transcript column
         if "transcript" in fields_to_explode:
             fields_to_explode.remove("transcript")
@@ -11834,11 +12849,23 @@ class Variants:
                 log.error(msg_err)
                 raise ValueError(msg_err)
 
-        # Explode fields to explode
-        self.explode_infos(
-            table=transcripts_table,
-            fields=fields_to_explode,
+        # Create view as table
+        annotation_view_name = "annotation_view_for_transcripts_prioritization_" + str(
+            random.randrange(1000)
         )
+        annotation_view_name = self.create_annotations_view(
+            table=transcripts_table,
+            view=annotation_view_name,
+            view_type="table",
+            view_mode="explore",
+            info_prefix_column="",
+            detect_type_list=True,
+            fields=fields_to_explode + ["transcript"],
+            fields_not_exists=False,
+            fields_forced_as_varchar=True,
+            fields_needed_all=False,
+        )
+        transcripts_table = annotation_view_name
 
         # Transcript preference file
         transcripts_preference_file = (
@@ -11943,7 +12970,7 @@ class Variants:
                 AND variants."ALT" = RankedTranscripts."ALT"     
         """
 
-        # log.debug(f"query_update={query_update}")
+        # Query update
         self.execute_query(query=query_update)
 
         # Return
@@ -12318,7 +13345,7 @@ class Variants:
     ############################
 
     def rename_info_fields(
-        self, fields_to_rename: dict = None, table: str = None, multiple: bool = False
+        self, fields_to_rename: dict = None, table: str = None
     ) -> dict:
         """
         The `rename_info_fields` function renames specified fields in a VCF file header and updates
@@ -12334,41 +13361,295 @@ class Variants:
         variants, and the function updates the corresponding INFO fields in this table when renaming
         specified fields in the VCF file header
         :type table: str
-        :param multiple: Ensure to remove fields if prenset multiple times (bad VCF format)
-        :type multiple: bool
-        :return: The `rename_info_fields` function returns a dictionary `fields_renamed` that contains
+        :return: The `rename_info_fields` function returns a dictionary `fields_processed` that contains
+        the original field names as keys and their corresponding new names (or None if the field was
+        removed) as values after renaming or removing specified fields in a VCF file header and updating
+        corresponding INFO fields in the variants table.
+        """
+
+        # Config
+        config = self.get_config()
+        access = config.get("access")
+
+        # Init
+        fields_processed = {
+            "renamed": {},
+            "removed": {},
+            "not_processed": {},
+            "not_found": {},
+        }
+
+        if table is None:
+            table = self.get_table_variants()
+
+        # Clasue case
+        clause_case = []
+
+        # Init
+        fields_to_process = {}
+
+        # For each field to rename or remove, one by one
+        if fields_to_rename is not None:
+            for field_to_rename, field_renamed in fields_to_rename.items():
+
+                # If no field to process
+                if field_to_rename != "":
+
+                    # rename empty is remove
+                    if field_renamed == "":
+                        field_renamed = None
+
+                    # Check if already to process
+                    check_field_to_rename_found = False
+                    for (
+                        field_to_process_to_rename,
+                        field_to_process_renamed,
+                    ) in fields_to_process.items():
+                        if field_to_rename == field_to_process_renamed:
+                            # Replace filed to process
+                            fields_to_process[field_to_process_to_rename] = (
+                                field_renamed
+                            )
+                            check_field_to_rename_found = True
+                    if not check_field_to_rename_found:
+                        # Add field to process
+                        fields_to_process[field_to_rename] = field_renamed
+
+        if len(fields_to_process) and access not in ["RO"]:
+
+            # Log
+            log.info("Rename or remove fields...")
+
+            # Header
+            header = self.get_header()
+
+            # For each field
+            for field_to_rename, field_renamed in fields_to_process.items():
+
+                # If to rename or remove
+                if (
+                    field_to_rename != field_renamed
+                    and field_to_rename not in ["", None]
+                    and field_renamed not in [""]
+                ):
+
+                    # Rename
+                    if field_renamed is not None:
+
+                        # Case clause
+                        clause_case.append(
+                            f""" WHEN k = '{field_to_rename}' THEN '{field_renamed}'  """
+                        )
+
+                        # Fields processed
+                        fields_processed["renamed"][field_to_rename] = field_renamed
+
+                        # Log
+                        log.debug(
+                            f"Rename or remove fields - field '{field_to_rename}' renamed as '{field_renamed}'"
+                        )
+
+                    # Remove
+                    else:
+
+                        # Case clause
+                        clause_case.append(
+                            f""" WHEN k = '{field_to_rename}' THEN NULL  """
+                        )
+
+                        # Fields processed
+                        fields_processed["removed"][field_to_rename] = field_renamed
+
+                        # Log
+                        log.debug(
+                            f"Rename or remove fields - field '{field_to_rename}' removed"
+                        )
+
+                    # Header
+                    if field_to_rename in header.infos:
+
+                        # Rename header if to rename
+                        if field_renamed is not None:
+                            header.infos[field_renamed] = vcf.parser._Info(
+                                field_renamed,
+                                header.infos[field_to_rename].num,
+                                header.infos[field_to_rename].type,
+                                header.infos[field_to_rename].desc,
+                                header.infos[field_to_rename].source,
+                                header.infos[field_to_rename].version,
+                                header.infos[field_to_rename].type_code,
+                            )
+
+                        # Remove header, if rename or remove
+                        del header.infos[field_to_rename]
+
+                    else:
+
+                        # Log
+                        log.warning(
+                            f"Rename or remove fields - field '{field_to_rename}' not in header"
+                        )
+
+                        # Fields processed
+                        fields_processed["not_found"][field_to_rename] = field_renamed
+
+                else:
+
+                    # Fields processed
+                    fields_processed["not_pocessed"][field_to_rename] = field_renamed
+
+            # Process
+            if len(clause_case):
+
+                # Update query
+                query_update = f"""
+                    UPDATE {table}
+                    SET INFO = renamed_table.INFO                       -- update INFO
+                    FROM (
+                        SELECT
+                            "#CHROM", POS, REF, ALT,                    -- variant id
+                            IFNULL(string_agg(kv, ';'), '') AS INFO     -- INFO
+                        FROM (
+                            SELECT
+                                "#CHROM", POS, REF, ALT,                -- variant id
+                                CASE
+                                    WHEN k IS NOT NULL                  -- key not null
+                                    THEN
+                                        CASE 
+                                            WHEN v IS NOT NULL          -- value not null
+                                            THEN concat(k, '=', v)      -- key-value: either String, Integer, Float
+                                            ELSE k                      -- Flag
+                                        END
+                                    ELSE NULL                           -- remove
+                                END AS kv
+                            FROM (
+                                SELECT "#CHROM", POS, REF, ALT,         -- variant id
+                                    CASE
+                                        {" ".join(clause_case)}         -- rename or remove
+                                        ELSE k                          -- no change
+                                    END AS k,                           -- key
+                                    v                                   -- value
+                                FROM (
+                                    SELECT
+                                        "#CHROM", POS, REF, ALT,        -- variant id
+                                        string_split(kv, '=')[1] AS k,  -- key
+                                        string_split(kv, '=')[2] AS v   -- value
+                                    FROM (
+                                        SELECT "#CHROM", POS, REF, ALT, unnest(string_split(INFO, ';')) AS kv
+                                        FROM variants
+                                        )
+                                    )
+                                )
+                            )
+                        GROUP BY "#CHROM", POS, REF, ALT
+                    ) AS renamed_table
+                    WHERE {table}."#CHROM" = renamed_table."#CHROM"     -- join
+                    AND {table}."POS" = renamed_table."POS"
+                    AND {table}."REF" = renamed_table."REF"
+                    AND {table}."ALT" = renamed_table."ALT"
+                """
+                # log.debug(f"query={query_update}")
+                log.debug(self.execute_query(query_update))
+
+        return fields_processed
+
+    def recreate_info_fields(
+        self, fields_to_rename: dict = None, table: str = None
+    ) -> dict:
+        """
+        The `recreate_info_fields` function renames specified fields in a VCF file header and updates
+        corresponding INFO fields in the variants table.
+
+        :param fields_to_rename: The `fields_to_rename` parameter is a dictionary that contains the
+        mapping of fields to be renamed in a VCF (Variant Call Format) file. The keys in the dictionary
+        represent the original field names that need to be renamed, and the corresponding values
+        represent the new names to which the fields should be renamed. Default {}
+        :type fields_to_rename: dict
+        :param table: The `table` parameter in the `recreate_info_fields` function represents the name of
+        the table in which the variants data is stored. This table contains information about genetic
+        variants, and the function updates the corresponding INFO fields in this table when renaming
+        specified fields in the VCF file header. Default Variants table 'variants'.
+        :type table: str
+        :return: The `recreate_info_fields` function returns a dictionary `fields_renamed` that contains
         the original field names as keys and their corresponding new names (or None if the field was
         removed) as values after renaming or removing specified fields in a VCF file header and updating
         corresponding INFO fields in the variants table.
         """
 
         # Init
-        fields_renamed = {}
         config = self.get_config()
         access = config.get("access")
 
+        # Table
         if table is None:
             table = self.get_table_variants()
 
-        # regexp replace fonction
-        regex_replace_dict = {}
-        regex_replace_nb = 0
-        regex_replace_partition = 125
-        regex_replace = "concat(INFO, ';')"  # Add ';' to reduce regexp comlexity
+        # Fields to rename or remove
+        if fields_to_rename is None:
+            fields_to_rename = {}
 
-        if fields_to_rename is not None and access not in ["RO"]:
+        # Fields on header
+        fields_to_process = {k: k for k in self.get_header().infos.keys()}
 
-            log.info("Rename or remove fields...")
+        # For each field to rename or remove, one by one
+        for field_to_rename, field_renamed in fields_to_rename.items():
+            log.debug(f"{field_to_rename}, {field_renamed}")
+            if field_to_rename != "" and field_renamed != "":
+                log.debug(f"{field_to_rename}, {field_renamed} OK")
+                # Check if already to process
+                check_field_to_rename_found = False
+                for (
+                    field_to_process_to_rename,
+                    field_to_process_renamed,
+                ) in fields_to_process.items():
+                    if field_to_rename == field_to_process_renamed:
+                        fields_to_process[field_to_process_to_rename] = field_renamed
+                        check_field_to_rename_found = True
+                if not check_field_to_rename_found:
+                    fields_to_process[field_to_rename] = field_renamed
+
+        # Init
+        fields_processed = {"removed": {}, "renamed": {}, "not_found": {}}
+
+        # if fields_to_rename is not None and access not in ["RO"]:
+        if fields_to_process is not None and access not in ["RO"]:
+
+            log.info(f"Recreate INFO with {len(fields_to_process)} fields...")
+
+            # Create view
+            annotation_view_name = "annotation_view_for_recreate_infos_" + str(
+                random.randrange(1000)
+            )
 
             # Header
             header = self.get_header()
 
-            for field_to_rename, field_renamed in fields_to_rename.items():
+            # Update query select clauses
+            query_view_select_clause = []
 
-                if field_to_rename in header.infos:
+            for field_to_rename, field_renamed in fields_to_process.items():
+
+                # Action
+                action = None
+
+                # Header
+
+                # Field to remove
+                if field_renamed is None:
+
+                    if field_renamed in header.infos:
+
+                        # Remove in header
+                        del header.infos[field_renamed]
+
+                    # Action
+                    action = "removed"
+
+                # Field to rename
+                elif field_to_rename in header.infos:
 
                     # Rename header
-                    if field_renamed is not None:
+                    if field_renamed is not None and field_renamed != field_to_rename:
                         header.infos[field_renamed] = vcf.parser._Info(
                             field_renamed,
                             header.infos[field_to_rename].num,
@@ -12378,41 +13659,30 @@ class Variants:
                             header.infos[field_to_rename].version,
                             header.infos[field_to_rename].type_code,
                         )
-                    del header.infos[field_to_rename]
+                        del header.infos[field_to_rename]
 
-                    # Rename INFO patterns
-                    field_pattern = rf"(^|;)({field_to_rename})(=[^;]*)?;"
-                    if field_renamed is not None:
-                        field_renamed_pattern = rf"\1{field_renamed}\3;"
-                    else:
-                        field_renamed_pattern = r"\1"
-
-                    # regexp replace
-                    regex_replace_nb += 1
-                    regex_replace_key = math.floor(
-                        regex_replace_nb / regex_replace_partition
-                    )
-                    if (regex_replace_nb % regex_replace_partition) == 0:
-                        regex_replace = "concat(INFO, ';')"
-                    if multiple:
-                        multiple_option = ", 'g'"
-                    else:
-                        multiple_option = ""
-                    regex_replace = f"regexp_replace({regex_replace}, '{field_pattern}', '{field_renamed_pattern}'{multiple_option})"
-                    regex_replace_dict[regex_replace_key] = regex_replace
-
-                    # Return
-                    fields_renamed[field_to_rename] = field_renamed
-
-                    # Log
-                    if field_renamed is not None:
-                        log.info(
-                            f"Rename or remove fields - field '{field_to_rename}' renamed to '{field_renamed}'"
+                    # Update query
+                    if header.infos[field_renamed].type == "Flag":
+                        query_view_select_clause.append(
+                            f"""
+                                CASE
+                                    WHEN "{field_renamed}" IS NOT NULL AND TRY_CAST("{field_renamed}" AS FLOAT) != 0
+                                    THEN '{field_renamed};'
+                                END
+                            """
                         )
                     else:
-                        log.info(
-                            f"Rename or remove fields - field '{field_to_rename}' removed"
+                        query_view_select_clause.append(
+                            f"""
+                                CASE
+                                    WHEN "{field_renamed}" IS NOT NULL
+                                    THEN concat('{field_renamed}=',"{field_renamed}",';')
+                                END
+                            """
                         )
+
+                    # Action
+                    action = "renamed"
 
                 else:
 
@@ -12420,26 +13690,63 @@ class Variants:
                         f"Rename or remove fields - field '{field_to_rename}' not in header"
                     )
 
-            # Rename INFO
-            for regex_replace_key, regex_replace in regex_replace_dict.items():
-                log.info(
-                    f"Rename or remove fields - Process [{regex_replace_key+1}/{len(regex_replace_dict)}]..."
+                    # Action
+                    action = "not_found"
+
+                # List of renamed or removed fields
+                if action:
+                    fields_processed[action][field_to_rename] = field_renamed
+
+            if len(query_view_select_clause):
+
+                # Create view
+                annotation_view_name = self.create_annotations_view(
+                    table=table,
+                    view=annotation_view_name,
+                    view_type="view",
+                    view_mode="full",
+                    info_prefix_column="",
+                    # info_struct_column="INFOS",
+                    detect_type_list=False,
+                    fields=fields_processed["renamed"].keys(),
+                    fields_not_exists=True,
+                    fields_forced_as_varchar=True,
+                    fields_needed_all=False,
+                    fields_to_rename=fields_processed["renamed"],
+                    drop_view=True,
                 )
+
+                # Log
+                log.info(
+                    f"Recreate INFO with {len(query_view_select_clause)} found fields..."
+                )
+
+                # Query
                 query = f"""
                     UPDATE {table}
                     SET
-                        INFO = regexp_replace({regex_replace}, ';$', '')
+                        INFO = regexp_replace(
+                                concat({", ".join(query_view_select_clause)}),
+                                ';$',
+                                ''
+                            )
+                    FROM {annotation_view_name}
+                    WHERE {table}."#CHROM" = {annotation_view_name}."#CHROM"
+                      AND {table}."POS" = {annotation_view_name}."POS"
+                      AND {table}."REF" = {annotation_view_name}."REF"
+                      AND {table}."ALT" = {annotation_view_name}."ALT"
                 """
                 # log.debug(f"query={query}")
+
+                # Excecute query
                 self.execute_query(query=query)
 
-        return fields_renamed
+        return fields_processed
 
     def calculation_rename_info_fields(
         self,
         fields_to_rename: dict = None,
         table: str = None,
-        multiple: bool = False,
         operation_name: str = "RENAME_INFO_FIELDS",
     ) -> None:
         """
@@ -12454,8 +13761,6 @@ class Variants:
         specify the name of the table for which the fields are to be renamed. It is a string type
         parameter
         :type table: str
-        :param multiple: Ensure to remove fields if prenset multiple times (bad VCF format)
-        :type multiple: bool
         :param operation_name: The `operation_name` parameter in the `calculation_rename_info_fields`
         method is a string that specifies the name of the operation being performed. In this context, it
         is used as a default value for the operation name if not explicitly provided when calling the
@@ -12491,7 +13796,65 @@ class Variants:
             table = param_table
 
         renamed_fields = self.rename_info_fields(
-            fields_to_rename=fields_to_rename, table=table, multiple=multiple
+            fields_to_rename=fields_to_rename, table=table
+        )
+
+        log.debug(f"renamed_fields:{renamed_fields}")
+
+    def calculation_recreate_info_fields(
+        self,
+        fields_to_rename: dict = None,
+        table: str = None,
+        operation_name: str = "RENAME_INFO_FIELDS",
+    ) -> None:
+        """
+        The `calculation_recreate_info_fields` function retrieves parameters from a dictionary, recreate
+        INFO fields with rename and table if provided, and then calls another function to rename the fields.
+
+        :param fields_to_rename: `fields_to_rename` is a dictionary that contains the fields to be
+        renamed in a table. Each key-value pair in the dictionary represents the original field name as
+        the key and the new field name as the value
+        :type fields_to_rename: dict
+        :param table: The `table` parameter in the `calculation_recreate_info_fields` method is used to
+        specify the name of the table for which the fields are to be renamed. It is a string type
+        parameter
+        :type table: str
+        :param operation_name: The `operation_name` parameter in the `calculation_recreate_info_fields`
+        method is a string that specifies the name of the operation being performed. In this context, it
+        is used as a default value for the operation name if not explicitly provided when calling the
+        function, defaults to RENAME_INFO_FIELDS
+        :type operation_name: str (optional)
+        """
+
+        # Param
+        param = self.get_param()
+
+        # Get param fields to rename
+        param_fields_to_rename = (
+            param.get("calculation", {})
+            .get("calculations", {})
+            .get(operation_name, {})
+            .get("fields_to_rename", None)
+        )
+
+        # Get param table
+        param_table = (
+            param.get("calculation", {})
+            .get("calculations", {})
+            .get(operation_name, {})
+            .get("table", None)
+        )
+
+        # Init fields_to_rename
+        if fields_to_rename is None:
+            fields_to_rename = param_fields_to_rename
+
+        # Init table
+        if table is None:
+            table = param_table
+
+        renamed_fields = self.recreate_info_fields(
+            fields_to_rename=fields_to_rename, table=table
         )
 
         log.debug(f"renamed_fields:{renamed_fields}")
@@ -12505,94 +13868,67 @@ class Variants:
         table: str = None,
         view: str = None,
         view_type: str = None,
+        view_mode: str = None,
         fields: list = None,
         fields_needed: list = None,
         fields_needed_all: bool = False,
         detect_type_list: bool = True,
         fields_not_exists: bool = True,
+        only_in_columns: bool = False,
+        formats: list = None,
+        strict: bool = False,
         info_prefix_column: str = None,
         info_struct_column: str = None,
+        sample_struct_column: str = None,
         drop_view: bool = False,
         fields_to_rename: dict = None,
         fields_forced_as_varchar: bool = False,
         limit: int = None,
     ) -> str:
         """
-        The `create_annotations_view` function creates a SQL view from fields in a VCF INFO column.
+        Creates a SQL view from fields in a VCF INFO column, or already in a column.
 
-        :param table: The `table` parameter in the `create_annotations_view` function is used to specify
-        the name of the table from which the fields are to be extracted. This table contains the
-        variants data, and the function creates a view based on the fields in the INFO column of this
-        table. Defaults to None
-        :type table: str
-        :param view: The `view` parameter in the `create_annotations_view` function is used to specify
-        the name of the view that will be created based on the fields in the VCF INFO column. This view
-        will contain the extracted fields from the INFO column in a structured format for further
-        processing or analysis. Defaults to None
-        :type view: str
-        :param view_type: The `view_type` parameter in the `create_annotations_view` function is used to
-        specify the type of view that will be created. It can be either a `VIEW` or a `TABLE`, and the
-        function will create the view based on the specified type. Defaults to `VIEW`
-        :type view_type: str
-        :param fields: The `fields` parameter in the `create_annotations_view` function is a list that
-        contains the names of the fields to be extracted from the INFO column in the VCF file. These
-        fields will be used to create the view with the specified columns and data extracted from the
-        INFO column. Defaults to None
-        :type fields: list
-        :param fields_needed: The `fields_needed` parameter in the `create_annotations_view` function is
-        a list of fields that are required for the view. These fields are essential for the view and
-        must be included in the view to ensure that the data is complete and accurate. By default, the
-        function will include all columns' table in the view, but you can specify the
-        required fields using this parameter. Defaults to None, which means key columns corresponding
-        of a variant ["#CHROM", "POS", "REF", "ALT"]
-        :type fields_needed: list
-        :param fields_needed_all: The `fields_needed_all` parameter in the `create_annotations_view`
-        function is a boolean flag that determines whether to include all fields in the table in the
-        view. If set to `True`, the function will include all fields in the table in the view (only
-        if `fields_needed` is `False`). If set to `False`, the function will only include the
-        needed fields specified in the `fields_needed` parameter in the view. Defaults to False
-        :type fields_needed_all: bool
-        :param detect_type_list: The `detect_type_list` parameter in the `create_annotations_view`
-        function is a boolean flag that determines whether to detect the type of the fields extracted
-        from the INFO column. If set to `True`, the function will detect the type of the fields and
-        handle them accordingly in the view. Defaults to False
-        :type detect_type_list: bool
-        :param fields_not_exists: The `fields_not_exists` parameter in the `create_annotations_view`
-        function is a boolean flag that determines whether to include fields that do not exist in the
-        table in the view. If set to `True`, the function will include fields that do not exist in the
-        table as NULL values in the view. Defaults to True
-        :type fields_not_exists: bool
-        :param info_prefix_column: The `info_prefix_column` parameter in the `create_annotations_view`
-        function is used to specify a prefix that will be added to the field names in the view.
-        If provided, the function will generate a fields with the prefix (e.g. "", "INFOS_", "annotations_").
-        If not provided (None), the function will not genereate columns. This prefix helps in
-        distinguishing the fields extracted from the INFO column in the view. Defaults to None.
-        :type info_prefix_column: str
-        :param info_struct_column: The `info_struct_column` parameter in the `create_annotations_view`
-        function is used to specify the name of the column that will contain the extracted fields from
-        the INFO column in the view. This column will hold the structured data extracted from the INFO
-        column for further processing or analysis (e.g. "INFOS" or "annotations"). If not provided (None),
-        the function will not genereate the column. Defaults to None
-        :type info_struct_column: str
-        :param drop_view: The `drop_view` parameter in the `create_annotations_view` function is a boolean
-        flag that determines whether to drop the existing view with the same name before creating a new
-        view. If set to `True`, the function will drop the existing view before creating a new view with
-        the specified name. Defaults to False
-        :type drop_view: bool
-        :param fields_to_rename: The `fields_to_rename` parameter in the `create_annotations_view`
-        function is a dictionary that contains the mapping of fields to be renamed in the VCF file. The
-        keys in the dictionary represent the original field names that need to be renamed, and the
-        corresponding values represent the new names to which the fields should be. Defaults to None
-        :type fields_to_rename: dict
-        :param fields_forced_as_varchar: Force fields as type VARCHAR
-        :type fields_forced_as_varchar: bool
-        :param limit: The `limit` parameter in the `create_annotations_view` function is an integer that
-        specifies the maximum number of rows to be included in the view. If provided, the function will
-        limit the number of rows in the view to the specified value. Defaults to None
-        :type limit: int
-        :return: The `create_annotations_view` function returns the name of the view that is created
-        based on the fields extracted from the INFO column in the VCF file. This view contains the
-        extracted fields in a structured format for further processing or analysis. Defaults to None
+        :param table: The name of the table containing variant data. If not provided, the default table is used.
+        :type table: str, optional
+        :param view: The name of the view that will be created based on the fields in the VCF INFO column. Defaults to None.
+        :type view: str, optional
+        :param view_type: The type of view to be created. It can be either a `VIEW` or a `TABLE`. Defaults to `VIEW`.
+        :type view_type: str, optional
+        :param view_mode: The mode of view to be created. It can be either `full` or `explore`. Defaults to `full`.
+        :type view_mode: str, optional
+        :param fields: A list of field names to be extracted from the INFO column in the VCF file. Defaults to None.
+        :type fields: list, optional
+        :param fields_needed: A list of fields that are required for the view. Defaults to None.
+        :type fields_needed: list, optional
+        :param fields_needed_all: A flag that determines whether to include all fields in the table in the view. Defaults to False.
+        :type fields_needed_all: bool, optional
+        :param detect_type_list: A flag that determines whether to detect the type of the fields extracted from the INFO column. Defaults to True.
+        :type detect_type_list: bool, optional
+        :param fields_not_exists: A flag that determines whether to include fields that do not exist in the table in the view. Defaults to True.
+        :type fields_not_exists: bool, optional
+        :param only_in_columns: A flag that determines whether to include only the fields that exist in the columns of the table. Defaults to False.
+        :type only_in_columns: bool, optional
+        :param formats: A list of field names to be extracted from the FORMAT column in the VCF file. Defaults to None.
+        :type formats: list, optional
+        :param strict: A flag that determines whether to enforce strict criteria for the fields in the view. Defaults to False.
+        :type strict: bool, optional
+        :param info_prefix_column: A prefix to be added to the field names in the view. Defaults to None.
+        :type info_prefix_column: str, optional
+        :param info_struct_column: The name of the column that will contain the extracted fields from the INFO column in the view. Defaults to None.
+        :type info_struct_column: str, optional
+        :param sample_struct_column: The name of the column that will contain the extracted formats from the samples columns in the view. Defaults to None.
+        :type sample_struct_column: str, optional
+        :param drop_view: A flag that determines whether to drop the existing view with the same name before creating a new view. Defaults to False.
+        :type drop_view: bool, optional
+        :param fields_to_rename: A dictionary that contains the mapping of fields to be renamed in the VCF file. Defaults to None.
+        :type fields_to_rename: dict, optional
+        :param fields_forced_as_varchar: A flag that forces fields to be treated as type VARCHAR. Defaults to False.
+        :type fields_forced_as_varchar: bool, optional
+        :param limit: The maximum number of rows to be included in the view. Defaults to None.
+        :type limit: int, optional
+
+        :return: The name of the view that is created based on the fields extracted from the INFO column in the VCF file.
+        :rtype: str
         """
 
         # Create a sql view from fields in VCF INFO column, with each column is a field present in the VCF header (with a specific type from VCF header) and extracted from INFO column (with a regexp like in rename_info_fields), and each row is a variant.
@@ -12609,16 +13945,32 @@ class Variants:
         if view_type is None:
             view_type = "VIEW"
 
+        # Get mode
+        view_mode_allowed = ["full", "explore"]
+        if view_mode is None:
+            view_mode = "explore"
+
+        # Mode lower
+        view_mode = view_mode.lower()
+
+        # Mode check
+        if view_mode not in view_mode_allowed:
+            msg_err = f"Invalid view mode: '{view_mode}' (either {view_mode_allowed})"
+            log.error(msg_err)
+            raise ValueError(msg_err)
+
+        # Prefix
         if info_prefix_column is not None:
             prefix = info_prefix_column
         else:
             prefix = ""
 
         # Check view type value
-        if view_type.upper() not in ["VIEW", "TABLE"]:
-            raise ValueError(
-                f"Invalid view type value: {view_type}. Either 'VIEW' or 'TABLE'"
-            )
+        view_type_allowed = ["view", "table"]
+        if view_type.lower() not in view_type_allowed:
+            msg_err = f"Invalid view type: {view_type} (either {view_type_allowed})"
+            log.error(msg_err)
+            raise ValueError(msg_err)
 
         # Get header
         header = self.get_header()
@@ -12627,19 +13979,50 @@ class Variants:
         if fields is None:
             fields = list(header.infos.keys())
 
+        # # Get format fields
+        # if formats is None:
+        #     formats = list(header.formats.keys())
+        #     # fields = list(header.infos.keys())
+
         # Get fields to rename
         if fields_to_rename is None:
             fields_to_rename = {}
 
+        # If Samples structured columns
+        if sample_struct_column:
+
+            # # Get format
+            # formats = list(header.formats.keys())
+            if formats is None:
+                formats = list(header.formats.keys())
+
+            # Get samples
+            samples = list(header.samples)
+
+        else:
+
+            # Empty format and samples
+            formats = []
+            samples = []
+
         log.debug(
-            f"Create '{view}' view (as '{view_type}') from table '{table}' with {len(fields)} fields"
+            f"Create '{view}' view (as '{view_type}' mode '{view_mode}') from table '{table}' with {len(fields)} fields"
         )
 
+        connexion_type = self.get_connexion_type()
+
         # Describe table
-        table_describe_query = f"""
-            DESCRIBE {table}
-        """
-        table_describe = self.get_query_to_df(query=table_describe_query)
+        if connexion_type in ["duckdb"]:
+            table_describe_query = f"""
+                DESCRIBE {table}
+            """
+            table_describe = self.get_query_to_df(query=table_describe_query)
+        else:
+            table_describe_query = f"""
+                PRAGMA table_info({table})
+            """
+            table_describe = self.get_query_to_df(query=table_describe_query)
+            table_describe["column_name"] = table_describe.get("name")
 
         # fields needed
         if fields_needed is None:
@@ -12647,32 +14030,52 @@ class Variants:
                 fields_needed = list(table_describe.get("column_name"))
             else:
                 fields_needed = ["#CHROM", "POS", "REF", "ALT"]
-            # list(table_describe.get("column_name"))
+
+        # Add samples in view mode 'full'
+        # log.debug(f"samples={samples}")
+        # log.debug(f"table_describe={table_describe}")
+        if view_mode in ["full"] and sample_struct_column and len(samples):
+            if "FORMAT" not in fields_needed and "FORMAT" in list(
+                table_describe.get("column_name")
+            ):  # in table_describe:
+                fields_needed += ["FORMAT"]
+            for field_needed in fields_needed:
+                if field_needed not in fields_needed:
+                    fields_needed += [field_needed]
+
+        # Check needed fieds
+        for field in fields_needed:
+            if field not in list(table_describe.get("column_name")):
+                msg_err = f"Field '{field}' is needed, but not in file"
+                raise ValueError(msg_err)
 
         # Create fields for annotation view extracted from INFO column in table variants (with regexp_replace like in rename_info_fields), with column type from VCF header
         fields_columns = []
         fields_columns_annotations_struct = []
+        samples_format_struct = []
         field_sql_type_list = False
-        for field in fields:
+
+        # Find "INFO" column
+        if "INFO" in list(table_describe.get("column_name")):
+            info_column = '"INFO"'
+        else:
+            info_column = "''"
+
+        # Each field
+        for field in set(fields):
 
             # Rename field
             field_to_rename = fields_to_rename.get(field, field)
+            if field_to_rename is None:
+                field_to_rename = field
 
             # Check field type
 
-            # Needed fields
-            if field in fields_needed:
-                continue
+            # Field info
+            field_infos = header.infos.get(field, None)
 
-            # Fields in table
-            elif field in list(table_describe.get("column_name")):
-                fields_columns.append(f""" "{field}" AS '{prefix}{field_to_rename}' """)
-
-            # Fields in header
-            elif field in header.infos:
-
-                # Field info
-                field_infos = header.infos.get(field, None)
+            # Field SQL type
+            if field_infos is not None:
 
                 # Field SQL type
                 field_sql_type = code_type_map_to_sql.get(field_infos.type, "VARCHAR")
@@ -12683,21 +14086,98 @@ class Variants:
                 else:
                     field_sql_type_list = False
 
-                # fields_forced_as_varchar
-                if fields_forced_as_varchar:
-                    field_sql_type = "VARCHAR"
-                    field_sql_type_list = False
+            else:
+
+                # Field SQL type
+                field_sql_type = "VARCHAR"
+
+                # Column is a list
+                field_sql_type_list = False
+
+            # fields_forced_as_varchar
+            if fields_forced_as_varchar:
+                field_sql_type = "VARCHAR"
+                field_sql_type_list = False
+
+            # Needed fields, not in other annotation fields (useful for DB with fields in column)
+            if field in fields_needed and not field in list(
+                table_describe.get("column_name")
+            ):
+                continue
+
+            # Fields in table
+            elif field in list(table_describe.get("column_name")):
+
+                # Add field in needed if 'full' view mode
+                if view_mode in ["full"]:
+                    if field not in fields_needed:
+                        fields_needed += [field]
+
+                # Only if not needes (already in a column)
+                if not field in fields_needed:
+                    # log.debug(f"Filed '{field}' not in needed")
+                    fields_columns.append(
+                        f"""
+                            "{field}" AS '{prefix}{field_to_rename}' -- field in column but not in needed
+                        """
+                    )
+
+                # Flag
+                if field_infos is not None and field_infos.type == "Flag":
+                    fields_columns_annotations_struct.append(
+                        f"""
+                            "{field_to_rename}":= TRY_CAST("{field}" AS BOOLEAN)
+                        """
+                    )
+                else:
+                    if field_sql_type_list:
+                        fields_columns_annotations_struct.append(
+                            f"""
+                                "{field_to_rename}":= CAST(list_transform(string_split(CAST("{field}" AS VARCHAR), ','), x -> CASE WHEN x = '.' OR x = '' THEN NULL ELSE x END) AS {field_sql_type}[]) -- field in column
+                            """
+                        )
+                    else:
+                        fields_columns_annotations_struct.append(
+                            f"""
+                                "{field_to_rename}":= COALESCE(NULLIF(regexp_replace(CAST("{field}" AS VARCHAR), '^\\.$', ''), '')::{field_sql_type}, NULL)  -- field in column
+                            """
+                        )
+
+            # Fields in header
+            elif (
+                field in header.infos
+                and not only_in_columns
+                and "INFO" in list(table_describe.get("column_name"))
+            ):
 
                 # Colonne is a flag
                 if field_infos.type == "Flag":
+
+                    # Field pattern
                     field_pattern = rf"(^|;)({field})([^;]*)?"
-                    fields_columns.append(
-                        f""" regexp_matches("INFO", '{field_pattern}')::BOOLEAN AS '{prefix}{field_to_rename}' """
-                    )
-                    fields_columns_annotations_struct.append(
-                        f""" "{field_to_rename}":= regexp_matches("INFO", '{field_pattern}')::BOOLEAN
-                        """
-                    )
+
+                    if view_mode in ["explore"]:
+                        fields_columns.append(
+                            f"""
+                                regexp_matches({info_column}, '{field_pattern}')::BOOLEAN AS '{prefix}{field_to_rename}'
+                            """
+                        )
+                        fields_columns_annotations_struct.append(
+                            f"""
+                                "{field_to_rename}":= regexp_matches({info_column}, '{field_pattern}')::BOOLEAN
+                            """
+                        )
+                    elif view_mode in ["full"]:
+                        fields_columns.append(
+                            f"""
+                                string_agg(CASE WHEN k = '{field}' THEN true END, ',')::BOOLEAN AS '{prefix}{field_to_rename}'
+                            """
+                        )
+                        fields_columns_annotations_struct.append(
+                            f"""
+                                "{field_to_rename}":= string_agg(CASE WHEN k = '{field}' THEN true END, ',')::BOOLEAN
+                            """
+                        )
 
                 # Colonne with a type
                 else:
@@ -12705,34 +14185,143 @@ class Variants:
                     # Field pattern
                     field_pattern = rf"(^|;)({field})=([^;]*)?"
 
+                    if view_mode in ["explore"]:
+                        field_source = (
+                            f""" regexp_extract({info_column}, '{field_pattern}', 3) """
+                        )
+                    elif view_mode in ["full"]:
+                        field_source = (
+                            f""" string_agg(CASE WHEN k = '{field}' THEN v END, ',') """
+                        )
+
                     # Field is a list
                     if field_sql_type_list:
+
                         fields_columns.append(
-                            f""" CAST(list_transform(string_split(NULLIF(regexp_extract("INFO", '{field_pattern}', 3), ''), ','), x -> CASE WHEN x = '.' OR x = '' THEN NULL ELSE x END) AS {field_sql_type}[]) AS '{prefix}{field_to_rename}' """
+                            f"""
+                                CAST(list_transform(string_split({field_source}, ','), x -> CASE WHEN x = '.' OR x = '' THEN NULL ELSE x END) AS {field_sql_type}[]) AS '{prefix}{field_to_rename}'
+                            """
                         )
                         fields_columns_annotations_struct.append(
-                            f""" "{field_to_rename}":= CAST(list_transform(string_split(NULLIF(regexp_extract("INFO", '{field_pattern}', 3), ''), ','), x -> CASE WHEN x = '.' OR x = '' THEN NULL ELSE x END) AS {field_sql_type}[])
+                            f"""
+                                "{field_to_rename}":= CAST(list_transform(string_split({field_source}, ','), x -> CASE WHEN x = '.' OR x = '' THEN NULL ELSE x END) AS {field_sql_type}[])
                             """
                         )
 
                     # Field is a unique value
                     else:
+
                         fields_columns.append(
-                            f""" NULLIF(regexp_replace(regexp_extract("INFO", '{field_pattern}', 3), '^\\.$', ''), '')::{field_sql_type} AS '{prefix}{field_to_rename}' """
+                            f"""
+                                NULLIF(regexp_replace({field_source}, '^\\.$', ''), '')::{field_sql_type} AS '{prefix}{field_to_rename}'
+                            """
                         )
                         fields_columns_annotations_struct.append(
-                            f""" "{field_to_rename}":= COALESCE(NULLIF(regexp_replace(regexp_extract("INFO", '{field_pattern}', 3), '^\\.$', ''), '')::{field_sql_type}, NULL)
+                            f"""
+                                "{field_to_rename}":= COALESCE(NULLIF(regexp_replace({field_source}, '^\\.$', ''), '')::{field_sql_type}, NULL)
                             """
                         )
 
+            # Add field even if not exists
+            elif fields_not_exists:
+
+                fields_columns.append(
+                    f"""
+                            null AS '{prefix}{field_to_rename}'
+                        """
+                )
+                fields_columns_annotations_struct.append(
+                    f"""
+                            "{field_to_rename}":= NULL
+                        """
+                )
+                msg_err = f"Field '{field}' is not found (in table or header): '{field}' will be set to NULL"
+                log.warning(msg=msg_err)
+
             else:
-                if fields_not_exists:
-                    fields_columns.append(f""" null AS '{prefix}{field_to_rename}' """)
-                    fields_columns_annotations_struct.append(
-                        f""" "{field_to_rename}":= NULL  """
+
+                # Field not found
+                msg_err = f"Field '{field}' is not found (in table or header or column)"
+
+                if strict:
+                    log.error(msg=msg_err)
+                    raise ValueError(msg_err)
+                else:
+                    log.warning(msg=msg_err)
+
+        # If samples and struct as option
+        if sample_struct_column and len(samples):
+
+            # Format info
+            format_infos = header.formats
+
+            # For each sample
+            for sample in samples:
+
+                # Struct by format
+                sample_format_struct = []
+
+                # For each format
+                for format in formats:
+                    # for format in ["GT"]:
+
+                    # Format cast and list
+                    format_cast = ""
+                    format_list = False
+                    format_cast = code_type_map_to_sql.get(
+                        format_infos.get(format).type, "VARCHAR"
                     )
-                    msg_err = f"Field '{field}' is not found (in table or header): '{field}' will be set to NULL"
-                    log.debug(msg=msg_err)
+                    if format_infos.get(format).num != 1:
+                        format_list = True
+
+                    # If format is a list
+                    if format_list:
+                        sample_format_struct.append(
+                            f""" 
+                                "{format}":= 
+                                    list_transform(
+                                        string_split(
+                                            NULLIF(
+                                                string_split("{sample}", ':')[list_position(string_split("FORMAT", ':'), '{format}')]
+                                                , ''
+                                            )
+                                            , ',')
+                                        , x -> CASE WHEN x = '.' OR x = '' THEN NULL ELSE x END
+                                    )::{format_cast}[]
+                            """
+                        )
+                    # If format is NOT a list
+                    else:
+                        sample_format_struct.append(
+                            f""" 
+                                "{format}":= 
+                                    COALESCE(
+                                        NULLIF(
+                                            regexp_replace(
+                                                string_split("{sample}", ':')[list_position(string_split("FORMAT", ':'), '{format}')]
+                                                , '^\\.$', ''
+                                            )
+                                        , ''
+                                        )
+                                    )::{format_cast}
+                            """
+                        )
+
+                # Add struct of the sample
+                if len(sample_format_struct):
+                    samples_format_struct.append(
+                        f"""
+                        "{sample}":= STRUCT_PACK({", ".join(sample_format_struct)})
+                    """
+                    )
+
+        # Combine fields into columns
+        if info_prefix_column is not None and len(fields_columns):
+            annotations_column_annotations_columns = (
+                f""", {", ".join(fields_columns)}"""
+            )
+        else:
+            annotations_column_annotations_columns = ""
 
         # Combine fields into a STRUCT
         if info_struct_column and len(fields_columns_annotations_struct):
@@ -12742,12 +14331,11 @@ class Variants:
         else:
             annotations_column_annotations_struct = ""
 
-        if info_prefix_column is not None and len(fields_columns):
-            annotations_column_annotations_columns = f""" 
-                , {", ".join(fields_columns)}
-                """
+        # Combine samples into a STRUCT
+        if sample_struct_column and len(samples_format_struct):
+            samples_format_struct_clause = f""", STRUCT_PACK({", ".join(samples_format_struct)}) AS {sample_struct_column} """
         else:
-            annotations_column_annotations_columns = ""
+            samples_format_struct_clause = ""
 
         # Limit
         limit_clause = ""
@@ -12755,22 +14343,72 @@ class Variants:
             limit_clause = f" LIMIT {limit} "
 
         # Query select
-        query_select = f"""
-            SELECT
-                {', '.join([f'"{field}"' for field in fields_needed])} {annotations_column_annotations_columns} {annotations_column_annotations_struct}
-            FROM
-                {table}
-            {limit_clause}
-        """
+
+        if view_mode in ["explore"]:
+            query_select = f"""
+                SELECT
+                    {', '.join([f'"{field}"' for field in fields_needed])}  -- variant id
+                    {annotations_column_annotations_columns}                -- annotations_column_annotations_columns
+                    {annotations_column_annotations_struct}                 -- annotations_column_annotations_struct
+                    {samples_format_struct_clause}                          -- samples_format_struct_clause
+                FROM
+                    {table}
+                {limit_clause}
+            """
+
+        elif view_mode in ["full"]:
+            query_select = f"""
+                    SELECT
+                        {', '.join([f'"{field}"' for field in fields_needed])}          -- variant id
+                        {annotations_column_annotations_columns}                        -- annotations_column_annotations_columns
+                        {annotations_column_annotations_struct}                         -- annotations_column_annotations_struct
+                        {samples_format_struct_clause}                                  -- samples_format_struct_clause
+                    FROM (
+                        SELECT
+                            {', '.join([f'"{field}"' for field in fields_needed])},     -- variant id
+                            k,      -- key
+                            v       -- value
+                        FROM (
+                            SELECT
+                                {', '.join([f'"{field}"' for field in fields_needed])},     -- variant id
+                                INFO,                                                       -- INFO
+                                string_split(kv, '=')[1] AS k,  -- key
+                                string_split(kv, '=')[2] AS v   -- value
+                            FROM (
+                                SELECT {', '.join([f'"{field}"' for field in fields_needed])},  -- variant id
+                                {info_column} AS INFO,                                          -- INFO
+                                -- unnest(string_split({info_column}, ';')) AS kv
+                                unnest(string_split(concat({info_column}, ''), ';')) AS kv
+                                FROM {table}
+                                )
+                            WHERE k in ('{"', '".join(fields)}') OR TRIM(INFO) in ('', '.')  OR INFO IS NULL
+                            )
+                        )
+                    GROUP BY {', '.join([f'"{field}"' for field in fields_needed])}
+                    {limit_clause}
+
+            """
 
         # Drop if any
         if drop_view:
             log.debug(f"Drop view: {view}")
-            query_create_view = f"""
-                DROP {view_type} IF EXISTS {view}
-            """
-            self.execute_query(query=query_create_view)
-            log.debug(f"View dropped: {view}")
+            try:
+                query_create_view = f"""
+                    DROP view IF EXISTS {view}
+                """
+                self.execute_query(query=query_create_view)
+                log.debug(f"View dropped: {view}")
+            except:
+                try:
+                    query_create_view = f"""
+                        DROP table IF EXISTS {view}
+                    """
+                    self.execute_query(query=query_create_view)
+                    log.debug(f"View dropped: {view}")
+                except:
+                    msg_err = f"View '{view}' can NOT be dropped"
+                    log.error(msg_err)
+                    raise ValueError(msg_err)
 
         # Create view
         log.debug(f"Create view: {view}")

@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 
 from collections import namedtuple
 
-from lazy import lazy
+from lazy import lazy  # type: ignore
 
 from howard.objects.cdna import CDNA_START_CODON, CDNA_STOP_CODON, CDNACoord
 

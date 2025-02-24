@@ -5,6 +5,7 @@
     "description": "Create a variant ID with chromosome, position, alt and ref",
     "available": true,
     "output_column_name": "variant_chr_pos_alt_ref",
+    "output_column_number": "1",
     "output_column_type": "String",
     "output_column_description": "variant ID with chromosome, position, alt and ref",
     "operation_query": " concat(\"#CHROM\", '_', POS, '_', REF, '_', ALT) ",
@@ -16,6 +17,7 @@
     "description": "Variant type (e.g. SNV, INDEL, MNV, BND...)",
     "available": true,
     "output_column_name": "VARTYPE",
+    "output_column_number": "1",
     "output_column_type": "String",
     "output_column_description": "Variant type: SNV if X>Y, MOSAIC if X>Y,Z or X,Y>Z, INDEL if XY>Z or X>YZ",
     "operation_query": [

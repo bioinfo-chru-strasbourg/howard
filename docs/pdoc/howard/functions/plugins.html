@@ -60,11 +60,11 @@
 
                         <label class="view-source-button" for="mod-plugins-view-source"><span>View Source</span></label>
 
-                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos">  1</span></a><span class="kn">import</span> <span class="nn">importlib</span>
-</span><span id="L-2"><a href="#L-2"><span class="linenos">  2</span></a><span class="kn">import</span> <span class="nn">os</span>
+                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos">  1</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span>
+</span><span id="L-2"><a href="#L-2"><span class="linenos">  2</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 </span><span id="L-3"><a href="#L-3"><span class="linenos">  3</span></a>
 </span><span id="L-4"><a href="#L-4"><span class="linenos">  4</span></a>
-</span><span id="L-5"><a href="#L-5"><span class="linenos">  5</span></a><span class="k">def</span> <span class="nf">plugins_infos</span><span class="p">(</span><span class="n">plugins_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">subfolder_plugins</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;plugins&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+</span><span id="L-5"><a href="#L-5"><span class="linenos">  5</span></a><span class="k">def</span><span class="w"> </span><span class="nf">plugins_infos</span><span class="p">(</span><span class="n">plugins_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">subfolder_plugins</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;plugins&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 </span><span id="L-6"><a href="#L-6"><span class="linenos">  6</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="L-7"><a href="#L-7"><span class="linenos">  7</span></a><span class="sd">    The `plugins_infos` function loads Python plugins from a specified directory and returns a</span>
 </span><span id="L-8"><a href="#L-8"><span class="linenos">  8</span></a><span class="sd">    dictionary mapping plugin names to their respective modules.</span>
@@ -110,7 +110,7 @@
 </span><span id="L-48"><a href="#L-48"><span class="linenos"> 48</span></a>    <span class="k">return</span> <span class="n">plugins</span>
 </span><span id="L-49"><a href="#L-49"><span class="linenos"> 49</span></a>
 </span><span id="L-50"><a href="#L-50"><span class="linenos"> 50</span></a>
-</span><span id="L-51"><a href="#L-51"><span class="linenos"> 51</span></a><span class="k">def</span> <span class="nf">plugins_list</span><span class="p">(</span>
+</span><span id="L-51"><a href="#L-51"><span class="linenos"> 51</span></a><span class="k">def</span><span class="w"> </span><span class="nf">plugins_list</span><span class="p">(</span>
 </span><span id="L-52"><a href="#L-52"><span class="linenos"> 52</span></a>    <span class="n">plugins</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">plugins_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">subfolder_plugins</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;plugins&quot;</span>
 </span><span id="L-53"><a href="#L-53"><span class="linenos"> 53</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 </span><span id="L-54"><a href="#L-54"><span class="linenos"> 54</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -161,7 +161,7 @@
 </span><span id="L-99"><a href="#L-99"><span class="linenos"> 99</span></a>    <span class="k">return</span> <span class="n">plugin_info</span>
 </span><span id="L-100"><a href="#L-100"><span class="linenos">100</span></a>
 </span><span id="L-101"><a href="#L-101"><span class="linenos">101</span></a>
-</span><span id="L-102"><a href="#L-102"><span class="linenos">102</span></a><span class="k">def</span> <span class="nf">plugins_to_load</span><span class="p">(</span><span class="n">plugins_list_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+</span><span id="L-102"><a href="#L-102"><span class="linenos">102</span></a><span class="k">def</span><span class="w"> </span><span class="nf">plugins_to_load</span><span class="p">(</span><span class="n">plugins_list_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 </span><span id="L-103"><a href="#L-103"><span class="linenos">103</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="L-104"><a href="#L-104"><span class="linenos">104</span></a><span class="sd">    The `plugins_to_load` function filters a dictionary of plugins based on their &quot;enabled&quot; and</span>
 </span><span id="L-105"><a href="#L-105"><span class="linenos">105</span></a><span class="sd">    &quot;__enabled__&quot; keys.</span>
@@ -199,7 +199,7 @@
 
     </div>
     <a class="headerlink" href="#plugins_infos"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="plugins_infos-6"><a href="#plugins_infos-6"><span class="linenos"> 6</span></a><span class="k">def</span> <span class="nf">plugins_infos</span><span class="p">(</span><span class="n">plugins_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">subfolder_plugins</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;plugins&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="plugins_infos-6"><a href="#plugins_infos-6"><span class="linenos"> 6</span></a><span class="k">def</span><span class="w"> </span><span class="nf">plugins_infos</span><span class="p">(</span><span class="n">plugins_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">subfolder_plugins</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;plugins&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 </span><span id="plugins_infos-7"><a href="#plugins_infos-7"><span class="linenos"> 7</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="plugins_infos-8"><a href="#plugins_infos-8"><span class="linenos"> 8</span></a><span class="sd">    The `plugins_infos` function loads Python plugins from a specified directory and returns a</span>
 </span><span id="plugins_infos-9"><a href="#plugins_infos-9"><span class="linenos"> 9</span></a><span class="sd">    dictionary mapping plugin names to their respective modules.</span>
@@ -283,7 +283,7 @@ subfolder, defaults to plugins</li>
 
     </div>
     <a class="headerlink" href="#plugins_list"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="plugins_list-52"><a href="#plugins_list-52"><span class="linenos"> 52</span></a><span class="k">def</span> <span class="nf">plugins_list</span><span class="p">(</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="plugins_list-52"><a href="#plugins_list-52"><span class="linenos"> 52</span></a><span class="k">def</span><span class="w"> </span><span class="nf">plugins_list</span><span class="p">(</span>
 </span><span id="plugins_list-53"><a href="#plugins_list-53"><span class="linenos"> 53</span></a>    <span class="n">plugins</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">plugins_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">subfolder_plugins</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;plugins&quot;</span>
 </span><span id="plugins_list-54"><a href="#plugins_list-54"><span class="linenos"> 54</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 </span><span id="plugins_list-55"><a href="#plugins_list-55"><span class="linenos"> 55</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -376,7 +376,7 @@ subfolder, defaults to plugins</li>
 
     </div>
     <a class="headerlink" href="#plugins_to_load"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="plugins_to_load-103"><a href="#plugins_to_load-103"><span class="linenos">103</span></a><span class="k">def</span> <span class="nf">plugins_to_load</span><span class="p">(</span><span class="n">plugins_list_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="plugins_to_load-103"><a href="#plugins_to_load-103"><span class="linenos">103</span></a><span class="k">def</span><span class="w"> </span><span class="nf">plugins_to_load</span><span class="p">(</span><span class="n">plugins_list_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 </span><span id="plugins_to_load-104"><a href="#plugins_to_load-104"><span class="linenos">104</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="plugins_to_load-105"><a href="#plugins_to_load-105"><span class="linenos">105</span></a><span class="sd">    The `plugins_to_load` function filters a dictionary of plugins based on their &quot;enabled&quot; and</span>
 </span><span id="plugins_to_load-106"><a href="#plugins_to_load-106"><span class="linenos">106</span></a><span class="sd">    &quot;__enabled__&quot; keys.</span>

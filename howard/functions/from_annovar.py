@@ -5,15 +5,14 @@ import gc
 import sys
 import os
 import subprocess
-import duckdb
+import duckdb  # type: ignore
 import argparse
-
-import Bio.bgzf as bgzf
-import pandas as pd
+import Bio.bgzf as bgzf  # type: ignore
+import pandas as pd  # type: ignore
 import logging as log
-import pyarrow as pa
-import pyarrow.parquet as pq
-import pyarrow.csv as pcsv
+import pyarrow as pa  # type: ignore
+import pyarrow.parquet as pq  # type: ignore
+import pyarrow.csv as pcsv  # type: ignore
 
 from howard.objects.variants import Variants
 from howard.functions.commons import full_path, remove_if_exists

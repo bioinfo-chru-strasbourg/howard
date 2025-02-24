@@ -147,7 +147,7 @@ Tools:
 Launch HOWARD interactive terminal to explore a VCF file:
 
 ``` bash
-howard query --input='tests/data/examples.vcf'
+howard query --input='tests/data/example.vcf.gz'
 ```
 
 ``` text
@@ -160,21 +160,29 @@ howard query --input='tests/data/examples.vcf'
 HOWARD::0.12.2.0 [Antony Le Bechec, Jean-Baptiste Lamouche]
 HOWARD - Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery
 
-#[2025-01-07 14:19:24] [INFO] Start
-#[2025-01-07 14:19:24] [INFO] Loading...
-#[2025-01-07 14:19:24] [INFO] End
-#[2025-01-07 14:19:24] [INFO] Start interative terminal
-#[2025-01-07 14:19:24] [INFO] Interactive DuckDB SQL terminal. Type 'exit' to quit.
-#[2025-01-07 14:19:24] [INFO] Type 'help' for a list of commands.
-#[2025-01-07 14:22:25] [SQL]> SELECT "#CHROM", "POS", "REF", "ALT", "INFO"
-#[2025-01-07 14:22:25] [SQL]| FROM variants_view
-#[2025-01-07 14:22:25] [SQL]| WHERE DP>30 
-#[2025-01-07 14:22:25] [SQL]|    OR CLNSIG LIKE 'pathogenic';
-  #CHROM       POS REF ALT               INFO
-0   chr1     28736   A   C  CLNSIG=pathogenic
-1   chr1     69101   A   G              DP=50
-2   chr7  55249063   G   A             DP=125
-#[2025-01-07 14:23:10] [SQL]> 
+#[2025-01-18 01:35:37]    INFO| Start
+#[2025-01-18 01:35:37]    INFO| Loading...
+#[2025-01-18 01:35:37]    INFO| End
+#[2025-01-18 01:35:37]    INFO| Start interative terminal
+#[2025-01-18 01:35:37]    INFO| Loading table 'header'...
+#[2025-01-18 01:35:37]    INFO| Loading table 'variants_view'...
+#[2025-01-18 01:35:37]    INFO| Interactive DuckDB SQL terminal
+#[2025-01-18 01:35:37]    INFO| - 'exit' to quit.
+#[2025-01-18 01:35:37]    INFO| - 'help' for a list of commands
+#[2025-01-18 01:35:37]        | >>> SELECT
+#[2025-01-18 01:35:40]        | ++>    "#CHROM", "POS", "REF", "ALT",
+#[2025-01-18 01:35:40]        | ++>    INFOS.CLNSIG,
+#[2025-01-18 01:35:40]        | ++>    SAMPLES.sample1.GT AS 'GT', 
+#[2025-01-18 01:35:40]        | ++>    SAMPLES.sample1.DP AS 'DP'
+#[2025-01-18 01:35:40]        | ++>  FROM variants_view
+#[2025-01-18 01:35:40]        | ++>  WHERE SAMPLES.sample1.DP > 30
+#[2025-01-18 01:35:40]        | ++>     OR INFOS.CLNSIG LIKE 'pathogenic'
+#[2025-01-18 01:35:40]        | ++>  
+  #CHROM       POS REF ALT      CLNSIG   GT   DP
+0   chr1     28736   A   C  pathogenic  0/1  729
+1   chr7  55249063   G   A        None  0/1  729
+2   chr1     69101   A   G        None  0/1  729
+#[2025-01-18 01:35:40]        | >>> 
 ```
 
 ### Graphical User Interface

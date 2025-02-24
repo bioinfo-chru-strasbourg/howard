@@ -1,24 +1,23 @@
 import hashlib
-import duckdb
+import duckdb  # type: ignore
 import sqlite3
-import vcf
+import vcf  # type: ignore
 import glob
 import os
 import io
-import pgzip
+import pgzip  # type: ignore
 import shutil
-
-import polars as pl
-import pandas as pd
-import Bio.bgzf as bgzf
-import pyarrow.parquet as pq
-import pyarrow as pa
+import polars as pl  # type: ignore
+import pandas as pd  # type: ignore
+import Bio.bgzf as bgzf  # type: ignore
+import pyarrow.parquet as pq  # type: ignore
+import pyarrow as pa  # type: ignore
 import logging as log
-
 from tempfile import TemporaryDirectory
 from typing import Optional, Union
 
 from howard.functions.commons import (
+    cast_columns_query,
     load_duckdb_extension,
     get_file_format,
     full_path,
@@ -1814,13 +1813,13 @@ class Database:
                         database=database, header_file=header_file
                     )
                     sql_query = f"SELECT * FROM {sql_from} LIMIT 0"
-                    
+
                     # Get columns
                     result_description = self.conn.execute(sql_query).description
 
                     # Extract columns' names
                     columns = [desc[0] for desc in result_description]
-                    
+
                     # Return columns as list
                     return columns
 
@@ -2560,6 +2559,9 @@ class Database:
                         {order_by_sql}
                     """
 
+                # Cast query column to be able to export into a flat file
+                query = cast_columns_query(query=query, conn=self.conn)
+
                 # Test empty query
                 df = self.conn.execute(query).fetch_record_batch(1)
                 query_empty = True
@@ -2846,7 +2848,8 @@ class Database:
                         query_output_header_tmp = os.path.join(tmp_dir, "header")
                         tmp_files.append(query_output_header_tmp)
                         self.get_header_file(
-                            header_file=query_output_header_tmp, remove_header_line=remove_header_line
+                            header_file=query_output_header_tmp,
+                            remove_header_line=remove_header_line,
                         )
 
                         # Add tmp header file for concat and compress

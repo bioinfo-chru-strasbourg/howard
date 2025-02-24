@@ -8,20 +8,20 @@ import json
 import yaml  # type: ignore
 
 from howard.tools.tools import (
-    set_log_level,
-    help_generation,
-    full_path,
-    arguments,
     commands_arguments,
+    arguments,
     shared_arguments,
     tool_gui_enable,
-    DEFAULT_CHUNK_SIZE,
 )
 from howard.functions.plugins import plugins_infos, plugins_list, plugins_to_load
 from howard.functions.commons import (
     folder_plugins,
+    full_path,
     subfolder_plugins,
     help_header,
+    set_log_level,
+    help_generation,
+    DEFAULT_CHUNK_SIZE,
 )
 
 
@@ -84,12 +84,19 @@ if os.path.exists(folder_plugins):
                     plugins_commands_arguments=plugins_commands_arguments,
                 )
             )
+
+            # Identify as plugin
+            plugins_commands_arguments[plugin_name]["help"] = "(plugin) " + str(
+                plugins_commands_arguments.get(plugin_name, {}).get("help")
+            )
+
             # Add command arguments on argparse and help
             for plugin_command_arguments in plugins_commands_arguments:
                 if plugin_command_arguments not in commands_arguments:
                     commands_arguments[plugin_command_arguments] = (
                         plugins_commands_arguments[plugin_command_arguments]
                     )
+
             # Add arguments need for plugin
             for plugin_argument in plugin_arguments:
                 if plugin_argument not in arguments:
@@ -264,6 +271,21 @@ def main() -> None:
             )
             raise ValueError(msg_gui_disable)
         command_function = commands_arguments[args.command]["function"]
+
+        # from howard.tools.command_function import command_function
+        # exec(
+        #     "from howard.tools.{command_function} import {command_function}".format(
+        #         command_function=command_function
+        #     )
+        # )
+        # import_command = (
+        #     f"from howard.tools.{command_function} import {command_function}"
+        # )
+        # log.debug(import_command)
+        # try:
+        #     exec(import_command)
+        # except:
+        #     """ """
         log.debug(f"Command/Tool: {command_function}")
         vcfdata_obj = eval(f"{command_function}(args)")
 

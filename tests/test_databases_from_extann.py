@@ -12,7 +12,7 @@ coverage report --include=howard/* -m
 import os
 import argparse
 import logging as log
-import pytest
+import pytest  # type: ignore
 import json
 from os.path import join as osj
 from tempfile import TemporaryDirectory

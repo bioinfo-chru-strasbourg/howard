@@ -9,7 +9,6 @@ coverage run -m pytest tests/test_variants_annotations_splice.py -x -v --log-cli
 coverage report --include=howard/* -m
 """
 
-import logging as log
 from tempfile import TemporaryDirectory
 from howard.functions.commons import identical
 from howard.objects.variants import Variants
@@ -35,12 +34,13 @@ PARAM = {
                 "spliceai_mask": 1,
                 "workdir": "/work",
                 "condacachedir": "/work",
-                "threads": 8,
+                # "threads": 8,
             }
         }
     }
 }
 CONFIG = {
+    "threads": 2,
     "folders": {
         "databases": {
             "genomes": f"{tests_databases_folder}/genomes/{tests_databases_release}"

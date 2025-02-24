@@ -12,18 +12,14 @@ coverage report --include=howard/* -m
 
 import logging as log
 import os
-import sys
 from tempfile import TemporaryDirectory
-import duckdb
-import re
-import Bio.bgzf as bgzf
-import gzip
-import pytest
+import pytest  # type: ignore
+import vcf  # type: ignore
 
-from howard.functions.commons import *
 from howard.objects.variants import Variants
-from howard.functions.databases import *
-from test_needed import *
+from howard.functions.commons import remove_if_exists
+
+from test_needed import tests_folder, tests_data_folder, tests_config
 
 
 def test_calculation_sql_on_table():
@@ -86,6 +82,9 @@ def test_calculation_sql_on_table():
             operations_config_dict=operations_config_dict,
             operations_config_file=operations_config_file,
         )
+
+        # result = variants.get_query_to_df(f"""SELECT * FROM variants """)
+        # log.debug(result.to_string())
 
         # Check number of variant_chr_pos_alt_ref
         result = variants.get_query_to_df(
@@ -773,6 +772,8 @@ def test_calculation_nomen_snpeff_hgvs_transcripts():
 
         # Calculation
         variants.calculation()
+        # result = variants.get_query_to_df(""" SELECT INFO FROM variants  """)
+        # log.debug(f"result=\n{result.to_string()}")
 
         # query annotated variant
         result = variants.get_query_to_df(

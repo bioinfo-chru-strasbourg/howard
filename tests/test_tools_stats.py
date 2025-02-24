@@ -10,22 +10,15 @@ coverage run -m pytest . -x -v
 coverage report --include=howard/* -m
 """
 
-import logging as log
-import os
-import sys
-import duckdb
-import re
-import Bio.bgzf as bgzf
-import gzip
-import pytest
-import pandas as pd
-from pandas.testing import assert_frame_equal
-from unittest.mock import patch
+# from howard.functions.commons import *
+# from howard.tools.tools import *
 
-from howard.objects.variants import Variants
-from howard.functions.commons import *
-from howard.tools.tools import *
-from test_needed import *
+import argparse
+
+from howard.tools.tools import arguments_dict
+from howard.tools.stats import stats
+
+from test_needed import tests_data_folder
 
 
 def test_stats():
