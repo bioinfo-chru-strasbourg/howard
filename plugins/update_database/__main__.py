@@ -121,10 +121,10 @@ def main(args: argparse) -> None:
         o = omim.Omim(
             database=args.database,
             databases_folder=args.databases_folder,
-            input=os.path.join(args.databases_folder, "OMIMannotations.bed.gz"),
             config_json=args.update_config,
             current_folder=args.current_folder,
             refseq=args.refseq,
+            data_folder=args.data_folder,
         )
         o.update_omim()
 
