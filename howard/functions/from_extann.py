@@ -146,6 +146,25 @@ def replace_values(input_string: str, config: dict) -> str:
         input_string = input_string.replace(str(key), str(value))
     return input_string
 
+def get_gene_bnd(transcript_list: list) -> list:
+    """
+    From transcript coordinate including UTR, return max possible region.
+    """
+    data = {"transcript": [], "start": [], "stop": [], "gene": None, "chrom": None}
+
+    for chrom, start, stop, transcript_id, *gene in transcript_list:
+        data["chrom"] = chrom
+        data["start"].append(start)
+        data["stop"].append(stop)
+        data["transcript"].append(transcript_id)
+        if gene:
+            data["gene"] = gene[0]
+    results = [
+        [data["chrom"], min(data["start"]), max(data["stop"]), tr] + ([data["gene"]] if data["gene"] else [])
+        for tr in data["transcript"]
+    ]
+    return results
+
 
 def write_extann(
     param,
@@ -190,9 +209,11 @@ def write_extann(
         df_extann.fillna(".", inplace=True)
         log.info("Get gene coordinates from refseq")
         for i, rows in df_extann.iterrows():
-            pos_list = get_gene_coordinate(df_refgene, rows, extra_cols, mode, df_transcript, alias)
+            pos_list = get_coordinate(df_refgene, rows, extra_cols, mode, df_transcript, alias)
             if pos_list:
                 # for each transcript from same gene
+                if mode == "gene":
+                    pos_list = get_gene_bnd(pos_list)
                 for data in pos_list:
                     # it means that gene name comming from alias is already in data list
                     if len(data) == 5:
@@ -287,9 +308,8 @@ def get_chosen_transcript(match: pd.DataFrame, df_transcript: pd.DataFrame, extr
     else:
         log.debug(f"{gene} not provided")
         return get_longest_transcript(match, extra_col)
-
-
-def get_gene_coordinate(
+    
+def get_coordinate(
     df_refgene: pd.DataFrame,
     gene_row: pd.Series,
     extra_col=None,
@@ -318,6 +338,7 @@ def get_gene_coordinate(
         else:
             return get_all_transcript(match, extra_col)
     else:
+        #If gene not in refgene search in alias file
         if alias is not None:
             # For all transcript mode search in alias file like OMIM or search in HUGO database file
             return get_refseq_match(gene, df_refgene, alias)
@@ -477,6 +498,8 @@ def from_extann(args: argparse) -> None:
             df_transcript = None
     if not args.hgnc_extann:
         args.hgnc_extann = ""
+    else:
+        log.warning("Using alias search could lead to duplicate transcript row in output bed file")
     # Param
     log.debug(f"Replace {str(param.get('replace'))}")
     log.debug(f"Config mode_extann {args.mode_extann}")
