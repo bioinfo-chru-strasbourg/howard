@@ -689,7 +689,7 @@ arguments = {
         """keep the longest, or keep the chosen one (transcript_extann).\n""",
         "required": False,
         "default": "longest",
-        "choices": ["all", "longest", "chosen"],
+        "choices": ["all", "longest", "chosen", "gene"],
         "type": str,
     },
     "param_extann": {
