@@ -19,7 +19,7 @@ howard annotation --input vcffile --output annotated.vcffile --annotations hg19_
 
 from Bio.bgzf import BgzfReader
 import pysam
-from howard.tools.tools import command
+from howard.functions.commons import command
 import os
 import logging as log
 import pandas as pd
