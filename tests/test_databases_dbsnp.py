@@ -99,7 +99,6 @@ def test_databases_download_dbsnp_full():
                 expected_files = [
                     f"GCF_000001405.{dnsnp_assemblies_map.get(assembly)}.gz",
                     "dbsnp.vcf.gz",
-                    "dbsnp.vcf.gz.tbi",
                     "dbsnp.parquet.hdr",
                     "dbsnp.parquet",
                 ]
@@ -132,7 +131,6 @@ def test_databases_download_dbsnp_full():
                 expected_files = [
                     f"GCF_000001405.{dnsnp_assemblies_map.get(assembly)}.gz",
                     "dbsnp.vcf.gz",
-                    "dbsnp.vcf.gz.tbi",
                     "dbsnp.parquet.hdr",
                     "dbsnp.parquet",
                 ]
