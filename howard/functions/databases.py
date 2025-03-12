@@ -4096,7 +4096,7 @@ def databases_download_dbsnp(
                         memory=memory,
                         compression_type="bgzip",
                         sort=False,
-                        index=True,
+                        index=False,
                     )
 
                 if write_parquet:
