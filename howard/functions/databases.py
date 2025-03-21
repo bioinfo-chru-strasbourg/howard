@@ -39,6 +39,7 @@ from howard.functions.commons import (
     bed_sort,
     command,
     concat_and_compress_files,
+    contig_sort_key,
     determine_column_number,
     determine_column_types,
     download_file,
@@ -889,6 +890,10 @@ def databases_download_genomes(
     log.info(f"Download Genomes {assemblies}")
 
     import genomepy  # type: ignore
+    from pyfaidx import Fasta, Faidx
+
+    def split_string(string, length):
+        return [string[i : i + length] for i in range(0, len(string), length)]
 
     if not genomes_folder:
         genomes_folder = DEFAULT_GENOME_FOLDER
@@ -902,9 +907,15 @@ def databases_download_genomes(
         installed_genomes = []
 
     for assembly in assemblies:
+
+        # Check if genome already installed
         if assembly in installed_genomes:
             log.info(f"Download Genomes {[assembly]} - already exists")
+
+        # Download genome and index
         else:
+
+            # Download genome
             log.info(f"Download Genomes {[assembly]} downloading...")
             genomepy.install_genome(
                 assembly,
@@ -914,6 +925,60 @@ def databases_download_genomes(
                 threads=threads,
                 regex=contig_regex,
             )
+
+            # Re-order genome contigs
+            log.info(f"Download Genomes {[assembly]} sorting...")
+
+            # Path of current genome fasta and index
+            path_fa = os.path.join(genomes_folder, assembly, f"{assembly}.fa")
+            path_fai = f"{path_fa}.fai"
+
+            # Load genome
+            fa = Fasta(path_fa)
+
+            # Sort contigs
+            contigs = list(fa.keys())
+            sorted_contigs = sorted(contigs, key=contig_sort_key)
+
+            # Path of sorted genome fasta and index
+            path_sorted_fa = f"{path_fa}.sorted.fa"
+            path_sorted_fai = f"{path_sorted_fa}.fai"
+
+            # Write sorted genome
+            with open(path_sorted_fa, "w") as sorted_fa:
+
+                # Write contigs
+                for chr in sorted_contigs:
+
+                    # Log
+                    log.debug(f"Chromosome {chr}...")
+
+                    # Write chromosome name
+                    sorted_fa.write(">" + chr + "\n")
+
+                    # Write chromosome sequence
+                    sorted_fa.write(
+                        "\n".join(map(str, split_string(fa[chr][:], 50))) + "\n"
+                    )
+
+            # Load fasta index
+            fa_sorted = Faidx(path_sorted_fa)
+
+            # Write sorted index
+            with open(path_sorted_fai, "w") as f:
+
+                # Write contigs index
+                for index, record in fa_sorted.index.items():
+                    f.write(
+                        f"{index}\t{record.rlen}\t{record.offset}\t{record.lenc}\t{record.lenb}\n"
+                    )
+
+            # Remove previous genome fasta and index
+            remove_if_exists([path_fa, path_fai])
+
+            # Rename sorted genome fasta and index
+            Path.rename(Path(path_sorted_fa), path_fa)
+            Path.rename(Path(path_sorted_fai), path_fai)
 
     return None
 
@@ -3885,7 +3950,7 @@ def databases_download_dbsnp(
                 # Header #CHROM line
                 db_header_list_chrom = [db_header_list[-1]]
                 # Header Contig
-                res = db.query(
+                header_contigs = db.query(
                     query=f"""
                             SELECT
                                     column0 AS chr,
@@ -3898,9 +3963,20 @@ def databases_download_dbsnp(
                                     ) AS contig
                             FROM read_csv_auto('{genome_index}')
                             """
-                )
-                db_header_list_chrs = list(res.df()["chr"])
-                db_header_list_contigs = list(res.df()["contig"])
+                ).df()
+
+                # List of chromosomes
+                db_header_list_chrs = list(header_contigs["chr"])
+
+                # Ordering chromosomes
+                db_header_list_chrs = sorted(db_header_list_chrs, key=contig_sort_key)
+
+                # Generate contigs for VCF header
+                db_header_list_contigs = []
+                for chr in db_header_list_chrs:
+                    db_header_list_contigs.append(
+                        list(header_contigs[header_contigs["chr"] == chr]["contig"])[0]
+                    )
 
                 # Write new heaer with contigs
                 db_header_new = db.get_header_from_list(
@@ -3926,12 +4002,31 @@ def databases_download_dbsnp(
                             """
                             )
                         else:
+
+                            # Detect type
+                            vcf_type = db_header.infos[info].type
+                            if vcf_type == "Integer":
+                                sql_type = "INTEGER"
+                            elif vcf_type == "Float":
+                                sql_type = "FLOAT"
+                            else:
+                                sql_type = "VARCHAR"
+
+                            # Detect number (uniq value or list)
+                            vcf_number = db_header.infos[info].num
+                            if vcf_number == "1":
+                                sql_type_list = False
+                            else:
+                                sql_type_list = True
+                                sql_type = "VARCHAR"
+
+                            # Create column for Parquet
                             query_select_info_fields_array.append(
                                 f"""
                                 CASE
                                     WHEN concat(';', INFO) NOT LIKE '%;{info}=%' THEN NULL
                                     ELSE REGEXP_EXTRACT(concat(';', INFO), ';{info}=([^;]*)',1)
-                                END AS {info}                             
+                                END::{sql_type} AS {info}                             
                             """
                             )
                 query_select_info_fields = " , ".join(query_select_info_fields_array)
@@ -3982,6 +4077,8 @@ def databases_download_dbsnp(
                                         "QUAL", "FILTER", "INFO"
                                 FROM df_chunk
                                 WHERE list_contains({db_header_list_chrs}, "#CHROM")
+                                  AND "REF" NOT IN ('')
+                                  AND "ALT" NOT IN ('')
                                 """
                             res = db.query(query=query)
                             # Use polars to parallelize csv write and an infile with pgzip to parallelise compression
@@ -4002,6 +4099,8 @@ def databases_download_dbsnp(
                                         {query_select_info_fields}
                                 FROM df_chunk
                                 WHERE list_contains({db_header_list_chrs}, "#CHROM")
+                                  AND "REF" NOT IN ('')
+                                  AND "ALT" NOT IN ('')
                                 """
                             res = db.query(query=query)
                             # Use pandas an to_parquet with append option ans fastparquet engine (no append with other df like polars or pyarrow)
@@ -4031,7 +4130,7 @@ def databases_download_dbsnp(
                         memory=memory,
                         compression_type="bgzip",
                         sort=False,
-                        index=False,
+                        index=True,
                     )
 
                 if write_parquet:
