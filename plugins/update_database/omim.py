@@ -41,6 +41,11 @@ class Omim(Database):
         self.data_folder = data_folder
         self.refseq = refseq
         self.refgene = self.get_refgene_list()
+        if not os.path.exists(osj(self.data_folder, "genemap_filtered.txt")):
+            log.error(f"genemap filtered is not in {self.data_folder} folder (grep -v \"^#\" genemap2.txt | cut -f9,13 > genemap_filtered.txt)")
+            raise FileExistsError()
+        else:
+            self.genemap = self.create_genemap()
 
     def write_omim(self, df_gb_sorted: pd.DataFrame, output: str):
         """
@@ -194,6 +199,51 @@ class Omim(Database):
         )
         log.debug(f"OMIM raw processed sorted: {len(df_gb_sorted)} rows")
         return df_gb_sorted
+    
+    def is_in_genemap(self, df: pd.DataFrame, row_to_check:dict) -> bool:
+        """
+        Check whether a gene / phenotype couple is in genemap2 raw file.
+        True meaning values need to be keep otherwise discarded from OMIM bundle file
+        Be carefull, genes could be a list
+        """
+        for genes in row_to_check["genes"].split(","):
+            pres = ((df["genes"] == genes) & (~df['OMIM_phenotype'].isna())).any()
+            if pres:
+                return True
+        return False
+    
+    def get_problematic_id(self, df:pd.DataFrame) -> list:
+        """
+        Get from OMIM bundle database OMIM_ID where ID is associated to different genes
+        """
+        mim_id = []
+        for id, df_g in df.groupby("OMIM_ID"):
+            if len(df_g["START"].unique().tolist()) > 1:
+                mim_id.append(id)
+        return mim_id
+    
+    def get_problematic_index_to_delete(self, df: pd.DataFrame, genemap: pd.DataFrame, mim_id: list) -> list:
+        """
+        Get list of index to delete for OMIM id matching two different genes due to alias association
+        """
+        id_to_delete = []
+        df_double = df.loc[df["OMIM_ID"].isin(mim_id)]
+        for omim, df_omim in df_double.groupby("OMIM_ID"):
+            for start, df_start in df_omim.groupby("START"):
+                if self.is_in_genemap(genemap, {"genes": df_start["genes"].iloc[0], "OMIM_phenotype": df_start["OMIM_phenotype"].iloc[0]}):
+                    continue
+                else:
+                    id_to_delete.extend(list(df_omim.loc[df_omim["START"] == start].index.values))
+        return id_to_delete
+    
+    def create_genemap(self):
+        """
+        
+        """
+        genemap = pd.read_csv(osj(self.data_folder, "genemap_filtered.txt"), sep="\t", comment="#", header=None)
+        genemap.columns = ["genes", "OMIM_phenotype"]
+        log.debug(f"genemap filtered {len(genemap.index)} rows")
+        return genemap
 
     def update_omim(self):
         """
@@ -223,12 +273,27 @@ class Omim(Database):
         omim_bundle["genes"] = omim_bundle.apply(lambda x: self.refactor_gene_column(x), axis=1)
         omim_bundle.drop(columns=['genes_x', 'genes_y'], inplace=True)
 
+        log.debug(f"OMIM bundle {len(omim_bundle.index)}")
 
-        output = osj(".", "OMIMannotations.final.bed.gz")
+        #Drop ambigous row
+        problematic_id = self.get_problematic_id(omim_bundle)
+        problematic_id_to_delete = self.get_problematic_index_to_delete(omim_bundle, self.genemap, problematic_id)
+        log.debug(f"OMIM bundle drop {len(omim_bundle.loc[omim_bundle.index.isin(problematic_id_to_delete)].index)} ambiguous rows")
+        omim_bundle_filtered = omim_bundle.drop(problematic_id_to_delete)
+
+
+        # drop empty phenotype
+        log.debug(f"OMIM bundle dropna phenotype: {len(omim_bundle_filtered.loc[omim_bundle_filtered['OMIM_phenotype'].isnull()].index)} rows")
+        omim_bundle_filtered.dropna(subset=['OMIM_phenotype'], inplace=True)
+
+
+        log.debug(f"OMIM bundle write {len(omim_bundle_filtered.index)} rows in final db")
+
+        output = osj(self.databases_folder, "OMIMannotations.final.bed.gz")
         with BgzfWriter(output, "wt") as o:
             for lines in self.header[:-1]:
                 o.write(lines + "\n")
-            omim_bundle.to_csv(o, header=True, index=False, sep="\t", mode="a")
+            omim_bundle_filtered.to_csv(o, header=True, index=False, sep="\t", mode="a")
         with open(output + ".hdr", "w+") as h:
             for lines in self.header:
                 h.write(lines + "\n")
