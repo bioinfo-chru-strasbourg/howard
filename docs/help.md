@@ -2212,7 +2212,7 @@ Notes:
 >     --download-dbsnp=<dnSNP>
 >
 >     Path to dbSNP databases
->     (e.g. '~/howard/databases/exomiser/dbsnp').
+>     (e.g. '~/howard/databases/dbsnp/current').
 
 </small>
 

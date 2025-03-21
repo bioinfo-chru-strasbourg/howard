@@ -3950,7 +3950,7 @@ def databases_download_dbsnp(
                 # Header #CHROM line
                 db_header_list_chrom = [db_header_list[-1]]
                 # Header Contig
-                res = db.query(
+                header_contigs = db.query(
                     query=f"""
                             SELECT
                                     column0 AS chr,
@@ -3963,9 +3963,20 @@ def databases_download_dbsnp(
                                     ) AS contig
                             FROM read_csv_auto('{genome_index}')
                             """
-                )
-                db_header_list_chrs = list(res.df()["chr"])
-                db_header_list_contigs = list(res.df()["contig"])
+                ).df()
+
+                # List of chromosomes
+                db_header_list_chrs = list(header_contigs["chr"])
+
+                # Ordering chromosomes
+                db_header_list_chrs = sorted(db_header_list_chrs, key=contig_sort_key)
+
+                # Generate contigs for VCF header
+                db_header_list_contigs = []
+                for chr in db_header_list_chrs:
+                    db_header_list_contigs.append(
+                        list(header_contigs[header_contigs["chr"] == chr]["contig"])[0]
+                    )
 
                 # Write new heaer with contigs
                 db_header_new = db.get_header_from_list(
@@ -3991,12 +4002,31 @@ def databases_download_dbsnp(
                             """
                             )
                         else:
+
+                            # Detect type
+                            vcf_type = db_header.infos[info].type
+                            if vcf_type == "Integer":
+                                sql_type = "INTEGER"
+                            elif vcf_type == "Float":
+                                sql_type = "FLOAT"
+                            else:
+                                sql_type = "VARCHAR"
+
+                            # Detect number (uniq value or list)
+                            vcf_number = db_header.infos[info].num
+                            if vcf_number == "1":
+                                sql_type_list = False
+                            else:
+                                sql_type_list = True
+                                sql_type = "VARCHAR"
+
+                            # Create column for Parquet
                             query_select_info_fields_array.append(
                                 f"""
                                 CASE
                                     WHEN concat(';', INFO) NOT LIKE '%;{info}=%' THEN NULL
                                     ELSE REGEXP_EXTRACT(concat(';', INFO), ';{info}=([^;]*)',1)
-                                END AS {info}                             
+                                END::{sql_type} AS {info}                             
                             """
                             )
                 query_select_info_fields = " , ".join(query_select_info_fields_array)
@@ -4047,6 +4077,8 @@ def databases_download_dbsnp(
                                         "QUAL", "FILTER", "INFO"
                                 FROM df_chunk
                                 WHERE list_contains({db_header_list_chrs}, "#CHROM")
+                                  AND "REF" NOT IN ('')
+                                  AND "ALT" NOT IN ('')
                                 """
                             res = db.query(query=query)
                             # Use polars to parallelize csv write and an infile with pgzip to parallelise compression
@@ -4067,6 +4099,8 @@ def databases_download_dbsnp(
                                         {query_select_info_fields}
                                 FROM df_chunk
                                 WHERE list_contains({db_header_list_chrs}, "#CHROM")
+                                  AND "REF" NOT IN ('')
+                                  AND "ALT" NOT IN ('')
                                 """
                             res = db.query(query=query)
                             # Use pandas an to_parquet with append option ans fastparquet engine (no append with other df like polars or pyarrow)
@@ -4096,7 +4130,7 @@ def databases_download_dbsnp(
                         memory=memory,
                         compression_type="bgzip",
                         sort=False,
-                        index=False,
+                        index=True,
                     )
 
                 if write_parquet:

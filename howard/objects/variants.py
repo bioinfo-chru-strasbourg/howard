@@ -9385,14 +9385,6 @@ class Variants:
                     drop_view=True,
                 )
 
-                # # DEVEL
-                # log.debug(f"operation_info_fields={operation_info_fields}")
-                # result_view = self.get_query_to_df(f"SELECT * FROM {table_view_name}")
-                # log.debug(f"result_view={result_view}")
-                # # result_view = self.get_query_to_df(
-                # #     f"SELECT {', '.join(operation_info_fields)} FROM {table_view_name}"
-                # # )
-                # # log.debug(f"result_view={result_view}")
 
                 # Table key construct
                 clause_key = []
@@ -12862,7 +12854,7 @@ class Variants:
             detect_type_list=True,
             fields=fields_to_explode + ["transcript"],
             fields_not_exists=False,
-            fields_forced_as_varchar=True,
+            fields_forced_as_varchar=False,
             fields_needed_all=False,
         )
         transcripts_table = annotation_view_name
