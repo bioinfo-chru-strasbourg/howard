@@ -1984,6 +1984,9 @@ def test_explode_infos():
     column_to_check = "CLNSIG"
     value_to_check = "pathogenic"
 
+    # Explode
+    variants.explode_infos()
+
     # check column found
     result = variants.execute_query("SELECT * FROM variants LIMIT 0")
     assert column_to_check in [col[0] for col in result.description]
@@ -2016,6 +2019,9 @@ def test_explode_infos_custom():
     # column to check
     column_to_check = "CUSTOM_CLNSIG"
     value_to_check = "pathogenic"
+
+    # Explode
+    variants.explode_infos()
 
     # check column found
     result = variants.execute_query("SELECT * FROM variants LIMIT 0")
@@ -2158,6 +2164,9 @@ def test_explode_infos_param_prefix():
     # column to check
     column_to_check = infos_prefix + "CLNSIG"
     value_to_check = "pathogenic"
+
+    # Explode
+    variants.explode_infos()
 
     # check column found
     result = variants.execute_query("SELECT * FROM variants LIMIT 0")
