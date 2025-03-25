@@ -114,10 +114,15 @@ def test_annotation_snpeff_full_unsorted():
         # Annotation
         variants.annotation()
 
-        # query annotated variant
-        result = variants.get_query_to_df(""" SELECT "#CHROM", "ANN" FROM variants """)
-        # log.debug(f"result: {result}")
+        # query annotated variants
+        result = variants.get_query_to_df(""" SELECT * FROM variants """)
         assert len(result) == original_len
+
+        # query annotated variants
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE "INFO" LIKE '%ANN%' """
+        )
+        assert len(result) > 0
 
         # query annotated variant as gene_fusion
         result = variants.get_query_to_df(

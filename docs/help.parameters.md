@@ -1786,11 +1786,12 @@ Default: `10`
 ## query_print_mode
 
 Print mode of query result (only for print result, not output). Either
-None (native), 'markdown', 'tabulate' or disabled.
+None (default), 'dataframe', 'markdown', 'tabulate' or disabled. If
+None, print mode is 'dataframe' if no export file is provided.
 
 Type: `str`
 
-Choices: `[None, 'markdown', 'tabulate', 'disabled']`
+Choices: `[None, 'dataframe', 'markdown', 'tabulate', 'disabled']`
 
 Default: `None`
 

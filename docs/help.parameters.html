@@ -2039,9 +2039,11 @@ output).</p>
 <h2 data-number="7.3" id="query_print_mode"><span
 class="header-section-number">7.3</span> query_print_mode</h2>
 <p>Print mode of query result (only for print result, not output).
-Either None (native), &#x2018;markdown&#x2019;, &#x2018;tabulate&#x2019; or disabled.</p>
+Either None (default), &#x2018;dataframe&#x2019;, &#x2018;markdown&#x2019;, &#x2018;tabulate&#x2019; or disabled.
+If None, print mode is &#x2018;dataframe&#x2019; if no export file is provided.</p>
 <p>Type: <code>str</code></p>
-<p>Choices: <code>[None, 'markdown', 'tabulate', 'disabled']</code></p>
+<p>Choices:
+<code>[None, 'dataframe', 'markdown', 'tabulate', 'disabled']</code></p>
 <p>Default: <code>None</code></p>
 <h1 data-number="8" id="export"><span
 class="header-section-number">8</span> export</h1>

@@ -2113,13 +2113,13 @@ class Variants:
                 f"Connexion format '{connexion_format}' not available with format '{input_format}'"
             )
 
-        # Explode INFOS fields into table fields
-        if self.get_explode_infos():
-            self.explode_infos(
-                prefix=self.get_explode_infos_prefix(),
-                fields=self.get_explode_infos_fields(),
-                force=True,
-            )
+        # # Explode INFOS fields into table fields
+        # if self.get_explode_infos():
+        #     self.explode_infos(
+        #         prefix=self.get_explode_infos_prefix(),
+        #         fields=self.get_explode_infos_fields(),
+        #         force=True,
+        #     )
 
         # Create index after insertion
         self.create_indexes()
@@ -2487,6 +2487,12 @@ class Variants:
 
         if access not in ["RO"]:
 
+            # Translate fields if patterns
+            fields = self.get_explode_infos_fields(explode_infos_fields=fields)
+
+            if fields is None or len(fields) == 0:
+                return []
+
             # prefix
             if prefix in [None, True] or not isinstance(prefix, str):
                 if self.get_explode_infos_prefix() not in [None, True]:
@@ -2511,8 +2517,14 @@ class Variants:
                 table_key = ["#CHROM", "POS", "REF", "ALT"]
 
             # Check source table columns
-            table_source_struct = self.get_columns(table=table_source)
-            table_dest_struct = self.get_columns(table=table_dest)
+            try:
+                table_source_struct = self.get_columns(table=table_source)
+            except:
+                table_source_struct = []
+            try:
+                table_dest_struct = self.get_columns(table=table_dest)
+            except:
+                table_dest_struct = []
 
             if "INFO" not in table_source_struct:
                 msg_err = f"Column 'INFO' not found in table '{table_source}'"
@@ -2526,9 +2538,6 @@ class Variants:
             log.debug(
                 f"Explode INFO fields - [{len(header_infos)}] annotations fields in header"
             )
-
-            # Translate fields if patterns
-            fields = self.get_explode_infos_fields(explode_infos_fields=fields)
 
             # Create view with all fields
             view_source = "view_source_" + str(random.randint(10000, 100000))
@@ -2790,6 +2799,7 @@ class Variants:
         output_file: str | None = None,
         output_header: str | None = None,
         export_header: bool = True,
+        explode_infos: bool = True,
         header_in_output: bool = None,
         query: str | None = None,
         parquet_partitions: list | None = None,
@@ -2818,6 +2828,11 @@ class Variants:
         True, the header will be exported to a file. If `export_header` is False, the header will not
         be, defaults to True
         :type export_header: bool (optional)
+        :param explode_infos: The `explode_infos` parameter is a boolean flag that determines whether
+        the INFO fields in the VCF file should be exploded into individual columns in the output file.
+        If `explode_infos` is set to True, the INFO fields will be exploded. If `explode_infos` is set
+        to False, the INFO fields will not be exploded. By default, the INFO fields are exploded
+        :type explode_infos: bool (optional)
         :param query: The `query` parameter in the `export_output` function is an optional SQL query
         that can be used to filter and select specific data from the VCF file before exporting it. If
         provided, only the data that matches the query will be exported. This allows you to customize
@@ -2934,7 +2949,7 @@ class Variants:
         connexion_format = self.get_connexion_format()
 
         # Explode infos
-        if self.get_explode_infos():
+        if self.get_explode_infos() and explode_infos:
             self.explode_infos(
                 prefix=self.get_explode_infos_prefix(),
                 fields=self.get_explode_infos_fields(),
@@ -3282,6 +3297,7 @@ class Variants:
             output_file=vcf_file,
             output_header=None,
             export_header=True,
+            explode_infos=False,
             query=sql_query_select,
             parquet_partitions=None,
             chunk_size=config.get("chunk_size", None),
@@ -4001,13 +4017,13 @@ class Variants:
                 log.info("Annotations 'splice' ...")
                 self.annotation_splice()
 
-        # Explode INFOS fields into table fields
-        if self.get_explode_infos():
-            self.explode_infos(
-                prefix=self.get_explode_infos_prefix(),
-                fields=self.get_explode_infos_fields(),
-                force=True,
-            )
+        # # Explode INFOS fields into table fields
+        # if self.get_explode_infos():
+        #     self.explode_infos(
+        #         prefix=self.get_explode_infos_prefix(),
+        #         fields=self.get_explode_infos_fields(),
+        #         force=True,
+        #     )
 
     def annotation_bigwig(self, threads: int = None) -> None:
         """
@@ -6031,7 +6047,7 @@ class Variants:
             threads = self.get_threads()
         log.debug("Threads: " + str(threads))
 
-        # DEBUG
+        # Delete tmp
         delete_tmp = True
         if self.get_config().get("verbosity", "warning") in ["debug"]:
             delete_tmp = False
@@ -7573,7 +7589,7 @@ class Variants:
                     "description": "Create a variant ID with chromosome, position, alt and ref",
                     "available": False,
                     "output_column_name": "variant_chr_pos_alt_ref",
-                    "output_column_number": "1",
+                    "output_column_number": 1,
                     "output_column_type": "String",
                     "output_column_description": "variant ID with chromosome, position, alt and ref",
                     "operation_query": """ concat("#CHROM", '_', "POS", '_', "REF", '_', "ALT") """,
@@ -7586,7 +7602,7 @@ class Variants:
                     "available": True,
                     "table": "variants",
                     "output_column_name": "VARTYPE",
-                    "output_column_number": "1",
+                    "output_column_number": 1,
                     "output_column_type": "String",
                     "output_column_description": "Variant type: SNV if X>Y, MOSAIC if X>Y,Z or X,Y>Z, INDEL if XY>Z or X>YZ",
                     "operation_query": """
@@ -7646,7 +7662,6 @@ class Variants:
                     "description": "Explode snpEff annotations in JSON format",
                     "available": True,
                     "function_name": "calculation_extract_snpeff",
-                    "function_params": [False, "JSON", "snpeff_json", "ANN"],
                     "function_params": ["ANN", None, None, "snpeff_json", True],
                 },
                 "NOMEN": {
@@ -9290,13 +9305,13 @@ class Variants:
                         f"Operations config: Calculation '{operation_name}' NOT available"
                     )
 
-        # Explode INFOS fields into table fields
-        if self.get_explode_infos():
-            self.explode_infos(
-                prefix=self.get_explode_infos_prefix(),
-                fields=self.get_explode_infos_fields(),
-                force=True,
-            )
+        # # Explode INFOS fields into table fields
+        # if self.get_explode_infos():
+        #     self.explode_infos(
+        #         prefix=self.get_explode_infos_prefix(),
+        #         fields=self.get_explode_infos_fields(),
+        #         force=True,
+        #     )
 
     def calculation_process_sql(
         self, operation: dict, operation_name: str = "unknown"
@@ -9384,7 +9399,6 @@ class Variants:
                     info_struct_column="INFOS",
                     drop_view=True,
                 )
-
 
                 # Table key construct
                 clause_key = []
@@ -9637,9 +9651,9 @@ class Variants:
                     annotation_type, "String"
                 )
                 annotation_column = f'"{annotation_name}"'
-                annotation_number = "1"
+                annotation_number = 1
                 if annotation_type_vcf in ["Flag"]:
-                    annotation_number = "0"
+                    annotation_number = 0
                 elif annotation_name in ["Annotation"]:
                     annotation_number = "."
                     annotation_column = f"""replace("{annotation_name}", '&', ',')"""
@@ -9648,7 +9662,7 @@ class Variants:
                         f"""string_split(CAST("{annotation_name}" AS STRING), '.')[1]"""
                     )
 
-                    annotation_number = "1"
+                    annotation_number = 1
                 annotation_desc = f"snpEff annotation '{annotation_name}'"
 
                 # Create dict
@@ -9675,7 +9689,7 @@ class Variants:
                 # Add snpeff_hgvs to header
                 vcf_reader.infos[snpeff_json] = vcf.parser._Info(
                     snpeff_json,
-                    "1",
+                    1,
                     "String",
                     "snpEff annotation in JSON format",
                     "howard calculation",
@@ -10951,7 +10965,7 @@ class Variants:
             # Add vaf_normalization to header
             vcf_reader.formats[tag] = vcf.parser._Format(
                 id=tag,
-                num="1",
+                num=1,
                 type="String",
                 desc=vcf_infos_tags.get(
                     tag, f"barcode family calculation for {ped_samples}"
@@ -11277,7 +11291,7 @@ class Variants:
             # Add vaf_normalization to header
             vcf_reader.formats[vaf_normalization_tag] = vcf.parser._Format(
                 id=vaf_normalization_tag,
-                num="1",
+                num=1,
                 type="Float",
                 desc=vcf_infos_tags.get(vaf_normalization_tag, "VAF Variant Frequency"),
                 type_code=self.code_type_map.get("Float"),
@@ -12708,7 +12722,7 @@ class Variants:
         # Add PZ Transcript in header
         self.get_header().infos[pz_fields_transcripts] = vcf.parser._Info(
             pz_fields_transcripts,
-            "1",
+            1,
             "String",
             pz_field_transcripts_description,
             "HOWARD transcript prioritization",
@@ -12761,7 +12775,7 @@ class Variants:
                 # Add PZ Transcript in header
                 self.get_header().infos[pz_field_new] = vcf.parser._Info(
                     pz_field_new,
-                    "1",
+                    1,
                     pz_field_new_type,
                     pz_field_new_description,
                     "unknown",
@@ -14073,7 +14087,7 @@ class Variants:
                 field_sql_type = code_type_map_to_sql.get(field_infos.type, "VARCHAR")
 
                 # Column is a list
-                if detect_type_list and field_infos.num != 1:
+                if detect_type_list and str(field_infos.num) != "1":
                     field_sql_type_list = True
                 else:
                     field_sql_type_list = False
