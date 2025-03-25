@@ -276,10 +276,11 @@ Usage examples:
 
 <small>
 
->     --query_print_mode=<print mode> [None, 'markdown', 'tabulate', 'disabled']
+>     --query_print_mode=<print mode> [None, 'dataframe', 'markdown', 'tabulate', 'disabled']
 >
 >     Print mode of query result (only for print result, not output).
->     Either None (native), 'markdown', 'tabulate' or disabled.
+>     Either None (default), 'dataframe', 'markdown', 'tabulate' or disabled.
+>     If None, print mode is 'dataframe' if no export file is provided.
 
 </small>
 
@@ -1613,10 +1614,11 @@ Usage examples:
 
 <small>
 
->     --query_print_mode=<print mode> [None, 'markdown', 'tabulate', 'disabled']
+>     --query_print_mode=<print mode> [None, 'dataframe', 'markdown', 'tabulate', 'disabled']
 >
 >     Print mode of query result (only for print result, not output).
->     Either None (native), 'markdown', 'tabulate' or disabled.
+>     Either None (default), 'dataframe', 'markdown', 'tabulate' or disabled.
+>     If None, print mode is 'dataframe' if no export file is provided.
 
 </small>
 

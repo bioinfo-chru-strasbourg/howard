@@ -4006,7 +4006,7 @@ def databases_download_dbsnp(
                             # Detect type
                             vcf_type = db_header.infos[info].type
                             if vcf_type == "Integer":
-                                sql_type = "INTEGER"
+                                sql_type = "BIGINT"
                             elif vcf_type == "Float":
                                 sql_type = "FLOAT"
                             else:
@@ -4014,7 +4014,7 @@ def databases_download_dbsnp(
 
                             # Detect number (uniq value or list)
                             vcf_number = db_header.infos[info].num
-                            if vcf_number == "1":
+                            if str(vcf_number) == "1":
                                 sql_type_list = False
                             else:
                                 sql_type_list = True

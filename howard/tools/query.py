@@ -74,27 +74,36 @@ def query(args: argparse) -> None:
 
         log.info("Querying...")
 
+        # Explode
+        vcfdata_obj.explode_infos()
+
         # Parameters
         query = param.get("query", {}).get("query", None)
         query_limit = param.get("query", {}).get("query_limit", None)
         query_print_mode = param.get("query", {}).get("query_print_mode", None)
 
         # Print query
-        if query_print_mode is None:
-            print(vcfdata_obj.get_query_to_df(query, limit=query_limit))
-        elif query_print_mode in ["markdown"]:
-            print(vcfdata_obj.get_query_to_df(query, limit=query_limit).to_markdown())
-        elif query_print_mode in ["tabulate"]:
-            print(
-                tabulate(
-                    vcfdata_obj.get_query_to_df(query, limit=query_limit),
-                    headers="keys",
-                    tablefmt="psql",
+        if query_print_mode is not None:
+            if query_print_mode.lower() in ["dataframe"]:
+                print(vcfdata_obj.get_query_to_df(query, limit=query_limit))
+            elif query_print_mode.lower() in ["markdown"]:
+                print(
+                    vcfdata_obj.get_query_to_df(query, limit=query_limit).to_markdown()
                 )
-            )
-        elif query_print_mode.lower() in ["no", "none", "null", "disabled"]:
-            log.info("Query print mode disabled")
-        else:
+            elif query_print_mode.lower() in ["tabulate"]:
+                print(
+                    tabulate(
+                        vcfdata_obj.get_query_to_df(query, limit=query_limit),
+                        headers="keys",
+                        tablefmt="psql",
+                    )
+                )
+            elif query_print_mode.lower() in ["no", "none", "null", "disabled"]:
+                log.info("Query print mode disabled")
+            else:
+                print(vcfdata_obj.get_query_to_df(query, limit=query_limit))
+        # if not output/export
+        elif not vcfdata_obj.get_output():
             print(vcfdata_obj.get_query_to_df(query, limit=query_limit))
 
     # Export

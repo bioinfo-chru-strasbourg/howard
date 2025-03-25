@@ -118,7 +118,7 @@ howard --help
 |  _  | |_| |\ V  V / ___ \|  _ <| |_| |
 |_| |_|\___/  \_/\_/_/   \_\_| \_\____/ 
                                         
-HOWARD::0.12.2.0 [Antony Le Bechec, Jean-Baptiste Lamouche]
+HOWARD::0.13.0 [Antony Le Bechec, Jean-Baptiste Lamouche]
 HOWARD - Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery
 
 usage: howard [-h] {query,stats,convert,hgvs,annotation,calculation,prioritization,process,databases,gui} ...
@@ -157,7 +157,7 @@ howard query --input='tests/data/example.vcf.gz'
 |  _  | |_| |\ V  V / ___ \|  _ <| |_| |
 |_| |_|\___/  \_/\_/_/   \_\_| \_\____/ 
                                         
-HOWARD::0.12.2.0 [Antony Le Bechec, Jean-Baptiste Lamouche]
+HOWARD::0.13.0 [Antony Le Bechec, Jean-Baptiste Lamouche]
 HOWARD - Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery
 
 #[2025-01-18 01:35:37]    INFO| Start
@@ -617,11 +617,13 @@ More details
 > ```
 >
 > ``` ts
->   #CHROM       POS ALT REF PZFlag  PZScore                     PZTags     DP      CLNSIG
-> 0   chr1     28736   C   A   PASS       15  PZFlag#PASS|PZScore#15...    NaN  pathogenic
-> 1   chr1     69101   G   A   PASS        5  PZFlag#PASS|PZScore#5|...   50.0        None
-> 2   chr7  55249063   A   G   PASS        5  PZFlag#PASS|PZScore#5|...  125.0        None
+>   #CHROM       POS ALT REF PZFlag  PZScore                                             PZTags     DP      CLNSIG
+> 0   chr7  55249063   A   G   PASS      105  [PZFlag#PASS, PZScore#105, ...  125.0        None
+> 1   chr1     28736   C   A   PASS       15  [PZFlag#PASS, PZScore#15,  ...    NaN  pathogenic
+> 2   chr1     69101   G   A   PASS        5  [PZFlag#PASS, PZScore#5,   ...   50.0        None
 > ```
+
+
 
 See [HOWARD Help Prioritization tool](docs/help.md#prioritization-tool)
 for more options.
@@ -664,14 +666,16 @@ More details
 >
 > ``` ts
 >                                                 hgvs
-> 0                     WASH7P:NR_024540.1:n.50+585T>G
-> 1     FAM138A:NR_026818.1:exon3:n.597T>G:p.Tyr199Asp
-> 2  OR4F5:NM_001005484.2:NP_001005484.2:exon3:c.74...
-> 3  LINC01128:NR_047526.1:n.287+3767A>G,LINC01128:...
-> 4  LINC01128:NR_047526.1:n.287+3768A>G,LINC01128:...
-> 5  LINC01128:NR_047526.1:n.287+3769A>G,LINC01128:...
-> 6  EGFR:NM_001346897.2:NP_001333826.1:exon19:c.22...
+> 0                   [WASH7P:NR_024540.1:n.50+585T>G]
+> 1   [FAM138A:NR_026818.1:exon3:n.597T>G:p.Tyr199Asp]
+> 2  [OR4F5:NM_001005484.2:NP_001005484.2:exon3:c.7...
+> 3  [LINC01128:NR_047526.1:n.287+3767A>G, LINC0112...
+> 4  [LINC01128:NR_047526.1:n.287+3768A>G, LINC0112...
+> 5  [LINC01128:NR_047526.1:n.287+3769A>G, LINC0112...
+> 6  [EGFR:NM_001346897.2:NP_001333826.1:exon19:c.2...
 > ```
+
+
 
 </details>
 
@@ -726,9 +730,9 @@ More details
 >
 > ``` ts
 >                                             NOMEN    PZFlag  PZScore
-> 0                    WASH7P:NR_024540:n.50+585T>G      PASS       15
-> 1     OR4F5:NP_001005484:exon3:c.74A>G:p.Glu25Gly      PASS        5
-> 2  EGFR:NM_001346897:exon19:c.2226G>A:p.Gln742Gln      PASS        5
+> 0  EGFR:NM_001346897:exon19:c.2226G>A:p.Gln742Gln      PASS      105
+> 1                    WASH7P:NR_024540:n.50+585T>G      PASS       15
+> 2     OR4F5:NM_001005484:exon3:c.74A>G:p.Glu25Gly      PASS        5
 > 3               LINC01128:NR_047526:n.287+3767A>G      PASS        0
 > 4               LINC01128:NR_047526:n.287+3768A>G      PASS        0
 > 5               LINC01128:NR_047526:n.287+3769A>G      PASS        0

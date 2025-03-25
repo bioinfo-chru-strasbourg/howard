@@ -432,6 +432,26 @@ def set_log_level(verbosity: str, log_file: str = None) -> str:
     return verbosity
 
 
+def get_log_level() -> int:
+    """
+    The function `get_log_level` returns the current log level of the Python logging module.
+
+    :return: The current log level.
+    """
+
+    return log.getLogger().getEffectiveLevel()
+
+
+def get_log_level_name() -> str:
+    """
+    The function `get_log_level_name` returns the current log level name of the Python logging module.
+
+    :return: The name of the current log level.
+    """
+
+    return log.getLevelName(get_log_level())
+
+
 def split_interval(start: int, end: int, step: int = None, ncuts: int = None):
     """
     It takes a start and end value, and either a step size or a number of cuts, and returns a list of
@@ -1671,7 +1691,7 @@ def download_file(
 
             # Aria options
             aria_async_dns_option = str(aria_async_dns).lower()
-            if quiet and log.root.level >= 20:
+            if quiet and get_log_level() >= 20:
                 aria_quiet_option = " --quiet "
                 aria_redirect_option = " 2>/dev/null "
             else:
