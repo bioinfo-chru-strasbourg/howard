@@ -1,6 +1,8 @@
 import os
 import time
 from utils import metaheader_rows
+import sys
+import gzip
 
 
 def create_vcf_header(input_path) -> list:
@@ -13,20 +15,22 @@ def create_vcf_header(input_path) -> list:
             header.append(
                 metaheader_rows(
                     "INFO",
-                    fields,
-                    1,
-                    "Float",
                     "MISTIC score (0:1), score close than 1 show a pathogenic missense",
+                    id=fields,
+                    number=1,
+                    type="Float",
+                    quoting=True
                 )
             )
         else:
             header.append(
                 metaheader_rows(
                     "INFO",
-                    fields,
-                    1,
-                    "String",
                     "MISTIC prediction either B for Benign or D for damaging",
+                    id=fields,
+                    number=1,
+                    type="String",
+                    quoting=True
                 )
             )
     header.append(
@@ -42,7 +46,7 @@ def mistic(file: str, output: str) -> str:
     header = create_vcf_header(file)
     write_header(header, output)
     with open(output, "a+") as out:
-        with open(file, "r") as file:
+        with gzip.open(file, "rt") as file:
             for lines in file:
                 if not lines.startswith("#"):
                     lines = lines.strip().split()
@@ -63,6 +67,6 @@ def write_header(header: list, output: str):
 
 
 if __name__ == "__main__":
-    file = "/home1/DB/HOWARD/MISTIC/current/hg19/MISTIC_GRCh37.tsv"
-    output = "/home1/DB/HOWARD/MISTIC/current/hg19/MISTIC_GRCh37.vcf"
+    file = sys.argv[1] #TSV MISTIC
+    output = sys.argv[2] #output VCF
     mistic(file, output)
