@@ -1,6 +1,6 @@
 # RELEASE NOTES
 
-## 0.12.2.0
+## 0.13.0
 
 Introduction of interactvie mode to dynamically explore data, using variants view
 with columns types (defined in VCF header), with build-in tool or Harlequin tool.
@@ -40,6 +40,8 @@ and transcripts mapping. New useful tools and plugins.
 ### Fixes
 
 - Fix BARCODEFAMILY calculation (multiple barcode with successive commandes)
+- Fix dnSNP download and index generated vcf
+- Fix explode_infos parameter
 
 ## 0.12.1.1
 

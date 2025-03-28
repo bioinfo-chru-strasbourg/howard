@@ -137,7 +137,9 @@ title: HOWARD Help Parameters
       from_column_format](#from_column_format)
     - [<span class="toc-section-number">10.10.2</span>
       from_columns_map](#from_columns_map)
-    - [<span class="toc-section-number">10.10.3</span> commons
+    - [<span class="toc-section-number">10.10.3</span>
+      from_variants](#from_variants)
+    - [<span class="toc-section-number">10.10.4</span> commons
       parameters](#commons-parameters)
   - [<span class="toc-section-number">10.11</span>
     prioritization](#prioritization-1)
@@ -1784,11 +1786,12 @@ Default: `10`
 ## query_print_mode
 
 Print mode of query result (only for print result, not output). Either
-None (native), 'markdown', 'tabulate' or disabled.
+None (default), 'dataframe', 'markdown', 'tabulate' or disabled. If
+None, print mode is 'dataframe' if no export file is provided.
 
 Type: `str`
 
-Choices: `[None, 'markdown', 'tabulate', 'disabled']`
+Choices: `[None, 'dataframe', 'markdown', 'tabulate', 'disabled']`
 
 Default: `None`
 
@@ -2255,6 +2258,35 @@ Examples:
 >        "column_case": null
 >      }
 >    ]
+> }
+> ```
+
+### from_variants
+
+List of fields from variants annotations, either from 'INFO' column or a
+specific column already available in the table.
+
+- 'fields' is a list of fields to include
+
+- 'prefix' is used to add a prefix on fields
+
+- 'INFO' enables full annotation inclusion by adding 'INFO' column
+
+Type: `dict`
+
+Default: `{}`
+
+Examples:
+
+> List of fields ('CLNSIG' and 'gnomad') to include without prefix:
+
+> ``` json
+> {
+>    "from_variants": {
+>       "fields": ["CLNSIG", "gnomad"],
+>       "prefix": "",
+>       "INFO": false,
+>    },
 > }
 > ```
 

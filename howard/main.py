@@ -17,6 +17,8 @@ from howard.functions.plugins import plugins_infos, plugins_list, plugins_to_loa
 from howard.functions.commons import (
     folder_plugins,
     full_path,
+    get_log_level,
+    load_args,
     subfolder_plugins,
     help_header,
     set_log_level,
@@ -125,9 +127,6 @@ def main() -> None:
         "shared_arguments": shared_arguments,
     }
 
-    # Header
-    print(help_header(setup=setup_cfg))
-
     # Generate parser
     parser = argparse.ArgumentParser()
     parser = help_generation(
@@ -151,6 +150,7 @@ def main() -> None:
     # verbosity
     if "verbosity" not in args:
         args.verbosity = "info"
+
     # log
     if "log" not in args:
         args.log = None
@@ -163,6 +163,10 @@ def main() -> None:
 
     # Logging
     set_log_level(args.verbosity, args.log)
+
+    # Header
+    if get_log_level() <= 20:
+        print(help_header(setup=setup_cfg))
 
     # Threads
     nb_threads = os.cpu_count()
@@ -272,28 +276,32 @@ def main() -> None:
             raise ValueError(msg_gui_disable)
         command_function = commands_arguments[args.command]["function"]
 
-        # from howard.tools.command_function import command_function
-        # exec(
-        #     "from howard.tools.{command_function} import {command_function}".format(
-        #         command_function=command_function
-        #     )
-        # )
-        # import_command = (
-        #     f"from howard.tools.{command_function} import {command_function}"
-        # )
-        # log.debug(import_command)
-        # try:
-        #     exec(import_command)
-        # except:
-        #     """ """
         log.debug(f"Command/Tool: {command_function}")
         vcfdata_obj = eval(f"{command_function}(args)")
 
     # Interactive option
     interactive = False
 
+    # Load args into param
+    if vcfdata_obj is not None:
+        param = vcfdata_obj.get_param()
+    else:
+        param = {}
+
+    param = load_args(
+        param=param,
+        args=args,
+        arguments_dict=arguments_dict,
+        command="query",
+        strict=False,
+    )
+
+    # Query
+    query = param.get("query", {}).get("query", None)
+
     # Specific "query" tool interactivity
-    if command_function == "query" and ("query" not in args or not args.query):
+    # if command_function == "query" and ("query" not in args or not args.query):
+    if command_function == "query" and not query:
         interactive = True
         log.debug("Interactivity terminal activated")
 

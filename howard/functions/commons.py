@@ -126,7 +126,7 @@ DEFAULT_ANNOVAR_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/annovar/current"
 DEFAULT_REFSEQ_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/refseq/current"
 DEFAULT_DBNSFP_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/dbnsfp/current"
 DEFAULT_EXOMISER_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/exomiser/current"
-DEFAULT_DBSNP_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/exomiser/dbsnp"
+DEFAULT_DBSNP_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/dbsnp/current"
 DEFAULT_SPLICE_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/splice"
 DEFAULT_SPLICEAI_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/spliceai"
 DEFAULT_SPIP_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/spip"
@@ -430,6 +430,26 @@ def set_log_level(verbosity: str, log_file: str = None) -> str:
     )
 
     return verbosity
+
+
+def get_log_level() -> int:
+    """
+    The function `get_log_level` returns the current log level of the Python logging module.
+
+    :return: The current log level.
+    """
+
+    return log.getLogger().getEffectiveLevel()
+
+
+def get_log_level_name() -> str:
+    """
+    The function `get_log_level_name` returns the current log level name of the Python logging module.
+
+    :return: The name of the current log level.
+    """
+
+    return log.getLevelName(get_log_level())
 
 
 def split_interval(start: int, end: int, step: int = None, ncuts: int = None):
@@ -1671,7 +1691,7 @@ def download_file(
 
             # Aria options
             aria_async_dns_option = str(aria_async_dns).lower()
-            if quiet and log.root.level >= 20:
+            if quiet and get_log_level() >= 20:
                 aria_quiet_option = " --quiet "
                 aria_redirect_option = " 2>/dev/null "
             else:
@@ -4508,9 +4528,48 @@ def docker_automount() -> str:
     return mounts_new
 
 
+# Sort contig function
+def contig_sort_key(contig: str) -> tuple:
+    """
+    Sort contigs in a VCF file. This function is used as a key function for sorting contigs in a VCF
+    file. It handles special cases for contig names like 'X', 'Y', 'M', and 'MT'. It also sorts
+    contigs based on their position as integers. The function returns a tuple with the contig position
+    and the contig name. Contigs are sorted in ascending order.
+
+    :param contig: The contig name to sort.
+    :type contig: str
+    :return: A tuple with the contig position and the contig name.
+    :rtype: tuple
+    """
+
+    # Remove 'chr' from contig
+    contig_clean = re.sub(r"^chr", "", contig)
+
+    # inf
+    inf = 100000000
+
+    # Special cases: X, Y, M/MT
+    if contig_clean == "X":
+        return (float(inf) - 3, contig)
+    elif contig_clean == "Y":
+        return (float(inf) - 2, contig)
+    elif contig_clean in ["M", "MT"]:
+        return (float(inf) - 1, contig)
+
+    # Contig as integer
+    try:
+        return (int(contig_clean), contig)
+    except ValueError:
+        # Contig as on-numeric
+        return (float(inf), contig_clean)
+
+
 def sort_contigs(vcf_reader):
     """
-    Sort contigs in VCF header.
+    Sort contigs in VCF header. This function sorts the contigs in the header of a VCF file based on
+    their names and positions. It uses the `contig_sort_key` function to sort the contigs. The function
+    returns a VCF object with sorted contigs. The contigs are sorted in ascending order. The function
+    modifies the contigs in place.
 
     :param vcf_reader: VCF object from VCF package.
     :type vcf_reader: vcf.Reader
@@ -4520,32 +4579,8 @@ def sort_contigs(vcf_reader):
 
     from collections import OrderedDict
 
-    # inf
-    inf = 100000000
-
     # Extract contigs from header
     contigs = list(vcf_reader.contigs.keys())
-
-    # Sort function
-    def contig_sort_key(contig):
-
-        # Remove 'chr' from contig
-        contig_clean = re.sub(r"^chr", "", contig)
-
-        # Special cases: X, Y, M/MT
-        if contig_clean == "X":
-            return (float(inf) - 3, contig)
-        elif contig_clean == "Y":
-            return (float(inf) - 2, contig)
-        elif contig_clean in ["M", "MT"]:
-            return (float(inf) - 1, contig)
-
-        # Contig as integer
-        try:
-            return (int(contig_clean), contig)
-        except ValueError:
-            # Contig as on-numeric
-            return (float(inf), contig_clean)
 
     # Sort contigs
     sorted_contigs = sorted(contigs, key=contig_sort_key)

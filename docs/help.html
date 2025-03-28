@@ -526,10 +526,11 @@ Limit of number of row for query (only for print result, not output).</code></pr
 <p></small></p>
 <p><small></p>
 <blockquote>
-<pre><code>    --query_print_mode=&lt;print mode&gt; [None, &#39;markdown&#39;, &#39;tabulate&#39;, &#39;disabled&#39;]
+<pre><code>    --query_print_mode=&lt;print mode&gt; [None, &#39;dataframe&#39;, &#39;markdown&#39;, &#39;tabulate&#39;, &#39;disabled&#39;]
 
 Print mode of query result (only for print result, not output).
-Either None (native), &#39;markdown&#39;, &#39;tabulate&#39; or disabled.</code></pre>
+Either None (default), &#39;dataframe&#39;, &#39;markdown&#39;, &#39;tabulate&#39; or disabled.
+If None, print mode is &#39;dataframe&#39; if no export file is provided.</code></pre>
 </blockquote>
 <p></small></p>
 <p><small></p>
@@ -1789,10 +1790,11 @@ Limit of number of row for query (only for print result, not output).</code></pr
 <p></small></p>
 <p><small></p>
 <blockquote>
-<pre><code>    --query_print_mode=&lt;print mode&gt; [None, &#39;markdown&#39;, &#39;tabulate&#39;, &#39;disabled&#39;]
+<pre><code>    --query_print_mode=&lt;print mode&gt; [None, &#39;dataframe&#39;, &#39;markdown&#39;, &#39;tabulate&#39;, &#39;disabled&#39;]
 
 Print mode of query result (only for print result, not output).
-Either None (native), &#39;markdown&#39;, &#39;tabulate&#39; or disabled.</code></pre>
+Either None (default), &#39;dataframe&#39;, &#39;markdown&#39;, &#39;tabulate&#39; or disabled.
+If None, print mode is &#39;dataframe&#39; if no export file is provided.</code></pre>
 </blockquote>
 <p></small></p>
 <h2 data-number="11.7" id="explode-2"><span
@@ -2352,7 +2354,7 @@ class="header-section-number">12.9</span> dbSNP</h2>
 <pre><code>    --download-dbsnp=&lt;dnSNP&gt;
 
 Path to dbSNP databases
-(e.g. &#39;~/howard/databases/exomiser/dbsnp&#39;).</code></pre>
+(e.g. &#39;~/howard/databases/dbsnp/current&#39;).</code></pre>
 </blockquote>
 <p></small></p>
 <p><small></p>

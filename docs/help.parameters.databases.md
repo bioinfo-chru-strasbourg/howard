@@ -741,7 +741,7 @@ dbSNP download.
 
 ## download_dbsnp
 
-Path to dbSNP databases (e.g. '~/howard/databases/exomiser/dbsnp').
+Path to dbSNP databases (e.g. '~/howard/databases/dbsnp/current').
 
 Type: `Path`
 

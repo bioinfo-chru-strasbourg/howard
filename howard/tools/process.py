@@ -53,9 +53,19 @@ def process(args: argparse) -> None:
 
     # Annotation
     vcfdata_obj.annotation_hgvs()
+
     vcfdata_obj.annotation()
+
     vcfdata_obj.calculation()
+    # # DEVEL
+    # query = f"""
+    #     SELECT DP FROM variants
+    # """
+    # df = vcfdata_obj.get_query_to_df(query)
+    # print(f"dataframe: {df}")
+    # return True
     vcfdata_obj.prioritization()
+    vcfdata_obj.explode_infos()
 
     # Query
     if param.get("query", {}).get("query", None):

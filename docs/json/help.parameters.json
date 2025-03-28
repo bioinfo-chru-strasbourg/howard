@@ -1182,6 +1182,25 @@
           "]"
         ]
       },
+      "from_variants": {
+        "__help": [
+          "List of fields from variants annotations, either from 'INFO' column or a specific column already available in the table.\n",
+          "- 'fields' is a list of fields to include\n",
+          "- 'prefix' is used to add a prefix on fields\n",
+          "- 'INFO' enables full annotation inclusion by adding 'INFO' column"
+        ],
+        "__type": "dict",
+        "__default": {},
+        "__code_type": "json",
+        "__examples_code": [
+          "# List of fields ('CLNSIG' and 'gnomad') to include without prefix:",
+          "\"from_variants\": {",
+          "   \"fields\": [\"CLNSIG\", \"gnomad\"],",
+          "   \"prefix\": \"\",",
+          "   \"INFO\": false,",
+          "},"
+        ]
+      },
       "commons parameters": {
         "__help": [
           "Some parameters are commons between these structure:\n",
