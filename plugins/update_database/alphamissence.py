@@ -40,7 +40,7 @@ def main():
         out.write("\t".join(mandatory)+"\n")
         header_row = header[0].strip().split()
         for lines in inp:
-            if not lines.startswith("#CHROM"):
+            if not lines.startswith("#"):
                 out.write(process(header_row, lines)+"\n")
 
 

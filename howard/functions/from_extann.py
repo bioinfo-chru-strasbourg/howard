@@ -207,6 +207,10 @@ def write_extann(
         # Annotations + header
         write_header(header, o)
         df_extann.fillna(".", inplace=True)
+
+        # Strip spaces in gene column
+        df_extann['genes'] = df_extann['genes'].str.strip()
+
         log.info("Get gene coordinates from refseq")
         for i, rows in df_extann.iterrows():
             pos_list = get_coordinate(df_refgene, rows, extra_cols, mode, df_transcript, alias)
@@ -224,6 +228,8 @@ def write_extann(
                         else:
                             data.append(val)
                     o.write("\t".join(list(map(str, data))) + "\n")
+            else:
+                log.debug(f"{rows['genes']} not found")
 
 
 def extann_to_info(record: pd.Series) -> str:

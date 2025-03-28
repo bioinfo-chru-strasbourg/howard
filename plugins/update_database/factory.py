@@ -3,6 +3,8 @@ from howard.functions.commons import (
     compress_file,
     command,
     set_log_level,
+    get_threads,
+    get_memory
 )
 from howard.tools.convert import convert
 from howard.tools.tools import (
@@ -351,7 +353,9 @@ class Database:
 
     def vcf_to_parquet(self, file):
         output = file.replace(".vcf.gz", ".parquet")
-        param = {"input": file, "output": output, "explode": {"explode_infos": True}}
+        threads = round(get_threads() / 2)
+        memory = str(round(int(re.match(r'\d+', get_memory())[0]) / 2))+"G"
+        param = {"input": file, "output": output, "explode": {"explode_infos": True}, "threads": threads, "memory": memory}
         convert(
             argparse.Namespace(
                 command="convert",
