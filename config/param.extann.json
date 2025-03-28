@@ -360,6 +360,378 @@
             "Description": "Publicatio"
         }
     },
+    "gnomad.v2.1.1.lof_metrics.by_gene.ordered.genes": {
+            "genes": {
+                "Number": ".",
+                "Type": "String",
+                "Description": "Gene symbol"
+            },
+            "transcript": {
+                "Number": ".",
+                "Type": "String",
+                "Description": "Refgene transcript"
+            },
+            "obs_mis": {
+                "Number": ".",
+                "Type": "Integer",
+                "Description": "The observed number of missense variants in the gene"
+            },
+            "exp_mis": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "The expected number of missense variants in the gene."
+            },
+            "oe_mis": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "The ratio of observed to expected missense variants, indicating missense constraint."
+            },
+            "mu_mis": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "TThe mutation rate for missense variants."
+            },
+            "possible_mis": {
+                "Number": ".",
+                "Type": "Integer",
+                "Description": "The number of possible missense variants in the gene."
+            },
+            "obs_mis_pphen": {
+                "Number": ".",
+                "Type": "Integer",
+                "Description": "The observed number of missense variants predicted to be deleterious by PolyPhen."
+            },
+            "exp_mis_pphen": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "The expected number of missense variants predicted to be deleterious by PolyPhen."
+            },
+            "oe_mis_pphen": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "The observed/expected ratio for missense variants predicted to be deleterious by PolyPhen."
+            },
+            "possible_mis_pphen": {
+                "Number": ".",
+                "Type": "Integer",
+                "Description": "The number of possible missense variants predicted to be deleterious by PolyPhen."
+            },
+            "obs_syn": {
+                "Number": ".",
+                "Type": "Integer",
+                "Description": "The observed number of synonymous variants."
+            },
+            "exp_syn": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "The expected number of synonymous variants based on sequence context and mutation rates."
+            },
+            "oe_syn": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "The observed/expected ratio for synonymous variants, providing a baseline for understanding other constraints."
+            },
+            "mu_syn": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "he mutation rate for synonymous variants."
+            },
+            "possible_syn": {
+                "Number": ".",
+                "Type": "Integer",
+                "Description": "The number of possible synonymous variants in the gene."
+            },
+            "obs_lof": {
+                "Number": ".",
+                "Type": "Integer",
+                "Description": "The observed number of loss-of-function variants."
+            },
+            "mu_lof": {
+                "Number": ".",
+                "Type": "Integer",
+                "Description": "The mutation rate for LoF variants."
+            },
+            "possible_lof": {
+                "Number": ".",
+                "Type": "Integer",
+                "Description": "The number of possible loss-of-function (LoF) variants in the gene."
+            },
+            "exp_lof": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "The expected number of loss-of-function variants based on sequence context and mutation rates."
+            },
+            "pLI": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "The probability of being loss-of-function intolerant. A high pLI indicates that the gene is likely intolerant to LoF mutations."
+            },
+            "pNull": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "The probability of being tolerant to loss-of-function mutations. Lower values suggest higher constraint."
+            },
+            "pRec": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "The probability of the gene being recessive."
+            },
+            "oe_lof": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "The observed/expected ratio for loss-of-function variants, providing an indication of LoF constraint."
+            },
+            "oe_syn_lower": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "This represents the lower bound of the 90% confidence interval for the observed/expected ratio of synonymous variants. It provides a measure of statistical uncertainty, indicating the lower limit within which the true O/E ratio is expected to fall 90% of the time."
+            },
+            "oe_syn_upper": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "This represents the upper bound of the 90% confidence interval for the observed/expected ratio of synonymous variants. It indicates the upper limit within which the true O/E ratio is expected to fall 90% of the time."
+            },
+            "oe_mis_lower": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "Represents the lower bound of the 90% confidence interval for the observed/expected ratio of missense variants. It gives a conservative estimate, indicating the lowest plausible value of the O/E ratio."
+            },
+            "oe_mis_upper": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "Represents the upper bound of the 90% confidence interval for the observed/expected ratio of missense variants. It provides the highest plausible value of the O/E ratio."
+            },
+            "oe_lof_lower": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "Represents the lower bound of the 90% confidence interval for the observed/expected ratio of loss-of-function variants. It gives a conservative estimate, indicating the lowest plausible value of the O/E ratio."
+            },
+            "oe_lof_upper": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "Represents the upper bound of the 90% confidence interval for the observed/expected ratio of loss-of-function variants. It provides the highest plausible value of the O/E ratio."
+            },
+            "constraint_flag": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "Flags indicating if a gene is under constraint, such as LoF-constrained or missense-constrained."
+            },
+            "syn_z": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "Z-score for synonymous variants, indicating deviation from the expected number."
+            },
+            "mis_z": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "Z-score for missense variants, indicating deviation from the expected number."
+            },
+            "lof_z": {
+                "Number": ".",
+                "Type": "Integer",
+                "Description": "Z-score for loss-of-function (LoF) variants, indicating deviation from the expected number."
+            },
+            "oe_lof_upper_rank": {
+                "Number": ".",
+                "Type": "Integer",
+                "Description": "Rank of the upper bound of the observed/expected (O/E) ratio for LoF variants among all genes."
+            },
+            "oe_lof_upper_bin": {
+                "Number": ".",
+                "Type": "Integer",
+                "Description": "Bin number for the upper bound of the O/E ratio for LoF variants."
+            },
+            "oe_lof_upper_bin_6": {
+                "Number": ".",
+                "Type": "Integer",
+                "Description": "Bin number for the upper bound of the O/E ratio for LoF variants in a specific classification."
+            },
+            "n_sites": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "Number of genomic sites covered for the gene."
+            },
+            "classic_caf": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "Classic Combined Allele Frequency (CAF), representing the frequency of alleles across populations."
+            },
+            "max_af": {
+                "Number": ".",
+                "Type": "Integer",
+                "Description": "Maximum allele frequency observed across populations."
+            },
+            "no_lofs": {
+                "Number": ".",
+                "Type": "Integer",
+                "Description": "Number of loss-of-function variants observed."
+            },
+            "obs_het_lof": {
+                "Number": ".",
+                "Type": "Integer",
+                "Description": "Number of observed heterozygous loss-of-function variants."
+            },
+            "obs_hom_lof": {
+                "Number": ".",
+                "Type": "Integer",
+                "Description": "Number of observed homozygous loss-of-function variants."
+            },
+            "defined": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "Indicates if the gene is well-defined or characterized in terms of function or phenotype."
+            },
+            "p": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "P-value associated with a specific statistic or test."
+            },
+            "exp_hom_lof": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "Expected number of homozygous loss-of-function variants."
+            },
+            "classic_caf_afr": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "Classic CAF for African populations."
+            },
+            "classic_caf_amr": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "Classic CAF for Admixed American populations."
+            },
+            "classic_caf_asj": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "Classic CAF for Ashkenazi Jewish populations."
+            },
+            "classic_caf_eas": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "Classic CAF for East Asian populations."
+            },
+            "classic_caf_fin": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "Classic CAF for Finnish populations."
+            },
+            "classic_caf_nfe": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "Classic CAF for Non-Finnish European populations."
+            },
+            "classic_caf_oth": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "Classic CAF for Other populations."
+            },
+            "classic_caf_sas": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "Classic CAF for South Asian populations."
+            },
+            "p_afr": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": " P-value specific to African populations."
+            },
+            "p_amr": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "P-value specific to Admixed American populations."
+            },
+            "p_asj": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "P-value specific to Ashkenazi Jewish populations."
+            },
+            "p_eas": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "P-value specific to East Asian populations."
+            },
+            "p_fin": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "P-value specific to Finnish populations."
+            },
+            "p_nfe": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "P-value specific to Non-Finnish European populations."
+            },
+            "p_oth": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "P-value specific to Other populations."
+            },
+            "p_sas": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "P-value specific to South Asian populations."
+            },
+            "transcript_type": {
+                "Number": ".",
+                "Type": "String",
+                "Description": "Type of transcript associated with the gene (e.g., coding, non-coding)."
+            },
+            "gene_id": {
+                "Number": ".",
+                "Type": "String",
+                "Description": "Unique identifier for the gene."
+            },
+            "transcript_level": {
+                "Number": ".",
+                "Type": "Integer",
+                "Description": "Level of transcript (e.g., 1 for known coding sequence)."
+            },
+            "cds_length": {
+                "Number": ".",
+                "Type": "Integer",
+                "Description": "Length of the coding sequence (CDS) for the gene."
+            },
+            "num_coding_exons": {
+                "Number": ".",
+                "Type": "String",
+                "Description": "Number of coding exons for the gene."
+            },
+            "gene_type": {
+                "Number": ".",
+                "Type": "Integer",
+                "Description": "Type of gene (e.g., protein-coding)."
+            },
+            "gene_length": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "Length of the gene."
+            },
+            "exac_pLI": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "Probability of being loss-of-function intolerant based on ExAC data."
+            },
+            "exac_obs_lof": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "The observed number of loss-of-function variants in ExAC data."
+            },
+            "exac_exp_lof": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "The expected number of loss-of-function variants in ExAC data."
+            },
+            "exac_oe_lof": {
+                "Number": ".",
+                "Type": "Float",
+                "Description": "The expected number of loss-of-function variants in ExAC data."
+            },
+            "brain_expression": {
+                "Number": ".",
+                "Type": "String",
+                "Description": ""
+            }
+        },
     "replace": {
         ",": "|",
         ";": "_"
