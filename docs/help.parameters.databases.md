@@ -154,6 +154,8 @@ title: HOWARD Help Parameters Databases
     param_extann](#param_extann)
   - [<span class="toc-section-number">15.6</span>
     mode_extann](#mode_extann)
+  - [<span class="toc-section-number">15.7</span>
+    hgnc_extann](#hgnc_extann)
 - [<span class="toc-section-number">16</span> Parameters](#parameters)
   - [<span class="toc-section-number">16.1</span>
     generate_param](#generate_param)
@@ -419,6 +421,8 @@ Default: `http://www.openbioinformatics.org/annovar/download`
 # refseq
 
 refSeq download.
+
+Type: `str`
 
 ## download_refseq
 
@@ -969,9 +973,17 @@ the longest, or keep the chosen one (transcript_extann).
 
 Type: `str`
 
-Choices: `['all', 'longest', 'chosen']`
+Choices: `['all', 'longest', 'chosen', 'gene']`
 
 Default: `longest`
+
+## hgnc_extann
+
+hgnc_extann file path. Path of HGNC file
+
+Type: `Path`
+
+Default: `None`
 
 # Parameters
 

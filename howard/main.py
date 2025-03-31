@@ -133,6 +133,7 @@ def main() -> None:
         arguments_dict=arguments_dict,
         parser=parser,
         output_type="parser",
+        setup=setup_cfg,
     )
 
     # Parse args

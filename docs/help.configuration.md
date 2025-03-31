@@ -313,6 +313,8 @@ Examples:
 
 Annotation databases folders for refSeq annotation.
 
+Type: `str`
+
 Format: `A folder path (without assembly)`
 
 Default: `~/howard/databases/refseq/current`

@@ -492,6 +492,8 @@ class="toc-section-number">15.4</span> transcripts</a></li>
 class="toc-section-number">15.5</span> param_extann</a></li>
 <li><a href="#mode_extann" id="toc-mode_extann"><span
 class="toc-section-number">15.6</span> mode_extann</a></li>
+<li><a href="#hgnc_extann" id="toc-hgnc_extann"><span
+class="toc-section-number">15.7</span> hgnc_extann</a></li>
 </ul></li>
 <li><a href="#parameters" id="toc-parameters"><span
 class="toc-section-number">16</span> Parameters</a>
@@ -740,6 +742,7 @@ class="header-section-number">7.3</span> download_annovar_url</h2>
 <h1 data-number="8" id="refseq"><span
 class="header-section-number">8</span> refseq</h1>
 <p>refSeq download.</p>
+<p>Type: <code>str</code></p>
 <h2 data-number="8.1" id="download_refseq"><span
 class="header-section-number">8.1</span> download_refseq</h2>
 <p>Path to refSeq databases
@@ -1154,8 +1157,13 @@ class="header-section-number">15.6</span> mode_extann</h2>
 <p>Mode extann selection. How to pick transcript from ncbi, keep all,
 keep the longest, or keep the chosen one (transcript_extann).</p>
 <p>Type: <code>str</code></p>
-<p>Choices: <code>['all', 'longest', 'chosen']</code></p>
+<p>Choices: <code>['all', 'longest', 'chosen', 'gene']</code></p>
 <p>Default: <code>longest</code></p>
+<h2 data-number="15.7" id="hgnc_extann"><span
+class="header-section-number">15.7</span> hgnc_extann</h2>
+<p>hgnc_extann file path. Path of HGNC file</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
 <h1 data-number="16" id="parameters"><span
 class="header-section-number">16</span> Parameters</h1>
 <p>Parameters generation.</p>
