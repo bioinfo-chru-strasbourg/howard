@@ -2433,11 +2433,20 @@ Notes:
 
 <small>
 
->     --mode_extann=<mode extann> ['all', 'longest', 'chosen'] (default: longest)
+>     --mode_extann=<mode extann> ['all', 'longest', 'chosen', 'gene'] (default: longest)
 >
 >     Mode extann selection.
 >     How to pick transcript from ncbi, keep all,
 >     keep the longest, or keep the chosen one (transcript_extann).
+
+</small>
+
+<small>
+
+>     --hgnc_extann=<hgnc_extann>
+>
+>     hgnc_extann file path.
+>     Path of HGNC file
 
 </small>
 
@@ -2621,7 +2630,7 @@ Usage examples:
 
 <small>
 
->     --database=<database> ['clinvar'] (default: clinvar)
+>     --database=<database> ['clinvar', 'gnomad', 'CADD', 'omim']
 >
 >     Which database to update.
 
@@ -2629,7 +2638,15 @@ Usage examples:
 
 <small>
 
->     --update_config=<update_config>
+>     --data_folder=<data_folder>
+>
+>     Path of data needed to update database.
+
+</small>
+
+<small>
+
+>     --update_config=<update_config> (default: ~/BIOINFO/git/HOWARD/plugins/update_database/config/update_databases.json)
 >
 >     Path of json configuration file.
 
@@ -2640,6 +2657,14 @@ Usage examples:
 >     --current_folder=<current_folder> (default: current)
 >
 >     Path of json configuration file.
+
+</small>
+
+<small>
+
+>     --refseq=<refseq>
+>
+>     Path of refseq file.
 
 </small>
 

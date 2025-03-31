@@ -2550,11 +2550,19 @@ bedlike header description, conf vcf specs.
 <p></small></p>
 <p><small></p>
 <blockquote>
-<pre><code>    --mode_extann=&lt;mode extann&gt; [&#39;all&#39;, &#39;longest&#39;, &#39;chosen&#39;] (default: longest)
+<pre><code>    --mode_extann=&lt;mode extann&gt; [&#39;all&#39;, &#39;longest&#39;, &#39;chosen&#39;, &#39;gene&#39;] (default: longest)
 
 Mode extann selection.
 How to pick transcript from ncbi, keep all,
 keep the longest, or keep the chosen one (transcript_extann).</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --hgnc_extann=&lt;hgnc_extann&gt;
+
+hgnc_extann file path.
+Path of HGNC file</code></pre>
 </blockquote>
 <p></small></p>
 <h2 data-number="12.13" id="parameters"><span
@@ -2725,14 +2733,21 @@ Path of HOWARD database folder.</code></pre>
 <p></small></p>
 <p><small></p>
 <blockquote>
-<pre><code>    --database=&lt;database&gt; [&#39;clinvar&#39;] (default: clinvar)
+<pre><code>    --database=&lt;database&gt; [&#39;clinvar&#39;, &#39;gnomad&#39;, &#39;CADD&#39;, &#39;omim&#39;]
 
 Which database to update.</code></pre>
 </blockquote>
 <p></small></p>
 <p><small></p>
 <blockquote>
-<pre><code>    --update_config=&lt;update_config&gt;
+<pre><code>    --data_folder=&lt;data_folder&gt;
+
+Path of data needed to update database.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --update_config=&lt;update_config&gt; (default: ~/BIOINFO/git/HOWARD/plugins/update_database/config/update_databases.json)
 
 Path of json configuration file.</code></pre>
 </blockquote>
@@ -2742,6 +2757,13 @@ Path of json configuration file.</code></pre>
 <pre><code>    --current_folder=&lt;current_folder&gt; (default: current)
 
 Path of json configuration file.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --refseq=&lt;refseq&gt;
+
+Path of refseq file.</code></pre>
 </blockquote>
 <p></small></p>
 <h2 data-number="15.3" id="options"><span

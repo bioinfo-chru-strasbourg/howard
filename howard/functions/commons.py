@@ -3454,6 +3454,65 @@ class RawTextArgumentDefaultsHelpFormatter(
     pass
 
 
+def get_prog_metadata(
+    setup: str = None,
+) -> dict:
+    """
+    The `get_prog_metadata` function retrieves metadata information about a program from a
+    configuration file or from the package metadata, and returns it as a dictionary.
+    If the metadata is not found, it falls back to default values.
+
+    :param setup: The `setup` parameter is a string that represents the path to a configuration file.
+    This file contains metadata about the program, such as its name, version, description, and long
+    description content type
+    :type setup: str
+    :return: The function `get_prog_metadata` returns a dictionary containing metadata information
+    about a program. The metadata includes the program name, version, author, and description. If the
+    metadata is not found in the provided setup file, it falls back to default values or retrieves
+    """
+
+    # Config Parser
+    # setup = "/tmp/config"
+    if setup is not None and os.path.isfile(setup):
+        cf = ConfigParser()
+        cf.read(setup)
+        prog_name = cf.get("metadata", "name", fallback="Unknown Program")
+        prog_version = cf.get("metadata", "version", fallback="0.0.0")
+        prog_authors = cf.get("metadata", "author", fallback="0.0.0")
+        prog_description = cf.get(
+            "metadata", "description", fallback="No description available."
+        )
+    else:
+        # meta
+        try:
+            meta = metadata("pyhoward")
+            prog_name = meta.get("Name")
+            prog_version = meta.get("Version")
+            prog_authors = meta.get("author")
+            prog_description = meta.get("Summary")
+        # Default
+        except Exception as e:
+            print(f"Erreur : {e}")
+            prog_name = "HOWARD"
+            prog_version = "0.0.0"
+            prog_authors = "ALB"
+            prog_description = "HOWARD - Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery"
+
+    # Name clean
+    prog_name_clean = re.sub(r"^(py)|((?<=\w)py)$", "", prog_name).split("-")[0]
+
+    # meta
+    prog_meta = {}
+    prog_meta["name"] = prog_name
+    prog_meta["name_clean"] = prog_name_clean
+    prog_meta["version"] = prog_version
+    prog_meta["author"] = prog_authors
+    prog_meta["description"] = prog_description
+
+    # meta return
+    return prog_meta
+
+
 def help_header(setup: str = None) -> str:
     """
     The `help_header` function generates a header for the help documentation based on the metadata
@@ -3468,32 +3527,13 @@ def help_header(setup: str = None) -> str:
 
     """
 
-    # Config Parser
-    # setup = "/tmp/config"
-    if os.path.isfile(setup):
-        cf = ConfigParser()
-        cf.read(setup)
-        prog_name = cf.get("metadata", "name", fallback="Unknown Program")
-        prog_version = cf.get("metadata", "version", fallback="0.0.0")
-        prog_authors = cf.get("metadata", "author", fallback="0.0.0")
-        prog_description = cf.get(
-            "metadata", "description", fallback="No description available."
-        )
-    else:
-        # meta
-        try:
-            meta = metadata("howard-ann")
-            prog_name = meta.get("Name")
-            prog_version = meta.get("Version")
-            prog_authors = meta.get("author")
-            prog_description = meta.get("Summary")
-        # Default
-        except Exception as e:
-            print(f"Erreur : {e}")
-            prog_name = "HOWARD"
-            prog_version = "0.0.0"
-            prog_authors = "ALB"
-            prog_description = "HOWARD - Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery"
+    # Meta program
+    meta = get_prog_metadata(setup=setup)
+    # prog_name = meta.get("name")
+    prog_name_clean = meta.get("name_clean")
+    prog_version = meta.get("version")
+    prog_authors = meta.get("author")
+    prog_description = meta.get("description")
 
     # Logo
     import pyfiglet  # type: ignore
@@ -3502,13 +3542,15 @@ def help_header(setup: str = None) -> str:
     init(autoreset=True)
 
     ascii_logo = colored(
-        pyfiglet.figlet_format(prog_name.split("-")[0].upper()),  # , font="slant")
+        pyfiglet.figlet_format(
+            prog_name_clean.split("-")[0].upper()
+        ),  # , font="slant")
         color=log_color,
     )
 
     # Description
     header_description = colored(
-        f"{prog_name.split('-')[0].upper()}::{prog_version} [{prog_authors}]\n{prog_description}\n"
+        f"{prog_name_clean.split('-')[0].upper()}::{prog_version} [{prog_authors}]\n{prog_description}\n"
         "",
         color=log_color,
     )
@@ -3524,6 +3566,7 @@ def help_generation(
     arguments_dict: dict = {},
     parser=None,
     output_type: str = "parser",
+    setup: str = None,
 ):
     """
     The `help_generation` function generates a parser object for command-line arguments, as well as
@@ -3534,13 +3577,13 @@ def help_generation(
     :param parser: The `parser` parameter is an instance of the `argparse.ArgumentParser` class. It is
     used to define the command-line interface and parse the command-line arguments. If no `parser` is
     provided, a new instance of `argparse.ArgumentParser` will be created
+    :param output_type: The `output_type` parameter determines the format of the output. It can be one
+    of the following values:, defaults to parser
+    :type output_type: str (optional)
     :param setup: The `setup` parameter is a string that represents the path to a configuration file.
     This file contains metadata about the program, such as its name, version, description, and long
     description content type
     :type setup: str
-    :param output_type: The `output_type` parameter determines the format of the output. It can be one
-    of the following values:, defaults to parser
-    :type output_type: str (optional)
     :return: The function `help_generation` returns different outputs based on the value of the
     `output_type` parameter.
     """
@@ -3555,7 +3598,7 @@ def help_generation(
         parser = argparse.ArgumentParser()
 
     # Parser information
-    parser.prog = metadata("howard-ann").get("Name").split("-")[0]
+    parser.prog = get_prog_metadata(setup=setup).get("name_clean", "howard")
     parser.description = ""
     parser.epilog = (
         "\nUsage examples:\n"
