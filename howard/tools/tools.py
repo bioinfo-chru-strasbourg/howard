@@ -1024,6 +1024,13 @@ arguments = {
         "choices": ["GENCODE", "Ensembl", "UCSC", "NCBI"],
         "gooey": {"widget": "Dropdown", "options": {}},
     },
+    "download-genomes-provider-file": {
+        "metavar": "genomes provider file",
+        "help": """Download or Copy Genome from URL or a file.\n"""
+        """(e.g. https://hgdownload.soe.ucsc.edu/goldenPath/sacCer3/bigZips/sacCer3.fa.gz).\n""",
+        "required": False,
+        "type": str,
+    },
     "download-genomes-contig-regex": {
         "metavar": "genomes contig regex",
         "help": """Regular expression to select specific chromosome\n"""
@@ -2189,6 +2196,7 @@ commands_arguments = {
         "help": """Download databases and needed files for howard and associated tools""",
         "epilog": """Usage examples:\n"""
         """   howard databases --assembly=hg19 --download-genomes=~/howard/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' \n"""
+        """   howard databases --assembly=hg19 --download-genomes=~/howard/databases/genomes/current --download-genomes-provider-file=https://hgdownload.soe.ucsc.edu/goldenpath/hg19/bigZips/p13.plusMT/hg19.p13.plusMT.fa.gz --download-genomes-contig-regex='chr[0-9XYMT]+$' \n"""
         """   howard databases --assembly=hg19 --download-annovar=~/howard/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' \n"""
         """   howard databases --assembly=hg19 --download-snpeff=~/howard/databases/snpeff/current \n"""
         """   howard databases --assembly=hg19 --download-refseq=~/howard/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' \n"""
@@ -2215,6 +2223,7 @@ commands_arguments = {
             "Genomes": {
                 "download-genomes": False,
                 "download-genomes-provider": False,
+                "download-genomes-provider-file": False,
                 "download-genomes-contig-regex": False,
             },
             "snpEff": {"download-snpeff": False},

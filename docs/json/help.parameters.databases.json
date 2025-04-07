@@ -128,6 +128,7 @@
     "__help": ["Genomes download."],
         "download_genomes": {},
         "download_genomes_provider": {},
+        "download_genomes_provider_file": {},
         "download_genomes_contig_regex": {}
     },
     "snpeff": {

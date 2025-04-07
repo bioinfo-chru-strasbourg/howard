@@ -858,6 +858,7 @@ def databases_download_genomes(
     assemblies: list,
     genomes_folder: str = DEFAULT_GENOME_FOLDER,
     provider: str = "UCSC",
+    provider_file: str = None,
     contig_regex: str = None,
     threads: int = 1,
 ) -> None:
@@ -874,6 +875,11 @@ def databases_download_genomes(
     default provider is set to "UCSC", which refers to the University of California, Santa Cruz Genome
     Browser. Other possible providers could include NCBI or Ensembl, defaults to UCSC
     :type provider: str (optional)
+    :param provider_file: The provider_file parameter is a string that specifies the path to a file
+    containing genome data. This file can be either a local file or a URL. If this parameter is provided,
+    the function will use the data from this file instead of downloading the genome data from the specified
+    provider. This allows users to download genome data from a specific source or use a pre-existing file
+    :type provider_file: str (optional)
     :param contig_regex: The contig_regex parameter is a regular expression used to filter the contigs
     (chromosomes or scaffolds) to be downloaded for a given genome assembly. It allows users to download
     only a subset of the available contigs, based on their names or other characteristics. If
@@ -915,16 +921,69 @@ def databases_download_genomes(
         # Download genome and index
         else:
 
+            # Files to remove
+            files_to_remove = []
+
+            # Path of current genome fasta and index
+            path_fa = os.path.join(genomes_folder, assembly, f"{assembly}.fa")
+            path_fai = f"{path_fa}.fai"
+
             # Download genome
-            log.info(f"Download Genomes {[assembly]} downloading...")
-            genomepy.install_genome(
-                assembly,
-                annotation=False,
-                provider=provider,
-                genomes_dir=genomes_folder,
-                threads=threads,
-                regex=contig_regex,
-            )
+
+            # Download from provided file, either an URL or a local file
+            if provider_file is not None:
+
+                # URL file name
+                provider_file_name = os.path.basename(provider_file)
+                files_to_remove.append(provider_file_name)
+
+                # temporary downloaded file name
+                path_fa_tmp = os.path.join(genomes_folder, assembly, provider_file_name)
+
+                # Create genome folder directory
+                if not os.path.exists(os.path.dirname(path_fa)):
+                    os.makedirs(os.path.dirname(path_fa))
+
+                # Check if file exists
+                if os.path.isfile(full_path(provider_file)):
+
+                    # Copy file to genomes folder
+                    shutil.copy(full_path(provider_file), path_fa_tmp)
+
+                # Check id provider file is an url
+                elif provider_file.startswith("http") or provider_file.startswith(
+                    "ftp"
+                ):
+                    # Download file
+                    download_file(provider_file, path_fa_tmp, threads=threads)
+
+                # If file is compressed, extract it
+                if path_fa_tmp.endswith(".gz"):
+                    path_fa_tmp_extracted_name = path_fa_tmp.replace(".gz", "")
+                    extract_file(
+                        file_path=path_fa_tmp,
+                        threads=threads,
+                    )
+                    # Rename file
+                    os.rename(path_fa_tmp_extracted_name, path_fa)
+                    # Remove compressed file
+                    os.remove(path_fa_tmp)
+                else:
+                    # Rename file
+                    os.rename(path_fa_tmp, path_fa)
+
+            else:
+                log.info(f"Download Genomes {[assembly]} downloading...")
+                genomepy.install_genome(
+                    assembly,
+                    annotation=False,
+                    provider=provider,
+                    genomes_dir=genomes_folder,
+                    threads=threads,
+                    regex=contig_regex,
+                )
+                # Remove regex contigs for future filter
+                contig_regex = None
 
             # Re-order genome contigs
             log.info(f"Download Genomes {[assembly]} sorting...")
@@ -940,45 +999,59 @@ def databases_download_genomes(
             contigs = list(fa.keys())
             sorted_contigs = sorted(contigs, key=contig_sort_key)
 
-            # Path of sorted genome fasta and index
-            path_sorted_fa = f"{path_fa}.sorted.fa"
-            path_sorted_fai = f"{path_sorted_fa}.fai"
+            # filter list of contig with a regex like 'chr[0-9XYM]+$'
+            if contig_regex:
+                contig_regex = re.compile(contig_regex)
+                sorted_contigs = list(
+                    filter(lambda x: contig_regex.match(x), sorted_contigs)
+                )
 
-            # Write sorted genome
-            with open(path_sorted_fa, "w") as sorted_fa:
+            if contigs != sorted_contigs:
 
-                # Write contigs
-                for chr in sorted_contigs:
+                # Path of sorted genome fasta and index
+                path_sorted_fa = f"{path_fa}.sorted.fa"
+                path_sorted_fai = f"{path_sorted_fa}.fai"
+                files_to_remove.append(path_sorted_fa)
+                files_to_remove.append(path_sorted_fai)
 
-                    # Log
-                    log.debug(f"Chromosome {chr}...")
+                # Write sorted genome
+                with open(path_sorted_fa, "w") as sorted_fa:
 
-                    # Write chromosome name
-                    sorted_fa.write(">" + chr + "\n")
+                    # Write contigs
+                    for chr in sorted_contigs:
 
-                    # Write chromosome sequence
-                    sorted_fa.write(
-                        "\n".join(map(str, split_string(fa[chr][:], 50))) + "\n"
-                    )
+                        # Log
+                        log.debug(f"Chromosome {chr}...")
 
-            # Load fasta index
-            fa_sorted = Faidx(path_sorted_fa)
+                        # Write chromosome name
+                        sorted_fa.write(">" + chr + "\n")
 
-            # Write sorted index
-            with open(path_sorted_fai, "w") as f:
+                        # Write chromosome sequence
+                        sorted_fa.write(
+                            "\n".join(map(str, split_string(fa[chr][:], 50))) + "\n"
+                        )
 
-                # Write contigs index
-                for index, record in fa_sorted.index.items():
-                    f.write(
-                        f"{index}\t{record.rlen}\t{record.offset}\t{record.lenc}\t{record.lenb}\n"
-                    )
+                # Load fasta index
+                fa_sorted = Faidx(path_sorted_fa)
 
-            # Remove previous genome fasta and index
-            remove_if_exists([path_fa, path_fai])
+                # Write sorted index
+                with open(path_sorted_fai, "w") as f:
 
-            # Rename sorted genome fasta and index
-            Path.rename(Path(path_sorted_fa), path_fa)
-            Path.rename(Path(path_sorted_fai), path_fai)
+                    # Write contigs index
+                    for index, record in fa_sorted.index.items():
+                        f.write(
+                            f"{index}\t{record.rlen}\t{record.offset}\t{record.lenc}\t{record.lenb}\n"
+                        )
+
+                # Remove previous genome fasta and index
+                remove_if_exists([path_fa, path_fai])
+
+                # Rename sorted genome fasta and index
+                Path.rename(Path(path_sorted_fa), path_fa)
+                Path.rename(Path(path_sorted_fai), path_fai)
+
+            # Remove genome tmp files
+            remove_if_exists(files_to_remove)
 
     return None
 
