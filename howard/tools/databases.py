@@ -193,6 +193,7 @@ def databases(args: argparse) -> None:
             assemblies=assemblies,
             genomes_folder=param_databases_genomes.get("download_genomes"),
             provider=param_databases_genomes.get("download_genomes_provider"),
+            provider_file=param_databases_genomes.get("download_genomes_provider_file"),
             contig_regex=param_databases_genomes.get("download_genomes_contig_regex"),
             threads=threads,
         )

@@ -14,6 +14,8 @@ title: HOWARD Help Parameters Databases
   - [<span class="toc-section-number">5.2</span>
     download_genomes_provider](#download_genomes_provider)
   - [<span class="toc-section-number">5.3</span>
+    download_genomes_provider_file](#download_genomes_provider_file)
+  - [<span class="toc-section-number">5.4</span>
     download_genomes_contig_regex](#download_genomes_contig_regex)
 - [<span class="toc-section-number">6</span> snpeff](#snpeff)
   - [<span class="toc-section-number">6.1</span>
@@ -364,6 +366,13 @@ Type: `str`
 Choices: `['GENCODE', 'Ensembl', 'UCSC', 'NCBI']`
 
 Default: `UCSC`
+
+## download_genomes_provider_file
+
+Download or Copy Genome from URL or a file. (e.g.
+https://hgdownload.soe.ucsc.edu/goldenPath/sacCer3/bigZips/sacCer3.fa.gz).
+
+Type: `str`
 
 ## download_genomes_contig_regex
 

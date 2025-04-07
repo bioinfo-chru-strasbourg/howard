@@ -36,6 +36,7 @@ and transcripts mapping. New useful tools and plugins.
 - Improve NOMEN extraction from HGVS list, including multiple patterns for NOMEN
 - Improve rename or remove INFO/tags
 - Improve stats generation (speedup, annotations stats, custom queries)
+- Improve genomes download with URL or local file as original FASTA
 
 ### Fixes
 

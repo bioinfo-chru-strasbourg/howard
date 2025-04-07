@@ -1702,6 +1702,11 @@ Usage examples:
 > --download-genomes-contig-regex='chr\[0-9XYM\]+\$'
 
 > howard databases --assembly=hg19
+> --download-genomes=~/howard/databases/genomes/current
+> --download-genomes-provider-file=https://hgdownload.soe.ucsc.edu/goldenpath/hg19/bigZips/p13.plusMT/hg19.p13.plusMT.fa.gz
+> --download-genomes-contig-regex='chr\[0-9XYMT\]+\$'
+
+> howard databases --assembly=hg19
 > --download-annovar=~/howard/databases/annovar/current
 > --download-annovar-files='refGene,cosmic70,nci60'
 
@@ -1815,6 +1820,15 @@ Notes:
 >
 >     Download Genome from an external provider.
 >     Available: GENCODE, Ensembl, UCSC, NCBI.
+
+</small>
+
+<small>
+
+>     --download-genomes-provider-file=<genomes provider file>
+>
+>     Download or Copy Genome from URL or a file.
+>     (e.g. https://hgdownload.soe.ucsc.edu/goldenPath/sacCer3/bigZips/sacCer3.fa.gz).
 
 </small>
 
