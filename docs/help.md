@@ -1719,6 +1719,7 @@ Usage examples:
 
 > howard databases --assembly=hg19
 > --download-dbnsfp=~/howard/databases/dbnsfp/current
+> --download-dbnsfp-source=tests/databases/dbnsfp/dbNSFP4.4a.zip
 > --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases
 
 > howard databases --assembly=hg19
@@ -1737,8 +1738,6 @@ Usage examples:
 > --download-annovar-files='refGene,cosmic70,nci60'
 > --download-snpeff=snpeff/current --download-refseq=refseq/current
 > --download-refseq-format-file='ncbiRefSeq.txt'
-> --download-dbnsfp=dbnsfp/current --download-dbnsfp-release='4.4a'
-> --download-dbnsfp-subdatabases
 > --download-alphamissense=alphamissense/current
 > --download-exomiser=exomiser/current --download-dbsnp=dbsnp/current
 > --download-dbsnp-vcf --threads=8
@@ -2001,6 +2000,15 @@ Notes:
 >
 >     Release of dbNSFP to download (see dbNSFP website)
 >     (e.g. '4.4a').
+
+</small>
+
+<small>
+
+>     --download-dbnsfp-source=<dnNSFP source as a URL or a file>
+>
+>     Source of dbNSFP as an URL or a local file
+>     (e.g. '/path/to/dbNSFP5.1a.zip').
 
 </small>
 
