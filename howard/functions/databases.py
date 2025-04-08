@@ -1548,6 +1548,7 @@ def databases_download_dbnsfp(
     dbnsfp_folder: str = None,
     dbnsfp_url: str = None,
     dbnsfp_release: str = "4.4a",
+    dbnsfp_source: str = None,
     threads: int = None,
     memory: int = 1,
     parquet_size: int = 100,
@@ -1737,8 +1738,9 @@ def databases_download_dbnsfp(
             columns_structure["Number"][column] = column_number
 
         # Log
+        number_of_columns = len(columns_structure["Type"])
         log.info(
-            f"Download dbNSFP {assemblies} - Check database structure - {len(columns_structure)} columns found"
+            f"Download dbNSFP {assemblies} - Check database structure - {number_of_columns} columns found"
         )
 
         db_structure.close()
@@ -1757,16 +1759,31 @@ def databases_download_dbnsfp(
 
         return columns_structure
 
-    def clean_name(name: str) -> str:
+    def clean_name(name: str, map: dict = {"-": "_", "+": "_", ".": "_"}) -> str:
         """
         The clean_name function replaces hyphens and plus signs in a string with underscores.
 
-        :param name: The `name` parameter is a string that represents a name
+        :param name: The `name` parameter is a string that represents a name or identifier that may
+        contain special characters (such as hyphens or plus signs) that need to be replaced with
+        underscores. This parameter is used to clean up the name by removing or replacing unwanted
+        characters. For example, if the input name is "gene-name+variant", the function will replace
+        the hyphen and plus sign with underscores, resulting in "gene_name_variant". This is useful for
+        ensuring that the name is in a format that is more suitable for use in programming or data
+        processing. The function can be used to sanitize names before using them in file names, database
+        identifiers, or other contexts where special characters may cause issues.
         :type name: str
+        :param map: The `map` parameter is a dictionary that defines the characters to be replaced and
+        their corresponding replacements. The keys in the dictionary are the characters to be replaced,
+        and the values are the characters that will replace them. For example, if you want to replace
+        hyphens with underscores and plus signs with underscores, you can use the following mapping:
+        `{"-": "_", "+": "_"}`. This means that any occurrence of a hyphen in the input string will be
+        replaced with an underscore, and any occurrence of a plus sign will also be replaced with an
+        underscore. You can customize this mapping to replace other characters as needed
+        :type map: dict (optional)
         :return: The function `clean_name` returns a string.
         """
 
-        mapping_table = str.maketrans({"-": "_", "+": "_"})
+        mapping_table = str.maketrans(map)
         return name.translate(mapping_table)
 
     def get_columns_select_clause(
@@ -2070,6 +2087,9 @@ def databases_download_dbnsfp(
                 line_in_variant = False
             elif line_in_variant:
                 line_split = line.split("\t")
+                # Case new release 5.x
+                if len(line_split) < 2:
+                    line_split = line.split("        ")
                 if line_split[0] != "":
                     line_name = line_split[1].split(":")[0]
                     line_desc = ":".join(line_split[1].split(":")[1:]).strip()
@@ -2110,17 +2130,38 @@ def databases_download_dbnsfp(
 
     # Files for dbNSFP
     # https://dbnsfp.s3.amazonaws.com/dbNSFP4.4a.zip
+    # https://usf.box.com/shared/static/0tq7q3b8ucaxxkmfyvnb0ss7g58ptgcl
     dbnsfp_zip = f"dbNSFP{dbnsfp_release}.zip"
     dbnsfp_readme = f"dbNSFP{dbnsfp_release}.readme.txt"
-    dbnsfp_zip_url = os.path.join(dbnsfp_url, dbnsfp_zip)
+
+    # Check if dbNSFP source is provided, either URL or file
+    if dbnsfp_source is not None:
+        if os.path.isfile(full_path(dbnsfp_source)):
+            dbnsfp_zip_url = full_path(dbnsfp_source)
+        elif dbnsfp_url.startswith("http") or dbnsfp_url.startswith("ftp"):
+            dbnsfp_zip_url = dbnsfp_source
+    # Check if dbNSFP URL is provided and if it is a valid URL
+    elif dbnsfp_url is not None:
+        dbnsfp_zip_url = os.path.join(dbnsfp_url, dbnsfp_zip)
+    # No dbNSFP source or URL provided
+    else:
+        msg_err = f"Download dbNSFP {assemblies} - No dbNSFP URL or source provided"
+        log.error(msg_err)
+        raise ValueError(msg_err)
+
+    # Destination files
     dbnsfp_zip_dest = os.path.join(dbnsfp_folder, dbnsfp_zip)
     dbnsfp_readme_dest = os.path.join(dbnsfp_folder, dbnsfp_readme)
     dbnsfp_zip_dest_folder = os.path.dirname(dbnsfp_zip_dest)
 
     # Download dbNSFP
     if not os.path.exists(dbnsfp_zip_dest):
-        log.info(f"Download dbNSFP {assemblies} - Download '{dbnsfp_zip}'...")
-        download_file(dbnsfp_zip_url, dbnsfp_zip_dest, threads=threads)
+        if os.path.isfile(dbnsfp_zip_url):
+            log.info(f"Download dbNSFP {assemblies} - Copy '{dbnsfp_zip}'...")
+            shutil.copyfile(dbnsfp_zip_url, dbnsfp_zip_dest)
+        else:
+            log.info(f"Download dbNSFP {assemblies} - Download '{dbnsfp_zip}'...")
+            download_file(dbnsfp_zip_url, dbnsfp_zip_dest, threads=threads)
     else:
         log.info(
             f"Download dbNSFP {assemblies} - Database '{dbnsfp_zip}' already exists"
@@ -2130,6 +2171,21 @@ def databases_download_dbnsfp(
     if not os.path.exists(dbnsfp_readme_dest):
         log.info(f"Download dbNSFP {assemblies} - Extract '{dbnsfp_zip}'...")
         extract_file(dbnsfp_zip_dest, threads=threads)
+        # Check if extracted on a folder
+        dbnsfp_zip_dest_folder_extracted = os.path.join(
+            dbnsfp_zip_dest_folder, dbnsfp_zip.replace(".zip", "")
+        )
+        if os.path.isdir(dbnsfp_zip_dest_folder_extracted):
+            # Move files to the folder
+            for file in os.listdir(dbnsfp_zip_dest_folder_extracted):
+                log.debug(f"Download dbNSFP {assemblies} - Move '{file}'...")
+                shutil.move(
+                    os.path.join(dbnsfp_zip_dest_folder_extracted, file),
+                    dbnsfp_zip_dest_folder,
+                )
+            # Remove folder
+            shutil.rmtree(dbnsfp_zip_dest_folder_extracted)
+
     else:
         log.info(
             f"Download dbNSFP {assemblies} - Database '{dbnsfp_zip}' already extracted"
@@ -2462,12 +2518,6 @@ def databases_download_dbnsfp(
                     sample_size=sample_size,
                     threads=threads,
                 )
-                # columns_structure_vcf = get_columns_structure(
-                #     database_file=database_files[0],
-                #     sample_size=sample_size,
-                #     threads=threads,
-                #     output_type="VCF",
-                # )
 
             output_prefix = f"{dbnsfp_folder}/{assembly}/dbNSFP{dbnsfp_release}"
             parquet_all_annotation = (
@@ -2633,7 +2683,8 @@ def databases_download_dbnsfp(
             log.info(f"Download dbNSFP ['{assembly}']")
             log.info(f"Download dbNSFP ['{assembly}'] - Parquet/VCF files generation")
 
-            output_prefix = f"{dbnsfp_folder}/{assembly}/dbNSFP{dbnsfp_release}"
+            output_prefix_name = f"dbNSFP{dbnsfp_release}"
+            output_prefix = f"{dbnsfp_folder}/{assembly}/{output_prefix_name}"
             partition_parquet_folder_all = f"{output_prefix}.ALL.partition.parquet"
             partition_parquet_folders = sorted(
                 glob.glob(f"{output_prefix}.*.partition.parquet"),
@@ -2648,7 +2699,11 @@ def databases_download_dbnsfp(
             ):
 
                 # sub database
-                sub_database = os.path.basename(partition_parquet_folder).split(".")[-3]
+                # sub_database = os.path.basename(partition_parquet_folder).split(".")[-3]
+                sub_database = re.search(
+                    rf"{output_prefix_name}\.(.*?)\.partition\.parquet",
+                    os.path.basename(partition_parquet_folder),
+                ).group(1)
 
                 # Input Parquet folder
                 input_partition_parquet = (

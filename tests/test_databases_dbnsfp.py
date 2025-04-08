@@ -26,6 +26,51 @@ from test_needed import (
 )
 
 
+def test_database_dbnsfp_step_by_step_from_source():
+    """
+    This function tests the "databases" function with a set of arguments.
+    """
+
+    # Init
+    dbnsfp_source = os.path.join(tests_databases_folder, "dbnsfp", "dbNSFP4.4a.zip")
+    genomes_folder = tests_config["folders"]["databases"]["genomes"]
+    download_needed_databases()
+    uniquify = False
+    threads = 8
+
+    # Tmp folder
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Assembly
+        assemblies = "hg19,hg38"
+        assemblies_list = [value for value in assemblies.split(",")]
+
+        dbnsfp_folder = tmp_dir
+
+        # Try to convert
+        try:
+            databases_download_dbnsfp(
+                assemblies=assemblies_list,
+                dbnsfp_folder=dbnsfp_folder,
+                dbnsfp_source=dbnsfp_source,
+                generate_parquet_file=False,
+                generate_sub_databases=False,
+                generate_vcf_file=False,
+                genomes_folder=genomes_folder,
+                uniquify=uniquify,
+                threads=threads,
+            )
+        except:
+            assert False
+
+        downloaded_files = os.listdir(dbnsfp_folder)
+        for assembly in assemblies_list:
+            assert assembly in downloaded_files
+            downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
+            nb_files = 2
+            assert len(downloaded_assembly_files) == nb_files
+
+
 @pytest.mark.parametrize(
     "generate_parquet_file, generate_sub_databases, generate_vcf_file, add_info, only_info, uniquify",
     [

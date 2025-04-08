@@ -58,22 +58,24 @@ title: HOWARD Help Parameters Databases
   - [<span class="toc-section-number">9.3</span>
     download_dbnsfp_release](#download_dbnsfp_release)
   - [<span class="toc-section-number">9.4</span>
-    download_dbnsfp_parquet_size](#download_dbnsfp_parquet_size)
+    download_dbnsfp_source](#download_dbnsfp_source)
   - [<span class="toc-section-number">9.5</span>
-    download_dbnsfp_subdatabases](#download_dbnsfp_subdatabases)
+    download_dbnsfp_parquet_size](#download_dbnsfp_parquet_size)
   - [<span class="toc-section-number">9.6</span>
-    download_dbnsfp_parquet](#download_dbnsfp_parquet)
+    download_dbnsfp_subdatabases](#download_dbnsfp_subdatabases)
   - [<span class="toc-section-number">9.7</span>
-    download_dbnsfp_vcf](#download_dbnsfp_vcf)
+    download_dbnsfp_parquet](#download_dbnsfp_parquet)
   - [<span class="toc-section-number">9.8</span>
-    download_dbnsfp_no_files_all](#download_dbnsfp_no_files_all)
+    download_dbnsfp_vcf](#download_dbnsfp_vcf)
   - [<span class="toc-section-number">9.9</span>
-    download_dbnsfp_add_info](#download_dbnsfp_add_info)
+    download_dbnsfp_no_files_all](#download_dbnsfp_no_files_all)
   - [<span class="toc-section-number">9.10</span>
-    download_dbnsfp_only_info](#download_dbnsfp_only_info)
+    download_dbnsfp_add_info](#download_dbnsfp_add_info)
   - [<span class="toc-section-number">9.11</span>
-    download_dbnsfp_uniquify](#download_dbnsfp_uniquify)
+    download_dbnsfp_only_info](#download_dbnsfp_only_info)
   - [<span class="toc-section-number">9.12</span>
+    download_dbnsfp_uniquify](#download_dbnsfp_uniquify)
+  - [<span class="toc-section-number">9.13</span>
     download_dbnsfp_row_group_size](#download_dbnsfp_row_group_size)
 - [<span class="toc-section-number">10</span>
   alphamissense](#alphamissense)
@@ -197,7 +199,8 @@ Examples:
 >          },
 >          "dbnsfp": {
 >              "download_dbnsfp": "~/howard/databases/dbnsfp/current",
->              "download_dbnsfp_release": "4.4a"
+>              "download_dbnsfp_source": "https://usf.box.com/shared/static/0tq7q3b8ucaxxkmfyvnb0ss7g58ptgcl",
+>              "download_dbnsfp_release": "4.9a"
 >          },
 >          "alphamissense": {
 >              "download_alphamissense": "~/howard/databases/alphamissense/current"
@@ -253,8 +256,8 @@ Examples:
 >          },
 >          "dbnsfp": {
 >              "download_dbnsfp": "~/howard/databases/dbnsfp/current",
->              "download_dbnsfp_url": "https://dbnsfp.s3.amazonaws.com",
->              "download_dbnsfp_release": "4.4a",
+>              "download_dbnsfp_source": "https://usf.box.com/shared/static/0tq7q3b8ucaxxkmfyvnb0ss7g58ptgcl",
+>              "download_dbnsfp_release": "4.9a",
 >              "download_dbnsfp_parquet_size": 100,
 >              "download_dbnsfp_subdatabases": true,
 >              "download_dbnsfp_parquet": false,
@@ -539,6 +542,13 @@ Default: `https://dbnsfp.s3.amazonaws.com`
 Release of dbNSFP to download (see dbNSFP website) (e.g. '4.4a').
 
 Default: `4.4a`
+
+## download_dbnsfp_source
+
+Source of dbNSFP as an URL or a local file (e.g.
+'/path/to/dbNSFP5.1a.zip').
+
+Default: `None`
 
 ## download_dbnsfp_parquet_size
 
