@@ -1196,6 +1196,13 @@ arguments = {
         "required": False,
         "default": "4.4a",
     },
+    "download-dbnsfp-source": {
+        "metavar": "dnNSFP source as a URL or a file",
+        "help": """Source of dbNSFP as an URL or a local file\n"""
+        """(e.g. '/path/to/dbNSFP5.1a.zip').\n""",
+        "required": False,
+        "default": None,
+    },
     "download-dbnsfp-parquet-size": {
         "metavar": "dbNSFP parquet size",
         "help": """Maximum size (Mb) of data files in Parquet folder.\n"""
@@ -2200,11 +2207,11 @@ commands_arguments = {
         """   howard databases --assembly=hg19 --download-annovar=~/howard/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' \n"""
         """   howard databases --assembly=hg19 --download-snpeff=~/howard/databases/snpeff/current \n"""
         """   howard databases --assembly=hg19 --download-refseq=~/howard/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' \n"""
-        """   howard databases --assembly=hg19 --download-dbnsfp=~/howard/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases \n"""
+        """   howard databases --assembly=hg19 --download-dbnsfp=~/howard/databases/dbnsfp/current --download-dbnsfp-source=tests/databases/dbnsfp/dbNSFP4.4a.zip --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases \n"""
         """   howard databases --assembly=hg19 --download-alphamissense=~/howard/databases/alphamissense/current \n"""
         """   howard databases --assembly=hg19 --download-exomiser=~/howard/databases/exomiser/current \n"""
         """   howard databases --assembly=hg19 --download-dbsnp=~/howard/databases/dbsnp/current --download-dbsnp-vcf \n"""
-        """   cd ~/howard/databases && howard databases --assembly=hg19 --download-genomes=genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' --download-annovar=annovar/current --download-annovar-files='refGene,cosmic70,nci60' --download-snpeff=snpeff/current --download-refseq=refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-dbnsfp=dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases --download-alphamissense=alphamissense/current --download-exomiser=exomiser/current --download-dbsnp=dbsnp/current --download-dbsnp-vcf --threads=8 \n"""
+        """   cd ~/howard/databases && howard databases --assembly=hg19 --download-genomes=genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' --download-annovar=annovar/current --download-annovar-files='refGene,cosmic70,nci60' --download-snpeff=snpeff/current --download-refseq=refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-alphamissense=alphamissense/current --download-exomiser=exomiser/current --download-dbsnp=dbsnp/current --download-dbsnp-vcf --threads=8 \n"""
         """   howard databases --generate-param=/tmp/param.json --generate-param-description=/tmp/test.description.json --generate-param-formats=parquet \n"""
         """   howard databases --input_annovar=tests/databases/others/hg19_nci60.txt --output_annovar=/tmp/nci60.from_annovar.vcf.gz --annovar_to_parquet=/tmp/nci60.from_annovar.parquet --annovar_code=nci60 --genome=~/howard/databases/genomes/current/hg19.fa \n"""
         """\n"""
@@ -2249,6 +2256,7 @@ commands_arguments = {
                 "download-dbnsfp": False,
                 "download-dbnsfp-url": False,
                 "download-dbnsfp-release": False,
+                "download-dbnsfp-source": False,
                 "download-dbnsfp-parquet-size": False,
                 "download-dbnsfp-subdatabases": False,
                 "download-dbnsfp-parquet": False,

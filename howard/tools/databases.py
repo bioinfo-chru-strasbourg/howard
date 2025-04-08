@@ -265,6 +265,7 @@ def databases(args: argparse) -> None:
             dbnsfp_folder=param_databases_dbnsfp.get("download_dbnsfp", None),
             dbnsfp_url=param_databases_dbnsfp.get("download_dbnsfp_url", None),
             dbnsfp_release=param_databases_dbnsfp.get("download_dbnsfp_release", None),
+            dbnsfp_source=param_databases_dbnsfp.get("download_dbnsfp_source", None),
             parquet_size=param_databases_dbnsfp.get(
                 "download_dbnsfp_parquet_size", None
             ),
