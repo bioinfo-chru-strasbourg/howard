@@ -403,7 +403,7 @@ GET_BIN_COMMAND_CONFIG_SPLICE = {
     "tools": {
         "splice": {
             "docker": {
-                "image": "bioinfochrustrasbourg/splice:0.2.2",
+                "image": "bioinfochrustrasbourg/splice:0.2.4",
                 "entrypoint": "/bin/bash",
             },
         },

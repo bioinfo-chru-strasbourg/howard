@@ -80,7 +80,7 @@ Examples:
 >     "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar",
 >     "splice": {
 >        "docker": {
->          "image": "bioinfochrustrasbourg/splice:0.2.1",
+>          "image": "bioinfochrustrasbourg/splice:0.2.4",
 >          "entrypoint": "/bin/bash",
 >          "options": null,
 >          "command": null
@@ -381,7 +381,7 @@ Examples:
 >    "tools": {
 >       "splice": {
 >          "docker": {
->            "image": "bioinfochrustrasbourg/splice:0.2.1",
+>            "image": "bioinfochrustrasbourg/splice:0.2.4",
 >            "entrypoint": "/bin/bash",
 >            "options": null,
 >            "command": null
@@ -550,7 +550,7 @@ Examples:
 > {
 >    "splice": {
 >       "docker": {
->         "image": "bioinfochrustrasbourg/splice:0.2.1",
+>         "image": "bioinfochrustrasbourg/splice:0.2.4",
 >         "entrypoint": "/bin/bash",
 >         "options": null,
 >         "command": null

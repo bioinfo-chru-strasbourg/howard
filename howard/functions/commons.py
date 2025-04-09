@@ -98,7 +98,7 @@ DEFAULT_TOOLS_BIN = {
     "docker": {"bin": "docker"},
     "splice": {
         "docker": {
-            "image": "bioinfochrustrasbourg/splice:0.2.1",
+            "image": "bioinfochrustrasbourg/splice:0.2.4",
             "entrypoint": "/bin/bash",
             "options": None,
             "command": None,
