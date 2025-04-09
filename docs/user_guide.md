@@ -222,7 +222,7 @@ Configuration file example:
     "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-14.0.0.jar",
     "splice": {
       "docker": {
-        "image": "bioinfochrustrasbourg/splice:0.2.1",
+        "image": "bioinfochrustrasbourg/splice:0.2.4",
         "entrypoint": "/bin/bash",
         "options": null,
         "command": null
