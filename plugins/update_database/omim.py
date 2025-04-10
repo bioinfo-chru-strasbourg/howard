@@ -297,7 +297,7 @@ class Omim(Database):
             log.warning(f"{' '.join(omim_ambiguous_check['genes'].unique().tolist())} genes not listed in omim_ambiguous, probably due to version changing, check those genes !!!")
 
         #Keep genes checked manually, Save listed amibuous gene name from omim_ambiguous in update_databases.json
-        index_genes_not_refseq = omim_bundle_filtered.index[(~omim_bundle_filtered["genes"].apply(lambda x: any(val.strip() in self.refgene for val in x.split(',')))) & (~omim_bundle_filtered['genes'].isin(self.config_json["omim_ambiguous"]["keep"]))].tolist()
+        index_genes_not_refseq = omim_bundle_filtered.index[(~omim_bundle_filtered["genes"].apply(lambda x: any(val.strip() in self.refgene for val in x.split(',')))) & (~omim_bundle_filtered['genes'].str.contains('|'.join(self.config_json["omim_ambiguous"]["keep"]), case=False, na=False))].tolist()
         
         log.debug(f"Saved {' '.join(self.config_json['omim_ambiguous']['keep'])} genes / phenotype")
         log.debug(f"OMIM bundle remove {len(index_genes_not_refseq)} row with gene not in refseq")

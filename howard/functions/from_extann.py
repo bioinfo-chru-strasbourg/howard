@@ -7,6 +7,7 @@ import os
 import time
 import yaml  # type: ignore
 import subprocess
+import itertools
 
 from howard.functions.commons import command, full_path, transcripts_file_to_df
 
@@ -426,8 +427,11 @@ def get_aliases(gene: str, alias: pd.DataFrame) -> list:
     :param alias: HNGC dataframe from raw txt file
     """
     try:
-        alias_gene = find_rows_with_substring(alias, gene).values.tolist()[0]
-
+        alias_gene_tmp = find_rows_with_substring(alias, gene).values.tolist()
+        if all(isinstance(sublist, list) for sublist in alias_gene_tmp):
+            alias_gene = itertools.chain(*alias_gene_tmp)
+        else:
+            alias_gene = alias_gene_tmp
     except AttributeError:
         return []
     alias_gene_splitted = []
