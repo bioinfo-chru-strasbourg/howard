@@ -359,7 +359,7 @@ class Gnomad(Database):
         variant.append(res_string)
         out.write("\t".join(variant) + "\n")
 
-    def vcf_query(self, file):
+    def vcf_query(self):
         freq = ["amr", "afr", "asj", "eas", "fin", "nfe", "oth", "sas"]
         coalesce = [
             f"COALESCE(SUM(CAST(AC_{val} AS BIGINT))/SUM(AN_{val}), 0) AS gnomadAltFreq_{val}"
@@ -374,9 +374,9 @@ class Gnomad(Database):
                         CAST(SUM(CAST(AC AS BIGINT)) - (2 * SUM(CAST(nhomalt AS BIGINT))) AS BIGINT) AS gnomadHetCount_all, \
                            CAST(SUM(CASE WHEN \"#CHROM\" = 'chrX' THEN CAST(AC_male AS BIGINT) ELSE 0 END) AS BIGINT) AS gnomadHemCount_all \
                                 FROM parquet_scan('"
-            + os.path.dirname(file)
+            + self.data_folder
             + "/*.parquet', union_by_name = true) GROUP BY \"#CHROM\", POS, REF, ALT) TO '"
-            + os.path.dirname(file)
+            + self.data_folder
             + "/exomes.genomes.processed.csv' DELIMITER '\t' CSV HEADER"
         )
         commands_arguments["query"]["groups"]["Query"]["query_print_mode"] = True
@@ -386,8 +386,8 @@ class Gnomad(Database):
         query(
             argparse.Namespace(
                 command="query",
-                input=file,
                 output="",
+                input="",
                 arguments_dict={
                     "arguments": arguments,
                     "commands_arguments": commands_arguments,
@@ -396,37 +396,48 @@ class Gnomad(Database):
                 param=json.dumps({"query": {"query": gnomad_query}}),
             )
         )
-        return osj(os.path.dirname(file) + "/exomes.genomes.processed.csv")
-
-    def update_gnomad(self):
+        return osj(self.data_folder, "exomes.genomes.processed.csv")
+    
+    def __call__(self, vcf_chrom):
         """
         1) Extract required annotations from vcf -> vcf
         2) Convert each vcf to parquet
         3) SQL query: merge exomes and genomes for all contig and calculate HOWARD annotations -> csv
         4) Merge back csv with header and convert it to parquet
         """
-        for chroms in os.listdir(self.data_folder):
-            if chroms.endswith(".bgz") and not os.path.exists(
-                osj(self.data_folder, chroms).replace(".vcf.bgz", ".parsed.vcf.gz")
-            ):
-                log.info(f"Processing {chroms}")
-                cleaned_vcf = osj(self.data_folder, chroms).replace(
-                    ".vcf.bgz", ".parsed.vcf.gz"
-                )
-                self.parse_info_field(osj(self.data_folder, chroms), cleaned_vcf, KEEP)
-            if not os.path.exists(
-                osj(self.data_folder, chroms.replace(".vcf.gz", ".parquet"))
-            ):
-                log.debug(
-                    f"VCF to parquet {osj(self.data_folder, chroms).replace('.vcf.bgz', '.parsed.vcf.gz')}"
-                )
-                self.vcf_to_parquet(
-                    osj(self.data_folder, chroms).replace(".vcf.bgz", ".parsed.vcf.gz")
-                )
-        if not os.path.exists(osj(self.data_folder, "exomes.genomes.processed.csv.gz")):
-            query_output_file = self.vcf_query(
-                osj(self.data_folder, chroms).replace(".vcf.bgz", ".parsed.vcf.gz")
+        
+        log.info(f"Processing {vcf_chrom} (PID: {os.getpid()})")
+        cleaned_vcf = osj(self.data_folder, vcf_chrom).replace(
+                ".vcf.bgz", ".parsed.vcf.gz"
             )
+        self.parse_info_field(osj(self.data_folder, vcf_chrom), cleaned_vcf, KEEP)
+        # if not os.path.exists(
+        #     cleaned_vcf.replace(".vcf.gz", ".parquet")
+        # ):
+        #     log.debug(
+        #         f"VCF to parquet {cleaned_vcf}"
+        #     )
+        #     self.vcf_to_parquet(
+        #         cleaned_vcf
+        #     )
+        return f"Done {cleaned_vcf.replace('.vcf.gz', '.parquet')}"
+    
+    def update_gnomad(self):
+        parquet_list = []
+        for parsed in os.listdir(self.data_folder):
+            if parsed.endswith(".parsed.vcf.gz"):
+                parquet_file = osj(self.data_folder, parsed).replace(".parsed.vcf.gz", ".parquet")
+                if not os.path.exists(parquet_file):
+                    log.debug(
+                        f"VCF to parquet {osj(self.data_folder, parsed)}"
+                    )
+                    self.vcf_to_parquet(
+                        osj(self.data_folder, parsed)
+                    )
+                parquet_list.append(parquet_file)
+        log.info(f"Gnomad DB from {' '.join(parquet_list)}")
+        if not os.path.exists(osj(self.data_folder, "exomes.genomes.processed.csv.gz")):
+            query_output_file = self.vcf_query()
             compress_file(query_output_file, query_output_file + ".gz")
         header = osj(os.path.dirname(os.path.abspath(__file__)), "config", "gnomad.hdr")
 

@@ -4,6 +4,7 @@ import sys
 import os
 from howard.functions.commons import DEFAULT_DATABASE_FOLDER
 import multiprocess as mp
+import concurrent.futures
 
 sys.path.append(os.path.join(os.path.dirname(__file__)))
 from plugins.update_database import clinvar, gnomad, cadd, omim
@@ -26,9 +27,7 @@ arguments = {
     },
     "update_config": {
         "help": """Path of json configuration file.\n""",
-        "default": os.path.join(
-            os.path.dirname(__file__), "config", "update_databases.json"
-        ),
+        "default": os.path.join(os.path.dirname(__file__), "config", "update_databases.json"),
         "type": str,
     },
     "current_folder": {
@@ -71,7 +70,7 @@ commands_arguments = {
 
 # Main function
 def main(args: argparse) -> None:
-    """
+    """hist | grep
     Query input VCF file and show result
     """
 
@@ -88,13 +87,30 @@ def main(args: argparse) -> None:
 
     elif args.database == "gnomad":
         log.info("Update Gnomad")
-        gnomad.Gnomad(
+        gnom = gnomad.Gnomad(
             database=args.database,
             databases_folder=args.databases_folder,
             config_json=args.update_config,
             current_folder=args.current_folder,
             data_folder=args.data_folder,
-        ).update_gnomad()
+        )
+
+        with concurrent.futures.ProcessPoolExecutor(max_workers=6) as executor:
+            futures = {
+                executor.submit(gnom, file): os.path.join(gnom.data_folder, file)
+                for file in os.listdir(gnom.data_folder)
+                if file.endswith(".bgz")
+                and not os.path.exists(
+                    os.path.join(gnom.data_folder, file).replace(".vcf.bgz", ".parsed.vcf.gz")
+                )
+            }
+            for future in concurrent.futures.as_completed(futures):
+                try:
+                    result = future.result()
+                    log.info(result)
+                except Exception as e:
+                    log.error(f"Error processing {futures[future]}: {e}")
+        gnom.update_gnomad()
 
     elif args.database == "CADD":
         cadd_input = [
@@ -107,9 +123,7 @@ def main(args: argparse) -> None:
             input_args = cadd.update_cadd(
                 cadd_input,
                 os.path.join(args.data_folder, "processing"),
-                os.path.join(
-                    args.data_folder, f"CADD.generated.{utils.now()}.partition.parquet"
-                ),
+                os.path.join(args.data_folder, f"CADD.generated.{utils.now()}.partition.parquet"),
             )
         # Start processing
         with mp.Pool(10) as p:

@@ -24,7 +24,6 @@ def sort_vcf(vcf, sorted_vcf):
 
 
 def count_row_file(file):
-    log.debug("Checking number of rows")
     result = subprocess.run(
         ["bash", "-c", f"zcat {file} | wc -l"],
         check=True,
