@@ -166,39 +166,39 @@
                 "Description": "Gene symbol"
             },
             "transcript": {
-                "Number": "1",
+                "Number": ".",
                 "Type": "String",
                 "Description": "Refgene transcript"
             },
             "OMIM_phenotype": {
-                "Number": "1",
+                "Number": ".",
                 "Type": "String",
                 "Description": "List of OMIM phenotype"
             },
             "OMIM_inheritance": {
-                "Number": "1",
+                "Number": ".",
                 "Type": "String",
                 "Description": "List of OMIM inheritance"
             },
             "OMIM_ID": {
-                "Number": "1",
+                "Number": ".",
                 "Type": "Integer",
                 "Description": "List of OMIM ID"
             },
             "OMIM_morbid": {
-                "Number": "1",
+                "Number": ".",
                 "Type": "String",
                 "Description": "Morbid Yes"
             },
             "OMIM_morbid_candidate": {
-                "Number": "1",
+                "Number": ".",
                 "Type": "String",
                 "Description": "Morbid candidate Yes"
             }
         }
     },
     "omim_ambiguous": {
-        "full": ["ARMD10", "CELIAC4", "CORD7","CRAC1","DDH1","DFNA48","EOS","ETL4","HPC3","IDDM21","LGS","MRT4","MRX45","MRX46","MRX88","MRX89","MRX91","MRX92","MS2","NAIC","OS4","PAC1","PCAP","PPR1","PPR3","PSORS12","SHFM3","SLC22A1L","TST1","TST2"],
+        "full": ["ARMD10", "CELIAC4", "CORD7","CRAC1","DDH1","DFNA48","EOS","ETL4","HPC3","IDDM21","LGS","MRT4","MRX45","MRX46","MRX88","MRX89","MRX91","MRX92","MS2","NAIC","OS4","PAC1","PCAP","PPR1","PPR3","PSORS12","SHFM3","SLC22A1L","TST1","TST2","ZWS","WS","MP1","DCR","EMP","ACP","ORP1", "RP15","CCA1","CLF","MST","RCD1","RMD1","RP17"],
         "keep": ["ARMD10", "CELIAC4", "CORD7", "CRAC1", "DDH1", "DFNA48", "SLC22A1L"]
     }
 }
