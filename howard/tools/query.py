@@ -41,7 +41,7 @@ def query(args: argparse) -> None:
 
     # Access
     input_format = vcfdata_obj.get_input_format()
-    if param.get("explode", {}).get("explode_infos", False) or not input_format in [
+    if param.get("explode", {}).get("explode_infos", False) or input_format not in [
         "duckdb",
         "parquet",
     ]:
@@ -75,7 +75,8 @@ def query(args: argparse) -> None:
         log.info("Querying...")
 
         # Explode
-        vcfdata_obj.explode_infos()
+        if param.get("explode", {}).get("explode_infos", False):
+            vcfdata_obj.explode_infos()
 
         # Parameters
         query = param.get("query", {}).get("query", None)
