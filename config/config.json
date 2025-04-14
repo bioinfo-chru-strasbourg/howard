@@ -1,5 +1,5 @@
 {
-    "threads": 24,
+    "threads": 4,
     "memory": null,
     "verbosity": "WARNING",
     "docker": {

@@ -143,6 +143,12 @@
         "- *Type:* Array of String",
         "- *Description:* For Python type calculations, specifies any additional parameters required by the Python function specified in 'function_name'."
       ]
+    },
+    "allow_empty": {
+      "__help": [
+        "- *Type:* Boolean",
+        "- *Description:* For both SQL and Python type calculations, specifies if calculation is able to process empty data (default: false). For empty data, 'false' will skip calculation, 'true' will process calculation with empty data."
+      ]
     }
   }
 }
