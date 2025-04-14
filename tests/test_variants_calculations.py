@@ -1370,6 +1370,42 @@ def test_calculation_vaf_normalization():
             assert False
 
 
+def test_calculation_vaf_normalization_empty():
+    """
+    This is a test function for the calculation of variant allele frequency normalization in a VCF file.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.empty.vcf"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {"calculation": {"calculations": {"vaf": None}}}
+
+        # Create object
+        variants = Variants(
+            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+        )
+
+        # Calculation
+        variants.calculation()
+
+        result = variants.get_query_to_df(
+            """ SELECT INFO FROM variants WHERE FORMAT LIKE '%:VAF' """
+        )
+        assert len(result) == 0
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
 def test_calculation_vaf_stats():
     """
     This is a test function for the calculation of variant allele frequency (VAF) statistics in a VCF

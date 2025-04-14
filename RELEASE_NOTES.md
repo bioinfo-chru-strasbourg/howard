@@ -44,6 +44,7 @@ and transcripts mapping. New useful tools and plugins.
 - Fix BARCODEFAMILY calculation (multiple barcode with successive commandes)
 - Fix dnSNP download and index generated vcf
 - Fix explode_infos parameter
+- Fix empty VCF fails
 
 ## 0.12.1.1
 
