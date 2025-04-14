@@ -741,12 +741,9 @@ def test_export_output(database_input_index, database_output_format):
 
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
-        tmp_dir = "/tmp/export_output"
-
         parquet_partitions = None
         # specific partition_parquet
         if database_output_format in ["partition_parquet"]:
-            # database_output_format = "parquet"
             database_output_format = "partition.parquet"
             parquet_partitions = ["#CHROM"]
         input_database = database_files.get(database_input_index)
@@ -758,11 +755,6 @@ def test_export_output(database_input_index, database_output_format):
             config=tests_config,
             load=True,
         )
-        # check input database file size
-        log.debug(f"FILE INPUT: {input_database}")
-        log.debug(f"FILE OUTPUT: {output_database}")
-        log.debug(f"FILE INPUT SIZE: {os.path.getsize(input_database)}")
-
         remove_if_exists([output_database, output_header])
         try:
             assert variants.export_output(

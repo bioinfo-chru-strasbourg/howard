@@ -314,7 +314,7 @@ def get_chosen_transcript(match: pd.DataFrame, df_transcript: pd.DataFrame, extr
     else:
         log.debug(f"{gene} not provided")
         return get_longest_transcript(match, extra_col)
-    
+
 def get_coordinate(
     df_refgene: pd.DataFrame,
     gene_row: pd.Series,
@@ -502,7 +502,7 @@ def from_extann(args: argparse) -> None:
         else:
             log.debug("No transcript provided for extann")
             df_transcript = None
-    if not args.hgnc_extann:
+    if "hgnc_extann" not in args or not args.hgnc_extann:
         args.hgnc_extann = ""
     else:
         log.warning("Using alias search could lead to duplicate transcript row in output bed file")
