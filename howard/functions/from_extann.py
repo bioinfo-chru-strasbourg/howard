@@ -308,6 +308,8 @@ def get_chosen_transcript(match: pd.DataFrame, df_transcript: pd.DataFrame, extr
             for transcript_data in match_tr:
                 if chosen in transcript_data:
                     return [transcript_data]
+            #if not in df_transcript
+            return get_longest_transcript(match, extra_col)
         except IndexError:
             log.debug(f"Chosen transcript for {' '.join(gene)} not found in refgene")
             return get_longest_transcript(match, extra_col)
