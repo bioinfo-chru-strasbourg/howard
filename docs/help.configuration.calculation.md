@@ -33,6 +33,8 @@ title: HOWARD Help Configuration Calculation
     function_name](#function_name)
   - [<span class="toc-section-number">2.16</span>
     function_params](#function_params)
+  - [<span class="toc-section-number">2.17</span>
+    allow_empty](#allow_empty)
 
 # Introduction
 
@@ -218,3 +220,12 @@ Examples:
 - *Description:* For Python type calculations, specifies any additional
   parameters required by the Python function specified in
   'function_name'.
+
+## allow_empty
+
+- *Type:* Boolean
+
+- *Description:* For both SQL and Python type calculations, specifies if
+  calculation is able to process empty data (default: false). For empty
+  data, 'false' will skip calculation, 'true' will process calculation
+  with empty data.

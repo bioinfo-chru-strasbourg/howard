@@ -709,7 +709,7 @@ class Variants:
     def get_query_to_df(self, query: str = "", limit: int = None) -> pd.DataFrame:
         """
         The `get_query_to_df` function takes a query as a string and returns the result as a pandas
-        DataFrame based on the connection format.
+        DataFrame based on the connection format. It supports both limited and full queries.
 
         :param query: The `query` parameter in the `get_query_to_df` function is a string that
         represents the SQL query you want to execute. This query will be used to fetch data from a
@@ -728,21 +728,42 @@ class Variants:
 
         # Limit in query
         if limit:
+
+            # Panda settings
             pd.set_option("display.max_rows", limit)
+
+            # DuckDB connexion
             if connexion_format in ["duckdb"]:
-                df = (
-                    self.conn.execute(query)
-                    .fetch_record_batch(limit)
-                    .read_next_batch()
-                    .to_pandas()
-                )
+
+                # Deprecated code: fail when empty result and limit
+                # df = (
+                #     self.conn.execute(query)
+                #     .fetch_record_batch(limit)
+                #     .read_next_batch()
+                #     .to_pandas()
+                # )
+
+                result = self.conn.execute(query).fetch_record_batch(limit)
+                if result is None:
+                    df = result.df()
+                else:
+                    try:
+                        df = result.read_next_batch().to_pandas()
+                    except StopIteration:
+                        df = self.conn.execute(query).df()[0:limit]
+
+            # SQLite connexion
             elif connexion_format in ["sqlite"]:
                 df = next(pd.read_sql_query(query, self.conn, chunksize=limit))
 
-        # Full query
+        # Full query without limit
         else:
+
+            # DuckDB connexion
             if connexion_format in ["duckdb"]:
                 df = self.conn.execute(query).df()
+
+            # SQLite connexion
             elif connexion_format in ["sqlite"]:
                 df = pd.read_sql_query(query, self.conn)
 
@@ -9007,6 +9028,10 @@ class Variants:
             """
         df_variants = self.get_query_to_df(query_variants)
 
+        if len(df_variants) == 0:
+            log.debug("No variants found for HGVS annotation")
+            return
+
         # Added columns
         added_columns = []
 
@@ -9274,29 +9299,56 @@ class Variants:
         if operations:
             log.info(f"Calculations...")
 
+        # Count number of variants
+        nb_variants = self.get_query_to_df(
+            f"SELECT count(*) AS count FROM {self.get_table_variants()}"
+        )["count"].tolist()[0]
+
         # For each operations
         for operation_name in operations:
+
             operation_name = operation_name.upper()
+
             if operation_name not in [""]:
+
                 if operation_name in operations_config:
+
+                    # Log
                     log.info(f"Calculation '{operation_name}'")
+
+                    # Get operation config
                     operation = operations_config[operation_name]
                     operation_type = operation.get("type", "sql")
-                    if operation_type == "python":
-                        self.calculation_process_function(
-                            operation=operation, operation_name=operation_name
-                        )
-                    elif operation_type == "sql":
-                        self.calculation_process_sql(
-                            operation=operation, operation_name=operation_name
-                        )
+                    operation_allow_empty = operation.get("allow_empty", False)
+
+                    if operation_allow_empty or nb_variants > 0:
+
+                        # Python process
+                        if operation_type == "python":
+                            self.calculation_process_function(
+                                operation=operation, operation_name=operation_name
+                            )
+
+                        # SQL process
+                        elif operation_type == "sql":
+                            self.calculation_process_sql(
+                                operation=operation, operation_name=operation_name
+                            )
+
+                        # Fail process
+                        else:
+                            log.error(
+                                f"Operations config: Type '{operation_type}' NOT available"
+                            )
+                            raise ValueError(
+                                f"Operations config: Type '{operation_type}' NOT available"
+                            )
+
                     else:
-                        log.error(
-                            f"Operations config: Type '{operation_type}' NOT available"
+                        log.info(
+                            f"Calculation '{operation_name}': aborded - no variants"
                         )
-                        raise ValueError(
-                            f"Operations config: Type '{operation_type}' NOT available"
-                        )
+
                 else:
                     log.error(
                         f"Operations config: Calculation '{operation_name}' NOT available"

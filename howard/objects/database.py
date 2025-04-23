@@ -2639,6 +2639,9 @@ class Database:
                             else:
                                 f.write("[\n")
 
+                    # Init writer
+                    writer = None
+
                     # Open stream files (uncompressed and compressed) for chunk
                     with open(query_output_database_tmp, mode="a") as f, pgzip.open(
                         query_output_database_tmp,
@@ -2786,11 +2789,13 @@ class Database:
                                     writer.write_batch(d)
 
                     # Close Parquet writer
-                    if (
-                        export_options.get("format") in ["PARQUET"]
-                        and not export_options.get("partition_by", None)
-                        and not export_options.get("per_thread_output", None)
+                    if export_options.get("format") in ["PARQUET"] and os.path.isfile(
+                        query_output_database_tmp
                     ):
+                        if writer is None:
+                            writer = pq.ParquetWriter(
+                                query_output_database_tmp, df.schema
+                            )
                         writer.close()
 
                     # JSON format - Add special "]" character at the end of the file

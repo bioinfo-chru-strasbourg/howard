@@ -527,7 +527,11 @@ def test_export_samples(input_vcf, param_samples):
             add_samples,
             where_clause,
         )
-        for input_vcf in ["example.vcf.gz", "example.without_sample.vcf"]
+        for input_vcf in [
+            "example.vcf.gz",
+            "example.empty.vcf",
+            "example.without_sample.vcf",
+        ]
         for remove_info in [True, False]
         for add_samples in [True, False]
         for where_clause in [
@@ -675,6 +679,35 @@ def test_export_query():
         assert os.path.exists(output_tsv) and os.path.exists(output_header)
 
 
+def test_export_query_empty():
+    """
+    This is a test function for exporting data from a VCF file to a TSV file using SQL queries.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.empty.vcf"
+        output_tsv = f"{tmp_dir}/example.tsv"
+
+        # remove if exists
+        remove_if_exists([output_tsv])
+
+        # Create object
+        variants = Variants(input=input_vcf, output=output_tsv, load=True)
+
+        # Check get_output
+        query = 'SELECT "#CHROM", POS, REF, ALT, INFO FROM variants'
+        variants.export_output(query=query)
+        assert os.path.exists(output_tsv)
+
+        # Check get_output without header
+        output_header = output_tsv + ".hdr"
+        remove_if_exists([output_tsv, output_tsv + ".hdr"])
+        variants.export_output(output_header=output_header, query=query)
+        assert os.path.exists(output_tsv) and os.path.exists(output_header)
+
+
 @pytest.mark.parametrize(
     "database_input_index, database_output_format",
     [
@@ -687,6 +720,7 @@ def test_export_query():
             "tsv",
             "csv",
             "example_vcf",
+            "example_empty_vcf",
         ]
         for database_output_format in [
             "parquet",
@@ -710,7 +744,7 @@ def test_export_output(database_input_index, database_output_format):
         parquet_partitions = None
         # specific partition_parquet
         if database_output_format in ["partition_parquet"]:
-            database_output_format = "parquet"
+            database_output_format = "partition.parquet"
             parquet_partitions = ["#CHROM"]
         input_database = database_files.get(database_input_index)
         output_database = f"{tmp_dir}/output_database.{database_output_format}"
