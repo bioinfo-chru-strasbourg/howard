@@ -388,21 +388,40 @@ class Gnomad(Database):
         variant.append(res_string)
         out.write("\t".join(variant) + "\n")
 
-    def vcf_query(self, file):
-        #No OTH pop in gnomad 4.1.0
-        freq = ["amr", "afr", "asj", "eas", "fin", "nfe", "oth", "sas"]
+    def vcf_query(self):
+        #gnomad2.1
+        # freq = ["amr", "afr", "asj", "eas", "fin", "nfe", "oth", "sas"]
+        # coalesce = [
+        #     f"COALESCE(SUM(CAST(AC_{val} AS BIGINT))/SUM(AN_{val}), 0) AS gnomadAltFreq_{val}"
+        #     for val in freq
+        # ]
+        # gnomad_query = (
+        #     'COPY (SELECT "#CHROM", POS, REF, ALT, CAST(SUM(CAST(AC AS BIGINT)) AS BIGINT) AS AC_all, CAST(SUM(AN) AS BIGINT) AS AN_all, '
+        #     + ", ".join(coalesce)
+        #     + ", COALESCE(SUM(CAST(REPLACE(AC_popmax, '.', '0') AS BIGINT))/SUM(CAST(REPLACE(AN_popmax, '.', '0') AS BIGINT)), 0) AS gnomadAltFreq_popmax, \
+        #         CAST(SUM(CAST(nhomalt AS BIGINT)) AS BIGINT) AS gnomadHomCount_all, \
+        #             COALESCE(SUM(CAST(AC AS BIGINT))/SUM(AN), 0) AS gnomadAltFreq_all, \
+        #                 CAST(SUM(CAST(AC AS BIGINT)) - (2 * SUM(CAST(nhomalt AS BIGINT))) AS BIGINT) AS gnomadHetCount_all, \
+        #                    CAST(SUM(CASE WHEN \"#CHROM\" = 'chrX' THEN CAST(AC_male AS BIGINT) ELSE 0 END) AS BIGINT) AS gnomadHemCount_all \
+        #                         FROM parquet_scan('"
+        #     + self.data_folder
+        #     + "/*.parquet', union_by_name = true) GROUP BY \"#CHROM\", POS, REF, ALT) TO '"
+        #     + self.data_folder
+        #     + "/exomes.genomes.processed.csv' DELIMITER '\t' CSV HEADER"
+        # )
+        freq = ["afr", "ami", "amr", "asj", "eas", "fin", "mid", "nfe", "sas", "remaining"]
         coalesce = [
-            f"COALESCE(SUM(CAST(AC_{val} AS BIGINT))/SUM(CAST(AN_{val} AS BIGINT)), 0) AS gnomadAltFreq_{val}"
+            f"COALESCE(SUM(CAST(CAST(AC_joint_{val} AS BIGINT) AS BIGINT))/SUM(CAST(AN_joint_{val} AS BIGINT)), 0) AS gnomadAltFreq_{val}"
             for val in freq
         ]
         gnomad_query = (
-            'COPY (SELECT "#CHROM", POS, REF, ALT, CAST(SUM(CAST(AC AS BIGINT)) AS BIGINT) AS AC_all, CAST(SUM(CAST(AN AS BIGINT)) AS BIGINT) AS AN_all, '
+            'COPY (SELECT "#CHROM", POS, REF, ALT, CAST(SUM(CAST(AC_joint AS BIGINT)) AS BIGINT) AS AC_all, CAST(SUM(CAST(AN_joint AS BIGINT)) AS BIGINT) AS AN_all, '
             + ", ".join(coalesce)
-            + ", COALESCE(SUM(CAST(REPLACE(AC_popmax, '.', '0') AS BIGINT))/SUM(CAST(REPLACE(AN_popmax, '.', '0') AS BIGINT)), 0) AS gnomadAltFreq_popmax, \
-                CAST(SUM(CAST(nhomalt AS BIGINT)) AS BIGINT) AS gnomadHomCount_all, \
-                    COALESCE(SUM(CAST(AC AS BIGINT))/SUM(AN), 0) AS gnomadAltFreq_all, \
-                        CAST(SUM(CAST(AC AS BIGINT)) - (2 * SUM(CAST(nhomalt AS BIGINT))) AS BIGINT) AS gnomadHetCount_all, \
-                           CAST(SUM(CASE WHEN \"#CHROM\" = 'chrX' THEN CAST(AC_male AS BIGINT) ELSE 0 END) AS BIGINT) AS gnomadHemCount_all \
+            + ", ROUND(COALESCE(SUM(CAST(REPLACE(AC_grpmax_joint, '.', '0') AS BIGINT))/SUM(CAST(REPLACE(AN_grpmax_joint, '.', '0') AS BIGINT)), 0), 7) AS gnomadAltFreq_popmax, \
+                ROUND(CAST(SUM(CAST(nhomalt_joint AS BIGINT)) AS BIGINT), 7) AS gnomadHomCount_all, \
+                    ROUND(COALESCE(SUM(CAST(AC_joint AS BIGINT))/SUM(CAST(AN_joint AS BIGINT)), 0), 7) AS gnomadAltFreq_all, \
+                        ROUND(CAST(SUM(CAST(AC_joint AS BIGINT)) - (2 * SUM(CAST(nhomalt_joint AS BIGINT))) AS BIGINT), 7) AS gnomadHetCount_all, \
+                           ROUND(CAST(SUM(CASE WHEN \"#CHROM\" = 'chrX' THEN CAST(AC_joint_XY AS BIGINT) ELSE 0 END) AS BIGINT), 7) AS gnomadHemCount_all \
                                 FROM parquet_scan('"
             + self.data_folder
             + "/*.parquet', union_by_name = true) GROUP BY \"#CHROM\", POS, REF, ALT) TO '"
@@ -418,6 +437,7 @@ class Gnomad(Database):
             argparse.Namespace(
                 command="query",
                 output="",
+                input=[file for file in os.listdir(self.data_folder) if file.endswith(".parquet")][0],
                 arguments_dict={
                     "arguments": arguments,
                     "commands_arguments": commands_arguments,
@@ -435,27 +455,6 @@ class Gnomad(Database):
         3) SQL query: merge exomes and genomes for all contig and calculate HOWARD annotations -> csv
         4) Merge back csv with header and convert it to parquet
         """
-<<<<<<< Updated upstream
-        for chroms in os.listdir(self.data_folder):
-            if chroms.endswith(".bgz") and not os.path.exists(
-                osj(self.data_folder, chroms).replace(".vcf.bgz", ".parsed.vcf.gz")
-            ):
-                log.info(f"Processing {chroms}")
-                cleaned_vcf = osj(self.data_folder, chroms).replace(
-                    ".vcf.bgz", ".parsed.vcf.gz"
-                )
-                self.parse_info_field(osj(self.data_folder, chroms), cleaned_vcf, KEEP)
-            if not os.path.exists(
-                osj(self.data_folder, chroms.replace(".parsed.vcf.gz", ".parquet"))
-            ):
-                log.debug(
-                    f"VCF to parquet {osj(self.data_folder, chroms).replace('.vcf.bgz', '.parsed.vcf.gz')}"
-                )
-                exit()
-                self.vcf_to_parquet(
-                    osj(self.data_folder, chroms).replace(".vcf.bgz", ".parsed.vcf.gz")
-                )
-=======
         
         log.info(f"Processing {vcf_chrom} (PID: {os.getpid()})")
         cleaned_vcf = osj(self.data_folder, vcf_chrom).replace(
@@ -488,7 +487,6 @@ class Gnomad(Database):
                 parquet_list.append(parquet_file)
         # exit()
         log.info(f"Gnomad DB from {' '.join(parquet_list)}")
->>>>>>> Stashed changes
         if not os.path.exists(osj(self.data_folder, "exomes.genomes.processed.csv.gz")):
             query_output_file = self.vcf_query()
             compress_file(query_output_file, query_output_file + ".gz")
@@ -506,54 +504,25 @@ class Gnomad(Database):
 
 
 """
-    for F in ../genomes/*.vcf.bgz; do samp=$(echo "$(basename $F)" | cut -f 1-7 -d '.').PARSED.vcf.gz && echo $samp && python ../parse_info.py --input $F --output $samp --keep ../gnomad_fields.txt;done &
+Matching annotations gnomad 4.1.0
+gnomadaltfreq_amr:          AF_joint_amr
+gnomadaltfreq_afr:          AF_joint_afr
+gnomadaltfreq_ami:          AF_joint_ami
+gnomadaltfreq_asj:          AF_joint_asj
+gnomadaltfreq_eas:          AF_joint_eas
+gnomadaltfreq_fin:          AF_joint_fin
+gnomadaltfreq_mid:          AF_joint_mid
+gnomadaltfreq_nfe:          AF_joint_nfe
+gnomadaltfreq_remaining:    AF_joint_remaining
+gnomadaltfreq_sas:          AF_joint_sas
+gnomadaltfreq_all:          AF_joint
+gnomadhomcount_all:         nhomalt_joint
+gnomadhetcount_all          /
+gnomadhemcount_all:         AC_joint_XY
+gnomadAltFreq_popmax:       AF_grpmax_joint
 
+Je rajoute:
+gnomadAlleleCount:          AC_joint
+gnomadAlleleNumber:         AN_joint
 
-
-
-    # def parseargs():
-    #     parser = argparse.ArgumentParser(description="VCF preprocessor")
-    #     parser.add_argument("-i", "--input", type=str, help="Compressed vcf", required=True)
-    #     parser.add_argument(
-    #         "-o",
-    #         "--output",
-    #         type=str,
-    #         help="Compressed vcf-like ready to use by HOWARD",
-    #         required=True,
-    #     )
-    #     parser.add_argument(
-    #         "--keep", type=str, help="File containing field to split and extract"
-    #     )
-    #     parser.add_argument("--process", action="store_true")
-    #     parser.add_argument(
-    #         "--process_header",
-    #         help="Use with process, it need to contains vcf header with mandatory",
-    #     )
-    #     return parser.parse_args()
-
-    # def main():
-    #     args = parseargs()
-    #     print(args)
-    #     print("VCF preprocessor")
-    #     input_file = args.input
-    #     output_file = args.output
-    #     if args.process:
-    #         self.concat_info_field(args.input, args.output, args.process_header)
-    #         exit()
-    #     if args.keep is not None:
-    #         keep = open(args.keep, "r").readline().strip().split(" ")
-    #         print(f"keep values from {args.keep}, count: {len(keep)}")
-    #     else:
-    #         keep = KEEP
-    #         print(f"keep values default, count: {len(keep)}")
-    #     self.parse_info_field(input_file, output_file, keep)
-
-    for F in ../genomes/*.vcf.bgz; do samp=$(echo "$(basename $F)" | cut -f 1-7 -d '.').PARSED.vcf.gz && echo $samp && python ../parse_info.py --input $F --output $samp --keep ../gnomad_fields.txt;done &
-
-    howard vcf to parquet:
-    howard convert --input gnomad.exomes.r2.1.1.sites.22.PARSED.vc.gz --output gnomad.exomes.r2.1.1.sites.22.PARSED.parquet
-    SQL pour générer les gnomAD
-    howard query --debug --query "COPY (SELECT \"#CHROM\", POS, REF, ALT, CAST(SUM(AC) AS BIGINT) AS AC_all, CAST(SUM(AN) AS BIGINT) AS AN_all, COALESCE(SUM(AC_amr)/SUM(AN_amr), 0) AS gnomadAltFreq_amr, COALESCE(SUM(AC_afr)/SUM(AN_afr), 0) AS gnomadAltFreq_afr, COALESCE(SUM(AC_asj)/SUM(AN_asj), 0) AS gnomadAltFreq_asj, COALESCE(SUM(AC_eas)/SUM(AN_eas), 0) AS gnomadAltFreq_eas, COALESCE(SUM(AC_fin)/SUM(AN_fin), 0) AS gnomadAltFreq_fin, COALESCE(SUM(AC_nfe)/SUM(AN_nfe), 0) AS gnomadAltFreq_nfe, COALESCE(SUM(AC_oth)/SUM(AN_oth), 0) AS gnomadAltFreq_oth, COALESCE(SUM(AC_sas)/SUM(AN_sas), 0) AS gnomadAltFreq_sas, COALESCE(SUM(CAST(REPLACE(AC_popmax, '.', '0') AS BIGINT))/SUM(CAST(REPLACE(AN_popmax, '.', '0') AS BIGINT)), 0) AS gnomadAltFreq_popmax, CAST(SUM(nhomalt) AS BIGINT) AS gnomadHomCount_all, COALESCE(SUM(AC)/SUM(AN), 0) AS gnomadAltFreq_all, CAST(SUM(AC) - (2 * SUM(nhomalt)) AS BIGINT) AS gnomadHetCount_all, CAST(SUM(AC_male) AS BIGINT) AS gnomadHemCount_all FROM parquet_scan('/enadisk/gstock/LGM/lamouche/gnomAD/*.parquet', union_by_name = true) GROUP BY \"#CHROM\", POS, REF, ALT) TO 'chr22.duckdb.csv' DELIMITER '\t' CSV HEADER"
-
-    howard query --input gnomad.exomes.r2.1.1.sites.22.PARSED.parquet --query "SELECT TABLE_CATALOG, DATA_TYPE, COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'variants'"
-    """
+"""
