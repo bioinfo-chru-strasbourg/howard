@@ -200,5 +200,33 @@
     "omim_ambiguous": {
         "full": ["ARMD10", "CELIAC4", "CORD7","CRAC1","DDH1","DFNA48","EOS","ETL4","HPC3","IDDM21","LGS","MRT4","MRX45","MRX46","MRX88","MRX89","MRX91","MRX92","MS2","NAIC","OS4","PAC1","PCAP","PPR1","PPR3","PSORS12","SHFM3","SLC22A1L","TST1","TST2","ZWS","WS","MP1","DCR","EMP","ACP","ORP1", "RP15","CCA1","CLF","MST","RCD1","RMD1","RP17"],
         "keep": ["ARMD10", "CELIAC4", "CORD7", "CRAC1", "DDH1", "DFNA48", "SLC22A1L"]
-    }
+    },
+    "gnomad_fields": [
+        "nhomalt_joint",
+        "AC_joint",
+        "AN_joint",
+        "AC_joint_XY",
+        "AC_joint_afr",
+        "AC_joint_ami",
+        "AC_joint_amr",
+        "AC_joint_asj",
+        "AC_joint_eas",
+        "AC_joint_fin",
+        "AC_joint_mid",
+        "AC_joint_nfe",
+        "AC_joint_sas",
+        "AC_joint_remaining",
+        "AN_joint_afr",
+        "AN_joint_ami",
+        "AN_joint_amr",
+        "AN_joint_asj",
+        "AN_joint_eas",
+        "AN_joint_fin",
+        "AN_joint_mid",
+        "AN_joint_nfe",
+        "AN_joint_sas",
+        "AN_joint_remaining",
+        "AC_grpmax_joint",
+        "AN_grpmax_joint"
+    ]
 }

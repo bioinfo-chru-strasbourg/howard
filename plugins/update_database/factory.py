@@ -353,13 +353,10 @@ class Database:
 
     def vcf_to_parquet(self, file):
         output = file.replace(".vcf.gz", ".parquet")
-<<<<<<< Updated upstream
         threads = round(get_threads() / 2)
         memory = str(round(int(re.match(r'\d+', get_memory())[0]) / 2))+"G"
         param = {"input": file, "output": output, "explode": {"explode_infos": True}, "threads": threads, "memory": memory}
-=======
-        param = {"input": file, "output": output, "explode": {"explode_infos": True}, "threads": 18, "memory": "100G"}
->>>>>>> Stashed changes
+        log.debug(f"VCF to parquet param: {param}")
         convert(
             argparse.Namespace(
                 command="convert",
