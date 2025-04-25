@@ -27,6 +27,203 @@ from test_needed import (
 )
 
 
+def test_annotation_parquet_relative_path():
+    """
+    The function `test_annotation_parquet_relative_path` tests the annotation functionality
+    with parquet as relative path into a param config file.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf"
+        annotation1 = "nci60.parquet"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {
+            "annotation": {
+                "parquet": {
+                    "annotations": {annotation1: {"nci60": "nci60"}},
+                },
+                "options": {"annotations_append": False},
+            }
+        }
+
+        # Construct config dict
+        config = tests_config.copy()
+
+        # Create object
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            param=param,
+            load=True,
+        )
+
+        # Remove if output file exists
+        remove_if_exists([output_vcf])
+
+        # Annotation
+        try:
+            variants.annotation()
+            assert True
+        except:
+            assert False
+
+
+def test_annotation_parquet_relative_path_subfolder():
+    """
+    The function `test_annotation_parquet_relative_path_subfolder` tests the annotation functionality
+    with parquet as relative path into a param config file.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf"
+        annotation1 = "nci60.parquet"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {
+            "annotation": {
+                "parquet": {
+                    "annotations": {annotation1: {"nci60": "nci60"}},
+                },
+                "options": {"annotations_append": False},
+            }
+        }
+
+        # Config
+        config = tests_config.copy()
+        config["folders"]["databases"]["annotations"] = [
+            os.path.dirname(os.path.dirname(tests_annotations_folder))
+        ]
+
+        # Create object
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            param=param,
+            load=True,
+        )
+
+        # Remove if output file exists
+        remove_if_exists([output_vcf])
+
+        # Annotation
+        try:
+            variants.annotation()
+            assert True
+        except:
+            assert False
+
+
+def test_annotation_parquet_relative_path_dirname():
+    """
+    The function `test_annotation_parquet_relative_path_dirname` tests the annotation functionality
+    with parquet as relative path into a param config file.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf"
+        annotation1 = "nci60.parquet"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {
+            "annotation": {
+                "parquet": {
+                    "annotations": {annotation1: {"nci60": "nci60"}},
+                },
+                "options": {"annotations_append": False},
+            }
+        }
+
+        # Config
+        config = tests_config.copy()
+        config["folders"]["databases"]["annotations"] = [
+            os.path.dirname(tests_annotations_folder)
+        ]
+
+        # Create object
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            param=param,
+            load=True,
+        )
+
+        # Remove if output file exists
+        remove_if_exists([output_vcf])
+
+        # Annotation
+        try:
+            variants.annotation()
+            assert True
+        except:
+            assert False
+
+
+def test_annotation_parquet_relative_path_dirname_and_basenamepath():
+    """
+    The function `test_annotation_parquet_relative_path_dirname` tests the annotation functionality
+    with parquet as relative path into a param config file.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf"
+        annotation1 = "hg19/nci60.parquet"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {
+            "annotation": {
+                "parquet": {
+                    "annotations": {annotation1: {"nci60": "nci60"}},
+                },
+                "options": {"annotations_append": False},
+            }
+        }
+
+        # Config
+        config = tests_config.copy()
+        config["folders"]["databases"]["annotations"] = [
+            os.path.dirname(tests_annotations_folder)
+        ]
+
+        # Create object
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            param=param,
+            load=True,
+        )
+
+        # Remove if output file exists
+        remove_if_exists([output_vcf])
+
+        # Annotation
+        try:
+            variants.annotation()
+            assert True
+        except:
+            assert False
+
+
 def test_annotation_parquet_append():
     """
     The function `test_annotation_parquet_append` tests the annotation functionality for appending data
@@ -57,8 +254,6 @@ def test_annotation_parquet_append():
                 "options": {"annotations_append": True},
             }
         }
-        log.debug(f"param={param}")
-        log.debug(f"param_update={param_update}")
 
         # Create object
         variants = Variants(
