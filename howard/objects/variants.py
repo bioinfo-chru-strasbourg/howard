@@ -40,6 +40,7 @@ from howard.functions.commons import (
     DEFAULT_TOOLS_BIN,
     DEFAULT_TOOLS_FOLDER,
     add_value_into_dict,
+    annotation_file_find,
     barcode,
     cast_columns_query,
     check_docker_image_exists,
@@ -3905,37 +3906,10 @@ class Variants:
                                 annotation_tool = annotation_tool_initial
 
                                 # Find file
-                                annotation_file_found = None
-
-                                if os.path.exists(annotation_file):
-                                    annotation_file_found = annotation_file
-                                elif os.path.exists(full_path(annotation_file)):
-                                    annotation_file_found = full_path(annotation_file)
-                                else:
-                                    # Find within assembly folders
-                                    for annotations_database in annotations_databases:
-                                        found_files = find_all(
-                                            annotation_file,
-                                            os.path.join(
-                                                annotations_database, assembly
-                                            ),
-                                        )
-                                        if len(found_files) > 0:
-                                            annotation_file_found = found_files[0]
-                                            break
-                                    if not annotation_file_found and not assembly:
-                                        # Find within folders
-                                        for (
-                                            annotations_database
-                                        ) in annotations_databases:
-                                            found_files = find_all(
-                                                annotation_file, annotations_database
-                                            )
-                                            if len(found_files) > 0:
-                                                annotation_file_found = found_files[0]
-                                                break
-                                log.debug(
-                                    f"for {annotation_file} annotation_file_found={annotation_file_found}"
+                                annotation_file_found = annotation_file_find(
+                                    annotation_file=annotation_file,
+                                    databases_folders=list(annotations_databases),
+                                    assembly=assembly,
                                 )
 
                                 # Full path
@@ -6803,6 +6777,13 @@ class Variants:
                 log.debug(f"Annotation '{annotation_name}'")
                 log.debug(
                     f"Annotation '{annotation_name}' - fields: {annotation_fields}"
+                )
+
+                # Find file
+                annotation = annotation_file_find(
+                    annotation_file=annotation,
+                    databases_folders=list(databases_folders),
+                    assembly=assembly,
                 )
 
                 # Create Database

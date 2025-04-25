@@ -4838,3 +4838,86 @@ def cast_columns_query(query, conn):
     """
 
     return query_cast
+
+
+def annotation_file_find(
+    annotation_file: str = None,
+    databases_folders: list = [],
+    assembly: str = None,
+) -> str:
+    """
+    The function `annotation_file_find` searches for a specified annotation file in a list of
+    directories, including assembly-specific folders, and returns the full path of the found file.
+    :param annotation_file: The `annotation_file` parameter is a string that represents the name of the
+    annotation file you are looking for. This file may be located in different directories or folders
+    :type annotation_file: str
+    :param databases_folders: The `databases_folders` parameter is a list of directories or folders
+    where the function will search for the specified annotation file. These directories may contain
+    different versions or assemblies of the annotation file
+    :type databases_folders: list
+    :param assembly: The `assembly` parameter is a string that represents the specific assembly or
+    version of the annotation file you are looking for. It is used to narrow down the search to a
+    specific assembly folder within the provided list of `databases_folders`
+    :type assembly: str (optional)
+    :return: The function `annotation_file_find` returns the full path of the found annotation file as a
+    string. If the file is not found in any of the specified directories, it returns `None`.
+    If the file is found, it returns the full path to the file.
+    If the file is not found, it returns None.
+    :rtype: str or None
+    """
+
+    # Init
+    annotation_file_found = None
+
+    # Check if annotation_file exists
+    if os.path.exists(annotation_file):
+        annotation_file_found = annotation_file
+
+    # Check if full annotation_file exists
+    elif os.path.exists(full_path(annotation_file)):
+        annotation_file_found = full_path(annotation_file)
+
+    else:
+
+        # Find within assembly folders
+        if assembly is not None:
+            assembly_folders = [
+                full_path(os.path.join(database, assembly))
+                for database in databases_folders
+            ]
+            found_file = search_in_folders(annotation_file, assembly_folders)
+            if found_file:
+                return found_file
+
+        # Search in general folders
+        general_folders = [
+            full_path(os.path.join(database, os.path.dirname(annotation_file)))
+            for database in databases_folders
+        ]
+        return search_in_folders(os.path.basename(annotation_file), general_folders)
+
+    return annotation_file_found
+
+
+def search_in_folders(file_name: str, search_folders: list) -> str:
+    """
+    The function `search_in_folders` searches for a specified file in a list of directories and returns
+    the full path of the first found file.
+    :param file_name: The `file_name` parameter is a string that represents the name of the file you are
+    looking for. This file may be located in different directories or folders
+    :type file_name: str
+    :param search_folders: The `search_folders` parameter is a list of directories or folders where the
+    function will search for the specified file. These directories may contain different versions or
+    assemblies of the file
+    :type search_folders: list
+    :return: The function `search_in_folders` returns the full path of the first found file as a string.
+    If the file is not found in any of the specified directories, it returns `None`.
+    :rtype: str or None
+    """
+
+    for folder in search_folders:
+        found_files = find_all(file_name, full_path(folder))
+        if found_files:
+            return found_files[0]
+
+    return None
