@@ -38,6 +38,7 @@ and transcripts mapping. New useful tools and plugins.
 - Improve stats generation (speedup, annotations stats, custom queries)
 - Improve genomes download with URL or local file as original FASTA
 - Improve dbNSFP download with URL or local file
+- Improve export in Parquet format by keeping column types
 
 ### Fixes
 

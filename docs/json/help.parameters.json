@@ -930,7 +930,20 @@
     },
     "order_by": {},
     "include_header": {},
-    "parquet_partitions": {}
+    "parquet_partitions": {},
+    "force_cast_as_flat": {
+      "__help": [
+        "Force cast as flat values (varchar, integer, boolean) for Parquet export. By default, Parquet export preserves all columns type, even as list/nested.",
+        "If 'true', values as list will be aggregated within a varchar value, with separator ','."
+      ],
+      "__type": "bool",
+      "__default": false,
+      "__code_type": "json",
+      "__examples_code": [
+        "# Force cast as flat values for Parquet export:",
+        "\"force_cast_as_flat\": true"
+      ]
+    }
   },
   "explode": {
     "__help": ["Explode options for INFO/tags annotations within VCF files."],

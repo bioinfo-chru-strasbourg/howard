@@ -107,6 +107,8 @@ title: HOWARD Help Parameters
     include_header](#include_header)
   - [<span class="toc-section-number">8.4</span>
     parquet_partitions](#parquet_partitions)
+  - [<span class="toc-section-number">8.5</span>
+    force_cast_as_flat](#force_cast_as_flat)
 - [<span class="toc-section-number">9</span> explode](#explode)
   - [<span class="toc-section-number">9.1</span>
     explode_infos](#explode_infos)
@@ -1868,6 +1870,29 @@ for NO partition but split parquet files into a folder. Examples:
 Type: `str`
 
 Default: `None`
+
+## force_cast_as_flat
+
+Force cast as flat values (varchar, integer, boolean) for Parquet
+export. By default, Parquet export preserves all columns type, even as
+list/nested.
+
+If 'true', values as list will be aggregated within a varchar value,
+with separator ','.
+
+Type: `bool`
+
+Default: `False`
+
+Examples:
+
+> Force cast as flat values for Parquet export:
+
+> ``` json
+> {
+>    "force_cast_as_flat": true
+> }
+> ```
 
 # explode
 

@@ -2140,6 +2140,7 @@ class Database:
         compresslevel: int = 6,
         export_header: bool = True,
         sample_list: list = None,
+        force_cast_as_flat: bool = False,
     ) -> bool:
         """
         The `export` function exports data from a database to a specified output format, compresses it
@@ -2227,6 +2228,12 @@ class Database:
         this parameter will be included in the output file. If not provided, the function will determine
         the samples to include based on the data
         :type sample_list: list
+        :param force_cast_as_flat: Only for Parquet format. The `force_cast_as_flat` parameter is a boolean
+        flag that indicates whether to force the export of the data as a flat file format, even if the data
+        is in a nested format. If `force_cast_as_flat` is set to `True`, the data will be exported as a
+        flat file, regardless of its original format. If set to `False`, the data will be exported in its
+        original format. By default, it is set to `False`, defaults to False
+        :type force_cast_as_flat: bool (optional)
         :return: The `export` function returns a boolean value indicating whether the export was
         successful or not.
         """
@@ -2560,7 +2567,8 @@ class Database:
                     """
 
                 # Cast query column to be able to export into a flat file
-                query = cast_columns_query(query=query, conn=self.conn)
+                if output_type not in ["parquet"] or force_cast_as_flat:
+                    query = cast_columns_query(query=query, conn=self.conn)
 
                 # Test empty query
                 df = self.conn.execute(query).fetch_record_batch(1)

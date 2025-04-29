@@ -1529,6 +1529,86 @@ def test_load_connexion_format_sqlite():
 ###
 
 
+def test_export_output_with_type():
+    """
+    This function tests the export of a VCF file in gzipped format with the pyVCF library.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # OUTPUT as TSV
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_vcf = f"{tmp_dir}/example.tsv"
+
+        # remove if exists
+        remove_if_exists([output_vcf])
+
+        # Create object
+        variants = Variants(input=input_vcf, output=output_vcf, load=True)
+
+        # Check get_output
+        variants.export_output(
+            query="SELECT *, ['test1', 'test2'] AS SIFT FROM variants"
+        )
+        assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
+
+        # Load and query output
+        variants = Variants(input=output_vcf, load=True)
+        result = variants.get_query_to_df("SELECT * FROM variants")
+        log.debug(result)
+        assert result["SIFT"][0] == "test1,test2"
+
+        # OUTPUT as Parquet
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_vcf = f"{tmp_dir}/example.parquet"
+
+        # remove if exists
+        remove_if_exists([output_vcf])
+
+        # Create object
+        variants = Variants(input=input_vcf, output=output_vcf, load=True)
+
+        # Check get_output
+        variants.export_output(
+            query="SELECT *, ['test1', 'test2'] AS SIFT FROM variants"
+        )
+        assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
+
+        # Load and query output
+        variants = Variants(input=output_vcf, load=True)
+        result = variants.get_query_to_df("SELECT * FROM variants")
+        assert result["SIFT"][0][0] == "test1"
+        assert result["SIFT"][0][1] == "test2"
+
+        # OUTPUT as Parquet as flat
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_vcf = f"{tmp_dir}/example.parquet"
+
+        # remove if exists
+        remove_if_exists([output_vcf])
+
+        # Create object
+        variants = Variants(input=input_vcf, output=output_vcf, load=True)
+
+        # Check get_output
+        variants.export_output(
+            query="SELECT *, ['test1', 'test2'] AS SIFT FROM variants",
+            force_cast_as_flat=True,
+        )
+        assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
+
+        # Load and query output
+        variants = Variants(input=output_vcf, load=True)
+        result = variants.get_query_to_df("SELECT * FROM variants")
+        assert result["SIFT"][0] == "test1,test2"
+
+
 def test_export_output_vcf_gz():
     """
     This function tests the export of a VCF file in gzipped format with the pyVCF library.

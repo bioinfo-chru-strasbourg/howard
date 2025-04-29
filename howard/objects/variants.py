@@ -2831,6 +2831,7 @@ class Variants:
         index: bool = False,
         order_by: str | None = None,
         fields_to_rename: dict | None = None,
+        force_cast_as_flat: bool = False,
     ) -> bool:
         """
         The `export_output` function exports data from a VCF file to various formats, including VCF,
@@ -2900,6 +2901,13 @@ class Variants:
         customize the output field names before exporting the data. Each key-value pair in the
         dictionary represents the original field name as the key and the new field name
         :type fields_to_rename: dict | None
+        :param force_cast_as_flat: Only for Parquet format. The `force_cast_as_flat` parameter is a boolean
+        flag that determines whether to force the export of nested or complex data structures as flat
+        structures. If `force_cast_as_flat` is set to `True`, the function will flatten any nested
+        structures in the data before exporting it. If `force_cast_as_flat` is set to `False`, the
+        function will preserve the original structure of the data during export. By default, it is set
+        to False
+        :type force_cast_as_flat: bool (optional)
         :return: The `export_output` function returns a boolean value. It checks if the output file
         exists and returns True if it does, or None if it doesn't.
         """
@@ -2932,6 +2940,11 @@ class Variants:
         if not fields_to_rename:
             fields_to_rename = param.get("export", {}).get("fields_to_rename", None)
         self.rename_info_fields(fields_to_rename=fields_to_rename)
+
+        # Force cast as flat
+        force_cast_as_flat = param.get("export", {}).get(
+            "force_cast_as_flat", force_cast_as_flat
+        )
 
         # Auto header name with extension
         if export_header or output_header:
@@ -3039,6 +3052,7 @@ class Variants:
             query=query,
             export_header=export_header,
             sample_list=sample_list,
+            force_cast_as_flat=force_cast_as_flat,
         )
 
         # Remove
