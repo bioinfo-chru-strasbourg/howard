@@ -4800,7 +4800,7 @@ def convert_markdown_to_pdf(input_file: str, output_file: str) -> None:
     convert_html_to_pdf(temp_html_path, output_file)
 
 
-def cast_columns_query(query, conn):
+def cast_columns_query(query, conn, sep: str = ","):
     """
     Cast columns of a query to VARCHAR or aggregate arrays to strings.
 
@@ -4808,6 +4808,8 @@ def cast_columns_query(query, conn):
     :type query: str
     :param conn: The database connection.
     :type conn: duckDB connection
+    :param sep: The separator for list aggregation, defaults to ","
+    :type sep: str
     :return: The modified SQL query with casted columns.
     :rtype: str
     """
@@ -4826,7 +4828,7 @@ def cast_columns_query(query, conn):
         column_type = description_dict.get(column, {}).get("type", "VARCHAR")
         if column_type.endswith("[]"):
             list_columns.append(
-                f""" list_aggregate("{column}", 'string_agg', ',') AS '{column}' """
+                f""" list_aggregate("{column}", 'string_agg', '{sep}') AS '{column}' """
             )
         else:
             list_columns.append(f""" "{column}" """)

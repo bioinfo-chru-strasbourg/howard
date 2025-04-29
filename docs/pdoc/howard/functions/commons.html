@@ -465,6 +465,12 @@
             <li>
                     <a class="function" href="#cast_columns_query">cast_columns_query</a>
             </li>
+            <li>
+                    <a class="function" href="#annotation_file_find">annotation_file_find</a>
+            </li>
+            <li>
+                    <a class="function" href="#search_in_folders">search_in_folders</a>
+            </li>
     </ul>
 
 
@@ -5288,7 +5294,7 @@
 </span><span id="L-4800"><a href="#L-4800"><span class="linenos">4800</span></a>    <span class="n">convert_html_to_pdf</span><span class="p">(</span><span class="n">temp_html_path</span><span class="p">,</span> <span class="n">output_file</span><span class="p">)</span>
 </span><span id="L-4801"><a href="#L-4801"><span class="linenos">4801</span></a>
 </span><span id="L-4802"><a href="#L-4802"><span class="linenos">4802</span></a>
-</span><span id="L-4803"><a href="#L-4803"><span class="linenos">4803</span></a><span class="k">def</span><span class="w"> </span><span class="nf">cast_columns_query</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">conn</span><span class="p">):</span>
+</span><span id="L-4803"><a href="#L-4803"><span class="linenos">4803</span></a><span class="k">def</span><span class="w"> </span><span class="nf">cast_columns_query</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">conn</span><span class="p">,</span> <span class="n">sep</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="p">):</span>
 </span><span id="L-4804"><a href="#L-4804"><span class="linenos">4804</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="L-4805"><a href="#L-4805"><span class="linenos">4805</span></a><span class="sd">    Cast columns of a query to VARCHAR or aggregate arrays to strings.</span>
 </span><span id="L-4806"><a href="#L-4806"><span class="linenos">4806</span></a>
@@ -5296,36 +5302,121 @@
 </span><span id="L-4808"><a href="#L-4808"><span class="linenos">4808</span></a><span class="sd">    :type query: str</span>
 </span><span id="L-4809"><a href="#L-4809"><span class="linenos">4809</span></a><span class="sd">    :param conn: The database connection.</span>
 </span><span id="L-4810"><a href="#L-4810"><span class="linenos">4810</span></a><span class="sd">    :type conn: duckDB connection</span>
-</span><span id="L-4811"><a href="#L-4811"><span class="linenos">4811</span></a><span class="sd">    :return: The modified SQL query with casted columns.</span>
-</span><span id="L-4812"><a href="#L-4812"><span class="linenos">4812</span></a><span class="sd">    :rtype: str</span>
-</span><span id="L-4813"><a href="#L-4813"><span class="linenos">4813</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="L-4814"><a href="#L-4814"><span class="linenos">4814</span></a>
-</span><span id="L-4815"><a href="#L-4815"><span class="linenos">4815</span></a>    <span class="c1"># Find structure, with DESCRIBE with query, of query with columns and type like VARCHAR or VARCHAR[], or FLOAT or FLOAT[]</span>
-</span><span id="L-4816"><a href="#L-4816"><span class="linenos">4816</span></a>    <span class="c1"># and create a dictionary with column name and type</span>
-</span><span id="L-4817"><a href="#L-4817"><span class="linenos">4817</span></a>    <span class="n">query_sql_structure</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
-</span><span id="L-4818"><a href="#L-4818"><span class="linenos">4818</span></a><span class="s2">        DESCRIBE (</span><span class="si">{</span><span class="n">query</span><span class="si">}</span><span class="s2">)</span>
-</span><span id="L-4819"><a href="#L-4819"><span class="linenos">4819</span></a><span class="s2">    &quot;&quot;&quot;</span>
-</span><span id="L-4820"><a href="#L-4820"><span class="linenos">4820</span></a>    <span class="n">result_describe</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query_sql_structure</span><span class="p">)</span>
-</span><span id="L-4821"><a href="#L-4821"><span class="linenos">4821</span></a>    <span class="n">description_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">]}</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">result_describe</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()}</span>
-</span><span id="L-4822"><a href="#L-4822"><span class="linenos">4822</span></a>
-</span><span id="L-4823"><a href="#L-4823"><span class="linenos">4823</span></a>    <span class="c1"># Add a select to aggregate list to string if needed</span>
-</span><span id="L-4824"><a href="#L-4824"><span class="linenos">4824</span></a>    <span class="n">list_columns</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="L-4825"><a href="#L-4825"><span class="linenos">4825</span></a>    <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">description_dict</span><span class="p">:</span>
-</span><span id="L-4826"><a href="#L-4826"><span class="linenos">4826</span></a>        <span class="n">column_type</span> <span class="o">=</span> <span class="n">description_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;VARCHAR&quot;</span><span class="p">)</span>
-</span><span id="L-4827"><a href="#L-4827"><span class="linenos">4827</span></a>        <span class="k">if</span> <span class="n">column_type</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;[]&quot;</span><span class="p">):</span>
-</span><span id="L-4828"><a href="#L-4828"><span class="linenos">4828</span></a>            <span class="n">list_columns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-</span><span id="L-4829"><a href="#L-4829"><span class="linenos">4829</span></a>                <span class="sa">f</span><span class="s2">&quot;&quot;&quot; list_aggregate(&quot;</span><span class="si">{</span><span class="n">column</span><span class="si">}</span><span class="s2">&quot;, &#39;string_agg&#39;, &#39;,&#39;) AS &#39;</span><span class="si">{</span><span class="n">column</span><span class="si">}</span><span class="s2">&#39; &quot;&quot;&quot;</span>
-</span><span id="L-4830"><a href="#L-4830"><span class="linenos">4830</span></a>            <span class="p">)</span>
-</span><span id="L-4831"><a href="#L-4831"><span class="linenos">4831</span></a>        <span class="k">else</span><span class="p">:</span>
-</span><span id="L-4832"><a href="#L-4832"><span class="linenos">4832</span></a>            <span class="n">list_columns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot; &quot;</span><span class="si">{</span><span class="n">column</span><span class="si">}</span><span class="s2">&quot; &quot;&quot;&quot;</span><span class="p">)</span>
-</span><span id="L-4833"><a href="#L-4833"><span class="linenos">4833</span></a>
-</span><span id="L-4834"><a href="#L-4834"><span class="linenos">4834</span></a>    <span class="c1"># RE-Query</span>
-</span><span id="L-4835"><a href="#L-4835"><span class="linenos">4835</span></a>    <span class="n">query_cast</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
-</span><span id="L-4836"><a href="#L-4836"><span class="linenos">4836</span></a><span class="s2">        SELECT </span><span class="si">{</span><span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">list_columns</span><span class="p">)</span><span class="si">}</span>
-</span><span id="L-4837"><a href="#L-4837"><span class="linenos">4837</span></a><span class="s2">        FROM (</span><span class="si">{</span><span class="n">query</span><span class="si">}</span><span class="s2">)</span>
-</span><span id="L-4838"><a href="#L-4838"><span class="linenos">4838</span></a><span class="s2">    &quot;&quot;&quot;</span>
-</span><span id="L-4839"><a href="#L-4839"><span class="linenos">4839</span></a>
-</span><span id="L-4840"><a href="#L-4840"><span class="linenos">4840</span></a>    <span class="k">return</span> <span class="n">query_cast</span>
+</span><span id="L-4811"><a href="#L-4811"><span class="linenos">4811</span></a><span class="sd">    :param sep: The separator for list aggregation, defaults to &quot;,&quot;</span>
+</span><span id="L-4812"><a href="#L-4812"><span class="linenos">4812</span></a><span class="sd">    :type sep: str</span>
+</span><span id="L-4813"><a href="#L-4813"><span class="linenos">4813</span></a><span class="sd">    :return: The modified SQL query with casted columns.</span>
+</span><span id="L-4814"><a href="#L-4814"><span class="linenos">4814</span></a><span class="sd">    :rtype: str</span>
+</span><span id="L-4815"><a href="#L-4815"><span class="linenos">4815</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-4816"><a href="#L-4816"><span class="linenos">4816</span></a>
+</span><span id="L-4817"><a href="#L-4817"><span class="linenos">4817</span></a>    <span class="c1"># Find structure, with DESCRIBE with query, of query with columns and type like VARCHAR or VARCHAR[], or FLOAT or FLOAT[]</span>
+</span><span id="L-4818"><a href="#L-4818"><span class="linenos">4818</span></a>    <span class="c1"># and create a dictionary with column name and type</span>
+</span><span id="L-4819"><a href="#L-4819"><span class="linenos">4819</span></a>    <span class="n">query_sql_structure</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+</span><span id="L-4820"><a href="#L-4820"><span class="linenos">4820</span></a><span class="s2">        DESCRIBE (</span><span class="si">{</span><span class="n">query</span><span class="si">}</span><span class="s2">)</span>
+</span><span id="L-4821"><a href="#L-4821"><span class="linenos">4821</span></a><span class="s2">    &quot;&quot;&quot;</span>
+</span><span id="L-4822"><a href="#L-4822"><span class="linenos">4822</span></a>    <span class="n">result_describe</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query_sql_structure</span><span class="p">)</span>
+</span><span id="L-4823"><a href="#L-4823"><span class="linenos">4823</span></a>    <span class="n">description_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">]}</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">result_describe</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()}</span>
+</span><span id="L-4824"><a href="#L-4824"><span class="linenos">4824</span></a>
+</span><span id="L-4825"><a href="#L-4825"><span class="linenos">4825</span></a>    <span class="c1"># Add a select to aggregate list to string if needed</span>
+</span><span id="L-4826"><a href="#L-4826"><span class="linenos">4826</span></a>    <span class="n">list_columns</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="L-4827"><a href="#L-4827"><span class="linenos">4827</span></a>    <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">description_dict</span><span class="p">:</span>
+</span><span id="L-4828"><a href="#L-4828"><span class="linenos">4828</span></a>        <span class="n">column_type</span> <span class="o">=</span> <span class="n">description_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;VARCHAR&quot;</span><span class="p">)</span>
+</span><span id="L-4829"><a href="#L-4829"><span class="linenos">4829</span></a>        <span class="k">if</span> <span class="n">column_type</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;[]&quot;</span><span class="p">):</span>
+</span><span id="L-4830"><a href="#L-4830"><span class="linenos">4830</span></a>            <span class="n">list_columns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+</span><span id="L-4831"><a href="#L-4831"><span class="linenos">4831</span></a>                <span class="sa">f</span><span class="s2">&quot;&quot;&quot; list_aggregate(&quot;</span><span class="si">{</span><span class="n">column</span><span class="si">}</span><span class="s2">&quot;, &#39;string_agg&#39;, &#39;</span><span class="si">{</span><span class="n">sep</span><span class="si">}</span><span class="s2">&#39;) AS &#39;</span><span class="si">{</span><span class="n">column</span><span class="si">}</span><span class="s2">&#39; &quot;&quot;&quot;</span>
+</span><span id="L-4832"><a href="#L-4832"><span class="linenos">4832</span></a>            <span class="p">)</span>
+</span><span id="L-4833"><a href="#L-4833"><span class="linenos">4833</span></a>        <span class="k">else</span><span class="p">:</span>
+</span><span id="L-4834"><a href="#L-4834"><span class="linenos">4834</span></a>            <span class="n">list_columns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot; &quot;</span><span class="si">{</span><span class="n">column</span><span class="si">}</span><span class="s2">&quot; &quot;&quot;&quot;</span><span class="p">)</span>
+</span><span id="L-4835"><a href="#L-4835"><span class="linenos">4835</span></a>
+</span><span id="L-4836"><a href="#L-4836"><span class="linenos">4836</span></a>    <span class="c1"># RE-Query</span>
+</span><span id="L-4837"><a href="#L-4837"><span class="linenos">4837</span></a>    <span class="n">query_cast</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+</span><span id="L-4838"><a href="#L-4838"><span class="linenos">4838</span></a><span class="s2">        SELECT </span><span class="si">{</span><span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">list_columns</span><span class="p">)</span><span class="si">}</span>
+</span><span id="L-4839"><a href="#L-4839"><span class="linenos">4839</span></a><span class="s2">        FROM (</span><span class="si">{</span><span class="n">query</span><span class="si">}</span><span class="s2">)</span>
+</span><span id="L-4840"><a href="#L-4840"><span class="linenos">4840</span></a><span class="s2">    &quot;&quot;&quot;</span>
+</span><span id="L-4841"><a href="#L-4841"><span class="linenos">4841</span></a>
+</span><span id="L-4842"><a href="#L-4842"><span class="linenos">4842</span></a>    <span class="k">return</span> <span class="n">query_cast</span>
+</span><span id="L-4843"><a href="#L-4843"><span class="linenos">4843</span></a>
+</span><span id="L-4844"><a href="#L-4844"><span class="linenos">4844</span></a>
+</span><span id="L-4845"><a href="#L-4845"><span class="linenos">4845</span></a><span class="k">def</span><span class="w"> </span><span class="nf">annotation_file_find</span><span class="p">(</span>
+</span><span id="L-4846"><a href="#L-4846"><span class="linenos">4846</span></a>    <span class="n">annotation_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="L-4847"><a href="#L-4847"><span class="linenos">4847</span></a>    <span class="n">databases_folders</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[],</span>
+</span><span id="L-4848"><a href="#L-4848"><span class="linenos">4848</span></a>    <span class="n">assembly</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="L-4849"><a href="#L-4849"><span class="linenos">4849</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="L-4850"><a href="#L-4850"><span class="linenos">4850</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-4851"><a href="#L-4851"><span class="linenos">4851</span></a><span class="sd">    The function `annotation_file_find` searches for a specified annotation file in a list of</span>
+</span><span id="L-4852"><a href="#L-4852"><span class="linenos">4852</span></a><span class="sd">    directories, including assembly-specific folders, and returns the full path of the found file.</span>
+</span><span id="L-4853"><a href="#L-4853"><span class="linenos">4853</span></a><span class="sd">    :param annotation_file: The `annotation_file` parameter is a string that represents the name of the</span>
+</span><span id="L-4854"><a href="#L-4854"><span class="linenos">4854</span></a><span class="sd">    annotation file you are looking for. This file may be located in different directories or folders</span>
+</span><span id="L-4855"><a href="#L-4855"><span class="linenos">4855</span></a><span class="sd">    :type annotation_file: str</span>
+</span><span id="L-4856"><a href="#L-4856"><span class="linenos">4856</span></a><span class="sd">    :param databases_folders: The `databases_folders` parameter is a list of directories or folders</span>
+</span><span id="L-4857"><a href="#L-4857"><span class="linenos">4857</span></a><span class="sd">    where the function will search for the specified annotation file. These directories may contain</span>
+</span><span id="L-4858"><a href="#L-4858"><span class="linenos">4858</span></a><span class="sd">    different versions or assemblies of the annotation file</span>
+</span><span id="L-4859"><a href="#L-4859"><span class="linenos">4859</span></a><span class="sd">    :type databases_folders: list</span>
+</span><span id="L-4860"><a href="#L-4860"><span class="linenos">4860</span></a><span class="sd">    :param assembly: The `assembly` parameter is a string that represents the specific assembly or</span>
+</span><span id="L-4861"><a href="#L-4861"><span class="linenos">4861</span></a><span class="sd">    version of the annotation file you are looking for. It is used to narrow down the search to a</span>
+</span><span id="L-4862"><a href="#L-4862"><span class="linenos">4862</span></a><span class="sd">    specific assembly folder within the provided list of `databases_folders`</span>
+</span><span id="L-4863"><a href="#L-4863"><span class="linenos">4863</span></a><span class="sd">    :type assembly: str (optional)</span>
+</span><span id="L-4864"><a href="#L-4864"><span class="linenos">4864</span></a><span class="sd">    :return: The function `annotation_file_find` returns the full path of the found annotation file as a</span>
+</span><span id="L-4865"><a href="#L-4865"><span class="linenos">4865</span></a><span class="sd">    string. If the file is not found in any of the specified directories, it returns `None`.</span>
+</span><span id="L-4866"><a href="#L-4866"><span class="linenos">4866</span></a><span class="sd">    If the file is found, it returns the full path to the file.</span>
+</span><span id="L-4867"><a href="#L-4867"><span class="linenos">4867</span></a><span class="sd">    If the file is not found, it returns None.</span>
+</span><span id="L-4868"><a href="#L-4868"><span class="linenos">4868</span></a><span class="sd">    :rtype: str or None</span>
+</span><span id="L-4869"><a href="#L-4869"><span class="linenos">4869</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-4870"><a href="#L-4870"><span class="linenos">4870</span></a>
+</span><span id="L-4871"><a href="#L-4871"><span class="linenos">4871</span></a>    <span class="c1"># Init</span>
+</span><span id="L-4872"><a href="#L-4872"><span class="linenos">4872</span></a>    <span class="n">annotation_file_found</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="L-4873"><a href="#L-4873"><span class="linenos">4873</span></a>
+</span><span id="L-4874"><a href="#L-4874"><span class="linenos">4874</span></a>    <span class="c1"># Check if annotation_file exists</span>
+</span><span id="L-4875"><a href="#L-4875"><span class="linenos">4875</span></a>    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">annotation_file</span><span class="p">):</span>
+</span><span id="L-4876"><a href="#L-4876"><span class="linenos">4876</span></a>        <span class="n">annotation_file_found</span> <span class="o">=</span> <span class="n">annotation_file</span>
+</span><span id="L-4877"><a href="#L-4877"><span class="linenos">4877</span></a>
+</span><span id="L-4878"><a href="#L-4878"><span class="linenos">4878</span></a>    <span class="c1"># Check if full annotation_file exists</span>
+</span><span id="L-4879"><a href="#L-4879"><span class="linenos">4879</span></a>    <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">full_path</span><span class="p">(</span><span class="n">annotation_file</span><span class="p">)):</span>
+</span><span id="L-4880"><a href="#L-4880"><span class="linenos">4880</span></a>        <span class="n">annotation_file_found</span> <span class="o">=</span> <span class="n">full_path</span><span class="p">(</span><span class="n">annotation_file</span><span class="p">)</span>
+</span><span id="L-4881"><a href="#L-4881"><span class="linenos">4881</span></a>
+</span><span id="L-4882"><a href="#L-4882"><span class="linenos">4882</span></a>    <span class="k">else</span><span class="p">:</span>
+</span><span id="L-4883"><a href="#L-4883"><span class="linenos">4883</span></a>
+</span><span id="L-4884"><a href="#L-4884"><span class="linenos">4884</span></a>        <span class="c1"># Find within assembly folders</span>
+</span><span id="L-4885"><a href="#L-4885"><span class="linenos">4885</span></a>        <span class="k">if</span> <span class="n">assembly</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="L-4886"><a href="#L-4886"><span class="linenos">4886</span></a>            <span class="n">assembly_folders</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="L-4887"><a href="#L-4887"><span class="linenos">4887</span></a>                <span class="n">full_path</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">database</span><span class="p">,</span> <span class="n">assembly</span><span class="p">))</span>
+</span><span id="L-4888"><a href="#L-4888"><span class="linenos">4888</span></a>                <span class="k">for</span> <span class="n">database</span> <span class="ow">in</span> <span class="n">databases_folders</span>
+</span><span id="L-4889"><a href="#L-4889"><span class="linenos">4889</span></a>            <span class="p">]</span>
+</span><span id="L-4890"><a href="#L-4890"><span class="linenos">4890</span></a>            <span class="n">found_file</span> <span class="o">=</span> <span class="n">search_in_folders</span><span class="p">(</span><span class="n">annotation_file</span><span class="p">,</span> <span class="n">assembly_folders</span><span class="p">)</span>
+</span><span id="L-4891"><a href="#L-4891"><span class="linenos">4891</span></a>            <span class="k">if</span> <span class="n">found_file</span><span class="p">:</span>
+</span><span id="L-4892"><a href="#L-4892"><span class="linenos">4892</span></a>                <span class="k">return</span> <span class="n">found_file</span>
+</span><span id="L-4893"><a href="#L-4893"><span class="linenos">4893</span></a>
+</span><span id="L-4894"><a href="#L-4894"><span class="linenos">4894</span></a>        <span class="c1"># Search in general folders</span>
+</span><span id="L-4895"><a href="#L-4895"><span class="linenos">4895</span></a>        <span class="n">general_folders</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="L-4896"><a href="#L-4896"><span class="linenos">4896</span></a>            <span class="n">full_path</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">database</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">annotation_file</span><span class="p">)))</span>
+</span><span id="L-4897"><a href="#L-4897"><span class="linenos">4897</span></a>            <span class="k">for</span> <span class="n">database</span> <span class="ow">in</span> <span class="n">databases_folders</span>
+</span><span id="L-4898"><a href="#L-4898"><span class="linenos">4898</span></a>        <span class="p">]</span>
+</span><span id="L-4899"><a href="#L-4899"><span class="linenos">4899</span></a>        <span class="k">return</span> <span class="n">search_in_folders</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">annotation_file</span><span class="p">),</span> <span class="n">general_folders</span><span class="p">)</span>
+</span><span id="L-4900"><a href="#L-4900"><span class="linenos">4900</span></a>
+</span><span id="L-4901"><a href="#L-4901"><span class="linenos">4901</span></a>    <span class="k">return</span> <span class="n">annotation_file_found</span>
+</span><span id="L-4902"><a href="#L-4902"><span class="linenos">4902</span></a>
+</span><span id="L-4903"><a href="#L-4903"><span class="linenos">4903</span></a>
+</span><span id="L-4904"><a href="#L-4904"><span class="linenos">4904</span></a><span class="k">def</span><span class="w"> </span><span class="nf">search_in_folders</span><span class="p">(</span><span class="n">file_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">search_folders</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="L-4905"><a href="#L-4905"><span class="linenos">4905</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-4906"><a href="#L-4906"><span class="linenos">4906</span></a><span class="sd">    The function `search_in_folders` searches for a specified file in a list of directories and returns</span>
+</span><span id="L-4907"><a href="#L-4907"><span class="linenos">4907</span></a><span class="sd">    the full path of the first found file.</span>
+</span><span id="L-4908"><a href="#L-4908"><span class="linenos">4908</span></a><span class="sd">    :param file_name: The `file_name` parameter is a string that represents the name of the file you are</span>
+</span><span id="L-4909"><a href="#L-4909"><span class="linenos">4909</span></a><span class="sd">    looking for. This file may be located in different directories or folders</span>
+</span><span id="L-4910"><a href="#L-4910"><span class="linenos">4910</span></a><span class="sd">    :type file_name: str</span>
+</span><span id="L-4911"><a href="#L-4911"><span class="linenos">4911</span></a><span class="sd">    :param search_folders: The `search_folders` parameter is a list of directories or folders where the</span>
+</span><span id="L-4912"><a href="#L-4912"><span class="linenos">4912</span></a><span class="sd">    function will search for the specified file. These directories may contain different versions or</span>
+</span><span id="L-4913"><a href="#L-4913"><span class="linenos">4913</span></a><span class="sd">    assemblies of the file</span>
+</span><span id="L-4914"><a href="#L-4914"><span class="linenos">4914</span></a><span class="sd">    :type search_folders: list</span>
+</span><span id="L-4915"><a href="#L-4915"><span class="linenos">4915</span></a><span class="sd">    :return: The function `search_in_folders` returns the full path of the first found file as a string.</span>
+</span><span id="L-4916"><a href="#L-4916"><span class="linenos">4916</span></a><span class="sd">    If the file is not found in any of the specified directories, it returns `None`.</span>
+</span><span id="L-4917"><a href="#L-4917"><span class="linenos">4917</span></a><span class="sd">    :rtype: str or None</span>
+</span><span id="L-4918"><a href="#L-4918"><span class="linenos">4918</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-4919"><a href="#L-4919"><span class="linenos">4919</span></a>
+</span><span id="L-4920"><a href="#L-4920"><span class="linenos">4920</span></a>    <span class="k">for</span> <span class="n">folder</span> <span class="ow">in</span> <span class="n">search_folders</span><span class="p">:</span>
+</span><span id="L-4921"><a href="#L-4921"><span class="linenos">4921</span></a>        <span class="n">found_files</span> <span class="o">=</span> <span class="n">find_all</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="n">full_path</span><span class="p">(</span><span class="n">folder</span><span class="p">))</span>
+</span><span id="L-4922"><a href="#L-4922"><span class="linenos">4922</span></a>        <span class="k">if</span> <span class="n">found_files</span><span class="p">:</span>
+</span><span id="L-4923"><a href="#L-4923"><span class="linenos">4923</span></a>            <span class="k">return</span> <span class="n">found_files</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="L-4924"><a href="#L-4924"><span class="linenos">4924</span></a>
+</span><span id="L-4925"><a href="#L-4925"><span class="linenos">4925</span></a>    <span class="k">return</span> <span class="kc">None</span>
 </span></pre></div>
 
 
@@ -13538,13 +13629,13 @@ modifies the contigs in place.</p>
 <div class="attr function">
             
         <span class="def">def</span>
-        <span class="name">cast_columns_query</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">query</span>, </span><span class="param"><span class="n">conn</span></span><span class="return-annotation">):</span></span>
+        <span class="name">cast_columns_query</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">query</span>, </span><span class="param"><span class="n">conn</span>, </span><span class="param"><span class="n">sep</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;,&#39;</span></span><span class="return-annotation">):</span></span>
 
                 <label class="view-source-button" for="cast_columns_query-view-source"><span>View Source</span></label>
 
     </div>
     <a class="headerlink" href="#cast_columns_query"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="cast_columns_query-4804"><a href="#cast_columns_query-4804"><span class="linenos">4804</span></a><span class="k">def</span><span class="w"> </span><span class="nf">cast_columns_query</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">conn</span><span class="p">):</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="cast_columns_query-4804"><a href="#cast_columns_query-4804"><span class="linenos">4804</span></a><span class="k">def</span><span class="w"> </span><span class="nf">cast_columns_query</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">conn</span><span class="p">,</span> <span class="n">sep</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="p">):</span>
 </span><span id="cast_columns_query-4805"><a href="#cast_columns_query-4805"><span class="linenos">4805</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="cast_columns_query-4806"><a href="#cast_columns_query-4806"><span class="linenos">4806</span></a><span class="sd">    Cast columns of a query to VARCHAR or aggregate arrays to strings.</span>
 </span><span id="cast_columns_query-4807"><a href="#cast_columns_query-4807"><span class="linenos">4807</span></a>
@@ -13552,36 +13643,38 @@ modifies the contigs in place.</p>
 </span><span id="cast_columns_query-4809"><a href="#cast_columns_query-4809"><span class="linenos">4809</span></a><span class="sd">    :type query: str</span>
 </span><span id="cast_columns_query-4810"><a href="#cast_columns_query-4810"><span class="linenos">4810</span></a><span class="sd">    :param conn: The database connection.</span>
 </span><span id="cast_columns_query-4811"><a href="#cast_columns_query-4811"><span class="linenos">4811</span></a><span class="sd">    :type conn: duckDB connection</span>
-</span><span id="cast_columns_query-4812"><a href="#cast_columns_query-4812"><span class="linenos">4812</span></a><span class="sd">    :return: The modified SQL query with casted columns.</span>
-</span><span id="cast_columns_query-4813"><a href="#cast_columns_query-4813"><span class="linenos">4813</span></a><span class="sd">    :rtype: str</span>
-</span><span id="cast_columns_query-4814"><a href="#cast_columns_query-4814"><span class="linenos">4814</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="cast_columns_query-4815"><a href="#cast_columns_query-4815"><span class="linenos">4815</span></a>
-</span><span id="cast_columns_query-4816"><a href="#cast_columns_query-4816"><span class="linenos">4816</span></a>    <span class="c1"># Find structure, with DESCRIBE with query, of query with columns and type like VARCHAR or VARCHAR[], or FLOAT or FLOAT[]</span>
-</span><span id="cast_columns_query-4817"><a href="#cast_columns_query-4817"><span class="linenos">4817</span></a>    <span class="c1"># and create a dictionary with column name and type</span>
-</span><span id="cast_columns_query-4818"><a href="#cast_columns_query-4818"><span class="linenos">4818</span></a>    <span class="n">query_sql_structure</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
-</span><span id="cast_columns_query-4819"><a href="#cast_columns_query-4819"><span class="linenos">4819</span></a><span class="s2">        DESCRIBE (</span><span class="si">{</span><span class="n">query</span><span class="si">}</span><span class="s2">)</span>
-</span><span id="cast_columns_query-4820"><a href="#cast_columns_query-4820"><span class="linenos">4820</span></a><span class="s2">    &quot;&quot;&quot;</span>
-</span><span id="cast_columns_query-4821"><a href="#cast_columns_query-4821"><span class="linenos">4821</span></a>    <span class="n">result_describe</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query_sql_structure</span><span class="p">)</span>
-</span><span id="cast_columns_query-4822"><a href="#cast_columns_query-4822"><span class="linenos">4822</span></a>    <span class="n">description_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">]}</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">result_describe</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()}</span>
-</span><span id="cast_columns_query-4823"><a href="#cast_columns_query-4823"><span class="linenos">4823</span></a>
-</span><span id="cast_columns_query-4824"><a href="#cast_columns_query-4824"><span class="linenos">4824</span></a>    <span class="c1"># Add a select to aggregate list to string if needed</span>
-</span><span id="cast_columns_query-4825"><a href="#cast_columns_query-4825"><span class="linenos">4825</span></a>    <span class="n">list_columns</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="cast_columns_query-4826"><a href="#cast_columns_query-4826"><span class="linenos">4826</span></a>    <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">description_dict</span><span class="p">:</span>
-</span><span id="cast_columns_query-4827"><a href="#cast_columns_query-4827"><span class="linenos">4827</span></a>        <span class="n">column_type</span> <span class="o">=</span> <span class="n">description_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;VARCHAR&quot;</span><span class="p">)</span>
-</span><span id="cast_columns_query-4828"><a href="#cast_columns_query-4828"><span class="linenos">4828</span></a>        <span class="k">if</span> <span class="n">column_type</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;[]&quot;</span><span class="p">):</span>
-</span><span id="cast_columns_query-4829"><a href="#cast_columns_query-4829"><span class="linenos">4829</span></a>            <span class="n">list_columns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-</span><span id="cast_columns_query-4830"><a href="#cast_columns_query-4830"><span class="linenos">4830</span></a>                <span class="sa">f</span><span class="s2">&quot;&quot;&quot; list_aggregate(&quot;</span><span class="si">{</span><span class="n">column</span><span class="si">}</span><span class="s2">&quot;, &#39;string_agg&#39;, &#39;,&#39;) AS &#39;</span><span class="si">{</span><span class="n">column</span><span class="si">}</span><span class="s2">&#39; &quot;&quot;&quot;</span>
-</span><span id="cast_columns_query-4831"><a href="#cast_columns_query-4831"><span class="linenos">4831</span></a>            <span class="p">)</span>
-</span><span id="cast_columns_query-4832"><a href="#cast_columns_query-4832"><span class="linenos">4832</span></a>        <span class="k">else</span><span class="p">:</span>
-</span><span id="cast_columns_query-4833"><a href="#cast_columns_query-4833"><span class="linenos">4833</span></a>            <span class="n">list_columns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot; &quot;</span><span class="si">{</span><span class="n">column</span><span class="si">}</span><span class="s2">&quot; &quot;&quot;&quot;</span><span class="p">)</span>
-</span><span id="cast_columns_query-4834"><a href="#cast_columns_query-4834"><span class="linenos">4834</span></a>
-</span><span id="cast_columns_query-4835"><a href="#cast_columns_query-4835"><span class="linenos">4835</span></a>    <span class="c1"># RE-Query</span>
-</span><span id="cast_columns_query-4836"><a href="#cast_columns_query-4836"><span class="linenos">4836</span></a>    <span class="n">query_cast</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
-</span><span id="cast_columns_query-4837"><a href="#cast_columns_query-4837"><span class="linenos">4837</span></a><span class="s2">        SELECT </span><span class="si">{</span><span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">list_columns</span><span class="p">)</span><span class="si">}</span>
-</span><span id="cast_columns_query-4838"><a href="#cast_columns_query-4838"><span class="linenos">4838</span></a><span class="s2">        FROM (</span><span class="si">{</span><span class="n">query</span><span class="si">}</span><span class="s2">)</span>
-</span><span id="cast_columns_query-4839"><a href="#cast_columns_query-4839"><span class="linenos">4839</span></a><span class="s2">    &quot;&quot;&quot;</span>
-</span><span id="cast_columns_query-4840"><a href="#cast_columns_query-4840"><span class="linenos">4840</span></a>
-</span><span id="cast_columns_query-4841"><a href="#cast_columns_query-4841"><span class="linenos">4841</span></a>    <span class="k">return</span> <span class="n">query_cast</span>
+</span><span id="cast_columns_query-4812"><a href="#cast_columns_query-4812"><span class="linenos">4812</span></a><span class="sd">    :param sep: The separator for list aggregation, defaults to &quot;,&quot;</span>
+</span><span id="cast_columns_query-4813"><a href="#cast_columns_query-4813"><span class="linenos">4813</span></a><span class="sd">    :type sep: str</span>
+</span><span id="cast_columns_query-4814"><a href="#cast_columns_query-4814"><span class="linenos">4814</span></a><span class="sd">    :return: The modified SQL query with casted columns.</span>
+</span><span id="cast_columns_query-4815"><a href="#cast_columns_query-4815"><span class="linenos">4815</span></a><span class="sd">    :rtype: str</span>
+</span><span id="cast_columns_query-4816"><a href="#cast_columns_query-4816"><span class="linenos">4816</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="cast_columns_query-4817"><a href="#cast_columns_query-4817"><span class="linenos">4817</span></a>
+</span><span id="cast_columns_query-4818"><a href="#cast_columns_query-4818"><span class="linenos">4818</span></a>    <span class="c1"># Find structure, with DESCRIBE with query, of query with columns and type like VARCHAR or VARCHAR[], or FLOAT or FLOAT[]</span>
+</span><span id="cast_columns_query-4819"><a href="#cast_columns_query-4819"><span class="linenos">4819</span></a>    <span class="c1"># and create a dictionary with column name and type</span>
+</span><span id="cast_columns_query-4820"><a href="#cast_columns_query-4820"><span class="linenos">4820</span></a>    <span class="n">query_sql_structure</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+</span><span id="cast_columns_query-4821"><a href="#cast_columns_query-4821"><span class="linenos">4821</span></a><span class="s2">        DESCRIBE (</span><span class="si">{</span><span class="n">query</span><span class="si">}</span><span class="s2">)</span>
+</span><span id="cast_columns_query-4822"><a href="#cast_columns_query-4822"><span class="linenos">4822</span></a><span class="s2">    &quot;&quot;&quot;</span>
+</span><span id="cast_columns_query-4823"><a href="#cast_columns_query-4823"><span class="linenos">4823</span></a>    <span class="n">result_describe</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query_sql_structure</span><span class="p">)</span>
+</span><span id="cast_columns_query-4824"><a href="#cast_columns_query-4824"><span class="linenos">4824</span></a>    <span class="n">description_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">]}</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">result_describe</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()}</span>
+</span><span id="cast_columns_query-4825"><a href="#cast_columns_query-4825"><span class="linenos">4825</span></a>
+</span><span id="cast_columns_query-4826"><a href="#cast_columns_query-4826"><span class="linenos">4826</span></a>    <span class="c1"># Add a select to aggregate list to string if needed</span>
+</span><span id="cast_columns_query-4827"><a href="#cast_columns_query-4827"><span class="linenos">4827</span></a>    <span class="n">list_columns</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="cast_columns_query-4828"><a href="#cast_columns_query-4828"><span class="linenos">4828</span></a>    <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">description_dict</span><span class="p">:</span>
+</span><span id="cast_columns_query-4829"><a href="#cast_columns_query-4829"><span class="linenos">4829</span></a>        <span class="n">column_type</span> <span class="o">=</span> <span class="n">description_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;VARCHAR&quot;</span><span class="p">)</span>
+</span><span id="cast_columns_query-4830"><a href="#cast_columns_query-4830"><span class="linenos">4830</span></a>        <span class="k">if</span> <span class="n">column_type</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;[]&quot;</span><span class="p">):</span>
+</span><span id="cast_columns_query-4831"><a href="#cast_columns_query-4831"><span class="linenos">4831</span></a>            <span class="n">list_columns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+</span><span id="cast_columns_query-4832"><a href="#cast_columns_query-4832"><span class="linenos">4832</span></a>                <span class="sa">f</span><span class="s2">&quot;&quot;&quot; list_aggregate(&quot;</span><span class="si">{</span><span class="n">column</span><span class="si">}</span><span class="s2">&quot;, &#39;string_agg&#39;, &#39;</span><span class="si">{</span><span class="n">sep</span><span class="si">}</span><span class="s2">&#39;) AS &#39;</span><span class="si">{</span><span class="n">column</span><span class="si">}</span><span class="s2">&#39; &quot;&quot;&quot;</span>
+</span><span id="cast_columns_query-4833"><a href="#cast_columns_query-4833"><span class="linenos">4833</span></a>            <span class="p">)</span>
+</span><span id="cast_columns_query-4834"><a href="#cast_columns_query-4834"><span class="linenos">4834</span></a>        <span class="k">else</span><span class="p">:</span>
+</span><span id="cast_columns_query-4835"><a href="#cast_columns_query-4835"><span class="linenos">4835</span></a>            <span class="n">list_columns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot; &quot;</span><span class="si">{</span><span class="n">column</span><span class="si">}</span><span class="s2">&quot; &quot;&quot;&quot;</span><span class="p">)</span>
+</span><span id="cast_columns_query-4836"><a href="#cast_columns_query-4836"><span class="linenos">4836</span></a>
+</span><span id="cast_columns_query-4837"><a href="#cast_columns_query-4837"><span class="linenos">4837</span></a>    <span class="c1"># RE-Query</span>
+</span><span id="cast_columns_query-4838"><a href="#cast_columns_query-4838"><span class="linenos">4838</span></a>    <span class="n">query_cast</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+</span><span id="cast_columns_query-4839"><a href="#cast_columns_query-4839"><span class="linenos">4839</span></a><span class="s2">        SELECT </span><span class="si">{</span><span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">list_columns</span><span class="p">)</span><span class="si">}</span>
+</span><span id="cast_columns_query-4840"><a href="#cast_columns_query-4840"><span class="linenos">4840</span></a><span class="s2">        FROM (</span><span class="si">{</span><span class="n">query</span><span class="si">}</span><span class="s2">)</span>
+</span><span id="cast_columns_query-4841"><a href="#cast_columns_query-4841"><span class="linenos">4841</span></a><span class="s2">    &quot;&quot;&quot;</span>
+</span><span id="cast_columns_query-4842"><a href="#cast_columns_query-4842"><span class="linenos">4842</span></a>
+</span><span id="cast_columns_query-4843"><a href="#cast_columns_query-4843"><span class="linenos">4843</span></a>    <span class="k">return</span> <span class="n">query_cast</span>
 </span></pre></div>
 
 
@@ -13592,12 +13685,171 @@ modifies the contigs in place.</p>
 <ul>
 <li><strong>query</strong>:  The original SQL query.</li>
 <li><strong>conn</strong>:  The database connection.</li>
+<li><strong>sep</strong>:  The separator for list aggregation, defaults to ","</li>
 </ul>
 
 <h6 id="returns">Returns</h6>
 
 <blockquote>
   <p>The modified SQL query with casted columns.</p>
+</blockquote>
+</div>
+
+
+                </section>
+                <section id="annotation_file_find">
+                            <input id="annotation_file_find-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">annotation_file_find</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">annotation_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">databases_folders</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[]</span>,</span><span class="param">	<span class="n">assembly</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span></span><span class="return-annotation">) -> <span class="nb">str</span>:</span></span>
+
+                <label class="view-source-button" for="annotation_file_find-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#annotation_file_find"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="annotation_file_find-4846"><a href="#annotation_file_find-4846"><span class="linenos">4846</span></a><span class="k">def</span><span class="w"> </span><span class="nf">annotation_file_find</span><span class="p">(</span>
+</span><span id="annotation_file_find-4847"><a href="#annotation_file_find-4847"><span class="linenos">4847</span></a>    <span class="n">annotation_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="annotation_file_find-4848"><a href="#annotation_file_find-4848"><span class="linenos">4848</span></a>    <span class="n">databases_folders</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[],</span>
+</span><span id="annotation_file_find-4849"><a href="#annotation_file_find-4849"><span class="linenos">4849</span></a>    <span class="n">assembly</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="annotation_file_find-4850"><a href="#annotation_file_find-4850"><span class="linenos">4850</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="annotation_file_find-4851"><a href="#annotation_file_find-4851"><span class="linenos">4851</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="annotation_file_find-4852"><a href="#annotation_file_find-4852"><span class="linenos">4852</span></a><span class="sd">    The function `annotation_file_find` searches for a specified annotation file in a list of</span>
+</span><span id="annotation_file_find-4853"><a href="#annotation_file_find-4853"><span class="linenos">4853</span></a><span class="sd">    directories, including assembly-specific folders, and returns the full path of the found file.</span>
+</span><span id="annotation_file_find-4854"><a href="#annotation_file_find-4854"><span class="linenos">4854</span></a><span class="sd">    :param annotation_file: The `annotation_file` parameter is a string that represents the name of the</span>
+</span><span id="annotation_file_find-4855"><a href="#annotation_file_find-4855"><span class="linenos">4855</span></a><span class="sd">    annotation file you are looking for. This file may be located in different directories or folders</span>
+</span><span id="annotation_file_find-4856"><a href="#annotation_file_find-4856"><span class="linenos">4856</span></a><span class="sd">    :type annotation_file: str</span>
+</span><span id="annotation_file_find-4857"><a href="#annotation_file_find-4857"><span class="linenos">4857</span></a><span class="sd">    :param databases_folders: The `databases_folders` parameter is a list of directories or folders</span>
+</span><span id="annotation_file_find-4858"><a href="#annotation_file_find-4858"><span class="linenos">4858</span></a><span class="sd">    where the function will search for the specified annotation file. These directories may contain</span>
+</span><span id="annotation_file_find-4859"><a href="#annotation_file_find-4859"><span class="linenos">4859</span></a><span class="sd">    different versions or assemblies of the annotation file</span>
+</span><span id="annotation_file_find-4860"><a href="#annotation_file_find-4860"><span class="linenos">4860</span></a><span class="sd">    :type databases_folders: list</span>
+</span><span id="annotation_file_find-4861"><a href="#annotation_file_find-4861"><span class="linenos">4861</span></a><span class="sd">    :param assembly: The `assembly` parameter is a string that represents the specific assembly or</span>
+</span><span id="annotation_file_find-4862"><a href="#annotation_file_find-4862"><span class="linenos">4862</span></a><span class="sd">    version of the annotation file you are looking for. It is used to narrow down the search to a</span>
+</span><span id="annotation_file_find-4863"><a href="#annotation_file_find-4863"><span class="linenos">4863</span></a><span class="sd">    specific assembly folder within the provided list of `databases_folders`</span>
+</span><span id="annotation_file_find-4864"><a href="#annotation_file_find-4864"><span class="linenos">4864</span></a><span class="sd">    :type assembly: str (optional)</span>
+</span><span id="annotation_file_find-4865"><a href="#annotation_file_find-4865"><span class="linenos">4865</span></a><span class="sd">    :return: The function `annotation_file_find` returns the full path of the found annotation file as a</span>
+</span><span id="annotation_file_find-4866"><a href="#annotation_file_find-4866"><span class="linenos">4866</span></a><span class="sd">    string. If the file is not found in any of the specified directories, it returns `None`.</span>
+</span><span id="annotation_file_find-4867"><a href="#annotation_file_find-4867"><span class="linenos">4867</span></a><span class="sd">    If the file is found, it returns the full path to the file.</span>
+</span><span id="annotation_file_find-4868"><a href="#annotation_file_find-4868"><span class="linenos">4868</span></a><span class="sd">    If the file is not found, it returns None.</span>
+</span><span id="annotation_file_find-4869"><a href="#annotation_file_find-4869"><span class="linenos">4869</span></a><span class="sd">    :rtype: str or None</span>
+</span><span id="annotation_file_find-4870"><a href="#annotation_file_find-4870"><span class="linenos">4870</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="annotation_file_find-4871"><a href="#annotation_file_find-4871"><span class="linenos">4871</span></a>
+</span><span id="annotation_file_find-4872"><a href="#annotation_file_find-4872"><span class="linenos">4872</span></a>    <span class="c1"># Init</span>
+</span><span id="annotation_file_find-4873"><a href="#annotation_file_find-4873"><span class="linenos">4873</span></a>    <span class="n">annotation_file_found</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="annotation_file_find-4874"><a href="#annotation_file_find-4874"><span class="linenos">4874</span></a>
+</span><span id="annotation_file_find-4875"><a href="#annotation_file_find-4875"><span class="linenos">4875</span></a>    <span class="c1"># Check if annotation_file exists</span>
+</span><span id="annotation_file_find-4876"><a href="#annotation_file_find-4876"><span class="linenos">4876</span></a>    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">annotation_file</span><span class="p">):</span>
+</span><span id="annotation_file_find-4877"><a href="#annotation_file_find-4877"><span class="linenos">4877</span></a>        <span class="n">annotation_file_found</span> <span class="o">=</span> <span class="n">annotation_file</span>
+</span><span id="annotation_file_find-4878"><a href="#annotation_file_find-4878"><span class="linenos">4878</span></a>
+</span><span id="annotation_file_find-4879"><a href="#annotation_file_find-4879"><span class="linenos">4879</span></a>    <span class="c1"># Check if full annotation_file exists</span>
+</span><span id="annotation_file_find-4880"><a href="#annotation_file_find-4880"><span class="linenos">4880</span></a>    <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">full_path</span><span class="p">(</span><span class="n">annotation_file</span><span class="p">)):</span>
+</span><span id="annotation_file_find-4881"><a href="#annotation_file_find-4881"><span class="linenos">4881</span></a>        <span class="n">annotation_file_found</span> <span class="o">=</span> <span class="n">full_path</span><span class="p">(</span><span class="n">annotation_file</span><span class="p">)</span>
+</span><span id="annotation_file_find-4882"><a href="#annotation_file_find-4882"><span class="linenos">4882</span></a>
+</span><span id="annotation_file_find-4883"><a href="#annotation_file_find-4883"><span class="linenos">4883</span></a>    <span class="k">else</span><span class="p">:</span>
+</span><span id="annotation_file_find-4884"><a href="#annotation_file_find-4884"><span class="linenos">4884</span></a>
+</span><span id="annotation_file_find-4885"><a href="#annotation_file_find-4885"><span class="linenos">4885</span></a>        <span class="c1"># Find within assembly folders</span>
+</span><span id="annotation_file_find-4886"><a href="#annotation_file_find-4886"><span class="linenos">4886</span></a>        <span class="k">if</span> <span class="n">assembly</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="annotation_file_find-4887"><a href="#annotation_file_find-4887"><span class="linenos">4887</span></a>            <span class="n">assembly_folders</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="annotation_file_find-4888"><a href="#annotation_file_find-4888"><span class="linenos">4888</span></a>                <span class="n">full_path</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">database</span><span class="p">,</span> <span class="n">assembly</span><span class="p">))</span>
+</span><span id="annotation_file_find-4889"><a href="#annotation_file_find-4889"><span class="linenos">4889</span></a>                <span class="k">for</span> <span class="n">database</span> <span class="ow">in</span> <span class="n">databases_folders</span>
+</span><span id="annotation_file_find-4890"><a href="#annotation_file_find-4890"><span class="linenos">4890</span></a>            <span class="p">]</span>
+</span><span id="annotation_file_find-4891"><a href="#annotation_file_find-4891"><span class="linenos">4891</span></a>            <span class="n">found_file</span> <span class="o">=</span> <span class="n">search_in_folders</span><span class="p">(</span><span class="n">annotation_file</span><span class="p">,</span> <span class="n">assembly_folders</span><span class="p">)</span>
+</span><span id="annotation_file_find-4892"><a href="#annotation_file_find-4892"><span class="linenos">4892</span></a>            <span class="k">if</span> <span class="n">found_file</span><span class="p">:</span>
+</span><span id="annotation_file_find-4893"><a href="#annotation_file_find-4893"><span class="linenos">4893</span></a>                <span class="k">return</span> <span class="n">found_file</span>
+</span><span id="annotation_file_find-4894"><a href="#annotation_file_find-4894"><span class="linenos">4894</span></a>
+</span><span id="annotation_file_find-4895"><a href="#annotation_file_find-4895"><span class="linenos">4895</span></a>        <span class="c1"># Search in general folders</span>
+</span><span id="annotation_file_find-4896"><a href="#annotation_file_find-4896"><span class="linenos">4896</span></a>        <span class="n">general_folders</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="annotation_file_find-4897"><a href="#annotation_file_find-4897"><span class="linenos">4897</span></a>            <span class="n">full_path</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">database</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">annotation_file</span><span class="p">)))</span>
+</span><span id="annotation_file_find-4898"><a href="#annotation_file_find-4898"><span class="linenos">4898</span></a>            <span class="k">for</span> <span class="n">database</span> <span class="ow">in</span> <span class="n">databases_folders</span>
+</span><span id="annotation_file_find-4899"><a href="#annotation_file_find-4899"><span class="linenos">4899</span></a>        <span class="p">]</span>
+</span><span id="annotation_file_find-4900"><a href="#annotation_file_find-4900"><span class="linenos">4900</span></a>        <span class="k">return</span> <span class="n">search_in_folders</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">annotation_file</span><span class="p">),</span> <span class="n">general_folders</span><span class="p">)</span>
+</span><span id="annotation_file_find-4901"><a href="#annotation_file_find-4901"><span class="linenos">4901</span></a>
+</span><span id="annotation_file_find-4902"><a href="#annotation_file_find-4902"><span class="linenos">4902</span></a>    <span class="k">return</span> <span class="n">annotation_file_found</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>The function <code><a href="#annotation_file_find">annotation_file_find</a></code> searches for a specified annotation file in a list of
+directories, including assembly-specific folders, and returns the full path of the found file.</p>
+
+<h6 id="parameters">Parameters</h6>
+
+<ul>
+<li><strong>annotation_file</strong>:  The <code>annotation_file</code> parameter is a string that represents the name of the
+annotation file you are looking for. This file may be located in different directories or folders</li>
+<li><strong>databases_folders</strong>:  The <code>databases_folders</code> parameter is a list of directories or folders
+where the function will search for the specified annotation file. These directories may contain
+different versions or assemblies of the annotation file</li>
+<li><strong>assembly</strong>:  The <code>assembly</code> parameter is a string that represents the specific assembly or
+version of the annotation file you are looking for. It is used to narrow down the search to a
+specific assembly folder within the provided list of <code>databases_folders</code></li>
+</ul>
+
+<h6 id="returns">Returns</h6>
+
+<blockquote>
+  <p>The function <code><a href="#annotation_file_find">annotation_file_find</a></code> returns the full path of the found annotation file as a
+  string. If the file is not found in any of the specified directories, it returns <code>None</code>.
+  If the file is found, it returns the full path to the file.
+  If the file is not found, it returns None.</p>
+</blockquote>
+</div>
+
+
+                </section>
+                <section id="search_in_folders">
+                            <input id="search_in_folders-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">search_in_folders</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">file_name</span><span class="p">:</span> <span class="nb">str</span>, </span><span class="param"><span class="n">search_folders</span><span class="p">:</span> <span class="nb">list</span></span><span class="return-annotation">) -> <span class="nb">str</span>:</span></span>
+
+                <label class="view-source-button" for="search_in_folders-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#search_in_folders"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="search_in_folders-4905"><a href="#search_in_folders-4905"><span class="linenos">4905</span></a><span class="k">def</span><span class="w"> </span><span class="nf">search_in_folders</span><span class="p">(</span><span class="n">file_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">search_folders</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="search_in_folders-4906"><a href="#search_in_folders-4906"><span class="linenos">4906</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="search_in_folders-4907"><a href="#search_in_folders-4907"><span class="linenos">4907</span></a><span class="sd">    The function `search_in_folders` searches for a specified file in a list of directories and returns</span>
+</span><span id="search_in_folders-4908"><a href="#search_in_folders-4908"><span class="linenos">4908</span></a><span class="sd">    the full path of the first found file.</span>
+</span><span id="search_in_folders-4909"><a href="#search_in_folders-4909"><span class="linenos">4909</span></a><span class="sd">    :param file_name: The `file_name` parameter is a string that represents the name of the file you are</span>
+</span><span id="search_in_folders-4910"><a href="#search_in_folders-4910"><span class="linenos">4910</span></a><span class="sd">    looking for. This file may be located in different directories or folders</span>
+</span><span id="search_in_folders-4911"><a href="#search_in_folders-4911"><span class="linenos">4911</span></a><span class="sd">    :type file_name: str</span>
+</span><span id="search_in_folders-4912"><a href="#search_in_folders-4912"><span class="linenos">4912</span></a><span class="sd">    :param search_folders: The `search_folders` parameter is a list of directories or folders where the</span>
+</span><span id="search_in_folders-4913"><a href="#search_in_folders-4913"><span class="linenos">4913</span></a><span class="sd">    function will search for the specified file. These directories may contain different versions or</span>
+</span><span id="search_in_folders-4914"><a href="#search_in_folders-4914"><span class="linenos">4914</span></a><span class="sd">    assemblies of the file</span>
+</span><span id="search_in_folders-4915"><a href="#search_in_folders-4915"><span class="linenos">4915</span></a><span class="sd">    :type search_folders: list</span>
+</span><span id="search_in_folders-4916"><a href="#search_in_folders-4916"><span class="linenos">4916</span></a><span class="sd">    :return: The function `search_in_folders` returns the full path of the first found file as a string.</span>
+</span><span id="search_in_folders-4917"><a href="#search_in_folders-4917"><span class="linenos">4917</span></a><span class="sd">    If the file is not found in any of the specified directories, it returns `None`.</span>
+</span><span id="search_in_folders-4918"><a href="#search_in_folders-4918"><span class="linenos">4918</span></a><span class="sd">    :rtype: str or None</span>
+</span><span id="search_in_folders-4919"><a href="#search_in_folders-4919"><span class="linenos">4919</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="search_in_folders-4920"><a href="#search_in_folders-4920"><span class="linenos">4920</span></a>
+</span><span id="search_in_folders-4921"><a href="#search_in_folders-4921"><span class="linenos">4921</span></a>    <span class="k">for</span> <span class="n">folder</span> <span class="ow">in</span> <span class="n">search_folders</span><span class="p">:</span>
+</span><span id="search_in_folders-4922"><a href="#search_in_folders-4922"><span class="linenos">4922</span></a>        <span class="n">found_files</span> <span class="o">=</span> <span class="n">find_all</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="n">full_path</span><span class="p">(</span><span class="n">folder</span><span class="p">))</span>
+</span><span id="search_in_folders-4923"><a href="#search_in_folders-4923"><span class="linenos">4923</span></a>        <span class="k">if</span> <span class="n">found_files</span><span class="p">:</span>
+</span><span id="search_in_folders-4924"><a href="#search_in_folders-4924"><span class="linenos">4924</span></a>            <span class="k">return</span> <span class="n">found_files</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="search_in_folders-4925"><a href="#search_in_folders-4925"><span class="linenos">4925</span></a>
+</span><span id="search_in_folders-4926"><a href="#search_in_folders-4926"><span class="linenos">4926</span></a>    <span class="k">return</span> <span class="kc">None</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>The function <code><a href="#search_in_folders">search_in_folders</a></code> searches for a specified file in a list of directories and returns
+the full path of the first found file.</p>
+
+<h6 id="parameters">Parameters</h6>
+
+<ul>
+<li><strong>file_name</strong>:  The <code>file_name</code> parameter is a string that represents the name of the file you are
+looking for. This file may be located in different directories or folders</li>
+<li><strong>search_folders</strong>:  The <code>search_folders</code> parameter is a list of directories or folders where the
+function will search for the specified file. These directories may contain different versions or
+assemblies of the file</li>
+</ul>
+
+<h6 id="returns">Returns</h6>
+
+<blockquote>
+  <p>The function <code><a href="#search_in_folders">search_in_folders</a></code> returns the full path of the first found file as a string.
+  If the file is not found in any of the specified directories, it returns <code>None</code>.</p>
 </blockquote>
 </div>
 
