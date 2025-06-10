@@ -511,7 +511,7 @@ arguments = {
     },
     # Explode infos
     "explode_infos": {
-        "help": """Explode VCF INFO/Tag into 'variants' table columns.\n""",
+        "help": """Explode VCF INFO/Tag into table columns (e.g. 'variants', 'transcripts').\n""",
         "action": "store_true",
         "default": False,
     },

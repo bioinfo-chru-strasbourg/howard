@@ -634,6 +634,7 @@ class Variants:
                 "parquet",
                 "db",
                 "duckdb",
+                "json",
             ]:
                 # header provided in param
                 if config.get("header_file", None):
@@ -12534,38 +12535,62 @@ class Variants:
     #######################
 
     def transcripts_export(
-        self, transcripts_table: str = None, param: dict = {}
+        self,
+        transcripts_table: str = None,
+        param_export: dict = {},
+        param_explode: dict = {},
     ) -> bool:
         """
-        Exports transcript data from a table to a specified file.
+        Exports transcript data from a table to a specified file, with options for formatting and additional information.
 
-        Args:
-            transcripts_table (str): The name of the transcripts table.
-            param (dict): A dictionary of parameters to customize the export process. This can include various options such as filtering criteria, formatting options, etc.
-
-        Returns:
-            bool: Returns True if the export is successful, False otherwise.
-
-        This function exports transcript data to a specified file, using the provided parameters to customize the export process. The function returns True if the export is successful, and False otherwise.
+        :param transcripts_table: The name of the transcripts table to export data from. If None, it defaults to "transcripts".
+        :type transcripts_table: str, optional
+        :param param_export: A dictionary of parameters to customize the export process, such as output file path, header options, etc.
+        :type param_export: dict, optional
+        :param param_explode: A dictionary of parameters for exploding fields in the transcripts table, such as prefix and fields to explode.
+        :type param_explode: dict, optional
+        :return: Returns True if the export is successful, False otherwise.
+        :rtype: bool
         """
 
         log.debug("Start transcripts export...")
 
         # Param
-        if not param:
-            param = self.get_param()
+        param = self.get_param()
+
+        # Transcripts table
+        if transcripts_table is None:
+            transcripts_table = param.get("transcripts", {}).get("table", "transcripts")
 
         # Param export
-        param_transcript_export = param.get("transcripts", {}).get("export", {})
-        transcripts_export_output = param_transcript_export.get("output", None)
-        transcripts_export_header = param_transcript_export.get("export_header", False)
-        transcripts_export_header_in_output = param_transcript_export.get(
+        if not param_export:
+            param_export = self.get_param().get("transcripts", {}).get("export", {})
+        transcripts_export_output = param_export.get("output", None)
+        transcripts_export_header = param_export.get("export_header", False)
+        transcripts_export_header_in_output = param_export.get(
             "header_in_output", False
         )
+        transcripts_export_add_info = param_export.get("add_info", False)
 
-        if not param_transcript_export or not transcripts_export_output:
+        if not param_export or not transcripts_export_output:
             log.warning(f"No transcriipts export parameters defined!")
             return False
+
+        # Param explode
+        if not param_explode:
+            param_explode = self.get_param().get("transcripts", {}).get("explode", {})
+
+        # Explode fields
+        if param_explode.get("explode_infos_fields", None) and param_explode.get(
+            "explode_infos", True
+        ):
+            self.explode_infos(
+                table=transcripts_table,
+                prefix=param_explode.get("explode_infos_prefix", None),
+                fields=param_explode.get("explode_infos_fields", None),
+                force=False,
+                fields_forced_as_varchar=False,
+            )
 
         # Create transcripts table description
         query_describe = f"""
@@ -12654,8 +12679,13 @@ class Variants:
         else:
 
             # Query param
-            query_update_info_value = f""" NULL """
-            query_export_columns = f""" "#CHROM", "POS", "REF", "ALT", {', '.join(transcripts_annotations_list)} """
+
+            if transcripts_export_add_info:
+                query_update_info_value = f""" INFO """
+                query_export_columns = f""" "#CHROM", "POS", "REF", "ALT", "INFO", {', '.join(transcripts_annotations_list)} """
+            else:
+                query_update_info_value = f""" NULL """
+                query_export_columns = f""" "#CHROM", "POS", "REF", "ALT", {', '.join(transcripts_annotations_list)} """
 
         # Query export
         query_export = f"""
