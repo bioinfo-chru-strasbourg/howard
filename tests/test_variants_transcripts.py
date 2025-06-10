@@ -2263,8 +2263,116 @@ def test_transcripts_create_view_export(output):
 
         # Export
         try:
+            variants.transcripts_export(transcripts_table=transcripts_table)
+        except:
+            assert False
+
+        assert os.path.isfile(f"{tmp_dir}/{output}")
+
+        if get_file_format(output) in ["vcf"]:
+            try:
+                vcf.Reader(filename=f"{tmp_dir}/{output}")
+            except:
+                assert False
+
+
+@pytest.mark.parametrize(
+    "output",
+    [
+        "output.vcf",
+        "output.vcf.gz",
+        "output.tsv",
+        "output.tsv.gz",
+        "output.parquet",
+        "output.json",
+    ],
+)
+def test_transcripts_create_view_export_explode(output):
+    """ """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # tmp_dir = "/tmp"
+
+        # Init files
+        input_vcf = f"{tests_data_folder}/example.ann.transcripts.vcf.gz"
+
+        # Construct param dict
+        param_struct = {
+            "table": "transcripts",
+            "column_id": "transcript",
+            "transcripts_info_json": "transcripts_json",
+            "transcripts_info_field": "transcripts_json",
+            "transcript_id_remove_version": True,
+            "transcript_id_mapping_file": None,
+            "transcript_id_mapping_force": False,
+            "struct": {
+                "from_column_format": [
+                    {
+                        "transcripts_column": "ANN",
+                        "transcripts_infos_column": "Feature_ID",
+                        "column_clean": True,
+                    },
+                ],
+                "from_columns_map": [
+                    {
+                        "transcripts_column": "Ensembl_transcriptid",
+                        "transcripts_infos_columns": [
+                            "genename",
+                            "Ensembl_geneid",
+                            "LIST_S2_score",
+                            "LIST_S2_pred",
+                        ],
+                        "column_clean": False,
+                    },
+                    {
+                        "transcripts_column": "Ensembl_transcriptid",
+                        "transcripts_infos_columns": [
+                            "genename",
+                            "VARITY_R_score",
+                            "Aloft_pred",
+                        ],
+                        "column_clean": False,
+                    },
+                ],
+                "from_variants": {
+                    "INFO": True,
+                },
+            },
+            "export": {
+                "output": f"{tmp_dir}/{output}",
+                "add_info": True,
+                "export_header": True,
+            },
+            "explode": {
+                "explode_infos_fields": ["CLNSIG"],
+            },
+        }
+
+        # Param without prioritization
+        param_with_transcripts = {"transcripts": dict(param_struct)}
+
+        # Config
+        config = tests_config
+
+        # Create object
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            config=config,
+            param=param_with_transcripts,
+            load=True,
+        )
+
+        # Create transcript view
+        transcripts_table = variants.create_transcript_view(
+            param=param_with_transcripts
+        )
+
+        # Export
+        try:
             variants.transcripts_export(
-                transcripts_table=transcripts_table, param=param_with_transcripts
+                transcripts_table=transcripts_table,
             )
         except:
             assert False
@@ -2276,6 +2384,39 @@ def test_transcripts_create_view_export(output):
                 vcf.Reader(filename=f"{tmp_dir}/{output}")
             except:
                 assert False
+
+        # Check if output file contains INFO and exploded field by opening output file for TSV/Parquet/JSON
+
+        # Create object
+        variants_output = Variants(
+            conn=None,
+            input=f"{tmp_dir}/{output}",
+            config=config,
+            param=param_with_transcripts,
+            load=True,
+        )
+
+        # Check exploded columns
+        query_check = f"""
+            SELECT * FROM variants
+        """
+        check = variants_output.get_query_to_df(query=query_check)
+        assert len(check) > 0
+        for field in (
+            param_with_transcripts.get("transcripts", {})
+            .get("explode", {})
+            .get("explode_infos_fields", [])
+            if get_file_format(output) not in ["vcf"]
+            else []
+        ) + (
+            ["INFO"]
+            if param_with_transcripts.get("transcripts", {})
+            .get("export", {})
+            .get("add_info", False)
+            or get_file_format(output) in ["vcf"]
+            else []
+        ):
+            assert field in check.columns
 
 
 @pytest.mark.parametrize(

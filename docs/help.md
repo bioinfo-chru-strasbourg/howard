@@ -236,7 +236,7 @@ Usage examples:
 
 >     --explode_infos
 >
->     Explode VCF INFO/Tag into 'variants' table columns.
+>     Explode VCF INFO/Tag into table columns (e.g. 'variants', 'transcripts').
 
 </small>
 
@@ -625,7 +625,7 @@ Usage examples:
 
 >     --explode_infos
 >
->     Explode VCF INFO/Tag into 'variants' table columns.
+>     Explode VCF INFO/Tag into table columns (e.g. 'variants', 'transcripts').
 
 </small>
 
@@ -1628,7 +1628,7 @@ Usage examples:
 
 >     --explode_infos
 >
->     Explode VCF INFO/Tag into 'variants' table columns.
+>     Explode VCF INFO/Tag into table columns (e.g. 'variants', 'transcripts').
 
 </small>
 
@@ -2902,7 +2902,7 @@ Usage examples:
 
 >     --explode_infos
 >
->     Explode VCF INFO/Tag into 'variants' table columns.
+>     Explode VCF INFO/Tag into table columns (e.g. 'variants', 'transcripts').
 
 </small>
 
@@ -3072,7 +3072,7 @@ Usage examples:
 
 >     --explode_infos
 >
->     Explode VCF INFO/Tag into 'variants' table columns.
+>     Explode VCF INFO/Tag into table columns (e.g. 'variants', 'transcripts').
 
 </small>
 

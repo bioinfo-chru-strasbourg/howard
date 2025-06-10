@@ -503,7 +503,29 @@ class="toc-section-number">10.11.10</span>
 prioritization_transcripts_version_force</a></li>
 </ul></li>
 <li><a href="#export-1" id="toc-export-1"><span
-class="toc-section-number">10.12</span> export</a></li>
+class="toc-section-number">10.12</span> export</a>
+<ul>
+<li><a href="#output" id="toc-output"><span
+class="toc-section-number">10.12.1</span> output</a></li>
+<li><a href="#export_header" id="toc-export_header"><span
+class="toc-section-number">10.12.2</span> export_header</a></li>
+<li><a href="#header_in_output" id="toc-header_in_output"><span
+class="toc-section-number">10.12.3</span> header_in_output</a></li>
+<li><a href="#add_info" id="toc-add_info"><span
+class="toc-section-number">10.12.4</span> add_info</a></li>
+</ul></li>
+<li><a href="#explode-1" id="toc-explode-1"><span
+class="toc-section-number">10.13</span> explode</a>
+<ul>
+<li><a href="#explode_infos-1" id="toc-explode_infos-1"><span
+class="toc-section-number">10.13.1</span> explode_infos</a></li>
+<li><a href="#explode_infos_prefix-1"
+id="toc-explode_infos_prefix-1"><span
+class="toc-section-number">10.13.2</span> explode_infos_prefix</a></li>
+<li><a href="#explode_infos_fields-1"
+id="toc-explode_infos_fields-1"><span
+class="toc-section-number">10.13.3</span> explode_infos_fields</a></li>
+</ul></li>
 </ul></li>
 <li><a href="#threads" id="toc-threads"><span
 class="toc-section-number">11</span> threads</a></li>
@@ -2135,7 +2157,8 @@ class="header-section-number">9</span> explode</h1>
 <p>Explode options for INFO/tags annotations within VCF files.</p>
 <h2 data-number="9.1" id="explode_infos"><span
 class="header-section-number">9.1</span> explode_infos</h2>
-<p>Explode VCF INFO/Tag into &#x2018;variants&#x2019; table columns.</p>
+<p>Explode VCF INFO/Tag into table columns (e.g.&#xA0;&#x2018;variants&#x2019;,
+&#x2018;transcripts&#x2019;).</p>
 <p>Default: <code>False</code></p>
 <h2 data-number="9.2" id="explode_infos_prefix"><span
 class="header-section-number">9.2</span> explode_infos_prefix</h2>
@@ -2756,15 +2779,16 @@ otherwise each column will be exported.</p>
 <p>Default: <code>{}</code></p>
 <p>Examples:</p>
 <blockquote>
-<p>Export as compressed TSV:</p>
+<p>Export as compressed TSV, including header:</p>
 </blockquote>
 <blockquote>
 <div class="sourceCode" id="cb105"><pre
 class="sourceCode json"><code class="sourceCode json"><span id="cb105-1"><a href="#cb105-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
 <span id="cb105-2"><a href="#cb105-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;export&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb105-3"><a href="#cb105-3" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;output&quot;</span><span class="fu">:</span> <span class="st">&quot;/tmp/output.tsv.gz&quot;</span></span>
-<span id="cb105-4"><a href="#cb105-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
-<span id="cb105-5"><a href="#cb105-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<span id="cb105-3"><a href="#cb105-3" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;output&quot;</span><span class="fu">:</span> <span class="st">&quot;/tmp/output.tsv.gz&quot;</span><span class="fu">,</span></span>
+<span id="cb105-4"><a href="#cb105-4" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;header_in_output&quot;</span><span class="fu">:</span> <span class="kw">true</span></span>
+<span id="cb105-5"><a href="#cb105-5" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb105-6"><a href="#cb105-6" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <blockquote>
 <p>Export as VCF:</p>
@@ -2778,16 +2802,141 @@ class="sourceCode json"><code class="sourceCode json"><span id="cb106-1"><a href
 <span id="cb106-5"><a href="#cb106-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <blockquote>
-<p>Export as Parquet:</p>
+<p>Export as Parquet, generate header file and include INFO column:</p>
 </blockquote>
 <blockquote>
 <div class="sourceCode" id="cb107"><pre
 class="sourceCode json"><code class="sourceCode json"><span id="cb107-1"><a href="#cb107-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
 <span id="cb107-2"><a href="#cb107-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;export&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb107-3"><a href="#cb107-3" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;output&quot;</span><span class="fu">:</span> <span class="st">&quot;/tmp/output.parquet&quot;</span></span>
-<span id="cb107-4"><a href="#cb107-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
-<span id="cb107-5"><a href="#cb107-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<span id="cb107-3"><a href="#cb107-3" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;output&quot;</span><span class="fu">:</span> <span class="st">&quot;/tmp/output.parquet&quot;</span><span class="fu">,</span></span>
+<span id="cb107-4"><a href="#cb107-4" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;export_header&quot;</span><span class="fu">:</span> <span class="kw">true</span><span class="fu">,</span></span>
+<span id="cb107-5"><a href="#cb107-5" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;add_info&quot;</span><span class="fu">:</span> <span class="kw">true</span></span>
+<span id="cb107-6"><a href="#cb107-6" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb107-7"><a href="#cb107-7" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
+<h3 data-number="10.12.1" id="output"><span
+class="header-section-number">10.12.1</span> output</h3>
+<p>Output file to export transcripts view/table. The output file format
+is deduced from the file extension (e.g.&#xA0;&#x2018;.vcf&#x2019;, &#x2018;.parquet&#x2019;,
+&#x2018;.tsv.gz&#x2019;).</p>
+<p>Type: <code>Path</code></p>
+<p>Default: <code>None</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Output file to export transcripts view/table:</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb108"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb108-1"><a href="#cb108-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb108-2"><a href="#cb108-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;output&quot;</span><span class="fu">:</span> <span class="st">&quot;/tmp/output.tsv.gz&quot;</span></span>
+<span id="cb108-3"><a href="#cb108-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h3 data-number="10.12.2" id="export_header"><span
+class="header-section-number">10.12.2</span> export_header</h3>
+<p>Export header file (&#x2018;.hdr&#x2019;) corresoonding to output file. By default,
+header file is not generated.</p>
+<p>Type: <code>Boolean</code></p>
+<p>Default: <code>True</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Include header in output file:</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb109"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb109-1"><a href="#cb109-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb109-2"><a href="#cb109-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;export_header&quot;</span><span class="fu">:</span> <span class="kw">true</span></span>
+<span id="cb109-3"><a href="#cb109-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>Do not include header in output file:</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb110"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb110-1"><a href="#cb110-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb110-2"><a href="#cb110-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;export_header&quot;</span><span class="fu">:</span> <span class="kw">false</span></span>
+<span id="cb110-3"><a href="#cb110-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h3 data-number="10.12.3" id="header_in_output"><span
+class="header-section-number">10.12.3</span> header_in_output</h3>
+<p>Include header in output file. By default, header is not included in
+output file (excpet for VCF format).</p>
+<p>Type: <code>Boolean</code></p>
+<p>Default: <code>True</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Include header in output file:</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb111"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb111-1"><a href="#cb111-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb111-2"><a href="#cb111-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;header_in_output&quot;</span><span class="fu">:</span> <span class="kw">true</span></span>
+<span id="cb111-3"><a href="#cb111-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>Do not include header in output file:</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb112"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb112-1"><a href="#cb112-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb112-2"><a href="#cb112-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;header_in_output&quot;</span><span class="fu">:</span> <span class="kw">false</span></span>
+<span id="cb112-3"><a href="#cb112-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h3 data-number="10.12.4" id="add_info"><span
+class="header-section-number">10.12.4</span> add_info</h3>
+<p>Add INFO field to output file. By default, INFO field is not added to
+output file (except for VCF fomat).</p>
+<p>Type: <code>Boolean</code></p>
+<p>Default: <code>False</code></p>
+<p>Examples:</p>
+<blockquote>
+<p>Add INFO field to output file:</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb113"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb113-1"><a href="#cb113-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb113-2"><a href="#cb113-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;add_info&quot;</span><span class="fu">:</span> <span class="kw">true</span></span>
+<span id="cb113-3"><a href="#cb113-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<blockquote>
+<p>Do not add INFO field to output file:</p>
+</blockquote>
+<blockquote>
+<div class="sourceCode" id="cb114"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb114-1"><a href="#cb114-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb114-2"><a href="#cb114-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;add_info&quot;</span><span class="fu">:</span> <span class="kw">false</span></span>
+<span id="cb114-3"><a href="#cb114-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+</blockquote>
+<h2 data-number="10.13" id="explode-1"><span
+class="header-section-number">10.13</span> explode</h2>
+<p>Explode options for INFO/tags annotations within output file.</p>
+<h3 data-number="10.13.1" id="explode_infos-1"><span
+class="header-section-number">10.13.1</span> explode_infos</h3>
+<p>Explode VCF INFO/Tag into table columns (e.g.&#xA0;&#x2018;variants&#x2019;,
+&#x2018;transcripts&#x2019;).</p>
+<p>Default: <code>False</code></p>
+<h3 data-number="10.13.2" id="explode_infos_prefix-1"><span
+class="header-section-number">10.13.2</span> explode_infos_prefix</h3>
+<p>Explode VCF INFO/Tag with a specific prefix.</p>
+<p>Type: <code>str</code></p>
+<p>Default: <code></code></p>
+<h3 data-number="10.13.3" id="explode_infos_fields-1"><span
+class="header-section-number">10.13.3</span> explode_infos_fields</h3>
+<p>Explode VCF INFO/Tag specific fields/tags. Keyword <code>*</code>
+specify all available fields, except those already specified. Pattern
+(regex) can be used, such as <code>.*_score</code> for fields named with
+&#x2019;_score&#x2019; at the end. Examples:</p>
+<ul>
+<li><p>&#x2018;HGVS,SIFT,Clinvar&#x2019; (list of fields)</p></li>
+<li><p>&#x2019;HGVS,*,Clinvar&#x2019; (list of fields with all other fields at the
+end)</p></li>
+<li><p>&#x2019;HGVS,.*_score,Clinvar&#x2019; (list of 2 fields with all scores in the
+middle)</p></li>
+<li><p>&#x2019;HGVS,.*_score,*&#x2019; (1 field, scores, all other fields)</p></li>
+<li><p>&#x2018;HGVS,<em>,.</em>_score&#x2019; (1 field, all other fields, all
+scores)</p></li>
+</ul>
+<p>Type: <code>str</code></p>
+<p>Default: <code>*</code></p>
 <h1 data-number="11" id="threads"><span
 class="header-section-number">11</span> threads</h1>
 <p>Specify the number of threads to use for processing HOWARD. It
@@ -2802,19 +2951,19 @@ CPU/core.</p>
 <p>Automatically detect all available CPU/cores</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb108"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb108-1"><a href="#cb108-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb108-2"><a href="#cb108-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;threads&quot;</span><span class="fu">:</span> <span class="dv">-1</span></span>
-<span id="cb108-3"><a href="#cb108-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb115"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb115-1"><a href="#cb115-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb115-2"><a href="#cb115-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;threads&quot;</span><span class="fu">:</span> <span class="dv">-1</span></span>
+<span id="cb115-3"><a href="#cb115-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <blockquote>
 <p>Define 8 CPU/cores</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb109"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb109-1"><a href="#cb109-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb109-2"><a href="#cb109-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;threads&quot;</span><span class="fu">:</span> <span class="dv">8</span></span>
-<span id="cb109-3"><a href="#cb109-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb116"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb116-1"><a href="#cb116-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb116-2"><a href="#cb116-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;threads&quot;</span><span class="fu">:</span> <span class="dv">8</span></span>
+<span id="cb116-3"><a href="#cb116-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h1 data-number="12" id="samples"><span
 class="header-section-number">12</span> samples</h1>
@@ -2829,37 +2978,37 @@ genotype annotations (based on &#x2018;FORMAT&#x2019; VCF column).</p>
 <p>Export only a list of samples:</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb110"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb110-1"><a href="#cb110-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb110-2"><a href="#cb110-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;samples&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb110-3"><a href="#cb110-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;list&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;sample1&quot;</span><span class="ot">,</span> <span class="st">&quot;sample2&quot;</span><span class="ot">]</span></span>
-<span id="cb110-4"><a href="#cb110-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
-<span id="cb110-5"><a href="#cb110-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb117"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb117-1"><a href="#cb117-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb117-2"><a href="#cb117-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;samples&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb117-3"><a href="#cb117-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;list&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;sample1&quot;</span><span class="ot">,</span> <span class="st">&quot;sample2&quot;</span><span class="ot">]</span></span>
+<span id="cb117-4"><a href="#cb117-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb117-5"><a href="#cb117-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <blockquote>
 <p>Do not check existing samples (all VCF columns after FORMAT
 column):</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb111"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb111-1"><a href="#cb111-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb111-2"><a href="#cb111-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;samples&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb111-3"><a href="#cb111-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;check&quot;</span><span class="fu">:</span> <span class="kw">false</span></span>
-<span id="cb111-4"><a href="#cb111-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
-<span id="cb111-5"><a href="#cb111-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb118"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb118-1"><a href="#cb118-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb118-2"><a href="#cb118-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;samples&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb118-3"><a href="#cb118-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;check&quot;</span><span class="fu">:</span> <span class="kw">false</span></span>
+<span id="cb118-4"><a href="#cb118-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb118-5"><a href="#cb118-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <blockquote>
 <p>Default configuration, with all samples are considered (null) and
 checked (true):</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb112"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb112-1"><a href="#cb112-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb112-2"><a href="#cb112-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;samples&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb112-3"><a href="#cb112-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;list&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
-<span id="cb112-4"><a href="#cb112-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;check&quot;</span><span class="fu">:</span> <span class="kw">true</span></span>
-<span id="cb112-5"><a href="#cb112-5" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
-<span id="cb112-6"><a href="#cb112-6" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb119"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb119-1"><a href="#cb119-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb119-2"><a href="#cb119-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;samples&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb119-3"><a href="#cb119-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;list&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
+<span id="cb119-4"><a href="#cb119-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;check&quot;</span><span class="fu">:</span> <span class="kw">true</span></span>
+<span id="cb119-5"><a href="#cb119-5" aria-hidden="true" tabindex="-1"></a>   <span class="fu">}</span></span>
+<span id="cb119-6"><a href="#cb119-6" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h2 data-number="12.1" id="list"><span
 class="header-section-number">12.1</span> list</h2>
@@ -2872,10 +3021,10 @@ Only these samples are exported in VCF format file.</p>
 <p>Export only a list of samples:</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb113"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb113-1"><a href="#cb113-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb113-2"><a href="#cb113-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;list&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;sample1&quot;</span><span class="ot">,</span> <span class="st">&quot;sample2&quot;</span><span class="ot">]</span></span>
-<span id="cb113-3"><a href="#cb113-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb120"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb120-1"><a href="#cb120-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb120-2"><a href="#cb120-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;list&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;sample1&quot;</span><span class="ot">,</span> <span class="st">&quot;sample2&quot;</span><span class="ot">]</span></span>
+<span id="cb120-3"><a href="#cb120-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h2 data-number="12.2" id="check"><span
 class="header-section-number">12.2</span> check</h2>
@@ -2890,10 +3039,10 @@ well-formed.</p>
 <p>Do not check existing samples:</p>
 </blockquote>
 <blockquote>
-<div class="sourceCode" id="cb114"><pre
-class="sourceCode json"><code class="sourceCode json"><span id="cb114-1"><a href="#cb114-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb114-2"><a href="#cb114-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;check&quot;</span><span class="fu">:</span> <span class="kw">false</span></span>
-<span id="cb114-3"><a href="#cb114-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb121"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb121-1"><a href="#cb121-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb121-2"><a href="#cb121-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;check&quot;</span><span class="fu">:</span> <span class="kw">false</span></span>
+<span id="cb121-3"><a href="#cb121-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 </blockquote>
 <h1 data-number="13" id="databases"><span
 class="header-section-number">13</span> databases</h1>

@@ -166,6 +166,20 @@ title: HOWARD Help Parameters
     - [<span class="toc-section-number">10.11.10</span>
       prioritization_transcripts_version_force](#prioritization_transcripts_version_force)
   - [<span class="toc-section-number">10.12</span> export](#export-1)
+    - [<span class="toc-section-number">10.12.1</span> output](#output)
+    - [<span class="toc-section-number">10.12.2</span>
+      export_header](#export_header)
+    - [<span class="toc-section-number">10.12.3</span>
+      header_in_output](#header_in_output)
+    - [<span class="toc-section-number">10.12.4</span>
+      add_info](#add_info)
+  - [<span class="toc-section-number">10.13</span> explode](#explode-1)
+    - [<span class="toc-section-number">10.13.1</span>
+      explode_infos](#explode_infos-1)
+    - [<span class="toc-section-number">10.13.2</span>
+      explode_infos_prefix](#explode_infos_prefix-1)
+    - [<span class="toc-section-number">10.13.3</span>
+      explode_infos_fields](#explode_infos_fields-1)
 - [<span class="toc-section-number">11</span> threads](#threads)
 - [<span class="toc-section-number">12</span> samples](#samples)
   - [<span class="toc-section-number">12.1</span> list](#list)
@@ -1900,7 +1914,8 @@ Explode options for INFO/tags annotations within VCF files.
 
 ## explode_infos
 
-Explode VCF INFO/Tag into 'variants' table columns.
+Explode VCF INFO/Tag into table columns (e.g. 'variants',
+'transcripts').
 
 Default: `False`
 
@@ -2585,12 +2600,13 @@ Default: `{}`
 
 Examples:
 
-> Export as compressed TSV:
+> Export as compressed TSV, including header:
 
 > ``` json
 > {
 >    "export": {
->      "output": "/tmp/output.tsv.gz"
+>      "output": "/tmp/output.tsv.gz",
+>      "header_in_output": true
 >    }
 > }
 > ```
@@ -2605,15 +2621,158 @@ Examples:
 > }
 > ```
 
-> Export as Parquet:
+> Export as Parquet, generate header file and include INFO column:
 
 > ``` json
 > {
 >    "export": {
->      "output": "/tmp/output.parquet"
+>      "output": "/tmp/output.parquet",
+>      "export_header": true,
+>      "add_info": true
 >    }
 > }
 > ```
+
+### output
+
+Output file to export transcripts view/table. The output file format is
+deduced from the file extension (e.g. '.vcf', '.parquet', '.tsv.gz').
+
+Type: `Path`
+
+Default: `None`
+
+Examples:
+
+> Output file to export transcripts view/table:
+
+> ``` json
+> {
+>    "output": "/tmp/output.tsv.gz"
+> }
+> ```
+
+### export_header
+
+Export header file ('.hdr') corresoonding to output file. By default,
+header file is not generated.
+
+Type: `Boolean`
+
+Default: `True`
+
+Examples:
+
+> Include header in output file:
+
+> ``` json
+> {
+>    "export_header": true
+> }
+> ```
+
+> Do not include header in output file:
+
+> ``` json
+> {
+>    "export_header": false
+> }
+> ```
+
+### header_in_output
+
+Include header in output file. By default, header is not included in
+output file (excpet for VCF format).
+
+Type: `Boolean`
+
+Default: `True`
+
+Examples:
+
+> Include header in output file:
+
+> ``` json
+> {
+>    "header_in_output": true
+> }
+> ```
+
+> Do not include header in output file:
+
+> ``` json
+> {
+>    "header_in_output": false
+> }
+> ```
+
+### add_info
+
+Add INFO field to output file. By default, INFO field is not added to
+output file (except for VCF fomat).
+
+Type: `Boolean`
+
+Default: `False`
+
+Examples:
+
+> Add INFO field to output file:
+
+> ``` json
+> {
+>    "add_info": true
+> }
+> ```
+
+> Do not add INFO field to output file:
+
+> ``` json
+> {
+>    "add_info": false
+> }
+> ```
+
+## explode
+
+Explode options for INFO/tags annotations within output file.
+
+### explode_infos
+
+Explode VCF INFO/Tag into table columns (e.g. 'variants',
+'transcripts').
+
+Default: `False`
+
+### explode_infos_prefix
+
+Explode VCF INFO/Tag with a specific prefix.
+
+Type: `str`
+
+Default: ``
+
+### explode_infos_fields
+
+Explode VCF INFO/Tag specific fields/tags. Keyword `*` specify all
+available fields, except those already specified. Pattern (regex) can be
+used, such as `.*_score` for fields named with '\_score' at the end.
+Examples:
+
+- 'HGVS,SIFT,Clinvar' (list of fields)
+
+- 'HGVS,\*,Clinvar' (list of fields with all other fields at the end)
+
+- 'HGVS,.\*\_score,Clinvar' (list of 2 fields with all scores in the
+  middle)
+
+- 'HGVS,.\*\_score,\*' (1 field, scores, all other fields)
+
+- 'HGVS,*,.*\_score' (1 field, all other fields, all scores)
+
+Type: `str`
+
+Default: `*`
 
 # threads
 
