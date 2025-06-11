@@ -2172,14 +2172,13 @@ specify all available fields, except those already specified. Pattern
 (regex) can be used, such as <code>.*_score</code> for fields named with
 &#x2019;_score&#x2019; at the end. Examples:</p>
 <ul>
-<li><p>&#x2018;HGVS,SIFT,Clinvar&#x2019; (list of fields)</p></li>
-<li><p>&#x2019;HGVS,*,Clinvar&#x2019; (list of fields with all other fields at the
-end)</p></li>
+<li><p>&#x2018;HGVS,SIFT,Clinvar&#x2019; (list of 3 fields)</p></li>
+<li><p>&#x2019;HGVS,*,Clinvar&#x2019; (list of 2 fields with all other fields in the
+middle)</p></li>
 <li><p>&#x2019;HGVS,.*_score,Clinvar&#x2019; (list of 2 fields with all scores in the
 middle)</p></li>
-<li><p>&#x2019;HGVS,.*_score,*&#x2019; (1 field, scores, all other fields)</p></li>
-<li><p>&#x2018;HGVS,<em>,.</em>_score&#x2019; (1 field, all other fields, all
-scores)</p></li>
+<li><p>&#x2019;HGVS,.*_score,*&#x2019; (1 field, scores, all other fields at the
+end)</p></li>
 </ul>
 <p>Type: <code>str</code></p>
 <p>Default: <code>*</code></p>
@@ -2926,14 +2925,13 @@ specify all available fields, except those already specified. Pattern
 (regex) can be used, such as <code>.*_score</code> for fields named with
 &#x2019;_score&#x2019; at the end. Examples:</p>
 <ul>
-<li><p>&#x2018;HGVS,SIFT,Clinvar&#x2019; (list of fields)</p></li>
-<li><p>&#x2019;HGVS,*,Clinvar&#x2019; (list of fields with all other fields at the
-end)</p></li>
+<li><p>&#x2018;HGVS,SIFT,Clinvar&#x2019; (list of 3 fields)</p></li>
+<li><p>&#x2019;HGVS,*,Clinvar&#x2019; (list of 2 fields with all other fields in the
+middle)</p></li>
 <li><p>&#x2019;HGVS,.*_score,Clinvar&#x2019; (list of 2 fields with all scores in the
 middle)</p></li>
-<li><p>&#x2019;HGVS,.*_score,*&#x2019; (1 field, scores, all other fields)</p></li>
-<li><p>&#x2018;HGVS,<em>,.</em>_score&#x2019; (1 field, all other fields, all
-scores)</p></li>
+<li><p>&#x2019;HGVS,.*_score,*&#x2019; (1 field, scores, all other fields at the
+end)</p></li>
 </ul>
 <p>Type: <code>str</code></p>
 <p>Default: <code>*</code></p>
