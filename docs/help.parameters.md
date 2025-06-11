@@ -1934,16 +1934,15 @@ available fields, except those already specified. Pattern (regex) can be
 used, such as `.*_score` for fields named with '\_score' at the end.
 Examples:
 
-- 'HGVS,SIFT,Clinvar' (list of fields)
+- 'HGVS,SIFT,Clinvar' (list of 3 fields)
 
-- 'HGVS,\*,Clinvar' (list of fields with all other fields at the end)
+- 'HGVS,\*,Clinvar' (list of 2 fields with all other fields in the
+  middle)
 
 - 'HGVS,.\*\_score,Clinvar' (list of 2 fields with all scores in the
   middle)
 
-- 'HGVS,.\*\_score,\*' (1 field, scores, all other fields)
-
-- 'HGVS,*,.*\_score' (1 field, all other fields, all scores)
+- 'HGVS,.\*\_score,\*' (1 field, scores, all other fields at the end)
 
 Type: `str`
 
@@ -2759,16 +2758,15 @@ available fields, except those already specified. Pattern (regex) can be
 used, such as `.*_score` for fields named with '\_score' at the end.
 Examples:
 
-- 'HGVS,SIFT,Clinvar' (list of fields)
+- 'HGVS,SIFT,Clinvar' (list of 3 fields)
 
-- 'HGVS,\*,Clinvar' (list of fields with all other fields at the end)
+- 'HGVS,\*,Clinvar' (list of 2 fields with all other fields in the
+  middle)
 
 - 'HGVS,.\*\_score,Clinvar' (list of 2 fields with all scores in the
   middle)
 
-- 'HGVS,.\*\_score,\*' (1 field, scores, all other fields)
-
-- 'HGVS,*,.*\_score' (1 field, all other fields, all scores)
+- 'HGVS,.\*\_score,\*' (1 field, scores, all other fields at the end)
 
 Type: `str`
 
