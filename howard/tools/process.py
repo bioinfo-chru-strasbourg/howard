@@ -51,21 +51,21 @@ def process(args: argparse) -> None:
     # Load data
     vcfdata_obj.load_data()
 
-    # Annotation
+    # Annotation HGVS
     vcfdata_obj.annotation_hgvs()
 
+    # Annotations
     vcfdata_obj.annotation()
 
+    # Calculations
     vcfdata_obj.calculation()
-    # # DEVEL
-    # query = f"""
-    #     SELECT DP FROM variants
-    # """
-    # df = vcfdata_obj.get_query_to_df(query)
-    # print(f"dataframe: {df}")
-    # return True
+
+    # Prioritizations
     vcfdata_obj.prioritization()
-    vcfdata_obj.explode_infos()
+
+    # Explode INFO/TAGs
+    if param.get("explode_infos", {}).get("explode_infos", False):
+        vcfdata_obj.explode_infos()
 
     # Query
     if param.get("query", {}).get("query", None):
