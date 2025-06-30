@@ -3325,8 +3325,28 @@ class Variants:
         if where_clause is None:
             where_clause = ""
 
-        # Variants
-        select_fields = """ "#CHROM", POS, ID, REF, ALT, QUAL, FILTER """
+        # Columns
+        existing_columns = self.get_columns(table=table_variants)
+        columns_default_values = {
+            "#CHROM": "'chr'",
+            "POS": "0",
+            "ID": "'.'",
+            "REF": "'N'",
+            "ALT": "'N'",
+            "QUAL": "'0'",
+            "FILTER": "'PASS'",
+        }
+        select_fields_list = []
+        for column in ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER"]:
+            if column not in existing_columns:
+                select_fields_list.append(
+                    f"{columns_default_values.get(column, '')} AS '{column}'"
+                )
+            else:
+                select_fields_list.append(f'"{column}"')
+        select_fields = ", ".join(select_fields_list)
+
+        # Query
         sql_query_select = f""" SELECT {select_fields}, {info_field} {samples_fields} FROM {table_variants} {where_clause} """
         log.debug(f"sql_query_select={sql_query_select}")
 
