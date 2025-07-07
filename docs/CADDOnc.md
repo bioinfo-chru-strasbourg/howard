@@ -1,10 +1,8 @@
-# CADD Optimized pathogenicity thresholds for Non Coding regions of the genome
-
-CONCERN : CADD Optimized threshold for Non Coding regions to Evaluate Risk of pathogeNicity
+# CADD Optimized pathogenicity thresholds for Non Coding regions
 
 ## Introduction
 
-This documentation provides a step-by-step guide for setting up and running the CADD Optimized (CADDO) pathogenicity prediction workflow. The CADDO score is designed to classify genetic variants as Pathogenic or Benign on CADD PHRED scores and functional annotations from ANNOVAR. The guide covers requirements, database setup, configuration, and execution of the workflow, enabling users to efficiently annotate and interpret variants using optimized CADD thresholds.
+This documentation provides a step-by-step guide for setting up and running the CADD Optimized (CADDOnc) pathogenicity prediction workflow. The CADDOnc score is designed to classify genetic variants as Pathogenic or Benign on CADD PHRED scores and functional annotations from ANNOVAR. The guide covers requirements, database setup, configuration, and execution of the workflow, enabling users to efficiently annotate and interpret variants using optimized CADD thresholds.
 
 The commands in this documentation will help you:
 
@@ -16,7 +14,7 @@ The commands in this documentation will help you:
 
 ## Requirements
 
-To follow this guide and run the CADDO workflow, you will need:
+To follow this guide and run the CADDOnc workflow, you will need:
 
 - **Operating System:** Linux or macOS recommended.
 - **Software:**
@@ -50,11 +48,11 @@ DATA="${HOME}/howard/data"
 
 ## Databases
 
-This section describes how to download and prepare the required CADD and ANNOVAR databases for use in the CADDO workflow. You will set up the directory structure, retrieve the necessary files, and perform any required preprocessing steps to ensure compatibility with Howard. Follow the instructions carefully to ensure that your annotation and prediction steps have access to the correct and properly formatted data sources.
+This section describes how to download and prepare the required CADD and ANNOVAR databases for use in the CADDOnc workflow. You will set up the directory structure, retrieve the necessary files, and perform any required preprocessing steps to ensure compatibility with Howard. Follow the instructions carefully to ensure that your annotation and prediction steps have access to the correct and properly formatted data sources.
 
 ### CADD
 
-These steps ensure that the CADD database is properly formatted and accessible for use in the CADDO variant annotation workflow.
+These steps ensure that the CADD database is properly formatted and accessible for use in the CADDOnc variant annotation workflow.
 
 ### Set CADD Variables
 
@@ -111,6 +109,7 @@ echo "##fileformat=VCFv4.2
 " > $CADD_FOLDER/$ASSEMBLY/whole_genome.tsv.gz.hdr
 
 howard query --input=$CADD_FOLDER/$ASSEMBLY/whole_genome.tsv.gz --output="$CADD_FOLDER/$ASSEMBLY/whole_genome.PHRED.parquet" --query="SELECT \"#Chrom\" AS '#CHROM', Pos AS POS, Ref as 'REF', Alt AS 'ALT', PHRED AS 'PHRED' FROM variants " --config='{"access": "RO"}' --parquet_partitions='#CHROM'
+cp $CADD_FOLDER/$ASSEMBLY/whole_genome.tsv.gz.hdr $CADD_FOLDER/$ASSEMBLY/whole_genome.PHRED.parquet.hdr
 ```
 
 ### ANNOVAR
@@ -129,7 +128,7 @@ howard databases --assembly="$ASSEMBLY" --download-annovar="$ANNOVAR_FOLDER" --d
 
 ## Process
 
-This section outlines the complete workflow for processing a VCF file using the CADDO pipeline, from parameter file creation to annotation and calculation.
+This section outlines the complete workflow for processing a VCF file using the CADDOnc pipeline, from parameter file creation to annotation and calculation.
 
 Workflow Overview:
 
@@ -143,7 +142,7 @@ Workflow Overview:
     Ensure your input VCF file is available and formatted correctly. You can create a test VCF as shown in the example.
 
 4. **Run Annotation and Calculation**:  
-    Use the `howard process` command to annotate the VCF with CADD and ANNOVAR data, and apply the CADDO calculation to classify each variant.
+    Use the `howard process` command to annotate the VCF with CADD and ANNOVAR data, and apply the CADDOnc calculation to classify each variant.
 
 5. **Inspect Results**:  
     Query the annotated VCF to review the results and verify that variants have been classified according to the defined logic.
@@ -155,15 +154,15 @@ This workflow enables automated, reproducible variant annotation and classificat
 ```bash
 CALCULATIONS="$DATA/calculations_config.json"
 echo '{
-    "CADDO": {
+    "CADDOnc": {
       "type": "sql",
-      "name": "CADDO",
-      "description": "CADD Optimized pathogenicity prediction",
+      "name": "CADDOnc",
+      "description": "CADD Optimized pathogenicity thresholds for Non Coding regions",
       "available": true,
-      "output_column_name": "CADDO",
+      "output_column_name": "CADDOnc",
       "output_column_number": "1",
       "output_column_type": "String",
-      "output_column_description": "Depending on CADD PHRED score (PHRED) and ANNOVAR variant location (Func_refGene), and CADD optimized thresholds, the variant is classified as Pathogenic 'P' or Benin 'B' or Unknown 'U'",
+      "output_column_description": "CADD Optimized pathogenicity thresholds for Non Coding regions. Classified as Pathogenic 'P' or Benin 'B' or Unknown 'U'",
       "operation_query": [
         "CASE",
         "WHEN PHRED IS NULL THEN '\''U'\''",
@@ -206,7 +205,7 @@ echo '{
   },
   "calculation": {
     "calculations": {
-      "CADDO": null
+      "CADDOnc": null
     },
     "calculation_config": "'$CALCULATIONS'"
   }
@@ -237,5 +236,5 @@ howard process --input="$MY_VCF" --output="$MY_ANOTATED_VCF" --assembly="$ASSEMB
 ```
 
 ```bash
-howard query --input="$MY_ANOTATED_VCF" --query="SELECT Func_refGene AS Location, CADDO AS Prediction, COUNT(*) AS Variant_Count FROM variants_view GROUP BY Func_refGene, CADDO ORDER BY Location, Prediction"
+howard query --input="$MY_ANOTATED_VCF" --query="SELECT Func_refGene AS Location, CADDOnc AS Prediction, COUNT(*) AS Variant_Count FROM variants_view GROUP BY Func_refGene, CADDOnc ORDER BY Location, Prediction"
 ```
