@@ -1,4 +1,6 @@
-# CADD Optimized pathogenicity prediction
+# CADD Optimized pathogenicity thresholds for Non Coding regions of the genome
+
+CONCERN : CADD Optimized threshold for Non Coding regions to Evaluate Risk of pathogeNicity
 
 ## Introduction
 
@@ -69,8 +71,8 @@ Create the appropriate directory structure, then download the CADD SNV data and 
 
 ```bash
 mkdir -p $CADD_FOLDER/$ASSEMBLY
-curl "https://kircherlab.bihealth.org/download/CADD/$CADD_VERSION/$ASSEMBLY_GRCH/whole_genome_SNVs.tsv.gz.tbi" > "$CADD_FOLDER/$ASSEMBLY/whole_genome_SNVs.tsv.gz.tbi"
-curl "https://kircherlab.bihealth.org/download/CADD/$CADD_VERSION/$ASSEMBLY_GRCH/whole_genome_SNVs.tsv.gz" | gzip -d | awk 'BEGIN{OFS="\t"} {if($1 ~ /^#/) print $0; else print "chr"$0}' | bgzip -c > "$CADD_FOLDER/$ASSEMBLY/whole_genome_SNVs.fixed.tsv.gz"
+wget --retry-connrefused --waitretry=10 --tries=10 --continue "https://kircherlab.bihealth.org/download/CADD/$CADD_VERSION/$ASSEMBLY_GRCH/whole_genome_SNVs.tsv.gz" -O - | gzip -d | cut -f1-4,6 | awk 'BEGIN{OFS="\t"} {if($1 ~ /^#/) print $0; else print "chr"$0}' | bgzip -l1 -c > "$CADD_FOLDER/$ASSEMBLY/whole_genome.tsv.gz"
+wget --retry-connrefused --waitretry=10 --tries=10 --continue "https://kircherlab.bihealth.org/download/CADD/$CADD_VERSION/$ASSEMBLY_GRCH/gnomad.genomes.r4.0.indel.tsv.gz" -O - | gzip -d | cut -f1-4,6 | awk 'BEGIN{OFS="\t"} $1 !~ /^#/{print "chr"$0}' | bgzip -l1 -c >> "$CADD_FOLDER/$ASSEMBLY/whole_genome.tsv.gz"
 ```
 
 #### Convert CADD to Parquet
@@ -81,7 +83,6 @@ Generate a header file containing metadata and column definitions to ensure the 
 echo "##fileformat=VCFv4.2
 ##FILTER=<ID=PASS,Description=\"All filters passed\">
 ##INFO=<ID=PHRED,Number=1,Type=Float,Description=\"CADD PHRED Score\">
-##INFO=<ID=RawScore,Number=1,Type=Float,Description=\"CADD Raw score from the model \">
 ##contig=<ID=chr1>
 ##contig=<ID=chr10>
 ##contig=<ID=chr11>
@@ -106,10 +107,10 @@ echo "##fileformat=VCFv4.2
 ##contig=<ID=chr9>
 ##contig=<ID=chrX>
 ##contig=<ID=chrY>
-#CHROM	POS	REF	ALT	PRHRED	RawScore
-" > $CADD_FOLDER/$ASSEMBLY/whole_genome_SNVs.fixed.tsv.gz.hdr
+#CHROM	POS	REF	ALT	PHRED
+" > $CADD_FOLDER/$ASSEMBLY/whole_genome.tsv.gz.hdr
 
-howard query --input=$CADD_FOLDER/$ASSEMBLY/whole_genome_SNVs.fixed.tsv.gz --output="$CADD_FOLDER/$ASSEMBLY/whole_genome_SNVs.parquet" --query="SELECT \"#Chrom\" AS '#CHROM', Pos AS POS, Ref as 'REF', Alt AS 'ALT', PHRED AS 'PHRED', RawScore AS 'RawScore' FROM variants " --config='{"access": "RO"}' --parquet_partitions='#CHROM'
+howard query --input=$CADD_FOLDER/$ASSEMBLY/whole_genome.tsv.gz --output="$CADD_FOLDER/$ASSEMBLY/whole_genome.PHRED.parquet" --query="SELECT \"#Chrom\" AS '#CHROM', Pos AS POS, Ref as 'REF', Alt AS 'ALT', PHRED AS 'PHRED' FROM variants " --config='{"access": "RO"}' --parquet_partitions='#CHROM'
 ```
 
 ### ANNOVAR
@@ -152,7 +153,7 @@ This workflow enables automated, reproducible variant annotation and classificat
 ### Configuration
 
 ```bash
-PARAM="$DATA/param.json"
+CALCULATIONS="$DATA/calculations_config.json"
 echo '{
     "CADDO": {
       "type": "sql",
@@ -182,12 +183,12 @@ echo '{
 ```
 
 ```bash
-CALCULATIONS="$DATA/calculations_config.json"
+PARAM="$DATA/param.json"
 echo '{
   "annotation": {
     "parquet": {
       "annotations": {
-        "'$CADD_FOLDER/$ASSEMBLY/whole_genome_SNVs.parquet'": {
+        "'$CADD_FOLDER/$ASSEMBLY/whole_genome.PHRED.parquet'": {
           "PHRED": "PHRED"
         }
       }
