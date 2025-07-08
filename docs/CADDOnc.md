@@ -199,7 +199,7 @@ echo '{
         }
       },
       "options": {
-        "genebase": " -splicing_threshold 3 "
+        "genebase": " -splicing_threshold 2 "
       }
     }
   },
