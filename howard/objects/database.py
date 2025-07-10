@@ -1771,7 +1771,7 @@ class Database:
         if not table:
             table = self.get_database_table(database=database)
 
-        if sql_query:
+        if sql_query and type(database) == duckdb.DuckDBPyConnection:
             columns_list = list(database.query(sql_query).columns)
             return columns_list
 
@@ -1815,10 +1815,19 @@ class Database:
                     sql_query = f"SELECT * FROM {sql_from} LIMIT 0"
 
                     # Get columns
-                    result_description = self.conn.execute(sql_query).description
+                    #result_description = self.conn.execute(sql_query).description
+                    result_columns = self.conn.query(sql_query).columns
 
-                    # Extract columns' names
-                    columns = [desc[0] for desc in result_description]
+                    # Extract columns' names and order them to have # at the beginning
+                    # columns = [desc[0] for desc in result_description]
+                    columns = []
+                    for column in result_columns:
+                        if column.startswith("#"):
+                            # Add at the beginning of the llist
+                            columns.insert(0, column)
+                        else:
+                            # Add at the end of the list
+                            columns.append(column)
 
                     # Return columns as list
                     return columns

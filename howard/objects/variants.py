@@ -2952,7 +2952,7 @@ class Variants:
             if not output_header:
                 output_header = f"{output_file}.hdr"
             # Export header
-            self.export_header(output_file=output_file)
+            self.export_header(output_file=output_file, query=query)
 
         # Switch off export header if VCF output
         output_file_type = get_file_format(output_file)
@@ -3147,6 +3147,7 @@ class Variants:
         clean_header: bool = True,
         clean_info_flag: bool = False,
         remove_chrom_line: bool = False,
+        query: str | None = None,
     ) -> str:
         """
         The `export_header` function takes a VCF file, extracts the header, modifies it according to
@@ -3179,6 +3180,11 @@ class Variants:
         writing it to the output file. If set to `True`, the #CHROM line will be removed; if set to `,
         defaults to False
         :type remove_chrom_line: bool (optional)
+        :param query: The `query` parameter in the `export_header` function is an optional SQL query
+        string that can be used to filter the columns in the header. If provided, the function will
+        retrieve only the columns that match the query. If not provided, all columns in the header will
+        be included in the output
+        :type query: str | None
         :return: The function `export_header` returns the name of the temporary header file that is
         created.
         """
@@ -3195,7 +3201,7 @@ class Variants:
             db_for_header = Database(database=self.get_input())
 
             # Get real columns in the file
-            db_header_columns = db_for_header.get_columns()
+            db_header_columns = db_for_header.get_columns(sql_query=query)
 
             with tempfile.TemporaryDirectory() as tmpdir:
 

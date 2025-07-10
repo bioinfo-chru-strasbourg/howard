@@ -2622,7 +2622,30 @@ def concat_and_compress_files(
             # Remove tmp file
             os.remove(output_file_tmp)
         except:
-            raise ValueError(f"Output file sorting failed: {output_file_tmp}")
+            log.warning(
+                f"Output file sorting (without tabix) failed: {output_file_tmp}"
+            )
+            # Sort with pysam with index before
+            try:
+                pysam.tabix_index(output_file_tmp, preset="vcf", force=True)
+                pysam.bcftools.sort(
+                    f"-Oz{compression_level}",
+                    "-o",
+                    output_file,
+                    "-T",
+                    output_file_tmp,
+                    output_file_tmp,
+                    "-m",
+                    f"{memory}G",
+                    threads=threads,
+                    catch_stdout=False,
+                )
+                # Remove tmp file
+                os.remove(output_file_tmp)
+            except:
+                raise ValueError(
+                    f"Output file sorting (with tabix) failed: {output_file_tmp}"
+                )
 
     else:
         # Rename tmp file
