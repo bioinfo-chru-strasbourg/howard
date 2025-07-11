@@ -1771,9 +1771,51 @@ class Database:
         if not table:
             table = self.get_database_table(database=database)
 
-        if sql_query and type(database) == duckdb.DuckDBPyConnection:
-            columns_list = list(database.query(sql_query).columns)
-            return columns_list
+        if sql_query:
+
+            columns_list = None
+
+            # Add robust error catching
+            try:
+                limited_query = f"SELECT * FROM ({sql_query}) AS _limited_query LIMIT 1"
+                if type(database) == duckdb.DuckDBPyConnection:
+                    # If the database is a DuckDB connection, execute the query directly
+                    try:
+                        columns_list = list(database.query(limited_query).columns)
+                        log.debug(
+                            f"Successfully executed query with database connection"
+                        )
+                    except Exception as e:
+                        log.debug(
+                            f"Error executing SQL query with database connection: {e}"
+                        )
+                        columns_list = None
+
+                # If no result or if database is not a DuckDB connection
+                else:  # if columns_list is None:
+                    try:
+                        limited_query = (
+                            f"SELECT * FROM ({sql_query}) AS _limited_query LIMIT 1"
+                        )
+                        q = self.query(limited_query)
+                        columns_list = list(q.columns)
+                        log.debug(f"Successfully executed query with self.conn")
+                    except Exception as e:
+                        log.debug(f"Error executing SQL query with self.conn: {e}")
+                        columns_list = None
+
+            except Exception as e:
+                log.debug(f"Unexpected error during query execution: {e}")
+                columns_list = None
+
+            # If we have columns, return them
+            if columns_list:
+                return columns_list
+
+        # if sql_query and type(database) == duckdb.DuckDBPyConnection:
+        #     columns_list = list(database.query(sql_query).columns)
+        #     log.debug(f"Columns from SQL query: {columns_list}")
+        #     return columns_list
 
         try:
             if database and self.exists(database):
@@ -1815,7 +1857,7 @@ class Database:
                     sql_query = f"SELECT * FROM {sql_from} LIMIT 0"
 
                     # Get columns
-                    #result_description = self.conn.execute(sql_query).description
+                    # result_description = self.conn.execute(sql_query).description
                     result_columns = self.conn.query(sql_query).columns
 
                     # Extract columns' names and order them to have # at the beginning
