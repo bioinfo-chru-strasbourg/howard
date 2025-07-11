@@ -2136,6 +2136,17 @@ class Variants:
                 f"Connexion format '{connexion_format}' not available with format '{input_format}'"
             )
 
+        # Add INFO column if not exists
+        if access not in ["RO"] and "INFO" not in self.get_header_columns_as_list():
+            log.debug("INFO column not found, adding it")
+            # Add INFO column
+            self.add_column(
+                table_name=table_variants,
+                column_name="INFO",
+                column_type="VARCHAR",
+                default_value=None,
+            )
+
         # # Explode INFOS fields into table fields
         # if self.get_explode_infos():
         #     self.explode_infos(
@@ -2330,6 +2341,7 @@ class Variants:
         )
         if default_value is not None:
             add_column_query += f" DEFAULT {default_value}"
+        log.debug(f"add_column_query: {add_column_query}")
         self.execute_query(add_column_query)
         added = not dropped
         log.debug(
