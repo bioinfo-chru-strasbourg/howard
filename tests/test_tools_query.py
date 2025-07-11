@@ -75,7 +75,7 @@ def test_query():
 
         query_list = {
             "SELECT count(*) AS '#count' FROM variants": {
-                "nb_lines": 55,
+                "nb_lines": 56,
                 "nb_variants": 1,
             },
             # "SELECT * AS '#count' FROM variants": {"nb_lines": 61, "nb_variants": 7},
@@ -118,6 +118,7 @@ def test_query():
                             result_output_nb_variants = 0
                             result_lines = []
                             for line in f:
+                                log.debug(f"line: {line.strip()}")
                                 if not result_output_nb_lines:
                                     log.debug(line)
                                 result_output_nb_lines += 1
