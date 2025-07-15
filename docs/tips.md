@@ -29,6 +29,57 @@ howard convert \
 
 </details>
 
+
+<details>
+
+<summary>
+
+How to process a huge file?
+</summary>
+To process a huge file efficiently, you can partition it into multiple smaller Parquet files, process each partition individually, and then merge the results into a final output file. This approach helps manage memory usage and speeds up processing for large datasets. Below is a step-by-step explanation:
+
+1. **Partition the Input File**:  
+    Use the `howard convert` command to split the input file into smaller Parquet files. This step ensures that the data is divided into manageable chunks for processing.
+
+2. **Process Each Partition**:  
+    Loop through each Parquet file and perform the desired processing. For example, you can apply specific calculations or transformations to each partition. After processing, the original partition files need to be removed to perform merge.
+
+3. **Merge Processed Files**:  
+    Combine all the processed Parquet files into a single output file using the `howard convert` command. This step consolidates the results into a unified file.
+
+The following script demonstrates this workflow:
+
+```bash
+# Initialize variables
+input_file=tests/data/example.vcf
+output_file=/tmp/example.test.vcf
+tmp_file=/tmp/example.test.partition.parquet
+chunk_size=2
+
+# Step 1: Partition the input file into smaller Parquet files
+howard convert --input=$input_file --output=$tmp_file --parquet_partitions='None' --chunk_size=$chunk_size
+
+# Step 2: Process each Parquet file
+for f in $tmp_file/*.parquet; do
+     # Copy header for the split Parquet file
+     cp $tmp_file.hdr $f.hdr
+     # Perform processing (e.g., identifying variant type)
+     howard process --input=$f --output=$f.processed.parquet --calculations="VARTYPE"
+     # Remove the original split Parquet file
+     rm -f $f $f.hdr
+done
+
+# Step 3: Merge processed Parquet files into a final output file
+howard convert --input=$tmp_file --output=$output_file
+
+# Clean up temporary files
+rm -rf $tmp_file
+```
+
+This method ensures efficient handling of large files while maintaining flexibility for various processing tasks.
+
+</details>
+
 <details>
 
 <summary>
