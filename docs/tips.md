@@ -51,7 +51,7 @@ The following script demonstrates this workflow:
 input_file=tests/data/example.vcf
 output_file=/tmp/example.test.vcf
 tmp_file=/tmp/example.test.partition.parquet
-chunk_size=2
+chunk_size=2 # default 1000000
 
 # Step 1: Partition the input file into smaller Parquet files
 howard convert --input=$input_file --output=$tmp_file --parquet_partitions='None' --chunk_size=$chunk_size
