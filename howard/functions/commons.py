@@ -120,6 +120,9 @@ DEFAULT_DBSNP_URL = "https://ftp.ncbi.nih.gov/snp/archive"
 # Databases default folder
 DEFAULT_DATABASE_FOLDER = os.path.join(folder_howard_home, "databases")
 DEFAULT_ANNOTATIONS_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/annotations/current"
+DEFAULT_PARQUET_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/parquet/current"
+DEFAULT_BCFTOOLS_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/bcftools/current"
+DEFAULT_BIGWIG_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/bigwig/current"
 DEFAULT_GENOME_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/genomes/current"
 DEFAULT_SNPEFF_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/snpeff/current"
 DEFAULT_ANNOVAR_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/annovar/current"
@@ -629,18 +632,23 @@ def find(name: str, path: str) -> str:
     return ""
 
 
-def find_all(name: str, path: str) -> list:
+def find_all(name: str, path: str, allow_dir: bool = True) -> list:
     """
-    "Walk the directory tree starting at path, and for each regular file with the name name, append its
-    full path to the result list."
+    "Walk the directory tree starting at path, and for each regular file or directory with the name name,
+    append its full path to the result list."
 
     The os.walk function is a generator that yields a 3-tuple containing the name of a directory, a list
     of its subdirectories, and a list of the files in that directory. The name of the directory is a
     string, and the lists of subdirectories and files are lists of strings
 
     :param name: The name of the file you're looking for
+    :type name: str
     :param path: The path to search in
-    :return: A list of all the files in the directory that have the name "name"
+    :type path: str
+    :param allow_dir: If True, the function will also search for directories with the specified name,
+    :type allow_dir: bool
+    :return: A list of all the files or directories in the directory that have the name "name"
+    :rtype: list
     """
 
     # result
@@ -653,6 +661,10 @@ def find_all(name: str, path: str) -> list:
         for filename in fnmatch.filter(files, name):
             if os.path.exists(os.path.join(root, filename)):
                 result.append(os.path.join(root, filename))
+        if allow_dir:
+            for dirname in fnmatch.filter(dirs, name):
+                if os.path.exists(os.path.join(root, dirname)):
+                    result.append(os.path.join(root, dirname))
     return result
 
 
@@ -4910,7 +4922,11 @@ def annotation_file_find(
                 full_path(os.path.join(database, assembly))
                 for database in databases_folders
             ]
+            log.debug(
+                f"Searching for {annotation_file} in assembly folders: {assembly_folders}"
+            )
             found_file = search_in_folders(annotation_file, assembly_folders)
+            log.debug(f"Found file in assembly folders: {found_file}")
             if found_file:
                 return found_file
 
@@ -4941,7 +4957,9 @@ def search_in_folders(file_name: str, search_folders: list) -> str:
     """
 
     for folder in search_folders:
+        log.debug(f"Searching for {file_name} in folder: {folder}")
         found_files = find_all(file_name, full_path(folder))
+        log.debug(f"Found files: {found_files}")
         if found_files:
             return found_files[0]
 

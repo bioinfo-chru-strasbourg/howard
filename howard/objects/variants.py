@@ -30,6 +30,9 @@ import math
 from howard.functions.commons import (
     CODE_TYPE_MAP,
     DEFAULT_ANNOTATIONS_FOLDER,
+    DEFAULT_PARQUET_FOLDER,
+    DEFAULT_BCFTOOLS_FOLDER,
+    DEFAULT_BIGWIG_FOLDER,
     DEFAULT_ANNOVAR_FOLDER,
     DEFAULT_ASSEMBLY,
     DEFAULT_DATABASE_FOLDER,
@@ -3746,10 +3749,10 @@ class Variants:
             .get("annotations", [DEFAULT_ANNOTATIONS_FOLDER])
             + config.get("folders", {})
             .get("databases", {})
-            .get("parquet", ["~/howard/databases/parquet/current"])
+            .get("parquet", [DEFAULT_PARQUET_FOLDER])
             + config.get("folders", {})
             .get("databases", {})
-            .get("bcftools", ["~/howard/databases/bcftools/current"])
+            .get("bcftools", [DEFAULT_BCFTOOLS_FOLDER])
         )
 
         # Get param annotations
@@ -3816,9 +3819,7 @@ class Variants:
             # List of annotations parameters
             annotations_list_input = {}
             if isinstance(param.get("annotations", None), str):
-                annotation_file_list = [
-                    value for value in param.get("annotations", "").split(",")
-                ]
+                annotation_file_list = list(param.get("annotations", "").split(","))
                 for annotation_file in annotation_file_list:
                     annotations_list_input[annotation_file.strip()] = {"INFO": None}
             else:
@@ -4102,11 +4103,11 @@ class Variants:
             self.get_config()
             .get("folders", {})
             .get("databases", {})
-            .get("annotations", ["."])
+            .get("annotations", [DEFAULT_ANNOTATIONS_FOLDER])
             + self.get_config()
             .get("folders", {})
             .get("databases", {})
-            .get("bigwig", ["."])
+            .get("bigwig", [DEFAULT_BIGWIG_FOLDER])
         )
         log.debug("Databases annotations: " + str(databases_folders))
 
@@ -4509,11 +4510,11 @@ class Variants:
             self.get_config()
             .get("folders", {})
             .get("databases", {})
-            .get("annotations", ["."])
+            .get("annotations", [DEFAULT_ANNOTATIONS_FOLDER])
             + self.get_config()
             .get("folders", {})
             .get("databases", {})
-            .get("bcftools", ["."])
+            .get("bcftools", [DEFAULT_BCFTOOLS_FOLDER])
         )
         log.debug("Databases annotations: " + str(databases_folders))
 
@@ -4862,11 +4863,11 @@ class Variants:
             self.get_config()
             .get("folders", {})
             .get("databases", {})
-            .get("annotations", ["."])
+            .get("annotations", [DEFAULT_ANNOTATIONS_FOLDER])
             + self.get_config()
             .get("folders", {})
             .get("databases", {})
-            .get("bcftools", ["."])
+            .get("bcftools", [DEFAULT_BCFTOOLS_FOLDER])
         )
         log.debug("Databases annotations: " + str(databases_folders))
 
@@ -6722,11 +6723,11 @@ class Variants:
             self.get_config()
             .get("folders", {})
             .get("databases", {})
-            .get("annotations", ["."])
+            .get("annotations", [DEFAULT_ANNOTATIONS_FOLDER])
             + self.get_config()
             .get("folders", {})
             .get("databases", {})
-            .get("parquet", ["."])
+            .get("parquet", [DEFAULT_PARQUET_FOLDER])
         )
         log.debug("Databases annotations: " + str(databases_folders))
 
