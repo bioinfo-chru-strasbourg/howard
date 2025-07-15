@@ -61,13 +61,15 @@ howard convert --input=$input_file --output=$tmp_file --parquet_partitions='None
 
 # Step 2: Process each Parquet file
 for f in $tmp_file/*.parquet; do
-     # Copy header for the split Parquet file
-     cp $tmp_file.hdr $f.hdr
-     # Perform processing (e.g., identifying variant type)
-     howard process --input=$f --output=$f.processed.parquet --calculations="VARTYPE"
-     # Remove the original split Parquet file
-     rm -f $f $f.hdr
+    # Copy header for the split Parquet file
+    cp $tmp_file.hdr $f.hdr
+    # Perform processing (e.g., identifying variant type)
+    howard process --input=$f --output=$f.processed.parquet --calculations="VARTYPE"
+    # Remove the original split Parquet file
+    rm -f $f $f.hdr
 done
+# Copy new header from last processed split Parquet file
+cp $f.processed.parquet.hdr $tmp_file.hdr
 
 # Step 3: Merge processed Parquet files into a final output file
 howard convert --input=$tmp_file --output=$output_file
