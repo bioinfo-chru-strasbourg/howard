@@ -3,7 +3,6 @@
 <details>
 
 <summary>
-
 How to hive partitioning into Parquet a VCF format file?
 </summary>
 
@@ -29,11 +28,9 @@ howard convert \
 
 </details>
 
-
 <details>
 
 <summary>
-
 How to process a huge file?
 </summary>
 To process a huge file efficiently, you can partition it into multiple smaller Parquet files, process each partition individually, and then merge the results into a final output file. This approach helps manage memory usage and speeds up processing for large datasets. Below is a step-by-step explanation:
@@ -85,7 +82,6 @@ This method ensures efficient handling of large files while maintaining flexibil
 <details>
 
 <summary>
-
 How to hive partitioning into Parquet a huge VCF format file with all
 annotations exploded into columns?
 </summary>
@@ -199,7 +195,6 @@ tree -h $PARQUET
 <details>
 
 <summary>
-
 How to aggregate all INFO annotations from multiple Parquet databases
 into one INFO field?
 </summary>
@@ -229,7 +224,6 @@ head -n2 /tmp/full_annotation.tsv
 <details>
 
 <summary>
-
 How to explore genetics variations from VCF files?
 </summary>
 
@@ -271,7 +265,6 @@ CuteVariant
 <details>
 
 <summary>
-
 How to generate dbNSFP databases?
 </summary>
 
