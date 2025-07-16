@@ -27,6 +27,7 @@ from howard.functions.commons import (
 
 # Import tools
 from howard.tools.process import process
+from howard.tools.process_multi import process_multi
 from howard.tools.annotation import annotation
 from howard.tools.calculation import calculation
 from howard.tools.hgvs import hgvs
@@ -2131,6 +2132,73 @@ commands_arguments = {
     },
     "process": {
         "function": "process",
+        "description": """howard process tool manage genetic variations to:\n"""
+        """- annotates genetic variants with multiple annotation databases/files and tools\n"""
+        """- calculates and normalizes annotations\n"""
+        """- prioritizes variants with profiles (list of citeria) to calculate scores and flags\n"""
+        """- translates into various formats\n"""
+        """- query genetic variants and annotations\n"""
+        """- generates variants statistics""",
+        "help": """Full genetic variations process: annotation, calculation, prioritization, format, query, filter...""",
+        "epilog": """Usage examples:\n"""
+        """   howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json \n"""
+        """   howard process --input=tests/data/example.vcf.gz --annotations='snpeff' --calculations='snpeff_hgvs' --prioritizations='default' --explode_infos --output=/tmp/example.annotated.tsv --query='SELECT "#CHROM", POS, ALT, REF, snpeff_hgvs FROM variants' \n"""
+        """   howard process --input=tests/data/example.vcf.gz --hgvs_options='full_format,use_exon' --explode_infos --output=/tmp/example.annotated.tsv --query='SELECT "#CHROM", POS, ALT, REF, hgvs FROM variants' \n"""
+        """   howard process --input=tests/data/example.vcf.gz --output=/tmp/example.howard.vcf.gz --hgvs='full_format,use_exon' --annotations='tests/databases/annotations/current/hg19/avsnp150.parquet,tests/databases/annotations/current/hg19/dbnsfp42a.parquet,tests/databases/annotations/current/hg19/gnomad211_genome.parquet' --calculations='NOMEN' --explode_infos --query='SELECT NOMEN, REVEL_score, SIFT_score, AF AS 'gnomad_AF', ClinPred_score, ClinPred_pred FROM variants' \n"""
+        """    \n""",
+        "groups": {
+            "main": {
+                "input": True,
+                "output": True,
+                "param": False,
+                "hgvs_options": False,
+                "annotations": False,
+                "calculations": False,
+                "prioritizations": False,
+                "assembly": False,
+            },
+            "HGVS": {
+                "use_gene": False,
+                "use_exon": False,
+                "use_protein": False,
+                "add_protein": False,
+                "full_format": False,
+                "codon_type": False,
+                "refgene": False,
+                "refseqlink": False,
+            },
+            "Annotation": {
+                "annotations_update": False,
+                "annotations_append": False,
+            },
+            "Calculation": {
+                "calculation_config": False,
+            },
+            "Prioritization": {
+                "default_profile": False,
+                "pzfields": False,
+                "prioritization_score_mode": False,
+                "prioritization_config": False,
+            },
+            "Query": {
+                "query": False,
+                "query_limit": False,
+                "query_print_mode": False,
+            },
+            "Explode": {
+                "explode_infos": False,
+                "explode_infos_prefix": False,
+                "explode_infos_fields": False,
+            },
+            "Export": {
+                "include_header": False,
+                "order_by": False,
+                "parquet_partitions": False,
+            },
+        },
+    },
+    "process_multi": {
+        "function": "process_multi",
         "description": """howard process tool manage genetic variations to:\n"""
         """- annotates genetic variants with multiple annotation databases/files and tools\n"""
         """- calculates and normalizes annotations\n"""
