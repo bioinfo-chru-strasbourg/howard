@@ -142,6 +142,8 @@ Tools:
     gui                 Graphical User Interface tools
 ```
 
+On MacOS, follow this [installation guide for MacOS](docs/INSTALL.macos.md)
+
 ### Interactive terminal
 
 Launch HOWARD interactive terminal to explore a VCF file:
@@ -184,6 +186,20 @@ HOWARD - Highly Open Workflow for Annotation & Ranking toward genomic variant Di
 2   chr1     69101   A   G        None  0/1  729
 #[2025-01-18 01:35:40]        | >>> 
 ```
+
+Or use extended mode with Harlequin tool ([https://harlequin.sh](https://harlequin.sh)):
+
+```bash
+howard query --input='tests/data/example.vcf.gz' --interactive_mode=harlequin
+```
+
+<figure>
+<img src="images/harlequin.png" title="HOWARD Harlequin SQL IDE"
+alt="HOWARD Harlequin SQL IDE" />
+<figcaption aria-hidden="true">
+HOWARD Harlequin SQL IDE
+</figcaption>
+</figure>
 
 ### Graphical User Interface
 
