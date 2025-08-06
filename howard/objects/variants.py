@@ -2237,8 +2237,12 @@ class Variants:
                     field = ".*"
 
                 # Find all fields with pattern
-                r = re.compile(rf"^{field}$")
-                fields_search = sorted(list(filter(r.match, fields_in_header)))
+                # Check if field is in header (to prevent special caracters in field such as '+', e.g. 'GERP++_RS')
+                if field in fields_in_header:
+                    fields_search = [field]
+                else:
+                    r = re.compile(rf"^{field}$")
+                    fields_search = sorted(list(filter(r.match, fields_in_header)))
 
                 # Remove fields input from search
                 if field in fields_search:
