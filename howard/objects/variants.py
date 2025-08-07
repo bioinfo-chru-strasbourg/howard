@@ -9747,11 +9747,11 @@ class Variants:
                     annotation_number = 0
                 elif annotation_name in ["Annotation"]:
                     annotation_number = "."
-                    annotation_column = f"""replace("{annotation_name}", '&', ',')"""
-                elif annotation_name in ["Distance"]:
                     annotation_column = (
-                        f"""string_split(CAST("{annotation_name}" AS STRING), '.')[1]"""
+                        f"""replace(CAST("{annotation_name}" AS VARCHAR), '&', ',')"""
                     )
+                elif annotation_name in ["Distance"]:
+                    annotation_column = f"""string_split(CAST("{annotation_name}" AS VARCHAR), '.')[1]"""
 
                     annotation_number = 1
                 annotation_desc = f"snpEff annotation '{annotation_name}'"
@@ -9965,7 +9965,7 @@ class Variants:
                             "Feature_ID",
                             CASE 
                                 WHEN "Rank" IS NOT NULL
-                                THEN concat('exon', split("Rank", '/')[1])
+                                THEN concat('exon', split(CAST("Rank" AS VARCHAR), '/')[1])
                                 ELSE NULL
                             END,
                             "HGVS.c",
