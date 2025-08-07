@@ -6,8 +6,8 @@ Usage:
 pytest tests/
 
 Coverage:
-coverage run -m pytest tests/test_objects_variants.py -x -v --log-cli-level=INFO --capture=tee-sys
-coverage report --include=howard/* -m 
+coverage run -m pytest tests/test_variants_calculations.py -x -v --log-cli-level=INFO --capture=tee-sys
+coverage report --include=howard/* -m
 """
 
 import logging as log
@@ -602,16 +602,23 @@ def test_calculation_vartype_full():
 
 
 @pytest.mark.parametrize(
-    "calculation",
+    "input_file, calculation",
     [
-        "snpeff_extract",
-        "snpeff_hgvs",
-        "snpeff_ann_explode",
-        "snpeff_ann_explode_uniquify",
-        "snpeff_ann_explode_json",
+        (
+            input_file,
+            calculation,
+        )
+        for input_file in ["example.ann.vcf.gz", "example.chrM.ann.vcf.gz"]
+        for calculation in [
+            "snpeff_extract",
+            "snpeff_hgvs",
+            "snpeff_ann_explode",
+            "snpeff_ann_explode_uniquify",
+            "snpeff_ann_explode_json",
+        ]
     ],
 )
-def test_calculation_snpeff_ann_explode(calculation):
+def test_calculation_snpeff_ann_explode(input_file, calculation):
     """
     This function is a test for calculating snpeff_hgvs in a VCF file using the Variants class.
 
@@ -623,7 +630,7 @@ def test_calculation_snpeff_ann_explode(calculation):
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
-        input_vcf = tests_data_folder + "/example.ann.vcf.gz"
+        input_vcf = tests_data_folder + "/" + input_file
         output_vcf = f"{tmp_dir}/output.{calculation}.vcf"
 
         # Construct param dict
@@ -634,6 +641,10 @@ def test_calculation_snpeff_ann_explode(calculation):
             conn=None, input=input_vcf, output=output_vcf, param=param, load=True
         )
 
+        # Check nb variants
+        result = variants.get_query_to_df(""" SELECT INFO FROM variants""")
+        nb_variants = len(result)
+
         # Check if no snpeff_hgvs
         result = variants.get_query_to_df(
             """ SELECT INFO FROM variants WHERE regexp_matches(INFO,'snpeff[^=]') """
@@ -643,11 +654,11 @@ def test_calculation_snpeff_ann_explode(calculation):
         # Calculation
         variants.calculation()
 
-        # query annotated variant
+        # query annotated variant (0 if no snpeff annotation like in chrM)
         result = variants.get_query_to_df(
             """ SELECT * FROM variants WHERE regexp_matches(INFO,'snpeff[^=]') """
         )
-        assert len(result) == 7
+        assert len(result) == nb_variants or len(result) == 0
 
         # Check if VCF is in correct format with pyVCF
         remove_if_exists([output_vcf])
