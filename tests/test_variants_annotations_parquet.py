@@ -6,7 +6,7 @@ Usage:
 pytest tests/
 
 Coverage:
-coverage run -m pytest tests/test_objects_variants.py -x -v --log-cli-level=INFO --capture=tee-sys
+coverage run -m pytest tests/test_variants_annotations_parquet.py -x -v --log-cli-level=INFO --capture=tee-sys
 coverage report --include=howard/* -m 
 """
 
@@ -593,6 +593,7 @@ def test_annotation_parquet_regions():
 
     # Init files
     input_vcf = tests_data_folder + "/example.vcf.gz"
+    input_multi_pos_vcf = tests_data_folder + "/example.multi_pos.vcf"
 
     # annotation regions
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
@@ -793,6 +794,73 @@ def test_annotation_parquet_regions():
         length = len(result)
 
         assert length == 3
+
+        # Check if VCF is in correct format with pyVCF
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+    # annotation regions with multi pos
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init
+        annotation_parquet = os.path.join(
+            tests_annotations_folder, f"annotation_regions.bed.gz"
+        )
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {
+            "annotation": {
+                "parquet": {"annotations": {annotation_parquet: {"INFO": None}}}
+            }
+        }
+
+        # Create object
+        variants = Variants(
+            conn=None,
+            input=input_multi_pos_vcf,
+            output=output_vcf,
+            param=param,
+            load=True,
+        )
+
+        # Annotation
+        variants.annotation()
+
+        # DEVEL
+        result = variants.get_query_to_df(
+            """SELECT "#CHROM", POS, REF, ALT, INFO FROM variants"""
+        )
+        log.debug(f"Result: {result.to_string()}")
+
+        # return
+
+        # query annotated variant
+        result = variants.get_query_to_df(
+            "SELECT 1 AS count FROM variants WHERE INFO LIKE '%annot1=blue,red%' AND INFO LIKE '%annot2=orange,cherry%'"
+        )
+        length = len(result)
+
+        assert length == 5
+
+        # query annotated variant
+        result = variants.get_query_to_df(
+            "SELECT 1 AS count FROM variants WHERE INFO LIKE '%annot1=yellow%' AND INFO LIKE '%annot2=banana%'"
+        )
+        length = len(result)
+
+        assert length == 5
+
+        # query annotated variant
+        result = variants.get_query_to_df(
+            "SELECT 1 AS count FROM variants WHERE INFO NOT LIKE '%annot1%' AND INFO NOT LIKE '%annot2%'"
+        )
+        length = len(result)
+
+        assert length == 1
 
         # Check if VCF is in correct format with pyVCF
         variants.export_output()
