@@ -588,7 +588,7 @@ def test_annotation_parquet_with_all_formats():
 def test_annotation_parquet_regions():
     """
     The `test_annotation_parquet_regions()` function tests the `annotation()` method of the `Variants`
-    class using a Parquet file as an annotation source with various formats.
+    class using a Parquet file as an annotation source with BED formats.
     """
 
     # Init files
@@ -830,17 +830,11 @@ def test_annotation_parquet_regions():
         # Annotation
         variants.annotation()
 
-        # DEVEL
-        result = variants.get_query_to_df(
-            """SELECT "#CHROM", POS, REF, ALT, INFO FROM variants"""
-        )
-        log.debug(f"Result: {result.to_string()}")
-
         # return
 
         # query annotated variant
         result = variants.get_query_to_df(
-            "SELECT 1 AS count FROM variants WHERE INFO LIKE '%annot1=blue,red%' AND INFO LIKE '%annot2=orange,cherry%'"
+            "SELECT 1 AS count FROM variants WHERE INFO LIKE '%annot1=blue,red%' AND INFO LIKE '%annot2=cherry,orange%' AND INFO LIKE '%annot3=jupyter,mars,venus%'"
         )
         length = len(result)
 
@@ -848,7 +842,7 @@ def test_annotation_parquet_regions():
 
         # query annotated variant
         result = variants.get_query_to_df(
-            "SELECT 1 AS count FROM variants WHERE INFO LIKE '%annot1=yellow%' AND INFO LIKE '%annot2=banana%'"
+            "SELECT 1 AS count FROM variants WHERE INFO LIKE '%annot1=yellow%' AND INFO LIKE '%annot2=banana%' AND INFO LIKE '%annot3=mars,pluto%'"
         )
         length = len(result)
 
@@ -856,7 +850,7 @@ def test_annotation_parquet_regions():
 
         # query annotated variant
         result = variants.get_query_to_df(
-            "SELECT 1 AS count FROM variants WHERE INFO NOT LIKE '%annot1%' AND INFO NOT LIKE '%annot2%'"
+            "SELECT 1 AS count FROM variants WHERE INFO NOT LIKE '%annot1%' AND INFO NOT LIKE '%annot2%' AND INFO NOT LIKE '%annot3%'"
         )
         length = len(result)
 
