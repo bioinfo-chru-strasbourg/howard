@@ -511,7 +511,7 @@ arguments = {
     },
     # Explode infos
     "explode_infos": {
-        "help": """Explode VCF INFO/Tag into 'variants' table columns.\n""",
+        "help": """Explode VCF INFO/Tag into table columns (e.g. 'variants', 'transcripts').\n""",
         "action": "store_true",
         "default": False,
     },
@@ -527,11 +527,10 @@ arguments = {
         """Keyword `*` specify all available fields, except those already specified.\n"""
         """Pattern (regex) can be used, such as `.*_score` for fields named with '_score' at the end.\n"""
         """Examples:\n"""
-        """- 'HGVS,SIFT,Clinvar' (list of fields)\n"""
-        """- 'HGVS,*,Clinvar' (list of fields with all other fields at the end)\n"""
+        """- 'HGVS,SIFT,Clinvar' (list of 3 fields)\n"""
+        """- 'HGVS,*,Clinvar' (list of 2 fields with all other fields in the middle)\n"""
         """- 'HGVS,.*_score,Clinvar' (list of 2 fields with all scores in the middle)\n"""
-        """- 'HGVS,.*_score,*' (1 field, scores, all other fields)\n"""
-        """- 'HGVS,*,.*_score' (1 field, all other fields, all scores)\n""",
+        """- 'HGVS,.*_score,*' (1 field, scores, all other fields at the end)\n""",
         "default": "*",
         "type": str,
     },

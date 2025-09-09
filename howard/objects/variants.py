@@ -30,6 +30,9 @@ import math
 from howard.functions.commons import (
     CODE_TYPE_MAP,
     DEFAULT_ANNOTATIONS_FOLDER,
+    DEFAULT_PARQUET_FOLDER,
+    DEFAULT_BCFTOOLS_FOLDER,
+    DEFAULT_BIGWIG_FOLDER,
     DEFAULT_ANNOVAR_FOLDER,
     DEFAULT_ASSEMBLY,
     DEFAULT_DATABASE_FOLDER,
@@ -40,6 +43,7 @@ from howard.functions.commons import (
     DEFAULT_TOOLS_BIN,
     DEFAULT_TOOLS_FOLDER,
     add_value_into_dict,
+    annotation_file_find,
     barcode,
     cast_columns_query,
     check_docker_image_exists,
@@ -633,6 +637,7 @@ class Variants:
                 "parquet",
                 "db",
                 "duckdb",
+                "json",
             ]:
                 # header provided in param
                 if config.get("header_file", None):
@@ -2134,6 +2139,17 @@ class Variants:
                 f"Connexion format '{connexion_format}' not available with format '{input_format}'"
             )
 
+        # Add INFO column if not exists
+        if access not in ["RO"] and "INFO" not in self.get_header_columns_as_list():
+            log.debug("INFO column not found, adding it")
+            # Add INFO column
+            self.add_column(
+                table_name=table_variants,
+                column_name="INFO",
+                column_type="VARCHAR",
+                default_value=None,
+            )
+
         # # Explode INFOS fields into table fields
         # if self.get_explode_infos():
         #     self.explode_infos(
@@ -2221,8 +2237,12 @@ class Variants:
                     field = ".*"
 
                 # Find all fields with pattern
-                r = re.compile(rf"^{field}$")
-                fields_search = sorted(list(filter(r.match, fields_in_header)))
+                # Check if field is in header (to prevent special caracters in field such as '+', e.g. 'GERP++_RS')
+                if field in fields_in_header:
+                    fields_search = [field]
+                else:
+                    r = re.compile(rf"^{field}$")
+                    fields_search = sorted(list(filter(r.match, fields_in_header)))
 
                 # Remove fields input from search
                 if field in fields_search:
@@ -2328,6 +2348,7 @@ class Variants:
         )
         if default_value is not None:
             add_column_query += f" DEFAULT {default_value}"
+        log.debug(f"add_column_query: {add_column_query}")
         self.execute_query(add_column_query)
         added = not dropped
         log.debug(
@@ -2830,6 +2851,7 @@ class Variants:
         index: bool = False,
         order_by: str | None = None,
         fields_to_rename: dict | None = None,
+        force_cast_as_flat: bool = False,
     ) -> bool:
         """
         The `export_output` function exports data from a VCF file to various formats, including VCF,
@@ -2899,6 +2921,13 @@ class Variants:
         customize the output field names before exporting the data. Each key-value pair in the
         dictionary represents the original field name as the key and the new field name
         :type fields_to_rename: dict | None
+        :param force_cast_as_flat: Only for Parquet format. The `force_cast_as_flat` parameter is a boolean
+        flag that determines whether to force the export of nested or complex data structures as flat
+        structures. If `force_cast_as_flat` is set to `True`, the function will flatten any nested
+        structures in the data before exporting it. If `force_cast_as_flat` is set to `False`, the
+        function will preserve the original structure of the data during export. By default, it is set
+        to False
+        :type force_cast_as_flat: bool (optional)
         :return: The `export_output` function returns a boolean value. It checks if the output file
         exists and returns True if it does, or None if it doesn't.
         """
@@ -2932,12 +2961,17 @@ class Variants:
             fields_to_rename = param.get("export", {}).get("fields_to_rename", None)
         self.rename_info_fields(fields_to_rename=fields_to_rename)
 
+        # Force cast as flat
+        force_cast_as_flat = param.get("export", {}).get(
+            "force_cast_as_flat", force_cast_as_flat
+        )
+
         # Auto header name with extension
         if export_header or output_header:
             if not output_header:
                 output_header = f"{output_file}.hdr"
             # Export header
-            self.export_header(output_file=output_file)
+            self.export_header(output_file=output_file, query=query)
 
         # Switch off export header if VCF output
         output_file_type = get_file_format(output_file)
@@ -3038,6 +3072,7 @@ class Variants:
             query=query,
             export_header=export_header,
             sample_list=sample_list,
+            force_cast_as_flat=force_cast_as_flat,
         )
 
         # Remove
@@ -3131,6 +3166,7 @@ class Variants:
         clean_header: bool = True,
         clean_info_flag: bool = False,
         remove_chrom_line: bool = False,
+        query: str | None = None,
     ) -> str:
         """
         The `export_header` function takes a VCF file, extracts the header, modifies it according to
@@ -3163,6 +3199,11 @@ class Variants:
         writing it to the output file. If set to `True`, the #CHROM line will be removed; if set to `,
         defaults to False
         :type remove_chrom_line: bool (optional)
+        :param query: The `query` parameter in the `export_header` function is an optional SQL query
+        string that can be used to filter the columns in the header. If provided, the function will
+        retrieve only the columns that match the query. If not provided, all columns in the header will
+        be included in the output
+        :type query: str | None
         :return: The function `export_header` returns the name of the temporary header file that is
         created.
         """
@@ -3179,7 +3220,7 @@ class Variants:
             db_for_header = Database(database=self.get_input())
 
             # Get real columns in the file
-            db_header_columns = db_for_header.get_columns()
+            db_header_columns = db_for_header.get_columns(sql_query=query)
 
             with tempfile.TemporaryDirectory() as tmpdir:
 
@@ -3309,8 +3350,28 @@ class Variants:
         if where_clause is None:
             where_clause = ""
 
-        # Variants
-        select_fields = """ "#CHROM", POS, ID, REF, ALT, QUAL, FILTER """
+        # Columns
+        existing_columns = self.get_columns(table=table_variants)
+        columns_default_values = {
+            "#CHROM": "'chr'",
+            "POS": "0",
+            "ID": "'.'",
+            "REF": "'N'",
+            "ALT": "'N'",
+            "QUAL": "'0'",
+            "FILTER": "'PASS'",
+        }
+        select_fields_list = []
+        for column in ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER"]:
+            if column not in existing_columns:
+                select_fields_list.append(
+                    f"{columns_default_values.get(column, '')} AS '{column}'"
+                )
+            else:
+                select_fields_list.append(f'"{column}"')
+        select_fields = ", ".join(select_fields_list)
+
+        # Query
         sql_query_select = f""" SELECT {select_fields}, {info_field} {samples_fields} FROM {table_variants} {where_clause} """
         log.debug(f"sql_query_select={sql_query_select}")
 
@@ -3692,10 +3753,10 @@ class Variants:
             .get("annotations", [DEFAULT_ANNOTATIONS_FOLDER])
             + config.get("folders", {})
             .get("databases", {})
-            .get("parquet", ["~/howard/databases/parquet/current"])
+            .get("parquet", [DEFAULT_PARQUET_FOLDER])
             + config.get("folders", {})
             .get("databases", {})
-            .get("bcftools", ["~/howard/databases/bcftools/current"])
+            .get("bcftools", [DEFAULT_BCFTOOLS_FOLDER])
         )
 
         # Get param annotations
@@ -3762,9 +3823,7 @@ class Variants:
             # List of annotations parameters
             annotations_list_input = {}
             if isinstance(param.get("annotations", None), str):
-                annotation_file_list = [
-                    value for value in param.get("annotations", "").split(",")
-                ]
+                annotation_file_list = list(param.get("annotations", "").split(","))
                 for annotation_file in annotation_file_list:
                     annotations_list_input[annotation_file.strip()] = {"INFO": None}
             else:
@@ -3905,37 +3964,10 @@ class Variants:
                                 annotation_tool = annotation_tool_initial
 
                                 # Find file
-                                annotation_file_found = None
-
-                                if os.path.exists(annotation_file):
-                                    annotation_file_found = annotation_file
-                                elif os.path.exists(full_path(annotation_file)):
-                                    annotation_file_found = full_path(annotation_file)
-                                else:
-                                    # Find within assembly folders
-                                    for annotations_database in annotations_databases:
-                                        found_files = find_all(
-                                            annotation_file,
-                                            os.path.join(
-                                                annotations_database, assembly
-                                            ),
-                                        )
-                                        if len(found_files) > 0:
-                                            annotation_file_found = found_files[0]
-                                            break
-                                    if not annotation_file_found and not assembly:
-                                        # Find within folders
-                                        for (
-                                            annotations_database
-                                        ) in annotations_databases:
-                                            found_files = find_all(
-                                                annotation_file, annotations_database
-                                            )
-                                            if len(found_files) > 0:
-                                                annotation_file_found = found_files[0]
-                                                break
-                                log.debug(
-                                    f"for {annotation_file} annotation_file_found={annotation_file_found}"
+                                annotation_file_found = annotation_file_find(
+                                    annotation_file=annotation_file,
+                                    databases_folders=list(annotations_databases),
+                                    assembly=assembly,
                                 )
 
                                 # Full path
@@ -4075,11 +4107,11 @@ class Variants:
             self.get_config()
             .get("folders", {})
             .get("databases", {})
-            .get("annotations", ["."])
+            .get("annotations", [DEFAULT_ANNOTATIONS_FOLDER])
             + self.get_config()
             .get("folders", {})
             .get("databases", {})
-            .get("bigwig", ["."])
+            .get("bigwig", [DEFAULT_BIGWIG_FOLDER])
         )
         log.debug("Databases annotations: " + str(databases_folders))
 
@@ -4482,11 +4514,11 @@ class Variants:
             self.get_config()
             .get("folders", {})
             .get("databases", {})
-            .get("annotations", ["."])
+            .get("annotations", [DEFAULT_ANNOTATIONS_FOLDER])
             + self.get_config()
             .get("folders", {})
             .get("databases", {})
-            .get("bcftools", ["."])
+            .get("bcftools", [DEFAULT_BCFTOOLS_FOLDER])
         )
         log.debug("Databases annotations: " + str(databases_folders))
 
@@ -4835,11 +4867,11 @@ class Variants:
             self.get_config()
             .get("folders", {})
             .get("databases", {})
-            .get("annotations", ["."])
+            .get("annotations", [DEFAULT_ANNOTATIONS_FOLDER])
             + self.get_config()
             .get("folders", {})
             .get("databases", {})
-            .get("bcftools", ["."])
+            .get("bcftools", [DEFAULT_BCFTOOLS_FOLDER])
         )
         log.debug("Databases annotations: " + str(databases_folders))
 
@@ -6695,11 +6727,11 @@ class Variants:
             self.get_config()
             .get("folders", {})
             .get("databases", {})
-            .get("annotations", ["."])
+            .get("annotations", [DEFAULT_ANNOTATIONS_FOLDER])
             + self.get_config()
             .get("folders", {})
             .get("databases", {})
-            .get("parquet", ["."])
+            .get("parquet", [DEFAULT_PARQUET_FOLDER])
         )
         log.debug("Databases annotations: " + str(databases_folders))
 
@@ -6803,6 +6835,13 @@ class Variants:
                 log.debug(f"Annotation '{annotation_name}'")
                 log.debug(
                     f"Annotation '{annotation_name}' - fields: {annotation_fields}"
+                )
+
+                # Find file
+                annotation = annotation_file_find(
+                    annotation_file=annotation,
+                    databases_folders=list(databases_folders),
+                    assembly=assembly,
                 )
 
                 # Create Database
@@ -7065,7 +7104,7 @@ class Variants:
                                 """
                                 )
                                 sql_query_annotation_to_agregate.append(
-                                    f""" string_agg(table_parquet_from."{annotation_field_column}", ',') AS "{annotation_field_column}" """
+                                    f""" array_to_string(array_sort(array_distinct(string_split(string_agg(DISTINCT table_parquet_from."{annotation_field_column}", ','), ','))), ',') AS "{annotation_field_column}" """
                                 )
 
                         # Not to annotate
@@ -9708,11 +9747,11 @@ class Variants:
                     annotation_number = 0
                 elif annotation_name in ["Annotation"]:
                     annotation_number = "."
-                    annotation_column = f"""replace("{annotation_name}", '&', ',')"""
-                elif annotation_name in ["Distance"]:
                     annotation_column = (
-                        f"""string_split(CAST("{annotation_name}" AS STRING), '.')[1]"""
+                        f"""replace(CAST("{annotation_name}" AS VARCHAR), '&', ',')"""
                     )
+                elif annotation_name in ["Distance"]:
+                    annotation_column = f"""string_split(CAST("{annotation_name}" AS VARCHAR), '.')[1]"""
 
                     annotation_number = 1
                 annotation_desc = f"snpEff annotation '{annotation_name}'"
@@ -9926,7 +9965,7 @@ class Variants:
                             "Feature_ID",
                             CASE 
                                 WHEN "Rank" IS NOT NULL
-                                THEN concat('exon', split("Rank", '/')[1])
+                                THEN concat('exon', split(CAST("Rank" AS VARCHAR), '/')[1])
                                 ELSE NULL
                             END,
                             "HGVS.c",
@@ -12539,38 +12578,62 @@ class Variants:
     #######################
 
     def transcripts_export(
-        self, transcripts_table: str = None, param: dict = {}
+        self,
+        transcripts_table: str = None,
+        param_export: dict = {},
+        param_explode: dict = {},
     ) -> bool:
         """
-        Exports transcript data from a table to a specified file.
+        Exports transcript data from a table to a specified file, with options for formatting and additional information.
 
-        Args:
-            transcripts_table (str): The name of the transcripts table.
-            param (dict): A dictionary of parameters to customize the export process. This can include various options such as filtering criteria, formatting options, etc.
-
-        Returns:
-            bool: Returns True if the export is successful, False otherwise.
-
-        This function exports transcript data to a specified file, using the provided parameters to customize the export process. The function returns True if the export is successful, and False otherwise.
+        :param transcripts_table: The name of the transcripts table to export data from. If None, it defaults to "transcripts".
+        :type transcripts_table: str, optional
+        :param param_export: A dictionary of parameters to customize the export process, such as output file path, header options, etc.
+        :type param_export: dict, optional
+        :param param_explode: A dictionary of parameters for exploding fields in the transcripts table, such as prefix and fields to explode.
+        :type param_explode: dict, optional
+        :return: Returns True if the export is successful, False otherwise.
+        :rtype: bool
         """
 
         log.debug("Start transcripts export...")
 
         # Param
-        if not param:
-            param = self.get_param()
+        param = self.get_param()
+
+        # Transcripts table
+        if transcripts_table is None:
+            transcripts_table = param.get("transcripts", {}).get("table", "transcripts")
 
         # Param export
-        param_transcript_export = param.get("transcripts", {}).get("export", {})
-        transcripts_export_output = param_transcript_export.get("output", None)
-        transcripts_export_header = param_transcript_export.get("export_header", False)
-        transcripts_export_header_in_output = param_transcript_export.get(
+        if not param_export:
+            param_export = self.get_param().get("transcripts", {}).get("export", {})
+        transcripts_export_output = param_export.get("output", None)
+        transcripts_export_header = param_export.get("export_header", False)
+        transcripts_export_header_in_output = param_export.get(
             "header_in_output", False
         )
+        transcripts_export_add_info = param_export.get("add_info", False)
 
-        if not param_transcript_export or not transcripts_export_output:
+        if not param_export or not transcripts_export_output:
             log.warning(f"No transcriipts export parameters defined!")
             return False
+
+        # Param explode
+        if not param_explode:
+            param_explode = self.get_param().get("transcripts", {}).get("explode", {})
+
+        # Explode fields
+        if param_explode.get("explode_infos_fields", None) and param_explode.get(
+            "explode_infos", True
+        ):
+            self.explode_infos(
+                table=transcripts_table,
+                prefix=param_explode.get("explode_infos_prefix", None),
+                fields=param_explode.get("explode_infos_fields", None),
+                force=False,
+                fields_forced_as_varchar=False,
+            )
 
         # Create transcripts table description
         query_describe = f"""
@@ -12659,8 +12722,13 @@ class Variants:
         else:
 
             # Query param
-            query_update_info_value = f""" NULL """
-            query_export_columns = f""" "#CHROM", "POS", "REF", "ALT", {', '.join(transcripts_annotations_list)} """
+
+            if transcripts_export_add_info:
+                query_update_info_value = f""" INFO """
+                query_export_columns = f""" "#CHROM", "POS", "REF", "ALT", "INFO", {', '.join(transcripts_annotations_list)} """
+            else:
+                query_update_info_value = f""" NULL """
+                query_export_columns = f""" "#CHROM", "POS", "REF", "ALT", {', '.join(transcripts_annotations_list)} """
 
         # Query export
         query_export = f"""

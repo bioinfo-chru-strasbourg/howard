@@ -40,15 +40,15 @@ def query(args: argparse) -> None:
     )
 
     # Access
-    input_format = vcfdata_obj.get_input_format()
-    if param.get("explode", {}).get("explode_infos", False) or input_format not in [
-        "duckdb",
-        "parquet",
-    ]:
-        access = "RW"
-    else:
-        access = "RO"
-    config["access"] = access
+    if config.get("access", None) is None:
+        input_format = vcfdata_obj.get_input_format()
+        if param.get("explode", {}).get("explode_infos", False) or input_format not in [
+            "duckdb",
+            "parquet",
+        ]:
+            config["access"] = "RW"
+        else:
+            config["access"] = "RO"
 
     # Re-Load Config and Params
     vcfdata_obj.set_param(param)

@@ -930,7 +930,20 @@
     },
     "order_by": {},
     "include_header": {},
-    "parquet_partitions": {}
+    "parquet_partitions": {},
+    "force_cast_as_flat": {
+      "__help": [
+        "Force cast as flat values (varchar, integer, boolean) for Parquet export. By default, Parquet export preserves all columns type, even as list/nested.",
+        "If 'true', values as list will be aggregated within a varchar value, with separator ','."
+      ],
+      "__type": "bool",
+      "__default": false,
+      "__code_type": "json",
+      "__examples_code": [
+        "# Force cast as flat values for Parquet export:",
+        "\"force_cast_as_flat\": true"
+      ]
+    }
   },
   "explode": {
     "__help": ["Explode options for INFO/tags annotations within VCF files."],
@@ -1346,19 +1359,82 @@
       "__default": {},
       "__code_type": "json",
       "__examples_code": [
-        "# Export as compressed TSV:",
+        "# Export as compressed TSV, including header:",
         "\"export\": {",
-        "  \"output\": \"/tmp/output.tsv.gz\"",
+        "  \"output\": \"/tmp/output.tsv.gz\",",
+        "  \"header_in_output\": true",
         "}",
         "# Export as VCF:",
         "\"export\": {",
         "  \"output\": \"/tmp/output.vcf\"",
         "}",
-        "# Export as Parquet:",
+        "# Export as Parquet, generate header file and include INFO column:",
         "\"export\": {",
-        "  \"output\": \"/tmp/output.parquet\"",
+        "  \"output\": \"/tmp/output.parquet\",",
+        "  \"export_header\": true,",
+        "  \"add_info\": true",
         "}"
-      ]
+      ],
+      "output": {
+        "__help": [
+          "Output file to export transcripts view/table. The output file format is deduced from the file extension (e.g. '.vcf', '.parquet', '.tsv.gz')."
+        ],
+        "__type": "Path",
+        "__default": null,
+        "__code_type": "json",
+        "__examples_code": [
+          "# Output file to export transcripts view/table:",
+          "\"output\": \"/tmp/output.tsv.gz\""
+        ]
+      },
+      "export_header": {
+        "__help": [
+          "Export header file ('.hdr') corresoonding to output file. By default, header file is not generated."
+        ],
+        "__type": "Boolean",
+        "__default": true,
+        "__code_type": "json",
+        "__examples_code": [
+          "# Include header in output file:",
+          "\"export_header\": true",
+          "# Do not include header in output file:",
+          "\"export_header\": false"
+        ]
+      },
+      "header_in_output": {
+        "__help": [
+          "Include header in output file. By default, header is not included in output file (excpet for VCF format)."
+        ],
+        "__type": "Boolean",
+        "__default": true,
+        "__code_type": "json",
+        "__examples_code": [
+          "# Include header in output file:",
+          "\"header_in_output\": true",
+          "# Do not include header in output file:",
+          "\"header_in_output\": false"
+        ]
+      },
+      "add_info": {
+        "__help": [
+          "Add INFO field to output file. By default, INFO field is not added to output file (except for VCF fomat)."
+        ],
+        "__type": "Boolean",
+        "__default": false,
+        "__code_type": "json",
+        "__examples_code": [
+          "# Add INFO field to output file:",
+          "\"add_info\": true",
+          "# Do not add INFO field to output file:",
+          "\"add_info\": false"
+        ]
+      }
+    },
+    "explode": {
+      "__help": ["Explode options for INFO/tags annotations within output file."],
+      "explode_infos": {},
+      "explode_infos_prefix": {},
+      "explode_infos_fields": {}
     }
   },
   "threads": {},

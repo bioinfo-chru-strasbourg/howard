@@ -505,9 +505,8 @@ def test_create_annotations_view_chrom_pos_ref_alt():
             LIMIT 100
             """
         )
-        # log.debug(annotations_view_select)
         # Check shape
-        assert annotations_view_select.shape == (7, 4)
+        assert annotations_view_select.shape == (7, 8)
         assert sorted(set(annotations_view_select.columns.to_list())) == sorted(
             set(
                 [
@@ -515,6 +514,10 @@ def test_create_annotations_view_chrom_pos_ref_alt():
                     "POS",
                     "REF",
                     "ALT",
+                    "INFO",
+                    "INFOS_CLNSIG",
+                    "INFOS_SIFT",
+                    "INFOS",
                 ]
             )
         )

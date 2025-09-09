@@ -1,7 +1,6 @@
 import argparse
 import logging as log
 
-from howard.functions import from_annovar
 from howard.functions.commons import (
     DEFAULT_REFSEQ_FOLDER,
     add_value_into_dict,
@@ -23,6 +22,7 @@ from howard.functions.databases import (
     databases_download_snpeff,
     generate_databases_param,
 )
+from howard.functions.from_annovar import from_annovar
 from howard.functions.from_extann import from_extann
 
 

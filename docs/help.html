@@ -490,7 +490,7 @@ class="header-section-number">2.2</span> Explode</h2>
 <blockquote>
 <pre><code>    --explode_infos
 
-Explode VCF INFO/Tag into &#39;variants&#39; table columns.</code></pre>
+Explode VCF INFO/Tag into table columns (e.g. &#39;variants&#39;, &#39;transcripts&#39;).</code></pre>
 </blockquote>
 <p></small></p>
 <p><small></p>
@@ -508,11 +508,10 @@ Explode VCF INFO/Tag specific fields/tags.
 Keyword `*` specify all available fields, except those already specified.
 Pattern (regex) can be used, such as `.*_score` for fields named with &#39;_score&#39; at the end.
 Examples:
-- &#39;HGVS,SIFT,Clinvar&#39; (list of fields)
-- &#39;HGVS,*,Clinvar&#39; (list of fields with all other fields at the end)
+- &#39;HGVS,SIFT,Clinvar&#39; (list of 3 fields)
+- &#39;HGVS,*,Clinvar&#39; (list of 2 fields with all other fields in the middle)
 - &#39;HGVS,.*_score,Clinvar&#39; (list of 2 fields with all scores in the middle)
-- &#39;HGVS,.*_score,*&#39; (1 field, scores, all other fields)
-- &#39;HGVS,*,.*_score&#39; (1 field, all other fields, all scores)</code></pre>
+- &#39;HGVS,.*_score,*&#39; (1 field, scores, all other fields at the end)</code></pre>
 </blockquote>
 <p></small></p>
 <h2 data-number="2.3" id="query"><span
@@ -859,7 +858,7 @@ class="header-section-number">6.2</span> Explode</h2>
 <blockquote>
 <pre><code>    --explode_infos
 
-Explode VCF INFO/Tag into &#39;variants&#39; table columns.</code></pre>
+Explode VCF INFO/Tag into table columns (e.g. &#39;variants&#39;, &#39;transcripts&#39;).</code></pre>
 </blockquote>
 <p></small></p>
 <p><small></p>
@@ -877,11 +876,10 @@ Explode VCF INFO/Tag specific fields/tags.
 Keyword `*` specify all available fields, except those already specified.
 Pattern (regex) can be used, such as `.*_score` for fields named with &#39;_score&#39; at the end.
 Examples:
-- &#39;HGVS,SIFT,Clinvar&#39; (list of fields)
-- &#39;HGVS,*,Clinvar&#39; (list of fields with all other fields at the end)
+- &#39;HGVS,SIFT,Clinvar&#39; (list of 3 fields)
+- &#39;HGVS,*,Clinvar&#39; (list of 2 fields with all other fields in the middle)
 - &#39;HGVS,.*_score,Clinvar&#39; (list of 2 fields with all scores in the middle)
-- &#39;HGVS,.*_score,*&#39; (1 field, scores, all other fields)
-- &#39;HGVS,*,.*_score&#39; (1 field, all other fields, all scores)</code></pre>
+- &#39;HGVS,.*_score,*&#39; (1 field, scores, all other fields at the end)</code></pre>
 </blockquote>
 <p></small></p>
 <h2 data-number="6.3" id="export-3"><span
@@ -1803,7 +1801,7 @@ class="header-section-number">11.7</span> Explode</h2>
 <blockquote>
 <pre><code>    --explode_infos
 
-Explode VCF INFO/Tag into &#39;variants&#39; table columns.</code></pre>
+Explode VCF INFO/Tag into table columns (e.g. &#39;variants&#39;, &#39;transcripts&#39;).</code></pre>
 </blockquote>
 <p></small></p>
 <p><small></p>
@@ -1821,11 +1819,10 @@ Explode VCF INFO/Tag specific fields/tags.
 Keyword `*` specify all available fields, except those already specified.
 Pattern (regex) can be used, such as `.*_score` for fields named with &#39;_score&#39; at the end.
 Examples:
-- &#39;HGVS,SIFT,Clinvar&#39; (list of fields)
-- &#39;HGVS,*,Clinvar&#39; (list of fields with all other fields at the end)
+- &#39;HGVS,SIFT,Clinvar&#39; (list of 3 fields)
+- &#39;HGVS,*,Clinvar&#39; (list of 2 fields with all other fields in the middle)
 - &#39;HGVS,.*_score,Clinvar&#39; (list of 2 fields with all scores in the middle)
-- &#39;HGVS,.*_score,*&#39; (1 field, scores, all other fields)
-- &#39;HGVS,*,.*_score&#39; (1 field, all other fields, all scores)</code></pre>
+- &#39;HGVS,.*_score,*&#39; (1 field, scores, all other fields at the end)</code></pre>
 </blockquote>
 <p></small></p>
 <h2 data-number="11.8" id="export-4"><span
@@ -2981,7 +2978,7 @@ class="header-section-number">18.3</span> Explode</h2>
 <blockquote>
 <pre><code>    --explode_infos
 
-Explode VCF INFO/Tag into &#39;variants&#39; table columns.</code></pre>
+Explode VCF INFO/Tag into table columns (e.g. &#39;variants&#39;, &#39;transcripts&#39;).</code></pre>
 </blockquote>
 <p></small></p>
 <p><small></p>
@@ -2999,11 +2996,10 @@ Explode VCF INFO/Tag specific fields/tags.
 Keyword `*` specify all available fields, except those already specified.
 Pattern (regex) can be used, such as `.*_score` for fields named with &#39;_score&#39; at the end.
 Examples:
-- &#39;HGVS,SIFT,Clinvar&#39; (list of fields)
-- &#39;HGVS,*,Clinvar&#39; (list of fields with all other fields at the end)
+- &#39;HGVS,SIFT,Clinvar&#39; (list of 3 fields)
+- &#39;HGVS,*,Clinvar&#39; (list of 2 fields with all other fields in the middle)
 - &#39;HGVS,.*_score,Clinvar&#39; (list of 2 fields with all scores in the middle)
-- &#39;HGVS,.*_score,*&#39; (1 field, scores, all other fields)
-- &#39;HGVS,*,.*_score&#39; (1 field, all other fields, all scores)</code></pre>
+- &#39;HGVS,.*_score,*&#39; (1 field, scores, all other fields at the end)</code></pre>
 </blockquote>
 <p></small></p>
 <h2 data-number="18.4" id="export-5"><span
@@ -3136,7 +3132,7 @@ class="header-section-number">19.3</span> Explode</h2>
 <blockquote>
 <pre><code>    --explode_infos
 
-Explode VCF INFO/Tag into &#39;variants&#39; table columns.</code></pre>
+Explode VCF INFO/Tag into table columns (e.g. &#39;variants&#39;, &#39;transcripts&#39;).</code></pre>
 </blockquote>
 <p></small></p>
 <p><small></p>
@@ -3154,11 +3150,10 @@ Explode VCF INFO/Tag specific fields/tags.
 Keyword `*` specify all available fields, except those already specified.
 Pattern (regex) can be used, such as `.*_score` for fields named with &#39;_score&#39; at the end.
 Examples:
-- &#39;HGVS,SIFT,Clinvar&#39; (list of fields)
-- &#39;HGVS,*,Clinvar&#39; (list of fields with all other fields at the end)
+- &#39;HGVS,SIFT,Clinvar&#39; (list of 3 fields)
+- &#39;HGVS,*,Clinvar&#39; (list of 2 fields with all other fields in the middle)
 - &#39;HGVS,.*_score,Clinvar&#39; (list of 2 fields with all scores in the middle)
-- &#39;HGVS,.*_score,*&#39; (1 field, scores, all other fields)
-- &#39;HGVS,*,.*_score&#39; (1 field, all other fields, all scores)</code></pre>
+- &#39;HGVS,.*_score,*&#39; (1 field, scores, all other fields at the end)</code></pre>
 </blockquote>
 <p></small></p>
 <h2 data-number="19.4" id="export-6"><span
