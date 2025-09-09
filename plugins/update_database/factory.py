@@ -356,6 +356,7 @@ class Database:
         threads = round(get_threads() / 2)
         memory = str(round(int(re.match(r'\d+', get_memory())[0]) / 2))+"G"
         param = {"input": file, "output": output, "explode": {"explode_infos": True}, "threads": threads, "memory": memory}
+        log.debug(f"VCF to parquet param: {param}")
         convert(
             argparse.Namespace(
                 command="convert",

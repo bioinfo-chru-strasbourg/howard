@@ -35,6 +35,7 @@ PARAM = {
                 "workdir": "/work",
                 "condacachedir": "/work",
                 # "threads": 8,
+                "tools": "SPiP,SpliceAI"
             }
         }
     }
@@ -43,13 +44,13 @@ CONFIG = {
     "threads": 2,
     "folders": {
         "databases": {
-            "genomes": f"{tests_databases_folder}/genomes/{tests_databases_release}"
+            "genomes": f"{tests_databases_folder}/genomes/{tests_databases_release}",
         }
     },
     "tools": {
         "splice": {
             "docker": {
-                "image": "bioinfochrustrasbourg/splice:0.2.4",
+                "image": "bioinfochrustrasbourg/splice:0.2.5",
                 "entrypoint": "/bin/bash",
             }
         }
@@ -65,7 +66,7 @@ CONFIG_DOCKER = {
     "tools": {
         "splice": {
             "docker": {
-                "image": "bioinfochrustrasbourg/splice:0.2.4",
+                "image": "bioinfochrustrasbourg/splice:0.2.5",
                 "entrypoint": "/bin/bash",
                 "config": {"automount": True, "notremove": True, "tmp": False},
             }

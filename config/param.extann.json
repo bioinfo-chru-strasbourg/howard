@@ -361,6 +361,7 @@
         }
     },
     "gnomad.v2.1.1.lof_metrics.by_gene.ordered.genes": {
+            "reference": "hg19",
             "genes": {
                 "Number": ".",
                 "Type": "String",

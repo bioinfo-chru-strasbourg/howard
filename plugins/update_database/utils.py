@@ -16,15 +16,16 @@ import subprocess
 def sort_vcf(vcf, sorted_vcf):
     if not vcf.endswith(".gz"):
         raise ValueError("VCF is not compressed")
-    log.debug("Sortinh {vcf}")
+    if sorted_vcf.endswith(".gz"):
+        sorted_vcf = sorted_vcf.replace(".gz", "")
+    log.debug(f"Sorting {vcf}")
     command(f"zcat {vcf} | grep '^#' > {sorted_vcf}")
-    command(f"zcat {vcf} | grep -v '^#' | sort -k1,1V -k2,2n >> {sorted_vcf}")
+    command(f"grep -v '^#' {vcf} | sort -k1,1V -k2,2n >> {sorted_vcf}")
     command(f"bgzip {sorted_vcf}")
     return sorted_vcf + ".gz"
 
 
 def count_row_file(file):
-    log.debug("Checking number of rows")
     result = subprocess.run(
         ["bash", "-c", f"zcat {file} | wc -l"],
         check=True,
