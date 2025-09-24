@@ -11,13 +11,15 @@ coverage report --include=howard/* -m
 """
 
 import os
+import re
 from tempfile import TemporaryDirectory
-import pytest
+from howard.functions.commons import remove_if_exists
+import pytest  # type: ignore
 
-from howard.functions.commons import *
+# from howard.functions.commons import *
 from howard.objects.variants import Variants
 from howard.objects.database import Database
-from test_needed import *
+from test_needed import tests_folder, database_files
 
 
 def test_export_empty():
@@ -26,8 +28,6 @@ def test_export_empty():
     """
 
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
-
-        tmp_dir = "/tmp"
 
         # No database input
         database = Database()
@@ -43,7 +43,7 @@ def test_export_empty():
         database = Database(database=output_database)
         results = database.query(query=f"""SELECT * FROM variants""")
         assert len(results) == 0
-        
+
 
 @pytest.mark.parametrize(
     "order_by, first_pos, first_qual, first_alt",
@@ -61,8 +61,6 @@ def test_export_order_by(order_by, first_pos, first_qual, first_alt):
     """
 
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
-
-        tmp_dir = "/tmp"
 
         # No database input
         database = Database()

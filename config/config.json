@@ -1,5 +1,5 @@
 {
-    "threads": 24,
+    "threads": 4,
     "memory": null,
     "verbosity": "WARNING",
     "docker": {
@@ -40,7 +40,7 @@
         "docker": "docker",
         "splice": {
             "docker": {
-                "image": "bioinfochrustrasbourg/splice:0.2.2",
+                "image": "bioinfochrustrasbourg/splice:0.2.4",
                 "entrypoint": "/bin/bash",
                 "options": null,
                 "command": null,

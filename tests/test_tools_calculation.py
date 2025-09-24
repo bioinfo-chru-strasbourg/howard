@@ -10,22 +10,15 @@ coverage run -m pytest . -x -v
 coverage report --include=howard/* -m
 """
 
-import logging as log
+import argparse
 import os
-import sys
-import duckdb
-import re
-import Bio.bgzf as bgzf
-import gzip
-import pytest
-import pandas as pd
-from pandas.testing import assert_frame_equal
-from unittest.mock import patch
 
+from howard.functions.commons import remove_if_exists
 from howard.objects.variants import Variants
-from howard.functions.commons import *
-from howard.tools.tools import *
-from test_needed import *
+from howard.tools.calculation import calculation
+from howard.tools.tools import arguments_dict
+
+from test_needed import tests_data_folder
 
 
 def test_calculation_tsv():
@@ -139,7 +132,7 @@ def test_calculation_vcf():
                 result_output_nb_variants += 1
 
     # Expected result
-    expected_result_nb_lines = 72
+    expected_result_nb_lines = 77
     expected_result_nb_variants = 7
 
     # Compare

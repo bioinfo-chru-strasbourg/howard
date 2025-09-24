@@ -1,37 +1,15 @@
-#!/usr/bin/env python
-
-import io
-import multiprocessing
 import os
-import re
-import subprocess
-from tempfile import NamedTemporaryFile
-import tempfile
-import duckdb
-import json
 import argparse
-import Bio.bgzf as bgzf
-import pandas as pd
-import vcf
 import logging as log
-import sys
-from configparser import ConfigParser
+import importlib.util
 
-
-from howard.objects.variants import Variants
-from howard.objects.database import Database
-from howard.functions.commons import *
-from howard.functions.databases import *
-from howard.tools.tools import *
+from howard.functions.commons import help_generation
 
 
 # Import Gooey only if exists
-import importlib.util
-
-
 try:
     importlib.util.find_spec("gooey")
-    from gooey import Gooey, GooeyParser
+    from gooey import Gooey, GooeyParser  # type: ignore
 except ImportError:
     log.error("""HOWARD GUI disabled""")
     log.error("""ModuleNotFoundError: No module named 'gooey'""")
@@ -80,14 +58,13 @@ def gui(args: argparse) -> None:
 
     # Config infos
     arguments_dict = args.arguments_dict
-    setup_cfg = args.setup_cfg
+    # setup_cfg = args.setup_cfg
 
     # Parser Gooey
     parser = GooeyParser()
     parser_gooey = help_generation(
         arguments_dict=arguments_dict,
         parser=parser,
-        setup=setup_cfg,
         output_type="gooey",
     )
     parser_gooey.print_help()

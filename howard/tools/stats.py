@@ -1,25 +1,8 @@
-#!/usr/bin/env python
-
-import io
-import multiprocessing
-import os
-import re
-import subprocess
-from tempfile import NamedTemporaryFile
-import tempfile
-import duckdb
-import json
 import argparse
-import Bio.bgzf as bgzf
-import pandas as pd
-import vcf
 import logging as log
-import sys
 
+from howard.functions.commons import load_args, load_config_args
 from howard.objects.variants import Variants
-from howard.objects.database import Database
-from howard.functions.commons import *
-from howard.functions.databases import *
 
 
 def stats(args: argparse) -> None:
@@ -37,7 +20,7 @@ def stats(args: argparse) -> None:
     log.info("Start")
 
     # Load config args
-    arguments_dict, setup_cfg, config, param = load_config_args(args)
+    arguments_dict, _, config, param = load_config_args(args)
 
     # Create variants object
     vcfdata_obj = Variants(input=args.input, config=config, param=param)
@@ -66,13 +49,38 @@ def stats(args: argparse) -> None:
     vcfdata_obj.load_data()
 
     # Parameters
+    stats_stdout = param.get("stats", {}).get("stats_stdout", False)
     stats_md = param.get("stats", {}).get("stats_md", None)
     stats_json = param.get("stats", {}).get("stats_json", None)
+    stats_html = param.get("stats", {}).get("stats_html", None)
+    stats_pdf = param.get("stats", {}).get("stats_pdf", None)
+    annotations_stats = param.get("stats", {}).get("annotations_stats", False)
+    queries = param.get("stats", {}).get("queries", None)
+    queries_view = param.get("stats", {}).get("queries_view", None)
+
+    # Force if no stats file
+    if (
+        stats_md is None
+        and stats_json is None
+        and stats_html is None
+        and stats_pdf is None
+    ):
+        stats_stdout = True
 
     # Stats
-    vcfdata_obj.print_stats(output_file=stats_md, json_file=stats_json)
+    vcfdata_obj.print_stats(
+        stdout=stats_stdout,
+        output_file=stats_md,
+        json_file=stats_json,
+        html_file=stats_html,
+        pdf_file=stats_pdf,
+        annotations_stats=annotations_stats,
+        queries=queries,
+        queries_view=queries_view,
+    )
 
-    # Close connexion
-    vcfdata_obj.close_connexion()
-
+    # Log
     log.info("End")
+
+    # Return Variants object
+    return vcfdata_obj

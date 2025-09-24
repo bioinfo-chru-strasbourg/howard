@@ -12,16 +12,14 @@ coverage report --include=howard/* -m
 
 import os
 
-# from howard.functions.commons import *
-# from howard.objects.variants import Variants
-# from howard.functions.databases import *
 from howard.functions.commons import full_path
 from howard.functions.databases import (
     databases_download_annovar,
     databases_download_genomes,
     databases_download_refseq,
 )
-from howard.tools.tools import main_folder  # , arguments_dict
+
+from howard.main import main_folder  # , arguments_dict
 
 
 # Main tests folder

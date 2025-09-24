@@ -10,114 +10,125 @@ title: HOWARD Help
   - [<span class="toc-section-number">2.2</span> Explode](#explode)
   - [<span class="toc-section-number">2.3</span> Query](#query)
   - [<span class="toc-section-number">2.4</span> Export](#export)
-- [<span class="toc-section-number">3</span> STATS tool](#stats-tool)
+- [<span class="toc-section-number">3</span> FILTER tool](#filter-tool)
   - [<span class="toc-section-number">3.1</span> Main
     options](#main-options-1)
-  - [<span class="toc-section-number">3.2</span> Stats](#stats)
-- [<span class="toc-section-number">4</span> CONVERT
-  tool](#convert-tool)
+  - [<span class="toc-section-number">3.2</span> Filters](#filters)
+  - [<span class="toc-section-number">3.3</span> Export](#export-1)
+- [<span class="toc-section-number">4</span> SORT tool](#sort-tool)
   - [<span class="toc-section-number">4.1</span> Main
     options](#main-options-2)
-  - [<span class="toc-section-number">4.2</span> Explode](#explode-1)
-  - [<span class="toc-section-number">4.3</span> Export](#export-1)
-- [<span class="toc-section-number">5</span> HGVS tool](#hgvs-tool)
+  - [<span class="toc-section-number">4.2</span> Export](#export-2)
+- [<span class="toc-section-number">5</span> STATS tool](#stats-tool)
   - [<span class="toc-section-number">5.1</span> Main
     options](#main-options-3)
-  - [<span class="toc-section-number">5.2</span> HGVS](#hgvs)
-- [<span class="toc-section-number">6</span> ANNOTATION
-  tool](#annotation-tool)
+  - [<span class="toc-section-number">5.2</span> Stats](#stats)
+- [<span class="toc-section-number">6</span> CONVERT
+  tool](#convert-tool)
   - [<span class="toc-section-number">6.1</span> Main
     options](#main-options-4)
-  - [<span class="toc-section-number">6.2</span>
-    Annotation](#annotation)
-- [<span class="toc-section-number">7</span> CALCULATION
-  tool](#calculation-tool)
+  - [<span class="toc-section-number">6.2</span> Explode](#explode-1)
+  - [<span class="toc-section-number">6.3</span> Export](#export-3)
+- [<span class="toc-section-number">7</span> HGVS tool](#hgvs-tool)
   - [<span class="toc-section-number">7.1</span> Main
     options](#main-options-5)
-  - [<span class="toc-section-number">7.2</span>
-    Calculation](#calculation)
-  - [<span class="toc-section-number">7.3</span> NOMEN](#nomen)
-  - [<span class="toc-section-number">7.4</span> TRIO](#trio)
-  - [<span class="toc-section-number">7.5</span>
-    BARCODEFAMILY](#barcodefamily)
-- [<span class="toc-section-number">8</span> PRIORITIZATION
-  tool](#prioritization-tool)
+  - [<span class="toc-section-number">7.2</span> HGVS](#hgvs)
+- [<span class="toc-section-number">8</span> ANNOTATION
+  tool](#annotation-tool)
   - [<span class="toc-section-number">8.1</span> Main
     options](#main-options-6)
   - [<span class="toc-section-number">8.2</span>
-    Prioritization](#prioritization)
-- [<span class="toc-section-number">9</span> PROCESS
-  tool](#process-tool)
+    Annotation](#annotation)
+- [<span class="toc-section-number">9</span> CALCULATION
+  tool](#calculation-tool)
   - [<span class="toc-section-number">9.1</span> Main
     options](#main-options-7)
-  - [<span class="toc-section-number">9.2</span> HGVS](#hgvs-1)
-  - [<span class="toc-section-number">9.3</span>
-    Annotation](#annotation-1)
-  - [<span class="toc-section-number">9.4</span>
-    Calculation](#calculation-1)
+  - [<span class="toc-section-number">9.2</span>
+    Calculation](#calculation)
+  - [<span class="toc-section-number">9.3</span> NOMEN](#nomen)
+  - [<span class="toc-section-number">9.4</span> TRIO](#trio)
   - [<span class="toc-section-number">9.5</span>
-    Prioritization](#prioritization-1)
-  - [<span class="toc-section-number">9.6</span> Query](#query-1)
-  - [<span class="toc-section-number">9.7</span> Explode](#explode-2)
-  - [<span class="toc-section-number">9.8</span> Export](#export-2)
-- [<span class="toc-section-number">10</span> DATABASES
-  tool](#databases-tool)
+    BARCODEFAMILY](#barcodefamily)
+- [<span class="toc-section-number">10</span> PRIORITIZATION
+  tool](#prioritization-tool)
   - [<span class="toc-section-number">10.1</span> Main
     options](#main-options-8)
-  - [<span class="toc-section-number">10.2</span> Genomes](#genomes)
-  - [<span class="toc-section-number">10.3</span> snpEff](#snpeff)
-  - [<span class="toc-section-number">10.4</span> Annovar](#annovar)
-  - [<span class="toc-section-number">10.5</span> refSeq](#refseq)
-  - [<span class="toc-section-number">10.6</span> dbNSFP](#dbnsfp)
-  - [<span class="toc-section-number">10.7</span>
-    AlphaMissense](#alphamissense)
-  - [<span class="toc-section-number">10.8</span> Exomiser](#exomiser)
-  - [<span class="toc-section-number">10.9</span> dbSNP](#dbsnp)
-  - [<span class="toc-section-number">10.10</span> HGMD](#hgmd)
-  - [<span class="toc-section-number">10.11</span>
-    from_Annovar](#from_annovar)
-  - [<span class="toc-section-number">10.12</span>
-    from_extann](#from_extann)
-  - [<span class="toc-section-number">10.13</span>
-    Parameters](#parameters)
-- [<span class="toc-section-number">11</span> GUI tool](#gui-tool)
-- [<span class="toc-section-number">12</span> HELP tool](#help-tool)
-  - [<span class="toc-section-number">12.1</span> Main
+  - [<span class="toc-section-number">10.2</span>
+    Prioritization](#prioritization)
+- [<span class="toc-section-number">11</span> PROCESS
+  tool](#process-tool)
+  - [<span class="toc-section-number">11.1</span> Main
     options](#main-options-9)
-- [<span class="toc-section-number">13</span> UPDATE_DATABASE
-  tool](#update_database-tool)
-  - [<span class="toc-section-number">13.1</span> Main
+  - [<span class="toc-section-number">11.2</span> HGVS](#hgvs-1)
+  - [<span class="toc-section-number">11.3</span>
+    Annotation](#annotation-1)
+  - [<span class="toc-section-number">11.4</span>
+    Calculation](#calculation-1)
+  - [<span class="toc-section-number">11.5</span>
+    Prioritization](#prioritization-1)
+  - [<span class="toc-section-number">11.6</span> Query](#query-1)
+  - [<span class="toc-section-number">11.7</span> Explode](#explode-2)
+  - [<span class="toc-section-number">11.8</span> Export](#export-4)
+- [<span class="toc-section-number">12</span> DATABASES
+  tool](#databases-tool)
+  - [<span class="toc-section-number">12.1</span> Main
     options](#main-options-10)
-  - [<span class="toc-section-number">13.2</span>
-    Update_database](#update_database)
-  - [<span class="toc-section-number">13.3</span> Options](#options)
-- [<span class="toc-section-number">14</span> TRANSCRIPTS_CHECK
-  tool](#transcripts_check-tool)
+  - [<span class="toc-section-number">12.2</span> Genomes](#genomes)
+  - [<span class="toc-section-number">12.3</span> snpEff](#snpeff)
+  - [<span class="toc-section-number">12.4</span> Annovar](#annovar)
+  - [<span class="toc-section-number">12.5</span> refSeq](#refseq)
+  - [<span class="toc-section-number">12.6</span> dbNSFP](#dbnsfp)
+  - [<span class="toc-section-number">12.7</span>
+    AlphaMissense](#alphamissense)
+  - [<span class="toc-section-number">12.8</span> Exomiser](#exomiser)
+  - [<span class="toc-section-number">12.9</span> dbSNP](#dbsnp)
+  - [<span class="toc-section-number">12.10</span> HGMD](#hgmd)
+  - [<span class="toc-section-number">12.11</span>
+    from_Annovar](#from_annovar)
+  - [<span class="toc-section-number">12.12</span>
+    from_extann](#from_extann)
+  - [<span class="toc-section-number">12.13</span>
+    Parameters](#parameters)
+- [<span class="toc-section-number">13</span> GUI tool](#gui-tool)
+- [<span class="toc-section-number">14</span> HELP tool](#help-tool)
   - [<span class="toc-section-number">14.1</span> Main
     options](#main-options-11)
-- [<span class="toc-section-number">15</span> GENEBE tool](#genebe-tool)
+- [<span class="toc-section-number">15</span> UPDATE_DATABASE
+  tool](#update_database-tool)
   - [<span class="toc-section-number">15.1</span> Main
     options](#main-options-12)
-  - [<span class="toc-section-number">15.2</span> GeneBe](#genebe)
-  - [<span class="toc-section-number">15.3</span> Explode](#explode-3)
-  - [<span class="toc-section-number">15.4</span> Export](#export-3)
-- [<span class="toc-section-number">16</span> MINIMALIZE
-  tool](#minimalize-tool)
+  - [<span class="toc-section-number">15.2</span>
+    Update_database](#update_database)
+  - [<span class="toc-section-number">15.3</span> Options](#options)
+- [<span class="toc-section-number">16</span> TO_EXCEL
+  tool](#to_excel-tool)
   - [<span class="toc-section-number">16.1</span> Main
     options](#main-options-13)
-  - [<span class="toc-section-number">16.2</span>
+  - [<span class="toc-section-number">16.2</span> Add](#add)
+- [<span class="toc-section-number">17</span> TRANSCRIPTS_CHECK
+  tool](#transcripts_check-tool)
+  - [<span class="toc-section-number">17.1</span> Main
+    options](#main-options-14)
+- [<span class="toc-section-number">18</span> GENEBE tool](#genebe-tool)
+  - [<span class="toc-section-number">18.1</span> Main
+    options](#main-options-15)
+  - [<span class="toc-section-number">18.2</span> GeneBe](#genebe)
+  - [<span class="toc-section-number">18.3</span> Explode](#explode-3)
+  - [<span class="toc-section-number">18.4</span> Export](#export-5)
+- [<span class="toc-section-number">19</span> MINIMALIZE
+  tool](#minimalize-tool)
+  - [<span class="toc-section-number">19.1</span> Main
+    options](#main-options-16)
+  - [<span class="toc-section-number">19.2</span>
     Minimalize](#minimalize)
-  - [<span class="toc-section-number">16.3</span> Explode](#explode-4)
-  - [<span class="toc-section-number">16.4</span> Export](#export-4)
-- [<span class="toc-section-number">17</span> Shared
+  - [<span class="toc-section-number">19.3</span> Explode](#explode-4)
+  - [<span class="toc-section-number">19.4</span> Export](#export-6)
+- [<span class="toc-section-number">20</span> Shared
   arguments](#shared-arguments)
 
 # Introduction
 
 <!--TOC-->
-
-HOWARD-ANN:0.12.1.1 - HOWARD - Highly Open Workflow for Annotation &
-Ranking toward genomic variant Discovery
 
 Usage examples:
 
@@ -225,7 +236,7 @@ Usage examples:
 
 >     --explode_infos
 >
->     Explode VCF INFO/Tag into 'variants' table columns.
+>     Explode VCF INFO/Tag into table columns (e.g. 'variants', 'transcripts').
 
 </small>
 
@@ -245,11 +256,10 @@ Usage examples:
 >     Keyword `*` specify all available fields, except those already specified.
 >     Pattern (regex) can be used, such as `.*_score` for fields named with '_score' at the end.
 >     Examples:
->     - 'HGVS,SIFT,Clinvar' (list of fields)
->     - 'HGVS,*,Clinvar' (list of fields with all other fields at the end)
+>     - 'HGVS,SIFT,Clinvar' (list of 3 fields)
+>     - 'HGVS,*,Clinvar' (list of 2 fields with all other fields in the middle)
 >     - 'HGVS,.*_score,Clinvar' (list of 2 fields with all scores in the middle)
->     - 'HGVS,.*_score,*' (1 field, scores, all other fields)
->     - 'HGVS,*,.*_score' (1 field, all other fields, all scores)
+>     - 'HGVS,.*_score,*' (1 field, scores, all other fields at the end)
 
 </small>
 
@@ -265,10 +275,169 @@ Usage examples:
 
 <small>
 
->     --query_print_mode=<print mode> [None, 'markdown', 'tabulate', 'disabled']
+>     --query_print_mode=<print mode> [None, 'dataframe', 'markdown', 'tabulate', 'disabled']
 >
 >     Print mode of query result (only for print result, not output).
->     Either None (native), 'markdown', 'tabulate' or disabled.
+>     Either None (default), 'dataframe', 'markdown', 'tabulate' or disabled.
+>     If None, print mode is 'dataframe' if no export file is provided.
+
+</small>
+
+<small>
+
+>     --interactive_mode=<interactive mode> ['table', 'view', 'harlequin', 'harlequin_view', 'harlequin_table'] (default: table)
+>
+>     Iteractive mode for variants view.
+>     Either 'table' for loading data and speed up queries, or 'view' for dynamic queries (slower), or 'harlequin' for using Harlequin tool.
+
+</small>
+
+## Export
+
+<small>
+
+>     --include_header
+>
+>     Include header (in VCF format) in output file.
+>     Only for compatible formats (tab-delimiter format as TSV or BED).
+
+</small>
+
+<small>
+
+>     --parquet_partitions=<parquet partitions>
+>
+>     Parquet partitioning using hive (available for any format).
+>     This option is faster parallel writing, but memory consuming.
+>     Use 'None' (string) for NO partition but split parquet files into a folder.
+>     Examples: '#CHROM', '#CHROM,REF', 'None'.
+
+</small>
+
+# FILTER tool
+
+Filter genetic variations in SQL format. Data can be loaded into
+'variants' table from various formats (e.g. VCF, TSV, Parquet...). SQL
+filter can also use external data within the request, such as a Parquet
+file(s).
+
+Usage examples:
+
+> howard filter --input=tests/data/example.vcf.gz
+> --output=/tmp/example.filter.vcf.gz --filter="REF = 'A' AND POS \<
+> 100000"
+
+> howard filter --input=tests/data/example.vcf.gz
+> --output=/tmp/example.filter.vcf.gz --filter="REF = 'A' AND POS \<
+> 100000" --samples="sample1,sample2"
+
+> howard filter --input=tests/data/example.vcf.gz
+> --output=/tmp/example.filter.vcf.gz --filter="INFOS.CLNSIG LIKE
+> 'pathogenic'" --samples="sample1,sample2"
+
+> howard filter --input=tests/data/example.vcf.gz
+> --output=/tmp/example.filter.vcf.gz --filter="QUAL \> 100 AND
+> SAMPLES.sample2.GT != './.'" --samples="sample2"
+
+> 
+
+## Main options
+
+<small>
+
+>     --input=<input> | required
+>
+>     Input file path.
+>     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
+>     Files can be compressesd (e.g. vcf.gz, tsv.gz).
+
+</small>
+
+<small>
+
+>     --output=<output> | required
+>
+>     Output file path.
+>     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
+>     Files can be compressesd (e.g. vcf.gz, tsv.gz).
+
+</small>
+
+## Filters
+
+<small>
+
+>     --filter=<filter>
+>
+>     Filter variant using SQL format
+>     (e.g. 'POS < 100000').
+
+</small>
+
+<small>
+
+>     --samples=<samples>
+>
+>     List of samples
+>     (e.g. 'sample1,sample2').
+
+</small>
+
+## Export
+
+<small>
+
+>     --include_header
+>
+>     Include header (in VCF format) in output file.
+>     Only for compatible formats (tab-delimiter format as TSV or BED).
+
+</small>
+
+<small>
+
+>     --parquet_partitions=<parquet partitions>
+>
+>     Parquet partitioning using hive (available for any format).
+>     This option is faster parallel writing, but memory consuming.
+>     Use 'None' (string) for NO partition but split parquet files into a folder.
+>     Examples: '#CHROM', '#CHROM,REF', 'None'.
+
+</small>
+
+# SORT tool
+
+Sort genetic variations from contig order. Data can be loaded into
+'variants' table from various formats (e.g. VCF, TSV, Parquet...). SQL
+filter can also use external data within the request, such as a Parquet
+file(s).
+
+Usage examples:
+
+> howard sort --input=tests/data/example.vcf.gz
+> --output=/tmp/example.sorted.vcf.gz
+
+> 
+
+## Main options
+
+<small>
+
+>     --input=<input> | required
+>
+>     Input file path.
+>     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
+>     Files can be compressesd (e.g. vcf.gz, tsv.gz).
+
+</small>
+
+<small>
+
+>     --output=<output> | required
+>
+>     Output file path.
+>     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
+>     Files can be compressesd (e.g. vcf.gz, tsv.gz).
 
 </small>
 
@@ -304,7 +473,10 @@ Usage examples:
 > howard stats --input=tests/data/example.vcf.gz
 
 > howard stats --input=tests/data/example.vcf.gz
-> --stats_md=/tmp/stats.md
+> --stats_md=/tmp/stats.md --stats_json=/tmp/stats.json
+> --stats_html=/tmp/stats.html --stats_pdf=/tmp/stats.pdf
+
+> howard stats --input=tests/data/example.vcf.gz --annotations_stats
 
 > howard stats --input=tests/data/example.vcf.gz
 > --param=config/param.json
@@ -336,6 +508,14 @@ Usage examples:
 
 <small>
 
+>     --stats_stdout
+>
+>     Print Markdown stats in stdout. Default False, except if no output files are requested.
+
+</small>
+
+<small>
+
 >     --stats_md=<stats markdown>
 >
 >     Stats Output file in MarkDown format.
@@ -347,6 +527,30 @@ Usage examples:
 >     --stats_json=<stats json>
 >
 >     Stats Output file in JSON format.
+
+</small>
+
+<small>
+
+>     --stats_html=<stats html>
+>
+>     Stats Output file in HTML format.
+
+</small>
+
+<small>
+
+>     --stats_pdf=<stats pdf>
+>
+>     Stats Output file in PDF format.
+
+</small>
+
+<small>
+
+>     --annotations_stats
+>
+>     Add statistics on annotations (INFO/tags)).
 
 </small>
 
@@ -420,7 +624,7 @@ Usage examples:
 
 >     --explode_infos
 >
->     Explode VCF INFO/Tag into 'variants' table columns.
+>     Explode VCF INFO/Tag into table columns (e.g. 'variants', 'transcripts').
 
 </small>
 
@@ -440,11 +644,10 @@ Usage examples:
 >     Keyword `*` specify all available fields, except those already specified.
 >     Pattern (regex) can be used, such as `.*_score` for fields named with '_score' at the end.
 >     Examples:
->     - 'HGVS,SIFT,Clinvar' (list of fields)
->     - 'HGVS,*,Clinvar' (list of fields with all other fields at the end)
+>     - 'HGVS,SIFT,Clinvar' (list of 3 fields)
+>     - 'HGVS,*,Clinvar' (list of 2 fields with all other fields in the middle)
 >     - 'HGVS,.*_score,Clinvar' (list of 2 fields with all scores in the middle)
->     - 'HGVS,.*_score,*' (1 field, scores, all other fields)
->     - 'HGVS,*,.*_score' (1 field, all other fields, all scores)
+>     - 'HGVS,.*_score,*' (1 field, scores, all other fields at the end)
 
 </small>
 
@@ -1409,10 +1612,11 @@ Usage examples:
 
 <small>
 
->     --query_print_mode=<print mode> [None, 'markdown', 'tabulate', 'disabled']
+>     --query_print_mode=<print mode> [None, 'dataframe', 'markdown', 'tabulate', 'disabled']
 >
 >     Print mode of query result (only for print result, not output).
->     Either None (native), 'markdown', 'tabulate' or disabled.
+>     Either None (default), 'dataframe', 'markdown', 'tabulate' or disabled.
+>     If None, print mode is 'dataframe' if no export file is provided.
 
 </small>
 
@@ -1422,7 +1626,7 @@ Usage examples:
 
 >     --explode_infos
 >
->     Explode VCF INFO/Tag into 'variants' table columns.
+>     Explode VCF INFO/Tag into table columns (e.g. 'variants', 'transcripts').
 
 </small>
 
@@ -1442,11 +1646,10 @@ Usage examples:
 >     Keyword `*` specify all available fields, except those already specified.
 >     Pattern (regex) can be used, such as `.*_score` for fields named with '_score' at the end.
 >     Examples:
->     - 'HGVS,SIFT,Clinvar' (list of fields)
->     - 'HGVS,*,Clinvar' (list of fields with all other fields at the end)
+>     - 'HGVS,SIFT,Clinvar' (list of 3 fields)
+>     - 'HGVS,*,Clinvar' (list of 2 fields with all other fields in the middle)
 >     - 'HGVS,.*_score,Clinvar' (list of 2 fields with all scores in the middle)
->     - 'HGVS,.*_score,*' (1 field, scores, all other fields)
->     - 'HGVS,*,.*_score' (1 field, all other fields, all scores)
+>     - 'HGVS,.*_score,*' (1 field, scores, all other fields at the end)
 
 </small>
 
@@ -1496,6 +1699,11 @@ Usage examples:
 > --download-genomes-contig-regex='chr\[0-9XYM\]+\$'
 
 > howard databases --assembly=hg19
+> --download-genomes=~/howard/databases/genomes/current
+> --download-genomes-provider-file=https://hgdownload.soe.ucsc.edu/goldenpath/hg19/bigZips/p13.plusMT/hg19.p13.plusMT.fa.gz
+> --download-genomes-contig-regex='chr\[0-9XYMT\]+\$'
+
+> howard databases --assembly=hg19
 > --download-annovar=~/howard/databases/annovar/current
 > --download-annovar-files='refGene,cosmic70,nci60'
 
@@ -1508,6 +1716,7 @@ Usage examples:
 
 > howard databases --assembly=hg19
 > --download-dbnsfp=~/howard/databases/dbnsfp/current
+> --download-dbnsfp-source=tests/databases/dbnsfp/dbNSFP4.4a.zip
 > --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases
 
 > howard databases --assembly=hg19
@@ -1526,8 +1735,6 @@ Usage examples:
 > --download-annovar-files='refGene,cosmic70,nci60'
 > --download-snpeff=snpeff/current --download-refseq=refseq/current
 > --download-refseq-format-file='ncbiRefSeq.txt'
-> --download-dbnsfp=dbnsfp/current --download-dbnsfp-release='4.4a'
-> --download-dbnsfp-subdatabases
 > --download-alphamissense=alphamissense/current
 > --download-exomiser=exomiser/current --download-dbsnp=dbsnp/current
 > --download-dbsnp-vcf --threads=8
@@ -1609,6 +1816,15 @@ Notes:
 >
 >     Download Genome from an external provider.
 >     Available: GENCODE, Ensembl, UCSC, NCBI.
+
+</small>
+
+<small>
+
+>     --download-genomes-provider-file=<genomes provider file>
+>
+>     Download or Copy Genome from URL or a file.
+>     (e.g. https://hgdownload.soe.ucsc.edu/goldenPath/sacCer3/bigZips/sacCer3.fa.gz).
 
 </small>
 
@@ -1781,6 +1997,15 @@ Notes:
 >
 >     Release of dbNSFP to download (see dbNSFP website)
 >     (e.g. '4.4a').
+
+</small>
+
+<small>
+
+>     --download-dbnsfp-source=<dnNSFP source as a URL or a file>
+>
+>     Source of dbNSFP as an URL or a local file
+>     (e.g. '/path/to/dbNSFP5.1a.zip').
 
 </small>
 
@@ -2008,7 +2233,7 @@ Notes:
 >     --download-dbsnp=<dnSNP>
 >
 >     Path to dbSNP databases
->     (e.g. '~/howard/databases/exomiser/dbsnp').
+>     (e.g. '~/howard/databases/dbsnp/current').
 
 </small>
 
@@ -2227,11 +2452,20 @@ Notes:
 
 <small>
 
->     --mode_extann=<mode extann> ['all', 'longest', 'chosen'] (default: longest)
+>     --mode_extann=<mode extann> ['all', 'longest', 'chosen', 'gene'] (default: longest)
 >
 >     Mode extann selection.
 >     How to pick transcript from ncbi, keep all,
 >     keep the longest, or keep the chosen one (transcript_extann).
+
+</small>
+
+<small>
+
+>     --hgnc_extann=<hgnc_extann>
+>
+>     hgnc_extann file path.
+>     Path of HGNC file
 
 </small>
 
@@ -2415,7 +2649,7 @@ Usage examples:
 
 <small>
 
->     --database=<database> ['clinvar'] (default: clinvar)
+>     --database=<database> ['clinvar', 'gnomad', 'CADD', 'omim']
 >
 >     Which database to update.
 
@@ -2423,7 +2657,15 @@ Usage examples:
 
 <small>
 
->     --update_config=<update_config>
+>     --data_folder=<data_folder>
+>
+>     Path of data needed to update database.
+
+</small>
+
+<small>
+
+>     --update_config=<update_config> (default: ~/BIOINFO/git/HOWARD/plugins/update_database/config/update_databases.json)
 >
 >     Path of json configuration file.
 
@@ -2434,6 +2676,14 @@ Usage examples:
 >     --current_folder=<current_folder> (default: current)
 >
 >     Path of json configuration file.
+
+</small>
+
+<small>
+
+>     --refseq=<refseq>
+>
+>     Path of refseq file.
 
 </small>
 
@@ -2452,6 +2702,57 @@ Usage examples:
 >     --limit=<limit>
 >
 >     None
+
+</small>
+
+# TO_EXCEL tool
+
+Convert VCF file to Excel '.xlsx' format.
+
+Usage examples:
+
+> howard to_excel --input=tests/data/example.vcf.gz
+> --output=/tmp/example.xlsx --add_variants_view
+
+> 
+
+## Main options
+
+<small>
+
+>     --input=<input> | required
+>
+>     Input file path.
+>     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
+>     Files can be compressesd (e.g. vcf.gz, tsv.gz).
+
+</small>
+
+<small>
+
+>     --output=<output> | required
+>
+>     Output file path.
+>     Format file must be either VCF, Parquet, TSV, CSV, PSV or duckDB.
+>     Files can be compressesd (e.g. vcf.gz, tsv.gz).
+
+</small>
+
+## Add
+
+<small>
+
+>     --add_variants_view
+>
+>     Create a sheet with all INFO fields exploded.
+
+</small>
+
+<small>
+
+>     --add_header
+>
+>     Create a sheet with all INFO fields header descritions.
 
 </small>
 
@@ -2598,7 +2899,7 @@ Usage examples:
 
 >     --explode_infos
 >
->     Explode VCF INFO/Tag into 'variants' table columns.
+>     Explode VCF INFO/Tag into table columns (e.g. 'variants', 'transcripts').
 
 </small>
 
@@ -2618,11 +2919,10 @@ Usage examples:
 >     Keyword `*` specify all available fields, except those already specified.
 >     Pattern (regex) can be used, such as `.*_score` for fields named with '_score' at the end.
 >     Examples:
->     - 'HGVS,SIFT,Clinvar' (list of fields)
->     - 'HGVS,*,Clinvar' (list of fields with all other fields at the end)
+>     - 'HGVS,SIFT,Clinvar' (list of 3 fields)
+>     - 'HGVS,*,Clinvar' (list of 2 fields with all other fields in the middle)
 >     - 'HGVS,.*_score,Clinvar' (list of 2 fields with all scores in the middle)
->     - 'HGVS,.*_score,*' (1 field, scores, all other fields)
->     - 'HGVS,*,.*_score' (1 field, all other fields, all scores)
+>     - 'HGVS,.*_score,*' (1 field, scores, all other fields at the end)
 
 </small>
 
@@ -2768,7 +3068,7 @@ Usage examples:
 
 >     --explode_infos
 >
->     Explode VCF INFO/Tag into 'variants' table columns.
+>     Explode VCF INFO/Tag into table columns (e.g. 'variants', 'transcripts').
 
 </small>
 
@@ -2788,11 +3088,10 @@ Usage examples:
 >     Keyword `*` specify all available fields, except those already specified.
 >     Pattern (regex) can be used, such as `.*_score` for fields named with '_score' at the end.
 >     Examples:
->     - 'HGVS,SIFT,Clinvar' (list of fields)
->     - 'HGVS,*,Clinvar' (list of fields with all other fields at the end)
+>     - 'HGVS,SIFT,Clinvar' (list of 3 fields)
+>     - 'HGVS,*,Clinvar' (list of 2 fields with all other fields in the middle)
 >     - 'HGVS,.*_score,Clinvar' (list of 2 fields with all scores in the middle)
->     - 'HGVS,.*_score,*' (1 field, scores, all other fields)
->     - 'HGVS,*,.*_score' (1 field, all other fields, all scores)
+>     - 'HGVS,.*_score,*' (1 field, scores, all other fields at the end)
 
 </small>
 
@@ -2901,7 +3200,15 @@ Usage examples:
 
 <small>
 
->     --verbosity=<verbosity> ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET'] (default: INFO)
+>     --interactive
+>
+>     Interative mode.
+
+</small>
+
+<small>
+
+>     --verbosity=<verbosity> ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET', 'WARN', 'FATAL'] (default: INFO)
 >
 >     Verbosity level
 >     Available: CRITICAL, ERROR, WARNING, INFO, DEBUG or NOTSET
@@ -2910,6 +3217,7 @@ Usage examples:
 >     - WARNING: An indication that something unexpected happened.
 >     - ERROR: Due to a more serious problem.
 >     - CRITICAL: A serious error.
+>     - FATAL: A fatal error.
 >     - NOTSET: All messages.
 
 </small>

@@ -1,36 +1,43 @@
-#!/usr/bin/env python
-
-import io
-import multiprocessing
 import os
-import re
-import subprocess
-from tempfile import NamedTemporaryFile
-import tempfile
-import duckdb
 import json
 import argparse
-import Bio.bgzf as bgzf
-import pandas as pd
-import vcf
-import logging as log
-import sys
 import importlib
 
 # Import Commons
-from howard.functions.commons import *
+from howard.functions.commons import (
+    DEFAULT_ALPHAMISSENSE_URL,
+    DEFAULT_ANNOTATIONS_FOLDER,
+    DEFAULT_ANNOVAR_FOLDER,
+    DEFAULT_ANNOVAR_URL,
+    DEFAULT_ASSEMBLY,
+    DEFAULT_DATABASE_FOLDER,
+    DEFAULT_DBNSFP_URL,
+    DEFAULT_DBSNP_FOLDER,
+    DEFAULT_DBSNP_URL,
+    DEFAULT_EXOMISER_CADD_URL,
+    DEFAULT_EXOMISER_FOLDER,
+    DEFAULT_EXOMISER_REMM_URL,
+    DEFAULT_EXOMISER_URL,
+    DEFAULT_GENOME_FOLDER,
+    DEFAULT_REFSEQ_FOLDER,
+    DEFAULT_REFSEQ_URL,
+    full_path,
+)
+
 
 # Import tools
-from howard.tools.process import *
-from howard.tools.annotation import *
-from howard.tools.calculation import *
-from howard.tools.hgvs import *
-from howard.tools.prioritization import *
-from howard.tools.query import *
-from howard.tools.stats import *
-from howard.tools.convert import *
-from howard.tools.databases import *
-from howard.tools.help import *
+from howard.tools.process import process
+from howard.tools.annotation import annotation
+from howard.tools.calculation import calculation
+from howard.tools.hgvs import hgvs
+from howard.tools.prioritization import prioritization
+from howard.tools.query import query
+from howard.tools.filter import filter
+from howard.tools.sort import sort
+from howard.tools.stats import stats
+from howard.tools.convert import convert
+from howard.tools.databases import databases
+from howard.tools.help import help
 
 
 # Import gui only if gooey and wx is installed
@@ -42,7 +49,7 @@ except ImportError:
     tool_gui_enable = False
 
 if tool_gui_enable:
-    from howard.tools.gui import *
+    from howard.tools.gui import gui
 
 
 class PathType(object):
@@ -164,6 +171,28 @@ arguments = {
             "options": {"initial_value": "SELECT * FROM variants"},
         },
         "extra": {"param_section": "query"},
+    },
+    "filter": {
+        "metavar": "filter",
+        "help": """Filter variant using SQL format\n""" """(e.g. 'POS < 100000').\n""",
+        "default": None,
+        "type": str,
+        "gooey": {
+            "widget": "Textarea",
+            "options": {"initial_value": ""},
+        },
+        # "extra": {"param_section": "filter"},
+    },
+    "samples": {
+        "metavar": "samples",
+        "help": """List of samples\n""" """(e.g. 'sample1,sample2').\n""",
+        "default": None,
+        "type": str,
+        "gooey": {
+            "widget": "Textarea",
+            "options": {"initial_value": ""},
+        },
+        # "extra": {"param_section": "filter"},
     },
     "output_query": {
         "metavar": "output",
@@ -473,15 +502,16 @@ arguments = {
     "query_print_mode": {
         "metavar": "print mode",
         "help": """Print mode of query result (only for print result, not output).\n"""
-        """Either None (native), 'markdown', 'tabulate' or disabled.\n""",
-        "choices": [None, "markdown", "tabulate", "disabled"],
+        """Either None (default), 'dataframe', 'markdown', 'tabulate' or disabled.\n"""
+        """If None, print mode is 'dataframe' if no export file is provided.\n""",
+        "choices": [None, "dataframe", "markdown", "tabulate", "disabled"],
         "default": None,
         "type": str,
         "gooey": {"widget": "Dropdown", "options": {}},
     },
     # Explode infos
     "explode_infos": {
-        "help": """Explode VCF INFO/Tag into 'variants' table columns.\n""",
+        "help": """Explode VCF INFO/Tag into table columns (e.g. 'variants', 'transcripts').\n""",
         "action": "store_true",
         "default": False,
     },
@@ -497,11 +527,10 @@ arguments = {
         """Keyword `*` specify all available fields, except those already specified.\n"""
         """Pattern (regex) can be used, such as `.*_score` for fields named with '_score' at the end.\n"""
         """Examples:\n"""
-        """- 'HGVS,SIFT,Clinvar' (list of fields)\n"""
-        """- 'HGVS,*,Clinvar' (list of fields with all other fields at the end)\n"""
+        """- 'HGVS,SIFT,Clinvar' (list of 3 fields)\n"""
+        """- 'HGVS,*,Clinvar' (list of 2 fields with all other fields in the middle)\n"""
         """- 'HGVS,.*_score,Clinvar' (list of 2 fields with all scores in the middle)\n"""
-        """- 'HGVS,.*_score,*' (1 field, scores, all other fields)\n"""
-        """- 'HGVS,*,.*_score' (1 field, all other fields, all scores)\n""",
+        """- 'HGVS,.*_score,*' (1 field, scores, all other fields at the end)\n""",
         "default": "*",
         "type": str,
     },
@@ -660,7 +689,7 @@ arguments = {
         """keep the longest, or keep the chosen one (transcript_extann).\n""",
         "required": False,
         "default": "longest",
-        "choices": ["all", "longest", "chosen"],
+        "choices": ["all", "longest", "chosen", "gene"],
         "type": str,
     },
     "param_extann": {
@@ -669,6 +698,17 @@ arguments = {
         """Param containing configuration, options to replace chars and\n"""
         """bedlike header description, conf vcf specs.\n"""
         """(e.g. '~/howard/config/param.extann.json')\n""",
+        "required": False,
+        "default": None,
+        "type": PathType(exists=True, type=None),
+        "gooey": {
+            "widget": "FileChooser",
+            "options": {"wildcard": "TSV file format|*.tsv|"},
+        },
+    },
+    "hgnc_extann": {
+        "metavar": "hgnc_extann",
+        "help": """hgnc_extann file path.\n""" """Path of HGNC file\n""",
         "required": False,
         "default": None,
         "type": PathType(exists=True, type=None),
@@ -745,6 +785,11 @@ arguments = {
         "extra": {"param_section": "calculation:calculations:BARCODEFAMILY"},
     },
     # Stats
+    "stats_stdout": {
+        "help": """Print Markdown stats in stdout. Default False, except if no output files are requested.\n""",
+        "action": "store_true",
+        "default": False,
+    },
     "stats_md": {
         "metavar": "stats markdown",
         "help": """Stats Output file in MarkDown format.\n""",
@@ -776,6 +821,43 @@ arguments = {
                 "Export statistics in JSON format": """"stats_json": "/tmp/stats.json" """
             }
         },
+    },
+    "stats_html": {
+        "metavar": "stats html",
+        "help": """Stats Output file in HTML format.\n""",
+        "required": False,
+        "default": None,
+        "type": PathType(exists=None, type="file"),
+        "gooey": {
+            "widget": "FileSaver",
+            "options": {"wildcard": "JSON file (*.html)|*.html"},
+        },
+        "extra": {
+            "examples": {
+                "Export statistics in JSON format": """"stats_html": "/tmp/stats.html" """
+            }
+        },
+    },
+    "stats_pdf": {
+        "metavar": "stats pdf",
+        "help": """Stats Output file in PDF format.\n""",
+        "required": False,
+        "default": None,
+        "type": PathType(exists=None, type="file"),
+        "gooey": {
+            "widget": "FileSaver",
+            "options": {"wildcard": "JSON file (*.pdf)|*.pdf"},
+        },
+        "extra": {
+            "examples": {
+                "Export statistics in JSON format": """"stats_pdf": "/tmp/stats.pdf" """
+            }
+        },
+    },
+    "annotations_stats": {
+        "help": """Add statistics on annotations (INFO/tags)).\n""",
+        "action": "store_true",
+        "default": False,
     },
     # Assembly and Genome
     "assembly": {
@@ -941,6 +1023,13 @@ arguments = {
         "choices": ["GENCODE", "Ensembl", "UCSC", "NCBI"],
         "gooey": {"widget": "Dropdown", "options": {}},
     },
+    "download-genomes-provider-file": {
+        "metavar": "genomes provider file",
+        "help": """Download or Copy Genome from URL or a file.\n"""
+        """(e.g. https://hgdownload.soe.ucsc.edu/goldenPath/sacCer3/bigZips/sacCer3.fa.gz).\n""",
+        "required": False,
+        "type": str,
+    },
     "download-genomes-contig-regex": {
         "metavar": "genomes contig regex",
         "help": """Regular expression to select specific chromosome\n"""
@@ -1105,6 +1194,13 @@ arguments = {
         """(e.g. '4.4a').\n""",
         "required": False,
         "default": "4.4a",
+    },
+    "download-dbnsfp-source": {
+        "metavar": "dnNSFP source as a URL or a file",
+        "help": """Source of dbNSFP as an URL or a local file\n"""
+        """(e.g. '/path/to/dbNSFP5.1a.zip').\n""",
+        "required": False,
+        "default": None,
     },
     "download-dbnsfp-parquet-size": {
         "metavar": "dbNSFP parquet size",
@@ -1699,9 +1795,19 @@ arguments = {
         """- WARNING: An indication that something unexpected happened.\n"""
         """- ERROR: Due to a more serious problem.\n"""
         """- CRITICAL: A serious error.\n"""
+        """- FATAL: A fatal error.\n"""
         """- NOTSET: All messages.\n""",
         "required": False,
-        "choices": ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG", "NOTSET"],
+        "choices": [
+            "CRITICAL",
+            "ERROR",
+            "WARNING",
+            "INFO",
+            "DEBUG",
+            "NOTSET",
+            "WARN",
+            "FATAL",
+        ],
         "default": "INFO",
         "type": str,
         "gooey": {"widget": "Dropdown", "options": {}},
@@ -1743,6 +1849,30 @@ arguments = {
             }
         },
     },
+    # Interactivity
+    "interactive": {
+        "help": """Interative mode.\n""",
+        "action": "store_true",
+        "default": False,
+    },
+    "interactive_mode": {
+        "metavar": "interactive mode",
+        "help": """Iteractive mode for variants view.\n"""
+        """Either 'table' for loading data and speed up queries"""
+        """, or 'view' for dynamic queries (slower)"""
+        """, or 'harlequin' for using Harlequin tool.\n""",
+        "default": "table",
+        "type": str,
+        "choices": ["table", "view", "harlequin", "harlequin_view", "harlequin_table"],
+        "gooey": {"widget": "Dropdown", "options": {}},
+        "extra": {
+            "examples": {
+                "Table mode": '"interactive_mode": "table"',
+                "View mode": '"interactive_mode": "view"',
+            }
+        },
+    },
+    # Verbosity
     "quiet": {"help": argparse.SUPPRESS, "action": "store_true", "default": False},
     "verbose": {"help": argparse.SUPPRESS, "action": "store_true", "default": False},
     "debug": {"help": argparse.SUPPRESS, "action": "store_true", "default": False},
@@ -1758,6 +1888,7 @@ shared_arguments = [
     "chunk_size",
     "tmp",
     "duckdb_settings",
+    "interactive",
     "verbosity",
     "log",
     "quiet",
@@ -1785,7 +1916,48 @@ commands_arguments = {
                 "explode_infos_prefix": False,
                 "explode_infos_fields": False,
             },
-            "Query": {"query_limit": False, "query_print_mode": False},
+            "Query": {
+                "query_limit": False,
+                "query_print_mode": False,
+                "interactive_mode": False,
+            },
+            "Export": {"include_header": False, "parquet_partitions": False},
+        },
+    },
+    "filter": {
+        "function": "filter",
+        "description": """Filter genetic variations in SQL format. Data can be loaded into 'variants' table from various formats (e.g. VCF, TSV, Parquet...). SQL filter can also use external data within the request, such as a Parquet file(s).  """,
+        "help": "Filter genetic variations file in SQL format.",
+        "epilog": """Usage examples:\n"""
+        """   howard filter --input=tests/data/example.vcf.gz --output=/tmp/example.filter.vcf.gz --filter="REF = 'A' AND POS < 100000" \n"""
+        """   howard filter --input=tests/data/example.vcf.gz --output=/tmp/example.filter.vcf.gz --filter="REF = 'A' AND POS < 100000" --samples="sample1,sample2" \n"""
+        """   howard filter --input=tests/data/example.vcf.gz --output=/tmp/example.filter.vcf.gz --filter="INFOS.CLNSIG LIKE 'pathogenic'" --samples="sample1,sample2" \n"""
+        """   howard filter --input=tests/data/example.vcf.gz --output=/tmp/example.filter.vcf.gz --filter="QUAL > 100 AND SAMPLES.sample2.GT != './.'" --samples="sample2" \n"""
+        """    \n""",
+        "groups": {
+            "main": {
+                "input": True,
+                "output": True,
+            },
+            "Filters": {
+                "filter": False,
+                "samples": False,
+            },
+            "Export": {"include_header": False, "parquet_partitions": False},
+        },
+    },
+    "sort": {
+        "function": "sort",
+        "description": """Sort genetic variations from contig order. Data can be loaded into 'variants' table from various formats (e.g. VCF, TSV, Parquet...). SQL filter can also use external data within the request, such as a Parquet file(s).  """,
+        "help": "Sort genetic variations file from contig order.",
+        "epilog": """Usage examples:\n"""
+        """   howard sort --input=tests/data/example.vcf.gz --output=/tmp/example.sorted.vcf.gz \n"""
+        """    \n""",
+        "groups": {
+            "main": {
+                "input": True,
+                "output": True,
+            },
             "Export": {"include_header": False, "parquet_partitions": False},
         },
     },
@@ -1795,12 +1967,20 @@ commands_arguments = {
         "help": "Statistics on genetic variations file.",
         "epilog": """Usage examples:\n"""
         """   howard stats --input=tests/data/example.vcf.gz \n"""
-        """   howard stats --input=tests/data/example.vcf.gz --stats_md=/tmp/stats.md \n"""
+        """   howard stats --input=tests/data/example.vcf.gz --stats_md=/tmp/stats.md --stats_json=/tmp/stats.json --stats_html=/tmp/stats.html  --stats_pdf=/tmp/stats.pdf \n"""
+        """   howard stats --input=tests/data/example.vcf.gz --annotations_stats \n"""
         """   howard stats --input=tests/data/example.vcf.gz --param=config/param.json \n"""
         """    \n""",
         "groups": {
             "main": {"input": True, "param": False},
-            "Stats": {"stats_md": False, "stats_json": False},
+            "Stats": {
+                "stats_stdout": False,
+                "stats_md": False,
+                "stats_json": False,
+                "stats_html": False,
+                "stats_pdf": False,
+                "annotations_stats": False,
+            },
         },
     },
     "convert": {
@@ -2022,14 +2202,15 @@ commands_arguments = {
         "help": """Download databases and needed files for howard and associated tools""",
         "epilog": """Usage examples:\n"""
         """   howard databases --assembly=hg19 --download-genomes=~/howard/databases/genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' \n"""
+        """   howard databases --assembly=hg19 --download-genomes=~/howard/databases/genomes/current --download-genomes-provider-file=https://hgdownload.soe.ucsc.edu/goldenpath/hg19/bigZips/p13.plusMT/hg19.p13.plusMT.fa.gz --download-genomes-contig-regex='chr[0-9XYMT]+$' \n"""
         """   howard databases --assembly=hg19 --download-annovar=~/howard/databases/annovar/current --download-annovar-files='refGene,cosmic70,nci60' \n"""
         """   howard databases --assembly=hg19 --download-snpeff=~/howard/databases/snpeff/current \n"""
         """   howard databases --assembly=hg19 --download-refseq=~/howard/databases/refseq/current --download-refseq-format-file='ncbiRefSeq.txt' \n"""
-        """   howard databases --assembly=hg19 --download-dbnsfp=~/howard/databases/dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases \n"""
+        """   howard databases --assembly=hg19 --download-dbnsfp=~/howard/databases/dbnsfp/current --download-dbnsfp-source=tests/databases/dbnsfp/dbNSFP4.4a.zip --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases \n"""
         """   howard databases --assembly=hg19 --download-alphamissense=~/howard/databases/alphamissense/current \n"""
         """   howard databases --assembly=hg19 --download-exomiser=~/howard/databases/exomiser/current \n"""
         """   howard databases --assembly=hg19 --download-dbsnp=~/howard/databases/dbsnp/current --download-dbsnp-vcf \n"""
-        """   cd ~/howard/databases && howard databases --assembly=hg19 --download-genomes=genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' --download-annovar=annovar/current --download-annovar-files='refGene,cosmic70,nci60' --download-snpeff=snpeff/current --download-refseq=refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-dbnsfp=dbnsfp/current --download-dbnsfp-release='4.4a' --download-dbnsfp-subdatabases --download-alphamissense=alphamissense/current --download-exomiser=exomiser/current --download-dbsnp=dbsnp/current --download-dbsnp-vcf --threads=8 \n"""
+        """   cd ~/howard/databases && howard databases --assembly=hg19 --download-genomes=genomes/current --download-genomes-provider=UCSC --download-genomes-contig-regex='chr[0-9XYM]+$' --download-annovar=annovar/current --download-annovar-files='refGene,cosmic70,nci60' --download-snpeff=snpeff/current --download-refseq=refseq/current --download-refseq-format-file='ncbiRefSeq.txt' --download-alphamissense=alphamissense/current --download-exomiser=exomiser/current --download-dbsnp=dbsnp/current --download-dbsnp-vcf --threads=8 \n"""
         """   howard databases --generate-param=/tmp/param.json --generate-param-description=/tmp/test.description.json --generate-param-formats=parquet \n"""
         """   howard databases --input_annovar=tests/databases/others/hg19_nci60.txt --output_annovar=/tmp/nci60.from_annovar.vcf.gz --annovar_to_parquet=/tmp/nci60.from_annovar.parquet --annovar_code=nci60 --genome=~/howard/databases/genomes/current/hg19.fa \n"""
         """\n"""
@@ -2048,6 +2229,7 @@ commands_arguments = {
             "Genomes": {
                 "download-genomes": False,
                 "download-genomes-provider": False,
+                "download-genomes-provider-file": False,
                 "download-genomes-contig-regex": False,
             },
             "snpEff": {"download-snpeff": False},
@@ -2073,6 +2255,7 @@ commands_arguments = {
                 "download-dbnsfp": False,
                 "download-dbnsfp-url": False,
                 "download-dbnsfp-release": False,
+                "download-dbnsfp-source": False,
                 "download-dbnsfp-parquet-size": False,
                 "download-dbnsfp-subdatabases": False,
                 "download-dbnsfp-parquet": False,
@@ -2131,6 +2314,7 @@ commands_arguments = {
                 "transcripts": False,
                 "param_extann": False,
                 "mode_extann": False,
+                "hgnc_extann": False,
             },
             "Parameters": {
                 "generate-param": False,

@@ -10,20 +10,14 @@ coverage run -m pytest tests/test_objects_variants.py -x -v --log-cli-level=INFO
 coverage report --include=howard/* -m 
 """
 
-import logging as log
-import os
-import sys
-from tempfile import TemporaryDirectory
-import duckdb
-import re
-import Bio.bgzf as bgzf
-import gzip
-import pytest
 
-from howard.functions.commons import *
+from tempfile import TemporaryDirectory
+import vcf  # type: ignore
+
 from howard.objects.variants import Variants
-from howard.functions.databases import *
-from test_needed import *
+from howard.functions.commons import remove_if_exists
+
+from test_needed import tests_data_folder, tests_folder, tests_config
 
 
 def test_annotation_annovar():

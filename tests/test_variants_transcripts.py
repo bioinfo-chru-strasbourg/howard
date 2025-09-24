@@ -12,8 +12,8 @@ coverage report --include=howard/* -m
 
 import logging as log
 from tempfile import TemporaryDirectory
-import pytest
-import vcf
+import pytest  # type: ignore
+import vcf  # type: ignore
 import os
 
 from howard.functions.commons import remove_if_exists, get_file_format
@@ -22,15 +22,123 @@ from test_needed import tests_folder, tests_config, tests_data_folder
 
 
 @pytest.mark.parametrize(
-    "input_vcf",
+    "input_vcf, columns",
     [
-        f"{tests_data_folder}/example.ann.transcripts.vcf.gz",
-        f"{tests_data_folder}/example.ann.vcf.gz",
-        f"{tests_data_folder}/example.dbnsfp.transcripts.vcf.gz",
-        f"{tests_data_folder}/example.dbnsfp.no_transcripts.vcf.gz",
+        (
+            f"{tests_data_folder}/example.ann.transcripts.vcf.gz",
+            [
+                "#CHROM",
+                "AAposAAlength",
+                "ALT",
+                "Allele",
+                "Aloft_pred",
+                "Annotation",
+                "AnnotationImpact",
+                "CDSposCDSlength",
+                "CLNSIG",
+                "Distance",
+                "ERRORSWARNINGSINFO",
+                "Ensembl_geneid",
+                "FeatureID",
+                "FeatureType",
+                "GeneID",
+                "GeneName",
+                "HGVSc",
+                "HGVSp",
+                "INFO",
+                "LIST_S2_pred",
+                "LIST_S2_score",
+                "POS",
+                "REF",
+                "Rank",
+                "TranscriptBioType",
+                "VARITY_R_score",
+                "cDNAposcDNAlength",
+                "genename_1",
+                "transcript",
+                "transcript_list",
+                "transcript_mapped",
+            ],
+        ),
+        (
+            f"{tests_data_folder}/example.ann.vcf.gz",
+            [
+                "#CHROM",
+                "AAposAAlength",
+                "ALT",
+                "Allele",
+                "Aloft_pred",
+                "Annotation",
+                "AnnotationImpact",
+                "CDSposCDSlength",
+                "CLNSIG",
+                "Distance",
+                "ERRORSWARNINGSINFO",
+                "Ensembl_geneid",
+                "FeatureID",
+                "FeatureType",
+                "GeneID",
+                "GeneName",
+                "HGVSc",
+                "HGVSp",
+                "INFO",
+                "LIST_S2_pred",
+                "LIST_S2_score",
+                "POS",
+                "REF",
+                "Rank",
+                "TranscriptBioType",
+                "VARITY_R_score",
+                "cDNAposcDNAlength",
+                "genename_1",
+                "transcript",
+                "transcript_list",
+                "transcript_mapped",
+            ],
+        ),
+        (
+            f"{tests_data_folder}/example.dbnsfp.transcripts.vcf.gz",
+            [
+                "#CHROM",
+                "ALT",
+                "Aloft_pred",
+                "CLNSIG",
+                "Ensembl_geneid",
+                "INFO",
+                "LIST_S2_pred",
+                "LIST_S2_score",
+                "POS",
+                "REF",
+                "VARITY_R_score",
+                "genename",
+                "transcript",
+                "transcript_list",
+                "transcript_mapped",
+            ],
+        ),
+        (
+            f"{tests_data_folder}/example.dbnsfp.no_transcripts.vcf.gz",
+            [
+                "#CHROM",
+                "ALT",
+                "Aloft_pred",
+                "CLNSIG",
+                "Ensembl_geneid",
+                "INFO",
+                "LIST_S2_pred",
+                "LIST_S2_score",
+                "POS",
+                "REF",
+                "VARITY_R_score",
+                "genename",
+                "transcript",
+                "transcript_list",
+                "transcript_mapped",
+            ],
+        ),
     ],
 )
-def test_create_transcript_view(input_vcf):
+def test_create_transcript_view_with_infos_column(input_vcf, columns):
     """
     The function `test_devel_create_transcript_view` creates a transcript view from a VCF file using
     specified parameters and checks the resulting table for data.
@@ -84,6 +192,11 @@ def test_create_transcript_view(input_vcf):
                             "column_case": None,
                         },
                     ],
+                    "from_variants": {
+                        "fields": ["CLNSIG", "not_a_field"],
+                        "prefix": "",
+                        "INFO": True,
+                    },
                 },
             }
         }
@@ -109,28 +222,282 @@ def test_create_transcript_view(input_vcf):
 
         # Check table content
         query_check = f"""
-            SELECT * FROM {transcripts_table}
-            ORDER BY "#CHROM", POS, REF, ALT, transcript
+            SELECT count(*) AS count FROM {transcripts_table}
         """
         check = variants.get_query_to_df(query=query_check)
-        assert len(check) > 0
+        assert check["count"][0] > 0
 
-        # Count number of lines in transcripts table
-        count_lines = len(check)
+        # Check table columns
+        query_check = f"""
+            SELECT * FROM transcripts
+        """
+        check_variants = variants.get_query_to_df(query=query_check)
+        # log.debug(f"check_variants columns: {sorted(set(check_variants.columns))}")
+        # log.debug(f"check_variants: {check_variants}")
+        assert sorted(set([f.lower() for f in check_variants.columns])) == sorted(
+            set([f.lower() for f in columns])
+        )
 
         # ReCreate transcript view
         transcripts_table = variants.create_transcript_view()
 
         # Check table content
-        query_check = f"""
-            SELECT * FROM {transcripts_table}
-            ORDER BY "#CHROM", POS, REF, ALT, transcript
+        query_check2 = f"""
+            SELECT count(*) as count FROM {transcripts_table}
         """
-        check = variants.get_query_to_df(query=query_check)
-        assert len(check) > 0
+        check2 = variants.get_query_to_df(query=query_check2)
+        assert check2["count"][0] > 0
 
         # Check if number of lines is the same
-        assert len(check) == count_lines
+        assert check["count"][0] == check2["count"][0]
+
+        # Check table content INFO
+        query_check3 = f"""
+            SELECT INFO as count FROM {transcripts_table}
+            WHERE INFO NOT IN ('')
+        """
+        check3 = variants.get_query_to_df(query=query_check3)
+        assert len(check3) > 0
+
+
+@pytest.mark.parametrize(
+    "input_vcf, columns",
+    [
+        (
+            f"{tests_data_folder}/example.ann.transcripts.vcf.gz",
+            [
+                "#CHROM",
+                "AAposAAlength",
+                "ALT",
+                "Allele",
+                "Aloft_pred",
+                "Annotation",
+                "AnnotationImpact",
+                "CDSposCDSlength",
+                "CLNSIG",
+                "Distance",
+                "ERRORSWARNINGSINFO",
+                "Ensembl_geneid",
+                "FeatureID",
+                "FeatureType",
+                "GeneID",
+                "GeneName",
+                "HGVSc",
+                "HGVSp",
+                "INFO",
+                "LIST_S2_pred",
+                "LIST_S2_score",
+                "POS",
+                "REF",
+                "Rank",
+                "TranscriptBioType",
+                "VARITY_R_score",
+                "cDNAposcDNAlength",
+                "genename_1",
+                "transcript",
+                "transcript_list",
+                "transcript_mapped",
+            ],
+        ),
+        (
+            f"{tests_data_folder}/example.ann.vcf.gz",
+            [
+                "#CHROM",
+                "AAposAAlength",
+                "ALT",
+                "Allele",
+                "Aloft_pred",
+                "Annotation",
+                "AnnotationImpact",
+                "CDSposCDSlength",
+                "CLNSIG",
+                "Distance",
+                "ERRORSWARNINGSINFO",
+                "Ensembl_geneid",
+                "FeatureID",
+                "FeatureType",
+                "GeneID",
+                "GeneName",
+                "HGVSc",
+                "HGVSp",
+                "INFO",
+                "LIST_S2_pred",
+                "LIST_S2_score",
+                "POS",
+                "REF",
+                "Rank",
+                "TranscriptBioType",
+                "VARITY_R_score",
+                "cDNAposcDNAlength",
+                "genename_1",
+                "transcript",
+                "transcript_list",
+                "transcript_mapped",
+            ],
+        ),
+        (
+            f"{tests_data_folder}/example.dbnsfp.transcripts.vcf.gz",
+            [
+                "#CHROM",
+                "ALT",
+                "Aloft_pred",
+                "CLNSIG",
+                "Ensembl_geneid",
+                "INFO",
+                "LIST_S2_pred",
+                "LIST_S2_score",
+                "POS",
+                "REF",
+                "VARITY_R_score",
+                "genename",
+                "transcript",
+                "transcript_list",
+                "transcript_mapped",
+            ],
+        ),
+        (
+            f"{tests_data_folder}/example.dbnsfp.no_transcripts.vcf.gz",
+            [
+                "#CHROM",
+                "ALT",
+                "Aloft_pred",
+                "CLNSIG",
+                "Ensembl_geneid",
+                "INFO",
+                "LIST_S2_pred",
+                "LIST_S2_score",
+                "POS",
+                "REF",
+                "VARITY_R_score",
+                "genename",
+                "transcript",
+                "transcript_list",
+                "transcript_mapped",
+            ],
+        ),
+    ],
+)
+def test_create_transcript_view(input_vcf, columns):
+    """
+    The function `test_devel_create_transcript_view` creates a transcript view from a VCF file using
+    specified parameters and checks the resulting table for data.
+
+    :param input_vcf: It seems like the `input_vcf` parameter is missing in the provided code snippet.
+    Could you please provide the value or path that should be assigned to the `input_vcf` variable in
+    the `test_devel_create_transcript_view` function?
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        output_vcf = f"{tmp_dir}/output.vcf"
+
+        # Construct param dict
+        param = {
+            "transcripts": {
+                "table": "transcripts",
+                "struct": {
+                    "from_column_format": [  # format List, e.g. snpEff
+                        {
+                            "transcripts_column": "ANN",
+                            "transcripts_infos_column": "Feature_ID",
+                            "column_rename": None,
+                            "column_clean": True,
+                            "column_case": None,
+                        }
+                    ],
+                    "from_columns_map": [  # format List, e.g. dbNSFP columns
+                        {
+                            "transcripts_column": "Ensembl_transcriptid",
+                            "transcripts_infos_columns": [
+                                "genename",
+                                "Ensembl_geneid",
+                                "LIST_S2_score",
+                                "LIST_S2_pred",
+                            ],
+                            "column_rename": None,
+                            "column_clean": False,
+                            "column_case": None,
+                        },
+                        {
+                            "transcripts_column": "Ensembl_transcriptid",
+                            "transcripts_infos_columns": [
+                                "genename",
+                                "VARITY_R_score",
+                                "Aloft_pred",
+                            ],
+                            "column_rename": None,
+                            "column_clean": False,
+                            "column_case": None,
+                        },
+                    ],
+                    "from_variants": {
+                        "fields": ["CLNSIG", "not_a_field"],
+                        "prefix": "",
+                    },
+                },
+            }
+        }
+
+        # Config
+        config = tests_config
+
+        # Create object
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            param=param,
+            load=True,
+        )
+
+        # Create transcript view
+        transcripts_table = variants.create_transcript_view()
+
+        # Check table exists
+        assert transcripts_table is not None
+
+        # Check table content
+        query_check = f"""
+            SELECT count(*) AS count FROM {transcripts_table}
+        """
+        check = variants.get_query_to_df(query=query_check)
+        assert check["count"][0] > 0
+
+        # Check table columns
+        query_check = f"""
+            SELECT * FROM transcripts
+        """
+        check_variants = variants.get_query_to_df(query=query_check)
+        # log.debug(f"check_variants columns: {sorted(set(check_variants.columns))}")
+        # log.debug(f"check_variants: {check_variants}")
+        assert sorted(set([f.lower() for f in check_variants.columns])) == sorted(
+            set([f.lower() for f in columns])
+        )
+
+        # ReCreate transcript view
+        transcripts_table = variants.create_transcript_view()
+
+        # Check table content
+        query_check2 = f"""
+            SELECT count(*) as count FROM {transcripts_table}
+        """
+        check2 = variants.get_query_to_df(query=query_check2)
+        assert check2["count"][0] > 0
+
+        # Check if number of lines is the same
+        assert check["count"][0] == check2["count"][0]
+
+        # Check table content INFO
+        query_check3 = f"""
+            SELECT INFO
+            FROM {transcripts_table}
+            WHERE INFO NOT IN ('')
+        """
+        check3 = variants.get_query_to_df(query=query_check3)
+        log.debug(f"check3=\n{check3}")
+        assert len(check3) == 0
 
 
 @pytest.mark.parametrize(
@@ -398,6 +765,10 @@ def test_transcripts_prioritization(input_vcf):
                         "column_case": None,
                     },
                 ],
+                "from_variants": {
+                    "fields": ["CLNSIG", "DP"],
+                    "prefix": "",
+                },
             },
         }
         param_prioritization = {
@@ -443,7 +814,21 @@ def test_transcripts_prioritization(input_vcf):
         )
 
         # Transcripts with prioritization
-        assert variants.transcripts_prioritization(param=param_with_prioritization)
+        assert variants.transcripts_prioritization(
+            param=param_with_prioritization, strict=False
+        )
+
+        # # DEVEL
+        # query_check = """
+        #     SELECT * FROM variants
+        # """
+        # check = variants.get_query_to_df(query=query_check)
+        # log.debug(f"check={check}")
+        # query_check = """
+        #     SELECT * FROM transcripts
+        # """
+        # check = variants.get_query_to_df(query=query_check)
+        # log.debug(f"check={check}")
 
         # Check transcript prioritization result
         # Check table content
@@ -788,6 +1173,19 @@ def test_transcripts_prioritization_multiple_param(
                 variants.transcripts_prioritization(param=param_with_prioritization)
 
             assert str(excinfo.value) == raise_value_error
+
+        # # DEVEL
+        # query_check_devel = f"""
+        #     SELECT INFO FROM variants
+        # """
+        # check_devel = variants.get_query_to_df(query=query_check_devel)
+        # log.debug(f"check: {check_devel.to_string()}")
+        # # DEVEL
+        # query_check_devel = f"""
+        #     SELECT * FROM transcripts
+        # """
+        # check_devel = variants.get_query_to_df(query=query_check_devel)
+        # log.debug(f"check: {check_devel.to_string()}")
 
         # If expected results
         if where_clause:
@@ -1865,8 +2263,116 @@ def test_transcripts_create_view_export(output):
 
         # Export
         try:
+            variants.transcripts_export(transcripts_table=transcripts_table)
+        except:
+            assert False
+
+        assert os.path.isfile(f"{tmp_dir}/{output}")
+
+        if get_file_format(output) in ["vcf"]:
+            try:
+                vcf.Reader(filename=f"{tmp_dir}/{output}")
+            except:
+                assert False
+
+
+@pytest.mark.parametrize(
+    "output",
+    [
+        "output.vcf",
+        "output.vcf.gz",
+        "output.tsv",
+        "output.tsv.gz",
+        "output.parquet",
+        "output.json",
+    ],
+)
+def test_transcripts_create_view_export_explode(output):
+    """ """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # tmp_dir = "/tmp"
+
+        # Init files
+        input_vcf = f"{tests_data_folder}/example.ann.transcripts.vcf.gz"
+
+        # Construct param dict
+        param_struct = {
+            "table": "transcripts",
+            "column_id": "transcript",
+            "transcripts_info_json": "transcripts_json",
+            "transcripts_info_field": "transcripts_json",
+            "transcript_id_remove_version": True,
+            "transcript_id_mapping_file": None,
+            "transcript_id_mapping_force": False,
+            "struct": {
+                "from_column_format": [
+                    {
+                        "transcripts_column": "ANN",
+                        "transcripts_infos_column": "Feature_ID",
+                        "column_clean": True,
+                    },
+                ],
+                "from_columns_map": [
+                    {
+                        "transcripts_column": "Ensembl_transcriptid",
+                        "transcripts_infos_columns": [
+                            "genename",
+                            "Ensembl_geneid",
+                            "LIST_S2_score",
+                            "LIST_S2_pred",
+                        ],
+                        "column_clean": False,
+                    },
+                    {
+                        "transcripts_column": "Ensembl_transcriptid",
+                        "transcripts_infos_columns": [
+                            "genename",
+                            "VARITY_R_score",
+                            "Aloft_pred",
+                        ],
+                        "column_clean": False,
+                    },
+                ],
+                "from_variants": {
+                    "INFO": True,
+                },
+            },
+            "export": {
+                "output": f"{tmp_dir}/{output}",
+                "add_info": True,
+                "export_header": True,
+            },
+            "explode": {
+                "explode_infos_fields": ["CLNSIG"],
+            },
+        }
+
+        # Param without prioritization
+        param_with_transcripts = {"transcripts": dict(param_struct)}
+
+        # Config
+        config = tests_config
+
+        # Create object
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            config=config,
+            param=param_with_transcripts,
+            load=True,
+        )
+
+        # Create transcript view
+        transcripts_table = variants.create_transcript_view(
+            param=param_with_transcripts
+        )
+
+        # Export
+        try:
             variants.transcripts_export(
-                transcripts_table=transcripts_table, param=param_with_transcripts
+                transcripts_table=transcripts_table,
             )
         except:
             assert False
@@ -1878,6 +2384,39 @@ def test_transcripts_create_view_export(output):
                 vcf.Reader(filename=f"{tmp_dir}/{output}")
             except:
                 assert False
+
+        # Check if output file contains INFO and exploded field by opening output file for TSV/Parquet/JSON
+
+        # Create object
+        variants_output = Variants(
+            conn=None,
+            input=f"{tmp_dir}/{output}",
+            config=config,
+            param=param_with_transcripts,
+            load=True,
+        )
+
+        # Check exploded columns
+        query_check = f"""
+            SELECT * FROM variants
+        """
+        check = variants_output.get_query_to_df(query=query_check)
+        assert len(check) > 0
+        for field in (
+            param_with_transcripts.get("transcripts", {})
+            .get("explode", {})
+            .get("explode_infos_fields", [])
+            if get_file_format(output) not in ["vcf"]
+            else []
+        ) + (
+            ["INFO"]
+            if param_with_transcripts.get("transcripts", {})
+            .get("export", {})
+            .get("add_info", False)
+            or get_file_format(output) in ["vcf"]
+            else []
+        ):
+            assert field in check.columns
 
 
 @pytest.mark.parametrize(
@@ -1911,6 +2450,7 @@ def test_transcripts_create_view_export(output):
                 "transcripts_column": "PZTTranscript",
                 # "transcripts_order": ["column", "file"],
             },
+            # ["NR_047526", "NR_036051", "NR_047551", "NM_001005484"],
             ["NR_047519", "NR_036051", "NR_047551", "NM_001005484"],
         ),
         (
@@ -1921,6 +2461,7 @@ def test_transcripts_create_view_export(output):
                 "transcripts_column": "PZTTranscript",
                 # "transcripts_order": ["column", "file"],
             },
+            # ["NR_047526", "NR_036051", "NR_047551", "NM_001005484"],
             ["NR_047519", "NR_036051", "NR_047551", "NM_001005484"],
         ),
         (
@@ -1931,6 +2472,7 @@ def test_transcripts_create_view_export(output):
                 "transcripts_column": "PZTTranscript",
                 "transcripts_order": ["column", "file"],
             },
+            # ["NR_047526", "NR_036051", "NR_047551", "NM_001005484"],
             ["NR_047519", "NR_036051", "NR_047551", "NM_001005484"],
         ),
         (
@@ -1941,6 +2483,7 @@ def test_transcripts_create_view_export(output):
                 "transcripts_column": "PZTTranscript",
                 "transcripts_order": ["file", "column"],
             },
+            # ["NR_047526", "NR_036266", "NM_001346897", "NM_001005484", "NR_024540"],
             ["NR_047519", "NR_036266", "NM_001346897", "NM_001005484", "NR_024540"],
         ),
     ],
@@ -2017,13 +2560,16 @@ def test_transcripts_create_view_prioritize_nomen(nomen_options, tnomen_expected
         variants.transcripts_prioritization(param=param)
 
         # SNPEFF HGVS
-        variants.calculation_extract_snpeff_hgvs()
+        variants.calculation_extract_snpeff()
 
         # NOMEN
         variants.calculation_extract_nomen()
 
         # Explode
-        variants.explode_infos(fields=["TNOMEN", "TVNOMEN", "GNOMEN", "PZTTranscript"])
+        variants.explode_infos(
+            fields=["TNOMEN", "TVNOMEN", "GNOMEN", "PZTTranscript"],
+            fields_forced_as_varchar=True,
+        )
 
         # DEVEL
         query_check = f"""
@@ -2031,8 +2577,16 @@ def test_transcripts_create_view_prioritize_nomen(nomen_options, tnomen_expected
         """
         check = variants.get_query_to_df(query=query_check)
 
+        # log.debug(f""" check INFO={check.to_string()} """)
+
         # Check list of expected transcripts
         assert len(check) == 7
+        # log.debug(
+        #     f""" sorted(list(set(check["TNOMEN"]))) = {sorted(list(set(check["TNOMEN"])))} """
+        # )
+        # log.debug(
+        #     f""" sorted(list(set(tnomen_expected))) = {sorted(list(set(tnomen_expected)))} """
+        # )
         assert sorted(list(set(check["TNOMEN"]))) == sorted(list(set(tnomen_expected)))
 
         # Check if PZTTranscript anre wwithin TNOMEN if transcript dynamic

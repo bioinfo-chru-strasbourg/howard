@@ -10,24 +10,18 @@ coverage run -m pytest tests/test_databases.py -x -vv --log-cli-level=DEBUG --ca
 coverage report --include=howard/* -m
 """
 
-import logging as log
+import argparse
 import os
-import sys
 from tempfile import TemporaryDirectory
-import duckdb
-import re
-import Bio.bgzf as bgzf
-import gzip
-import pytest
-import pandas as pd
-from pandas.testing import assert_frame_equal
-from unittest.mock import patch
 
-from howard.objects.variants import Variants
-from howard.objects.database import Database
-from howard.functions.commons import *
-from howard.tools.databases import *
+# from howard.functions.commons import *
+# from howard.tools.databases import *
+
+from howard.functions.commons import DEFAULT_ANNOVAR_URL
+from howard.tools.databases import databases
 from howard.tools.tools import arguments_dict
+
+from howard.functions.databases import databases_infos, databases_param
 
 from test_needed import *
 

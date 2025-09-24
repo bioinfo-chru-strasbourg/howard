@@ -347,7 +347,7 @@ class="sourceCode json"><code class="sourceCode json"><span id="cb1-1"><a href="
 <span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;exomiser&quot;</span><span class="fu">:</span> <span class="st">&quot;~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar&quot;</span><span class="fu">,</span></span>
 <span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;splice&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
 <span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>       <span class="dt">&quot;docker&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;image&quot;</span><span class="fu">:</span> <span class="st">&quot;bioinfochrustrasbourg/splice:0.2.1&quot;</span><span class="fu">,</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;image&quot;</span><span class="fu">:</span> <span class="st">&quot;bioinfochrustrasbourg/splice:0.2.4&quot;</span><span class="fu">,</span></span>
 <span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;entrypoint&quot;</span><span class="fu">:</span> <span class="st">&quot;/bin/bash&quot;</span><span class="fu">,</span></span>
 <span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
 <span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;command&quot;</span><span class="fu">:</span> <span class="kw">null</span></span>
@@ -559,6 +559,7 @@ class="sourceCode json"><code class="sourceCode json"><span id="cb12-1"><a href=
 <h3 data-number="2.1.8" id="refseq"><span
 class="header-section-number">2.1.8</span> refseq</h3>
 <p>Annotation databases folders for refSeq annotation.</p>
+<p>Type: <code>str</code></p>
 <p>Format: <code>A folder path (without assembly)</code></p>
 <p>Default: <code>~/howard/databases/refseq/current</code></p>
 <p>Examples:</p>
@@ -607,7 +608,7 @@ class="sourceCode json"><code class="sourceCode json"><span id="cb15-1"><a href=
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;tools&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;bcftools&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
 <span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;docker&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>           <span class="dt">&quot;image&quot;</span><span class="fu">:</span> <span class="st">&quot;howard:0.12.1.1&quot;</span><span class="fu">,</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>           <span class="dt">&quot;image&quot;</span><span class="fu">:</span> <span class="st">&quot;howard:0.13.0&quot;</span><span class="fu">,</span></span>
 <span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>           <span class="dt">&quot;entrypoint&quot;</span><span class="fu">:</span> <span class="st">&quot;bcftools&quot;</span><span class="fu">,</span></span>
 <span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>           <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
 <span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>           <span class="dt">&quot;command&quot;</span><span class="fu">:</span> <span class="kw">null</span></span>
@@ -625,7 +626,7 @@ class="sourceCode json"><code class="sourceCode json"><span id="cb16-1"><a href=
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;tools&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;splice&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
 <span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>         <span class="dt">&quot;docker&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>           <span class="dt">&quot;image&quot;</span><span class="fu">:</span> <span class="st">&quot;bioinfochrustrasbourg/splice:0.2.1&quot;</span><span class="fu">,</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>           <span class="dt">&quot;image&quot;</span><span class="fu">:</span> <span class="st">&quot;bioinfochrustrasbourg/splice:0.2.4&quot;</span><span class="fu">,</span></span>
 <span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>           <span class="dt">&quot;entrypoint&quot;</span><span class="fu">:</span> <span class="st">&quot;/bin/bash&quot;</span><span class="fu">,</span></span>
 <span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>           <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
 <span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>           <span class="dt">&quot;command&quot;</span><span class="fu">:</span> <span class="kw">null</span></span>
@@ -790,7 +791,7 @@ https://hub.docker.com/r/bioinfochrustrasbourg/splice).</p>
 class="sourceCode json"><code class="sourceCode json"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>   <span class="dt">&quot;splice&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
 <span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;docker&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;image&quot;</span><span class="fu">:</span> <span class="st">&quot;bioinfochrustrasbourg/splice:0.2.1&quot;</span><span class="fu">,</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;image&quot;</span><span class="fu">:</span> <span class="st">&quot;bioinfochrustrasbourg/splice:0.2.4&quot;</span><span class="fu">,</span></span>
 <span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;entrypoint&quot;</span><span class="fu">:</span> <span class="st">&quot;/bin/bash&quot;</span><span class="fu">,</span></span>
 <span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;options&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span></span>
 <span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>        <span class="dt">&quot;command&quot;</span><span class="fu">:</span> <span class="kw">null</span></span>
@@ -891,11 +892,12 @@ diagnosing problems.</p></li>
 happened.</p></li>
 <li><p>ERROR: Due to a more serious problem.</p></li>
 <li><p>CRITICAL: A serious error.</p></li>
+<li><p>FATAL: A fatal error.</p></li>
 <li><p>NOTSET: All messages.</p></li>
 </ul>
 <p>Type: <code>str</code></p>
 <p>Choices:
-<code>['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET']</code></p>
+<code>['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET', 'WARN', 'FATAL']</code></p>
 <p>Default: <code>INFO</code></p>
 <p>Examples:</p>
 <blockquote>

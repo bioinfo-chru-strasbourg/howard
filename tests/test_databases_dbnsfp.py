@@ -10,26 +10,65 @@ coverage run -m pytest tests/test_databases.py -x -vv --log-cli-level=DEBUG --ca
 coverage report --include=howard/* -m
 """
 
-import logging as log
 import os
-import sys
+import shutil
 from tempfile import TemporaryDirectory
-import duckdb
-import re
-import Bio.bgzf as bgzf
-import gzip
-import pytest
-import pandas as pd
-from pandas.testing import assert_frame_equal
-from unittest.mock import patch
+from howard.functions.databases import databases_download_dbnsfp
+import pytest  # type: ignore
 
 from howard.objects.variants import Variants
-from howard.objects.database import Database
-from howard.functions.commons import *
-from howard.tools.databases import *
-from howard.tools.tools import arguments_dict
 
-from test_needed import *
+from test_needed import (
+    download_needed_databases,
+    tests_folder,
+    tests_databases_folder,
+    tests_config,
+)
+
+
+def test_database_dbnsfp_step_by_step_from_source():
+    """
+    This function tests the "databases" function with a set of arguments.
+    """
+
+    # Init
+    dbnsfp_source = os.path.join(tests_databases_folder, "dbnsfp", "dbNSFP4.4a.zip")
+    genomes_folder = tests_config["folders"]["databases"]["genomes"]
+    download_needed_databases()
+    uniquify = False
+    threads = 8
+
+    # Tmp folder
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Assembly
+        assemblies = "hg19,hg38"
+        assemblies_list = [value for value in assemblies.split(",")]
+
+        dbnsfp_folder = tmp_dir
+
+        # Try to convert
+        try:
+            databases_download_dbnsfp(
+                assemblies=assemblies_list,
+                dbnsfp_folder=dbnsfp_folder,
+                dbnsfp_source=dbnsfp_source,
+                generate_parquet_file=False,
+                generate_sub_databases=False,
+                generate_vcf_file=False,
+                genomes_folder=genomes_folder,
+                uniquify=uniquify,
+                threads=threads,
+            )
+        except:
+            assert False
+
+        downloaded_files = os.listdir(dbnsfp_folder)
+        for assembly in assemblies_list:
+            assert assembly in downloaded_files
+            downloaded_assembly_files = os.listdir(f"{dbnsfp_folder}/{assembly}")
+            nb_files = 2
+            assert len(downloaded_assembly_files) == nb_files
 
 
 @pytest.mark.parametrize(

@@ -5,6 +5,7 @@
     "description": "Create a variant ID with chromosome, position, alt and ref",
     "available": true,
     "output_column_name": "variant_chr_pos_alt_ref",
+    "output_column_number": "1",
     "output_column_type": "String",
     "output_column_description": "variant ID with chromosome, position, alt and ref",
     "operation_query": " concat(\"#CHROM\", '_', POS, '_', REF, '_', ALT) ",
@@ -16,6 +17,7 @@
     "description": "Variant type (e.g. SNV, INDEL, MNV, BND...)",
     "available": true,
     "output_column_name": "VARTYPE",
+    "output_column_number": "1",
     "output_column_type": "String",
     "output_column_description": "Variant type: SNV if X>Y, MOSAIC if X>Y,Z or X,Y>Z, INDEL if XY>Z or X>YZ",
     "operation_query": [
@@ -32,36 +34,36 @@
     "operation_info": true
   },
   "snpeff_hgvs": {
-    "type": "python",
-    "name": "snpeff_hgvs",
-    "description": "HGVS nomenclatures from snpEff annotation",
-    "available": true,
-    "function_name": "calculation_extract_snpeff_hgvs",
-    "function_params": ["snpeff_hgvs", "ANN"]
+      "type": "python",
+      "name": "snpeff_hgvs",
+      "description": "HGVS nomenclatures from snpEff annotation",
+      "available": true,
+      "function_name": "calculation_extract_snpeff",
+      "function_params": ["ANN", "snpeff_hgvs", null, null, false]
   },
   "snpeff_ann_explode": {
-    "type": "python",
-    "name": "snpeff_ann_explode",
-    "description": "Explode snpEff annotations",
-    "available": true,
-    "function_name": "calculation_snpeff_ann_explode",
-    "function_params": [true, "fields", "snpeff_", "ANN"]
+      "type": "python",
+      "name": "snpeff_ann_explode",
+      "description": "Explode snpEff annotations with uniquify values",
+      "available": true,
+      "function_name": "calculation_extract_snpeff",
+      "function_params": ["ANN", null, "snpeff_", null, false]
   },
   "snpeff_ann_explode_uniquify": {
-    "type": "python",
-    "name": "snpeff_ann_explode_uniquify",
-    "description": "Explode snpEff annotations with uniquify values",
-    "available": true,
-    "function_name": "calculation_snpeff_ann_explode",
-    "function_params": [true, "fields", "snpeff_uniquify_", "ANN"]
+      "type": "python",
+      "name": "snpeff_ann_explode_uniquify",
+      "description": "Explode snpEff annotations",
+      "available": true,
+      "function_name": "calculation_extract_snpeff",
+      "function_params": ["ANN", null, "snpeff_uniquify_", null, true]
   },
   "snpeff_ann_explode_json": {
-    "type": "python",
-    "name": "snpeff_ann_explode_json",
-    "description": "Explode snpEff annotations in JSON format",
-    "available": true,
-    "function_name": "calculation_snpeff_ann_explode",
-    "function_params": [true, "JSON", "snpeff_json", "ANN"]
+      "type": "python",
+      "name": "snpeff_ann_explode_json",
+      "description": "Explode snpEff annotations in JSON format",
+      "available": true,
+      "function_name": "calculation_extract_snpeff",
+      "function_params": ["ANN", null, null, "snpeff_json", true]
   },
   "NOMEN": {
     "type": "python",

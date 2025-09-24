@@ -11,19 +11,13 @@ coverage report --include=howard/* -m
 """
 
 import logging as log
-import os
-import sys
 from tempfile import TemporaryDirectory
-import duckdb
-import re
-import Bio.bgzf as bgzf
-import gzip
-import pytest
+import vcf  # type: ignore
 
-from howard.functions.commons import *
 from howard.objects.variants import Variants
-from howard.functions.databases import *
-from test_needed import *
+from howard.functions.commons import remove_if_exists
+
+from test_needed import tests_folder, tests_data_folder, tests_config
 
 
 def test_annotation_snpeff():
@@ -111,12 +105,24 @@ def test_annotation_snpeff_full_unsorted():
         # Remove if output file exists
         remove_if_exists([output_vcf])
 
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants ORDER BY "#CHROM", POS """
+        )
+        original_len = len(result)
+        # log.debug(f"result0: {result}")
+
         # Annotation
         variants.annotation()
 
-        # query annotated variant
-        result = variants.get_query_to_df(""" SELECT INFO, "ANN" FROM variants """)
-        assert len(result) == 36
+        # query annotated variants
+        result = variants.get_query_to_df(""" SELECT * FROM variants """)
+        assert len(result) == original_len
+
+        # query annotated variants
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE "INFO" LIKE '%ANN%' """
+        )
+        assert len(result) > 0
 
         # query annotated variant as gene_fusion
         result = variants.get_query_to_df(

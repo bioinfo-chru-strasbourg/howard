@@ -1,49 +1,37 @@
-import io
 import multiprocessing
 import os
 from pathlib import Path
-import platform
 import re
 import statistics
 import string
 import subprocess
-import sys
-from tempfile import NamedTemporaryFile
 import tempfile
 import typing
-import duckdb
+import duckdb  # type: ignore
 import json
 import argparse
-import pandas as pd
-import vcf
+import pandas as pd  # type: ignore
 import logging as log
 import shutil
-import urllib.request
 import zipfile
-import gzip
-import requests
+import requests  # type: ignore
 import fnmatch
 import ast
-
 import random
-
-import pgzip
-import mgzip
-import bgzip
-
-import pysam
-import yaml
-import pysam.bcftools
-
+import pgzip  # type: ignore
+import mgzip  # type: ignore
+import bgzip  # type: ignore
+import pysam  # type: ignore
+import yaml  # type: ignore
+import pysam.bcftools  # type: ignore
 import signal
-from contextlib import contextmanager
-
-from configparser import ConfigParser, NoSectionError, NoOptionError
-
+from configparser import ConfigParser
 from importlib.metadata import metadata
-
 from shutil import which
+from termcolor import colored  # type: ignore
+from colorama import init  # type: ignore
 
+# File folder
 file_folder = os.path.dirname(__file__)
 
 # plugin subfolder
@@ -65,9 +53,7 @@ comparison_map = {
     "contains": "SIMILAR TO",
 }
 
-
 code_type_map = {"Integer": 0, "String": 1, "Float": 2, "Flag": 3}
-
 
 code_type_map_to_sql = {
     "Integer": "INTEGER",
@@ -76,6 +62,13 @@ code_type_map_to_sql = {
     "Flag": "VARCHAR",
 }
 
+code_type_map_to_vcf = {
+    "INTEGER": "Integer",
+    "VARCHAR": "String",
+    "FLOAT": "Float",
+    "DOUBLE": "Integer",
+    "BOOLEAN": "String",
+}
 
 file_format_delimiters = {"vcf": "\t", "tsv": "\t", "csv": ",", "psv": "|", "bed": "\t"}
 
@@ -86,7 +79,6 @@ file_format_allowed = list(file_format_delimiters.keys()) + [
 ]
 
 file_compressed_format = ["gz", "bgz"]
-
 
 vcf_required_release = "##fileformat=VCFv4.2"
 vcf_required_columns = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO"]
@@ -106,7 +98,7 @@ DEFAULT_TOOLS_BIN = {
     "docker": {"bin": "docker"},
     "splice": {
         "docker": {
-            "image": "bioinfochrustrasbourg/splice:0.2.1",
+            "image": "bioinfochrustrasbourg/splice:0.2.4",
             "entrypoint": "/bin/bash",
             "options": None,
             "command": None,
@@ -128,13 +120,16 @@ DEFAULT_DBSNP_URL = "https://ftp.ncbi.nih.gov/snp/archive"
 # Databases default folder
 DEFAULT_DATABASE_FOLDER = os.path.join(folder_howard_home, "databases")
 DEFAULT_ANNOTATIONS_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/annotations/current"
+DEFAULT_PARQUET_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/parquet/current"
+DEFAULT_BCFTOOLS_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/bcftools/current"
+DEFAULT_BIGWIG_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/bigwig/current"
 DEFAULT_GENOME_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/genomes/current"
 DEFAULT_SNPEFF_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/snpeff/current"
 DEFAULT_ANNOVAR_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/annovar/current"
 DEFAULT_REFSEQ_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/refseq/current"
 DEFAULT_DBNSFP_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/dbnsfp/current"
 DEFAULT_EXOMISER_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/exomiser/current"
-DEFAULT_DBSNP_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/exomiser/dbsnp"
+DEFAULT_DBSNP_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/dbsnp/current"
 DEFAULT_SPLICE_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/splice"
 DEFAULT_SPLICEAI_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/spliceai"
 DEFAULT_SPIP_FOLDER = f"{DEFAULT_DATABASE_FOLDER}/spip"
@@ -154,8 +149,6 @@ MACHIN_LIST = {"amd64": "amd64", "arm64": "arm64"}
 # bcftools format allowed
 BCFTOOLS_FORMAT = ["vcf", "bed"]
 
-LOG_FORMAT = "#[%(asctime)s] [%(levelname)s] %(message)s"
-
 CODE_TYPE_MAP = {"Integer": 0, "String": 1, "Float": 2, "Flag": 3}
 
 GENOTYPE_MAP = {None: ".", -1: "A", -2: "G", -3: "R"}
@@ -164,6 +157,170 @@ DTYPE_LIMIT_AUTO = 10000
 
 DEFAULT_CHUNK_SIZE = 1024 * 1024
 
+# LOG_FORMAT = "#[%(asctime)s] [%(levelname)-7s] %(message)s"
+LOG_FORMAT = "#[%(asctime)s] %(levelname)7s| %(message)s"
+
+# Log Color
+log_color = None
+
+# Prompt
+prompt_mesage = "#[{}]        |"
+prompt_color = None
+prompt_line_color = "green"
+
+
+# Add Default custom CSS for better styling
+default_css = """
+    body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f4;
+    }
+    .container {
+        width: 90%;
+        margin: auto;
+        overflow: hidden;
+        padding: 20px;
+        background: #fff;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .table-container {
+        overflow-x: auto; /* Enable horizontal scrolling */
+    }
+    h1 {
+        background-color: #dcdcdc; /* Light purple background color */
+        color: #333; /* Dark text color */
+        font-size: 2em; /* Smaller font size */
+        text-align: center;
+        margin-bottom: 20px;
+        padding: 10px;
+        border-radius: 5px;
+    }
+    h2 {
+        background-color: #dcdcdc; /* Light purple background color */
+        color: #333; /* Dark text color */
+        font-size: 1.5em; /* Smaller font size */
+        margin-top: 30px;
+        margin-bottom: 15px;
+        padding: 8px;
+        border-radius: 5px;
+    }
+    h3 {
+        color: #333;
+        font-size: 1.2em; /* Smaller font size */
+        margin-top: 20px;
+        margin-bottom: 10px;
+    }
+    table {
+        # width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+    }
+    table, th, td {
+        border: 1px solid #ddd;
+    }
+    th, td {
+        padding: 10px;
+        text-align: left;
+    }
+    th {
+        background-color: #f2f2f2;
+    }
+    td:last-child {
+        word-wrap: break-word; /* Enable word wrapping */
+        word-break: break-all; /* Break words if necessary */
+    }
+    a {
+        color: #007bff;
+        text-decoration: none;
+    }
+    a:hover {
+        color: #0056b3;
+        text-decoration: underline;
+    }
+    
+"""
+
+# Default latex style
+default_latex_style = r"""
+    % custom.sty
+    \usepackage{geometry}
+    \geometry{margin=1in}
+
+    \usepackage{fancyhdr}
+    \pagestyle{fancy}
+    \fancyhead{}
+    \fancyfoot{}
+    \fancyhead[LE,RO]{\thepage}
+    \fancyhead[LO,RE]{\textbf{HOWARD}}
+    \fancyfoot[C]{\textit{Generated by HOWARD}}
+
+    \usepackage{titlesec}
+    \usepackage{xcolor}
+
+    % Define custom colors
+    \definecolor{sectioncolor}{RGB}{105, 105, 105} % Dim gray
+    \definecolor{subsectioncolor}{RGB}{105, 105, 105} % Dim gray
+    \definecolor{sectionbgcolor}{RGB}{245, 245, 245} % Light gray background for sections
+    \definecolor{subsectionbgcolor}{RGB}{230, 230, 230} % Slightly darker gray background for subsections
+    \definecolor{tableheadercolor}{RGB}{169, 169, 169} % Dark gray
+    \definecolor{tablealtrowcolor}{RGB}{245, 245, 245} % Light gray
+
+    % Customize section and subsection titles
+    \titleformat{\section}
+    {\normalfont\Large\bfseries\color{sectioncolor}}{\thesection}{1em}{}
+    \titleformat{\subsection}
+    {\normalfont\large\bfseries\color{subsectioncolor}}{\thesubsection}{1em}{}
+
+    % Add page break before each section
+    \titlespacing*{\section}{0pt}{\baselineskip}{\baselineskip}
+    \titlespacing*{\subsection}{0pt}{\baselineskip}{\baselineskip}
+    \newcommand{\sectionbreak}{\clearpage}
+    \newcommand{\subsectionbreak}{\clearpage}
+
+    % Customize header and footer lines
+    \renewcommand{\headrulewidth}{1pt}
+    \renewcommand{\footrulewidth}{1pt}
+    \renewcommand{\headrule}{\color{sectioncolor}\hrule height \headrulewidth \vskip-\headrulewidth}
+    \renewcommand{\footrule}{\color{sectioncolor}\hrule height \footrulewidth \vskip-\footrulewidth}
+
+    % Customize table of contents
+    \usepackage{tocloft}
+    \renewcommand{\cftsecfont}{\color{sectioncolor}}
+    \renewcommand{\cftsubsecfont}{\color{subsectioncolor}}
+    \renewcommand{\cftsecpagefont}{\color{sectioncolor}}
+    \renewcommand{\cftsubsecpagefont}{\color{subsectioncolor}}
+
+    % Reduce overall text size
+    \renewcommand{\normalsize}{\fontsize{9}{11}\selectfont}
+    \renewcommand{\large}{\fontsize{11}{13}\selectfont}
+    \renewcommand{\Large}{\fontsize{13}{15}\selectfont}
+
+    % Enhance table appearance
+    \usepackage{array}
+    \usepackage{booktabs}
+    \usepackage{colortbl}
+    \usepackage{makecell}
+    \usepackage{tabularx}
+    \usepackage{adjustbox}
+
+    % Define alternating row colors
+    \usepackage{etoolbox}
+    \AtBeginEnvironment{tabularx}{\rowcolors{2}{tablealtrowcolor}{white}}
+
+    % Customize table header
+    \newcolumntype{H}{>{\columncolor{tableheadercolor}}c}
+
+    % Apply styles to tables
+    \let\oldtabularx\tabularx
+    \let\endoldtabularx\endtabularx
+    \renewenvironment{tabularx}[1][]{\begin{adjustbox}{max width=\textwidth}\begin{tabularx}{\textwidth}{#1}}{\end{tabularx}\end{adjustbox}}
+
+    % Define a new column type for wrapping text
+    \newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+"""
 
 def remove_if_exists(filepaths: list) -> None:
     """
@@ -203,27 +360,99 @@ def set_log_level(verbosity: str, log_file: str = None) -> str:
     :param verbosity: The level of verbosity
     """
 
+    import coloredlogs  # type: ignore
+
+    # Verbosity configs
     verbosity = verbosity.lower()
+
+    # Config
     configs = {
         "debug": log.DEBUG,
         "info": log.INFO,
         "warning": log.WARNING,
+        "warn": log.WARN,
         "error": log.ERROR,
         "critical": log.CRITICAL,
+        "fatal": log.FATAL,
         "notset": log.NOTSET,
     }
     if verbosity not in configs.keys():
         raise ValueError("Unknown verbosity level:" + verbosity)
 
-    log.basicConfig(
-        filename=log_file,
-        encoding="utf-8",
-        format=LOG_FORMAT,
-        datefmt="%Y-%m-%d %H:%M:%S",
+    # Format
+    format = LOG_FORMAT
+
+    # # Basic config
+    # log.basicConfig(
+    #     filename=log_file,
+    #     encoding="utf-8",
+    #     format=format,
+    #     datefmt="%Y-%m-%d %H:%M:%S",
+    #     level=configs[verbosity],
+    # )
+
+    # Logger
+    logger = log.getLogger()
+
+    # Styles
+    LEVEL_STYLES = {
+        "debug": {"color": "magenta"},
+        # "info": {"color": "white"},
+        "info": {},
+        "warning": {"color": "yellow"},
+        "warn": {"color": "yellow"},
+        "error": {"color": "red"},
+        "critical": {"bold": True, "color": "red"},
+        "fatal": {"bold": True, "color": "red"},
+        "notset": {},
+        # "notice": {"color": "magenta"},
+        # "spam": {"color": "green", "faint": True},
+        # "success": {"bold": True, "color": "green"},
+        # "verbose": {"color": "blue"},
+    }
+    color = log_color
+    bold = False
+    faint = False
+    FIELDS_STYLES = {
+        "asctime": {"bold": bold, "color": color, "faint": faint},
+        "hostname": {"bold": bold, "color": color, "faint": faint},
+        "levelname": {"bold": bold, "color": color, "faint": faint},
+        "name": {"bold": bold, "color": color, "faint": faint},
+        "programname": {"bold": bold, "color": color, "faint": faint},
+        "username": {"bold": bold, "color": color, "faint": faint},
+    }
+
+    # coloredlogs install
+    coloredlogs.install(
         level=configs[verbosity],
+        encoding="utf-8",
+        logger=logger,
+        fmt=format,
+        level_styles=LEVEL_STYLES,
+        field_styles=FIELDS_STYLES,
     )
 
     return verbosity
+
+
+def get_log_level() -> int:
+    """
+    The function `get_log_level` returns the current log level of the Python logging module.
+
+    :return: The current log level.
+    """
+
+    return log.getLogger().getEffectiveLevel()
+
+
+def get_log_level_name() -> str:
+    """
+    The function `get_log_level_name` returns the current log level name of the Python logging module.
+
+    :return: The name of the current log level.
+    """
+
+    return log.getLevelName(get_log_level())
 
 
 def split_interval(start: int, end: int, step: int = None, ncuts: int = None):
@@ -403,18 +632,23 @@ def find(name: str, path: str) -> str:
     return ""
 
 
-def find_all(name: str, path: str) -> list:
+def find_all(name: str, path: str, allow_dir: bool = True) -> list:
     """
-    "Walk the directory tree starting at path, and for each regular file with the name name, append its
-    full path to the result list."
+    "Walk the directory tree starting at path, and for each regular file or directory with the name name,
+    append its full path to the result list."
 
     The os.walk function is a generator that yields a 3-tuple containing the name of a directory, a list
     of its subdirectories, and a list of the files in that directory. The name of the directory is a
     string, and the lists of subdirectories and files are lists of strings
 
     :param name: The name of the file you're looking for
+    :type name: str
     :param path: The path to search in
-    :return: A list of all the files in the directory that have the name "name"
+    :type path: str
+    :param allow_dir: If True, the function will also search for directories with the specified name,
+    :type allow_dir: bool
+    :return: A list of all the files or directories in the directory that have the name "name"
+    :rtype: list
     """
 
     # result
@@ -427,6 +661,10 @@ def find_all(name: str, path: str) -> list:
         for filename in fnmatch.filter(files, name):
             if os.path.exists(os.path.join(root, filename)):
                 result.append(os.path.join(root, filename))
+        if allow_dir:
+            for dirname in fnmatch.filter(dirs, name):
+                if os.path.exists(os.path.join(root, dirname)):
+                    result.append(os.path.join(root, dirname))
     return result
 
 
@@ -1465,7 +1703,7 @@ def download_file(
 
             # Aria options
             aria_async_dns_option = str(aria_async_dns).lower()
-            if quiet and log.root.level >= 20:
+            if quiet and get_log_level() >= 20:
                 aria_quiet_option = " --quiet "
                 aria_redirect_option = " 2>/dev/null "
             else:
@@ -1985,7 +2223,7 @@ def get_memory(config: dict = {}, param: dict = None) -> str:
     provided in the `param` dictionary, and if not, it looks for a default value in the `config`
     """
 
-    import psutil
+    import psutil  # type: ignore
 
     # Memory system
     mem = psutil.virtual_memory()
@@ -2396,7 +2634,30 @@ def concat_and_compress_files(
             # Remove tmp file
             os.remove(output_file_tmp)
         except:
-            raise ValueError(f"Output file sorting failed: {output_file_tmp}")
+            log.warning(
+                f"Output file sorting (without tabix) failed: {output_file_tmp}"
+            )
+            # Sort with pysam with index before
+            try:
+                pysam.tabix_index(output_file_tmp, preset="vcf", force=True)
+                pysam.bcftools.sort(
+                    f"-Oz{compression_level}",
+                    "-o",
+                    output_file,
+                    "-T",
+                    output_file_tmp,
+                    output_file_tmp,
+                    "-m",
+                    f"{memory}G",
+                    threads=threads,
+                    catch_stdout=False,
+                )
+                # Remove tmp file
+                os.remove(output_file_tmp)
+            except:
+                raise ValueError(
+                    f"Output file sorting (with tabix) failed: {output_file_tmp}"
+                )
 
     else:
         # Rename tmp file
@@ -2578,7 +2839,7 @@ def genome_build_switch(assembly: str) -> str:
     :return: The function `genome_build_switch` returns a string.
     """
 
-    import genomepy
+    import genomepy  # type: ignore
 
     genome_list = genomepy.search(assembly, exact=False)
 
@@ -3228,11 +3489,119 @@ class RawTextArgumentDefaultsHelpFormatter(
     pass
 
 
+def get_prog_metadata(
+    setup: str = None,
+) -> dict:
+    """
+    The `get_prog_metadata` function retrieves metadata information about a program from a
+    configuration file or from the package metadata, and returns it as a dictionary.
+    If the metadata is not found, it falls back to default values.
+
+    :param setup: The `setup` parameter is a string that represents the path to a configuration file.
+    This file contains metadata about the program, such as its name, version, description, and long
+    description content type
+    :type setup: str
+    :return: The function `get_prog_metadata` returns a dictionary containing metadata information
+    about a program. The metadata includes the program name, version, author, and description. If the
+    metadata is not found in the provided setup file, it falls back to default values or retrieves
+    """
+
+    # Config Parser
+    # setup = "/tmp/config"
+    if setup is not None and os.path.isfile(setup):
+        cf = ConfigParser()
+        cf.read(setup)
+        prog_name = cf.get("metadata", "name", fallback="Unknown Program")
+        prog_version = cf.get("metadata", "version", fallback="0.0.0")
+        prog_authors = cf.get("metadata", "author", fallback="0.0.0")
+        prog_description = cf.get(
+            "metadata", "description", fallback="No description available."
+        )
+    else:
+        # meta
+        try:
+            meta = metadata("pyhoward")
+            prog_name = meta.get("Name")
+            prog_version = meta.get("Version")
+            prog_authors = meta.get("author")
+            prog_description = meta.get("Summary")
+        # Default
+        except Exception as e:
+            print(f"Erreur : {e}")
+            prog_name = "HOWARD"
+            prog_version = "0.0.0"
+            prog_authors = "ALB"
+            prog_description = "HOWARD - Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery"
+
+    # Name clean
+    prog_name_clean = re.sub(r"^(py)|((?<=\w)py)$", "", prog_name).split("-")[0]
+
+    # meta
+    prog_meta = {}
+    prog_meta["name"] = prog_name
+    prog_meta["name_clean"] = prog_name_clean
+    prog_meta["version"] = prog_version
+    prog_meta["author"] = prog_authors
+    prog_meta["description"] = prog_description
+
+    # meta return
+    return prog_meta
+
+
+def help_header(setup: str = None) -> str:
+    """
+    The `help_header` function generates a header for the help documentation based on the metadata
+    information provided in the setup file.
+
+    :param setup: The `setup` parameter is a string that represents the path to a configuration file.
+    This file contains metadata about the program, such as its name, version, description, and long
+    description content type
+    :type setup: str
+    :return: The function `help_header` returns a string that represents the header for the help
+    documentation. The header includes the program name, version, authors, and description.
+
+    """
+
+    # Meta program
+    meta = get_prog_metadata(setup=setup)
+    # prog_name = meta.get("name")
+    prog_name_clean = meta.get("name_clean")
+    prog_version = meta.get("version")
+    prog_authors = meta.get("author")
+    prog_description = meta.get("description")
+
+    # Logo
+    import pyfiglet  # type: ignore
+
+    # This ensures that the color settings are reset after each print
+    init(autoreset=True)
+
+    ascii_logo = colored(
+        pyfiglet.figlet_format(
+            prog_name_clean.split("-")[0].upper()
+        ),  # , font="slant")
+        color=log_color,
+    )
+
+    # Description
+    header_description = colored(
+        f"{prog_name_clean.split('-')[0].upper()}::{prog_version} [{prog_authors}]\n{prog_description}\n"
+        "",
+        color=log_color,
+    )
+
+    # Header
+    header = f"""{ascii_logo}{header_description}"""
+
+    # Return
+    return header
+
+
 def help_generation(
     arguments_dict: dict = {},
     parser=None,
-    setup: str = None,
     output_type: str = "parser",
+    setup: str = None,
 ):
     """
     The `help_generation` function generates a parser object for command-line arguments, as well as
@@ -3243,13 +3612,13 @@ def help_generation(
     :param parser: The `parser` parameter is an instance of the `argparse.ArgumentParser` class. It is
     used to define the command-line interface and parse the command-line arguments. If no `parser` is
     provided, a new instance of `argparse.ArgumentParser` will be created
+    :param output_type: The `output_type` parameter determines the format of the output. It can be one
+    of the following values:, defaults to parser
+    :type output_type: str (optional)
     :param setup: The `setup` parameter is a string that represents the path to a configuration file.
     This file contains metadata about the program, such as its name, version, description, and long
     description content type
     :type setup: str
-    :param output_type: The `output_type` parameter determines the format of the output. It can be one
-    of the following values:, defaults to parser
-    :type output_type: str (optional)
     :return: The function `help_generation` returns different outputs based on the value of the
     `output_type` parameter.
     """
@@ -3259,46 +3628,13 @@ def help_generation(
     commands_arguments = arguments_dict.get("commands_arguments", {})
     shared_arguments = arguments_dict.get("shared_arguments", {})
 
-    # # Config Parser
-    # cf = ConfigParser()
-    # try:
-    #     cf.read(setup)
-    #     prog_name = cf.get("metadata", "name", fallback="Unknown Program")
-    #     prog_version = cf.get("metadata", "version", fallback="0.0.0")
-    #     prog_description = cf.get(
-    #         "metadata", "description", fallback="No description available."
-    #     )
-    #     prog_long_description_content_type = cf.get(
-    #         "metadata", "long_description_content_type", fallback="text/plain"
-    #     )
-    # except (NoSectionError, NoOptionError) as e:
-    #     print(f"Error reading configuration file: {e}")
-    #     prog_name = "HOWARD"
-    #     prog_version = "0.0.0"
-    #     prog_description = "HOWARD - Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery"
-    #     prog_long_description_content_type = "text/plain"
-
-    try:
-        meta = metadata("howard-ann")
-        prog_name = meta.get("Name")
-        prog_version = meta.get("Version")
-        prog_description = meta.get("Summary")
-    except Exception as e:
-        print(f"Erreur : {e}")
-        prog_name = "HOWARD"
-        prog_version = "0.0.0"
-        prog_description = "HOWARD - Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery"
-
     # Parser default
     if not parser:
         parser = argparse.ArgumentParser()
 
     # Parser information
-    parser.prog = prog_name
-    parser.description = (
-        f"""{prog_name.upper()}:{prog_version} - {prog_description}\n"""
-        # + f"""{prog_long_description_content_type}"""
-    )
+    parser.prog = get_prog_metadata(setup=setup).get("name_clean", "howard")
+    parser.description = ""
     parser.epilog = (
         "\nUsage examples:\n"
         + """   howard process --input=tests/data/example.vcf.gz --output=/tmp/example.annotated.vcf.gz --param=config/param.json \n"""
@@ -4188,7 +4524,7 @@ def detect_column_type(column) -> str:
     conditions checked in the function.
     """
 
-    from pandas.api.types import is_datetime64_any_dtype as is_datetime
+    from pandas.api.types import is_datetime64_any_dtype as is_datetime  # type: ignore
 
     if len(column) == 0:
         return "VARCHAR"
@@ -4199,7 +4535,11 @@ def detect_column_type(column) -> str:
     elif pd.to_numeric(column, errors="coerce").notnull().all():
         return "DOUBLE"
     else:
-        return "VARCHAR"
+        try:
+            pd.to_numeric(column)
+            return "DOUBLE"
+        except:
+            return "VARCHAR"
 
 
 def determine_column_number(values_list: list) -> str:
@@ -4264,3 +4604,363 @@ def docker_automount() -> str:
         if "sock" not in volume.get("Source") and "tmp" not in volume.get("Source"):
             mounts_new += f" -v {volume.get('Source')}:{volume.get ('Destination')}:{volume.get('Mode')}"
     return mounts_new
+
+
+# Sort contig function
+def contig_sort_key(contig: str) -> tuple:
+    """
+    Sort contigs in a VCF file. This function is used as a key function for sorting contigs in a VCF
+    file. It handles special cases for contig names like 'X', 'Y', 'M', and 'MT'. It also sorts
+    contigs based on their position as integers. The function returns a tuple with the contig position
+    and the contig name. Contigs are sorted in ascending order.
+
+    :param contig: The contig name to sort.
+    :type contig: str
+    :return: A tuple with the contig position and the contig name.
+    :rtype: tuple
+    """
+
+    # Remove 'chr' from contig
+    contig_clean = re.sub(r"^chr", "", contig)
+
+    # inf
+    inf = 100000000
+
+    # Special cases: X, Y, M/MT
+    if contig_clean == "X":
+        return (float(inf) - 3, contig)
+    elif contig_clean == "Y":
+        return (float(inf) - 2, contig)
+    elif contig_clean in ["M", "MT"]:
+        return (float(inf) - 1, contig)
+
+    # Contig as integer
+    try:
+        return (int(contig_clean), contig)
+    except ValueError:
+        # Contig as on-numeric
+        return (float(inf), contig_clean)
+
+
+def sort_contigs(vcf_reader):
+    """
+    Sort contigs in VCF header. This function sorts the contigs in the header of a VCF file based on
+    their names and positions. It uses the `contig_sort_key` function to sort the contigs. The function
+    returns a VCF object with sorted contigs. The contigs are sorted in ascending order. The function
+    modifies the contigs in place.
+
+    :param vcf_reader: VCF object from VCF package.
+    :type vcf_reader: vcf.Reader
+    :return: VCF object with sorted contigs.
+    :rtype: vcf.Reader
+    """
+
+    from collections import OrderedDict
+
+    # Extract contigs from header
+    contigs = list(vcf_reader.contigs.keys())
+
+    # Sort contigs
+    sorted_contigs = sorted(contigs, key=contig_sort_key)
+
+    # Create new contgis OrderedDict
+    ordered_contigs = OrderedDict()
+
+    # Add contigs
+    for contig in sorted_contigs:
+        ordered_contigs[contig] = vcf_reader.contigs[contig]
+
+    # Replace contigs
+    vcf_reader.contigs = ordered_contigs
+
+    # Return
+    return vcf_reader
+
+
+def escape_markdown_table_chars(value, special_chars=None):
+    """
+    Escape special characters in a string value for Markdown tables.
+
+    :param value: The string value to process.
+    :type value: str
+    :param special_chars: A list of special characters to escape. Defaults to None.
+    :type special_chars: list, optional
+    :return: The string value with escaped special characters.
+    :rtype: str
+    """
+
+    if special_chars is None:
+        special_chars = [
+            "|",
+        ]
+    if isinstance(value, str):
+        for char in special_chars:
+            value = value.replace(char, f"\\{char}")
+    return value
+
+
+def convert_markdown_to_html(
+    input_file: str, output_file: str, css: str = None
+) -> None:
+    """
+    Convert a Markdown file to an HTML file.
+
+    :param input_file: The path to the input Markdown file.
+    :type input_file: str
+    :param output_file: The path to the output HTML file.
+    :type output_file: str
+    :param css: Optional CSS styles to include in the HTML file. Defaults to None.
+    :type css: str, optional
+    :return: None
+    :rtype: None
+    """
+    import markdown2  # type: ignore
+
+    # Read the Markdown content from the input file
+    with open(input_file, "r", encoding="utf-8") as md_file:
+        md_content = md_file.read()
+        html_content = markdown2.markdown(
+            md_content, extras=["tables", "toc", "code-friendly"]
+        )
+
+    # CSS content
+    if css is None:
+        css = default_css
+
+    # HTML content
+    html_content = f"<html><head><style>{css}</style></head><body><div class='container'><div class='table-container'>{html_content}</div></div></body></html>"
+
+    # Write the HTML content to the output file
+    with open(output_file, "w", encoding="utf-8") as html_file:
+        html_file.write(html_content)
+
+
+def convert_html_to_pdf(
+    input_file: str,
+    output_file: str,
+    extras_args: list = None,
+    custom_style: str = None,
+) -> None:
+    """
+    Convert an HTML file to a PDF file.
+
+    :param input_file: The path to the input HTML file.
+    :type input_file: str
+    :param output_file: The path to the output PDF file.
+    :type output_file: str
+    :param extra_args: Optional list of extra arguments for the PDF conversion. Defaults to None.
+    :type extra_args: list, optional
+    :return: None
+    :rtype: None
+    """
+    import pypandoc  # type: ignore
+
+    # Files to remove
+    files_to_remove = []
+
+    # Default extra arguments
+    default_extra_args = [
+        "--pdf-engine=xelatex",
+        "--variable",
+        "geometry:margin=1in",
+        "--variable",
+        "tables:autofit",
+        "--variable",
+        "table-use-row-colors=true",
+        "--variable",
+        "table-use-col-widths=true",
+        "--variable",
+        "table-col-widths=0.3,0.3,0.3",
+    ]
+
+    # Extra arguments
+    if extras_args is None:
+        extra_args = default_extra_args
+
+    # Default extra arguments custom style
+    if custom_style is None:
+
+        # Default Latex custom style
+        with tempfile.NamedTemporaryFile(
+            suffix=".sty", delete=False
+        ) as temp_latex_style_file:
+            temp_latex_style_path = temp_latex_style_file.name
+
+            # Write default latex style
+            with open(temp_latex_style_path, "w") as temp_latex_style:
+                temp_latex_style.write(default_latex_style)
+
+        # Default latex style
+        custom_style = temp_latex_style_path
+        files_to_remove.append(custom_style)
+
+        if os.path.exists(custom_style):
+            extra_args.append("--include-in-header=" + custom_style)
+
+    # Convert HTML to PDF
+    log.getLogger("pypandoc").addHandler(log.NullHandler())
+    output = pypandoc.convert_file(
+        input_file,
+        "pdf",
+        outputfile=output_file,
+        extra_args=extra_args,
+        encoding="utf-8",
+    )
+
+    # Assert conversion success
+    assert output == "", "Conversion to PDF failed"
+
+    # Remove temporary latex style file
+    remove_if_exists(files_to_remove)
+
+
+def convert_markdown_to_pdf(input_file: str, output_file: str) -> None:
+    """
+    Convert a Markdown file to a PDF file.
+
+    :param input_file: The path to the input Markdown file.
+    :type input_file: str
+    :param output_file: The path to the output PDF file.
+    :type output_file: str
+    :return: None
+    :rtype: None
+    """
+
+    # Convert Markdown to HTML
+    with tempfile.NamedTemporaryFile(suffix=".html", delete=True) as temp_html_file:
+        temp_html_path = temp_html_file.name
+    convert_markdown_to_html(input_file, temp_html_path)
+
+    # Convert HTML to PDF
+    convert_html_to_pdf(temp_html_path, output_file)
+
+
+def cast_columns_query(query, conn, sep: str = ","):
+    """
+    Cast columns of a query to VARCHAR or aggregate arrays to strings.
+
+    :param query: The original SQL query.
+    :type query: str
+    :param conn: The database connection.
+    :type conn: duckDB connection
+    :param sep: The separator for list aggregation, defaults to ","
+    :type sep: str
+    :return: The modified SQL query with casted columns.
+    :rtype: str
+    """
+
+    # Find structure, with DESCRIBE with query, of query with columns and type like VARCHAR or VARCHAR[], or FLOAT or FLOAT[]
+    # and create a dictionary with column name and type
+    query_sql_structure = f"""
+        DESCRIBE ({query})
+    """
+    result_describe = conn.execute(query_sql_structure)
+    description_dict = {row[0]: {"type": row[1]} for row in result_describe.fetchall()}
+
+    # Add a select to aggregate list to string if needed
+    list_columns = []
+    for column in description_dict:
+        column_type = description_dict.get(column, {}).get("type", "VARCHAR")
+        if column_type.endswith("[]"):
+            list_columns.append(
+                f""" list_aggregate("{column}", 'string_agg', '{sep}') AS '{column}' """
+            )
+        else:
+            list_columns.append(f""" "{column}" """)
+
+    # RE-Query
+    query_cast = f"""
+        SELECT {",".join(list_columns)}
+        FROM ({query})
+    """
+
+    return query_cast
+
+
+def annotation_file_find(
+    annotation_file: str = None,
+    databases_folders: list = [],
+    assembly: str = None,
+) -> str:
+    """
+    The function `annotation_file_find` searches for a specified annotation file in a list of
+    directories, including assembly-specific folders, and returns the full path of the found file.
+    :param annotation_file: The `annotation_file` parameter is a string that represents the name of the
+    annotation file you are looking for. This file may be located in different directories or folders
+    :type annotation_file: str
+    :param databases_folders: The `databases_folders` parameter is a list of directories or folders
+    where the function will search for the specified annotation file. These directories may contain
+    different versions or assemblies of the annotation file
+    :type databases_folders: list
+    :param assembly: The `assembly` parameter is a string that represents the specific assembly or
+    version of the annotation file you are looking for. It is used to narrow down the search to a
+    specific assembly folder within the provided list of `databases_folders`
+    :type assembly: str (optional)
+    :return: The function `annotation_file_find` returns the full path of the found annotation file as a
+    string. If the file is not found in any of the specified directories, it returns `None`.
+    If the file is found, it returns the full path to the file.
+    If the file is not found, it returns None.
+    :rtype: str or None
+    """
+
+    # Init
+    annotation_file_found = None
+
+    # Check if annotation_file exists
+    if os.path.exists(annotation_file):
+        annotation_file_found = annotation_file
+
+    # Check if full annotation_file exists
+    elif os.path.exists(full_path(annotation_file)):
+        annotation_file_found = full_path(annotation_file)
+
+    else:
+
+        # Find within assembly folders
+        if assembly is not None:
+            assembly_folders = [
+                full_path(os.path.join(database, assembly))
+                for database in databases_folders
+            ]
+            log.debug(
+                f"Searching for {annotation_file} in assembly folders: {assembly_folders}"
+            )
+            found_file = search_in_folders(annotation_file, assembly_folders)
+            log.debug(f"Found file in assembly folders: {found_file}")
+            if found_file:
+                return found_file
+
+        # Search in general folders
+        general_folders = [
+            full_path(os.path.join(database, os.path.dirname(annotation_file)))
+            for database in databases_folders
+        ]
+        return search_in_folders(os.path.basename(annotation_file), general_folders)
+
+    return annotation_file_found
+
+
+def search_in_folders(file_name: str, search_folders: list) -> str:
+    """
+    The function `search_in_folders` searches for a specified file in a list of directories and returns
+    the full path of the first found file.
+    :param file_name: The `file_name` parameter is a string that represents the name of the file you are
+    looking for. This file may be located in different directories or folders
+    :type file_name: str
+    :param search_folders: The `search_folders` parameter is a list of directories or folders where the
+    function will search for the specified file. These directories may contain different versions or
+    assemblies of the file
+    :type search_folders: list
+    :return: The function `search_in_folders` returns the full path of the first found file as a string.
+    If the file is not found in any of the specified directories, it returns `None`.
+    :rtype: str or None
+    """
+
+    for folder in search_folders:
+        log.debug(f"Searching for {file_name} in folder: {folder}")
+        found_files = find_all(file_name, full_path(folder))
+        log.debug(f"Found files: {found_files}")
+        if found_files:
+            return found_files[0]
+
+    return None

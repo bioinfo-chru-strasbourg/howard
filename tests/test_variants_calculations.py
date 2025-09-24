@@ -6,24 +6,20 @@ Usage:
 pytest tests/
 
 Coverage:
-coverage run -m pytest tests/test_objects_variants.py -x -v --log-cli-level=INFO --capture=tee-sys
-coverage report --include=howard/* -m 
+coverage run -m pytest tests/test_variants_calculations.py -x -v --log-cli-level=INFO --capture=tee-sys
+coverage report --include=howard/* -m
 """
 
 import logging as log
 import os
-import sys
 from tempfile import TemporaryDirectory
-import duckdb
-import re
-import Bio.bgzf as bgzf
-import gzip
-import pytest
+import pytest  # type: ignore
+import vcf  # type: ignore
 
-from howard.functions.commons import *
 from howard.objects.variants import Variants
-from howard.functions.databases import *
-from test_needed import *
+from howard.functions.commons import remove_if_exists
+
+from test_needed import tests_folder, tests_data_folder, tests_config
 
 
 def test_calculation_sql_on_table():
@@ -86,6 +82,9 @@ def test_calculation_sql_on_table():
             operations_config_dict=operations_config_dict,
             operations_config_file=operations_config_file,
         )
+
+        # result = variants.get_query_to_df(f"""SELECT * FROM variants """)
+        # log.debug(result.to_string())
 
         # Check number of variant_chr_pos_alt_ref
         result = variants.get_query_to_df(
@@ -227,11 +226,7 @@ def test_calculation_sql_config_file_in_param():
         )
 
         # Load param
-        param = {
-            "calculation": {
-                "calculation_config" : operations_config_file
-            }
-        }
+        param = {"calculation": {"calculation_config": operations_config_file}}
         variants.set_param(param=param)
 
         # Operations config dict
@@ -607,10 +602,23 @@ def test_calculation_vartype_full():
 
 
 @pytest.mark.parametrize(
-    "calculation",
-    ["snpeff_ann_explode", "snpeff_ann_explode_uniquify", "snpeff_ann_explode_json"],
+    "input_file, calculation",
+    [
+        (
+            input_file,
+            calculation,
+        )
+        for input_file in ["example.ann.vcf.gz", "example.chrM.ann.vcf.gz"]
+        for calculation in [
+            "snpeff_extract",
+            "snpeff_hgvs",
+            "snpeff_ann_explode",
+            "snpeff_ann_explode_uniquify",
+            "snpeff_ann_explode_json",
+        ]
+    ],
 )
-def test_calculation_snpeff_ann_explode(calculation):
+def test_calculation_snpeff_ann_explode(input_file, calculation):
     """
     This function is a test for calculating snpeff_hgvs in a VCF file using the Variants class.
 
@@ -622,7 +630,7 @@ def test_calculation_snpeff_ann_explode(calculation):
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
-        input_vcf = tests_data_folder + "/example.ann.vcf.gz"
+        input_vcf = tests_data_folder + "/" + input_file
         output_vcf = f"{tmp_dir}/output.{calculation}.vcf"
 
         # Construct param dict
@@ -633,6 +641,10 @@ def test_calculation_snpeff_ann_explode(calculation):
             conn=None, input=input_vcf, output=output_vcf, param=param, load=True
         )
 
+        # Check nb variants
+        result = variants.get_query_to_df(""" SELECT INFO FROM variants""")
+        nb_variants = len(result)
+
         # Check if no snpeff_hgvs
         result = variants.get_query_to_df(
             """ SELECT INFO FROM variants WHERE regexp_matches(INFO,'snpeff[^=]') """
@@ -642,11 +654,11 @@ def test_calculation_snpeff_ann_explode(calculation):
         # Calculation
         variants.calculation()
 
-        # query annotated variant
+        # query annotated variant (0 if no snpeff annotation like in chrM)
         result = variants.get_query_to_df(
             """ SELECT * FROM variants WHERE regexp_matches(INFO,'snpeff[^=]') """
         )
-        assert len(result) == 7
+        assert len(result) == nb_variants or len(result) == 0
 
         # Check if VCF is in correct format with pyVCF
         remove_if_exists([output_vcf])
@@ -737,7 +749,7 @@ def test_calculation_snpeff_hgvs_no_ann():
             assert False
 
 
-def test_calculation_snpeff_hgvs_transcripts():
+def test_calculation_nomen_snpeff_hgvs_transcripts():
     """
     This function tests the calculation of SNPEff HGVS transcripts using a VCF file and a transcripts
     file.
@@ -771,6 +783,8 @@ def test_calculation_snpeff_hgvs_transcripts():
 
         # Calculation
         variants.calculation()
+        # result = variants.get_query_to_df(""" SELECT INFO FROM variants  """)
+        # log.debug(f"result=\n{result.to_string()}")
 
         # query annotated variant
         result = variants.get_query_to_df(
@@ -799,7 +813,7 @@ def test_calculation_snpeff_hgvs_transcripts():
             assert False
 
 
-def test_calculation_snpeff_hgvs_notranscripts():
+def test_calculation_nomen_snpeff_hgvs_notranscripts():
     """
     This function tests the calculation of SNPEff HGVS notranscripts in a VCF file.
     """
@@ -1357,6 +1371,42 @@ def test_calculation_vaf_normalization():
             """ SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND sample4 LIKE '%:0.303819' """
         )
         assert len(result) == 1
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
+def test_calculation_vaf_normalization_empty():
+    """
+    This is a test function for the calculation of variant allele frequency normalization in a VCF file.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.empty.vcf"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {"calculation": {"calculations": {"vaf": None}}}
+
+        # Create object
+        variants = Variants(
+            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+        )
+
+        # Calculation
+        variants.calculation()
+
+        result = variants.get_query_to_df(
+            """ SELECT INFO FROM variants WHERE FORMAT LIKE '%:VAF' """
+        )
+        assert len(result) == 0
 
         # Check if VCF is in correct format with pyVCF
         remove_if_exists([output_vcf])

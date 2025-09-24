@@ -14,6 +14,8 @@ title: HOWARD Help Parameters Databases
   - [<span class="toc-section-number">5.2</span>
     download_genomes_provider](#download_genomes_provider)
   - [<span class="toc-section-number">5.3</span>
+    download_genomes_provider_file](#download_genomes_provider_file)
+  - [<span class="toc-section-number">5.4</span>
     download_genomes_contig_regex](#download_genomes_contig_regex)
 - [<span class="toc-section-number">6</span> snpeff](#snpeff)
   - [<span class="toc-section-number">6.1</span>
@@ -56,22 +58,24 @@ title: HOWARD Help Parameters Databases
   - [<span class="toc-section-number">9.3</span>
     download_dbnsfp_release](#download_dbnsfp_release)
   - [<span class="toc-section-number">9.4</span>
-    download_dbnsfp_parquet_size](#download_dbnsfp_parquet_size)
+    download_dbnsfp_source](#download_dbnsfp_source)
   - [<span class="toc-section-number">9.5</span>
-    download_dbnsfp_subdatabases](#download_dbnsfp_subdatabases)
+    download_dbnsfp_parquet_size](#download_dbnsfp_parquet_size)
   - [<span class="toc-section-number">9.6</span>
-    download_dbnsfp_parquet](#download_dbnsfp_parquet)
+    download_dbnsfp_subdatabases](#download_dbnsfp_subdatabases)
   - [<span class="toc-section-number">9.7</span>
-    download_dbnsfp_vcf](#download_dbnsfp_vcf)
+    download_dbnsfp_parquet](#download_dbnsfp_parquet)
   - [<span class="toc-section-number">9.8</span>
-    download_dbnsfp_no_files_all](#download_dbnsfp_no_files_all)
+    download_dbnsfp_vcf](#download_dbnsfp_vcf)
   - [<span class="toc-section-number">9.9</span>
-    download_dbnsfp_add_info](#download_dbnsfp_add_info)
+    download_dbnsfp_no_files_all](#download_dbnsfp_no_files_all)
   - [<span class="toc-section-number">9.10</span>
-    download_dbnsfp_only_info](#download_dbnsfp_only_info)
+    download_dbnsfp_add_info](#download_dbnsfp_add_info)
   - [<span class="toc-section-number">9.11</span>
-    download_dbnsfp_uniquify](#download_dbnsfp_uniquify)
+    download_dbnsfp_only_info](#download_dbnsfp_only_info)
   - [<span class="toc-section-number">9.12</span>
+    download_dbnsfp_uniquify](#download_dbnsfp_uniquify)
+  - [<span class="toc-section-number">9.13</span>
     download_dbnsfp_row_group_size](#download_dbnsfp_row_group_size)
 - [<span class="toc-section-number">10</span>
   alphamissense](#alphamissense)
@@ -154,6 +158,8 @@ title: HOWARD Help Parameters Databases
     param_extann](#param_extann)
   - [<span class="toc-section-number">15.6</span>
     mode_extann](#mode_extann)
+  - [<span class="toc-section-number">15.7</span>
+    hgnc_extann](#hgnc_extann)
 - [<span class="toc-section-number">16</span> Parameters](#parameters)
   - [<span class="toc-section-number">16.1</span>
     generate_param](#generate_param)
@@ -193,7 +199,8 @@ Examples:
 >          },
 >          "dbnsfp": {
 >              "download_dbnsfp": "~/howard/databases/dbnsfp/current",
->              "download_dbnsfp_release": "4.4a"
+>              "download_dbnsfp_source": "https://usf.box.com/shared/static/0tq7q3b8ucaxxkmfyvnb0ss7g58ptgcl",
+>              "download_dbnsfp_release": "4.9a"
 >          },
 >          "alphamissense": {
 >              "download_alphamissense": "~/howard/databases/alphamissense/current"
@@ -249,8 +256,8 @@ Examples:
 >          },
 >          "dbnsfp": {
 >              "download_dbnsfp": "~/howard/databases/dbnsfp/current",
->              "download_dbnsfp_url": "https://dbnsfp.s3.amazonaws.com",
->              "download_dbnsfp_release": "4.4a",
+>              "download_dbnsfp_source": "https://usf.box.com/shared/static/0tq7q3b8ucaxxkmfyvnb0ss7g58ptgcl",
+>              "download_dbnsfp_release": "4.9a",
 >              "download_dbnsfp_parquet_size": 100,
 >              "download_dbnsfp_subdatabases": true,
 >              "download_dbnsfp_parquet": false,
@@ -363,6 +370,13 @@ Choices: `['GENCODE', 'Ensembl', 'UCSC', 'NCBI']`
 
 Default: `UCSC`
 
+## download_genomes_provider_file
+
+Download or Copy Genome from URL or a file. (e.g.
+https://hgdownload.soe.ucsc.edu/goldenPath/sacCer3/bigZips/sacCer3.fa.gz).
+
+Type: `str`
+
 ## download_genomes_contig_regex
 
 Regular expression to select specific chromosome (e.g
@@ -419,6 +433,8 @@ Default: `http://www.openbioinformatics.org/annovar/download`
 # refseq
 
 refSeq download.
+
+Type: `str`
 
 ## download_refseq
 
@@ -526,6 +542,13 @@ Default: `https://dbnsfp.s3.amazonaws.com`
 Release of dbNSFP to download (see dbNSFP website) (e.g. '4.4a').
 
 Default: `4.4a`
+
+## download_dbnsfp_source
+
+Source of dbNSFP as an URL or a local file (e.g.
+'/path/to/dbNSFP5.1a.zip').
+
+Default: `None`
 
 ## download_dbnsfp_parquet_size
 
@@ -741,7 +764,7 @@ dbSNP download.
 
 ## download_dbsnp
 
-Path to dbSNP databases (e.g. '~/howard/databases/exomiser/dbsnp').
+Path to dbSNP databases (e.g. '~/howard/databases/dbsnp/current').
 
 Type: `Path`
 
@@ -969,9 +992,17 @@ the longest, or keep the chosen one (transcript_extann).
 
 Type: `str`
 
-Choices: `['all', 'longest', 'chosen']`
+Choices: `['all', 'longest', 'chosen', 'gene']`
 
 Default: `longest`
+
+## hgnc_extann
+
+hgnc_extann file path. Path of HGNC file
+
+Type: `Path`
+
+Default: `None`
 
 # Parameters
 

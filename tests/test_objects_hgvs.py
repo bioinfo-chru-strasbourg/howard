@@ -2,13 +2,10 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from io import StringIO
-import os
-import re
-
-import nose
+import nose  # type: ignore
 
 try:
-    from pyfaidx import Fasta as SequenceFileDB
+    from pyfaidx import Fasta as SequenceFileDB  # type: ignore
 except ImportError:
     SequenceFileDB = None
 
@@ -22,7 +19,13 @@ from howard.functions.utils import (
     matches_ref_allele,
     parse_hgvs_name,
 )
-from test_needed import *
+
+from test_needed import (
+    tests_folder,
+    tests_data_folder,
+    tests_databases_folder,
+    download_needed_databases,
+)
 
 
 def get_transcript(name):

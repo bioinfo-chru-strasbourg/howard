@@ -1,5 +1,53 @@
 # RELEASE NOTES
 
+## 0.13.0
+
+Introduction of interactvie mode to dynamically explore data, using variants view
+with columns types (defined in VCF header), with build-in tool or Harlequin tool.
+Improvements using view duckDB feature, mainly for calculations and prioritizations,
+and transcripts mapping. New useful tools and plugins.
+
+### News
+
+- Interactivity mode:
+  - Interactive terminal to execute SQL queries
+  - Completion and history features
+  - Display modes (e.g. 'dataframe', 'markdown', 'simple', 'tabulate')
+  - Query result limitation, to speedup exploration
+  - Extended mode with Harlequin tool ([https://harlequin.sh](https://harlequin.sh))
+- Variants "view":
+  - Query more easily (with "variants_view" view loaded by default in query tools)
+  - INFO/tags and samples structured on specific columns ('INFOS' and 'SAMPLES')
+  - Improve performances for annotations, calculations and prioritizations
+  - Improve prioritization profiles definition using columns types
+    (Integer, Float, String) with list type (defined in VCF header)
+- New tools:
+  - Tool 'filter' to filter variants in SQL format and samples 
+  - Tool 'sort' to sort variants from contig order
+- Plugins:
+  - 'to_excel': Convert VCF to Excel '.xlsx' format
+
+### Updates
+
+- Improve prioritization performances (vith annotations view)
+- Improve transcripts prioritization performances (reduce memory)
+- Improve transcripts view creation (columns type detected)
+- Improve snpEff extract information (HGVS list, explode annotations, generate as JSON)
+- Improve NOMEN extraction from HGVS list, including multiple patterns for NOMEN
+- Improve rename or remove INFO/tags
+- Improve stats generation (speedup, annotations stats, custom queries)
+- Improve genomes download with URL or local file as original FASTA
+- Improve dbNSFP download with URL or local file
+- Improve export in Parquet format by keeping column types
+
+### Fixes
+
+- Fix BARCODEFAMILY calculation (multiple barcode with successive commandes)
+- Fix dnSNP download and index generated vcf
+- Fix explode_infos parameter
+- Fix empty VCF fails
+- Fix header generation
+
 ## 0.12.1.1
 
 Few updates and fixes.

@@ -12,18 +12,204 @@ coverage report --include=howard/* -m
 
 import logging as log
 import os
-import sys
+import vcf  # type: ignore
 from tempfile import TemporaryDirectory
-import duckdb
-import re
-import Bio.bgzf as bgzf
-import gzip
-import pytest
+import duckdb  # type: ignore
+import pytest  # type: ignore
 
-from howard.functions.commons import *
 from howard.objects.variants import Variants
-from howard.functions.databases import *
-from test_needed import *
+from howard.functions.commons import remove_if_exists, vcf_required_columns
+
+from test_needed import tests_folder, tests_data_folder, tests_config, database_files
+
+
+def test_explode_infos_fields_from_table_to_another():
+    """ """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_tsv = f"{tmp_dir}/example.tsv"
+
+        # remove if exists
+        remove_if_exists([output_tsv])
+
+        # Create object
+        variants = Variants(input=input_vcf, output=output_tsv, load=True)
+
+        # # Check variants table content
+        # query = "SELECT * FROM variants"
+        # df_another_table = variants.get_query_to_df(query=query)
+        # log.debug(df_another_table)
+
+        # Create another table
+        query_create_another_table = f"""
+            CREATE TABLE another_table AS (
+                SELECT "#CHROM", POS, REF, ALT, QUAL, FILTER FROM variants
+            )
+        """
+        variants.execute_query(query_create_another_table)
+
+        # # Check another table content
+        # query = "SELECT * FROM another_table"
+        # df_another_table = variants.get_query_to_df(query=query)
+        # log.debug(df_another_table)
+
+        # Explode field into variants
+        log.debug(f"Explode field 'CLNSIG' into variants")
+        explode_infos_fields_list = variants.explode_infos(
+            fields=["CLNSIG"],
+            table="variants",
+        )
+        # log.debug(f"explode_infos_fields_list={explode_infos_fields_list}")
+
+        # Check another table content
+        query = "SELECT * FROM variants"
+        df_variants_table = variants.get_query_to_df(query=query)
+        # log.debug(df_variants_table)
+        assert "CLNSIG" in df_variants_table.columns
+
+        log.debug(f"Explode field 'CLNSIG' into another_table from variants")
+        explode_infos_fields_list = variants.explode_infos(
+            fields=["CLNSIG"],
+            table_source="variants",
+            table_dest="another_table",
+            table_key=["#CHROM", "POS", "REF", "ALT"],
+        )
+        # log.debug(f"explode_infos_fields_list={explode_infos_fields_list}")
+
+        # Check another table content
+        query = "SELECT * FROM another_table WHERE CLNSIG IS NOT NULL"
+        df_another_table = variants.get_query_to_df(query=query)
+        # log.debug(df_another_table)
+        assert "CLNSIG" in df_another_table.columns
+        assert len(df_another_table) == 2
+
+        log.debug(f"Explode field 'DP' into another_table from variants")
+        explode_infos_fields_list = variants.explode_infos(
+            fields=["DP"],
+            table_source="variants",
+            table_dest="another_table",
+            table_key=["#CHROM", "POS", "REF", "ALT"],
+        )
+        # log.debug(f"explode_infos_fields_list={explode_infos_fields_list}")
+
+        # Check another table content
+        query = "SELECT * FROM another_table WHERE DP IS NOT NULL"
+        df_another_table = variants.get_query_to_df(query=query)
+        # log.debug(df_another_table)
+        assert "DP" in df_another_table.columns
+        assert len(df_another_table) == 2
+
+        # Check another table content with CLNSIG and DP
+        query = "SELECT * FROM another_table WHERE CLNSIG IS NOT NULL OR DP IS NOT NULL"
+        df_another_table = variants.get_query_to_df(query=query)
+        # log.debug(df_another_table)
+        assert len(df_another_table) == 4
+
+        log.debug(
+            f"Explode field 'no_a_field' into another_table from variants with fields_not_exists=False"
+        )
+        explode_infos_fields_list = variants.explode_infos(
+            fields=["no_a_field"],
+            table_source="variants",
+            table_dest="another_table",
+            table_key=["#CHROM", "POS", "REF", "ALT"],
+            fields_not_exists=False,
+        )
+        # log.debug(f"explode_infos_fields_list={explode_infos_fields_list}")
+
+        # Check another table content
+        query = "SELECT * FROM another_table"
+        df_another_table = variants.get_query_to_df(query=query)
+        # log.debug(df_another_table)
+        assert "no_a_field" not in df_another_table.columns
+
+        log.debug(
+            f"Explode field 'no_a_field' into another_table from variants with fields_not_exists=True"
+        )
+        explode_infos_fields_list = variants.explode_infos(
+            fields=["no_a_field"],
+            table_source="variants",
+            table_dest="another_table",
+            table_key=["#CHROM", "POS", "REF", "ALT"],
+            fields_not_exists=True,
+        )
+        # log.debug(f"explode_infos_fields_list={explode_infos_fields_list}")
+
+        # Check another table content
+        query = "SELECT * FROM another_table"
+        df_another_table = variants.get_query_to_df(query=query)
+        # log.debug(df_another_table)
+        assert "no_a_field" in df_another_table.columns
+
+        log.debug(f"Explode field 'SIFT' into another_table from variants")
+        explode_infos_fields_list = variants.explode_infos(
+            fields=["SIFT"],
+            table_source="variants",
+            table_dest="another_table",
+            table_key=["#CHROM", "POS", "REF", "ALT"],
+        )
+        # log.debug(f"explode_infos_fields_list={explode_infos_fields_list}")
+
+        # Check another table content
+        query = "SELECT * FROM another_table"
+        df_another_table = variants.get_query_to_df(query=query)
+        # log.debug(df_another_table)
+        assert "SIFT" in df_another_table.columns
+
+        log.debug(f"Explode field 'SIFT' into another_table from variants but exists")
+        # Set SIFT to None
+        query = "UPDATE another_table SET SIFT = NULL"
+        variants.execute_query(query)
+
+        # Explode SIFT
+        explode_infos_fields_list = variants.explode_infos(
+            fields=["SIFT"],
+            table_source="variants",
+            table_dest="another_table",
+            table_key=["#CHROM", "POS", "REF", "ALT"],
+        )
+        # log.debug(f"explode_infos_fields_list={explode_infos_fields_list}")
+
+        # Check another table content
+        query = "SELECT * FROM another_table"
+        df_another_table = variants.get_query_to_df(query=query)
+        # log.debug(df_another_table)
+        assert "SIFT" in df_another_table.columns
+
+        # Check another table content
+        query = "SELECT * FROM another_table WHERE SIFT IS NULL"
+        df_another_table = variants.get_query_to_df(query=query)
+        # log.debug(df_another_table)
+        assert len(df_another_table) == 7
+
+        log.debug(
+            f"Explode field 'SIFT' into another_table from variants but exists but force"
+        )
+
+        # Explode SIFT
+        explode_infos_fields_list = variants.explode_infos(
+            fields=["SIFT"],
+            table_source="variants",
+            table_dest="another_table",
+            table_key=["#CHROM", "POS", "REF", "ALT"],
+            force=True,
+        )
+        # log.debug(f"explode_infos_fields_list={explode_infos_fields_list}")
+
+        # Check another table content
+        query = "SELECT * FROM another_table"
+        df_another_table = variants.get_query_to_df(query=query)
+        # log.debug(df_another_table)
+        assert "SIFT" in df_another_table.columns
+
+        # Check another table content
+        query = "SELECT * FROM another_table WHERE SIFT IS NULL"
+        df_another_table = variants.get_query_to_df(query=query)
+        # log.debug(df_another_table)
+        assert len(df_another_table) == 0
 
 
 def test_genotype_format():
@@ -341,7 +527,11 @@ def test_export_samples(input_vcf, param_samples):
             add_samples,
             where_clause,
         )
-        for input_vcf in ["example.vcf.gz", "example.without_sample.vcf"]
+        for input_vcf in [
+            "example.vcf.gz",
+            "example.empty.vcf",
+            "example.without_sample.vcf",
+        ]
         for remove_info in [True, False]
         for add_samples in [True, False]
         for where_clause in [
@@ -489,6 +679,35 @@ def test_export_query():
         assert os.path.exists(output_tsv) and os.path.exists(output_header)
 
 
+def test_export_query_empty():
+    """
+    This is a test function for exporting data from a VCF file to a TSV file using SQL queries.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.empty.vcf"
+        output_tsv = f"{tmp_dir}/example.tsv"
+
+        # remove if exists
+        remove_if_exists([output_tsv])
+
+        # Create object
+        variants = Variants(input=input_vcf, output=output_tsv, load=True)
+
+        # Check get_output
+        query = 'SELECT "#CHROM", POS, REF, ALT, INFO FROM variants'
+        variants.export_output(query=query)
+        assert os.path.exists(output_tsv)
+
+        # Check get_output without header
+        output_header = output_tsv + ".hdr"
+        remove_if_exists([output_tsv, output_tsv + ".hdr"])
+        variants.export_output(output_header=output_header, query=query)
+        assert os.path.exists(output_tsv) and os.path.exists(output_header)
+
+
 @pytest.mark.parametrize(
     "database_input_index, database_output_format",
     [
@@ -501,6 +720,7 @@ def test_export_query():
             "tsv",
             "csv",
             "example_vcf",
+            "example_empty_vcf",
         ]
         for database_output_format in [
             "parquet",
@@ -524,7 +744,7 @@ def test_export_output(database_input_index, database_output_format):
         parquet_partitions = None
         # specific partition_parquet
         if database_output_format in ["partition_parquet"]:
-            database_output_format = "parquet"
+            database_output_format = "partition.parquet"
             parquet_partitions = ["#CHROM"]
         input_database = database_files.get(database_input_index)
         output_database = f"{tmp_dir}/output_database.{database_output_format}"
@@ -672,10 +892,10 @@ def test_get_header():
     # Check header List and nb
     header_list = variants.get_header(type="list")
     assert header_list != []
-    assert len(header_list) == 53
+    assert len(header_list) == 54
 
     # check header length
-    assert variants.get_header_length() == 52
+    assert variants.get_header_length() == 53
 
     # check get_header_columns
     header_columns = variants.get_header_columns().strip()
@@ -1309,6 +1529,86 @@ def test_load_connexion_format_sqlite():
 ###
 
 
+def test_export_output_with_type():
+    """
+    This function tests the export of a VCF file in gzipped format with the pyVCF library.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # OUTPUT as TSV
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_vcf = f"{tmp_dir}/example.tsv"
+
+        # remove if exists
+        remove_if_exists([output_vcf])
+
+        # Create object
+        variants = Variants(input=input_vcf, output=output_vcf, load=True)
+
+        # Check get_output
+        variants.export_output(
+            query="SELECT *, ['test1', 'test2'] AS SIFT FROM variants"
+        )
+        assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
+
+        # Load and query output
+        variants = Variants(input=output_vcf, load=True)
+        result = variants.get_query_to_df("SELECT * FROM variants")
+        log.debug(result)
+        assert result["SIFT"][0] == "test1,test2"
+
+        # OUTPUT as Parquet
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_vcf = f"{tmp_dir}/example.parquet"
+
+        # remove if exists
+        remove_if_exists([output_vcf])
+
+        # Create object
+        variants = Variants(input=input_vcf, output=output_vcf, load=True)
+
+        # Check get_output
+        variants.export_output(
+            query="SELECT *, ['test1', 'test2'] AS SIFT FROM variants"
+        )
+        assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
+
+        # Load and query output
+        variants = Variants(input=output_vcf, load=True)
+        result = variants.get_query_to_df("SELECT * FROM variants")
+        assert result["SIFT"][0][0] == "test1"
+        assert result["SIFT"][0][1] == "test2"
+
+        # OUTPUT as Parquet as flat
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf.gz"
+        output_vcf = f"{tmp_dir}/example.parquet"
+
+        # remove if exists
+        remove_if_exists([output_vcf])
+
+        # Create object
+        variants = Variants(input=input_vcf, output=output_vcf, load=True)
+
+        # Check get_output
+        variants.export_output(
+            query="SELECT *, ['test1', 'test2'] AS SIFT FROM variants",
+            force_cast_as_flat=True,
+        )
+        assert os.path.exists(output_vcf) and os.path.exists(output_vcf + ".hdr")
+
+        # Load and query output
+        variants = Variants(input=output_vcf, load=True)
+        result = variants.get_query_to_df("SELECT * FROM variants")
+        assert result["SIFT"][0] == "test1,test2"
+
+
 def test_export_output_vcf_gz():
     """
     This function tests the export of a VCF file in gzipped format with the pyVCF library.
@@ -1798,9 +2098,11 @@ def test_explode_infos():
     column_to_check = "CLNSIG"
     value_to_check = "pathogenic"
 
+    # Explode
+    variants.explode_infos()
+
     # check column found
     result = variants.execute_query("SELECT * FROM variants LIMIT 0")
-    log.debug(f"result={result}")
     assert column_to_check in [col[0] for col in result.description]
 
     # Check value in column
@@ -1831,6 +2133,9 @@ def test_explode_infos_custom():
     # column to check
     column_to_check = "CUSTOM_CLNSIG"
     value_to_check = "pathogenic"
+
+    # Explode
+    variants.explode_infos()
 
     # check column found
     result = variants.execute_query("SELECT * FROM variants LIMIT 0")
@@ -1924,30 +2229,35 @@ def test_explode_infos_sqlite():
     variants = Variants(input=input_vcf, config=input_config, load=True)
 
     # Explode infos fields
-    variants.explode_infos()
+    # variants.explode_infos()
 
-    # Annotation
-    variants.annotation()
+    # Explode infos fields
+    with pytest.raises(ValueError) as e:
+        variants.explode_infos()
+    assert str(e.value) == f"Connexion format 'sqlite' not available for explode infos"
 
-    # column to check
-    column_to_check = "CLNSIG"
-    value_to_check = "pathogenic"
+    # # Annotation
+    # variants.annotation()
 
-    # check column found
-    result = variants.execute_query("SELECT * FROM variants LIMIT 0")
-    assert column_to_check in [col[0] for col in result.description]
+    # # column to check
+    # column_to_check = "CLNSIG"
+    # value_to_check = "pathogenic"
 
-    # Check value in column
-    result = variants.get_query_to_df(
-        f"""SELECT "{column_to_check}" AS column_to_check FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND REF = 'A' AND ALT = 'C' """
-    )
-    assert value_to_check == result["column_to_check"][0]
+    # # check column found
+    # result = variants.execute_query("SELECT * FROM variants LIMIT 0")
+    # assert column_to_check in [col[0] for col in result.description]
 
-    # Check number of value in column to check
-    result = variants.get_query_to_df(
-        f"""SELECT "{column_to_check}" AS column_to_check FROM variants WHERE "{column_to_check}" IS NOT NULL """
-    )
-    assert len(result) == 2
+    # # Check value in column
+    # result = variants.get_query_to_df(
+    #     f"""SELECT "{column_to_check}" AS column_to_check FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND REF = 'A' AND ALT = 'C' """
+    # )
+    # assert value_to_check == result["column_to_check"][0]
+
+    # # Check number of value in column to check
+    # result = variants.get_query_to_df(
+    #     f"""SELECT "{column_to_check}" AS column_to_check FROM variants WHERE "{column_to_check}" IS NOT NULL """
+    # )
+    # assert len(result) == 2
 
 
 def test_explode_infos_param_prefix():
@@ -1968,6 +2278,9 @@ def test_explode_infos_param_prefix():
     # column to check
     column_to_check = infos_prefix + "CLNSIG"
     value_to_check = "pathogenic"
+
+    # Explode
+    variants.explode_infos()
 
     # check column found
     result = variants.execute_query("SELECT * FROM variants LIMIT 0")
@@ -2182,7 +2495,7 @@ def test_rename_fields():
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
-        input_vcf = tests_data_folder + "/example.annotation_names.vcf"
+        input_vcf = tests_data_folder + "/example.annotation_names.vcf.gz"
         output_vcf = f"{tmp_dir}/output.vcf"
 
         # Create object
@@ -2198,14 +2511,68 @@ def test_rename_fields():
             "SIFT": None,
             "SPiP_Alt": "SPiP_alternative",
             "SPiP_alternative": None,
+            "CLNSIGSUFFIX": "",
         }
 
         # Rename fields
-        fields_renamed = variants.rename_info_fields(fields_to_rename=fields_to_rename)
-        assert fields_renamed == {'CLNSIG': 'CLNSIG_renamed', 'PREFIXCLNSIG': 'PREFIXCLNSIG_renamed', 'DP': 'depth', 'SIFT': None, 'SPiP_Alt': 'SPiP_alternative', 'SPiP_alternative': None}
-        assert len(variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%SIFT%'")) == 0
-        assert len(variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%None=%'")) == 0
-        assert len(variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE '%SPiP%'")) == 0
+        fields_processed = variants.rename_info_fields(
+            fields_to_rename=fields_to_rename
+        )
+
+        # Check
+        assert fields_processed == {
+            "renamed": {
+                "CLNSIG": "CLNSIG_renamed",
+                "PREFIXCLNSIG": "PREFIXCLNSIG_renamed",
+                "DP": "depth",
+                "field_not_in_header": "field_not_in_header_renamed",
+            },
+            "removed": {
+                "CLNSIGSUFFIX": None,
+                "SIFT": None,
+                "SPiP_Alt": None,
+            },
+            "not_processed": {},
+            "not_found": {"field_not_in_header": "field_not_in_header_renamed"},
+        }
+        assert (
+            len(
+                variants.get_query_to_df(
+                    "SELECT INFO FROM variants WHERE INFO LIKE '%SIFT%'"
+                )
+            )
+            == 0
+        )
+        assert (
+            len(
+                variants.get_query_to_df(
+                    "SELECT INFO FROM variants WHERE INFO LIKE '%None=%'"
+                )
+            )
+            == 0
+        )
+        assert (
+            len(
+                variants.get_query_to_df(
+                    "SELECT INFO FROM variants WHERE INFO LIKE '%SPiP%'"
+                )
+            )
+            == 0
+        )
+        assert (
+            len(
+                variants.get_query_to_df(
+                    "SELECT INFO FROM variants WHERE INFO LIKE '%CLNSIGSUFFIX%'"
+                )
+            )
+            == 0
+        )
+        assert (
+            len(
+                variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE ''")
+            )
+            == 1
+        )
 
         # Check if VCF is in correct format with pyVCF
         remove_if_exists([output_vcf])
@@ -2225,7 +2592,7 @@ def test_rename_fields_to_param_and_export():
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Init files
-        input_vcf = tests_data_folder + "/example.annotation_names.vcf"
+        input_vcf = tests_data_folder + "/example.annotation_names.vcf.gz"
         output_vcf = f"{tmp_dir}/output.test.vcf"
 
         # Param
@@ -2240,6 +2607,7 @@ def test_rename_fields_to_param_and_export():
                     "SIFT": None,
                     "SPiP_Alt": "SPiP_alternative",
                     "SPiP_alternative": None,
+                    "CLNSIGSUFFIX": None,
                 }
             }
         }
@@ -2252,6 +2620,130 @@ def test_rename_fields_to_param_and_export():
         variants.export_output(output_file=output_vcf)
         try:
             vcf_obj = vcf.Reader(filename=output_vcf)
-            assert list(set(vcf_obj.infos.keys())).sort() == ['CLNSIGSUFFIX', 'AA', 'NS', 'PREFIXCLNSIG_renamed', 'CLNSIG_renamed', 'depth'].sort()
+            assert (
+                list(set(vcf_obj.infos.keys())).sort()
+                == [
+                    "CLNSIGSUFFIX",
+                    "AA",
+                    "NS",
+                    "PREFIXCLNSIG_renamed",
+                    "CLNSIG_renamed",
+                    "depth",
+                ].sort()
+            )
         except:
             assert False
+
+
+def test_recreate_infos_fields():
+    """
+    The function `test_recreate_infos_fields` recreate INFO fields in a VCF file and checks if the output
+    VCF is in the correct format using pyVCF.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.annotation_names.vcf.gz"
+        output_vcf = f"{tmp_dir}/output.vcf"
+
+        # Create object
+        variants = Variants(input=input_vcf, load=True)
+
+        # Fieldst to rename
+        fields_to_rename = {
+            "CLNSIG": "CLNSIG_renamed",
+            "PREFIXCLNSIG": "PREFIXCLNSIG_renamed",
+            "DP": "depth",
+            "field_not_in_header": "field_not_in_header_renamed",
+            "": "",
+            "SIFT": None,
+            "SPiP_Alt": "SPiP_alternative",
+            "SPiP_alternative": None,
+        }
+
+        # recreate info fields
+        fields_processed = variants.recreate_info_fields(
+            fields_to_rename=fields_to_rename
+        )
+
+        # Check
+        assert fields_processed == {
+            "not_found": {"field_not_in_header": "field_not_in_header_renamed"},
+            "removed": {"SIFT": None, "SPiP_Alt": None},
+            "renamed": {
+                "AA": "AA",
+                "CLNSIG": "CLNSIG_renamed",
+                "CLNSIGSUFFIX": "CLNSIGSUFFIX",
+                "DP": "depth",
+                "NS": "NS",
+                "PREFIXCLNSIG": "PREFIXCLNSIG_renamed",
+            },
+        }
+        assert (
+            len(
+                variants.get_query_to_df(
+                    "SELECT INFO FROM variants WHERE INFO LIKE '%SIFT%'"
+                )
+            )
+            == 0
+        )
+        assert (
+            len(
+                variants.get_query_to_df(
+                    "SELECT INFO FROM variants WHERE INFO LIKE '%None=%'"
+                )
+            )
+            == 0
+        )
+        assert (
+            len(
+                variants.get_query_to_df(
+                    "SELECT INFO FROM variants WHERE INFO LIKE '%SPiP%'"
+                )
+            )
+            == 0
+        )
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output(output_file=output_vcf)
+        try:
+            vcf_obj = vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
+def test_get_columns():
+    """
+    This function tests the get_columns method of the Variants class by creating
+    an object and checking if the columns are as expected.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.annotation_names.vcf.gz"
+
+        # Create object
+        variants = Variants(input=input_vcf, load=True)
+
+        # Check get_columns
+        columns = variants.get_columns()
+        assert len(columns) == 13
+        log.debug(columns)
+        assert columns == [
+            "#CHROM",
+            "POS",
+            "ID",
+            "REF",
+            "ALT",
+            "QUAL",
+            "FILTER",
+            "INFO",
+            "FORMAT",
+            "sample1",
+            "sample2",
+            "sample3",
+            "sample4",
+        ]

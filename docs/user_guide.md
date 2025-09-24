@@ -222,7 +222,7 @@ Configuration file example:
     "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-14.0.0.jar",
     "splice": {
       "docker": {
-        "image": "bioinfochrustrasbourg/splice:0.2.1",
+        "image": "bioinfochrustrasbourg/splice:0.2.4",
         "entrypoint": "/bin/bash",
         "options": null,
         "command": null
@@ -864,7 +864,7 @@ infos](help.md#explode-infos)).
 >    --explode_infos \
 >    --output='/tmp/example.tsv'
 >
-> cut '/tmp/example.tsv' -f1-4,7,15
+> cut -f1-4,7,15 '/tmp/example.tsv' 
 > ```
 >
 > ``` ts
@@ -895,8 +895,10 @@ BED) files, in various format (e.g. VCF, BED, Parquet, TSV, JSON), using
 `--input` parameter. This allows to load data to perfom actions, such as
 explode VCF INFO/tags (parameter `--explode_infos`, see [HOWARD Help
 query - Explode infos](help.md#explode-infos)) in columns to be easier
-querying. Each columns format (e.g. string, integer) are automatically
-detected to be used in a SQL query.
+querying. Moreover, using `variants_view` instead of `variants` improve 
+SQL query experience, with structured data. Each columns format
+(e.g. string, integer, float, flag, list) are automatically detected
+to be used in a SQL query.
 
 > Example: Select variants in VCF with REF and POS fields filter
 >
@@ -916,6 +918,17 @@ detected to be used in a SQL query.
 >             FROM variants 
 >             WHERE DP >= 50 OR CLNSIG NOT NULL 
 >             ORDER BY CLNSIG DESC, DP DESC'
+> ```
+
+> Example: Select variants in VCF with INFO Tags criteria filters using structured data
+>
+> ``` bash
+> howard query \
+>    --input='tests/data/example.vcf.gz' \
+>    --query='SELECT "#CHROM", POS, REF, ALT, INFOS.CLNSIG, SAMPLES.sample2.GT AS sample2 
+>             FROM variants_view 
+>             WHERE SAMPLES.sample2.DP >= 50 OR INFOS.CLNSIG NOT NULL 
+>             ORDER BY INFOS.CLNSIG DESC'
 > ```
 
 > Example: Select variants in VCF and generate VCF output with variants
@@ -1655,17 +1668,21 @@ fields and order by fields.
 >    --input='/tmp/example.prioritized.vcf.gz' \
 >    --explode_infos \
 >    --query="SELECT \"#CHROM\", POS, ALT, REF, PZComment, PZFlag \
->             FROM variants WHERE PZComment IS NOT NULL \
+>             FROM variants \
 >             ORDER BY PZFlag DESC, PZScore DESC"
 > ```
 >
 > ``` ts
 >   #CHROM       POS ALT REF                                          PZComment    PZFlag
-> 0   chr1     69101   G   A                    DP, Variant probably pathogenic      PASS
-> 1   chr7  55249063   A   G                    DP, Variant probably pathogenic      PASS
-> 2   chr1     28736   C   A                      Described on CLINVAR database      PASS
-> 3   chr1     35144   C   A  Described on CLINVAR database, Described on CL...  FILTERED
+> 0   chr1     69101   G   A                 [DP,  Variant probably pathogenic]      PASS
+> 1   chr7  55249063   A   G                 [DP,  Variant probably pathogenic]      PASS
+> 2   chr1     28736   C   A                    [Described on CLINVAR database]      PASS
+> 3   chr1    768251   G   A                                             [None]      PASS
+> 4   chr1    768252   G   A                                             [None]      PASS
+> 5   chr1    768253   G   A                                             [None]      PASS
+> 6   chr1     35144   C   A  [Described on CLINVAR database,  Described on ...  FILTERED
 > ```
+
 
 Prioritization profiles are defined in a JSON configuration file. Each
 profiles are defined as a list of annotation fields with associated
@@ -1794,14 +1811,15 @@ more options.
 
 > ``` ts
 >                                                 hgvs
-> 0                     WASH7P:NR_024540.1:n.50+585T>G
-> 1     FAM138A:NR_026818.1:exon3:n.597T>G:p.Tyr199Asp
-> 2  OR4F5:NM_001005484.2:NP_001005484.2:exon3:c.74...
-> 3  LINC01128:NR_047526.1:n.287+3767A>G,LINC01128:...
-> 4  LINC01128:NR_047526.1:n.287+3768A>G,LINC01128:...
-> 5  LINC01128:NR_047526.1:n.287+3769A>G,LINC01128:...
-> 6  EGFR:NM_001346897.2:NP_001333826.1:exon19:c.22...
+> 0                   [WASH7P:NR_024540.1:n.50+585T>G]
+> 1   [FAM138A:NR_026818.1:exon3:n.597T>G:p.Tyr199Asp]
+> 2  [OR4F5:NM_001005484.2:NP_001005484.2:exon3:c.7...
+> 3  [LINC01128:NR_047526.1:n.287+3767A>G, LINC0112...
+> 4  [LINC01128:NR_047526.1:n.287+3768A>G, LINC0112...
+> 5  [LINC01128:NR_047526.1:n.287+3769A>G, LINC0112...
+> 6  [EGFR:NM_001346897.2:NP_001333826.1:exon19:c.2...
 > ```
+
 
 > Example: HGVS annotation with separated options
 >
@@ -1821,13 +1839,13 @@ more options.
 
 > ``` ts
 >                                                 hgvs
-> 0                     WASH7P:NR_024540.1:n.50+585T>G
-> 1     FAM138A:NR_026818.1:exon3:n.597T>G:p.Tyr199Asp
-> 2  OR4F5:NM_001005484.2:NP_001005484.2:exon3:c.74...
-> 3  LINC01128:NR_047526.1:n.287+3767A>G,LINC01128:...
-> 4  LINC01128:NR_047526.1:n.287+3768A>G,LINC01128:...
-> 5  LINC01128:NR_047526.1:n.287+3769A>G,LINC01128:...
-> 6  EGFR:NM_001346897.2:NP_001333826.1:exon19:c.22...
+> 0                   [WASH7P:NR_024540.1:n.50+585T>G]
+> 1   [FAM138A:NR_026818.1:exon3:n.597T>G:p.Tyr199Asp]
+> 2  [OR4F5:NM_001005484.2:NP_001005484.2:exon3:c.7...
+> 3  [LINC01128:NR_047526.1:n.287+3767A>G, LINC0112...
+> 4  [LINC01128:NR_047526.1:n.287+3768A>G, LINC0112...
+> 5  [LINC01128:NR_047526.1:n.287+3769A>G, LINC0112...
+> 6  [EGFR:NM_001346897.2:NP_001333826.1:exon19:c.2...
 > ```
 
 ## Process
@@ -1873,10 +1891,10 @@ annotations.
 >    --explode_infos \
 >    --query="SELECT NOMEN,
 >                    PZFlag,
->                    avsnp150 AS 'snpID',
->                    SIFT_score AS 'SIFT',
->                    AF AS 'gnomAD',
->                    ClinPred_pred AS 'ClinPred' \
+>                    array_to_string(avsnp150, ',') AS 'snpID',
+>                    array_to_string(SIFT_score, ',') AS 'SIFT',
+>                    array_to_string(AF, ',') AS 'gnomAD',
+>                    array_to_string(ClinPred_pred, ',') AS 'ClinPred' \
 >                 FROM variants"
 > ```
 
@@ -1910,10 +1928,10 @@ annotations.
 >    --prioritizations='default' \
 >    --prioritization_config='config/prioritization_profiles.json' \
 >    --explode_infos \
->    --query="SELECT string_split(snpeff_hgvs, ',')[1] AS 'HGVS',
+>    --query="SELECT snpeff_hgvs[1] AS 'HGVS',
 >                    PZScore,
->                    Func_refGene AS 'Location',
->                    string_split(string_split(cosmic70, ',')[2], '=')[2] AS 'COSMIC' \
+>                    array_to_string(Func_refGene, ',') AS 'Location',
+>                    string_split(cosmic70[2], '=')[2] AS 'COSMIC' \
 >             FROM variants \
 >             ORDER BY PZScore DESC"
 > ```
@@ -1954,13 +1972,13 @@ file can be combine with options.
 
 > ``` ts
 >                                             NOMEN                                          PZComment
-> 0  EGFR:NM_001346897:exon19:c.2226G>A:p.Gln742Gln  DP higher than 50, Described on CLINVAR databa...
-> 1              WASH7P:NR_024540:exon1:n.50+585T>G        Described on CLINVAR database as pathogenic
-> 2      OR4F5:NM_001005484:exon1:c.11A>G:p.Glu4Gly                                  DP higher than 50
-> 3         LINC01128:NR_047519:exon2:n.287+3767A>G                                               None
-> 4         LINC01128:NR_047519:exon2:n.287+3768A>G                                               None
-> 5         LINC01128:NR_047519:exon2:n.287+3769A>G                                               None
-> 6                  MIR1302-9:NR_036266:n.*4641A>C    Described on CLINVAR database as non-pathogenic
+> 0  EGFR:NM_001346897:exon19:c.2226G>A:p.Gln742Gln  [DP higher than 50,  Described on CLINVAR data...
+> 1              WASH7P:NR_024540:exon1:n.50+585T>G      [Described on CLINVAR database as pathogenic]
+> 2      OR4F5:NM_001005484:exon1:c.11A>G:p.Glu4Gly                                [DP higher than 50]
+> 3                  MIR1302-9:NR_036266:n.*4641A>C  [Described on CLINVAR database as non-pathogenic]
+> 4         LINC01128:NR_047519:exon2:n.287+3767A>G                                             [None]
+> 5         LINC01128:NR_047519:exon2:n.287+3768A>G                                             [None]
+> 6         LINC01128:NR_047519:exon2:n.287+3769A>G                                             [None]
 > ```
 
 > ``` bash
@@ -2000,11 +2018,11 @@ file can be combine with options.
 
 > ``` ts
 >   #CHROM       POS ALT REF                                           NOMEN    PZFlag  PZScore
-> 0   chr7  55249063   A   G  EGFR:NM_001346897:exon19:c.2226G>A:p.Gln742Gln      PASS    100.0
-> 1   chr1     28736   C   A              WASH7P:NR_024540:exon1:n.50+585T>G      PASS     15.0
-> 2   chr1     69101   G   A      OR4F5:NM_001005484:exon1:c.11A>G:p.Glu4Gly      PASS      5.0
-> 3   chr1    768251   G   A         LINC01128:NR_047519:exon2:n.287+3767A>G      PASS      0.0
-> 4   chr1    768252   G   A         LINC01128:NR_047519:exon2:n.287+3768A>G      PASS      0.0
-> 5   chr1    768253   G   A         LINC01128:NR_047519:exon2:n.287+3769A>G      PASS      0.0
+> 0   chr7  55249063   A   G  EGFR:NM_001346897:exon19:c.2226G>A:p.Gln742Gln      PASS      100
+> 1   chr1     28736   C   A              WASH7P:NR_024540:exon1:n.50+585T>G      PASS       15
+> 2   chr1     69101   G   A      OR4F5:NM_001005484:exon1:c.11A>G:p.Glu4Gly      PASS        5
+> 3   chr1    768251   G   A         LINC01128:NR_047519:exon2:n.287+3767A>G      PASS        0
+> 4   chr1    768252   G   A         LINC01128:NR_047519:exon2:n.287+3768A>G      PASS        0
+> 5   chr1    768253   G   A         LINC01128:NR_047519:exon2:n.287+3769A>G      PASS        0
 > 6   chr1     35144   C   A                  MIR1302-9:NR_036266:n.*4641A>C  FILTERED      NaN
 > ```

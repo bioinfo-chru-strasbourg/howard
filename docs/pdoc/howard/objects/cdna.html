@@ -69,13 +69,13 @@
 
                         <label class="view-source-button" for="mod-cdna-view-source"><span>View Source</span></label>
 
-                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos">  1</span></a><span class="kn">import</span> <span class="nn">re</span>
+                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos">  1</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 </span><span id="L-2"><a href="#L-2"><span class="linenos">  2</span></a>
 </span><span id="L-3"><a href="#L-3"><span class="linenos">  3</span></a><span class="n">CDNA_START_CODON</span> <span class="o">=</span> <span class="s2">&quot;cdna_start&quot;</span>
 </span><span id="L-4"><a href="#L-4"><span class="linenos">  4</span></a><span class="n">CDNA_STOP_CODON</span> <span class="o">=</span> <span class="s2">&quot;cdna_stop&quot;</span>
 </span><span id="L-5"><a href="#L-5"><span class="linenos">  5</span></a>
 </span><span id="L-6"><a href="#L-6"><span class="linenos">  6</span></a>
-</span><span id="L-7"><a href="#L-7"><span class="linenos">  7</span></a><span class="k">class</span> <span class="nc">CDNACoord</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+</span><span id="L-7"><a href="#L-7"><span class="linenos">  7</span></a><span class="k">class</span><span class="w"> </span><span class="nc">CDNACoord</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 </span><span id="L-8"><a href="#L-8"><span class="linenos">  8</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="L-9"><a href="#L-9"><span class="linenos">  9</span></a><span class="sd">    A HGVS cDNA-based coordinate.</span>
 </span><span id="L-10"><a href="#L-10"><span class="linenos"> 10</span></a>
@@ -102,7 +102,7 @@
 </span><span id="L-31"><a href="#L-31"><span class="linenos"> 31</span></a><span class="sd">    *N+M / *N-M = nucleotide in an intron in the 3&#39;UTR (e.g. *212-2A&gt;G)</span>
 </span><span id="L-32"><a href="#L-32"><span class="linenos"> 32</span></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="L-33"><a href="#L-33"><span class="linenos"> 33</span></a>
-</span><span id="L-34"><a href="#L-34"><span class="linenos"> 34</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coord</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">landmark</span><span class="o">=</span><span class="n">CDNA_START_CODON</span><span class="p">,</span> <span class="n">string</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+</span><span id="L-34"><a href="#L-34"><span class="linenos"> 34</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coord</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">landmark</span><span class="o">=</span><span class="n">CDNA_START_CODON</span><span class="p">,</span> <span class="n">string</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
 </span><span id="L-35"><a href="#L-35"><span class="linenos"> 35</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="L-36"><a href="#L-36"><span class="linenos"> 36</span></a><span class="sd">        coord: main coordinate along cDNA on the same strand as the transcript</span>
 </span><span id="L-37"><a href="#L-37"><span class="linenos"> 37</span></a>
@@ -130,7 +130,7 @@
 </span><span id="L-59"><a href="#L-59"><span class="linenos"> 59</span></a>            <span class="bp">self</span><span class="o">.</span><span class="n">offset</span> <span class="o">=</span> <span class="n">offset</span>
 </span><span id="L-60"><a href="#L-60"><span class="linenos"> 60</span></a>            <span class="bp">self</span><span class="o">.</span><span class="n">landmark</span> <span class="o">=</span> <span class="n">landmark</span>
 </span><span id="L-61"><a href="#L-61"><span class="linenos"> 61</span></a>
-</span><span id="L-62"><a href="#L-62"><span class="linenos"> 62</span></a>    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coord_text</span><span class="p">):</span>
+</span><span id="L-62"><a href="#L-62"><span class="linenos"> 62</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coord_text</span><span class="p">):</span>
 </span><span id="L-63"><a href="#L-63"><span class="linenos"> 63</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="L-64"><a href="#L-64"><span class="linenos"> 64</span></a><span class="sd">        Parse a HGVS formatted cDNA coordinate.</span>
 </span><span id="L-65"><a href="#L-65"><span class="linenos"> 65</span></a><span class="sd">        &quot;&quot;&quot;</span>
@@ -161,7 +161,7 @@
 </span><span id="L-90"><a href="#L-90"><span class="linenos"> 90</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;unknown coord_prefix &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="n">coord_prefix</span><span class="p">)</span>
 </span><span id="L-91"><a href="#L-91"><span class="linenos"> 91</span></a>        <span class="k">return</span> <span class="bp">self</span>
 </span><span id="L-92"><a href="#L-92"><span class="linenos"> 92</span></a>
-</span><span id="L-93"><a href="#L-93"><span class="linenos"> 93</span></a>    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span id="L-93"><a href="#L-93"><span class="linenos"> 93</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 </span><span id="L-94"><a href="#L-94"><span class="linenos"> 94</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="L-95"><a href="#L-95"><span class="linenos"> 95</span></a><span class="sd">        Return a formatted cDNA coordinate</span>
 </span><span id="L-96"><a href="#L-96"><span class="linenos"> 96</span></a><span class="sd">        &quot;&quot;&quot;</span>
@@ -179,7 +179,7 @@
 </span><span id="L-108"><a href="#L-108"><span class="linenos">108</span></a>
 </span><span id="L-109"><a href="#L-109"><span class="linenos">109</span></a>        <span class="k">return</span> <span class="s2">&quot;</span><span class="si">%s%d%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">coord_prefix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coord</span><span class="p">,</span> <span class="n">offset</span><span class="p">)</span>
 </span><span id="L-110"><a href="#L-110"><span class="linenos">110</span></a>
-</span><span id="L-111"><a href="#L-111"><span class="linenos">111</span></a>    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+</span><span id="L-111"><a href="#L-111"><span class="linenos">111</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
 </span><span id="L-112"><a href="#L-112"><span class="linenos">112</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Equality operator.&quot;&quot;&quot;</span>
 </span><span id="L-113"><a href="#L-113"><span class="linenos">113</span></a>        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coord</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">landmark</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span>
 </span><span id="L-114"><a href="#L-114"><span class="linenos">114</span></a>            <span class="n">other</span><span class="o">.</span><span class="n">coord</span><span class="p">,</span>
@@ -187,7 +187,7 @@
 </span><span id="L-116"><a href="#L-116"><span class="linenos">116</span></a>            <span class="n">other</span><span class="o">.</span><span class="n">landmark</span><span class="p">,</span>
 </span><span id="L-117"><a href="#L-117"><span class="linenos">117</span></a>        <span class="p">)</span>
 </span><span id="L-118"><a href="#L-118"><span class="linenos">118</span></a>
-</span><span id="L-119"><a href="#L-119"><span class="linenos">119</span></a>    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span id="L-119"><a href="#L-119"><span class="linenos">119</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 </span><span id="L-120"><a href="#L-120"><span class="linenos">120</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="L-121"><a href="#L-121"><span class="linenos">121</span></a><span class="sd">        Returns a string representation of a cDNA coordinate.</span>
 </span><span id="L-122"><a href="#L-122"><span class="linenos">122</span></a><span class="sd">        &quot;&quot;&quot;</span>
@@ -234,7 +234,7 @@
 
     </div>
     <a class="headerlink" href="#CDNACoord"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="CDNACoord-8"><a href="#CDNACoord-8"><span class="linenos">  8</span></a><span class="k">class</span> <span class="nc">CDNACoord</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="CDNACoord-8"><a href="#CDNACoord-8"><span class="linenos">  8</span></a><span class="k">class</span><span class="w"> </span><span class="nc">CDNACoord</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 </span><span id="CDNACoord-9"><a href="#CDNACoord-9"><span class="linenos">  9</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="CDNACoord-10"><a href="#CDNACoord-10"><span class="linenos"> 10</span></a><span class="sd">    A HGVS cDNA-based coordinate.</span>
 </span><span id="CDNACoord-11"><a href="#CDNACoord-11"><span class="linenos"> 11</span></a>
@@ -261,7 +261,7 @@
 </span><span id="CDNACoord-32"><a href="#CDNACoord-32"><span class="linenos"> 32</span></a><span class="sd">    *N+M / *N-M = nucleotide in an intron in the 3&#39;UTR (e.g. *212-2A&gt;G)</span>
 </span><span id="CDNACoord-33"><a href="#CDNACoord-33"><span class="linenos"> 33</span></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="CDNACoord-34"><a href="#CDNACoord-34"><span class="linenos"> 34</span></a>
-</span><span id="CDNACoord-35"><a href="#CDNACoord-35"><span class="linenos"> 35</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coord</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">landmark</span><span class="o">=</span><span class="n">CDNA_START_CODON</span><span class="p">,</span> <span class="n">string</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+</span><span id="CDNACoord-35"><a href="#CDNACoord-35"><span class="linenos"> 35</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coord</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">landmark</span><span class="o">=</span><span class="n">CDNA_START_CODON</span><span class="p">,</span> <span class="n">string</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
 </span><span id="CDNACoord-36"><a href="#CDNACoord-36"><span class="linenos"> 36</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="CDNACoord-37"><a href="#CDNACoord-37"><span class="linenos"> 37</span></a><span class="sd">        coord: main coordinate along cDNA on the same strand as the transcript</span>
 </span><span id="CDNACoord-38"><a href="#CDNACoord-38"><span class="linenos"> 38</span></a>
@@ -289,7 +289,7 @@
 </span><span id="CDNACoord-60"><a href="#CDNACoord-60"><span class="linenos"> 60</span></a>            <span class="bp">self</span><span class="o">.</span><span class="n">offset</span> <span class="o">=</span> <span class="n">offset</span>
 </span><span id="CDNACoord-61"><a href="#CDNACoord-61"><span class="linenos"> 61</span></a>            <span class="bp">self</span><span class="o">.</span><span class="n">landmark</span> <span class="o">=</span> <span class="n">landmark</span>
 </span><span id="CDNACoord-62"><a href="#CDNACoord-62"><span class="linenos"> 62</span></a>
-</span><span id="CDNACoord-63"><a href="#CDNACoord-63"><span class="linenos"> 63</span></a>    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coord_text</span><span class="p">):</span>
+</span><span id="CDNACoord-63"><a href="#CDNACoord-63"><span class="linenos"> 63</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coord_text</span><span class="p">):</span>
 </span><span id="CDNACoord-64"><a href="#CDNACoord-64"><span class="linenos"> 64</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="CDNACoord-65"><a href="#CDNACoord-65"><span class="linenos"> 65</span></a><span class="sd">        Parse a HGVS formatted cDNA coordinate.</span>
 </span><span id="CDNACoord-66"><a href="#CDNACoord-66"><span class="linenos"> 66</span></a><span class="sd">        &quot;&quot;&quot;</span>
@@ -320,7 +320,7 @@
 </span><span id="CDNACoord-91"><a href="#CDNACoord-91"><span class="linenos"> 91</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;unknown coord_prefix &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="n">coord_prefix</span><span class="p">)</span>
 </span><span id="CDNACoord-92"><a href="#CDNACoord-92"><span class="linenos"> 92</span></a>        <span class="k">return</span> <span class="bp">self</span>
 </span><span id="CDNACoord-93"><a href="#CDNACoord-93"><span class="linenos"> 93</span></a>
-</span><span id="CDNACoord-94"><a href="#CDNACoord-94"><span class="linenos"> 94</span></a>    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span id="CDNACoord-94"><a href="#CDNACoord-94"><span class="linenos"> 94</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 </span><span id="CDNACoord-95"><a href="#CDNACoord-95"><span class="linenos"> 95</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="CDNACoord-96"><a href="#CDNACoord-96"><span class="linenos"> 96</span></a><span class="sd">        Return a formatted cDNA coordinate</span>
 </span><span id="CDNACoord-97"><a href="#CDNACoord-97"><span class="linenos"> 97</span></a><span class="sd">        &quot;&quot;&quot;</span>
@@ -338,7 +338,7 @@
 </span><span id="CDNACoord-109"><a href="#CDNACoord-109"><span class="linenos">109</span></a>
 </span><span id="CDNACoord-110"><a href="#CDNACoord-110"><span class="linenos">110</span></a>        <span class="k">return</span> <span class="s2">&quot;</span><span class="si">%s%d%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">coord_prefix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coord</span><span class="p">,</span> <span class="n">offset</span><span class="p">)</span>
 </span><span id="CDNACoord-111"><a href="#CDNACoord-111"><span class="linenos">111</span></a>
-</span><span id="CDNACoord-112"><a href="#CDNACoord-112"><span class="linenos">112</span></a>    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+</span><span id="CDNACoord-112"><a href="#CDNACoord-112"><span class="linenos">112</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
 </span><span id="CDNACoord-113"><a href="#CDNACoord-113"><span class="linenos">113</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Equality operator.&quot;&quot;&quot;</span>
 </span><span id="CDNACoord-114"><a href="#CDNACoord-114"><span class="linenos">114</span></a>        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coord</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">landmark</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span>
 </span><span id="CDNACoord-115"><a href="#CDNACoord-115"><span class="linenos">115</span></a>            <span class="n">other</span><span class="o">.</span><span class="n">coord</span><span class="p">,</span>
@@ -346,7 +346,7 @@
 </span><span id="CDNACoord-117"><a href="#CDNACoord-117"><span class="linenos">117</span></a>            <span class="n">other</span><span class="o">.</span><span class="n">landmark</span><span class="p">,</span>
 </span><span id="CDNACoord-118"><a href="#CDNACoord-118"><span class="linenos">118</span></a>        <span class="p">)</span>
 </span><span id="CDNACoord-119"><a href="#CDNACoord-119"><span class="linenos">119</span></a>
-</span><span id="CDNACoord-120"><a href="#CDNACoord-120"><span class="linenos">120</span></a>    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span id="CDNACoord-120"><a href="#CDNACoord-120"><span class="linenos">120</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 </span><span id="CDNACoord-121"><a href="#CDNACoord-121"><span class="linenos">121</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="CDNACoord-122"><a href="#CDNACoord-122"><span class="linenos">122</span></a><span class="sd">        Returns a string representation of a cDNA coordinate.</span>
 </span><span id="CDNACoord-123"><a href="#CDNACoord-123"><span class="linenos">123</span></a><span class="sd">        &quot;&quot;&quot;</span>
@@ -393,7 +393,7 @@
 
     </div>
     <a class="headerlink" href="#CDNACoord.__init__"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="CDNACoord.__init__-35"><a href="#CDNACoord.__init__-35"><span class="linenos">35</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coord</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">landmark</span><span class="o">=</span><span class="n">CDNA_START_CODON</span><span class="p">,</span> <span class="n">string</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="CDNACoord.__init__-35"><a href="#CDNACoord.__init__-35"><span class="linenos">35</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coord</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">landmark</span><span class="o">=</span><span class="n">CDNA_START_CODON</span><span class="p">,</span> <span class="n">string</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
 </span><span id="CDNACoord.__init__-36"><a href="#CDNACoord.__init__-36"><span class="linenos">36</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="CDNACoord.__init__-37"><a href="#CDNACoord.__init__-37"><span class="linenos">37</span></a><span class="sd">        coord: main coordinate along cDNA on the same strand as the transcript</span>
 </span><span id="CDNACoord.__init__-38"><a href="#CDNACoord.__init__-38"><span class="linenos">38</span></a>
@@ -449,7 +449,7 @@
 
     </div>
     <a class="headerlink" href="#CDNACoord.parse"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="CDNACoord.parse-63"><a href="#CDNACoord.parse-63"><span class="linenos">63</span></a>    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coord_text</span><span class="p">):</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="CDNACoord.parse-63"><a href="#CDNACoord.parse-63"><span class="linenos">63</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coord_text</span><span class="p">):</span>
 </span><span id="CDNACoord.parse-64"><a href="#CDNACoord.parse-64"><span class="linenos">64</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="CDNACoord.parse-65"><a href="#CDNACoord.parse-65"><span class="linenos">65</span></a><span class="sd">        Parse a HGVS formatted cDNA coordinate.</span>
 </span><span id="CDNACoord.parse-66"><a href="#CDNACoord.parse-66"><span class="linenos">66</span></a><span class="sd">        &quot;&quot;&quot;</span>

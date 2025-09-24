@@ -1,28 +1,15 @@
-#!/usr/bin/env python
-
-import io
-import multiprocessing
 import os
+from pathlib import Path
 import re
-import subprocess
-from tempfile import NamedTemporaryFile
-import tempfile
-import duckdb
-import json
 import argparse
-import Bio.bgzf as bgzf
-import pandas as pd
-import vcf
 import logging as log
-import sys
-from configparser import ConfigParser
-import pypandoc
-
-from howard.objects.variants import Variants
-from howard.objects.database import Database
-from howard.functions.commons import *
-from howard.functions.databases import *
-from howard.tools.tools import *
+from tempfile import TemporaryDirectory
+from howard.functions.commons import (
+    full_path,
+    help_generation,
+    help_generation_from_json,
+)
+import pypandoc  # type: ignore
 
 
 main_folder = os.path.dirname(__file__)
@@ -51,9 +38,7 @@ def help(args: argparse) -> None:
         setup_cfg = None
 
     # Parser
-    parser = help_generation(
-        arguments_dict=arguments_dict, setup=setup_cfg, output_type="parser"
-    )
+    parser = help_generation(arguments_dict=arguments_dict, output_type="parser")
     parser.print_help()
     print("")
 
@@ -110,7 +95,7 @@ def help(args: argparse) -> None:
         # Help from options
         else:
             help_content = help_generation(
-                arguments_dict=arguments_dict, setup=setup_cfg, output_type="markdown"
+                arguments_dict=arguments_dict, output_type="markdown"
             )
 
         # Clean MD content
@@ -241,4 +226,5 @@ def help(args: argparse) -> None:
                     extra_args=pdoc_args,
                 )
 
+    # Log
     log.info("End")

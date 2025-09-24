@@ -1,40 +1,58 @@
-#!/usr/bin/env python
-
 import argparse
-import datetime
-from functools import partial
-import itertools
-import multiprocessing
+import json
 import os
-import subprocess
-import pyarrow.parquet as pq
-import pyarrow as pa
-from pyarrow import csv
-import duckdb
-import pandas as pd
-import Bio.bgzf as bgzf
-import numpy as np
-import concurrent.futures
-from multiprocessing import Pool, cpu_count
-import dask.dataframe as dd
+from pathlib import Path
+import re
+import pyarrow.parquet as pq  # type: ignore
+import duckdb  # type: ignore
+import pandas as pd  # type: ignore
+from multiprocessing import Pool  # , cpu_count
+import dask.dataframe as dd  # type: ignore
 import logging as log
 import fnmatch
 import glob
-
 import os
-import requests
 import shutil
-import zipfile
-import gzip
-import pandas as pd
+import pandas as pd  # type: ignore
 from typing import List
 from tempfile import TemporaryDirectory
+from jproperties import Properties  # type: ignore
+import vcf  # type: ignore
+import io
 
-from jproperties import Properties  # jproperties 2.1.1
+from howard.functions.commons import (
+    BCFTOOLS_FORMAT,
+    DEFAULT_ALPHAMISSENSE_URL,
+    DEFAULT_ANNOTATIONS_FOLDER,
+    DEFAULT_DATABASE_FOLDER,
+    DEFAULT_DBNSFP_FOLDER,
+    DEFAULT_DBNSFP_URL,
+    DEFAULT_DBSNP_FOLDER,
+    DEFAULT_DBSNP_URL,
+    DEFAULT_EXOMISER_FOLDER,
+    DEFAULT_EXOMISER_URL,
+    DEFAULT_GENOME_FOLDER,
+    DEFAULT_REFSEQ_FOLDER,
+    DEFAULT_REFSEQ_URL,
+    DEFAULT_TOOLS_FOLDER,
+    GENOTYPE_MAP,
+    bed_sort,
+    command,
+    concat_and_compress_files,
+    contig_sort_key,
+    determine_column_number,
+    determine_column_types,
+    download_file,
+    duckdb_execute,
+    extract_file,
+    full_path,
+    genome_build_switch,
+    get_bin,
+    code_type_map,
+    remove_if_exists,
+)
 
-
-from howard.functions.commons import *
-from howard.objects.variants import *
+# from howard.objects.variants import *
 
 
 def generate_databases_param(args: argparse, assemblies: list = []):
@@ -840,6 +858,7 @@ def databases_download_genomes(
     assemblies: list,
     genomes_folder: str = DEFAULT_GENOME_FOLDER,
     provider: str = "UCSC",
+    provider_file: str = None,
     contig_regex: str = None,
     threads: int = 1,
 ) -> None:
@@ -856,6 +875,11 @@ def databases_download_genomes(
     default provider is set to "UCSC", which refers to the University of California, Santa Cruz Genome
     Browser. Other possible providers could include NCBI or Ensembl, defaults to UCSC
     :type provider: str (optional)
+    :param provider_file: The provider_file parameter is a string that specifies the path to a file
+    containing genome data. This file can be either a local file or a URL. If this parameter is provided,
+    the function will use the data from this file instead of downloading the genome data from the specified
+    provider. This allows users to download genome data from a specific source or use a pre-existing file
+    :type provider_file: str (optional)
     :param contig_regex: The contig_regex parameter is a regular expression used to filter the contigs
     (chromosomes or scaffolds) to be downloaded for a given genome assembly. It allows users to download
     only a subset of the available contigs, based on their names or other characteristics. If
@@ -871,7 +895,11 @@ def databases_download_genomes(
 
     log.info(f"Download Genomes {assemblies}")
 
-    import genomepy
+    import genomepy  # type: ignore
+    from pyfaidx import Fasta, Faidx
+
+    def split_string(string, length):
+        return [string[i : i + length] for i in range(0, len(string), length)]
 
     if not genomes_folder:
         genomes_folder = DEFAULT_GENOME_FOLDER
@@ -885,18 +913,145 @@ def databases_download_genomes(
         installed_genomes = []
 
     for assembly in assemblies:
+
+        # Check if genome already installed
         if assembly in installed_genomes:
             log.info(f"Download Genomes {[assembly]} - already exists")
+
+        # Download genome and index
         else:
-            log.info(f"Download Genomes {[assembly]} downloading...")
-            genomepy.install_genome(
-                assembly,
-                annotation=False,
-                provider=provider,
-                genomes_dir=genomes_folder,
-                threads=threads,
-                regex=contig_regex,
-            )
+
+            # Files to remove
+            files_to_remove = []
+
+            # Path of current genome fasta and index
+            path_fa = os.path.join(genomes_folder, assembly, f"{assembly}.fa")
+            path_fai = f"{path_fa}.fai"
+
+            # Download genome
+
+            # Download from provided file, either an URL or a local file
+            if provider_file is not None:
+
+                # URL file name
+                provider_file_name = os.path.basename(provider_file)
+                files_to_remove.append(provider_file_name)
+
+                # temporary downloaded file name
+                path_fa_tmp = os.path.join(genomes_folder, assembly, provider_file_name)
+
+                # Create genome folder directory
+                if not os.path.exists(os.path.dirname(path_fa)):
+                    os.makedirs(os.path.dirname(path_fa))
+
+                # Check if file exists
+                if os.path.isfile(full_path(provider_file)):
+
+                    # Copy file to genomes folder
+                    shutil.copy(full_path(provider_file), path_fa_tmp)
+
+                # Check id provider file is an url
+                elif provider_file.startswith("http") or provider_file.startswith(
+                    "ftp"
+                ):
+                    # Download file
+                    download_file(provider_file, path_fa_tmp, threads=threads)
+
+                # If file is compressed, extract it
+                if path_fa_tmp.endswith(".gz"):
+                    path_fa_tmp_extracted_name = path_fa_tmp.replace(".gz", "")
+                    extract_file(
+                        file_path=path_fa_tmp,
+                        threads=threads,
+                    )
+                    # Rename file
+                    os.rename(path_fa_tmp_extracted_name, path_fa)
+                    # Remove compressed file
+                    os.remove(path_fa_tmp)
+                else:
+                    # Rename file
+                    os.rename(path_fa_tmp, path_fa)
+
+            else:
+                log.info(f"Download Genomes {[assembly]} downloading...")
+                genomepy.install_genome(
+                    assembly,
+                    annotation=False,
+                    provider=provider,
+                    genomes_dir=genomes_folder,
+                    threads=threads,
+                    regex=contig_regex,
+                )
+                # Remove regex contigs for future filter
+                contig_regex = None
+
+            # Re-order genome contigs
+            log.info(f"Download Genomes {[assembly]} sorting...")
+
+            # Path of current genome fasta and index
+            path_fa = os.path.join(genomes_folder, assembly, f"{assembly}.fa")
+            path_fai = f"{path_fa}.fai"
+
+            # Load genome
+            fa = Fasta(path_fa)
+
+            # Sort contigs
+            contigs = list(fa.keys())
+            sorted_contigs = sorted(contigs, key=contig_sort_key)
+
+            # filter list of contig with a regex like 'chr[0-9XYM]+$'
+            if contig_regex:
+                contig_regex = re.compile(contig_regex)
+                sorted_contigs = list(
+                    filter(lambda x: contig_regex.match(x), sorted_contigs)
+                )
+
+            if contigs != sorted_contigs:
+
+                # Path of sorted genome fasta and index
+                path_sorted_fa = f"{path_fa}.sorted.fa"
+                path_sorted_fai = f"{path_sorted_fa}.fai"
+                files_to_remove.append(path_sorted_fa)
+                files_to_remove.append(path_sorted_fai)
+
+                # Write sorted genome
+                with open(path_sorted_fa, "w") as sorted_fa:
+
+                    # Write contigs
+                    for chr in sorted_contigs:
+
+                        # Log
+                        log.debug(f"Chromosome {chr}...")
+
+                        # Write chromosome name
+                        sorted_fa.write(">" + chr + "\n")
+
+                        # Write chromosome sequence
+                        sorted_fa.write(
+                            "\n".join(map(str, split_string(fa[chr][:], 50))) + "\n"
+                        )
+
+                # Load fasta index
+                fa_sorted = Faidx(path_sorted_fa)
+
+                # Write sorted index
+                with open(path_sorted_fai, "w") as f:
+
+                    # Write contigs index
+                    for index, record in fa_sorted.index.items():
+                        f.write(
+                            f"{index}\t{record.rlen}\t{record.offset}\t{record.lenc}\t{record.lenb}\n"
+                        )
+
+                # Remove previous genome fasta and index
+                remove_if_exists([path_fa, path_fai])
+
+                # Rename sorted genome fasta and index
+                Path.rename(Path(path_sorted_fa), path_fa)
+                Path.rename(Path(path_sorted_fai), path_fai)
+
+            # Remove genome tmp files
+            remove_if_exists(files_to_remove)
 
     return None
 
@@ -1393,6 +1548,7 @@ def databases_download_dbnsfp(
     dbnsfp_folder: str = None,
     dbnsfp_url: str = None,
     dbnsfp_release: str = "4.4a",
+    dbnsfp_source: str = None,
     threads: int = None,
     memory: int = 1,
     parquet_size: int = 100,
@@ -1582,8 +1738,9 @@ def databases_download_dbnsfp(
             columns_structure["Number"][column] = column_number
 
         # Log
+        number_of_columns = len(columns_structure["Type"])
         log.info(
-            f"Download dbNSFP {assemblies} - Check database structure - {len(columns_structure)} columns found"
+            f"Download dbNSFP {assemblies} - Check database structure - {number_of_columns} columns found"
         )
 
         db_structure.close()
@@ -1602,16 +1759,31 @@ def databases_download_dbnsfp(
 
         return columns_structure
 
-    def clean_name(name: str) -> str:
+    def clean_name(name: str, map: dict = {"-": "_", "+": "_", ".": "_"}) -> str:
         """
         The clean_name function replaces hyphens and plus signs in a string with underscores.
 
-        :param name: The `name` parameter is a string that represents a name
+        :param name: The `name` parameter is a string that represents a name or identifier that may
+        contain special characters (such as hyphens or plus signs) that need to be replaced with
+        underscores. This parameter is used to clean up the name by removing or replacing unwanted
+        characters. For example, if the input name is "gene-name+variant", the function will replace
+        the hyphen and plus sign with underscores, resulting in "gene_name_variant". This is useful for
+        ensuring that the name is in a format that is more suitable for use in programming or data
+        processing. The function can be used to sanitize names before using them in file names, database
+        identifiers, or other contexts where special characters may cause issues.
         :type name: str
+        :param map: The `map` parameter is a dictionary that defines the characters to be replaced and
+        their corresponding replacements. The keys in the dictionary are the characters to be replaced,
+        and the values are the characters that will replace them. For example, if you want to replace
+        hyphens with underscores and plus signs with underscores, you can use the following mapping:
+        `{"-": "_", "+": "_"}`. This means that any occurrence of a hyphen in the input string will be
+        replaced with an underscore, and any occurrence of a plus sign will also be replaced with an
+        underscore. You can customize this mapping to replace other characters as needed
+        :type map: dict (optional)
         :return: The function `clean_name` returns a string.
         """
 
-        mapping_table = str.maketrans({"-": "_", "+": "_"})
+        mapping_table = str.maketrans(map)
         return name.translate(mapping_table)
 
     def get_columns_select_clause(
@@ -1915,6 +2087,9 @@ def databases_download_dbnsfp(
                 line_in_variant = False
             elif line_in_variant:
                 line_split = line.split("\t")
+                # Case new release 5.x
+                if len(line_split) < 2:
+                    line_split = line.split("        ")
                 if line_split[0] != "":
                     line_name = line_split[1].split(":")[0]
                     line_desc = ":".join(line_split[1].split(":")[1:]).strip()
@@ -1955,17 +2130,38 @@ def databases_download_dbnsfp(
 
     # Files for dbNSFP
     # https://dbnsfp.s3.amazonaws.com/dbNSFP4.4a.zip
+    # https://usf.box.com/shared/static/0tq7q3b8ucaxxkmfyvnb0ss7g58ptgcl
     dbnsfp_zip = f"dbNSFP{dbnsfp_release}.zip"
     dbnsfp_readme = f"dbNSFP{dbnsfp_release}.readme.txt"
-    dbnsfp_zip_url = os.path.join(dbnsfp_url, dbnsfp_zip)
+
+    # Check if dbNSFP source is provided, either URL or file
+    if dbnsfp_source is not None:
+        if os.path.isfile(full_path(dbnsfp_source)):
+            dbnsfp_zip_url = full_path(dbnsfp_source)
+        elif dbnsfp_url.startswith("http") or dbnsfp_url.startswith("ftp"):
+            dbnsfp_zip_url = dbnsfp_source
+    # Check if dbNSFP URL is provided and if it is a valid URL
+    elif dbnsfp_url is not None:
+        dbnsfp_zip_url = os.path.join(dbnsfp_url, dbnsfp_zip)
+    # No dbNSFP source or URL provided
+    else:
+        msg_err = f"Download dbNSFP {assemblies} - No dbNSFP URL or source provided"
+        log.error(msg_err)
+        raise ValueError(msg_err)
+
+    # Destination files
     dbnsfp_zip_dest = os.path.join(dbnsfp_folder, dbnsfp_zip)
     dbnsfp_readme_dest = os.path.join(dbnsfp_folder, dbnsfp_readme)
     dbnsfp_zip_dest_folder = os.path.dirname(dbnsfp_zip_dest)
 
     # Download dbNSFP
     if not os.path.exists(dbnsfp_zip_dest):
-        log.info(f"Download dbNSFP {assemblies} - Download '{dbnsfp_zip}'...")
-        download_file(dbnsfp_zip_url, dbnsfp_zip_dest, threads=threads)
+        if os.path.isfile(dbnsfp_zip_url):
+            log.info(f"Download dbNSFP {assemblies} - Copy '{dbnsfp_zip}'...")
+            shutil.copyfile(dbnsfp_zip_url, dbnsfp_zip_dest)
+        else:
+            log.info(f"Download dbNSFP {assemblies} - Download '{dbnsfp_zip}'...")
+            download_file(dbnsfp_zip_url, dbnsfp_zip_dest, threads=threads)
     else:
         log.info(
             f"Download dbNSFP {assemblies} - Database '{dbnsfp_zip}' already exists"
@@ -1975,6 +2171,21 @@ def databases_download_dbnsfp(
     if not os.path.exists(dbnsfp_readme_dest):
         log.info(f"Download dbNSFP {assemblies} - Extract '{dbnsfp_zip}'...")
         extract_file(dbnsfp_zip_dest, threads=threads)
+        # Check if extracted on a folder
+        dbnsfp_zip_dest_folder_extracted = os.path.join(
+            dbnsfp_zip_dest_folder, dbnsfp_zip.replace(".zip", "")
+        )
+        if os.path.isdir(dbnsfp_zip_dest_folder_extracted):
+            # Move files to the folder
+            for file in os.listdir(dbnsfp_zip_dest_folder_extracted):
+                log.debug(f"Download dbNSFP {assemblies} - Move '{file}'...")
+                shutil.move(
+                    os.path.join(dbnsfp_zip_dest_folder_extracted, file),
+                    dbnsfp_zip_dest_folder,
+                )
+            # Remove folder
+            shutil.rmtree(dbnsfp_zip_dest_folder_extracted)
+
     else:
         log.info(
             f"Download dbNSFP {assemblies} - Database '{dbnsfp_zip}' already extracted"
@@ -2307,12 +2518,6 @@ def databases_download_dbnsfp(
                     sample_size=sample_size,
                     threads=threads,
                 )
-                # columns_structure_vcf = get_columns_structure(
-                #     database_file=database_files[0],
-                #     sample_size=sample_size,
-                #     threads=threads,
-                #     output_type="VCF",
-                # )
 
             output_prefix = f"{dbnsfp_folder}/{assembly}/dbNSFP{dbnsfp_release}"
             parquet_all_annotation = (
@@ -2478,7 +2683,8 @@ def databases_download_dbnsfp(
             log.info(f"Download dbNSFP ['{assembly}']")
             log.info(f"Download dbNSFP ['{assembly}'] - Parquet/VCF files generation")
 
-            output_prefix = f"{dbnsfp_folder}/{assembly}/dbNSFP{dbnsfp_release}"
+            output_prefix_name = f"dbNSFP{dbnsfp_release}"
+            output_prefix = f"{dbnsfp_folder}/{assembly}/{output_prefix_name}"
             partition_parquet_folder_all = f"{output_prefix}.ALL.partition.parquet"
             partition_parquet_folders = sorted(
                 glob.glob(f"{output_prefix}.*.partition.parquet"),
@@ -2493,7 +2699,11 @@ def databases_download_dbnsfp(
             ):
 
                 # sub database
-                sub_database = os.path.basename(partition_parquet_folder).split(".")[-3]
+                # sub_database = os.path.basename(partition_parquet_folder).split(".")[-3]
+                sub_database = re.search(
+                    rf"{output_prefix_name}\.(.*?)\.partition\.parquet",
+                    os.path.basename(partition_parquet_folder),
+                ).group(1)
 
                 # Input Parquet folder
                 input_partition_parquet = (
@@ -2925,6 +3135,7 @@ def databases_download_alphamissense(
     """
 
     from howard.objects.database import Database
+    from howard.objects.variants import Variants
 
     # Log
     log.info(f"Download AlphaMissense {assemblies}")
@@ -2970,6 +3181,8 @@ def databases_download_alphamissense(
         # Convert to Parquet
         if os.path.exists(alphamissense_tsv_dest):
             if not os.path.exists(alphamissense_parquet_dest):
+
+                # Convert into Parquet
                 log.info(
                     f"Download AlphaMissense {assemblies} - Convert to '{alphamissense_parquet}'..."
                 )
@@ -2980,6 +3193,36 @@ def databases_download_alphamissense(
                     output_database=alphamissense_parquet_dest,
                     output_header=alphamissense_parquet_dest + ".hdr",
                     threads=threads,
+                )
+
+                # Header
+                log.info(
+                    f"Download AlphaMissense {assemblies} - Format '{alphamissense_parquet}' header..."
+                )
+                vcf_header = Variants(input=alphamissense_parquet_dest)
+                vcf_header_header = vcf_header.get_header()
+
+                # Change num as '1' instead of '.'
+                new_infos = {}
+                for field in vcf_header_header.infos:
+                    info = vcf_header_header.infos[field]
+                    new_info = vcf.parser._Info(
+                        id=info.id,
+                        num=1,  # Change '.' to '1'
+                        type=info.type,
+                        desc=info.desc,
+                        source=info.source,
+                        version=info.version,
+                        type_code=info.type_code,
+                    )
+                    new_infos[field] = new_info
+                vcf_header_header.infos = new_infos
+
+                # Export header
+                vcf_header.export_header(
+                    output_file=alphamissense_parquet_dest,
+                    output_file_ext=".hdr",
+                    remove_chrom_line=False,
                 )
             else:
                 log.info(
@@ -3632,6 +3875,7 @@ def databases_download_dbsnp(
 
     # Import Database object
     from howard.objects.database import Database
+    import pgzip  # type: ignore
 
     # Log
     log.info(f"Download dbSNP {assemblies}")
@@ -3834,7 +4078,7 @@ def databases_download_dbsnp(
                 # Header #CHROM line
                 db_header_list_chrom = [db_header_list[-1]]
                 # Header Contig
-                res = db.query(
+                header_contigs = db.query(
                     query=f"""
                             SELECT
                                     column0 AS chr,
@@ -3847,9 +4091,20 @@ def databases_download_dbsnp(
                                     ) AS contig
                             FROM read_csv_auto('{genome_index}')
                             """
-                )
-                db_header_list_chrs = list(res.df()["chr"])
-                db_header_list_contigs = list(res.df()["contig"])
+                ).df()
+
+                # List of chromosomes
+                db_header_list_chrs = list(header_contigs["chr"])
+
+                # Ordering chromosomes
+                db_header_list_chrs = sorted(db_header_list_chrs, key=contig_sort_key)
+
+                # Generate contigs for VCF header
+                db_header_list_contigs = []
+                for chr in db_header_list_chrs:
+                    db_header_list_contigs.append(
+                        list(header_contigs[header_contigs["chr"] == chr]["contig"])[0]
+                    )
 
                 # Write new heaer with contigs
                 db_header_new = db.get_header_from_list(
@@ -3875,12 +4130,31 @@ def databases_download_dbsnp(
                             """
                             )
                         else:
+
+                            # Detect type
+                            vcf_type = db_header.infos[info].type
+                            if vcf_type == "Integer":
+                                sql_type = "BIGINT"
+                            elif vcf_type == "Float":
+                                sql_type = "FLOAT"
+                            else:
+                                sql_type = "VARCHAR"
+
+                            # Detect number (uniq value or list)
+                            vcf_number = db_header.infos[info].num
+                            if str(vcf_number) == "1":
+                                sql_type_list = False
+                            else:
+                                sql_type_list = True
+                                sql_type = "VARCHAR"
+
+                            # Create column for Parquet
                             query_select_info_fields_array.append(
                                 f"""
                                 CASE
                                     WHEN concat(';', INFO) NOT LIKE '%;{info}=%' THEN NULL
                                     ELSE REGEXP_EXTRACT(concat(';', INFO), ';{info}=([^;]*)',1)
-                                END AS {info}                             
+                                END::{sql_type} AS {info}                             
                             """
                             )
                 query_select_info_fields = " , ".join(query_select_info_fields_array)
@@ -3931,6 +4205,8 @@ def databases_download_dbsnp(
                                         "QUAL", "FILTER", "INFO"
                                 FROM df_chunk
                                 WHERE list_contains({db_header_list_chrs}, "#CHROM")
+                                  AND "REF" NOT IN ('')
+                                  AND "ALT" NOT IN ('')
                                 """
                             res = db.query(query=query)
                             # Use polars to parallelize csv write and an infile with pgzip to parallelise compression
@@ -3951,6 +4227,8 @@ def databases_download_dbsnp(
                                         {query_select_info_fields}
                                 FROM df_chunk
                                 WHERE list_contains({db_header_list_chrs}, "#CHROM")
+                                  AND "REF" NOT IN ('')
+                                  AND "ALT" NOT IN ('')
                                 """
                             res = db.query(query=query)
                             # Use pandas an to_parquet with append option ans fastparquet engine (no append with other df like polars or pyarrow)
@@ -3980,7 +4258,7 @@ def databases_download_dbsnp(
                         memory=memory,
                         compression_type="bgzip",
                         sort=False,
-                        index=False,
+                        index=True,
                     )
 
                 if write_parquet:
@@ -4091,6 +4369,8 @@ def databases_download_hgmd(
     :type to_tsv: bool (optional)
     :return: a boolean value indicating whether the HGMD database conversion was successful or not.
     """
+
+    import mgzip  # type: ignore
 
     # Check assemblies
     if not assemblies or len(assemblies) > 1 or len(assemblies) == 0:

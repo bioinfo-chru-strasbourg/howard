@@ -12,18 +12,12 @@ coverage report --include=howard/* -m
 
 import logging as log
 import os
-import sys
-from tempfile import TemporaryDirectory
-import duckdb
-import re
-import Bio.bgzf as bgzf
-import gzip
-import pytest
-import pandas as pd
-from pandas.testing import assert_frame_equal
-from unittest.mock import patch
+from tempfile import TemporaryDirectory, NamedTemporaryFile
+import duckdb  # type: ignore
+import pytest  # type: ignore
+import pandas as pd  # type: ignore
+from pandas.testing import assert_frame_equal  # type: ignore
 
-from howard.objects.variants import Variants
 from howard.functions.commons import *
 from test_needed import *
 
@@ -195,7 +189,7 @@ def test_help():
         "shared_arguments": shared_arguments,
     }
     help_content = help_generation(
-        arguments_dict=arguments_dict, setup=setup_cfg, output_type="markdown"
+        arguments_dict=arguments_dict, output_type="markdown"
     )
     assert help_content != ""
 
@@ -207,9 +201,9 @@ def test_help():
 
 
 def test_identical_with_identical_files():
-    with tempfile.NamedTemporaryFile(
+    with NamedTemporaryFile(mode="w", delete=False) as f1, NamedTemporaryFile(
         mode="w", delete=False
-    ) as f1, tempfile.NamedTemporaryFile(mode="w", delete=False) as f2:
+    ) as f2:
         f1.write("## Header\n")
         f1.write("Data Line 1\n")
         f1.write("Data Line 2\n")
@@ -226,9 +220,9 @@ def test_identical_with_identical_files():
 
 
 def test_identical_with_different_header():
-    with tempfile.NamedTemporaryFile(
+    with NamedTemporaryFile(mode="w", delete=False) as f1, NamedTemporaryFile(
         mode="w", delete=False
-    ) as f1, tempfile.NamedTemporaryFile(mode="w", delete=False) as f2:
+    ) as f2:
         f1.write("## Header\n")
         f1.write("Data Line 1\n")
         f1.write("Data Line 2\n")
@@ -245,9 +239,9 @@ def test_identical_with_different_header():
 
 
 def test_identical_with_different_content():
-    with tempfile.NamedTemporaryFile(
+    with NamedTemporaryFile(mode="w", delete=False) as f1, NamedTemporaryFile(
         mode="w", delete=False
-    ) as f1, tempfile.NamedTemporaryFile(mode="w", delete=False) as f2:
+    ) as f2:
         f1.write("## Header\n")
         f1.write("Data Line 1\n")
         f1.write("Data Line 2\n")
@@ -409,7 +403,7 @@ GET_BIN_COMMAND_CONFIG_SPLICE = {
     "tools": {
         "splice": {
             "docker": {
-                "image": "bioinfochrustrasbourg/splice:0.2.2",
+                "image": "bioinfochrustrasbourg/splice:0.2.4",
                 "entrypoint": "/bin/bash",
             },
         },
@@ -525,7 +519,7 @@ def test_get_bin_command_snpeff():
             "bcftools": {
                 "bin": "bcftools",
                 "docker": {
-                    "image": "howard:0.12.1.1",
+                    "image": "howard:0.13.0",
                     "entrypoint": "bcftools",
                     "options": None,
                     "command": None,
@@ -557,7 +551,7 @@ def test_get_bin_command_bcftools():
             "bcftools": {
                 "bin": "bcftools",
                 "docker": {
-                    "image": "howard:0.12.1.1",
+                    "image": "howard:0.13.0",
                     "entrypoint": "bcftools",
                     "options": None,
                     "command": None,
@@ -588,7 +582,7 @@ def test_get_bin_command_bcftools():
             "--memory=16g",
             "--entrypoint='bcftools'",
             "-v /tmp/howard:/tmp/howard",
-            "howard:0.12.1.1",
+            "howard:0.13.0",
         ]
     )
     # Test command bcftools found with docker with added options
@@ -608,7 +602,7 @@ def test_get_bin_command_bcftools():
             "--entrypoint='bcftools'",
             "-v /host/path/to/mount:/inner/path_to/mount",
             "-v /tmp/howard:/tmp/howard",
-            "howard:0.12.1.1",
+            "howard:0.13.0",
         ]
     )
 
@@ -2049,7 +2043,7 @@ def test_find_all():
     if the function returns the correct paths.
     """
     # Create a temporary directory structure
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with TemporaryDirectory() as tmpdir:
         # Create some files with the name 'test_file' in different directories
         open(os.path.join(tmpdir, "test_file"), "a").close()
         os.makedirs(os.path.join(tmpdir, "subdir"))
@@ -2082,7 +2076,7 @@ def test_find_genome():
     # Either genome in the system or not
 
     # create a temporary directory
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with TemporaryDirectory() as tmpdir:
         # specify a non-existent path for the genome file
         genome_path_nonexistent = os.path.join(tmpdir, "nonexistent_genome.fa")
         # call the function to find the genome file

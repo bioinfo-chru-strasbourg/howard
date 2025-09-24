@@ -80,7 +80,7 @@ Examples:
 >     "exomiser": "~/howard/tools/exomiser/current/bin/exomiser-cli-13.2.0.jar",
 >     "splice": {
 >        "docker": {
->          "image": "bioinfochrustrasbourg/splice:0.2.1",
+>          "image": "bioinfochrustrasbourg/splice:0.2.4",
 >          "entrypoint": "/bin/bash",
 >          "options": null,
 >          "command": null
@@ -313,6 +313,8 @@ Examples:
 
 Annotation databases folders for refSeq annotation.
 
+Type: `str`
+
 Format: `A folder path (without assembly)`
 
 Default: `~/howard/databases/refseq/current`
@@ -362,7 +364,7 @@ Examples:
 >    "tools": {
 >       "bcftools": {
 >          "docker": {
->            "image": "howard:0.12.1.1",
+>            "image": "howard:0.13.0",
 >            "entrypoint": "bcftools",
 >            "options": null,
 >            "command": null
@@ -379,7 +381,7 @@ Examples:
 >    "tools": {
 >       "splice": {
 >          "docker": {
->            "image": "bioinfochrustrasbourg/splice:0.2.1",
+>            "image": "bioinfochrustrasbourg/splice:0.2.4",
 >            "entrypoint": "/bin/bash",
 >            "options": null,
 >            "command": null
@@ -548,7 +550,7 @@ Examples:
 > {
 >    "splice": {
 >       "docker": {
->         "image": "bioinfochrustrasbourg/splice:0.2.1",
+>         "image": "bioinfochrustrasbourg/splice:0.2.4",
 >         "entrypoint": "/bin/bash",
 >         "options": null,
 >         "command": null
@@ -660,11 +662,14 @@ NOTSET
 
 - CRITICAL: A serious error.
 
+- FATAL: A fatal error.
+
 - NOTSET: All messages.
 
 Type: `str`
 
-Choices: `['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET']`
+Choices:
+`['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET', 'WARN', 'FATAL']`
 
 Default: `INFO`
 

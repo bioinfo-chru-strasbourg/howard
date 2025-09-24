@@ -1,24 +1,23 @@
 import hashlib
-import duckdb
+import duckdb  # type: ignore
 import sqlite3
-import vcf
+import vcf  # type: ignore
 import glob
 import os
 import io
-import pgzip
+import pgzip  # type: ignore
 import shutil
-
-import polars as pl
-import pandas as pd
-import Bio.bgzf as bgzf
-import pyarrow.parquet as pq
-import pyarrow as pa
+import polars as pl  # type: ignore
+import pandas as pd  # type: ignore
+import Bio.bgzf as bgzf  # type: ignore
+import pyarrow.parquet as pq  # type: ignore
+import pyarrow as pa  # type: ignore
 import logging as log
-
 from tempfile import TemporaryDirectory
 from typing import Optional, Union
 
 from howard.functions.commons import (
+    cast_columns_query,
     load_duckdb_extension,
     get_file_format,
     full_path,
@@ -1773,8 +1772,50 @@ class Database:
             table = self.get_database_table(database=database)
 
         if sql_query:
-            columns_list = list(database.query(sql_query).columns)
-            return columns_list
+
+            columns_list = None
+
+            # Add robust error catching
+            try:
+                limited_query = f"SELECT * FROM ({sql_query}) AS _limited_query LIMIT 1"
+                if type(database) == duckdb.DuckDBPyConnection:
+                    # If the database is a DuckDB connection, execute the query directly
+                    try:
+                        columns_list = list(database.query(limited_query).columns)
+                        log.debug(
+                            f"Successfully executed query with database connection"
+                        )
+                    except Exception as e:
+                        log.debug(
+                            f"Error executing SQL query with database connection: {e}"
+                        )
+                        columns_list = None
+
+                # If no result or if database is not a DuckDB connection
+                else:  # if columns_list is None:
+                    try:
+                        limited_query = (
+                            f"SELECT * FROM ({sql_query}) AS _limited_query LIMIT 1"
+                        )
+                        q = self.query(limited_query)
+                        columns_list = list(q.columns)
+                        log.debug(f"Successfully executed query with self.conn")
+                    except Exception as e:
+                        log.debug(f"Error executing SQL query with self.conn: {e}")
+                        columns_list = None
+
+            except Exception as e:
+                log.debug(f"Unexpected error during query execution: {e}")
+                columns_list = None
+
+            # If we have columns, return them
+            if columns_list:
+                return columns_list
+
+        # if sql_query and type(database) == duckdb.DuckDBPyConnection:
+        #     columns_list = list(database.query(sql_query).columns)
+        #     log.debug(f"Columns from SQL query: {columns_list}")
+        #     return columns_list
 
         try:
             if database and self.exists(database):
@@ -1814,13 +1855,22 @@ class Database:
                         database=database, header_file=header_file
                     )
                     sql_query = f"SELECT * FROM {sql_from} LIMIT 0"
-                    
-                    # Get columns
-                    result_description = self.conn.execute(sql_query).description
 
-                    # Extract columns' names
-                    columns = [desc[0] for desc in result_description]
-                    
+                    # Get columns
+                    # result_description = self.conn.execute(sql_query).description
+                    result_columns = self.conn.query(sql_query).columns
+
+                    # Extract columns' names and order them to have # at the beginning
+                    # columns = [desc[0] for desc in result_description]
+                    columns = []
+                    for column in result_columns:
+                        if column.startswith("#"):
+                            # Add at the beginning of the llist
+                            columns.insert(0, column)
+                        else:
+                            # Add at the end of the list
+                            columns.append(column)
+
                     # Return columns as list
                     return columns
 
@@ -2141,6 +2191,7 @@ class Database:
         compresslevel: int = 6,
         export_header: bool = True,
         sample_list: list = None,
+        force_cast_as_flat: bool = False,
     ) -> bool:
         """
         The `export` function exports data from a database to a specified output format, compresses it
@@ -2228,6 +2279,12 @@ class Database:
         this parameter will be included in the output file. If not provided, the function will determine
         the samples to include based on the data
         :type sample_list: list
+        :param force_cast_as_flat: Only for Parquet format. The `force_cast_as_flat` parameter is a boolean
+        flag that indicates whether to force the export of the data as a flat file format, even if the data
+        is in a nested format. If `force_cast_as_flat` is set to `True`, the data will be exported as a
+        flat file, regardless of its original format. If set to `False`, the data will be exported in its
+        original format. By default, it is set to `False`, defaults to False
+        :type force_cast_as_flat: bool (optional)
         :return: The `export` function returns a boolean value indicating whether the export was
         successful or not.
         """
@@ -2560,6 +2617,10 @@ class Database:
                         {order_by_sql}
                     """
 
+                # Cast query column to be able to export into a flat file
+                if output_type not in ["parquet"] or force_cast_as_flat:
+                    query = cast_columns_query(query=query, conn=self.conn)
+
                 # Test empty query
                 df = self.conn.execute(query).fetch_record_batch(1)
                 query_empty = True
@@ -2636,6 +2697,9 @@ class Database:
                                 f.write(b"[\n")
                             else:
                                 f.write("[\n")
+
+                    # Init writer
+                    writer = None
 
                     # Open stream files (uncompressed and compressed) for chunk
                     with open(query_output_database_tmp, mode="a") as f, pgzip.open(
@@ -2784,11 +2848,13 @@ class Database:
                                     writer.write_batch(d)
 
                     # Close Parquet writer
-                    if (
-                        export_options.get("format") in ["PARQUET"]
-                        and not export_options.get("partition_by", None)
-                        and not export_options.get("per_thread_output", None)
+                    if export_options.get("format") in ["PARQUET"] and os.path.isfile(
+                        query_output_database_tmp
                     ):
+                        if writer is None:
+                            writer = pq.ParquetWriter(
+                                query_output_database_tmp, df.schema
+                            )
                         writer.close()
 
                     # JSON format - Add special "]" character at the end of the file
@@ -2846,7 +2912,8 @@ class Database:
                         query_output_header_tmp = os.path.join(tmp_dir, "header")
                         tmp_files.append(query_output_header_tmp)
                         self.get_header_file(
-                            header_file=query_output_header_tmp, remove_header_line=remove_header_line
+                            header_file=query_output_header_tmp,
+                            remove_header_line=remove_header_line,
                         )
 
                         # Add tmp header file for concat and compress

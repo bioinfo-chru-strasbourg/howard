@@ -10,26 +10,202 @@ coverage run -m pytest tests/test_databases.py -x -vv --log-cli-level=DEBUG --ca
 coverage report --include=howard/* -m
 """
 
-import logging as log
 import os
-import sys
 from tempfile import TemporaryDirectory
-import duckdb
-import re
-import Bio.bgzf as bgzf
-import gzip
-import pytest
-import pandas as pd
-from pandas.testing import assert_frame_equal
-from unittest.mock import patch
 
-from howard.objects.variants import Variants
-from howard.objects.database import Database
-from howard.functions.commons import *
-from howard.tools.databases import *
-from howard.tools.tools import arguments_dict
+from howard.functions.commons import DEFAULT_GENOME_FOLDER
+from howard.functions.databases import databases_download_genomes
 
-from test_needed import *
+from test_needed import tests_databases_folder
+
+
+def test_databases_download_genomes_file():
+    """
+    The function tests the databases_download_genomes function by checking if genomes are downloaded correctly for
+    different assemblies and contig filters.
+    """
+
+    import genomepy  # type: ignore
+
+    # Init
+    assemblies_config = {
+        "sacCer3": {
+            "assembly": "sacCer3",
+            "contigs": [
+                "chrM",
+                "chrXI",
+                "chrII",
+                "chrXVI",
+                "chrIII",
+                "chrVI",
+                "chrV",
+                "chrXII",
+                "chrVIII",
+                "chrXV",
+                "chrIV",
+                "chrI",
+                "chrXIII",
+                "chrX",
+                "chrIX",
+                "chrVII",
+                "chrXIV",
+            ],
+        },
+        "sacCer2": {
+            "assembly": "sacCer2",
+            "contigs": [
+                "chrM",
+                "2micron",
+                "chrXI",
+                "chrII",
+                "chrXVI",
+                "chrIII",
+                "chrVI",
+                "chrV",
+                "chrXII",
+                "chrVIII",
+                "chrXV",
+                "chrIV",
+                "chrI",
+                "chrXIII",
+                "chrX",
+                "chrIX",
+                "chrVII",
+                "chrXIV",
+            ],
+        },
+    }
+    threads = 2
+
+    # Genome from file uncompressed
+    with TemporaryDirectory() as tmpdir:
+
+        assemblies = ["sacCer3"]
+
+        genomes_folder = tmpdir
+        provider = "UCSC"
+        provider_file = os.path.join(tests_databases_folder, "genomes", "sacCer3.fa")
+
+        contig_regex = None
+        try:
+            genome = databases_download_genomes(
+                assemblies=assemblies,
+                genomes_folder=genomes_folder,
+                provider=provider,
+                provider_file=provider_file,
+                contig_regex=contig_regex,
+                threads=threads,
+            )
+            for assembly in assemblies:
+                genome = genomepy.Genome(assembly, genomes_dir=DEFAULT_GENOME_FOLDER)
+                assert os.path.exists(genome.genome_file)
+                assert (
+                    list(genome.keys()).sort()
+                    == assemblies_config.get(assembly).get("contigs", []).sort()
+                )
+        except:
+            assert False
+
+    # Genome from file uncompressed with filter on contig
+    with TemporaryDirectory() as tmpdir:
+
+        assemblies = ["sacCer3"]
+
+        genomes_folder = tmpdir
+        provider = "UCSC"
+        provider_file = os.path.join(tests_databases_folder, "genomes", "sacCer3.fa")
+
+        contig_regex = "chrX.*$"
+        try:
+            genome = databases_download_genomes(
+                assemblies=assemblies,
+                genomes_folder=genomes_folder,
+                provider=provider,
+                provider_file=provider_file,
+                contig_regex=contig_regex,
+                threads=threads,
+            )
+            for assembly in assemblies:
+                genome = genomepy.Genome(assembly, genomes_dir=DEFAULT_GENOME_FOLDER)
+                assert os.path.exists(genome.genome_file)
+                assert (
+                    list(genome.keys()).sort()
+                    == [
+                        "chrXI",
+                        "chrXVI",
+                        "chrXII",
+                        "chrXV",
+                        "chrXIII",
+                        "chrX",
+                        "chrXIV",
+                    ].sort()
+                )
+                assert (
+                    list(genome.keys()).sort()
+                    == assemblies_config.get(assembly).get("contigs", []).sort()
+                )
+        except:
+            assert False
+
+    # Genome from file compressed
+    with TemporaryDirectory() as tmpdir:
+
+        assemblies = ["sacCer3"]
+
+        genomes_folder = tmpdir
+        provider = "UCSC"
+        provider_file = os.path.join(tests_databases_folder, "genomes", "sacCer3.fa.gz")
+
+        contig_regex = None
+        try:
+            genome = databases_download_genomes(
+                assemblies=assemblies,
+                genomes_folder=genomes_folder,
+                provider=provider,
+                provider_file=provider_file,
+                contig_regex=contig_regex,
+                threads=threads,
+            )
+            for assembly in assemblies:
+                genome = genomepy.Genome(assembly, genomes_dir=DEFAULT_GENOME_FOLDER)
+                assert os.path.exists(genome.genome_file)
+                assert (
+                    list(genome.keys()).sort()
+                    == assemblies_config.get(assembly).get("contigs", []).sort()
+                )
+        except:
+            assert False
+
+    # Genome from URL
+    with TemporaryDirectory() as tmpdir:
+
+        assemblies = ["sacCer3"]
+
+        genomes_folder = tmpdir
+        provider = "UCSC"
+        provider_file = (
+            "https://hgdownload.soe.ucsc.edu/goldenPath/sacCer3/bigZips/sacCer3.fa.gz"
+        )
+
+        contig_regex = None
+        try:
+            genome = databases_download_genomes(
+                assemblies=assemblies,
+                genomes_folder=genomes_folder,
+                provider=provider,
+                provider_file=provider_file,
+                contig_regex=contig_regex,
+                threads=threads,
+            )
+            for assembly in assemblies:
+                genome = genomepy.Genome(assembly, genomes_dir=DEFAULT_GENOME_FOLDER)
+                assert os.path.exists(genome.genome_file)
+                assert (
+                    list(genome.keys()).sort()
+                    == assemblies_config.get(assembly).get("contigs", []).sort()
+                )
+        except:
+            assert False
 
 
 def test_databases_download_genomes():
@@ -38,7 +214,7 @@ def test_databases_download_genomes():
     different assemblies and contig filters.
     """
 
-    import genomepy
+    import genomepy  # type: ignore
 
     # Init
     assemblies_config = {
@@ -91,7 +267,7 @@ def test_databases_download_genomes():
     threads = 2
 
     # Uniq assembly not folder provided
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with TemporaryDirectory() as tmpdir:
 
         assemblies = ["sacCer3"]
 
@@ -117,7 +293,7 @@ def test_databases_download_genomes():
             assert False
 
     # Uniq assembly
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with TemporaryDirectory() as tmpdir:
 
         assemblies = ["sacCer3"]
 
@@ -143,7 +319,7 @@ def test_databases_download_genomes():
             assert False
 
     # Multiple assemblies
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with TemporaryDirectory() as tmpdir:
 
         assemblies = ["sacCer2", "sacCer3"]
 
@@ -169,7 +345,7 @@ def test_databases_download_genomes():
             assert False
 
     # Filtered assembl
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with TemporaryDirectory() as tmpdir:
 
         assemblies = ["sacCer3"]
 

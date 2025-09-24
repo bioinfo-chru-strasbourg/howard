@@ -1,25 +1,8 @@
-#!/usr/bin/env python
-
-import io
-import multiprocessing
-import os
-import re
-import subprocess
-from tempfile import NamedTemporaryFile
-import tempfile
-import duckdb
-import json
 import argparse
-import Bio.bgzf as bgzf
-import pandas as pd
-import vcf
 import logging as log
-import sys
 
+from howard.functions.commons import load_args, load_config_args
 from howard.objects.variants import Variants
-from howard.objects.database import Database
-from howard.functions.commons import *
-from howard.functions.databases import *
 
 
 def convert(args: argparse) -> None:
@@ -34,7 +17,7 @@ def convert(args: argparse) -> None:
     """
 
     # Load config args
-    arguments_dict, setup_cfg, config, param = load_config_args(args)
+    arguments_dict, _, config, param = load_config_args(args)
 
     # Create variants object
     vcfdata_obj = Variants(
@@ -55,20 +38,68 @@ def convert(args: argparse) -> None:
     )
 
     # Access
-    if not param.get("explode", {}).get("explode_infos", False):
-        config["access"] = "RO"
+    config["access"] = config.get("access", "RO")
+
+    # Init
+    param["explode"] = param.get("explode", {})
 
     # Re-Load Config and Params
     vcfdata_obj.set_param(param)
     vcfdata_obj.set_config(config)
 
+    # Determine view type and mode (either "table" or "view", either "explore" or "full")
+    view_type = "view"
+    view_mode = "explore"
+
+    # Output format
+    output_format = vcfdata_obj.get_output_format()
+
     # Load data
     vcfdata_obj.load_data()
 
+    # Explode Infos
+
+    # Init
+    query = None
+
+    # If input format is vcf, explode_infos is set to False
+    if output_format in ["vcf"]:
+        param["explode"]["explode_infos"] = False
+
+    # If explode infos is set to True, create annotation view and set query
+    elif param.get("explode", {}).get("explode_infos", False):
+
+        # Fields to explode
+        fields = param.get("explode", {}).get("explode_infos_fields", None)
+        if fields is not None:
+            fields = fields.split(",")
+
+        # Prefix
+        info_prefix_column = param.get("explode", {}).get("explode_infos_prefix", "")
+
+        # Create annotation view with infos from explode_infos_fields
+        annotation_view_name = "variants_view_export"
+        annotation_view_name = vcfdata_obj.create_annotations_view(
+            view=annotation_view_name,
+            view_type=view_type,
+            view_mode=view_mode,
+            info_prefix_column=info_prefix_column,
+            fields=fields,
+            fields_not_exists=False,
+            fields_needed_all=True,
+            fields_forced_as_varchar=True,
+            # info_struct_column=None,
+            # sample_struct_column=None,
+            detect_type_list=False,
+        )
+        query = f"SELECT * FROM {annotation_view_name}"
+        param["explode"]["explode_infos"] = False
+
     # Export
-    vcfdata_obj.export_output()
+    vcfdata_obj.export_output(query=query)
 
-    # Close connexion
-    vcfdata_obj.close_connexion()
-
+    # Log
     log.info("End")
+
+    # Return Variants object
+    return vcfdata_obj

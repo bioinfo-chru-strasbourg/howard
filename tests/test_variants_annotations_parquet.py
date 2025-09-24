@@ -6,24 +6,222 @@ Usage:
 pytest tests/
 
 Coverage:
-coverage run -m pytest tests/test_objects_variants.py -x -v --log-cli-level=INFO --capture=tee-sys
+coverage run -m pytest tests/test_variants_annotations_parquet.py -x -v --log-cli-level=INFO --capture=tee-sys
 coverage report --include=howard/* -m 
 """
 
+import glob
 import logging as log
 import os
-import sys
 from tempfile import TemporaryDirectory
-import duckdb
-import re
-import Bio.bgzf as bgzf
-import gzip
-import pytest
+import vcf  # type: ignore
 
-from howard.functions.commons import *
 from howard.objects.variants import Variants
-from howard.functions.databases import *
-from test_needed import *
+from howard.functions.commons import remove_if_exists
+
+from test_needed import (
+    tests_folder,
+    tests_data_folder,
+    tests_annotations_folder,
+    tests_config,
+)
+
+
+def test_annotation_parquet_relative_path():
+    """
+    The function `test_annotation_parquet_relative_path` tests the annotation functionality
+    with parquet as relative path into a param config file.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf"
+        annotation1 = "nci60.parquet"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {
+            "annotation": {
+                "parquet": {
+                    "annotations": {annotation1: {"nci60": "nci60"}},
+                },
+                "options": {"annotations_append": False},
+            }
+        }
+
+        # Construct config dict
+        config = tests_config.copy()
+
+        # Create object
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            param=param,
+            load=True,
+        )
+
+        # Remove if output file exists
+        remove_if_exists([output_vcf])
+
+        # Annotation
+        try:
+            variants.annotation()
+            assert True
+        except:
+            assert False
+
+
+def test_annotation_parquet_relative_path_subfolder():
+    """
+    The function `test_annotation_parquet_relative_path_subfolder` tests the annotation functionality
+    with parquet as relative path into a param config file.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf"
+        annotation1 = "nci60.parquet"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {
+            "annotation": {
+                "parquet": {
+                    "annotations": {annotation1: {"nci60": "nci60"}},
+                },
+                "options": {"annotations_append": False},
+            }
+        }
+
+        # Config
+        config = tests_config.copy()
+        config["folders"]["databases"]["annotations"] = [
+            os.path.dirname(os.path.dirname(tests_annotations_folder))
+        ]
+
+        # Create object
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            param=param,
+            load=True,
+        )
+
+        # Remove if output file exists
+        remove_if_exists([output_vcf])
+
+        # Annotation
+        try:
+            variants.annotation()
+            assert True
+        except:
+            assert False
+
+
+def test_annotation_parquet_relative_path_dirname():
+    """
+    The function `test_annotation_parquet_relative_path_dirname` tests the annotation functionality
+    with parquet as relative path into a param config file.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf"
+        annotation1 = "nci60.parquet"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {
+            "annotation": {
+                "parquet": {
+                    "annotations": {annotation1: {"nci60": "nci60"}},
+                },
+                "options": {"annotations_append": False},
+            }
+        }
+
+        # Config
+        config = tests_config.copy()
+        config["folders"]["databases"]["annotations"] = [
+            os.path.dirname(tests_annotations_folder)
+        ]
+
+        # Create object
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            param=param,
+            load=True,
+        )
+
+        # Remove if output file exists
+        remove_if_exists([output_vcf])
+
+        # Annotation
+        try:
+            variants.annotation()
+            assert True
+        except:
+            assert False
+
+
+def test_annotation_parquet_relative_path_dirname_and_basenamepath():
+    """
+    The function `test_annotation_parquet_relative_path_dirname` tests the annotation functionality
+    with parquet as relative path into a param config file.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.vcf"
+        annotation1 = "hg19/nci60.parquet"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {
+            "annotation": {
+                "parquet": {
+                    "annotations": {annotation1: {"nci60": "nci60"}},
+                },
+                "options": {"annotations_append": False},
+            }
+        }
+
+        # Config
+        config = tests_config.copy()
+        config["folders"]["databases"]["annotations"] = [
+            os.path.dirname(tests_annotations_folder)
+        ]
+
+        # Create object
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=config,
+            param=param,
+            load=True,
+        )
+
+        # Remove if output file exists
+        remove_if_exists([output_vcf])
+
+        # Annotation
+        try:
+            variants.annotation()
+            assert True
+        except:
+            assert False
 
 
 def test_annotation_parquet_append():
@@ -56,8 +254,6 @@ def test_annotation_parquet_append():
                 "options": {"annotations_append": True},
             }
         }
-        log.debug(f"param={param}")
-        log.debug(f"param_update={param_update}")
 
         # Create object
         variants = Variants(
@@ -392,11 +588,12 @@ def test_annotation_parquet_with_all_formats():
 def test_annotation_parquet_regions():
     """
     The `test_annotation_parquet_regions()` function tests the `annotation()` method of the `Variants`
-    class using a Parquet file as an annotation source with various formats.
+    class using a Parquet file as an annotation source with BED formats.
     """
 
     # Init files
     input_vcf = tests_data_folder + "/example.vcf.gz"
+    input_multi_pos_vcf = tests_data_folder + "/example.multi_pos.vcf"
 
     # annotation regions
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
@@ -597,6 +794,67 @@ def test_annotation_parquet_regions():
         length = len(result)
 
         assert length == 3
+
+        # Check if VCF is in correct format with pyVCF
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+    # annotation regions with multi pos
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init
+        annotation_parquet = os.path.join(
+            tests_annotations_folder, f"annotation_regions.bed.gz"
+        )
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {
+            "annotation": {
+                "parquet": {"annotations": {annotation_parquet: {"INFO": None}}}
+            }
+        }
+
+        # Create object
+        variants = Variants(
+            conn=None,
+            input=input_multi_pos_vcf,
+            output=output_vcf,
+            param=param,
+            load=True,
+        )
+
+        # Annotation
+        variants.annotation()
+
+        # return
+
+        # query annotated variant
+        result = variants.get_query_to_df(
+            "SELECT 1 AS count FROM variants WHERE INFO LIKE '%annot1=blue,red%' AND INFO LIKE '%annot2=cherry,orange%' AND INFO LIKE '%annot3=jupyter,mars,venus%'"
+        )
+        length = len(result)
+
+        assert length == 5
+
+        # query annotated variant
+        result = variants.get_query_to_df(
+            "SELECT 1 AS count FROM variants WHERE INFO LIKE '%annot1=yellow%' AND INFO LIKE '%annot2=banana%' AND INFO LIKE '%annot3=mars,pluto%'"
+        )
+        length = len(result)
+
+        assert length == 5
+
+        # query annotated variant
+        result = variants.get_query_to_df(
+            "SELECT 1 AS count FROM variants WHERE INFO NOT LIKE '%annot1%' AND INFO NOT LIKE '%annot2%' AND INFO NOT LIKE '%annot3%'"
+        )
+        length = len(result)
+
+        assert length == 1
 
         # Check if VCF is in correct format with pyVCF
         variants.export_output()

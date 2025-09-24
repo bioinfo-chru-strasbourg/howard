@@ -9,7 +9,6 @@ coverage run -m pytest tests/test_variants_annotations_splice.py -x -v --log-cli
 coverage report --include=howard/* -m
 """
 
-import logging as log
 from tempfile import TemporaryDirectory
 from howard.functions.commons import identical
 from howard.objects.variants import Variants
@@ -35,21 +34,23 @@ PARAM = {
                 "spliceai_mask": 1,
                 "workdir": "/work",
                 "condacachedir": "/work",
-                "threads": 8,
+                # "threads": 8,
+                "tools": "SPiP,SpliceAI"
             }
         }
     }
 }
 CONFIG = {
+    "threads": 2,
     "folders": {
         "databases": {
-            "genomes": f"{tests_databases_folder}/genomes/{tests_databases_release}"
+            "genomes": f"{tests_databases_folder}/genomes/{tests_databases_release}",
         }
     },
     "tools": {
         "splice": {
             "docker": {
-                "image": "bioinfochrustrasbourg/splice:0.2.3",
+                "image": "bioinfochrustrasbourg/splice:0.2.5",
                 "entrypoint": "/bin/bash",
             }
         }
@@ -65,7 +66,7 @@ CONFIG_DOCKER = {
     "tools": {
         "splice": {
             "docker": {
-                "image": "bioinfochrustrasbourg/splice:0.2.3",
+                "image": "bioinfochrustrasbourg/splice:0.2.5",
                 "entrypoint": "/bin/bash",
                 "config": {"automount": True, "notremove": True, "tmp": False},
             }
