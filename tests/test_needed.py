@@ -144,5 +144,8 @@ def download_needed_databases():
     annovar_folder = config["folders"]["databases"]["annovar"]
     annovar_files = ["nci60"]
     databases_download_annovar(
-        folder=annovar_folder, files=annovar_files, assemblies=[assembly]
+        folder=annovar_folder,
+        files=annovar_files,
+        assemblies=[assembly],
+        force_check_dblist=True,
     )

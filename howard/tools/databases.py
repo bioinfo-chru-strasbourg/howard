@@ -208,6 +208,7 @@ def databases(args: argparse) -> None:
             assemblies=assemblies,
             annovar_url=param_databases_annovar.get("download_annovar_url"),
             threads=threads,
+            force_check_dblist=True,
         )
 
     # snpEff

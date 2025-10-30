@@ -6481,6 +6481,7 @@ class Variants:
                 folder=annovar_databases,
                 files=list(annotations.keys()),
                 assemblies=[assembly],
+                force_check_dblist=False,
             )
 
             for annotation in annotations:

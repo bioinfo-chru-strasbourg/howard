@@ -39,7 +39,11 @@ def test_databases_download_annovar_multiple_assembly():
 
         # Download
         databases_download_annovar(
-            folder=tmp_dir, files=file_list, assemblies=assemblies, threads=threads
+            folder=tmp_dir,
+            files=file_list,
+            assemblies=assemblies,
+            threads=threads,
+            force_check_dblist=True,
         )
 
         # Dowloaded files
@@ -56,7 +60,11 @@ def test_databases_download_annovar_multiple_assembly():
 
         # Download
         databases_download_annovar(
-            folder=tmp_dir, files=file_list, assemblies=assemblies, threads=threads
+            folder=tmp_dir,
+            files=file_list,
+            assemblies=assemblies,
+            threads=threads,
+            force_check_dblist=True,
         )
 
         # Dowloaded files
@@ -92,7 +100,11 @@ def test_databases_download_annovar_mandatory_refgene():
 
         # Download
         databases_download_annovar(
-            folder=tmp_dir, files=file_list, assemblies=assemblies, threads=threads
+            folder=tmp_dir,
+            files=file_list,
+            assemblies=assemblies,
+            threads=threads,
+            force_check_dblist=True,
         )
 
         # Dowloaded files
@@ -125,7 +137,11 @@ def test_databases_download_annovar_pattern_files():
 
         # Download
         databases_download_annovar(
-            folder=tmp_dir, files=file_list, assemblies=assemblies, threads=threads
+            folder=tmp_dir,
+            files=file_list,
+            assemblies=assemblies,
+            threads=threads,
+            force_check_dblist=True,
         )
 
         # Dowloaded files
