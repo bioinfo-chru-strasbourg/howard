@@ -598,21 +598,26 @@ def databases_download_annovar(
             patterns_file_to_check = list(set(files + files_minimum))
             log.debug(f"Following files will be downloaded: {patterns_file_to_check}")
 
-        log.debug(f"Download list of Annovar files from Annovar URL")
+        log.debug("Download list of Annovar files from Annovar URL")
 
         avdblist_file = f"{assembly}_avdblist.txt"
         avdblist_url_file = f"{annovar_url}/{avdblist_file}"
         avdblist_folder_file = f"{folder_assembly}/{avdblist_file}"
-        log.debug(
-            f"Download list of Annovar files {avdblist_file} from Annovar URL {avdblist_url_file} to Annovar folder {avdblist_folder_file}"
-        )
-        download_file(avdblist_url_file, avdblist_folder_file, threads=threads)
 
+        # Download list of Annovar files if not exists
+        if not os.path.exists(avdblist_folder_file):
+            log.debug(
+                f"Download list of Annovar files {avdblist_file} from Annovar URL {avdblist_url_file} to Annovar folder {avdblist_folder_file}"
+            )
+            download_file(avdblist_url_file, avdblist_folder_file, threads=threads)
+
+        # Check if list of Annovar files exists
         if not os.path.exists(avdblist_folder_file):
             log.error(
                 f"Download list of Annovar files from Annovar URL: {avdblist_url_file}"
             )
             log.error(f"Annovar Database list: {avdblist_folder_file}")
+            log.error("Check your internet connection or annovar folder permissions")
             raise FileNotFoundError(f"Annovar Database list: {avdblist_folder_file}")
 
         else:
