@@ -147,7 +147,7 @@ RUN echo "#[INFO] TOOL installation '$TOOL_NAME:$TOOL_VERSION'" && \
 ENV TOOL_NAME=snpeff
 ENV TOOL_VERSION=5.2a
 ENV TARBALL="snpEff_v5_2a_core.zip"
-ENV TARBALL_LOCATION=https://snpeff.blob.core.windows.net/versions
+ENV TARBALL_LOCATION=https://snpeff.odsp.astrazeneca.com/versions
 ENV TARBALL_FOLDER=snpeff_folder
 ENV TOOL_DATABASE_FOLDER=$DATABASES/snpeff/current
 ENV DEST=$TOOLS/$TOOL_NAME/$TOOL_VERSION
