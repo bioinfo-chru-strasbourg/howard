@@ -548,6 +548,7 @@ def databases_download_annovar(
     assemblies: list = ["hg19"],
     annovar_url: str = "http://www.openbioinformatics.org/annovar/download",
     threads: int = 1,
+    force_check_dblist: bool = True,
 ) -> None:
     """
     This function downloads and extracts Annovar databases for specified assemblies and files.
@@ -567,6 +568,12 @@ def databases_download_annovar(
     :param threads: The "threads" parameter specifies the number of threads (parallel processes) to use
     for download and extract/uncompress files. Default: 1
     :type threads: int (optional)
+    :param force_check_dblist: The `force_check_dblist` parameter is a boolean flag that determines
+    whether to force re-download the database list file even if it already exists. If set to `True`, the
+    database list file will be re-downloaded. If set to `False`, the function will check if the file exists
+    before attempting to download it. Defaults to `True`
+    :type force_check_dblist: bool (optional)
+    :return: None
     """
 
     log.info(f"Download Annovar databases {assemblies}")
@@ -605,7 +612,7 @@ def databases_download_annovar(
         avdblist_folder_file = f"{folder_assembly}/{avdblist_file}"
 
         # Download list of Annovar files if not exists
-        if not os.path.exists(avdblist_folder_file):
+        if not os.path.exists(avdblist_folder_file) or force_check_dblist:
             log.debug(
                 f"Download list of Annovar files {avdblist_file} from Annovar URL {avdblist_url_file} to Annovar folder {avdblist_folder_file}"
             )
