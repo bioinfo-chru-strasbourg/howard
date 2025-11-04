@@ -1,5 +1,26 @@
 # RELEASE NOTES
 
+## 0.13.1
+
+Some news, improves and fixes
+
+### News
+
+- Add batch process for huge input files (TODO) ([#442](https://github.com/bioinfo-chru-strasbourg/howard/issues/442))
+- Add BigBed annotation, as BigWig format (TODO) ([#444](https://github.com/bioinfo-chru-strasbourg/howard/issues/444))
+
+### Updates
+
+- Improve annotation update from external tools (e.g. snpEff, Annovar, splice...), to improve ressources ([#443](https://github.com/bioinfo-chru-strasbourg/howard/issues/443))
+- Improve BigWig/BigBed annotation with direct update without external generated VCF ([#444](https://github.com/bioinfo-chru-strasbourg/howard/issues/444))
+- Update duckDB package (TODO)
+
+### Fixes
+
+- Fix new snpEff URL ([#441](https://github.com/bioinfo-chru-strasbourg/howard/issues/441))
+- Fix Annovar check DB files (*_avdblist.txt) download (only for download, not when auto-download during annotation) ([#440](https://github.com/bioinfo-chru-strasbourg/howard/issues/440))
+- Fix VCF calculation to consider '.' values ([[#445](https://github.com/bioinfo-chru-strasbourg/howard/issues/445)])
+
 ## 0.13.0
 
 Introduction of interactvie mode to dynamically explore data, using variants view

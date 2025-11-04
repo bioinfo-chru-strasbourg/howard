@@ -1,5 +1,6 @@
 import datetime
 import gc
+import glob
 import gzip
 import io
 import os
@@ -129,6 +130,8 @@ class Variants:
 
         # Input
         self.set_input(input)
+        log.debug(f"Input set to: {input}")
+        log.debug(f"Input set to: {self.get_input()}")
 
         # Config
         self.set_config(config)
@@ -150,7 +153,7 @@ class Variants:
 
         # Load data
         if load:
-            self.load_data()
+            self.load_data(input)
 
     def load_header(
         self,
@@ -2024,16 +2027,16 @@ class Variants:
         if connexion_format in ["duckdb"]:
 
             # Database already exists
-            if self.input_format in ["db", "duckdb"]:
+            if input_format in ["db", "duckdb"]:
 
                 if connexion_format in ["duckdb"]:
-                    log.debug(f"Input file format '{self.input_format}' duckDB")
+                    log.debug(f"Input file format '{input_format}' duckDB")
                 else:
                     log.error(
-                        f"Input file format '{self.input_format}' not compatilbe with database format '{connexion_format}'"
+                        f"Input file format '{input_format}' not compatilbe with database format '{connexion_format}'"
                     )
                     raise ValueError(
-                        f"Input file format '{self.input_format}' not compatilbe with database format '{connexion_format}'"
+                        f"Input file format '{input_format}' not compatilbe with database format '{connexion_format}'"
                     )
 
             # Load from existing database format
@@ -2056,9 +2059,9 @@ class Variants:
 
                 except:
                     # Format not available
-                    log.error(f"Input file format '{self.input_format}' not available")
+                    log.error(f"Input file format '{input_format}' not available")
                     raise ValueError(
-                        f"Input file format '{self.input_format}' not available"
+                        f"Input file format '{input_format}' not available"
                     )
 
         # SQLite connexion
@@ -3462,44 +3465,124 @@ class Variants:
 
         return memory
 
-    def update_from_vcf(self, vcf_file: str) -> None:
+    def update_from_vcf(
+        self, vcf_file: str, update_existing_fields: bool = False
+    ) -> None:
         """
         > If the database is duckdb, then use the parquet method, otherwise use the sqlite method
 
-        :param vcf_file: the path to the VCF file
+        :param vcf_file: the path to the VCF file you want to update the database with
+        :type vcf_file: str
+        :param update_existing_fields: If True, existing fields in the INFO column will be updated
+        with the values from the VCF file. If False, only new fields will be added, defaults to False
+        :type update_existing_fields: bool (optional)
+        :return: None
         """
 
         connexion_format = self.get_connexion_format()
 
         if connexion_format in ["duckdb"]:
-            self.update_from_vcf_duckdb(vcf_file)
+            self.update_from_vcf_duckdb(
+                vcf_file, update_existing_fields=update_existing_fields
+            )
         elif connexion_format in ["sqlite"]:
             self.update_from_vcf_sqlite(vcf_file)
 
-    def update_from_vcf_duckdb(self, vcf_file: str) -> None:
+    def update_from_vcf_duckdb(
+        self, vcf_file: str, update_existing_fields: bool = False
+    ) -> None:
         """
         It takes a VCF file and updates the INFO column of the variants table in the database with the
         INFO column of the VCF file
 
-        :param vcf_file: the path to the VCF file
+        :param vcf_file: The path to the VCF file you want to update the database with
+        :type vcf_file: str
+        :param update_existing_fields: If True, existing fields in the INFO column will be updated
+        with the values from the VCF file. If False, only new fields will be added, defaults to False
+        :type update_existing_fields: bool (optional)
+        :return: None
         """
 
-        # varaints table
+        # variants table
         table_variants = self.get_table_variants()
 
-        # Loading VCF into temporaire table
-        skip = self.get_header_length(file=vcf_file)
-        vcf_df = pd.read_csv(
-            vcf_file,
-            sep="\t",
-            engine="c",
-            skiprows=skip,
-            header=0,
-            low_memory=False,
-        )
-        sql_query_update = f"""
-        UPDATE {table_variants} as table_variants
-            SET INFO = concat(
+        log.info(f"Update variants table from file '{os.path.basename(vcf_file)}'...")
+
+        with TemporaryDirectory(dir=self.get_tmp_dir()) as tmp_dir:
+
+            log.debug(f"Create parquet files from VCF '{vcf_file}'...")
+
+            # Create parquet from VCF
+            vcf_file_parquet_path = os.path.join(tmp_dir, "vcf_file.parquet")
+            vcf_file_parquet = Variants(
+                input=vcf_file, load=True, config={"access": "RO"}
+            )
+
+            log.debug(f"Variants input format {vcf_file_parquet.get_input_format()}")
+
+            if vcf_file_parquet.get_input_format() == "parquet":
+
+                # list of parquet files
+                list_of_parquet = [vcf_file]
+
+            else:
+
+                # Export parquet parameters
+                parquet_partitions = "None"
+                chunk_size = self.get_config().get("chunk_size", None)
+                threads = self.get_threads()
+
+                # Export parquet files
+                log.debug("Export VCF to partitioned parquet...")
+                vcf_file_parquet.export_output(
+                    output_file=vcf_file_parquet_path,
+                    parquet_partitions=parquet_partitions,
+                    chunk_size=chunk_size,
+                    threads=threads,
+                    export_header=True,
+                )
+                log.debug(f"Partitioned parquet generated: {vcf_file_parquet_path}")
+
+                # list of parquet files
+                list_of_parquet = glob.glob(f"{vcf_file_parquet_path}/*.parquet")
+
+            log.debug(f"List of parquet: {list_of_parquet}")
+
+            # Update if fields exist
+            if update_existing_fields:
+                # list of header columns
+                header_columns = self.get_header().infos.keys()
+                header_columns_vcf_file_parquet = (
+                    vcf_file_parquet.get_header().infos.keys()
+                )
+
+                # columns that exist in both
+                common_columns = list(
+                    set(header_columns).intersection(
+                        set(header_columns_vcf_file_parquet)
+                    )
+                )
+
+                # Remove common columns
+                if len(common_columns) > 0:
+                    log.debug(f"Common columns to update/remove: {common_columns}")
+                    self.rename_info_fields(
+                        fields_to_rename=dict.fromkeys(common_columns, None)
+                    )
+                else:
+                    log.debug("No common columns to update/remove")
+
+            log.debug(
+                f"Update variants table from {len(list_of_parquet)} parquet files..."
+            )
+
+            for parquet_file in list_of_parquet:
+                log.debug(
+                    f"Update variants table from parquet file: {os.path.basename(parquet_file)}..."
+                )
+                sql_query_update = f"""
+                UPDATE {table_variants} as table_variants
+                    SET INFO = concat(
                             CASE
                                 WHEN INFO NOT IN ('', '.')
                                 THEN INFO
@@ -3520,7 +3603,7 @@ class Variants:
                                             ELSE ''
                                         END
                                     )
-                                FROM vcf_df as table_parquet
+                                FROM read_parquet('{parquet_file}') as table_parquet
                                         WHERE CAST(table_parquet.\"#CHROM\" AS VARCHAR) = CAST(table_variants.\"#CHROM\" AS VARCHAR)
                                         AND table_parquet.\"POS\" = table_variants.\"POS\"
                                         AND table_parquet.\"ALT\" = table_variants.\"ALT\"
@@ -3528,9 +3611,22 @@ class Variants:
                                         AND table_parquet.INFO NOT IN ('','.')
                             )
                         )
-            ;
+                    ;
+                    """
+                # log.debug(f"sql_query_update: {sql_query_update}")
+                self.conn.execute(sql_query_update)
+
+            # Clean INFO fields that are empty
+            sql_query_clean = f"""
+                UPDATE {table_variants}
+                SET INFO = CASE
+                    WHEN INFO IN ('','.')
+                    THEN '.'
+                    ELSE INFO
+                END
             """
-        self.conn.execute(sql_query_update)
+            # log.debug(f"sql_query_clean: {sql_query_clean}")
+            self.conn.execute(sql_query_clean)
 
     def update_from_vcf_sqlite(self, vcf_file: str) -> None:
         """
@@ -13635,7 +13731,7 @@ class Variants:
                     FROM (
                         SELECT
                             "#CHROM", POS, REF, ALT,                    -- variant id
-                            IFNULL(string_agg(kv, ';'), '') AS INFO     -- INFO
+                            IFNULL(string_agg(kv, ';'), '.') AS INFO    -- INFO
                         FROM (
                             SELECT
                                 "#CHROM", POS, REF, ALT,                -- variant id
@@ -13675,8 +13771,8 @@ class Variants:
                     AND {table}."REF" = renamed_table."REF"
                     AND {table}."ALT" = renamed_table."ALT"
                 """
-                # log.debug(f"query={query_update}")
-                log.debug(self.execute_query(query_update))
+                # log.debug(f"query_update={query_update}")
+                self.execute_query(query_update)
 
         return fields_processed
 

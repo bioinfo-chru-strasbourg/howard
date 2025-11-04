@@ -23,6 +23,71 @@ from howard.functions.commons import remove_if_exists, vcf_required_columns
 from test_needed import tests_folder, tests_data_folder, tests_config, database_files
 
 
+@pytest.mark.parametrize(
+    "input_vcf, annotations_vcf, expected_output_nb_variants, update_existing_fields",
+    [
+        ("example.vcf.gz", "example.nci60_2.vcf", 2, True),
+        ("example.empty.vcf", "example.nci60_2.vcf", 0, True),
+        ("example.vcf.gz", "example.empty.no_info.vcf", 0, True),
+        ("example.vcf.gz", "example.nci60_2.parquet", 2, True),
+        ("example.vcf.gz", "example.nci60_2.vcf", 2, False),
+        ("example.empty.vcf", "example.nci60_2.vcf", 0, False),
+        ("example.vcf.gz", "example.empty.no_info.vcf", 0, False),
+        ("example.vcf.gz", "example.nci60_2.parquet", 2, False),
+    ],
+)
+def test_update_from_vcf(
+    input_vcf, annotations_vcf, expected_output_nb_variants, update_existing_fields
+):
+    """
+    This is a test function for updating a VCF file using the Variants class.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = os.path.join(tests_data_folder, input_vcf)
+        output_vcf = f"{tmp_dir}/example.vcf"
+        annotations_vcf = os.path.join(tests_data_folder, annotations_vcf)
+
+        # remove if exists
+        remove_if_exists([output_vcf])
+
+        # Create object
+        variants = Variants(input=input_vcf, output=output_vcf, load=True)
+
+        # Update from VCF
+        variants.update_from_vcf(
+            vcf_file=annotations_vcf, update_existing_fields=update_existing_fields
+        )
+
+        df = variants.get_query_to_df(
+            "SELECT * FROM variants WHERE INFO LIKE '%nci60=%'"
+        )
+        assert len(df) == expected_output_nb_variants
+
+        # Check update existing fields
+        if expected_output_nb_variants > 0:
+            if update_existing_fields:
+                df = variants.get_query_to_df(
+                    "SELECT * FROM variants WHERE INFO LIKE 'DP=25;nci60=0.123'"
+                )
+                assert len(df) == 1
+            else:
+                df = variants.get_query_to_df(
+                    "SELECT * FROM variants WHERE INFO LIKE 'DP=125;DP=25;nci60=0.123'"
+                )
+                assert len(df) == 1
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output(output_file=output_vcf)
+        try:
+            vcf_obj = vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
 def test_explode_infos_fields_from_table_to_another():
     """ """
 
@@ -2569,7 +2634,9 @@ def test_rename_fields():
         )
         assert (
             len(
-                variants.get_query_to_df("SELECT INFO FROM variants WHERE INFO LIKE ''")
+                variants.get_query_to_df(
+                    "SELECT INFO FROM variants WHERE INFO LIKE '.'"
+                )
             )
             == 1
         )
