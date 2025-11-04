@@ -13,9 +13,6 @@ coverage report --include=howard/* -m
 import os
 from tempfile import TemporaryDirectory
 
-# from howard.functions.commons import *
-# from howard.tools.databases import *
-
 from howard.functions.databases import databases_download_snpeff
 from test_needed import tests_folder, tests_config
 
@@ -75,7 +72,7 @@ def test_databases_download_snpeff_mouse():
     with TemporaryDirectory(dir=tests_folder) as tmp_dir:
 
         # Assembly
-        assemblies = "GRCm39.105"
+        assemblies = "GRCm38.99"
         assemblies_list = [value for value in assemblies.split(",")]
 
         # snpEff folder
