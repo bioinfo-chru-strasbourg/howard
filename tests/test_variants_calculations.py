@@ -1381,6 +1381,80 @@ def test_calculation_vaf_normalization():
             assert False
 
 
+def test_calculation_vaf_normalization_ad():
+    """
+    This is a test function for the calculation of variant allele frequency normalization in a VCF file.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.AD.vcf"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {"calculation": {"calculations": {"vaf": None}}}
+
+        # Create object
+        variants = Variants(
+            conn=None, input=input_vcf, output=output_vcf, param=param, load=True
+        )
+
+        # Calculation
+        variants.calculation()
+
+        result = variants.get_query_to_df(
+            """ SELECT INFO FROM variants WHERE FORMAT LIKE '%:VAF' """
+        )
+        assert len(result) == 7
+
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND sample1 LIKE '%:0.279835' """
+        )
+        assert len(result) == 1
+
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND sample2 LIKE '%:0.282898' """
+        )
+        assert len(result) == 1
+
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND sample3 LIKE '%:0.282955' """
+        )
+        assert len(result) == 1
+
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 28736 AND sample4 LIKE '%:0.303819' """
+        )
+        assert len(result) == 1
+
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE "#CHROM" = 'chr1' AND POS = 35144 AND sample4 LIKE '%:.' """
+        )
+        assert len(result) == 1
+
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE sample4 LIKE '%:.' """
+        )
+        assert len(result) == 4
+
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE sample4 NOT LIKE '%:.' """
+        )
+        assert len(result) == 3
+
+        result = variants.get_query_to_df(""" SELECT * FROM variants""")
+        log.debug(result.to_string())
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
 def test_calculation_vaf_normalization_empty():
     """
     This is a test function for the calculation of variant allele frequency normalization in a VCF file.

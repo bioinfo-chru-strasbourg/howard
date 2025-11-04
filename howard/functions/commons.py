@@ -1519,7 +1519,8 @@ def vaf_normalization(row, sample: str) -> str:
     elif "AD" in sample_genotype_dict:
         if sample_genotype_dict["AD"] != ".":
             ad_split = sample_genotype_dict["AD"].split(",")
-            if ad_split != ["."]:
+            # if ad_split contains values "."
+            if "." not in ad_split:
                 ad_dp = sum(map(int, ad_split))
                 ad_alt = sum(map(int, ad_split[1:]))
                 vaf = round(ad_alt / ad_dp, 6) if ad_dp else "."
