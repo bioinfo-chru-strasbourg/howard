@@ -6,7 +6,7 @@ Usage:
 pytest tests/
 
 Coverage:
-coverage run -m pytest . -x -v
+coverage run -m pytest tests/test_tools_annotation.py -x -v --log-cli-level=INFO --capture=tee-sys
 coverage report --include=howard/* -m
 """
 

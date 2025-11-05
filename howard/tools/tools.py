@@ -207,6 +207,13 @@ arguments = {
             },
         },
     },
+    "chunking_enable": {
+        "help": """Chunk processing by splitting input file into smaller parts.\n"""
+        """Use chunk parameters to define chunk size and partitioning fields.\n""",
+        "action": "store_true",
+        "default": False,
+        "extra": {"param_section": "chunking"},
+    },
     # Annotations
     "annotations": {
         "metavar": "annotations",
@@ -2155,6 +2162,7 @@ commands_arguments = {
                 "calculations": False,
                 "prioritizations": False,
                 "assembly": False,
+                "chunking_enable": False,
             },
             "HGVS": {
                 "use_gene": False,
