@@ -17,6 +17,7 @@ from tempfile import TemporaryDirectory
 from typing import Optional, Union
 
 from howard.functions.commons import (
+    MAX_LINE_SIZE,
     cast_columns_query,
     load_duckdb_extension,
     get_file_format,
@@ -1354,17 +1355,51 @@ class Database:
                         f"Input file '{database}' not a compatible partitionned parquet folder"
                     )
 
+            # OLD Code
+            # # Query number of columns detected by duckdb
+            # log.debug(f"Detecting number of columns in file: {database_ref}")
+            # query_nb_columns_detected_by_duckdb = f"""
+            #         SELECT *
+            #         FROM read_csv('{database_ref}', auto_detect=True, hive_partitioning={hive_partitioning}, compression='{database_compression}', skip={header_length}, delim='{delimiter}', sample_size={sample_size}, max_line_size={MAX_LINE_SIZE}, ignore_errors=True)
+            #         LIMIT 0
+            #     """
+            # # Detect the number of columns in the CSV file without using SQL
+            # try:
+            #     nb_columns_detected_by_duckdb = len(
+            #         self.conn.query(query_nb_columns_detected_by_duckdb).columns
+            #     )
+            # except ValueError:
+            #     nb_columns_detected_by_duckdb = 0
+
             # Query number of columns detected by duckdb
+            log.debug(f"Detecting number of columns in file: {database_ref}")
             query_nb_columns_detected_by_duckdb = f"""
                     SELECT *
-                    FROM read_csv('{database_ref}', auto_detect=True, hive_partitioning={hive_partitioning}, compression='{database_compression}', skip={header_length}, delim='{delimiter}', sample_size={sample_size})
+                    FROM read_csv('{database_ref}', auto_detect=True, hive_partitioning={hive_partitioning}, compression='{database_compression}', skip={header_length}, delim='{delimiter}', sample_size=1, max_line_size={MAX_LINE_SIZE}, ignore_errors=true)
                     LIMIT 0
                 """
+            # Detect the number of columns in the CSV file without using SQL
+            # Try to get columns from duckdb
+            # Some exception can append during query execution, such as invalid input, very huge lines, ...
             try:
+                # self.conn.execute("SET duckdb_encoding='latin1'")
                 nb_columns_detected_by_duckdb = len(
                     self.conn.query(query_nb_columns_detected_by_duckdb).columns
                 )
+            except duckdb.InvalidInputException as exc:  # capture exact error
+                log.error(
+                    f"Invalid input while detecting columns for {database_ref}: {exc}"
+                )
+                nb_columns_detected_by_duckdb = 0
+            except Exception as exc:  # generic fallback
+                log.error(
+                    f"Unexpected error while detecting columns for {database_ref}: {exc}"
+                )
+                nb_columns_detected_by_duckdb = 0
             except ValueError:
+                log.error(
+                    f"Failed to detect number of columns using duckdb for file: {database_ref}"
+                )
                 nb_columns_detected_by_duckdb = 0
 
             # Check table columns
@@ -1394,10 +1429,10 @@ class Database:
                     table_columns_types_list_join_option = ""
 
                 # SQL form
-                sql_from = f"""read_csv('{database_ref}', names={table_columns}{table_columns_types_list_join_option}, auto_detect=True, compression='{database_compression}', skip={header_length}, delim='{delimiter}', hive_partitioning={hive_partitioning}, sample_size={sample_size})"""
+                sql_from = f"""read_csv('{database_ref}', names={table_columns}{table_columns_types_list_join_option}, auto_detect=True, compression='{database_compression}', skip={header_length}, delim='{delimiter}', hive_partitioning={hive_partitioning}, sample_size={sample_size}, max_line_size={MAX_LINE_SIZE})"""
 
             else:
-                sql_from = f"read_csv('{database_ref}', auto_detect=True, compression='{database_compression}', skip={header_length}, delim='{delimiter}', hive_partitioning={hive_partitioning}, sample_size={sample_size})"
+                sql_from = f"read_csv('{database_ref}', auto_detect=True, compression='{database_compression}', skip={header_length}, delim='{delimiter}', hive_partitioning={hive_partitioning}, sample_size={sample_size}, max_line_size={MAX_LINE_SIZE})"
 
         # JSON
         elif database_format in ["json"]:
@@ -1850,15 +1885,52 @@ class Database:
                     "bed",
                     "json",
                 ]:
+
                     # Query
                     sql_from = self.get_sql_from(
                         database=database, header_file=header_file
                     )
                     sql_query = f"SELECT * FROM {sql_from} LIMIT 0"
 
-                    # Get columns
-                    # result_description = self.conn.execute(sql_query).description
-                    result_columns = self.conn.query(sql_query).columns
+                    # Get columns from duckdb
+                    # Try to get columns from duckdb
+                    # Some exception can append during query execution, such as invalid input, very huge lines, ...
+                    try:
+                        result_columns = self.conn.query(sql_query).columns
+                    except duckdb.InvalidInputException as exc:  # capture exact error
+                        log.warning(
+                            f"Invalid input while detecting columns for {database}: {str(exc).strip()}"
+                        )
+                        log.warning(f"Try to get columns from file for: {database}")
+                        result_columns = None
+                    except Exception as exc:  # generic fallback
+                        log.warning(
+                            f"Unexpected error while detecting columns for {database}: {str(exc).strip()}"
+                        )
+                        log.warning(f"Try to get columns from file for: {database}")
+                        result_columns = None
+                    except ValueError:
+                        log.warning(
+                            f"Failed to detect number of columns using duckdb for file: {database}"
+                        )
+                        log.warning(f"Try to get columns from file for: {database}")
+                        result_columns = None
+
+                    # Get columns from file if not detected
+                    try:
+                        if not result_columns:
+                            result_columns = self.get_table_columns_from_file(
+                                database=database, header_file=header_file
+                            )
+                            log.debug(f"Table columns from file: {result_columns}")
+                    except ValueError:
+                        result_columns = None
+                        log.error(
+                            f"Failed to get table columns from file for: {database}"
+                        )
+                        raise ValueError(
+                            f"Failed to get table columns from file for: {database}"
+                        )
 
                     # Extract columns' names and order them to have # at the beginning
                     # columns = [desc[0] for desc in result_description]

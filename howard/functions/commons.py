@@ -160,6 +160,9 @@ DEFAULT_CHUNK_SIZE = 1024 * 1024
 # LOG_FORMAT = "#[%(asctime)s] [%(levelname)-7s] %(message)s"
 LOG_FORMAT = "#[%(asctime)s] %(levelname)7s| %(message)s"
 
+# Maximum line size for CSV files in duckDB
+MAX_LINE_SIZE = 40796640
+
 # Log Color
 log_color = None
 

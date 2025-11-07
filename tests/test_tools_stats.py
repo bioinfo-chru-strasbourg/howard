@@ -10,9 +10,6 @@ coverage run -m pytest tests/test_tools_stats.py -x -v --log-cli-level=INFO --ca
 coverage report --include=howard/* -m
 """
 
-# from howard.functions.commons import *
-# from howard.tools.tools import *
-
 import argparse
 
 from howard.tools.tools import arguments_dict

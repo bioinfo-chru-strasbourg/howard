@@ -34,7 +34,6 @@ def test_query_empty():
         # Init files
         input_vcf = tests_data_folder + "/example.vcf.gz"
         output_vcf = os.path.join(tmp_dir, "output_file.vcf")
-        output_parquet = os.path.join(tmp_dir, "output_file.parquet")
         query = "SELECT * FROM variants WHERE POS < 0"
 
         # Create object
@@ -55,7 +54,7 @@ def test_query_empty():
         # Check if exported file is empty
         variants_output_vcf = Variants(conn=None, input=output_vcf, load=True)
         results = variants_output_vcf.get_query_to_df(
-            query=f"""SELECT * FROM variants"""
+            query="""SELECT * FROM variants"""
         )
         assert len(results) == 0
 

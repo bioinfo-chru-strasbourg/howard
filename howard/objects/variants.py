@@ -3466,7 +3466,10 @@ class Variants:
         return memory
 
     def update_from_vcf(
-        self, vcf_file: str, update_existing_fields: bool = False
+        self,
+        vcf_file: str,
+        update_existing_fields: bool = False,
+        remove_vcf_file: bool = True,
     ) -> None:
         """
         > If the database is duckdb, then use the parquet method, otherwise use the sqlite method
@@ -3476,6 +3479,9 @@ class Variants:
         :param update_existing_fields: If True, existing fields in the INFO column will be updated
         with the values from the VCF file. If False, only new fields will be added, defaults to False
         :type update_existing_fields: bool (optional)
+        :param remove_vcf_file: If True, the VCF file will be removed after the update is complete,
+        defaults to True
+        :type remove_vcf_file: bool (optional)
         :return: None
         """
 
@@ -3487,6 +3493,9 @@ class Variants:
             )
         elif connexion_format in ["sqlite"]:
             self.update_from_vcf_sqlite(vcf_file)
+
+        if remove_vcf_file:
+            remove_if_exists([vcf_file])
 
     def update_from_vcf_duckdb(
         self, vcf_file: str, update_existing_fields: bool = False
@@ -4555,6 +4564,7 @@ class Variants:
                     # Update variants
                     log.info(f"Annotations 'bigwig' update...")
                     self.update_from_vcf(output_vcf_file)
+                    remove_if_exists([output_vcf_file])
                     log.debug(f"Update done.")
 
         return True
@@ -4896,7 +4906,7 @@ class Variants:
                         add_samples=False,
                         index=True,
                     )
-                    shutil.copyfile(tmp_vcf_name, "/tmp/input.vcf")
+                    # shutil.copyfile(tmp_vcf_name, "/tmp/input.vcf")
 
                     # Num command
                     nb_command = 0
@@ -4911,13 +4921,19 @@ class Variants:
                         run_parallel_commands([command_annotate], threads)
 
                         # Debug
-                        shutil.copyfile(commands[command_annotate], "/tmp/snpsift.vcf")
+                        # shutil.copyfile(commands[command_annotate], "/tmp/snpsift.vcf")
 
                         # Update variants
                         log.info(
                             f"Annotation - Updating [{nb_command}/{len(commands)}]..."
                         )
                         self.update_from_vcf(commands[command_annotate])
+                        remove_if_exists(
+                            [
+                                commands[command_annotate],
+                                commands[command_annotate] + ".tbi",
+                            ]
+                        )
 
     def annotation_bcftools(self, threads: int = None) -> None:
         """
@@ -5360,7 +5376,7 @@ class Variants:
                     # Command merge
                     merge_command = f"{bcftools_bin_command} merge --force-samples --threads={threads} {tmp_vcf_name} {tmp_ann_vcf_list_cmd} -o {tmp_annotate_vcf_name} -Oz 2>>{tmp_annotate_vcf_name_err} {tmp_files_remove_command}"
                     log.info(
-                        f"Annotation - Annotation merging "
+                        "Annotation - Annotation merging "
                         + str(len(commands))
                         + " annotated files"
                     )
@@ -5401,8 +5417,8 @@ class Variants:
                         raise ValueError("Annotation failed: Error in commands")
 
                     # Update variants
-                    log.info(f"Annotation - Updating...")
-                    self.update_from_vcf(tmp_annotate_vcf_name)
+                    log.info("Annotation - Updating...")
+                    self.update_from_vcf(tmp_annotate_vcf_name, remove_vcf_file=False)
 
     def annotation_exomiser(self, threads: int = None) -> None:
         """
@@ -6393,6 +6409,14 @@ class Variants:
             # Update variants
             log.info(f"Annotation - Updating...")
             self.update_from_vcf(tmp_annotate_vcf_name)
+            list_to_remove = [
+                tmp_annotate_vcf_name,
+                tmp_annotate_vcf_name_err,
+                f"{tmp_annotate_vcf_name}.tbi",
+                f"{tmp_vcf_name}.tbi",
+            ]
+            log.debug(f"tmp_annotate_vcf_name: {list_to_remove}")
+            remove_if_exists(list_to_remove)
 
         else:
             if "ANN" in self.get_header().infos:
@@ -6784,17 +6808,25 @@ class Variants:
                 # Update variants
                 log.info(f"Annotation Annovar - Updating...")
                 self.update_from_vcf(tmp_annotate_vcf_name)
+                remove_if_exists(
+                    [
+                        tmp_annotate_vcf_name,
+                        tmp_annotate_vcf_name_err,
+                        f"{tmp_annotate_vcf_name}.tbi",
+                    ]
+                )
 
             # Clean files
             # Tmp file remove command
             if True:
-                tmp_files_remove_command = ""
-                if tmp_files:
-                    tmp_files_remove_command = " ".join(tmp_files)
-                clean_command = f" rm -f {tmp_files_remove_command} "
-                log.debug(f"Annotation Annovar - Annotation cleaning ")
-                log.debug(f"Annotation - cleaning command: {clean_command}")
-                run_parallel_commands([clean_command], 1)
+                remove_if_exists(tmp_files)
+                # tmp_files_remove_command = ""
+                # if tmp_files:
+                #     tmp_files_remove_command = " ".join(tmp_files)
+                # clean_command = f" rm -f {tmp_files_remove_command} "
+                # log.debug(f"Annotation Annovar - Annotation cleaning ")
+                # log.debug(f"Annotation - cleaning command: {clean_command}")
+                # run_parallel_commands([clean_command], 1)
 
     # Parquet
     def annotation_parquet(self, threads: int = None) -> None:

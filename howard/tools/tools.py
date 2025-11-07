@@ -10,6 +10,7 @@ from howard.functions.commons import (
     DEFAULT_ANNOVAR_FOLDER,
     DEFAULT_ANNOVAR_URL,
     DEFAULT_ASSEMBLY,
+    DEFAULT_CHUNK_SIZE,
     DEFAULT_DATABASE_FOLDER,
     DEFAULT_DBNSFP_URL,
     DEFAULT_DBSNP_FOLDER,
@@ -1738,7 +1739,7 @@ arguments = {
         """The lower the chunk size, the less memory consumption.\n"""
         """For Parquet partitioning, files size will depend on the chunk size.\n""",
         "required": False,
-        "default": 1000000,
+        "default": DEFAULT_CHUNK_SIZE,
         "type": int,
         "gooey": {
             "widget": "IntegerField",
@@ -1746,7 +1747,7 @@ arguments = {
         },
         "extra": {
             "examples": {
-                "Chunk size of 1.000.000 by default": '"chunk_size": 1000000',
+                f"Chunk size of {DEFAULT_CHUNK_SIZE} by default": f'"chunk_size": {DEFAULT_CHUNK_SIZE}',
                 "Smaller chunk size to reduce Parquet file size and memory usage": '"chunk_size": 100000',
             }
         },
