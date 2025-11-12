@@ -1372,7 +1372,7 @@ class Database:
             #     nb_columns_detected_by_duckdb = 0
 
             # Query number of columns detected by duckdb
-            log.debug(f"Detecting number of columns in file: {database_ref}")
+            # log.debug(f"Detecting number of columns in file: {database_ref}")
             query_nb_columns_detected_by_duckdb = f"""
                     SELECT *
                     FROM read_csv('{database_ref}', auto_detect=True, hive_partitioning={hive_partitioning}, compression='{database_compression}', skip={header_length}, delim='{delimiter}', sample_size=1, max_line_size={MAX_LINE_SIZE}, ignore_errors=true)
@@ -1817,9 +1817,9 @@ class Database:
                     # If the database is a DuckDB connection, execute the query directly
                     try:
                         columns_list = list(database.query(limited_query).columns)
-                        log.debug(
-                            f"Successfully executed query with database connection"
-                        )
+                        # log.debug(
+                        #     f"Successfully executed query with database connection"
+                        # )
                     except Exception as e:
                         log.debug(
                             f"Error executing SQL query with database connection: {e}"
@@ -1834,7 +1834,7 @@ class Database:
                         )
                         q = self.query(limited_query)
                         columns_list = list(q.columns)
-                        log.debug(f"Successfully executed query with self.conn")
+                        # log.debug(f"Successfully executed query with self.conn")
                     except Exception as e:
                         log.debug(f"Error executing SQL query with self.conn: {e}")
                         columns_list = None

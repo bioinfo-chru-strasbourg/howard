@@ -26,11 +26,12 @@ import logging as log
 import fastparquet as fp  # type: ignore
 import cyvcf2  # type: ignore
 import pyBigWig  # type: ignore
-import math
+import bgzip
 
 from howard.functions.commons import (
     CODE_TYPE_MAP,
     DEFAULT_ANNOTATIONS_FOLDER,
+    DEFAULT_CHUNK_SIZE,
     DEFAULT_PARQUET_FOLDER,
     DEFAULT_BCFTOOLS_FOLDER,
     DEFAULT_BIGWIG_FOLDER,
@@ -130,8 +131,6 @@ class Variants:
 
         # Input
         self.set_input(input)
-        log.debug(f"Input set to: {input}")
-        log.debug(f"Input set to: {self.get_input()}")
 
         # Config
         self.set_config(config)
@@ -524,10 +523,7 @@ class Variants:
         elif self.get_connexion_type() in ["memory", default_connexion_db, None]:
             connexion_db = default_connexion_db
         elif self.get_connexion_type() in ["tmpfile"]:
-            tmp_name = tempfile.mkdtemp(
-                prefix=self.get_prefix(), dir=self.get_tmp_dir(), suffix=".db"
-            )
-            connexion_db = f"{tmp_name}/tmp.db"
+            connexion_db = self.get_tmp_dir() + f"/howard.{get_random()}.tmp.db"
         elif self.get_connexion_type() != "":
             connexion_db = self.get_connexion_type()
         else:
@@ -572,6 +568,8 @@ class Variants:
                         if isinstance(setting_value, str):
                             setting_value = f"'{setting_value}'"
                         conn.execute(f"PRAGMA {setting}={setting_value};")
+                # duckDB settings arrow large buffer size
+                conn.execute("SET arrow_large_buffer_size=true")
             elif connexion_format in ["sqlite"]:
                 conn = sqlite3.connect(connexion_db)
 
@@ -583,6 +581,7 @@ class Variants:
         log.debug(f"connexion_db: {connexion_db}")
         log.debug(f"connexion config: {connexion_config}")
         log.debug(f"connexion duckdb settings: {self.get_duckdb_settings()}")
+        log.debug(f"connexion duckdb settings: arrow_large_buffer_size=true")
 
     def set_output(self, output: str = None) -> None:
         """
@@ -1697,12 +1696,25 @@ class Variants:
         """
         return self.conn
 
-    def close_connexion(self) -> None:
+    def close_connexion(self) -> str:
         """
         This function closes the connection to the database.
         :return: The connection is being closed.
         """
-        return self.conn.close()
+
+        log.debug(f"Close connexion...")
+        self.conn.close()
+
+        connexion_db = self.get_connexion_db()
+
+        # Remove connexion db file
+        if os.path.exists(connexion_db) and connexion_db != self.get_connexion_type():
+            log.debug(f"Remove connexion db file: {connexion_db}")
+            remove_if_exists([connexion_db])
+
+        log.debug(f"Connexion '{connexion_db}' closed.")
+
+        return connexion_db
 
     def get_header(self, type: str = "vcf"):
         """
@@ -2047,6 +2059,7 @@ class Variants:
                     database = Database(database=self.input)
                     sql_from = database.get_sql_from(sample_size=sample_size)
 
+                    log.debug(f"Load Data into {table_variants}...")
                     if access in ["RO"]:
                         sql_load = (
                             f"CREATE VIEW {table_variants} AS SELECT * FROM {sql_from}"
@@ -2056,13 +2069,13 @@ class Variants:
                             f"CREATE TABLE {table_variants} AS SELECT * FROM {sql_from}"
                         )
                     self.conn.execute(sql_load)
+                    log.debug(f"Load Data into {table_variants} - done.")
 
-                except:
+                except Exception as e:
                     # Format not available
-                    log.error(f"Input file format '{input_format}' not available")
-                    raise ValueError(
-                        f"Input file format '{input_format}' not available"
-                    )
+                    msg_err = f"Load Data into {table_variants} - failed to load data: {str(e)}"
+                    log.error(msg_err)
+                    raise ValueError(msg_err)
 
         # SQLite connexion
         elif connexion_format in ["sqlite"] and input_format in [
@@ -3489,7 +3502,9 @@ class Variants:
 
         if connexion_format in ["duckdb"]:
             self.update_from_vcf_duckdb(
-                vcf_file, update_existing_fields=update_existing_fields
+                vcf_file,
+                update_existing_fields=update_existing_fields,
+                remove_vcf_file=remove_vcf_file,
             )
         elif connexion_format in ["sqlite"]:
             self.update_from_vcf_sqlite(vcf_file)
@@ -3498,7 +3513,10 @@ class Variants:
             remove_if_exists([vcf_file])
 
     def update_from_vcf_duckdb(
-        self, vcf_file: str, update_existing_fields: bool = False
+        self,
+        vcf_file: str,
+        update_existing_fields: bool = False,
+        remove_vcf_file: bool = True,
     ) -> None:
         """
         It takes a VCF file and updates the INFO column of the variants table in the database with the
@@ -3509,6 +3527,9 @@ class Variants:
         :param update_existing_fields: If True, existing fields in the INFO column will be updated
         with the values from the VCF file. If False, only new fields will be added, defaults to False
         :type update_existing_fields: bool (optional)
+        :param remove_vcf_file: If True, the VCF file will be removed after the update is complete,
+        defaults to True
+        :type remove_vcf_file: bool (optional)
         :return: None
         """
 
@@ -3551,6 +3572,9 @@ class Variants:
                     export_header=True,
                 )
                 log.debug(f"Partitioned parquet generated: {vcf_file_parquet_path}")
+
+                if remove_vcf_file:
+                    remove_if_exists([vcf_file])
 
                 # list of parquet files
                 list_of_parquet = glob.glob(f"{vcf_file_parquet_path}/*.parquet")
@@ -4892,7 +4916,7 @@ class Variants:
                                 annotation_infos_rename = ""
 
                             # Annotate command
-                            command_annotate = f"{snpsift_bin_command} annotate {annotation_infos_option} {db_file} {tmp_vcf_name} | {bcftools_bin_command} annotate --threads={threads} {annotation_infos_rename} -Oz1 -o {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} "
+                            command_annotate = f"{snpsift_bin_command} annotate {annotation_infos_option} {db_file} {tmp_vcf_name} 2>>{tmp_annotation_vcf_name_err} | {bcftools_bin_command} annotate --threads={threads} {annotation_infos_rename} -Oz1 -o {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} "
 
                             # Add command
                             commands[command_annotate] = tmp_annotation_vcf_name
@@ -6381,16 +6405,16 @@ class Variants:
 
             # Warning/Error messages
             if len(error_message_command_err):
-                log.error(f"Error messages:")
-                for message in list(set(error_message_command_err)):
+                log.error("Error messages:")
+                for message in set(error_message_command_err):
                     log.error(f"   {message}")
             elif len(error_message_command_warning):
-                log.warning(f"Warning messages:")
-                for message in list(set(error_message_command_warning)):
+                log.warning("Warning messages:")
+                for message in set(error_message_command_warning):
                     log.warning(f"   {message}")
             # debug info
-            log.debug(f"Warning/Error messages:")
-            for message in list(set(error_message_command_all)):
+            log.debug("Warning/Error messages:")
+            for message in set(error_message_command_all):
                 log.debug(f"   {message}")
             # failed
             if len(error_message_command_err):

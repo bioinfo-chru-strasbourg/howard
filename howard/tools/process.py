@@ -118,6 +118,9 @@ def _process_standard(args, config, param):
     # Export
     vcfdata_obj.export_output(query=param.get("query", {}).get("query", None))
 
+    # Close connexion
+    vcfdata_obj.close_connexion()
+
     # Log
     log.info("End")
 
@@ -216,6 +219,9 @@ def _process_chunked(args, config, param, chunking_config):
         if isinstance(chunk_config, dict):
             chunk_config["access"] = "RO"
 
+        # Force connexion type in memory to allow RO access mode
+        chunk_config["connexion_type"] = "memory"
+
         # Create Variants object for conversion into Parquet with chunking
         convert_obj = Variants(
             input=original_input,
@@ -223,6 +229,7 @@ def _process_chunked(args, config, param, chunking_config):
             config=chunk_config,
             param=chunk_param,
         )
+        log.debug(f"TEST: convert_obj config: {convert_obj.get_config()}")
 
         # Load the data in read-only mode
         convert_obj.load_data()
@@ -235,6 +242,9 @@ def _process_chunked(args, config, param, chunking_config):
             chunk_size=chunk_size,
             export_header=True,
         )
+
+        # Close connexion for conversion object
+        convert_obj.close_connexion()
 
         # Find all parquet chunks
         # Use glob to find all ".parquet" file in a folder, recursively
@@ -262,8 +272,10 @@ def _process_chunked(args, config, param, chunking_config):
         processed_transcripts_chunks = []
 
         for i, chunk_file in enumerate(chunk_files):
-            log.info(f"Chunking - Processing chunk {i+1}/{len(chunk_files)}")
-            log.info(f"Chunking - Processing chunk file {chunk_file}")
+            log.info(
+                f"Chunking - Processing chunk {i+1}/{len(chunk_files)} - {(i+1)/len(chunk_files)*100:.2f}%"
+            )
+            log.debug(f"Chunking - Processing chunk file {chunk_file}")
 
             # Copy the header of the converted input partitionned parquet
             # for the chunk parquet file
@@ -338,6 +350,9 @@ def _process_chunked(args, config, param, chunking_config):
         if isinstance(merge_config, dict):
             merge_config["access"] = "RO"  # Use read-only access in config as well
 
+        # Force connexion type in memory to allow RO access mode
+        merge_config["connexion_type"] = "memory"
+
         # Create final Variants object for merging
         final_obj = Variants(
             input=processed_dir,
@@ -362,6 +377,7 @@ def _process_chunked(args, config, param, chunking_config):
 
         # Export to final output format
         final_obj.export_output(sort=sort)
+
         # Check if final export created the output file
         if os.path.exists(original_output):
             log.debug(f"Chunking - Final output written to {original_output}")
@@ -371,6 +387,8 @@ def _process_chunked(args, config, param, chunking_config):
         # Transcript export
         if transcripts_export:
             if processed_transcripts_chunks:
+
+                # Create final Variants object for merging transcripts
                 final_transcripts_obj = Variants(
                     input=processed_transcripts_dir,
                     output=original_transcripts_export_output,
@@ -380,8 +398,15 @@ def _process_chunked(args, config, param, chunking_config):
                 log.debug(
                     f"Chunking - Exporting final transcripts to {original_transcripts_export_output}"
                 )
+
+                # Export transcripts
                 final_transcripts_obj.export_output()
+
+                # Close connexion for final object
+                final_transcripts_obj.close_connexion()
+
             elif original_transcripts_export_output:
+
                 log.debug("Chunking - No transcripts to export")
                 log.debug(
                     f"Chunking - Creating empty transcripts export file at {original_transcripts_export_output}"
