@@ -2643,9 +2643,7 @@ class Database:
                         + '"'
                     )
                 parquet_partitions_by = ",".join(parquet_partitions_clean)
-                query_export_format += (
-                    f", PARTITION_BY ({parquet_partitions_by}), OVERWRITE_OR_IGNORE"
-                )
+                query_export_format += f", PARTITION_BY ({parquet_partitions_by}), OVERWRITE_OR_IGNORE, FILENAME_PATTERN 'part_{{i}}'"
                 export_options["partition_by"] = parquet_partitions_array
                 if export_options.get("format", None) == "CSV":
                     export_mode = "duckdb"

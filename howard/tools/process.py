@@ -167,7 +167,8 @@ def _process_chunked(args, config, param, chunking_config):
 
     # Get chunking partitioning strategy (default to 'None' if not specified)
     # Can be 'None', '#CHROM', '#CHROM,FILTER', etc.
-    chunking_partitions = chunking_config.get("partitions", "None")
+    # chunking_partitions = chunking_config.get("partitions", "None")
+    chunking_partitions = chunking_config.get("partitions", "#CHROM")
     log.debug(f"Chunking - Using partitioning strategy: {chunking_partitions}")
 
     # Get base temporary directory
