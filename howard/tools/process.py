@@ -265,6 +265,7 @@ def _process_chunked(args, config, param, chunking_config):
         processed_dir = os.path.join(temp_dir, "processed_chunks.parquet")
         os.makedirs(processed_dir, exist_ok=True)
         processed_chunks = []
+        processed_chunks_header = []
         processed_transcripts_dir = os.path.join(
             temp_dir, "processed_transcripts_chunks.parquet"
         )
@@ -319,6 +320,7 @@ def _process_chunked(args, config, param, chunking_config):
                 # Process the chunk with standard processing (not in read-only mode)
                 _process_standard(chunk_args, chunk_proc_config, chunk_proc_param)
                 processed_chunks.append(chunk_output)
+                processed_chunks_header.append(f"{chunk_output}.hdr")
                 if chunk_transcripts_output and os.path.exists(
                     chunk_transcripts_output
                 ):
@@ -352,6 +354,10 @@ def _process_chunked(args, config, param, chunking_config):
 
         # Force connexion type in memory to allow RO access mode
         merge_config["connexion_type"] = "memory"
+
+        # Copy output header files for processed chunks
+        if os.path.exists(processed_chunks_header[0]):
+            shutil.copy(processed_chunks_header[0], f"{processed_dir}.hdr")
 
         # Create final Variants object for merging
         final_obj = Variants(

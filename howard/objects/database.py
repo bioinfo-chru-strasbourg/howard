@@ -578,7 +578,9 @@ class Database:
             header_info_type = "String"
             header_column_df = database_query_columns.df()[header_column]
             header_column_df_dtype = header_column_df.dtype
-            if header_column_df_dtype == object:
+            if str(header_column_df_dtype).startswith("float"):
+                header_info_type = "Float"
+            elif header_column_df_dtype == object:
                 if pd.to_numeric(header_column_df, errors="coerce").notnull().all():
                     header_info_type = "Float"
             else:

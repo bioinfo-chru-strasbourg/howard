@@ -219,6 +219,38 @@ def test_process_with_chunking():
     )
     assert len(result) == 1
 
+    # Check header
+    assert "INFO" in variants.get_header_columns()
+    assert set(variants.get_header_infos_list()) == set(
+        [
+            "NS",
+            "DP",
+            "AA",
+            "CLNSIG",
+            "SIFT",
+            "nci60",
+            "VARTYPE",
+            "NOMEN",
+            "CNOMEN",
+            "RNOMEN",
+            "NNOMEN",
+            "PNOMEN",
+            "UPNOMEN",
+            "TVNOMEN",
+            "TNOMEN",
+            "VNOMEN",
+            "TPVNOMEN",
+            "TPNOMEN",
+            "TPVVNOMEN",
+            "ENOMEN",
+            "GNOMEN",
+            "PZScore",
+            "PZFlag",
+            "PZScore_default",
+            "PZFlag_default",
+        ]
+    )
+
 
 def test_process_with_chunking_and_chunk_size():
 
@@ -272,6 +304,38 @@ def test_process_with_chunking_and_chunk_size():
     )
     assert len(result) == 1
 
+    # Check header
+    assert "INFO" in variants.get_header_columns()
+    assert set(variants.get_header_infos_list()) == set(
+        [
+            "NS",
+            "DP",
+            "AA",
+            "CLNSIG",
+            "SIFT",
+            "nci60",
+            "VARTYPE",
+            "NOMEN",
+            "CNOMEN",
+            "RNOMEN",
+            "NNOMEN",
+            "PNOMEN",
+            "UPNOMEN",
+            "TVNOMEN",
+            "TNOMEN",
+            "VNOMEN",
+            "TPVNOMEN",
+            "TPNOMEN",
+            "TPVVNOMEN",
+            "ENOMEN",
+            "GNOMEN",
+            "PZScore",
+            "PZFlag",
+            "PZScore_default",
+            "PZFlag_default",
+        ]
+    )
+
 
 def test_process_with_chunking_empty_input_file():
 
@@ -318,6 +382,22 @@ def test_process_with_chunking_empty_input_file():
         "SELECT INFO FROM variants WHERE INFO LIKE '%VARTYPE=%'"
     )
     assert len(result) == 0
+
+    # Check header
+    assert "INFO" in variants.get_header_columns()
+    assert set(variants.get_header_infos_list()) == set(
+        [
+            "CLNSIG",
+            "SIFT",
+            "PZScore",
+            "DP",
+            "PZScore_default",
+            "AA",
+            "PZFlag_default",
+            "PZFlag",
+            "NS",
+        ]
+    )
 
 
 def test_process_with_chunking_param():
@@ -385,3 +465,33 @@ def test_process_with_chunking_param():
         # Check calculation
         result = transcripts.get_query_to_df("SELECT * FROM variants")
         assert len(result) == 38
+
+    # Check header
+    assert "INFO" in variants.get_header_columns()
+    assert set(variants.get_header_infos_list()) == set(
+        [
+            "NS",
+            "DP",
+            "AA",
+            "CLNSIG",
+            "SIFT",
+            "ANN",
+            "LOF",
+            "NMD",
+            "nci60",
+            "VARTYPE",
+            "transcripts_json",
+            "transcripts_ann",
+            "PZTTranscript",
+            "PZTScore",
+            "PZTFlag",
+            "PZTScore_default",
+            "PZTFlag_default",
+            "PZTScore_transcripts",
+            "PZTFlag_transcripts",
+            "PZScore",
+            "PZFlag",
+            "PZScore_default",
+            "PZFlag_default",
+        ]
+    )
