@@ -250,7 +250,11 @@ def _process_chunked(args, config, param, chunking_config):
         # Find all parquet chunks
         # Use glob to find all ".parquet" file in a folder, recursively
         glob_pattern = os.path.join(partition_dir, "**", "*.parquet")
-        chunk_files = glob.glob(glob_pattern, recursive=True)
+        # chunk_files = glob.glob(glob_pattern, recursive=True)
+        chunk_files = sorted(
+            glob.glob(glob_pattern, recursive=True),
+            key=lambda p: (os.path.getmtime(p)),
+        )
         log.debug(f"chunk_files: {chunk_files}")
 
         # If no chunk files found, raise error

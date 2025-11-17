@@ -1298,9 +1298,13 @@ class Database:
 
             # Check for partition
             if os.path.isdir(database):
-                list_of_parquet = glob.glob(
-                    os.path.join(database, "**/*parquet"), recursive=True
+                list_of_parquet = sorted(
+                    glob.glob(os.path.join(database, "**/*parquet"), recursive=True),
+                    key=lambda p: (
+                        os.path.getmtime(p)
+                    ),  # key=lambda p: (os.path.getmtime(p), os.path.basename(p))
                 )
+
                 if list_of_parquet:
                     list_of_parquet_level_path = "*/" * (
                         list_of_parquet[0].replace(database, "").count("/") - 1
@@ -1339,9 +1343,11 @@ class Database:
 
             # Check for partition
             if os.path.isdir(database):
-                list_of_parquet = glob.glob(
-                    os.path.join(database, "**/*csv"), recursive=True
+                list_of_parquet = sorted(
+                    glob.glob(os.path.join(database, "**/*csv"), recursive=True),
+                    key=lambda p: (os.path.getmtime(p)),
                 )
+                # key=lambda p: (os.path.getmtime(p), os.path.basename(p))
                 if list_of_parquet:
                     database_compression = "gzip"
                     hive_partitioning = 1
@@ -2906,6 +2912,10 @@ class Database:
                                     if "None" in partition_by:
                                         partition_by = None
 
+                                    # Generate partition part id
+                                    # To keep line ordering
+                                    partition_part_i = str(i).zfill(10)
+
                                     # Pyarrow write
                                     pq.write_to_dataset(
                                         pa.Table.from_batches([d]),
@@ -2913,6 +2923,7 @@ class Database:
                                         partition_cols=partition_by,
                                         use_threads=threads,
                                         existing_data_behavior="overwrite_or_ignore",
+                                        basename_template=f"part-{partition_part_i}-{{i}}.parquet",
                                     )
 
                                 # Parquet in unique file
