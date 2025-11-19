@@ -15,6 +15,7 @@ import pyarrow as pa  # type: ignore
 import logging as log
 from tempfile import TemporaryDirectory
 from typing import Optional, Union
+import pysam  # type: ignore
 
 from howard.functions.commons import (
     MAX_LINE_SIZE,
@@ -2724,11 +2725,25 @@ class Database:
                     compression_mode_gzip = compressed and (
                         export_options.get("compression", None) in ["gzip", "bgzip"]
                     )
+                    compression_mode_bgzip = compressed and (
+                        export_options.get("compression", None) in ["bgzip"]
+                    )
 
                     # File stream mode (str or bytes)
                     f_mode = ""
                     if compression_mode_gzip:
                         f_mode = "b"
+
+                    # Relocate query_output_database_tmp if not bgzip to not erase file when writing
+                    # If query is empty, relaocate anyway to avoid issues of empty file (without header)
+                    # if compression_mode_bgzip and not query_empty:
+                    if compression_mode_bgzip:
+                        query_output_database_tmp_bgzip = query_output_database_tmp
+                    else:
+                        query_output_database_tmp_bgzip = (
+                            f"{query_output_database_tmp}.tmp"
+                        )
+                    tmp_files.append(query_output_database_tmp_bgzip)
 
                     if include_header:
 
@@ -2738,11 +2753,15 @@ class Database:
                             mode="w",
                             thread=threads,
                             compresslevel=compresslevel,
-                        ) as f_gz:
+                        ) as f_gz, pysam.BGZFile(
+                            query_output_database_tmp_bgzip, "w"
+                        ) as f_bgz:
 
                             # Switch to compressed stream file
                             if compression_mode_gzip:
                                 f = f_gz
+                            if compression_mode_bgzip:
+                                f = f_bgz
 
                             # Generate header tmp file
                             query_output_header_tmp = os.path.join(tmp_dir, "header")
@@ -2756,7 +2775,12 @@ class Database:
                             with open(
                                 query_output_header_tmp, "r" + f_mode
                             ) as output_header_tmp:
-                                f.write(output_header_tmp.read())
+                                log.debug(
+                                    f"Write header to output file in r + {f_mode}"
+                                )
+                                # Keep header content for bgzip, if any
+                                header_content = output_header_tmp.read()
+                                f.write(header_content)
 
                     # JSON format - Add special "[" character at the beginning of the file
                     if export_options.get("format") in ["JSON"]:
@@ -2779,17 +2803,32 @@ class Database:
                     # Init writer
                     writer = None
 
+                    # Relocate query_output_database_tmp if not bgzip to not erase file when writing
+                    # If query is empty, relaocate anyway to avoid issues of empty file (without header)
+                    # if compression_mode_bgzip and not query_empty:
+                    if compression_mode_bgzip and not query_empty:
+                        query_output_database_tmp_bgzip = query_output_database_tmp
+                    else:
+                        query_output_database_tmp_bgzip = (
+                            f"{query_output_database_tmp}.tmp"
+                        )
+                    tmp_files.append(query_output_database_tmp_bgzip)
+
                     # Open stream files (uncompressed and compressed) for chunk
                     with open(query_output_database_tmp, mode="a") as f, pgzip.open(
                         query_output_database_tmp,
                         mode="a",
                         thread=threads,
                         compresslevel=compresslevel,
-                    ) as f_gz:
+                    ) as f_gz, pysam.BGZFile(
+                        query_output_database_tmp_bgzip, "w"
+                    ) as f_bgz:
 
                         # Switch to compressed stream file
                         if compression_mode_gzip:
                             f = f_gz
+                        if compression_mode_bgzip:
+                            f = f_bgz
 
                         # Chunk query with batch of dataframes of chunk_size
                         df = self.conn.execute(query).fetch_record_batch(chunk_size)
@@ -2841,27 +2880,57 @@ class Database:
                             # CSV format
                             if export_options.get("format") in ["CSV"]:
 
-                                # With quote option
-                                if export_options.get("quote", None):
+                                if compression_mode_bgzip:
 
-                                    # Polars write dataframe
-                                    pl.from_arrow(d).write_csv(
-                                        file=f,
-                                        separator=export_options.get("delimiter", ""),
-                                        include_header=header,
-                                        quote_char=export_options.get("quote", '"'),
+                                    # Encode dataframe to csv in bytes
+                                    csv_bytes = (
+                                        pl.from_arrow(d)
+                                        .write_csv(
+                                            separator="\t",
+                                            include_header=header,
+                                            quote_style="never",
+                                        )
+                                        .encode("utf-8")
                                     )
 
-                                # Without quote option
+                                    # Write header content if any (for bgzip only)
+                                    if header_content:
+                                        header_content_bytes = header_content
+                                        header_content = ""
+                                        f.write(header_content_bytes)
+
+                                    # Write dataframe in bytes mode
+                                    f.write(csv_bytes)
+
                                 else:
 
-                                    # Polars write dataframe
-                                    pl.from_arrow(d).write_csv(
-                                        file=f,
-                                        separator=export_options.get("delimiter", ""),
-                                        include_header=header,
-                                        quote_style="never",
-                                    )
+                                    # if True:
+
+                                    # With quote option
+                                    if export_options.get("quote", None):
+
+                                        # Polars write dataframe
+                                        pl.from_arrow(d).write_csv(
+                                            file=f,
+                                            separator=export_options.get(
+                                                "delimiter", ""
+                                            ),
+                                            include_header=header,
+                                            quote_char=export_options.get("quote", '"'),
+                                        )
+
+                                    # Without quote option
+                                    else:
+
+                                        # Polars write dataframe
+                                        pl.from_arrow(d).write_csv(
+                                            file=f,
+                                            separator=export_options.get(
+                                                "delimiter", ""
+                                            ),
+                                            include_header=header,
+                                            quote_style="never",
+                                        )
 
                             # JSON format
                             elif export_options.get("format") in ["JSON"]:

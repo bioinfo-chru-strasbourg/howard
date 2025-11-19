@@ -16,7 +16,10 @@ import pytest  # type: ignore
 import vcf  # type: ignore
 import os
 
-from howard.functions.commons import remove_if_exists, get_file_format
+from howard.functions.commons import (
+    remove_if_exists,
+    get_file_format,
+)
 from howard.objects.variants import Variants
 from test_needed import tests_folder, tests_config, tests_data_folder
 

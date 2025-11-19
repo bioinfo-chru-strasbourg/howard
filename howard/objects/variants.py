@@ -2441,13 +2441,16 @@ class Variants:
 
         return removed
 
-    def get_batch_split(self, table: str = None, block: int = 1000) -> int:
+    def get_batch_split(
+        self, table: str = None, block: int = 1000, nb_lines: int = None
+    ) -> int:
         """
         Calculate the batch size for processing data based on the number of rows in the table and available memory.
 
         Args:
             table (str, optional): The name of the table to evaluate. If None, the default variants table is used.
             block (int, optional): The block size to use for the calculation. Default is 1000.
+            nb_lines (int, optional): The number of lines in the table. If None, it will be calculated.
 
         Returns:
             int: The calculated batch size.
@@ -2461,16 +2464,17 @@ class Variants:
         log.debug(f"Evaluate batch size by parameter")
 
         # Count numbber of variants in table variants
-        nb_lines = (
-            self.get_connexion()
-            .execute(
-                f"""
-            SELECT count(*)
-            FROM {table}
-            """
+        if nb_lines is None:
+            nb_lines = (
+                self.get_connexion()
+                .execute(
+                    f"""
+                SELECT count(*)
+                FROM {table}
+                """
+                )
+                .fetchone()[0]
             )
-            .fetchone()[0]
-        )
 
         # Check memory
         memory = extract_memory_in_go(get_memory(self.get_config(), self.get_param()))
@@ -6869,6 +6873,9 @@ class Variants:
             threads = self.get_threads()
         log.debug("Threads: " + str(threads))
 
+        # Chunk size
+        chunk_size = self.get_config().get("chunk_size", DEFAULT_CHUNK_SIZE)
+
         # DEBUG
         delete_tmp = True
         if self.get_config().get("verbosity", "warning") in ["debug"]:
@@ -6927,7 +6934,7 @@ class Variants:
             f"""SELECT count(*) as count FROM {table_variants} as table_variants LIMIT 1"""
         )
         if not sql_query_chromosomes_df["count"][0]:
-            log.info(f"VCF empty")
+            log.info("VCF empty")
             return
 
         # VCF header
@@ -6937,7 +6944,7 @@ class Variants:
         # Nb Variants POS
         log.debug("NB Variants Start")
         nb_variants = self.conn.execute(
-            f"SELECT count(*) AS count FROM variants"
+            "SELECT count(*) AS count FROM variants"
         ).fetchdf()["count"][0]
         log.debug("NB Variants Stop")
 
@@ -6953,7 +6960,7 @@ class Variants:
         added_columns = []
 
         # drop indexes
-        log.debug(f"Drop indexes...")
+        log.debug("Drop indexes...")
         self.drop_indexes()
 
         if annotations:
@@ -7014,7 +7021,7 @@ class Variants:
                     msg_err_list = []
                     if not parquet_file:
                         msg_err_list.append(
-                            f"Annotation failed: Annotation file not found"
+                            "Annotation failed: Annotation file not found"
                         )
                     if parquet_file and not parquet_hdr_file:
                         msg_err_list.append(
@@ -7296,7 +7303,7 @@ class Variants:
                         log.debug("Column INFO annotation enabled")
                         sql_query_annotation_update_info_sets = []
                         sql_query_annotation_update_info_sets.append(
-                            f" table_parquet.INFO "
+                            " table_parquet.INFO "
                         )
 
                     if sql_query_annotation_update_info_sets:
@@ -7333,7 +7340,7 @@ class Variants:
                         nb_of_variant_annotated = 0
                         query_dict = query_dict_remove
 
-                        # for chrom in sql_query_chromosomes_df["CHROM"]:
+                        # For each chromosome, first bacth by chromosome
                         for chrom in sql_query_chromosomes_dict:
 
                             # Number of variant by chromosome
@@ -7383,36 +7390,93 @@ class Variants:
                                     AND table_parquet.\"REF\" = table_variants.\"REF\"
                                 """
 
-                            # Create update query
-                            sql_query_annotation_chrom_interval_pos = f"""
-                                UPDATE {table_variants} as table_variants
-                                    SET INFO = 
-                                        concat(
-                                            CASE WHEN table_variants.INFO NOT IN ('','.')
-                                                THEN table_variants.INFO
-                                                ELSE ''
-                                            END
-                                            ,
-                                            CASE WHEN table_variants.INFO NOT IN ('','.')
-                                                        AND (
-                                                        concat({sql_query_annotation_update_info_sets_sql})
-                                                        )
-                                                        NOT IN ('','.') 
-                                                    THEN ';'
-                                                    ELSE ''
-                                            END
-                                            ,
-                                            {sql_query_annotation_update_info_sets_sql}
-                                            )
-                                    {sql_query_annotation_from_clause}
-                                    WHERE {sql_query_annotation_where_clause}
-                                    ;
-                                """
+                            # Get min/max POS and number of variants by chrom
+                            nb_of_variant_by_chrom = sql_query_chromosomes_dict.get(
+                                chrom, {}
+                            ).get("count", 0)
+                            min_of_variant_by_chrom = (
+                                sql_query_chromosomes_dict.get(chrom, {}).get("min", 0)
+                            ) - 1
+                            max_of_variant_by_chrom = sql_query_chromosomes_dict.get(
+                                chrom, {}
+                            ).get("max", 0)
 
-                            # Add update query to dict
-                            query_dict[
-                                f"{chrom} [{nb_of_variant_by_chrom} variants]"
-                            ] = sql_query_annotation_chrom_interval_pos
+                            # DEBUG
+                            # log.debug(
+                            #     f"nb_of_variant_by_chrom={nb_of_variant_by_chrom}"
+                            # )
+                            # log.debug(
+                            #     f"min_of_variant_by_chrom={min_of_variant_by_chrom}"
+                            # )
+                            # log.debug(
+                            #     f"max_of_variant_by_chrom={max_of_variant_by_chrom}"
+                            # )
+
+                            # Create batch queries by position intervals
+                            batch_index = 0
+                            nb_windows = (nb_of_variant_by_chrom // chunk_size) + 1
+                            chunk_size_batch_update = (
+                                int(
+                                    (max_of_variant_by_chrom - min_of_variant_by_chrom)
+                                    / nb_windows
+                                )
+                                + 1
+                            )
+
+                            # DEBUG
+                            # log.debug(f"nb_windows={nb_windows}")
+                            # log.debug(
+                            #     f"chunk_size_batch_update={chunk_size_batch_update}"
+                            # )
+
+                            # Create queries by position intervals
+                            for start in range(
+                                min_of_variant_by_chrom,
+                                max_of_variant_by_chrom,
+                                chunk_size_batch_update,
+                            ):
+                                end = start + chunk_size_batch_update
+                                batch_index += 1
+
+                                # where clause in any cases, because it speedup the query
+                                where_clause_batch_split = f" AND table_variants.POS >= {start} AND table_variants.POS < {end} "
+
+                                # Create update query
+                                sql_query_annotation_chrom_interval_pos = f"""
+                                    UPDATE {table_variants} as table_variants
+                                        SET INFO = 
+                                            concat(
+                                                CASE WHEN table_variants.INFO NOT IN ('','.')
+                                                    THEN table_variants.INFO
+                                                    ELSE ''
+                                                END
+                                                ,
+                                                CASE WHEN table_variants.INFO NOT IN ('','.')
+                                                            AND (
+                                                            concat({sql_query_annotation_update_info_sets_sql})
+                                                            )
+                                                            NOT IN ('','.') 
+                                                        THEN ';'
+                                                        ELSE ''
+                                                END
+                                                ,
+                                                {sql_query_annotation_update_info_sets_sql}
+                                                )
+                                        {sql_query_annotation_from_clause}
+                                        WHERE {sql_query_annotation_where_clause}
+                                            {where_clause_batch_split}
+                                        ;
+                                    """
+
+                                # DEBUG
+                                # log.debug(
+                                #     f"sql_query_annotation_chrom_interval_pos={sql_query_annotation_chrom_interval_pos}"
+                                # )
+
+                                # Add update query to dict
+                                query_dict[
+                                    f"{chrom} [{nb_of_variant_by_chrom} variants] - batch [{batch_index}/{nb_windows} - {batch_index/nb_windows:.2%}%]"
+                                ] = sql_query_annotation_chrom_interval_pos
 
                         nb_of_query = len(query_dict)
                         num_query = 0
@@ -7424,13 +7488,13 @@ class Variants:
                             query = query_dict[query_name]
                             num_query += 1
                             log.info(
-                                f"Annotation '{annotation_name}' - Annotation - Query [{num_query}/{nb_of_query}] {query_name}..."
+                                f"Annotation '{annotation_name}' - Annotation - Query [{num_query}/{nb_of_query} - {num_query/nb_of_query:.2%}] {query_name}..."
                             )
                             result = self.conn.execute(query)
                             nb_of_variant_annotated_by_query = result.df()["Count"][0]
                             nb_of_variant_annotated += nb_of_variant_annotated_by_query
                             log.info(
-                                f"Annotation '{annotation_name}' - Annotation - Query [{num_query}/{nb_of_query}] {query_name} - {nb_of_variant_annotated_by_query} variants annotated"
+                                f"Annotation '{annotation_name}' - Annotation - Query [{num_query}/{nb_of_query} - {num_query/nb_of_query:.2%}] {query_name} - {nb_of_variant_annotated_by_query} variants annotated"
                             )
 
                         log.info(
@@ -7442,8 +7506,6 @@ class Variants:
                         log.info(
                             f"Annotation '{annotation_name}' - No Annotations available"
                         )
-
-                    # log.debug("Final header: " + str(vcf_reader.infos))
 
         # Remove added columns
         for added_column in added_columns:
