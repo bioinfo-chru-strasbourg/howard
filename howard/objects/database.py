@@ -2775,9 +2775,6 @@ class Database:
                             with open(
                                 query_output_header_tmp, "r" + f_mode
                             ) as output_header_tmp:
-                                log.debug(
-                                    f"Write header to output file in r + {f_mode}"
-                                )
                                 # Keep header content for bgzip, if any
                                 header_content = output_header_tmp.read()
                                 f.write(header_content)

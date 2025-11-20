@@ -69,6 +69,7 @@ title: HOWARD Help
   - [<span class="toc-section-number">11.6</span> Query](#query-1)
   - [<span class="toc-section-number">11.7</span> Explode](#explode-2)
   - [<span class="toc-section-number">11.8</span> Export](#export-4)
+  - [<span class="toc-section-number">11.9</span> Chunking](#chunking)
 - [<span class="toc-section-number">12</span> DATABASES
   tool](#databases-tool)
   - [<span class="toc-section-number">12.1</span> Main
@@ -1687,6 +1688,48 @@ Usage examples:
 
 </small>
 
+## Chunking
+
+<small>
+
+>     --chunking_enable
+>
+>     Chunking process by splitting input file into smaller parts.
+>     Use chunking parameters to define chunking size and partitioning fields.
+
+</small>
+
+<small>
+
+>     --chunking_size=<chunking size> (default: 1000000)
+>
+>     Chunking size in number of variants to use when chunking is enabled.
+>     Chunking will be applied if number of variants exceeding this chunking size.
+>     For example, setting this to 1,000,000 will chunk input files
+>     with more than 1 million variants into multiple files,
+>     each containing up to 1 million variants.
+
+</small>
+
+<small>
+
+>     --chunking_partitions=<chunking partitions> (default: None)
+>
+>     Partitioning scheme to use when chunking is enabled,
+>     defining how the input file is partitioned during chunking.
+>     For example, setting this to '#CHROM' will partition the input file by chromosome.
+
+</small>
+
+<small>
+
+>     --chunking_sort
+>
+>     Sort final output after chunking is applied.
+>     Prevents issues with unordered variants after chunked processing.
+
+</small>
+
 # DATABASES tool
 
 Download databases and needed files for howard and associated tools
@@ -3171,7 +3214,7 @@ Usage examples:
 
 <small>
 
->     --chunk_size=<chunk size> (default: 1000000)
+>     --chunk_size=<chunk size> (default: 1048576)
 >
 >     Number of records in batch to export output file.
 >     The lower the chunk size, the less memory consumption.

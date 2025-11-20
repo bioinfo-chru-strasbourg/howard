@@ -208,12 +208,72 @@ arguments = {
             },
         },
     },
+    # Chunking
     "chunking_enable": {
-        "help": """Chunk processing by splitting input file into smaller parts.\n"""
-        """Use chunk parameters to define chunk size and partitioning fields.\n""",
+        "help": """Chunking process by splitting input file into smaller parts.\n"""
+        """Use chunking parameters to define chunking size and partitioning fields.\n""",
         "action": "store_true",
         "default": False,
-        "extra": {"param_section": "chunking"},
+        "extra": {
+            "param_section": "chunking",
+            "examples": {
+                "# Enable chunking": '"chunking_enable": true',
+                "# Disable chunking": '"chunking_enable": false',
+            },
+        },
+    },
+    "chunking_size": {
+        "metavar": "chunking size",
+        "help": """Chunking size in number of variants to use when chunking is enabled.\n"""
+        """Chunking will be applied if number of variants exceeding this chunking size.\n"""
+        """For example, setting this to 1,000,000 will chunk input files\n"""
+        """with more than 1 million variants into multiple files,\n"""
+        """each containing up to 1 million variants.\n""",
+        "default": 1000000,
+        "type": int,
+        "gooey": {
+            "widget": "IntegerField",
+            "options": {"min": 100000, "max": 1000000000, "increment": 100000},
+        },
+        "extra": {
+            "param_section": "chunking",
+            "examples": {
+                "# Set chunking size to 1 million variants": '"chunking_size": 1000000',
+                "# Set chunking size to 10 million variants": '"chunking_size": 10000000',
+            },
+        },
+    },
+    "chunking_partitions": {
+        "metavar": "chunking partitions",
+        "help": """Partitioning scheme to use when chunking is enabled,\n"""
+        """defining how the input file is partitioned during chunking.\n"""
+        """For example, setting this to '#CHROM' will partition the input file by chromosome.\n""",
+        "default": "None",
+        "type": str,
+        "gooey": {
+            "widget": "Textarea",
+            "options": {"initial_value": "None"},
+        },
+        "extra": {
+            "param_section": "chunking",
+            "examples": {
+                "# No partitioning": '"chunking_partitions": "None"',
+                "# Partition by chromosome": '"chunking_partitions": "#CHROM"',
+            },
+        },
+    },
+    "chunking_sort": {
+        "help": """Sort final output after chunking is applied.\n"""
+        """Prevents issues with unordered variants after chunked processing.\n""",
+        "action": "store_true",
+        "default": False,
+        "extra": {
+            "param_section": "chunking",
+            "examples": {
+                "# Enable sorting": '"chunking_sort": true',
+                "# Disable sorting": '"chunking_sort": false',
+            },
+        },
     },
     # Annotations
     "annotations": {
@@ -2163,7 +2223,6 @@ commands_arguments = {
                 "calculations": False,
                 "prioritizations": False,
                 "assembly": False,
-                "chunking_enable": False,
             },
             "HGVS": {
                 "use_gene": False,
@@ -2202,6 +2261,12 @@ commands_arguments = {
                 "include_header": False,
                 "order_by": False,
                 "parquet_partitions": False,
+            },
+            "Chunking": {
+                "chunking_enable": False,
+                "chunking_size": False,
+                "chunking_partitions": False,
+                "chunking_sort": False,
             },
         },
     },

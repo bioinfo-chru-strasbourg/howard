@@ -908,6 +908,13 @@ scores and flags</li>
 command, through available options or a parameters file in JSON format
 (see <a href="docs/help.param.html">HOWARD Parameters JSON</a>
 file).</p>
+<p>This process tool include a chunking process to handle large files by
+dividing them into smaller, more manageable pieces (chunks), by
+specifying chunk size and partitioning scheme. This approach allows each
+chunk to be processed independently, reducing memory usage, disk usage
+(duckDB swap), and can help prevent crashes or slowdowns due to memory
+constraints. Once all chunks are processed, the results are merged to
+produce the final output.</p>
 <p>See <a href="docs/help.html#process-tool">HOWARD Help Process
 tool</a> tool for more information.</p>
 <details>

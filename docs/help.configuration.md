@@ -25,16 +25,25 @@ title: HOWARD Help Configuration
   - [<span class="toc-section-number">3.5</span> annovar](#annovar-1)
   - [<span class="toc-section-number">3.6</span> exomiser](#exomiser-1)
   - [<span class="toc-section-number">3.7</span> splice](#splice)
-- [<span class="toc-section-number">4</span> threads](#threads)
-- [<span class="toc-section-number">5</span> memory](#memory)
-- [<span class="toc-section-number">6</span> assembly](#assembly)
-- [<span class="toc-section-number">7</span> verbosity](#verbosity)
-- [<span class="toc-section-number">8</span> tmp](#tmp)
-- [<span class="toc-section-number">9</span> access](#access)
-- [<span class="toc-section-number">10</span>
+- [<span class="toc-section-number">4</span> chunking](#chunking)
+  - [<span class="toc-section-number">4.1</span>
+    chunking_enable](#chunking_enable)
+  - [<span class="toc-section-number">4.2</span>
+    chunking_size](#chunking_size)
+  - [<span class="toc-section-number">4.3</span>
+    chunking_partitions](#chunking_partitions)
+  - [<span class="toc-section-number">4.4</span>
+    chunking_sort](#chunking_sort)
+- [<span class="toc-section-number">5</span> threads](#threads)
+- [<span class="toc-section-number">6</span> memory](#memory)
+- [<span class="toc-section-number">7</span> assembly](#assembly)
+- [<span class="toc-section-number">8</span> verbosity](#verbosity)
+- [<span class="toc-section-number">9</span> tmp](#tmp)
+- [<span class="toc-section-number">10</span> access](#access)
+- [<span class="toc-section-number">11</span>
   duckdb_settings](#duckdb_settings)
-- [<span class="toc-section-number">11</span> chunk_size](#chunk_size)
-- [<span class="toc-section-number">12</span> log](#log)
+- [<span class="toc-section-number">12</span> chunk_size](#chunk_size)
+- [<span class="toc-section-number">13</span> log](#log)
 
 # Introduction
 
@@ -559,6 +568,167 @@ Examples:
 > }
 > ```
 
+# chunking
+
+Chunking is a technique used to process large files by dividing them
+into smaller, more manageable pieces (chunks), by specifying chunk size
+and partitioning scheme. This approach allows each chunk to be processed
+independently, reducing memory usage, disk usage (duckDB swap), and can
+help prevent crashes or slowdowns due to memory constraints. Once all
+chunks are processed, the results are merged to produce the final
+output.
+
+This method is particularly useful for handling large datasets or files
+that would otherwise be too resource-intensive to process in one go
+(such as low memory, or data particularly huge due to extensive
+annotation).
+
+However, splitting, processing, and merging chunks can introduce
+additional computational overhead, may mislead with some calculations
+(due to not covering the full region of interest, such as all variants
+of a gene for compound heterozygote calculation), and can not apply full
+data features (such as statistics). Moreover, the order of data can
+change during the chunking-merging process.
+
+To enable chunking, include the `chunking` section in the parameters
+JSON file. This section includes parameters to enable chunking, define
+chunk size, partitioning scheme, and sorting of the final output.
+
+Examples:
+
+> Default configuration for chunking
+
+> ``` json
+> {
+>    "chunking": {
+>       "chunking_enable": false,
+>       "chunking_size": 1000000
+>       "chunking_partitions": "None",
+>       "chunking_sort": false
+> }
+> ```
+
+> Example of a configuration for chunking big files by chromosome with
+> 100 million variants per chunk and sorting of final output
+
+> ``` json
+> {
+>    "chunking": {
+>       "chunking_enable": true,
+>       "chunking_size": 100000000
+>       "chunking_partitions": "#CHROM",
+>       "chunking_sort": false
+> }
+> ```
+
+## chunking_enable
+
+Chunking process by splitting input file into smaller parts. Use
+chunking parameters to define chunking size and partitioning fields.
+
+Default: `False`
+
+Examples:
+
+> Enable chunking
+
+> ``` json
+> {
+>    "chunking_enable": true
+> }
+> ```
+
+> Disable chunking
+
+> ``` json
+> {
+>    "chunking_enable": false
+> }
+> ```
+
+## chunking_size
+
+Chunking size in number of variants to use when chunking is enabled.
+Chunking will be applied if number of variants exceeding this chunking
+size. For example, setting this to 1,000,000 will chunk input files with
+more than 1 million variants into multiple files, each containing up to
+1 million variants.
+
+Type: `int`
+
+Default: `1000000`
+
+Examples:
+
+> Set chunking size to 1 million variants
+
+> ``` json
+> {
+>    "chunking_size": 1000000
+> }
+> ```
+
+> Set chunking size to 10 million variants
+
+> ``` json
+> {
+>    "chunking_size": 10000000
+> }
+> ```
+
+## chunking_partitions
+
+Partitioning scheme to use when chunking is enabled, defining how the
+input file is partitioned during chunking. For example, setting this to
+'#CHROM' will partition the input file by chromosome.
+
+Type: `str`
+
+Default: `None`
+
+Examples:
+
+> No partitioning
+
+> ``` json
+> {
+>    "chunking_partitions": "None"
+> }
+> ```
+
+> Partition by chromosome
+
+> ``` json
+> {
+>    "chunking_partitions": "#CHROM"
+> }
+> ```
+
+## chunking_sort
+
+Sort final output after chunking is applied. Prevents issues with
+unordered variants after chunked processing.
+
+Default: `False`
+
+Examples:
+
+> Enable sorting
+
+> ``` json
+> {
+>    "chunking_sort": true
+> }
+> ```
+
+> Disable sorting
+
+> ``` json
+> {
+>    "chunking_sort": false
+> }
+> ```
+
 # threads
 
 Specify the number of threads to use for processing HOWARD. It
@@ -803,15 +973,15 @@ will depend on the chunk size.
 
 Type: `int`
 
-Default: `1000000`
+Default: `1048576`
 
 Examples:
 
-> Chunk size of 1.000.000 by default
+> Chunk size of 1048576 by default
 
 > ``` json
 > {
->    "chunk_size": 1000000
+>    "chunk_size": 1048576
 > }
 > ```
 

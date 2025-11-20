@@ -6,7 +6,7 @@ Some news, improves and fixes
 
 ### News
 
-- Add batch process for huge input files (TODO) ([#442](https://github.com/bioinfo-chru-strasbourg/howard/issues/442))
+- Add chunking process for huge input files ([#442](https://github.com/bioinfo-chru-strasbourg/howard/issues/442))
 - Add BigBed annotation, as BigWig format (TODO) ([#444](https://github.com/bioinfo-chru-strasbourg/howard/issues/444))
 
 ### Updates

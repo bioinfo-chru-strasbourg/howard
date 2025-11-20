@@ -7,7 +7,6 @@ import os
 from pathlib import Path
 import random
 import re
-import shutil
 import sqlite3
 import string
 import subprocess
@@ -26,7 +25,6 @@ import logging as log
 import fastparquet as fp  # type: ignore
 import cyvcf2  # type: ignore
 import pyBigWig  # type: ignore
-import bgzip
 
 from howard.functions.commons import (
     CODE_TYPE_MAP,
@@ -4934,7 +4932,6 @@ class Variants:
                         add_samples=False,
                         index=True,
                     )
-                    # shutil.copyfile(tmp_vcf_name, "/tmp/input.vcf")
 
                     # Num command
                     nb_command = 0
@@ -4947,9 +4944,6 @@ class Variants:
                         )
                         log.debug(f"command_annotate={command_annotate}")
                         run_parallel_commands([command_annotate], threads)
-
-                        # Debug
-                        # shutil.copyfile(commands[command_annotate], "/tmp/snpsift.vcf")
 
                         # Update variants
                         log.info(

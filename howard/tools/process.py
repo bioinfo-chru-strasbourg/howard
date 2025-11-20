@@ -5,7 +5,6 @@ import os
 import tempfile
 from pathlib import Path
 import shutil
-import time
 from tabulate import tabulate  # type: ignore
 
 from howard.functions.commons import (
@@ -51,7 +50,18 @@ def process(args: argparse) -> None:
     )
 
     # Get chunking parameters from the dedicated "chunking" section in param
-    chunking_config = param.get("chunking", {})
+    chunking_config_config = config.get("chunking", {})
+    chunking_config_param = param.get("chunking", {})
+    if isinstance(chunking_config_config, dict) and isinstance(
+        chunking_config_param, dict
+    ):
+        chunking_config = {**chunking_config_config, **chunking_config_param}
+    elif isinstance(chunking_config_config, dict):
+        chunking_config = chunking_config_config
+    elif isinstance(chunking_config_param, dict):
+        chunking_config = chunking_config_param
+    else:
+        chunking_config = {}
 
     # Check if chunking is enabled via the 'enable' flag in the chunking section
     use_chunking = chunking_config.get("chunking_enable", False)
@@ -108,7 +118,7 @@ def _process_standard(args, config, param):
     vcfdata_obj.prioritization()
 
     # Explode infos
-    if param.get("explode_infos", {}).get("explode_infos", False):
+    if param.get("explode", {}).get("explode_infos", False):
         vcfdata_obj.explode_infos()
 
     # Query
@@ -119,7 +129,7 @@ def _process_standard(args, config, param):
     vcfdata_obj.export_output(query=param.get("query", {}).get("query", None))
 
     # Close connexion
-    vcfdata_obj.close_connexion()
+    # vcfdata_obj.close_connexion()
 
     # Log
     log.info("End")
@@ -154,7 +164,7 @@ def _process_chunked(args, config, param, chunking_config):
     # Get chunking parameters from chunking configuration
     # chunk_size (default to 1,000,000 if not found, see Variants class for details)
     chunk_size = (
-        chunking_config.get("chunk_size")
+        chunking_config.get("chunking_size")
         or (
             args.chunk_size
             if "chunk_size" in args and args.chunk_size != DEFAULT_CHUNK_SIZE
@@ -162,13 +172,16 @@ def _process_chunked(args, config, param, chunking_config):
         )
         or param.get("chunk_size")
         or config.get("chunk_size")
+        or DEFAULT_CHUNK_SIZE
     )
     log.debug(f"Chunking - Using chunk size: {chunk_size}")
 
     # Get chunking partitioning strategy (default to 'None' if not specified)
     # Can be 'None', '#CHROM', '#CHROM,FILTER', etc.
-    # chunking_partitions = chunking_config.get("partitions", "None")
-    chunking_partitions = chunking_config.get("partitions", "#CHROM")
+    # Prevents if chunking_partitions is empty string or None
+    chunking_partitions = chunking_config.get("chunking_partitions", "None")
+    if chunking_partitions is None or str(chunking_partitions).strip() == "":
+        chunking_partitions = "None"
     log.debug(f"Chunking - Using partitioning strategy: {chunking_partitions}")
 
     # Get base temporary directory
@@ -230,10 +243,24 @@ def _process_chunked(args, config, param, chunking_config):
             config=chunk_config,
             param=chunk_param,
         )
-        log.debug(f"TEST: convert_obj config: {convert_obj.get_config()}")
 
         # Load the data in read-only mode
         convert_obj.load_data()
+
+        # Check number of variants to decide if chunking is needed
+        log.debug("Chunking - Checking number of variants in input file")
+        check_nb_of_variants = convert_obj.get_query_to_df(
+            f"SELECT count(1) AS count FROM variants LIMIT ({chunk_size+1})"
+        )
+        if check_nb_of_variants["count"][0] <= chunk_size:
+            log.debug(
+                f"Chunking - Number of variants is less than or equal to chunk size ({chunk_size}), processing without chunking"
+            )
+            return _process_standard(args, config, param)
+        else:
+            log.debug(
+                f"Chunking - Number of variants exceeds chunk size ({chunk_size}), proceeding with chunked processing"
+            )
 
         # Export to partitioned parquet format using parquet_partitions='None'
         # This ensures the file is split into multiple parquet files in the output directory
@@ -250,7 +277,6 @@ def _process_chunked(args, config, param, chunking_config):
         # Find all parquet chunks
         # Use glob to find all ".parquet" file in a folder, recursively
         glob_pattern = os.path.join(partition_dir, "**", "*.parquet")
-        # chunk_files = glob.glob(glob_pattern, recursive=True)
         chunk_files = sorted(
             glob.glob(glob_pattern, recursive=True),
             key=lambda p: (os.path.getmtime(p)),
@@ -258,9 +284,11 @@ def _process_chunked(args, config, param, chunking_config):
         log.debug(f"chunk_files: {chunk_files}")
 
         # If no chunk files found, raise error
-        if not chunk_files:
+        if len(chunk_files) <= 1:
             # Suppose no variants were found (empty input file)
-            log.debug(f"Chunking - No parquet chunks created in {partition_dir}")
+            log.debug(
+                f"Chunking - Only {len(chunk_files)} parquet chunks created, processing without chunking"
+            )
             # Process with standard flow to create empty output
             return _process_standard(args, config, param)
         else:
@@ -379,7 +407,7 @@ def _process_chunked(args, config, param, chunking_config):
             "vcf",
             "vcf.gz",
             "bcf",
-        ] and chunk_param.get("sort_output", False):
+        ] and chunk_param.get("chunking_sort", False):
             log.debug("Output can be sorted as VCF format")
             sort = True
         else:
@@ -387,7 +415,9 @@ def _process_chunked(args, config, param, chunking_config):
             sort = False
 
         # Export to final output format
-        final_obj.export_output(sort=sort)
+        final_obj.export_output(
+            sort=sort, query=param.get("query", {}).get("query", None)
+        )
 
         # Check if final export created the output file
         if os.path.exists(original_output):
@@ -434,7 +464,8 @@ def _process_chunked(args, config, param, chunking_config):
         # Log
         log.info("End")
 
-        return final_obj
+        # Return None because chunking do not support returning Variants object (for interactive mode)
+        return None
 
     except Exception as e:
         import traceback
@@ -463,59 +494,6 @@ def _process_chunked(args, config, param, chunking_config):
 
         args.input = original_input
         args.output = original_output
-
-
-# Function removed as it's now integrated directly into _process_chunked
-
-
-# def _merge_processed_chunks(chunk_files, output_file, config, param):
-#     """
-#     Merge multiple processed chunk files into a single output file.
-
-#     Note: This function is kept for compatibility but is no longer used in the
-#     simplified implementation, as merging is now handled directly in _process_chunked
-#     using HOWARD's built-in functionality for handling partitioned parquet files.
-
-#     :param chunk_files: List of processed chunk files
-#     :param output_file: Final output file path
-#     :param config: Configuration dictionary
-#     :param param: Parameters dictionary
-#     """
-#     log.warning(
-#         "_merge_processed_chunks is deprecated, merging now handled in _process_chunked"
-#     )
-
-#     if not chunk_files:
-#         log.error("No chunks to merge")
-#         return
-
-#     log.info(f"Merging {len(chunk_files)} chunks into {output_file}")
-
-#     # Create a temporary directory to hold all processed chunks
-#     temp_dir = os.path.dirname(chunk_files[0])
-#     partition_dir = os.path.join(temp_dir, "merged_partition")
-#     os.makedirs(partition_dir, exist_ok=True)
-
-#     # Copy all chunk files to the partition directory with proper naming
-#     for i, chunk_file in enumerate(chunk_files):
-#         dest_file = os.path.join(partition_dir, f"part_{i}.parquet")
-#         shutil.copy(chunk_file, dest_file)
-
-#         # Copy header file if it exists
-#         if os.path.exists(f"{chunk_file}.hdr"):
-#             shutil.copy(f"{chunk_file}.hdr", f"{partition_dir}.hdr")
-
-#     # Create a Variants object for the partition directory
-#     merged_obj = Variants(
-#         input=partition_dir, output=output_file, config=config, param=param, load=True
-#     )
-
-#     # Export to final format
-#     merged_obj.export_output(
-#         output_file=output_file,
-#         sort=True,  # Sort by genomic coordinates
-#         index=True,  # Create index if applicable
-#     )
 
 
 def _handle_query(vcfdata_obj, param):
