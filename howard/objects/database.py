@@ -2877,57 +2877,30 @@ class Database:
                             # CSV format
                             if export_options.get("format") in ["CSV"]:
 
-                                if compression_mode_bgzip:
+                                # Code with polars write directly to file
+                                # Due to structural types in Arrow, direct write in Arrow is not valid
+                                # Polars is used to write CSV directly to file
 
-                                    # Encode dataframe to csv in bytes
-                                    csv_bytes = (
-                                        pl.from_arrow(d)
-                                        .write_csv(
-                                            separator="\t",
-                                            include_header=header,
-                                            quote_style="never",
-                                        )
-                                        .encode("utf-8")
-                                    )
+                                # Write header content if any (for bgzip only, because no append mode)
+                                if compression_mode_bgzip and header_content:
+                                    f.write(header_content)
 
-                                    # Write header content if any (for bgzip only)
-                                    if header_content:
-                                        header_content_bytes = header_content
-                                        header_content = ""
-                                        f.write(header_content_bytes)
+                                # Write kwargs
+                                write_kwargs = {
+                                    "file": f,
+                                    "separator": export_options.get("delimiter", ""),
+                                    "include_header": header,
+                                }
 
-                                    # Write dataframe in bytes mode
-                                    f.write(csv_bytes)
-
+                                # Options for quote
+                                quote_opt = export_options.get("quote")
+                                if quote_opt:
+                                    write_kwargs["quote_char"] = quote_opt
                                 else:
+                                    write_kwargs["quote_style"] = "never"
 
-                                    # if True:
-
-                                    # With quote option
-                                    if export_options.get("quote", None):
-
-                                        # Polars write dataframe
-                                        pl.from_arrow(d).write_csv(
-                                            file=f,
-                                            separator=export_options.get(
-                                                "delimiter", ""
-                                            ),
-                                            include_header=header,
-                                            quote_char=export_options.get("quote", '"'),
-                                        )
-
-                                    # Without quote option
-                                    else:
-
-                                        # Polars write dataframe
-                                        pl.from_arrow(d).write_csv(
-                                            file=f,
-                                            separator=export_options.get(
-                                                "delimiter", ""
-                                            ),
-                                            include_header=header,
-                                            quote_style="never",
-                                        )
+                                # Polars write dataframe
+                                pl.from_arrow(d).write_csv(**write_kwargs)
 
                             # JSON format
                             elif export_options.get("format") in ["JSON"]:

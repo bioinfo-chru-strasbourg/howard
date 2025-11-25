@@ -210,8 +210,9 @@ arguments = {
     },
     # Chunking
     "chunking_enable": {
-        "help": """Chunking process by splitting input file into smaller parts.\n"""
-        """Use chunking parameters to define chunking size and partitioning fields.\n""",
+        "help": """Chunking process aims to improve processing efficiency, either by:\n"""
+        """- splitting input file into smaller parts.\n"""
+        """- using duckDB database as a intermediate file storage.""",
         "action": "store_true",
         "default": False,
         "extra": {
@@ -222,13 +223,33 @@ arguments = {
             },
         },
     },
+    "chunking_mode": {
+        "metavar": "chunking mode",
+        "help": """Chunking mode select the mode of chunking:\n"""
+        """- 'parquet' mode will split files into smaller Parquet files\n"""
+        """(only if number of variants exceed this chunking size).\n"""
+        """- 'duckdb' mode will use DuckDB to load the entire input file\n"""
+        """into an intermediate storage file.\n""",
+        "default": "parquet",
+        "type": str,
+        "gooey": {
+            "widget": "Textarea",
+            "options": {"initial_value": "parquet"},
+        },
+        "extra": {
+            "param_section": "chunking",
+            "examples": {
+                "# Default chunking mode": '"chunking_mode": "parquet"',
+                "# Chunking mode duckDB": '"chunking_mode": "duckdb"',
+            },
+        },
+    },
     "chunking_size": {
         "metavar": "chunking size",
-        "help": """Chunking size in number of variants to use when chunking is enabled.\n"""
-        """Chunking will be applied if number of variants exceeding this chunking size.\n"""
-        """For example, setting this to 1,000,000 will chunk input files\n"""
-        """with more than 1 million variants into multiple files,\n"""
-        """each containing up to 1 million variants.\n""",
+        "help": """Chunking size is the number of variants to process at a time.\n"""
+        """With 'parquet' chunking mode, input file will be split into multiple smaller Parquet files\n"""
+        """with a maximum of 'chunking_size' variants per file.\n"""
+        """With 'duckdb' chunking mode, the global chunk_size parameter will replaceded by 'chunking_size'.\n""",
         "default": 1000000,
         "type": int,
         "gooey": {
@@ -245,9 +266,8 @@ arguments = {
     },
     "chunking_partitions": {
         "metavar": "chunking partitions",
-        "help": """Partitioning scheme to use when chunking is enabled,\n"""
-        """defining how the input file is partitioned during chunking.\n"""
-        """For example, setting this to '#CHROM' will partition the input file by chromosome.\n""",
+        "help": """Partitioning scheme to use with 'parquet' chunking mode,\n"""
+        """defining how the input file is partitioned during chunking.\n""",
         "default": "None",
         "type": str,
         "gooey": {
@@ -2264,6 +2284,7 @@ commands_arguments = {
             },
             "Chunking": {
                 "chunking_enable": False,
+                "chunking_mode": False,
                 "chunking_size": False,
                 "chunking_partitions": False,
                 "chunking_sort": False,

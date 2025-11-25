@@ -64,19 +64,65 @@ def process(args: argparse) -> None:
         chunking_config = {}
 
     # Check if chunking is enabled via the 'enable' flag in the chunking section
-    use_chunking = chunking_config.get("chunking_enable", False)
+    chunking_enable = chunking_config.get("chunking_enable", False)
+
+    # Check chunking mode from args (overrides config/param)
+    chunking_mode = chunking_config.get("chunking_mode", "parquet")
 
     # If chunking is not enabled, run the standard processing flow
-    if not use_chunking:
-        log.info("Chunking disabled")
+    if not chunking_enable:
         return _process_standard(args, config, param)
     else:
         # Log chunking settings
         log.info("Chunking enabled")
-        log.debug(f"Chunking enabled: chunking_config={chunking_config}")
+        for key, value in chunking_config.items():
+            if key != "chunking_enable":
+                log.info(f"  {key}: {value}")
 
-        # Call chunked processing
-        return _process_chunked(args, config, param, chunking_config)
+        # Call chunked processing in parquet mode
+        if chunking_mode.lower() == "parquet" or not chunking_mode:
+            return _process_chunked(args, config, param, chunking_config)
+        elif chunking_mode.lower() == "duckdb":
+            log.debug(f"config1: {config}")
+            return _process_duckdb(args, config, param, chunking_config)
+        else:
+            log.error(f"Unknown chunking mode: {chunking_mode}")
+            raise ValueError(f"Unknown chunking mode: {chunking_mode}")
+
+
+def _process_duckdb(args, config, param, chunking_config):
+    """
+    Process a large input file by chunking it into smaller parts using DuckDB's capabilities.
+
+    :param args: Command line arguments
+    :param config: Configuration dictionary
+    :param param: Parameters dictionary
+    :param chunking_config: Chunking configuration dictionary
+    :return: Processed Variants object
+    """
+
+    # Currently not implemented
+    log.warning("Chunking mode 'duckdb' is an experimental feature.")
+
+    config_chunking_mode_duckdb = config.copy()
+    config_chunking_mode_duckdb["connexion_type"] = "tmpfile"
+
+    # Get chunking parameters from chunking configuration
+    # chunk_size (default to 1,000,000 if not found, see Variants class for details)
+    chunk_size = (
+        chunking_config.get("chunking_size")
+        or (
+            args.chunk_size
+            if "chunk_size" in args and args.chunk_size != DEFAULT_CHUNK_SIZE
+            else None
+        )
+        or param.get("chunk_size")
+        or config.get("chunk_size")
+        or DEFAULT_CHUNK_SIZE
+    )
+    config_chunking_mode_duckdb["chunk_size"] = chunk_size
+
+    return _process_standard(args, config_chunking_mode_duckdb, param)
 
 
 def _process_standard(args, config, param):

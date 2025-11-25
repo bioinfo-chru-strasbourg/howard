@@ -623,8 +623,11 @@ Examples:
 
 ## chunking_enable
 
-Chunking process by splitting input file into smaller parts. Use
-chunking parameters to define chunking size and partitioning fields.
+Chunking process aims to improve processing efficiency, either by:
+
+- splitting input file into smaller parts.
+
+- using duckDB database as a intermediate file storage.
 
 Default: `False`
 
@@ -648,11 +651,11 @@ Examples:
 
 ## chunking_size
 
-Chunking size in number of variants to use when chunking is enabled.
-Chunking will be applied if number of variants exceeding this chunking
-size. For example, setting this to 1,000,000 will chunk input files with
-more than 1 million variants into multiple files, each containing up to
-1 million variants.
+Chunking size is the number of variants to process at a time. With
+'parquet' chunking mode, input file will be split into multiple smaller
+Parquet files with a maximum of 'chunking_size' variants per file. With
+'duckdb' chunking mode, the global chunk_size parameter will replaceded
+by 'chunking_size'.
 
 Type: `int`
 
@@ -678,9 +681,8 @@ Examples:
 
 ## chunking_partitions
 
-Partitioning scheme to use when chunking is enabled, defining how the
-input file is partitioned during chunking. For example, setting this to
-'#CHROM' will partition the input file by chromosome.
+Partitioning scheme to use with 'parquet' chunking mode, defining how
+the input file is partitioned during chunking.
 
 Type: `str`
 

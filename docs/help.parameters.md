@@ -2872,23 +2872,31 @@ describes configuration JSON file for databases download and convert.
 
 Chunking is a technique used to process large files by dividing them
 into smaller, more manageable pieces (chunks), by specifying chunk size
-and partitioning scheme. This approach allows each chunk to be processed
-independently, reducing memory usage, disk usage (duckDB swap), and can
-help prevent crashes or slowdowns due to memory constraints. Once all
-chunks are processed, the results are merged to produce the final
-output.
+and partitioning scheme. For example, setting this to 1,000,000 will
+chunk input files with more than 1 million variants into multiple files,
+each containing up to 1 million variants (only if the input file
+contains more than 1 million variants). Setting this to '#CHROM' will
+partition the input file by chromosome. This approach allows each chunk
+to be processed independently, reducing memory usage, disk usage (duckDB
+swap), and can help prevent crashes or slowdowns due to memory
+constraints. Once all chunks are processed, the results are merged to
+produce the final output.
 
 This method is particularly useful for handling large datasets or files
 that would otherwise be too resource-intensive to process in one go
 (such as low memory, or data particularly huge due to extensive
-annotation).
+annotation). However, splitting, processing, and merging chunks can
+introduce additional computational overhead, may mislead with some
+calculations (due to not covering the full region of interest, such as
+all variants of a gene for compound heterozygote calculation), and can
+not apply full data features (such as statistics). Moreover, the order
+of data can change during the chunking-merging process.
 
-However, splitting, processing, and merging chunks can introduce
-additional computational overhead, may mislead with some calculations
-(due to not covering the full region of interest, such as all variants
-of a gene for compound heterozygote calculation), and can not apply full
-data features (such as statistics). Moreover, the order of data can
-change during the chunking-merging process.
+Specifically, the 'parquet' chunking mode will split the input file ino
+multiple parquet files. Another 'duckdb' chunking mode will not split
+the input file, but will load data into an intermadiate duckDB storage
+file, reducing memory usage and duckDB swap, and reserving memory to
+tools and processes.
 
 To enable chunking, include the `chunking` section in the parameters
 JSON file. This section includes parameters to enable chunking, define
@@ -2902,29 +2910,49 @@ Examples:
 > {
 >    "chunking": {
 >       "chunking_enable": false,
->       "chunking_size": 1000000
+>       "chunking_mode": 'parquet',
+>       "chunking_size": 1000000,
 >       "chunking_partitions": "None",
 >       "chunking_sort": false
+>    }
 > }
 > ```
 
 > Example of a configuration for chunking big files by chromosome with
-> 100 million variants per chunk and sorting of final output
+> 100 million variants per chunk
 
 > ``` json
 > {
 >    "chunking": {
 >       "chunking_enable": true,
+>       "chunking_mode": 'parquet',
+>       "chunking_size": 100000000,
+>       "chunking_partitions": "#CHROM"
+>    }
+> }
+> ```
+
+> Example of a configuration for chunking big files with a duckDB
+> intermadiate storage, with chunk_size global parameter as 100 million
+> variants
+
+> ``` json
+> {
+>    "chunking": {
+>       "chunking_enable": true,
+>       "chunking_mode": 'duckdb',
 >       "chunking_size": 100000000
->       "chunking_partitions": "#CHROM",
->       "chunking_sort": false
+>    }
 > }
 > ```
 
 ## chunking_enable
 
-Chunking process by splitting input file into smaller parts. Use
-chunking parameters to define chunking size and partitioning fields.
+Chunking process aims to improve processing efficiency, either by:
+
+- splitting input file into smaller parts.
+
+- using duckDB database as a intermediate file storage.
 
 Default: `False`
 
@@ -2948,11 +2976,11 @@ Examples:
 
 ## chunking_size
 
-Chunking size in number of variants to use when chunking is enabled.
-Chunking will be applied if number of variants exceeding this chunking
-size. For example, setting this to 1,000,000 will chunk input files with
-more than 1 million variants into multiple files, each containing up to
-1 million variants.
+Chunking size is the number of variants to process at a time. With
+'parquet' chunking mode, input file will be split into multiple smaller
+Parquet files with a maximum of 'chunking_size' variants per file. With
+'duckdb' chunking mode, the global chunk_size parameter will replaceded
+by 'chunking_size'.
 
 Type: `int`
 
@@ -2978,9 +3006,8 @@ Examples:
 
 ## chunking_partitions
 
-Partitioning scheme to use when chunking is enabled, defining how the
-input file is partitioned during chunking. For example, setting this to
-'#CHROM' will partition the input file by chromosome.
+Partitioning scheme to use with 'parquet' chunking mode, defining how
+the input file is partitioned during chunking.
 
 Type: `str`
 

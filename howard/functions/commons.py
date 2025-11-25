@@ -2587,7 +2587,7 @@ def concat_and_compress_files(
     # Check single file with same compression type to speed up process
     if len(input_files) == 1 and compression_type_input0 == compression_type:
         log.debug(
-            f"Single file with same compression type: Copy {input_files[0]} to {output_file_tmp}"
+            f"Single file with same compression type ({compression_type}): Copy {input_files[0]} to {output_file_tmp}"
         )
         # os.rename(input_files[0], output_file_tmp)
         shutil.copyfile(input_files[0], output_file_tmp)

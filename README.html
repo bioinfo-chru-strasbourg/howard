@@ -914,7 +914,8 @@ specifying chunk size and partitioning scheme. This approach allows each
 chunk to be processed independently, reducing memory usage, disk usage
 (duckDB swap), and can help prevent crashes or slowdowns due to memory
 constraints. Once all chunks are processed, the results are merged to
-produce the final output.</p>
+produce the final output. Another chunking mode aim to load the entire
+input file into a intermediate duckdb storage file.</p>
 <p>See <a href="docs/help.html#process-tool">HOWARD Help Process
 tool</a> tool for more information.</p>
 <details>

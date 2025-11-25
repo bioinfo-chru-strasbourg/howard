@@ -3894,16 +3894,12 @@ class Variants:
         if param.get("annotations", None) and isinstance(
             param.get("annotations", None), str
         ):
-            log.debug(param.get("annotations", None))
             param_annotation_list = param.get("annotations").split(",")
         else:
             param_annotation_list = []
 
         # Each tools param
         if param.get("annotation_parquet", None) != None:
-            log.debug(
-                f"""param.get("annotation_parquet", None)={param.get("annotation_parquet", None)}"""
-            )
             if isinstance(param.get("annotation_parquet", None), list):
                 param_annotation_list.append(",".join(param.get("annotation_parquet")))
             else:
@@ -3940,8 +3936,8 @@ class Variants:
         # Merge param annotations list
         param["annotations"] = ",".join(param_annotation_list)
 
-        # debug
-        log.debug(f"param_annotations={param['annotations']}")
+        # # debug
+        # log.debug(f"param_annotations={param['annotations']}")
 
         if param.get("annotations"):
 
@@ -4070,7 +4066,10 @@ class Variants:
                     else:
 
                         # Tools detection
-                        if annotation_file.startswith("bcftools:"):
+                        if annotation_file.startswith("parquet:"):
+                            annotation_tool_initial = "parquet"
+                            annotation_file = ":".join(annotation_file.split(":")[1:])
+                        elif annotation_file.startswith("bcftools:"):
                             annotation_tool_initial = "bcftools"
                             annotation_file = ":".join(annotation_file.split(":")[1:])
                         elif annotation_file.startswith("snpsift:"):
@@ -7469,7 +7468,7 @@ class Variants:
 
                                 # Add update query to dict
                                 query_dict[
-                                    f"{chrom} [{nb_of_variant_by_chrom} variants] - batch [{batch_index}/{nb_windows} - {batch_index/nb_windows:.2%}%]"
+                                    f"{chrom} [{nb_of_variant_by_chrom} variants] - batch [{batch_index}/{nb_windows}][{batch_index/nb_windows:.2%}%]"
                                 ] = sql_query_annotation_chrom_interval_pos
 
                         nb_of_query = len(query_dict)
@@ -7482,13 +7481,13 @@ class Variants:
                             query = query_dict[query_name]
                             num_query += 1
                             log.info(
-                                f"Annotation '{annotation_name}' - Annotation - Query [{num_query}/{nb_of_query} - {num_query/nb_of_query:.2%}] {query_name}..."
+                                f"Annotation '{annotation_name}' - Annotation - Query [{num_query}/{nb_of_query}][{num_query/nb_of_query:.2%}] {query_name}..."
                             )
                             result = self.conn.execute(query)
                             nb_of_variant_annotated_by_query = result.df()["Count"][0]
                             nb_of_variant_annotated += nb_of_variant_annotated_by_query
                             log.info(
-                                f"Annotation '{annotation_name}' - Annotation - Query [{num_query}/{nb_of_query} - {num_query/nb_of_query:.2%}] {query_name} - {nb_of_variant_annotated_by_query} variants annotated"
+                                f"Annotation '{annotation_name}' - Annotation - Query [{num_query}/{nb_of_query}][{num_query/nb_of_query:.2%}] {query_name} - {nb_of_variant_annotated_by_query} variants annotated"
                             )
 
                         log.info(
