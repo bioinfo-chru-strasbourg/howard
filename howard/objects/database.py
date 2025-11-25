@@ -15,8 +15,10 @@ import pyarrow as pa  # type: ignore
 import logging as log
 from tempfile import TemporaryDirectory
 from typing import Optional, Union
+import pysam  # type: ignore
 
 from howard.functions.commons import (
+    MAX_LINE_SIZE,
     cast_columns_query,
     load_duckdb_extension,
     get_file_format,
@@ -577,7 +579,9 @@ class Database:
             header_info_type = "String"
             header_column_df = database_query_columns.df()[header_column]
             header_column_df_dtype = header_column_df.dtype
-            if header_column_df_dtype == object:
+            if str(header_column_df_dtype).startswith("float"):
+                header_info_type = "Float"
+            elif header_column_df_dtype == object:
                 if pd.to_numeric(header_column_df, errors="coerce").notnull().all():
                     header_info_type = "Float"
             else:
@@ -1295,9 +1299,13 @@ class Database:
 
             # Check for partition
             if os.path.isdir(database):
-                list_of_parquet = glob.glob(
-                    os.path.join(database, "**/*parquet"), recursive=True
+                list_of_parquet = sorted(
+                    glob.glob(os.path.join(database, "**/*parquet"), recursive=True),
+                    key=lambda p: (
+                        os.path.getmtime(p)
+                    ),  # key=lambda p: (os.path.getmtime(p), os.path.basename(p))
                 )
+
                 if list_of_parquet:
                     list_of_parquet_level_path = "*/" * (
                         list_of_parquet[0].replace(database, "").count("/") - 1
@@ -1336,9 +1344,11 @@ class Database:
 
             # Check for partition
             if os.path.isdir(database):
-                list_of_parquet = glob.glob(
-                    os.path.join(database, "**/*csv"), recursive=True
+                list_of_parquet = sorted(
+                    glob.glob(os.path.join(database, "**/*csv"), recursive=True),
+                    key=lambda p: (os.path.getmtime(p)),
                 )
+                # key=lambda p: (os.path.getmtime(p), os.path.basename(p))
                 if list_of_parquet:
                     database_compression = "gzip"
                     hive_partitioning = 1
@@ -1354,17 +1364,51 @@ class Database:
                         f"Input file '{database}' not a compatible partitionned parquet folder"
                     )
 
+            # OLD Code
+            # # Query number of columns detected by duckdb
+            # log.debug(f"Detecting number of columns in file: {database_ref}")
+            # query_nb_columns_detected_by_duckdb = f"""
+            #         SELECT *
+            #         FROM read_csv('{database_ref}', auto_detect=True, hive_partitioning={hive_partitioning}, compression='{database_compression}', skip={header_length}, delim='{delimiter}', sample_size={sample_size}, max_line_size={MAX_LINE_SIZE}, ignore_errors=True)
+            #         LIMIT 0
+            #     """
+            # # Detect the number of columns in the CSV file without using SQL
+            # try:
+            #     nb_columns_detected_by_duckdb = len(
+            #         self.conn.query(query_nb_columns_detected_by_duckdb).columns
+            #     )
+            # except ValueError:
+            #     nb_columns_detected_by_duckdb = 0
+
             # Query number of columns detected by duckdb
+            # log.debug(f"Detecting number of columns in file: {database_ref}")
             query_nb_columns_detected_by_duckdb = f"""
                     SELECT *
-                    FROM read_csv('{database_ref}', auto_detect=True, hive_partitioning={hive_partitioning}, compression='{database_compression}', skip={header_length}, delim='{delimiter}', sample_size={sample_size})
+                    FROM read_csv('{database_ref}', auto_detect=True, hive_partitioning={hive_partitioning}, compression='{database_compression}', skip={header_length}, delim='{delimiter}', sample_size=1, max_line_size={MAX_LINE_SIZE}, ignore_errors=true)
                     LIMIT 0
                 """
+            # Detect the number of columns in the CSV file without using SQL
+            # Try to get columns from duckdb
+            # Some exception can append during query execution, such as invalid input, very huge lines, ...
             try:
+                # self.conn.execute("SET duckdb_encoding='latin1'")
                 nb_columns_detected_by_duckdb = len(
                     self.conn.query(query_nb_columns_detected_by_duckdb).columns
                 )
+            except duckdb.InvalidInputException as exc:  # capture exact error
+                log.error(
+                    f"Invalid input while detecting columns for {database_ref}: {exc}"
+                )
+                nb_columns_detected_by_duckdb = 0
+            except Exception as exc:  # generic fallback
+                log.error(
+                    f"Unexpected error while detecting columns for {database_ref}: {exc}"
+                )
+                nb_columns_detected_by_duckdb = 0
             except ValueError:
+                log.error(
+                    f"Failed to detect number of columns using duckdb for file: {database_ref}"
+                )
                 nb_columns_detected_by_duckdb = 0
 
             # Check table columns
@@ -1394,10 +1438,10 @@ class Database:
                     table_columns_types_list_join_option = ""
 
                 # SQL form
-                sql_from = f"""read_csv('{database_ref}', names={table_columns}{table_columns_types_list_join_option}, auto_detect=True, compression='{database_compression}', skip={header_length}, delim='{delimiter}', hive_partitioning={hive_partitioning}, sample_size={sample_size})"""
+                sql_from = f"""read_csv('{database_ref}', names={table_columns}{table_columns_types_list_join_option}, auto_detect=True, compression='{database_compression}', skip={header_length}, delim='{delimiter}', hive_partitioning={hive_partitioning}, sample_size={sample_size}, max_line_size={MAX_LINE_SIZE})"""
 
             else:
-                sql_from = f"read_csv('{database_ref}', auto_detect=True, compression='{database_compression}', skip={header_length}, delim='{delimiter}', hive_partitioning={hive_partitioning}, sample_size={sample_size})"
+                sql_from = f"read_csv('{database_ref}', auto_detect=True, compression='{database_compression}', skip={header_length}, delim='{delimiter}', hive_partitioning={hive_partitioning}, sample_size={sample_size}, max_line_size={MAX_LINE_SIZE})"
 
         # JSON
         elif database_format in ["json"]:
@@ -1782,9 +1826,9 @@ class Database:
                     # If the database is a DuckDB connection, execute the query directly
                     try:
                         columns_list = list(database.query(limited_query).columns)
-                        log.debug(
-                            f"Successfully executed query with database connection"
-                        )
+                        # log.debug(
+                        #     f"Successfully executed query with database connection"
+                        # )
                     except Exception as e:
                         log.debug(
                             f"Error executing SQL query with database connection: {e}"
@@ -1799,7 +1843,7 @@ class Database:
                         )
                         q = self.query(limited_query)
                         columns_list = list(q.columns)
-                        log.debug(f"Successfully executed query with self.conn")
+                        # log.debug(f"Successfully executed query with self.conn")
                     except Exception as e:
                         log.debug(f"Error executing SQL query with self.conn: {e}")
                         columns_list = None
@@ -1850,15 +1894,52 @@ class Database:
                     "bed",
                     "json",
                 ]:
+
                     # Query
                     sql_from = self.get_sql_from(
                         database=database, header_file=header_file
                     )
                     sql_query = f"SELECT * FROM {sql_from} LIMIT 0"
 
-                    # Get columns
-                    # result_description = self.conn.execute(sql_query).description
-                    result_columns = self.conn.query(sql_query).columns
+                    # Get columns from duckdb
+                    # Try to get columns from duckdb
+                    # Some exception can append during query execution, such as invalid input, very huge lines, ...
+                    try:
+                        result_columns = self.conn.query(sql_query).columns
+                    except duckdb.InvalidInputException as exc:  # capture exact error
+                        log.warning(
+                            f"Invalid input while detecting columns for {database}: {str(exc).strip()}"
+                        )
+                        log.warning(f"Try to get columns from file for: {database}")
+                        result_columns = None
+                    except Exception as exc:  # generic fallback
+                        log.warning(
+                            f"Unexpected error while detecting columns for {database}: {str(exc).strip()}"
+                        )
+                        log.warning(f"Try to get columns from file for: {database}")
+                        result_columns = None
+                    except ValueError:
+                        log.warning(
+                            f"Failed to detect number of columns using duckdb for file: {database}"
+                        )
+                        log.warning(f"Try to get columns from file for: {database}")
+                        result_columns = None
+
+                    # Get columns from file if not detected
+                    try:
+                        if not result_columns:
+                            result_columns = self.get_table_columns_from_file(
+                                database=database, header_file=header_file
+                            )
+                            log.debug(f"Table columns from file: {result_columns}")
+                    except ValueError:
+                        result_columns = None
+                        log.error(
+                            f"Failed to get table columns from file for: {database}"
+                        )
+                        raise ValueError(
+                            f"Failed to get table columns from file for: {database}"
+                        )
 
                     # Extract columns' names and order them to have # at the beginning
                     # columns = [desc[0] for desc in result_description]
@@ -2569,9 +2650,7 @@ class Database:
                         + '"'
                     )
                 parquet_partitions_by = ",".join(parquet_partitions_clean)
-                query_export_format += (
-                    f", PARTITION_BY ({parquet_partitions_by}), OVERWRITE_OR_IGNORE"
-                )
+                query_export_format += f", PARTITION_BY ({parquet_partitions_by}), OVERWRITE_OR_IGNORE, FILENAME_PATTERN 'part_{{i}}'"
                 export_options["partition_by"] = parquet_partitions_array
                 if export_options.get("format", None) == "CSV":
                     export_mode = "duckdb"
@@ -2646,11 +2725,25 @@ class Database:
                     compression_mode_gzip = compressed and (
                         export_options.get("compression", None) in ["gzip", "bgzip"]
                     )
+                    compression_mode_bgzip = compressed and (
+                        export_options.get("compression", None) in ["bgzip"]
+                    )
 
                     # File stream mode (str or bytes)
                     f_mode = ""
                     if compression_mode_gzip:
                         f_mode = "b"
+
+                    # Relocate query_output_database_tmp if not bgzip to not erase file when writing
+                    # If query is empty, relaocate anyway to avoid issues of empty file (without header)
+                    # if compression_mode_bgzip and not query_empty:
+                    if compression_mode_bgzip:
+                        query_output_database_tmp_bgzip = query_output_database_tmp
+                    else:
+                        query_output_database_tmp_bgzip = (
+                            f"{query_output_database_tmp}.tmp"
+                        )
+                    tmp_files.append(query_output_database_tmp_bgzip)
 
                     if include_header:
 
@@ -2660,11 +2753,15 @@ class Database:
                             mode="w",
                             thread=threads,
                             compresslevel=compresslevel,
-                        ) as f_gz:
+                        ) as f_gz, pysam.BGZFile(
+                            query_output_database_tmp_bgzip, "w"
+                        ) as f_bgz:
 
                             # Switch to compressed stream file
                             if compression_mode_gzip:
                                 f = f_gz
+                            if compression_mode_bgzip:
+                                f = f_bgz
 
                             # Generate header tmp file
                             query_output_header_tmp = os.path.join(tmp_dir, "header")
@@ -2678,7 +2775,9 @@ class Database:
                             with open(
                                 query_output_header_tmp, "r" + f_mode
                             ) as output_header_tmp:
-                                f.write(output_header_tmp.read())
+                                # Keep header content for bgzip, if any
+                                header_content = output_header_tmp.read()
+                                f.write(header_content)
 
                     # JSON format - Add special "[" character at the beginning of the file
                     if export_options.get("format") in ["JSON"]:
@@ -2701,17 +2800,32 @@ class Database:
                     # Init writer
                     writer = None
 
+                    # Relocate query_output_database_tmp if not bgzip to not erase file when writing
+                    # If query is empty, relaocate anyway to avoid issues of empty file (without header)
+                    # if compression_mode_bgzip and not query_empty:
+                    if compression_mode_bgzip and not query_empty:
+                        query_output_database_tmp_bgzip = query_output_database_tmp
+                    else:
+                        query_output_database_tmp_bgzip = (
+                            f"{query_output_database_tmp}.tmp"
+                        )
+                    tmp_files.append(query_output_database_tmp_bgzip)
+
                     # Open stream files (uncompressed and compressed) for chunk
                     with open(query_output_database_tmp, mode="a") as f, pgzip.open(
                         query_output_database_tmp,
                         mode="a",
                         thread=threads,
                         compresslevel=compresslevel,
-                    ) as f_gz:
+                    ) as f_gz, pysam.BGZFile(
+                        query_output_database_tmp_bgzip, "w"
+                    ) as f_bgz:
 
                         # Switch to compressed stream file
                         if compression_mode_gzip:
                             f = f_gz
+                        if compression_mode_bgzip:
+                            f = f_bgz
 
                         # Chunk query with batch of dataframes of chunk_size
                         df = self.conn.execute(query).fetch_record_batch(chunk_size)
@@ -2763,27 +2877,30 @@ class Database:
                             # CSV format
                             if export_options.get("format") in ["CSV"]:
 
-                                # With quote option
-                                if export_options.get("quote", None):
+                                # Code with polars write directly to file
+                                # Due to structural types in Arrow, direct write in Arrow is not valid
+                                # Polars is used to write CSV directly to file
 
-                                    # Polars write dataframe
-                                    pl.from_arrow(d).write_csv(
-                                        file=f,
-                                        separator=export_options.get("delimiter", ""),
-                                        include_header=header,
-                                        quote_char=export_options.get("quote", '"'),
-                                    )
+                                # Write header content if any (for bgzip only, because no append mode)
+                                if compression_mode_bgzip and header_content:
+                                    f.write(header_content)
 
-                                # Without quote option
+                                # Write kwargs
+                                write_kwargs = {
+                                    "file": f,
+                                    "separator": export_options.get("delimiter", ""),
+                                    "include_header": header,
+                                }
+
+                                # Options for quote
+                                quote_opt = export_options.get("quote")
+                                if quote_opt:
+                                    write_kwargs["quote_char"] = quote_opt
                                 else:
+                                    write_kwargs["quote_style"] = "never"
 
-                                    # Polars write dataframe
-                                    pl.from_arrow(d).write_csv(
-                                        file=f,
-                                        separator=export_options.get("delimiter", ""),
-                                        include_header=header,
-                                        quote_style="never",
-                                    )
+                                # Polars write dataframe
+                                pl.from_arrow(d).write_csv(**write_kwargs)
 
                             # JSON format
                             elif export_options.get("format") in ["JSON"]:
@@ -2834,6 +2951,10 @@ class Database:
                                     if "None" in partition_by:
                                         partition_by = None
 
+                                    # Generate partition part id
+                                    # To keep line ordering
+                                    partition_part_i = str(i).zfill(10)
+
                                     # Pyarrow write
                                     pq.write_to_dataset(
                                         pa.Table.from_batches([d]),
@@ -2841,6 +2962,7 @@ class Database:
                                         partition_cols=partition_by,
                                         use_threads=threads,
                                         existing_data_behavior="overwrite_or_ignore",
+                                        basename_template=f"part-{partition_part_i}-{{i}}.parquet",
                                     )
 
                                 # Parquet in unique file

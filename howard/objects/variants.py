@@ -7,7 +7,6 @@ import os
 from pathlib import Path
 import random
 import re
-import shutil
 import sqlite3
 import string
 import subprocess
@@ -26,11 +25,11 @@ import logging as log
 import fastparquet as fp  # type: ignore
 import cyvcf2  # type: ignore
 import pyBigWig  # type: ignore
-import math
 
 from howard.functions.commons import (
     CODE_TYPE_MAP,
     DEFAULT_ANNOTATIONS_FOLDER,
+    DEFAULT_CHUNK_SIZE,
     DEFAULT_PARQUET_FOLDER,
     DEFAULT_BCFTOOLS_FOLDER,
     DEFAULT_BIGWIG_FOLDER,
@@ -130,8 +129,6 @@ class Variants:
 
         # Input
         self.set_input(input)
-        log.debug(f"Input set to: {input}")
-        log.debug(f"Input set to: {self.get_input()}")
 
         # Config
         self.set_config(config)
@@ -524,10 +521,7 @@ class Variants:
         elif self.get_connexion_type() in ["memory", default_connexion_db, None]:
             connexion_db = default_connexion_db
         elif self.get_connexion_type() in ["tmpfile"]:
-            tmp_name = tempfile.mkdtemp(
-                prefix=self.get_prefix(), dir=self.get_tmp_dir(), suffix=".db"
-            )
-            connexion_db = f"{tmp_name}/tmp.db"
+            connexion_db = self.get_tmp_dir() + f"/howard.{get_random()}.tmp.db"
         elif self.get_connexion_type() != "":
             connexion_db = self.get_connexion_type()
         else:
@@ -572,6 +566,8 @@ class Variants:
                         if isinstance(setting_value, str):
                             setting_value = f"'{setting_value}'"
                         conn.execute(f"PRAGMA {setting}={setting_value};")
+                # duckDB settings arrow large buffer size
+                conn.execute("SET arrow_large_buffer_size=true")
             elif connexion_format in ["sqlite"]:
                 conn = sqlite3.connect(connexion_db)
 
@@ -583,6 +579,7 @@ class Variants:
         log.debug(f"connexion_db: {connexion_db}")
         log.debug(f"connexion config: {connexion_config}")
         log.debug(f"connexion duckdb settings: {self.get_duckdb_settings()}")
+        log.debug(f"connexion duckdb settings: arrow_large_buffer_size=true")
 
     def set_output(self, output: str = None) -> None:
         """
@@ -1697,12 +1694,25 @@ class Variants:
         """
         return self.conn
 
-    def close_connexion(self) -> None:
+    def close_connexion(self) -> str:
         """
         This function closes the connection to the database.
         :return: The connection is being closed.
         """
-        return self.conn.close()
+
+        log.debug(f"Close connexion...")
+        self.conn.close()
+
+        connexion_db = self.get_connexion_db()
+
+        # Remove connexion db file
+        if os.path.exists(connexion_db) and connexion_db != self.get_connexion_type():
+            log.debug(f"Remove connexion db file: {connexion_db}")
+            remove_if_exists([connexion_db])
+
+        log.debug(f"Connexion '{connexion_db}' closed.")
+
+        return connexion_db
 
     def get_header(self, type: str = "vcf"):
         """
@@ -2047,6 +2057,7 @@ class Variants:
                     database = Database(database=self.input)
                     sql_from = database.get_sql_from(sample_size=sample_size)
 
+                    log.debug(f"Load Data into {table_variants}...")
                     if access in ["RO"]:
                         sql_load = (
                             f"CREATE VIEW {table_variants} AS SELECT * FROM {sql_from}"
@@ -2056,13 +2067,13 @@ class Variants:
                             f"CREATE TABLE {table_variants} AS SELECT * FROM {sql_from}"
                         )
                     self.conn.execute(sql_load)
+                    log.debug(f"Load Data into {table_variants} - done.")
 
-                except:
+                except Exception as e:
                     # Format not available
-                    log.error(f"Input file format '{input_format}' not available")
-                    raise ValueError(
-                        f"Input file format '{input_format}' not available"
-                    )
+                    msg_err = f"Load Data into {table_variants} - failed to load data: {str(e)}"
+                    log.error(msg_err)
+                    raise ValueError(msg_err)
 
         # SQLite connexion
         elif connexion_format in ["sqlite"] and input_format in [
@@ -2428,13 +2439,16 @@ class Variants:
 
         return removed
 
-    def get_batch_split(self, table: str = None, block: int = 1000) -> int:
+    def get_batch_split(
+        self, table: str = None, block: int = 1000, nb_lines: int = None
+    ) -> int:
         """
         Calculate the batch size for processing data based on the number of rows in the table and available memory.
 
         Args:
             table (str, optional): The name of the table to evaluate. If None, the default variants table is used.
             block (int, optional): The block size to use for the calculation. Default is 1000.
+            nb_lines (int, optional): The number of lines in the table. If None, it will be calculated.
 
         Returns:
             int: The calculated batch size.
@@ -2448,16 +2462,17 @@ class Variants:
         log.debug(f"Evaluate batch size by parameter")
 
         # Count numbber of variants in table variants
-        nb_lines = (
-            self.get_connexion()
-            .execute(
-                f"""
-            SELECT count(*)
-            FROM {table}
-            """
+        if nb_lines is None:
+            nb_lines = (
+                self.get_connexion()
+                .execute(
+                    f"""
+                SELECT count(*)
+                FROM {table}
+                """
+                )
+                .fetchone()[0]
             )
-            .fetchone()[0]
-        )
 
         # Check memory
         memory = extract_memory_in_go(get_memory(self.get_config(), self.get_param()))
@@ -3466,7 +3481,10 @@ class Variants:
         return memory
 
     def update_from_vcf(
-        self, vcf_file: str, update_existing_fields: bool = False
+        self,
+        vcf_file: str,
+        update_existing_fields: bool = False,
+        remove_vcf_file: bool = True,
     ) -> None:
         """
         > If the database is duckdb, then use the parquet method, otherwise use the sqlite method
@@ -3476,6 +3494,9 @@ class Variants:
         :param update_existing_fields: If True, existing fields in the INFO column will be updated
         with the values from the VCF file. If False, only new fields will be added, defaults to False
         :type update_existing_fields: bool (optional)
+        :param remove_vcf_file: If True, the VCF file will be removed after the update is complete,
+        defaults to True
+        :type remove_vcf_file: bool (optional)
         :return: None
         """
 
@@ -3483,13 +3504,21 @@ class Variants:
 
         if connexion_format in ["duckdb"]:
             self.update_from_vcf_duckdb(
-                vcf_file, update_existing_fields=update_existing_fields
+                vcf_file,
+                update_existing_fields=update_existing_fields,
+                remove_vcf_file=remove_vcf_file,
             )
         elif connexion_format in ["sqlite"]:
             self.update_from_vcf_sqlite(vcf_file)
 
+        if remove_vcf_file:
+            remove_if_exists([vcf_file])
+
     def update_from_vcf_duckdb(
-        self, vcf_file: str, update_existing_fields: bool = False
+        self,
+        vcf_file: str,
+        update_existing_fields: bool = False,
+        remove_vcf_file: bool = True,
     ) -> None:
         """
         It takes a VCF file and updates the INFO column of the variants table in the database with the
@@ -3500,6 +3529,9 @@ class Variants:
         :param update_existing_fields: If True, existing fields in the INFO column will be updated
         with the values from the VCF file. If False, only new fields will be added, defaults to False
         :type update_existing_fields: bool (optional)
+        :param remove_vcf_file: If True, the VCF file will be removed after the update is complete,
+        defaults to True
+        :type remove_vcf_file: bool (optional)
         :return: None
         """
 
@@ -3542,6 +3574,9 @@ class Variants:
                     export_header=True,
                 )
                 log.debug(f"Partitioned parquet generated: {vcf_file_parquet_path}")
+
+                if remove_vcf_file:
+                    remove_if_exists([vcf_file])
 
                 # list of parquet files
                 list_of_parquet = glob.glob(f"{vcf_file_parquet_path}/*.parquet")
@@ -3859,16 +3894,12 @@ class Variants:
         if param.get("annotations", None) and isinstance(
             param.get("annotations", None), str
         ):
-            log.debug(param.get("annotations", None))
             param_annotation_list = param.get("annotations").split(",")
         else:
             param_annotation_list = []
 
         # Each tools param
         if param.get("annotation_parquet", None) != None:
-            log.debug(
-                f"""param.get("annotation_parquet", None)={param.get("annotation_parquet", None)}"""
-            )
             if isinstance(param.get("annotation_parquet", None), list):
                 param_annotation_list.append(",".join(param.get("annotation_parquet")))
             else:
@@ -3905,8 +3936,8 @@ class Variants:
         # Merge param annotations list
         param["annotations"] = ",".join(param_annotation_list)
 
-        # debug
-        log.debug(f"param_annotations={param['annotations']}")
+        # # debug
+        # log.debug(f"param_annotations={param['annotations']}")
 
         if param.get("annotations"):
 
@@ -4035,7 +4066,10 @@ class Variants:
                     else:
 
                         # Tools detection
-                        if annotation_file.startswith("bcftools:"):
+                        if annotation_file.startswith("parquet:"):
+                            annotation_tool_initial = "parquet"
+                            annotation_file = ":".join(annotation_file.split(":")[1:])
+                        elif annotation_file.startswith("bcftools:"):
                             annotation_tool_initial = "bcftools"
                             annotation_file = ":".join(annotation_file.split(":")[1:])
                         elif annotation_file.startswith("snpsift:"):
@@ -4555,6 +4589,7 @@ class Variants:
                     # Update variants
                     log.info(f"Annotations 'bigwig' update...")
                     self.update_from_vcf(output_vcf_file)
+                    remove_if_exists([output_vcf_file])
                     log.debug(f"Update done.")
 
         return True
@@ -4882,7 +4917,7 @@ class Variants:
                                 annotation_infos_rename = ""
 
                             # Annotate command
-                            command_annotate = f"{snpsift_bin_command} annotate {annotation_infos_option} {db_file} {tmp_vcf_name} | {bcftools_bin_command} annotate --threads={threads} {annotation_infos_rename} -Oz1 -o {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} "
+                            command_annotate = f"{snpsift_bin_command} annotate {annotation_infos_option} {db_file} {tmp_vcf_name} 2>>{tmp_annotation_vcf_name_err} | {bcftools_bin_command} annotate --threads={threads} {annotation_infos_rename} -Oz1 -o {tmp_annotation_vcf_name} 2>>{tmp_annotation_vcf_name_err} "
 
                             # Add command
                             commands[command_annotate] = tmp_annotation_vcf_name
@@ -4896,7 +4931,6 @@ class Variants:
                         add_samples=False,
                         index=True,
                     )
-                    shutil.copyfile(tmp_vcf_name, "/tmp/input.vcf")
 
                     # Num command
                     nb_command = 0
@@ -4910,14 +4944,17 @@ class Variants:
                         log.debug(f"command_annotate={command_annotate}")
                         run_parallel_commands([command_annotate], threads)
 
-                        # Debug
-                        shutil.copyfile(commands[command_annotate], "/tmp/snpsift.vcf")
-
                         # Update variants
                         log.info(
                             f"Annotation - Updating [{nb_command}/{len(commands)}]..."
                         )
                         self.update_from_vcf(commands[command_annotate])
+                        remove_if_exists(
+                            [
+                                commands[command_annotate],
+                                commands[command_annotate] + ".tbi",
+                            ]
+                        )
 
     def annotation_bcftools(self, threads: int = None) -> None:
         """
@@ -5360,7 +5397,7 @@ class Variants:
                     # Command merge
                     merge_command = f"{bcftools_bin_command} merge --force-samples --threads={threads} {tmp_vcf_name} {tmp_ann_vcf_list_cmd} -o {tmp_annotate_vcf_name} -Oz 2>>{tmp_annotate_vcf_name_err} {tmp_files_remove_command}"
                     log.info(
-                        f"Annotation - Annotation merging "
+                        "Annotation - Annotation merging "
                         + str(len(commands))
                         + " annotated files"
                     )
@@ -5401,8 +5438,8 @@ class Variants:
                         raise ValueError("Annotation failed: Error in commands")
 
                     # Update variants
-                    log.info(f"Annotation - Updating...")
-                    self.update_from_vcf(tmp_annotate_vcf_name)
+                    log.info("Annotation - Updating...")
+                    self.update_from_vcf(tmp_annotate_vcf_name, remove_vcf_file=False)
 
     def annotation_exomiser(self, threads: int = None) -> None:
         """
@@ -6365,16 +6402,16 @@ class Variants:
 
             # Warning/Error messages
             if len(error_message_command_err):
-                log.error(f"Error messages:")
-                for message in list(set(error_message_command_err)):
+                log.error("Error messages:")
+                for message in set(error_message_command_err):
                     log.error(f"   {message}")
             elif len(error_message_command_warning):
-                log.warning(f"Warning messages:")
-                for message in list(set(error_message_command_warning)):
+                log.warning("Warning messages:")
+                for message in set(error_message_command_warning):
                     log.warning(f"   {message}")
             # debug info
-            log.debug(f"Warning/Error messages:")
-            for message in list(set(error_message_command_all)):
+            log.debug("Warning/Error messages:")
+            for message in set(error_message_command_all):
                 log.debug(f"   {message}")
             # failed
             if len(error_message_command_err):
@@ -6393,6 +6430,14 @@ class Variants:
             # Update variants
             log.info(f"Annotation - Updating...")
             self.update_from_vcf(tmp_annotate_vcf_name)
+            list_to_remove = [
+                tmp_annotate_vcf_name,
+                tmp_annotate_vcf_name_err,
+                f"{tmp_annotate_vcf_name}.tbi",
+                f"{tmp_vcf_name}.tbi",
+            ]
+            log.debug(f"tmp_annotate_vcf_name: {list_to_remove}")
+            remove_if_exists(list_to_remove)
 
         else:
             if "ANN" in self.get_header().infos:
@@ -6784,17 +6829,25 @@ class Variants:
                 # Update variants
                 log.info(f"Annotation Annovar - Updating...")
                 self.update_from_vcf(tmp_annotate_vcf_name)
+                remove_if_exists(
+                    [
+                        tmp_annotate_vcf_name,
+                        tmp_annotate_vcf_name_err,
+                        f"{tmp_annotate_vcf_name}.tbi",
+                    ]
+                )
 
             # Clean files
             # Tmp file remove command
             if True:
-                tmp_files_remove_command = ""
-                if tmp_files:
-                    tmp_files_remove_command = " ".join(tmp_files)
-                clean_command = f" rm -f {tmp_files_remove_command} "
-                log.debug(f"Annotation Annovar - Annotation cleaning ")
-                log.debug(f"Annotation - cleaning command: {clean_command}")
-                run_parallel_commands([clean_command], 1)
+                remove_if_exists(tmp_files)
+                # tmp_files_remove_command = ""
+                # if tmp_files:
+                #     tmp_files_remove_command = " ".join(tmp_files)
+                # clean_command = f" rm -f {tmp_files_remove_command} "
+                # log.debug(f"Annotation Annovar - Annotation cleaning ")
+                # log.debug(f"Annotation - cleaning command: {clean_command}")
+                # run_parallel_commands([clean_command], 1)
 
     # Parquet
     def annotation_parquet(self, threads: int = None) -> None:
@@ -6812,6 +6865,9 @@ class Variants:
         if not threads:
             threads = self.get_threads()
         log.debug("Threads: " + str(threads))
+
+        # Chunk size
+        chunk_size = self.get_config().get("chunk_size", DEFAULT_CHUNK_SIZE)
 
         # DEBUG
         delete_tmp = True
@@ -6871,7 +6927,7 @@ class Variants:
             f"""SELECT count(*) as count FROM {table_variants} as table_variants LIMIT 1"""
         )
         if not sql_query_chromosomes_df["count"][0]:
-            log.info(f"VCF empty")
+            log.info("VCF empty")
             return
 
         # VCF header
@@ -6881,7 +6937,7 @@ class Variants:
         # Nb Variants POS
         log.debug("NB Variants Start")
         nb_variants = self.conn.execute(
-            f"SELECT count(*) AS count FROM variants"
+            "SELECT count(*) AS count FROM variants"
         ).fetchdf()["count"][0]
         log.debug("NB Variants Stop")
 
@@ -6897,7 +6953,7 @@ class Variants:
         added_columns = []
 
         # drop indexes
-        log.debug(f"Drop indexes...")
+        log.debug("Drop indexes...")
         self.drop_indexes()
 
         if annotations:
@@ -6958,7 +7014,7 @@ class Variants:
                     msg_err_list = []
                     if not parquet_file:
                         msg_err_list.append(
-                            f"Annotation failed: Annotation file not found"
+                            "Annotation failed: Annotation file not found"
                         )
                     if parquet_file and not parquet_hdr_file:
                         msg_err_list.append(
@@ -7240,7 +7296,7 @@ class Variants:
                         log.debug("Column INFO annotation enabled")
                         sql_query_annotation_update_info_sets = []
                         sql_query_annotation_update_info_sets.append(
-                            f" table_parquet.INFO "
+                            " table_parquet.INFO "
                         )
 
                     if sql_query_annotation_update_info_sets:
@@ -7277,7 +7333,7 @@ class Variants:
                         nb_of_variant_annotated = 0
                         query_dict = query_dict_remove
 
-                        # for chrom in sql_query_chromosomes_df["CHROM"]:
+                        # For each chromosome, first bacth by chromosome
                         for chrom in sql_query_chromosomes_dict:
 
                             # Number of variant by chromosome
@@ -7327,36 +7383,93 @@ class Variants:
                                     AND table_parquet.\"REF\" = table_variants.\"REF\"
                                 """
 
-                            # Create update query
-                            sql_query_annotation_chrom_interval_pos = f"""
-                                UPDATE {table_variants} as table_variants
-                                    SET INFO = 
-                                        concat(
-                                            CASE WHEN table_variants.INFO NOT IN ('','.')
-                                                THEN table_variants.INFO
-                                                ELSE ''
-                                            END
-                                            ,
-                                            CASE WHEN table_variants.INFO NOT IN ('','.')
-                                                        AND (
-                                                        concat({sql_query_annotation_update_info_sets_sql})
-                                                        )
-                                                        NOT IN ('','.') 
-                                                    THEN ';'
-                                                    ELSE ''
-                                            END
-                                            ,
-                                            {sql_query_annotation_update_info_sets_sql}
-                                            )
-                                    {sql_query_annotation_from_clause}
-                                    WHERE {sql_query_annotation_where_clause}
-                                    ;
-                                """
+                            # Get min/max POS and number of variants by chrom
+                            nb_of_variant_by_chrom = sql_query_chromosomes_dict.get(
+                                chrom, {}
+                            ).get("count", 0)
+                            min_of_variant_by_chrom = (
+                                sql_query_chromosomes_dict.get(chrom, {}).get("min", 0)
+                            ) - 1
+                            max_of_variant_by_chrom = sql_query_chromosomes_dict.get(
+                                chrom, {}
+                            ).get("max", 0)
 
-                            # Add update query to dict
-                            query_dict[
-                                f"{chrom} [{nb_of_variant_by_chrom} variants]"
-                            ] = sql_query_annotation_chrom_interval_pos
+                            # DEBUG
+                            # log.debug(
+                            #     f"nb_of_variant_by_chrom={nb_of_variant_by_chrom}"
+                            # )
+                            # log.debug(
+                            #     f"min_of_variant_by_chrom={min_of_variant_by_chrom}"
+                            # )
+                            # log.debug(
+                            #     f"max_of_variant_by_chrom={max_of_variant_by_chrom}"
+                            # )
+
+                            # Create batch queries by position intervals
+                            batch_index = 0
+                            nb_windows = (nb_of_variant_by_chrom // chunk_size) + 1
+                            chunk_size_batch_update = (
+                                int(
+                                    (max_of_variant_by_chrom - min_of_variant_by_chrom)
+                                    / nb_windows
+                                )
+                                + 1
+                            )
+
+                            # DEBUG
+                            # log.debug(f"nb_windows={nb_windows}")
+                            # log.debug(
+                            #     f"chunk_size_batch_update={chunk_size_batch_update}"
+                            # )
+
+                            # Create queries by position intervals
+                            for start in range(
+                                min_of_variant_by_chrom,
+                                max_of_variant_by_chrom,
+                                chunk_size_batch_update,
+                            ):
+                                end = start + chunk_size_batch_update
+                                batch_index += 1
+
+                                # where clause in any cases, because it speedup the query
+                                where_clause_batch_split = f" AND table_variants.POS >= {start} AND table_variants.POS < {end} "
+
+                                # Create update query
+                                sql_query_annotation_chrom_interval_pos = f"""
+                                    UPDATE {table_variants} as table_variants
+                                        SET INFO = 
+                                            concat(
+                                                CASE WHEN table_variants.INFO NOT IN ('','.')
+                                                    THEN table_variants.INFO
+                                                    ELSE ''
+                                                END
+                                                ,
+                                                CASE WHEN table_variants.INFO NOT IN ('','.')
+                                                            AND (
+                                                            concat({sql_query_annotation_update_info_sets_sql})
+                                                            )
+                                                            NOT IN ('','.') 
+                                                        THEN ';'
+                                                        ELSE ''
+                                                END
+                                                ,
+                                                {sql_query_annotation_update_info_sets_sql}
+                                                )
+                                        {sql_query_annotation_from_clause}
+                                        WHERE {sql_query_annotation_where_clause}
+                                            {where_clause_batch_split}
+                                        ;
+                                    """
+
+                                # DEBUG
+                                # log.debug(
+                                #     f"sql_query_annotation_chrom_interval_pos={sql_query_annotation_chrom_interval_pos}"
+                                # )
+
+                                # Add update query to dict
+                                query_dict[
+                                    f"{chrom} [{nb_of_variant_by_chrom} variants] - batch [{batch_index}/{nb_windows}][{batch_index/nb_windows:.2%}%]"
+                                ] = sql_query_annotation_chrom_interval_pos
 
                         nb_of_query = len(query_dict)
                         num_query = 0
@@ -7368,13 +7481,13 @@ class Variants:
                             query = query_dict[query_name]
                             num_query += 1
                             log.info(
-                                f"Annotation '{annotation_name}' - Annotation - Query [{num_query}/{nb_of_query}] {query_name}..."
+                                f"Annotation '{annotation_name}' - Annotation - Query [{num_query}/{nb_of_query}][{num_query/nb_of_query:.2%}] {query_name}..."
                             )
                             result = self.conn.execute(query)
                             nb_of_variant_annotated_by_query = result.df()["Count"][0]
                             nb_of_variant_annotated += nb_of_variant_annotated_by_query
                             log.info(
-                                f"Annotation '{annotation_name}' - Annotation - Query [{num_query}/{nb_of_query}] {query_name} - {nb_of_variant_annotated_by_query} variants annotated"
+                                f"Annotation '{annotation_name}' - Annotation - Query [{num_query}/{nb_of_query}][{num_query/nb_of_query:.2%}] {query_name} - {nb_of_variant_annotated_by_query} variants annotated"
                             )
 
                         log.info(
@@ -7386,8 +7499,6 @@ class Variants:
                         log.info(
                             f"Annotation '{annotation_name}' - No Annotations available"
                         )
-
-                    # log.debug("Final header: " + str(vcf_reader.infos))
 
         # Remove added columns
         for added_column in added_columns:

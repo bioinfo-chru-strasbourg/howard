@@ -10,6 +10,7 @@ from howard.functions.commons import (
     DEFAULT_ANNOVAR_FOLDER,
     DEFAULT_ANNOVAR_URL,
     DEFAULT_ASSEMBLY,
+    DEFAULT_CHUNK_SIZE,
     DEFAULT_DATABASE_FOLDER,
     DEFAULT_DBNSFP_URL,
     DEFAULT_DBSNP_FOLDER,
@@ -204,6 +205,93 @@ arguments = {
             "widget": "FileSaver",
             "options": {
                 "wildcard": "All files (*)|*",
+            },
+        },
+    },
+    # Chunking
+    "chunking_enable": {
+        "help": """Chunking process aims to improve processing efficiency, either by:\n"""
+        """- splitting input file into smaller parts.\n"""
+        """- using duckDB database as a intermediate file storage.""",
+        "action": "store_true",
+        "default": False,
+        "extra": {
+            "param_section": "chunking",
+            "examples": {
+                "# Enable chunking": '"chunking_enable": true',
+                "# Disable chunking": '"chunking_enable": false',
+            },
+        },
+    },
+    "chunking_mode": {
+        "metavar": "chunking mode",
+        "help": """Chunking mode select the mode of chunking:\n"""
+        """- 'parquet' mode will split files into smaller Parquet files\n"""
+        """(only if number of variants exceed this chunking size).\n"""
+        """- 'duckdb' mode will use DuckDB to load the entire input file\n"""
+        """into an intermediate storage file.\n""",
+        "default": "parquet",
+        "type": str,
+        "gooey": {
+            "widget": "Textarea",
+            "options": {"initial_value": "parquet"},
+        },
+        "extra": {
+            "param_section": "chunking",
+            "examples": {
+                "# Default chunking mode": '"chunking_mode": "parquet"',
+                "# Chunking mode duckDB": '"chunking_mode": "duckdb"',
+            },
+        },
+    },
+    "chunking_size": {
+        "metavar": "chunking size",
+        "help": """Chunking size is the number of variants to process at a time.\n"""
+        """With 'parquet' chunking mode, input file will be split into multiple smaller Parquet files\n"""
+        """with a maximum of 'chunking_size' variants per file.\n"""
+        """With 'duckdb' chunking mode, the global chunk_size parameter will replaceded by 'chunking_size'.\n""",
+        "default": 1000000,
+        "type": int,
+        "gooey": {
+            "widget": "IntegerField",
+            "options": {"min": 100000, "max": 1000000000, "increment": 100000},
+        },
+        "extra": {
+            "param_section": "chunking",
+            "examples": {
+                "# Set chunking size to 1 million variants": '"chunking_size": 1000000',
+                "# Set chunking size to 10 million variants": '"chunking_size": 10000000',
+            },
+        },
+    },
+    "chunking_partitions": {
+        "metavar": "chunking partitions",
+        "help": """Partitioning scheme to use with 'parquet' chunking mode,\n"""
+        """defining how the input file is partitioned during chunking.\n""",
+        "default": "None",
+        "type": str,
+        "gooey": {
+            "widget": "Textarea",
+            "options": {"initial_value": "None"},
+        },
+        "extra": {
+            "param_section": "chunking",
+            "examples": {
+                "# No partitioning": '"chunking_partitions": "None"',
+                "# Partition by chromosome": '"chunking_partitions": "#CHROM"',
+            },
+        },
+    },
+    "chunking_sort": {
+        "help": """Sort final output after chunking is applied.\n"""
+        """Prevents issues with unordered variants after chunked processing.\n""",
+        "action": "store_true",
+        "default": False,
+        "extra": {
+            "param_section": "chunking",
+            "examples": {
+                "# Enable sorting": '"chunking_sort": true',
+                "# Disable sorting": '"chunking_sort": false',
             },
         },
     },
@@ -1731,7 +1819,7 @@ arguments = {
         """The lower the chunk size, the less memory consumption.\n"""
         """For Parquet partitioning, files size will depend on the chunk size.\n""",
         "required": False,
-        "default": 1000000,
+        "default": DEFAULT_CHUNK_SIZE,
         "type": int,
         "gooey": {
             "widget": "IntegerField",
@@ -1739,7 +1827,7 @@ arguments = {
         },
         "extra": {
             "examples": {
-                "Chunk size of 1.000.000 by default": '"chunk_size": 1000000',
+                f"Chunk size of {DEFAULT_CHUNK_SIZE} by default": f'"chunk_size": {DEFAULT_CHUNK_SIZE}',
                 "Smaller chunk size to reduce Parquet file size and memory usage": '"chunk_size": 100000',
             }
         },
@@ -2193,6 +2281,13 @@ commands_arguments = {
                 "include_header": False,
                 "order_by": False,
                 "parquet_partitions": False,
+            },
+            "Chunking": {
+                "chunking_enable": False,
+                "chunking_mode": False,
+                "chunking_size": False,
+                "chunking_partitions": False,
+                "chunking_sort": False,
             },
         },
     },

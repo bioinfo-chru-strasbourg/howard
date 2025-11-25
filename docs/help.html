@@ -282,6 +282,8 @@ class="toc-section-number">11.6</span> Query</a></li>
 class="toc-section-number">11.7</span> Explode</a></li>
 <li><a href="#export-4" id="toc-export-4"><span
 class="toc-section-number">11.8</span> Export</a></li>
+<li><a href="#chunking" id="toc-chunking"><span
+class="toc-section-number">11.9</span> Chunking</a></li>
 </ul></li>
 <li><a href="#databases-tool" id="toc-databases-tool"><span
 class="toc-section-number">12</span> DATABASES tool</a>
@@ -1856,6 +1858,54 @@ Use &#39;None&#39; (string) for NO partition but split parquet files into a fold
 Examples: &#39;#CHROM&#39;, &#39;#CHROM,REF&#39;, &#39;None&#39;.</code></pre>
 </blockquote>
 <p></small></p>
+<h2 data-number="11.9" id="chunking"><span
+class="header-section-number">11.9</span> Chunking</h2>
+<p><small></p>
+<blockquote>
+<pre><code>    --chunking_enable
+
+Chunking process aims to improve processing efficiency, either by:
+- splitting input file into smaller parts.
+- using duckDB database as a intermediate file storage.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --chunking_mode=&lt;chunking mode&gt; (default: parquet)
+
+Chunking mode select the mode of chunking:
+- &#39;parquet&#39; mode will split files into smaller Parquet files
+(only if number of variants exceed this chunking size).
+- &#39;duckdb&#39; mode will use DuckDB to load the entire input file
+into an intermediate storage file.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --chunking_size=&lt;chunking size&gt; (default: 1000000)
+
+Chunking size is the number of variants to process at a time.
+With &#39;parquet&#39; chunking mode, input file will be split into multiple smaller Parquet files
+with a maximum of &#39;chunking_size&#39; variants per file.
+With &#39;duckdb&#39; chunking mode, the global chunk_size parameter will replaceded by &#39;chunking_size&#39;.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --chunking_partitions=&lt;chunking partitions&gt; (default: None)
+
+Partitioning scheme to use with &#39;parquet&#39; chunking mode,
+defining how the input file is partitioned during chunking.</code></pre>
+</blockquote>
+<p></small></p>
+<p><small></p>
+<blockquote>
+<pre><code>    --chunking_sort
+
+Sort final output after chunking is applied.
+Prevents issues with unordered variants after chunked processing.</code></pre>
+</blockquote>
+<p></small></p>
 <h1 data-number="12" id="databases-tool"><span
 class="header-section-number">12</span> DATABASES tool</h1>
 <p>Download databases and needed files for howard and associated
@@ -3226,7 +3276,7 @@ By default (None) is 80%% of RAM (for duckDB).</code></pre>
 <p></small></p>
 <p><small></p>
 <blockquote>
-<pre><code>    --chunk_size=&lt;chunk size&gt; (default: 1000000)
+<pre><code>    --chunk_size=&lt;chunk size&gt; (default: 1048576)
 
 Number of records in batch to export output file.
 The lower the chunk size, the less memory consumption.

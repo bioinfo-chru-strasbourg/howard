@@ -13,7 +13,7 @@ coverage report --include=howard/* -m
 import os
 import re
 from tempfile import TemporaryDirectory
-from howard.functions.commons import remove_if_exists
+from howard.functions.commons import MAX_LINE_SIZE, remove_if_exists
 import pytest  # type: ignore
 
 # from howard.functions.commons import *
@@ -1143,6 +1143,8 @@ def test_get_sql_from():
     # Create empty object
     database = Database()
 
+    max_line_size_parameter = f", max_line_size={MAX_LINE_SIZE}"
+
     # Check duckdb
     assert (
         database.get_sql_from(database_files.get("duckdb"))
@@ -1166,56 +1168,72 @@ def test_get_sql_from():
     assert (
         database.get_sql_from(database_files.get("vcf"))
         == f"""read_csv('{database_files.get("vcf")}'"""
-        + """, names=['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'], types={'#CHROM': STRING, 'POS': INT, 'ID': VARCHAR, 'REF': VARCHAR, 'ALT': VARCHAR, 'FILTER': VARCHAR, 'INFO': VARCHAR}, auto_detect=True, compression='none', skip=36, delim='	', hive_partitioning=0, sample_size=20480)"""
+        + """, names=['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'], types={'#CHROM': STRING, 'POS': INT, 'ID': VARCHAR, 'REF': VARCHAR, 'ALT': VARCHAR, 'FILTER': VARCHAR, 'INFO': VARCHAR}, auto_detect=True, compression='none', skip=36, delim='	', hive_partitioning=0, sample_size=20480"""
+        + max_line_size_parameter
+        + ")"
     )
 
     # Check vcf gz
     assert (
         database.get_sql_from(database_files.get("vcf_gz"))
         == f"""read_csv('{database_files.get("vcf_gz")}'"""
-        + """, names=['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'], types={'#CHROM': STRING, 'POS': INT, 'ID': VARCHAR, 'REF': VARCHAR, 'ALT': VARCHAR, 'FILTER': VARCHAR, 'INFO': VARCHAR}, auto_detect=True, compression='gzip', skip=36, delim='\t', hive_partitioning=0, sample_size=20480)"""
+        + """, names=['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'], types={'#CHROM': STRING, 'POS': INT, 'ID': VARCHAR, 'REF': VARCHAR, 'ALT': VARCHAR, 'FILTER': VARCHAR, 'INFO': VARCHAR}, auto_detect=True, compression='gzip', skip=36, delim='\t', hive_partitioning=0, sample_size=20480"""
+        + max_line_size_parameter
+        + ")"
     )
 
     # Check partition vcf gz
     assert (
         database.get_sql_from(database_files.get("partition_vcf_gz"))
         == f"""read_csv('{database_files.get("partition_vcf_gz")}/*/*csv'"""
-        + """, names=['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'], types={'#CHROM': STRING, 'POS': INT, 'ID': VARCHAR, 'REF': VARCHAR, 'ALT': VARCHAR, 'FILTER': VARCHAR, 'INFO': VARCHAR}, auto_detect=True, compression='gzip', skip=0, delim='\t', hive_partitioning=1, sample_size=20480)"""
+        + """, names=['#CHROM', 'POS', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO'], types={'#CHROM': STRING, 'POS': INT, 'ID': VARCHAR, 'REF': VARCHAR, 'ALT': VARCHAR, 'FILTER': VARCHAR, 'INFO': VARCHAR}, auto_detect=True, compression='gzip', skip=0, delim='\t', hive_partitioning=1, sample_size=20480"""
+        + max_line_size_parameter
+        + ")"
     )
 
     # Check tsv
     assert (
         database.get_sql_from(database_files.get("tsv"))
         == f"""read_csv('{database_files.get("tsv")}'"""
-        + """, names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], types={'#CHROM': STRING, 'POS': INT, 'REF': VARCHAR, 'ALT': VARCHAR, 'ID': VARCHAR, 'FILTER': VARCHAR, 'INFO': VARCHAR}, auto_detect=True, compression='none', skip=36, delim='\t', hive_partitioning=0, sample_size=20480)"""
+        + """, names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], types={'#CHROM': STRING, 'POS': INT, 'REF': VARCHAR, 'ALT': VARCHAR, 'ID': VARCHAR, 'FILTER': VARCHAR, 'INFO': VARCHAR}, auto_detect=True, compression='none', skip=36, delim='\t', hive_partitioning=0, sample_size=20480"""
+        + max_line_size_parameter
+        + ")"
     )
 
     # Check tsv gz
     assert (
         database.get_sql_from(database_files.get("tsv_gz"))
         == f"""read_csv('{database_files.get("tsv_gz")}'"""
-        + """, names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], types={'#CHROM': STRING, 'POS': INT, 'REF': VARCHAR, 'ALT': VARCHAR, 'ID': VARCHAR, 'FILTER': VARCHAR, 'INFO': VARCHAR}, auto_detect=True, compression='gzip', skip=36, delim='\t', hive_partitioning=0, sample_size=20480)"""
+        + """, names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], types={'#CHROM': STRING, 'POS': INT, 'REF': VARCHAR, 'ALT': VARCHAR, 'ID': VARCHAR, 'FILTER': VARCHAR, 'INFO': VARCHAR}, auto_detect=True, compression='gzip', skip=36, delim='\t', hive_partitioning=0, sample_size=20480"""
+        + max_line_size_parameter
+        + ")"
     )
 
     # Check csv
     assert (
         database.get_sql_from(database_files.get("csv"))
         == f"""read_csv('{database_files.get("csv")}'"""
-        + """, names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], types={'#CHROM': STRING, 'POS': INT, 'REF': VARCHAR, 'ALT': VARCHAR, 'ID': VARCHAR, 'FILTER': VARCHAR, 'INFO': VARCHAR}, auto_detect=True, compression='none', skip=0, delim=',', hive_partitioning=0, sample_size=20480)"""
+        + """, names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], types={'#CHROM': STRING, 'POS': INT, 'REF': VARCHAR, 'ALT': VARCHAR, 'ID': VARCHAR, 'FILTER': VARCHAR, 'INFO': VARCHAR}, auto_detect=True, compression='none', skip=0, delim=',', hive_partitioning=0, sample_size=20480"""
+        + max_line_size_parameter
+        + ")"
     )
 
     # Check tbl
     assert (
         database.get_sql_from(database_files.get("tbl"))
         == f"""read_csv('{database_files.get("tbl")}'"""
-        + """, names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], types={'#CHROM': STRING, 'POS': INT, 'REF': VARCHAR, 'ALT': VARCHAR, 'ID': VARCHAR, 'FILTER': VARCHAR, 'INFO': VARCHAR}, auto_detect=True, compression='none', skip=0, delim='|', hive_partitioning=0, sample_size=20480)"""
+        + """, names=['#CHROM', 'POS', 'REF', 'ALT', 'ID', 'QUAL', 'FILTER', 'INFO'], types={'#CHROM': STRING, 'POS': INT, 'REF': VARCHAR, 'ALT': VARCHAR, 'ID': VARCHAR, 'FILTER': VARCHAR, 'INFO': VARCHAR}, auto_detect=True, compression='none', skip=0, delim='|', hive_partitioning=0, sample_size=20480"""
+        + max_line_size_parameter
+        + ")"
     )
 
     # Check bed
     assert (
         database.get_sql_from(database_files.get("bed"))
         == f"""read_csv('{database_files.get("bed")}'"""
-        + """, names=['#CHROM', 'START', 'END', 'annot1', 'annot2'], types={'#CHROM': STRING, 'START': INT, 'END': INT}, auto_detect=True, compression='none', skip=33, delim='\t', hive_partitioning=0, sample_size=20480)"""
+        + """, names=['#CHROM', 'START', 'END', 'annot1', 'annot2'], types={'#CHROM': STRING, 'START': INT, 'END': INT}, auto_detect=True, compression='none', skip=33, delim='\t', hive_partitioning=0, sample_size=20480"""
+        + max_line_size_parameter
+        + ")"
     )
 
     # Check json

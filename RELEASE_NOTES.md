@@ -1,12 +1,12 @@
 # RELEASE NOTES
 
-## 0.13.1
+## 0.14.0
 
 Some news, improves and fixes
 
 ### News
 
-- Add batch process for huge input files (TODO) ([#442](https://github.com/bioinfo-chru-strasbourg/howard/issues/442))
+- Add chunking process for huge input files ([#442](https://github.com/bioinfo-chru-strasbourg/howard/issues/442))
 - Add BigBed annotation, as BigWig format (TODO) ([#444](https://github.com/bioinfo-chru-strasbourg/howard/issues/444))
 
 ### Updates
@@ -20,6 +20,7 @@ Some news, improves and fixes
 - Fix new snpEff URL ([#441](https://github.com/bioinfo-chru-strasbourg/howard/issues/441))
 - Fix Annovar check DB files (*_avdblist.txt) download (only for download, not when auto-download during annotation) ([#440](https://github.com/bioinfo-chru-strasbourg/howard/issues/440))
 - Fix VCF calculation to consider '.' values ([[#445](https://github.com/bioinfo-chru-strasbourg/howard/issues/445)])
+- Fix Alphamissense download TODO
 
 ## 0.13.0
 

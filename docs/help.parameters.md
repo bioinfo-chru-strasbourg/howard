@@ -180,11 +180,20 @@ title: HOWARD Help Parameters
       explode_infos_prefix](#explode_infos_prefix-1)
     - [<span class="toc-section-number">10.13.3</span>
       explode_infos_fields](#explode_infos_fields-1)
-- [<span class="toc-section-number">11</span> threads](#threads)
-- [<span class="toc-section-number">12</span> samples](#samples)
-  - [<span class="toc-section-number">12.1</span> list](#list)
-  - [<span class="toc-section-number">12.2</span> check](#check)
-- [<span class="toc-section-number">13</span> databases](#databases)
+- [<span class="toc-section-number">11</span> samples](#samples)
+  - [<span class="toc-section-number">11.1</span> list](#list)
+  - [<span class="toc-section-number">11.2</span> check](#check)
+- [<span class="toc-section-number">12</span> databases](#databases)
+- [<span class="toc-section-number">13</span> chunking](#chunking)
+  - [<span class="toc-section-number">13.1</span>
+    chunking_enable](#chunking_enable)
+  - [<span class="toc-section-number">13.2</span>
+    chunking_size](#chunking_size)
+  - [<span class="toc-section-number">13.3</span>
+    chunking_partitions](#chunking_partitions)
+  - [<span class="toc-section-number">13.4</span>
+    chunking_sort](#chunking_sort)
+- [<span class="toc-section-number">14</span> threads](#threads)
 
 # Introduction
 
@@ -2772,36 +2781,6 @@ Type: `str`
 
 Default: `*`
 
-# threads
-
-Specify the number of threads to use for processing HOWARD. It
-determines the level of parallelism, either on python scripts, duckdb
-engine and external tools. It and can help speed up the process/tool.
-Use -1 to use all available CPU/cores. Either non valid value is 1
-CPU/core.
-
-Type: `int`
-
-Default: `-1`
-
-Examples:
-
-> Automatically detect all available CPU/cores
-
-> ``` json
-> {
->    "threads": -1
-> }
-> ```
-
-> Define 8 CPU/cores
-
-> ``` json
-> {
->    "threads": 8
-> }
-> ```
-
 # samples
 
 Samples parameters to defined a list of samples or use options to check
@@ -2888,3 +2867,221 @@ Examples:
 
 [HOWARD Parameters Databases JSON](help.parameters.databases.md)
 describes configuration JSON file for databases download and convert.
+
+# chunking
+
+Chunking is a technique used to process large files by dividing them
+into smaller, more manageable pieces (chunks), by specifying chunk size
+and partitioning scheme. For example, setting this to 1,000,000 will
+chunk input files with more than 1 million variants into multiple files,
+each containing up to 1 million variants (only if the input file
+contains more than 1 million variants). Setting this to '#CHROM' will
+partition the input file by chromosome. This approach allows each chunk
+to be processed independently, reducing memory usage, disk usage (duckDB
+swap), and can help prevent crashes or slowdowns due to memory
+constraints. Once all chunks are processed, the results are merged to
+produce the final output.
+
+This method is particularly useful for handling large datasets or files
+that would otherwise be too resource-intensive to process in one go
+(such as low memory, or data particularly huge due to extensive
+annotation). However, splitting, processing, and merging chunks can
+introduce additional computational overhead, may mislead with some
+calculations (due to not covering the full region of interest, such as
+all variants of a gene for compound heterozygote calculation), and can
+not apply full data features (such as statistics). Moreover, the order
+of data can change during the chunking-merging process.
+
+Specifically, the 'parquet' chunking mode will split the input file ino
+multiple parquet files. Another 'duckdb' chunking mode will not split
+the input file, but will load data into an intermadiate duckDB storage
+file, reducing memory usage and duckDB swap, and reserving memory to
+tools and processes.
+
+To enable chunking, include the `chunking` section in the parameters
+JSON file. This section includes parameters to enable chunking, define
+chunk size, partitioning scheme, and sorting of the final output.
+
+Examples:
+
+> Default configuration for chunking
+
+> ``` json
+> {
+>    "chunking": {
+>       "chunking_enable": false,
+>       "chunking_mode": 'parquet',
+>       "chunking_size": 1000000,
+>       "chunking_partitions": "None",
+>       "chunking_sort": false
+>    }
+> }
+> ```
+
+> Example of a configuration for chunking big files by chromosome with
+> 100 million variants per chunk
+
+> ``` json
+> {
+>    "chunking": {
+>       "chunking_enable": true,
+>       "chunking_mode": 'parquet',
+>       "chunking_size": 100000000,
+>       "chunking_partitions": "#CHROM"
+>    }
+> }
+> ```
+
+> Example of a configuration for chunking big files with a duckDB
+> intermadiate storage, with chunk_size global parameter as 100 million
+> variants
+
+> ``` json
+> {
+>    "chunking": {
+>       "chunking_enable": true,
+>       "chunking_mode": 'duckdb',
+>       "chunking_size": 100000000
+>    }
+> }
+> ```
+
+## chunking_enable
+
+Chunking process aims to improve processing efficiency, either by:
+
+- splitting input file into smaller parts.
+
+- using duckDB database as a intermediate file storage.
+
+Default: `False`
+
+Examples:
+
+> Enable chunking
+
+> ``` json
+> {
+>    "chunking_enable": true
+> }
+> ```
+
+> Disable chunking
+
+> ``` json
+> {
+>    "chunking_enable": false
+> }
+> ```
+
+## chunking_size
+
+Chunking size is the number of variants to process at a time. With
+'parquet' chunking mode, input file will be split into multiple smaller
+Parquet files with a maximum of 'chunking_size' variants per file. With
+'duckdb' chunking mode, the global chunk_size parameter will replaceded
+by 'chunking_size'.
+
+Type: `int`
+
+Default: `1000000`
+
+Examples:
+
+> Set chunking size to 1 million variants
+
+> ``` json
+> {
+>    "chunking_size": 1000000
+> }
+> ```
+
+> Set chunking size to 10 million variants
+
+> ``` json
+> {
+>    "chunking_size": 10000000
+> }
+> ```
+
+## chunking_partitions
+
+Partitioning scheme to use with 'parquet' chunking mode, defining how
+the input file is partitioned during chunking.
+
+Type: `str`
+
+Default: `None`
+
+Examples:
+
+> No partitioning
+
+> ``` json
+> {
+>    "chunking_partitions": "None"
+> }
+> ```
+
+> Partition by chromosome
+
+> ``` json
+> {
+>    "chunking_partitions": "#CHROM"
+> }
+> ```
+
+## chunking_sort
+
+Sort final output after chunking is applied. Prevents issues with
+unordered variants after chunked processing.
+
+Default: `False`
+
+Examples:
+
+> Enable sorting
+
+> ``` json
+> {
+>    "chunking_sort": true
+> }
+> ```
+
+> Disable sorting
+
+> ``` json
+> {
+>    "chunking_sort": false
+> }
+> ```
+
+# threads
+
+Specify the number of threads to use for processing HOWARD. It
+determines the level of parallelism, either on python scripts, duckdb
+engine and external tools. It and can help speed up the process/tool.
+Use -1 to use all available CPU/cores. Either non valid value is 1
+CPU/core.
+
+Type: `int`
+
+Default: `-1`
+
+Examples:
+
+> Automatically detect all available CPU/cores
+
+> ``` json
+> {
+>    "threads": -1
+> }
+> ```
+
+> Define 8 CPU/cores
+
+> ``` json
+> {
+>    "threads": 8
+> }
+> ```

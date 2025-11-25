@@ -713,6 +713,8 @@ This process tool combines all other tools to pipe them in a uniq
 command, through available options or a parameters file in JSON format
 (see [HOWARD Parameters JSON](docs/help.param.md) file).
 
+This process tool include a chunking process to handle large files by dividing them into smaller, more manageable pieces (chunks), by specifying chunk size and partitioning scheme. This approach allows each chunk to be processed independently, reducing memory usage, disk usage (duckDB swap), and can help prevent crashes or slowdowns due to memory constraints. Once all chunks are processed, the results are merged to produce the final output. Another chunking mode aim to load the entire input file into a intermediate duckdb storage file.
+
 See [HOWARD Help Process tool](docs/help.md#process-tool) tool for more
 information.
 

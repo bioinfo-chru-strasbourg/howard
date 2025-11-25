@@ -69,6 +69,7 @@ title: HOWARD Help
   - [<span class="toc-section-number">11.6</span> Query](#query-1)
   - [<span class="toc-section-number">11.7</span> Explode](#explode-2)
   - [<span class="toc-section-number">11.8</span> Export](#export-4)
+  - [<span class="toc-section-number">11.9</span> Chunking](#chunking)
 - [<span class="toc-section-number">12</span> DATABASES
   tool](#databases-tool)
   - [<span class="toc-section-number">12.1</span> Main
@@ -1687,6 +1688,59 @@ Usage examples:
 
 </small>
 
+## Chunking
+
+<small>
+
+>     --chunking_enable
+>
+>     Chunking process aims to improve processing efficiency, either by:
+>     - splitting input file into smaller parts.
+>     - using duckDB database as a intermediate file storage.
+
+</small>
+
+<small>
+
+>     --chunking_mode=<chunking mode> (default: parquet)
+>
+>     Chunking mode select the mode of chunking:
+>     - 'parquet' mode will split files into smaller Parquet files
+>     (only if number of variants exceed this chunking size).
+>     - 'duckdb' mode will use DuckDB to load the entire input file
+>     into an intermediate storage file.
+
+</small>
+
+<small>
+
+>     --chunking_size=<chunking size> (default: 1000000)
+>
+>     Chunking size is the number of variants to process at a time.
+>     With 'parquet' chunking mode, input file will be split into multiple smaller Parquet files
+>     with a maximum of 'chunking_size' variants per file.
+>     With 'duckdb' chunking mode, the global chunk_size parameter will replaceded by 'chunking_size'.
+
+</small>
+
+<small>
+
+>     --chunking_partitions=<chunking partitions> (default: None)
+>
+>     Partitioning scheme to use with 'parquet' chunking mode,
+>     defining how the input file is partitioned during chunking.
+
+</small>
+
+<small>
+
+>     --chunking_sort
+>
+>     Sort final output after chunking is applied.
+>     Prevents issues with unordered variants after chunked processing.
+
+</small>
+
 # DATABASES tool
 
 Download databases and needed files for howard and associated tools
@@ -3171,7 +3225,7 @@ Usage examples:
 
 <small>
 
->     --chunk_size=<chunk size> (default: 1000000)
+>     --chunk_size=<chunk size> (default: 1048576)
 >
 >     Number of records in batch to export output file.
 >     The lower the chunk size, the less memory consumption.

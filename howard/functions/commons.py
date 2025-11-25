@@ -160,6 +160,9 @@ DEFAULT_CHUNK_SIZE = 1024 * 1024
 # LOG_FORMAT = "#[%(asctime)s] [%(levelname)-7s] %(message)s"
 LOG_FORMAT = "#[%(asctime)s] %(levelname)7s| %(message)s"
 
+# Maximum line size for CSV files in duckDB
+MAX_LINE_SIZE = 40796640
+
 # Log Color
 log_color = None
 
@@ -2578,8 +2581,19 @@ def concat_and_compress_files(
     # Tmp file
     output_file_tmp = output_file + "." + str(random.randrange(1000)) + ".tmp"
 
-    if compression_type in ["gzip"]:
-        # See https://pypi.org/project/mgzip/
+    # Compression type for first input file
+    compression_type_input0 = get_compression_type(input_files[0])
+
+    # Check single file with same compression type to speed up process
+    if len(input_files) == 1 and compression_type_input0 == compression_type:
+        log.debug(
+            f"Single file with same compression type ({compression_type}): Copy {input_files[0]} to {output_file_tmp}"
+        )
+        # os.rename(input_files[0], output_file_tmp)
+        shutil.copyfile(input_files[0], output_file_tmp)
+
+    # Concat and compress files in gzip
+    elif compression_type in ["gzip"]:
         with pgzip.open(
             output_file_tmp,
             "w" + open_type,
@@ -2594,6 +2608,8 @@ def concat_and_compress_files(
                 threads=threads,
                 block=block,
             )
+
+    # Concat and compress files in bgzip
     elif compression_type in ["bgzip"]:
         with open(output_file_tmp, "w" + open_type) as compressed_file_raw:
             with bgzip.BGZipWriter(
@@ -2606,6 +2622,8 @@ def concat_and_compress_files(
                     threads=threads,
                     block=block,
                 )
+
+    # Concat and compress files in none
     elif compression_type in ["none"]:
         with open(output_file_tmp, "w" + open_type) as compressed_file:
             concat_into_infile(

@@ -12,6 +12,7 @@ coverage report --include=howard/* -m
 
 import logging as log
 import os
+import shutil
 import vcf  # type: ignore
 from tempfile import TemporaryDirectory
 import duckdb  # type: ignore
@@ -58,7 +59,9 @@ def test_update_from_vcf(
 
         # Update from VCF
         variants.update_from_vcf(
-            vcf_file=annotations_vcf, update_existing_fields=update_existing_fields
+            vcf_file=annotations_vcf,
+            update_existing_fields=update_existing_fields,
+            remove_vcf_file=False,
         )
 
         df = variants.get_query_to_df(
@@ -78,6 +81,55 @@ def test_update_from_vcf(
                     "SELECT * FROM variants WHERE INFO LIKE 'DP=125;DP=25;nci60=0.123'"
                 )
                 assert len(df) == 1
+
+        # Check if VCF is in correct format with pyVCF
+        remove_if_exists([output_vcf])
+        variants.export_output(output_file=output_vcf)
+        try:
+            vcf_obj = vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
+def test_update_from_vcf_and_remove():
+    """
+    This is a test function for updating a VCF file using the Variants class.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = os.path.join(tests_data_folder, "example.vcf.gz")
+        output_vcf = f"{tmp_dir}/example.vcf"
+        annotations_vcf = os.path.join(tests_data_folder, "example.nci60_2.vcf")
+
+        # Copy annotation file into tmp file
+        tmp_annotations_vcf = f"{tmp_dir}/example.nci60_2.vcf"
+        shutil.copy(annotations_vcf, tmp_annotations_vcf)
+
+        # remove if exists
+        remove_if_exists([output_vcf])
+
+        # Create object
+        variants = Variants(input=input_vcf, output=output_vcf, load=True)
+
+        # Update from VCF
+        variants.update_from_vcf(
+            vcf_file=tmp_annotations_vcf,
+            update_existing_fields=True,
+            remove_vcf_file=True,
+        )
+
+        df = variants.get_query_to_df(
+            "SELECT * FROM variants WHERE INFO LIKE '%nci60=%'"
+        )
+        assert len(df) == 2
+
+        # Check update existing fields
+        df = variants.get_query_to_df(
+            "SELECT * FROM variants WHERE INFO LIKE 'DP=25;nci60=0.123'"
+        )
+        assert len(df) == 1
 
         # Check if VCF is in correct format with pyVCF
         remove_if_exists([output_vcf])
