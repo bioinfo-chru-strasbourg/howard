@@ -3158,15 +3158,25 @@ def databases_download_alphamissense(
     for assembly in assemblies:
 
         # Files for AlphaMissense
+
+        # Files to download
         alphamissense_tsv = f"AlphaMissense_{assembly}.tsv.gz"
         alphamissense_tsv_url = os.path.join(alphamissense_url, alphamissense_tsv)
         alphamissense_tsv_dest = os.path.join(
             alphamissense_folder, assembly, alphamissense_tsv
         )
         alphamissense_tsv_dest_folder = os.path.dirname(alphamissense_tsv_dest)
+
+        # Parquet file
         alphamissense_parquet = f"AlphaMissense.parquet"
         alphamissense_parquet_dest = os.path.join(
             alphamissense_folder, assembly, alphamissense_parquet
+        )
+
+        # VCF file
+        alphamissense_vcf = f"AlphaMissense.vcf.gz"
+        alphamissense_vcf_dest = os.path.join(
+            alphamissense_folder, assembly, alphamissense_vcf
         )
 
         # Create folder if not exists
@@ -3192,6 +3202,8 @@ def databases_download_alphamissense(
 
         # Convert to Parquet
         if os.path.exists(alphamissense_tsv_dest):
+
+            # Convert into Parquet
             if not os.path.exists(alphamissense_parquet_dest):
 
                 # Convert into Parquet
@@ -3201,33 +3213,64 @@ def databases_download_alphamissense(
                 alphamissense_database = Database(
                     database=alphamissense_tsv_dest, conn_config={"threads": threads}
                 )
+
+                # Export with custom query to add INFO column
+
+                # Get columns
+                columns = alphamissense_database.get_columns()
+                extra_columns = alphamissense_database.get_extra_columns()
+                ids_columns = [col for col in columns if col not in extra_columns]
+
+                # Build query columns
+                query_ids = ", ".join([f'"{col}"' for col in ids_columns])
+                query_info_column = ", ';', ".join(
+                    [f"'{col}=' || CAST(\"{col}\" AS VARCHAR)" for col in extra_columns]
+                )
+                query_extra_columns = ", ".join([f'"{col}"' for col in extra_columns])
+
+                # Build query
+                alphamissense_database_query = f"""
+                SELECT
+                    {query_ids},
+                    concat(
+                        {query_info_column}
+                    ) AS INFO,
+                    {query_extra_columns}
+                FROM variants
+                """
+
+                # Export to Parquet with query
                 alphamissense_database.export(
                     output_database=alphamissense_parquet_dest,
                     output_header=alphamissense_parquet_dest + ".hdr",
                     threads=threads,
+                    query=alphamissense_database_query,
                 )
 
                 # Header
                 log.info(
                     f"Download AlphaMissense {assemblies} - Format '{alphamissense_parquet}' header..."
                 )
+
+                # Create header
                 vcf_header = Variants(input=alphamissense_parquet_dest)
                 vcf_header_header = vcf_header.get_header()
 
                 # Change num as '1' instead of '.'
                 new_infos = {}
                 for field in vcf_header_header.infos:
-                    info = vcf_header_header.infos[field]
-                    new_info = vcf.parser._Info(
-                        id=info.id,
-                        num=1,  # Change '.' to '1'
-                        type=info.type,
-                        desc=info.desc,
-                        source=info.source,
-                        version=info.version,
-                        type_code=info.type_code,
-                    )
-                    new_infos[field] = new_info
+                    if field not in ["INFO"]:
+                        info = vcf_header_header.infos[field]
+                        new_info = vcf.parser._Info(
+                            id=info.id,
+                            num=1,  # Change '.' to '1'
+                            type=info.type,
+                            desc=info.desc,
+                            source=info.source,
+                            version=info.version,
+                            type_code=info.type_code,
+                        )
+                        new_infos[field] = new_info
                 vcf_header_header.infos = new_infos
 
                 # Export header
@@ -3236,9 +3279,40 @@ def databases_download_alphamissense(
                     output_file_ext=".hdr",
                     remove_chrom_line=False,
                 )
+
             else:
                 log.info(
                     f"Download AlphaMissense {assemblies} - Database '{alphamissense_parquet}' already exists"
+                )
+
+            # Convert to VCF
+            if not os.path.exists(alphamissense_vcf_dest):
+                log.info(
+                    f"Download AlphaMissense {assemblies} - Convert to '{alphamissense_vcf}'..."
+                )
+
+                # Check if Parquet exists
+                if not os.path.exists(alphamissense_parquet_dest):
+                    log.error(
+                        f"Download AlphaMissense {assemblies} - Database '{alphamissense_parquet}' DOES NOT exists"
+                    )
+                else:
+
+                    # Open Parquet
+                    alphamissense_database_parquet = Database(
+                        database=alphamissense_parquet_dest,
+                        conn_config={"threads": threads},
+                    )
+
+                    # Export to VCF with index
+                    alphamissense_database_parquet.export(
+                        output_database=alphamissense_vcf_dest,
+                        threads=threads,
+                        index=True,
+                    )
+            else:
+                log.info(
+                    f"Download AlphaMissense {assemblies} - Database '{alphamissense_vcf}' already exists"
                 )
         else:
             log.error(
