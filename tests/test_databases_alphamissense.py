@@ -52,7 +52,7 @@ def test_download_alphamissense():
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{alphamissense_folder}/{assembly}")
             log.debug(downloaded_assembly_files)
-            nb_files = 3
+            nb_files = 5
             assert len(downloaded_assembly_files) == nb_files
 
         # Download AlphaMissense again
@@ -68,5 +68,5 @@ def test_download_alphamissense():
             assert assembly in downloaded_files
             downloaded_assembly_files = os.listdir(f"{alphamissense_folder}/{assembly}")
             log.debug(downloaded_assembly_files)
-            nb_files = 3
+            nb_files = 5
             assert len(downloaded_assembly_files) == nb_files
