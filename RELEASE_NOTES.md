@@ -22,6 +22,7 @@ Some news, improves and fixes
 - Fix VCF calculation to consider '.' values ([[#445](https://github.com/bioinfo-chru-strasbourg/howard/issues/445)])
 - Fix Alphamissense download ([[#448](https://github.com/bioinfo-chru-strasbourg/howard/issues/448)])
 - Fix issue when some trancript annotations are missing ([[#451](https://github.com/bioinfo-chru-strasbourg/howard/issues/451)])
+- Fix external tool update with REF/ALT in upper case ([[#451](https://github.com/bioinfo-chru-strasbourg/howard/issues/451)])
 
 ## 0.13.0
 

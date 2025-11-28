@@ -2579,7 +2579,7 @@ def concat_and_compress_files(
     output_file = full_path(output_file)
 
     # Tmp file
-    output_file_tmp = output_file + "." + str(random.randrange(1000)) + ".tmp"
+    output_file_tmp = output_file + "." + str(random.randrange(1000000)) + ".tmp"
 
     # Compression type for first input file
     compression_type_input0 = get_compression_type(input_files[0])

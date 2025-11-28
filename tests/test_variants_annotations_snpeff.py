@@ -20,6 +20,56 @@ from howard.functions.commons import remove_if_exists
 from test_needed import tests_folder, tests_data_folder, tests_config
 
 
+def test_annotation_snpeff_lower():
+    """
+    This function tests the annotation of variants using the snpEff tool.
+    """
+
+    with TemporaryDirectory(dir=tests_folder) as tmp_dir:
+
+        # Init files
+        input_vcf = tests_data_folder + "/example.lower.vcf"
+        output_vcf = f"{tmp_dir}/output.vcf.gz"
+
+        # Construct param dict
+        param = {
+            "annotation": {
+                "snpeff": {
+                    "options": "-lof -hgvs -oicr -noShiftHgvs -spliceSiteSize 3 "
+                }
+            }
+        }
+
+        # Create object
+        variants = Variants(
+            conn=None,
+            input=input_vcf,
+            output=output_vcf,
+            config=tests_config,
+            param=param,
+            load=True,
+        )
+
+        # Remove if output file exists
+        remove_if_exists([output_vcf])
+
+        # Annotation
+        variants.annotation()
+
+        # query annotated variant
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE "INFO" LIKE '%ANN%' """
+        )
+        assert len(result) == 4
+
+        # Check if VCF is in correct format with pyVCF
+        variants.export_output()
+        try:
+            vcf.Reader(filename=output_vcf)
+        except:
+            assert False
+
+
 def test_annotation_snpeff():
     """
     This function tests the annotation of variants using the snpEff tool.
@@ -57,7 +107,9 @@ def test_annotation_snpeff():
         variants.annotation()
 
         # query annotated variant
-        result = variants.get_query_to_df(""" SELECT * FROM variants """)
+        result = variants.get_query_to_df(
+            """ SELECT * FROM variants WHERE "INFO" LIKE '%ANN%' """
+        )
         assert len(result) == 7
 
         # Check if VCF is in correct format with pyVCF

@@ -3485,6 +3485,7 @@ class Variants:
         vcf_file: str,
         update_existing_fields: bool = False,
         remove_vcf_file: bool = True,
+        upper_case: bool = True,
     ) -> None:
         """
         > If the database is duckdb, then use the parquet method, otherwise use the sqlite method
@@ -3507,6 +3508,7 @@ class Variants:
                 vcf_file,
                 update_existing_fields=update_existing_fields,
                 remove_vcf_file=remove_vcf_file,
+                upper_case=upper_case,
             )
         elif connexion_format in ["sqlite"]:
             self.update_from_vcf_sqlite(vcf_file)
@@ -3519,6 +3521,7 @@ class Variants:
         vcf_file: str,
         update_existing_fields: bool = False,
         remove_vcf_file: bool = True,
+        upper_case: bool = True,
     ) -> None:
         """
         It takes a VCF file and updates the INFO column of the variants table in the database with the
@@ -3532,6 +3535,8 @@ class Variants:
         :param remove_vcf_file: If True, the VCF file will be removed after the update is complete,
         defaults to True
         :type remove_vcf_file: bool (optional)
+        :param upper_case: If True, the ALT and REF fields will be compared in uppercase, defaults to True
+        :type upper_case: bool (optional)
         :return: None
         """
 
@@ -3611,6 +3616,12 @@ class Variants:
                 f"Update variants table from {len(list_of_parquet)} parquet files..."
             )
 
+            # Upper case function for ALT and REF
+            if upper_case:
+                upper_func = "upper"
+            else:
+                upper_func = ""
+
             for parquet_file in list_of_parquet:
                 log.debug(
                     f"Update variants table from parquet file: {os.path.basename(parquet_file)}..."
@@ -3641,8 +3652,8 @@ class Variants:
                                 FROM read_parquet('{parquet_file}') as table_parquet
                                         WHERE CAST(table_parquet.\"#CHROM\" AS VARCHAR) = CAST(table_variants.\"#CHROM\" AS VARCHAR)
                                         AND table_parquet.\"POS\" = table_variants.\"POS\"
-                                        AND table_parquet.\"ALT\" = table_variants.\"ALT\"
-                                        AND table_parquet.\"REF\" = table_variants.\"REF\"
+                                        AND {upper_func}(table_parquet.\"ALT\") = {upper_func}(table_variants.\"ALT\")
+                                        AND {upper_func}(table_parquet.\"REF\") = {upper_func}(table_variants.\"REF\")
                                         AND table_parquet.INFO NOT IN ('','.')
                             )
                         )
@@ -8624,7 +8635,7 @@ class Variants:
                         criterion_fields_profile = []
                         annotation_view_name = (
                             "annotation_view_for_prioritization_"
-                            + str(random.randrange(1000))
+                            + str(random.randrange(1000000))
                         )
                         annotations_view_prefix = ""
                         annotations_view_struct = "INFOS"
@@ -9283,7 +9294,7 @@ class Variants:
         added_columns = []
 
         # Add hgvs column in variants table
-        hgvs_column_name = "hgvs_" + str(random.randrange(1000))
+        hgvs_column_name = "hgvs_" + str(random.randrange(1000000))
         added_column = self.add_column(
             table_variants, hgvs_column_name, "STRING", default_value=None
         )
@@ -9710,7 +9721,7 @@ class Variants:
                 try:
                     # create view name with random number
                     calculation_view_name = "calculation_view_" + str(
-                        random.randrange(1000)
+                        random.randrange(1000000)
                     )
                     query_create_view = f"""
                         CREATE TABLE {calculation_view_name} AS
@@ -10391,8 +10402,8 @@ class Variants:
         log.info(f"Start NOMEN calculation configuration...")
 
         # Create annotation view
-        annotations_view = "annotations_vies_for_extract_nomen_" + str(
-            random.randrange(1000)
+        annotations_view = "annotations_view_for_extract_nomen_" + str(
+            random.randrange(1000000)
         )
         if transcripts_column is None:
             transcripts_column = "transcript"
@@ -10531,7 +10542,7 @@ class Variants:
 
                 # Construct transcripts pond table
                 transcripts_pond_table = "transcripts_pond_" + str(
-                    random.randrange(1000)
+                    random.randrange(1000000)
                 )
                 transcripts_pond_df = pd.DataFrame(
                     list(transcripts_pond.items()), columns=["transcript", "rank"]
@@ -10690,7 +10701,7 @@ class Variants:
                     WHERE rn = 1
             """
             nomen_annotations_view = "annotations_vies_for_extract_nomen_" + str(
-                random.randrange(1000)
+                random.randrange(1000000)
             )
             query_find_nomen_create = f"""
             CREATE TABLE {nomen_annotations_view} AS (
@@ -13191,7 +13202,7 @@ class Variants:
 
         # Create view as table
         annotation_view_name = "annotation_view_for_transcripts_prioritization_" + str(
-            random.randrange(1000)
+            random.randrange(1000000)
         )
         annotation_view_name = self.create_annotations_view(
             table=transcripts_table,
@@ -13958,7 +13969,7 @@ class Variants:
 
             # Create view
             annotation_view_name = "annotation_view_for_recreate_infos_" + str(
-                random.randrange(1000)
+                random.randrange(1000000)
             )
 
             # Header
