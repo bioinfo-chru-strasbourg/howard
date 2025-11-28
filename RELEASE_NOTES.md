@@ -13,14 +13,15 @@ Some news, improves and fixes
 
 - Improve annotation update from external tools (e.g. snpEff, Annovar, splice...), to improve ressources ([#443](https://github.com/bioinfo-chru-strasbourg/howard/issues/443))
 - Improve BigWig/BigBed annotation with direct update without external generated VCF ([#444](https://github.com/bioinfo-chru-strasbourg/howard/issues/444))
-- Update duckDB package (TODO)
+- ??? Update duckDB package (TODO)
 
 ### Fixes
 
 - Fix new snpEff URL ([#441](https://github.com/bioinfo-chru-strasbourg/howard/issues/441))
 - Fix Annovar check DB files (*_avdblist.txt) download (only for download, not when auto-download during annotation) ([#440](https://github.com/bioinfo-chru-strasbourg/howard/issues/440))
 - Fix VCF calculation to consider '.' values ([[#445](https://github.com/bioinfo-chru-strasbourg/howard/issues/445)])
-- Fix Alphamissense download TODO
+- Fix Alphamissense download ([[#448](https://github.com/bioinfo-chru-strasbourg/howard/issues/448)])
+- Fix issue when some trancript annotations are missing ([[#451](https://github.com/bioinfo-chru-strasbourg/howard/issues/451)])
 
 ## 0.13.0
 

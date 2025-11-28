@@ -11912,6 +11912,7 @@ class Variants:
             annotation_fields_type = {}
 
             # from columns map
+            # temporary_tables and annotation_fields are appended within the function
             log.info("Transcripts view creation - Annotations mapping...")
             columns_maps = struct.get("from_columns_map", [])
             (
@@ -11930,14 +11931,13 @@ class Variants:
 
             # Append temporary tables infos
             added_columns += added_columns_tmp
-            temporary_tables += temporary_tables_tmp
             temporary_intermediate_tables += temporary_intermediate_tables_tmp
-            annotation_fields += annotation_fields_tmp
             for field in annotation_fields_type_tmp:
                 field_type = annotation_fields_type_tmp.get(field, "VARCHAR")
                 annotation_fields_type[field] = field_type
 
             # from column format
+            # temporary_tables and annotation_fields are appended within the function
             log.info("Transcripts view creation - Annotations in format field...")
             column_formats = struct.get("from_column_format", [])
             (
@@ -11955,8 +11955,6 @@ class Variants:
 
             # Append temporary tables infos
             added_columns += added_columns_tmp
-            temporary_tables += temporary_tables_tmp
-            annotation_fields += annotation_fields_tmp
             for field in added_columns_type_list:
                 annotation_fields_type[field] = added_columns_type_list.get(
                     field, "VARCHAR"
@@ -11982,6 +11980,14 @@ class Variants:
                     query_merge += f"""
                         UNION BY NAME SELECT * FROM {temporary_table}
                     """
+
+            # Create final merge query with transcript handling
+            # Field transcript as None or '' to 'UNKNOWN' prevent issues with group by and association of variants with all avaialble transcripts
+            # A field 'transcript_1' will be created within this table
+            query_merge = f"""
+                SELECT CASE WHEN "transcript" IS NULL THEN 'UNKNOWN' ELSE "transcript" END AS "transcript", *
+                FROM ({query_merge}) AS transcripts_merged
+            """
 
             # transcript table tmp
             transcript_table_tmp = "transcripts_tmp"
