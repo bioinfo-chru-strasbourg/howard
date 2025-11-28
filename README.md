@@ -118,7 +118,7 @@ howard --help
 |  _  | |_| |\ V  V / ___ \|  _ <| |_| |
 |_| |_|\___/  \_/\_/_/   \_\_| \_\____/ 
                                         
-HOWARD::0.13.0 [Antony Le Bechec, Jean-Baptiste Lamouche]
+HOWARD::0.14.0 [Antony Le Bechec, Jean-Baptiste Lamouche]
 HOWARD - Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery
 
 usage: howard [-h] {query,stats,convert,hgvs,annotation,calculation,prioritization,process,databases,gui} ...
@@ -159,7 +159,7 @@ howard query --input='tests/data/example.vcf.gz'
 |  _  | |_| |\ V  V / ___ \|  _ <| |_| |
 |_| |_|\___/  \_/\_/_/   \_\_| \_\____/ 
                                         
-HOWARD::0.13.0 [Antony Le Bechec, Jean-Baptiste Lamouche]
+HOWARD::0.14.0 [Antony Le Bechec, Jean-Baptiste Lamouche]
 HOWARD - Highly Open Workflow for Annotation & Ranking toward genomic variant Discovery
 
 #[2025-01-18 01:35:37]    INFO| Start

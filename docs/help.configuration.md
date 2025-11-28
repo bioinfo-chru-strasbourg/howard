@@ -373,7 +373,7 @@ Examples:
 >    "tools": {
 >       "bcftools": {
 >          "docker": {
->            "image": "howard:0.13.0",
+>            "image": "howard:0.14.0",
 >            "entrypoint": "bcftools",
 >            "options": null,
 >            "command": null
