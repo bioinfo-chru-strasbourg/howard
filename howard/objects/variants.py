@@ -2440,7 +2440,11 @@ class Variants:
         return removed
 
     def get_batch_split(
-        self, table: str = None, block: int = 1000, nb_lines: int = None
+        self,
+        table: str = None,
+        block: int = 1000,
+        nb_lines: int = None,
+        use_memory: bool = True,
     ) -> int:
         """
         Calculate the batch size for processing data based on the number of rows in the table and available memory.
@@ -2449,6 +2453,7 @@ class Variants:
             table (str, optional): The name of the table to evaluate. If None, the default variants table is used.
             block (int, optional): The block size to use for the calculation. Default is 1000.
             nb_lines (int, optional): The number of lines in the table. If None, it will be calculated.
+            use_memory (bool, optional): Whether to consider available memory in the calculation to ponderate block size (memory*block). Default is True.
 
         Returns:
             int: The calculated batch size.
@@ -2459,7 +2464,7 @@ class Variants:
             table = self.get_table_variants()
 
         # Evaluate split
-        log.debug(f"Evaluate batch size by parameter")
+        log.debug("Evaluate batch size by parameter")
 
         # Count numbber of variants in table variants
         if nb_lines is None:
@@ -2467,15 +2472,20 @@ class Variants:
                 self.get_connexion()
                 .execute(
                     f"""
-                SELECT count(*)
-                FROM {table}
-                """
+                        SELECT count(1)
+                        FROM {table}
+                    """
                 )
                 .fetchone()[0]
             )
 
         # Check memory
-        memory = extract_memory_in_go(get_memory(self.get_config(), self.get_param()))
+        if not use_memory:
+            memory = 1
+        else:
+            memory = extract_memory_in_go(
+                get_memory(self.get_config(), self.get_param())
+            )
 
         # Avaluate block size using block size (e.g. 1000 viarants) and memory
         block_size = block * memory
@@ -9734,32 +9744,19 @@ class Variants:
                                     END,
                                     '{output_column_name}=',
                                     TRY_CAST(({operation_query}) AS VARCHAR)
-                                ) AS INFO
+                                ) AS INFO,
+                                row_number() OVER () AS _rowid
                         FROM {table_view_name}
                         
                     """
                     # log.debug(f"query_create_view={query_create_view}")
+                    log.debug("Create calculation view...")
                     self.get_connexion().execute(query_create_view)
-                except:
+
+                except Exception as e:
                     msg_err = f"Operations config: Calculation '{operation_name}' query failed"
                     log.error(msg_err)
                     raise ValueError(msg_err)
-
-                # Add to INFO
-                if operation_info:
-                    sql_update_info = f"""
-                        UPDATE {operation_table_dest}
-                        SET "INFO" = concat(
-                                CASE
-                                    WHEN {operation_table_dest}."INFO" IS NOT NULL AND {operation_table_dest}."INFO" NOT IN ('', '.')
-                                    THEN {operation_table_dest}."INFO"
-                                    ELSE ''
-                                END,
-                                table_view."INFO"
-                                )
-                        FROM {calculation_view_name} AS table_view
-                        WHERE {" AND ".join(clause_key)}
-                    """
 
                 # Operation calculation
                 try:
@@ -9767,35 +9764,103 @@ class Variants:
                     # Add to INFO
                     if operation_info:
 
-                        if True:
-                            # Batch split
-                            batch_split = self.get_batch_split(
-                                table=calculation_view_name, block=1000
-                            )
-                            # batch_split = 100
+                        # if False:
 
-                            # Insert by batch
-                            for batch_index in range(batch_split):
-                                # where clause
-                                if batch_split > 1:
-                                    where_clause = f""" AND ({operation_table_dest}."POS" % {batch_split}) = {batch_index} """
-                                else:
-                                    where_clause = ""
-                                # Insert data
-                                sql_update_info_chunk = f"""
-                                    {sql_update_info}
-                                    {where_clause}
-                                """
-                                log.debug(
-                                    f"Calculation process - process batch [{batch_index+1}/{batch_split}]..."
+                        #     sql_update_info = f"""
+                        #         UPDATE {operation_table_dest}
+                        #         SET "INFO" = concat(
+                        #                 CASE
+                        #                     WHEN {operation_table_dest}."INFO" IS NOT NULL AND {operation_table_dest}."INFO" NOT IN ('', '.')
+                        #                     THEN {operation_table_dest}."INFO"
+                        #                     ELSE ''
+                        #                 END,
+                        #                 table_view."INFO"
+                        #                 )
+                        #         FROM {calculation_view_name} AS table_view
+                        #         WHERE {" AND ".join(clause_key)}
+                        #     """
+                        #     log.debug(f"sql_update_info={sql_update_info}")
+
+                        #     # Batch split
+                        #     # batch_split = self.get_batch_split(
+                        #     #     table=calculation_view_name, block=1000
+                        #     # )
+
+                        #     # Batch split - new
+                        #     # Chunk size
+                        #     chunk_size = self.get_config().get(
+                        #         "chunk_size", DEFAULT_CHUNK_SIZE
+                        #     )
+                        #     batch_split = self.get_batch_split(
+                        #         table=calculation_view_name,
+                        #         block=chunk_size,
+                        #         use_memory=False,
+                        #     )
+                        #     # batch_split = 1
+
+                        #     # Insert by batch
+                        #     for batch_index in range(batch_split):
+                        #         # where clause
+                        #         if batch_split > 1:
+                        #             where_clause = f""" AND ({operation_table_dest}."POS" % {batch_split}) = {batch_index} """
+                        #         else:
+                        #             where_clause = ""
+                        #         # Insert data
+                        #         sql_update_info_chunk = f"""
+                        #             {sql_update_info}
+                        #             {where_clause}
+                        #         """
+                        #         log.debug(
+                        #             f"Calculation process - process batch [{batch_index+1}/{batch_split}]..."
+                        #         )
+                        #         # log.debug(
+                        #         #     f"sql_update_info_chunk={sql_update_info_chunk}"
+                        #         # )
+                        #         self.conn.execute(sql_update_info_chunk)
+
+                        # if True:
+
+                        # Create list of columns to select with INFO updated
+                        columns_select = []
+                        for column in self.get_columns(operation_table_dest):
+                            if column == "INFO":
+                                columns_select.append(
+                                    """
+                                        concat(
+                                            CASE
+                                                WHEN m."INFO" IS NOT NULL AND m."INFO" NOT IN ('', '.')
+                                                THEN m."INFO"
+                                                ELSE ''
+                                            END,
+                                            u."INFO"
+                                            ) AS "INFO"
+                                    """
                                 )
-                                # log.debug(
-                                #     f"sql_update_info_chunk={sql_update_info_chunk}"
-                                # )
-                                self.conn.execute(sql_update_info_chunk)
+                            else:
+                                columns_select.append(f'm."{column}"')
 
-                except:
-                    msg_err = f"Operations config: Calculation '{operation_name}' query failed"
+                        # Create new table with updated INFO
+                        log.debug("Calculation process - CTAS update...")
+                        new_operation_table_dest = f"new_{operation_table_dest}_{str(random.randrange(1000000))}"
+                        sql_ctas_update = f"""
+                            CREATE TABLE {new_operation_table_dest} AS
+                            SELECT
+                                {', '.join(columns_select)}
+                            FROM {operation_table_dest} AS m
+                            LEFT JOIN {calculation_view_name} AS u USING ({', '.join([f'"{k}"' for k in operation_table_key])})
+                            ORDER BY u._rowid;
+                        """
+                        # log.debug(f"sql_ctas_update={sql_ctas_update}")
+                        self.conn.execute(sql_ctas_update)
+
+                        # Replace old table
+                        self.conn.execute(f"DROP TABLE {operation_table_dest};")
+                        self.conn.execute(
+                            f"ALTER TABLE {new_operation_table_dest} RENAME TO {operation_table_dest};"
+                        )
+
+                except Exception as e:
+                    msg_err = f"Operations config: Calculation '{operation_name}' query failed: {str(e)}"
                     log.error(msg_err)
                     raise ValueError(msg_err)
 

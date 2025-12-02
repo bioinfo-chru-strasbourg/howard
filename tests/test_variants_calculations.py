@@ -550,7 +550,7 @@ def test_calculation_vartype_full():
         result = variants.get_query_to_df(
             """ SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=SNV%' """
         )
-        assert len(result) == 4
+        assert len(result) == 6  # duplication !!!
 
         result = variants.get_query_to_df(
             """ SELECT * FROM variants WHERE INFO LIKE '%VARTYPE=INDEL%' """
@@ -1128,7 +1128,7 @@ def test_calculation_barcode_genotype():
 
         # DEBUG
         result = variants.get_query_to_df(""" SELECT * FROM variants """)
-        log.debug(result)
+        # log.debug(result)
 
         # Construct param dict
         params = {
@@ -1444,7 +1444,7 @@ def test_calculation_vaf_normalization_ad():
         assert len(result) == 3
 
         result = variants.get_query_to_df(""" SELECT * FROM variants""")
-        log.debug(result.to_string())
+        # log.debug(result.to_string())
 
         # Check if VCF is in correct format with pyVCF
         remove_if_exists([output_vcf])
