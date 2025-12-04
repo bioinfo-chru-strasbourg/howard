@@ -9655,8 +9655,8 @@ class Variants:
         output_column_name = operation.get("output_column_name", operation_name)
         output_column_number = operation.get("output_column_number", ".")
         output_column_type = operation.get("output_column_type", "String")
-        prefix = operation.get("explode_infos_prefix", "")
-        output_column_type_sql = code_type_map_to_sql.get(output_column_type, "VARCHAR")
+        # prefix = operation.get("explode_infos_prefix", "")
+        # output_column_type_sql = code_type_map_to_sql.get(output_column_type, "VARCHAR")
         output_column_description = operation.get(
             "output_column_description", f"{operation_name} operation"
         )
@@ -9665,7 +9665,7 @@ class Variants:
             operation_query = " ".join(operation_query)
         operation_info_fields = operation.get("info_fields", [])
         operation_info_fields_check = operation.get("info_fields_check", False)
-        operation_info = operation.get("operation_info", True)
+        # operation_info = operation.get("operation_info", True)
         operation_table = operation.get(
             "table", self.get_table_variants(clause="alter")
         )
@@ -9690,9 +9690,6 @@ class Variants:
 
             # If info fields available
             if operation_info_fields_check_result:
-
-                # Added_columns
-                added_columns = []
 
                 # Create VCF header field
                 vcf_reader = self.get_header()
@@ -9727,25 +9724,20 @@ class Variants:
                         f""" {operation_table_dest}."{key}" = table_view."{key}" """
                     )
 
-                # Create view
+                # Create table with calculation
+                calculation_view_name = "calculation_view_" + str(
+                    random.randrange(1000000)
+                )
+
                 try:
-                    # create view name with random number
-                    calculation_view_name = "calculation_view_" + str(
-                        random.randrange(1000000)
-                    )
                     query_create_view = f"""
-                        CREATE TABLE {calculation_view_name} AS
+                        CREATE VIEW {calculation_view_name} AS
                         SELECT {", ".join([f'"{k}"' for k in operation_table_key])},
                             concat(
-                                    CASE
-                                        WHEN "INFO" IS NOT NULL AND "INFO" NOT IN ('', '.')
-                                        THEN ';'
-                                        ELSE ''
-                                    END,
                                     '{output_column_name}=',
                                     TRY_CAST(({operation_query}) AS VARCHAR)
                                 ) AS INFO,
-                                row_number() OVER () AS _rowid
+                                -- row_number() OVER (ORDER BY 1) AS _rowid
                         FROM {table_view_name}
                         
                     """
@@ -9754,120 +9746,20 @@ class Variants:
                     self.get_connexion().execute(query_create_view)
 
                 except Exception as e:
+                    log.error(f"Error creating calculation view: {e}")
                     msg_err = f"Operations config: Calculation '{operation_name}' query failed"
                     log.error(msg_err)
                     raise ValueError(msg_err)
 
-                # Operation calculation
-                try:
-
-                    # Add to INFO
-                    if operation_info:
-
-                        # if False:
-
-                        #     sql_update_info = f"""
-                        #         UPDATE {operation_table_dest}
-                        #         SET "INFO" = concat(
-                        #                 CASE
-                        #                     WHEN {operation_table_dest}."INFO" IS NOT NULL AND {operation_table_dest}."INFO" NOT IN ('', '.')
-                        #                     THEN {operation_table_dest}."INFO"
-                        #                     ELSE ''
-                        #                 END,
-                        #                 table_view."INFO"
-                        #                 )
-                        #         FROM {calculation_view_name} AS table_view
-                        #         WHERE {" AND ".join(clause_key)}
-                        #     """
-                        #     log.debug(f"sql_update_info={sql_update_info}")
-
-                        #     # Batch split
-                        #     # batch_split = self.get_batch_split(
-                        #     #     table=calculation_view_name, block=1000
-                        #     # )
-
-                        #     # Batch split - new
-                        #     # Chunk size
-                        #     chunk_size = self.get_config().get(
-                        #         "chunk_size", DEFAULT_CHUNK_SIZE
-                        #     )
-                        #     batch_split = self.get_batch_split(
-                        #         table=calculation_view_name,
-                        #         block=chunk_size,
-                        #         use_memory=False,
-                        #     )
-                        #     # batch_split = 1
-
-                        #     # Insert by batch
-                        #     for batch_index in range(batch_split):
-                        #         # where clause
-                        #         if batch_split > 1:
-                        #             where_clause = f""" AND ({operation_table_dest}."POS" % {batch_split}) = {batch_index} """
-                        #         else:
-                        #             where_clause = ""
-                        #         # Insert data
-                        #         sql_update_info_chunk = f"""
-                        #             {sql_update_info}
-                        #             {where_clause}
-                        #         """
-                        #         log.debug(
-                        #             f"Calculation process - process batch [{batch_index+1}/{batch_split}]..."
-                        #         )
-                        #         # log.debug(
-                        #         #     f"sql_update_info_chunk={sql_update_info_chunk}"
-                        #         # )
-                        #         self.conn.execute(sql_update_info_chunk)
-
-                        # if True:
-
-                        # Create list of columns to select with INFO updated
-                        columns_select = []
-                        for column in self.get_columns(operation_table_dest):
-                            if column == "INFO":
-                                columns_select.append(
-                                    """
-                                        concat(
-                                            CASE
-                                                WHEN m."INFO" IS NOT NULL AND m."INFO" NOT IN ('', '.')
-                                                THEN m."INFO"
-                                                ELSE ''
-                                            END,
-                                            u."INFO"
-                                            ) AS "INFO"
-                                    """
-                                )
-                            else:
-                                columns_select.append(f'm."{column}"')
-
-                        # Create new table with updated INFO
-                        log.debug("Calculation process - CTAS update...")
-                        new_operation_table_dest = f"new_{operation_table_dest}_{str(random.randrange(1000000))}"
-                        sql_ctas_update = f"""
-                            CREATE TABLE {new_operation_table_dest} AS
-                            SELECT
-                                {', '.join(columns_select)}
-                            FROM {operation_table_dest} AS m
-                            LEFT JOIN {calculation_view_name} AS u USING ({', '.join([f'"{k}"' for k in operation_table_key])})
-                            ORDER BY u._rowid;
-                        """
-                        # log.debug(f"sql_ctas_update={sql_ctas_update}")
-                        self.conn.execute(sql_ctas_update)
-
-                        # Replace old table
-                        self.conn.execute(f"DROP TABLE {operation_table_dest};")
-                        self.conn.execute(
-                            f"ALTER TABLE {new_operation_table_dest} RENAME TO {operation_table_dest};"
-                        )
-
-                except Exception as e:
-                    msg_err = f"Operations config: Calculation '{operation_name}' query failed: {str(e)}"
-                    log.error(msg_err)
-                    raise ValueError(msg_err)
-
-                # Remove added columns
-                for added_column in added_columns:
-                    log.debug(f"added_column: {added_column}")
-                    self.drop_column(column=added_column)
+                # update table
+                self.update_table(
+                    source_table=calculation_view_name,
+                    dest_table=operation_table_dest,
+                    join_keys=operation_table_key,
+                    update_columns={"INFO": "INFO"},
+                    mode="append",
+                    separator=";",
+                )
 
             else:
                 msg_err = f"Operations config: Calculation '{operation_name}' DOES NOT contain all mandatory fields {operation_info_fields}"
@@ -9880,6 +9772,105 @@ class Variants:
             )
             log.error(msg_err)
             raise ValueError(msg_err)
+
+    def update_table(
+        self,
+        source_table: str,
+        dest_table: str,
+        join_keys: list,
+        update_columns: dict,
+        mode: str = "append",
+        separator: str = ";",
+        physical_order: bool = True,
+    ) -> None:
+        """
+        The `update_ctas_table` function creates a new table by joining a source table and
+        destination table on specified keys, updating specified columns in the process.
+
+        :param source_table: The `source_table` parameter is the name of the table that contains the
+        new data that will be used to update the `dest_table`
+        :type source_table: str
+        :param dest_table: The `dest_table` parameter is the name of the table that you want to update
+        with data from the `source_table`
+        :type dest_table: str
+        :param join_keys: The `join_keys` parameter is a list of column names that will be used to join
+        the `source_table` and `dest_table`. These columns should exist in both tables and will be used to
+        match rows between the two tables
+        :type join_keys: list
+        :param update_columns: The `update_columns` parameter is a dictionary that maps the columns in the
+        `dest_table` to the corresponding columns in the `source_table` that will be used to update them. The keys
+        of the dictionary are the column names in the `dest_table`, and the values are the column names in the `source_table`
+        :type update_columns: dict
+        :param mode: The `mode` parameter determines how the update will be performed. It can take one of the following
+        values:
+            - "replace": This mode will replace the values in the `dest_table` with the values from the `source_table` for the specified `update_columns`.
+            - "append": This mode will append the values from the `source_table` to the existing values in the `dest_table` for the specified `update_columns`.
+        :type mode: str (optional)
+        :param physical_order: The `physical_order` parameter is a boolean value that determines whether
+        the order of the rows in the destination table should be preserved during the update process. If
+        set to `True`, the function will create a view of the destination table with a row_number for
+        ordering, ensuring that the original order of the rows is maintained. If set to `False`, the
+        function will not create this view, and the order of the rows in the destination table may not be
+        preserved after the update. The default value is `True`.
+        :type physical_order: bool (optional)
+
+        :return: The function `update_ctas_table` does not return anything. It performs an update on the
+        destination table (`dest_table`) by creating a new table with updated columns based on the
+        source table (`source_table`) and then replacing the old destination table with the new one.
+        """
+
+        # Build column update expressions
+        dest_cols = self.get_columns(dest_table)
+        columns_expr = []
+
+        for col in dest_cols:
+            if col in update_columns:
+                src_col = update_columns[col]
+                if mode == "replace":
+                    columns_expr.append(f's.{src_col} AS "{col}"')
+                elif mode == "append":
+                    columns_expr.append(
+                        f"""
+                            concat(
+                                COALESCE(NULLIF(NULLIF(d."{col}", ''), '.'), ''),
+                                CASE 
+                                    WHEN NULLIF(NULLIF(d."{col}", ''), '.') IS NOT NULL
+                                    AND NULLIF(NULLIF(s."{src_col}", ''), '.') IS NOT NULL
+                                    THEN '{separator}'
+                                    ELSE ''
+                                END,
+                                COALESCE(NULLIF(NULLIF(s."{src_col}", ''), '.'), '')
+                            ) AS "{col}"
+                        """
+                    )
+            else:
+                columns_expr.append(f'd."{col}"')
+
+        # Build CTAS preserving physical order using row_number()
+        new_dest_table = f"tmp_new_{dest_table}_{random.randrange(1000000)}"
+
+        sql = f"""
+            CREATE TABLE {new_dest_table} AS
+            WITH d AS (
+                SELECT * {", row_number() OVER () AS _rowid" if physical_order else ""}
+                FROM {dest_table}
+            )
+            SELECT
+                {', '.join(columns_expr)}
+            FROM d
+            LEFT JOIN {source_table} AS s USING ({', '.join([f'"{k}"' for k in join_keys])})
+            {"ORDER BY d._rowid" if physical_order else ""}
+        """
+
+        # Execute CTAS
+        log.debug(f"Update CTAS table from {source_table} to {dest_table}...")
+        self.get_connexion().execute(sql)
+
+        # Swap tables
+        self.get_connexion().execute(f"DROP TABLE {dest_table};")
+        self.get_connexion().execute(
+            f"ALTER TABLE {new_dest_table} RENAME TO {dest_table};"
+        )
 
     def calculation_process_function(
         self, operation: dict, operation_name: str = "unknown"
